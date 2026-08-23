@@ -10,6 +10,7 @@
 /// [MemoryRecord]s through this surface.
 library;
 
+import '../../../auth/domain_scope.dart';
 import '../../contracts/event_record.dart';
 import '../../contracts/memory_record.dart';
 import '../embedding/embedder.dart';
@@ -200,7 +201,8 @@ class MemoryRuntime {
     required String ownerUserId,
     String? source,
     Set<String>? sourcePrefixes,
-    Set<String>? typeFilter,
+    Set<DomainScope>? domains,
+    Set<EventKind>? kindFilter,
     Set<String>? entityFilter,
     Duration window = const Duration(days: 30),
     int limit = 50,
@@ -208,7 +210,8 @@ class MemoryRuntime {
     ownerUserId: ownerUserId,
     source: source,
     sourcePrefixes: sourcePrefixes,
-    typeFilter: typeFilter,
+    domains: domains,
+    kindFilter: kindFilter,
     entityFilter: entityFilter,
     since: _clock().subtract(window),
     limit: limit,

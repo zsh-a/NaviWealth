@@ -370,7 +370,7 @@ class KnowledgeExperiment {
 
 /// Recurring user-defined reminder. `nextDueAt` is the single source of
 /// truth for "when does this surface again" — bumped to `now + intervalDays`
-/// on `markDone`. RoutineDueAgent scans `nextDueAt <= now + 7d` daily and
+/// on `markDone`. Knowledge Review reads `nextDueAt <= now + 7d` and
 /// emits a memory + local notification.
 class KnowledgeRoutine {
   KnowledgeRoutine({

@@ -459,7 +459,7 @@ class _RecoveryAlertPanel extends ConsumerWidget {
                 run.status != AgentRunLifecycleStatus.failed))) {
       return const SizedBox.shrink();
     }
-    final metaLabel = l10n.healthBriefingUpdated(
+    final metaLabel = l10n.agentResultUpdated(
       _ago(l10n, artifact?.createdAt ?? run!.startedAt),
     );
     return AgentResultSurface(

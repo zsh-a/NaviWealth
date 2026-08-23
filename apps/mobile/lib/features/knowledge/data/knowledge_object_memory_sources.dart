@@ -15,6 +15,16 @@ const String kKnowledgeExperimentMemorySource = 'know:experiments';
 const String kKnowledgeDecisionMemorySource = 'know:decisions';
 const String kKnowledgeRoutineMemorySource = 'know:routines';
 
+const String kKnowledgeNoteEventSourceFamily = 'know:knowledge_notes';
+const String kKnowledgePrincipleEventSourceFamily = 'know:knowledge_principles';
+const String kKnowledgeAssumptionEventSourceFamily =
+    'know:knowledge_assumptions';
+const String kKnowledgeConceptEventSourceFamily = 'know:knowledge_concepts';
+const String kKnowledgeExperimentEventSourceFamily =
+    'know:knowledge_experiments';
+const String kKnowledgeDecisionEventSourceFamily = 'know:knowledge_decisions';
+const String kKnowledgeRoutineEventSourceFamily = 'know:knowledge_routines';
+
 /// Every KnowledgeOS Memory source keyed by a short type token
 /// (`docs/domains/knowledgeos-domain.md` §15.3). Iterated by the dedupe /
 /// cross-type search tools. Add a new type's source above and here.

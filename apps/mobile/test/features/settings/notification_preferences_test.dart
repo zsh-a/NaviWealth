@@ -8,7 +8,6 @@ import 'package:naviwealth/core/notifications/notification_preferences.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/health/data/health_notification_preferences.dart';
 import 'package:naviwealth/features/settings/ui/notification_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,26 +22,19 @@ void main() {
   group('notification preferences', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    test(
-      'default app notifications and briefing notifications to on',
-      () async {
-        final prefs = await SharedPreferences.getInstance();
-        final c = _container(prefs);
-        addTearDown(c.dispose);
+    test('defaults app notifications to on', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final c = _container(prefs);
+      addTearDown(c.dispose);
 
-        expect(c.read(notificationsEnabledProvider), isTrue);
-        expect(c.read(healthBriefingNotificationsEnabledProvider), isTrue);
-      },
-    );
+      expect(c.read(notificationsEnabledProvider), isTrue);
+    });
 
-    test('persist app-level and briefing-level toggles', () async {
+    test('persists the app-level toggle', () async {
       var prefs = await SharedPreferences.getInstance();
       final c = _container(prefs);
 
       await c.read(notificationsEnabledProvider.notifier).setEnabled(false);
-      await c
-          .read(healthBriefingNotificationsEnabledProvider.notifier)
-          .setEnabled(false);
       c.dispose();
 
       prefs = await SharedPreferences.getInstance();
@@ -50,7 +42,6 @@ void main() {
       addTearDown(c2.dispose);
 
       expect(c2.read(notificationsEnabledProvider), isFalse);
-      expect(c2.read(healthBriefingNotificationsEnabledProvider), isFalse);
     });
 
     testWidgets('settings page renders permission state and toggles', (
@@ -85,18 +76,12 @@ void main() {
       expect(find.text('Notifications'), findsOneWidget);
       expect(find.text('System notifications are allowed.'), findsOneWidget);
       expect(find.text('Allow app notifications'), findsOneWidget);
-      expect(find.text('Morning Briefing'), findsOneWidget);
+      expect(find.text('Daily Navigator'), findsNothing);
 
       await tester.tap(find.byType(FSwitch).first);
       await tester.pumpAndSettle();
 
       expect(container.read(notificationsEnabledProvider), isFalse);
-      expect(
-        find.text(
-          'Turn on app notifications to run the daily briefing reminder.',
-        ),
-        findsOneWidget,
-      );
     });
   });
 }

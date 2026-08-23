@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
@@ -41,6 +42,32 @@ MemoryRecord _mem({
     updatedAt: t,
   );
 }
+
+EventRecord _event({
+  required String id,
+  required String type,
+  required DateTime timestamp,
+  required String source,
+  required String ownerUserId,
+  required String summary,
+  required Map<String, Object?> payload,
+  required Set<String> entities,
+}) => EventRecord(
+  id: id,
+  domain: null,
+  kind: EventKind(namespace: 'test', name: type),
+  occurredAt: timestamp,
+  observedAt: timestamp,
+  sourceIdentity: SourceIdentity.infrastructure(
+    rowFamily: source,
+    rowId: id,
+    fingerprint: 'fixture-$id',
+  ),
+  ownerUserId: ownerUserId,
+  summary: summary,
+  facts: payload,
+  entities: entities,
+);
 
 MemoryRuntime _runtime({DateTime Function()? clock}) {
   final db = makeTestDatabase();
@@ -196,11 +223,11 @@ void main() {
   });
 
   group('MemoryRuntime.recordEvent + recentEvents', () {
-    test('events come back desc by timestamp + filtered by entity', () async {
+    test('events come back desc by occurredAt + filtered by entity', () async {
       final fixed = DateTime.utc(2026, 5, 24, 12);
       final rt = _runtime(clock: () => fixed);
       await rt.recordEvent(
-        EventRecord(
+        _event(
           id: 'e1',
           type: 'trade_closed',
           timestamp: DateTime.utc(2026, 5, 20),
@@ -212,7 +239,7 @@ void main() {
         ),
       );
       await rt.recordEvent(
-        EventRecord(
+        _event(
           id: 'e2',
           type: 'trade_closed',
           timestamp: DateTime.utc(2026, 5, 22),

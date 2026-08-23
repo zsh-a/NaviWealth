@@ -93,10 +93,13 @@ NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
 
 | 域 | 启用方式 | Shell 标签页 | AI 工具 | Agent |
 |---|---|---|---|---|
-| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 35 设备工具 | — |
-| HealthOS | 用户启用 | Today / Trend / Plan | 7 设备工具 | Morning Briefing / Recovery Alert / Weekly Summary |
-| KnowledgeOS | 用户启用 | Inbox / Library / Review | 16 设备工具 | Review / Assumption / Contradiction / Inbox Triage / Routine Due |
-| ExecutionOS | 用户启用 | Today / Commitments / Review | 8 设备工具 | Review |
+| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 35 设备工具 | Weekly Wealth / Cashflow Anomaly / FIRE Drift / Options Risk |
+| HealthOS | 用户启用 | Today / Trend / Plan | 7 设备工具 | Recovery Alert / Weekly Summary |
+| KnowledgeOS | 用户启用 | Inbox / Library / Review | 16 设备工具 | Review / Assumption / Contradiction / Inbox Triage |
+| ExecutionOS | 用户启用 | Today / Commitments / Review | 8 设备工具 | Due Action / Review |
+
+跨域判断由 app-level `DailyNavigatorAgent` 完成；领域 Agent 只生成可验证的
+事实和 finding，不进行 agent-to-agent 调用。
 
 域启用状态通过 `domainOptInsProvider` 管理，所有工具、提示、Shell spec、Agent 和命令面板条目从 active packs 派生。
 

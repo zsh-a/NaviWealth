@@ -7610,9 +7610,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsDisabled => '已停用';
 
   @override
-  String get agentSettingsNotifications => '通知';
-
-  @override
   String agentSettingsOverviewEnabled(int enabled, int total) {
     return '已启用 $enabled/$total';
   }
@@ -7989,13 +7986,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '复盘扫描时效、报价质量、标的集中度与合约风险。';
 
   @override
-  String get agentPresentationMorningBriefingLabel => '早间简报';
-
-  @override
-  String get agentPresentationMorningBriefingDescription =>
-      '基于最近的健康与财务信号生成每日简报。';
-
-  @override
   String get agentPresentationRecoveryAlertLabel => '恢复提醒';
 
   @override
@@ -8034,13 +8024,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get agentPresentationKnowledgeInboxTriageDescription =>
       '找出需要分类或后续处理的捕获笔记。';
-
-  @override
-  String get agentPresentationKnowledgeRoutineLabel => 'Routine 到期';
-
-  @override
-  String get agentPresentationKnowledgeRoutineDescription =>
-      '检查到期需要复盘的知识 Routine。';
 
   @override
   String get agentPresentationExecutionReviewLabel => '执行复盘';
@@ -8111,18 +8094,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsNotificationsMasterSubtitle => '控制本地 Agent 通知和后台提醒任务。';
-
-  @override
-  String get settingsNotificationsHealthBriefingTitle => '晨间简报';
-
-  @override
-  String settingsNotificationsHealthBriefingSubtitle(String hour) {
-    return '大约 $hour:00 运行并推送 HealthOS 摘要。';
-  }
-
-  @override
-  String get settingsNotificationsHealthBriefingBlockedSubtitle =>
-      '开启应用通知后才会运行每日简报提醒。';
 
   @override
   String get settingsNotificationsPermissionChecking => '正在检查系统通知权限…';
@@ -8312,7 +8283,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDomainsHealthDisabledSubtitle => '启用 AI 工具和本地记忆索引';
 
   @override
-  String get settingsDomainsHealthTodaySubtitle => '查看今日恢复、指标与早间简报';
+  String get settingsDomainsHealthTodaySubtitle => '查看今日恢复、指标与健康趋势';
 
   @override
   String get settingsDomainsKnowledgeEnabledSubtitle =>
@@ -8359,17 +8330,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDomainsHealthSyncTitle => '同步健康数据';
-
-  @override
-  String get settingsDomainsBriefingTimeHelp => '晨间简报时间';
-
-  @override
-  String get settingsDomainsBriefingTimeTitle => '简报时间';
-
-  @override
-  String settingsDomainsBriefingTimeSubtitle(String hour) {
-    return '每日大约 $hour:00 触发（后台调度窗口浮动）';
-  }
 
   @override
   String get settingsAiModelsCheckingRuntime => '正在检查下次启动的 embedder 路径…';
@@ -8645,58 +8605,6 @@ class AppLocalizationsZh extends AppLocalizations {
     Object first,
   ) {
     return '$count 条假设超过 $days 天未校验，首条：$first';
-  }
-
-  @override
-  String get knowledgeAgentRoutineTitle => '本周到期的 Routine';
-
-  @override
-  String knowledgeAgentRoutineNoneDue(Object days) {
-    return '未来 $days 天内暂无到期 Routine。';
-  }
-
-  @override
-  String knowledgeAgentRoutineLeadOverdue(Object days, Object statement) {
-    return '$statement（已逾期 $days 天）';
-  }
-
-  @override
-  String knowledgeAgentRoutineLeadToday(Object statement) {
-    return '$statement（今日到期）';
-  }
-
-  @override
-  String knowledgeAgentRoutineLeadUpcoming(Object days, Object statement) {
-    return '$statement（$days 天后到期）';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryMixed(
-    Object first,
-    Object overdueCount,
-    Object upcomingCount,
-  ) {
-    return '$overdueCount 条已逾期 + $upcomingCount 条本周到期，首条：$first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryOverdueOne(Object first) {
-    return '1 条 Routine 已逾期：$first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryOverdueMany(Object count, Object first) {
-    return '$count 条 Routine 已逾期，首条：$first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryUpcomingOne(Object first) {
-    return '1 条 Routine 本周到期：$first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryUpcomingMany(Object count, Object first) {
-    return '$count 条 Routine 本周到期，首条：$first';
   }
 
   @override
@@ -12266,31 +12174,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthRecoveryInsufficientTip => '先同步并连续记录几天，恢复建议会更稳定。';
 
   @override
-  String get healthBriefingTitle => '早间简报';
-
-  @override
-  String get healthBriefingEmpty => '暂无简报';
-
-  @override
-  String get healthBriefingEmptyHint => '同步数据后可生成今日简报。';
-
-  @override
-  String get healthBriefingGenerating => '生成中';
-
-  @override
-  String get healthBriefingUpdate => '更新';
-
-  @override
-  String get healthBriefingGenerate => '生成';
-
-  @override
-  String healthBriefingUpdated(Object time) {
+  String agentResultUpdated(String time) {
     return '更新于 $time';
-  }
-
-  @override
-  String healthBriefingLoadFailed(Object message) {
-    return '简报加载失败：$message';
   }
 
   @override
@@ -13600,9 +13485,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get healthBriefingAuto => '自动';
-
-  @override
   String get healthGarminTitle => 'Garmin Connect';
 
   @override
@@ -14283,11 +14165,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeAgentWeeklyWealthSkipNoSnapshot => '暂无可复盘的财务快照';
 
   @override
-  String financeAgentWeeklyWealthMemoryTitle(Object dayKey) {
-    return '每周财富复盘 · $dayKey';
-  }
-
-  @override
   String get financeAgentWeeklyWealthTitle => '每周财富复盘';
 
   @override
@@ -14400,11 +14277,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeAgentCashflowSkipNoAnomaly => '未检测到现金流异常';
 
   @override
-  String financeAgentCashflowMemoryTitle(Object dayKey) {
-    return '现金流异常复盘 · $dayKey';
-  }
-
-  @override
   String get financeAgentCashflowTitle => '现金流异常复盘';
 
   @override
@@ -14447,11 +14319,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get financeAgentFireSkipNoDrift => '未检测到 FIRE 计划偏移';
-
-  @override
-  String financeAgentFireMemoryTitle(Object dayKey) {
-    return 'FIRE 计划偏移监控 · $dayKey';
-  }
 
   @override
   String get financeAgentFireTitle => 'FIRE 计划偏移监控';
@@ -14702,11 +14569,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeAgentOptionsSkipNoFinding => '未发现期权收入风险';
 
   @override
-  String financeAgentOptionsMemoryTitle(Object dayKey) {
-    return '期权收入风险复盘 · $dayKey';
-  }
-
-  @override
   String get financeAgentOptionsTitle => '期权收入风险复盘';
 
   @override
@@ -14814,77 +14676,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeAgentOptionsAction => '查看期权扫描';
 
   @override
-  String get healthAgentMorningSkipNoHealth => '过去 24 小时没有健康信号';
-
-  @override
-  String get healthAgentMorningSkipNoUsable => '有健康事件但没有可用信号';
-
-  @override
-  String healthAgentMorningMemoryTitle(Object dayKey) {
-    return '晨间简报 · $dayKey';
-  }
-
-  @override
-  String get healthAgentMorningTitle => '晨间简报';
-
-  @override
-  String get healthAgentMorningSleepShortTag => '（偏短）';
-
-  @override
-  String get healthAgentMorningSleepLongTag => '（偏长）';
-
-  @override
-  String healthAgentMorningSleepLine(Object hours, Object tag) {
-    return '睡眠 $hours 小时$tag';
-  }
-
-  @override
-  String healthAgentMorningHrvLine(Object value) {
-    return 'HRV $value ms';
-  }
-
-  @override
-  String healthAgentMorningFinanceLine(Object items) {
-    return '财务：$items';
-  }
-
-  @override
-  String healthAgentMorningPromptSystem(Object language) {
-    return '你是 HealthOS 晨间简报。根据过去 24 小时的结构化健康和财务信号，写一句符合用户语气的晨间简报（简短、平静、事实化）。只使用提供的数字。除非数字明显异常，否则不要添加建议。请用$language回复。';
-  }
-
-  @override
-  String get healthAgentMorningPromptStructuredSignals =>
-      '结构化信号（原样使用这些数字，不要改写）：';
-
-  @override
-  String get healthAgentMorningPromptInstruction =>
-      '写一句平静、事实化的句子（不超过 30 个词或 45 个汉字），提到每个信号。不要列点。不要使用表情。';
-
-  @override
-  String get healthAgentMorningInsightSleepTitle => '睡眠';
-
-  @override
-  String get healthAgentMorningInsightHrvTitle => 'HRV';
-
-  @override
-  String get healthAgentMorningInsightFinanceTitle => '财务';
-
-  @override
-  String get healthAgentMorningAction => '查看简报';
-
-  @override
   String healthAgentRecoverySkipInsufficient(Object count) {
     return 'HRV 数据不足（$count 个点）';
   }
 
   @override
   String get healthAgentRecoverySkipNoDecline => '未检测到持续 HRV 下降';
-
-  @override
-  String healthAgentRecoveryMemoryTitle(Object dayKey) {
-    return '恢复提醒 · $dayKey';
-  }
 
   @override
   String get healthAgentRecoveryTitle => '恢复提醒';
@@ -14897,11 +14694,6 @@ class AppLocalizationsZh extends AppLocalizations {
     Object recentMs,
   ) {
     return 'HRV 已连续 $days 天低于基线（近期 $recentMs ms vs 平均 $baselineMs ms，下降 $declinePct%）。今天可考虑降低活动强度。';
-  }
-
-  @override
-  String healthAgentRecoveryNotificationBody(Object days, Object declinePct) {
-    return 'HRV 在 $days 天内下降 $declinePct%。今天可考虑降低活动强度。';
   }
 
   @override
@@ -14930,11 +14722,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthAgentWeeklySkipNoActionable => '本周没有可行动信号';
-
-  @override
-  String healthAgentWeeklyMemoryTitle(Object dayKey) {
-    return '每周健康总结 · $dayKey';
-  }
 
   @override
   String get healthAgentWeeklyTitle => '每周健康总结';
@@ -15007,11 +14794,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionAgentReviewSkipNoSignals => '暂无可复盘的执行信号';
-
-  @override
-  String executionAgentReviewMemoryTitle(Object dayKey) {
-    return '执行复盘 · $dayKey';
-  }
 
   @override
   String get executionAgentReviewTitle => '执行复盘';
@@ -15249,32 +15031,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeAgentContradictionAction => '查看矛盾项';
-
-  @override
-  String get knowledgeAgentRoutineArtifactTitle => '例行事项到期';
-
-  @override
-  String get knowledgeAgentRoutineInsightOverdueTitle => '逾期例行事项';
-
-  @override
-  String knowledgeAgentRoutineInsightOverdueBody(Object count, Object plural) {
-    return '$count 个例行事项已逾期。';
-  }
-
-  @override
-  String get knowledgeAgentRoutineInsightUpcomingTitle => '即将到期例行事项';
-
-  @override
-  String knowledgeAgentRoutineInsightUpcomingBody(
-    Object count,
-    Object days,
-    Object plural,
-  ) {
-    return '$count 个例行事项将在 $days 天内到期。';
-  }
-
-  @override
-  String get knowledgeAgentRoutineAction => '查看例行事项';
 
   @override
   String get knowledgeAgentInboxSkipNoNotes => '没有待 triage 的 note';
@@ -16985,4 +16741,80 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeImageLocalOnlyToast => '图片已插入，目前仅保存在此设备。';
+
+  @override
+  String get developerIssuesTitle => '报告产品问题';
+
+  @override
+  String get developerIssuesSubtitle =>
+      '保存一份带有限诊断信息的本地 dogfood 报告。只有你明确导出后，数据才会离开设备。';
+
+  @override
+  String get developerIssuesDescriptionLabel => '哪里需要改进？';
+
+  @override
+  String get developerIssuesDescriptionHint => '例如：FIRE 卡片的信息层级让建议操作不容易被发现。';
+
+  @override
+  String get developerIssuesDescriptionHelp => '请说明观察到的问题与预期结果，不要填写密钥等敏感信息。';
+
+  @override
+  String get developerIssuesDescriptionRequired => '请先描述产品问题再保存。';
+
+  @override
+  String get developerIssuesCaptureAction => '保存本地报告';
+
+  @override
+  String get developerIssuesCapturingAction => '正在保存…';
+
+  @override
+  String get developerIssuesSavedToast => '报告已保存在此设备';
+
+  @override
+  String get developerIssuesSaveFailedToast => '报告保存失败，请检查描述后重试。';
+
+  @override
+  String get developerIssuesContextSection => '自动附加的上下文';
+
+  @override
+  String get developerIssuesRouteLabel => '来源页面';
+
+  @override
+  String get developerIssuesDomainLabel => '领域';
+
+  @override
+  String get developerIssuesShellDomain => 'LifeOS 外壳';
+
+  @override
+  String get developerIssuesHistorySection => '本地报告';
+
+  @override
+  String get developerIssuesEmpty => '此设备尚未保存报告。';
+
+  @override
+  String get developerIssuesExportAction => '导出';
+
+  @override
+  String get developerIssuesExportedLabel => '已导出';
+
+  @override
+  String get developerIssuesLocalLabel => '仅本地';
+
+  @override
+  String get developerIssuesTraceAttached => '已附 Trace';
+
+  @override
+  String developerIssuesToolErrorsAttached(int count) {
+    return '$count 个工具错误码';
+  }
+
+  @override
+  String get developerIssuesExportFailedToast => '无法打开导出面板，请重试。';
+
+  @override
+  String get developerIssuesAdvancedTitle => '产品问题报告';
+
+  @override
+  String get developerIssuesAdvancedSubtitle =>
+      '在本地捕获页面、构建版本、最新 Trace 与有限工具错误码';
 }

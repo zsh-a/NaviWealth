@@ -2,7 +2,7 @@
 /// follow-up).
 ///
 /// Renders HealthKit/Garmin sync status, recovery, key metrics, weekly
-/// summary, and the latest Morning Briefing. Trend and Plan now have MVP
+/// summary. Trend and Plan now have MVP
 /// surfaces; Today stays the dense operational entry point.
 ///
 /// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3): a
@@ -26,8 +26,6 @@ import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
-import '../../../core/ai/agents/ui/agent_results_panel.dart';
-import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/format/formatters.dart';
@@ -55,7 +53,6 @@ import 'health_trend_page.dart' show healthTrendPath;
 import 'plan_actions.dart';
 import 'recovery_verdict.dart';
 
-part 'briefing_panel.dart';
 part 'metric_grid.dart';
 part 'metric_grid_cards.dart';
 part 'metric_grid_primitives.dart';
@@ -128,10 +125,6 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                     ),
                   ),
                   const AdaptiveSummaryTile(child: _RecoveryAlertPanel()),
-                  const AdaptiveSummaryTile(
-                    role: AdaptiveSummaryTileRole.featured,
-                    child: _BriefingPanel(),
-                  ),
                   const AdaptiveSummaryTile(
                     role: AdaptiveSummaryTileRole.featured,
                     child: _MetricGrid(),
@@ -385,8 +378,6 @@ DateTime? _latestDate(DateTime? left, DateTime? right) {
 void _invalidateHealthSurfaces(WidgetRef ref) {
   ref.invalidate(health_data.healthSyncStatusProvider);
   ref.invalidate(healthTodaySnapshotProvider);
-  ref.invalidate(health_agent_providers.latestMorningBriefingProvider);
-  ref.invalidate(health_agent_providers.latestMorningBriefingArtifactProvider);
   ref.invalidate(health_agent_providers.latestRecoveryAlertArtifactProvider);
   ref.invalidate(health_agent_providers.latestRecoveryAlertRunProvider);
   ref.invalidate(health_agent_providers.latestHealthReviewAgentResultsProvider);

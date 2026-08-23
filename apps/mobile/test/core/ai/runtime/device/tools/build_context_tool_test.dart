@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
@@ -161,12 +162,18 @@ void main() {
       await rt.recordEvent(
         EventRecord(
           id: 'event-1',
-          type: 'trade_closed',
-          timestamp: DateTime.utc(2026, 5, 23),
-          source: 'options_trade_journal',
+          domain: null,
+          kind: const EventKind(namespace: 'options', name: 'trade_closed'),
+          occurredAt: DateTime.utc(2026, 5, 23),
+          observedAt: DateTime.utc(2026, 5, 23),
+          sourceIdentity: const SourceIdentity.infrastructure(
+            rowFamily: 'options_trade_journal',
+            rowId: 'event-1',
+            fingerprint: 'event-1-v1',
+          ),
           ownerUserId: _kOwner,
           summary: 'closed NVDA put',
-          payload: const {},
+          facts: const <String, Object?>{},
           entities: const {'NVDA'},
         ),
       );

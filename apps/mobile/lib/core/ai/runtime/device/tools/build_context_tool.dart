@@ -201,18 +201,22 @@ class BuildContextTool implements DeviceTool {
 
   static Map<String, Object?> _eventToWire(EventRecord e) => <String, Object?>{
     'id': e.id,
-    'type': e.type,
-    'timestamp': e.timestamp.toUtc().toIso8601String(),
-    'source': e.source,
+    if (e.domain != null) 'domain': e.domain!.wire,
+    'kind': e.kind.wire,
+    'occurred_at': e.occurredAt.toUtc().toIso8601String(),
+    'observed_at': e.observedAt.toUtc().toIso8601String(),
+    'source_identity': e.sourceIdentity.toJson(),
     'authority': EvidenceAuthority.sourceFact.wire,
-    'provenance': <String, Object?>{
-      'source': e.source,
-      'source_id': e.id,
-      'observed_at': e.timestamp.toUtc().toIso8601String(),
-    },
+    'provenance': EvidenceProvenance(
+      source: e.sourceIdentity.rowFamily,
+      sourceId: e.sourceIdentity.rowId,
+      observedAt: e.observedAt,
+    ).toJson(),
     if (e.title != null) 'title': e.title,
     'summary': e.summary,
+    'facts': e.facts,
     if (e.entities.isNotEmpty) 'entities': e.entities.toList(growable: false),
     'importance': e.importance,
+    'confidence': e.confidence,
   };
 }

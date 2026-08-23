@@ -12,6 +12,7 @@ import '../../../shell/settings_route_paths.dart';
 import '../../composition/ask_ai.dart';
 import '../../intent/ai_intent_invocation.dart';
 import '../agent_artifact.dart';
+import '../agent_feedback_store.dart';
 import '../agent_intents.dart';
 import '../agent_run_store.dart';
 import '../providers.dart' as agent_providers;

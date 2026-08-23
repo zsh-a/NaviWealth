@@ -17,7 +17,6 @@ void main() {
       );
 
       expect(pref.enabled, isTrue);
-      expect(pref.notificationsEnabled, isTrue);
       expect(
         await store.isEnabled(ownerUserId: 'user-1', agentId: 'agent-1'),
         isTrue,
@@ -68,51 +67,6 @@ void main() {
       );
       final rows = await store.listForOwner(ownerUserId: 'user-1');
       expect(rows.map((pref) => pref.agentId), ['agent-1']);
-    },
-  );
-
-  test(
-    'SqliteAgentPreferenceStore persists notification toggles without changing enabled',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final store = SqliteAgentPreferenceStore(db: db);
-      final updatedAt = DateTime.utc(2026, 7, 5, 8);
-
-      await store.setEnabled(
-        ownerUserId: 'user-1',
-        agentId: 'agent-1',
-        enabled: false,
-        updatedAt: updatedAt,
-      );
-      await store.setNotificationsEnabled(
-        ownerUserId: 'user-1',
-        agentId: 'agent-1',
-        enabled: false,
-        updatedAt: updatedAt.add(const Duration(minutes: 1)),
-      );
-
-      final saved = await store.preferenceFor(
-        ownerUserId: 'user-1',
-        agentId: 'agent-1',
-      );
-      expect(saved.enabled, isFalse);
-      expect(saved.notificationsEnabled, isFalse);
-      expect(saved.updatedAt, updatedAt.add(const Duration(minutes: 1)));
-
-      await store.setEnabled(
-        ownerUserId: 'user-1',
-        agentId: 'agent-1',
-        enabled: true,
-        updatedAt: updatedAt.add(const Duration(minutes: 2)),
-      );
-
-      final enabledAgain = await store.preferenceFor(
-        ownerUserId: 'user-1',
-        agentId: 'agent-1',
-      );
-      expect(enabledAgain.enabled, isTrue);
-      expect(enabledAgain.notificationsEnabled, isFalse);
     },
   );
 }

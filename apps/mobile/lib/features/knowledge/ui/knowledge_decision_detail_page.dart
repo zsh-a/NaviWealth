@@ -659,7 +659,7 @@ class _SnapshotRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final typography = context.theme.typography;
-    final ts = (map['timestamp'] as String?) ?? '';
+    final ts = (map['occurred_at'] as String?) ?? '';
     final summary = (map['summary'] as String?) ?? '';
     final title = (map['title'] as String?) ?? '';
     return Padding(

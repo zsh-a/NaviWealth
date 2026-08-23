@@ -4,12 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/context_pack_memory.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_answer_quality_eval.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 
 import '../../../../core/persistence/test_database.dart';
 
@@ -119,12 +121,19 @@ void main() {
     await runtime.recordEvent(
       EventRecord(
         id: 'event-nvda-reduced',
-        type: 'position_reduced',
-        timestamp: DateTime.utc(2026, 6, 28),
-        source: 'options_trade_journal',
+        domain: DomainScope.finance,
+        kind: EventKind.domain(DomainScope.finance, 'position_reduced'),
+        occurredAt: DateTime.utc(2026, 6, 28),
+        observedAt: DateTime.utc(2026, 6, 28),
+        sourceIdentity: const SourceIdentity(
+          domain: DomainScope.finance,
+          rowFamily: 'fin:options_trade_journal',
+          rowId: 'nvda-reduced',
+          fingerprint: 'fixture-nvda-reduced',
+        ),
         ownerUserId: _owner,
         summary: 'NVDA put was reduced.',
-        payload: const <String, Object?>{},
+        facts: const <String, Object?>{},
         entities: const {'NVDA'},
       ),
     );

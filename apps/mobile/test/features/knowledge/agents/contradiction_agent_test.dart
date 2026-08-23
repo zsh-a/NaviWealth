@@ -100,14 +100,12 @@ class _FakeRepo implements KnowledgeRepository {
       throw UnimplementedError('${invocation.memberName} not stubbed');
 }
 
-/// Fake runtime: serves canned recall hits per source and captures the
-/// record the agent writes via `remember`.
+/// Fake runtime: serves canned source-fact recall hits per source.
 class _FakeRuntime implements MemoryRuntime {
   _FakeRuntime(this.hitsBySource);
 
   /// `know:decisions` / `know:notes` → hits returned for any query.
   final Map<String, List<MemoryHit>> hitsBySource;
-  MemoryRecord? remembered;
 
   @override
   Future<List<MemoryHit>> recall({
@@ -125,11 +123,6 @@ class _FakeRuntime implements MemoryRuntime {
     Duration recencyHalfLife = const Duration(days: 30),
   }) async {
     return hitsBySource[source] ?? const <MemoryHit>[];
-  }
-
-  @override
-  Future<void> remember(MemoryRecord record) async {
-    remembered = record;
   }
 
   @override
@@ -309,8 +302,7 @@ void main() {
     expect(result.status, AgentRunStatus.completed);
     expect(result.artifactId, '$kKnowledgeContradictionAgentId:2026-05-30');
     expect(result.payload['issue_count'], 1);
-    expect(runtime.remembered!.payload['artifact_id'], result.artifactId);
-    final issues = runtime.remembered!.payload['issues']! as List<Object?>;
+    final issues = result.payload['issues']! as List<Object?>;
     final issue = issues.single! as Map<String, Object?>;
     expect(issue['kind'], 'assumption_invalidated');
     expect(issue['reference_id'], 'a-stale');
@@ -322,7 +314,7 @@ void main() {
     expect(artifact, isNotNull);
     expect(artifact!.kind, AgentArtifactKind.alert);
     expect(artifact.severity, AgentArtifactSeverity.warning);
-    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.memoryId, isNull);
     expect(artifact.insights.single.title, 'Invalidated assumptions');
     expect(artifact.evidence.single.id, 'd1');
     expect(artifact.actions.single.intent, 'knowledge.reviewDueItems');
@@ -337,7 +329,7 @@ void main() {
     expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
 
-  test('persists source trace id onto result, artifact, and memory', () async {
+  test('persists source trace id onto result and artifact', () async {
     final runtime = _FakeRuntime(const {});
     final container = makeContainer(repo: _FakeRepo(), runtime: runtime);
     final agent = ContradictionAgent(
@@ -365,7 +357,6 @@ void main() {
     expect(result.status, AgentRunStatus.completed);
     expect(result.traceId, 'trace-contradiction-1');
     expect(result.payload['trace_id'], 'trace-contradiction-1');
-    expect(runtime.remembered?.payload['trace_id'], 'trace-contradiction-1');
 
     final artifactStore = await container.read(
       agent_providers.agentArtifactStoreProvider.future,
@@ -395,7 +386,7 @@ void main() {
     expect(judge.calls, 1);
     expect(result.payload['issue_count'], 1);
     final issue =
-        (runtime.remembered!.payload['issues']! as List<Object?>).single!
+        (result.payload['issues']! as List<Object?>).single!
             as Map<String, Object?>;
     expect(issue['kind'], 'principle_mismatch');
     expect(issue['reference_id'], 'p1');
@@ -419,7 +410,6 @@ void main() {
 
     expect(judge.calls, 1);
     expect(result.status, AgentRunStatus.skipped);
-    expect(runtime.remembered, isNull);
     final outcomeFailures = evaluateAgentOutcomeCase(
       regressionCase: agentOutcomeRegressionCaseById(
         'knowledge.contradiction.prompt_injection_guard',
@@ -447,7 +437,6 @@ void main() {
     final result = await runAgent(container, agent);
 
     expect(result.status, AgentRunStatus.skipped);
-    expect(runtime.remembered, isNull);
   });
 
   test('candidate cosine floor: below-threshold hits are not judged', () async {
@@ -595,7 +584,7 @@ void main() {
 
       expect(result.status, AgentRunStatus.completed);
       final issue =
-          (runtime.remembered!.payload['issues']! as List<Object?>).single!
+          (result.payload['issues']! as List<Object?>).single!
               as Map<String, Object?>;
       expect(issue['kind'], 'principle_mismatch');
       expect(issue['detail'], contains('违反'));

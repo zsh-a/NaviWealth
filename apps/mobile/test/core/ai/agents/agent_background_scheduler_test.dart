@@ -313,7 +313,7 @@ void main() {
     expect(store.peekDue(_task), newer);
   });
 
-  test('runIfDue still runs notification-disabled agents', () async {
+  test('runIfDue runs enabled agents', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{
       _task.dueAtPreferenceKey: DateTime.utc(
         2026,
@@ -331,12 +331,6 @@ void main() {
       eventStore: SqliteEventStore(db: db),
     );
     final preferences = InMemoryAgentPreferenceStore();
-    await preferences.setNotificationsEnabled(
-      ownerUserId: 'u',
-      agentId: 'agent-1',
-      enabled: false,
-      updatedAt: DateTime.utc(2026, 7, 5, 8),
-    );
     final container = ProviderContainer();
     addTearDown(container.dispose);
     final agent = _StubAgent();

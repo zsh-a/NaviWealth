@@ -10,14 +10,9 @@ import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
-import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
-import 'package:naviwealth/core/ai/local/memory/event_store.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
 import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
@@ -40,7 +35,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: _runtimeForDb(db),
     );
 
     expect(result.status, AgentRunStatus.skipped);
@@ -58,7 +52,6 @@ void main() {
   test('persists deterministic cashflow anomaly artifact', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final traceStore = InMemoryAiTraceStore();
 
@@ -67,13 +60,12 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: runtime,
       artifactStore: store,
       traceStore: traceStore,
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kCashflowAnomalyReviewMemorySource:2026-07-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, '$kCashflowAnomalyReviewAgentId:2026-07-05');
     expect(result.traceId, '$kCashflowAnomalyReviewAgentId:trace:2026-07-05');
     expect(result.summary, contains('+62%'));
@@ -175,14 +167,6 @@ void main() {
         'wealth-review',
       ]);
     },
-  );
-}
-
-MemoryRuntime _runtimeForDb(AppDatabase db) {
-  return MemoryRuntime(
-    embedder: StubEmbedder(),
-    memoryStore: SqliteMemoryStore(db: db),
-    eventStore: SqliteEventStore(db: db),
   );
 }
 

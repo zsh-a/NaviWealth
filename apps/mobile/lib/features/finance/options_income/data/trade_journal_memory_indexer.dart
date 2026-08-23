@@ -29,8 +29,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 
 import '../domain/options_strategy_profile.dart';
@@ -40,6 +42,7 @@ import 'providers.dart';
 /// Stable cross-source label so [ContextPack] can filter ("only
 /// options memories") without enum'ing in core.
 const String kTradeJournalSource = 'options_trade_journal';
+const String kTradeJournalEventSourceFamily = 'fin:options_trade_journal';
 
 /// Event types this indexer emits. Free-form strings on the wire;
 /// constants here for local consistency.
@@ -68,7 +71,7 @@ class TradeJournalMemoryIndexer {
     var memories = 0;
     final now = _clock();
     for (final entry in entries) {
-      await runtime.recordEvent(_eventFor(entry, ownerUserId));
+      await runtime.recordEvent(_eventFor(entry, ownerUserId, observedAt: now));
       events++;
       final memory = _episodicMemoryFor(entry, ownerUserId, now: now);
       if (memory != null) {
@@ -79,17 +82,28 @@ class TradeJournalMemoryIndexer {
     return (events: events, memories: memories);
   }
 
-  EventRecord _eventFor(TradeJournalEntry entry, String ownerUserId) {
+  EventRecord _eventFor(
+    TradeJournalEntry entry,
+    String ownerUserId, {
+    required DateTime observedAt,
+  }) {
     final type = _eventType(entry.status);
     return EventRecord(
       id: '$kTradeJournalSource:$type:${entry.id}',
-      type: type,
-      timestamp: entry.closedAt?.toUtc() ?? entry.openedAt.toUtc(),
-      source: kTradeJournalSource,
+      domain: DomainScope.finance,
+      kind: EventKind.domain(DomainScope.finance, type),
+      occurredAt: entry.closedAt?.toUtc() ?? entry.openedAt.toUtc(),
+      observedAt: observedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.finance,
+        rowFamily: kTradeJournalEventSourceFamily,
+        rowId: entry.id,
+        fingerprint: entry.sync.hlc.toString(),
+      ),
       ownerUserId: ownerUserId,
       title: '${entry.symbol} · ${entry.strategy.wire}',
       summary: _eventSummary(entry, type),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'strategy': entry.strategy.wire,
         'symbol': entry.symbol,
         'option_symbol': entry.optionSymbol,
@@ -105,6 +119,7 @@ class TradeJournalMemoryIndexer {
       },
       entities: _entitiesFor(entry),
       importance: _eventImportance(entry),
+      confidence: 1,
     );
   }
 

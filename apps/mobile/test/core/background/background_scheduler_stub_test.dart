@@ -5,30 +5,16 @@ import 'package:naviwealth/core/background/background_scheduler.dart';
 import 'package:naviwealth/core/background/background_scheduler_stub.dart';
 
 void main() {
-  test('morning briefing task identifiers stay stable', () {
-    expect(kMorningBriefingTaskName, 'com.naviwealth.morningBriefing');
-    expect(kMorningBriefingDueAtKey, 'lifeos.health.briefing.dueAt');
-    expect(kMorningBriefingBackgroundTask.name, kMorningBriefingTaskName);
+  test('Life attention task identifiers stay stable', () {
+    expect(kLifeAttentionTaskName, 'com.naviwealth.lifeAttention');
+    expect(kLifeAttentionDueAtKey, 'lifeos.attention.dueAt');
+    expect(kLifeAttentionBackgroundTask.name, kLifeAttentionTaskName);
     expect(
-      kMorningBriefingBackgroundTask.dueAtPreferenceKey,
-      kMorningBriefingDueAtKey,
+      kLifeAttentionBackgroundTask.dueAtPreferenceKey,
+      kLifeAttentionDueAtKey,
     );
     expect(
-      kMorningBriefingBackgroundTask.defaultInterval,
-      const Duration(hours: 24),
-    );
-    expect(kKnowledgeRoutineDueTaskName, 'com.naviwealth.knowledgeRoutineDue');
-    expect(kKnowledgeRoutineDueAtKey, 'lifeos.knowledge.routineDue.dueAt');
-    expect(
-      kKnowledgeRoutineDueBackgroundTask.name,
-      kKnowledgeRoutineDueTaskName,
-    );
-    expect(
-      kKnowledgeRoutineDueBackgroundTask.dueAtPreferenceKey,
-      kKnowledgeRoutineDueAtKey,
-    );
-    expect(
-      kKnowledgeRoutineDueBackgroundTask.defaultInterval,
+      kLifeAttentionBackgroundTask.defaultInterval,
       const Duration(hours: 24),
     );
     expect(kExecutionReviewTaskName, 'com.naviwealth.executionReview');
@@ -59,16 +45,11 @@ void main() {
       const Duration(hours: 6),
     );
     expect(kBackgroundTaskSpecs.map((spec) => spec.name), <String>[
-      kMorningBriefingTaskName,
-      kKnowledgeRoutineDueTaskName,
+      kLifeAttentionTaskName,
       kExecutionReviewTaskName,
       kGarminSyncTaskName,
       kHealthPlatformSyncTaskName,
     ]);
-    expect(
-      backgroundTaskSpecForName(kKnowledgeRoutineDueTaskName),
-      kKnowledgeRoutineDueBackgroundTask,
-    );
     expect(
       backgroundTaskSpecForName(kExecutionReviewTaskName),
       kExecutionReviewBackgroundTask,
@@ -93,19 +74,17 @@ void main() {
     ).readAsStringSync();
 
     expect(infoPlist, contains('BGTaskSchedulerPermittedIdentifiers'));
-    expect(infoPlist, contains(kMorningBriefingTaskName));
-    expect(infoPlist, contains(kKnowledgeRoutineDueTaskName));
+    expect(infoPlist, contains(kLifeAttentionTaskName));
     expect(infoPlist, contains(kExecutionReviewTaskName));
     expect(infoPlist, contains(kGarminSyncTaskName));
     expect(infoPlist, contains(kHealthPlatformSyncTaskName));
-    expect(appDelegate, contains(kMorningBriefingTaskName));
-    expect(appDelegate, contains(kKnowledgeRoutineDueTaskName));
+    expect(appDelegate, contains(kLifeAttentionTaskName));
     expect(appDelegate, contains(kExecutionReviewTaskName));
     expect(appDelegate, contains(kGarminSyncTaskName));
     expect(appDelegate, contains(kHealthPlatformSyncTaskName));
     expect(callback, contains("@pragma('vm:entry-point')"));
     expect(callback, contains('backgroundTaskSpecForName'));
-    expect(callback, contains('kMorningBriefingTaskName'));
+    expect(callback, contains('kLifeAttentionTaskName'));
     expect(callback, contains('dueAtPreferenceKey'));
   });
 
@@ -114,14 +93,9 @@ void main() {
 
     expect(await scheduler.isAvailable(), isFalse);
     await scheduler.initialize();
-    await scheduler.registerTask(kMorningBriefingBackgroundTask);
+    await scheduler.registerTask(kLifeAttentionBackgroundTask);
     await scheduler.registerTask(
-      kMorningBriefingBackgroundTask,
-      interval: const Duration(minutes: 15),
-    );
-    await scheduler.registerTask(kKnowledgeRoutineDueBackgroundTask);
-    await scheduler.registerTask(
-      kKnowledgeRoutineDueBackgroundTask,
+      kLifeAttentionBackgroundTask,
       interval: const Duration(minutes: 15),
     );
     await scheduler.registerTask(kExecutionReviewBackgroundTask);
@@ -139,8 +113,7 @@ void main() {
       kHealthPlatformSyncBackgroundTask,
       interval: const Duration(minutes: 15),
     );
-    await scheduler.cancelTask(kMorningBriefingBackgroundTask);
-    await scheduler.cancelTask(kKnowledgeRoutineDueBackgroundTask);
+    await scheduler.cancelTask(kLifeAttentionBackgroundTask);
     await scheduler.cancelTask(kExecutionReviewBackgroundTask);
     await scheduler.cancelTask(kGarminSyncBackgroundTask);
     await scheduler.cancelTask(kHealthPlatformSyncBackgroundTask);

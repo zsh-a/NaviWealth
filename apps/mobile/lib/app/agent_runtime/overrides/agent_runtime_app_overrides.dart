@@ -15,6 +15,9 @@ import 'package:naviwealth/app/agent_runtime/persistence/drift_agent_runtime_cha
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/app/agents/daily_navigator_agent.dart';
+import 'package:naviwealth/app/agents/daily_navigator_synthesizer.dart';
+import 'package:naviwealth/app/agents/providers.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
     as llm_credentials;
@@ -29,6 +32,18 @@ import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 
 List<Override> agentRuntimeAppProviderOverrides() => <Override>[
+  dailyNavigatorAgentProvider.overrideWith((ref) {
+    final runtime = agentRuntimeProfileTurnBinding(
+      ref,
+      agentId: kDailyNavigatorAgentId,
+      domain: 'life',
+      surface: 'life_daily_navigator',
+      resolveAvailability: false,
+    )!;
+    return DailyNavigatorAgent(
+      synthesizer: FrbDailyNavigatorSynthesizer(runtime: runtime),
+    );
+  }),
   agentRuntimeProfileTurnRunnerProvider.overrideWith(
     buildAgentRuntimeProfileTurnRunner,
   ),

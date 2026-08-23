@@ -8,15 +8,15 @@ import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart'
-    show kCashflowAnomalyReviewAgentId, kCashflowAnomalyReviewMemorySource;
+    show kCashflowAnomalyReviewAgentId;
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart'
-    show kFirePlanDriftMonitorAgentId, kFirePlanDriftMonitorMemorySource;
+    show kFirePlanDriftMonitorAgentId;
 import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart'
-    show kOptionsIncomeRiskReviewAgentId, kOptionsIncomeRiskReviewMemorySource;
+    show kOptionsIncomeRiskReviewAgentId;
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart'
-    show kWeeklyWealthReviewAgentId, kWeeklyWealthReviewMemorySource;
+    show kWeeklyWealthReviewAgentId;
 import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
 import 'package:naviwealth/features/finance/composition/finance_command_palette.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
@@ -103,13 +103,7 @@ final DomainPack kFinancePack = DomainPack(
       placement: AgentResultPlacement.domainHome,
     ),
   ],
-  memorySourcePrefixes: const [
-    kTradeJournalSource,
-    kWeeklyWealthReviewMemorySource,
-    kCashflowAnomalyReviewMemorySource,
-    kFirePlanDriftMonitorMemorySource,
-    kOptionsIncomeRiskReviewMemorySource,
-  ],
+  memorySourcePrefixes: const ['fin:', kTradeJournalSource],
   memoryBootstrapBuilder: _financeMemoryBootstrap,
   backgroundBootstrapBuilder: financeBackgroundBootstrap,
   commandPaletteEntriesBuilder: financeCommandPaletteEntries,

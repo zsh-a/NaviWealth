@@ -275,7 +275,7 @@ CaptureClassification? _parseCaptureClassification(Map<String, Object?> json) {
 
   int? intervalDays = _coerceInt(json['interval_days']);
   if (kind == CaptureKind.routine) {
-    // Routine without an interval is unusable for RoutineDueAgent;
+    // A Routine without an interval is unusable for due-state review;
     // require it (LLM should set it; fall back to 180 if it didn't).
     intervalDays ??= 180;
     if (intervalDays < 1) intervalDays = 1;

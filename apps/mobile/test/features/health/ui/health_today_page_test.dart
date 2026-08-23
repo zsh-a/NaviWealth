@@ -10,7 +10,6 @@ import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
@@ -60,21 +59,6 @@ void main() {
             (ref) async => const <double>[],
           ),
           weeklySummaryProvider.overrideWith((ref) async => null),
-          health_agent_providers.latestMorningBriefingProvider.overrideWith(
-            (ref) async => null,
-          ),
-          health_agent_providers.latestMorningBriefingArtifactProvider
-              .overrideWith(
-                (ref) async => _artifact(
-                  id: 'morning-1',
-                  agentId: kMorningBriefingAgentId,
-                  kind: AgentArtifactKind.briefing,
-                  severity: AgentArtifactSeverity.info,
-                  title: 'Morning Briefing',
-                  summary: 'Keep the first block light after short sleep.',
-                  insight: 'Sleep debt',
-                ),
-              ),
           health_agent_providers.latestRecoveryAlertArtifactProvider
               .overrideWith(
                 (ref) async => _artifact(
@@ -112,13 +96,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.byType(AdaptiveSummaryGrid), findsOneWidget);
-    expect(find.text('Morning Briefing'), findsOneWidget);
-    expect(
-      find.text('Keep the first block light after short sleep.'),
-      findsOneWidget,
-    );
-    expect(find.text('Sleep debt'), findsOneWidget);
-
     expect(find.text('Recovery Alert'), findsOneWidget);
     expect(
       find.text('HRV dropped while resting heart rate climbed.'),
@@ -166,11 +143,6 @@ void main() {
             (ref) async => const <double>[],
           ),
           weeklySummaryProvider.overrideWith((ref) async => null),
-          health_agent_providers.latestMorningBriefingProvider.overrideWith(
-            (ref) async => null,
-          ),
-          health_agent_providers.latestMorningBriefingArtifactProvider
-              .overrideWith((ref) async => null),
           health_agent_providers.latestRecoveryAlertArtifactProvider
               .overrideWith(
                 (ref) async => _artifact(

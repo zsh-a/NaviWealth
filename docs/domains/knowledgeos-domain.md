@@ -273,7 +273,9 @@ Location:
 
 Rules:
 
-- Agents write memories, local triage state, proposals, and notifications as documented.
+- Agents write stable local findings, temporary artifacts, triage state, and
+  proposals. They do not promote their own explanations into Memory or send
+  notifications directly.
 - Agents must not modify user-authored source content without a proposal and confirmation.
 - Agents must skip cleanly when no LLM profile exists if the task requires LLM judgment.
 - Agents must not call other agents.

@@ -3,9 +3,9 @@
 ///
 /// Runs Sunday 09:00 local. Surfaces "what needs review this week" —
 /// both Decisions whose `review_date` has passed **and** active
-/// Assumptions left unverified past [kKnowledgeAssumptionStaleDays]. Writes one episodic
-/// memory; the Review tab reads the same repo, so the memory is a recall
-/// affordance for AI chat, not a UI primary path.
+/// Assumptions left unverified past [kKnowledgeAssumptionStaleDays]. The
+/// result remains an expiring Agent Artifact; agents never promote their own
+/// summaries into long-term memory.
 library;
 
 import '../../../core/ai/agents/agent.dart';
@@ -14,8 +14,6 @@ import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
@@ -25,10 +23,8 @@ import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
-import '_agent_memory.dart';
 
 const String kKnowledgeReviewAgentId = 'knowledge_review';
-const String kKnowledgeReviewMemorySource = 'agent:knowledge_review';
 
 class ReviewAgent implements Agent {
   const ReviewAgent({
@@ -59,7 +55,6 @@ class ReviewAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
     final dueSnapshot = await dueReader.read(ctx);
@@ -87,28 +82,6 @@ class ReviewAgent implements Agent {
           ? staleAssumptions.first.statement
           : null,
     );
-    final built = buildAgentMemory(
-      source: kKnowledgeReviewMemorySource,
-      kind: MemoryKind.episodic,
-      ownerUserId: ownerUserId,
-      start: start,
-      finished: finished,
-      title: l10n.knowledgeAgentReviewTitle,
-      summary: summary,
-      payload: <String, Object?>{
-        'context': 'weekly review tick at ${start.toUtc().toIso8601String()}',
-        'due_decision_ids': due.map((d) => d.id).toList(growable: false),
-        'stale_assumption_ids': staleAssumptions
-            .map((a) => a.id)
-            .toList(growable: false),
-        'assumption_threshold_days': staleAssumptionDays,
-        if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
-      },
-      entities: <String>{'knowledge_review', 'weekly_review'},
-      importance: 0.7,
-      confidence: 0.95,
-    );
-    await runtime.remember(built.record);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -117,7 +90,6 @@ class ReviewAgent implements Agent {
       start: start,
       finished: finished,
       summary: summary,
-      memoryId: built.memoryId,
       due: due,
       staleAssumptions: staleAssumptions,
       traceId: dueSnapshot.traceId,
@@ -136,7 +108,6 @@ class ReviewAgent implements Agent {
         'stale_assumption_count': staleAssumptions.length,
         if (dueSnapshot.traceId != null) 'trace_id': dueSnapshot.traceId,
       },
-      memoryId: built.memoryId,
       artifactId: artifact.id,
       traceId: dueSnapshot.traceId,
     );
@@ -147,7 +118,6 @@ class ReviewAgent implements Agent {
     required DateTime start,
     required DateTime finished,
     required String summary,
-    required String memoryId,
     required List<ReviewDecisionItem> due,
     required List<ReviewAssumptionItem> staleAssumptions,
     required String? traceId,
@@ -248,7 +218,6 @@ class ReviewAgent implements Agent {
         l10n,
         sourceLabel: l10n.knowledgeAgentReviewArtifactTitle,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: finished.toUtc(),
       expiresAt: finished.toUtc().add(const Duration(days: 14)),

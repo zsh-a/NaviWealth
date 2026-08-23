@@ -6,6 +6,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 "$repo_root/apps/mobile/tool/check-l10n-parity.sh"
 "$repo_root/apps/mobile/tool/check-back-nav-coverage.sh"
 "$repo_root/tool/check-ai-contract-wire-enums.sh"
+dart run "$repo_root/tool/generate_agent_runtime_capabilities.dart" --check
 "$repo_root/tool/check-sync-client-wire-fixtures.sh"
 "$repo_root/tool/lint-motion-policy.sh"
 "$repo_root/tool/lint-no-feature-in-shared.sh"

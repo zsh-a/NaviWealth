@@ -57,6 +57,7 @@ import '../features/finance/inbox/data/financial_inbox_providers.dart';
 import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
+import 'agents/providers.dart';
 import 'domain_packs.dart';
 import 'domain_packs/proposal_applier_route.dart';
 import 'life_action_outcomes.dart';
@@ -178,6 +179,9 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     agentRegistrationProvider.overrideWith(
       (ref) =>
           domainAgentRegistrations(ref, ref.watch(activeDomainPacksProvider)),
+    ),
+    appAgentRegistryProvider.overrideWith(
+      (ref) => <Agent>[ref.watch(dailyNavigatorAgentProvider)],
     ),
     agentPresentationSpecsProvider.overrideWith(
       (ref) =>

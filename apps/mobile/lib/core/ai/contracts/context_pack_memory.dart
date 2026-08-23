@@ -59,7 +59,7 @@ class ContextPackMemory {
   /// by scope + validity window.
   final List<MemoryRecord> userPreferences;
 
-  /// Last-N events (any source, any type) in the recency window. The
+  /// Last-N events (any source family and event kind) in the recency window. The
   /// builder doesn't try to be smart here — recent_events is the raw
   /// timeline feed, used for "what was the user doing lately".
   final List<EventRecord> recentEvents;

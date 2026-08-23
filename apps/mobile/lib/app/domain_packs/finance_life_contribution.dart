@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
 import '../../features/finance/activity/data/activity_feed_provider.dart';
@@ -38,6 +39,14 @@ DomainLifeSignalSlice financeLifeSignals(Ref ref, DateTime now) {
           sourceRowFamily: _budgetFamily,
           sourceRowId: 'month:$periodMonth',
         ),
+        evidence: <SourceIdentity>[
+          SourceIdentity(
+            domain: DomainScope.finance,
+            rowFamily: _budgetFamily,
+            rowId: 'month:$periodMonth',
+            fingerprint: '$periodMonth:${budgetSignal.wire}',
+          ),
+        ],
       ),
     );
   }
@@ -74,6 +83,19 @@ DomainLifeSignalSlice financeLifeSignals(Ref ref, DateTime now) {
             sourceRowFamily: _journalFamily,
             sourceRowId: 'day:${_dayKey(now)}',
           ),
+          evidence: <SourceIdentity>[
+            SourceIdentity(
+              domain: DomainScope.finance,
+              rowFamily: _journalFamily,
+              rowId: 'day:${_dayKey(now)}',
+              fingerprint:
+                  (rows
+                          .map((row) => '${row.entry.id}:${row.entry.sync.hlc}')
+                          .toList()
+                        ..sort())
+                      .join('|'),
+            ),
+          ],
         ),
       );
     }

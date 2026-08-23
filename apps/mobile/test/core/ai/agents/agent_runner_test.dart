@@ -165,11 +165,11 @@ void main() {
       window: const Duration(days: 9999),
     );
     expect(events, hasLength(1));
-    expect(events.single.type, kAgentRunEventTypeCompleted);
-    expect(events.single.payload['agent_id'], 'stub');
-    expect(events.single.payload['memory_id'], 'memory-1');
-    expect(events.single.payload['artifact_id'], 'artifact-1');
-    expect(events.single.payload['trace_id'], 'trace-1');
+    expect(events.single.kind.name, kAgentRunEventTypeCompleted);
+    expect(events.single.facts['agent_id'], 'stub');
+    expect(events.single.facts['memory_id'], 'memory-1');
+    expect(events.single.facts['artifact_id'], 'artifact-1');
+    expect(events.single.facts['trace_id'], 'trace-1');
   });
 
   test('runOnce skips disabled agents without writing run history', () async {
@@ -220,7 +220,7 @@ void main() {
       ownerUserId: 'u',
       window: const Duration(days: 9999),
     );
-    expect(events.single.type, kAgentRunEventTypeFailed);
+    expect(events.single.kind.name, kAgentRunEventTypeFailed);
   });
 
   test('lastRunAt advances after a successful run', () async {

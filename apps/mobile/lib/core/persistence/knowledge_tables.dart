@@ -171,7 +171,7 @@ class KnowledgeExperiments extends Table with SyncableTable {
 /// Recurring user-defined reminder ("港卡每 6 个月做一次活跃交易"). A first-class
 /// type alongside Decision / Assumption / ... because the cadence + last-done
 /// state needs a stable row to advance against — a plain Note can carry the
-/// text but has no place to record "lastDoneAt → nextDueAt". RoutineDueAgent
+/// text but has no place to record "lastDoneAt → nextDueAt". The Review page
 /// scans `next_due_at <= now + 7d` daily and emits a memory + local
 /// notification on the `lifeos.knowledge.review` channel.
 /// `status: active | paused | archived`.

@@ -427,6 +427,7 @@ MemoryRecord _memory({
   return MemoryRecord(
     id: id,
     kind: MemoryKind.semantic,
+    authority: EvidenceAuthority.userConfirmed,
     ownerUserId: ownerUserId,
     source: 'test',
     title: id,

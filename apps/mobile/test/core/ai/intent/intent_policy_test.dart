@@ -228,12 +228,12 @@ void main() {
     final prompt = renderPromptFor(
       inv,
       catalog: _catalog,
-      objectLabel: 'Morning Briefing',
+      objectLabel: 'Daily Navigator',
       fallbackPromptTemplate: 'Review {{object_label}} safely.',
       debugAssertOnOffCatalog: false,
     );
 
-    expect(prompt, 'Review Morning Briefing safely.');
+    expect(prompt, 'Review Daily Navigator safely.');
   });
 
   test('single-domain intent: domains resolves to just its home domain', () {

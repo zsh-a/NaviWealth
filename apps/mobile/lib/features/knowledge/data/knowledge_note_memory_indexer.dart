@@ -21,6 +21,31 @@ Future<void> _reindexNotes(
     final summary = n.bodyMd.isEmpty
         ? n.title
         : '${n.title.isEmpty ? "(untitled)" : n.title}: ${_truncate(bodyForIndex)}';
+    await recordKnowledgeStateEvent(
+      runtime,
+      ownerUserId: ownerUserId,
+      kind: 'knowledge_note_state',
+      sourceFamily: kKnowledgeNoteEventSourceFamily,
+      rowId: n.id,
+      fingerprint: n.sync.hlc.toString(),
+      occurredAt: n.sync.updatedAt,
+      observedAt: now,
+      title: n.title.isEmpty ? untitled : n.title,
+      summary: summary,
+      facts: <String, Object?>{
+        'tags': n.tags,
+        if (n.projectTag != null) 'project_tag': n.projectTag,
+        if (n.sourceUrl != null) 'source_url': n.sourceUrl,
+        'promoted': n.isPromoted,
+      },
+      entities: <String>{
+        'knowledge_note',
+        n.id,
+        ...n.tags.map((tag) => 'tag:$tag'),
+      },
+      importance: 0.5,
+      confidence: 1,
+    );
     await runtime.remember(
       MemoryRecord(
         id: id,

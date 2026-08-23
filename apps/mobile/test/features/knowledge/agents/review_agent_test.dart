@@ -8,10 +8,6 @@ import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
-import 'package:naviwealth/core/ai/contracts/memory_record.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/providers.dart'
-    show memoryRuntimeProvider;
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -38,7 +34,6 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-        memoryRuntimeProvider.overrideWith((ref) async => _FakeMemoryRuntime()),
       ],
     );
     addTearDown(container.dispose);
@@ -72,12 +67,10 @@ void main() {
     final db = makeTestDatabase();
     addTearDown(db.close);
     final artifactStore = SqliteAgentArtifactStore(db: db);
-    final runtime = _FakeMemoryRuntime();
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-        memoryRuntimeProvider.overrideWith((ref) async => runtime),
         agent_providers.agentArtifactStoreProvider.overrideWith(
           (ref) async => artifactStore,
         ),
@@ -111,16 +104,14 @@ void main() {
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kKnowledgeReviewMemorySource:2026-07-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, 'knowledge_review:2026-07-05');
     expect(result.traceId, 'trace-knowledge-review-1');
-    expect(runtime.remembered?.id, result.memoryId);
-    expect(runtime.remembered?.payload['trace_id'], 'trace-knowledge-review-1');
 
     final artifact = await artifactStore.read(result.artifactId!);
     expect(artifact?.kind, AgentArtifactKind.review);
     expect(artifact?.severity, AgentArtifactSeverity.attention);
-    expect(artifact?.memoryId, result.memoryId);
+    expect(artifact?.memoryId, isNull);
     expect(artifact?.traceId, 'trace-knowledge-review-1');
     expect(artifact?.insights.map((insight) => insight.title), [
       'Decisions due',
@@ -145,12 +136,10 @@ void main() {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final artifactStore = SqliteAgentArtifactStore(db: db);
-      final runtime = _FakeMemoryRuntime();
       final container = ProviderContainer(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          memoryRuntimeProvider.overrideWith((ref) async => runtime),
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => artifactStore,
           ),
@@ -335,12 +324,10 @@ void main() {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final artifactStore = SqliteAgentArtifactStore(db: db);
-      final runtime = _FakeMemoryRuntime();
       final container = ProviderContainer(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          memoryRuntimeProvider.overrideWith((ref) async => runtime),
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => artifactStore,
           ),
@@ -561,17 +548,4 @@ class _FixedReviewDueReader implements ReviewDueReader {
 
   @override
   Future<ReviewDueSnapshot> read(AgentContext ctx) async => snapshot;
-}
-
-class _FakeMemoryRuntime implements MemoryRuntime {
-  MemoryRecord? remembered;
-
-  @override
-  Future<void> remember(MemoryRecord record) async {
-    remembered = record;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

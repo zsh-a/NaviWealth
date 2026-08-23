@@ -15,7 +15,11 @@ import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
 import 'knowledge_object_memory_indexers.dart'
-    show kKnowledgeDecisionMemorySource, subscribeKnowledgeIndexer;
+    show
+        kKnowledgeDecisionEventSourceFamily,
+        kKnowledgeDecisionMemorySource,
+        recordKnowledgeStateEvent,
+        subscribeKnowledgeIndexer;
 
 class KnowledgeDecisionMemoryIndexer {
   const KnowledgeDecisionMemoryIndexer();
@@ -35,6 +39,36 @@ class KnowledgeDecisionMemoryIndexer {
     );
     for (final d in decisions) {
       final memoryId = '$kKnowledgeDecisionMemorySource:episodic:${d.id}';
+      final summary = _summarize(d);
+      final importance = _importance(d.status);
+      await recordKnowledgeStateEvent(
+        runtime,
+        ownerUserId: ownerUserId,
+        kind: 'knowledge_decision_state',
+        sourceFamily: kKnowledgeDecisionEventSourceFamily,
+        rowId: d.id,
+        fingerprint: d.sync.hlc.toString(),
+        occurredAt: d.sync.updatedAt,
+        observedAt: now,
+        title: d.question,
+        summary: summary,
+        facts: <String, Object?>{
+          'selected_label': d.selectedLabel,
+          'status': d.status.wire,
+          'principle_ids': d.principleIds,
+          'assumption_ids': d.assumptionIds,
+          if (d.reviewDate != null)
+            'review_date': d.reviewDate!.toUtc().toIso8601String(),
+        },
+        entities: <String>{
+          'knowledge_decision',
+          d.id,
+          ...d.principleIds.map((id) => 'principle:$id'),
+          ...d.assumptionIds.map((id) => 'assumption:$id'),
+        },
+        importance: importance,
+        confidence: 1,
+      );
       final memory = MemoryRecord(
         id: memoryId,
         kind: MemoryKind.episodic,
@@ -50,7 +84,7 @@ class KnowledgeDecisionMemoryIndexer {
         source: kKnowledgeDecisionMemorySource,
         sourceId: d.id,
         title: d.question,
-        summary: _summarize(d),
+        summary: summary,
         payload: <String, Object?>{
           'context':
               'decision recorded at ${d.decidedAt.toUtc().toIso8601String()}',
@@ -76,7 +110,7 @@ class KnowledgeDecisionMemoryIndexer {
           ...d.assumptionIds.map((id) => 'assumption:$id'),
         },
         // Active decisions outrank superseded ones for recall.
-        importance: _importance(d.status),
+        importance: importance,
         confidence: 0.9,
         validFrom: d.decidedAt.toUtc(),
         // expired / falsified / superseded decisions stay queryable but

@@ -134,7 +134,6 @@ void main() {
                   icon: FLucideIcons.walletCards,
                   label: _fakeAgentLabel,
                   description: _fakeAgentDescription,
-                  notificationsSupported: true,
                 ),
               }),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
@@ -185,24 +184,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Run now'), findsOneWidget);
-    expect(find.text('Notifications'), findsOneWidget);
-
-    await tester.tap(
-      find.byKey(const ValueKey<String>('agent-notifications-fake_agent')),
-    );
-    await tester.pumpAndSettle();
-
-    final pref = await preferenceStore.preferenceFor(
-      ownerUserId: 'user-1',
-      agentId: 'fake_agent',
-    );
-    expect(pref.notificationsEnabled, isFalse);
-    expect(pref.enabled, isTrue);
+    expect(find.text('Notifications'), findsNothing);
   });
 
-  testWidgets('persists enabled toggle without changing notifications', (
-    tester,
-  ) async {
+  testWidgets('persists enabled toggle', (tester) async {
     final preferenceStore = InMemoryAgentPreferenceStore();
     final runStore = InMemoryAgentRunStore();
     await tester.pumpWidget(
@@ -225,7 +210,6 @@ void main() {
                   icon: FLucideIcons.walletCards,
                   label: _fakeAgentLabel,
                   description: _fakeAgentDescription,
-                  notificationsSupported: true,
                 ),
               }),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
@@ -258,7 +242,6 @@ void main() {
       agentId: 'fake_agent',
     );
     expect(pref.enabled, isFalse);
-    expect(pref.notificationsEnabled, isTrue);
     expect(find.text('Disabled'), findsWidgets);
   });
 
@@ -339,7 +322,6 @@ void main() {
                   icon: FLucideIcons.walletCards,
                   label: _fakeAgentLabel,
                   description: _fakeAgentDescription,
-                  notificationsSupported: true,
                 ),
                 'failed_agent': AgentPresentationSpec(
                   agentId: 'failed_agent',
@@ -347,7 +329,6 @@ void main() {
                   icon: FLucideIcons.triangleAlert,
                   label: _failedAgentLabel,
                   description: _failedAgentDescription,
-                  notificationsSupported: true,
                 ),
               }),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
@@ -489,76 +470,6 @@ void main() {
       ),
       isNull,
     );
-  });
-
-  testWidgets('disabled agents cannot change notification preference', (
-    tester,
-  ) async {
-    final preferenceStore = InMemoryAgentPreferenceStore();
-    final runStore = InMemoryAgentRunStore();
-    await preferenceStore.setEnabled(
-      ownerUserId: 'user-1',
-      agentId: 'fake_agent',
-      enabled: false,
-      updatedAt: DateTime.utc(2026, 7, 5),
-    );
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWith((_) async => db),
-          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistrationProvider
-              .overrideWithValue(const <DomainAgentRegistration>[
-                DomainAgentRegistration(
-                  agent: _FakeAgent(),
-                  domain: DomainScope.finance,
-                ),
-              ]),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                  notificationsSupported: true,
-                ),
-              }),
-          agent_providers.agentPreferenceStoreProvider.overrideWith(
-            (ref) async => preferenceStore,
-          ),
-          agent_providers.agentRunStoreProvider.overrideWith(
-            (ref) async => runStore,
-          ),
-        ],
-        child: MaterialApp(
-          theme: AppTheme.light(),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: FTheme(
-            data: FTheme.neutral.light.desktop,
-            child: const AgentsSettingsPage(),
-          ),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Presented Agent'));
-    await tester.pumpAndSettle();
-
-    await tester.tap(
-      find.byKey(const ValueKey<String>('agent-notifications-fake_agent')),
-    );
-    await tester.pumpAndSettle();
-
-    final pref = await preferenceStore.preferenceFor(
-      ownerUserId: 'user-1',
-      agentId: 'fake_agent',
-    );
-    expect(pref.enabled, isFalse);
-    expect(pref.notificationsEnabled, isTrue);
   });
 
   testWidgets('run now writes a manual run through the controller', (

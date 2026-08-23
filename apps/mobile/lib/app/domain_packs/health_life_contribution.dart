@@ -1,6 +1,10 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
 import '../../features/health/agents/providers.dart' as agents;
@@ -33,6 +37,16 @@ DomainLifeSignalSlice healthLifeSignals(Ref ref, DateTime now) {
           sourceRowFamily: _metricFamily,
           sourceRowId: 'recovery:${_dayKey(now)}',
         ),
+        evidence: <SourceIdentity>[
+          SourceIdentity(
+            domain: DomainScope.health,
+            rowFamily: _metricFamily,
+            rowId: 'recovery:${_dayKey(now)}',
+            fingerprint: sha256
+                .convert(utf8.encode(jsonEncode(value)))
+                .toString(),
+          ),
+        ],
       ),
     );
   }

@@ -18,8 +18,14 @@ final agentRegistrationProvider = Provider<List<DomainAgentRegistration>>(
   (ref) => const <DomainAgentRegistration>[],
 );
 
+/// App-owned orchestration agents that do not belong to an opt-in domain.
+final appAgentRegistryProvider = Provider<List<Agent>>(
+  (ref) => const <Agent>[],
+);
+
 final agentRegistryProvider = Provider<List<Agent>>((ref) {
   return [
+    ...ref.watch(appAgentRegistryProvider),
     for (final registration in ref.watch(agentRegistrationProvider))
       registration.agent,
   ];

@@ -3,18 +3,25 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/agents/agent_run_controller.dart';
-import '../../../core/ai/agents/agent_run_store.dart';
+import '../../../core/ai/agents/agent_trigger.dart';
+import '../../../core/ai/contracts/source_identity.dart';
+import '../../../core/auth/domain_scope.dart';
 
 /// Debounces Knowledge writes into focused agent runs. Capture remains a fast
 /// local write; classification and contradiction checks begin after the write
 /// has settled instead of waiting for the periodic scheduler.
 final class KnowledgeChangeScheduler {
-  KnowledgeChangeScheduler(this._ref);
+  KnowledgeChangeScheduler(Ref ref)
+    : _coordinator = AgentTriggerCoordinator(
+        dispatch: (agentId, trigger, _) async {
+          final controller = await ref.read(agentRunControllerProvider.future);
+          return controller.runOnceById(agentId, trigger: trigger);
+        },
+      );
 
-  final Ref _ref;
-  final Map<String, Timer> _timers = <String, Timer>{};
+  final AgentTriggerCoordinator _coordinator;
 
-  void schedule(String tableName) {
+  void schedule(String tableName, String rowId) {
     final agentIds = switch (tableName) {
       'knowledge_notes' => const <String>[
         'knowledge_inbox_triage',
@@ -25,29 +32,34 @@ final class KnowledgeChangeScheduler {
       'knowledge_assumptions' => const <String>['knowledge_contradiction'],
       _ => const <String>[],
     };
+    final observedAt = DateTime.now().toUtc();
+    final family = 'know:$tableName';
+    final signal = AgentTriggerSignal(
+      kind: AgentTriggerKind.event,
+      key: family,
+      observedAt: observedAt,
+      fingerprint: '$family:$rowId:${observedAt.microsecondsSinceEpoch}',
+      source: SourceIdentity(
+        domain: DomainScope.knowledge,
+        rowFamily: family,
+        rowId: rowId,
+        fingerprint: '$rowId:${observedAt.microsecondsSinceEpoch}',
+      ),
+    );
     for (final agentId in agentIds) {
-      _timers.remove(agentId)?.cancel();
-      _timers[agentId] = Timer(const Duration(milliseconds: 800), () {
-        _timers.remove(agentId);
-        unawaited(_run(agentId));
-      });
+      unawaited(
+        _coordinator.submit(
+          agentId: agentId,
+          spec: AgentTriggerSpec.event(
+            id: 'knowledge_row_changed',
+            sourceFamily: family,
+            debounce: const Duration(milliseconds: 800),
+          ),
+          signal: signal,
+        ),
+      );
     }
   }
 
-  Future<void> _run(String agentId) async {
-    try {
-      final controller = await _ref.read(agentRunControllerProvider.future);
-      await controller.runOnceById(agentId, trigger: AgentRunTrigger.event);
-    } on Object {
-      // Best effort: the normal interval schedule remains the fallback when
-      // the domain is disabled, the runtime is unavailable, or startup races.
-    }
-  }
-
-  void dispose() {
-    for (final timer in _timers.values) {
-      timer.cancel();
-    }
-    _timers.clear();
-  }
+  void dispose() => _coordinator.dispose();
 }

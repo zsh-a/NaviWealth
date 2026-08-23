@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/ai/composition/ai_context.dart';
 import '../../core/ai/composition/ask_ai.dart';
+import '../../core/developer/developer_issue.dart';
+import '../../core/developer/providers.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/shell/desktop_sidebar.dart';
 import '../../core/shell/domain_shell.dart';
@@ -99,6 +101,10 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
       ref.read(domainPackRegistryProvider),
       location,
     );
+    if (nextDomain != null) {
+      ref.read(developerIssueContextProvider.notifier).state =
+          DeveloperIssueContext(route: location, domain: nextDomain.name);
+    }
     final current = ref.read(aiContextProvider);
     if (current.path != location || current.domain != nextDomain) {
       ref.read(aiContextProvider.notifier).state = AiContext(

@@ -9,6 +9,11 @@ pipeline, and durable-resume implementation. It does not own domain Agent
 behavior or user-facing presentation. The `third_party/agent-runtime` crates,
 FRB bridge code, and contract tests are authoritative for exact APIs.
 
+The generated capability inventory for the exact pinned commit is
+[`agent-runtime-capabilities.json`](agent-runtime-capabilities.json). Regenerate
+or verify it with `tool/generate_agent_runtime_capabilities.dart`; do not copy
+binding, transport, store, provider, or protocol inventories into this file.
+
 This is the current implementation map for agents working on the Rust agent
 runtime. Use this document for code navigation and maintenance decisions.
 It is the single source of truth for the runtime that exists now.
@@ -26,6 +31,7 @@ vendored into NaviWealth as `third_party/agent-runtime`. It provides:
 - reusable Rust contracts and runner crates
 - schema / fixture / OpenAPI wire contracts
 - local CLI, HTTP, stdio, eval, replay, debug bundle, and TUI surfaces
+- a dependency-light TypeScript client under `bindings/ts`
 - Flutter FRB JSON entrypoints for native mobile integration
 - Dart app-level adapters that keep business data and device tools in Flutter
 
@@ -328,7 +334,9 @@ TUI uses persistent natural input by default. Plain text runs the shared
 
 These are the current implementation limits:
 
-- There is no standalone `bindings/dart` or `bindings/ts` SDK package yet.
+- There is no standalone `bindings/dart` package. The pinned runtime does ship
+  `bindings/ts`; exact package/version/transport support comes from the
+  generated capability manifest.
 - Trace is event-first (`events`) and does not currently expose a separate
   `spans` array.
 - `ProposalEnvelope` does not carry a `risk` field; risk is currently expressed

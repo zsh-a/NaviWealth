@@ -12,16 +12,11 @@ import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
-import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
-import 'package:naviwealth/core/ai/local/memory/event_store.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
-import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
 import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
@@ -54,7 +49,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: _runtimeForDb(db),
     );
 
     expect(result.status, AgentRunStatus.skipped);
@@ -96,7 +90,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: _runtimeForDb(db),
     );
 
     expect(result.status, AgentRunStatus.skipped);
@@ -106,7 +99,6 @@ void main() {
   test('persists deterministic options income risk artifact', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final traceStore = InMemoryAiTraceStore();
     final snapshot = OptionsIncomeRiskSnapshot(
@@ -154,13 +146,12 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: runtime,
       artifactStore: store,
       traceStore: traceStore,
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kOptionsIncomeRiskReviewMemorySource:2026-07-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, '$kOptionsIncomeRiskReviewAgentId:2026-07-05');
     expect(result.traceId, '$kOptionsIncomeRiskReviewAgentId:trace:2026-07-05');
     expect(result.payload['issue_count'], greaterThanOrEqualTo(4));
@@ -385,14 +376,6 @@ const _financePresentationSpecs = <String, AgentPresentationSpec>{
 String _agentLabel(AppLocalizations _) => 'Agent';
 
 String _agentDescription(AppLocalizations _) => 'Agent';
-
-MemoryRuntime _runtimeForDb(AppDatabase db) {
-  return MemoryRuntime(
-    embedder: StubEmbedder(),
-    memoryStore: SqliteMemoryStore(db: db),
-    eventStore: SqliteEventStore(db: db),
-  );
-}
 
 OptionsOpportunity _opportunity({
   required String symbol,

@@ -3,9 +3,8 @@
 ///
 /// Looks at every Decision authored in the last cadence window and
 /// compares each against the user's active Principles + referenced
-/// Assumptions. Two independent checks emit a `kind='semantic'` memory
-/// (the Review tab + AI chat surface it; the underlying Decision is never
-/// overwritten):
+/// Assumptions. Two independent checks emit a transient Agent Artifact and
+/// durable finding identity; the underlying Decision is never overwritten.
 ///
 /// - **Check 1 — assumption integrity (structural, deterministic).** A
 ///   still-active Decision that cites an assumption no longer in the
@@ -33,7 +32,6 @@ import '../../../core/ai/agents/agent_finding_store.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -51,14 +49,11 @@ import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
-import '_agent_memory.dart';
 
 part 'contradiction_agent_models.dart';
 part 'contradiction_agent_source_reader.dart';
 
 const String kKnowledgeContradictionAgentId = 'knowledge_contradiction';
-const String kKnowledgeContradictionMemorySource =
-    'agent:knowledge_contradiction';
 
 /// How many cosine-nearest recent memories to consider per Principle
 /// before the LLM judge. Small so the per-run LLM call count stays cheap
@@ -214,45 +209,6 @@ class ContradictionAgent implements Agent {
 
     final dayKey = AppFormatters.utcDayKey(start);
     final artifactId = '$kKnowledgeContradictionAgentId:$dayKey';
-    final built = buildAgentMemory(
-      source: kKnowledgeContradictionMemorySource,
-      kind: MemoryKind.semantic,
-      ownerUserId: ownerUserId,
-      start: start,
-      finished: finished,
-      title: l10n.knowledgeAgentContradictionTitle,
-      summary: summary,
-      payload: <String, Object?>{
-        'issues': issues
-            .map(
-              (i) => <String, Object?>{
-                'decision_id': i.decisionId,
-                'decision_question': i.decisionQuestion,
-                'finding_id': i.findingId,
-                'subject_kind': i.subjectKind,
-                'kind': i.kind,
-                'reference_id': i.referenceId,
-                'detail': i.detail,
-                'confidence': i.confidence,
-                if (i.semanticSimilarity != null)
-                  'semantic_similarity': i.semanticSimilarity,
-                if (i.tokenOverlap != null) 'token_overlap': i.tokenOverlap,
-              },
-            )
-            .toList(growable: false),
-        'artifact_id': artifactId,
-        if (source.traceId != null) 'trace_id': source.traceId,
-      },
-      entities: <String>{
-        'knowledge_contradiction',
-        ...issues.map((i) => i.decisionId),
-      },
-      importance: 0.7,
-      confidence: issues
-          .map((issue) => issue.confidence)
-          .reduce((a, b) => a > b ? a : b),
-    );
-    await runtime.remember(built.record);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -262,7 +218,6 @@ class ContradictionAgent implements Agent {
         ownerUserId: ownerUserId,
         createdAt: finished,
         summary: summary,
-        memoryId: built.memoryId,
         issues: issues,
         traceId: source.traceId,
         l10n: l10n,
@@ -277,9 +232,24 @@ class ContradictionAgent implements Agent {
       summary: summary,
       payload: <String, Object?>{
         'issue_count': issues.length,
+        'issues': <Object?>[
+          for (final issue in issues)
+            <String, Object?>{
+              'finding_id': issue.findingId,
+              'subject_kind': issue.subjectKind,
+              'subject_id': issue.decisionId,
+              'kind': issue.kind,
+              'reference_id': issue.referenceId,
+              'detail': issue.detail,
+              'confidence': issue.confidence,
+              if (issue.semanticSimilarity != null)
+                'semantic_similarity': issue.semanticSimilarity,
+              if (issue.tokenOverlap != null)
+                'token_overlap': issue.tokenOverlap,
+            },
+        ],
         if (source.traceId != null) 'trace_id': source.traceId,
       },
-      memoryId: built.memoryId,
       artifactId: artifactId,
       traceId: source.traceId,
     );
@@ -290,7 +260,6 @@ class ContradictionAgent implements Agent {
     required String ownerUserId,
     required DateTime createdAt,
     required String summary,
-    required String memoryId,
     required List<_Contradiction> issues,
     required String? traceId,
     required AppLocalizations l10n,
@@ -403,7 +372,6 @@ class ContradictionAgent implements Agent {
         sourceLabel: l10n.knowledgeAgentContradictionArtifactTitle,
         modelAssisted: traceId != null,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),

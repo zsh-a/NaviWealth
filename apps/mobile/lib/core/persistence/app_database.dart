@@ -154,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 72;
+  int get schemaVersion => 77;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -184,6 +184,9 @@ class AppDatabase extends _$AppDatabase {
       await _createAgentRuntimeChatSnapshots(this);
       await _createAgentArtifacts(this);
       await _createAgentFindings(this);
+      await _createAgentFeedback(this);
+      await _createAttentionDecisions(this);
+      await _createDeveloperIssues(this);
       await _createDataMaintenanceRuns(this);
       await _createAgentPreferences(this);
       await _createRebalanceExecutionTables(this);
@@ -391,7 +394,7 @@ class AppDatabase extends _$AppDatabase {
       // v20 → v21: KnowledgeOS routines (`docs/domains/knowledgeos-domain.md`
       // §3 + §9). Recurring user-defined reminders ("港卡每 6 个月做一次
       //活跃交易") — a typed row that records cadence + last-done state
-      // so RoutineDueAgent can advance `next_due_at` reliably.
+      // so Knowledge Review can advance `next_due_at` reliably.
       if (from < 21) {
         await m.createTable(knowledgeRoutines);
         await customStatement(
@@ -1094,12 +1097,35 @@ class AppDatabase extends _$AppDatabase {
           column: 'supersedes_id',
           definition: 'TEXT',
         );
-        await _createMemoryRuntime(this);
+        await _createMemoryStorage(this);
         await _createPersonalProfile(this);
         // Pending AI candidates are disposable staging state. Rebuild the
         // table around the generic memory/profile target contract.
         await customStatement('DROP TABLE IF EXISTS memory_candidates');
         await _createMemoryCandidates(this);
+      }
+      // v72 -> v73: replace the derived event index with the typed,
+      // evidence-anchored contract. Source-domain indexers rebuild its rows.
+      if (from < 73) {
+        await customStatement('DROP TABLE IF EXISTS events');
+        await _createMemoryRuntime(this);
+      }
+      if (from < 74) {
+        await _createAttentionDecisions(this);
+      }
+      if (from < 75) {
+        await _createAgentFeedback(this);
+      }
+      if (from < 76) {
+        await _createDeveloperIssues(this);
+      }
+      // Per-agent notification switches were removed. AttentionArbiter owns
+      // proactive policy behind the one global notification preference.
+      // Preferences are local/re-creatable, so intentionally drop the old
+      // shape instead of carrying a compatibility column.
+      if (from < 77) {
+        await customStatement('DROP TABLE IF EXISTS agent_preferences');
+        await _createAgentPreferences(this);
       }
     },
     beforeOpen: (details) async {

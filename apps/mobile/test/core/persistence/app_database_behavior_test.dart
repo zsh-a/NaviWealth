@@ -2073,4 +2073,84 @@ void main() {
     final version = await db.customSelect('PRAGMA user_version').getSingle();
     expect(version.read<int>('user_version'), db.schemaVersion);
   });
+
+  test('v71 upgrade replaces the legacy event index', () async {
+    final dir = await Directory.systemTemp.createTemp(
+      'naviwealth-typed-events-migration-',
+    );
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File('${dir.path}/naviwealth.db');
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy.execute('''
+        CREATE TABLE events (
+          id TEXT PRIMARY KEY,
+          type TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          source TEXT NOT NULL,
+          owner_user_id TEXT NOT NULL,
+          title TEXT,
+          summary TEXT NOT NULL,
+          payload_json TEXT NOT NULL,
+          entities_json TEXT NOT NULL,
+          importance REAL NOT NULL DEFAULT 0.5
+        )
+      ''');
+      legacy.execute(
+        'INSERT INTO events (id, type, timestamp, source, owner_user_id, '
+        'summary, payload_json, entities_json) VALUES '
+        "('legacy-event', 'trade_closed', 1, 'options_trade_journal', "
+        "'u1', 'legacy', '{}', '[]')",
+      );
+      legacy.execute('PRAGMA user_version = 71');
+    } finally {
+      legacy.close();
+    }
+
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
+
+    final columns = await db.customSelect('PRAGMA table_info(events)').get();
+    final names = columns.map((row) => row.read<String>('name')).toSet();
+    expect(
+      names,
+      containsAll(<String>{
+        'domain',
+        'kind',
+        'occurred_at',
+        'observed_at',
+        'source_family',
+        'source_row_id',
+        'source_fingerprint',
+        'facts_json',
+        'confidence',
+      }),
+    );
+    expect(
+      names.intersection(<String>{
+        'type',
+        'timestamp',
+        'source',
+        'payload_json',
+      }),
+      isEmpty,
+    );
+    final count = await db
+        .customSelect('SELECT COUNT(*) AS count FROM events')
+        .getSingle();
+    expect(count.read<int>('count'), 0);
+
+    final indexes = await db.customSelect('PRAGMA index_list(events)').get();
+    expect(
+      indexes.map((row) => row.read<String>('name')).toSet(),
+      containsAll(<String>{
+        'idx_events_owner_time',
+        'idx_events_owner_type',
+        'idx_events_owner_source',
+        'idx_events_owner_domain_occurred',
+      }),
+    );
+  });
 }

@@ -5,10 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/notifications/notification_payload_router.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/notifications/providers.dart';
-import 'package:naviwealth/features/health/agents/health_notifications.dart';
-import 'package:naviwealth/features/knowledge/agents/knowledge_notifications.dart';
 
 void main() {
   test('notificationRouteFromPayload accepts only internal routes', () {
@@ -23,15 +22,9 @@ void main() {
     expect(notificationRouteFromPayload(null), isNull);
   });
 
-  test('domain notification producers emit accepted internal routes', () {
-    final payloads = <String>[
-      HealthNotifications.payloadForArtifact('health:artifact-1'),
-      KnowledgeNotifications.payloadForArtifact('knowledge:artifact-1'),
-    ];
-
-    for (final payload in payloads) {
-      expect(notificationRouteFromPayload(payload), payload);
-    }
+  test('artifact routes are accepted internal notification payloads', () {
+    final payload = AgentArtifactRoutes.detail('life:artifact-1');
+    expect(notificationRouteFromPayload(payload), payload);
   });
 
   testWidgets('routes live notification payloads through GoRouter', (

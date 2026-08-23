@@ -1,9 +1,8 @@
 /// `weekly_wealth_review` — deterministic FinanceOS weekly review agent.
 ///
 /// Reads the same dashboard snapshot the Finance Home renders, derives a
-/// local-only artifact, and stores an episodic memory for future recall. This
-/// agent intentionally does not call an LLM: money math and data-quality
-/// checks stay deterministic.
+/// local-only artifact. This agent intentionally does not call an LLM: money
+/// math and data-quality checks stay deterministic.
 library;
 
 import 'dart:ui' show Locale;
@@ -18,11 +17,7 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/contracts.dart';
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/memory_runtime.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
@@ -34,7 +29,6 @@ import '../domain/fx/money.dart';
 import '../home/domain/dashboard_models.dart';
 
 const String kWeeklyWealthReviewAgentId = 'weekly_wealth_review';
-const String kWeeklyWealthReviewMemorySource = 'agent:weekly_wealth_review';
 
 class WeeklyWealthReviewAgent implements Agent {
   const WeeklyWealthReviewAgent({
@@ -57,7 +51,6 @@ class WeeklyWealthReviewAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final startedAt = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -68,7 +61,6 @@ class WeeklyWealthReviewAgent implements Agent {
       ownerUserId: ownerUserId,
       startedAt: startedAt,
       finishedAt: DateTime.now().toUtc(),
-      runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
       l10n: agentL10n(ctx.ref),
@@ -80,7 +72,6 @@ class WeeklyWealthReviewAgent implements Agent {
     required String ownerUserId,
     required DateTime startedAt,
     required DateTime finishedAt,
-    required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
     AppLocalizations? l10n,
@@ -100,45 +91,9 @@ class WeeklyWealthReviewAgent implements Agent {
 
     final analysis = WealthReviewAnalysis.fromSnapshot(snapshot);
     final dayKey = AppFormatters.utcDayKey(startedAt);
-    final memoryId = '$kWeeklyWealthReviewMemorySource:$dayKey';
     final artifactId = '$kWeeklyWealthReviewAgentId:$dayKey';
     final traceId = '$kWeeklyWealthReviewAgentId:trace:$dayKey';
     final summary = analysis.summary(strings);
-    final memory = MemoryRecord(
-      id: memoryId,
-      kind: MemoryKind.episodic,
-      role: MemoryRole.pattern,
-      authority: EvidenceAuthority.deterministicDerived,
-      ownerUserId: ownerUserId,
-      scope: 'finance',
-      source: kWeeklyWealthReviewMemorySource,
-      sourceId: dayKey,
-      title: strings.financeAgentWeeklyWealthMemoryTitle(dayKey),
-      summary: summary,
-      payload: <String, Object?>{
-        'context':
-            'weekly wealth review run at ${startedAt.toUtc().toIso8601String()}',
-        'outcome': analysis.toPayload(),
-        'artifact_id': artifactId,
-        if (traceStore != null) 'trace_id': traceId,
-      },
-      entities: <String>{
-        'finance',
-        'wealth',
-        'weekly_wealth_review',
-        dayKey,
-        for (final allocation in snapshot.allocations)
-          'finance_category:${allocation.category.name}',
-        for (final item in analysis.evidenceItems.take(8))
-          'finance_item:${item.id}',
-      },
-      importance: analysis.severity == AgentArtifactSeverity.info ? 0.58 : 0.74,
-      confidence: 0.95,
-      validFrom: startedAt.toUtc(),
-      createdAt: startedAt.toUtc(),
-      updatedAt: finishedAt.toUtc(),
-    );
-    await runtime.remember(memory);
     await traceStore?.append(
       analysis.toTrace(
         requestId: traceId,
@@ -151,7 +106,6 @@ class WeeklyWealthReviewAgent implements Agent {
       analysis.toArtifact(
         id: artifactId,
         ownerUserId: ownerUserId,
-        memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
         l10n: strings,
@@ -165,7 +119,6 @@ class WeeklyWealthReviewAgent implements Agent {
       finishedAt: finishedAt,
       summary: summary,
       payload: analysis.toPayload(),
-      memoryId: memoryId,
       artifactId: artifactStore == null ? null : artifactId,
       traceId: traceStore == null ? null : traceId,
     );
@@ -284,7 +237,6 @@ class WealthReviewAnalysis {
   AgentArtifact toArtifact({
     required String id,
     required String ownerUserId,
-    required String memoryId,
     required String? traceId,
     required DateTime createdAt,
     required AppLocalizations l10n,
@@ -425,7 +377,6 @@ class WealthReviewAnalysis {
         l10n,
         sourceLabel: l10n.financeAgentWeeklyWealthTitle,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),

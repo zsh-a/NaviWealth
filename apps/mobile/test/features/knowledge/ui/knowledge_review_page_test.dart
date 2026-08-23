@@ -123,10 +123,10 @@ void main() {
                   artifacts: <AgentArtifact>[
                     _artifact(),
                     _artifact(
-                      id: 'knowledge-routine-1',
-                      agentId: 'knowledge_routine_due',
-                      title: 'Routine Due',
-                      summary: 'A weekly review routine is due.',
+                      id: 'knowledge-contradiction-1',
+                      agentId: 'knowledge_contradiction',
+                      title: 'Review artifact',
+                      summary: 'A possible contradiction needs review.',
                       createdAt: DateTime.utc(2026, 7, 4, 9),
                     ),
                   ],
@@ -147,8 +147,8 @@ void main() {
 
     expect(find.text('Knowledge Review'), findsOneWidget);
     expect(find.text('Review due decisions and assumptions.'), findsOneWidget);
-    expect(find.text('Routine Due'), findsNothing);
-    expect(find.text('A weekly review routine is due.'), findsNothing);
+    expect(find.text('Review artifact'), findsNothing);
+    expect(find.text('A possible contradiction needs review.'), findsNothing);
     expect(find.byType(AgentResultCard), findsOneWidget);
     expect(find.byType(AgentCompactResultRow), findsNothing);
     expect(

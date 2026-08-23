@@ -6,7 +6,7 @@
 /// The store exposes a few well-shaped reads:
 ///
 /// - [recentEvents] — owner+time-window slice, optionally filtered by
-///   source / type / entities. Drives [ContextPack.recentEvents].
+///   source family / kind / domain / entities. Drives recent context events.
 /// - [readEvent] — point lookup by id (used to follow
 ///   [MemoryRecord.sourceEventId]).
 library;
@@ -14,7 +14,9 @@ library;
 import 'package:drift/drift.dart';
 
 import '../../../../core/persistence/app_database.dart';
+import '../../../auth/domain_scope.dart';
 import '../../contracts/event_record.dart';
+import '../../contracts/source_identity.dart';
 
 abstract class EventStore {
   Future<void> writeEvent(EventRecord event);
@@ -23,7 +25,8 @@ abstract class EventStore {
     required String ownerUserId,
     String? source,
     Set<String>? sourcePrefixes,
-    Set<String>? typeFilter,
+    Set<DomainScope>? domains,
+    Set<EventKind>? kindFilter,
     Set<String>? entityFilter,
     DateTime? since,
     int limit = 50,
@@ -39,20 +42,26 @@ class SqliteEventStore implements EventStore {
   Future<void> writeEvent(EventRecord e) async {
     await _db.customStatement(
       'INSERT OR REPLACE INTO events ('
-      '  id, type, timestamp, source, owner_user_id, title, summary,'
-      '  payload_json, entities_json, importance'
-      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      '  id, domain, kind, occurred_at, observed_at, source_family,'
+      '  source_row_id, source_fingerprint, owner_user_id, title, summary,'
+      '  facts_json, entities_json, importance, confidence'
+      ') VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       <Object?>[
         e.id,
-        e.type,
-        e.timestamp.toUtc().millisecondsSinceEpoch,
-        e.source,
+        e.domain?.wire,
+        e.kind.wire,
+        e.occurredAt.toUtc().millisecondsSinceEpoch,
+        e.observedAt.toUtc().millisecondsSinceEpoch,
+        e.sourceIdentity.rowFamily,
+        e.sourceIdentity.rowId,
+        e.sourceIdentity.fingerprint,
         e.ownerUserId,
         e.title,
         e.summary,
-        e.encodePayload(),
+        e.encodeFacts(),
         e.encodeEntities(),
         e.importance,
+        e.confidence,
       ],
     );
   }
@@ -74,7 +83,8 @@ class SqliteEventStore implements EventStore {
     required String ownerUserId,
     String? source,
     Set<String>? sourcePrefixes,
-    Set<String>? typeFilter,
+    Set<DomainScope>? domains,
+    Set<EventKind>? kindFilter,
     Set<String>? entityFilter,
     DateTime? since,
     int limit = 50,
@@ -87,33 +97,43 @@ class SqliteEventStore implements EventStore {
     if (normalizedSourcePrefixes != null && normalizedSourcePrefixes.isEmpty) {
       return const <EventRecord>[];
     }
+    if (domains != null && domains.isEmpty) {
+      return const <EventRecord>[];
+    }
     final filters = <String>['owner_user_id = ?'];
     final vars = <Variable<Object>>[Variable.withString(ownerUserId)];
 
     if (source != null) {
-      filters.add('source = ?');
+      filters.add('source_family = ?');
       vars.add(Variable.withString(source));
     }
     if (normalizedSourcePrefixes != null) {
       final prefixFilters = <String>[];
       for (final prefix in normalizedSourcePrefixes) {
-        prefixFilters.add("source LIKE ? ESCAPE '\\'");
+        prefixFilters.add("source_family LIKE ? ESCAPE '\\'");
         vars.add(Variable.withString('${_escapeLike(prefix)}%'));
       }
       filters.add('(${prefixFilters.join(' OR ')})');
     }
-    if (typeFilter != null && typeFilter.isNotEmpty) {
+    if (domains != null) {
+      final placeholders = List<String>.filled(domains.length, '?').join(', ');
+      filters.add('domain IN ($placeholders)');
+      for (final domain in domains) {
+        vars.add(Variable.withString(domain.wire));
+      }
+    }
+    if (kindFilter != null && kindFilter.isNotEmpty) {
       final placeholders = List<String>.filled(
-        typeFilter.length,
+        kindFilter.length,
         '?',
       ).join(', ');
-      filters.add('type IN ($placeholders)');
-      for (final t in typeFilter) {
-        vars.add(Variable.withString(t));
+      filters.add('kind IN ($placeholders)');
+      for (final kind in kindFilter) {
+        vars.add(Variable.withString(kind.wire));
       }
     }
     if (since != null) {
-      filters.add('timestamp >= ?');
+      filters.add('occurred_at >= ?');
       vars.add(Variable.withInt(since.toUtc().millisecondsSinceEpoch));
     }
 
@@ -127,7 +147,7 @@ class SqliteEventStore implements EventStore {
     final rows = await _db
         .customSelect(
           'SELECT * FROM events WHERE ${filters.join(' AND ')} '
-          'ORDER BY timestamp DESC LIMIT $pullLimit',
+          'ORDER BY occurred_at DESC LIMIT $pullLimit',
           variables: vars,
         )
         .get();
@@ -159,16 +179,35 @@ String _escapeLike(String value) =>
 
 EventRecord _rowToEvent(QueryRow row) => EventRecord(
   id: row.read<String>('id'),
-  type: row.read<String>('type'),
-  timestamp: DateTime.fromMillisecondsSinceEpoch(
-    row.read<int>('timestamp'),
+  domain: switch (row.readNullable<String>('domain')) {
+    final String wire => DomainScope.tryParse(wire),
+    null => null,
+  },
+  kind: EventKind.fromWire(row.read<String>('kind')),
+  occurredAt: DateTime.fromMillisecondsSinceEpoch(
+    row.read<int>('occurred_at'),
     isUtc: true,
   ),
-  source: row.read<String>('source'),
+  observedAt: DateTime.fromMillisecondsSinceEpoch(
+    row.read<int>('observed_at'),
+    isUtc: true,
+  ),
+  sourceIdentity: _sourceIdentityFromRow(row),
   ownerUserId: row.read<String>('owner_user_id'),
   title: row.read<String?>('title'),
   summary: row.read<String>('summary'),
-  payload: EventRecord.decodePayload(row.read<String>('payload_json')),
+  facts: EventRecord.decodeFacts(row.read<String>('facts_json')),
   entities: EventRecord.decodeEntities(row.read<String>('entities_json')),
   importance: row.read<double>('importance'),
+  confidence: row.read<double>('confidence'),
 );
+
+SourceIdentity _sourceIdentityFromRow(QueryRow row) {
+  final domainWire = row.readNullable<String>('domain');
+  return SourceIdentity(
+    domain: domainWire == null ? null : DomainScope.tryParse(domainWire),
+    rowFamily: row.read<String>('source_family'),
+    rowId: row.read<String>('source_row_id'),
+    fingerprint: row.read<String>('source_fingerprint'),
+  );
+}

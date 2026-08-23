@@ -11,6 +11,9 @@ import 'package:naviwealth/app/agent_runtime/overrides/agent_runtime_provider_ov
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/app/agents/daily_navigator_agent.dart';
+import 'package:naviwealth/app/agents/daily_navigator_synthesizer.dart';
+import 'package:naviwealth/app/agents/providers.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
@@ -27,11 +30,8 @@ import 'package:naviwealth/features/execution/agents/providers.dart'
 import 'package:naviwealth/features/execution/agents/review_agent.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
-import 'package:naviwealth/features/health/agents/briefing_synthesizer.dart';
-import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
-import 'package:naviwealth/features/health/data/health_notification_preferences.dart';
 import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
 import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
@@ -49,7 +49,6 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
-        kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
       final native = FakeAgentRuntimeEffectPlanBridge();
@@ -105,11 +104,11 @@ void main() {
       );
 
       expect(
-        container.read(morningBriefingAgentProvider),
-        isA<MorningBriefingAgent>().having(
+        container.read(dailyNavigatorAgentProvider),
+        isA<DailyNavigatorAgent>().having(
           (agent) => agent.synthesizer,
           'synthesizer',
-          isA<FrbBriefingSynthesizer>(),
+          isA<FrbDailyNavigatorSynthesizer>(),
         ),
       );
       expect(
@@ -176,7 +175,6 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
-        kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
       final native = FakeAgentRuntimeEffectPlanBridge();
@@ -216,7 +214,7 @@ void main() {
       expect(
         catalog.agents.map((agent) => agent.id),
         containsAll(<String>[
-          'morning_briefing',
+          'recovery_alert',
           'knowledge_review',
           'knowledge_inbox_triage',
         ]),
@@ -229,7 +227,6 @@ void main() {
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
-        kHealthBriefingNotificationsEnabledKey: false,
       });
       final prefs = await SharedPreferences.getInstance();
       final container = ProviderContainer(
@@ -265,7 +262,7 @@ void main() {
       expect(
         catalog.agents.map((agent) => agent.id),
         containsAll(<String>[
-          'morning_briefing',
+          'recovery_alert',
           'knowledge_review',
           'execution_review',
         ]),

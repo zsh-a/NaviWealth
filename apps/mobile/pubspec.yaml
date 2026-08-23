@@ -30,9 +30,8 @@ dependencies:
   fl_chart: ^1.2.0
   flutter:
     sdk: flutter
-  # D-2.5b (`docs/healthos-domain.md` §8): local notifications for
-  # autonomous agents (Morning Briefing "ready" toast). Web fallback
-  # is a no-op via conditional import — HealthOS isn't on web.
+  # Local notifications are emitted only after the global attention arbiter
+  # chooses the interrupt tier. The Web implementation is a no-op.
   flutter_local_notifications: ^22.0.1
   flutter_localizations:
     sdk: flutter
@@ -90,9 +89,9 @@ dependencies:
   url_launcher: ^6.3.2
   uuid: ^4.6.0
   web: ^1.1.1
-  # D-2.5b: cross-platform background task scheduler (Android
-  # WorkManager + iOS BGTaskScheduler). Used to fire the Morning
-  # Briefing agent at 07:00 local even when the app is backgrounded.
+  # Cross-platform background task scheduler (Android WorkManager + iOS
+  # BGTaskScheduler). Background callbacks only evaluate precomputed,
+  # deterministic attention snapshots; they never invoke an LLM.
   workmanager: ^0.10.8
   xml: ^7.0.1
 

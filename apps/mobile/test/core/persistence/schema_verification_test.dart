@@ -20,8 +20,72 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 72', () {
-      expect(db.schemaVersion, 72);
+    test('is 77', () {
+      expect(db.schemaVersion, 77);
+    });
+  });
+
+  group('Developer issue capture', () {
+    test('is local-only and keeps bounded diagnostic fields', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(developer_issues)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>{
+          'id',
+          'owner_user_id',
+          'description',
+          'route',
+          'domain',
+          'app_version',
+          'build_number',
+          'commit_sha',
+          'trace_id',
+          'tool_errors_json',
+          'screenshot_path',
+          'created_at',
+          'exported_at',
+        }),
+      );
+      expect(columns, isNot(contains('hlc')));
+    });
+  });
+
+  group('Typed event evidence index', () {
+    test('contains only the canonical event identity columns', () async {
+      final result = await db.customSelect('PRAGMA table_info(events)').get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>{
+          'id',
+          'domain',
+          'kind',
+          'occurred_at',
+          'observed_at',
+          'source_family',
+          'source_row_id',
+          'source_fingerprint',
+          'owner_user_id',
+          'title',
+          'summary',
+          'facts_json',
+          'entities_json',
+          'importance',
+          'confidence',
+        }),
+      );
+      expect(
+        columns.intersection(<String>{
+          'type',
+          'timestamp',
+          'source',
+          'payload_json',
+        }),
+        isEmpty,
+      );
     });
   });
 
@@ -510,6 +574,21 @@ void main() {
       expect(result, hasLength(1));
     });
 
+    test('memories require explicit authority and provenance', () async {
+      final result = await db.customSelect('PRAGMA table_info(memories)').get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>{
+          'role',
+          'authority',
+          'provenance_json',
+          'supersedes_id',
+        }),
+      );
+      expect(columns, isNot(contains('provenance')));
+    });
+
     test('recurring_pattern_observations table has expected columns', () async {
       final result = await db
           .customSelect('PRAGMA table_info(recurring_pattern_observations)')
@@ -651,6 +730,24 @@ void main() {
       );
     });
 
+    test('agent feedback preserves causal policy fingerprints', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(agent_feedback)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll(<String>[
+          'artifact_id',
+          'kind',
+          'life_context_fingerprint',
+          'finding_fingerprint',
+          'attention_decision_id',
+          'created_at',
+        ]),
+      );
+    });
+
     test('agent_preferences table has preference columns', () async {
       final result = await db
           .customSelect('PRAGMA table_info(agent_preferences)')
@@ -658,14 +755,9 @@ void main() {
       final columns = result.map((r) => r.read<String>('name')).toSet();
       expect(
         columns,
-        containsAll([
-          'owner_user_id',
-          'agent_id',
-          'enabled',
-          'notifications_enabled',
-          'updated_at',
-        ]),
+        containsAll(['owner_user_id', 'agent_id', 'enabled', 'updated_at']),
       );
+      expect(columns, isNot(contains('notifications_enabled')));
     });
   });
 

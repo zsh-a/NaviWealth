@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "runtime_commit": "a89e11b0924107b637e741aeb8d75950b6430ac6",
+  "protocol": {
+    "wire": "agent.v1",
+    "embedded_snapshot": 1,
+    "chat_turn_snapshot": 1
+  },
+  "bindings": {
+    "rust_crates": true,
+    "typescript": {
+      "available": true,
+      "package": "@agent-runtime/client",
+      "version": "0.1.0",
+      "http_client": true,
+      "structured_output": true
+    },
+    "dart": {
+      "available": false
+    }
+  },
+  "transports": {
+    "rust_library": true,
+    "cli": true,
+    "http": true,
+    "stdio": true,
+    "flutter_frb": {
+      "runtime_owned": false,
+      "host_adapter": "apps/mobile/native/lifeos_native"
+    }
+  },
+  "stores": {
+    "in_memory": true,
+    "file": true,
+    "sqlite_feature": true
+  },
+  "llm_providers": [
+    "mock",
+    "openai",
+    "anthropic",
+    "ollama"
+  ],
+  "authoritative_inputs": [
+    "crates/agent-core/src/lib.rs",
+    "crates/agent-core/src/embedded.rs",
+    "crates/agent-chat/src/snapshot.rs",
+    "crates/agent-store/Cargo.toml",
+    "bindings/ts/package.json",
+    "bindings/ts/src/http-client.ts",
+    "bindings/ts/src/generate-object.ts",
+    "openapi/agent-runtime-api.yaml"
+  ]
+}

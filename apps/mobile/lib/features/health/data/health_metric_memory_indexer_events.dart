@@ -29,17 +29,28 @@ const double kSleepShortHours = 5.0;
 const double kSleepLongHours = 9.0;
 
 mixin _HealthMetricEventMapper on _HealthMetricMemoryFormatting {
-  EventRecord _eventFor(HealthMetric metric, String ownerUserId) {
+  EventRecord _eventFor(
+    HealthMetric metric,
+    String ownerUserId, {
+    required DateTime observedAt,
+  }) {
     final type = _eventType(metric.kind);
     return EventRecord(
       id: '$kHealthSource:$type:${metric.id}',
-      type: type,
-      timestamp: metric.capturedAt.toUtc(),
-      source: kHealthSource,
+      domain: DomainScope.health,
+      kind: EventKind.domain(DomainScope.health, type),
+      occurredAt: metric.capturedAt.toUtc(),
+      observedAt: observedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.health,
+        rowFamily: kHealthSource,
+        rowId: metric.id,
+        fingerprint: metric.sync.hlc.toString(),
+      ),
       ownerUserId: ownerUserId,
       title: _eventTitle(metric),
       summary: _eventSummary(metric),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'kind': metric.kind.wire,
         'value': metric.value,
         'unit': metric.unit,
@@ -48,6 +59,7 @@ mixin _HealthMetricEventMapper on _HealthMetricMemoryFormatting {
       },
       entities: _entitiesFor(metric),
       importance: _eventImportance(metric),
+      confidence: 1,
     );
   }
 

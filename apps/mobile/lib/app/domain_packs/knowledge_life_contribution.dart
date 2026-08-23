@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
 import '../../features/knowledge/agents/providers.dart' as agents;
@@ -31,6 +32,15 @@ DomainLifeSignalSlice knowledgeLifeSignals(Ref ref, DateTime now) {
           sourceRowFamily: _noteFamily,
           sourceRowId: 'inbox',
         ),
+        evidence: <SourceIdentity>[
+          for (final note in inbox.value!.take(8))
+            SourceIdentity(
+              domain: DomainScope.knowledge,
+              rowFamily: _noteFamily,
+              rowId: note.id,
+              fingerprint: note.sync.hlc.toString(),
+            ),
+        ],
       ),
     );
   }

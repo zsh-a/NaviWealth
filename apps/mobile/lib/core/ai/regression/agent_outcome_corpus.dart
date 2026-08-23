@@ -71,7 +71,6 @@ const String kAgentOutcomeToolFailureTag = 'tool_failure';
 const String kAgentOutcomeBudgetExhaustedTag = 'budget_exhausted';
 const String kAgentOutcomeNoLlmProfileTag = 'no_llm_profile';
 const String kAgentOutcomePromptInjectionTag = 'prompt_injection';
-const String kAgentOutcomeDomainOptOutTag = 'domain_opt_out';
 
 const List<AgentOutcomeRegressionCase>
 agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
@@ -286,31 +285,6 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedActionIntents: <String>{kAgentExplainResultIntent},
     expectedActionRoutes: <String>{'/plan/income'},
     tags: <String>{kAgentOutcomeNoLlmProfileTag},
-  ),
-  AgentOutcomeRegressionCase(
-    id: 'health.morning_briefing.no_finding',
-    agentId: 'morning_briefing',
-    domain: 'health',
-    snapshotId: 'health.morning_briefing.empty_health_window',
-    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
-  ),
-  AgentOutcomeRegressionCase(
-    id: 'health.morning_briefing.ready',
-    agentId: 'morning_briefing',
-    domain: 'health',
-    snapshotId: 'health.morning_briefing.recovery_attention',
-    expectedStatus: AgentOutcomeRegressionStatus.ready,
-    expectedArtifactKind: AgentArtifactKind.briefing,
-    expectedSeverity: AgentArtifactSeverity.attention,
-    expectedTopInsightTitles: <String>{'Sleep', 'HRV', 'Finance'},
-    expectedEvidenceTypes: <String>{'health_event', 'finance_event'},
-    expectedEvidenceRoutePatterns: <String, String>{
-      'health_event': '/health/trend',
-      'finance_event': '/health',
-    },
-    expectedActionKinds: <String>{'review'},
-    expectedActionIntents: <String>{kAgentExplainResultIntent},
-    expectedActionRoutes: <String>{'/health'},
   ),
   AgentOutcomeRegressionCase(
     id: 'health.recovery_alert.no_finding',
@@ -553,30 +527,5 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     },
     expectedActionKinds: <String>{'open_route'},
     expectedActionRoutes: <String>{'/execution'},
-  ),
-  AgentOutcomeRegressionCase(
-    id: 'knowledge.routine_due.ready',
-    agentId: 'knowledge_routine_due',
-    domain: 'knowledge',
-    snapshotId: 'knowledge.routine_due.overdue_and_upcoming',
-    expectedStatus: AgentOutcomeRegressionStatus.ready,
-    expectedArtifactKind: AgentArtifactKind.reminder,
-    expectedSeverity: AgentArtifactSeverity.attention,
-    expectedTopInsightTitles: <String>{'Overdue routines', 'Upcoming routines'},
-    expectedEvidenceTypes: <String>{'knowledge_routine'},
-    expectedEvidenceRoutePatterns: <String, String>{
-      'knowledge_routine': '/knowledge/library/object/routine/*',
-    },
-    expectedActionKinds: <String>{'open_object'},
-    expectedActionIntents: <String>{kKnowledgeReviewDueItemsIntent},
-    expectedActionRoutes: <String>{'/knowledge/review'},
-  ),
-  AgentOutcomeRegressionCase(
-    id: 'knowledge.routine_due.domain_opt_out',
-    agentId: 'knowledge_routine_due',
-    domain: 'knowledge',
-    snapshotId: 'knowledge.routine_due.knowledge_disabled',
-    expectedStatus: AgentOutcomeRegressionStatus.noFinding,
-    tags: <String>{kAgentOutcomeDomainOptOutTag},
   ),
 ];

@@ -29,10 +29,12 @@ void main() {
     );
     await db.customStatement(
       'INSERT INTO events '
-      '(id, type, timestamp, source, owner_user_id, summary, payload_json, '
-      "entities_json) VALUES ('old-event', 'test', ?, 'test', 'user-a', "
+      '(id, domain, kind, occurred_at, observed_at, source_family, '
+      'source_row_id, source_fingerprint, owner_user_id, summary, facts_json, '
+      "entities_json) VALUES ('old-event', NULL, 'test.fixture', ?, ?, "
+      "'test:events', 'old-event', 'fixture-old-event', 'user-a', "
       "'old', '{}', '[]')",
-      <Object?>[oldMillis],
+      <Object?>[oldMillis, oldMillis],
     );
     await db.customStatement(
       'INSERT INTO memory_candidates '

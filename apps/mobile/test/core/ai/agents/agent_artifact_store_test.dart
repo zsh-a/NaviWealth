@@ -13,11 +13,11 @@ void main() {
     final artifact = AgentArtifact(
       id: 'artifact-1',
       ownerUserId: 'user-1',
-      agentId: 'morning_briefing',
+      agentId: 'daily_navigator',
       domain: 'health',
       kind: AgentArtifactKind.briefing,
       severity: AgentArtifactSeverity.attention,
-      title: 'Morning briefing',
+      title: 'Daily Navigator',
       summary: 'Recovery is mixed.',
       metrics: const [
         AgentMetric(label: 'Sleep', value: '5.8h', context: 'Target 8h'),

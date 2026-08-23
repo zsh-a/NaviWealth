@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/auth/domain_scope.dart';
 
 const Duration kDecisionSnapshotWindow = Duration(days: 7);
 const int kDecisionSnapshotPerDomainCap = 5;
@@ -38,11 +39,12 @@ class DecisionContextSnapper {
       final runtime = await _ref.read(memoryRuntimeProvider.future);
       final all = await runtime.recentEvents(
         ownerUserId: ownerUserId,
+        domains: const <DomainScope>{DomainScope.finance, DomainScope.health},
         window: kDecisionSnapshotWindow,
         limit: 200,
       );
-      final finance = _pickByPrefix(all, 'fin:');
-      final health = _pickByPrefix(all, 'health:');
+      final finance = _pickByDomain(all, DomainScope.finance);
+      final health = _pickByDomain(all, DomainScope.health);
       if (finance.isEmpty && health.isEmpty) return null;
       return <String, Object?>{
         'captured_at': ts.toIso8601String(),
@@ -61,16 +63,16 @@ class DecisionContextSnapper {
     }
   }
 
-  static List<Map<String, Object?>> _pickByPrefix(
+  static List<Map<String, Object?>> _pickByDomain(
     List<EventRecord> events,
-    String prefix,
+    DomainScope domain,
   ) {
-    final filtered = events.where((e) => e.source.startsWith(prefix)).toList()
+    final filtered = events.where((event) => event.domain == domain).toList()
       ..sort((a, b) {
         // Importance first, then most recent.
         final cmp = b.importance.compareTo(a.importance);
         if (cmp != 0) return cmp;
-        return b.timestamp.compareTo(a.timestamp);
+        return b.occurredAt.compareTo(a.occurredAt);
       });
     return filtered
         .take(kDecisionSnapshotPerDomainCap)
@@ -79,9 +81,9 @@ class DecisionContextSnapper {
   }
 
   static Map<String, Object?> _packOne(EventRecord e) => <String, Object?>{
-    'type': e.type,
-    'source': e.source,
-    'timestamp': e.timestamp.toUtc().toIso8601String(),
+    'kind': e.kind.wire,
+    'source_identity': e.sourceIdentity.toJson(),
+    'occurred_at': e.occurredAt.toUtc().toIso8601String(),
     'title': ?e.title,
     'summary': e.summary,
     'importance': e.importance,

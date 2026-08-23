@@ -14,11 +14,7 @@ import '../../../core/ai/agents/agent_artifact_store.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/contracts.dart';
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/memory_runtime.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
@@ -35,8 +31,6 @@ import '../fire/domain/fire_state.dart';
 import '../fire/domain/fire_stress_test.dart';
 
 const String kFirePlanDriftMonitorAgentId = 'fire_plan_drift_monitor';
-const String kFirePlanDriftMonitorMemorySource =
-    'agent:fire_plan_drift_monitor';
 
 class FirePlanDriftMonitorAgent implements Agent {
   const FirePlanDriftMonitorAgent({
@@ -59,7 +53,6 @@ class FirePlanDriftMonitorAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final startedAt = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -72,7 +65,6 @@ class FirePlanDriftMonitorAgent implements Agent {
       ownerUserId: ownerUserId,
       startedAt: startedAt,
       finishedAt: DateTime.now().toUtc(),
-      runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
       l10n: agentL10n(ctx.ref),
@@ -84,7 +76,6 @@ class FirePlanDriftMonitorAgent implements Agent {
     required String ownerUserId,
     required DateTime startedAt,
     required DateTime finishedAt,
-    required MemoryRuntime runtime,
     List<FireStressResult> stressTests = const <FireStressResult>[],
     FireReview? previousReview,
     AgentArtifactStore? artifactStore,
@@ -116,46 +107,9 @@ class FirePlanDriftMonitorAgent implements Agent {
     }
 
     final dayKey = AppFormatters.utcDayKey(startedAt);
-    final memoryId = '$kFirePlanDriftMonitorMemorySource:$dayKey';
     final artifactId = '$kFirePlanDriftMonitorAgentId:$dayKey';
     final traceId = '$kFirePlanDriftMonitorAgentId:trace:$dayKey';
     final summary = analysis.summary(strings);
-    final memory = MemoryRecord(
-      id: memoryId,
-      kind: MemoryKind.episodic,
-      role: MemoryRole.guidance,
-      authority: EvidenceAuthority.deterministicDerived,
-      ownerUserId: ownerUserId,
-      scope: 'finance',
-      source: kFirePlanDriftMonitorMemorySource,
-      sourceId: dayKey,
-      title: strings.financeAgentFireMemoryTitle(dayKey),
-      summary: summary,
-      payload: <String, Object?>{
-        'context':
-            'FIRE plan drift monitor run at ${startedAt.toUtc().toIso8601String()}',
-        'outcome': analysis.toPayload(),
-        'artifact_id': artifactId,
-        if (traceStore != null) 'trace_id': traceId,
-      },
-      entities: <String>{
-        'finance',
-        'fire',
-        'fire_plan',
-        'drift',
-        review.periodKey,
-        for (final finding in analysis.concerningFindings)
-          'fire_finding:${finding.code.name}',
-      },
-      importance: analysis.severity == AgentArtifactSeverity.warning
-          ? 0.78
-          : 0.66,
-      confidence: 0.92,
-      validFrom: startedAt.toUtc(),
-      createdAt: startedAt.toUtc(),
-      updatedAt: finishedAt.toUtc(),
-    );
-    await runtime.remember(memory);
     await traceStore?.append(
       analysis.toTrace(
         requestId: traceId,
@@ -168,7 +122,6 @@ class FirePlanDriftMonitorAgent implements Agent {
       analysis.toArtifact(
         id: artifactId,
         ownerUserId: ownerUserId,
-        memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
         l10n: strings,
@@ -182,7 +135,6 @@ class FirePlanDriftMonitorAgent implements Agent {
       finishedAt: finishedAt,
       summary: summary,
       payload: analysis.toPayload(),
-      memoryId: memoryId,
       artifactId: artifactStore == null ? null : artifactId,
       traceId: traceStore == null ? null : traceId,
     );
@@ -332,7 +284,6 @@ class FirePlanDriftAnalysis {
   AgentArtifact toArtifact({
     required String id,
     required String ownerUserId,
-    required String memoryId,
     required String? traceId,
     required DateTime createdAt,
     required AppLocalizations l10n,
@@ -460,7 +411,6 @@ class FirePlanDriftAnalysis {
           ),
         ],
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),

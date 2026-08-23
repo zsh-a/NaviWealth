@@ -156,7 +156,7 @@ class DataMaintenanceService {
         );
         counts['events'] = await _deleteMillisBefore(
           table: 'events',
-          column: 'timestamp',
+          column: 'occurred_at',
           cutoff: started.subtract(const Duration(days: 180)),
         );
         counts['memory_candidates'] = await _database.customUpdate(

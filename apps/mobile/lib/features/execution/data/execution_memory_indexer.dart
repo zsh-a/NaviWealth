@@ -9,6 +9,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/contracts/event_record.dart';
+import '../../../core/ai/contracts/source_identity.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
@@ -21,6 +22,13 @@ const String kExecutionActionMemorySource = 'execution:actions';
 const String kExecutionProjectMemorySource = 'execution:projects';
 const String kExecutionCommitmentMemorySource = 'execution:commitments';
 const String kExecutionProgressMemorySource = 'execution:progress';
+
+const String kExecutionActionEventSourceFamily = 'exec:execution_actions';
+const String kExecutionProjectEventSourceFamily = 'exec:execution_projects';
+const String kExecutionCommitmentEventSourceFamily =
+    'exec:execution_commitments';
+const String kExecutionProgressEventSourceFamily =
+    'exec:execution_progress_entries';
 
 const String kExecutionActionEventType = 'execution_action_state';
 const String kExecutionProjectEventType = 'execution_project_state';
@@ -87,13 +95,20 @@ class ExecutionMemoryIndexer {
     final scheduledFor = action.scheduledFor;
     return EventRecord(
       id: '$kExecutionActionMemorySource:${action.id}',
-      type: kExecutionActionEventType,
-      timestamp: action.sync.updatedAt.toUtc(),
-      source: kExecutionActionMemorySource,
+      domain: DomainScope.execution,
+      kind: EventKind.domain(DomainScope.execution, kExecutionActionEventType),
+      occurredAt: action.sync.updatedAt.toUtc(),
+      observedAt: action.sync.updatedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.execution,
+        rowFamily: kExecutionActionEventSourceFamily,
+        rowId: action.id,
+        fingerprint: action.sync.hlc.toString(),
+      ),
       ownerUserId: ownerUserId,
       title: 'Action ${action.status.wire}: ${action.title}',
       summary: _actionSummary(action),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'id': action.id,
         'title': action.title,
         'note': action.note,
@@ -120,6 +135,7 @@ class ExecutionMemoryIndexer {
         ..._sourceEntities(action.source),
       },
       importance: _actionImportance(action),
+      confidence: 1,
     );
   }
 
@@ -127,13 +143,20 @@ class ExecutionMemoryIndexer {
     final targetDate = project.targetDate;
     return EventRecord(
       id: '$kExecutionProjectMemorySource:${project.id}',
-      type: kExecutionProjectEventType,
-      timestamp: project.sync.updatedAt.toUtc(),
-      source: kExecutionProjectMemorySource,
+      domain: DomainScope.execution,
+      kind: EventKind.domain(DomainScope.execution, kExecutionProjectEventType),
+      occurredAt: project.sync.updatedAt.toUtc(),
+      observedAt: project.sync.updatedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.execution,
+        rowFamily: kExecutionProjectEventSourceFamily,
+        rowId: project.id,
+        fingerprint: project.sync.hlc.toString(),
+      ),
       ownerUserId: ownerUserId,
       title: 'Project ${project.status.wire}: ${project.title}',
       summary: _projectSummary(project),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'id': project.id,
         'title': project.title,
         'description': project.description,
@@ -154,6 +177,7 @@ class ExecutionMemoryIndexer {
         ..._sourceEntities(project.source),
       },
       importance: _projectImportance(project),
+      confidence: 1,
     );
   }
 
@@ -164,13 +188,23 @@ class ExecutionMemoryIndexer {
     final targetDate = commitment.targetDate;
     return EventRecord(
       id: '$kExecutionCommitmentMemorySource:${commitment.id}',
-      type: kExecutionCommitmentEventType,
-      timestamp: commitment.sync.updatedAt.toUtc(),
-      source: kExecutionCommitmentMemorySource,
+      domain: DomainScope.execution,
+      kind: EventKind.domain(
+        DomainScope.execution,
+        kExecutionCommitmentEventType,
+      ),
+      occurredAt: commitment.sync.updatedAt.toUtc(),
+      observedAt: commitment.sync.updatedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.execution,
+        rowFamily: kExecutionCommitmentEventSourceFamily,
+        rowId: commitment.id,
+        fingerprint: commitment.sync.hlc.toString(),
+      ),
       ownerUserId: ownerUserId,
       title: 'Commitment ${commitment.status.wire}: ${commitment.title}',
       summary: _commitmentSummary(commitment),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'id': commitment.id,
         'title': commitment.title,
         'description': commitment.description,
@@ -194,6 +228,7 @@ class ExecutionMemoryIndexer {
         ..._sourceEntities(commitment.source),
       },
       importance: _commitmentImportance(commitment),
+      confidence: 1,
     );
   }
 
@@ -204,15 +239,25 @@ class ExecutionMemoryIndexer {
         entry.kind == ExecutionProgressKind.completion;
     return EventRecord(
       id: '$kExecutionProgressMemorySource:${entry.id}',
-      type: kExecutionProgressEventType,
-      timestamp: entry.createdAt.toUtc(),
-      source: kExecutionProgressMemorySource,
+      domain: DomainScope.execution,
+      kind: EventKind.domain(
+        DomainScope.execution,
+        kExecutionProgressEventType,
+      ),
+      occurredAt: entry.createdAt.toUtc(),
+      observedAt: entry.sync.updatedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.execution,
+        rowFamily: kExecutionProgressEventSourceFamily,
+        rowId: entry.id,
+        fingerprint: entry.sync.hlc.toString(),
+      ),
       ownerUserId: ownerUserId,
       title: 'Execution progress: ${entry.kind.wire}',
       summary: entry.note.trim().isEmpty
           ? 'Recorded ${entry.kind.wire} progress.'
           : entry.note.trim(),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'id': entry.id,
         'kind': entry.kind.wire,
         'note': entry.note,
@@ -231,6 +276,7 @@ class ExecutionMemoryIndexer {
           'execution_commitment:${entry.commitmentId}',
       },
       importance: highSignal ? 0.82 : 0.5,
+      confidence: 1,
     );
   }
 }

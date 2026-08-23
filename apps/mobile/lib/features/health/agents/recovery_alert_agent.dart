@@ -1,9 +1,8 @@
 /// `recovery_alert` — fires when HRV shows a sustained decline.
 ///
-/// Runs daily after the Morning Briefing. Reads the last 7 days of HRV
-/// data and checks for 3+ consecutive days below the rolling average.
-/// When triggered, writes an episodic memory and optionally sends a
-/// local notification recommending lighter activity.
+/// Reads the last 7 days of HRV data and checks for 3+ consecutive days below
+/// the rolling average. It emits a temporary artifact; the app-owned attention
+/// arbiter owns interruption policy.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,33 +14,25 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/context_evidence.dart';
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
-import '../../../core/notifications/notification_service.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
-import 'health_notifications.dart';
 
 const String kRecoveryAlertAgentId = 'recovery_alert';
-const String kRecoveryAlertMemorySource = 'agent:recovery_alert';
 
 /// Minimum consecutive below-average days to trigger an alert.
 const int kDeclineThresholdDays = 3;
 
 class RecoveryAlertAgent implements Agent {
   const RecoveryAlertAgent({
-    this.notifier,
     this.signalReader = const RepositoryRecoveryAlertSignalReader(),
   });
 
-  final NotificationService? notifier;
   final RecoveryAlertSignalReader signalReader;
 
   @override
@@ -56,7 +47,6 @@ class RecoveryAlertAgent implements Agent {
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final l10n = agentL10n(ctx.ref);
     final signal = await signalReader.read(ctx);
@@ -81,42 +71,6 @@ class RecoveryAlertAgent implements Agent {
     );
     final artifactId = '$kRecoveryAlertAgentId:$dayKey';
 
-    // Persist memory.
-    final memoryId = '$kRecoveryAlertMemorySource:$dayKey';
-    final memory = MemoryRecord(
-      id: memoryId,
-      kind: MemoryKind.episodic,
-      role: MemoryRole.guidance,
-      authority: EvidenceAuthority.deterministicDerived,
-      ownerUserId: ownerUserId,
-      scope: 'health',
-      source: kRecoveryAlertMemorySource,
-      sourceId: dayKey,
-      title: l10n.healthAgentRecoveryMemoryTitle(dayKey),
-      summary: summary,
-      payload: <String, Object?>{
-        'context': 'HRV decline detected at ${start.toUtc().toIso8601String()}',
-        'decision': 'recommend lighter activity',
-        'reasoning': '${alert.consecutiveDays} consecutive days below baseline',
-        'outcome': <String, Object?>{
-          'baseline_avg_ms': _round(alert.avgBaselineMs),
-          'recent_avg_ms': _round(alert.avgRecentMs),
-          'decline_pct': _round(alert.declinePct),
-          'consecutive_days': alert.consecutiveDays,
-          'signal_source': signal.source,
-          if (signal.traceId != null) 'trace_id': signal.traceId,
-        },
-        'artifact_id': artifactId,
-        if (signal.traceId != null) 'trace_id': signal.traceId,
-      },
-      entities: <String>{'recovery_alert', 'hrv_decline', dayKey},
-      importance: 0.7,
-      confidence: 0.8,
-      validFrom: start.toUtc(),
-      createdAt: start.toUtc(),
-      updatedAt: DateTime.now().toUtc(),
-    );
-    await runtime.remember(memory);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -124,7 +78,6 @@ class RecoveryAlertAgent implements Agent {
       _artifact(
         id: artifactId,
         ownerUserId: ownerUserId,
-        memoryId: memoryId,
         createdAt: start,
         source: signal.source,
         traceId: signal.traceId,
@@ -134,38 +87,9 @@ class RecoveryAlertAgent implements Agent {
       ),
     );
 
-    // Notify.
-    if (notifier != null) {
-      try {
-        final preferenceStore = await ctx.ref.read(
-          agent_providers.agentPreferenceStoreProvider.future,
-        );
-        final notificationsEnabled = await preferenceStore
-            .areNotificationsEnabled(
-              ownerUserId: ownerUserId,
-              agentId: kRecoveryAlertAgentId,
-            );
-        if (notificationsEnabled && await notifier!.hasPermissions()) {
-          await notifier!.showNow(
-            id: HealthNotifications.idForRecoveryAlert(start.toLocal()),
-            title: l10n.healthAgentRecoveryTitle,
-            body: l10n.healthAgentRecoveryNotificationBody(
-              _round(alert.declinePct),
-              alert.consecutiveDays,
-            ),
-            payload: HealthNotifications.payloadForArtifact(artifactId),
-            channel: kHealthBriefingNotificationChannel,
-          );
-        }
-      } on Object {
-        // Best-effort.
-      }
-    }
-
     return _completedResult(
       startedAt: start,
       summary: summary,
-      memoryId: memoryId,
       artifactId: artifactId,
       signal: signal,
       alert: alert,
@@ -175,7 +99,6 @@ class RecoveryAlertAgent implements Agent {
   static AgentRunResult _completedResult({
     required DateTime startedAt,
     required String summary,
-    required String memoryId,
     required String artifactId,
     required RecoveryAlertSignalRead signal,
     required RecoveryAlertSignal alert,
@@ -193,7 +116,6 @@ class RecoveryAlertAgent implements Agent {
         'consecutive_days': alert.consecutiveDays,
         'signal_source': signal.source,
       },
-      memoryId: memoryId,
       artifactId: artifactId,
       traceId: signal.traceId,
     );
@@ -202,7 +124,6 @@ class RecoveryAlertAgent implements Agent {
   static AgentArtifact _artifact({
     required String id,
     required String ownerUserId,
-    required String memoryId,
     required DateTime createdAt,
     required String source,
     required String? traceId,
@@ -300,7 +221,6 @@ class RecoveryAlertAgent implements Agent {
         l10n,
         sourceLabel: l10n.healthAgentRecoveryEvidenceLabel,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 7)),

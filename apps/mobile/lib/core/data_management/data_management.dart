@@ -295,11 +295,10 @@ class DataManagementService {
         'owner_user_id = ? AND domain_scope = ?',
         <Object?>[_ownerUserId, scope.wire],
       );
-      affected += await _deleteIn(
-        table: 'events',
-        column: 'source',
-        values: sourceNames,
-        ownerColumn: 'owner_user_id',
+      affected += await _deleteWhere(
+        'events',
+        'owner_user_id = ? AND domain = ?',
+        <Object?>[_ownerUserId, scope.wire],
       );
       affected += await _deleteIn(
         table: 'domain_event_log',

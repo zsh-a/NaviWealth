@@ -18,17 +18,8 @@ library;
 
 import '../notifications/notification_service.dart';
 
-/// Stable workmanager task name for the daily Morning Briefing.
-/// Mirrors the `Info.plist::BGTaskSchedulerPermittedIdentifiers`
-/// entry and the iOS `AppDelegate.swift` registration call site —
-/// **never** rename one without updating both.
-const String kMorningBriefingTaskName = 'com.naviwealth.morningBriefing';
-
-/// Stable workmanager task name for KnowledgeOS routine reminders.
-/// The background isolate only stamps a due flag; foreground catch-up runs
-/// `knowledge_routine_due` through the shared agent controller.
-const String kKnowledgeRoutineDueTaskName =
-    'com.naviwealth.knowledgeRoutineDue';
+/// Background-safe inspection of a precomputed Life attention snapshot.
+const String kLifeAttentionTaskName = 'com.naviwealth.lifeAttention';
 
 /// Stable workmanager task name for ExecutionOS weekly review catch-up.
 /// Foreground catch-up runs `execution_review` through the shared agent
@@ -44,15 +35,7 @@ const String kGarminSyncTaskName = 'com.naviwealth.garminSync';
 /// identifiers.
 const String kHealthPlatformSyncTaskName = 'com.naviwealth.healthPlatformSync';
 
-/// SharedPreferences key set by the background callback when the OS
-/// fires the periodic task. The foreground app reads it on launch and
-/// triggers an in-process scheduled-agent tick if found (the background
-/// isolate can't run the full agent — no ProviderContainer / Drift access).
-const String kMorningBriefingDueAtKey = 'lifeos.health.briefing.dueAt';
-
-/// SharedPreferences key set by the background callback when KnowledgeOS
-/// routine reminders should catch up in the foreground process.
-const String kKnowledgeRoutineDueAtKey = 'lifeos.knowledge.routineDue.dueAt';
+const String kLifeAttentionDueAtKey = 'lifeos.attention.dueAt';
 
 /// SharedPreferences key set by the background callback when ExecutionOS
 /// review should catch up in the foreground process.
@@ -85,34 +68,17 @@ class BackgroundTaskSpec {
   final Duration defaultInterval;
 }
 
-const BackgroundTaskSpec kMorningBriefingBackgroundTask = BackgroundTaskSpec(
-  name: kMorningBriefingTaskName,
-  dueAtPreferenceKey: kMorningBriefingDueAtKey,
+const BackgroundTaskSpec kLifeAttentionBackgroundTask = BackgroundTaskSpec(
+  name: kLifeAttentionTaskName,
+  dueAtPreferenceKey: kLifeAttentionDueAtKey,
   defaultInterval: Duration(hours: 24),
 );
-
-const BackgroundTaskSpec kKnowledgeRoutineDueBackgroundTask =
-    BackgroundTaskSpec(
-      name: kKnowledgeRoutineDueTaskName,
-      dueAtPreferenceKey: kKnowledgeRoutineDueAtKey,
-      defaultInterval: Duration(hours: 24),
-    );
 
 const BackgroundTaskSpec kExecutionReviewBackgroundTask = BackgroundTaskSpec(
   name: kExecutionReviewTaskName,
   dueAtPreferenceKey: kExecutionReviewDueAtKey,
   defaultInterval: Duration(days: 7),
 );
-
-const NotificationChannelSpec kMorningBriefingWakeNotificationChannel =
-    NotificationChannelSpec(
-      id: 'lifeos.health.briefing',
-      name: 'Morning Briefing',
-      description: 'Daily HealthOS morning briefing summaries.',
-    );
-
-int morningBriefingWakeNotificationId(DateTime localDay) =>
-    localDay.year * 10000 + localDay.month * 100 + localDay.day;
 
 const BackgroundTaskSpec kGarminSyncBackgroundTask = BackgroundTaskSpec(
   name: kGarminSyncTaskName,
@@ -127,12 +93,21 @@ const BackgroundTaskSpec kHealthPlatformSyncBackgroundTask = BackgroundTaskSpec(
 );
 
 const List<BackgroundTaskSpec> kBackgroundTaskSpecs = <BackgroundTaskSpec>[
-  kMorningBriefingBackgroundTask,
-  kKnowledgeRoutineDueBackgroundTask,
+  kLifeAttentionBackgroundTask,
   kExecutionReviewBackgroundTask,
   kGarminSyncBackgroundTask,
   kHealthPlatformSyncBackgroundTask,
 ];
+
+const NotificationChannelSpec kLifeAttentionNotificationChannel =
+    NotificationChannelSpec(
+      id: 'lifeos.attention',
+      name: 'Life Navigator',
+      description: 'High-priority evidence-backed LifeOS judgments.',
+    );
+
+int lifeAttentionNotificationId(DateTime localDay) =>
+    100000000 + localDay.year * 10000 + localDay.month * 100 + localDay.day;
 
 BackgroundTaskSpec? backgroundTaskSpecForName(String taskName) {
   for (final spec in kBackgroundTaskSpecs) {

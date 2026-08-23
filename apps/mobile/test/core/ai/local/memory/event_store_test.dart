@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 
 import '../../../../core/persistence/test_database.dart';
 
@@ -12,15 +14,23 @@ EventRecord _ev({
   DateTime? timestamp,
   Set<String> entities = const {'NVDA'},
   double importance = 0.6,
+  DomainScope domain = DomainScope.finance,
 }) => EventRecord(
   id: id,
-  type: type,
-  timestamp: timestamp ?? DateTime.utc(2026, 5, 20),
-  source: source,
+  domain: domain,
+  kind: EventKind.domain(domain, type),
+  occurredAt: timestamp ?? DateTime.utc(2026, 5, 20),
+  observedAt: timestamp ?? DateTime.utc(2026, 5, 20),
+  sourceIdentity: SourceIdentity(
+    domain: domain,
+    rowFamily: source,
+    rowId: id,
+    fingerprint: 'hlc-$id',
+  ),
   ownerUserId: ownerUserId,
   title: 'NVDA put closed',
   summary: 'cash_secured_put closed.',
-  payload: const {'symbol': 'NVDA'},
+  facts: const {'symbol': 'NVDA'},
   entities: entities,
   importance: importance,
 );
@@ -37,9 +47,14 @@ void main() {
       await store.writeEvent(_ev(id: 'e1'));
       final back = await store.readEvent('e1');
       expect(back, isNotNull);
-      expect(back!.type, 'trade_closed');
+      expect(back!.kind.name, 'trade_closed');
+      expect(back.domain, DomainScope.finance);
+      expect(back.kind.wire, 'finance.trade_closed');
+      expect(back.sourceIdentity.rowId, 'e1');
+      expect(back.sourceIdentity.fingerprint, 'hlc-e1');
+      expect(back.evidenceAnchor, isNotNull);
       expect(back.entities, {'NVDA'});
-      expect(back.payload['symbol'], 'NVDA');
+      expect(back.facts['symbol'], 'NVDA');
     });
 
     test('writeEvent is idempotent by id', () async {
@@ -63,7 +78,9 @@ void main() {
 
     test('recentEvents filters by source', () async {
       await store.writeEvent(_ev(id: 'a', source: 'options_trade_journal'));
-      await store.writeEvent(_ev(id: 'b', source: 'health:sleep'));
+      await store.writeEvent(
+        _ev(id: 'b', source: 'health:sleep', domain: DomainScope.health),
+      );
       final out = await store.recentEvents(
         ownerUserId: 'u1',
         source: 'health:sleep',
@@ -75,7 +92,9 @@ void main() {
       'recentEvents applies sourcePrefixes as a strict allow-list',
       () async {
         await store.writeEvent(_ev(id: 'finance'));
-        await store.writeEvent(_ev(id: 'health', source: 'health:sleep'));
+        await store.writeEvent(
+          _ev(id: 'health', source: 'health:sleep', domain: DomainScope.health),
+        );
         final out = await store.recentEvents(
           ownerUserId: 'u1',
           sourcePrefixes: const {'health:'},
@@ -96,6 +115,25 @@ void main() {
       },
     );
 
+    test('recentEvents applies domain as a strict allow-list', () async {
+      await store.writeEvent(_ev(id: 'finance'));
+      await store.writeEvent(
+        _ev(id: 'health', source: 'health:sleep', domain: DomainScope.health),
+      );
+
+      final health = await store.recentEvents(
+        ownerUserId: 'u1',
+        domains: const <DomainScope>{DomainScope.health},
+      );
+      expect(health.map((event) => event.id), ['health']);
+
+      final denied = await store.recentEvents(
+        ownerUserId: 'u1',
+        domains: const <DomainScope>{},
+      );
+      expect(denied, isEmpty);
+    });
+
     test('sourcePrefixes escapes SQL wildcard characters', () async {
       await store.writeEvent(_ev(id: 'literal', source: r'know_%:notes'));
       await store.writeEvent(_ev(id: 'lookalike', source: 'knowXX:notes'));
@@ -106,12 +144,14 @@ void main() {
       expect(out.map((event) => event.id), ['literal']);
     });
 
-    test('recentEvents filters by type set', () async {
+    test('recentEvents filters by event kind set', () async {
       await store.writeEvent(_ev(id: 'open', type: 'trade_opened'));
       await store.writeEvent(_ev(id: 'close', type: 'trade_closed'));
       final out = await store.recentEvents(
         ownerUserId: 'u1',
-        typeFilter: const {'trade_closed'},
+        kindFilter: <EventKind>{
+          const EventKind(namespace: 'finance', name: 'trade_closed'),
+        },
       );
       expect(out.map((e) => e.id), ['close']);
     });

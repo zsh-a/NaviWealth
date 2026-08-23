@@ -10,11 +10,6 @@ final _agentReviewTitleProvider = Provider<String>(
   (ref) => knowledgeAgentL10n(ref).knowledgeAgentReviewTitle,
 );
 
-final _agentRoutineOverdueProvider = Provider<String>(
-  (ref) =>
-      knowledgeAgentL10n(ref).knowledgeAgentRoutineLeadOverdue(3, 'HK card'),
-);
-
 final _agentContradictionProvider = Provider<String>(
   (ref) => knowledgeAgentL10n(
     ref,
@@ -38,10 +33,6 @@ void main() {
 
     expect(container.read(_agentReviewTitleProvider), 'Weekly review');
     expect(
-      container.read(_agentRoutineOverdueProvider),
-      'HK card (overdue by 3 days)',
-    );
-    expect(
       container.read(_agentContradictionProvider),
       'Detected 1 assumption_invalidated issue: detail',
     );
@@ -51,7 +42,6 @@ void main() {
     final container = await _containerWithLocale(const Locale('zh'));
 
     expect(container.read(_agentReviewTitleProvider), '本周复盘');
-    expect(container.read(_agentRoutineOverdueProvider), 'HK card（已逾期 3 天）');
     expect(
       container.read(_agentContradictionProvider),
       '检出 1 处 assumption_invalidated：detail',

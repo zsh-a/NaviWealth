@@ -18,10 +18,7 @@ import workmanager_apple  // HealthOS background task scheduling
     // the Dart `Workmanager().registerPeriodicTask(uniqueName, …)`
     // task names.
     WorkmanagerPlugin.registerBGProcessingTask(
-      withIdentifier: "com.naviwealth.morningBriefing"
-    )
-    WorkmanagerPlugin.registerBGProcessingTask(
-      withIdentifier: "com.naviwealth.knowledgeRoutineDue"
+      withIdentifier: "com.naviwealth.lifeAttention"
     )
     WorkmanagerPlugin.registerBGProcessingTask(
       withIdentifier: "com.naviwealth.executionReview"

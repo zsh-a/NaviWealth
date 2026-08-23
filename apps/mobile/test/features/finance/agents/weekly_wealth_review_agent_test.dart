@@ -9,14 +9,9 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
-import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
-import 'package:naviwealth/core/ai/local/memory/event_store.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/providers.dart'
     as finance_agent_providers;
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
@@ -37,11 +32,9 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: _runtimeForDb(db),
     );
 
     expect(result.status, AgentRunStatus.skipped);
-    expect(result.memoryId, isNull);
     expect(result.artifactId, isNull);
     final failures = evaluateAgentOutcomeCase(
       regressionCase: agentOutcomeRegressionCaseById(
@@ -55,7 +48,6 @@ void main() {
   test('persists deterministic weekly wealth artifact with evidence', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final traceStore = InMemoryAiTraceStore();
 
@@ -64,13 +56,12 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: runtime,
       artifactStore: store,
       traceStore: traceStore,
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kWeeklyWealthReviewMemorySource:2026-07-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, '$kWeeklyWealthReviewAgentId:2026-07-05');
     expect(result.traceId, '$kWeeklyWealthReviewAgentId:trace:2026-07-05');
     expect(result.summary, contains('Net worth ¥8,000.00'));
@@ -81,7 +72,7 @@ void main() {
     expect(artifact!.domain, 'finance');
     expect(artifact.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.warning);
-    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.memoryId, isNull);
     expect(artifact.traceId, result.traceId);
     expect(
       artifact.insights.map((insight) => insight.title),
@@ -133,7 +124,6 @@ void main() {
   test('persists weekly wealth artifact in Chinese when requested', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final l10n = lookupAppLocalizations(const Locale('zh'));
 
@@ -142,7 +132,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: runtime,
       artifactStore: store,
       l10n: l10n,
     );
@@ -163,7 +152,6 @@ void main() {
   test('rounds long decimal money amounts for display', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final l10n = lookupAppLocalizations(const Locale('zh'));
 
@@ -172,7 +160,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: runtime,
       artifactStore: store,
       l10n: l10n,
     );
@@ -239,14 +226,6 @@ void main() {
     expect(run?.artifactId, 'wealth-review-new');
     expect(run?.traceId, 'trace-new');
   });
-}
-
-MemoryRuntime _runtimeForDb(AppDatabase db) {
-  return MemoryRuntime(
-    embedder: StubEmbedder(),
-    memoryStore: SqliteMemoryStore(db: db),
-    eventStore: SqliteEventStore(db: db),
-  );
 }
 
 DashboardSnapshot _snapshot() {

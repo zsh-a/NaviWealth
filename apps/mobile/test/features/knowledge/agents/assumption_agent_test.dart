@@ -6,9 +6,6 @@ import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
-import 'package:naviwealth/core/ai/contracts/memory_record.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -158,7 +155,6 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-        memoryRuntimeProvider.overrideWith((ref) async => _FakeMemoryRuntime()),
       ],
     );
     addTearDown(container.dispose);
@@ -197,12 +193,10 @@ void main() {
     final db = makeTestDatabase();
     addTearDown(db.close);
     final artifactStore = SqliteAgentArtifactStore(db: db);
-    final runtime = _FakeMemoryRuntime();
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-        memoryRuntimeProvider.overrideWith((ref) async => runtime),
         agent_providers.agentArtifactStoreProvider.overrideWith(
           (ref) async => artifactStore,
         ),
@@ -236,17 +230,15 @@ void main() {
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kKnowledgeAssumptionMemorySource:2026-07-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, '$kKnowledgeAssumptionAgentId:2026-07-05');
     expect(result.traceId, 'trace-assumption-1');
-    expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
-    expect(runtime.remembered?.payload['trace_id'], 'trace-assumption-1');
 
     final artifact = await artifactStore.read(result.artifactId!);
     expect(artifact, isNotNull);
     expect(artifact!.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.attention);
-    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.memoryId, isNull);
     expect(artifact.traceId, 'trace-assumption-1');
     expect(artifact.insights.single.title, 'Stale assumptions');
     expect(artifact.evidence.map((ref) => ref.id), ['assumption-stale']);
@@ -375,17 +367,4 @@ class _FixedAssumptionReader implements AssumptionReviewReader {
 
   @override
   Future<AssumptionReviewSnapshot> listOpen(AgentContext ctx) async => result;
-}
-
-class _FakeMemoryRuntime implements MemoryRuntime {
-  MemoryRecord? remembered;
-
-  @override
-  Future<void> remember(MemoryRecord record) async {
-    remembered = record;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

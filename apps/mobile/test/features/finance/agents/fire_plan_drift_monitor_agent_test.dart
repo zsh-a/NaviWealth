@@ -12,14 +12,9 @@ import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
-import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
-import 'package:naviwealth/core/ai/local/memory/event_store.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
 import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
@@ -51,7 +46,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: _runtimeForDb(db),
     );
 
     expect(result.status, AgentRunStatus.skipped);
@@ -73,7 +67,6 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: _runtimeForDb(db),
     );
 
     expect(result.status, AgentRunStatus.skipped);
@@ -91,7 +84,6 @@ void main() {
   test('persists deterministic FIRE drift artifact', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    final runtime = _runtimeForDb(db);
     final store = SqliteAgentArtifactStore(db: db);
     final traceStore = InMemoryAiTraceStore();
     final state = _state(
@@ -112,14 +104,13 @@ void main() {
       ownerUserId: 'u',
       startedAt: now,
       finishedAt: now.add(const Duration(milliseconds: 20)),
-      runtime: runtime,
       stressTests: stressTests,
       artifactStore: store,
       traceStore: traceStore,
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kFirePlanDriftMonitorMemorySource:2026-07-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, '$kFirePlanDriftMonitorAgentId:2026-07-05');
     expect(result.traceId, '$kFirePlanDriftMonitorAgentId:trace:2026-07-05');
     expect(result.payload['finding_count'], greaterThan(0));
@@ -200,7 +191,6 @@ void main() {
     final artifact = FirePlanDriftAnalysis.fromReview(review).toArtifact(
       id: 'fire-zh',
       ownerUserId: 'u',
-      memoryId: 'memory-zh',
       traceId: null,
       createdAt: now,
       l10n: lookupAppLocalizations(const Locale('zh')),
@@ -234,7 +224,6 @@ void main() {
         ).toArtifact(
           id: 'fire-trend',
           ownerUserId: 'u',
-          memoryId: 'memory-trend',
           traceId: null,
           createdAt: now,
           l10n: lookupAppLocalizations(const Locale('zh')),
@@ -311,14 +300,6 @@ void main() {
       'wealth-review',
     ]);
   });
-}
-
-MemoryRuntime _runtimeForDb(AppDatabase db) {
-  return MemoryRuntime(
-    embedder: StubEmbedder(),
-    memoryStore: SqliteMemoryStore(db: db),
-    eventStore: SqliteEventStore(db: db),
-  );
 }
 
 FireState _state({

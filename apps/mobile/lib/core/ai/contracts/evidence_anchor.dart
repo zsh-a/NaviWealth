@@ -13,13 +13,29 @@
 /// pair only.
 library;
 
+import 'source_identity.dart';
+
 /// One reference from a tool result back to the entity it cited.
 class EvidenceAnchor {
   const EvidenceAnchor({
     required this.entityTable,
     required this.entityId,
     this.label,
+    this.sourceIdentity,
   });
+
+  factory EvidenceAnchor.fromSource(SourceIdentity source, {String? label}) {
+    final separator = source.rowFamily.indexOf(':');
+    final entityTable = separator < 0
+        ? source.rowFamily
+        : source.rowFamily.substring(separator + 1);
+    return EvidenceAnchor(
+      entityTable: entityTable,
+      entityId: source.rowId,
+      label: label,
+      sourceIdentity: source,
+    );
+  }
 
   /// Drift table name — `postings`, `assets`, `journal_entries`,
   /// `accounts`, etc. Used to dispatch to the right detail page.
@@ -33,17 +49,28 @@ class EvidenceAnchor {
   /// available to resolve the label cheaply.
   final String? label;
 
+  /// Typed identity used by Event/Agent evidence. Legacy tool anchors may
+  /// leave this null and continue to route by [entityTable] + [entityId].
+  final SourceIdentity? sourceIdentity;
+
   Map<String, Object?> toJson() => <String, Object?>{
     'entity_table': entityTable,
     'entity_id': entityId,
     if (label != null) 'label': label,
+    if (sourceIdentity != null) 'source_identity': sourceIdentity!.toJson(),
   };
 
-  factory EvidenceAnchor.fromJson(Map<String, Object?> json) => EvidenceAnchor(
-    entityTable: json['entity_table'] as String? ?? '',
-    entityId: json['entity_id'] as String? ?? '',
-    label: json['label'] as String?,
-  );
+  factory EvidenceAnchor.fromJson(Map<String, Object?> json) {
+    final sourceJson = json['source_identity'];
+    return EvidenceAnchor(
+      entityTable: json['entity_table'] as String? ?? '',
+      entityId: json['entity_id'] as String? ?? '',
+      label: json['label'] as String?,
+      sourceIdentity: sourceJson is Map
+          ? SourceIdentity.fromJson(sourceJson.cast<String, Object?>())
+          : null,
+    );
+  }
 }
 
 /// Compose a tool result envelope that pairs [result] with a list of

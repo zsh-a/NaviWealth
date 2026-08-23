@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/ai/contracts/source_identity.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/life_signal.dart';
 import '../../features/execution/agents/providers.dart' as agents;
@@ -10,6 +11,7 @@ import '../../features/execution/domain/execution_models.dart';
 import '../../features/life/data/life_events_provider.dart';
 
 const _artifactFamily = 'execution:agent_artifacts';
+const _actionFamily = 'exec:execution_actions';
 
 DomainLifeSignalSlice executionLifeSignals(Ref ref, DateTime now) {
   final events = <LifeEvent>[];
@@ -17,33 +19,54 @@ DomainLifeSignalSlice executionLifeSignals(Ref ref, DateTime now) {
   final today = ref.watch(executionTodayActionsProvider).value;
   final open = ref.watch(executionOpenActionsProvider).value ?? today;
   if (open != null) {
+    evaluated.add(_actionFamily);
     final blocked = open
         .where((action) => action.status == ExecutionActionStatus.blocked)
-        .length;
-    if (blocked > 0) {
+        .toList(growable: false);
+    if (blocked.isNotEmpty) {
       events.add(
         LifeEvent(
           id: 'sig-exec-blocked',
           at: now,
           domain: DomainScope.execution,
           template: LifeEventTemplate.executionBlocked,
-          params: <String>['$blocked'],
+          params: <String>['${blocked.length}'],
           routePath: ExecutionRoutes.today,
           priority: LifeSignalPriority.high,
+          evidence: <SourceIdentity>[
+            for (final action in blocked.take(8))
+              SourceIdentity(
+                domain: DomainScope.execution,
+                rowFamily: _actionFamily,
+                rowId: action.id,
+                fingerprint: action.sync.hlc.toString(),
+              ),
+          ],
         ),
       );
     }
-    final due = open.where((action) => action.isDue(now)).length;
-    if (due > 0) {
+    final due = open
+        .where((action) => action.isDue(now))
+        .toList(growable: false);
+    if (due.isNotEmpty) {
       events.add(
         LifeEvent(
           id: 'sig-exec-due',
           at: now,
           domain: DomainScope.execution,
           template: LifeEventTemplate.executionDue,
-          params: <String>['$due'],
+          params: <String>['${due.length}'],
           routePath: ExecutionRoutes.today,
           priority: LifeSignalPriority.high,
+          evidence: <SourceIdentity>[
+            for (final action in due.take(8))
+              SourceIdentity(
+                domain: DomainScope.execution,
+                rowFamily: _actionFamily,
+                rowId: action.id,
+                fingerprint: action.sync.hlc.toString(),
+              ),
+          ],
         ),
       );
     }

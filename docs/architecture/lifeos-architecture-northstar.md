@@ -16,7 +16,7 @@ NaviWealth is a Personal LifeOS with multiple opt-in domains:
 | Domain | Role | Activation |
 |---|---|---|
 | FinanceOS | Seed domain: wealth, cashflow, portfolio, FIRE, options income | Always on |
-| HealthOS | Health signals, recovery, morning briefing | User opt-in |
+| HealthOS | Health signals, recovery, and trends | User opt-in |
 | KnowledgeOS | Decision memory, review, assumptions, routines | User opt-in |
 | ExecutionOS | Personal actions, projects, commitments, and progress review | User opt-in |
 
@@ -100,6 +100,11 @@ Domain-owned code:
 - `features/<domain>/agents/`
 - `features/<domain>/composition/`
 
+App-owned cross-domain synthesis lives under `app/agents/`. It consumes only
+domain-neutral signals/context and must not recalculate domain business values.
+The production shape is many deterministic domain analyzers plus one bounded
+Life synthesis agent, not agent-to-agent orchestration.
+
 Rules:
 
 - `ToolDescriptor`, `DeviceTool`, dispatcher, traces, proposal envelopes, and runtime loops are cross-domain contracts.
@@ -151,10 +156,17 @@ The backend remains schema-agnostic. Domain semantics stay on the client.
 
 Memory Runtime is cross-domain infrastructure:
 
-- Events: "what happened".
-- Memories: semantic, episodic, procedural, and event-derived long-term context.
+- Events: typed evidence identity for "what happened" (`domain`, `kind`,
+  occurred/observed time, source family/row/fingerprint, facts, entities,
+  confidence, and evidence anchor).
+- Memories: source facts, explicitly confirmed long-term memory, and
+  deterministic derived memory with required provenance.
 - Embeddings: model-fingerprint-keyed side table.
 - Context Builder: slot-based retrieval for agent and chat prompts.
+- `PersonalProfileSnapshot`: stable, structured, explicitly confirmed goals,
+  preferences, constraints, baselines, and routines.
+- `LifeContextSnapshot`: active-domain dynamic state, freshness, changes,
+  relevant history, and a deterministic fingerprint.
 
 Domain indexers convert domain rows into events and memories:
 
@@ -163,6 +175,10 @@ Domain indexers convert domain rows into events and memories:
 - Knowledge object and decision indexers.
 
 New indexers belong in the owning domain and are contributed through the owning `DomainPack.memoryBootstrapBuilder`; `app/domain_bootstrap.dart` only loops active packs. Do not make `core/ai/local/memory/` import a domain.
+
+Agent Artifacts, repeated reviews, attention decisions, and outcome feedback
+are not durable Memory. A model inference can enter the stable profile only
+through an explicit Memory proposal and user confirmation.
 
 ## Rust Boundary
 

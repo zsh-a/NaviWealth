@@ -19,6 +19,7 @@ import '../core/data_management/providers.dart';
 import '../core/lifeos/domain_pack.dart';
 import '../core/logging/providers.dart';
 import '../core/sync/providers.dart';
+import 'agents/providers.dart';
 import 'domain_composition.dart';
 
 /// Starts Memory Runtime indexers for active domains. When an optional domain
@@ -56,6 +57,7 @@ final authenticatedStartupBootstrapProvider = Provider<void>((ref) {
   ref.watch(memoryRuntimeMaintenanceBootstrapProvider);
   ref.watch(memoryLayerBootstrapProvider);
   ref.watch(agentForegroundSchedulerBootstrapProvider);
+  ref.watch(lifeIntelligenceBootstrapProvider);
 });
 
 /// Best-effort derived-vector hygiene. Native model loading remains lazy and

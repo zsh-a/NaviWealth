@@ -1,7 +1,7 @@
 /// HealthOS domain detail settings.
 ///
 /// Shows HealthOS-specific operational controls: Today link, platform sync,
-/// and morning briefing time. Reached from the Settings overview's
+/// and source synchronization. Reached from the Settings overview's
 /// HealthOS row.
 library;
 
@@ -15,7 +15,6 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/health_sync_service.dart';
 import '../data/health_sync_status.dart';
-import '../data/morning_briefing_preferences.dart';
 import '../data/providers.dart' as health_data;
 import 'garmin_sync_status_card.dart';
 
@@ -39,11 +38,6 @@ class HealthDomainSettingsPage extends ConsumerWidget {
             child: Column(children: <Widget>[_HealthPlatformSyncRow()]),
           ),
           const GarminSyncStatusCard(),
-          const SizedBox(height: AppSpacing.s8),
-          const SoftCard.raised(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
-            child: _BriefingHourRow(),
-          ),
         ],
       ),
     );
@@ -126,110 +120,6 @@ class _HealthPlatformSyncRowState
       label: l10n.settingsDomainsHealthSyncTitle,
       subtitle: _subtitle(l10n, persisted),
       onTap: _running ? () {} : _run,
-    );
-  }
-}
-
-// ── Briefing hour ────────────────────────────────────────────────────────────
-
-class _BriefingHourRow extends ConsumerWidget {
-  const _BriefingHourRow();
-
-  Future<void> _pick(BuildContext context, WidgetRef ref, int current) async {
-    final l10n = AppLocalizations.of(context);
-    final picked = await showAppSheet<int>(
-      context: context,
-      title: l10n.settingsDomainsBriefingTimeTitle,
-      subtitle: l10n.settingsDomainsBriefingTimeHelp,
-      footer: FButton(
-        variant: FButtonVariant.outline,
-        onPress: () => Navigator.of(context).maybePop(),
-        child: Text(l10n.commonCancel),
-      ),
-      builder: (_) => _BriefingHourSheet(selectedHour: current),
-    );
-    if (picked == null) return;
-    await ref.read(morningBriefingHourProvider.notifier).set(picked);
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final hour = ref.watch(morningBriefingHourProvider);
-    final label = hour.toString().padLeft(2, '0');
-    final l10n = AppLocalizations.of(context);
-    return InlineLinkRow(
-      icon: FLucideIcons.clock,
-      label: l10n.settingsDomainsBriefingTimeTitle,
-      subtitle: l10n.settingsDomainsBriefingTimeSubtitle(label),
-      trailingValue: '$label:00',
-      onTap: () => _pick(context, ref, hour),
-    );
-  }
-}
-
-/// Compact horizontal-scrollable hour picker.
-class _BriefingHourSheet extends StatefulWidget {
-  const _BriefingHourSheet({required this.selectedHour});
-
-  final int selectedHour;
-
-  @override
-  State<_BriefingHourSheet> createState() => _BriefingHourSheetState();
-}
-
-class _BriefingHourSheetState extends State<_BriefingHourSheet> {
-  late final ScrollController _controller = ScrollController(
-    initialScrollOffset: (widget.selectedHour * 54.0 - 108).clamp(0, 1000),
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return SizedBox(
-      height: AppControlHeights.pickerStrip,
-      child: ListView.separated(
-        controller: _controller,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-        itemCount: 24,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s6),
-        itemBuilder: (_, index) {
-          final selected = index == widget.selectedHour;
-          return AppTappable(
-            onPress: () => Navigator.of(context).pop(index),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            child: AnimatedContainer(
-              duration: AppMotionPolicy.duration(context, Motion.medium),
-              curve: Motion.standardDecelerate,
-              width: 48,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected
-                    ? colors.primary.withValues(alpha: AppOpacity.subtle)
-                    : colors.muted,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                border: Border.all(
-                  color: selected
-                      ? colors.primary.withValues(alpha: AppOpacity.prominent)
-                      : colors.border.withValues(alpha: AppOpacity.muted),
-                ),
-              ),
-              child: Text(
-                '${index.toString().padLeft(2, '0')}:00',
-                style: selected
-                    ? context.captionLabelStyle.copyWith(color: colors.primary)
-                    : context.captionStyle.copyWith(color: colors.foreground),
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 }

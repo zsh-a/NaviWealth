@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/agent_runtime/context/app_chat_context_assembler.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
@@ -27,6 +29,7 @@ MemoryRecord _memory({
 }) => MemoryRecord(
   id: id,
   kind: MemoryKind.semantic,
+  authority: EvidenceAuthority.userConfirmed,
   ownerUserId: _owner,
   scope: '*',
   source: source,
@@ -41,16 +44,29 @@ MemoryRecord _memory({
   updatedAt: _now,
 );
 
-EventRecord _event({required String id, required String source}) => EventRecord(
-  id: id,
-  type: 'fixture',
-  timestamp: _now,
-  source: source,
-  ownerUserId: _owner,
-  summary: id,
-  payload: const <String, Object?>{},
-  entities: const <String>{},
-);
+EventRecord _event({
+  required String id,
+  required DomainScope domain,
+  required String source,
+}) {
+  return EventRecord(
+    id: id,
+    domain: domain,
+    kind: EventKind.domain(domain, 'fixture'),
+    occurredAt: _now,
+    observedAt: _now,
+    sourceIdentity: SourceIdentity(
+      domain: domain,
+      rowFamily: source,
+      rowId: id,
+      fingerprint: 'fixture-$id',
+    ),
+    ownerUserId: _owner,
+    summary: id,
+    facts: const <String, Object?>{},
+    entities: const <String>{},
+  );
+}
 
 void main() {
   test(
@@ -79,10 +95,18 @@ void main() {
         ),
       );
       await runtime.recordEvent(
-        _event(id: 'finance-event', source: 'options_trade_journal'),
+        _event(
+          id: 'finance-event',
+          domain: DomainScope.finance,
+          source: 'options_trade_journal',
+        ),
       );
       await runtime.recordEvent(
-        _event(id: 'health-event', source: 'health:health_metrics'),
+        _event(
+          id: 'health-event',
+          domain: DomainScope.health,
+          source: 'health:health_metrics',
+        ),
       );
 
       final blocks = await prepareAppChatContextBlocks(
@@ -132,31 +156,34 @@ void main() {
     },
   );
 
-  test('empty active-domain allow-list returns no context', () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final runtime = MemoryRuntime(
-      embedder: StubEmbedder(),
-      memoryStore: SqliteMemoryStore(db: db),
-      eventStore: SqliteEventStore(db: db),
-    );
+  test(
+    'empty active-domain allow-list returns only the stable profile',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final runtime = MemoryRuntime(
+        embedder: StubEmbedder(),
+        memoryStore: SqliteMemoryStore(db: db),
+        eventStore: SqliteEventStore(db: db),
+      );
 
-    final blocks = await prepareAppChatContextBlocks(
-      contextBuilder: ContextBuilder(runtime: runtime),
-      accessPolicy: const MemoryAccessPolicy.denyAll(),
-      profileBuilder: PersonalProfileSnapshotBuilder(
-        SqlitePersonalProfileStore(db),
-      ),
-      activeDomainScopes: const <String>{},
-      aiContext: const AiContext(path: '/'),
-      request: const ChatContextPrepRequest(
-        ownerUserId: _owner,
-        sessionId: 's1',
-        turnId: 't1',
-        userMessage: 'hello',
-      ),
-    );
+      final blocks = await prepareAppChatContextBlocks(
+        contextBuilder: ContextBuilder(runtime: runtime),
+        accessPolicy: const MemoryAccessPolicy.denyAll(),
+        profileBuilder: PersonalProfileSnapshotBuilder(
+          SqlitePersonalProfileStore(db),
+        ),
+        activeDomainScopes: const <String>{},
+        aiContext: const AiContext(path: '/'),
+        request: const ChatContextPrepRequest(
+          ownerUserId: _owner,
+          sessionId: 's1',
+          turnId: 't1',
+          userMessage: 'hello',
+        ),
+      );
 
-    expect(blocks, isEmpty);
-  });
+      expect(blocks, isEmpty);
+    },
+  );
 }

@@ -17,6 +17,37 @@ Future<void> _reindexExperiments(
     final body = e.methodMd.isEmpty
         ? e.hypothesis
         : '${e.hypothesis} — method: ${_truncate(e.methodMd)}';
+    final importance = switch (e.status) {
+      ExperimentStatus.running => 0.8,
+      ExperimentStatus.done => 0.85,
+      ExperimentStatus.planned => 0.5,
+      ExperimentStatus.abandoned => 0.4,
+    };
+    await recordKnowledgeStateEvent(
+      runtime,
+      ownerUserId: ownerUserId,
+      kind: 'knowledge_experiment_state',
+      sourceFamily: kKnowledgeExperimentEventSourceFamily,
+      rowId: e.id,
+      fingerprint: e.sync.hlc.toString(),
+      occurredAt: e.sync.updatedAt,
+      observedAt: now,
+      title: e.hypothesis,
+      summary: body,
+      facts: <String, Object?>{
+        'status': e.status.wire,
+        'metrics': e.metrics,
+        if (e.targetAssumptionId != null)
+          'target_assumption_id': e.targetAssumptionId,
+      },
+      entities: <String>{
+        'knowledge_experiment',
+        e.id,
+        if (e.targetAssumptionId != null) 'assumption:${e.targetAssumptionId}',
+      },
+      importance: importance,
+      confidence: 1,
+    );
     await runtime.remember(
       MemoryRecord(
         id: id,
@@ -46,12 +77,7 @@ Future<void> _reindexExperiments(
           if (e.targetAssumptionId != null)
             'assumption:${e.targetAssumptionId}',
         },
-        importance: switch (e.status) {
-          ExperimentStatus.running => 0.8,
-          ExperimentStatus.done => 0.85,
-          ExperimentStatus.planned => 0.5,
-          ExperimentStatus.abandoned => 0.4,
-        },
+        importance: importance,
         confidence: 0.85,
         validFrom: e.startedAt.toUtc(),
         createdAt: e.startedAt.toUtc(),

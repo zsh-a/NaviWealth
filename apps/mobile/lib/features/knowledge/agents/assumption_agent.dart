@@ -5,7 +5,7 @@
 /// MVP keeps the cadence interval-based — event-driven invalidation
 /// arrives once the indexer wires `know:*` events). Surfaces every
 /// active assumption that hasn't been verified in > 90 days into the
-/// Review tab via an episodic memory.
+/// Review tab via an expiring Agent Artifact.
 library;
 
 import '../../../core/ai/agents/agent.dart';
@@ -14,8 +14,6 @@ import '../../../core/ai/agents/agent_artifact_presentation.dart';
 import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
@@ -25,10 +23,8 @@ import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_agent_l10n.dart';
-import '_agent_memory.dart';
 
 const String kKnowledgeAssumptionAgentId = 'knowledge_assumption';
-const String kKnowledgeAssumptionMemorySource = 'agent:knowledge_assumption';
 
 /// Threshold beyond which an active assumption is considered "stale" —
 /// surfaced into the Review tab so the user gets nudged to either
@@ -59,7 +55,6 @@ class AssumptionAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = knowledgeAgentL10n(ctx.ref);
 
     final snapshot = await assumptionReader.listOpen(ctx);
@@ -82,25 +77,6 @@ class AssumptionAgent implements Agent {
     final summary = _summarize(l10n, stale.length, stale.first.statement);
     final dayKey = AppFormatters.utcDayKey(start);
     final artifactId = '$kKnowledgeAssumptionAgentId:$dayKey';
-    final built = buildAgentMemory(
-      source: kKnowledgeAssumptionMemorySource,
-      kind: MemoryKind.episodic,
-      ownerUserId: ownerUserId,
-      start: start,
-      finished: finished,
-      title: l10n.knowledgeAgentAssumptionTitle,
-      summary: summary,
-      payload: <String, Object?>{
-        'stale_assumption_ids': stale.map((a) => a.id).toList(growable: false),
-        'threshold_days': staleAssumptionDays,
-        'artifact_id': artifactId,
-        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
-      },
-      entities: <String>{'knowledge_assumption', 'assumption_review'},
-      importance: 0.6,
-      confidence: 0.9,
-    );
-    await runtime.remember(built.record);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -110,7 +86,6 @@ class AssumptionAgent implements Agent {
         ownerUserId: ownerUserId,
         createdAt: finished,
         summary: summary,
-        memoryId: built.memoryId,
         stale: stale,
         traceId: snapshot.traceId,
         l10n: l10n,
@@ -127,7 +102,6 @@ class AssumptionAgent implements Agent {
         'stale_count': stale.length,
         if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
-      memoryId: built.memoryId,
       artifactId: artifactId,
       traceId: snapshot.traceId,
     );
@@ -138,7 +112,6 @@ class AssumptionAgent implements Agent {
     required String ownerUserId,
     required DateTime createdAt,
     required String summary,
-    required String memoryId,
     required List<AssumptionReviewItem> stale,
     required String? traceId,
     required AppLocalizations l10n,
@@ -205,7 +178,6 @@ class AssumptionAgent implements Agent {
         l10n,
         sourceLabel: l10n.knowledgeAgentAssumptionArtifactTitle,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),

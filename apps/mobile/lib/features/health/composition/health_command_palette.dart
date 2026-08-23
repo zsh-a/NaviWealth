@@ -10,7 +10,7 @@ import 'health_route_paths.dart';
 ///
 /// Navigation entries plus metric/search aliases. HealthOS remains
 /// mostly read-only, so actions stay in-page; the palette should still
-/// help users jump to sleep, HRV, VO2 max, Garmin, and briefing surfaces.
+/// help users jump to sleep, HRV, VO2 max, Garmin, and recovery surfaces.
 List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
   return <CommandPaletteEntry>[
     CommandPaletteEntry(
@@ -21,15 +21,11 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
         HealthRoutes.today,
         'health',
         'today',
-        'briefing',
-        'morning briefing',
         'sync',
         'garmin',
         l10n.healthTodayTitle,
-        l10n.healthBriefingTitle,
         '健康',
         '今日',
-        '简报',
         '同步',
       ],
       run: (BuildContext ctx) => ctx.go(HealthRoutes.today),

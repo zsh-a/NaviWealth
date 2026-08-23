@@ -1,12 +1,9 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
-import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
-import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
-import 'package:naviwealth/features/health/agents/morning_briefing_agent.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
@@ -97,24 +94,6 @@ final _executionActions = <ExecutionAction>[
   ),
 ];
 
-final _morningBriefing = AgentArtifact(
-  id: 'health:morning-briefing',
-  ownerUserId: 'readme-user',
-  agentId: kMorningBriefingAgentId,
-  domain: 'health',
-  kind: AgentArtifactKind.briefing,
-  severity: AgentArtifactSeverity.info,
-  title: '晨间简报',
-  summary: '恢复状态稳定。今天适合正常训练，并把最需要专注的工作放在上午。',
-  insights: const <AgentInsight>[
-    AgentInsight(title: '恢复趋势稳定', body: '睡眠与 HRV 保持在个人基线附近。'),
-  ],
-  evidence: const <AgentEvidenceRef>[
-    AgentEvidenceRef(type: 'health_metric', id: 'health:hrv'),
-  ],
-  createdAt: _domainShowcaseNow,
-);
-
 List<Override> readmeDomainShowcaseOverrides() => <Override>[
   healthHasAnyDataProvider.overrideWith((_) async => true),
   health_data.garminSyncControllerProvider.overrideWithBuild(
@@ -130,12 +109,6 @@ List<Override> readmeDomainShowcaseOverrides() => <Override>[
     (_) async => const <double>[48, 52, 50, 55, 57, 54, 59],
   ),
   weeklySummaryProvider.overrideWith((_) async => null),
-  health_agent_providers.latestMorningBriefingProvider.overrideWith(
-    (_) async => null as MemoryRecord?,
-  ),
-  health_agent_providers.latestMorningBriefingArtifactProvider.overrideWith(
-    (_) async => _morningBriefing,
-  ),
   health_agent_providers.latestRecoveryAlertArtifactProvider.overrideWith(
     (_) async => null,
   ),

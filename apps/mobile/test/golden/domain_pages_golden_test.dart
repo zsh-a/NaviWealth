@@ -44,11 +44,6 @@ void main() {
         ),
         recoverySparklineProvider.overrideWith((_) async => const <double>[]),
         weeklySummaryProvider.overrideWith((_) async => null),
-        health_agent_providers.latestMorningBriefingProvider.overrideWith(
-          (_) async => null,
-        ),
-        health_agent_providers.latestMorningBriefingArtifactProvider
-            .overrideWith((_) async => null),
         health_agent_providers.latestRecoveryAlertRunProvider.overrideWith(
           (_) async => null,
         ),

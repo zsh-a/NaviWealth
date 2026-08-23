@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../ai/contracts/source_identity.dart';
 import '../auth/domain_scope.dart';
 
 /// Cross-domain attention signal rendered by the Life hub.
@@ -14,6 +15,7 @@ class LifeEvent {
     this.routePath,
     this.priority = LifeSignalPriority.normal,
     this.actionSuggestion,
+    this.evidence = const <SourceIdentity>[],
   });
 
   final String id;
@@ -24,6 +26,20 @@ class LifeEvent {
   final String? routePath;
   final LifeSignalPriority priority;
   final LifeActionSuggestion? actionSuggestion;
+  final List<SourceIdentity> evidence;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'id': id,
+    'at': at.toUtc().toIso8601String(),
+    'domain': domain.wire,
+    'template': template.name,
+    'params': params,
+    if (routePath != null) 'route_path': routePath,
+    'priority': priority.name,
+    if (actionSuggestion != null)
+      'action_suggestion': actionSuggestion!.toJson(),
+    'evidence': [for (final source in evidence) source.toJson()],
+  };
 }
 
 /// One complete observation contributed by a domain.
@@ -45,11 +61,13 @@ class LifeSignalSnapshot {
     required this.observedAt,
     required this.events,
     required this.evaluatedSourceFamilies,
+    this.evaluatedSourceFamiliesByDomain = const <DomainScope, Set<String>>{},
   });
 
   final DateTime observedAt;
   final List<LifeEvent> events;
   final Set<String> evaluatedSourceFamilies;
+  final Map<DomainScope, Set<String>> evaluatedSourceFamiliesByDomain;
 
   bool evaluated(String sourceRowFamily) =>
       evaluatedSourceFamilies.contains(sourceRowFamily);
@@ -66,6 +84,12 @@ class LifeActionSuggestion {
   final LifeActionTemplate template;
   final String sourceRowFamily;
   final String? sourceRowId;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'template': template.name,
+    'source_row_family': sourceRowFamily,
+    if (sourceRowId != null) 'source_row_id': sourceRowId,
+  };
 }
 
 enum LifeActionTemplate {

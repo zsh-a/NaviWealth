@@ -22,7 +22,6 @@ import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
-import '../agents/routine_due_agent.dart';
 import '../application/knowledge_lifecycle_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
@@ -37,6 +36,7 @@ part 'knowledge_review_routines.dart';
 part 'knowledge_review_selection.dart';
 
 const int _kDecisionReviewRescheduleDays = 90;
+const Duration kRoutineDueLookahead = Duration(days: 7);
 const String _kReviewRoutineOrderPrefsKey = 'routine_order';
 const String _kReviewDecisionOrderPrefsKey = 'decision_order';
 const String _kReviewAssumptionOrderPrefsKey = 'assumption_order';

@@ -106,8 +106,6 @@ void main() {
             'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
         'options_income_risk_review':
             'test/features/finance/agents/options_income_risk_review_agent_test.dart',
-        'morning_briefing':
-            'test/features/health/agents/morning_briefing_agent_test.dart',
         'recovery_alert':
             'test/features/health/agents/recovery_alert_agent_test.dart',
         'weekly_summary':
@@ -120,8 +118,6 @@ void main() {
             'test/features/knowledge/agents/contradiction_agent_test.dart',
         'knowledge_review':
             'test/features/knowledge/agents/review_agent_test.dart',
-        'knowledge_routine_due':
-            'test/features/knowledge/agents/routine_due_agent_test.dart',
         'execution_review':
             'test/features/execution/agents/review_agent_test.dart',
         'execution_due_actions':
@@ -145,8 +141,6 @@ void main() {
             'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
         'options_income_risk_review':
             'test/features/finance/agents/options_income_risk_review_agent_test.dart',
-        'morning_briefing':
-            'test/features/health/agents/morning_briefing_agent_test.dart',
         'recovery_alert':
             'test/features/health/agents/recovery_alert_agent_test.dart',
         'weekly_summary':
@@ -159,21 +153,13 @@ void main() {
             'test/features/knowledge/agents/contradiction_agent_test.dart',
         'knowledge_review':
             'test/features/knowledge/agents/review_agent_test.dart',
-        'knowledge_routine_due':
-            'test/features/knowledge/agents/routine_due_agent_test.dart',
         'execution_review':
             'test/features/execution/agents/review_agent_test.dart',
         'execution_due_actions':
             'test/features/execution/agents/due_action_agent_test.dart',
       };
-      const fixturePathsByCaseId = <String, String>{
-        'knowledge.routine_due.domain_opt_out':
-            'test/app/domain_composition_test.dart',
-      };
-
       for (final c in agentOutcomeRegressionCorpus) {
-        final path =
-            fixturePathsByCaseId[c.id] ?? executableFixturePaths[c.agentId];
+        final path = executableFixturePaths[c.agentId];
         expect(path, isNotNull, reason: c.id);
         final src = File(path!).readAsStringSync();
         expect(src, contains(c.id), reason: c.id);
@@ -330,7 +316,6 @@ void main() {
       expect(tags, contains(kAgentOutcomeBudgetExhaustedTag));
       expect(tags, contains(kAgentOutcomeNoLlmProfileTag));
       expect(tags, contains(kAgentOutcomePromptInjectionTag));
-      expect(tags, contains(kAgentOutcomeDomainOptOutTag));
     });
 
     test('FinanceOS has executable no-LLM fallback coverage', () {
@@ -364,13 +349,6 @@ void main() {
             reason: c.id,
           );
         }
-        if (c.tags.contains(kAgentOutcomeDomainOptOutTag)) {
-          expect(
-            c.expectedStatus,
-            AgentOutcomeRegressionStatus.noFinding,
-            reason: c.id,
-          );
-        }
       }
     });
 
@@ -392,8 +370,6 @@ void main() {
             'test/features/knowledge/agents/review_agent_test.dart',
         'execution.review.budget_exhausted':
             'test/features/execution/agents/review_agent_test.dart',
-        'knowledge.routine_due.domain_opt_out':
-            'test/app/domain_composition_test.dart',
       };
 
       for (final c in agentOutcomeRegressionCorpus.where(

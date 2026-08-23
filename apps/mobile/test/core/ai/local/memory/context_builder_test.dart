@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/context_pack_memory.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
@@ -52,6 +53,30 @@ ContextBuilder _builder({DateTime Function()? clock}) {
   return ContextBuilder(runtime: runtime);
 }
 
+EventRecord _event({
+  required String id,
+  required String kind,
+  required DateTime at,
+  required String source,
+  required String summary,
+  required Set<String> entities,
+}) => EventRecord(
+  id: id,
+  domain: null,
+  kind: EventKind(namespace: 'test', name: kind),
+  occurredAt: at,
+  observedAt: at,
+  sourceIdentity: SourceIdentity.infrastructure(
+    rowFamily: source,
+    rowId: id,
+    fingerprint: 'fixture-$id',
+  ),
+  ownerUserId: _kOwner,
+  summary: summary,
+  facts: const <String, Object?>{},
+  entities: entities,
+);
+
 void main() {
   group('ContextBuilder.build', () {
     test('empty runtime returns empty pack with isEmpty flag', () async {
@@ -79,14 +104,12 @@ void main() {
         ),
       );
       await r.recordEvent(
-        EventRecord(
+        _event(
           id: 'event-1',
-          type: 'trade_closed',
-          timestamp: DateTime.utc(2026, 5, 23),
+          kind: 'trade_closed',
+          at: DateTime.utc(2026, 5, 23),
           source: 'options_trade_journal',
-          ownerUserId: _kOwner,
           summary: 'closed something',
-          payload: const {},
           entities: const {'NVDA'},
         ),
       );
@@ -119,14 +142,12 @@ void main() {
         _mem(id: 'out-of-scope', kind: MemoryKind.procedural, scope: 'fire'),
       );
       await r.recordEvent(
-        EventRecord(
+        _event(
           id: 'event-1',
-          type: 'whatever',
-          timestamp: DateTime.utc(2026, 5, 23),
+          kind: 'whatever',
+          at: DateTime.utc(2026, 5, 23),
           source: 'x',
-          ownerUserId: _kOwner,
           summary: 's',
-          payload: const {},
           entities: const {},
         ),
       );
@@ -146,26 +167,22 @@ void main() {
         final r = b.runtime;
         final ts = DateTime.utc(2026, 5, 23);
         await r.recordEvent(
-          EventRecord(
+          _event(
             id: 'nvda',
-            type: 't',
-            timestamp: ts,
+            kind: 't',
+            at: ts,
             source: 'x',
-            ownerUserId: _kOwner,
             summary: 's',
-            payload: const {},
             entities: const {'NVDA'},
           ),
         );
         await r.recordEvent(
-          EventRecord(
+          _event(
             id: 'aapl',
-            type: 't',
-            timestamp: ts.add(const Duration(hours: 1)),
+            kind: 't',
+            at: ts.add(const Duration(hours: 1)),
             source: 'x',
-            ownerUserId: _kOwner,
             summary: 's',
-            payload: const {},
             entities: const {'AAPL'},
           ),
         );
@@ -221,26 +238,22 @@ void main() {
         ),
       );
       await r.recordEvent(
-        EventRecord(
+        _event(
           id: 'finance-event',
-          type: 'trade_closed',
-          timestamp: DateTime.utc(2026, 5, 23),
+          kind: 'trade_closed',
+          at: DateTime.utc(2026, 5, 23),
           source: 'options_trade_journal',
-          ownerUserId: _kOwner,
           summary: 'finance',
-          payload: const {},
           entities: const {},
         ),
       );
       await r.recordEvent(
-        EventRecord(
+        _event(
           id: 'health-event',
-          type: 'sleep_recorded',
-          timestamp: DateTime.utc(2026, 5, 23),
+          kind: 'sleep_recorded',
+          at: DateTime.utc(2026, 5, 23),
           source: 'health:health_metrics',
-          ownerUserId: _kOwner,
           summary: 'health',
-          payload: const {},
           entities: const {},
         ),
       );

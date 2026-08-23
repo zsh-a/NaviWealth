@@ -6,11 +6,7 @@ import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
-import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
-import 'package:naviwealth/core/ai/contracts/memory_record.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -18,7 +14,6 @@ import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
-import 'package:naviwealth/core/notifications/notification_service.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
@@ -146,10 +141,7 @@ void main() {
 
   test('reports no finding for a stable recovery signal', () async {
     final container = ProviderContainer(
-      overrides: [
-        currentUserIdProvider.overrideWithValue(() async => _owner),
-        memoryRuntimeProvider.overrideWith((ref) async => _FakeMemoryRuntime()),
-      ],
+      overrides: [currentUserIdProvider.overrideWithValue(() async => _owner)],
     );
     addTearDown(container.dispose);
     final ref = container.read(_refProvider);
@@ -183,25 +175,17 @@ void main() {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final store = SqliteAgentArtifactStore(db: db);
-      final preferences = InMemoryAgentPreferenceStore();
-      final runtime = _FakeMemoryRuntime();
       final container = ProviderContainer(
         overrides: [
           currentUserIdProvider.overrideWithValue(() async => _owner),
-          memoryRuntimeProvider.overrideWith((ref) async => runtime),
           agent_providers.agentArtifactStoreProvider.overrideWith(
             (ref) async => store,
-          ),
-          agent_providers.agentPreferenceStoreProvider.overrideWith(
-            (ref) async => preferences,
           ),
         ],
       );
       addTearDown(container.dispose);
       final ref = container.read(_refProvider);
-      final notifier = _RecordingNotificationService();
       final agent = RecoveryAlertAgent(
-        notifier: notifier,
         signalReader: _FallbackReader(
           RecoveryAlertSignalRead.alert(
             source: 'test',
@@ -223,17 +207,14 @@ void main() {
       expect(result.status, AgentRunStatus.completed);
       expect(result.artifactId, '$kRecoveryAlertAgentId:2026-06-29');
       expect(result.traceId, 'trace-recovery-1');
-      expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
-      expect(runtime.remembered?.payload['trace_id'], 'trace-recovery-1');
-      final outcome = runtime.remembered?.payload['outcome'] as Map;
-      expect(outcome['trace_id'], 'trace-recovery-1');
+      expect(result.memoryId, isNull);
 
       final artifact = await store.read(result.artifactId!);
       expect(artifact, isNotNull);
       expect(artifact!.kind, AgentArtifactKind.alert);
       expect(artifact.domain, 'health');
       expect(artifact.severity, AgentArtifactSeverity.warning);
-      expect(artifact.memoryId, result.memoryId);
+      expect(artifact.memoryId, isNull);
       expect(artifact.traceId, 'trace-recovery-1');
       expect(artifact.summary, result.summary);
       expect(
@@ -252,62 +233,6 @@ void main() {
         artifact: artifact,
       );
       expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
-      expect(notifier.showCount, 1);
-      expect(notifier.lastPayload, '/insights/recovery_alert%3A2026-06-29');
-    },
-  );
-
-  test(
-    'skips local notification when recovery alert notifications are off',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final store = SqliteAgentArtifactStore(db: db);
-      final preferences = InMemoryAgentPreferenceStore();
-      await preferences.setNotificationsEnabled(
-        ownerUserId: _owner,
-        agentId: kRecoveryAlertAgentId,
-        enabled: false,
-        updatedAt: DateTime.utc(2026, 6, 29, 8),
-      );
-      final runtime = _FakeMemoryRuntime();
-      final container = ProviderContainer(
-        overrides: [
-          currentUserIdProvider.overrideWithValue(() async => _owner),
-          memoryRuntimeProvider.overrideWith((ref) async => runtime),
-          agent_providers.agentArtifactStoreProvider.overrideWith(
-            (ref) async => store,
-          ),
-          agent_providers.agentPreferenceStoreProvider.overrideWith(
-            (ref) async => preferences,
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-      final ref = container.read(_refProvider);
-      final notifier = _RecordingNotificationService();
-      final agent = RecoveryAlertAgent(
-        notifier: notifier,
-        signalReader: _FallbackReader(
-          RecoveryAlertSignalRead.alert(
-            source: 'test',
-            alert: const RecoveryAlertSignal(
-              avgBaselineMs: 50,
-              avgRecentMs: 40,
-              declinePct: 20,
-              consecutiveDays: 3,
-            ),
-          ),
-        ),
-      );
-
-      final result = await agent.run(
-        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 8)),
-      );
-
-      expect(result.status, AgentRunStatus.completed);
-      expect(await store.read(result.artifactId!), isNotNull);
-      expect(notifier.showCount, 0);
     },
   );
 
@@ -459,53 +384,5 @@ class _FallbackReader implements RecoveryAlertSignalReader {
   Future<RecoveryAlertSignalRead> read(AgentContext ctx) async {
     calls += 1;
     return result;
-  }
-}
-
-class _FakeMemoryRuntime implements MemoryRuntime {
-  MemoryRecord? remembered;
-
-  @override
-  Future<void> remember(MemoryRecord record) async {
-    remembered = record;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} not stubbed');
-}
-
-class _RecordingNotificationService implements NotificationService {
-  int showCount = 0;
-  String? lastPayload;
-
-  @override
-  Stream<String> get payloads => const Stream<String>.empty();
-
-  @override
-  Future<void> cancel(int id) async {}
-
-  @override
-  Future<bool> hasPermissions() async => true;
-
-  @override
-  Future<String?> initialPayload() async => null;
-
-  @override
-  Future<bool> isAvailable() async => true;
-
-  @override
-  Future<bool> requestPermissions() async => true;
-
-  @override
-  Future<void> showNow({
-    required int id,
-    required String title,
-    required String body,
-    required NotificationChannelSpec channel,
-    String? payload,
-  }) async {
-    showCount += 1;
-    lastPayload = payload;
   }
 }

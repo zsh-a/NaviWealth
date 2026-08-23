@@ -179,7 +179,6 @@ AgentPreference _defaultAgentPreference(String ownerUserId, String agentId) {
     ownerUserId: ownerUserId,
     agentId: agentId,
     enabled: true,
-    notificationsEnabled: true,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
   );
 }
@@ -299,24 +298,6 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     }
   }
 
-  Future<void> _setNotificationsEnabled(bool enabled) async {
-    final ownerUserId = await ref.read(currentUserIdProvider)();
-    final store = await ref.read(
-      agent_providers.agentPreferenceStoreProvider.future,
-    );
-    await store.setNotificationsEnabled(
-      ownerUserId: ownerUserId,
-      agentId: widget.row.agent.id,
-      enabled: enabled,
-      updatedAt: DateTime.now().toUtc(),
-    );
-    final revision = ref.read(
-      agent_providers.agentPreferenceRevisionProvider.notifier,
-    );
-    revision.state = revision.state + 1;
-    ref.invalidate(_agentSettingsRowsProvider);
-  }
-
   Future<void> _runNow() async {
     if (_running) return;
     setState(() => _running = true);
@@ -389,7 +370,6 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
         onRunNow: _runNow,
         onShowHistory: _showHistory,
         onSetEnabled: _setEnabled,
-        onSetNotificationsEnabled: _setNotificationsEnabled,
         onRowsChanged: () => ref.invalidate(_agentSettingsRowsProvider),
       ),
     );
@@ -510,7 +490,6 @@ class _AgentSettingsDetailSheet extends ConsumerStatefulWidget {
     required this.onRunNow,
     required this.onShowHistory,
     required this.onSetEnabled,
-    required this.onSetNotificationsEnabled,
     required this.onRowsChanged,
   });
 
@@ -519,7 +498,6 @@ class _AgentSettingsDetailSheet extends ConsumerStatefulWidget {
   final Future<void> Function() onRunNow;
   final Future<void> Function() onShowHistory;
   final Future<void> Function(bool) onSetEnabled;
-  final Future<void> Function(bool) onSetNotificationsEnabled;
   final VoidCallback onRowsChanged;
 
   @override
@@ -530,16 +508,13 @@ class _AgentSettingsDetailSheet extends ConsumerStatefulWidget {
 class _AgentSettingsDetailSheetState
     extends ConsumerState<_AgentSettingsDetailSheet> {
   late bool _enabled;
-  late bool _notificationsEnabled;
   late bool _running;
   bool _savingEnabled = false;
-  bool _savingNotifications = false;
 
   @override
   void initState() {
     super.initState();
     _enabled = widget.row.preference.enabled;
-    _notificationsEnabled = widget.row.preference.notificationsEnabled;
     _running = widget.running;
   }
 
@@ -570,32 +545,6 @@ class _AgentSettingsDetailSheetState
       );
     } finally {
       if (mounted) setState(() => _savingEnabled = false);
-    }
-  }
-
-  Future<void> _setNotificationsEnabled(bool value) async {
-    if (_savingNotifications) return;
-    final previous = _notificationsEnabled;
-    setState(() {
-      _notificationsEnabled = value;
-      _savingNotifications = true;
-    });
-    try {
-      await widget.onSetNotificationsEnabled(value);
-    } on Object catch (error) {
-      if (!mounted) return;
-      setState(() => _notificationsEnabled = previous);
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        userSafeErrorMessage(
-          context,
-          error,
-          operation: 'save agent notification settings',
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _savingNotifications = false);
     }
   }
 
@@ -699,28 +648,6 @@ class _AgentSettingsDetailSheetState
                         tone: AppBadgeTone.neutral,
                       ),
               ),
-              if (presentation?.notificationsSupported ?? false) ...[
-                const AppGradientDivider(),
-                _AgentDetailActionRow(
-                  icon: FLucideIcons.bell,
-                  title: l10n.agentSettingsNotifications,
-                  subtitle: _savingNotifications
-                      ? l10n.commonSaving
-                      : _notificationsEnabled
-                      ? l10n.agentSettingsEnabled
-                      : l10n.agentSettingsDisabled,
-                  trailing: _SavingSwitch(
-                    key: ValueKey<String>(
-                      'agent-notifications-${row.agent.id}',
-                    ),
-                    value: _notificationsEnabled,
-                    saving: _savingNotifications,
-                    onChange: enabled && !_savingNotifications
-                        ? _setNotificationsEnabled
-                        : null,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -819,7 +746,6 @@ class _AgentDetailActionRow extends StatelessWidget {
 
 class _SavingSwitch extends StatelessWidget {
   const _SavingSwitch({
-    super.key,
     required this.value,
     required this.saving,
     required this.onChange,
@@ -931,6 +857,9 @@ String _triggerLabel(AppLocalizations l10n, AgentRunTrigger trigger) {
     AgentRunTrigger.manual => l10n.agentSettingsTriggerManual,
     AgentRunTrigger.schedule => l10n.agentSettingsTriggerSchedule,
     AgentRunTrigger.event => l10n.agentSettingsTriggerEvent,
+    AgentRunTrigger.threshold => l10n.agentSettingsTriggerEvent,
+    AgentRunTrigger.stateTransition => l10n.agentSettingsTriggerEvent,
+    AgentRunTrigger.freshness => l10n.agentSettingsTriggerEvent,
     AgentRunTrigger.backgroundDue => l10n.agentSettingsTriggerBackgroundDue,
     AgentRunTrigger.catchUp => l10n.agentSettingsTriggerCatchUp,
   };

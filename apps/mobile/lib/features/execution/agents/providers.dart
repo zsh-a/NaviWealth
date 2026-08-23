@@ -19,8 +19,6 @@ import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/background/background_scheduler.dart';
 import '../../../core/background/providers.dart' as background_providers;
-import '../../../core/notifications/notification_preferences.dart';
-import '../../../core/notifications/providers.dart' as notification_providers;
 import 'due_action_agent.dart';
 import 'review_agent.dart';
 
@@ -28,14 +26,9 @@ final executionReviewAgentProvider = Provider<ExecutionReviewAgent>(
   (ref) => const ExecutionReviewAgent(),
 );
 
-final executionDueActionAgentProvider = Provider<ExecutionDueActionAgent>((
-  ref,
-) {
-  final notifier = ref.watch(notificationsEnabledProvider)
-      ? ref.watch(notification_providers.notificationServiceProvider)
-      : null;
-  return ExecutionDueActionAgent(notifier: notifier);
-});
+final executionDueActionAgentProvider = Provider<ExecutionDueActionAgent>(
+  (ref) => const ExecutionDueActionAgent(),
+);
 
 final executionAgentsProvider = Provider<List<Agent>>((ref) {
   return <Agent>[
@@ -86,12 +79,11 @@ final executionReviewCronProvider = Provider<void>((ref) {
   final scheduler = ref.watch(background_providers.backgroundSchedulerProvider);
   final optIns = ref.watch(core_auth.domainOptInsProvider).value;
   final executionEnabled = optIns?.contains(DomainScope.execution) ?? false;
-  final notificationsEnabled = ref.watch(notificationsEnabledProvider);
   ref.watch(agent_providers.agentPreferenceRevisionProvider);
   unawaited(() async {
     try {
       if (!await scheduler.isAvailable()) return;
-      if (!executionEnabled || !notificationsEnabled) {
+      if (!executionEnabled) {
         await scheduler.cancelTask(kExecutionReviewBackgroundTask);
         return;
       }
@@ -103,12 +95,7 @@ final executionReviewCronProvider = Provider<void>((ref) {
         ownerUserId: ownerUserId,
         agentId: kExecutionReviewAgentId,
       );
-      final agentNotificationsEnabled = await preferenceStore
-          .areNotificationsEnabled(
-            ownerUserId: ownerUserId,
-            agentId: kExecutionReviewAgentId,
-          );
-      if (agentEnabled && agentNotificationsEnabled) {
+      if (agentEnabled) {
         await scheduler.registerTask(kExecutionReviewBackgroundTask);
       } else {
         await scheduler.cancelTask(kExecutionReviewBackgroundTask);

@@ -92,7 +92,7 @@ void main() {
         window: const Duration(days: 9999),
       );
       expect(events, hasLength(3));
-      expect(events.map((e) => e.type).toSet(), {
+      expect(events.map((event) => event.kind.name).toSet(), {
         kEventSleepSessionEnded,
         kEventHrvRecorded,
         kEventStepsRecorded,
@@ -152,7 +152,10 @@ void main() {
         window: const Duration(days: 9999),
       );
       // Every event type unique
-      expect(events.map((e) => e.type).toSet().length, knownKinds.length);
+      expect(
+        events.map((event) => event.kind.name).toSet().length,
+        knownKinds.length,
+      );
     });
   });
 
@@ -174,7 +177,7 @@ void main() {
         ownerUserId: 'u1',
         window: const Duration(days: 9999),
       );
-      expect(events.single.type, kEventWorkoutCompleted);
+      expect(events.single.kind.name, kEventWorkoutCompleted);
     });
 
     test('vo2 max row emits vo2_max_recorded event, no episodic', () async {
@@ -195,7 +198,7 @@ void main() {
         ownerUserId: 'u1',
         window: const Duration(days: 9999),
       );
-      expect(events.single.type, kEventVo2MaxRecorded);
+      expect(events.single.kind.name, kEventVo2MaxRecorded);
     });
   });
 

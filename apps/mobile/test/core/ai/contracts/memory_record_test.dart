@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/context_evidence.dart';
 import 'package:naviwealth/core/ai/contracts/event_record.dart';
 import 'package:naviwealth/core/ai/contracts/memory_record.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 
 void main() {
   group('MemoryKindWire', () {
@@ -145,21 +146,27 @@ void main() {
       final ts = DateTime.utc(2026, 5, 24, 9);
       final original = EventRecord(
         id: 'evt-1',
-        type: 'trade_closed',
-        timestamp: ts,
-        source: 'options_trade_journal',
+        domain: null,
+        kind: const EventKind(namespace: 'options', name: 'trade_closed'),
+        occurredAt: ts,
+        observedAt: ts,
+        sourceIdentity: const SourceIdentity.infrastructure(
+          rowFamily: 'options_trade_journal',
+          rowId: 'trade-1',
+          fingerprint: 'trade-1-v1',
+        ),
         ownerUserId: 'u1',
         title: 'NVDA put closed',
         summary: 'cash_secured_put closed.',
-        payload: const {'symbol': 'NVDA', 'realized_pnl': '0.65'},
+        facts: const {'symbol': 'NVDA', 'realized_pnl': '0.65'},
         entities: const {'NVDA', 'cash_secured_put'},
         importance: 0.6,
       );
       final back = EventRecord.fromJson(original.toJson());
       expect(back.id, 'evt-1');
-      expect(back.type, 'trade_closed');
-      expect(back.timestamp, ts);
-      expect(back.payload['symbol'], 'NVDA');
+      expect(back.kind.wire, 'options.trade_closed');
+      expect(back.occurredAt, ts);
+      expect(back.facts['symbol'], 'NVDA');
       expect(back.entities, {'NVDA', 'cash_secured_put'});
       expect(back.importance, 0.6);
     });

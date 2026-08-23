@@ -56,7 +56,7 @@ Widget _wrapWithRouter(
 AgentArtifact _artifact({
   String id = 'artifact-1',
   String agentId = 'agent-1',
-  String title = 'Morning Briefing',
+  String title = 'Daily Navigator',
   List<AgentEvidenceRef> evidence = const [
     AgentEvidenceRef(
       type: 'metric',
@@ -136,7 +136,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Daily Navigator'), findsOneWidget);
     expect(find.text('Updated just now'), findsOneWidget);
     expect(
       find.text('Sleep debt is elevated; keep the first block light.'),
@@ -187,7 +187,7 @@ void main() {
     expect(find.text('Review'), findsNothing);
     expect(find.byIcon(FLucideIcons.chevronRight), findsOneWidget);
 
-    await tester.tap(find.text('Morning Briefing'));
+    await tester.tap(find.text('Daily Navigator'));
     await tester.pump(const Duration(milliseconds: 120));
     expect(opened, isTrue);
   });
@@ -206,7 +206,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Daily Navigator'), findsOneWidget);
     expect(find.text('Updated just now'), findsOneWidget);
     expect(find.text('Attention'), findsOneWidget);
     expect(
@@ -214,7 +214,7 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.text('Morning Briefing'));
+    await tester.tap(find.text('Daily Navigator'));
     await tester.pump(const Duration(milliseconds: 120));
 
     expect(opened, isTrue);
@@ -248,7 +248,7 @@ void main() {
     );
     expect(find.byType(AgentResultCard), findsOneWidget);
     expect(find.byType(AgentCompactResultRow), findsNothing);
-    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Daily Navigator'), findsOneWidget);
     expect(find.text('Recovery Alert'), findsNothing);
 
     await tester.drag(
@@ -257,7 +257,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Morning Briefing'), findsNothing);
+    expect(find.text('Daily Navigator'), findsNothing);
     expect(find.text('Recovery Alert'), findsOneWidget);
   });
 
@@ -318,7 +318,7 @@ void main() {
     await gesture.up();
     await tester.pumpAndSettle();
     expect(tester.getTopLeft(card).dx, closeTo(initialLeft, 0.5));
-    expect(find.text('Morning Briefing'), findsOneWidget);
+    expect(find.text('Daily Navigator'), findsOneWidget);
     expect(find.text('Recovery Alert'), findsNothing);
   });
 
@@ -430,7 +430,7 @@ void main() {
     expect(capturedInvocation?.object?.id, 'artifact-1');
     expect(capturedInvocation?.context['agent_id'], 'agent-1');
     expect(capturedInvocation?.context['trace_id'], 'trace-1');
-    expect(capturedObjectLabel, 'Morning Briefing');
+    expect(capturedObjectLabel, 'Daily Navigator');
   });
 
   testWidgets('detail follow-up ignores repeat taps while pending', (
@@ -602,7 +602,7 @@ void main() {
     expect(capturedInvocation?.context['action_label'], 'Review plan');
     expect(capturedInvocation?.context['proposal_kind'], 'action_plan');
     expect(capturedInvocation?.context['artifact_id'], 'artifact-1');
-    expect(capturedObjectLabel, 'Morning Briefing');
+    expect(capturedObjectLabel, 'Daily Navigator');
   });
 
   testWidgets('detail trace action opens transparency detail route', (

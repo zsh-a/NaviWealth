@@ -13,11 +13,7 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/contracts.dart';
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/memory_runtime.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/trace/ai_trace_store.dart';
 import '../../../core/ai/trace/providers.dart';
 import '../../../core/auth/current_user.dart';
@@ -27,8 +23,6 @@ import '../composition/finance_route_paths.dart';
 import '../expense/data/expense_anomaly_insight_provider.dart';
 
 const String kCashflowAnomalyReviewAgentId = 'cashflow_anomaly_review';
-const String kCashflowAnomalyReviewMemorySource =
-    'agent:cashflow_anomaly_review';
 
 class CashflowAnomalyReviewAgent implements Agent {
   const CashflowAnomalyReviewAgent({
@@ -51,7 +45,6 @@ class CashflowAnomalyReviewAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final startedAt = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -62,7 +55,6 @@ class CashflowAnomalyReviewAgent implements Agent {
       ownerUserId: ownerUserId,
       startedAt: startedAt,
       finishedAt: DateTime.now().toUtc(),
-      runtime: runtime,
       artifactStore: artifactStore,
       traceStore: traceStore,
       l10n: agentL10n(ctx.ref),
@@ -74,7 +66,6 @@ class CashflowAnomalyReviewAgent implements Agent {
     required String ownerUserId,
     required DateTime startedAt,
     required DateTime finishedAt,
-    required MemoryRuntime runtime,
     AgentArtifactStore? artifactStore,
     AiTraceStore? traceStore,
     AppLocalizations? l10n,
@@ -94,45 +85,9 @@ class CashflowAnomalyReviewAgent implements Agent {
       detectedAt: startedAt,
     );
     final dayKey = AppFormatters.utcDayKey(startedAt);
-    final memoryId = '$kCashflowAnomalyReviewMemorySource:$dayKey';
     final artifactId = '$kCashflowAnomalyReviewAgentId:$dayKey';
     final traceId = '$kCashflowAnomalyReviewAgentId:trace:$dayKey';
     final summary = analysis.summary(strings);
-    final memory = MemoryRecord(
-      id: memoryId,
-      kind: MemoryKind.episodic,
-      role: MemoryRole.episode,
-      authority: EvidenceAuthority.deterministicDerived,
-      ownerUserId: ownerUserId,
-      scope: 'finance',
-      source: kCashflowAnomalyReviewMemorySource,
-      sourceId: dayKey,
-      title: strings.financeAgentCashflowMemoryTitle(dayKey),
-      summary: summary,
-      payload: <String, Object?>{
-        'context':
-            'cashflow anomaly review run at ${startedAt.toUtc().toIso8601String()}',
-        'outcome': analysis.toPayload(),
-        'artifact_id': artifactId,
-        if (traceStore != null) 'trace_id': traceId,
-      },
-      entities: <String>{
-        'finance',
-        'cashflow',
-        'expense',
-        'anomaly',
-        analysis.upload.id,
-        dayKey,
-      },
-      importance: analysis.severity == AgentArtifactSeverity.warning
-          ? 0.76
-          : 0.64,
-      confidence: 0.9,
-      validFrom: startedAt.toUtc(),
-      createdAt: startedAt.toUtc(),
-      updatedAt: finishedAt.toUtc(),
-    );
-    await runtime.remember(memory);
     await traceStore?.append(
       analysis.toTrace(
         requestId: traceId,
@@ -145,7 +100,6 @@ class CashflowAnomalyReviewAgent implements Agent {
       analysis.toArtifact(
         id: artifactId,
         ownerUserId: ownerUserId,
-        memoryId: memoryId,
         traceId: traceStore == null ? null : traceId,
         createdAt: startedAt,
         l10n: strings,
@@ -159,7 +113,6 @@ class CashflowAnomalyReviewAgent implements Agent {
       finishedAt: finishedAt,
       summary: summary,
       payload: analysis.toPayload(),
-      memoryId: memoryId,
       artifactId: artifactStore == null ? null : artifactId,
       traceId: traceStore == null ? null : traceId,
     );
@@ -235,7 +188,6 @@ class CashflowAnomalyAnalysis {
   AgentArtifact toArtifact({
     required String id,
     required String ownerUserId,
-    required String memoryId,
     required String? traceId,
     required DateTime createdAt,
     required AppLocalizations l10n,
@@ -312,7 +264,6 @@ class CashflowAnomalyAnalysis {
         l10n,
         sourceLabel: l10n.financeAgentCashflowEvidenceLabel,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 7)),

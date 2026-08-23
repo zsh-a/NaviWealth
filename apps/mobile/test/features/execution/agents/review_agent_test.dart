@@ -8,7 +8,6 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
-import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -202,25 +201,10 @@ void main() {
     );
 
     expect(result.status, AgentRunStatus.completed);
-    expect(result.memoryId, '$kExecutionReviewMemorySource:2026-06-05');
+    expect(result.memoryId, isNull);
     expect(result.artifactId, '$kExecutionReviewAgentId:2026-06-05');
     expect(result.summary, contains('1 blocked'));
     expect(result.summary, contains('2 active commitments'));
-
-    final runtime = await container.read(memoryRuntimeProvider.future);
-    final hits = await runtime.recall(
-      ownerUserId: _userId,
-      queryText: 'execution review blocked commitments',
-      kinds: const {MemoryKind.episodic},
-      source: kExecutionReviewMemorySource,
-      topK: 5,
-    );
-    expect(hits, hasLength(1));
-    expect(hits.single.record.entities, contains('execution_review'));
-    expect(
-      hits.single.record.entities,
-      contains('execution_action:action-review'),
-    );
 
     final artifact = await SqliteAgentArtifactStore(
       db: db,
@@ -230,7 +214,7 @@ void main() {
     expect(artifact.domain, 'execution');
     expect(artifact.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.attention);
-    expect(artifact.memoryId, result.memoryId);
+    expect(artifact.memoryId, isNull);
     expect(artifact.summary, result.summary);
     expect(
       artifact.insights.map((insight) => insight.title),
@@ -261,7 +245,7 @@ void main() {
     expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
   });
 
-  test('persists review trace id onto result, artifact, and memory', () async {
+  test('persists review trace id onto result and artifact', () async {
     final result = await _withRef(
       container,
       (ref) => ExecutionReviewAgent(
@@ -297,17 +281,7 @@ void main() {
     ).read('$kExecutionReviewAgentId:2026-06-05');
     expect(artifact?.traceId, 'trace-execution-1');
 
-    final runtime = await container.read(memoryRuntimeProvider.future);
-    final hits = await runtime.recall(
-      ownerUserId: _userId,
-      queryText: 'trace execution review',
-      kinds: const {MemoryKind.episodic},
-      source: kExecutionReviewMemorySource,
-      topK: 1,
-    );
-    expect(hits.single.record.payload['trace_id'], 'trace-execution-1');
-    final outcome = hits.single.record.payload['outcome'] as Map;
-    expect(outcome['trace_id'], 'trace-execution-1');
+    expect(result.payload['trace_id'], 'trace-execution-1');
   });
 
   test('skips when there is nothing to review', () async {

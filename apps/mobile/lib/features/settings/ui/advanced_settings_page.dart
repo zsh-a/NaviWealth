@@ -55,6 +55,14 @@ class AdvancedSettingsPage extends ConsumerWidget {
                 subtitle: l10n.settingsPerfSubtitle,
                 onTap: () => context.pushNamed(SettingsRouteNames.performance),
               ),
+              const AppGradientDivider(),
+              InlineLinkRow(
+                icon: FLucideIcons.messageSquareWarning,
+                label: l10n.developerIssuesAdvancedTitle,
+                subtitle: l10n.developerIssuesAdvancedSubtitle,
+                onTap: () =>
+                    context.pushNamed(SettingsRouteNames.developerIssues),
+              ),
             ],
           ),
         ],

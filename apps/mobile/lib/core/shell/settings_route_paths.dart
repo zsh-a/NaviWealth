@@ -10,6 +10,7 @@ abstract final class SettingsRoutes {
   static const notifications = '/settings/notifications';
   static const logs = '/settings/logs';
   static const performance = '/settings/performance';
+  static const developerIssues = '/settings/developer-issues';
   static const sync = '/settings/sync';
   static const ai = '/settings/ai';
   static const advanced = '/settings/advanced';
@@ -48,6 +49,7 @@ abstract final class SettingsRouteNames {
   static const notifications = 'notifications';
   static const logs = 'logs';
   static const performance = 'performance';
+  static const developerIssues = 'developer-issues';
   static const sync = 'sync';
   static const ai = 'ai';
   static const advanced = 'advanced';

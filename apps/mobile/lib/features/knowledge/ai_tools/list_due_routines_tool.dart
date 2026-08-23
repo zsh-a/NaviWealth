@@ -2,7 +2,7 @@
 /// (`docs/domains/knowledgeos-domain.md` §4 + §7).
 ///
 /// Returns active routines whose `next_due_at <= as_of`, including those
-/// already overdue. Used by Morning Briefing / Review tab / RoutineDueAgent.
+/// already overdue. Used by the Review tab and contextual AI answers.
 /// `as_of` defaults to `now + 7d` so the caller sees "this week" without
 /// re-doing the arithmetic; pass an explicit ISO8601 to narrow.
 library;
@@ -25,7 +25,7 @@ class ListDueRoutinesTool implements DeviceTool {
       '例如「港卡每 6 个月活跃一次」)。每条返回 id / statement / interval_days / '
       'next_due_at / last_done_at / days_until_due(负数代表已逾期)。'
       'as_of 默认 now+7d(本周窗口),可传 ISO8601 缩小或扩大。'
-      '用途:Review tab、Morning Briefing、回答「我现在有什么定期事项要做？」。';
+      '用途:Review tab、Daily Navigator context、回答「我现在有什么定期事项要做？」。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{

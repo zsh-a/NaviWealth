@@ -19,7 +19,7 @@ Included:
 - VO2 max pipeline where platform support exists.
 - Weight and body fat as explicit low-frequency manual or AI-confirmed entries.
 - Read-only Garmin Connect ingestion through the narrow native runtime.
-- Morning Briefing, Recovery Alert, and Weekly Summary agents.
+- Recovery Alert and Weekly Summary domain analyzers.
 
 Excluded:
 
@@ -64,7 +64,8 @@ Pull-to-refresh is a real source refresh, not a local-query reload:
 - Concurrent refresh gestures share one in-flight import.
 - Partial failures preserve successful source results and remain visible on
   Today.
-- Morning Briefing uses the same coordinator before generating its result.
+- Daily Navigator consumes the refreshed Health `LifeSignal` only after the
+  app-level freshness and material-change gates.
 
 The last platform-sync attempt, last successful refresh, and its
 fetched/upserted/unchanged counts are persisted locally by
@@ -143,7 +144,7 @@ Contributions:
 - Tabs: Today, Trends. The legacy `/health/plan` deep link redirects to Today;
   recovery-plan content lives in the Today hero.
 - Tools: `features/health/health_ai_tools.dart`.
-- Agents: Morning Briefing, Recovery Alert, Weekly Summary.
+- Agents: Recovery Alert, Weekly Summary.
 - Command palette: `features/health/composition/health_command_palette.dart`.
 
 HealthOS is active only when the user enables it in Settings.
@@ -152,7 +153,7 @@ HealthOS is active only when the user enables it in Settings.
 
 | Tab | Purpose |
 |---|---|
-| Today | Source choice and freshness, sleep, HRV, explainable recovery confidence, workout cards, latest Morning Briefing, manual run |
+| Today | Source choice and freshness, sleep, HRV, explainable recovery confidence, workout cards, and latest Recovery Alert |
 | Trend | HRV, sleep hours, workout minutes line charts |
 
 Key files:
@@ -195,7 +196,9 @@ Source:
 
 Behavior:
 
-- Each supported health row emits an `EventRecord`.
+- Each supported health row emits a typed `EventRecord` with Health domain,
+  occurred/observed time, source row identity/fingerprint, facts, entities,
+  confidence, and evidence anchor.
 - Notable sleep sessions can emit an episodic `MemoryRecord` in `scope='health'`.
 - Health opt-in is enforced inside the indexer provider.
 - Memory Runtime remains domain-neutral.
@@ -216,37 +219,15 @@ Event examples:
 
 | Agent | Purpose |
 |---|---|
-| Morning Briefing | Daily recovery briefing with deterministic fallback |
 | Recovery Alert | Surfaces material recovery-risk signals |
 | Weekly Summary | Reviews the recent Health window |
 
-All three produce the shared agent artifact/result contract and are registered
-through `kHealthPack`. Morning Briefing and Recovery Alert support per-agent
-notification preferences; disabling HealthOS removes all three from active
-composition.
-
-### Morning Briefing
-
-Agent:
-
-- `features/health/agents/morning_briefing_agent.dart`
-
-Supporting files:
-
-- `features/health/agents/briefing_synthesizer.dart`
-- `features/health/agents/providers.dart`
-- `features/health/data/morning_briefing_preferences.dart`
-- `core/background/`
-- `core/notifications/`
-
-Behavior:
-
-- Runs around the user's configured local hour.
-- Reads recent Memory Runtime events.
-- Uses LLM synthesis when a usable device LLM profile exists.
-- Falls back to deterministic programmatic synthesis on LLM failure or absence.
-- Writes a briefing memory and a domain notification.
-- Background callbacks only set a due flag; the full run happens after foreground startup.
+Both produce shared local findings and Agent Artifacts and are registered
+through `kHealthPack`. They do not write Agent summaries to durable Memory or
+post notifications directly. Health recovery `LifeSignal`s feed the app-owned
+Daily Navigator; the global attention layer decides whether the cross-domain
+judgment stays silent, appears on Life, or interrupts. Disabling HealthOS
+removes Health Agents, signals, tools, and context from active composition.
 
 ## Platform Caveats
 
@@ -267,5 +248,7 @@ When touching HealthOS, add or run targeted tests for:
 - `HealthMetricRepository` queries.
 - Health AI tool outputs.
 - `HealthMetricMemoryIndexer`.
-- Morning Briefing agent and synthesizer.
+- Recovery Alert and Weekly Summary agents.
+- Typed event/evidence identity and Health source-route resolution.
+- Daily Navigator stale/inactive Health gating through app composition.
 - Health route shell and opt-in behavior.

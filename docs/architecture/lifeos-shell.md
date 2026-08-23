@@ -20,7 +20,8 @@ The shell owns cross-domain infrastructure:
 - Sync v3 row-family namespace and per-domain reset generations.
 - Shared persistence adapter.
 - Encrypted local backup and restore.
-- Background jobs and notifications.
+- Trigger coordination, global attention policy, background-safe evaluation,
+  and notifications.
 
 Domain business behavior belongs in the domain SSOT:
 
@@ -38,6 +39,8 @@ app/
   routing/router_builder.dart    Outer dock shell plus domain routes
   shell/app_dock_shell.dart      Multi-domain chrome
   domain_bootstrap.dart          Domain indexer/background startup
+  life_context_composition.dart  Personal profile + active Life context
+  agents/                        App-owned cross-domain synthesis
 
 core/
   lifeos/domain_pack.dart        Domain registration contract
@@ -47,7 +50,9 @@ core/
   sync/sync_table_registry.dart  Row-family prefixes and sync table metadata
   ai/composition/                Cross-domain AI seams
   ai/agents/                     Agent framework
+  ai/attention/                  Global silent/surface/interrupt policy
   ai/local/memory/               Memory Runtime
+  developer/                     Local dogfood issue contract/store
   persistence/                   Drift adapter and shared tables
 
 features/<domain>/
@@ -66,7 +71,7 @@ features/<domain>/
 | Domain | Scope | Shell tabs | Tools | Agents |
 |---|---|---|---|---|
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review |
-| HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Morning Briefing, Recovery Alert, Weekly Summary |
+| HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Recovery Alert, Weekly Summary |
 | KnowledgeOS | `knowledge` | Inbox, Library (+ hidden Review) | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage |
 | ExecutionOS | `execution` | Today, Plans (+ hidden Review) | `kExecutionDeviceTools` | Review, Due Action |
 
@@ -200,25 +205,41 @@ domain-owned; generic Life signals are not presented as a review backlog.
 Core framework:
 
 - `core/ai/agents/agent.dart`
-- `core/ai/agents/agent_schedule.dart`
+- `core/ai/agents/agent_trigger.dart`
 - `core/ai/agents/agent_registry.dart`
 - `core/ai/agents/agent_runner.dart`
+- `core/ai/attention/`
 
 Current domain agents:
 
-- Health: Morning Briefing, Recovery Alert, Weekly Summary.
+- Health: Recovery Alert, Weekly Summary.
 - Knowledge: Review, Assumption, Contradiction, Inbox Triage.
-- Execution: Review.
+- Execution: Review, Due Action.
+
+Current app-owned Agent:
+
+- Daily Navigator: correlates active-domain `LifeSignal`s after deterministic
+  material-change, freshness, evidence, and attention gates. It owns no domain
+  calculations and never writes business rows directly.
 
 Rules:
 
 - Agents are named use cases, not a general automation platform.
-- Agents read through repositories, tools, or Memory Runtime and write events/memories/proposals/notifications according to domain SSOTs.
+- Domain Agents act as sensors/analysts: they read repositories, tools, or
+  Memory Runtime and emit stable findings and temporary `AgentArtifact`s.
+- Agent Artifacts do not write durable Memory and domain Agents do not send
+  notifications. Explicit proposal confirmation owns business writes; the
+  global attention layer is the only proactive-notification policy owner.
 - Cross-run diagnostics are stored as local-only stable findings. Agents
   reconcile open findings by stable identity; disappeared signals resolve, and
   ignored/snoozed findings reopen only when evidence changes or snooze expires.
 - Agents must not call other agents.
-- Background isolate callbacks remain lightweight. Heavy work runs in the foreground path where Riverpod, memory, LLM, and notification services are available.
+- `AgentTriggerSpec` separates schedule, event, threshold, state-transition,
+  freshness, and manual trigger policy from persisted run provenance.
+- Background callbacks may read only a precomputed primitive Life snapshot,
+  run deterministic attention logic, and persist a pending decision. LLM,
+  Memory retrieval, tools, proposal application, and business writes stay in
+  the foreground provider graph.
 
 ## Memory Runtime
 
@@ -233,6 +254,7 @@ Core types:
 - `EventRecord`
 - `MemoryRecord`
 - `MemoryAccessPolicy`
+- `LifeContextSnapshot`
 - `MemoryRuntime`
 - `MemoryStore`
 - `EventStore`
@@ -252,6 +274,12 @@ Indexers:
 Rules:
 
 - `core/ai/local/memory/` does not import domains.
+- Every event has typed domain/source identity and conclusion-level evidence;
+  consumers never partition domains by string prefix or exclusion.
+- Every durable Memory row declares retrieval role, evidence authority,
+  provenance, and optional supersede lineage. Stable goals, preferences,
+  constraints, and rules live in Personal Profile and require explicit user
+  confirmation.
 - Domain indexers live in domain `data/`.
 - Domain indexers are contributed through `DomainPack.memoryBootstrapBuilder`;
   the app bootstrap only loops active packs.
@@ -340,6 +368,15 @@ Disabling a domain does not delete its data. Cache cleanup also does not imply
 server erasure. Permanent erasure increments the domain generation before
 physically deleting its server rows; stale offline writes are rejected and the
 client hard-resets that domain when it observes a newer generation.
+
+## Developer Issue Capture
+
+Advanced Settings exposes a local dogfood report surface backed by the
+local-only `developer_issues` table. The app shell retains the last domain route
+while Settings is open; capture adds build identity, latest trace id, and at
+most five structural tool error codes. It never includes raw tool payloads or
+error messages. Export is explicit, omits owner identity and local screenshot
+paths, and does not create a GitHub issue or invoke a coding Agent.
 
 ## Embedding Runtime
 
@@ -467,13 +504,18 @@ Location:
 
 - `core/background/`
 - `core/notifications/`
-- Health, Knowledge, and Execution agent providers.
+- `core/ai/attention/`
+- `app/agents/providers.dart`
 
 Rules:
 
-- Platform callbacks set lightweight flags and optional placeholder notifications.
-- Full agent runs happen after app startup with a complete provider graph.
-- Notification channels are domain-named and documented in the owning domain SSOT.
+- Source-import callbacks may set lightweight due flags for foreground import.
+- Life attention callbacks read only a precomputed primitive snapshot, evaluate
+  deterministic candidates against the global interrupt budget, persist the
+  decision, and notify only for `interrupt`.
+- Full Agent runs and explanations happen after app startup with a complete
+  provider graph.
+- Domain Agents never bypass `AttentionArbiter` with direct notifications.
 
 ## Rust Boundary
 

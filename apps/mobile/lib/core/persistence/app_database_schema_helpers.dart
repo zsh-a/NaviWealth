@@ -194,6 +194,12 @@ Future<void> _createAgentArtifacts(AppDatabase db) async {
   }
 }
 
+Future<void> _createAttentionDecisions(AppDatabase db) async {
+  for (final stmt in attentionDecisionDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createAgentPreferences(AppDatabase db) async {
   for (final stmt in agentPreferenceDdl) {
     await db.customStatement(stmt);
@@ -391,6 +397,12 @@ Future<void> _createMemoryRuntime(AppDatabase db) async {
   }
 }
 
+Future<void> _createMemoryStorage(AppDatabase db) async {
+  for (final stmt in memoryStorageDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
 Future<void> _createKnowledgeInboxTriage(AppDatabase db) async {
   for (final stmt in knowledgeInboxTriageDdl) {
     await db.customStatement(stmt);
@@ -405,6 +417,18 @@ Future<void> _createKnowledgeAttachments(AppDatabase db) async {
 
 Future<void> _createAgentFindings(AppDatabase db) async {
   for (final stmt in agentFindingDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createAgentFeedback(AppDatabase db) async {
+  for (final stmt in agentFeedbackDdl) {
+    await db.customStatement(stmt);
+  }
+}
+
+Future<void> _createDeveloperIssues(AppDatabase db) async {
+  for (final stmt in developerIssueDdl) {
     await db.customStatement(stmt);
   }
 }

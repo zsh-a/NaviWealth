@@ -99,30 +99,35 @@ void main() {
 
     expect(events, hasLength(4));
     final action = events.firstWhere(
-      (event) => event.source == kExecutionActionMemorySource,
+      (event) =>
+          event.sourceIdentity.rowFamily == kExecutionActionEventSourceFamily,
     );
-    expect(action.type, kExecutionActionEventType);
-    expect(action.payload['source_domain'], 'finance');
-    expect(action.payload['source_row_family'], 'fin:budgets');
+    expect(action.kind.name, kExecutionActionEventType);
+    expect(action.facts['source_domain'], 'finance');
+    expect(action.facts['source_row_family'], 'fin:budgets');
     expect(action.entities, contains('source_domain:finance'));
     expect(action.entities, contains('status:blocked'));
 
     final project = events.firstWhere(
-      (event) => event.source == kExecutionProjectMemorySource,
+      (event) =>
+          event.sourceIdentity.rowFamily == kExecutionProjectEventSourceFamily,
     );
-    expect(project.payload['source_domain'], 'health');
+    expect(project.facts['source_domain'], 'health');
     expect(project.entities, contains('source_domain:health'));
 
     final commitment = events.firstWhere(
-      (event) => event.source == kExecutionCommitmentMemorySource,
+      (event) =>
+          event.sourceIdentity.rowFamily ==
+          kExecutionCommitmentEventSourceFamily,
     );
     expect(commitment.entities, contains('execution_project:project-health'));
 
     final progress = events.firstWhere(
-      (event) => event.source == kExecutionProgressMemorySource,
+      (event) =>
+          event.sourceIdentity.rowFamily == kExecutionProgressEventSourceFamily,
     );
-    expect(progress.type, kExecutionProgressEventType);
-    expect(progress.payload['kind'], 'blocker');
+    expect(progress.kind.name, kExecutionProgressEventType);
+    expect(progress.facts['kind'], 'blocker');
     expect(progress.entities, contains('execution_action:act-finance'));
     expect(progress.importance, greaterThan(0.8));
   });

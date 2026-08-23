@@ -16,6 +16,46 @@ Future<void> _forgetMissingSourceIds(
   );
 }
 
+Future<void> recordKnowledgeStateEvent(
+  MemoryRuntime runtime, {
+  required String ownerUserId,
+  required String kind,
+  required String sourceFamily,
+  required String rowId,
+  required String fingerprint,
+  required DateTime occurredAt,
+  required DateTime observedAt,
+  required String title,
+  required String summary,
+  required Map<String, Object?> facts,
+  required Set<String> entities,
+  required double importance,
+  double confidence = 1,
+}) {
+  return runtime.recordEvent(
+    EventRecord(
+      id: '$sourceFamily:$kind:$rowId',
+      domain: DomainScope.knowledge,
+      kind: EventKind.domain(DomainScope.knowledge, kind),
+      occurredAt: occurredAt.toUtc(),
+      observedAt: observedAt.toUtc(),
+      sourceIdentity: SourceIdentity(
+        domain: DomainScope.knowledge,
+        rowFamily: sourceFamily,
+        rowId: rowId,
+        fingerprint: fingerprint,
+      ),
+      ownerUserId: ownerUserId,
+      title: title,
+      summary: summary,
+      facts: facts,
+      entities: entities,
+      importance: importance,
+      confidence: confidence,
+    ),
+  );
+}
+
 /// Shared subscribe-then-reindex plumbing for every KnowledgeOS indexer
 /// provider, Decision included (`docs/domains/knowledgeos-domain.md` §3).
 ///

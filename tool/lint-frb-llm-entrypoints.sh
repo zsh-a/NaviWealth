@@ -141,8 +141,8 @@ if ! grep -q "bootstrap/bootstrap_provider_overrides.dart" "$BOOTSTRAP" || \
 fi
 
 SCHEDULED_AGENT_FRB_OVERRIDES='
+dailyNavigatorAgentProvider FrbDailyNavigatorSynthesizer
 executionReviewAgentProvider FrbExecutionReviewReader
-morningBriefingAgentProvider FrbBriefingSynthesizer
 recoveryAlertAgentProvider FrbRecoveryAlertSignalReader
 weeklySummaryAgentProvider FrbWeeklySummaryReader
 reviewAgentProvider FrbReviewDueReader
@@ -172,8 +172,8 @@ while read -r provider frb_type; do
 done <<< "$SCHEDULED_AGENT_FRB_OVERRIDES"
 
 for surface in \
+  life_daily_navigator \
   execution_review \
-  health_morning_briefing \
   health_recovery_alert \
   health_weekly_summary \
   knowledge_review \

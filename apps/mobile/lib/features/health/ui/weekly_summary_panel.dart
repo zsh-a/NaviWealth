@@ -72,9 +72,7 @@ class _WeeklySummaryArtifactCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final metaLabel = l10n.healthBriefingUpdated(
-      _ago(l10n, artifact.createdAt),
-    );
+    final metaLabel = l10n.agentResultUpdated(_ago(l10n, artifact.createdAt));
 
     return AgentResultSurface(
       artifact: artifact,
@@ -132,7 +130,7 @@ class _WeeklySummaryFallback extends ConsumerWidget {
       children: [
         AgentRunStatusCard(
           record: run,
-          metaLabel: l10n.healthBriefingUpdated(_ago(l10n, run.startedAt)),
+          metaLabel: l10n.agentResultUpdated(_ago(l10n, run.startedAt)),
           onRetry: () => _retry(ref),
         ),
         const SizedBox(height: AppSpacing.s12),

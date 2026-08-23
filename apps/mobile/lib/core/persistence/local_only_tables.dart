@@ -6,8 +6,8 @@
 /// - `agent_artifacts` — user-visible briefing/review/alert records produced
 ///   by agents. Local-only, with evidence/actions encoded as compact JSON.
 ///   Dismiss/snooze state hides the current result without deleting history.
-/// - `agent_preferences` — per-user local agent toggles and notification
-///   preferences. These are product preferences, not synced source data.
+/// - `agent_preferences` — per-user local Agent enablement. Proactive
+///   notification policy is global and lives in the attention layer.
 /// - `agent_runtime_checkpoints` — resumable Rust-owned runtime snapshots and
 ///   host-effect journals. These are high-frequency local execution records,
 ///   never product sync objects.
@@ -29,6 +29,9 @@
 ///   (`docs/architecture/lifeos-shell.md` §6, D-1.7b). Typed records with
 ///   lifecycle, vectors in a side table so embedder swap doesn't have
 ///   to rewrite memory rows.
+/// - `developer_issues` — explicit, local-only dogfood reports. Exports omit
+///   account identity and never create remote issues without another user
+///   action.
 ///
 /// See also the parallel pattern in `event_log_tables.dart`.
 library;
@@ -101,6 +104,38 @@ CREATE INDEX IF NOT EXISTS idx_data_maintenance_runs_owner_started
 const List<String> dataMaintenanceRunDdl = <String>[
   createDataMaintenanceRuns,
   createDataMaintenanceRunsOwnerIndex,
+];
+
+// ----------------------------------------------------------------------
+// Developer-mode dogfood issue capture
+// ----------------------------------------------------------------------
+
+const String createDeveloperIssues = '''
+CREATE TABLE IF NOT EXISTS developer_issues (
+  id                TEXT PRIMARY KEY,
+  owner_user_id     TEXT NOT NULL,
+  description       TEXT NOT NULL,
+  route             TEXT NOT NULL,
+  domain            TEXT,
+  app_version       TEXT NOT NULL,
+  build_number      TEXT NOT NULL,
+  commit_sha        TEXT NOT NULL,
+  trace_id          TEXT,
+  tool_errors_json  TEXT NOT NULL,
+  screenshot_path   TEXT,
+  created_at        INTEGER NOT NULL,
+  exported_at       INTEGER
+)
+''';
+
+const String createDeveloperIssuesOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_developer_issues_owner_created
+  ON developer_issues(owner_user_id, created_at DESC)
+''';
+
+const List<String> developerIssueDdl = <String>[
+  createDeveloperIssues,
+  createDeveloperIssuesOwnerIndex,
 ];
 
 // ----------------------------------------------------------------------
@@ -178,7 +213,7 @@ CREATE TABLE IF NOT EXISTS agent_runs (
   agent_id      TEXT NOT NULL,
   agent_name    TEXT NOT NULL,
   status        TEXT NOT NULL,     -- running|ready|no_finding|failed
-  trigger       TEXT NOT NULL,     -- manual|schedule|background_due|catch_up
+  trigger       TEXT NOT NULL,     -- persisted execution provenance
   started_at    INTEGER NOT NULL,  -- millis since epoch (UTC)
   finished_at   INTEGER,
   summary       TEXT,
@@ -361,12 +396,78 @@ const List<String> agentFindingDdl = <String>[
   createAgentFindingsAgentStatusIndex,
 ];
 
+const String createAgentFeedback = '''
+CREATE TABLE IF NOT EXISTS agent_feedback (
+  id                       TEXT PRIMARY KEY,
+  owner_user_id            TEXT NOT NULL,
+  artifact_id              TEXT NOT NULL,
+  agent_id                 TEXT NOT NULL,
+  domain                   TEXT NOT NULL,
+  kind                     TEXT NOT NULL CHECK (
+    kind IN ('accepted', 'dismissed', 'snoozed', 'completed', 'undone')
+  ),
+  action_kind              TEXT,
+  life_context_fingerprint TEXT,
+  finding_fingerprint      TEXT,
+  attention_decision_id    TEXT,
+  payload_json             TEXT NOT NULL,
+  created_at               INTEGER NOT NULL
+)
+''';
+
+const String createAgentFeedbackArtifactIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_feedback_artifact_created
+  ON agent_feedback(owner_user_id, artifact_id, created_at DESC)
+''';
+
+const String createAgentFeedbackAgentIndex = '''
+CREATE INDEX IF NOT EXISTS idx_agent_feedback_agent_created
+  ON agent_feedback(owner_user_id, agent_id, created_at DESC)
+''';
+
+const List<String> agentFeedbackDdl = <String>[
+  createAgentFeedback,
+  createAgentFeedbackArtifactIndex,
+  createAgentFeedbackAgentIndex,
+];
+
+const String createAttentionDecisions = '''
+CREATE TABLE IF NOT EXISTS attention_decisions (
+  id                  TEXT PRIMARY KEY,
+  owner_user_id       TEXT NOT NULL,
+  candidate_id        TEXT NOT NULL,
+  agent_id            TEXT NOT NULL,
+  finding_fingerprint TEXT NOT NULL,
+  level               TEXT NOT NULL CHECK (
+    level IN ('silent', 'surface', 'interrupt')
+  ),
+  candidate_json      TEXT NOT NULL,
+  reasons_json        TEXT NOT NULL,
+  created_at          INTEGER NOT NULL
+)
+''';
+
+const String createAttentionDecisionsOwnerIndex = '''
+CREATE INDEX IF NOT EXISTS idx_attention_decisions_owner_created
+  ON attention_decisions(owner_user_id, created_at DESC)
+''';
+
+const String createAttentionDecisionsInterruptIndex = '''
+CREATE INDEX IF NOT EXISTS idx_attention_decisions_interrupt_budget
+  ON attention_decisions(owner_user_id, level, created_at DESC)
+''';
+
+const List<String> attentionDecisionDdl = <String>[
+  createAttentionDecisions,
+  createAttentionDecisionsOwnerIndex,
+  createAttentionDecisionsInterruptIndex,
+];
+
 const String createAgentPreferences = '''
 CREATE TABLE IF NOT EXISTS agent_preferences (
   owner_user_id         TEXT NOT NULL,
   agent_id              TEXT NOT NULL,
   enabled               INTEGER NOT NULL DEFAULT 1,
-  notifications_enabled INTEGER NOT NULL DEFAULT 1,
   updated_at            INTEGER NOT NULL,
   PRIMARY KEY (owner_user_id, agent_id)
 )
@@ -573,35 +674,45 @@ CREATE INDEX IF NOT EXISTS idx_memory_embeddings_fingerprint
 /// this DDL).
 const String createEvents = '''
 CREATE TABLE IF NOT EXISTS events (
-  id            TEXT PRIMARY KEY,
-  type          TEXT NOT NULL,
-  timestamp     INTEGER NOT NULL,            -- millis since epoch
-  source        TEXT NOT NULL,
-  owner_user_id TEXT NOT NULL,
-  title         TEXT,
-  summary       TEXT NOT NULL,
-  payload_json  TEXT NOT NULL,
-  entities_json TEXT NOT NULL,
-  importance    REAL NOT NULL DEFAULT 0.5
+  id                 TEXT PRIMARY KEY,
+  domain             TEXT,
+  kind               TEXT NOT NULL,
+  occurred_at        INTEGER NOT NULL,       -- millis since epoch
+  observed_at        INTEGER NOT NULL,
+  source_family      TEXT NOT NULL,
+  source_row_id      TEXT NOT NULL,
+  source_fingerprint TEXT NOT NULL,
+  owner_user_id      TEXT NOT NULL,
+  title              TEXT,
+  summary            TEXT NOT NULL,
+  facts_json         TEXT NOT NULL,
+  entities_json      TEXT NOT NULL,
+  importance         REAL NOT NULL DEFAULT 0.5,
+  confidence         REAL NOT NULL DEFAULT 1.0
 )
 ''';
 
 const String createEventsOwnerTimeIndex = '''
 CREATE INDEX IF NOT EXISTS idx_events_owner_time
-  ON events(owner_user_id, timestamp DESC)
+  ON events(owner_user_id, occurred_at DESC)
 ''';
 
 const String createEventsOwnerTypeIndex = '''
 CREATE INDEX IF NOT EXISTS idx_events_owner_type
-  ON events(owner_user_id, type, timestamp DESC)
+  ON events(owner_user_id, kind, occurred_at DESC)
 ''';
 
 const String createEventsOwnerSourceIndex = '''
 CREATE INDEX IF NOT EXISTS idx_events_owner_source
-  ON events(owner_user_id, source, timestamp DESC)
+  ON events(owner_user_id, source_family, occurred_at DESC)
 ''';
 
-const List<String> memoryRuntimeDdl = [
+const String createEventsOwnerDomainOccurredIndex = '''
+CREATE INDEX IF NOT EXISTS idx_events_owner_domain_occurred
+  ON events(owner_user_id, domain, occurred_at DESC)
+''';
+
+const List<String> memoryStorageDdl = [
   createMemories,
   createMemoriesOwnerKindIndex,
   createMemoriesOwnerScopeIndex,
@@ -609,11 +720,17 @@ const List<String> memoryRuntimeDdl = [
   createMemoriesSupersedesIndex,
   createMemoryEmbeddings,
   createMemoryEmbeddingsFingerprintIndex,
+];
+
+const List<String> eventRuntimeDdl = [
   createEvents,
   createEventsOwnerTimeIndex,
   createEventsOwnerTypeIndex,
   createEventsOwnerSourceIndex,
+  createEventsOwnerDomainOccurredIndex,
 ];
+
+const List<String> memoryRuntimeDdl = [...memoryStorageDdl, ...eventRuntimeDdl];
 
 // ----------------------------------------------------------------------
 // KnowledgeOS inbox triage side-table

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
+import 'package:naviwealth/core/ai/contracts/source_identity.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
@@ -11,12 +12,16 @@ import 'package:naviwealth/features/life/domain/life_event.dart';
 final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
   final events = <LifeEvent>[];
   final evaluatedSourceFamilies = <String>{};
+  final evaluatedByDomain = <DomainScope, Set<String>>{};
   final now = DateTime.now().toUtc();
   for (final pack in ref.watch(activeDomainPacksProvider)) {
     final slice = pack.lifeSignalBuilder?.call(ref, now);
     if (slice == null) continue;
     events.addAll(slice.events);
     evaluatedSourceFamilies.addAll(slice.evaluatedSourceFamilies);
+    evaluatedByDomain[pack.scope] = Set<String>.unmodifiable(
+      slice.evaluatedSourceFamilies,
+    );
   }
 
   events.sort((a, b) {
@@ -28,6 +33,7 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
     observedAt: now,
     events: List.unmodifiable(events),
     evaluatedSourceFamilies: Set.unmodifiable(evaluatedSourceFamilies),
+    evaluatedSourceFamiliesByDomain: Map.unmodifiable(evaluatedByDomain),
   );
 });
 
@@ -55,6 +61,15 @@ LifeEvent lifeEventForAgentArtifact(AgentArtifact artifact) {
       sourceRowFamily: '${domain.wire}:agent_artifacts',
       sourceRowId: artifact.id,
     ),
+    evidence: <SourceIdentity>[
+      SourceIdentity(
+        domain: domain,
+        rowFamily: '${domain.wire}:agent_artifacts',
+        rowId: artifact.id,
+        fingerprint:
+            artifact.traceId ?? artifact.createdAt.toUtc().toIso8601String(),
+      ),
+    ],
   );
 }
 

@@ -216,9 +216,9 @@ the evidence fingerprint remains unchanged.
 Review artifacts preserve human-readable titles, recommend a Top 3 focus set,
 show weekly completed/dropped throughput, and expose a proposal action for
 turning diagnostics into concrete next Actions. Progress entries are also
-indexed into local Memory/Event storage; blockers and completion/scope changes
-receive higher event importance. Derived findings and memory indexes do not
-sync.
+indexed into typed local Event storage and `source_fact` Memory; blockers and
+completion/scope changes receive higher event importance. Derived findings and
+memory indexes do not sync.
 
 The Review page can turn selected missing Project/Commitment next steps from
 the artifact proposal payload into high-priority Actions after explicit user
@@ -226,6 +226,6 @@ confirmation. It re-checks current open Actions before presenting the batch
 and writes only the selected rows through the repository.
 
 `ExecutionDueActionAgent` runs daily, finds open Actions due within the next
-24 hours (including overdue Actions), writes a reminder artifact with
-action-detail evidence routes, and posts a local notification only when global
-and per-agent notification preferences permit it.
+24 hours (including overdue Actions), and writes a reminder artifact with
+action-detail evidence routes. It never posts a notification directly; any
+proactive interruption must pass through the global attention policy.

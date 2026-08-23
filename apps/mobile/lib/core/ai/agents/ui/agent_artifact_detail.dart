@@ -248,6 +248,15 @@ _ArtifactFooterAction? _footerActionForArtifact(
       label: presentation.title,
       isDirectNavigation: action.route != null,
       run: (context, ref) async {
+        unawaited(
+          _recordAgentFeedback(
+            ref,
+            artifact: artifact,
+            kind: AgentFeedbackKind.accepted,
+            action: action,
+          ),
+        );
+        if (!context.mounted) return;
         if (action.route case final route?) {
           _openArtifactRoute(context, route);
           return;
@@ -344,18 +353,23 @@ Future<void> _snoozeAgentArtifact(
   final store = await ref.read(
     agent_providers.agentArtifactStoreProvider.future,
   );
-  await store.snooze(
-    ownerUserId: ownerUserId,
-    id: artifact.id,
-    until: DateTime.now().toUtc().add(const Duration(days: 1)),
-  );
+  final until = DateTime.now().toUtc().add(const Duration(days: 1));
+  await store.snooze(ownerUserId: ownerUserId, id: artifact.id, until: until);
   final findingStore = await ref.read(
     agent_providers.agentFindingStoreProvider.future,
   );
   await findingStore.snoozeOpenForAgent(
     ownerUserId: ownerUserId,
     agentId: artifact.agentId,
-    until: DateTime.now().toUtc().add(const Duration(days: 1)),
+    until: until,
+  );
+  unawaited(
+    _recordAgentFeedback(
+      ref,
+      artifact: artifact,
+      kind: AgentFeedbackKind.snoozed,
+      payload: <String, Object?>{'snoozed_until': until.toIso8601String()},
+    ),
   );
   await onVisibilityChanged?.call();
   if (context.mounted && Navigator.of(context).canPop()) {
@@ -386,9 +400,39 @@ Future<void> _dismissAgentArtifact(
     agentId: artifact.agentId,
     at: DateTime.now().toUtc(),
   );
+  unawaited(
+    _recordAgentFeedback(
+      ref,
+      artifact: artifact,
+      kind: AgentFeedbackKind.dismissed,
+    ),
+  );
   await onVisibilityChanged?.call();
   if (context.mounted && Navigator.of(context).canPop()) {
     Navigator.of(context).pop();
+  }
+}
+
+Future<void> _recordAgentFeedback(
+  WidgetRef ref, {
+  required AgentArtifact artifact,
+  required AgentFeedbackKind kind,
+  AgentAction? action,
+  Map<String, Object?> payload = const <String, Object?>{},
+}) async {
+  try {
+    final store = await ref.read(
+      agent_providers.agentFeedbackStoreProvider.future,
+    );
+    await store.record(
+      artifact: artifact,
+      kind: kind,
+      action: action,
+      payload: payload,
+    );
+  } on Object {
+    // Feedback informs future policy, but must never delay or reject the
+    // user-authoritative action that generated it.
   }
 }
 

@@ -72,7 +72,7 @@ void main() {
         ownerUserId: 'u1',
         window: const Duration(days: 9999),
       );
-      expect(events.single.type, kEventTradeOpened);
+      expect(events.single.kind.name, kEventTradeOpened);
       expect(events.single.entities, containsAll(['NVDA']));
     });
 
@@ -229,7 +229,7 @@ void main() {
       expect(memory.sourceEventId, 'options_trade_journal:trade_assigned:X');
       final event = await rt.eventStore.readEvent(memory.sourceEventId!);
       expect(event, isNotNull);
-      expect(event!.type, kEventTradeAssigned);
+      expect(event!.kind.name, kEventTradeAssigned);
     });
 
     test('empty input is a no-op', () async {

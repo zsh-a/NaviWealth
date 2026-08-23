@@ -9,8 +9,8 @@
 ///
 ///   1. Stamp a task-specific SharedPreferences due key so the foreground
 ///      app sees there's pending work on next launch.
-///   2. For Morning Briefing only, post a placeholder notification so the
-///      user knows the briefing is ready. Data sync tasks stay silent.
+///   2. For Life attention only, inspect a precomputed primitive snapshot.
+///      A persisted interrupt decision must exist before a notification posts.
 ///
 /// Heavier "compute the briefing inside the background isolate"
 /// is intentionally deferred — booting Drift + SQLCipher + Memory
@@ -22,6 +22,7 @@ library;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../ai/attention/background_safe_attention.dart';
 import '../notifications/notification_service_factory.dart';
 import 'background_scheduler.dart';
 
@@ -40,15 +41,27 @@ void lifeosBackgroundCallback() {
         now.toUtc().millisecondsSinceEpoch,
       );
 
-      if (task.name == kMorningBriefingTaskName) {
-        final notifier = createNotificationService();
-        if (await notifier.hasPermissions()) {
-          await notifier.showNow(
-            id: morningBriefingWakeNotificationId(now),
-            title: 'Morning briefing ready',
-            body: 'Open the app to see today\'s HealthOS summary.',
-            channel: kMorningBriefingWakeNotificationChannel,
-          );
+      if (task.name == kLifeAttentionTaskName) {
+        final store = SharedPreferencesBackgroundSafeAttentionStore(prefs);
+        final snapshot = store.readSnapshot();
+        final decision = snapshot == null
+            ? null
+            : const BackgroundSafeAttentionEvaluator().inspect(
+                snapshot,
+                now: now,
+              );
+        if (decision != null) {
+          await store.savePending(decision);
+          final notifier = createNotificationService();
+          if (await notifier.hasPermissions()) {
+            await notifier.showNow(
+              id: lifeAttentionNotificationId(now),
+              title: 'NaviWealth needs your attention',
+              body: 'Open Daily Navigator to review the evidence.',
+              channel: kLifeAttentionNotificationChannel,
+              payload: '/life',
+            );
+          }
         }
       }
     } on Object {

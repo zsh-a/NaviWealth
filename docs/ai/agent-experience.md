@@ -2,7 +2,7 @@
 
 Status: current implementation and extension contract.
 
-Last reviewed: 2026-08-01.
+Last reviewed: 2026-08-23.
 
 ## Document Contract
 
@@ -24,7 +24,8 @@ follow-up, or dismiss the result.
 
 Rules:
 
-- Agent results appear in the owning domain surface.
+- Domain Agent results appear in the owning domain surface. The app-owned Daily
+  Navigator appears on the Life surface.
 - Follow-up uses `askAi()` and a registered `AiIntentInvocation`; do not add an
   agent chat tab or private follow-up route.
 - Writes and high-risk actions use `ProposalEnvelope`, interaction-mode policy,
@@ -40,9 +41,10 @@ The production `DomainPack` registry is authoritative. At this review:
 
 | Domain | Agents | Default placement |
 |---|---|---|
+| LifeOS app composition | Daily Navigator | Life home |
 | FinanceOS | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review | Finance home |
-| HealthOS | Morning Briefing, Recovery Alert, Weekly Summary | Health home/review |
-| KnowledgeOS | Review, Assumption, Contradiction, Inbox Triage, Routine Due | Knowledge review |
+| HealthOS | Recovery Alert, Weekly Summary | Health home/review |
+| KnowledgeOS | Review, Assumption, Contradiction, Inbox Triage | Knowledge review |
 | ExecutionOS | Review, Due Action | Execution review |
 
 Do not copy this list into another roadmap. Composition contract tests must
@@ -82,6 +84,10 @@ Agent run, artifact, and preference tables are local-only. They are not Sync v3
 source rows and are not part of encrypted user-data backup unless a future
 design explicitly changes that policy.
 
+Artifacts are temporary explanations, not durable personal Memory. Repeated
+runs reconcile stable finding identities; they do not append episodic model
+summaries to `memories`.
+
 ## Presentation Contract
 
 Reusable UI:
@@ -106,12 +112,11 @@ Presentation rules:
 - Compact viewports must keep title, close action, body, and primary action
   reachable without overflow.
 
-## Preferences And Scheduling
+## Preferences, Triggers, And Attention
 
 Settings exposes active agents only and supports:
 
 - enable/disable;
-- notification preference where supported;
 - manual run;
 - latest status and artifact;
 - run history.
@@ -120,10 +125,22 @@ Disabling an agent prevents manual, scheduled, retry, and background-due runs
 at the runner boundary. Disabling an optional domain also removes its agent
 composition and cancels/ignores its background work.
 
-Native background callbacks remain lightweight: they write a due flag or
-platform signal. Foreground startup consumes the flag once and invokes the
-shared `AgentRunController`; heavy Riverpod, Memory, LLM, repository, and
-notification work does not run inside the platform callback.
+`AgentTriggerSpec` supports schedule, event, threshold, state transition,
+freshness, and manual policy. The coordinator debounces and de-duplicates
+signals before the runner records concrete run provenance. A schedule is a
+fallback, not the default reason to call an LLM when no state changed.
+
+Every proactive result is evaluated by `AttentionArbiter` as `silent`,
+`surface`, or `interrupt`, using novelty, severity, confidence, actionability,
+freshness, evidence completeness, suppression state, notification eligibility,
+and a global 24-hour interrupt budget. Domain Agents do not call notification
+services directly.
+
+The Life background callback reads only a precomputed primitive snapshot and
+runs deterministic attention logic. It can persist a pending attention
+decision and post an `interrupt` notification, but cannot invoke an LLM, read
+Memory, dispatch tools, apply proposals, or mutate business data. Foreground
+startup imports that decision and performs any full synthesis.
 
 ## Evidence, Proposals, And Transparency
 
@@ -152,6 +169,19 @@ cover the behavior appropriate to each agent, including:
 - domain opt-out and inactive-agent behavior;
 - unexpected actions, proposal kinds, evidence ids, or forbidden claims.
 
+The policy corpus separately evaluates whether a result deserved attention:
+
+- `should_surface` and `should_stay_silent`;
+- duplicate and unchanged finding suppression;
+- stale or inactive-domain evidence;
+- missing evidence, low confidence, and non-actionable suggestions;
+- notification eligibility and interrupt-budget exhaustion;
+- deterministic no-model-call gating.
+
+Structured feedback records accepted, dismissed, snoozed, completed, and
+undone outcomes with the originating Life-context, finding, and attention
+fingerprints. Feedback is local policy evidence and never becomes Memory.
+
 The fixed Memory answer-quality gate emits a privacy-safe JSON aggregate with
 case/pass counts plus forbidden-claim, forbidden-evidence, missing-fact, and
 missing-evidence failure counts. It includes only stable failing fixture ids;
@@ -176,12 +206,14 @@ creating Agent-specific reporting or attribution models.
 2. Keep business calculation in deterministic domain services or tools.
 3. Produce shared run states and `AgentArtifact`; do not invent a private
    result model.
-4. Register the agent, presentation spec, intents, placement, and optional
+4. Do not write Agent summaries to Memory or call notification services from
+   the Agent. Emit stable findings/artifacts and let the attention layer decide.
+5. Register the agent, presentation spec, intents, placement, and optional
    background bootstrap through the owning `DomainPack`.
-5. Route follow-up through `askAi()` and writes through proposals.
-6. Add owner/domain/visibility checks for any new read or deep-link path.
-7. Add focused runner/store/UI tests and executable corpus cases.
-8. Verify the active/inactive domain composition contract.
+6. Route follow-up through `askAi()` and writes through proposals.
+7. Add owner/domain/visibility checks for any new read or deep-link path.
+8. Add focused runner/store/UI tests and executable outcome and policy cases.
+9. Verify the active/inactive domain composition contract.
 
 ## Non-Goals
 

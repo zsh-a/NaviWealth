@@ -3,7 +3,7 @@
 /// Drives one or more [Agent]s. Two entry points:
 ///
 /// - [runOnce] — fire a specific agent immediately (manual trigger,
-///   "Run morning briefing now" Settings link)
+///   "Run Daily Navigator now" Settings link)
 /// - [tick] — called periodically by the platform driver; fires every
 ///   agent whose [AgentSchedule.shouldFire] returns true
 ///
@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../auth/current_user.dart';
 import '../contracts/event_record.dart';
+import '../contracts/source_identity.dart';
 import '../local/memory/memory_runtime.dart';
 import '../local/memory/providers.dart';
 import 'agent.dart';
@@ -151,11 +152,22 @@ class AgentRunner {
         'busy agent results are transient and cannot be recorded',
       ),
     };
+    final sourceRowId =
+        '${agent.id}:${result.startedAt.toUtc().toIso8601String()}';
+    final eventId = '$kAgentRunEventSource:$sourceRowId';
     final event = EventRecord(
-      id: '$kAgentRunEventSource:${agent.id}:${result.startedAt.toUtc().toIso8601String()}',
-      type: type,
-      timestamp: result.finishedAt.toUtc(),
-      source: kAgentRunEventSource,
+      id: eventId,
+      domain: null,
+      kind: EventKind(namespace: 'agent', name: type),
+      occurredAt: result.finishedAt.toUtc(),
+      observedAt: result.finishedAt.toUtc(),
+      sourceIdentity: SourceIdentity.infrastructure(
+        rowFamily: 'agent:agent_runs',
+        rowId: sourceRowId,
+        fingerprint:
+            result.traceId ??
+            '${result.status.name}:${result.finishedAt.toUtc().microsecondsSinceEpoch}',
+      ),
       ownerUserId: ownerUserId,
       title: '${agent.name} · ${result.status.name}',
       summary:
@@ -163,7 +175,7 @@ class AgentRunner {
           (result.status == AgentRunStatus.failed
               ? (result.error ?? 'agent failed')
               : '${agent.name} ${result.status.name}'),
-      payload: <String, Object?>{
+      facts: <String, Object?>{
         'agent_id': agent.id,
         'agent_name': agent.name,
         'status': result.status.name,

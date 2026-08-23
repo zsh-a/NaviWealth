@@ -27,7 +27,6 @@ import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
-import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -623,7 +622,7 @@ void main() {
         c.read(agentRegistryProvider).map((agent) => agent.id),
         containsAll(<String>[
           'weekly_wealth_review',
-          'morning_briefing',
+          'daily_navigator',
           'knowledge_review',
           'execution_review',
         ]),
@@ -632,7 +631,7 @@ void main() {
         c.read(agentPresentationSpecsProvider).keys,
         containsAll(<String>[
           'weekly_wealth_review',
-          'morning_briefing',
+          'recovery_alert',
           'knowledge_review',
           'execution_review',
         ]),
@@ -733,61 +732,9 @@ void main() {
         );
       }
       expect(
-        {
-          for (final entry in specs.entries)
-            if (entry.value.notificationsSupported) entry.key,
-        },
-        <String>{
-          'morning_briefing',
-          'recovery_alert',
-          'execution_review',
-          'execution_due_actions',
-        },
-      );
-      expect(
         specs.values.map((spec) => spec.placement),
         everyElement(isNot(AgentResultPlacement.settingsOnly)),
       );
-    },
-  );
-
-  test(
-    'production composition treats disabled KnowledgeOS agents as no-run outcomes',
-    () async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final c = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWith((_) async => db),
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          ...lifeOsDomainCompositionOverrides(),
-        ],
-      );
-      addTearDown(c.dispose);
-
-      await c.read(auth.domainOptInsProvider.future);
-
-      expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
-        DomainScope.finance,
-      ]);
-      expect(
-        c.read(agentRegistryProvider).map((agent) => agent.id),
-        isNot(contains('knowledge_routine_due')),
-      );
-      expect(
-        c.read(agentPresentationSpecsProvider),
-        isNot(contains('knowledge_routine_due')),
-      );
-
-      final failures = evaluateAgentOutcomeCaseWithoutRun(
-        regressionCase: agentOutcomeRegressionCaseById(
-          'knowledge.routine_due.domain_opt_out',
-        ),
-        reason: 'domain_not_enabled',
-      );
-      expect(failures, isEmpty);
     },
   );
 }

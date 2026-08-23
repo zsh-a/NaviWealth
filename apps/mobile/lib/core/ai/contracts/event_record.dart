@@ -1,143 +1,190 @@
-/// Cross-domain event log entry (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
+/// Typed cross-domain event log entry.
 ///
-/// Events are durable, append-only(ish) records of "something
-/// happened": a trade opened, a sleep night ended, a file was saved.
-/// They're written by domain indexers (e.g. trade journal extractor),
-/// queried by [ContextBuilder] under the "recent_events" slot, and
-/// optionally promoted to a [MemoryRecord] (kind=`event`) when the
-/// event itself has long-term significance.
-///
-/// Events vs memories:
-///
-/// - **Event** — happened at a specific instant; cheap to write; many.
-/// - **Memory** — synthesised across one-or-more events; carries
-///   confidence + importance + lifecycle.
-///
-/// Most events do NOT become memories. The Extractor decides.
+/// Events capture what happened, when the source says it happened, when the
+/// device observed it, and the exact source-row revision that supports the
+/// claim. Every event has a stable evidence identity; infrastructure events
+/// use a null domain but otherwise follow the same contract.
 library;
 
 import 'dart:convert';
 
+import '../../auth/domain_scope.dart';
+import 'evidence_anchor.dart';
+import 'source_identity.dart';
+
+class EventKind {
+  const EventKind({required this.namespace, required this.name})
+    : assert(namespace != ''),
+      assert(name != '');
+
+  factory EventKind.domain(DomainScope domain, String name) =>
+      EventKind(namespace: domain.wire, name: name);
+
+  factory EventKind.fromWire(String wire) {
+    final normalized = wire.trim();
+    final separator = normalized.indexOf('.');
+    if (separator <= 0 || separator == normalized.length - 1) {
+      throw FormatException('Invalid EventKind wire value: $wire');
+    }
+    return EventKind(
+      namespace: normalized.substring(0, separator),
+      name: normalized.substring(separator + 1),
+    );
+  }
+
+  final String namespace;
+  final String name;
+
+  String get wire => '$namespace.$name';
+
+  @override
+  bool operator ==(Object other) =>
+      other is EventKind && other.namespace == namespace && other.name == name;
+
+  @override
+  int get hashCode => Object.hash(namespace, name);
+}
+
 class EventRecord {
-  const EventRecord({
+  EventRecord({
     required this.id,
-    required this.type,
-    required this.timestamp,
-    required this.source,
+    required this.domain,
+    required this.kind,
+    required this.occurredAt,
+    required this.observedAt,
+    required this.sourceIdentity,
     required this.ownerUserId,
     required this.summary,
-    required this.payload,
+    required this.facts,
     required this.entities,
     this.title,
     this.importance = 0.5,
-  });
+    this.confidence = 1.0,
+  }) : assert(id != ''),
+       assert(ownerUserId != ''),
+       assert(summary != ''),
+       assert(domain == null || kind.namespace == domain.wire),
+       assert(domain == sourceIdentity.domain),
+       assert(importance >= 0 && importance <= 1),
+       assert(confidence >= 0 && confidence <= 1);
 
-  /// Opaque stable id; convention `<source>:<type>:<sourceId>`.
   final String id;
-
-  /// Free-form event type (`'trade_opened'`, `'sleep_session_ended'`).
-  /// Not enum'd — new domains add their own types.
-  final String type;
-
-  final DateTime timestamp;
-
-  /// Source system label (`'options_trade_journal'`,
-  /// `'health:sleep'`). Free string.
-  final String source;
-
+  final DomainScope? domain;
+  final EventKind kind;
+  final DateTime occurredAt;
+  final DateTime observedAt;
+  final SourceIdentity sourceIdentity;
   final String ownerUserId;
-
-  /// Optional short label. UI/LLM can render this directly.
   final String? title;
-
-  /// Required one-line synopsis — what happened. The Extractor uses
-  /// this when promoting to a [MemoryRecord].
   final String summary;
-
-  /// Type-specific structured fields, JSON-encoded for storage.
-  final Map<String, Object?> payload;
-
-  /// Entity tags. Same convention as [MemoryRecord.entities].
+  final Map<String, Object?> facts;
   final Set<String> entities;
-
-  /// `0..1`. Drives "is this worth surfacing in recent_events"
-  /// reranking.
   final double importance;
+  final double confidence;
+
+  EvidenceAnchor get evidenceAnchor =>
+      EvidenceAnchor.fromSource(sourceIdentity, label: title);
 
   EventRecord copyWith({
-    String? type,
-    DateTime? timestamp,
-    String? source,
+    DomainScope? domain,
+    EventKind? kind,
+    DateTime? occurredAt,
+    DateTime? observedAt,
+    SourceIdentity? sourceIdentity,
     String? title,
     String? summary,
-    Map<String, Object?>? payload,
+    Map<String, Object?>? facts,
     Set<String>? entities,
     double? importance,
+    double? confidence,
   }) => EventRecord(
     id: id,
     ownerUserId: ownerUserId,
-    type: type ?? this.type,
-    timestamp: timestamp ?? this.timestamp,
-    source: source ?? this.source,
+    domain: domain ?? this.domain,
+    kind: kind ?? this.kind,
+    occurredAt: occurredAt ?? this.occurredAt,
+    observedAt: observedAt ?? this.observedAt,
+    sourceIdentity: sourceIdentity ?? this.sourceIdentity,
     title: title ?? this.title,
     summary: summary ?? this.summary,
-    payload: payload ?? this.payload,
+    facts: facts ?? this.facts,
     entities: entities ?? this.entities,
     importance: importance ?? this.importance,
+    confidence: confidence ?? this.confidence,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
     'id': id,
-    'type': type,
-    'timestamp': timestamp.toUtc().toIso8601String(),
-    'source': source,
+    if (domain != null) 'domain': domain!.wire,
+    'kind': kind.wire,
+    'occurred_at': occurredAt.toUtc().toIso8601String(),
+    'observed_at': observedAt.toUtc().toIso8601String(),
+    'source_identity': sourceIdentity.toJson(),
     'owner_user_id': ownerUserId,
     if (title != null) 'title': title,
     'summary': summary,
-    'payload': payload,
-    'entities': entities.toList(growable: false),
+    'facts': facts,
+    'entities': entities.toList(growable: false)..sort(),
     'importance': importance,
+    'confidence': confidence,
   };
 
   factory EventRecord.fromJson(Map<String, Object?> json) {
-    final entitiesRaw = json['entities'];
-    final ts = json['timestamp'];
+    final domainWire = json['domain'] as String?;
+    final domain = domainWire == null ? null : _requiredDomain(domainWire);
+    final sourceJson = json['source_identity'] as Map;
+    final entitiesRaw = json['entities'] as List;
     return EventRecord(
-      id: (json['id'] as String?) ?? '',
-      type: (json['type'] as String?) ?? '',
-      timestamp: ts is String
-          ? DateTime.parse(ts).toUtc()
-          : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      source: (json['source'] as String?) ?? '',
-      ownerUserId: (json['owner_user_id'] as String?) ?? '',
+      id: json['id'] as String,
+      domain: domain,
+      kind: EventKind.fromWire(json['kind'] as String),
+      occurredAt: _requiredDateTime(json['occurred_at'], 'occurred_at'),
+      observedAt: _requiredDateTime(json['observed_at'], 'observed_at'),
+      sourceIdentity: SourceIdentity.fromJson(
+        sourceJson.cast<String, Object?>(),
+      ),
+      ownerUserId: json['owner_user_id'] as String,
       title: json['title'] as String?,
-      summary: (json['summary'] as String?) ?? '',
-      payload: _mapOf(json['payload']),
-      entities: entitiesRaw is List
-          ? entitiesRaw.whereType<String>().toSet()
-          : <String>{},
-      importance: (json['importance'] as num?)?.toDouble() ?? 0.5,
+      summary: json['summary'] as String,
+      facts: factsOf(json['facts']),
+      entities: entitiesRaw.whereType<String>().toSet(),
+      importance: (json['importance'] as num).toDouble(),
+      confidence: (json['confidence'] as num).toDouble(),
     );
   }
 
-  String encodePayload() => jsonEncode(payload);
-  static Map<String, Object?> decodePayload(String s) {
-    if (s.isEmpty) return const <String, Object?>{};
-    final v = jsonDecode(s);
-    if (v is Map) return v.map((k, v) => MapEntry(k.toString(), v));
-    return const <String, Object?>{};
-  }
+  String encodeFacts() => jsonEncode(facts);
 
-  String encodeEntities() => jsonEncode(entities.toList(growable: false));
-  static Set<String> decodeEntities(String s) {
-    if (s.isEmpty) return <String>{};
-    final v = jsonDecode(s);
-    if (v is List) return v.whereType<String>().toSet();
-    return <String>{};
+  static Map<String, Object?> decodeFacts(String value) =>
+      factsOf(jsonDecode(value));
+
+  String encodeEntities() =>
+      jsonEncode(entities.toList(growable: false)..sort());
+
+  static Set<String> decodeEntities(String value) {
+    final decoded = jsonDecode(value) as List;
+    return decoded.whereType<String>().toSet();
   }
 }
 
-Map<String, Object?> _mapOf(Object? raw) {
-  if (raw is Map) return raw.map((k, v) => MapEntry(k.toString(), v));
-  return const <String, Object?>{};
+Map<String, Object?> factsOf(Object? raw) {
+  if (raw is! Map) throw const FormatException('Event facts must be a map');
+  return raw.map((key, value) => MapEntry(key.toString(), value));
+}
+
+DomainScope _requiredDomain(String wire) {
+  final domain = DomainScope.tryParse(wire);
+  if (domain == null) throw FormatException('Unknown event domain: $wire');
+  return domain;
+}
+
+DateTime _requiredDateTime(Object? raw, String field) {
+  if (raw is String && raw.isNotEmpty) {
+    final parsed = DateTime.tryParse(raw)?.toUtc();
+    if (parsed != null) return parsed;
+  }
+  if (raw is num) {
+    return DateTime.fromMillisecondsSinceEpoch(raw.toInt(), isUtc: true);
+  }
+  throw FormatException('Invalid or missing EventRecord.$field');
 }

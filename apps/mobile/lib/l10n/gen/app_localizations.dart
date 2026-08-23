@@ -13489,12 +13489,6 @@ abstract class AppLocalizations {
   /// **'Disabled'**
   String get agentSettingsDisabled;
 
-  /// Badge for agents that support notifications.
-  ///
-  /// In en, this message translates to:
-  /// **'Notifications'**
-  String get agentSettingsNotifications;
-
   /// Compact overview metric showing enabled agents out of all active-domain agents.
   ///
   /// In en, this message translates to:
@@ -14129,18 +14123,6 @@ abstract class AppLocalizations {
   /// **'Reviews scan freshness, quote quality, concentration, and contract risk.'**
   String get agentPresentationOptionsIncomeRiskReviewDescription;
 
-  /// Presentation label for the HealthOS morning briefing agent.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning Briefing'**
-  String get agentPresentationMorningBriefingLabel;
-
-  /// Presentation description for the HealthOS morning briefing agent.
-  ///
-  /// In en, this message translates to:
-  /// **'Builds a daily briefing from recent Health and Finance signals.'**
-  String get agentPresentationMorningBriefingDescription;
-
   /// Presentation label for the HealthOS recovery alert agent.
   ///
   /// In en, this message translates to:
@@ -14212,18 +14194,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Surfaces captured notes that need classification or follow-up.'**
   String get agentPresentationKnowledgeInboxTriageDescription;
-
-  /// Presentation label for the KnowledgeOS routine due agent.
-  ///
-  /// In en, this message translates to:
-  /// **'Routine Due'**
-  String get agentPresentationKnowledgeRoutineLabel;
-
-  /// Presentation description for the KnowledgeOS routine due agent.
-  ///
-  /// In en, this message translates to:
-  /// **'Checks knowledge routines due for review.'**
-  String get agentPresentationKnowledgeRoutineDescription;
 
   /// Presentation label for the ExecutionOS review agent.
   ///
@@ -14338,24 +14308,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Controls local agent notifications and background reminder jobs.'**
   String get settingsNotificationsMasterSubtitle;
-
-  /// HealthOS morning briefing notification preference label
-  ///
-  /// In en, this message translates to:
-  /// **'Morning Briefing'**
-  String get settingsNotificationsHealthBriefingTitle;
-
-  /// HealthOS morning briefing notification preference subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Runs around {hour}:00 and posts the HealthOS summary.'**
-  String settingsNotificationsHealthBriefingSubtitle(String hour);
-
-  /// HealthOS briefing subtitle when the master notification switch is off
-  ///
-  /// In en, this message translates to:
-  /// **'Turn on app notifications to run the daily briefing reminder.'**
-  String get settingsNotificationsHealthBriefingBlockedSubtitle;
 
   /// Notification settings permission status while loading
   ///
@@ -14726,7 +14678,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDomainsHealthTodaySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'View recovery, metrics, and the morning briefing'**
+  /// **'View recovery, metrics, and health trends'**
   String get settingsDomainsHealthTodaySubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeEnabledSubtitle.
@@ -14810,24 +14762,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sync health data'**
   String get settingsDomainsHealthSyncTitle;
-
-  /// No description provided for @settingsDomainsBriefingTimeHelp.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning briefing time'**
-  String get settingsDomainsBriefingTimeHelp;
-
-  /// No description provided for @settingsDomainsBriefingTimeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Briefing time'**
-  String get settingsDomainsBriefingTimeTitle;
-
-  /// No description provided for @settingsDomainsBriefingTimeSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Runs around {hour}:00 each day (background scheduling may drift)'**
-  String settingsDomainsBriefingTimeSubtitle(String hour);
 
   /// No description provided for @settingsAiModelsCheckingRuntime.
   ///
@@ -15304,70 +15238,6 @@ abstract class AppLocalizations {
     Object days,
     Object first,
   );
-
-  /// No description provided for @knowledgeAgentRoutineTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Routines due this week'**
-  String get knowledgeAgentRoutineTitle;
-
-  /// No description provided for @knowledgeAgentRoutineNoneDue.
-  ///
-  /// In en, this message translates to:
-  /// **'No routines due in the next {days} days.'**
-  String knowledgeAgentRoutineNoneDue(Object days);
-
-  /// No description provided for @knowledgeAgentRoutineLeadOverdue.
-  ///
-  /// In en, this message translates to:
-  /// **'{statement} (overdue by {days} days)'**
-  String knowledgeAgentRoutineLeadOverdue(Object days, Object statement);
-
-  /// No description provided for @knowledgeAgentRoutineLeadToday.
-  ///
-  /// In en, this message translates to:
-  /// **'{statement} (due today)'**
-  String knowledgeAgentRoutineLeadToday(Object statement);
-
-  /// No description provided for @knowledgeAgentRoutineLeadUpcoming.
-  ///
-  /// In en, this message translates to:
-  /// **'{statement} (due in {days} days)'**
-  String knowledgeAgentRoutineLeadUpcoming(Object days, Object statement);
-
-  /// No description provided for @knowledgeAgentRoutineSummaryMixed.
-  ///
-  /// In en, this message translates to:
-  /// **'{overdueCount} overdue + {upcomingCount} due this week. First: {first}'**
-  String knowledgeAgentRoutineSummaryMixed(
-    Object first,
-    Object overdueCount,
-    Object upcomingCount,
-  );
-
-  /// No description provided for @knowledgeAgentRoutineSummaryOverdueOne.
-  ///
-  /// In en, this message translates to:
-  /// **'1 Routine is overdue: {first}'**
-  String knowledgeAgentRoutineSummaryOverdueOne(Object first);
-
-  /// No description provided for @knowledgeAgentRoutineSummaryOverdueMany.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} Routines are overdue. First: {first}'**
-  String knowledgeAgentRoutineSummaryOverdueMany(Object count, Object first);
-
-  /// No description provided for @knowledgeAgentRoutineSummaryUpcomingOne.
-  ///
-  /// In en, this message translates to:
-  /// **'1 Routine is due this week: {first}'**
-  String knowledgeAgentRoutineSummaryUpcomingOne(Object first);
-
-  /// No description provided for @knowledgeAgentRoutineSummaryUpcomingMany.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} Routines are due this week. First: {first}'**
-  String knowledgeAgentRoutineSummaryUpcomingMany(Object count, Object first);
 
   /// No description provided for @knowledgeAgentContradictionTitle.
   ///
@@ -21704,53 +21574,11 @@ abstract class AppLocalizations {
   /// **'Sync data and track for a few days for stable recovery advice.'**
   String get healthRecoveryInsufficientTip;
 
-  /// No description provided for @healthBriefingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning Briefing'**
-  String get healthBriefingTitle;
-
-  /// No description provided for @healthBriefingEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'No briefing yet'**
-  String get healthBriefingEmpty;
-
-  /// No description provided for @healthBriefingEmptyHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync data to generate today\'s briefing.'**
-  String get healthBriefingEmptyHint;
-
-  /// No description provided for @healthBriefingGenerating.
-  ///
-  /// In en, this message translates to:
-  /// **'Generating'**
-  String get healthBriefingGenerating;
-
-  /// No description provided for @healthBriefingUpdate.
-  ///
-  /// In en, this message translates to:
-  /// **'Update'**
-  String get healthBriefingUpdate;
-
-  /// No description provided for @healthBriefingGenerate.
-  ///
-  /// In en, this message translates to:
-  /// **'Generate'**
-  String get healthBriefingGenerate;
-
-  /// No description provided for @healthBriefingUpdated.
+  /// No description provided for @agentResultUpdated.
   ///
   /// In en, this message translates to:
   /// **'Updated {time}'**
-  String healthBriefingUpdated(Object time);
-
-  /// No description provided for @healthBriefingLoadFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Briefing load failed: {message}'**
-  String healthBriefingLoadFailed(Object message);
+  String agentResultUpdated(String time);
 
   /// No description provided for @healthNoData.
   ///
@@ -24123,12 +23951,6 @@ abstract class AppLocalizations {
   /// **'Plan load failed: {message}'**
   String healthPlanLoadFailed(String message);
 
-  /// No description provided for @healthBriefingAuto.
-  ///
-  /// In en, this message translates to:
-  /// **'Auto'**
-  String get healthBriefingAuto;
-
   /// No description provided for @healthGarminTitle.
   ///
   /// In en, this message translates to:
@@ -25437,12 +25259,6 @@ abstract class AppLocalizations {
   /// **'no finance snapshot to review'**
   String get financeAgentWeeklyWealthSkipNoSnapshot;
 
-  /// No description provided for @financeAgentWeeklyWealthMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Weekly wealth review · {dayKey}'**
-  String financeAgentWeeklyWealthMemoryTitle(Object dayKey);
-
   /// No description provided for @financeAgentWeeklyWealthTitle.
   ///
   /// In en, this message translates to:
@@ -25611,12 +25427,6 @@ abstract class AppLocalizations {
   /// **'no cashflow anomaly detected'**
   String get financeAgentCashflowSkipNoAnomaly;
 
-  /// No description provided for @financeAgentCashflowMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Cashflow anomaly review · {dayKey}'**
-  String financeAgentCashflowMemoryTitle(Object dayKey);
-
   /// No description provided for @financeAgentCashflowTitle.
   ///
   /// In en, this message translates to:
@@ -25691,12 +25501,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no FIRE plan drift detected'**
   String get financeAgentFireSkipNoDrift;
-
-  /// No description provided for @financeAgentFireMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'FIRE plan drift monitor · {dayKey}'**
-  String financeAgentFireMemoryTitle(Object dayKey);
 
   /// No description provided for @financeAgentFireTitle.
   ///
@@ -26105,12 +25909,6 @@ abstract class AppLocalizations {
   /// **'no options income risk finding'**
   String get financeAgentOptionsSkipNoFinding;
 
-  /// No description provided for @financeAgentOptionsMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Options income risk review · {dayKey}'**
-  String financeAgentOptionsMemoryTitle(Object dayKey);
-
   /// No description provided for @financeAgentOptionsTitle.
   ///
   /// In en, this message translates to:
@@ -26259,102 +26057,6 @@ abstract class AppLocalizations {
   /// **'Review options scan'**
   String get financeAgentOptionsAction;
 
-  /// No description provided for @healthAgentMorningSkipNoHealth.
-  ///
-  /// In en, this message translates to:
-  /// **'no health signals in the last 24h'**
-  String get healthAgentMorningSkipNoHealth;
-
-  /// No description provided for @healthAgentMorningSkipNoUsable.
-  ///
-  /// In en, this message translates to:
-  /// **'health events present but no usable signals'**
-  String get healthAgentMorningSkipNoUsable;
-
-  /// No description provided for @healthAgentMorningMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning briefing · {dayKey}'**
-  String healthAgentMorningMemoryTitle(Object dayKey);
-
-  /// No description provided for @healthAgentMorningTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Morning Briefing'**
-  String get healthAgentMorningTitle;
-
-  /// No description provided for @healthAgentMorningSleepShortTag.
-  ///
-  /// In en, this message translates to:
-  /// **' (short)'**
-  String get healthAgentMorningSleepShortTag;
-
-  /// No description provided for @healthAgentMorningSleepLongTag.
-  ///
-  /// In en, this message translates to:
-  /// **' (long)'**
-  String get healthAgentMorningSleepLongTag;
-
-  /// No description provided for @healthAgentMorningSleepLine.
-  ///
-  /// In en, this message translates to:
-  /// **'Slept {hours}h{tag}'**
-  String healthAgentMorningSleepLine(Object hours, Object tag);
-
-  /// No description provided for @healthAgentMorningHrvLine.
-  ///
-  /// In en, this message translates to:
-  /// **'HRV {value}ms'**
-  String healthAgentMorningHrvLine(Object value);
-
-  /// No description provided for @healthAgentMorningFinanceLine.
-  ///
-  /// In en, this message translates to:
-  /// **'Finance: {items}'**
-  String healthAgentMorningFinanceLine(Object items);
-
-  /// No description provided for @healthAgentMorningPromptSystem.
-  ///
-  /// In en, this message translates to:
-  /// **'You are HealthOS Morning Briefing. Given structured Health + Finance signals from the last 24 hours, write a single-sentence morning briefing in the user\'s tone (short, calm, factual). Use only the numbers provided. Do not add advice unless the numbers are clearly outliers. Reply in {language}.'**
-  String healthAgentMorningPromptSystem(Object language);
-
-  /// No description provided for @healthAgentMorningPromptStructuredSignals.
-  ///
-  /// In en, this message translates to:
-  /// **'Structured signals (use these numbers verbatim, do not change them):'**
-  String get healthAgentMorningPromptStructuredSignals;
-
-  /// No description provided for @healthAgentMorningPromptInstruction.
-  ///
-  /// In en, this message translates to:
-  /// **'Write one calm, factual sentence (<= 30 words) that mentions each signal. No bullet points. No emojis.'**
-  String get healthAgentMorningPromptInstruction;
-
-  /// No description provided for @healthAgentMorningInsightSleepTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sleep'**
-  String get healthAgentMorningInsightSleepTitle;
-
-  /// No description provided for @healthAgentMorningInsightHrvTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'HRV'**
-  String get healthAgentMorningInsightHrvTitle;
-
-  /// No description provided for @healthAgentMorningInsightFinanceTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Finance'**
-  String get healthAgentMorningInsightFinanceTitle;
-
-  /// No description provided for @healthAgentMorningAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Review briefing'**
-  String get healthAgentMorningAction;
-
   /// No description provided for @healthAgentRecoverySkipInsufficient.
   ///
   /// In en, this message translates to:
@@ -26366,12 +26068,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no sustained HRV decline detected'**
   String get healthAgentRecoverySkipNoDecline;
-
-  /// No description provided for @healthAgentRecoveryMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Recovery Alert · {dayKey}'**
-  String healthAgentRecoveryMemoryTitle(Object dayKey);
 
   /// No description provided for @healthAgentRecoveryTitle.
   ///
@@ -26389,12 +26085,6 @@ abstract class AppLocalizations {
     Object declinePct,
     Object recentMs,
   );
-
-  /// No description provided for @healthAgentRecoveryNotificationBody.
-  ///
-  /// In en, this message translates to:
-  /// **'HRV down {declinePct}% over {days} days. Consider lighter activity today.'**
-  String healthAgentRecoveryNotificationBody(Object days, Object declinePct);
 
   /// No description provided for @healthAgentRecoveryInsightDeclineTitle.
   ///
@@ -26443,12 +26133,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no actionable signals this week'**
   String get healthAgentWeeklySkipNoActionable;
-
-  /// No description provided for @healthAgentWeeklyMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Weekly Summary · {dayKey}'**
-  String healthAgentWeeklyMemoryTitle(Object dayKey);
 
   /// No description provided for @healthAgentWeeklyTitle.
   ///
@@ -26554,12 +26238,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'no execution signals to review'**
   String get executionAgentReviewSkipNoSignals;
-
-  /// No description provided for @executionAgentReviewMemoryTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Execution review · {dayKey}'**
-  String executionAgentReviewMemoryTitle(Object dayKey);
 
   /// No description provided for @executionAgentReviewTitle.
   ///
@@ -26899,46 +26577,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Review contradictions'**
   String get knowledgeAgentContradictionAction;
-
-  /// No description provided for @knowledgeAgentRoutineArtifactTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Routine Due'**
-  String get knowledgeAgentRoutineArtifactTitle;
-
-  /// No description provided for @knowledgeAgentRoutineInsightOverdueTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Overdue routines'**
-  String get knowledgeAgentRoutineInsightOverdueTitle;
-
-  /// No description provided for @knowledgeAgentRoutineInsightOverdueBody.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} routine{plural} are overdue.'**
-  String knowledgeAgentRoutineInsightOverdueBody(Object count, Object plural);
-
-  /// No description provided for @knowledgeAgentRoutineInsightUpcomingTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Upcoming routines'**
-  String get knowledgeAgentRoutineInsightUpcomingTitle;
-
-  /// No description provided for @knowledgeAgentRoutineInsightUpcomingBody.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} routine{plural} are due within {days} days.'**
-  String knowledgeAgentRoutineInsightUpcomingBody(
-    Object count,
-    Object days,
-    Object plural,
-  );
-
-  /// No description provided for @knowledgeAgentRoutineAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Review routines'**
-  String get knowledgeAgentRoutineAction;
 
   /// No description provided for @knowledgeAgentInboxSkipNoNotes.
   ///
@@ -30043,6 +29681,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image inserted. It is currently stored on this device only.'**
   String get knowledgeImageLocalOnlyToast;
+
+  /// No description provided for @developerIssuesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a product issue'**
+  String get developerIssuesTitle;
+
+  /// No description provided for @developerIssuesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save a local dogfood report with bounded diagnostics. Nothing is sent until you export it.'**
+  String get developerIssuesSubtitle;
+
+  /// No description provided for @developerIssuesDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'What should be improved?'**
+  String get developerIssuesDescriptionLabel;
+
+  /// No description provided for @developerIssuesDescriptionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Example: The FIRE card\'s information hierarchy makes the recommended action hard to find.'**
+  String get developerIssuesDescriptionHint;
+
+  /// No description provided for @developerIssuesDescriptionHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the observed problem and the result you expected. Do not include secrets.'**
+  String get developerIssuesDescriptionHelp;
+
+  /// No description provided for @developerIssuesDescriptionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the product issue before saving.'**
+  String get developerIssuesDescriptionRequired;
+
+  /// No description provided for @developerIssuesCaptureAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save local report'**
+  String get developerIssuesCaptureAction;
+
+  /// No description provided for @developerIssuesCapturingAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get developerIssuesCapturingAction;
+
+  /// No description provided for @developerIssuesSavedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Report saved on this device'**
+  String get developerIssuesSavedToast;
+
+  /// No description provided for @developerIssuesSaveFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the report. Review the description and try again.'**
+  String get developerIssuesSaveFailedToast;
+
+  /// No description provided for @developerIssuesContextSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Captured context'**
+  String get developerIssuesContextSection;
+
+  /// No description provided for @developerIssuesRouteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Source route'**
+  String get developerIssuesRouteLabel;
+
+  /// No description provided for @developerIssuesDomainLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Domain'**
+  String get developerIssuesDomainLabel;
+
+  /// No description provided for @developerIssuesShellDomain.
+  ///
+  /// In en, this message translates to:
+  /// **'LifeOS shell'**
+  String get developerIssuesShellDomain;
+
+  /// No description provided for @developerIssuesHistorySection.
+  ///
+  /// In en, this message translates to:
+  /// **'Local reports'**
+  String get developerIssuesHistorySection;
+
+  /// No description provided for @developerIssuesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No reports saved on this device.'**
+  String get developerIssuesEmpty;
+
+  /// No description provided for @developerIssuesExportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get developerIssuesExportAction;
+
+  /// No description provided for @developerIssuesExportedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported'**
+  String get developerIssuesExportedLabel;
+
+  /// No description provided for @developerIssuesLocalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Local only'**
+  String get developerIssuesLocalLabel;
+
+  /// No description provided for @developerIssuesTraceAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'Trace attached'**
+  String get developerIssuesTraceAttached;
+
+  /// No description provided for @developerIssuesToolErrorsAttached.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} tool error codes'**
+  String developerIssuesToolErrorsAttached(int count);
+
+  /// No description provided for @developerIssuesExportFailedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the export sheet. Try again.'**
+  String get developerIssuesExportFailedToast;
+
+  /// No description provided for @developerIssuesAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Product issue reports'**
+  String get developerIssuesAdvancedTitle;
+
+  /// No description provided for @developerIssuesAdvancedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture route, build, latest trace, and bounded tool error codes locally'**
+  String get developerIssuesAdvancedSubtitle;
 }
 
 class _AppLocalizationsDelegate

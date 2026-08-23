@@ -1,7 +1,7 @@
 /// `weekly_summary` — produces a weekly health overview.
 ///
 /// Runs every Sunday evening. Aggregates the week's sleep, HRV, steps,
-/// and workout data into a concise summary memory record.
+/// and workout data into a concise temporary artifact.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,9 +13,6 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/context_evidence.dart';
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
@@ -28,7 +25,6 @@ import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
 const String kWeeklySummaryAgentId = 'weekly_summary';
-const String kWeeklySummaryMemorySource = 'agent:weekly_summary';
 
 class WeeklySummaryAgent implements Agent {
   const WeeklySummaryAgent({
@@ -50,7 +46,6 @@ class WeeklySummaryAgent implements Agent {
   @override
   Future<AgentRunResult> run(AgentContext ctx) async {
     final start = ctx.now;
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final l10n = agentL10n(ctx.ref);
 
@@ -106,42 +101,8 @@ class WeeklySummaryAgent implements Agent {
 
     final summary = l10n.healthAgentWeeklySummary(parts.join(' · '));
     final dayKey = AppFormatters.utcDayKey(start);
-    final memoryId = '$kWeeklySummaryMemorySource:$dayKey';
     final artifactId = '$kWeeklySummaryAgentId:$dayKey';
 
-    final memory = MemoryRecord(
-      id: memoryId,
-      kind: MemoryKind.episodic,
-      role: MemoryRole.pattern,
-      authority: EvidenceAuthority.deterministicDerived,
-      ownerUserId: ownerUserId,
-      scope: '*',
-      source: kWeeklySummaryMemorySource,
-      sourceId: dayKey,
-      title: l10n.healthAgentWeeklyMemoryTitle(dayKey),
-      summary: summary,
-      payload: <String, Object?>{
-        'context': 'weekly summary at ${start.toUtc().toIso8601String()}',
-        'outcome': <String, Object?>{
-          'recovery_score': recoveryScore,
-          'recovery_verdict': recoveryVerdict,
-          'avg_sleep_hours': avgSleep == null ? null : _round(avgSleep),
-          'total_steps': weekSteps,
-          'workout_count': weekWorkouts,
-          'workout_minutes': _round(weekWorkoutMin),
-          if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
-        },
-        'artifact_id': artifactId,
-        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
-      },
-      entities: <String>{'weekly_summary', 'health', dayKey},
-      importance: 0.6,
-      confidence: 0.8,
-      validFrom: start.toUtc(),
-      createdAt: start.toUtc(),
-      updatedAt: DateTime.now().toUtc(),
-    );
-    await runtime.remember(memory);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -149,7 +110,6 @@ class WeeklySummaryAgent implements Agent {
       _artifact(
         id: artifactId,
         ownerUserId: ownerUserId,
-        memoryId: memoryId,
         createdAt: start,
         snapshot: snapshot,
         summary: summary,
@@ -170,7 +130,6 @@ class WeeklySummaryAgent implements Agent {
         'workout_count': weekWorkouts,
         if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
-      memoryId: memoryId,
       artifactId: artifactId,
       traceId: snapshot.traceId,
     );
@@ -179,7 +138,6 @@ class WeeklySummaryAgent implements Agent {
   static AgentArtifact _artifact({
     required String id,
     required String ownerUserId,
-    required String memoryId,
     required DateTime createdAt,
     required WeeklySummarySnapshot snapshot,
     required String summary,
@@ -306,7 +264,6 @@ class WeeklySummaryAgent implements Agent {
         l10n,
         sourceLabel: l10n.healthAgentWeeklyEvidenceLabel,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),

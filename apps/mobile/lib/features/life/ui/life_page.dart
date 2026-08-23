@@ -5,6 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/agents/providers.dart' as life_agent_providers;
+import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
+import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
+import 'package:naviwealth/core/ai/agents/ui/agent_results_panel.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -31,6 +35,9 @@ class LifePage extends ConsumerWidget {
     final packs = ref.watch(lifeWorkbenchDomainsProvider);
     final events = ref.watch(lifeEventsProvider);
     final hero = ref.watch(lifeHeroSummaryProvider);
+    final navigatorArtifact = ref
+        .watch(life_agent_providers.latestDailyNavigatorArtifactProvider)
+        .value;
     final reviewPacks = packs
         .where((pack) => pack.reviewRoutePath != null)
         .toList(growable: false);
@@ -64,6 +71,9 @@ class LifePage extends ConsumerWidget {
             ref.invalidate(lifeSignalSnapshotProvider);
             ref.invalidate(lifeEventsProvider);
             ref.invalidate(lifeHeroSummaryProvider);
+            ref.invalidate(
+              life_agent_providers.latestDailyNavigatorArtifactProvider,
+            );
           },
           maxContentWidth: AdaptiveMaxWidth.page,
           greeting: _LifeGreeting(l10n: l10n),
@@ -83,9 +93,27 @@ class LifePage extends ConsumerWidget {
             ),
           ),
           summaryTiles: staggeredSummaryTiles([
-            if (priorityEvents.isNotEmpty)
+            if (navigatorArtifact != null)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.featured,
+                child: AgentResultCard(
+                  artifact: navigatorArtifact,
+                  metaLabel: agentResultMetaLabel(
+                    l10n,
+                    navigatorArtifact.createdAt,
+                  ),
+                  layout: AgentResultCardLayout.summary,
+                  summaryMaxLines: 5,
+                  onOpen: () => context.push(
+                    AgentArtifactRoutes.detail(navigatorArtifact.id),
+                  ),
+                ),
+              ),
+            if (priorityEvents.isNotEmpty)
+              AdaptiveSummaryTile(
+                role: navigatorArtifact == null
+                    ? AdaptiveSummaryTileRole.featured
+                    : AdaptiveSummaryTileRole.continuous,
                 child: _LifeEventSection(
                   title: l10n.lifeTimelinePriorityTitle,
                   events: priorityEvents,

@@ -199,9 +199,9 @@ void main() {
     );
 
     final trace = await recorder.recordStepRun(
-      agentId: 'knowledge_routine_due',
-      domain: kDomainKnowledge,
-      surface: 'knowledge_routine_due',
+      agentId: 'execution_due_actions',
+      domain: kDomainExecution,
+      surface: 'execution_due_actions',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
       stepRun: const AgentRuntimeNativeStepRunResult(
@@ -222,7 +222,7 @@ void main() {
             'kind': 'agent_runtime_step',
             'status': 'completed',
             'step_index': 3,
-            'tool_name': 'list_due_routines',
+            'tool_name': 'list_open_actions',
             'run_state': <String, Object?>{
               'status': 'effect_requested',
               'step_index': 3,
@@ -240,7 +240,7 @@ void main() {
             'effect': <String, Object?>{
               'kind': 'tool',
               'effect_id': 'call_1',
-              'name': 'list_due_routines',
+              'name': 'list_open_actions',
               'input': <String, Object?>{'limit': 50},
             },
           },
@@ -250,19 +250,19 @@ void main() {
           <String, Object?>{
             'jsonrpc': '2.0',
             'id': 'call_1',
-            'result': <String, Object?>{'routines': <Object?>[]},
+            'result': <String, Object?>{'actions': <Object?>[]},
           },
         ],
       ),
     );
 
     expect(traces.single, same(trace));
-    expect(trace.requestId, 'agent-runtime:knowledge_routine_due:run_2');
+    expect(trace.requestId, 'agent-runtime:execution_due_actions:run_2');
     expect(trace.routingReason, kFrbNativeEffectLoopRoutingReason);
     expect(trace.intent.label, 'agent_runtime_step_run');
     expect(trace.llmRoundCount, 0);
     expect(trace.toolSpans.single.id, 'tool:4');
-    expect(trace.toolSpans.single.name, 'tool:list_due_routines');
+    expect(trace.toolSpans.single.name, 'tool:list_open_actions');
     expect(
       trace.toolSpans.single.attributes,
       containsPair('native_step_index', 3),
@@ -277,7 +277,7 @@ void main() {
     );
     expect(
       trace.toolSpans.single.attributes,
-      containsPair('native_trace_event_tool_name', 'list_due_routines'),
+      containsPair('native_trace_event_tool_name', 'list_open_actions'),
     );
     expect(
       trace.toolSpans.single.attributes,
@@ -293,7 +293,7 @@ void main() {
     );
     expect(
       trace.spans.first.attributes,
-      containsPair('surface', 'knowledge_routine_due'),
+      containsPair('surface', 'execution_due_actions'),
     );
     expect(
       trace.spans.first.attributes,
@@ -305,7 +305,7 @@ void main() {
     );
     expect(
       trace.spans.first.attributes,
-      containsPair('native_trace_event_tool_name', 'list_due_routines'),
+      containsPair('native_trace_event_tool_name', 'list_open_actions'),
     );
     expect(
       trace.spans.first.attributes,

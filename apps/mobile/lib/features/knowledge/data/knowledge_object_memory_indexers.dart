@@ -25,7 +25,9 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/contracts/context_evidence.dart';
+import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/contracts/memory_record.dart';
+import '../../../core/ai/contracts/source_identity.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';

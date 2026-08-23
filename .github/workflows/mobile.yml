@@ -9,6 +9,9 @@ on:
       - '.github/workflows/mobile.yml'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v3_*.json'
+      - 'docs/architecture/agent-runtime-capabilities.json'
+      - 'third_party/agent-runtime'
+      - 'tool/generate_agent_runtime_capabilities.dart'
       - 'tool/check-ai-contract-wire-enums.sh'
       - 'tool/check-sync-client-wire-fixtures.sh'
       - 'tool/check-mobile-static.sh'
@@ -33,6 +36,9 @@ on:
       - '.github/workflows/mobile.yml'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v3_*.json'
+      - 'docs/architecture/agent-runtime-capabilities.json'
+      - 'third_party/agent-runtime'
+      - 'tool/generate_agent_runtime_capabilities.dart'
       - 'tool/check-ai-contract-wire-enums.sh'
       - 'tool/check-sync-client-wire-fixtures.sh'
       - 'tool/check-mobile-static.sh'
@@ -89,6 +95,8 @@ jobs:
     needs: prepare-font-assets
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.0'

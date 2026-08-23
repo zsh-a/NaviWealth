@@ -78,6 +78,7 @@ class AgentRunResult {
     required DateTime finishedAt,
     String? reason,
     String? traceId,
+    Map<String, Object?> payload = const <String, Object?>{},
   }) => AgentRunResult(
     agentId: agentId,
     status: AgentRunStatus.skipped,
@@ -85,6 +86,7 @@ class AgentRunResult {
     finishedAt: finishedAt,
     summary: reason,
     traceId: traceId,
+    payload: payload,
   );
 
   factory AgentRunResult.failed({
@@ -116,7 +118,7 @@ class AgentRunResult {
   );
 
   /// `[Agent.id]` of the agent that produced this result. Stable
-  /// identifier — UI surfaces ("show me last morning briefing") key
+  /// identifier — UI surfaces ("show me the latest Daily Navigator") key
   /// off it.
   final String agentId;
 
@@ -130,7 +132,7 @@ class AgentRunResult {
 
   /// Structured payload the agent wants to persist alongside the
   /// summary. Free-form so each agent can shape its own output —
-  /// Morning Briefing uses `{slept_hours, recovery_score, finance_delta, ...}`.
+  /// Daily Navigator uses structured active-domain context and evidence.
   final Map<String, Object?> payload;
 
   /// If the agent wrote a memory record, this is its id (so callers
@@ -160,21 +162,18 @@ class AgentRunResult {
   };
 }
 
-/// One scheduled agent. Concrete implementations live in domain
-/// modules; they register via `agentRegistryProvider` overrides in
-/// `bootstrap.dart`.
+/// One named Agent use case. Domain analyzers register through DomainPack;
+/// app-owned cross-domain synthesis registers through app composition.
 abstract class Agent {
-  /// Stable opaque id (e.g. `'morning_briefing'`). Used as the
-  /// memory / event back-pointer key — never rename without a
-  /// migration.
+  /// Stable opaque id (e.g. `'daily_navigator'`) used by runs, findings,
+  /// artifacts, feedback, and attention decisions.
   String get id;
 
-  /// Display name shown in any "agent runs" UI surface ("Morning
-  /// Briefing"). Free text.
+  /// Display name shown in Agent run surfaces. Free text.
   String get name;
 
-  /// When this agent should fire — usually a fixed daily / weekly
-  /// cadence.
+  /// Schedule fallback. Signal-driven dispatch uses `AgentTriggerSpec` before
+  /// entering the runner and records its own run provenance.
   AgentSchedule get schedule;
 
   /// Execute one run.

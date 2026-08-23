@@ -8022,9 +8022,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsDisabled => 'Disabled';
 
   @override
-  String get agentSettingsNotifications => 'Notifications';
-
-  @override
   String agentSettingsOverviewEnabled(int enabled, int total) {
     return 'Enabled $enabled/$total';
   }
@@ -8420,13 +8417,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Reviews scan freshness, quote quality, concentration, and contract risk.';
 
   @override
-  String get agentPresentationMorningBriefingLabel => 'Morning Briefing';
-
-  @override
-  String get agentPresentationMorningBriefingDescription =>
-      'Builds a daily briefing from recent Health and Finance signals.';
-
-  @override
   String get agentPresentationRecoveryAlertLabel => 'Recovery Alert';
 
   @override
@@ -8468,13 +8458,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get agentPresentationKnowledgeInboxTriageDescription =>
       'Surfaces captured notes that need classification or follow-up.';
-
-  @override
-  String get agentPresentationKnowledgeRoutineLabel => 'Routine Due';
-
-  @override
-  String get agentPresentationKnowledgeRoutineDescription =>
-      'Checks knowledge routines due for review.';
 
   @override
   String get agentPresentationExecutionReviewLabel => 'Execution Review';
@@ -8547,18 +8530,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsNotificationsMasterSubtitle =>
       'Controls local agent notifications and background reminder jobs.';
-
-  @override
-  String get settingsNotificationsHealthBriefingTitle => 'Morning Briefing';
-
-  @override
-  String settingsNotificationsHealthBriefingSubtitle(String hour) {
-    return 'Runs around $hour:00 and posts the HealthOS summary.';
-  }
-
-  @override
-  String get settingsNotificationsHealthBriefingBlockedSubtitle =>
-      'Turn on app notifications to run the daily briefing reminder.';
 
   @override
   String get settingsNotificationsPermissionChecking =>
@@ -8766,7 +8737,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsHealthTodaySubtitle =>
-      'View recovery, metrics, and the morning briefing';
+      'View recovery, metrics, and health trends';
 
   @override
   String get settingsDomainsKnowledgeEnabledSubtitle =>
@@ -8820,17 +8791,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsHealthSyncTitle => 'Sync health data';
-
-  @override
-  String get settingsDomainsBriefingTimeHelp => 'Morning briefing time';
-
-  @override
-  String get settingsDomainsBriefingTimeTitle => 'Briefing time';
-
-  @override
-  String settingsDomainsBriefingTimeSubtitle(String hour) {
-    return 'Runs around $hour:00 each day (background scheduling may drift)';
-  }
 
   @override
   String get settingsAiModelsCheckingRuntime =>
@@ -9118,58 +9078,6 @@ class AppLocalizationsEn extends AppLocalizations {
     Object first,
   ) {
     return '$count assumptions have not been verified for more than $days days. First: $first';
-  }
-
-  @override
-  String get knowledgeAgentRoutineTitle => 'Routines due this week';
-
-  @override
-  String knowledgeAgentRoutineNoneDue(Object days) {
-    return 'No routines due in the next $days days.';
-  }
-
-  @override
-  String knowledgeAgentRoutineLeadOverdue(Object days, Object statement) {
-    return '$statement (overdue by $days days)';
-  }
-
-  @override
-  String knowledgeAgentRoutineLeadToday(Object statement) {
-    return '$statement (due today)';
-  }
-
-  @override
-  String knowledgeAgentRoutineLeadUpcoming(Object days, Object statement) {
-    return '$statement (due in $days days)';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryMixed(
-    Object first,
-    Object overdueCount,
-    Object upcomingCount,
-  ) {
-    return '$overdueCount overdue + $upcomingCount due this week. First: $first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryOverdueOne(Object first) {
-    return '1 Routine is overdue: $first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryOverdueMany(Object count, Object first) {
-    return '$count Routines are overdue. First: $first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryUpcomingOne(Object first) {
-    return '1 Routine is due this week: $first';
-  }
-
-  @override
-  String knowledgeAgentRoutineSummaryUpcomingMany(Object count, Object first) {
-    return '$count Routines are due this week. First: $first';
   }
 
   @override
@@ -12917,32 +12825,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sync data and track for a few days for stable recovery advice.';
 
   @override
-  String get healthBriefingTitle => 'Morning Briefing';
-
-  @override
-  String get healthBriefingEmpty => 'No briefing yet';
-
-  @override
-  String get healthBriefingEmptyHint =>
-      'Sync data to generate today\'s briefing.';
-
-  @override
-  String get healthBriefingGenerating => 'Generating';
-
-  @override
-  String get healthBriefingUpdate => 'Update';
-
-  @override
-  String get healthBriefingGenerate => 'Generate';
-
-  @override
-  String healthBriefingUpdated(Object time) {
+  String agentResultUpdated(String time) {
     return 'Updated $time';
-  }
-
-  @override
-  String healthBriefingLoadFailed(Object message) {
-    return 'Briefing load failed: $message';
   }
 
   @override
@@ -14343,9 +14227,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get healthBriefingAuto => 'Auto';
-
-  @override
   String get healthGarminTitle => 'Garmin Connect';
 
   @override
@@ -15065,11 +14946,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'no finance snapshot to review';
 
   @override
-  String financeAgentWeeklyWealthMemoryTitle(Object dayKey) {
-    return 'Weekly wealth review · $dayKey';
-  }
-
-  @override
   String get financeAgentWeeklyWealthTitle => 'Weekly Wealth Review';
 
   @override
@@ -15185,11 +15061,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'no cashflow anomaly detected';
 
   @override
-  String financeAgentCashflowMemoryTitle(Object dayKey) {
-    return 'Cashflow anomaly review · $dayKey';
-  }
-
-  @override
   String get financeAgentCashflowTitle => 'Cashflow Anomaly Review';
 
   @override
@@ -15233,11 +15104,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financeAgentFireSkipNoDrift => 'no FIRE plan drift detected';
-
-  @override
-  String financeAgentFireMemoryTitle(Object dayKey) {
-    return 'FIRE plan drift monitor · $dayKey';
-  }
 
   @override
   String get financeAgentFireTitle => 'FIRE Plan Drift Monitor';
@@ -15503,11 +15369,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'no options income risk finding';
 
   @override
-  String financeAgentOptionsMemoryTitle(Object dayKey) {
-    return 'Options income risk review · $dayKey';
-  }
-
-  @override
   String get financeAgentOptionsTitle => 'Options Income Risk Review';
 
   @override
@@ -15621,68 +15482,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get financeAgentOptionsAction => 'Review options scan';
 
   @override
-  String get healthAgentMorningSkipNoHealth =>
-      'no health signals in the last 24h';
-
-  @override
-  String get healthAgentMorningSkipNoUsable =>
-      'health events present but no usable signals';
-
-  @override
-  String healthAgentMorningMemoryTitle(Object dayKey) {
-    return 'Morning briefing · $dayKey';
-  }
-
-  @override
-  String get healthAgentMorningTitle => 'Morning Briefing';
-
-  @override
-  String get healthAgentMorningSleepShortTag => ' (short)';
-
-  @override
-  String get healthAgentMorningSleepLongTag => ' (long)';
-
-  @override
-  String healthAgentMorningSleepLine(Object hours, Object tag) {
-    return 'Slept ${hours}h$tag';
-  }
-
-  @override
-  String healthAgentMorningHrvLine(Object value) {
-    return 'HRV ${value}ms';
-  }
-
-  @override
-  String healthAgentMorningFinanceLine(Object items) {
-    return 'Finance: $items';
-  }
-
-  @override
-  String healthAgentMorningPromptSystem(Object language) {
-    return 'You are HealthOS Morning Briefing. Given structured Health + Finance signals from the last 24 hours, write a single-sentence morning briefing in the user\'s tone (short, calm, factual). Use only the numbers provided. Do not add advice unless the numbers are clearly outliers. Reply in $language.';
-  }
-
-  @override
-  String get healthAgentMorningPromptStructuredSignals =>
-      'Structured signals (use these numbers verbatim, do not change them):';
-
-  @override
-  String get healthAgentMorningPromptInstruction =>
-      'Write one calm, factual sentence (<= 30 words) that mentions each signal. No bullet points. No emojis.';
-
-  @override
-  String get healthAgentMorningInsightSleepTitle => 'Sleep';
-
-  @override
-  String get healthAgentMorningInsightHrvTitle => 'HRV';
-
-  @override
-  String get healthAgentMorningInsightFinanceTitle => 'Finance';
-
-  @override
-  String get healthAgentMorningAction => 'Review briefing';
-
-  @override
   String healthAgentRecoverySkipInsufficient(Object count) {
     return 'insufficient HRV data ($count points)';
   }
@@ -15690,11 +15489,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get healthAgentRecoverySkipNoDecline =>
       'no sustained HRV decline detected';
-
-  @override
-  String healthAgentRecoveryMemoryTitle(Object dayKey) {
-    return 'Recovery Alert · $dayKey';
-  }
 
   @override
   String get healthAgentRecoveryTitle => 'Recovery Alert';
@@ -15707,11 +15501,6 @@ class AppLocalizationsEn extends AppLocalizations {
     Object recentMs,
   ) {
     return 'HRV has been below your baseline for $days days ($recentMs ms vs $baselineMs ms average, $declinePct% decline). Consider lighter activity today.';
-  }
-
-  @override
-  String healthAgentRecoveryNotificationBody(Object days, Object declinePct) {
-    return 'HRV down $declinePct% over $days days. Consider lighter activity today.';
   }
 
   @override
@@ -15742,11 +15531,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get healthAgentWeeklySkipNoActionable =>
       'no actionable signals this week';
-
-  @override
-  String healthAgentWeeklyMemoryTitle(Object dayKey) {
-    return 'Weekly Summary · $dayKey';
-  }
 
   @override
   String get healthAgentWeeklyTitle => 'Weekly Summary';
@@ -15820,11 +15604,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get executionAgentReviewSkipNoSignals =>
       'no execution signals to review';
-
-  @override
-  String executionAgentReviewMemoryTitle(Object dayKey) {
-    return 'Execution review · $dayKey';
-  }
 
   @override
   String get executionAgentReviewTitle => 'Execution review';
@@ -16068,32 +15847,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeAgentContradictionAction => 'Review contradictions';
-
-  @override
-  String get knowledgeAgentRoutineArtifactTitle => 'Routine Due';
-
-  @override
-  String get knowledgeAgentRoutineInsightOverdueTitle => 'Overdue routines';
-
-  @override
-  String knowledgeAgentRoutineInsightOverdueBody(Object count, Object plural) {
-    return '$count routine$plural are overdue.';
-  }
-
-  @override
-  String get knowledgeAgentRoutineInsightUpcomingTitle => 'Upcoming routines';
-
-  @override
-  String knowledgeAgentRoutineInsightUpcomingBody(
-    Object count,
-    Object days,
-    Object plural,
-  ) {
-    return '$count routine$plural are due within $days days.';
-  }
-
-  @override
-  String get knowledgeAgentRoutineAction => 'Review routines';
 
   @override
   String get knowledgeAgentInboxSkipNoNotes => 'no untriaged notes';
@@ -17897,4 +17650,85 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeImageLocalOnlyToast =>
       'Image inserted. It is currently stored on this device only.';
+
+  @override
+  String get developerIssuesTitle => 'Report a product issue';
+
+  @override
+  String get developerIssuesSubtitle =>
+      'Save a local dogfood report with bounded diagnostics. Nothing is sent until you export it.';
+
+  @override
+  String get developerIssuesDescriptionLabel => 'What should be improved?';
+
+  @override
+  String get developerIssuesDescriptionHint =>
+      'Example: The FIRE card\'s information hierarchy makes the recommended action hard to find.';
+
+  @override
+  String get developerIssuesDescriptionHelp =>
+      'Describe the observed problem and the result you expected. Do not include secrets.';
+
+  @override
+  String get developerIssuesDescriptionRequired =>
+      'Describe the product issue before saving.';
+
+  @override
+  String get developerIssuesCaptureAction => 'Save local report';
+
+  @override
+  String get developerIssuesCapturingAction => 'Saving…';
+
+  @override
+  String get developerIssuesSavedToast => 'Report saved on this device';
+
+  @override
+  String get developerIssuesSaveFailedToast =>
+      'Couldn\'t save the report. Review the description and try again.';
+
+  @override
+  String get developerIssuesContextSection => 'Captured context';
+
+  @override
+  String get developerIssuesRouteLabel => 'Source route';
+
+  @override
+  String get developerIssuesDomainLabel => 'Domain';
+
+  @override
+  String get developerIssuesShellDomain => 'LifeOS shell';
+
+  @override
+  String get developerIssuesHistorySection => 'Local reports';
+
+  @override
+  String get developerIssuesEmpty => 'No reports saved on this device.';
+
+  @override
+  String get developerIssuesExportAction => 'Export';
+
+  @override
+  String get developerIssuesExportedLabel => 'Exported';
+
+  @override
+  String get developerIssuesLocalLabel => 'Local only';
+
+  @override
+  String get developerIssuesTraceAttached => 'Trace attached';
+
+  @override
+  String developerIssuesToolErrorsAttached(int count) {
+    return '$count tool error codes';
+  }
+
+  @override
+  String get developerIssuesExportFailedToast =>
+      'Couldn\'t open the export sheet. Try again.';
+
+  @override
+  String get developerIssuesAdvancedTitle => 'Product issue reports';
+
+  @override
+  String get developerIssuesAdvancedSubtitle =>
+      'Capture route, build, latest trace, and bounded tool error codes locally';
 }

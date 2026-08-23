@@ -1,29 +1,18 @@
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_presentation.dart';
-import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
-import '../../../core/notifications/notification_service.dart';
 import '../composition/execution_route_paths.dart';
 import '../data/providers.dart';
 
 const String kExecutionDueActionAgentId = 'execution_due_actions';
 
-const NotificationChannelSpec kExecutionDueNotificationChannel =
-    NotificationChannelSpec(
-      id: 'lifeos.execution.due',
-      name: 'Execution Due Actions',
-      description: 'ExecutionOS reminders for actions due soon.',
-    );
-
 class ExecutionDueActionAgent implements Agent {
-  const ExecutionDueActionAgent({this.notifier});
-
-  final NotificationService? notifier;
+  const ExecutionDueActionAgent();
 
   @override
   String get id => kExecutionDueActionAgentId;
@@ -113,32 +102,6 @@ class ExecutionDueActionAgent implements Agent {
         createdAt: finishedAt,
       ),
     );
-
-    final activeNotifier = notifier;
-    if (activeNotifier != null) {
-      final preferences = await ctx.ref.read(
-        agent_providers.agentPreferenceStoreProvider.future,
-      );
-      final enabled = await preferences.areNotificationsEnabled(
-        ownerUserId: ownerUserId,
-        agentId: id,
-      );
-      if (enabled &&
-          await activeNotifier.isAvailable() &&
-          await activeNotifier.hasPermissions()) {
-        await activeNotifier.showNow(
-          id:
-              0x20000000 +
-              startedAt.year * 10000 +
-              startedAt.month * 100 +
-              startedAt.day,
-          title: l10n.executionDueAgentTitle,
-          body: summary,
-          channel: kExecutionDueNotificationChannel,
-          payload: AgentArtifactRoutes.detail(artifactId),
-        );
-      }
-    }
 
     return AgentRunResult(
       agentId: id,

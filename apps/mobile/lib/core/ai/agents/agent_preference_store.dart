@@ -1,7 +1,8 @@
 /// Local user preferences for LifeOS agents.
 ///
-/// Preferences are device-local product state. They control scheduling and
-/// notifications, but they do not change the agent registry itself.
+/// Preferences are device-local product state. They control whether a named
+/// Agent may run but do not change the registry itself. Proactive notification
+/// policy is global and belongs to AttentionArbiter.
 library;
 
 import 'package:drift/drift.dart';
@@ -13,14 +14,12 @@ class AgentPreference {
     required this.ownerUserId,
     required this.agentId,
     required this.enabled,
-    required this.notificationsEnabled,
     required this.updatedAt,
   });
 
   final String ownerUserId;
   final String agentId;
   final bool enabled;
-  final bool notificationsEnabled;
   final DateTime updatedAt;
 }
 
@@ -35,19 +34,7 @@ abstract interface class AgentPreferenceStore {
     required String agentId,
   });
 
-  Future<bool> areNotificationsEnabled({
-    required String ownerUserId,
-    required String agentId,
-  });
-
   Future<void> setEnabled({
-    required String ownerUserId,
-    required String agentId,
-    required bool enabled,
-    required DateTime updatedAt,
-  });
-
-  Future<void> setNotificationsEnabled({
     required String ownerUserId,
     required String agentId,
     required bool enabled,
@@ -70,7 +57,6 @@ class InMemoryAgentPreferenceStore implements AgentPreferenceStore {
           ownerUserId: ownerUserId,
           agentId: agentId,
           enabled: true,
-          notificationsEnabled: true,
           updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
         );
   }
@@ -88,53 +74,16 @@ class InMemoryAgentPreferenceStore implements AgentPreferenceStore {
   }
 
   @override
-  Future<bool> areNotificationsEnabled({
-    required String ownerUserId,
-    required String agentId,
-  }) async {
-    final pref = await preferenceFor(
-      ownerUserId: ownerUserId,
-      agentId: agentId,
-    );
-    return pref.notificationsEnabled;
-  }
-
-  @override
   Future<void> setEnabled({
     required String ownerUserId,
     required String agentId,
     required bool enabled,
     required DateTime updatedAt,
   }) async {
-    final current = await preferenceFor(
-      ownerUserId: ownerUserId,
-      agentId: agentId,
-    );
     _preferences[_key(ownerUserId, agentId)] = AgentPreference(
       ownerUserId: ownerUserId,
       agentId: agentId,
       enabled: enabled,
-      notificationsEnabled: current.notificationsEnabled,
-      updatedAt: updatedAt.toUtc(),
-    );
-  }
-
-  @override
-  Future<void> setNotificationsEnabled({
-    required String ownerUserId,
-    required String agentId,
-    required bool enabled,
-    required DateTime updatedAt,
-  }) async {
-    final current = await preferenceFor(
-      ownerUserId: ownerUserId,
-      agentId: agentId,
-    );
-    _preferences[_key(ownerUserId, agentId)] = AgentPreference(
-      ownerUserId: ownerUserId,
-      agentId: agentId,
-      enabled: current.enabled,
-      notificationsEnabled: enabled,
       updatedAt: updatedAt.toUtc(),
     );
   }
@@ -180,7 +129,6 @@ class SqliteAgentPreferenceStore implements AgentPreferenceStore {
             ownerUserId: ownerUserId,
             agentId: agentId,
             enabled: true,
-            notificationsEnabled: true,
             updatedAt: DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
           )
         : _rowToPreference(row);
@@ -199,18 +147,6 @@ class SqliteAgentPreferenceStore implements AgentPreferenceStore {
   }
 
   @override
-  Future<bool> areNotificationsEnabled({
-    required String ownerUserId,
-    required String agentId,
-  }) async {
-    final pref = await preferenceFor(
-      ownerUserId: ownerUserId,
-      agentId: agentId,
-    );
-    return pref.notificationsEnabled;
-  }
-
-  @override
   Future<void> setEnabled({
     required String ownerUserId,
     required String agentId,
@@ -223,9 +159,8 @@ class SqliteAgentPreferenceStore implements AgentPreferenceStore {
         owner_user_id,
         agent_id,
         enabled,
-        notifications_enabled,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?)
       ON CONFLICT(owner_user_id, agent_id) DO UPDATE SET
         enabled = excluded.enabled,
         updated_at = excluded.updated_at
@@ -233,41 +168,6 @@ class SqliteAgentPreferenceStore implements AgentPreferenceStore {
       <Object?>[
         ownerUserId,
         agentId,
-        enabled ? 1 : 0,
-        1,
-        updatedAt.toUtc().millisecondsSinceEpoch,
-      ],
-    );
-  }
-
-  @override
-  Future<void> setNotificationsEnabled({
-    required String ownerUserId,
-    required String agentId,
-    required bool enabled,
-    required DateTime updatedAt,
-  }) async {
-    final current = await preferenceFor(
-      ownerUserId: ownerUserId,
-      agentId: agentId,
-    );
-    await _db.customStatement(
-      '''
-      INSERT INTO agent_preferences (
-        owner_user_id,
-        agent_id,
-        enabled,
-        notifications_enabled,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?)
-      ON CONFLICT(owner_user_id, agent_id) DO UPDATE SET
-        notifications_enabled = excluded.notifications_enabled,
-        updated_at = excluded.updated_at
-      ''',
-      <Object?>[
-        ownerUserId,
-        agentId,
-        current.enabled ? 1 : 0,
         enabled ? 1 : 0,
         updatedAt.toUtc().millisecondsSinceEpoch,
       ],
@@ -300,7 +200,6 @@ AgentPreference _rowToPreference(QueryRow row) {
     ownerUserId: row.read<String>('owner_user_id'),
     agentId: row.read<String>('agent_id'),
     enabled: row.read<int>('enabled') != 0,
-    notificationsEnabled: row.read<int>('notifications_enabled') != 0,
     updatedAt: DateTime.fromMillisecondsSinceEpoch(
       row.read<int>('updated_at'),
       isUtc: true,

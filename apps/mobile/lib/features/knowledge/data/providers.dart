@@ -52,7 +52,7 @@ final knowledgeRepositoryProvider = FutureProvider<KnowledgeRepository>((
   return KnowledgeRepository(
     db: db,
     outbox: outbox,
-    onRowChanged: (table, _) => scheduler.schedule(table),
+    onRowChanged: scheduler.schedule,
   );
 });
 

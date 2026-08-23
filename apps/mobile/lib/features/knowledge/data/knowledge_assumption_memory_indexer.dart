@@ -14,6 +14,33 @@ Future<void> _reindexAssumptions(
   );
   for (final a in xs) {
     final id = '$kKnowledgeAssumptionMemorySource:semantic:${a.id}';
+    final importance = switch (a.status) {
+      AssumptionStatus.active => a.confidence,
+      AssumptionStatus.weakened => a.confidence * 0.5,
+      AssumptionStatus.falsified => 0.2,
+      AssumptionStatus.retired => 0.2,
+    };
+    await recordKnowledgeStateEvent(
+      runtime,
+      ownerUserId: ownerUserId,
+      kind: 'knowledge_assumption_state',
+      sourceFamily: kKnowledgeAssumptionEventSourceFamily,
+      rowId: a.id,
+      fingerprint: a.sync.hlc.toString(),
+      occurredAt: a.sync.updatedAt,
+      observedAt: now,
+      title: a.statement,
+      summary: a.statement,
+      facts: <String, Object?>{
+        'status': a.status.wire,
+        'scope': a.scope,
+        'confidence': a.confidence,
+        'evidence_ids': a.evidenceIds,
+      },
+      entities: <String>{'knowledge_assumption', a.id},
+      importance: importance,
+      confidence: a.confidence,
+    );
     await runtime.remember(
       MemoryRecord(
         id: id,
@@ -37,12 +64,7 @@ Future<void> _reindexAssumptions(
         // Map the user's own stated confidence directly. Falsified
         // assumptions stay in memory (so ContradictionAgent can still
         // see them) but with much lower importance.
-        importance: switch (a.status) {
-          AssumptionStatus.active => a.confidence,
-          AssumptionStatus.weakened => a.confidence * 0.5,
-          AssumptionStatus.falsified => 0.2,
-          AssumptionStatus.retired => 0.2,
-        },
+        importance: importance,
         confidence: a.confidence,
         validFrom: a.declaredAt.toUtc(),
         createdAt: a.declaredAt.toUtc(),

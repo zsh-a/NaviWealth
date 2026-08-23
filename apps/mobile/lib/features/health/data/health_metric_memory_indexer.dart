@@ -19,6 +19,7 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import '../../../core/ai/contracts/context_evidence.dart';
 import '../../../core/ai/contracts/event_record.dart';
 import '../../../core/ai/contracts/memory_record.dart';
+import '../../../core/ai/contracts/source_identity.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -65,7 +66,7 @@ class HealthMetricMemoryIndexer
         .toList(growable: false);
     for (final m in rows) {
       if (m.kind == HealthMetricKind.unknown) continue;
-      await runtime.recordEvent(_eventFor(m, ownerUserId));
+      await runtime.recordEvent(_eventFor(m, ownerUserId, observedAt: now));
       events++;
       final memory = _episodicMemoryFor(m, ownerUserId, now: now);
       if (memory != null) {

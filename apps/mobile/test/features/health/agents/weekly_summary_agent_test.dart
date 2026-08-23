@@ -11,9 +11,6 @@ import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
-import 'package:naviwealth/core/ai/contracts/memory_record.dart';
-import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
-import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -211,80 +208,71 @@ void main() {
     );
   });
 
-  test(
-    'writes weekly summary memory and artifact from reader snapshot',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final store = SqliteAgentArtifactStore(db: db);
-      final runtime = _FakeMemoryRuntime();
-      final container = ProviderContainer(
-        overrides: [
-          currentUserIdProvider.overrideWithValue(() async => _owner),
-          memoryRuntimeProvider.overrideWith((ref) async => runtime),
-          agent_providers.agentArtifactStoreProvider.overrideWith(
-            (ref) async => store,
-          ),
-          ..._weeklySummaryRegistrationOverrides(),
-        ],
-      );
-      addTearDown(container.dispose);
-      final ref = container.read(_refProvider);
-      final agent = WeeklySummaryAgent(
-        summaryReader: _FallbackReader(
-          const WeeklySummarySnapshot(
-            hasHealthData: true,
-            recoveryScore: 82,
-            recoveryVerdict: 'rested',
-            avgSleepHours: 7.5,
-            totalSteps: 42000,
-            workoutCount: 3,
-            workoutMinutes: 95,
-            traceId: 'trace-weekly-summary-1',
-          ),
+  test('writes weekly summary artifact from reader snapshot', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentArtifactStore(db: db);
+    final container = ProviderContainer(
+      overrides: [
+        currentUserIdProvider.overrideWithValue(() async => _owner),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => store,
         ),
-      );
-
-      final result = await agent.run(
-        AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 20)),
-      );
-
-      expect(result.status, AgentRunStatus.completed);
-      expect(result.summary, contains('Recovery 82/100 (rested)'));
-      expect(result.summary, contains('42.0k steps'));
-      expect(result.artifactId, '$kWeeklySummaryAgentId:2026-06-29');
-      expect(result.traceId, 'trace-weekly-summary-1');
-      expect(runtime.remembered?.source, kWeeklySummaryMemorySource);
-      expect(runtime.remembered?.payload['artifact_id'], result.artifactId);
-      expect(runtime.remembered?.payload['trace_id'], 'trace-weekly-summary-1');
-      final outcome = runtime.remembered?.payload['outcome'] as Map?;
-      expect(outcome?['trace_id'], 'trace-weekly-summary-1');
-
-      final artifact = await store.read(result.artifactId!);
-      expect(artifact, isNotNull);
-      expect(artifact!.kind, AgentArtifactKind.review);
-      expect(artifact.domain, 'health');
-      expect(artifact.severity, AgentArtifactSeverity.info);
-      expect(artifact.memoryId, result.memoryId);
-      expect(artifact.traceId, 'trace-weekly-summary-1');
-      expect(artifact.summary, result.summary);
-      expect(
-        artifact.insights.map((insight) => insight.title),
-        containsAll(['Recovery', 'Sleep', 'Activity', 'Workouts']),
-      );
-      expect(artifact.evidence.single.type, 'health_week');
-      expect(artifact.actions.single.objectId, result.artifactId);
-
-      final outcomeFailures = evaluateAgentOutcomeCase(
-        regressionCase: agentOutcomeRegressionCaseById(
-          'health.weekly_summary.ready',
+        ..._weeklySummaryRegistrationOverrides(),
+      ],
+    );
+    addTearDown(container.dispose);
+    final ref = container.read(_refProvider);
+    final agent = WeeklySummaryAgent(
+      summaryReader: _FallbackReader(
+        const WeeklySummarySnapshot(
+          hasHealthData: true,
+          recoveryScore: 82,
+          recoveryVerdict: 'rested',
+          avgSleepHours: 7.5,
+          totalSteps: 42000,
+          workoutCount: 3,
+          workoutMinutes: 95,
+          traceId: 'trace-weekly-summary-1',
         ),
-        result: result,
-        artifact: artifact,
-      );
-      expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
-    },
-  );
+      ),
+    );
+
+    final result = await agent.run(
+      AgentContext(ref: ref, now: DateTime.utc(2026, 6, 29, 20)),
+    );
+
+    expect(result.status, AgentRunStatus.completed);
+    expect(result.summary, contains('Recovery 82/100 (rested)'));
+    expect(result.summary, contains('42.0k steps'));
+    expect(result.artifactId, '$kWeeklySummaryAgentId:2026-06-29');
+    expect(result.traceId, 'trace-weekly-summary-1');
+    expect(result.memoryId, isNull);
+
+    final artifact = await store.read(result.artifactId!);
+    expect(artifact, isNotNull);
+    expect(artifact!.kind, AgentArtifactKind.review);
+    expect(artifact.domain, 'health');
+    expect(artifact.severity, AgentArtifactSeverity.info);
+    expect(artifact.memoryId, isNull);
+    expect(artifact.traceId, 'trace-weekly-summary-1');
+    expect(artifact.summary, result.summary);
+    expect(
+      artifact.insights.map((insight) => insight.title),
+      containsAll(['Recovery', 'Sleep', 'Activity', 'Workouts']),
+    );
+    expect(artifact.evidence.single.type, 'health_week');
+    expect(artifact.actions.single.objectId, result.artifactId);
+
+    final outcomeFailures = evaluateAgentOutcomeCase(
+      regressionCase: agentOutcomeRegressionCaseById(
+        'health.weekly_summary.ready',
+      ),
+      result: result,
+      artifact: artifact,
+    );
+    expect(outcomeFailures, isEmpty, reason: outcomeFailures.join('\n'));
+  });
 
   test(
     'latest weekly summary artifact provider returns newest health artifact',
@@ -579,17 +567,4 @@ class _FallbackReader implements WeeklySummaryReader {
     calls += 1;
     return result;
   }
-}
-
-class _FakeMemoryRuntime implements MemoryRuntime {
-  MemoryRecord? remembered;
-
-  @override
-  Future<void> remember(MemoryRecord record) async {
-    remembered = record;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} not stubbed');
 }

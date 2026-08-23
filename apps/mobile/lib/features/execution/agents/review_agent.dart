@@ -1,9 +1,7 @@
 /// `execution_review` — weekly ExecutionOS review agent.
 ///
 /// Summarises the open execution surface (today-worthy actions, blocked work,
-/// active projects/commitments, and recent progress) into an episodic memory.
-/// The UI remains repository-driven; this memory is for recall and agent
-/// continuity.
+/// active projects/commitments, and recent progress) into a temporary artifact.
 library;
 
 import '../../../core/ai/agents/agent.dart';
@@ -14,9 +12,6 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/contracts/context_evidence.dart';
-import '../../../core/ai/contracts/memory_record.dart';
-import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
@@ -28,7 +23,6 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 
 const String kExecutionReviewAgentId = 'execution_review';
-const String kExecutionReviewMemorySource = 'agent:execution_review';
 
 class ExecutionReviewAgent implements Agent {
   const ExecutionReviewAgent({
@@ -51,7 +45,6 @@ class ExecutionReviewAgent implements Agent {
   Future<AgentRunResult> run(AgentContext ctx) async {
     final startedAt = ctx.now;
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final runtime = await ctx.ref.read(memoryRuntimeProvider.future);
     final l10n = agentL10n(ctx.ref);
 
     final snapshot = await reviewReader.read(ctx);
@@ -309,7 +302,6 @@ class ExecutionReviewAgent implements Agent {
 
     final finishedAt = DateTime.now().toUtc();
     final dayKey = AppFormatters.utcDayKey(startedAt);
-    final memoryId = '$kExecutionReviewMemorySource:$dayKey';
     final artifactId = '$kExecutionReviewAgentId:$dayKey';
     final summary = _summary(
       l10n: l10n,
@@ -321,65 +313,6 @@ class ExecutionReviewAgent implements Agent {
       activeCommitmentCount: snapshot.activeCommitmentCount,
       weeklyProgress: weeklyProgress,
     );
-    final memory = MemoryRecord(
-      id: memoryId,
-      kind: MemoryKind.episodic,
-      role: MemoryRole.pattern,
-      authority: EvidenceAuthority.deterministicDerived,
-      ownerUserId: ownerUserId,
-      scope: '*',
-      source: kExecutionReviewMemorySource,
-      sourceId: dayKey,
-      title: l10n.executionAgentReviewMemoryTitle(dayKey),
-      summary: summary,
-      payload: <String, Object?>{
-        'context':
-            'execution review run at ${startedAt.toUtc().toIso8601String()}',
-        'outcome': <String, Object?>{
-          'today_action_count': todayActions.length,
-          'open_action_count': openActions.length,
-          'blocked_action_count': blockedActions.length,
-          'due_action_count': dueActions.length,
-          'active_project_count': snapshot.activeProjectCount,
-          'active_commitment_count': snapshot.activeCommitmentCount,
-          'weekly_progress_count': weeklyProgress.length,
-          if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
-        },
-        'sample_action_ids': todayActions
-            .take(5)
-            .map((action) => action.id)
-            .toList(growable: false),
-        'sample_project_ids': projects
-            .take(5)
-            .map((project) => project.id)
-            .toList(growable: false),
-        'sample_commitment_ids': commitments
-            .take(5)
-            .map((commitment) => commitment.id)
-            .toList(growable: false),
-        'artifact_id': artifactId,
-        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
-      },
-      entities: <String>{
-        'execution',
-        'execution_review',
-        dayKey,
-        for (final action in todayActions.take(8))
-          'execution_action:${action.id}',
-        for (final project in projects.take(8))
-          'execution_project:${project.id}',
-        for (final commitment in commitments.take(8))
-          'execution_commitment:${commitment.id}',
-      },
-      importance: blockedActions.isNotEmpty || dueActions.isNotEmpty
-          ? 0.78
-          : 0.62,
-      confidence: 0.9,
-      validFrom: startedAt.toUtc(),
-      createdAt: startedAt.toUtc(),
-      updatedAt: finishedAt,
-    );
-    await runtime.remember(memory);
     final artifactStore = await ctx.ref.read(
       agent_providers.agentArtifactStoreProvider.future,
     );
@@ -387,7 +320,6 @@ class ExecutionReviewAgent implements Agent {
       _artifact(
         id: artifactId,
         ownerUserId: ownerUserId,
-        memoryId: memoryId,
         createdAt: startedAt,
         summary: summary,
         todayActions: todayActions,
@@ -419,8 +351,16 @@ class ExecutionReviewAgent implements Agent {
       startedAt: startedAt,
       finishedAt: finishedAt,
       summary: summary,
-      payload: memory.payload,
-      memoryId: memoryId,
+      payload: <String, Object?>{
+        'today_action_count': todayActions.length,
+        'open_action_count': openActions.length,
+        'blocked_action_count': blockedActions.length,
+        'due_action_count': dueActions.length,
+        'active_project_count': snapshot.activeProjectCount,
+        'active_commitment_count': snapshot.activeCommitmentCount,
+        'weekly_progress_count': weeklyProgress.length,
+        if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
+      },
       artifactId: artifactId,
       traceId: snapshot.traceId,
     );
@@ -429,7 +369,6 @@ class ExecutionReviewAgent implements Agent {
   static AgentArtifact _artifact({
     required String id,
     required String ownerUserId,
-    required String memoryId,
     required DateTime createdAt,
     required String summary,
     required List<ExecutionReviewAction> todayActions,
@@ -798,7 +737,6 @@ class ExecutionReviewAgent implements Agent {
         l10n,
         sourceLabel: l10n.executionAgentReviewTitle,
       ),
-      memoryId: memoryId,
       traceId: traceId,
       createdAt: createdAt.toUtc(),
       expiresAt: createdAt.toUtc().add(const Duration(days: 14)),
