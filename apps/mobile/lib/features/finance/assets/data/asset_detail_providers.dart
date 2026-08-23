@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
@@ -21,9 +22,7 @@ final manualAssetByIdProvider = FutureProvider.autoDispose
 /// zero), so the card can pick a sensible empty state.
 final assetHoldingSnapshotProvider = FutureProvider.autoDispose
     .family<HoldingSnapshot?, String>((ref, assetId) async {
-      final service = await ref.watch(holdingServiceProvider.future);
-      final asOf = DateTime.now().toUtc();
-      final all = await service.computeAt(asOf);
+      final all = await ref.watch(holdingsSnapshotProvider.future);
       return all[assetId];
     });
 
@@ -61,6 +60,14 @@ final assetPriceHistoryProvider = FutureProvider.autoDispose
       ref,
       key,
     ) async {
+      // Refresh an open detail page after the background coordinator finishes
+      // warming market data. Selecting the success timestamp avoids refetching
+      // for the intermediate `syncing` state.
+      ref.watch(
+        priceSyncStatusEventStreamProvider.select(
+          (event) => event.value?.lastSuccessAt,
+        ),
+      );
       final service = await ref.watch(marketDataServiceProvider.future);
       final to = DateTime.now().toUtc();
       final from = to.subtract(Duration(days: key.days));

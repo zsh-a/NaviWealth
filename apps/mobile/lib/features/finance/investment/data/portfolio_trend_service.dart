@@ -4,6 +4,7 @@ import 'package:decimal/decimal.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 
+import '../domain/holding_price_source.dart';
 import '../domain/holding_service.dart';
 import '../domain/models/investment_portfolio.dart';
 import '../domain/models/portfolio_capital_assignment.dart';
@@ -24,6 +25,7 @@ class PortfolioTrendService {
     required Iterable<InvestmentPortfolio> portfolios,
     required List<PortfolioCapitalAssignment> assignmentHistory,
     required PortfolioTrendRange range,
+    HoldingPriceSource? priceSource,
     DateTime? now,
   }) async {
     final portfolioList = portfolios.toList(growable: false);
@@ -32,14 +34,22 @@ class PortfolioTrendService {
     final end = (now ?? DateTime.now()).toUtc();
     final datesByPortfolio = <String, List<DateTime>>{
       for (final portfolio in portfolioList)
-        portfolio.id: _sampleDates(
+        portfolio.id: sampleDatesFor(
           createdAt: portfolio.createdAt,
           end: end,
           range: range,
         ),
     };
     final allDates = datesByPortfolio.values.expand((dates) => dates).toSet();
-    final samples = await holdings.computeAtSamples(allDates);
+    final holdingsService = holdings;
+    final samples =
+        priceSource != null &&
+            holdingsService is RepriceableSampledHoldingService
+        ? await holdingsService.computeAtSamplesWithPriceSource(
+            allDates,
+            priceSource: priceSource,
+          )
+        : await holdingsService.computeAtSamples(allDates);
     final sampleByInstant = {for (final sample in samples) sample.asOf: sample};
 
     return {
@@ -289,7 +299,8 @@ class PortfolioTrendService {
     }
   }
 
-  static List<DateTime> _sampleDates({
+  /// Sample instants used by both the trend computation and its price loader.
+  static List<DateTime> sampleDatesFor({
     required DateTime createdAt,
     required DateTime end,
     required PortfolioTrendRange range,

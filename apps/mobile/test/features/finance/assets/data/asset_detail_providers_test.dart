@@ -1,12 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/assets/data/asset_detail_providers.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
+import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
-import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
-import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
@@ -120,6 +121,44 @@ void main() {
         );
       },
     );
+
+    test('refreshes after a successful background price sync', () async {
+      final market = _RecordingMarketDataService();
+      final statusBus = PriceSyncStatusBus();
+      final container = ProviderContainer(
+        overrides: [
+          marketDataServiceProvider.overrideWith((_) async => market),
+          priceSyncStatusBusProvider.overrideWithValue(statusBus),
+        ],
+      );
+      addTearDown(statusBus.close);
+      addTearDown(container.dispose);
+      final provider = assetPriceHistoryProvider(
+        const PriceHistoryKey(
+          symbol: 'AAPL',
+          market: AssetMarket.usStock,
+          days: 30,
+        ),
+      );
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+
+      await container.read(provider.future);
+      final callsBeforeSync = market.historicalCalls;
+
+      final syncedAt = DateTime.utc(2026, 1, 3);
+      statusBus.emit(
+        PriceSyncStatusEvent(
+          status: PriceSyncStatus.fresh,
+          at: syncedAt,
+          lastSuccessAt: syncedAt,
+        ),
+      );
+      await pumpEventQueue();
+      await container.read(provider.future);
+
+      expect(market.historicalCalls, greaterThan(callsBeforeSync));
+    });
   });
 
   group('assetHoldingSnapshotProvider', () {
@@ -127,10 +166,11 @@ void main() {
       'returns the requested asset snapshot and null for unknown assets',
       () async {
         final snapshot = _snapshot('asset-a');
-        final holdingService = _MapHoldingService({'asset-a': snapshot});
         final container = ProviderContainer(
           overrides: [
-            holdingServiceProvider.overrideWith((_) async => holdingService),
+            holdingsSnapshotProvider.overrideWith(
+              (_) async => {'asset-a': snapshot},
+            ),
           ],
         );
         addTearDown(container.dispose);
@@ -145,10 +185,43 @@ void main() {
         );
       },
     );
+
+    test('updates when the shared holdings snapshot changes', () async {
+      final holdingsState = StateProvider<Map<String, HoldingSnapshot>>(
+        (_) => {'asset-a': _snapshot('asset-a')},
+      );
+      final container = ProviderContainer(
+        overrides: [
+          holdingsSnapshotProvider.overrideWith(
+            (ref) async => ref.watch(holdingsState),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final provider = assetHoldingSnapshotProvider('asset-a');
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+
+      expect(
+        (await container.read(provider.future))!.marketValueInBase,
+        Decimal.parse('120'),
+      );
+
+      container.read(holdingsState.notifier).state = {
+        'asset-a': _snapshot('asset-a', marketValue: '150'),
+      };
+      await pumpEventQueue();
+
+      expect(
+        (await container.read(provider.future))!.marketValueInBase,
+        Decimal.parse('150'),
+      );
+    });
   });
 }
 
 class _RecordingMarketDataService implements MarketDataService {
+  int historicalCalls = 0;
   String? lastHistoricalSymbol;
   DateTime? lastHistoricalFrom;
   DateTime? lastHistoricalTo;
@@ -163,6 +236,7 @@ class _RecordingMarketDataService implements MarketDataService {
     BarInterval interval = BarInterval.day,
     AssetMarket? market,
   }) async {
+    historicalCalls += 1;
     lastHistoricalSymbol = symbol;
     lastHistoricalFrom = from;
     lastHistoricalTo = to;
@@ -199,36 +273,17 @@ class _RecordingMarketDataService implements MarketDataService {
   }
 }
 
-class _MapHoldingService implements HoldingService {
-  const _MapHoldingService(this.snapshots);
-
-  final Map<String, HoldingSnapshot> snapshots;
-
-  @override
-  Future<Map<String, HoldingSnapshot>> computeAt(DateTime asOf) async =>
-      snapshots;
-
-  @override
-  Future<void> invalidateFrom(DateTime from) async {}
-
-  @override
-  Future<List<Lot>> lotsAt(DateTime asOf) async => const [];
-
-  @override
-  Future<LotInventorySnapshot> persistDailySnapshot(DateTime day) async =>
-      LotInventorySnapshot(ownerUserId: 'test', day: day, lots: const []);
-}
-
-HoldingSnapshot _snapshot(String assetId) {
+HoldingSnapshot _snapshot(String assetId, {String marketValue = '120'}) {
+  final value = Decimal.parse(marketValue);
   return HoldingSnapshot(
     assetId: assetId,
     quantity: Decimal.one,
     costBasisInAssetCurrency: Decimal.parse('100'),
-    marketValueInAssetCurrency: Decimal.parse('120'),
+    marketValueInAssetCurrency: value,
     assetCurrency: 'USD',
     costBasisInBase: Decimal.parse('100'),
-    marketValueInBase: Decimal.parse('120'),
-    unrealizedPnlInBase: Decimal.parse('20'),
+    marketValueInBase: value,
+    unrealizedPnlInBase: value - Decimal.parse('100'),
     weight: Decimal.zero,
     baseCurrency: 'USD',
     asOf: DateTime.utc(2026, 1, 2),
