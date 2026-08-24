@@ -4,3 +4,4 @@ export 'interaction_ids.dart';
 export 'interaction_reducer.dart';
 export 'interaction_state.dart';
 export 'interruption_policy.dart';
+export 'output_text_segmenter.dart';

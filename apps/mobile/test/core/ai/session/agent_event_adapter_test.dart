@@ -90,4 +90,43 @@ void main() {
       await coordinator.close();
     },
   );
+
+  test('segments streamed text for delivery and output consumers', () async {
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+    );
+    final turnId = coordinator.startTurn(InteractionInputOrigin.voice);
+    final segments = <String>[];
+    final adapter = AgentEventAdapter(
+      coordinator,
+      onOutputSegment: (segment) => segments.add(segment.text),
+    );
+    const epoch = ResponseEpoch.initial();
+
+    adapter.accept(
+      const TextEvent('本月消费 12430 元。'),
+      turnId: turnId,
+      epoch: epoch,
+    );
+    adapter.accept(
+      const TextEvent('其中房租 5200 元'),
+      turnId: turnId,
+      epoch: epoch,
+    );
+    expect(segments, ['本月消费 12430 元。']);
+    expect(coordinator.state.deliveryLedger.queuedText, '本月消费 12430 元。');
+
+    adapter.accept(
+      const DoneEvent(stopReason: 'end_turn', rounds: 1),
+      turnId: turnId,
+      epoch: epoch,
+    );
+    expect(segments, ['本月消费 12430 元。', '其中房租 5200 元']);
+    expect(
+      coordinator.state.deliveryLedger.queuedText,
+      '本月消费 12430 元。其中房租 5200 元',
+    );
+
+    await coordinator.close();
+  });
 }

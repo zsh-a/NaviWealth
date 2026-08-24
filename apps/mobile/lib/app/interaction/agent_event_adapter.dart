@@ -1,8 +1,12 @@
 import '../../core/ai/contracts/chat_events.dart';
 import '../../core/ai/contracts/interaction.dart';
+import '../../core/ai/session/delivery_ledger.dart';
 import '../../core/ai/session/interaction_events.dart';
 import '../../core/ai/session/interaction_ids.dart';
+import '../../core/ai/session/output_text_segmenter.dart';
 import 'interaction_session_coordinator.dart';
+
+typedef OutputSegmentSink = void Function(OutputSegment segment);
 
 /// Maps the existing provider-neutral Chat event vocabulary into the
 /// InteractionSession lanes.
@@ -12,9 +16,26 @@ import 'interaction_session_coordinator.dart';
 /// this class only projects their events into timing, delivery, and
 /// interruption state.
 final class AgentEventAdapter {
-  const AgentEventAdapter(this._coordinator);
+  AgentEventAdapter(
+    this._coordinator, {
+    OutputTextSegmenter? segmenter,
+    this.onOutputSegment,
+  }) : _segmenter = segmenter ?? OutputTextSegmenter();
 
   final InteractionSessionCoordinator _coordinator;
+  final OutputTextSegmenter _segmenter;
+  final OutputSegmentSink? onOutputSegment;
+
+  /// Projects a whole provider stream through the same ordered adapter.
+  Future<void> acceptStream(
+    Stream<AiChatEvent> events, {
+    required TurnId turnId,
+    required ResponseEpoch epoch,
+  }) async {
+    await for (final event in events) {
+      accept(event, turnId: turnId, epoch: epoch);
+    }
+  }
 
   void accept(
     AiChatEvent event, {
@@ -63,12 +84,18 @@ final class AgentEventAdapter {
           turnId: turnId,
           epoch: epoch,
         );
+        if (_isCurrent(epoch)) {
+          _queueSegments(_segmenter.add(text, epoch: epoch));
+        }
       case DoneEvent():
         _coordinator.dispatch(
           (stamp) => AgentFinished(stamp: stamp),
           turnId: turnId,
           epoch: epoch,
         );
+        if (_isCurrent(epoch)) {
+          _queueSegments(_segmenter.flush(epoch: epoch));
+        }
       case ErrorEvent(:final code):
         _coordinator.dispatch(
           (stamp) => AgentFailed(stamp: stamp, code: code),
@@ -83,6 +110,16 @@ final class AgentEventAdapter {
         // These events remain owned by the chat/trace surfaces. They do not
         // change session execution or delivery state.
         break;
+    }
+  }
+
+  bool _isCurrent(ResponseEpoch epoch) =>
+      _coordinator.state.responseEpoch == epoch;
+
+  void _queueSegments(List<OutputSegment> segments) {
+    for (final segment in segments) {
+      _coordinator.queueOutputSegment(segment);
+      onOutputSegment?.call(segment);
     }
   }
 
