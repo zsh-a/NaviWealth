@@ -14835,6 +14835,36 @@ abstract class AppLocalizations {
   /// **'Model files stay on this device and are never uploaded. EmbeddingGemma powers local memory retrieval; Zipformer powers real-time Mandarin voice input. ONNX Runtime is bundled with the app.'**
   String get settingsAiModelsHint;
 
+  /// No description provided for @settingsAiModelsSpeechEngineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice recognition engine'**
+  String get settingsAiModelsSpeechEngineTitle;
+
+  /// No description provided for @settingsAiModelsSpeechEngineSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'System on-device recognition is the safe default. Zipformer keeps audio local and needs its model bundle.'**
+  String get settingsAiModelsSpeechEngineSubtitle;
+
+  /// No description provided for @settingsAiModelsSpeechEngineSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System on-device'**
+  String get settingsAiModelsSpeechEngineSystem;
+
+  /// No description provided for @settingsAiModelsSpeechEngineZipformer.
+  ///
+  /// In en, this message translates to:
+  /// **'Local Zipformer'**
+  String get settingsAiModelsSpeechEngineZipformer;
+
+  /// No description provided for @settingsAiModelsSpeechEngineZipformerMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Download the Zipformer bundle below before using local recognition.'**
+  String get settingsAiModelsSpeechEngineZipformerMissing;
+
   /// No description provided for @settingsAiModelsFootnote.
   ///
   /// In en, this message translates to:

@@ -167,12 +167,15 @@ ModelBundle embeddingGemmaBundle() {
 /// the existing atomic downloader verify the weight without requiring archive
 /// extraction. SHA-256 values are the upstream LFS object id for the model and
 /// a digest verified from the pinned upstream revision for `tokens.txt`.
+const streamingZipformerLargeCtcZhBundleId =
+    'streaming-zipformer-large-ctc-zh-int8-2025-06-30';
+
 ModelBundle streamingZipformerLargeCtcZhBundle() {
   const baseUrl =
       'https://huggingface.co/csukuangfj/'
       'sherpa-onnx-streaming-zipformer-ctc-zh-int8-2025-06-30/resolve/main';
   return const ModelBundle(
-    id: 'streaming-zipformer-large-ctc-zh-int8-2025-06-30',
+    id: streamingZipformerLargeCtcZhBundleId,
     displayName: 'Zipformer Large CTC 中文实时语音 (INT8)',
     description: '约 155 MB，普通话真流式端侧识别',
     archiveFallback: ModelArchiveSource(

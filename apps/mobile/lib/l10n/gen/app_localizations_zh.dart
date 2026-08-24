@@ -8371,6 +8371,23 @@ class AppLocalizationsZh extends AppLocalizations {
       '模型文件仅保存在本机，不会上传。EmbeddingGemma 用于本地记忆检索；Zipformer 用于普通话实时语音输入。ONNX Runtime 已随应用构建，无需单独管理。';
 
   @override
+  String get settingsAiModelsSpeechEngineTitle => '语音识别引擎';
+
+  @override
+  String get settingsAiModelsSpeechEngineSubtitle =>
+      '系统端侧识别是安全默认值；Zipformer 全程本地运行，需要先下载语音模型。';
+
+  @override
+  String get settingsAiModelsSpeechEngineSystem => '系统端侧识别';
+
+  @override
+  String get settingsAiModelsSpeechEngineZipformer => '本地 Zipformer';
+
+  @override
+  String get settingsAiModelsSpeechEngineZipformerMissing =>
+      '使用本地识别前，请先下载下方 Zipformer 模型。';
+
+  @override
   String get settingsAiModelsFootnote =>
       '语音模型下载后可在下一次点击麦克风时直接使用。EmbeddingGemma 下载后需重启应用，已有记忆会在下次索引周期自动重新生成向量，原始记录保持不变。';
 

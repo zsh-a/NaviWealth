@@ -66,13 +66,17 @@ class ChatController extends StateNotifier<ChatTurnState> {
   final String sessionId;
   InteractionChatSession? _interactionSession;
   String? _interactionOwnerUserId;
+  SpeechRecognizerBackend? _interactionBackend;
 
   InteractionChatSession _ensureInteractionSession({
     required ChatRepository repository,
     required String ownerUserId,
   }) {
     final existing = _interactionSession;
-    if (existing != null && _interactionOwnerUserId == ownerUserId) {
+    final backend = ref.read(speechRecognizerBackendProvider);
+    if (existing != null &&
+        _interactionOwnerUserId == ownerUserId &&
+        _interactionBackend == backend) {
       return existing;
     }
     if (existing != null) unawaited(existing.close());
@@ -112,6 +116,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
     );
     _interactionSession = session;
     _interactionOwnerUserId = ownerUserId;
+    _interactionBackend = backend;
     return session;
   }
 

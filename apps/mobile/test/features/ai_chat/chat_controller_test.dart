@@ -10,14 +10,22 @@ import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/speech/speech_input.dart';
 import 'package:naviwealth/core/speech/speech_recognizer.dart';
 import 'package:naviwealth/core/speech/speech_recognizer_provider.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_turn_metadata.dart';
 import 'package:naviwealth/features/ai_chat/state/chat_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   const sessionId = 'session-1';
   const ownerUserId = 'owner-1';
+  late SharedPreferences preferences;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    preferences = await SharedPreferences.getInstance();
+  });
 
   ProviderContainer makeContainer(
     _FakeChatRepository repo, {
@@ -27,6 +35,7 @@ void main() {
       overrides: [
         activeUserIdProvider.overrideWithValue(ownerUserId),
         chatRepositoryProvider.overrideWith((_) async => repo),
+        sharedPreferencesProvider.overrideWithValue(preferences),
         if (speechInput != null)
           speechInputProvider.overrideWithValue(speechInput),
       ],

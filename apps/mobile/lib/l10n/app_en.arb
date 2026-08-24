@@ -4591,6 +4591,11 @@
   "settingsAiModelsInstalledSource": "Installed",
   "settingsAiModelsMissingSource": "Missing",
   "settingsAiModelsHint": "Model files stay on this device and are never uploaded. EmbeddingGemma powers local memory retrieval; Zipformer powers real-time Mandarin voice input. ONNX Runtime is bundled with the app.",
+  "settingsAiModelsSpeechEngineTitle": "Voice recognition engine",
+  "settingsAiModelsSpeechEngineSubtitle": "System on-device recognition is the safe default. Zipformer keeps audio local and needs its model bundle.",
+  "settingsAiModelsSpeechEngineSystem": "System on-device",
+  "settingsAiModelsSpeechEngineZipformer": "Local Zipformer",
+  "settingsAiModelsSpeechEngineZipformerMissing": "Download the Zipformer bundle below before using local recognition.",
   "settingsAiModelsFootnote": "The speech model is available on the next microphone tap. After downloading EmbeddingGemma, restart the app; existing memories are re-indexed in the next cycle and original records remain unchanged.",
   "settingsAiModelsStateLoadFailed": "Failed to load state: {error}",
   "@settingsAiModelsStateLoadFailed": {

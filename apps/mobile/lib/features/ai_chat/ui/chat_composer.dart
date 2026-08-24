@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/shell/settings_route_paths.dart';
+import '../../../core/speech/speech_recognizer.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../state/composer_draft.dart';
@@ -186,6 +188,22 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     setState(() => _voiceBusy = true);
     try {
       await action();
+    } on SpeechRecognitionException catch (error) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final message = switch (error.code) {
+        SpeechRecognitionErrorCode.modelNotInstalled =>
+          l10n.speechInputModelMissing,
+        SpeechRecognitionErrorCode.permissionDenied =>
+          l10n.speechInputPermissionDenied,
+        SpeechRecognitionErrorCode.recorderUnavailable ||
+        SpeechRecognitionErrorCode.runtimeUnavailable ||
+        SpeechRecognitionErrorCode.sessionBusy => l10n.speechInputFailed,
+      };
+      AppMessenger.show(context, ToastKind.error, message);
+      if (error.code == SpeechRecognitionErrorCode.modelNotInstalled) {
+        unawaited(context.push(SettingsRoutes.aiModels));
+      }
     } on Object {
       if (mounted) {
         AppMessenger.show(

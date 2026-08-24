@@ -8837,6 +8837,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'Model files stay on this device and are never uploaded. EmbeddingGemma powers local memory retrieval; Zipformer powers real-time Mandarin voice input. ONNX Runtime is bundled with the app.';
 
   @override
+  String get settingsAiModelsSpeechEngineTitle => 'Voice recognition engine';
+
+  @override
+  String get settingsAiModelsSpeechEngineSubtitle =>
+      'System on-device recognition is the safe default. Zipformer keeps audio local and needs its model bundle.';
+
+  @override
+  String get settingsAiModelsSpeechEngineSystem => 'System on-device';
+
+  @override
+  String get settingsAiModelsSpeechEngineZipformer => 'Local Zipformer';
+
+  @override
+  String get settingsAiModelsSpeechEngineZipformerMissing =>
+      'Download the Zipformer bundle below before using local recognition.';
+
+  @override
   String get settingsAiModelsFootnote =>
       'The speech model is available on the next microphone tap. After downloading EmbeddingGemma, restart the app; existing memories are re-indexed in the next cycle and original records remain unchanged.';
 

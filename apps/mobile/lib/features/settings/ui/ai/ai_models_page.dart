@@ -11,6 +11,8 @@
 ///   - Per-file progress when downloading; aggregate when not
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -20,7 +22,9 @@ import '../../../../core/ai/local/embedding/embedder_path_resolution.dart';
 import '../../../../core/ai/local/embedding/model_install_state.dart';
 import '../../../../core/ai/local/embedding/model_manifest.dart';
 import '../../../../core/format/formatters.dart';
+import '../../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
+import '../../../../core/speech/speech_recognizer_provider.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 
@@ -44,6 +48,8 @@ class AiModelsPage extends ConsumerWidget {
           _RuntimeDiagnosticsCard(resolution: resolution),
           const SizedBox(height: AppSpacing.s12),
           const _ActiveEmbedderCard(),
+          const SizedBox(height: AppSpacing.s12),
+          _SpeechRecognizerCard(bundles: bundles),
           const SizedBox(height: AppSpacing.s12),
           const _Hint(),
           const SizedBox(height: AppSpacing.s16),

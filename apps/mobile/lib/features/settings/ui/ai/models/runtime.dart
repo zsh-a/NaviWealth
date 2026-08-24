@@ -1,5 +1,54 @@
 part of '../ai_models_page.dart';
 
+class _SpeechRecognizerCard extends ConsumerWidget {
+  const _SpeechRecognizerCard({required this.bundles});
+
+  final List<ModelBundle> bundles;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ModelBundle? zipformer;
+    for (final bundle in bundles) {
+      if (bundle.id == streamingZipformerLargeCtcZhBundleId) {
+        zipformer = bundle;
+        break;
+      }
+    }
+    if (zipformer == null) return const SizedBox.shrink();
+
+    final l10n = AppLocalizations.of(context);
+    final backend = ref.watch(speechRecognizerBackendProvider);
+    final install = ref.watch(modelInstallProvider(zipformer));
+    final subtitle = install.when(
+      loading: () => l10n.settingsAiModelsSpeechEngineSubtitle,
+      error: (_, _) => l10n.settingsAiModelsSpeechEngineSubtitle,
+      data: (state) => state.isInstalled
+          ? l10n.settingsAiModelsSpeechEngineSubtitle
+          : l10n.settingsAiModelsSpeechEngineZipformerMissing,
+    );
+
+    return AppGroupedSurface(
+      padding: EdgeInsets.zero,
+      child: InlineSettingRow<SpeechRecognizerBackend>(
+        icon: FLucideIcons.mic,
+        label: l10n.settingsAiModelsSpeechEngineTitle,
+        subtitle: subtitle,
+        value: backend,
+        options: {
+          l10n.settingsAiModelsSpeechEngineSystem:
+              SpeechRecognizerBackend.systemOnDevice,
+          l10n.settingsAiModelsSpeechEngineZipformer:
+              SpeechRecognizerBackend.localZipformer,
+        },
+        onChanged: (next) => unawaited(
+          ref.read(speechRecognizerBackendProvider.notifier).setBackend(next),
+        ),
+        stackValue: true,
+      ),
+    );
+  }
+}
+
 class _ActiveEmbedderCard extends ConsumerWidget {
   const _ActiveEmbedderCard();
 
