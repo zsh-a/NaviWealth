@@ -7,6 +7,8 @@ import '../../core/ai/session/output_text_segmenter.dart';
 import 'interaction_session_coordinator.dart';
 
 typedef OutputSegmentSink = void Function(OutputSegment segment);
+typedef OutputFinishedSink =
+    void Function(ResponseEpoch epoch, {required bool interrupted});
 
 /// Maps the existing provider-neutral Chat event vocabulary into the
 /// InteractionSession lanes.
@@ -20,11 +22,13 @@ final class AgentEventAdapter {
     this._coordinator, {
     OutputTextSegmenter? segmenter,
     this.onOutputSegment,
+    this.onOutputFinished,
   }) : _segmenter = segmenter ?? OutputTextSegmenter();
 
   final InteractionSessionCoordinator _coordinator;
   final OutputTextSegmenter _segmenter;
   final OutputSegmentSink? onOutputSegment;
+  final OutputFinishedSink? onOutputFinished;
 
   /// Projects a whole provider stream through the same ordered adapter.
   Future<void> acceptStream(
@@ -95,6 +99,7 @@ final class AgentEventAdapter {
         );
         if (_isCurrent(epoch)) {
           _queueSegments(_segmenter.flush(epoch: epoch));
+          onOutputFinished?.call(epoch, interrupted: false);
         }
       case ErrorEvent(:final code):
         _coordinator.dispatch(
@@ -102,6 +107,9 @@ final class AgentEventAdapter {
           turnId: turnId,
           epoch: epoch,
         );
+        if (_isCurrent(epoch)) {
+          onOutputFinished?.call(epoch, interrupted: true);
+        }
       case ToolCallDeltaEvent() ||
           ThinkingDeltaEvent() ||
           UsageEvent() ||
