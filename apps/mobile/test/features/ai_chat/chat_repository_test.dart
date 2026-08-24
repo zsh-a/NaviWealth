@@ -180,6 +180,27 @@ void main() {
       expect(api.lastMetadata?['assistant_message_id'], api.lastTurnId);
     });
 
+    test('forwards provider-neutral events to an optional observer', () async {
+      api.script.addAll(<AiChatEvent>[
+        const TextEvent('回答'),
+        const DoneEvent(stopReason: 'end_turn', rounds: 1),
+      ]);
+      final observed = <AiChatEvent>[];
+      final id = await activeSessionId();
+
+      final outcome = await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: '问题',
+        onAiChatEvent: observed.add,
+      );
+
+      expect(outcome, SendOutcome.completed);
+      expect(observed, hasLength(2));
+      expect(observed.first, isA<TextEvent>());
+      expect(observed.last, isA<DoneEvent>());
+    });
+
     test('prepares and forwards host context blocks for every turn', () async {
       api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
       repo = ChatRepository(

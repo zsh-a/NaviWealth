@@ -304,6 +304,9 @@ apps/mobile/lib/app/agent_runtime/
 
 apps/mobile/lib/app/interaction/
   interaction_session_coordinator.dart  thin side-effect coordinator
+  interaction_chat_session.dart         ChatRepository-backed host composition
+  speech_output_bridge.dart              serialized output and delivery bridge
+  agent_event_adapter.dart               Chat event -> session projection
   turn_arbiter.dart                     interruption and turn policy
   voice_interaction_adapter.dart        Speech/Chat/HITL adapters
 

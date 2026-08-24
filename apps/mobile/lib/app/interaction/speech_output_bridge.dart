@@ -158,6 +158,7 @@ final class SerializedSpeechOutputBridge {
         // A provider failure must not block later interaction turns. The
         // current epoch is discarded by the host on the next turn; no text
         // is marked delivered here because playback never started.
+        _tryFinishOutput(entry.stamp.epoch);
         continue;
       }
 

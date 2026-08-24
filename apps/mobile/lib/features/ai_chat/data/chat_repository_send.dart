@@ -40,6 +40,7 @@ mixin _ChatRepositorySend {
     String? model,
     CancelToken? cancelToken,
     ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
+    void Function(AiChatEvent event)? onAiChatEvent,
   }) async {
     // Device-only AI: the runtime authenticates
     // with the user's own LLM key, not this token. In local-only mode there is
@@ -223,6 +224,15 @@ mixin _ChatRepositorySend {
 
       await for (final event in stream) {
         sawStreamEvent = true;
+        try {
+          // Presentation observers (InteractionSession, speech delivery,
+          // diagnostics) must never be able to break durable chat
+          // persistence or the Agent Runtime loop.
+          onAiChatEvent?.call(event);
+        } on Object {
+          // Best effort by contract; ChatRepository remains the semantic and
+          // durable owner of this stream.
+        }
         switch (event) {
           case TextEvent(:final text):
             segments[segments.length - 1] = segments.last + text;

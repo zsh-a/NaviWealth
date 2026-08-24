@@ -22,6 +22,7 @@ final class InteractionTurnRequest {
     required this.text,
     required this.origin,
     this.interactionResponse,
+    this.resumeTurnId,
   });
 
   final SessionId sessionId;
@@ -30,6 +31,7 @@ final class InteractionTurnRequest {
   final String text;
   final InteractionInputOrigin origin;
   final AiInteractionResponse? interactionResponse;
+  final String? resumeTurnId;
 }
 
 typedef InteractionTurnHandler =
@@ -236,6 +238,7 @@ class InteractionSessionCoordinator {
           text: text,
           origin: inputOrigin,
           interactionResponse: response,
+          resumeTurnId: pending?.resumeToken,
         ),
       ),
     );
@@ -258,6 +261,9 @@ class InteractionSessionCoordinator {
       );
 
   void agentFinished() => dispatch((stamp) => AgentFinished(stamp: stamp));
+
+  void agentFailed({String? code}) =>
+      dispatch((stamp) => AgentFailed(stamp: stamp, code: code));
 
   void agentCancelled() => dispatch((stamp) => AgentCancelled(stamp: stamp));
 

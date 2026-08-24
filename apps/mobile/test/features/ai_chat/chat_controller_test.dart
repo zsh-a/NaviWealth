@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/chat_events.dart';
 import 'package:naviwealth/core/ai/contracts/interaction.dart';
 import 'package:naviwealth/core/ai/session/interaction_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
@@ -185,6 +186,7 @@ class _FakeChatRepository implements ChatRepository {
     String? model,
     CancelToken? cancelToken,
     ChatTurnMetadata turnMetadata = const ChatTurnMetadata.empty(),
+    void Function(AiChatEvent event)? onAiChatEvent,
   }) async {
     sendCount += 1;
     lastSessionId = sessionId;

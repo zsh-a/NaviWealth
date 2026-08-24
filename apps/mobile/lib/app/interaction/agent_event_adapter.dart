@@ -29,6 +29,7 @@ final class AgentEventAdapter {
   final OutputTextSegmenter _segmenter;
   final OutputSegmentSink? onOutputSegment;
   final OutputFinishedSink? onOutputFinished;
+  final Set<int> _finishedOutputEpochs = <int>{};
 
   /// Projects a whole provider stream through the same ordered adapter.
   Future<void> acceptStream(
@@ -91,7 +92,7 @@ final class AgentEventAdapter {
         if (_isCurrent(epoch)) {
           _queueSegments(_segmenter.add(text, epoch: epoch));
         }
-      case DoneEvent():
+      case DoneEvent(:final stopReason):
         _coordinator.dispatch(
           (stamp) => AgentFinished(stamp: stamp),
           turnId: turnId,
@@ -99,7 +100,7 @@ final class AgentEventAdapter {
         );
         if (_isCurrent(epoch)) {
           _queueSegments(_segmenter.flush(epoch: epoch));
-          onOutputFinished?.call(epoch, interrupted: false);
+          _emitOutputFinished(epoch, interrupted: stopReason == 'error');
         }
       case ErrorEvent(:final code):
         _coordinator.dispatch(
@@ -108,7 +109,7 @@ final class AgentEventAdapter {
           epoch: epoch,
         );
         if (_isCurrent(epoch)) {
-          onOutputFinished?.call(epoch, interrupted: true);
+          _emitOutputFinished(epoch, interrupted: true);
         }
       case ToolCallDeltaEvent() ||
           ThinkingDeltaEvent() ||
@@ -129,6 +130,11 @@ final class AgentEventAdapter {
       _coordinator.queueOutputSegment(segment);
       onOutputSegment?.call(segment);
     }
+  }
+
+  void _emitOutputFinished(ResponseEpoch epoch, {required bool interrupted}) {
+    if (!_finishedOutputEpochs.add(epoch.value)) return;
+    onOutputFinished?.call(epoch, interrupted: interrupted);
   }
 
   static AiInteractionEnvelope? _pendingInteraction(Object? output) {

@@ -135,4 +135,39 @@ void main() {
       await coordinator.close();
     },
   );
+
+  test('pending interaction preserves its durable resume token', () async {
+    final requests = <InteractionTurnRequest>[];
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      onTurnCommitted: (request) async => requests.add(request),
+    );
+    coordinator.startTurn(InteractionInputOrigin.voice);
+    final interaction = AiInteractionEnvelope(
+      interactionId: 'interaction-1',
+      kind: AiInteractionKind.approval,
+      mode: AiInteractionMode.oneTap,
+      status: AiInteractionStatus.pending,
+      title: '确认操作',
+      createdAt: DateTime.utc(2026, 8, 24),
+      resumeKind: AiInteractionResumeKind.chatTurn,
+      resumeToken: 'durable-turn-1',
+    );
+    coordinator.agentWaitingForInteraction(interaction);
+
+    final response = AiInteractionResponse(
+      interactionId: interaction.interactionId,
+      action: AiInteractionAction.approve,
+      value: true,
+      respondedAt: DateTime.utc(2026, 8, 24),
+      respondedBy: 'voice',
+    );
+    coordinator.commitInput('确认', interactionResponse: response);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(requests, hasLength(1));
+    expect(requests.single.resumeTurnId, 'durable-turn-1');
+    expect(requests.single.interactionResponse, same(response));
+    await coordinator.close();
+  });
 }
