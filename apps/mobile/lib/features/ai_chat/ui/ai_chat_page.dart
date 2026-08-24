@@ -264,12 +264,19 @@ class _ChatPane extends ConsumerWidget {
               isStreaming: turn.isStreaming,
               isVoiceActive: turn.voiceActive,
               canStartVoice: turn.canStartVoice,
+              voiceCapsuleVisible: turn.voiceCapsuleVisible,
+              voiceTranscript: turn.voiceTranscript,
+              voiceInputLane: turn.voiceInputLane,
+              voiceOutputLane: turn.voiceOutputLane,
               onStartVoice: () => ref
                   .read(chatControllerProvider(sessionId).notifier)
                   .startVoice(systemContext: systemContext),
               onStopVoice: () => ref
                   .read(chatControllerProvider(sessionId).notifier)
                   .stopVoice(),
+              onCancelVoice: () => ref
+                  .read(chatControllerProvider(sessionId).notifier)
+                  .cancelVoice(),
               onSend: send,
               onSendWithOrigin: sendWithOrigin,
               onEditResend: editResend,

@@ -5967,6 +5967,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speechInputStartingTooltip => '正在准备端侧语音识别…';
 
   @override
+  String get speechInputListeningStatus => '正在聆听…';
+
+  @override
+  String get speechInputEndpointingStatus => '正在收尾识别…';
+
+  @override
+  String get speechInputThinkingStatus => '正在思考…';
+
+  @override
+  String get speechInputSpeakingStatus => '正在播报 · 点击麦克风可打断';
+
+  @override
+  String get speechInputCancelTooltip => '取消语音输入';
+
+  @override
   String get speechInputModelMissing => '请先下载中文实时语音模型';
 
   @override

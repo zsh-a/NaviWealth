@@ -13,6 +13,22 @@ import 'package:naviwealth/core/speech/speech_output.dart';
 import 'package:naviwealth/core/speech/speech_recognizer.dart';
 
 void main() {
+  test('projects reducer state through the host callback', () async {
+    InteractionState? projected;
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      onStateChanged: (state) => projected = state,
+    );
+
+    coordinator.startTurn(InteractionInputOrigin.voice);
+    coordinator.updateTranscript('记一笔午饭', isFinal: false);
+
+    expect(projected, same(coordinator.state));
+    expect(projected?.transcript, '记一笔午饭');
+    expect(projected?.inputLane, InteractionInputLane.speechDetected);
+    await coordinator.close();
+  });
+
   test(
     'Coordinator assigns one global sequence and commits valid barge-in',
     () async {
@@ -211,6 +227,23 @@ void main() {
       await coordinator.close();
     },
   );
+
+  test('cancelVoice ends the input session without finalizing it', () async {
+    final input = _FakeSpeechInput();
+    bool? endedAsCancelled;
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      speechInput: input,
+      onSpeechEnded: ({required cancelled}) => endedAsCancelled = cancelled,
+    );
+
+    await coordinator.startVoice();
+    await coordinator.cancelVoice();
+
+    expect(input.session.cancelled, isTrue);
+    expect(endedAsCancelled, isTrue);
+    await coordinator.close();
+  });
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -230,6 +263,7 @@ final class _FakeSpeechInputSession implements SpeechInputSession {
   final StreamController<SpeechInputEvent> _events =
       StreamController<SpeechInputEvent>.broadcast(sync: true);
   bool _closed = false;
+  bool cancelled = false;
 
   @override
   Stream<SpeechInputEvent> get events => _events.stream;
@@ -249,6 +283,8 @@ final class _FakeSpeechInputSession implements SpeechInputSession {
   @override
   Future<void> cancel() async {
     if (_closed) return;
+    cancelled = true;
+    emit(const SpeechInputEnded(cancelled: true));
     _closed = true;
     await _events.close();
   }

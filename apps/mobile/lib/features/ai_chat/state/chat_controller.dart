@@ -32,29 +32,46 @@ class ChatTurnState {
     this.cancelToken,
     this.voiceListening = false,
     this.voiceTurnActive = false,
+    this.voiceTranscript = '',
+    this.voiceInputLane = InteractionInputLane.idle,
+    this.voiceOutputLane = InteractionOutputLane.idle,
   });
 
   final ChatTurnPhase phase;
   final CancelToken? cancelToken;
   final bool voiceListening;
   final bool voiceTurnActive;
+  final String voiceTranscript;
+  final InteractionInputLane voiceInputLane;
+  final InteractionOutputLane voiceOutputLane;
 
   bool get isIdle => phase == ChatTurnPhase.idle;
   bool get isStreaming => phase == ChatTurnPhase.streaming;
   bool get isBusy => phase != ChatTurnPhase.idle;
   bool get voiceActive => voiceListening;
   bool get canStartVoice => !isStreaming || voiceTurnActive;
+  bool get voiceEndpointing =>
+      voiceListening && voiceInputLane == InteractionInputLane.endpointing;
+  bool get voiceSpeaking =>
+      voiceTurnActive && _isVoiceOutputActive(voiceOutputLane);
+  bool get voiceCapsuleVisible => voiceListening || voiceTurnActive;
 
   ChatTurnState copyWith({
     ChatTurnPhase? phase,
     CancelToken? cancelToken,
     bool? voiceListening,
     bool? voiceTurnActive,
+    String? voiceTranscript,
+    InteractionInputLane? voiceInputLane,
+    InteractionOutputLane? voiceOutputLane,
   }) => ChatTurnState(
     phase: phase ?? this.phase,
     cancelToken: cancelToken ?? this.cancelToken,
     voiceListening: voiceListening ?? this.voiceListening,
     voiceTurnActive: voiceTurnActive ?? this.voiceTurnActive,
+    voiceTranscript: voiceTranscript ?? this.voiceTranscript,
+    voiceInputLane: voiceInputLane ?? this.voiceInputLane,
+    voiceOutputLane: voiceOutputLane ?? this.voiceOutputLane,
   );
 }
 
@@ -96,6 +113,9 @@ class ChatController extends StateNotifier<ChatTurnState> {
           voiceTurnActive:
               state.voiceTurnActive ||
               request.origin == InteractionInputOrigin.voice,
+          voiceTranscript: state.voiceTranscript,
+          voiceInputLane: state.voiceInputLane,
+          voiceOutputLane: state.voiceOutputLane,
         );
       },
       onTurnFinished: (request, _) {
@@ -105,14 +125,31 @@ class ChatController extends StateNotifier<ChatTurnState> {
         state = ChatTurnState(
           voiceListening: state.voiceListening,
           voiceTurnActive: request.origin == InteractionInputOrigin.voice
-              ? false
+              ? state.voiceListening ||
+                    _isVoiceOutputActive(state.voiceOutputLane)
               : state.voiceTurnActive,
+          voiceTranscript: state.voiceTranscript,
+          voiceInputLane: state.voiceInputLane,
+          voiceOutputLane: state.voiceOutputLane,
         );
       },
-      onSpeechEnded: () {
+      onSpeechEnded: ({required cancelled}) {
         if (!mounted) return;
-        state = state.copyWith(voiceListening: false);
+        final keepVoiceTurn =
+            !cancelled ||
+            state.isStreaming ||
+            _isVoiceOutputActive(state.voiceOutputLane);
+        state = _withVoiceState(
+          state,
+          voiceListening: false,
+          voiceTurnActive: keepVoiceTurn,
+          voiceTranscript: keepVoiceTurn ? null : '',
+          voiceInputLane: keepVoiceTurn
+              ? state.voiceInputLane
+              : InteractionInputLane.idle,
+        );
       },
+      onStateChanged: _onInteractionStateChanged,
     );
     _interactionSession = session;
     _interactionOwnerUserId = ownerUserId;
@@ -165,6 +202,9 @@ class ChatController extends StateNotifier<ChatTurnState> {
         state = ChatTurnState(
           voiceListening: state.voiceListening,
           voiceTurnActive: state.voiceTurnActive,
+          voiceTranscript: state.voiceTranscript,
+          voiceInputLane: state.voiceInputLane,
+          voiceOutputLane: state.voiceOutputLane,
         );
       }
     }
@@ -206,6 +246,44 @@ class ChatController extends StateNotifier<ChatTurnState> {
         state = state.copyWith(voiceListening: false);
       }
     }
+  }
+
+  Future<void> cancelVoice() async {
+    final session = _interactionSession;
+    if (session == null) return;
+    try {
+      await session.cancelVoice();
+    } finally {
+      if (mounted) {
+        final keepVoiceTurn =
+            state.isStreaming || _isVoiceOutputActive(state.voiceOutputLane);
+        state = _withVoiceState(
+          state,
+          voiceListening: false,
+          voiceTurnActive: keepVoiceTurn,
+          voiceTranscript: keepVoiceTurn ? null : '',
+          voiceInputLane: keepVoiceTurn
+              ? state.voiceInputLane
+              : InteractionInputLane.idle,
+        );
+      }
+    }
+  }
+
+  void _onInteractionStateChanged(InteractionState interaction) {
+    if (!mounted) return;
+    final shouldFinishVoiceTurn =
+        state.voiceTurnActive &&
+        !state.voiceListening &&
+        !state.isStreaming &&
+        interaction.outputLane == InteractionOutputLane.idle;
+    state = _withVoiceState(
+      state,
+      voiceTurnActive: shouldFinishVoiceTurn ? false : state.voiceTurnActive,
+      voiceTranscript: interaction.transcript,
+      voiceInputLane: interaction.inputLane,
+      voiceOutputLane: interaction.outputLane,
+    );
   }
 
   Future<void> chooseDecision({
@@ -286,6 +364,28 @@ class ChatController extends StateNotifier<ChatTurnState> {
     super.dispose();
   }
 }
+
+bool _isVoiceOutputActive(InteractionOutputLane lane) =>
+    lane == InteractionOutputLane.synthesizing ||
+    lane == InteractionOutputLane.playing ||
+    lane == InteractionOutputLane.paused;
+
+ChatTurnState _withVoiceState(
+  ChatTurnState current, {
+  bool? voiceListening,
+  bool? voiceTurnActive,
+  String? voiceTranscript,
+  InteractionInputLane? voiceInputLane,
+  InteractionOutputLane? voiceOutputLane,
+}) => ChatTurnState(
+  phase: current.phase,
+  cancelToken: current.cancelToken,
+  voiceListening: voiceListening ?? current.voiceListening,
+  voiceTurnActive: voiceTurnActive ?? current.voiceTurnActive,
+  voiceTranscript: voiceTranscript ?? current.voiceTranscript,
+  voiceInputLane: voiceInputLane ?? current.voiceInputLane,
+  voiceOutputLane: voiceOutputLane ?? current.voiceOutputLane,
+);
 
 /// Per-session controller. Riverpod auto-disposes when the chat page
 /// pops, which also cancels any in-flight turn via the `mounted` check.

@@ -58,7 +58,8 @@ class InteractionSessionCoordinator {
     void Function()? onBargeInCandidate,
     void Function()? onFalseInterruption,
     void Function(ResponseEpoch staleEpoch)? onEpochAdvanced,
-    void Function()? onSpeechEnded,
+    void Function({required bool cancelled})? onSpeechEnded,
+    void Function(InteractionState state)? onStateChanged,
     void Function(Object error, StackTrace stackTrace)? onTurnError,
     VoiceInteractionResponseDecoder? responseDecoder,
     BargeInPolicy bargeInPolicy = const BargeInPolicy(),
@@ -74,6 +75,7 @@ class InteractionSessionCoordinator {
        _onFalseInterruption = onFalseInterruption,
        _onEpochAdvanced = onEpochAdvanced,
        _onSpeechEnded = onSpeechEnded,
+       _onStateChanged = onStateChanged,
        _onTurnError = onTurnError,
        _responseDecoder = responseDecoder ?? decodeVoiceInteractionResponse,
        _bargeInPolicy = bargeInPolicy,
@@ -85,7 +87,8 @@ class InteractionSessionCoordinator {
   final void Function()? _onBargeInCandidate;
   final void Function()? _onFalseInterruption;
   final void Function(ResponseEpoch staleEpoch)? _onEpochAdvanced;
-  final void Function()? _onSpeechEnded;
+  final void Function({required bool cancelled})? _onSpeechEnded;
+  final void Function(InteractionState state)? _onStateChanged;
   final void Function(Object error, StackTrace stackTrace)? _onTurnError;
   final VoiceInteractionResponseDecoder _responseDecoder;
   final BargeInPolicy _bargeInPolicy;
@@ -127,6 +130,7 @@ class InteractionSessionCoordinator {
     final next = reduce(_state, build(stamp));
     _state = next;
     _states.add(next);
+    _onStateChanged?.call(next);
     return next;
   }
 
@@ -176,13 +180,25 @@ class InteractionSessionCoordinator {
   }
 
   Future<void> stopVoice() async {
+    await _endVoice(cancelled: false);
+  }
+
+  Future<void> cancelVoice() async {
+    await _endVoice(cancelled: true);
+  }
+
+  Future<void> _endVoice({required bool cancelled}) async {
     final session = _speechSession;
     if (session == null) return;
     _speechSession = null;
     final events = _speechEvents;
     _speechEvents = null;
     try {
-      await session.stop();
+      if (cancelled) {
+        await session.cancel();
+      } else {
+        await session.stop();
+      }
     } finally {
       await events?.cancel();
     }
@@ -422,9 +438,9 @@ class InteractionSessionCoordinator {
         speechStopped(stoppedAt: stoppedAt, duration: duration);
       case SpeechInputTranscript(:final text, :final isFinal):
         updateTranscript(text, isFinal: isFinal);
-      case SpeechInputEnded():
+      case SpeechInputEnded(:final cancelled):
         speechStopped();
-        _onSpeechEnded?.call();
+        _onSpeechEnded?.call(cancelled: cancelled);
         break;
     }
   }

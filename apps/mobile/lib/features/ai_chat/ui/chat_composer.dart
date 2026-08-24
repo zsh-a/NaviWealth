@@ -38,6 +38,11 @@ class ChatComposer extends ConsumerStatefulWidget {
     this.canStartVoice = true,
     this.onStartVoice,
     this.onStopVoice,
+    this.onCancelVoice,
+    this.voiceCapsuleVisible = false,
+    this.voiceTranscript = '',
+    this.voiceInputLane = InteractionInputLane.idle,
+    this.voiceOutputLane = InteractionOutputLane.idle,
   });
 
   final bool isStreaming;
@@ -65,6 +70,11 @@ class ChatComposer extends ConsumerStatefulWidget {
   final bool canStartVoice;
   final Future<void> Function()? onStartVoice;
   final Future<void> Function()? onStopVoice;
+  final Future<void> Function()? onCancelVoice;
+  final bool voiceCapsuleVisible;
+  final String voiceTranscript;
+  final InteractionInputLane voiceInputLane;
+  final InteractionOutputLane voiceOutputLane;
 
   bool get _busy => isStreaming;
 
@@ -217,6 +227,27 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     }
   }
 
+  Future<void> _cancelVoice() async {
+    if (_voiceBusy) return;
+    final action = widget.onCancelVoice;
+    if (action == null) return;
+
+    setState(() => _voiceBusy = true);
+    try {
+      await action();
+    } on Object {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).speechInputFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _voiceBusy = false);
+    }
+  }
+
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     final isEnter =
@@ -300,6 +331,22 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                     : const SizedBox(width: double.infinity),
               ),
               if (sessionId != null) const _ProfileCaption(),
+              if (_usesInteractionVoice && widget.voiceCapsuleVisible)
+                _VoiceCapsule(
+                  transcript: widget.voiceTranscript,
+                  isListening: widget.isVoiceActive,
+                  isEndpointing:
+                      widget.voiceInputLane == InteractionInputLane.endpointing,
+                  isSpeaking:
+                      widget.voiceOutputLane ==
+                          InteractionOutputLane.synthesizing ||
+                      widget.voiceOutputLane == InteractionOutputLane.playing ||
+                      widget.voiceOutputLane == InteractionOutputLane.paused,
+                  busy: _voiceBusy,
+                  onCancel: widget.onCancelVoice == null
+                      ? null
+                      : () => unawaited(_cancelVoice()),
+                ),
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: colors.muted.withValues(alpha: AppOpacity.prominent),
@@ -370,6 +417,148 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _VoiceCapsule extends StatelessWidget {
+  const _VoiceCapsule({
+    required this.transcript,
+    required this.isListening,
+    required this.isEndpointing,
+    required this.isSpeaking,
+    required this.busy,
+    required this.onCancel,
+  });
+
+  final String transcript;
+  final bool isListening;
+  final bool isEndpointing;
+  final bool isSpeaking;
+  final bool busy;
+  final VoidCallback? onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final status = isListening
+        ? (isEndpointing
+              ? l10n.speechInputEndpointingStatus
+              : l10n.speechInputListeningStatus)
+        : (isSpeaking
+              ? l10n.speechInputSpeakingStatus
+              : l10n.speechInputThinkingStatus);
+    final icon = isSpeaking
+        ? FLucideIcons.sparkles
+        : isEndpointing
+        ? FLucideIcons.loaderCircle
+        : FLucideIcons.mic;
+    final text = transcript.trim();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+      child: AnimatedSize(
+        duration: AppMotionPolicy.duration(context, Motion.fast),
+        curve: Motion.standardDecelerate,
+        alignment: Alignment.bottomCenter,
+        child: SoftCard.flat(
+          borderRadius: AppRadius.lg,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              AppSpacing.s10,
+              AppSpacing.s8,
+              AppSpacing.s10,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _VoiceSignal(
+                  active: isListening,
+                  color: isSpeaking ? colors.primary : colors.foreground,
+                ),
+                const SizedBox(width: AppSpacing.s10),
+                Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (text.isNotEmpty)
+                        Text(
+                          text,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.bodyCaptionStyle.copyWith(
+                            color: colors.foreground,
+                          ),
+                        ),
+                      Text(
+                        status,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.captionLabelStyle.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (onCancel != null && isListening)
+                  FTooltip(
+                    tipBuilder: (_, _) => Text(l10n.speechInputCancelTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: busy ? null : onCancel,
+                      child: busy
+                          ? const SizedBox.square(
+                              dimension: AppIconSizes.sm,
+                              child: FCircularProgress(),
+                            )
+                          : const Icon(FLucideIcons.x),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VoiceSignal extends StatelessWidget {
+  const _VoiceSignal({required this.active, required this.color});
+
+  final bool active;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    const heights = <double>[8, 14, 10];
+    return SizedBox(
+      width: 14,
+      height: 18,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          for (final height in heights)
+            AnimatedContainer(
+              duration: AppMotionPolicy.duration(context, Motion.fast),
+              width: 3,
+              height: active ? height : 6,
+              decoration: BoxDecoration(
+                color: active
+                    ? color
+                    : color.withValues(alpha: AppOpacity.muted),
+                borderRadius: BorderRadius.circular(AppRadius.full),
+              ),
+            ),
+        ],
       ),
     );
   }

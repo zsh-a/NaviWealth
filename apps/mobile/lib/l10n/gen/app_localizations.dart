@@ -10561,6 +10561,36 @@ abstract class AppLocalizations {
   /// **'Preparing on-device speech recognition…'**
   String get speechInputStartingTooltip;
 
+  /// No description provided for @speechInputListeningStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening…'**
+  String get speechInputListeningStatus;
+
+  /// No description provided for @speechInputEndpointingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing recognition…'**
+  String get speechInputEndpointingStatus;
+
+  /// No description provided for @speechInputThinkingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking…'**
+  String get speechInputThinkingStatus;
+
+  /// No description provided for @speechInputSpeakingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking · Tap the mic to interrupt'**
+  String get speechInputSpeakingStatus;
+
+  /// No description provided for @speechInputCancelTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel voice input'**
+  String get speechInputCancelTooltip;
+
   /// No description provided for @speechInputModelMissing.
   ///
   /// In en, this message translates to:

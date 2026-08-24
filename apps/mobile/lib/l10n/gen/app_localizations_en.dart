@@ -6300,6 +6300,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Preparing on-device speech recognition…';
 
   @override
+  String get speechInputListeningStatus => 'Listening…';
+
+  @override
+  String get speechInputEndpointingStatus => 'Finishing recognition…';
+
+  @override
+  String get speechInputThinkingStatus => 'Thinking…';
+
+  @override
+  String get speechInputSpeakingStatus => 'Speaking · Tap the mic to interrupt';
+
+  @override
+  String get speechInputCancelTooltip => 'Cancel voice input';
+
+  @override
   String get speechInputModelMissing =>
       'Download the real-time Chinese speech model first';
 

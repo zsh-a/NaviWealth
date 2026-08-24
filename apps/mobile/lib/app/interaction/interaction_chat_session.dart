@@ -33,7 +33,8 @@ final class InteractionChatSession {
     void Function(InteractionTurnRequest request)? onTurnStarted,
     void Function(InteractionTurnRequest request, SendOutcome outcome)?
     onTurnFinished,
-    void Function()? onSpeechEnded,
+    void Function({required bool cancelled})? onSpeechEnded,
+    void Function(InteractionState state)? onStateChanged,
     void Function(Object error, StackTrace stackTrace)? onTurnError,
   }) {
     late final InteractionChatSession session;
@@ -49,6 +50,7 @@ final class InteractionChatSession {
         unawaited(session._output.interrupt(staleEpoch: staleEpoch));
       },
       onSpeechEnded: onSpeechEnded,
+      onStateChanged: onStateChanged,
       onTurnError: onTurnError,
     );
     final output = SerializedSpeechOutputBridge(
@@ -104,6 +106,8 @@ final class InteractionChatSession {
   Future<void> startVoice() => _coordinator.startVoice();
 
   Future<void> stopVoice() => _coordinator.stopVoice();
+
+  Future<void> cancelVoice() => _coordinator.cancelVoice();
 
   void configure({String? systemContext, String? model}) {
     if (_closed) return;

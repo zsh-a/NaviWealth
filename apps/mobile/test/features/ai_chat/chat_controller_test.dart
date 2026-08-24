@@ -215,6 +215,46 @@ void main() {
       expect(container.read(provider).voiceActive, isFalse);
     },
   );
+
+  test(
+    'voice capsule state follows live transcript and cancellation',
+    () async {
+      final repo = _FakeChatRepository();
+      final input = _FakeSpeechInput();
+      final container = makeContainer(repo, speechInput: input);
+      final provider = chatControllerProvider(sessionId);
+      final sub = container.listen(
+        provider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      final controller = container.read(provider.notifier);
+      await controller.startVoice();
+      input.session.emit(
+        const SpeechInputTranscript(text: '看看本月支出', isFinal: false),
+      );
+      await _flush();
+
+      expect(container.read(provider).voiceCapsuleVisible, isTrue);
+      expect(container.read(provider).voiceTranscript, '看看本月支出');
+      expect(
+        container.read(provider).voiceInputLane,
+        InteractionInputLane.speechDetected,
+      );
+
+      await controller.cancelVoice();
+
+      expect(input.session.cancelled, isTrue);
+      expect(container.read(provider).voiceCapsuleVisible, isFalse);
+      expect(container.read(provider).voiceTranscript, isEmpty);
+      expect(
+        container.read(provider).voiceInputLane,
+        InteractionInputLane.idle,
+      );
+    },
+  );
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -300,6 +340,9 @@ final class _FakeSpeechInputSession implements SpeechInputSession {
   @override
   Future<void> cancel() async {
     cancelled = true;
-    if (!_events.isClosed) await _events.close();
+    if (!_events.isClosed) {
+      emit(const SpeechInputEnded(cancelled: true));
+      await _events.close();
+    }
   }
 }
