@@ -316,46 +316,71 @@ apps/mobile/lib/core/speech/
 
 apps/mobile/android/app/src/main/kotlin/com/naviwealth/naviwealth/
   AndroidSpeechBridge.kt  Android API 31+ on-device semantic speech bridge
-  AndroidAudioCaptureBridge.kt  Android native hot-path capture skeleton
+  AndroidAudioCaptureBridge.kt  Android native capture, VAD and ASR lifecycle
+  NativeSherpaStreamingRecognizer.kt  Kotlin semantic handle for JNI ASR
   NativePcmRingBuffer.kt  bounded native-only PCM buffer
+
+apps/mobile/android/app/src/main/cpp/
+  sherpa_streaming_jni.cpp  JNI bridge to the packaged sherpa-onnx C API
 
 apps/mobile/lib/features/ai_chat/
   data/            context window, structured checkpoint summarizer/store use
   domain/          conversation checkpoint payload
 ```
 
-Android currently selects the platform on-device recognizer for push-to-talk.
-The native bridge owns recognition lifecycle, `VOICE_COMMUNICATION` audio mode,
-permission handling, and semantic `speech_started` / partial / final / ended
-events. No PCM crosses a Flutter channel. The sherpa Zipformer implementation
-remains available as a separate local-model backend for the later native hot
-path; it is not silently replaced by a cloud recognizer when unavailable.
+Android still selects the platform on-device recognizer by default. The system
+provider owns its own recorder through `AndroidSpeechBridge`; this remains the
+production-safe first choice and does not require a downloaded model. The
+opt-in `localZipformer` provider reuses the existing `SpeechRecognizer` seam,
+checks the shared model installer for
+`streaming-zipformer-large-ctc-zh-int8-2025-06-30`, and passes the installed
+directory to the native bridge. A missing local model is reported as
+`modelNotInstalled`; it never triggers a cloud fallback.
 
-The Android hot path is now explicitly reserved behind `SpeechCapture`:
+When `localZipformer` is selected, the Android hot path is:
 
 ```text
 AudioRecord (VOICE_COMMUNICATION, 16 kHz mono PCM16)
   -> platform AEC / NS / AGC (best effort)
-  -> NativePcmRingBuffer (2 second bounded buffer)
-  -> NativeEnergyVad (semantic speech boundaries)
-  -> future native Silero/Sherpa ASR consumer
+  -> one native capture thread
+       ├─> NativeEnergyVad (semantic speech boundaries)
+       ├─> JNI -> packaged sherpa-onnx C API
+       │       └─> Streaming Zipformer Large CTC (INT8)
+       └─> NativePcmRingBuffer (2 second bounded diagnostics buffer)
 ```
 
-`AndroidAudioCaptureBridge` is not the current default recognizer. Android's
-`SpeechRecognizer` service owns its own recorder, so the system on-device
-provider continues to use `AndroidSpeechBridge`; the app-owned `AudioRecord`
-path is for the later Sherpa/native ASR backend. Both native bridges use the
-same process-local microphone lease and stop on Activity background/destroy.
-The capture bridge emits only format/effect/VAD capabilities, lifecycle events,
-semantic `speech_started` / `speech_stopped` boundaries, and aggregate
-captured/buffered/dropped-byte counters. PCM is never sent over Flutter, FRB,
-logs, or persisted storage.
+`AndroidAudioCaptureBridge` owns the app-owned `AudioRecord` lifecycle,
+`VOICE_COMMUNICATION` mode, permission handling, best-effort platform audio
+effects, native VAD, and the optional native Zipformer handle. Both Android
+speech bridges use the same process-local microphone lease and stop on Activity
+background/destroy. The bridge emits only format/effect/VAD capabilities,
+lifecycle events, semantic `speech_started` / `speech_stopped` boundaries,
+partial/final transcript events, and aggregate captured/buffered/dropped-byte
+counters. PCM is never sent over Flutter, FRB, logs, or persisted storage.
+
+The JNI bridge loads the C API and C++ support libraries already supplied by
+the existing `sherpa_onnx` Android FFI dependency; it does not add a second
+model runtime or copy the model into the APK. Dart only resolves the existing
+`<app_support>/ai-models/` bundle and receives semantic events. The shared
+`SpeechRecognizer` contract therefore remains provider-neutral:
+
+```text
+SpeechRecognizer
+  ├─ systemOnDevice -> Android system on-device SpeechRecognizer (default)
+  └─ localZipformer -> AudioRecord -> JNI -> sherpa Streaming Zipformer
+```
 
 The first native VAD implementation is a deterministic energy gate with
 hysteresis, adaptive quiet-floor tracking, and minimum speech/silence frame
-durations. It is intentionally a replaceable bootstrap for the later native
-Silero/Sherpa model; it does not become a second interaction or agent loop and
+durations. It is intentionally a replaceable bootstrap for a future native
+Silero/Sherpa VAD; it does not become a second interaction or agent loop and
 does not send confidence or audio frames across the capability boundary.
+
+Native segment finalization feeds the trailing PCM frame to ASR before the VAD
+stop boundary is emitted, and finalization is idempotent across VAD stop,
+explicit stop, and Activity teardown. The semantic event order is therefore
+`speech_started -> transcript updates -> final transcript -> speech_stopped ->
+capture_stopped` where the corresponding signal exists.
 
 Finance ingest 的 `FrbVisionIngestClient` 与 `UnavailableVisionIngestClient` 位于
 `features/finance/ingest/`；是否允许 provider Vision 由隐私 gate 决定。Backend

@@ -5,6 +5,9 @@ import 'speech_recognizer.dart';
 SpeechRecognizer createSpeechRecognizer(Ref ref) =>
     const _UnsupportedSpeechRecognizer();
 
+SpeechRecognizer createLocalSpeechRecognizer(Ref ref) =>
+    const _UnsupportedSpeechRecognizer();
+
 class _UnsupportedSpeechRecognizer implements SpeechRecognizer {
   const _UnsupportedSpeechRecognizer();
 

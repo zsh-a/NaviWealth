@@ -24,14 +24,14 @@ import androidx.core.content.ContextCompat
 import kotlin.math.max
 
 /**
- * Android-owned audio capture pipeline for a future native ASR/VAD backend.
+ * Android-owned audio capture pipeline for the local native ASR/VAD backend.
  *
  * This is intentionally separate from [AndroidSpeechBridge]. Android's
  * SpeechRecognizer owns its own AudioRecord, so platform recognition continues
  * to use that service. This bridge is the native hot path for Sherpa/native
  * models: AudioRecord -> voice processing effects -> bounded ring buffer.
- * PCM never crosses a Flutter channel; only capability, lifecycle, and
- * aggregate buffer metrics are emitted.
+ * PCM never crosses a Flutter channel; only capability, lifecycle, semantic
+ * transcript events, and aggregate buffer metrics are emitted.
  */
 internal class AndroidAudioCaptureBridge(
     private val activity: Activity,
@@ -65,6 +65,7 @@ internal class AndroidAudioCaptureBridge(
     private var eventChannel: EventChannel? = null
     private var eventSink: EventChannel.EventSink? = null
     private var pendingStart: MethodChannel.Result? = null
+    private var pendingModelDirectory: String? = null
     private var pendingStop: MethodChannel.Result? = null
 
     private var audioRecord: AudioRecord? = null
@@ -75,6 +76,8 @@ internal class AndroidAudioCaptureBridge(
     private var capturedBytes = 0L
     private var readErrors = 0
     private var vad: NativeEnergyVad? = null
+    private var streamingRecognizer: NativeSherpaStreamingRecognizer? = null
+    private var pendingSpeechStopped: SpeechStop? = null
 
     private var echoCanceler: AcousticEchoCanceler? = null
     private var noiseSuppressor: NoiseSuppressor? = null
@@ -94,7 +97,7 @@ internal class AndroidAudioCaptureBridge(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "status" -> result.success(statusPayload())
-            "start" -> start(result)
+            "start" -> start(result, call.arguments)
             "stop" -> stop(result)
             "cancel" -> cancel(result)
             else -> result.notImplemented()
@@ -136,7 +139,7 @@ internal class AndroidAudioCaptureBridge(
         return baseFormatPayload() + effectsPayload() + vadPayload()
     }
 
-    private fun start(result: MethodChannel.Result) {
+    private fun start(result: MethodChannel.Result, arguments: Any?) {
         if (active || pendingStart != null) {
             result.error(
                 "session_busy",
@@ -155,6 +158,7 @@ internal class AndroidAudioCaptureBridge(
         }
         if (!hasRecordAudioPermission()) {
             pendingStart = result
+            pendingModelDirectory = modelDirectoryFromArguments(arguments)
             ActivityCompat.requestPermissions(
                 activity,
                 arrayOf(Manifest.permission.RECORD_AUDIO),
@@ -162,10 +166,10 @@ internal class AndroidAudioCaptureBridge(
             )
             return
         }
-        startCapture(result)
+        startCapture(result, modelDirectoryFromArguments(arguments))
     }
 
-    private fun startCapture(result: MethodChannel.Result) {
+    private fun startCapture(result: MethodChannel.Result, modelDirectory: String?) {
         if (!AndroidMicrophoneLease.tryAcquire(leaseOwner)) {
             result.error(
                 "session_busy",
@@ -224,6 +228,16 @@ internal class AndroidAudioCaptureBridge(
         ringBuffer.clear()
         capturedBytes = 0L
         readErrors = 0
+        pendingSpeechStopped = null
+        streamingRecognizer = try {
+            modelDirectory?.let { NativeSherpaStreamingRecognizer.create(it) }
+        } catch (error: RuntimeException) {
+            failNativeRecognizerStart(result, recorder, error)
+            return
+        } catch (error: LinkageError) {
+            failNativeRecognizerStart(result, recorder, error)
+            return
+        }
         vad = NativeEnergyVad(
             onSpeechStarted = { startedAtMs ->
                 emit(
@@ -235,13 +249,9 @@ internal class AndroidAudioCaptureBridge(
                 )
             },
             onSpeechStopped = { stoppedAtMs, durationMs ->
-                emit(
-                    mapOf(
-                        "type" to "speech_stopped",
-                        "stopped_at_ms" to stoppedAtMs,
-                        "duration_ms" to durationMs,
-                        "vad_mode" to NativeEnergyVad.MODE,
-                    ),
+                pendingSpeechStopped = SpeechStop(
+                    stoppedAtMs = stoppedAtMs,
+                    durationMs = durationMs,
                 )
             },
         )
@@ -293,7 +303,7 @@ internal class AndroidAudioCaptureBridge(
             return
         }
         result.success(null)
-        finishCapture(cancelled = true)
+        finishCapture(cancelled = true, emitTerminalEvent = false)
     }
 
     private fun captureLoop(recorder: AudioRecord) {
@@ -304,12 +314,48 @@ internal class AndroidAudioCaptureBridge(
                 read > 0 -> {
                     ringBuffer.write(frame, length = read)
                     capturedBytes += read.toLong()
-                    vad?.acceptPcm16(
-                        source = frame,
-                        offset = 0,
-                        length = read,
-                        timestampMs = System.currentTimeMillis(),
-                    )
+                    try {
+                        // Feed the complete native frame to ASR before the VAD
+                        // callback can finalize a segment. This keeps the
+                        // trailing frame in the stream being finalized.
+                        val update = streamingRecognizer?.acceptPcm16(frame, read)
+                        if (update?.isFinal == true) streamingRecognizer?.reset()
+                        vad?.acceptPcm16(
+                            source = frame,
+                            offset = 0,
+                            length = read,
+                            timestampMs = System.currentTimeMillis(),
+                        )
+                        val speechStopped = pendingSpeechStopped
+                        pendingSpeechStopped = null
+                        if (speechStopped != null) {
+                            // A model endpoint on this frame already owns the
+                            // final event. Otherwise flush the accumulated
+                            // native stream exactly once before the boundary.
+                            if (update?.isFinal == true) {
+                                emitStreamingTranscript(update)
+                            } else {
+                                finishStreamingSegment()
+                            }
+                            emitSpeechStopped(speechStopped)
+                        } else {
+                            update?.let { emitStreamingTranscript(it) }
+                        }
+                    } catch (error: RuntimeException) {
+                        readErrors++
+                        mainHandler.post {
+                            if (active) {
+                                finishCapture(
+                                    cancelled = true,
+                                    terminalError =
+                                        "runtime_unavailable" to
+                                            (error.message
+                                                ?: "Native Zipformer recognition failed"),
+                                )
+                            }
+                        }
+                        return
+                    }
                 }
                 read == AudioRecord.ERROR_DEAD_OBJECT -> {
                     readErrors++
@@ -366,13 +412,27 @@ internal class AndroidAudioCaptureBridge(
                 Thread.currentThread().interrupt()
             }
         }
+        val shouldFinalize = emitTerminalEvent && !cancelled && terminalError == null
         val currentVad = vad
         vad = null
-        if (emitTerminalEvent) {
+        if (shouldFinalize) {
             currentVad?.finish(System.currentTimeMillis())
         } else {
             currentVad?.reset()
         }
+        val speechStopped = pendingSpeechStopped
+        pendingSpeechStopped = null
+        val currentRecognizer = streamingRecognizer
+        streamingRecognizer = null
+        if (shouldFinalize) {
+            if (speechStopped != null) {
+                finishStreamingSegment(currentRecognizer)
+                emitSpeechStopped(speechStopped)
+            } else {
+                finishStreamingSegment(currentRecognizer)
+            }
+        }
+        currentRecognizer?.close()
         try {
             recorder?.release()
         } finally {
@@ -402,6 +462,9 @@ internal class AndroidAudioCaptureBridge(
         audioRecord = null
         vad?.reset()
         vad = null
+        pendingSpeechStopped = null
+        streamingRecognizer?.close()
+        streamingRecognizer = null
         try {
             recorder.stop()
         } catch (_: RuntimeException) {
@@ -413,6 +476,21 @@ internal class AndroidAudioCaptureBridge(
         releaseEffects()
         restoreAudioMode()
         AndroidMicrophoneLease.release(leaseOwner)
+    }
+
+    private fun failNativeRecognizerStart(
+        result: MethodChannel.Result,
+        recorder: AudioRecord,
+        error: Throwable,
+    ) {
+        audioRecord = null
+        recorder.release()
+        AndroidMicrophoneLease.release(leaseOwner)
+        result.error(
+            "runtime_unavailable",
+            error.message ?: "Unable to create the native Zipformer recognizer",
+            null,
+        )
     }
 
     private fun configureEffects(audioSessionId: Int) {
@@ -504,6 +582,11 @@ internal class AndroidAudioCaptureBridge(
                 "aec_enabled" to (echoCanceler != null),
                 "ns_enabled" to (noiseSuppressor != null),
                 "agc_enabled" to (automaticGainControl != null),
+                "asr_mode" to if (streamingRecognizer != null) {
+                    "sherpa_zipformer"
+                } else {
+                    "none"
+                },
             )
 
     private fun stoppedEvent(cancelled: Boolean): Map<String, Any?> {
@@ -523,7 +606,60 @@ internal class AndroidAudioCaptureBridge(
         ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.RECORD_AUDIO,
-        ) == PackageManager.PERMISSION_GRANTED
+            ) == PackageManager.PERMISSION_GRANTED
+
+    private fun modelDirectoryFromArguments(arguments: Any?): String? {
+        val map = arguments as? Map<*, *> ?: return null
+        return (map["model_directory"] as? String)?.trim()?.takeIf { it.isNotEmpty() }
+    }
+
+    private fun emitStreamingTranscript(update: NativeSherpaStreamingRecognizer.Update) {
+        if (update.text.isEmpty()) return
+        emit(
+            mapOf(
+                "type" to "transcript",
+                "text" to update.text,
+                "is_final" to update.isFinal,
+                "recognizer" to "sherpa_zipformer",
+            ),
+        )
+    }
+
+    private fun emitSpeechStopped(stop: SpeechStop) {
+        emit(
+            mapOf(
+                "type" to "speech_stopped",
+                "stopped_at_ms" to stop.stoppedAtMs,
+                "duration_ms" to stop.durationMs,
+                "vad_mode" to NativeEnergyVad.MODE,
+            ),
+        )
+    }
+
+    private fun finishStreamingSegment(
+        recognizer: NativeSherpaStreamingRecognizer? = streamingRecognizer,
+    ) {
+        val text = try {
+            recognizer?.finishSegment()
+        } catch (_: RuntimeException) {
+            null
+        }
+        if (text.isNullOrEmpty()) return
+        emit(
+            mapOf(
+                "type" to "transcript",
+                "text" to text,
+                "is_final" to true,
+                "recognizer" to "sherpa_zipformer",
+            ),
+        )
+        recognizer?.reset()
+    }
+
+    private data class SpeechStop(
+        val stoppedAtMs: Long,
+        val durationMs: Long,
+    )
 
     private fun restoreAudioMode() {
         val mode = previousAudioMode ?: return
@@ -554,7 +690,7 @@ internal class AndroidAudioCaptureBridge(
     }
 
     fun onHostStopped() {
-        if (active) finishCapture(cancelled = true)
+        if (active) finishCapture(cancelled = true, emitTerminalEvent = false)
     }
 
     fun onRequestPermissionsResult(
@@ -563,9 +699,12 @@ internal class AndroidAudioCaptureBridge(
     ): Boolean {
         if (requestCode != RECORD_AUDIO_REQUEST_CODE) return false
         val result = pendingStart ?: return true
+        val modelDirectory = pendingModelDirectory
         pendingStart = null
+        pendingModelDirectory = null
+        pendingSpeechStopped = null
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
-            startCapture(result)
+            startCapture(result, modelDirectory)
         } else {
             result.error(
                 "permission_denied",
@@ -583,6 +722,7 @@ internal class AndroidAudioCaptureBridge(
             null,
         )
         pendingStart = null
+        pendingModelDirectory = null
         if (active) finishCapture(cancelled = true, emitTerminalEvent = false)
         mainHandler.removeCallbacksAndMessages(null)
         methodChannel?.setMethodCallHandler(null)

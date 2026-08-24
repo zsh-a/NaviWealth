@@ -1,4 +1,4 @@
-/// Native audio capture capability used by a future in-process ASR/VAD engine.
+/// Native audio capture capability used by in-process ASR/VAD engines.
 ///
 /// This contract intentionally exposes no PCM frames. Audio stays in the
 /// platform/native hot path; Dart receives only capability, lifecycle, and

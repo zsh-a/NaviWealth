@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 
 import 'speech_capture.dart';
 
-/// Android AudioRecord capture bridge for future native ASR/VAD consumers.
+/// Android AudioRecord capture bridge for native ASR/VAD consumers.
 ///
 /// Android owns AudioRecord, voice communication processing, and the native
 /// PCM ring buffer. This Dart adapter only carries semantic lifecycle and
