@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/interaction.dart';
 import 'package:naviwealth/core/ai/session/interaction_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
@@ -99,6 +100,20 @@ void main() {
         );
 
     expect(repo.lastTurnMetadata.inputOrigin, InteractionInputOrigin.voice);
+  });
+
+  test('voice interaction metadata preserves the original turn for resume', () {
+    final metadata = ChatTurnMetadata(
+      interactionResponse: AiInteractionResponse(
+        interactionId: 'interaction-1',
+        action: AiInteractionAction.approve,
+        value: true,
+        respondedAt: DateTime.utc(2026, 8, 24),
+      ),
+      resumeTurnId: 'turn-1',
+    );
+
+    expect(metadata.resumeTurnId, 'turn-1');
   });
 
   test('send() is a no-op without content or active user', () async {

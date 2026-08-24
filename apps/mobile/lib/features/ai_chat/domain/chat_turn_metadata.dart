@@ -8,14 +8,16 @@ class ChatTurnMetadata {
     this.interactionResponse,
     this.invocationTrace,
     this.inputOrigin,
+    String? resumeTurnId,
     this.extra = const <String, Object?>{},
-  });
+  }) : _resumeTurnId = resumeTurnId;
 
   const ChatTurnMetadata.empty()
     : decision = null,
       interactionResponse = null,
       invocationTrace = null,
       inputOrigin = null,
+      _resumeTurnId = null,
       extra = const <String, Object?>{};
 
   factory ChatTurnMetadata.forDecision({
@@ -25,6 +27,7 @@ class ChatTurnMetadata {
     AiInteractionResponse? interactionResponse,
     Map<String, Object?>? invocationTrace,
     InteractionInputOrigin? inputOrigin,
+    String? resumeTurnId,
     Map<String, Object?> extra = const <String, Object?>{},
   }) {
     return ChatTurnMetadata(
@@ -36,6 +39,7 @@ class ChatTurnMetadata {
       interactionResponse: interactionResponse,
       invocationTrace: invocationTrace,
       inputOrigin: inputOrigin,
+      resumeTurnId: resumeTurnId,
       extra: extra,
     );
   }
@@ -44,12 +48,14 @@ class ChatTurnMetadata {
   final AiInteractionResponse? interactionResponse;
   final Map<String, Object?>? invocationTrace;
   final InteractionInputOrigin? inputOrigin;
+  final String? _resumeTurnId;
   final Map<String, Object?> extra;
 
   bool get hasInvocationTrace => invocationTrace != null;
 
-  String? get resumeTurnId =>
-      interactionResponse == null ? null : decision?.messageId;
+  String? get resumeTurnId => interactionResponse == null
+      ? null
+      : (decision?.messageId ?? _resumeTurnId);
 
   Map<String, Object?> toAgentMetadata() => <String, Object?>{
     ...extra,
