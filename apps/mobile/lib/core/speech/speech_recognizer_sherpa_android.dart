@@ -154,6 +154,16 @@ class _AndroidSherpaSpeechRecognitionSession
         _emit(
           SpeechRecognitionEvent(text: text, isFinal: map?['is_final'] == true),
         );
+      case 'speech_stopped':
+        _emit(
+          SpeechRecognitionEvent(
+            text: '',
+            isFinal: false,
+            speechStopped: true,
+            stoppedAt: _dateTimeFromMillis(map?['stopped_at_ms']),
+            speechDuration: _durationFromMillis(map?['duration_ms']),
+          ),
+        );
       case 'capture_stopped':
         unawaited(_finish());
       case 'error':
@@ -247,6 +257,9 @@ class _AndroidSherpaSpeechRecognitionSession
 DateTime? _dateTimeFromMillis(Object? value) => value is int
     ? DateTime.fromMillisecondsSinceEpoch(value, isUtc: true)
     : null;
+
+Duration? _durationFromMillis(Object? value) =>
+    value is int && value >= 0 ? Duration(milliseconds: value) : null;
 
 Map<Object?, Object?>? _objectMap(Object? value) {
   if (value is Map<Object?, Object?>) return value;

@@ -15,16 +15,24 @@ void main() {
     recognizer.session.emitSpeechStarted();
     recognizer.session.emit('吃饭', isFinal: false);
     recognizer.session.emit('吃饭了吗', isFinal: true);
+    recognizer.session.emitSpeechStopped(
+      duration: const Duration(milliseconds: 240),
+    );
     await session.stop();
     await Future<void>.delayed(Duration.zero);
 
-    expect(events, hasLength(4));
+    expect(events, hasLength(5));
     expect(events[0], isA<SpeechInputSpeechStarted>());
     expect((events[1] as SpeechInputTranscript).text, '吃饭');
     expect((events[1] as SpeechInputTranscript).isFinal, isFalse);
     expect((events[2] as SpeechInputTranscript).text, '吃饭了吗');
     expect((events[2] as SpeechInputTranscript).isFinal, isTrue);
-    expect((events[3] as SpeechInputEnded).cancelled, isFalse);
+    expect(events[3], isA<SpeechInputSpeechStopped>());
+    expect(
+      (events[3] as SpeechInputSpeechStopped).duration,
+      const Duration(milliseconds: 240),
+    );
+    expect((events[4] as SpeechInputEnded).cancelled, isFalse);
 
     await subscription.cancel();
   });
@@ -78,6 +86,17 @@ class _FakeRecognitionSession implements SpeechRecognitionSession {
         text: '',
         isFinal: false,
         speechStarted: true,
+      ),
+    );
+  }
+
+  void emitSpeechStopped({required Duration duration}) {
+    _events.add(
+      SpeechRecognitionEvent(
+        text: '',
+        isFinal: false,
+        speechStopped: true,
+        speechDuration: duration,
       ),
     );
   }

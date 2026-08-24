@@ -177,7 +177,9 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
   void _applyTranscript(SpeechInputEvent event) {
     final text = switch (event) {
       SpeechInputTranscript(:final text) => text,
-      SpeechInputSpeechStarted() || SpeechInputEnded() => null,
+      SpeechInputSpeechStarted() ||
+      SpeechInputSpeechStopped() ||
+      SpeechInputEnded() => null,
     };
     if (text == null) return;
     if (!mounted) return;

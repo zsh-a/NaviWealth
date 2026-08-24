@@ -197,10 +197,16 @@ void main() {
       expect(coordinator.state.bargeInPhase, BargeInPhase.candidate);
       expect(coordinator.state.outputLane, InteractionOutputLane.paused);
 
+      input.session.emit(
+        const SpeechInputSpeechStopped(duration: Duration(milliseconds: 100)),
+      );
+      await _flush();
+      expect(coordinator.state.bargeInPhase, BargeInPhase.none);
+      expect(coordinator.state.outputLane, InteractionOutputLane.playing);
+
       await coordinator.stopVoice();
       await _flush();
 
-      expect(coordinator.state.bargeInPhase, BargeInPhase.none);
       expect(coordinator.state.outputLane, InteractionOutputLane.playing);
       await coordinator.close();
     },

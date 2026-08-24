@@ -16,6 +16,15 @@ final class SpeechInputSpeechStarted extends SpeechInputEvent {
   final DateTime? startedAt;
 }
 
+/// Native VAD reached the end of one speech segment while the recognition
+/// session may remain open for another segment.
+final class SpeechInputSpeechStopped extends SpeechInputEvent {
+  const SpeechInputSpeechStopped({this.stoppedAt, this.duration});
+
+  final DateTime? stoppedAt;
+  final Duration? duration;
+}
+
 final class SpeechInputTranscript extends SpeechInputEvent {
   const SpeechInputTranscript({required this.text, required this.isFinal});
 
@@ -90,6 +99,14 @@ class _RecognizerSpeechInputSession implements SpeechInputSession {
     if (_closed) return;
     if (event.speechStarted) {
       _events.add(SpeechInputSpeechStarted(startedAt: event.startedAt));
+    }
+    if (event.speechStopped) {
+      _events.add(
+        SpeechInputSpeechStopped(
+          stoppedAt: event.stoppedAt,
+          duration: event.speechDuration,
+        ),
+      );
     }
     if (event.text.isEmpty && !event.isFinal) return;
     _events.add(

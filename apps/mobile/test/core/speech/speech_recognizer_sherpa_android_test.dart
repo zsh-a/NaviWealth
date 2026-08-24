@@ -101,6 +101,11 @@ void main() {
               'is_final': true,
             })
             ..add(<String, Object?>{
+              'type': 'speech_stopped',
+              'stopped_at_ms': 2345,
+              'duration_ms': 1111,
+            })
+            ..add(<String, Object?>{
               'type': 'capture_stopped',
               'cancelled': false,
             });
@@ -118,7 +123,7 @@ void main() {
 
       final events = await session.events.toList();
 
-      expect(events, hasLength(3));
+      expect(events, hasLength(4));
       expect(events[0].speechStarted, isTrue);
       expect(
         events[0].startedAt,
@@ -128,6 +133,12 @@ void main() {
       expect(events[1].isFinal, isFalse);
       expect(events[2].text, '记录午饭三十八元');
       expect(events[2].isFinal, isTrue);
+      expect(events[3].speechStopped, isTrue);
+      expect(
+        events[3].stoppedAt,
+        DateTime.fromMillisecondsSinceEpoch(2345, isUtc: true),
+      );
+      expect(events[3].speechDuration, const Duration(milliseconds: 1111));
 
       final startCall = calls.singleWhere((call) => call.method == 'start');
       expect(

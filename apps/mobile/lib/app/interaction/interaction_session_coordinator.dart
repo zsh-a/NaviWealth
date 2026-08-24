@@ -204,6 +204,27 @@ class InteractionSessionCoordinator {
     });
   }
 
+  void speechStopped({DateTime? stoppedAt, Duration? duration}) {
+    dispatch((stamp) => SpeechStopped(stamp: stamp));
+    if (_state.bargeInPhase != BargeInPhase.candidate) return;
+
+    final startedAt = _state.candidateStartedAt;
+    final elapsed =
+        duration ??
+        (startedAt == null
+            ? Duration.zero
+            : (stoppedAt ?? _clock()).difference(startedAt));
+    final effectiveElapsed = elapsed.isNegative ? Duration.zero : elapsed;
+    if (_bargeInPolicy.shouldCommit(
+      elapsed: effectiveElapsed,
+      transcript: _state.transcript,
+    )) {
+      commitBargeIn(transcript: _state.transcript);
+    } else {
+      resolveFalseInterruption();
+    }
+  }
+
   void updateTranscript(String text, {required bool isFinal}) {
     dispatch(
       (stamp) => TranscriptUpdated(stamp: stamp, text: text, isFinal: isFinal),
@@ -397,16 +418,12 @@ class InteractionSessionCoordinator {
     switch (event) {
       case SpeechInputSpeechStarted(:final startedAt):
         speechStarted(startedAt: startedAt);
+      case SpeechInputSpeechStopped(:final stoppedAt, :final duration):
+        speechStopped(stoppedAt: stoppedAt, duration: duration);
       case SpeechInputTranscript(:final text, :final isFinal):
         updateTranscript(text, isFinal: isFinal);
       case SpeechInputEnded():
-        dispatch((stamp) => SpeechStopped(stamp: stamp));
-        // A short VAD candidate that ends before the policy threshold is a
-        // false interruption. Resume the same output epoch instead of
-        // leaving the serialized speech bridge paused indefinitely.
-        if (_state.bargeInPhase == BargeInPhase.candidate) {
-          resolveFalseInterruption();
-        }
+        speechStopped();
         _onSpeechEnded?.call();
         break;
     }

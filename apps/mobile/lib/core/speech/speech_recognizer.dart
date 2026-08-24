@@ -22,6 +22,9 @@ class SpeechRecognitionEvent {
     required this.isFinal,
     this.speechStarted = false,
     this.startedAt,
+    this.speechStopped = false,
+    this.stoppedAt,
+    this.speechDuration,
   });
 
   final String text;
@@ -33,6 +36,13 @@ class SpeechRecognitionEvent {
   final bool speechStarted;
 
   final DateTime? startedAt;
+
+  /// True when the native capture pipeline reached a VAD speech boundary.
+  /// This is distinct from the end of the whole recognition session.
+  final bool speechStopped;
+
+  final DateTime? stoppedAt;
+  final Duration? speechDuration;
 }
 
 enum SpeechRecognitionErrorCode {
