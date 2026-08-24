@@ -13,6 +13,7 @@ void main() {
   testWidgets('dictation updates draft and never submits it', (tester) async {
     final recognizer = _FakeSpeechRecognizer();
     final controller = TextEditingController(text: 'Existing note');
+    var speechInputEvents = 0;
     addTearDown(controller.dispose);
 
     await tester.pumpWidget(
@@ -22,7 +23,15 @@ void main() {
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: SpeechInputButton(controller: controller)),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: Scaffold(
+              body: SpeechInputButton(
+                controller: controller,
+                onSpeechInput: () => speechInputEvents += 1,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -34,6 +43,7 @@ void main() {
     recognizer.session.add('今天完成了月度复盘');
     await tester.pump();
     expect(controller.text, 'Existing note\n今天完成了月度复盘');
+    expect(speechInputEvents, 1);
 
     await tester.tap(find.byIcon(FLucideIcons.square));
     await tester.pump();
@@ -59,11 +69,14 @@ void main() {
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: ValueListenableBuilder<bool>(
-              valueListenable: enabled,
-              builder: (_, value, _) =>
-                  SpeechInputButton(controller: controller, enabled: value),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: Scaffold(
+              body: ValueListenableBuilder<bool>(
+                valueListenable: enabled,
+                builder: (_, value, _) =>
+                    SpeechInputButton(controller: controller, enabled: value),
+              ),
             ),
           ),
         ),
@@ -98,7 +111,10 @@ void main() {
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: SpeechInputButton(controller: controller)),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: Scaffold(body: SpeechInputButton(controller: controller)),
+          ),
         ),
       ),
     );
@@ -136,7 +152,10 @@ void main() {
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(body: SpeechInputButton(controller: controller)),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: Scaffold(body: SpeechInputButton(controller: controller)),
+          ),
         ),
       ),
     );
