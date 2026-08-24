@@ -242,7 +242,7 @@ void main() {
         stamp: stamp(
           sequence: 5,
           turnId: interruptedTurn,
-          epoch: ResponseEpoch(1),
+          epoch: const ResponseEpoch(1),
         ),
         text: '第二轮回答',
       ),
