@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'posting.dart';
@@ -9,6 +9,7 @@ part of 'posting.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
@@ -63,7 +64,7 @@ class _$CostCopyWithImpl<$Res>
 /// Create a copy of Cost
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? perUnit = null,Object? currency = null,Object? lotId = freezed,Object? acquiredOn = freezed,}) {
-  return _then(_self.copyWith(
+  return _then(Cost(
 perUnit: null == perUnit ? _self.perUnit : perUnit // ignore: cast_nullable_to_non_nullable
 as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,lotId: freezed == lotId ? _self.lotId : lotId // ignore: cast_nullable_to_non_nullable
@@ -329,7 +330,7 @@ class _$PriceCopyWithImpl<$Res>
 /// Create a copy of Price
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? perUnit = null,Object? currency = null,}) {
-  return _then(_self.copyWith(
+  return _then(Price(
 perUnit: null == perUnit ? _self.perUnit : perUnit // ignore: cast_nullable_to_non_nullable
 as Decimal,currency: null == currency ? _self.currency : currency // ignore: cast_nullable_to_non_nullable
 as String,
@@ -596,7 +597,7 @@ class _$PostingCopyWithImpl<$Res>
 /// Create a copy of Posting
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? journalEntryId = null,Object? position = null,Object? accountId = null,Object? units = null,Object? unit = null,Object? cost = freezed,Object? price = freezed,Object? sync = null,}) {
-  return _then(_self.copyWith(
+  return _then(Posting(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,journalEntryId: null == journalEntryId ? _self.journalEntryId : journalEntryId // ignore: cast_nullable_to_non_nullable
 as String,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
