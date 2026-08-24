@@ -39,6 +39,39 @@ The runtime must remain independent of Flutter, Riverpod, Drift, and
 NaviWealth domain models. Business policy and repositories stay in the host
 application unless a migration explicitly moves them into a Rust agent.
 
+## Interaction Session Relationship
+
+The standalone runtime already exists and is the source of truth for
+`agent-core`, `agent-chat`, `agent-llm`, runner, store, schema, and fixture
+contracts. NaviWealth consumes it through the `apps/mobile/lib/app/agent_runtime/`
+Host/FRB adapter layer. Full-duplex voice must reuse the existing ChatTurn,
+tool-continuation, ProposalEnvelope, InteractionEnvelope, trace, and durable
+resume contracts; it must not create a second Agent loop.
+
+Interaction timing and modality remain outside the standalone runtime for the
+current phase:
+
+```text
+core/ai/session/       pure session reducer and provider-neutral policies
+app/interaction/       thin Coordinator and side-effectful host adapters
+core/speech/           native-backed SpeechInput/SpeechOutput capabilities
+third_party/agent-runtime
+                       semantic execution, tools, proposals, HITL, resume
+```
+
+The Coordinator owns session lanes, Coordinator-assigned event ordering,
+`SessionId`/`TurnId`/`ResponseEpoch`, two-phase barge-in, delivery projection,
+and interruption policy. `ResponseEpoch` only invalidates stale presentation
+and output; it does not cancel or roll back a committed business side effect.
+Pending `InteractionEnvelope` state remains authoritative and cannot be
+bypassed by a new voice turn.
+
+The initial session reducer should remain a pure host-side function. Extracting
+it into a new `agent-interaction` crate is deferred until a real multi-host,
+durable-resume, or deterministic-replay caller requires the same state machine
+outside the Flutter host. High-frequency PCM, AEC, VAD, ASR, TTS, and playback
+are never dependencies of this runtime.
+
 ## Code Map
 
 ```text
@@ -298,6 +331,8 @@ TUI uses persistent natural input by default. Plain text runs the shared
 | Change FRB API | `apps/mobile/native/lifeos_native/src/api/agent_runtime.rs` | FRB codegen, native API tests, Dart bridge tests |
 | Change AI Chat streaming | `apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart`, `apps/mobile/lib/app/agent_runtime/chat/frb_chat_runner.dart` | `frb_chat_runner_test.dart`, stream bridge test |
 | Change proposal apply behavior | `crates/agent-cli/src/proposal.rs`, `apps/mobile/lib/app/agent_runtime/proposals/agent_runtime_proposal_bridge.dart` | proposal CLI tests, targeted Flutter proposal tests |
+| Change InteractionSession reducer or epoch policy | `apps/mobile/lib/core/ai/session/`, `apps/mobile/lib/app/interaction/` | deterministic reducer/replay tests, targeted Flutter session tests; do not change standalone runtime by default |
+| Add a voice/realtime engine adapter | `apps/mobile/lib/core/speech/`, `apps/mobile/lib/app/interaction/` | capability, privacy, interruption, delivery, and device audio tests; reuse existing tool/interaction host gateways |
 
 ## Invariants
 
@@ -307,6 +342,14 @@ TUI uses persistent natural input by default. Plain text runs the shared
 - Pending tool calls and pending interactions are mutually exclusive in
   ChatTurn state and snapshots. Hosts must resume with exactly one of
   `tool_results` or `interaction_response`.
+- InteractionSession `ResponseEpoch` invalidates stale output only; it is not a
+  business transaction rollback mechanism. Committed local or external effects
+  remain recorded and governed by their existing idempotency and proposal
+  policies.
+- A voice `BargeInCandidate` may pause or duck output, but only a committed
+  interruption increments the epoch and supersedes the active response.
+- Session event ordering is assigned by the Host Coordinator. Provider-local
+  timestamps or sequence numbers do not define cross-producer ordering.
 - A `requires_interaction` snapshot contains one pending `chat_turn`
   interaction, no pending tools, and no tool dispatch journal.
 - Flutter persists embedded snapshots in the local-only
@@ -366,5 +409,9 @@ These are the current implementation limits:
   conversation checkpoint and Rust still provides its own final
   priority-context/recent-message fallback. A richer device-LLM checkpoint
   summarizer is not yet implemented.
+- InteractionSession full-duplex coordination is not yet a standalone runtime
+  feature. Current speech input is a managed, draft-only recognizer path; the
+  native audio hot path, two-phase barge-in, segment delivery ledger, and
+  voice-to-InteractionResponse adapter remain Host/capability work.
 
 Use this document and current tests as authority.

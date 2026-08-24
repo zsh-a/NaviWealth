@@ -203,6 +203,54 @@ Intent 先注册到 `intent_policy.dart`，禁止 feature 自建 `openAiChat` �
 | Ambient | Agent result / artifact follow-up |
 | Ingest | 文件、截图、粘贴和分享的隐形解析链 |
 
+### 5.1a InteractionSession 与 Voice Turn
+
+Voice 是输入/输出 capability，不是第二套 Agent loop。长期边界固定为：
+
+```text
+Interaction owns timing and delivery
+Agent Runtime owns semantics and execution
+Domain owns truth and side effects
+Capability owns modality
+```
+
+一个 `AiIntentInvocation` 负责启动或标定一个 `InteractionSession`；同一
+session 后续的每个输入都是新的 Turn，并携带 `inputOrigin`（`voice`、
+`touch`、`keyboard` 等）。`AiIntentInvocation.source` 继续表示入口位置，
+例如 `finance_home` 或 `command_palette`，不能被改作输入媒介字段。
+
+`InteractionSession` 的初始实现位于 Host：纯
+`InteractionState reduce(InteractionState, InteractionEvent)` reducer 负责
+三个并行 lane、`SessionId` / `TurnId` / `ResponseEpoch`、pending
+`InteractionEnvelope`、delivery projection 和 interruption policy；薄
+Coordinator 在 reducer 外调用 ChatRepository、SpeechInput、SpeechOutput
+等副作用。全局事件序号由 Coordinator 分配，Tool / Proposal / 外部副作用
+才附加 `OperationId`。
+
+Voice barge-in 必须分两阶段：
+
+```text
+speech_started → BargeInCandidate → duck/pause output
+                 → sustained speech or valid ASR text
+                 → BargeInCommitted → epoch++ / stale output discarded
+```
+
+噪声、咳嗽和扬声器残余回声可以成为 `false_interruption`，恢复原 epoch。
+`ResponseEpoch` 只让旧的 LLM/TTS/UI 结果失效，不回滚已提交的业务副作用。
+Pending `InteractionEnvelope` 优先于普通新 Turn；语音不能绕过 approval 或
+typed confirmation。
+
+Assistant 的完整生成文本、用户实际听到的内容、下一轮模型看到的内容必须
+分开管理：
+
+```text
+GeneratedText → 本地 trace/debug
+DeliveryLedger → 每个输出 channel 已完成的 segment id
+ContextProjection → 已交付前缀 + interrupted 标记
+```
+
+第一版只记录 segment id，不使用未定义的跨 Dart/Rust `usize` 偏移。
+
 ### 5.2 Calm 视觉
 
 AI 元素使用 surface tone、细线图标、克制的 cursor 动效和 outline reply chip。
@@ -218,6 +266,9 @@ AI 元素使用 surface tone、细线图标、克制的 cursor 动效和 outline
 - [ ] 新 surface 写入完整 invocation trace
 - [ ] UI 遵循 Calm 视觉约束
 - [ ] 摄取草稿在用户确认前不进入 journal 或同步表
+- [ ] Voice turn 携带 `inputOrigin`，而不是重新创建一套 Agent loop
+- [ ] Barge-in 区分 candidate 与 committed interruption
+- [ ] Undelivered assistant output 不进入下一轮 voice context
 
 ### 5.10.7 反模式
 
@@ -233,6 +284,7 @@ apps/mobile/lib/core/ai/
   agents/          domain-neutral agent framework and UI primitives
   contracts/       context, tool, proposal, trace contracts
   intent/          AiIntentInvocation and policy
+  session/         InteractionSession ids, events, reducer, delivery, interruption policy
   llm_credentials/ profiles and secure credential seams
   local/           embedding, memory, deterministic skills
   runtime/         host-neutral runtime seams and device tool contracts
@@ -249,6 +301,14 @@ apps/mobile/lib/app/agent_runtime/
   runner/          profile turn and embedded runtime composition
   tools/           production device-tool host
   trace/           runtime result -> AiTraceStore
+
+apps/mobile/lib/app/interaction/
+  interaction_session_coordinator.dart  thin side-effect coordinator
+  turn_arbiter.dart                     interruption and turn policy
+  voice_interaction_adapter.dart        Speech/Chat/HITL adapters
+
+apps/mobile/lib/core/speech/
+  speech input/output capabilities and the existing SpeechRecognizer seam
 
 apps/mobile/lib/features/ai_chat/
   data/            context window, structured checkpoint summarizer/store use

@@ -33,6 +33,14 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 - Do not turn sync v3 into an event platform, CRDT framework, or multi-schema negotiation layer.
 - Do not add social, collaboration, publishing, enterprise SaaS, or entertainment surfaces.
 - Do not write phase plans for untriggered domains.
+- Do not make a full-duplex or omni speech model the center of the product
+  architecture. Model and engine choices belong behind capability seams.
+- Do not add a second voice/agent execution loop or an `agent-interaction`
+  crate to the standalone runtime without a current multi-host, durable-resume,
+  or deterministic-replay caller.
+- Do not move high-frequency PCM through Dart/FRB, and do not keep the
+  microphone open in the background by default. Active-session audio belongs
+  on the native hot path.
 
 ## Layering
 
@@ -44,7 +52,7 @@ Domain business layer
   features/<domain>/{ui,data,domain,ai_tools,agents}
 
 Cross-domain infrastructure
-  core/{ai,auth,sync,persistence,audit,shell,lifeos,background,notifications}
+  core/{ai,auth,sync,persistence,audit,shell,lifeos,speech,background,notifications}
 ```
 
 Rules:
@@ -111,6 +119,124 @@ Rules:
 - Concrete business tools live in the owning domain.
 - Tools that mutate state must use proposal or explicit confirmation semantics unless the tool is a narrow, user-explicit local write already documented in the domain SSOT.
 - The LLM key is user-owned and stored on device. There is no backend AI relay or cloud fallback.
+
+## Interaction Session Boundaries
+
+NaviWealth's long-term interaction model is one modality-agnostic
+`InteractionSession`, not a separate Voice Agent Runtime. The governing
+boundary is:
+
+```text
+Interaction owns timing and delivery
+Agent Runtime owns semantics and execution
+Domain owns truth and side effects
+Capability owns modality
+```
+
+`InteractionSession` is a thin host coordinator around existing Agent Runtime
+and capability ports. Its state must be representable by a pure reducer so that
+the session policy can be replayed and, only when a real cross-host caller
+exists, moved to another runtime without rewriting Flutter orchestration.
+
+The initial implementation belongs in the host:
+
+```text
+core/ai/session/       provider-neutral ids, events, reducer, policies
+app/interaction/       side-effectful Coordinator and host adapters
+core/speech/            SpeechInput and SpeechOutput capabilities
+app/agent_runtime/     existing ChatTurn / tool / proposal / resume adapter
+```
+
+`core/ai/contracts/interaction.dart` remains the human-in-the-loop
+`InteractionEnvelope` contract. Session orchestration uses the separate
+`core/ai/session/` namespace and must not create a second confirmation model.
+
+### Session state and event ordering
+
+The session has three orthogonal lanes rather than one `VoiceState`:
+
+```text
+InputLane       idle → listening → endpointing → committed
+ExecutionLane   idle → running → tool_running → waiting_interaction → done
+OutputLane      idle → synthesizing → playing → interrupted → idle
+```
+
+The lanes may be active simultaneously. An event entering the reducer receives
+the one global sequence assigned by the Coordinator; ASR, TTS, and Agent
+producers do not assign competing global sequence numbers.
+
+Session events carry:
+
+```text
+SessionId + TurnId + ResponseEpoch + sequence
+```
+
+`OperationId` is added only to tool, proposal, and external-side-effect events.
+`ResponseEpoch` invalidates stale presentation and output events; it never
+pretends to roll back a committed business operation.
+
+### Interruption and barge-in
+
+Voice interruption is two-phase:
+
+```text
+speech_started
+  → BargeInCandidate
+  → duck/pause playback immediately
+  → sustained speech or valid ASR text
+  → BargeInCommitted
+  → increment epoch and cancel/discard stale output
+```
+
+Noise, coughs, and speaker residue may resolve a candidate as
+`false_interruption`; the same epoch and output may then resume. A pending
+`InteractionEnvelope` has priority over a new ordinary user turn. Voice input
+must first be interpreted as an interaction response when the response schema
+allows it; it must not bypass approval or typed confirmation.
+
+### Delivery and conversation projection
+
+Generated assistant text, what a user actually received, and what the next
+model turn sees are separate records:
+
+```text
+GeneratedText       complete local trace/debug output
+DeliveryLedger      completed output segments per channel
+ContextProjection   delivered prefix + interruption marker for the next turn
+```
+
+The first delivery implementation records completed segment ids, not a bare
+cross-language string offset. A later implementation may add an explicitly
+defined UTF-8 or grapheme offset. Keeping complete generated text locally does
+not authorize feeding undelivered text into the next voice context.
+
+### Turns, invocations, and capabilities
+
+An initial `AiIntentInvocation` starts or scopes a session. Each subsequent
+input is a new `Turn` carrying `inputOrigin` (`voice`, `touch`, `keyboard`,
+etc.); a session may therefore move from voice to touch to text without
+creating a new AI surface or chat loop.
+
+Production engine selection is capability-driven:
+
+- `LocalCascaded`: the default production shape — native audio processing,
+  local/system ASR, the existing Agent Runtime, and system TTS.
+- `CloudRealtime`: an explicit opt-in engine. Audio, transcript, context, and
+  tool requests remain subject to host privacy and proposal policy.
+- `LocalOmni`: an experimental engine gated by device, memory, thermal, and
+  capability checks.
+
+User policy must distinguish `audio_transport`, `transcript_transport`, and
+`context_transport`. Local ASR alone does not make a cloud LLM turn fully
+local. Engine descriptors must advertise transcript, tool-call, proposal,
+interaction-resume, durable-resume, interruption, and delivery capabilities;
+an engine without the required safety capability is restricted to the lower
+side-effect modes.
+
+The Agent Runtime remains the semantic authority for the cascaded engine. A
+Realtime or local-omni adapter may have provider-specific generation state, but
+its tool calls, proposals, interactions, traces, and domain writes must enter
+the same host gateways. It must not become a second business execution loop.
 
 ## Persistence Boundaries
 
@@ -200,6 +326,16 @@ Current Rust surface:
   Rust.
 - Generated FRB bindings under `apps/mobile/lib/src/rust/`.
 
+The standalone Rust `agent-runtime` already exists as the
+`third_party/agent-runtime` Git submodule and is the source of truth for
+`agent-core`, `agent-chat`, `agent-llm`, runner, store, schema, and fixture
+contracts. NaviWealth's `apps/mobile/lib/app/agent_runtime/` code is the
+Host/FRB adapter layer. Full-duplex voice must reuse its ChatTurn,
+tool-continuation, proposal, InteractionEnvelope, and durable-resume contracts;
+it must not add a parallel Agent loop. A pure session reducer may be moved into
+the standalone runtime later only after a real multi-host, durable-resume, or
+replay requirement appears.
+
 The separate `sherpa_onnx` C++/Dart-FFI dependency is allowed only behind the
 domain-neutral `core/speech/` contract. It consumes microphone PCM and emits
 draft text; it does not own business policy, persistence, tools, or automatic
@@ -219,6 +355,11 @@ Before merging architecture-affecting code, answer:
 - Are sync row families prefixed correctly?
 - Are AI write paths confirmed or proposal-based?
 - Did tests cover the owner boundary and the integration seam?
+- Does the InteractionSession use a pure reducer behind a thin Coordinator?
+- Are `BargeInCandidate` and `BargeInCommitted` distinct?
+- Are generated text, delivered segments, and context projection separate?
+- Does `ResponseEpoch` gate stale output without implying business rollback?
+- Does high-frequency audio remain on the native hot path?
 
 ## Document Ownership
 

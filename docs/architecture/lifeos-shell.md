@@ -41,6 +41,7 @@ app/
   domain_bootstrap.dart          Domain indexer/background startup
   life_context_composition.dart  Personal profile + active Life context
   agents/                        App-owned cross-domain synthesis
+  interaction/                   InteractionSession Coordinator and host adapters
 
 core/
   lifeos/domain_pack.dart        Domain registration contract
@@ -49,9 +50,11 @@ core/
   backup/backup_table_registry.dart  Encrypted backup table metadata
   sync/sync_table_registry.dart  Row-family prefixes and sync table metadata
   ai/composition/                Cross-domain AI seams
+  ai/session/                    InteractionSession ids, events, reducer, and policies
   ai/agents/                     Agent framework
   ai/attention/                  Global silent/surface/interrupt policy
   ai/local/memory/               Memory Runtime
+  speech/                        Domain-neutral SpeechInput/SpeechOutput capabilities
   developer/                     Local dogfood issue contract/store
   persistence/                   Drift adapter and shared tables
 
@@ -178,6 +181,150 @@ Rules:
 - Read tools can return direct data.
 - Write tools either return `ProposalEnvelope` or require explicit confirmation. Narrow local writes must be documented in the domain SSOT.
 - System prompts are active-domain scoped. The model must not receive instructions for inactive domain tools.
+
+## Interaction Session Runtime
+
+The shell's long-term interaction seam is one modality-agnostic
+`InteractionSession`, not a separate Voice Agent Runtime. Its boundary is:
+
+```text
+Interaction owns timing and delivery
+Agent Runtime owns semantics and execution
+Domain owns truth and side effects
+Capability owns modality
+```
+
+The initial implementation is deliberately split:
+
+```text
+core/ai/session/       ids, semantic events, pure reducer, policies
+app/interaction/       thin side-effectful Coordinator and host adapters
+core/speech/           SpeechInput and SpeechOutput capabilities
+app/agent_runtime/     existing ChatTurn / tool / proposal / resume adapter
+```
+
+The standalone Rust Agent Runtime already exists in the
+`third_party/agent-runtime` submodule. It remains the source of truth for
+`agent-core`, `agent-chat`, `agent-llm`, runner, store, schema, and fixture
+contracts. `apps/mobile/lib/app/agent_runtime/` is NaviWealth's Host/FRB
+adapter. Full-duplex voice reuses those contracts and does not add a parallel
+Agent loop or an `agent-interaction` crate at this stage.
+
+The Coordinator must remain thin. Its state policy is a pure
+`InteractionState reduce(InteractionState, InteractionEvent)` reducer; it
+invokes ChatRepository, SpeechInput, SpeechOutput, and InteractionEnvelope
+side effects outside the reducer. This keeps deterministic replay and a future
+runtime migration possible without moving Flutter orchestration wholesale.
+
+### Session lanes and identifiers
+
+One `VoiceState` is insufficient because input, execution, and output overlap:
+
+```text
+InputLane       idle → listening → endpointing → committed
+ExecutionLane   idle → running → tool_running → waiting_interaction → done
+OutputLane      idle → synthesizing → playing → interrupted → idle
+```
+
+Every event entering the reducer receives one Coordinator-assigned sequence
+number and carries:
+
+```text
+SessionId + TurnId + ResponseEpoch + sequence
+```
+
+Tool, Proposal, and external-side-effect events additionally carry an
+`OperationId`. `OperationId` is not required on every session event. A stale
+`ResponseEpoch` invalidates UI/audio output; it never rolls back a committed
+business operation.
+
+An `AiIntentInvocation` starts or scopes a session. Later turns carry their
+own `inputOrigin` (`voice`, `touch`, `keyboard`, etc.) and reuse the same
+session. `source` on `AiIntentInvocation` remains the entry location such as
+`finance_home` or `command_palette`; it is not overloaded with the input
+modality.
+
+### Two-phase barge-in
+
+VAD is allowed to react quickly without immediately invalidating the Agent
+response:
+
+```text
+speech_started
+  → BargeInCandidate
+  → duck/pause playback immediately
+  → sustained speech or valid ASR text
+  → BargeInCommitted
+  → increment epoch and cancel/discard stale output
+```
+
+Noise, coughs, and speaker residue can resolve as `false_interruption`, in
+which case the same epoch/output may resume. A pending
+`InteractionEnvelope` takes priority over a normal new turn. Voice input must
+first be interpreted as an interaction response when its schema allows it; it
+must not bypass approval or typed confirmation.
+
+### Delivery and context projection
+
+Generated assistant text, delivered output, and next-turn context are separate:
+
+```text
+GeneratedText       complete local trace/debug output
+DeliveryLedger      completed output segments per channel
+ContextProjection   delivered prefix + interruption marker
+```
+
+The first implementation records completed segment ids rather than a bare
+cross-language string offset. A later implementation may add an explicitly
+defined UTF-8 or grapheme offset. Complete generated text may remain in the
+local trace, but undelivered text must not be silently fed into the next voice
+context.
+
+### Engine policy
+
+Engine choice is capability- and policy-driven, not model-name-driven:
+
+| Engine | Role | Default policy |
+|---|---|---|
+| `LocalCascadedEngine` | Native audio processing → local/system ASR → existing Agent Runtime → system TTS | Production default |
+| `CloudRealtimeEngine` | Provider realtime audio session with host tool/interaction gateways | Explicit opt-in; never a silent fallback |
+| `LocalOmniEngine` | High-resource local speech/vision experiment | Experimental and device-gated |
+
+The engine descriptor must advertise the capabilities required by the Host:
+streaming input/output, full-duplex, interruption, transcript, tool calls,
+proposal handling, interaction resume, durable resume, and delivery tracking.
+An engine without the required safety capability is restricted to lower-risk,
+read-only conversation.
+
+Privacy is expressed per signal rather than as one ambiguous local flag:
+
+```text
+audio_transport
+transcript_transport
+context_transport
+```
+
+Local ASR plus a cloud LLM is audio-local but not a fully local turn. Cloud
+Realtime is available only when the user policy permits audio and context to
+leave the device.
+
+The production model policy follows capability slots rather than a single
+"all-in-one voice model":
+
+| Capability slot | Production default | Optional path | Boundary |
+|---|---|---|---|
+| AEC / NS / AGC | iOS / Android system audio processing | Native engine-specific processing | High-rate audio stays native |
+| Streaming ASR | Local streaming Zipformer through `SpeechRecognizer` | System on-device ASR | Partial text is semantic input only |
+| Offline refinement | None in the first path | SenseVoice or Whisper when a real second-pass caller exists | Never required by the live turn loop |
+| Agent reasoning | Existing user-selected `LlmProfile` and Agent Runtime | Realtime provider's generation inside its Host adapter | Voice does not choose a separate reasoning profile |
+| TTS | System TTS | Downloadable local TTS | System TTS is not bundled model data |
+| Full-duplex engine | Local cascaded engine | Explicit cloud realtime or experimental local omni engine | Capability and privacy gates are mandatory |
+
+The current installed Zipformer bundle is Mandarin-only; a zh-en streaming
+bundle is a versioned model-manifest change with its own language declaration,
+checksums, fixtures, and native smoke coverage. `sherpa_onnx` is the current
+local speech backend, not a product-level architecture dependency: all future
+ASR/TTS implementations remain behind the existing speech seam.
 
 ## Proposal Application
 
@@ -404,6 +551,9 @@ not a source of automatic writes.
 Location:
 
 - Contract and platform selection: `core/speech/`.
+- Existing ASR seam: `SpeechRecognizer` → `SpeechRecognitionSession` →
+  `SpeechRecognitionEvent`; do not add a second public `AsrProvider` contract
+  around it.
 - Native engine: the `sherpa_onnx` Dart FFI plugin backed by C++ and ONNX Runtime.
 - Reusable draft control: `design_system/widgets/speech_input_button.dart`.
 - Model bundle: the shared AI model installer under `core/ai/local/embedding/model_*`.
@@ -411,6 +561,10 @@ Location:
 Behavior:
 
 - Native mobile/desktop uses the opt-in INT8 Mandarin streaming Zipformer.
+- The intended provider shape is `SpeechInput` above the existing recognizer
+  seam, with `SystemSpeechRecognizer` and `SherpaSpeechRecognizer` as concrete
+  implementations. Provider choice is policy-driven and must never silently
+  fall back to a network recognizer.
 - Managed recognition owns one application-wide microphone session. Concurrent
   starts fail deterministically with `session_busy`, and every completion,
   cancellation, startup failure, or stream error releases the session lease.
@@ -422,11 +576,21 @@ Behavior:
 - Microphone PCM is consumed in memory and is neither persisted nor synced.
 - Partial/final transcripts only update an editable text controller. Sending,
   saving, tool invocation, and proposal application remain explicit user actions.
+- The current Dart path (`record` PCM stream → Dart decode → Sherpa FFI) is a
+  push-to-talk/local-ASR path, not the final full-duplex audio engine. A true
+  full-duplex implementation keeps capture, AEC/NS/AGC, VAD, and high-rate ASR
+  audio on the native hot path; Dart/FRB receives only semantic events.
+- Full-duplex barge-in follows `BargeInCandidate → BargeInCommitted`. A VAD
+  signal may duck or pause playback immediately, but only sustained speech or
+  valid ASR text increments the response epoch and invalidates the old output.
 - Speech diagnostics retain only counters, durations, and stable error enums.
   Microphone bytes and transcript text are never passed to diagnostics or logs.
 - AI Chat and Knowledge Inbox are the first callers; domains do not own or
   import the recognizer implementation.
 - Web uses the unsupported stub and keeps microphone access disabled.
+- Speech output is a separate `SpeechOutput` capability. System TTS is the
+  initial production default; downloadable local TTS is an optional engine
+  capability and is not bundled with the app.
 - Android packages the ONNX Runtime supplied by `sherpa_onnx`; the Rust
   embedder dynamically reuses that single process-wide library.
 - Model installation prefers individually checksummed files and falls back to
