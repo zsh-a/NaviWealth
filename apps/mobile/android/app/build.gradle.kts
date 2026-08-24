@@ -45,7 +45,11 @@ repositories {
 
 android {
     namespace = "com.naviwealth.naviwealth"
-    compileSdk = flutter.compileSdkVersion
+    // flutter_secure_storage and receive_sharing_intent currently publish
+    // Android SDK 37 metadata. Keep the application compile SDK at the
+    // highest dependency requirement instead of inheriting Flutter's SDK 36
+    // default, while min/target SDK remain controlled by Flutter.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

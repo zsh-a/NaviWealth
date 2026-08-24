@@ -311,10 +311,13 @@ apps/mobile/lib/app/interaction/
   voice_interaction_adapter.dart        Speech/Chat/HITL adapters
 
 apps/mobile/lib/core/speech/
-  speech input/output capabilities and the existing SpeechRecognizer seam
+  speech input/output capabilities, the existing SpeechRecognizer seam, and
+  the Android-only native AudioRecord capture seam
 
 apps/mobile/android/app/src/main/kotlin/com/naviwealth/naviwealth/
   AndroidSpeechBridge.kt  Android API 31+ on-device semantic speech bridge
+  AndroidAudioCaptureBridge.kt  Android native hot-path capture skeleton
+  NativePcmRingBuffer.kt  bounded native-only PCM buffer
 
 apps/mobile/lib/features/ai_chat/
   data/            context window, structured checkpoint summarizer/store use
@@ -327,6 +330,24 @@ permission handling, and semantic `speech_started` / partial / final / ended
 events. No PCM crosses a Flutter channel. The sherpa Zipformer implementation
 remains available as a separate local-model backend for the later native hot
 path; it is not silently replaced by a cloud recognizer when unavailable.
+
+The Android hot path is now explicitly reserved behind `SpeechCapture`:
+
+```text
+AudioRecord (VOICE_COMMUNICATION, 16 kHz mono PCM16)
+  -> platform AEC / NS / AGC (best effort)
+  -> NativePcmRingBuffer (2 second bounded buffer)
+  -> future native VAD / Sherpa ASR consumer
+```
+
+`AndroidAudioCaptureBridge` is not the current default recognizer. Android's
+`SpeechRecognizer` service owns its own recorder, so the system on-device
+provider continues to use `AndroidSpeechBridge`; the app-owned `AudioRecord`
+path is for the later Sherpa/native ASR backend. Both native bridges use the
+same process-local microphone lease and stop on Activity background/destroy.
+The capture bridge emits only format/effect capabilities, lifecycle events,
+and aggregate captured/buffered/dropped-byte counters. PCM is never sent over
+Flutter, FRB, logs, or persisted storage.
 
 Finance ingest 的 `FrbVisionIngestClient` 与 `UnavailableVisionIngestClient` 位于
 `features/finance/ingest/`；是否允许 provider Vision 由隐私 gate 决定。Backend

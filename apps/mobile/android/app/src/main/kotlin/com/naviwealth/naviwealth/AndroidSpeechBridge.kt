@@ -45,6 +45,7 @@ internal class AndroidSpeechBridge(
     private val context: Context = activity.applicationContext
     private val audioManager: AudioManager =
         context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val leaseOwner = "speech:${System.identityHashCode(this)}"
 
     private var methodChannel: MethodChannel? = null
     private var eventChannel: EventChannel? = null
@@ -154,9 +155,19 @@ internal class AndroidSpeechBridge(
             return
         }
 
+        if (!AndroidMicrophoneLease.tryAcquire(leaseOwner)) {
+            result.error(
+                "session_busy",
+                "Another native microphone pipeline is already active",
+                null,
+            )
+            return
+        }
+
         val recognizer = try {
             SpeechRecognizer.createOnDeviceSpeechRecognizer(context)
         } catch (error: RuntimeException) {
+            AndroidMicrophoneLease.release(leaseOwner)
             result.error(
                 "runtime_unavailable",
                 "Unable to create Android on-device speech recognizer",
@@ -234,6 +245,7 @@ internal class AndroidSpeechBridge(
         } finally {
             recognizer?.destroy()
             restoreAudioMode()
+            AndroidMicrophoneLease.release(leaseOwner)
             if (emitTerminalEvent) {
                 emit(mapOf("type" to "ended", "cancelled" to true))
             }
@@ -252,6 +264,7 @@ internal class AndroidSpeechBridge(
             // Best-effort cleanup for a recognizer that failed during startup.
         }
         restoreAudioMode()
+        AndroidMicrophoneLease.release(leaseOwner)
     }
 
     private fun finishRecognition(
@@ -269,6 +282,7 @@ internal class AndroidSpeechBridge(
             // the terminal semantic event regardless.
         }
         restoreAudioMode()
+        AndroidMicrophoneLease.release(leaseOwner)
         terminalError?.let { (code, message) ->
             emit(mapOf("type" to "error", "code" to code, "message" to message))
         }
