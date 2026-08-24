@@ -14,13 +14,7 @@ class _TruncationFooter extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final muted = context.theme.colors.mutedForeground;
 
-    final canContinue = switch (reason) {
-      ChatStopReason.maxTokens ||
-      ChatStopReason.toolUse ||
-      ChatStopReason.error ||
-      ChatStopReason.unknown => true,
-      ChatStopReason.refusal || ChatStopReason.endTurn => false,
-    };
+    final canContinue = reason.allowsContinuation;
     final label = switch (reason) {
       ChatStopReason.maxTokens => l10n.aiChatTruncatedMaxTokens,
       ChatStopReason.toolUse => l10n.aiChatTruncatedToolBudget,

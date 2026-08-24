@@ -10,18 +10,28 @@
 library;
 
 /// Maximum LLM↔tool round-trips per turn.
-const int kMaxToolRounds = 16;
+///
+/// This remains a hard runaway guard, but is intentionally high enough for
+/// cross-domain reads and follow-up tool calls in one user turn.
+const int kMaxToolRounds = 32;
 
 /// Per-conversation cap on `propose_*` calls.
 const int kMaxProposalsPerConversation = 5;
 
-/// `max_tokens` sent on every Messages request. Generous on purpose:
-/// extended-thinking models (mimo, Claude with thinking, …) spend a large
-/// share of the budget on internal reasoning before emitting the visible
-/// answer / tool call. A tight cap truncates them mid-thought
-/// (`stop_reason: max_tokens` with no usable output), so an agent must not
-/// be starved here.
-const int kAnthropicMaxOutputTokens = 8192;
+/// Default output allowance for device LLM requests.
+///
+/// The provider may still enforce a lower model-specific maximum. Keeping the
+/// app default provider-neutral and applying it in the shared LLM bridge avoids
+/// silent provider fallbacks (Anthropic otherwise defaults to only 1024 in the
+/// native adapter). Explicitly smaller task budgets still override this value.
+const int kDefaultLlmMaxOutputTokens = 16 * 1024;
+
+/// Runtime context-window policy for interactive chat.
+///
+/// Output capacity is reserved from the total input window so a large prompt
+/// cannot consume the space needed to finish the answer.
+const int kDefaultChatMaxInputTokens = 128000;
+const int kDefaultChatPreserveRecentMessages = 24;
 
 /// Domain-agnostic system prompt core. Carries identity, read rules,
 /// and the generic write protocol shared across LifeOS domains.

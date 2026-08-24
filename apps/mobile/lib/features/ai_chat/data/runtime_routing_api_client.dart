@@ -12,6 +12,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/runtime/ai_runtime.dart';
+import '../../../core/ai/runtime/device/device_system_prompt.dart';
 import '../../../core/auth/auth_session.dart';
 import 'ai_chat_api_client.dart';
 
@@ -19,6 +20,13 @@ import 'ai_chat_api_client.dart';
 /// runtime. Web has no device runtime; native/desktop needs a
 /// user-supplied API key + opt-in (§4.6.2).
 const String kDeviceUnavailableMessage = 'device_unavailable';
+
+const AgentRuntimeContextPolicy kDefaultAiChatContextPolicy =
+    AgentRuntimeContextPolicy(
+      maxInputTokens: kDefaultChatMaxInputTokens,
+      reserveOutputTokens: kDefaultLlmMaxOutputTokens,
+      preserveRecentMessages: kDefaultChatPreserveRecentMessages,
+    );
 
 class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
   const RuntimeRoutingAiChatApiClient({ChatAgent? agent}) : _agent = agent;
@@ -63,7 +71,7 @@ class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
         portfolioSnapshot: portfolioSnapshot,
         contextPack: contextPack,
         contextBlocks: contextBlocks,
-        contextPolicy: contextPolicy,
+        contextPolicy: contextPolicy ?? kDefaultAiChatContextPolicy,
         interactionResponse: interactionResponse,
         metadata: metadata,
         model: model,

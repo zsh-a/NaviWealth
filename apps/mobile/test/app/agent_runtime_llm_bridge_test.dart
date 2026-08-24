@@ -4,6 +4,8 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.da
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
+    show kDefaultLlmMaxOutputTokens;
 
 import 'agent_runtime_native_bridge_test_harness.dart';
 
@@ -41,6 +43,48 @@ void main() {
     expect(metadata['base_url'], 'https://llm.example.test/v1');
     expect(metadata['api_key'], 'sk-test');
     expect(metadata['trace_id'], 'trace_1');
+  });
+
+  test('buildRequest always applies the shared default output budget', () {
+    final bridge = AgentRuntimeLlmBridge(
+      bridge: FakeAgentRuntimeNativeBridge(),
+      profile: const LlmProfile(
+        id: 'profile_1',
+        name: '',
+        provider: LlmProvider.anthropic,
+        apiKey: 'sk-ant',
+      ),
+    );
+
+    final request = bridge.buildRequest(
+      messages: const <Map<String, Object?>>[
+        <String, Object?>{'role': 'user', 'content': 'Explain'},
+      ],
+    );
+
+    expect(request['max_output_tokens'], kDefaultLlmMaxOutputTokens);
+  });
+
+  test('buildRequest rejects a non-positive output budget', () {
+    final bridge = AgentRuntimeLlmBridge(
+      bridge: FakeAgentRuntimeNativeBridge(),
+      profile: const LlmProfile(
+        id: 'profile_1',
+        name: '',
+        provider: LlmProvider.openai,
+        apiKey: 'sk-openai',
+      ),
+    );
+
+    expect(
+      () => bridge.buildRequest(
+        messages: const <Map<String, Object?>>[
+          <String, Object?>{'role': 'user', 'content': 'Explain'},
+        ],
+        maxOutputTokens: 0,
+      ),
+      throwsRangeError,
+    );
   });
 
   test('completeMock sends request through native bridge', () async {

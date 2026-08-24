@@ -125,8 +125,8 @@ class FrbDailyNavigatorSynthesizer implements DailyNavigatorSynthesizer {
   const FrbDailyNavigatorSynthesizer({
     required this.runtime,
     this.fallback = const ProgrammaticDailyNavigatorSynthesizer(),
-    this.maxTokens = 240,
-    this.requestTimeout = const Duration(seconds: 20),
+    this.maxTokens = 4096,
+    this.requestTimeout = const Duration(seconds: 45),
   });
 
   final AgentRuntimeProfileTurnBinding runtime;

@@ -40,11 +40,14 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
     final isStreaming = message.status == ChatMessageStatus.streaming;
     final hasProgress = isStreaming && message.progress != null;
 
+    final stopReason = message.stopReason;
     final showTruncation =
         !isStreaming &&
         message.role == ChatRole.assistant &&
-        message.status == ChatMessageStatus.complete &&
-        (message.stopReason?.isAbnormal ?? false);
+        message.content.trim().isNotEmpty &&
+        (message.status == ChatMessageStatus.complete ||
+            message.status == ChatMessageStatus.errored) &&
+        (stopReason?.isAbnormal ?? false);
 
     final body = Column(
       crossAxisAlignment: CrossAxisAlignment.start,

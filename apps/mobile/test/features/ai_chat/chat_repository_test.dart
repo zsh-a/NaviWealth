@@ -789,7 +789,7 @@ void main() {
               sessionId: id,
               ownerUserId: 'user-1',
               role: i.isEven ? ChatRole.user : ChatRole.assistant,
-              content: 'turn-$i ${'x' * 5000}',
+              content: 'turn-$i ${'x' * 13000}',
               status: ChatMessageStatus.complete,
               createdAt: DateTime.utc(2026, 7, 1, 0, i),
             ),

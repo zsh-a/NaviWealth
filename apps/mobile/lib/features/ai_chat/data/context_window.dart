@@ -23,13 +23,13 @@ class ContextWindow {
   final List<ChatMessage> droppedMessages;
 }
 
-/// Conservative budget for the device runtime prompt. We keep the wire
-/// payload comfortably below the retired backend's 32 KB body cap so
-/// the same chat history shape remains safe if a relay is reintroduced.
-/// Char count is a coarse proxy for tokens, but safe for Chinese
-/// (≈ 1 char ≈ 1.5 tokens for Anthropic's tokenizer) because we
-/// underbudget.
-const int kDefaultContextCharBudget = 18000;
+/// Host-side conversation-history budget before the runtime performs its own
+/// token-aware context selection. Device-only chat no longer needs to inherit
+/// the retired backend's 32 KB request-body constraint.
+///
+/// Char count remains a coarse first-pass proxy; the Rust runtime recomputes
+/// token estimates and applies the authoritative context policy afterwards.
+const int kDefaultContextCharBudget = 64000;
 
 /// Always keep the most recent N turns regardless of budget so the user
 /// can finish a thought even if it would push the budget over. Anything
@@ -39,9 +39,9 @@ const int kMinKeptTurns = 4;
 /// Build the wire payload for the chat runtime from persisted [history]
 /// plus a freshly-typed [pending] user message.
 ///
-/// Local-only roles (`system`, `error`) and partially-streamed assistant
-/// turns (`status != complete`) are skipped — the model doesn't need
-/// truncation banners or half-formed prior replies.
+/// Local-only roles (`system`, `error`) and actively streaming turns are
+/// skipped. A failed assistant turn with visible text is retained so the user
+/// can continue from a network interruption without losing the partial answer.
 ContextWindow buildContextWindow({
   required List<ChatMessage> history,
   required String pending,
@@ -51,7 +51,13 @@ ContextWindow buildContextWindow({
   final eligible = <({ChatMessage source, WireMessage wire})>[];
   for (final m in history) {
     if (m.role != ChatRole.user && m.role != ChatRole.assistant) continue;
-    if (m.status != ChatMessageStatus.complete) continue;
+    final isRecoverablePartial =
+        m.role == ChatRole.assistant &&
+        m.status == ChatMessageStatus.errored &&
+        m.content.trim().isNotEmpty;
+    if (m.status != ChatMessageStatus.complete && !isRecoverablePartial) {
+      continue;
+    }
     final content = _historyContentForRuntime(m);
     if (content == null) continue;
     eligible.add((

@@ -31,7 +31,7 @@ class AgentRuntimeNativeStepRunner implements AgentRuntimeEffectStepRunner {
     required AgentRuntimeExecutionBridge bridge,
     required AgentRuntimeToolHost toolHost,
     AgentRuntimeCheckpointStore? checkpointStore,
-    int defaultMaxEffectSteps = 4,
+    int defaultMaxEffectSteps = 16,
     int defaultMaxSubagentDepth = 4,
   }) : _bridge = bridge,
        _toolDispatcher = AgentRuntimeToolDispatcher(

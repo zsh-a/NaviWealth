@@ -58,11 +58,9 @@ extension ToolInvocationStatusX on ToolInvocationStatus {
 /// How an assistant turn finished, mirrored from Anthropic's `stop_reason`
 /// (forwarded by the backend in the SSE `done` frame).
 ///
-/// We keep this *ephemeral* — the value lives on [ChatMessage] for the
-/// current session only and is intentionally not persisted to Drift. The
-/// UI uses it to surface a slim "reply was truncated" footer right after
-/// the response lands; once the user moves on (or the session is
-/// re-opened later), the message is treated as plain history.
+/// The value is persisted with [ChatMessage] so an interrupted reply remains
+/// diagnosable after reopening the session. The UI uses it to surface a slim
+/// recovery footer without mixing transport notices into the model transcript.
 ///
 ///  * [endTurn] — model finished naturally; nothing to flag.
 ///  * [maxTokens] — output ran into the per-call token budget; the
@@ -80,6 +78,14 @@ extension ChatStopReasonX on ChatStopReason {
   /// `true` when the user should be told the reply may be incomplete.
   /// `endTurn` is the only "all good" outcome.
   bool get isAbnormal => this != ChatStopReason.endTurn;
+
+  bool get allowsContinuation => switch (this) {
+    ChatStopReason.maxTokens ||
+    ChatStopReason.toolUse ||
+    ChatStopReason.error ||
+    ChatStopReason.unknown => true,
+    ChatStopReason.refusal || ChatStopReason.endTurn => false,
+  };
 
   static ChatStopReason parse(String? wire) => switch (wire) {
     'end_turn' => ChatStopReason.endTurn,

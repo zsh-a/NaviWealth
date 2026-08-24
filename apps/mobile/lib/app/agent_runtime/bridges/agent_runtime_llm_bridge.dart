@@ -10,6 +10,8 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_protocol.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
+    show kDefaultLlmMaxOutputTokens;
 
 final agentRuntimeLlmBridgeProvider = Provider<AgentRuntimeLlmBridge?>((ref) {
   if (!ref.watch(deviceLlmPlatformSupportedProvider)) return null;
@@ -38,6 +40,14 @@ class AgentRuntimeLlmBridge {
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
+    final outputTokenLimit = maxOutputTokens ?? kDefaultLlmMaxOutputTokens;
+    if (outputTokenLimit <= 0) {
+      throw RangeError.value(
+        outputTokenLimit,
+        'maxOutputTokens',
+        'must be greater than zero',
+      );
+    }
     return <String, Object?>{
       'protocol_version': kAgentRuntimeProtocolVersion,
       'provider': _profile.provider.wire,
@@ -46,7 +56,7 @@ class AgentRuntimeLlmBridge {
           : _defaultModel(_profile.provider),
       'messages': messages,
       'temperature': ?temperature,
-      'max_output_tokens': ?maxOutputTokens,
+      'max_output_tokens': outputTokenLimit,
       'tools': tools,
       'metadata': <String, Object?>{
         ...metadata,

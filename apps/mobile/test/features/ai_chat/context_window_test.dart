@@ -96,6 +96,34 @@ void main() {
       expect(ctx.droppedTurns, 0);
     });
 
+    test('retains visible text from an interrupted assistant turn', () {
+      final history = [
+        _msg(role: ChatRole.user, content: '写一份完整方案'),
+        _msg(
+          role: ChatRole.assistant,
+          content: '这是已经收到的前半段：',
+          status: ChatMessageStatus.errored,
+        ),
+      ];
+
+      final ctx = buildContextWindow(
+        history: history,
+        pending: '请继续。',
+        charBudget: 1000,
+      );
+
+      expect(ctx.wire.map((message) => message.role), [
+        'user',
+        'assistant',
+        'user',
+      ]);
+      expect(ctx.wire.map((message) => message.content), [
+        '写一份完整方案',
+        '这是已经收到的前半段：',
+        '请继续。',
+      ]);
+    });
+
     test(
       'keeps ask_user decision transcript even when assistant text is empty',
       () {
