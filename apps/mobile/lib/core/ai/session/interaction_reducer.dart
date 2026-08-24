@@ -113,6 +113,12 @@ InteractionState reduce(InteractionState state, InteractionEvent event) {
 
 InteractionState _turnStarted(InteractionState state, TurnStarted event) =>
     state.copyWith(
+      // The first turn starts at epoch 0. Every later ordinary turn gets a
+      // fresh response epoch so late Agent/TTS work from the previous turn
+      // cannot mutate the new turn even when no barge-in occurred.
+      responseEpoch: state.activeTurnId == null
+          ? state.responseEpoch
+          : state.responseEpoch.next(),
       activeTurnId: event.stamp.turnId,
       inputOrigin: event.origin,
       inputLane: event.origin == InteractionInputOrigin.voice

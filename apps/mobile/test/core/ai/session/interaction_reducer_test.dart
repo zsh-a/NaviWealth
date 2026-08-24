@@ -202,6 +202,54 @@ void main() {
     },
   );
 
+  test('ordinary turns advance epoch and reject late previous-turn events', () {
+    var state = InteractionState.initial(sessionId: sessionId);
+    state = apply(
+      state,
+      TurnStarted(
+        stamp: stamp(sequence: 1, turnId: firstTurn),
+        origin: InteractionInputOrigin.voice,
+      ),
+    );
+    state = apply(
+      state,
+      AgentTextGenerated(stamp: stamp(sequence: 2), text: '第一轮回答'),
+    );
+    expect(state.responseEpoch, epochZero);
+
+    state = apply(
+      state,
+      TurnStarted(
+        stamp: stamp(sequence: 3, turnId: interruptedTurn),
+        origin: InteractionInputOrigin.touch,
+      ),
+    );
+    expect(state.responseEpoch.value, 1);
+    expect(state.generatedText, isEmpty);
+
+    state = apply(
+      state,
+      AgentTextGenerated(
+        stamp: stamp(sequence: 4, turnId: firstTurn, epoch: epochZero),
+        text: '迟到的第一轮回答',
+      ),
+    );
+    expect(state.generatedText, isEmpty);
+
+    state = apply(
+      state,
+      AgentTextGenerated(
+        stamp: stamp(
+          sequence: 5,
+          turnId: interruptedTurn,
+          epoch: ResponseEpoch(1),
+        ),
+        text: '第二轮回答',
+      ),
+    );
+    expect(state.generatedText, '第二轮回答');
+  });
+
   test('delivery ledger ignores unknown segments and preserves order', () {
     var ledger = DeliveryLedger.empty();
     ledger = ledger.queue(const OutputSegment(id: 'a', text: '第一段'));
