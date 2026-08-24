@@ -86,6 +86,13 @@ void main() {
       expect(output.sessions.single.cancelled, isTrue);
       expect(coordinator.state.outputLane, InteractionOutputLane.interrupted);
 
+      const nextSegment = OutputSegment(id: 'segment-2', text: '新回答。');
+      coordinator.queueOutputSegment(nextSegment);
+      bridge.enqueue(nextSegment);
+      await _flush();
+      expect(output.requests, hasLength(2));
+      expect(output.requests.last.stamp.epoch.value, 1);
+
       await bridge.close();
       await coordinator.close();
     },

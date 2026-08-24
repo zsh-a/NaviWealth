@@ -1,8 +1,15 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
+import '../../../app/interaction/interaction_chat_session.dart';
+import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/speech/speech_output_provider.dart';
+import '../../../core/speech/speech_recognizer_provider.dart';
+import '../data/chat_repository.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
 import '../domain/chat_turn_metadata.dart';
@@ -20,20 +27,35 @@ enum ChatTurnPhase { idle, streaming }
 /// `chatMessagesStreamProvider`. This controller only models ephemeral
 /// UI signals.
 class ChatTurnState {
-  const ChatTurnState({this.phase = ChatTurnPhase.idle, this.cancelToken});
+  const ChatTurnState({
+    this.phase = ChatTurnPhase.idle,
+    this.cancelToken,
+    this.voiceListening = false,
+    this.voiceTurnActive = false,
+  });
 
   final ChatTurnPhase phase;
   final CancelToken? cancelToken;
+  final bool voiceListening;
+  final bool voiceTurnActive;
 
   bool get isIdle => phase == ChatTurnPhase.idle;
   bool get isStreaming => phase == ChatTurnPhase.streaming;
   bool get isBusy => phase != ChatTurnPhase.idle;
+  bool get voiceActive => voiceListening;
+  bool get canStartVoice => !isStreaming || voiceTurnActive;
 
-  ChatTurnState copyWith({ChatTurnPhase? phase, CancelToken? cancelToken}) =>
-      ChatTurnState(
-        phase: phase ?? this.phase,
-        cancelToken: cancelToken ?? this.cancelToken,
-      );
+  ChatTurnState copyWith({
+    ChatTurnPhase? phase,
+    CancelToken? cancelToken,
+    bool? voiceListening,
+    bool? voiceTurnActive,
+  }) => ChatTurnState(
+    phase: phase ?? this.phase,
+    cancelToken: cancelToken ?? this.cancelToken,
+    voiceListening: voiceListening ?? this.voiceListening,
+    voiceTurnActive: voiceTurnActive ?? this.voiceTurnActive,
+  );
 }
 
 class ChatController extends StateNotifier<ChatTurnState> {
@@ -42,6 +64,56 @@ class ChatController extends StateNotifier<ChatTurnState> {
 
   final Ref ref;
   final String sessionId;
+  InteractionChatSession? _interactionSession;
+  String? _interactionOwnerUserId;
+
+  InteractionChatSession _ensureInteractionSession({
+    required ChatRepository repository,
+    required String ownerUserId,
+  }) {
+    final existing = _interactionSession;
+    if (existing != null && _interactionOwnerUserId == ownerUserId) {
+      return existing;
+    }
+    if (existing != null) unawaited(existing.close());
+
+    final session = InteractionChatSession(
+      repository: repository,
+      ownerUserId: ownerUserId,
+      sessionId: sessionId,
+      speechInput: ref.read(speechInputProvider),
+      speechOutput: ref.read(speechOutputProvider),
+      onTurnStarted: (request) {
+        if (!mounted) return;
+        state = ChatTurnState(
+          phase: ChatTurnPhase.streaming,
+          cancelToken: request.cancelToken,
+          voiceListening: state.voiceListening,
+          voiceTurnActive:
+              state.voiceTurnActive ||
+              request.origin == InteractionInputOrigin.voice,
+        );
+      },
+      onTurnFinished: (request, _) {
+        if (!mounted || !identical(state.cancelToken, request.cancelToken)) {
+          return;
+        }
+        state = ChatTurnState(
+          voiceListening: state.voiceListening,
+          voiceTurnActive: request.origin == InteractionInputOrigin.voice
+              ? false
+              : state.voiceTurnActive,
+        );
+      },
+      onSpeechEnded: () {
+        if (!mounted) return;
+        state = state.copyWith(voiceListening: false);
+      },
+    );
+    _interactionSession = session;
+    _interactionOwnerUserId = ownerUserId;
+    return session;
+  }
 
   /// Send [content] as the next user turn. Concurrent calls are
   /// rejected — the UI disables the send button while the pipeline is
@@ -68,17 +140,65 @@ class ChatController extends StateNotifier<ChatTurnState> {
 
     try {
       final repo = await ref.read(chatRepositoryProvider.future);
-      await repo.sendMessage(
-        sessionId: sessionId,
+      final session = _ensureInteractionSession(
+        repository: repo,
         ownerUserId: ownerUserId,
-        content: trimmed,
-        systemContext: systemContext,
-        turnMetadata: turnMetadata,
+      );
+      session.configure(systemContext: systemContext);
+      session.startTurn(
+        turnMetadata.inputOrigin ?? InteractionInputOrigin.keyboard,
+      );
+      await session.commitInput(
+        trimmed,
+        origin: turnMetadata.inputOrigin,
+        interactionResponse: turnMetadata.interactionResponse,
         cancelToken: cancelToken,
+        resumeTurnId: turnMetadata.resumeTurnId,
       );
     } finally {
+      if (mounted && identical(state.cancelToken, cancelToken)) {
+        state = ChatTurnState(
+          voiceListening: state.voiceListening,
+          voiceTurnActive: state.voiceTurnActive,
+        );
+      }
+    }
+  }
+
+  /// Starts the semantic voice lane for this chat session.
+  ///
+  /// A voice response may be interrupted while it is streaming; an unrelated
+  /// keyboard response is left alone until it has produced output that the
+  /// interaction coordinator can safely supersede.
+  Future<void> startVoice({String? systemContext, String? model}) async {
+    if (state.voiceListening) return;
+    final ownerUserId = ref.read(activeUserIdProvider);
+    if (ownerUserId == null) return;
+
+    final repo = await ref.read(chatRepositoryProvider.future);
+    final session = _ensureInteractionSession(
+      repository: repo,
+      ownerUserId: ownerUserId,
+    );
+    final interactionState = session.coordinator.state;
+    final hasPendingInteraction = interactionState.pendingInteraction != null;
+    final hasOutput = interactionState.outputLane != InteractionOutputLane.idle;
+    if (state.isBusy && !hasOutput && !hasPendingInteraction) return;
+
+    session.configure(systemContext: systemContext, model: model);
+    await session.startVoice();
+    if (!mounted) return;
+    state = state.copyWith(voiceListening: true, voiceTurnActive: true);
+  }
+
+  Future<void> stopVoice() async {
+    final session = _interactionSession;
+    if (session == null) return;
+    try {
+      await session.stopVoice();
+    } finally {
       if (mounted) {
-        state = const ChatTurnState();
+        state = state.copyWith(voiceListening: false);
       }
     }
   }
@@ -153,6 +273,12 @@ class ChatController extends StateNotifier<ChatTurnState> {
     if (token != null && !token.isCancelled) {
       token.cancel('user cancelled');
     }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_interactionSession?.close());
+    super.dispose();
   }
 }
 

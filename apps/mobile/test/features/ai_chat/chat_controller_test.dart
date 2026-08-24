@@ -7,6 +7,9 @@ import 'package:naviwealth/core/ai/contracts/chat_events.dart';
 import 'package:naviwealth/core/ai/contracts/interaction.dart';
 import 'package:naviwealth/core/ai/session/interaction_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/speech/speech_input.dart';
+import 'package:naviwealth/core/speech/speech_recognizer.dart';
+import 'package:naviwealth/core/speech/speech_recognizer_provider.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_turn_metadata.dart';
@@ -16,11 +19,16 @@ void main() {
   const sessionId = 'session-1';
   const ownerUserId = 'owner-1';
 
-  ProviderContainer makeContainer(_FakeChatRepository repo) {
+  ProviderContainer makeContainer(
+    _FakeChatRepository repo, {
+    SpeechInput? speechInput,
+  }) {
     final container = ProviderContainer(
       overrides: [
         activeUserIdProvider.overrideWithValue(ownerUserId),
         chatRepositoryProvider.overrideWith((_) async => repo),
+        if (speechInput != null)
+          speechInputProvider.overrideWithValue(speechInput),
       ],
     );
     addTearDown(container.dispose);
@@ -162,7 +170,45 @@ void main() {
     await sending;
     expect(container.read(provider).isIdle, isTrue);
   });
+
+  test(
+    'startVoice commits the semantic transcript through the chat session',
+    () async {
+      final repo = _FakeChatRepository();
+      final input = _FakeSpeechInput();
+      final container = makeContainer(repo, speechInput: input);
+      final provider = chatControllerProvider(sessionId);
+      final sub = container.listen(
+        provider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      final controller = container.read(provider.notifier);
+      await controller.startVoice(systemContext: '当前页面上下文');
+      expect(input.started, isTrue);
+      expect(container.read(provider).voiceActive, isTrue);
+
+      input.session.emit(
+        const SpeechInputTranscript(text: '记录今天午饭 38 元', isFinal: true),
+      );
+      await _flush();
+      await _flush();
+
+      expect(repo.lastContent, '记录今天午饭 38 元');
+      expect(repo.lastSystemContext, '当前页面上下文');
+      expect(repo.lastTurnMetadata.inputOrigin, InteractionInputOrigin.voice);
+
+      await controller.stopVoice();
+      await _flush();
+      expect(input.session.stopped, isTrue);
+      expect(container.read(provider).voiceActive, isFalse);
+    },
+  );
 }
+
+Future<void> _flush() => Future<void>.delayed(Duration.zero);
 
 class _FakeChatRepository implements ChatRepository {
   int sendCount = 0;
@@ -204,4 +250,47 @@ class _FakeChatRepository implements ChatRepository {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+final class _FakeSpeechInput implements SpeechInput {
+  final session = _FakeSpeechInputSession();
+  bool started = false;
+
+  @override
+  Future<SpeechRecognizerStatus> status() async =>
+      const SpeechRecognizerStatus(SpeechRecognizerAvailability.ready);
+
+  @override
+  Future<SpeechInputSession> start() async {
+    started = true;
+    return session;
+  }
+}
+
+final class _FakeSpeechInputSession implements SpeechInputSession {
+  final StreamController<SpeechInputEvent> _events =
+      StreamController<SpeechInputEvent>.broadcast();
+  bool stopped = false;
+  bool cancelled = false;
+
+  @override
+  Stream<SpeechInputEvent> get events => _events.stream;
+
+  void emit(SpeechInputEvent event) {
+    if (!_events.isClosed) _events.add(event);
+  }
+
+  @override
+  Future<void> stop() async {
+    stopped = true;
+    emit(const SpeechInputEnded(cancelled: false));
+    await _flush();
+    await _events.close();
+  }
+
+  @override
+  Future<void> cancel() async {
+    cancelled = true;
+    if (!_events.isClosed) await _events.close();
+  }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/ai/contracts/interaction.dart';
@@ -21,6 +22,9 @@ final class InteractionTurnRequest {
     required this.epoch,
     required this.text,
     required this.origin,
+    this.cancelToken,
+    this.systemContext,
+    this.model,
     this.interactionResponse,
     this.resumeTurnId,
   });
@@ -30,6 +34,9 @@ final class InteractionTurnRequest {
   final ResponseEpoch epoch;
   final String text;
   final InteractionInputOrigin origin;
+  final CancelToken? cancelToken;
+  final String? systemContext;
+  final String? model;
   final AiInteractionResponse? interactionResponse;
   final String? resumeTurnId;
 }
@@ -51,6 +58,8 @@ class InteractionSessionCoordinator {
     void Function()? onBargeInCandidate,
     void Function()? onFalseInterruption,
     void Function(ResponseEpoch staleEpoch)? onEpochAdvanced,
+    void Function()? onSpeechEnded,
+    void Function(Object error, StackTrace stackTrace)? onTurnError,
     VoiceInteractionResponseDecoder? responseDecoder,
     BargeInPolicy bargeInPolicy = const BargeInPolicy(),
     Uuid? uuid,
@@ -64,6 +73,8 @@ class InteractionSessionCoordinator {
        _onBargeInCandidate = onBargeInCandidate,
        _onFalseInterruption = onFalseInterruption,
        _onEpochAdvanced = onEpochAdvanced,
+       _onSpeechEnded = onSpeechEnded,
+       _onTurnError = onTurnError,
        _responseDecoder = responseDecoder ?? decodeVoiceInteractionResponse,
        _bargeInPolicy = bargeInPolicy,
        _uuid = uuid ?? const Uuid(),
@@ -74,6 +85,8 @@ class InteractionSessionCoordinator {
   final void Function()? _onBargeInCandidate;
   final void Function()? _onFalseInterruption;
   final void Function(ResponseEpoch staleEpoch)? _onEpochAdvanced;
+  final void Function()? _onSpeechEnded;
+  final void Function(Object error, StackTrace stackTrace)? _onTurnError;
   final VoiceInteractionResponseDecoder _responseDecoder;
   final BargeInPolicy _bargeInPolicy;
   final Uuid _uuid;
@@ -134,19 +147,22 @@ class InteractionSessionCoordinator {
     }
     await stopVoice();
 
-    // A pending HITL envelope resumes the existing turn. Speaking over an
-    // active response also waits for BargeInCommitted before assigning a new
-    // turn, so the old delivered prefix can be projected safely.
-    if (_state.pendingInteraction == null &&
-        !_isOutputActive(_state.outputLane)) {
-      startTurn(InteractionInputOrigin.voice);
-    }
-
     final session = await input.start();
     if (_disposed) {
       await session.cancel();
       return;
     }
+
+    // A pending HITL envelope resumes the existing turn. Speaking over an
+    // active response also waits for BargeInCommitted before assigning a new
+    // turn, so the old delivered prefix can be projected safely. Start the
+    // native session first so a failed permission/model/runtime start cannot
+    // leave a phantom voice turn in the reducer.
+    if (_state.pendingInteraction == null &&
+        !_isOutputActive(_state.outputLane)) {
+      startTurn(InteractionInputOrigin.voice);
+    }
+
     _speechSession = session;
     _speechEvents = session.events.listen(
       _onSpeechEvent,
@@ -197,14 +213,29 @@ class InteractionSessionCoordinator {
       commitBargeIn(transcript: text);
     }
     if (isFinal && text.trim().isNotEmpty) {
-      commitInput(text);
+      _commitSpeechInput(text);
     }
   }
 
-  void commitInput(
+  void _commitSpeechInput(String text) {
+    unawaited(
+      commitInput(text).then<void>(
+        (_) {},
+        onError: (Object error, StackTrace stackTrace) {
+          _onTurnError?.call(error, stackTrace);
+        },
+      ),
+    );
+  }
+
+  Future<void> commitInput(
     String text, {
     InteractionInputOrigin? origin,
     AiInteractionResponse? interactionResponse,
+    CancelToken? cancelToken,
+    String? systemContext,
+    String? model,
+    String? resumeTurnId,
   }) {
     final inputOrigin =
         origin ?? _state.inputOrigin ?? InteractionInputOrigin.voice;
@@ -223,23 +254,24 @@ class InteractionSessionCoordinator {
         interactionResponse: response,
       ),
     );
-    if (!accepted) return;
+    if (!accepted) return Future<void>.value();
 
     final turnId = _state.activeTurnId;
-    if (turnId == null) return;
+    if (turnId == null) return Future<void>.value();
     final handler = _onTurnCommitted;
-    if (handler == null) return;
-    unawaited(
-      handler(
-        InteractionTurnRequest(
-          sessionId: _state.sessionId,
-          turnId: turnId,
-          epoch: _state.responseEpoch,
-          text: text,
-          origin: inputOrigin,
-          interactionResponse: response,
-          resumeTurnId: pending?.resumeToken,
-        ),
+    if (handler == null) return Future<void>.value();
+    return handler(
+      InteractionTurnRequest(
+        sessionId: _state.sessionId,
+        turnId: turnId,
+        epoch: _state.responseEpoch,
+        text: text,
+        origin: inputOrigin,
+        cancelToken: cancelToken,
+        systemContext: systemContext,
+        model: model,
+        interactionResponse: response,
+        resumeTurnId: resumeTurnId ?? pending?.resumeToken,
       ),
     );
   }
@@ -368,8 +400,8 @@ class InteractionSessionCoordinator {
       case SpeechInputTranscript(:final text, :final isFinal):
         updateTranscript(text, isFinal: isFinal);
       case SpeechInputEnded():
-        // Input end is already represented by the final transcript event.
-        // No automatic domain action is taken here.
+        dispatch((stamp) => SpeechStopped(stamp: stamp));
+        _onSpeechEnded?.call();
         break;
     }
   }

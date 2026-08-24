@@ -62,6 +62,13 @@ class _ConversationComposer extends ConsumerWidget {
     return ChatComposer(
       sessionId: sessionId,
       isStreaming: turn.isStreaming,
+      isVoiceActive: turn.voiceActive,
+      canStartVoice: turn.canStartVoice,
+      onStartVoice: () => ref
+          .read(chatControllerProvider(sessionId).notifier)
+          .startVoice(systemContext: systemContext),
+      onStopVoice: () =>
+          ref.read(chatControllerProvider(sessionId).notifier).stopVoice(),
       initialText: prefill,
       onSend: (text) {
         ref

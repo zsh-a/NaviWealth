@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import '../../core/ai/contracts/chat_events.dart';
 import '../../core/ai/contracts/interaction.dart';
 import '../../core/ai/intent/ai_intent_invocation.dart';
@@ -28,6 +30,11 @@ final class InteractionChatSession {
     AiIntentInvocation? invocation,
     String? systemContext,
     String? model,
+    void Function(InteractionTurnRequest request)? onTurnStarted,
+    void Function(InteractionTurnRequest request, SendOutcome outcome)?
+    onTurnFinished,
+    void Function()? onSpeechEnded,
+    void Function(Object error, StackTrace stackTrace)? onTurnError,
   }) {
     late final InteractionChatSession session;
     final coordinator = InteractionSessionCoordinator(
@@ -37,8 +44,12 @@ final class InteractionChatSession {
       onTurnCommitted: (request) => session._handleTurn(request),
       onBargeInCandidate: () => unawaited(session._output.pause()),
       onFalseInterruption: () => unawaited(session._output.resume()),
-      onEpochAdvanced: (staleEpoch) =>
-          unawaited(session._output.interrupt(staleEpoch: staleEpoch)),
+      onEpochAdvanced: (staleEpoch) {
+        session._cancelEpoch(staleEpoch);
+        unawaited(session._output.interrupt(staleEpoch: staleEpoch));
+      },
+      onSpeechEnded: onSpeechEnded,
+      onTurnError: onTurnError,
     );
     final output = SerializedSpeechOutputBridge(
       speechOutput: speechOutput,
@@ -51,6 +62,8 @@ final class InteractionChatSession {
       model: model,
       coordinator: coordinator,
       output: output,
+      onTurnStarted: onTurnStarted,
+      onTurnFinished: onTurnFinished,
     );
     return session;
   }
@@ -62,19 +75,28 @@ final class InteractionChatSession {
     required String? model,
     required InteractionSessionCoordinator coordinator,
     required SerializedSpeechOutputBridge output,
+    required void Function(InteractionTurnRequest request)? onTurnStarted,
+    required void Function(InteractionTurnRequest request, SendOutcome outcome)?
+    onTurnFinished,
   }) : _repository = repository,
        _ownerUserId = ownerUserId,
        _systemContext = systemContext,
        _model = model,
        _coordinator = coordinator,
-       _output = output;
+       _output = output,
+       _onTurnStarted = onTurnStarted,
+       _onTurnFinished = onTurnFinished;
 
   final ChatRepository _repository;
   final String _ownerUserId;
-  final String? _systemContext;
-  final String? _model;
+  String? _systemContext;
+  String? _model;
   final InteractionSessionCoordinator _coordinator;
   final SerializedSpeechOutputBridge _output;
+  final void Function(InteractionTurnRequest request)? _onTurnStarted;
+  final void Function(InteractionTurnRequest request, SendOutcome outcome)?
+  _onTurnFinished;
+  final Map<int, CancelToken> _activeCancelTokens = <int, CancelToken>{};
   bool _closed = false;
 
   InteractionSessionCoordinator get coordinator => _coordinator;
@@ -83,80 +105,174 @@ final class InteractionChatSession {
 
   Future<void> stopVoice() => _coordinator.stopVoice();
 
+  void configure({String? systemContext, String? model}) {
+    if (_closed) return;
+    _systemContext = systemContext;
+    _model = model;
+  }
+
   TurnId startTurn(InteractionInputOrigin origin) =>
       _coordinator.startTurn(origin);
 
-  void commitInput(
+  Future<void> commitInput(
     String text, {
     InteractionInputOrigin? origin,
     AiInteractionResponse? interactionResponse,
+    CancelToken? cancelToken,
+    String? systemContext,
+    String? model,
+    String? resumeTurnId,
   }) => _coordinator.commitInput(
     text,
     origin: origin,
     interactionResponse: interactionResponse,
+    cancelToken: cancelToken,
+    systemContext: systemContext,
+    model: model,
+    resumeTurnId: resumeTurnId,
   );
 
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
+    for (final token in _activeCancelTokens.values) {
+      if (!token.isCancelled) token.cancel('interaction session closed');
+    }
     await _output.close();
     await _coordinator.close();
   }
 
   Future<void> _handleTurn(InteractionTurnRequest request) async {
     if (!_owns(request)) return;
+
+    final effectiveRequest = request.cancelToken == null
+        ? InteractionTurnRequest(
+            sessionId: request.sessionId,
+            turnId: request.turnId,
+            epoch: request.epoch,
+            text: request.text,
+            origin: request.origin,
+            cancelToken: CancelToken(),
+            systemContext: request.systemContext,
+            model: request.model,
+            interactionResponse: request.interactionResponse,
+            resumeTurnId: request.resumeTurnId,
+          )
+        : request;
+    final cancelToken = effectiveRequest.cancelToken!;
+    _activeCancelTokens[effectiveRequest.epoch.value] = cancelToken;
+    _onTurnStarted?.call(effectiveRequest);
     _coordinator.agentStarted();
 
+    final speakOutput = effectiveRequest.origin == InteractionInputOrigin.voice;
     var sawTerminal = false;
     final adapter = AgentEventAdapter(
       _coordinator,
-      onOutputSegment: _output.enqueue,
+      onOutputSegment: speakOutput ? _output.enqueue : null,
       onOutputFinished: (epoch, {required interrupted}) {
         sawTerminal = true;
-        unawaited(_output.finish(epoch, interrupted: interrupted));
+        if (speakOutput) {
+          unawaited(_output.finish(epoch, interrupted: interrupted));
+        } else {
+          _coordinator.outputPlaybackStopped(interrupted: interrupted);
+        }
       },
     );
 
+    var outcome = SendOutcome.completed;
     try {
-      final outcome = await _repository.sendMessage(
-        sessionId: request.sessionId.value,
+      outcome = await _repository.sendMessage(
+        sessionId: effectiveRequest.sessionId.value,
         ownerUserId: _ownerUserId,
-        content: request.text,
-        systemContext: _systemContext,
-        model: _model,
+        content: effectiveRequest.text,
+        systemContext: effectiveRequest.systemContext ?? _systemContext,
+        model: effectiveRequest.model ?? _model,
         turnMetadata: ChatTurnMetadata(
-          interactionResponse: request.interactionResponse,
-          inputOrigin: request.origin,
-          resumeTurnId: request.resumeTurnId,
+          interactionResponse: effectiveRequest.interactionResponse,
+          inputOrigin: effectiveRequest.origin,
+          resumeTurnId: effectiveRequest.resumeTurnId,
         ),
         onAiChatEvent: (event) {
           if (event is DoneEvent || event is ErrorEvent) {
             sawTerminal = true;
           }
-          adapter.accept(event, turnId: request.turnId, epoch: request.epoch);
+          adapter.accept(
+            event,
+            turnId: effectiveRequest.turnId,
+            epoch: effectiveRequest.epoch,
+          );
         },
+        cancelToken: cancelToken,
       );
 
-      if (!sawTerminal && _owns(request)) {
+      if (!sawTerminal && _owns(effectiveRequest)) {
         switch (outcome) {
           case SendOutcome.completed:
             _coordinator.agentFinished();
-            unawaited(_output.finish(request.epoch, interrupted: false));
+            _finishOutput(
+              effectiveRequest.epoch,
+              speakOutput: speakOutput,
+              interrupted: false,
+            );
           case SendOutcome.errored:
             _coordinator.agentFailed();
-            unawaited(_output.finish(request.epoch, interrupted: true));
+            _finishOutput(
+              effectiveRequest.epoch,
+              speakOutput: speakOutput,
+              interrupted: true,
+            );
           case SendOutcome.cancelled:
             _coordinator.agentCancelled();
-            unawaited(_output.finish(request.epoch, interrupted: true));
+            _finishOutput(
+              effectiveRequest.epoch,
+              speakOutput: speakOutput,
+              interrupted: true,
+            );
         }
-      } else if (outcome == SendOutcome.cancelled && _owns(request)) {
+      } else if (outcome == SendOutcome.cancelled && _owns(effectiveRequest)) {
         _coordinator.agentCancelled();
       }
     } on Object {
-      if (_owns(request)) {
+      outcome = SendOutcome.errored;
+      if (_owns(effectiveRequest)) {
         _coordinator.agentFailed();
-        unawaited(_output.finish(request.epoch, interrupted: true));
+        _finishOutput(
+          effectiveRequest.epoch,
+          speakOutput: speakOutput,
+          interrupted: true,
+        );
       }
+      rethrow;
+    } finally {
+      if (identical(
+        _activeCancelTokens[effectiveRequest.epoch.value],
+        cancelToken,
+      )) {
+        _activeCancelTokens.remove(effectiveRequest.epoch.value);
+      }
+      _onTurnFinished?.call(effectiveRequest, outcome);
+    }
+  }
+
+  void _finishOutput(
+    ResponseEpoch epoch, {
+    required bool speakOutput,
+    required bool interrupted,
+  }) {
+    if (speakOutput) {
+      unawaited(_output.finish(epoch, interrupted: interrupted));
+    } else if (_ownsEpoch(epoch)) {
+      _coordinator.outputPlaybackStopped(interrupted: interrupted);
+    }
+  }
+
+  bool _ownsEpoch(ResponseEpoch epoch) =>
+      !_closed && _coordinator.state.responseEpoch == epoch;
+
+  void _cancelEpoch(ResponseEpoch epoch) {
+    final token = _activeCancelTokens[epoch.value];
+    if (token != null && !token.isCancelled) {
+      token.cancel('voice interruption');
     }
   }
 

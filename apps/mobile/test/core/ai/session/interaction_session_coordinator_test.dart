@@ -70,8 +70,7 @@ void main() {
         ),
       );
 
-      coordinator.commitInput('执行');
-      await Future<void>.delayed(Duration.zero);
+      await coordinator.commitInput('执行');
 
       expect(coordinator.state.pendingInteraction, isNotNull);
       expect(requests, isEmpty);
@@ -162,8 +161,7 @@ void main() {
       respondedAt: DateTime.utc(2026, 8, 24),
       respondedBy: 'voice',
     );
-    coordinator.commitInput('确认', interactionResponse: response);
-    await Future<void>.delayed(Duration.zero);
+    await coordinator.commitInput('确认', interactionResponse: response);
 
     expect(requests, hasLength(1));
     expect(requests.single.resumeTurnId, 'durable-turn-1');

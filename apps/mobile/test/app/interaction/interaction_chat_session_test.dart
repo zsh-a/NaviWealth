@@ -28,7 +28,10 @@ void main() {
       );
 
       session.startTurn(InteractionInputOrigin.voice);
-      session.commitInput('我这个月消费多少？', origin: InteractionInputOrigin.voice);
+      await session.commitInput(
+        '我这个月消费多少？',
+        origin: InteractionInputOrigin.voice,
+      );
       await _flush();
       await _flush();
 

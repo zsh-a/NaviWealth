@@ -103,6 +103,9 @@ final class SerializedSpeechOutputBridge {
   Future<void> interrupt({required ResponseEpoch staleEpoch}) async {
     if (_closed) return;
     _generation++;
+    // A committed barge-in follows a candidate pause. The new epoch owns a
+    // fresh output queue, so it must be allowed to pump immediately.
+    _paused = false;
     _discardEpoch(staleEpoch);
     final active = _activeSession;
     final activeEntry = _activeEntry;

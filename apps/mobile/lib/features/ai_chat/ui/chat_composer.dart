@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,10 @@ class ChatComposer extends ConsumerStatefulWidget {
     this.initialText,
     this.onEditResend,
     this.onSendWithOrigin,
+    this.isVoiceActive = false,
+    this.canStartVoice = true,
+    this.onStartVoice,
+    this.onStopVoice,
   });
 
   final bool isStreaming;
@@ -52,6 +57,13 @@ class ChatComposer extends ConsumerStatefulWidget {
   final void Function(String text, InteractionInputOrigin origin)?
   onSendWithOrigin;
 
+  /// Enables the session-level voice lane when both callbacks are supplied.
+  /// Callers that omit them retain the draft-only dictation behavior.
+  final bool isVoiceActive;
+  final bool canStartVoice;
+  final Future<void> Function()? onStartVoice;
+  final Future<void> Function()? onStopVoice;
+
   bool get _busy => isStreaming;
 
   @override
@@ -67,6 +79,10 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
   /// When set, next submit replaces this user turn instead of appending.
   String? _replaceMessageId;
   InteractionInputOrigin? _draftInputOrigin;
+  bool _voiceBusy = false;
+
+  bool get _usesInteractionVoice =>
+      !kIsWeb && widget.onStartVoice != null && widget.onStopVoice != null;
 
   @override
   void initState() {
@@ -158,6 +174,29 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
 
   void _markSpeechInput() {
     _draftInputOrigin = InteractionInputOrigin.voice;
+  }
+
+  Future<void> _toggleVoice() async {
+    if (_voiceBusy) return;
+    final action = widget.isVoiceActive
+        ? widget.onStopVoice
+        : (widget.canStartVoice ? widget.onStartVoice : null);
+    if (action == null) return;
+
+    setState(() => _voiceBusy = true);
+    try {
+      await action();
+    } on Object {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).speechInputFailed,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _voiceBusy = false);
+    }
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
@@ -286,11 +325,19 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.s4),
-                      SpeechInputButton(
-                        controller: _controller,
-                        enabled: !widget._busy,
-                        onSpeechInput: _markSpeechInput,
-                      ),
+                      if (_usesInteractionVoice)
+                        _InteractionVoiceButton(
+                          active: widget.isVoiceActive,
+                          busy: _voiceBusy,
+                          enabled: widget.isVoiceActive || widget.canStartVoice,
+                          onPress: () => unawaited(_toggleVoice()),
+                        )
+                      else
+                        SpeechInputButton(
+                          controller: _controller,
+                          enabled: !widget._busy,
+                          onSpeechInput: _markSpeechInput,
+                        ),
                       const SizedBox(width: AppSpacing.s4),
                       _TrailingButton(
                         controller: _controller,
@@ -305,6 +352,43 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InteractionVoiceButton extends StatelessWidget {
+  const _InteractionVoiceButton({
+    required this.active,
+    required this.busy,
+    required this.enabled,
+    required this.onPress,
+  });
+
+  final bool active;
+  final bool busy;
+  final bool enabled;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tooltip = active
+        ? l10n.speechInputStopTooltip
+        : busy
+        ? l10n.speechInputStartingTooltip
+        : l10n.speechInputStartTooltip;
+    return FTooltip(
+      tipBuilder: (_, _) => Text(tooltip),
+      child: FButton.icon(
+        variant: active ? FButtonVariant.destructive : FButtonVariant.secondary,
+        onPress: enabled && !busy ? onPress : null,
+        child: busy
+            ? const SizedBox.square(
+                dimension: AppIconSizes.sm,
+                child: FCircularProgress(),
+              )
+            : Icon(active ? FLucideIcons.square : FLucideIcons.mic),
       ),
     );
   }
