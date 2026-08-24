@@ -112,6 +112,25 @@ class _AndroidSpeechCaptureSession implements SpeechCaptureSession {
     switch (map?['type']) {
       case 'capture_started':
         _emit(SpeechCaptureStarted(capabilities: _capabilitiesFromMap(map!)));
+      case 'speech_started':
+        _emit(
+          SpeechCaptureSpeechStarted(
+            startedAt: _dateTimeFromMillis(map?['started_at_ms']),
+            vadMode: map?['vad_mode'] is String
+                ? map!['vad_mode']! as String
+                : null,
+          ),
+        );
+      case 'speech_stopped':
+        _emit(
+          SpeechCaptureSpeechStopped(
+            stoppedAt: _dateTimeFromMillis(map?['stopped_at_ms']),
+            durationMs: _intValue(map?['duration_ms']),
+            vadMode: map?['vad_mode'] is String
+                ? map!['vad_mode']! as String
+                : null,
+          ),
+        );
       case 'capture_stopped':
         _emit(
           SpeechCaptureStopped(
@@ -250,7 +269,15 @@ SpeechCaptureCapabilities _capabilitiesFromMap(Map<Object?, Object?> map) =>
       aecEnabled: map['aec_enabled'] == true,
       noiseSuppressionEnabled: map['ns_enabled'] == true,
       automaticGainControlEnabled: map['agc_enabled'] == true,
+      vadMode: map['vad_mode'] is String ? map['vad_mode']! as String : 'none',
+      vadFrameDurationMs: _intValue(map['vad_frame_duration_ms']),
+      vadMinSpeechFrames: _intValue(map['vad_min_speech_frames']),
+      vadMinSilenceFrames: _intValue(map['vad_min_silence_frames']),
     );
+
+DateTime? _dateTimeFromMillis(Object? value) => value is int
+    ? DateTime.fromMillisecondsSinceEpoch(value, isUtc: true)
+    : null;
 
 int _intValue(Object? value) => value is int ? value : 0;
 

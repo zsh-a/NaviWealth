@@ -2,7 +2,7 @@
 ///
 /// This contract intentionally exposes no PCM frames. Audio stays in the
 /// platform/native hot path; Dart receives only capability, lifecycle, and
-/// aggregate buffer events.
+/// aggregate buffer events, and native VAD speech boundary events.
 library;
 
 enum SpeechCaptureAvailability { ready, permissionDenied, unsupported }
@@ -37,6 +37,10 @@ class SpeechCaptureCapabilities {
     this.aecEnabled = false,
     this.noiseSuppressionEnabled = false,
     this.automaticGainControlEnabled = false,
+    this.vadMode = 'none',
+    this.vadFrameDurationMs = 0,
+    this.vadMinSpeechFrames = 0,
+    this.vadMinSilenceFrames = 0,
   });
 
   final int sampleRateHz;
@@ -49,6 +53,12 @@ class SpeechCaptureCapabilities {
   final bool aecEnabled;
   final bool noiseSuppressionEnabled;
   final bool automaticGainControlEnabled;
+  final String vadMode;
+  final int vadFrameDurationMs;
+  final int vadMinSpeechFrames;
+  final int vadMinSilenceFrames;
+
+  bool get vadAvailable => vadMode != 'none';
 }
 
 class SpeechCaptureStatus {
@@ -73,6 +83,30 @@ final class SpeechCaptureStarted extends SpeechCaptureEvent {
   const SpeechCaptureStarted({required this.capabilities});
 
   final SpeechCaptureCapabilities capabilities;
+}
+
+/// Native VAD detected a sustained speech interval.
+///
+/// This event contains no audio data. InteractionSession may use it as the
+/// first phase of a two-stage barge-in candidate before a transcript exists.
+final class SpeechCaptureSpeechStarted extends SpeechCaptureEvent {
+  const SpeechCaptureSpeechStarted({this.startedAt, this.vadMode});
+
+  final DateTime? startedAt;
+  final String? vadMode;
+}
+
+/// Native VAD detected the end of a sustained speech interval.
+final class SpeechCaptureSpeechStopped extends SpeechCaptureEvent {
+  const SpeechCaptureSpeechStopped({
+    this.stoppedAt,
+    required this.durationMs,
+    this.vadMode,
+  });
+
+  final DateTime? stoppedAt;
+  final int durationMs;
+  final String? vadMode;
 }
 
 final class SpeechCaptureStopped extends SpeechCaptureEvent {

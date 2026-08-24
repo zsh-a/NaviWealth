@@ -337,7 +337,8 @@ The Android hot path is now explicitly reserved behind `SpeechCapture`:
 AudioRecord (VOICE_COMMUNICATION, 16 kHz mono PCM16)
   -> platform AEC / NS / AGC (best effort)
   -> NativePcmRingBuffer (2 second bounded buffer)
-  -> future native VAD / Sherpa ASR consumer
+  -> NativeEnergyVad (semantic speech boundaries)
+  -> future native Silero/Sherpa ASR consumer
 ```
 
 `AndroidAudioCaptureBridge` is not the current default recognizer. Android's
@@ -345,9 +346,16 @@ AudioRecord (VOICE_COMMUNICATION, 16 kHz mono PCM16)
 provider continues to use `AndroidSpeechBridge`; the app-owned `AudioRecord`
 path is for the later Sherpa/native ASR backend. Both native bridges use the
 same process-local microphone lease and stop on Activity background/destroy.
-The capture bridge emits only format/effect capabilities, lifecycle events,
-and aggregate captured/buffered/dropped-byte counters. PCM is never sent over
-Flutter, FRB, logs, or persisted storage.
+The capture bridge emits only format/effect/VAD capabilities, lifecycle events,
+semantic `speech_started` / `speech_stopped` boundaries, and aggregate
+captured/buffered/dropped-byte counters. PCM is never sent over Flutter, FRB,
+logs, or persisted storage.
+
+The first native VAD implementation is a deterministic energy gate with
+hysteresis, adaptive quiet-floor tracking, and minimum speech/silence frame
+durations. It is intentionally a replaceable bootstrap for the later native
+Silero/Sherpa model; it does not become a second interaction or agent loop and
+does not send confidence or audio frames across the capability boundary.
 
 Finance ingest 的 `FrbVisionIngestClient` 与 `UnavailableVisionIngestClient` 位于
 `features/finance/ingest/`；是否允许 provider Vision 由隐私 gate 决定。Backend

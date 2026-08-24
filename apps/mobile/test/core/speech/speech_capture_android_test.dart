@@ -25,6 +25,11 @@ void main() {
         'aec_available': true,
         'ns_available': true,
         'agc_available': false,
+        'vad_available': true,
+        'vad_mode': 'native_energy',
+        'vad_frame_duration_ms': 20,
+        'vad_min_speech_frames': 2,
+        'vad_min_silence_frames': 20,
       };
     });
 
@@ -38,6 +43,71 @@ void main() {
     expect(status.capabilities?.channelCount, 1);
     expect(status.capabilities?.aecAvailable, isTrue);
     expect(status.capabilities?.automaticGainControlAvailable, isFalse);
+    expect(status.capabilities?.vadAvailable, isTrue);
+    expect(status.capabilities?.vadMode, 'native_energy');
+    expect(status.capabilities?.vadFrameDurationMs, 20);
+  });
+
+  test('maps native VAD boundaries without exposing audio frames', () async {
+    const channel = MethodChannel('test.naviwealth/audio_capture.vad');
+    final nativeEvents = StreamController<Object?>();
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    addTearDown(() async {
+      messenger.setMockMethodCallHandler(channel, null);
+      await nativeEvents.close();
+    });
+
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      if (call.method == 'start') {
+        nativeEvents
+          ..add(<String, Object?>{
+            'type': 'capture_started',
+            'sample_rate_hz': 16000,
+            'channel_count': 1,
+            'encoding': 'pcm16le',
+            'ring_capacity_bytes': 64000,
+            'vad_mode': 'native_energy',
+            'vad_frame_duration_ms': 20,
+            'vad_min_speech_frames': 2,
+            'vad_min_silence_frames': 20,
+          })
+          ..add(<String, Object?>{
+            'type': 'speech_started',
+            'started_at_ms': 1000,
+            'vad_mode': 'native_energy',
+          })
+          ..add(<String, Object?>{
+            'type': 'speech_stopped',
+            'stopped_at_ms': 2400,
+            'duration_ms': 1400,
+            'vad_mode': 'native_energy',
+          });
+      }
+      return null;
+    });
+
+    final session = await AndroidNativeAudioCapture(
+      methodChannel: channel,
+      eventStream: () => nativeEvents.stream,
+    ).start();
+    final events = <SpeechCaptureEvent>[];
+    final subscription = session.events.listen(events.add);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(events, hasLength(3));
+    expect(events[0], isA<SpeechCaptureStarted>());
+    expect(events[1], isA<SpeechCaptureSpeechStarted>());
+    expect(
+      (events[1] as SpeechCaptureSpeechStarted).startedAt,
+      DateTime.fromMillisecondsSinceEpoch(1000, isUtc: true),
+    );
+    expect(events[2], isA<SpeechCaptureSpeechStopped>());
+    expect((events[2] as SpeechCaptureSpeechStopped).durationMs, 1400);
+    expect((events[2] as SpeechCaptureSpeechStopped).vadMode, 'native_energy');
+
+    await session.cancel();
+    await subscription.cancel();
   });
 
   test('buffers lifecycle events and never exposes PCM frames', () async {

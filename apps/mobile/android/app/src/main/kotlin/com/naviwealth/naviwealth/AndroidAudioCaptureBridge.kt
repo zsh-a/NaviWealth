@@ -74,6 +74,7 @@ internal class AndroidAudioCaptureBridge(
     private var ringBuffer = NativePcmRingBuffer(ringCapacityBytes())
     private var capturedBytes = 0L
     private var readErrors = 0
+    private var vad: NativeEnergyVad? = null
 
     private var echoCanceler: AcousticEchoCanceler? = null
     private var noiseSuppressor: NoiseSuppressor? = null
@@ -132,7 +133,7 @@ internal class AndroidAudioCaptureBridge(
                 "reason" to "The Android audio recorder is unavailable",
             )
         }
-        return baseFormatPayload() + effectsPayload()
+        return baseFormatPayload() + effectsPayload() + vadPayload()
     }
 
     private fun start(result: MethodChannel.Result) {
@@ -223,6 +224,27 @@ internal class AndroidAudioCaptureBridge(
         ringBuffer.clear()
         capturedBytes = 0L
         readErrors = 0
+        vad = NativeEnergyVad(
+            onSpeechStarted = { startedAtMs ->
+                emit(
+                    mapOf(
+                        "type" to "speech_started",
+                        "started_at_ms" to startedAtMs,
+                        "vad_mode" to NativeEnergyVad.MODE,
+                    ),
+                )
+            },
+            onSpeechStopped = { stoppedAtMs, durationMs ->
+                emit(
+                    mapOf(
+                        "type" to "speech_stopped",
+                        "stopped_at_ms" to stoppedAtMs,
+                        "duration_ms" to durationMs,
+                        "vad_mode" to NativeEnergyVad.MODE,
+                    ),
+                )
+            },
+        )
         previousAudioMode = audioManager.mode
         try {
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
@@ -282,6 +304,12 @@ internal class AndroidAudioCaptureBridge(
                 read > 0 -> {
                     ringBuffer.write(frame, length = read)
                     capturedBytes += read.toLong()
+                    vad?.acceptPcm16(
+                        source = frame,
+                        offset = 0,
+                        length = read,
+                        timestampMs = System.currentTimeMillis(),
+                    )
                 }
                 read == AudioRecord.ERROR_DEAD_OBJECT -> {
                     readErrors++
@@ -338,6 +366,13 @@ internal class AndroidAudioCaptureBridge(
                 Thread.currentThread().interrupt()
             }
         }
+        val currentVad = vad
+        vad = null
+        if (emitTerminalEvent) {
+            currentVad?.finish(System.currentTimeMillis())
+        } else {
+            currentVad?.reset()
+        }
         try {
             recorder?.release()
         } finally {
@@ -365,6 +400,8 @@ internal class AndroidAudioCaptureBridge(
     private fun abortStart(recorder: AudioRecord) {
         active = false
         audioRecord = null
+        vad?.reset()
+        vad = null
         try {
             recorder.stop()
         } catch (_: RuntimeException) {
@@ -440,6 +477,14 @@ internal class AndroidAudioCaptureBridge(
         "ring_capacity_bytes" to ringCapacityBytes(),
     )
 
+    private fun vadPayload(): Map<String, Any?> = mapOf(
+        "vad_available" to true,
+        "vad_mode" to NativeEnergyVad.MODE,
+        "vad_frame_duration_ms" to NativeEnergyVad.FRAME_DURATION_MS,
+        "vad_min_speech_frames" to NativeEnergyVad.MIN_SPEECH_FRAMES,
+        "vad_min_silence_frames" to NativeEnergyVad.MIN_SILENCE_FRAMES,
+    )
+
     private fun effectsPayload(): Map<String, Any?> = mapOf(
         "aec_available" to runCatching { AcousticEchoCanceler.isAvailable() }
             .getOrDefault(false),
@@ -452,6 +497,7 @@ internal class AndroidAudioCaptureBridge(
     private fun startedEvent(bufferSize: Int): Map<String, Any?> =
         baseFormatPayload() +
             effectsPayload() +
+            vadPayload() +
             mapOf(
                 "type" to "capture_started",
                 "buffer_size_bytes" to bufferSize,
@@ -469,6 +515,7 @@ internal class AndroidAudioCaptureBridge(
             "buffered_bytes" to snapshot.bufferedBytes,
             "dropped_bytes" to snapshot.droppedBytes,
             "read_errors" to readErrors,
+            "vad_mode" to NativeEnergyVad.MODE,
         )
     }
 
