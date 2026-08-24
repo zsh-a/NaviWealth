@@ -57,6 +57,12 @@ final class AgentToolStarted extends InteractionEvent {
   final OperationId operationId;
 }
 
+final class AgentToolFinished extends InteractionEvent {
+  const AgentToolFinished({required super.stamp, required this.operationId});
+
+  final OperationId operationId;
+}
+
 final class AgentWaitingForInteraction extends InteractionEvent {
   const AgentWaitingForInteraction({
     required super.stamp,
@@ -132,6 +138,12 @@ final class AgentFinished extends InteractionEvent {
 
 final class AgentCancelled extends InteractionEvent {
   const AgentCancelled({required super.stamp});
+}
+
+final class AgentFailed extends InteractionEvent {
+  const AgentFailed({required super.stamp, this.code});
+
+  final String? code;
 }
 
 final class SessionClosed extends InteractionEvent {

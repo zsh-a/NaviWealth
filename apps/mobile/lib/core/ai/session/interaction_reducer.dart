@@ -43,6 +43,7 @@ InteractionState reduce(InteractionState state, InteractionEvent event) {
       executingTurnId: event.stamp.turnId,
       activeOperationId: event.operationId,
     ),
+    AgentToolFinished() => _agentToolFinished(ordered, event),
     AgentWaitingForInteraction() => ordered.copyWith(
       executionLane: InteractionExecutionLane.waitingInteraction,
       pendingInteraction: event.interaction,
@@ -98,6 +99,7 @@ InteractionState reduce(InteractionState state, InteractionEvent event) {
     ),
     AgentFinished() => _agentFinished(ordered, event),
     AgentCancelled() => _agentCancelled(ordered, event),
+    AgentFailed() => _agentFailed(ordered, event),
     SessionClosed() => ordered.copyWith(
       status: InteractionSessionStatus.closed,
       inputLane: InteractionInputLane.idle,
@@ -183,8 +185,24 @@ InteractionState _agentFinished(InteractionState state, AgentFinished event) {
       state.executingTurnId != event.stamp.turnId) {
     return state;
   }
+  // A Chat stream may emit its terminal event after a tool has produced a
+  // pending HITL envelope. The interaction remains the execution boundary;
+  // do not let the stream's Done event clear the waiting state or make a
+  // subsequent voice transcript bypass the envelope.
+  if (state.pendingInteraction != null) return state;
   return state.copyWith(
     executionLane: InteractionExecutionLane.done,
+    activeOperationId: null,
+  );
+}
+
+InteractionState _agentToolFinished(
+  InteractionState state,
+  AgentToolFinished event,
+) {
+  if (state.activeOperationId != event.operationId) return state;
+  return state.copyWith(
+    executionLane: InteractionExecutionLane.running,
     activeOperationId: null,
   );
 }
@@ -199,6 +217,12 @@ InteractionState _agentCancelled(InteractionState state, AgentCancelled event) {
     activeOperationId: null,
   );
 }
+
+InteractionState _agentFailed(InteractionState state, AgentFailed event) =>
+    state.copyWith(
+      executionLane: InteractionExecutionLane.done,
+      activeOperationId: null,
+    );
 
 InteractionOutputLane _pauseOutput(InteractionOutputLane lane) =>
     switch (lane) {

@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/shell/settings_route_paths.dart';
+import '../../core/speech/speech_input.dart';
 import '../../core/speech/speech_recognizer.dart';
 import '../../core/speech/speech_recognizer_provider.dart';
 import '../../l10n/gen/app_localizations.dart';
@@ -37,8 +38,8 @@ enum _SpeechButtonState { idle, starting, listening, stopping }
 class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
     with WidgetsBindingObserver {
   _SpeechButtonState _state = _SpeechButtonState.idle;
-  SpeechRecognitionSession? _session;
-  StreamSubscription<SpeechRecognitionEvent>? _events;
+  SpeechInputSession? _session;
+  StreamSubscription<SpeechInputEvent>? _events;
   String _baseText = '';
   bool _writingTranscript = false;
 
@@ -97,8 +98,8 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
     setState(() => _state = _SpeechButtonState.starting);
     final l10n = AppLocalizations.of(context);
     try {
-      final recognizer = ref.read(speechRecognizerProvider);
-      final status = await recognizer.status();
+      final input = ref.read(speechInputProvider);
+      final status = await input.status();
       if (!mounted) return;
       if (!widget.enabled || _state != _SpeechButtonState.starting) return;
       switch (status.availability) {
@@ -124,7 +125,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
       }
 
       _baseText = widget.controller.text;
-      final session = await recognizer.start();
+      final session = await input.start();
       if (!mounted ||
           !widget.enabled ||
           _state != _SpeechButtonState.starting) {
@@ -162,17 +163,22 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
     }
   }
 
-  void _applyTranscript(SpeechRecognitionEvent event) {
+  void _applyTranscript(SpeechInputEvent event) {
+    final text = switch (event) {
+      SpeechInputTranscript(:final text) => text,
+      SpeechInputSpeechStarted() || SpeechInputEnded() => null,
+    };
+    if (text == null) return;
     if (!mounted) return;
     final separator = _baseText.isEmpty || RegExp(r'\s$').hasMatch(_baseText)
         ? ''
         : '\n';
-    final text = '$_baseText$separator${event.text}';
+    final nextText = '$_baseText$separator$text';
     _writingTranscript = true;
     try {
       widget.controller.value = TextEditingValue(
-        text: text,
-        selection: TextSelection.collapsed(offset: text.length),
+        text: nextText,
+        selection: TextSelection.collapsed(offset: nextText.length),
       );
     } finally {
       _writingTranscript = false;
