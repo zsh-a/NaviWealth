@@ -11,6 +11,7 @@ import '../../core/ai/session/interaction_reducer.dart';
 import '../../core/ai/session/interaction_state.dart';
 import '../../core/ai/session/interruption_policy.dart';
 import '../../core/speech/speech_input.dart';
+import '../../core/speech/speech_output.dart';
 import 'voice_interaction_adapter.dart';
 
 final class InteractionTurnRequest {
@@ -273,6 +274,37 @@ class InteractionSessionCoordinator {
   void outputPlaybackStopped({required bool interrupted}) => dispatch(
     (stamp) => OutputPlaybackStopped(stamp: stamp, interrupted: interrupted),
   );
+
+  /// Maps provider-neutral SpeechOutput events into the session reducer.
+  ///
+  /// The provider's own stamp is used for session/epoch correlation only;
+  /// reducer ordering remains Coordinator-owned through [dispatch].
+  void acceptSpeechOutputEvent(SpeechOutputEvent event) {
+    if (_disposed ||
+        event.stamp.sessionId != _state.sessionId ||
+        event.stamp.epoch != _state.responseEpoch) {
+      return;
+    }
+    switch (event) {
+      case SpeechOutputStarted():
+        outputPlaybackStarted();
+      case SpeechOutputSegmentDelivered(:final segmentId):
+        outputSegmentDelivered(segmentId);
+      case SpeechOutputPaused():
+        dispatch((stamp) => OutputPlaybackPaused(stamp: stamp));
+      case SpeechOutputResumed():
+        dispatch((stamp) => OutputPlaybackResumed(stamp: stamp));
+      case SpeechOutputStopped(:final interrupted):
+        outputPlaybackStopped(interrupted: interrupted);
+    }
+  }
+
+  /// Consumes a provider session without exposing its stream to the reducer.
+  Future<void> consumeSpeechOutput(Stream<SpeechOutputEvent> events) async {
+    await for (final event in events) {
+      acceptSpeechOutputEvent(event);
+    }
+  }
 
   void commitBargeIn({String transcript = ''}) {
     if (_state.bargeInPhase != BargeInPhase.candidate) return;

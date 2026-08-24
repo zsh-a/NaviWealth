@@ -5,6 +5,7 @@ import 'package:naviwealth/core/ai/session/delivery_ledger.dart';
 import 'package:naviwealth/core/ai/session/interaction_events.dart';
 import 'package:naviwealth/core/ai/session/interaction_ids.dart';
 import 'package:naviwealth/core/ai/session/interaction_state.dart';
+import 'package:naviwealth/core/speech/speech_output.dart';
 
 void main() {
   test(
@@ -74,6 +75,63 @@ void main() {
 
       expect(coordinator.state.pendingInteraction, isNotNull);
       expect(requests, isEmpty);
+      await coordinator.close();
+    },
+  );
+
+  test(
+    'projects SpeechOutput delivery and rejects stale provider events',
+    () async {
+      const sessionId = SessionId('session-1');
+      final coordinator = InteractionSessionCoordinator(sessionId: sessionId);
+      final turnId = coordinator.startTurn(InteractionInputOrigin.voice);
+      const epoch = ResponseEpoch.initial();
+      coordinator.queueOutputSegment(
+        const OutputSegment(id: 'segment-1', text: '本月消费 12430 元。'),
+      );
+      final providerStamp = InteractionStamp(
+        sessionId: sessionId,
+        turnId: turnId,
+        epoch: epoch,
+        sequence: 1,
+      );
+
+      coordinator.acceptSpeechOutputEvent(
+        SpeechOutputStarted(stamp: providerStamp, segmentId: 'segment-1'),
+      );
+      coordinator.acceptSpeechOutputEvent(
+        SpeechOutputSegmentDelivered(
+          stamp: providerStamp,
+          segmentId: 'segment-1',
+        ),
+      );
+      expect(coordinator.state.outputLane, InteractionOutputLane.playing);
+      expect(coordinator.state.deliveryLedger.deliveredText, '本月消费 12430 元。');
+
+      coordinator.acceptSpeechOutputEvent(
+        SpeechOutputStopped(stamp: providerStamp, interrupted: false),
+      );
+      expect(coordinator.state.outputLane, InteractionOutputLane.idle);
+      expect(
+        coordinator.state.lastContextProjection?.deliveredText,
+        '本月消费 12430 元。',
+      );
+
+      coordinator.outputPlaybackStarted();
+      coordinator.speechStarted();
+      coordinator.updateTranscript('等等', isFinal: false);
+      expect(coordinator.state.responseEpoch.value, 1);
+      final staleOutputStamp = InteractionStamp(
+        sessionId: sessionId,
+        turnId: turnId,
+        epoch: epoch,
+        sequence: 99,
+      );
+      coordinator.acceptSpeechOutputEvent(
+        SpeechOutputStopped(stamp: staleOutputStamp, interrupted: false),
+      );
+      expect(coordinator.state.outputLane, InteractionOutputLane.interrupted);
+
       await coordinator.close();
     },
   );
