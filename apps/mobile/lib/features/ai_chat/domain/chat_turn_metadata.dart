@@ -1,4 +1,5 @@
 import '../../../core/ai/contracts/interaction.dart';
+import '../../../core/ai/session/interaction_state.dart';
 import 'chat_models.dart';
 
 class ChatTurnMetadata {
@@ -6,6 +7,7 @@ class ChatTurnMetadata {
     this.decision,
     this.interactionResponse,
     this.invocationTrace,
+    this.inputOrigin,
     this.extra = const <String, Object?>{},
   });
 
@@ -13,6 +15,7 @@ class ChatTurnMetadata {
     : decision = null,
       interactionResponse = null,
       invocationTrace = null,
+      inputOrigin = null,
       extra = const <String, Object?>{};
 
   factory ChatTurnMetadata.forDecision({
@@ -21,6 +24,7 @@ class ChatTurnMetadata {
     required String toolInvocationId,
     AiInteractionResponse? interactionResponse,
     Map<String, Object?>? invocationTrace,
+    InteractionInputOrigin? inputOrigin,
     Map<String, Object?> extra = const <String, Object?>{},
   }) {
     return ChatTurnMetadata(
@@ -31,6 +35,7 @@ class ChatTurnMetadata {
       ),
       interactionResponse: interactionResponse,
       invocationTrace: invocationTrace,
+      inputOrigin: inputOrigin,
       extra: extra,
     );
   }
@@ -38,6 +43,7 @@ class ChatTurnMetadata {
   final ChatDecisionMetadata? decision;
   final AiInteractionResponse? interactionResponse;
   final Map<String, Object?>? invocationTrace;
+  final InteractionInputOrigin? inputOrigin;
   final Map<String, Object?> extra;
 
   bool get hasInvocationTrace => invocationTrace != null;
@@ -50,6 +56,7 @@ class ChatTurnMetadata {
     if (decision case final decision?) ...decision.toAgentMetadata(),
     if (interactionResponse case final response?)
       'interaction_response': response.toJson(),
+    if (inputOrigin case final origin?) 'input_origin': origin.wire,
     'invocation': ?invocationTrace,
   };
 }

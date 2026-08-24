@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../logging/providers.dart';
 import 'managed_speech_recognizer.dart';
 import 'speech_diagnostics.dart';
+import 'speech_input.dart';
 import 'speech_recognizer.dart';
 import 'speech_recognizer_stub.dart'
     if (dart.library.io) 'speech_recognizer_sherpa.dart'
@@ -17,4 +18,8 @@ final speechRecognizerProvider = Provider<SpeechRecognizer>((ref) {
     delegate: implementation.createSpeechRecognizer(ref),
     diagnostics: ref.watch(speechDiagnosticsProvider),
   );
+});
+
+final speechInputProvider = Provider<SpeechInput>((ref) {
+  return RecognizerSpeechInput(ref.watch(speechRecognizerProvider));
 });

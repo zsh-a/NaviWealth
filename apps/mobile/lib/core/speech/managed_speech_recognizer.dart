@@ -23,7 +23,7 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
 
   @override
   Future<SpeechRecognitionSession> start() async {
-    final release = _SpeechSessionCoordinator.tryAcquire();
+    final release = _MicrophoneLease.tryAcquire();
     if (release == null) {
       _diagnostics.record(
         const SpeechDiagnosticEvent(
@@ -83,7 +83,7 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
 /// Owns the single process-local microphone lease shared by every managed
 /// recognizer instance. The returned release callback is idempotent so an
 /// error and a later stream completion cannot release a newer session.
-class _SpeechSessionCoordinator {
+class _MicrophoneLease {
   static bool _reserved = false;
 
   static void Function()? tryAcquire() {
