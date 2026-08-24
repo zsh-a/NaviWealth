@@ -126,6 +126,11 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
             l10n.speechInputUnsupported,
           );
           return;
+        case SpeechRecognizerAvailability.permissionDenied:
+          // The Android provider requests RECORD_AUDIO from the explicit
+          // push-to-talk action. Do not turn a first-use permission state into
+          // a permanent error before the native request has run.
+          break;
         case SpeechRecognizerAvailability.ready:
           break;
       }

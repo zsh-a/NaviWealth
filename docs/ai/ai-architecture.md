@@ -313,10 +313,20 @@ apps/mobile/lib/app/interaction/
 apps/mobile/lib/core/speech/
   speech input/output capabilities and the existing SpeechRecognizer seam
 
+apps/mobile/android/app/src/main/kotlin/com/naviwealth/naviwealth/
+  AndroidSpeechBridge.kt  Android API 31+ on-device semantic speech bridge
+
 apps/mobile/lib/features/ai_chat/
   data/            context window, structured checkpoint summarizer/store use
   domain/          conversation checkpoint payload
 ```
+
+Android currently selects the platform on-device recognizer for push-to-talk.
+The native bridge owns recognition lifecycle, `VOICE_COMMUNICATION` audio mode,
+permission handling, and semantic `speech_started` / partial / final / ended
+events. No PCM crosses a Flutter channel. The sherpa Zipformer implementation
+remains available as a separate local-model backend for the later native hot
+path; it is not silently replaced by a cloud recognizer when unavailable.
 
 Finance ingest 的 `FrbVisionIngestClient` 与 `UnavailableVisionIngestClient` 位于
 `features/finance/ingest/`；是否允许 provider Vision 由隐私 gate 决定。Backend

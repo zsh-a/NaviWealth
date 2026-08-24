@@ -128,5 +128,12 @@
         <intent>
             <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
         </intent>
+        <!-- Android 11+ package visibility for the on-device
+             SpeechRecognizer service. The app still explicitly requests the
+             API 31 on-device recognizer and never falls back to a remote
+             recognition service. -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
     </queries>
 </manifest>

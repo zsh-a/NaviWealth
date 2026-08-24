@@ -1,6 +1,11 @@
 import 'dart:async';
 
-enum SpeechRecognizerAvailability { ready, modelNotInstalled, unsupported }
+enum SpeechRecognizerAvailability {
+  ready,
+  modelNotInstalled,
+  permissionDenied,
+  unsupported,
+}
 
 class SpeechRecognizerStatus {
   const SpeechRecognizerStatus(this.availability, {this.reason});
@@ -12,10 +17,22 @@ class SpeechRecognizerStatus {
 }
 
 class SpeechRecognitionEvent {
-  const SpeechRecognitionEvent({required this.text, required this.isFinal});
+  const SpeechRecognitionEvent({
+    required this.text,
+    required this.isFinal,
+    this.speechStarted = false,
+    this.startedAt,
+  });
 
   final String text;
   final bool isFinal;
+
+  /// True when the native capture pipeline detected speech before ASR had a
+  /// transcript. This is a semantic signal for InteractionSession barge-in;
+  /// it does not carry audio frames.
+  final bool speechStarted;
+
+  final DateTime? startedAt;
 }
 
 enum SpeechRecognitionErrorCode {

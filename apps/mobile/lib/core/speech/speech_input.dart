@@ -7,8 +7,9 @@ sealed class SpeechInputEvent {
   const SpeechInputEvent();
 }
 
-/// Optional event emitted by a native full-duplex engine when VAD detects
-/// speech. The current push-to-talk recognizer does not synthesize it.
+/// Event emitted by a native capture pipeline when VAD detects speech before
+/// a transcript exists. InteractionSession uses it for the first phase of
+/// barge-in; it carries no audio frames.
 final class SpeechInputSpeechStarted extends SpeechInputEvent {
   const SpeechInputSpeechStarted({this.startedAt});
 
@@ -87,6 +88,10 @@ class _RecognizerSpeechInputSession implements SpeechInputSession {
 
   void _onEvent(SpeechRecognitionEvent event) {
     if (_closed) return;
+    if (event.speechStarted) {
+      _events.add(SpeechInputSpeechStarted(startedAt: event.startedAt));
+    }
+    if (event.text.isEmpty && !event.isFinal) return;
     _events.add(
       SpeechInputTranscript(text: event.text, isFinal: event.isFinal),
     );

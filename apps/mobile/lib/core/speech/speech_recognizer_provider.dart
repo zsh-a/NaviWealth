@@ -6,7 +6,7 @@ import 'speech_diagnostics.dart';
 import 'speech_input.dart';
 import 'speech_recognizer.dart';
 import 'speech_recognizer_stub.dart'
-    if (dart.library.io) 'speech_recognizer_sherpa.dart'
+    if (dart.library.io) 'speech_recognizer_io.dart'
     as implementation;
 
 final speechDiagnosticsProvider = Provider<SpeechDiagnosticsRecorder>((ref) {

@@ -12,17 +12,19 @@ void main() {
     final events = <SpeechInputEvent>[];
     final subscription = session.events.listen(events.add);
 
+    recognizer.session.emitSpeechStarted();
     recognizer.session.emit('吃饭', isFinal: false);
     recognizer.session.emit('吃饭了吗', isFinal: true);
     await session.stop();
     await Future<void>.delayed(Duration.zero);
 
-    expect(events, hasLength(3));
-    expect((events[0] as SpeechInputTranscript).text, '吃饭');
-    expect((events[0] as SpeechInputTranscript).isFinal, isFalse);
-    expect((events[1] as SpeechInputTranscript).text, '吃饭了吗');
-    expect((events[1] as SpeechInputTranscript).isFinal, isTrue);
-    expect((events[2] as SpeechInputEnded).cancelled, isFalse);
+    expect(events, hasLength(4));
+    expect(events[0], isA<SpeechInputSpeechStarted>());
+    expect((events[1] as SpeechInputTranscript).text, '吃饭');
+    expect((events[1] as SpeechInputTranscript).isFinal, isFalse);
+    expect((events[2] as SpeechInputTranscript).text, '吃饭了吗');
+    expect((events[2] as SpeechInputTranscript).isFinal, isTrue);
+    expect((events[3] as SpeechInputEnded).cancelled, isFalse);
 
     await subscription.cancel();
   });
@@ -68,6 +70,16 @@ class _FakeRecognitionSession implements SpeechRecognitionSession {
 
   void emit(String text, {required bool isFinal}) {
     _events.add(SpeechRecognitionEvent(text: text, isFinal: isFinal));
+  }
+
+  void emitSpeechStarted() {
+    _events.add(
+      const SpeechRecognitionEvent(
+        text: '',
+        isFinal: false,
+        speechStarted: true,
+      ),
+    );
   }
 
   @override
