@@ -115,7 +115,8 @@ class _SymbolFieldState extends ConsumerState<SymbolField> {
     }
 
     final asyncSearch = ref.watch(securitiesSearchServiceProvider);
-    return asyncSearch.when(
+    return asyncSearch.whenOrLoading(
+      context: context,
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
         child: FProgress(),
