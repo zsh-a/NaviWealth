@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/interaction/interaction_session_coordinator.dart';
 import 'package:naviwealth/core/ai/contracts/interaction.dart';
@@ -5,7 +7,10 @@ import 'package:naviwealth/core/ai/session/delivery_ledger.dart';
 import 'package:naviwealth/core/ai/session/interaction_events.dart';
 import 'package:naviwealth/core/ai/session/interaction_ids.dart';
 import 'package:naviwealth/core/ai/session/interaction_state.dart';
+import 'package:naviwealth/core/ai/session/interruption_policy.dart';
+import 'package:naviwealth/core/speech/speech_input.dart';
 import 'package:naviwealth/core/speech/speech_output.dart';
+import 'package:naviwealth/core/speech/speech_recognizer.dart';
 
 void main() {
   test(
@@ -168,4 +173,77 @@ void main() {
     expect(requests.single.interactionResponse, same(response));
     await coordinator.close();
   });
+
+  test(
+    'short barge-in candidate resumes output when speech input ends',
+    () async {
+      final input = _FakeSpeechInput();
+      final coordinator = InteractionSessionCoordinator(
+        sessionId: const SessionId('session-1'),
+        speechInput: input,
+        bargeInPolicy: const BargeInPolicy(
+          minimumSpeechDuration: Duration(seconds: 1),
+        ),
+      );
+      coordinator.startTurn(InteractionInputOrigin.voice);
+      coordinator.queueOutputSegment(
+        const OutputSegment(id: 'segment-1', text: '继续回答。'),
+      );
+      coordinator.outputPlaybackStarted();
+
+      await coordinator.startVoice();
+      input.session.emit(const SpeechInputSpeechStarted());
+      await _flush();
+      expect(coordinator.state.bargeInPhase, BargeInPhase.candidate);
+      expect(coordinator.state.outputLane, InteractionOutputLane.paused);
+
+      await coordinator.stopVoice();
+      await _flush();
+
+      expect(coordinator.state.bargeInPhase, BargeInPhase.none);
+      expect(coordinator.state.outputLane, InteractionOutputLane.playing);
+      await coordinator.close();
+    },
+  );
+}
+
+Future<void> _flush() => Future<void>.delayed(Duration.zero);
+
+final class _FakeSpeechInput implements SpeechInput {
+  final session = _FakeSpeechInputSession();
+
+  @override
+  Future<SpeechRecognizerStatus> status() async =>
+      const SpeechRecognizerStatus(SpeechRecognizerAvailability.ready);
+
+  @override
+  Future<SpeechInputSession> start() async => session;
+}
+
+final class _FakeSpeechInputSession implements SpeechInputSession {
+  final StreamController<SpeechInputEvent> _events =
+      StreamController<SpeechInputEvent>.broadcast(sync: true);
+  bool _closed = false;
+
+  @override
+  Stream<SpeechInputEvent> get events => _events.stream;
+
+  void emit(SpeechInputEvent event) {
+    if (!_closed) _events.add(event);
+  }
+
+  @override
+  Future<void> stop() async {
+    if (_closed) return;
+    emit(const SpeechInputEnded(cancelled: false));
+    _closed = true;
+    await _events.close();
+  }
+
+  @override
+  Future<void> cancel() async {
+    if (_closed) return;
+    _closed = true;
+    await _events.close();
+  }
 }

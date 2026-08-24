@@ -401,6 +401,12 @@ class InteractionSessionCoordinator {
         updateTranscript(text, isFinal: isFinal);
       case SpeechInputEnded():
         dispatch((stamp) => SpeechStopped(stamp: stamp));
+        // A short VAD candidate that ends before the policy threshold is a
+        // false interruption. Resume the same output epoch instead of
+        // leaving the serialized speech bridge paused indefinitely.
+        if (_state.bargeInPhase == BargeInPhase.candidate) {
+          resolveFalseInterruption();
+        }
         _onSpeechEnded?.call();
         break;
     }
