@@ -92,7 +92,7 @@ dependencies:
   # Cross-platform background task scheduler (Android WorkManager + iOS
   # BGTaskScheduler). Background callbacks only evaluate precomputed,
   # deterministic attention snapshots; they never invoke an LLM.
-  workmanager: ^0.10.8
+  workmanager: ^0.10.9
   xml: ^7.0.1
 
 # D-2.2 (`docs/healthos-domain.md` §2): `health ^13.3.1` pins
