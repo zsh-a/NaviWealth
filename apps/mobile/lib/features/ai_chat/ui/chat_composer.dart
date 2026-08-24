@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/ai/llm_credentials/providers.dart';
+import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
@@ -29,6 +30,7 @@ class ChatComposer extends ConsumerStatefulWidget {
     this.sessionId,
     this.initialText,
     this.onEditResend,
+    this.onSendWithOrigin,
   });
 
   final bool isStreaming;
@@ -44,6 +46,12 @@ class ChatComposer extends ConsumerStatefulWidget {
   /// when null.
   final void Function(String messageId, String text)? onEditResend;
 
+  /// Optional modality-aware submission path. Existing callers can continue
+  /// using [onSend] for touch/keyboard input; voice-backed drafts use this
+  /// callback so the ChatTurn carries its original input origin.
+  final void Function(String text, InteractionInputOrigin origin)?
+  onSendWithOrigin;
+
   bool get _busy => isStreaming;
 
   @override
@@ -58,6 +66,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
 
   /// When set, next submit replaces this user turn instead of appending.
   String? _replaceMessageId;
+  InteractionInputOrigin? _draftInputOrigin;
 
   @override
   void initState() {
@@ -123,8 +132,10 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     if (text.trim().isEmpty) return;
     final replaceId = _replaceMessageId;
     final sessionId = widget.sessionId;
+    final inputOrigin = _draftInputOrigin;
     setState(() {
       _replaceMessageId = null;
+      _draftInputOrigin = null;
       _controller.clear();
     });
     if (sessionId != null) {
@@ -137,7 +148,16 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
         return;
       }
     }
+    final sendWithOrigin = widget.onSendWithOrigin;
+    if (inputOrigin != null && sendWithOrigin != null) {
+      sendWithOrigin(text, inputOrigin);
+      return;
+    }
     widget.onSend(text);
+  }
+
+  void _markSpeechInput() {
+    _draftInputOrigin = InteractionInputOrigin.voice;
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
@@ -269,6 +289,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                       SpeechInputButton(
                         controller: _controller,
                         enabled: !widget._busy,
+                        onSpeechInput: _markSpeechInput,
                       ),
                       const SizedBox(width: AppSpacing.s4),
                       _TrailingButton(

@@ -24,10 +24,16 @@ class SpeechInputButton extends ConsumerStatefulWidget {
     super.key,
     required this.controller,
     this.enabled = true,
+    this.onSpeechInput,
   });
 
   final TextEditingController controller;
   final bool enabled;
+
+  /// Called after a transcript event has been written to [controller].
+  /// Consumers can use this to preserve the input modality when the draft is
+  /// eventually submitted. The button still never submits the draft itself.
+  final VoidCallback? onSpeechInput;
 
   @override
   ConsumerState<SpeechInputButton> createState() => _SpeechInputButtonState();
@@ -180,6 +186,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
         text: nextText,
         selection: TextSelection.collapsed(offset: nextText.length),
       );
+      widget.onSpeechInput?.call();
     } finally {
       _writingTranscript = false;
     }

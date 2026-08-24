@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
+import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/auth_route_paths.dart';
@@ -15,6 +16,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/chat_models.dart';
+import '../domain/chat_turn_metadata.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
 import 'chat_composer.dart';
@@ -204,6 +206,14 @@ class _ChatPane extends ConsumerWidget {
         .read(chatControllerProvider(sessionId).notifier)
         .send(text, systemContext: systemContext);
 
+    void sendWithOrigin(String text, InteractionInputOrigin origin) => ref
+        .read(chatControllerProvider(sessionId).notifier)
+        .send(
+          text,
+          systemContext: systemContext,
+          turnMetadata: ChatTurnMetadata(inputOrigin: origin),
+        );
+
     void editResend(String messageId, String text) => ref
         .read(chatControllerProvider(sessionId).notifier)
         .editAndResend(
@@ -253,6 +263,7 @@ class _ChatPane extends ConsumerWidget {
               sessionId: sessionId,
               isStreaming: turn.isStreaming,
               onSend: send,
+              onSendWithOrigin: sendWithOrigin,
               onEditResend: editResend,
               onCancel: () =>
                   ref.read(chatControllerProvider(sessionId).notifier).cancel(),

@@ -68,6 +68,15 @@ class _ConversationComposer extends ConsumerWidget {
             .read(chatControllerProvider(sessionId).notifier)
             .send(text, systemContext: systemContext);
       },
+      onSendWithOrigin: (text, origin) {
+        ref
+            .read(chatControllerProvider(sessionId).notifier)
+            .send(
+              text,
+              systemContext: systemContext,
+              turnMetadata: ChatTurnMetadata(inputOrigin: origin),
+            );
+      },
       onEditResend: (messageId, text) {
         ref
             .read(chatControllerProvider(sessionId).notifier)

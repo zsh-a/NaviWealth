@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/session/interaction_state.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart';
@@ -83,6 +84,23 @@ void main() {
     expect(container.read(provider).cancelToken, isNull);
   });
 
+  test('send() preserves the input origin in turn metadata', () async {
+    final repo = _FakeChatRepository();
+    final container = makeContainer(repo);
+    final provider = chatControllerProvider(sessionId);
+
+    await container
+        .read(provider.notifier)
+        .send(
+          '记录今天午饭 38 元',
+          turnMetadata: const ChatTurnMetadata(
+            inputOrigin: InteractionInputOrigin.voice,
+          ),
+        );
+
+    expect(repo.lastTurnMetadata.inputOrigin, InteractionInputOrigin.voice);
+  });
+
   test('send() is a no-op without content or active user', () async {
     final repo = _FakeChatRepository();
     final container = ProviderContainer(
@@ -141,6 +159,7 @@ class _FakeChatRepository implements ChatRepository {
   String? lastContent;
   String? lastSystemContext;
   CancelToken? lastCancelToken;
+  ChatTurnMetadata lastTurnMetadata = const ChatTurnMetadata.empty();
 
   @override
   Future<SendOutcome> sendMessage({
@@ -158,6 +177,7 @@ class _FakeChatRepository implements ChatRepository {
     lastContent = content;
     lastSystemContext = systemContext;
     lastCancelToken = cancelToken;
+    lastTurnMetadata = turnMetadata;
     if (!entered.isCompleted) entered.complete();
     await gate?.future;
     final failure = failWith;
