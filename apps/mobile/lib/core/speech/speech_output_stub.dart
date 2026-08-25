@@ -13,6 +13,9 @@ final class _UnsupportedSpeechOutput implements SpeechOutput {
 
   @override
   Future<SpeechOutputSession> speak(SpeechOutputRequest request) {
-    throw StateError('Speech output is unavailable on this platform');
+    throw const SpeechOutputException(
+      SpeechOutputErrorCode.engineUnavailable,
+      'Speech output is unavailable on this platform',
+    );
   }
 }

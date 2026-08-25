@@ -3,6 +3,7 @@ import 'dart:collection';
 
 import '../../core/ai/session/delivery_ledger.dart';
 import '../../core/ai/session/interaction_ids.dart';
+import '../../core/ai/session/interaction_state.dart';
 import '../../core/speech/speech_output.dart';
 import 'interaction_session_coordinator.dart';
 
@@ -87,7 +88,13 @@ final class SerializedSpeechOutputBridge {
     if (_closed) return;
     _paused = true;
     final active = _activeSession;
-    if (active != null) await active.pause();
+    if (active == null) return;
+    try {
+      await active.pause();
+    } on Object catch (error, stackTrace) {
+      _reportProviderError(error, stackTrace);
+      await _cancelActive(active);
+    }
   }
 
   /// Resumes a false interruption or restarts the queue after a candidate was
@@ -97,7 +104,12 @@ final class SerializedSpeechOutputBridge {
     _paused = false;
     final active = _activeSession;
     if (active != null) {
-      await active.resume();
+      try {
+        await active.resume();
+      } on Object catch (error, stackTrace) {
+        _reportProviderError(error, stackTrace);
+        await _cancelActive(active);
+      }
     }
     _ensurePump();
   }
@@ -162,15 +174,13 @@ final class SerializedSpeechOutputBridge {
           SpeechOutputRequest(stamp: entry.stamp, segment: entry.segment),
         );
       } on Object catch (error, stackTrace) {
-        try {
-          onProviderError?.call(error, stackTrace);
-        } catch (_) {
-          // Diagnostics must never make a provider failure load-bearing.
-        }
+        _reportProviderError(error, stackTrace);
         _activeEntry = null;
-        // A provider failure must not block later interaction turns. The
-        // current epoch is discarded by the host on the next turn; no text
-        // is marked delivered here because playback never started.
+        // A provider failure must not leave the output lane synthesizing
+        // forever while the Agent is still waiting for a terminal event.
+        if (_ownsEpoch(entry.stamp.epoch)) {
+          _coordinator.outputPlaybackStopped(interrupted: true);
+        }
         _tryFinishOutput(entry.stamp.epoch);
         continue;
       }
@@ -188,6 +198,11 @@ final class SerializedSpeechOutputBridge {
 
       if (interrupted) {
         _discardEpoch(entry.stamp.epoch);
+        if (_ownsEpoch(entry.stamp.epoch) &&
+            _coordinator.state.outputLane !=
+                InteractionOutputLane.interrupted) {
+          _coordinator.outputPlaybackStopped(interrupted: true);
+        }
         continue;
       }
       _tryFinishOutput(entry.stamp.epoch);
@@ -198,11 +213,29 @@ final class SerializedSpeechOutputBridge {
     final done = Completer<void>();
     _activeCompletion = done;
     var interrupted = false;
+    var stopped = false;
+    var providerErrorReported = false;
     late final StreamSubscription<SpeechOutputEvent> subscription;
     subscription = session.events.listen(
       (event) {
+        if (event is SpeechOutputError) {
+          interrupted = true;
+          if (!providerErrorReported) {
+            providerErrorReported = true;
+            _reportProviderError(
+              SpeechOutputException(
+                event.code,
+                'System text-to-speech provider failed',
+              ),
+              StackTrace.current,
+            );
+          }
+          unawaited(_cancelAfterFailure(session, done));
+          return;
+        }
         if (event is SpeechOutputStopped) {
-          interrupted = event.interrupted;
+          stopped = true;
+          interrupted = interrupted || event.interrupted;
           if (!_closed && event.interrupted) {
             _coordinator.acceptSpeechOutputEvent(event);
           }
@@ -211,10 +244,20 @@ final class SerializedSpeechOutputBridge {
         }
         if (!_closed) _coordinator.acceptSpeechOutputEvent(event);
       },
-      onError: (Object _, StackTrace _) {
+      onError: (Object error, StackTrace stackTrace) {
+        interrupted = true;
+        if (!providerErrorReported) {
+          providerErrorReported = true;
+          _reportProviderError(error, stackTrace);
+        }
+        unawaited(_cancelAfterFailure(session, done));
         if (!done.isCompleted) done.complete();
       },
       onDone: () {
+        // A provider session that closes without a stopped event is not a
+        // successful delivery. Treat it as terminal failure so the pump can
+        // release the queue and the next interaction turn can proceed.
+        if (!stopped) interrupted = true;
         if (!done.isCompleted) done.complete();
       },
       cancelOnError: false,
@@ -232,8 +275,31 @@ final class SerializedSpeechOutputBridge {
     final completion = _activeCompletion;
     try {
       await active.cancel();
+    } on Object catch (error, stackTrace) {
+      _reportProviderError(error, stackTrace);
     } finally {
       if (completion != null && !completion.isCompleted) completion.complete();
+    }
+  }
+
+  Future<void> _cancelAfterFailure(
+    SpeechOutputSession session,
+    Completer<void> done,
+  ) async {
+    try {
+      await session.cancel();
+    } on Object catch (error, stackTrace) {
+      _reportProviderError(error, stackTrace);
+    } finally {
+      if (!done.isCompleted) done.complete();
+    }
+  }
+
+  void _reportProviderError(Object error, StackTrace stackTrace) {
+    try {
+      onProviderError?.call(error, stackTrace);
+    } catch (_) {
+      // Diagnostics must never make a provider failure load-bearing.
     }
   }
 
@@ -250,6 +316,9 @@ final class SerializedSpeechOutputBridge {
       generation == _generation &&
       _coordinator.state.sessionId == entry.stamp.sessionId &&
       _coordinator.state.responseEpoch == entry.stamp.epoch;
+
+  bool _ownsEpoch(ResponseEpoch epoch) =>
+      !_closed && _coordinator.state.responseEpoch == epoch;
 
   void _discardEpoch(ResponseEpoch epoch) {
     _queue.removeWhere((entry) => entry.stamp.epoch.value <= epoch.value);

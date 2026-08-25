@@ -197,6 +197,37 @@ void main() {
     await bridge.close();
     await coordinator.close();
   });
+
+  test('reports a native output error and releases the active pump', () async {
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+    );
+    coordinator.startTurn(InteractionInputOrigin.voice);
+    Object? reportedError;
+    final output = _FakeSpeechOutput();
+    final bridge = SerializedSpeechOutputBridge(
+      speechOutput: output,
+      coordinator: coordinator,
+      onProviderError: (error, _) => reportedError = error,
+    );
+    const segment = OutputSegment(id: 'native-error', text: '播报失败');
+
+    coordinator.queueOutputSegment(segment);
+    bridge.enqueue(segment);
+    await _flush();
+    await output.sessions.single.fail(SpeechOutputErrorCode.synthesisFailed);
+    await _flush();
+
+    expect(reportedError, isA<SpeechOutputException>());
+    expect(
+      (reportedError! as SpeechOutputException).code,
+      SpeechOutputErrorCode.synthesisFailed,
+    );
+    expect(coordinator.state.outputLane, InteractionOutputLane.interrupted);
+
+    await bridge.close();
+    await coordinator.close();
+  });
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -257,6 +288,14 @@ final class _FakeSpeechOutputSession implements SpeechOutputSession {
         ),
       )
       ..add(SpeechOutputStopped(stamp: request.stamp, interrupted: false));
+  }
+
+  Future<void> fail(SpeechOutputErrorCode code) async {
+    if (_events.isClosed) return;
+    _events
+      ..add(SpeechOutputError(stamp: request.stamp, code: code))
+      ..add(SpeechOutputStopped(stamp: request.stamp, interrupted: true));
+    await _events.close();
   }
 
   @override

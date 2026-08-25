@@ -10,6 +10,39 @@ class SpeechOutputStatus {
   final String? reason;
 
   bool get isReady => availability == SpeechOutputAvailability.ready;
+
+  SpeechOutputErrorCode? get errorCode => switch (availability) {
+    SpeechOutputAvailability.ready => null,
+    SpeechOutputAvailability.unsupported =>
+      SpeechOutputErrorCode.engineUnavailable,
+  };
+}
+
+enum SpeechOutputErrorCode {
+  engineUnavailable,
+  synthesisFailed,
+  interrupted,
+  sessionBusy,
+}
+
+extension SpeechOutputErrorCodeValue on SpeechOutputErrorCode {
+  String get diagnosticCode => switch (this) {
+    SpeechOutputErrorCode.engineUnavailable => 'engine_unavailable',
+    SpeechOutputErrorCode.synthesisFailed => 'synthesis_failed',
+    SpeechOutputErrorCode.interrupted => 'interrupted',
+    SpeechOutputErrorCode.sessionBusy => 'session_busy',
+  };
+}
+
+class SpeechOutputException implements Exception {
+  const SpeechOutputException(this.code, this.message, {this.cause});
+
+  final SpeechOutputErrorCode code;
+  final String message;
+  final Object? cause;
+
+  @override
+  String toString() => message;
 }
 
 final class SpeechOutputRequest {
@@ -40,6 +73,12 @@ final class SpeechOutputSegmentDelivered extends SpeechOutputEvent {
   final String segmentId;
 }
 
+final class SpeechOutputError extends SpeechOutputEvent {
+  const SpeechOutputError({required super.stamp, required this.code});
+
+  final SpeechOutputErrorCode code;
+}
+
 final class SpeechOutputPaused extends SpeechOutputEvent {
   const SpeechOutputPaused({required super.stamp});
 }
@@ -49,9 +88,22 @@ final class SpeechOutputResumed extends SpeechOutputEvent {
 }
 
 final class SpeechOutputStopped extends SpeechOutputEvent {
-  const SpeechOutputStopped({required super.stamp, required this.interrupted});
+  const SpeechOutputStopped({
+    required super.stamp,
+    required this.interrupted,
+    this.reason,
+  });
 
   final bool interrupted;
+  final SpeechOutputStopReason? reason;
+}
+
+enum SpeechOutputStopReason {
+  completed,
+  userCancelled,
+  interrupted,
+  providerError,
+  lifecycle,
 }
 
 abstract interface class SpeechOutputSession {

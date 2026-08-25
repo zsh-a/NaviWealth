@@ -9,6 +9,7 @@ import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
+import '../../../core/speech/speech_output.dart';
 import '../../../core/speech/speech_output_provider.dart';
 import '../../../core/speech/speech_recognizer.dart';
 import '../../../core/speech/speech_recognizer_provider.dart';
@@ -172,7 +173,13 @@ class ChatController extends StateNotifier<ChatTurnState> {
             .event(
               'core.speech.output.failed',
               level: AppLogLevel.warning,
-              fields: const {'outcome': 'failed', 'provider': 'system_tts'},
+              fields: {
+                'outcome': 'failed',
+                'provider': 'system_tts',
+                'error_code': error is SpeechOutputException
+                    ? error.code.diagnosticCode
+                    : diagnosticErrorCode(error),
+              },
               error: error,
               stackTrace: stackTrace,
             );

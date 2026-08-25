@@ -386,6 +386,10 @@ class InteractionSessionCoordinator {
         outputPlaybackStarted();
       case SpeechOutputSegmentDelivered(:final segmentId):
         outputSegmentDelivered(segmentId);
+      case SpeechOutputError():
+        // SerializedSpeechOutputBridge reports provider failures separately;
+        // an error event never counts as delivered assistant output.
+        break;
       case SpeechOutputPaused():
         dispatch((stamp) => OutputPlaybackPaused(stamp: stamp));
       case SpeechOutputResumed():
