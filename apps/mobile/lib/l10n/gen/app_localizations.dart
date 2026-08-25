@@ -14877,6 +14877,12 @@ abstract class AppLocalizations {
   /// **'System on-device recognition is the safe default. Zipformer keeps audio local and needs its model bundle.'**
   String get settingsAiModelsSpeechEngineSubtitle;
 
+  /// No description provided for @settingsAiModelsSpeechEngineLocalOnlySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This platform currently uses local Zipformer recognition and needs its model bundle.'**
+  String get settingsAiModelsSpeechEngineLocalOnlySubtitle;
+
   /// No description provided for @settingsAiModelsSpeechEngineSystem.
   ///
   /// In en, this message translates to:

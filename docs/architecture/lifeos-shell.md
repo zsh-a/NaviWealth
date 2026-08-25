@@ -314,7 +314,7 @@ The production model policy follows capability slots rather than a single
 | Capability slot | Production default | Optional path | Boundary |
 |---|---|---|---|
 | AEC / NS / AGC | iOS / Android system audio processing | Native engine-specific processing | High-rate audio stays native |
-| Streaming ASR | Local streaming Zipformer through `SpeechRecognizer` | System on-device ASR | Partial text is semantic input only |
+| Streaming ASR | Android system on-device ASR; iOS/macOS local Zipformer through `SpeechRecognizer` | Android local Zipformer; future native system adapters on Apple platforms | Partial text is semantic input only |
 | Offline refinement | None in the first path | SenseVoice or Whisper when a real second-pass caller exists | Never required by the live turn loop |
 | Agent reasoning | Existing user-selected `LlmProfile` and Agent Runtime | Realtime provider's generation inside its Host adapter | Voice does not choose a separate reasoning profile |
 | TTS | System TTS | Downloadable local TTS | System TTS is not bundled model data |
@@ -560,7 +560,10 @@ Location:
 
 Behavior:
 
-- Native mobile/desktop uses the opt-in INT8 Mandarin streaming Zipformer.
+- Android defaults to the system on-device recognizer; local INT8 Mandarin
+  Zipformer is an opt-in alternative. iOS and macOS currently default to local
+  Zipformer because their native system-recognizer adapters are not implemented
+  yet. Web remains unsupported.
 - The intended provider shape is `SpeechInput` above the existing recognizer
   seam, with `SystemSpeechRecognizer` and `SherpaSpeechRecognizer` as concrete
   implementations. Provider choice is policy-driven and must never silently

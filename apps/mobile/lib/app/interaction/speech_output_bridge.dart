@@ -15,11 +15,16 @@ final class SerializedSpeechOutputBridge {
   SerializedSpeechOutputBridge({
     required SpeechOutput speechOutput,
     required InteractionSessionCoordinator coordinator,
+    this.onProviderError,
   }) : _speechOutput = speechOutput,
        _coordinator = coordinator;
 
   final SpeechOutput _speechOutput;
   final InteractionSessionCoordinator _coordinator;
+
+  /// Reports provider failures without carrying generated text, audio data,
+  /// or user content across the interaction boundary.
+  final void Function(Object error, StackTrace stackTrace)? onProviderError;
   final Queue<_QueuedSpeechSegment> _queue = Queue<_QueuedSpeechSegment>();
   final Set<int> _finishedEpochs = <int>{};
 
@@ -156,7 +161,12 @@ final class SerializedSpeechOutputBridge {
         session = await _speechOutput.speak(
           SpeechOutputRequest(stamp: entry.stamp, segment: entry.segment),
         );
-      } on Object {
+      } on Object catch (error, stackTrace) {
+        try {
+          onProviderError?.call(error, stackTrace);
+        } catch (_) {
+          // Diagnostics must never make a provider failure load-bearing.
+        }
         _activeEntry = null;
         // A provider failure must not block later interaction turns. The
         // current epoch is discarded by the host on the next turn; no text

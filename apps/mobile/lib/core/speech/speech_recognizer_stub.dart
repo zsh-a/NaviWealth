@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'speech_recognizer.dart';
 
+/// Web and other non-IO builds do not expose Android's system recognizer.
+bool get supportsSystemOnDeviceBackend => false;
+
 SpeechRecognizer createSpeechRecognizer(Ref ref) =>
     const _UnsupportedSpeechRecognizer();
 

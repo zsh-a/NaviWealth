@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../../app/interaction/interaction_chat_session.dart';
 import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/auth/current_user.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/logging/providers.dart';
 import '../../../core/speech/speech_output_provider.dart';
 import '../../../core/speech/speech_recognizer_provider.dart';
 import '../data/chat_repository.dart';
@@ -150,6 +152,17 @@ class ChatController extends StateNotifier<ChatTurnState> {
         );
       },
       onStateChanged: _onInteractionStateChanged,
+      onSpeechOutputError: (error, stackTrace) {
+        ref
+            .read(loggerProvider)
+            .event(
+              'core.speech.output.failed',
+              level: AppLogLevel.warning,
+              fields: const {'outcome': 'failed', 'provider': 'system_tts'},
+              error: error,
+              stackTrace: stackTrace,
+            );
+      },
     );
     _interactionSession = session;
     _interactionOwnerUserId = ownerUserId;

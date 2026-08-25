@@ -5,14 +5,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test(
-    'defaults to system recognition and persists a backend choice',
+    'defaults to the platform backend and persists a backend choice',
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{});
       final prefs = await SharedPreferences.getInstance();
       final controller = SpeechRecognizerBackendController(prefs);
       addTearDown(controller.dispose);
 
-      expect(controller.state, SpeechRecognizerBackend.systemOnDevice);
+      expect(
+        controller.state,
+        SpeechRecognizerBackendController.platformDefault,
+      );
 
       await controller.setBackend(SpeechRecognizerBackend.localZipformer);
 
@@ -23,17 +26,31 @@ void main() {
     },
   );
 
+  test('unknown persisted values fall back to the platform backend', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'naviwealth.speech.recognizer_backend': 'futureBackend',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final controller = SpeechRecognizerBackendController(prefs);
+    addTearDown(controller.dispose);
+
+    expect(controller.state, SpeechRecognizerBackendController.platformDefault);
+  });
+
   test(
-    'unknown persisted values fall back to the safe system backend',
+    'migrates an unavailable persisted system backend to the platform default',
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
-        'naviwealth.speech.recognizer_backend': 'futureBackend',
+        'naviwealth.speech.recognizer_backend': 'systemOnDevice',
       });
       final prefs = await SharedPreferences.getInstance();
       final controller = SpeechRecognizerBackendController(prefs);
       addTearDown(controller.dispose);
 
-      expect(controller.state, SpeechRecognizerBackend.systemOnDevice);
+      expect(
+        controller.state,
+        SpeechRecognizerBackendController.platformDefault,
+      );
     },
   );
 }

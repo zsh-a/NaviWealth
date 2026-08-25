@@ -8,6 +8,11 @@ import 'speech_recognizer_android.dart';
 import 'speech_recognizer_sherpa.dart' as sherpa;
 import 'speech_recognizer_sherpa_android.dart';
 
+/// The explicit system on-device bridge currently exists only on Android.
+/// Other native platforms use the local Zipformer path until a native
+/// platform recognizer adapter is implemented for them.
+bool get supportsSystemOnDeviceBackend => Platform.isAndroid;
+
 /// Selects the current native speech backend without changing the shared
 /// SpeechRecognizer contract. Android uses the platform's explicit on-device
 /// recognizer; other IO platforms retain the local sherpa backend until their

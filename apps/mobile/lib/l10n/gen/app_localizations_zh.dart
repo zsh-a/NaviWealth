@@ -8393,6 +8393,10 @@ class AppLocalizationsZh extends AppLocalizations {
       '系统端侧识别是安全默认值；Zipformer 全程本地运行，需要先下载语音模型。';
 
   @override
+  String get settingsAiModelsSpeechEngineLocalOnlySubtitle =>
+      '当前平台使用本地 Zipformer 识别，需要先下载语音模型。';
+
+  @override
   String get settingsAiModelsSpeechEngineSystem => '系统端侧识别';
 
   @override

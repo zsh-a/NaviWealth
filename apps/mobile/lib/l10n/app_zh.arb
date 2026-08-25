@@ -2642,6 +2642,7 @@
   "settingsAiModelsHint": "模型文件仅保存在本机，不会上传。EmbeddingGemma 用于本地记忆检索；Zipformer 用于普通话实时语音输入。ONNX Runtime 已随应用构建，无需单独管理。",
   "settingsAiModelsSpeechEngineTitle": "语音识别引擎",
   "settingsAiModelsSpeechEngineSubtitle": "系统端侧识别是安全默认值；Zipformer 全程本地运行，需要先下载语音模型。",
+  "settingsAiModelsSpeechEngineLocalOnlySubtitle": "当前平台使用本地 Zipformer 识别，需要先下载语音模型。",
   "settingsAiModelsSpeechEngineSystem": "系统端侧识别",
   "settingsAiModelsSpeechEngineZipformer": "本地 Zipformer",
   "settingsAiModelsSpeechEngineZipformerMissing": "使用本地识别前，请先下载下方 Zipformer 模型。",

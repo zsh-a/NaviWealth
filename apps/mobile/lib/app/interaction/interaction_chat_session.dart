@@ -36,6 +36,7 @@ final class InteractionChatSession {
     void Function({required bool cancelled})? onSpeechEnded,
     void Function(InteractionState state)? onStateChanged,
     void Function(Object error, StackTrace stackTrace)? onTurnError,
+    void Function(Object error, StackTrace stackTrace)? onSpeechOutputError,
   }) {
     late final InteractionChatSession session;
     final coordinator = InteractionSessionCoordinator(
@@ -56,6 +57,7 @@ final class InteractionChatSession {
     final output = SerializedSpeechOutputBridge(
       speechOutput: speechOutput,
       coordinator: coordinator,
+      onProviderError: onSpeechOutputError,
     );
     session = InteractionChatSession._(
       repository: repository,

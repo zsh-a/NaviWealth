@@ -15,8 +15,16 @@ import 'speech_recognizer_stub.dart'
 
 enum SpeechRecognizerBackend { systemOnDevice, localZipformer }
 
-/// User-selectable speech backend. System on-device recognition is the safe
-/// default; the local Zipformer backend is opt-in and stays on this device.
+/// Whether the selected platform has a real system on-device recognizer
+/// implementation. Web remains an explicit unsupported surface; native
+/// non-Android platforms currently use local Zipformer instead.
+final speechRecognizerSystemBackendAvailableProvider = Provider<bool>(
+  (_) => implementation.supportsSystemOnDeviceBackend,
+);
+
+/// User-selectable speech backend. Android uses system on-device recognition
+/// by default; other native platforms use local Zipformer until their native
+/// system recognizer adapters exist.
 final speechRecognizerBackendProvider =
     StateNotifierProvider<
       SpeechRecognizerBackendController,
@@ -29,22 +37,46 @@ final speechRecognizerBackendProvider =
 
 class SpeechRecognizerBackendController
     extends StateNotifier<SpeechRecognizerBackend> {
-  SpeechRecognizerBackendController(this._prefs) : super(_load(_prefs));
+  SpeechRecognizerBackendController(this._prefs)
+    : super(_load(_prefs, _defaultBackend()));
 
   static const String _preferenceKey = 'naviwealth.speech.recognizer_backend';
 
   final SharedPreferences _prefs;
 
-  static SpeechRecognizerBackend _load(SharedPreferences prefs) {
-    if (kIsWeb) return SpeechRecognizerBackend.systemOnDevice;
-    return switch (prefs.getString(_preferenceKey)) {
+  static SpeechRecognizerBackend get platformDefault => _defaultBackend();
+
+  static SpeechRecognizerBackend _defaultBackend() {
+    if (kIsWeb || implementation.supportsSystemOnDeviceBackend) {
+      return SpeechRecognizerBackend.systemOnDevice;
+    }
+    return SpeechRecognizerBackend.localZipformer;
+  }
+
+  static SpeechRecognizerBackend _load(
+    SharedPreferences prefs,
+    SpeechRecognizerBackend fallback,
+  ) {
+    final stored = switch (prefs.getString(_preferenceKey)) {
       'localZipformer' => SpeechRecognizerBackend.localZipformer,
-      _ => SpeechRecognizerBackend.systemOnDevice,
+      'systemOnDevice' => SpeechRecognizerBackend.systemOnDevice,
+      _ => fallback,
     };
+    if (stored == SpeechRecognizerBackend.systemOnDevice &&
+        !kIsWeb &&
+        !implementation.supportsSystemOnDeviceBackend) {
+      return fallback;
+    }
+    return stored;
   }
 
   Future<void> setBackend(SpeechRecognizerBackend backend) async {
-    final effective = kIsWeb ? SpeechRecognizerBackend.systemOnDevice : backend;
+    final effective = kIsWeb
+        ? SpeechRecognizerBackend.systemOnDevice
+        : implementation.supportsSystemOnDeviceBackend ||
+              backend == SpeechRecognizerBackend.localZipformer
+        ? backend
+        : SpeechRecognizerBackend.localZipformer;
     if (state == effective) return;
     state = effective;
     await _prefs.setString(_preferenceKey, effective.name);

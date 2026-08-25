@@ -337,6 +337,12 @@ checks the shared model installer for
 directory to the native bridge. A missing local model is reported as
 `modelNotInstalled`; it never triggers a cloud fallback.
 
+On iOS and macOS, the current native path defaults to local Zipformer because
+the explicit system on-device recognizer bridge has not been implemented for
+those platforms yet. The settings UI therefore exposes only local Zipformer
+there; a persisted Android system selection is normalized to that local path.
+Web keeps the unsupported speech stub and does not expose a microphone path.
+
 When `localZipformer` is selected, the Android hot path is:
 
 ```text

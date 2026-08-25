@@ -169,6 +169,34 @@ void main() {
     await bridge.close();
     await coordinator.close();
   });
+
+  test('reports provider failures without blocking the output pump', () async {
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+    );
+    coordinator.startTurn(InteractionInputOrigin.voice);
+    Object? reportedError;
+    StackTrace? reportedStackTrace;
+    final bridge = SerializedSpeechOutputBridge(
+      speechOutput: _FailingSpeechOutput(),
+      coordinator: coordinator,
+      onProviderError: (error, stackTrace) {
+        reportedError = error;
+        reportedStackTrace = stackTrace;
+      },
+    );
+    const segment = OutputSegment(id: 'failed', text: '无法播报。');
+
+    coordinator.queueOutputSegment(segment);
+    bridge.enqueue(segment);
+    await _flush();
+
+    expect(reportedError, isA<StateError>());
+    expect(reportedStackTrace, isNotNull);
+
+    await bridge.close();
+    await coordinator.close();
+  });
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -187,6 +215,17 @@ final class _FakeSpeechOutput implements SpeechOutput {
     final session = _FakeSpeechOutputSession(request);
     sessions.add(session);
     return session;
+  }
+}
+
+final class _FailingSpeechOutput implements SpeechOutput {
+  @override
+  Future<SpeechOutputStatus> status() async =>
+      const SpeechOutputStatus(SpeechOutputAvailability.unsupported);
+
+  @override
+  Future<SpeechOutputSession> speak(SpeechOutputRequest request) {
+    throw StateError('system TTS unavailable');
   }
 }
 

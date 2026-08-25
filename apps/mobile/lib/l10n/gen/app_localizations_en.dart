@@ -8859,6 +8859,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'System on-device recognition is the safe default. Zipformer keeps audio local and needs its model bundle.';
 
   @override
+  String get settingsAiModelsSpeechEngineLocalOnlySubtitle =>
+      'This platform currently uses local Zipformer recognition and needs its model bundle.';
+
+  @override
   String get settingsAiModelsSpeechEngineSystem => 'System on-device';
 
   @override

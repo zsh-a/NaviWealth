@@ -18,14 +18,31 @@ class _SpeechRecognizerCard extends ConsumerWidget {
 
     final l10n = AppLocalizations.of(context);
     final backend = ref.watch(speechRecognizerBackendProvider);
+    final systemAvailable = ref.watch(
+      speechRecognizerSystemBackendAvailableProvider,
+    );
     final install = ref.watch(modelInstallProvider(zipformer));
     final subtitle = install.when(
-      loading: () => l10n.settingsAiModelsSpeechEngineSubtitle,
-      error: (_, _) => l10n.settingsAiModelsSpeechEngineSubtitle,
-      data: (state) => state.isInstalled
+      loading: () => systemAvailable
           ? l10n.settingsAiModelsSpeechEngineSubtitle
+          : l10n.settingsAiModelsSpeechEngineLocalOnlySubtitle,
+      error: (_, _) => systemAvailable
+          ? l10n.settingsAiModelsSpeechEngineSubtitle
+          : l10n.settingsAiModelsSpeechEngineLocalOnlySubtitle,
+      data: (state) => state.isInstalled
+          ? (systemAvailable
+                ? l10n.settingsAiModelsSpeechEngineSubtitle
+                : l10n.settingsAiModelsSpeechEngineLocalOnlySubtitle)
           : l10n.settingsAiModelsSpeechEngineZipformerMissing,
     );
+
+    final options = <String, SpeechRecognizerBackend>{
+      if (systemAvailable)
+        l10n.settingsAiModelsSpeechEngineSystem:
+            SpeechRecognizerBackend.systemOnDevice,
+      l10n.settingsAiModelsSpeechEngineZipformer:
+          SpeechRecognizerBackend.localZipformer,
+    };
 
     return AppGroupedSurface(
       padding: EdgeInsets.zero,
@@ -34,12 +51,7 @@ class _SpeechRecognizerCard extends ConsumerWidget {
         label: l10n.settingsAiModelsSpeechEngineTitle,
         subtitle: subtitle,
         value: backend,
-        options: {
-          l10n.settingsAiModelsSpeechEngineSystem:
-              SpeechRecognizerBackend.systemOnDevice,
-          l10n.settingsAiModelsSpeechEngineZipformer:
-              SpeechRecognizerBackend.localZipformer,
-        },
+        options: options,
         onChanged: (next) => unawaited(
           ref.read(speechRecognizerBackendProvider.notifier).setBackend(next),
         ),
