@@ -172,6 +172,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
       SpeechInputTranscript(:final text) => text,
       SpeechInputSpeechStarted() ||
       SpeechInputSpeechStopped() ||
+      SpeechInputCaptureStarted() ||
       SpeechInputEnded() => null,
     };
     if (text == null) return;

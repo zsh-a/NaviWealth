@@ -91,6 +91,10 @@ void main() {
           // events until the Interaction/managed session subscribes.
           nativeEvents
             ..add(<String, Object?>{
+              'type': 'capture_started',
+              'startup_duration_ms': 321,
+            })
+            ..add(<String, Object?>{
               'type': 'speech_started',
               'started_at_ms': 1234,
             })
@@ -127,24 +131,29 @@ void main() {
 
       final events = await session.events.toList();
 
-      expect(events, hasLength(5));
-      expect(events[0].speechStarted, isTrue);
+      expect(events, hasLength(6));
+      expect(events[0].captureStarted, isTrue);
       expect(
-        events[0].startedAt,
+        events[0].captureStartupDuration,
+        const Duration(milliseconds: 321),
+      );
+      expect(events[1].speechStarted, isTrue);
+      expect(
+        events[1].startedAt,
         DateTime.fromMillisecondsSinceEpoch(1234, isUtc: true),
       );
-      expect(events[1].text, '记录午饭');
-      expect(events[1].isFinal, isFalse);
-      expect(events[2].text, '记录午饭三十八元');
-      expect(events[2].isFinal, isTrue);
-      expect(events[3].speechStopped, isTrue);
+      expect(events[2].text, '记录午饭');
+      expect(events[2].isFinal, isFalse);
+      expect(events[3].text, '记录午饭三十八元');
+      expect(events[3].isFinal, isTrue);
+      expect(events[4].speechStopped, isTrue);
       expect(
-        events[3].stoppedAt,
+        events[4].stoppedAt,
         DateTime.fromMillisecondsSinceEpoch(2345, isUtc: true),
       );
-      expect(events[3].speechDuration, const Duration(milliseconds: 1111));
-      expect(events[4].sessionEnded, isTrue);
-      expect(events[4].cancelled, isFalse);
+      expect(events[4].speechDuration, const Duration(milliseconds: 1111));
+      expect(events[5].sessionEnded, isTrue);
+      expect(events[5].cancelled, isFalse);
 
       final startCall = calls.singleWhere((call) => call.method == 'start');
       expect(

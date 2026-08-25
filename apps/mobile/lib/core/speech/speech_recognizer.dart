@@ -65,6 +65,8 @@ class SpeechRecognitionEvent {
     this.speechStopped = false,
     this.stoppedAt,
     this.speechDuration,
+    this.captureStarted = false,
+    this.captureStartupDuration,
     this.sessionEnded = false,
     this.cancelled = false,
   });
@@ -85,6 +87,15 @@ class SpeechRecognitionEvent {
 
   final DateTime? stoppedAt;
   final Duration? speechDuration;
+
+  /// True when the native capture pipeline has completed its startup work and
+  /// AudioRecord is accepting frames. This is distinct from
+  /// [speechStarted], which waits for VAD to detect a user's voice.
+  final bool captureStarted;
+
+  /// Time spent preparing the native capture/model path before
+  /// [captureStarted]. This is transcript-free startup telemetry.
+  final Duration? captureStartupDuration;
 
   /// True when the provider has emitted its terminal lifecycle signal. This
   /// is separate from [isFinal]: a native session can end because the host

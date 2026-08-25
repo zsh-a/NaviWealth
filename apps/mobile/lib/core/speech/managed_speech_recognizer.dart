@@ -165,6 +165,14 @@ class _ManagedSpeechRecognitionSession implements SpeechRecognitionSession {
 
   void _onEvent(SpeechRecognitionEvent event) {
     if (_closed) return;
+    if (event.captureStarted) {
+      _diagnostics.record(
+        SpeechDiagnosticEvent(
+          kind: SpeechDiagnosticEventKind.captureStarted,
+          elapsed: event.captureStartupDuration ?? _stopwatch.elapsed,
+        ),
+      );
+    }
     if (!_firstPartialRecorded && event.text.trim().isNotEmpty) {
       _firstPartialRecorded = true;
       _diagnostics.record(

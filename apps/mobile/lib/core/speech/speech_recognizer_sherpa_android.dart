@@ -160,6 +160,17 @@ class _AndroidSherpaSpeechRecognitionSession
             startedAt: _dateTimeFromMillis(map?['started_at_ms']),
           ),
         );
+      case 'capture_started':
+        _emit(
+          SpeechRecognitionEvent(
+            text: '',
+            isFinal: false,
+            captureStarted: true,
+            captureStartupDuration: _durationFromMillis(
+              map?['startup_duration_ms'],
+            ),
+          ),
+        );
       case 'transcript':
         final text = map?['text'];
         if (text is! String) return;

@@ -4,6 +4,7 @@ import 'speech_recognizer.dart';
 enum SpeechDiagnosticEventKind {
   statusUnavailable,
   started,
+  captureStarted,
   firstPartial,
   completed,
   cancelled,
@@ -15,6 +16,7 @@ extension on SpeechDiagnosticEventKind {
   String get wire => switch (this) {
     SpeechDiagnosticEventKind.statusUnavailable => 'status_unavailable',
     SpeechDiagnosticEventKind.started => 'started',
+    SpeechDiagnosticEventKind.captureStarted => 'capture_started',
     SpeechDiagnosticEventKind.firstPartial => 'first_partial',
     SpeechDiagnosticEventKind.completed => 'completed',
     SpeechDiagnosticEventKind.cancelled => 'cancelled',
@@ -50,6 +52,7 @@ class SpeechDiagnosticsSnapshot {
     required this.statusUnavailable,
     required this.maxDurationStops,
     this.lastFirstPartialLatency,
+    this.lastCaptureStartupLatency,
     this.lastSessionDuration,
     this.lastErrorCode,
     this.lastStatusAvailability,
@@ -63,6 +66,7 @@ class SpeechDiagnosticsSnapshot {
   final int statusUnavailable;
   final int maxDurationStops;
   final Duration? lastFirstPartialLatency;
+  final Duration? lastCaptureStartupLatency;
   final Duration? lastSessionDuration;
   final SpeechRecognitionErrorCode? lastErrorCode;
   final SpeechRecognizerAvailability? lastStatusAvailability;
@@ -89,6 +93,7 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
   var _statusUnavailable = 0;
   var _maxDurationStops = 0;
   Duration? _lastFirstPartialLatency;
+  Duration? _lastCaptureStartupLatency;
   Duration? _lastSessionDuration;
   SpeechRecognitionErrorCode? _lastErrorCode;
   SpeechRecognizerAvailability? _lastStatusAvailability;
@@ -102,6 +107,7 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
     statusUnavailable: _statusUnavailable,
     maxDurationStops: _maxDurationStops,
     lastFirstPartialLatency: _lastFirstPartialLatency,
+    lastCaptureStartupLatency: _lastCaptureStartupLatency,
     lastSessionDuration: _lastSessionDuration,
     lastErrorCode: _lastErrorCode,
     lastStatusAvailability: _lastStatusAvailability,
@@ -117,6 +123,8 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
         _lastStatusErrorCode = event.errorCode;
       case SpeechDiagnosticEventKind.started:
         _started++;
+      case SpeechDiagnosticEventKind.captureStarted:
+        _lastCaptureStartupLatency = event.elapsed;
       case SpeechDiagnosticEventKind.firstPartial:
         _lastFirstPartialLatency = event.elapsed;
       case SpeechDiagnosticEventKind.completed:

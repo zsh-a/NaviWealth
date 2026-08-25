@@ -461,6 +461,11 @@ class InteractionSessionCoordinator {
         speechStarted(startedAt: startedAt);
       case SpeechInputSpeechStopped(:final stoppedAt, :final duration):
         speechStopped(stoppedAt: stoppedAt, duration: duration);
+      case SpeechInputCaptureStarted():
+        // Capture readiness is a diagnostic/UX boundary. The start future
+        // already resolves only after the native session is active, so it
+        // must not advance the interaction state or trigger barge-in.
+        break;
       case SpeechInputTranscript(:final text, :final isFinal):
         updateTranscript(text, isFinal: isFinal);
       case SpeechInputEnded(:final cancelled):

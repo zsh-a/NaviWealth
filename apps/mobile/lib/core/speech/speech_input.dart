@@ -25,6 +25,14 @@ final class SpeechInputSpeechStopped extends SpeechInputEvent {
   final Duration? duration;
 }
 
+/// Native capture is ready to receive frames. This is earlier than
+/// [SpeechInputSpeechStarted], which waits for VAD to detect user speech.
+final class SpeechInputCaptureStarted extends SpeechInputEvent {
+  const SpeechInputCaptureStarted({this.startupDuration});
+
+  final Duration? startupDuration;
+}
+
 final class SpeechInputTranscript extends SpeechInputEvent {
   const SpeechInputTranscript({required this.text, required this.isFinal});
 
@@ -106,6 +114,13 @@ class _RecognizerSpeechInputSession implements SpeechInputSession {
         SpeechInputSpeechStopped(
           stoppedAt: event.stoppedAt,
           duration: event.speechDuration,
+        ),
+      );
+    }
+    if (event.captureStarted) {
+      _events.add(
+        SpeechInputCaptureStarted(
+          startupDuration: event.captureStartupDuration,
         ),
       );
     }

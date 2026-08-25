@@ -586,8 +586,11 @@ Behavior:
 - The current Dart path (`record` PCM stream → Dart decode → Sherpa FFI) remains
   a push-to-talk/local-ASR path. Android local Zipformer is the native
   full-duplex path: capture, AEC/NS/AGC, VAD, and high-rate ASR stay native;
-  Dart/FRB receives only semantic events. A host stop sends a cancelled
-  terminal event before releasing the native microphone lease.
+  Dart/FRB receives only semantic events. Model initialization is off the
+  Android UI thread and the initialized model handle is reused between turns;
+  `capture_started` reports readiness and transcript-free startup duration. A
+  host stop sends a cancelled terminal event before releasing the native
+  microphone lease.
 - Full-duplex barge-in follows `BargeInCandidate → BargeInCommitted`. A VAD
   signal may duck or pause playback immediately, but only sustained speech or
   valid ASR text increments the response epoch and invalidates the old output.

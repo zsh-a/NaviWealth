@@ -12,6 +12,9 @@ void main() {
     final events = <SpeechInputEvent>[];
     final subscription = session.events.listen(events.add);
 
+    recognizer.session.emitCaptureStarted(
+      startupDuration: const Duration(milliseconds: 321),
+    );
     recognizer.session.emitSpeechStarted();
     recognizer.session.emit('吃饭', isFinal: false);
     recognizer.session.emit('吃饭了吗', isFinal: true);
@@ -21,18 +24,23 @@ void main() {
     await session.stop();
     await Future<void>.delayed(Duration.zero);
 
-    expect(events, hasLength(5));
-    expect(events[0], isA<SpeechInputSpeechStarted>());
-    expect((events[1] as SpeechInputTranscript).text, '吃饭');
-    expect((events[1] as SpeechInputTranscript).isFinal, isFalse);
-    expect((events[2] as SpeechInputTranscript).text, '吃饭了吗');
-    expect((events[2] as SpeechInputTranscript).isFinal, isTrue);
-    expect(events[3], isA<SpeechInputSpeechStopped>());
+    expect(events, hasLength(6));
+    expect(events[0], isA<SpeechInputCaptureStarted>());
     expect(
-      (events[3] as SpeechInputSpeechStopped).duration,
+      (events[0] as SpeechInputCaptureStarted).startupDuration,
+      const Duration(milliseconds: 321),
+    );
+    expect(events[1], isA<SpeechInputSpeechStarted>());
+    expect((events[2] as SpeechInputTranscript).text, '吃饭');
+    expect((events[2] as SpeechInputTranscript).isFinal, isFalse);
+    expect((events[3] as SpeechInputTranscript).text, '吃饭了吗');
+    expect((events[3] as SpeechInputTranscript).isFinal, isTrue);
+    expect(events[4], isA<SpeechInputSpeechStopped>());
+    expect(
+      (events[4] as SpeechInputSpeechStopped).duration,
       const Duration(milliseconds: 240),
     );
-    expect((events[4] as SpeechInputEnded).cancelled, isFalse);
+    expect((events[5] as SpeechInputEnded).cancelled, isFalse);
 
     await subscription.cancel();
   });
@@ -105,6 +113,17 @@ class _FakeRecognitionSession implements SpeechRecognitionSession {
         text: '',
         isFinal: false,
         speechStarted: true,
+      ),
+    );
+  }
+
+  void emitCaptureStarted({required Duration startupDuration}) {
+    _events.add(
+      SpeechRecognitionEvent(
+        text: '',
+        isFinal: false,
+        captureStarted: true,
+        captureStartupDuration: startupDuration,
       ),
     );
   }

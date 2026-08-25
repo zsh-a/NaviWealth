@@ -224,15 +224,23 @@ void main() {
     final session = await recognizer.start();
     final events = <SpeechRecognitionEvent>[];
     session.events.listen(events.add);
+    delegate.sessions.single.addCaptureStarted(
+      startupDuration: const Duration(milliseconds: 480),
+    );
     delegate.sessions.single.add('银行卡余额是一万元');
     await Future<void>.delayed(Duration.zero);
     await session.stop();
 
     expect(events, isNotEmpty);
+    expect(
+      diagnostics.snapshot.lastCaptureStartupLatency,
+      const Duration(milliseconds: 480),
+    );
     expect(diagnostics.snapshot.lastFirstPartialLatency, isNotNull);
     final history = logger.talker.history
         .map((entry) => entry.message ?? '')
         .join('\n');
+    expect(history, contains('core.speech.session.capture_started'));
     expect(history, contains('core.speech.session.first_partial'));
     expect(history, isNot(contains('银行卡')));
     expect(history, isNot(contains('一万元')));
@@ -296,6 +304,18 @@ class _FakeSession implements SpeechRecognitionSession {
   void add(String text) {
     if (_events.isClosed) return;
     _events.add(SpeechRecognitionEvent(text: text, isFinal: false));
+  }
+
+  void addCaptureStarted({required Duration startupDuration}) {
+    if (_events.isClosed) return;
+    _events.add(
+      SpeechRecognitionEvent(
+        text: '',
+        isFinal: false,
+        captureStarted: true,
+        captureStartupDuration: startupDuration,
+      ),
+    );
   }
 
   void addSessionEnded({required bool cancelled}) {
