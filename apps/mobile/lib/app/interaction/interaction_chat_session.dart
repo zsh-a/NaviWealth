@@ -9,6 +9,7 @@ import '../../core/ai/session/interaction_ids.dart';
 import '../../core/ai/session/interaction_state.dart';
 import '../../core/speech/speech_input.dart';
 import '../../core/speech/speech_output.dart';
+import '../../core/speech/speech_recognizer.dart';
 import '../../features/ai_chat/data/chat_repository.dart';
 import '../../features/ai_chat/domain/chat_turn_metadata.dart';
 import 'agent_event_adapter.dart';
@@ -34,6 +35,8 @@ final class InteractionChatSession {
     void Function(InteractionTurnRequest request, SendOutcome outcome)?
     onTurnFinished,
     void Function({required bool cancelled})? onSpeechEnded,
+    void Function(SpeechRecognitionException error, StackTrace stackTrace)?
+    onSpeechError,
     void Function(InteractionState state)? onStateChanged,
     void Function(Object error, StackTrace stackTrace)? onTurnError,
     void Function(Object error, StackTrace stackTrace)? onSpeechOutputError,
@@ -51,6 +54,7 @@ final class InteractionChatSession {
         unawaited(session._output.interrupt(staleEpoch: staleEpoch));
       },
       onSpeechEnded: onSpeechEnded,
+      onSpeechError: onSpeechError,
       onStateChanged: onStateChanged,
       onTurnError: onTurnError,
     );

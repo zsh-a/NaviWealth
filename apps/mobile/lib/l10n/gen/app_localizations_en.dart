@@ -6327,6 +6327,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone permission is required for voice input';
 
   @override
+  String get speechInputRecorderUnavailable =>
+      'The microphone or recording device is unavailable';
+
+  @override
+  String get speechInputRuntimeUnavailable =>
+      'The on-device speech recognition service is unavailable';
+
+  @override
+  String get speechInputSessionBusy =>
+      'The previous voice session is still closing';
+
+  @override
   String get speechInputFailed =>
       'Speech recognition could not start. Try again later';
 

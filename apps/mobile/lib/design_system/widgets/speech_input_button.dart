@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/shell/settings_route_paths.dart';
+import '../../core/speech/speech_error_copy.dart';
 import '../../core/speech/speech_input.dart';
 import '../../core/speech/speech_recognizer.dart';
 import '../../core/speech/speech_recognizer_provider.dart';
@@ -157,15 +158,7 @@ class _SpeechInputButtonState extends ConsumerState<SpeechInputButton>
     } on SpeechRecognitionException catch (error) {
       if (!mounted || _state != _SpeechButtonState.starting) return;
       setState(() => _state = _SpeechButtonState.idle);
-      final message = switch (error.code) {
-        SpeechRecognitionErrorCode.modelNotInstalled =>
-          l10n.speechInputModelMissing,
-        SpeechRecognitionErrorCode.permissionDenied =>
-          l10n.speechInputPermissionDenied,
-        SpeechRecognitionErrorCode.recorderUnavailable ||
-        SpeechRecognitionErrorCode.runtimeUnavailable ||
-        SpeechRecognitionErrorCode.sessionBusy => l10n.speechInputFailed,
-      };
+      final message = speechRecognitionErrorMessage(l10n, error.code);
       AppMessenger.show(context, ToastKind.error, message);
     } on Object {
       if (!mounted || _state != _SpeechButtonState.starting) return;

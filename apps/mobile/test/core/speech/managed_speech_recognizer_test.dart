@@ -54,6 +54,41 @@ void main() {
   );
 
   test(
+    'records unavailable status with a stable code and no reason text',
+    () async {
+      final logger = AppLogger(environment: AppEnvironment.dev);
+      final diagnostics = SpeechDiagnosticsRecorder(logger: logger);
+      final recognizer = ManagedSpeechRecognizer(
+        delegate: _FakeRecognizer(
+          statusValue: const SpeechRecognizerStatus(
+            SpeechRecognizerAvailability.modelNotInstalled,
+            reason: 'path contains private provider detail',
+          ),
+        ),
+        diagnostics: diagnostics,
+      );
+
+      final status = await recognizer.status();
+
+      expect(status.isReady, isFalse);
+      expect(status.errorCode, SpeechRecognitionErrorCode.modelNotInstalled);
+      expect(diagnostics.snapshot.statusUnavailable, 1);
+      expect(
+        diagnostics.snapshot.lastStatusAvailability,
+        SpeechRecognizerAvailability.modelNotInstalled,
+      );
+      expect(
+        diagnostics.snapshot.lastStatusErrorCode,
+        SpeechRecognitionErrorCode.modelNotInstalled,
+      );
+      final history = logger.talker.history
+          .map((entry) => entry.message?.toString() ?? '')
+          .join('\n');
+      expect(history, isNot(contains('path contains private provider detail')));
+    },
+  );
+
+  test(
     'start failure records its code and releases process ownership',
     () async {
       final failingDelegate = _FakeRecognizer(
@@ -201,15 +236,20 @@ void main() {
 }
 
 class _FakeRecognizer implements SpeechRecognizer {
-  _FakeRecognizer({this.startError});
+  _FakeRecognizer({
+    this.startError,
+    this.statusValue = const SpeechRecognizerStatus(
+      SpeechRecognizerAvailability.ready,
+    ),
+  });
 
   final sessions = <_FakeSession>[];
   Object? startError;
+  final SpeechRecognizerStatus statusValue;
   var started = 0;
 
   @override
-  Future<SpeechRecognizerStatus> status() async =>
-      const SpeechRecognizerStatus(SpeechRecognizerAvailability.ready);
+  Future<SpeechRecognizerStatus> status() async => statusValue;
 
   @override
   Future<SpeechRecognitionSession> start() async {

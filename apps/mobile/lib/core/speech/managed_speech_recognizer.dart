@@ -19,7 +19,34 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
   final Duration maxSessionDuration;
 
   @override
-  Future<SpeechRecognizerStatus> status() => _delegate.status();
+  Future<SpeechRecognizerStatus> status() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      final status = await _delegate.status();
+      if (!status.isReady) {
+        _diagnostics.record(
+          SpeechDiagnosticEvent(
+            kind: SpeechDiagnosticEventKind.statusUnavailable,
+            elapsed: stopwatch.elapsed,
+            errorCode: status.errorCode,
+            availability: status.availability,
+          ),
+        );
+      }
+      return status;
+    } on Object catch (error) {
+      _diagnostics.record(
+        SpeechDiagnosticEvent(
+          kind: SpeechDiagnosticEventKind.failed,
+          elapsed: stopwatch.elapsed,
+          errorCode: error is SpeechRecognitionException
+              ? error.code
+              : SpeechRecognitionErrorCode.runtimeUnavailable,
+        ),
+      );
+      rethrow;
+    }
+  }
 
   @override
   Future<SpeechRecognitionSession> start() async {

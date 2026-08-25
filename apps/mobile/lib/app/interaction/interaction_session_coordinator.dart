@@ -13,6 +13,7 @@ import '../../core/ai/session/interaction_state.dart';
 import '../../core/ai/session/interruption_policy.dart';
 import '../../core/speech/speech_input.dart';
 import '../../core/speech/speech_output.dart';
+import '../../core/speech/speech_recognizer.dart';
 import 'voice_interaction_adapter.dart';
 
 final class InteractionTurnRequest {
@@ -59,6 +60,8 @@ class InteractionSessionCoordinator {
     void Function()? onFalseInterruption,
     void Function(ResponseEpoch staleEpoch)? onEpochAdvanced,
     void Function({required bool cancelled})? onSpeechEnded,
+    void Function(SpeechRecognitionException error, StackTrace stackTrace)?
+    onSpeechError,
     void Function(InteractionState state)? onStateChanged,
     void Function(Object error, StackTrace stackTrace)? onTurnError,
     VoiceInteractionResponseDecoder? responseDecoder,
@@ -75,6 +78,7 @@ class InteractionSessionCoordinator {
        _onFalseInterruption = onFalseInterruption,
        _onEpochAdvanced = onEpochAdvanced,
        _onSpeechEnded = onSpeechEnded,
+       _onSpeechError = onSpeechError,
        _onStateChanged = onStateChanged,
        _onTurnError = onTurnError,
        _responseDecoder = responseDecoder ?? decodeVoiceInteractionResponse,
@@ -88,6 +92,8 @@ class InteractionSessionCoordinator {
   final void Function()? _onFalseInterruption;
   final void Function(ResponseEpoch staleEpoch)? _onEpochAdvanced;
   final void Function({required bool cancelled})? _onSpeechEnded;
+  final void Function(SpeechRecognitionException error, StackTrace stackTrace)?
+  _onSpeechError;
   final void Function(InteractionState state)? _onStateChanged;
   final void Function(Object error, StackTrace stackTrace)? _onTurnError;
   final VoiceInteractionResponseDecoder _responseDecoder;
@@ -151,6 +157,12 @@ class InteractionSessionCoordinator {
     }
     await stopVoice();
 
+    final status = await input.status();
+    if (!status.isReady &&
+        status.availability != SpeechRecognizerAvailability.permissionDenied) {
+      throw speechRecognitionExceptionForStatus(status);
+    }
+
     final session = await input.start();
     if (_disposed) {
       await session.cancel();
@@ -171,9 +183,18 @@ class InteractionSessionCoordinator {
     _speechEvents = session.events.listen(
       _onSpeechEvent,
       onError: (Object error, StackTrace stackTrace) {
-        // The recognizer owns its lifecycle/error contract. The Coordinator
-        // only exposes the error to the session stream through state-free
-        // host logging; it must not turn an input error into a domain write.
+        final normalized = error is SpeechRecognitionException
+            ? error
+            : SpeechRecognitionException(
+                SpeechRecognitionErrorCode.runtimeUnavailable,
+                'Speech recognition event stream failed',
+                cause: error,
+              );
+        try {
+          _onSpeechError?.call(normalized, stackTrace);
+        } catch (_) {
+          // Diagnostics must never make the input lifecycle load-bearing.
+        }
       },
       cancelOnError: false,
     );

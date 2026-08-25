@@ -10609,6 +10609,24 @@ abstract class AppLocalizations {
   /// **'Microphone permission is required for voice input'**
   String get speechInputPermissionDenied;
 
+  /// No description provided for @speechInputRecorderUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The microphone or recording device is unavailable'**
+  String get speechInputRecorderUnavailable;
+
+  /// No description provided for @speechInputRuntimeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The on-device speech recognition service is unavailable'**
+  String get speechInputRuntimeUnavailable;
+
+  /// No description provided for @speechInputSessionBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The previous voice session is still closing'**
+  String get speechInputSessionBusy;
+
   /// No description provided for @speechInputFailed.
   ///
   /// In en, this message translates to:

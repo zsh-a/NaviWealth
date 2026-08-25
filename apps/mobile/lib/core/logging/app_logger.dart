@@ -436,4 +436,5 @@ const Set<String> _allowedDiagnosticKeys = {
   'market',
   'currency',
   'batch_size',
+  'availability',
 };

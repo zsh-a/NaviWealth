@@ -5991,6 +5991,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speechInputPermissionDenied => '需要麦克风权限才能使用语音输入';
 
   @override
+  String get speechInputRecorderUnavailable => '麦克风或录音设备不可用';
+
+  @override
+  String get speechInputRuntimeUnavailable => '端侧语音识别服务不可用';
+
+  @override
+  String get speechInputSessionBusy => '上一语音会话仍在关闭，请稍后重试';
+
+  @override
   String get speechInputFailed => '语音识别启动失败，请稍后重试';
 
   @override

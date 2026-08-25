@@ -239,6 +239,7 @@ SpeechRecognitionException _speechExceptionFromObject(Object error) {
 
 SpeechRecognitionErrorCode _errorCodeFromWire(Object? value) => switch (value) {
   'permission_denied' => SpeechRecognitionErrorCode.permissionDenied,
+  'unsupported' => SpeechRecognitionErrorCode.unsupported,
   'recorder_unavailable' => SpeechRecognitionErrorCode.recorderUnavailable,
   'session_busy' => SpeechRecognitionErrorCode.sessionBusy,
   _ => SpeechRecognitionErrorCode.runtimeUnavailable,

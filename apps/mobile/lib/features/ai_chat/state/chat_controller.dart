@@ -10,6 +10,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
 import '../../../core/speech/speech_output_provider.dart';
+import '../../../core/speech/speech_recognizer.dart';
 import '../../../core/speech/speech_recognizer_provider.dart';
 import '../data/chat_repository.dart';
 import '../data/providers.dart';
@@ -35,6 +36,7 @@ class ChatTurnState {
     this.voiceListening = false,
     this.voiceTurnActive = false,
     this.voiceTranscript = '',
+    this.voiceErrorCode,
     this.voiceInputLane = InteractionInputLane.idle,
     this.voiceOutputLane = InteractionOutputLane.idle,
   });
@@ -44,6 +46,7 @@ class ChatTurnState {
   final bool voiceListening;
   final bool voiceTurnActive;
   final String voiceTranscript;
+  final SpeechRecognitionErrorCode? voiceErrorCode;
   final InteractionInputLane voiceInputLane;
   final InteractionOutputLane voiceOutputLane;
 
@@ -66,6 +69,8 @@ class ChatTurnState {
     String? voiceTranscript,
     InteractionInputLane? voiceInputLane,
     InteractionOutputLane? voiceOutputLane,
+    SpeechRecognitionErrorCode? voiceErrorCode,
+    bool clearVoiceErrorCode = false,
   }) => ChatTurnState(
     phase: phase ?? this.phase,
     cancelToken: cancelToken ?? this.cancelToken,
@@ -74,6 +79,9 @@ class ChatTurnState {
     voiceTranscript: voiceTranscript ?? this.voiceTranscript,
     voiceInputLane: voiceInputLane ?? this.voiceInputLane,
     voiceOutputLane: voiceOutputLane ?? this.voiceOutputLane,
+    voiceErrorCode: clearVoiceErrorCode
+        ? null
+        : voiceErrorCode ?? this.voiceErrorCode,
   );
 }
 
@@ -121,6 +129,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
           voiceOutputLane: state.voiceOutputLane,
+          voiceErrorCode: state.voiceErrorCode,
         );
       },
       onTurnFinished: (request, _) {
@@ -136,6 +145,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
           voiceOutputLane: state.voiceOutputLane,
+          voiceErrorCode: state.voiceErrorCode,
         );
       },
       onSpeechEnded: ({required cancelled}) {
@@ -154,6 +164,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
               : InteractionInputLane.idle,
         );
       },
+      onSpeechError: _onSpeechInputError,
       onStateChanged: _onInteractionStateChanged,
       onSpeechOutputError: (error, stackTrace) {
         ref
@@ -221,6 +232,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
           voiceOutputLane: state.voiceOutputLane,
+          voiceErrorCode: state.voiceErrorCode,
         );
       }
     }
@@ -246,10 +258,27 @@ class ChatController extends StateNotifier<ChatTurnState> {
     final hasOutput = interactionState.outputLane != InteractionOutputLane.idle;
     if (state.isBusy && !hasOutput && !hasPendingInteraction) return;
 
+    if (mounted) state = state.copyWith(clearVoiceErrorCode: true);
     session.configure(systemContext: systemContext, model: model);
-    await session.startVoice();
+    try {
+      await session.startVoice();
+    } on Object catch (error, stackTrace) {
+      final speechError = error is SpeechRecognitionException
+          ? error
+          : SpeechRecognitionException(
+              SpeechRecognitionErrorCode.runtimeUnavailable,
+              'Speech recognition failed to start',
+              cause: error,
+            );
+      _onSpeechInputError(speechError, stackTrace);
+      rethrow;
+    }
     if (!mounted) return;
-    state = state.copyWith(voiceListening: true, voiceTurnActive: true);
+    state = state.copyWith(
+      voiceListening: true,
+      voiceTurnActive: true,
+      clearVoiceErrorCode: true,
+    );
   }
 
   Future<void> stopVoice() async {
@@ -259,7 +288,10 @@ class ChatController extends StateNotifier<ChatTurnState> {
       await session.stopVoice();
     } finally {
       if (mounted) {
-        state = state.copyWith(voiceListening: false);
+        state = state.copyWith(
+          voiceListening: false,
+          clearVoiceErrorCode: true,
+        );
       }
     }
   }
@@ -281,6 +313,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
           voiceInputLane: keepVoiceTurn
               ? state.voiceInputLane
               : InteractionInputLane.idle,
+          clearVoiceErrorCode: true,
         );
       }
     }
@@ -299,6 +332,39 @@ class ChatController extends StateNotifier<ChatTurnState> {
       voiceTranscript: interaction.transcript,
       voiceInputLane: interaction.inputLane,
       voiceOutputLane: interaction.outputLane,
+    );
+  }
+
+  void _onSpeechInputError(
+    SpeechRecognitionException error,
+    StackTrace stackTrace,
+  ) {
+    if (!mounted) return;
+    final backend = _interactionBackend?.name;
+    ref
+        .read(loggerProvider)
+        .event(
+          'core.speech.input.failed',
+          level: AppLogLevel.warning,
+          fields: {
+            'outcome': 'failed',
+            'provider': backend ?? 'unknown',
+            'error_code': error.code.diagnosticCode,
+          },
+          error: error,
+          stackTrace: stackTrace,
+        );
+    final keepVoiceTurn =
+        state.isStreaming || _isVoiceOutputActive(state.voiceOutputLane);
+    state = _withVoiceState(
+      state,
+      voiceListening: false,
+      voiceTurnActive: keepVoiceTurn,
+      voiceTranscript: keepVoiceTurn ? null : '',
+      voiceInputLane: keepVoiceTurn
+          ? state.voiceInputLane
+          : InteractionInputLane.idle,
+      voiceErrorCode: error.code,
     );
   }
 
@@ -393,6 +459,8 @@ ChatTurnState _withVoiceState(
   String? voiceTranscript,
   InteractionInputLane? voiceInputLane,
   InteractionOutputLane? voiceOutputLane,
+  SpeechRecognitionErrorCode? voiceErrorCode,
+  bool clearVoiceErrorCode = false,
 }) => ChatTurnState(
   phase: current.phase,
   cancelToken: current.cancelToken,
@@ -401,6 +469,9 @@ ChatTurnState _withVoiceState(
   voiceTranscript: voiceTranscript ?? current.voiceTranscript,
   voiceInputLane: voiceInputLane ?? current.voiceInputLane,
   voiceOutputLane: voiceOutputLane ?? current.voiceOutputLane,
+  voiceErrorCode: clearVoiceErrorCode
+      ? null
+      : voiceErrorCode ?? current.voiceErrorCode,
 );
 
 /// Per-session controller. Riverpod auto-disposes when the chat page

@@ -299,6 +299,73 @@ void main() {
       await controller.cancelVoice();
     },
   );
+
+  test('surfaces asynchronous speech errors with a stable code', () async {
+    final repo = _FakeChatRepository();
+    final input = _FakeSpeechInput();
+    final container = makeContainer(repo, speechInput: input);
+    final provider = chatControllerProvider(sessionId);
+    final sub = container.listen(
+      provider,
+      (previous, next) {},
+      fireImmediately: true,
+    );
+    addTearDown(sub.close);
+
+    final controller = container.read(provider.notifier);
+    await controller.startVoice();
+    input.session.emitError(
+      const SpeechRecognitionException(
+        SpeechRecognitionErrorCode.recorderUnavailable,
+        'native recorder detail',
+      ),
+    );
+    await _flush();
+
+    expect(
+      container.read(provider).voiceErrorCode,
+      SpeechRecognitionErrorCode.recorderUnavailable,
+    );
+    expect(container.read(provider).voiceListening, isFalse);
+
+    await controller.cancelVoice();
+    expect(container.read(provider).voiceErrorCode, isNull);
+  });
+
+  test('records status failure without opening a voice session', () async {
+    final repo = _FakeChatRepository();
+    final input = _FakeSpeechInput(
+      statusValue: const SpeechRecognizerStatus(
+        SpeechRecognizerAvailability.unsupported,
+      ),
+    );
+    final container = makeContainer(repo, speechInput: input);
+    final provider = chatControllerProvider(sessionId);
+    final sub = container.listen(
+      provider,
+      (previous, next) {},
+      fireImmediately: true,
+    );
+    addTearDown(sub.close);
+
+    final controller = container.read(provider.notifier);
+    await expectLater(
+      controller.startVoice(),
+      throwsA(
+        isA<SpeechRecognitionException>().having(
+          (error) => error.code,
+          'code',
+          SpeechRecognitionErrorCode.unsupported,
+        ),
+      ),
+    );
+
+    expect(input.started, isFalse);
+    expect(
+      container.read(provider).voiceErrorCode,
+      SpeechRecognitionErrorCode.unsupported,
+    );
+  });
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -346,12 +413,18 @@ class _FakeChatRepository implements ChatRepository {
 }
 
 final class _FakeSpeechInput implements SpeechInput {
+  _FakeSpeechInput({
+    this.statusValue = const SpeechRecognizerStatus(
+      SpeechRecognizerAvailability.ready,
+    ),
+  });
+
   final session = _FakeSpeechInputSession();
+  final SpeechRecognizerStatus statusValue;
   bool started = false;
 
   @override
-  Future<SpeechRecognizerStatus> status() async =>
-      const SpeechRecognizerStatus(SpeechRecognizerAvailability.ready);
+  Future<SpeechRecognizerStatus> status() async => statusValue;
 
   @override
   Future<SpeechInputSession> start() async {
@@ -371,6 +444,10 @@ final class _FakeSpeechInputSession implements SpeechInputSession {
 
   void emit(SpeechInputEvent event) {
     if (!_events.isClosed) _events.add(event);
+  }
+
+  void emitError(Object error) {
+    if (!_events.isClosed) _events.addError(error, StackTrace.current);
   }
 
   @override

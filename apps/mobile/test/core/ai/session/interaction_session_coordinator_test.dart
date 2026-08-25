@@ -244,19 +244,77 @@ void main() {
     expect(endedAsCancelled, isTrue);
     await coordinator.close();
   });
+
+  test('blocks model-missing voice start before opening a session', () async {
+    final input = _FakeSpeechInput(
+      statusValue: const SpeechRecognizerStatus(
+        SpeechRecognizerAvailability.modelNotInstalled,
+      ),
+    );
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      speechInput: input,
+    );
+
+    await expectLater(
+      coordinator.startVoice(),
+      throwsA(
+        isA<SpeechRecognitionException>().having(
+          (error) => error.code,
+          'code',
+          SpeechRecognitionErrorCode.modelNotInstalled,
+        ),
+      ),
+    );
+    expect(input.started, isFalse);
+    await coordinator.close();
+  });
+
+  test('forwards asynchronous speech failures as stable exceptions', () async {
+    SpeechRecognitionException? received;
+    final input = _FakeSpeechInput();
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      speechInput: input,
+      onSpeechError: (error, _) => received = error,
+    );
+
+    await coordinator.startVoice();
+    input.session.emitError(
+      const SpeechRecognitionException(
+        SpeechRecognitionErrorCode.recorderUnavailable,
+        'device-specific recorder detail',
+      ),
+    );
+    await _flush();
+
+    expect(received?.code, SpeechRecognitionErrorCode.recorderUnavailable);
+    expect(received?.message, 'device-specific recorder detail');
+    await coordinator.close();
+  });
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
 
 final class _FakeSpeechInput implements SpeechInput {
+  _FakeSpeechInput({
+    this.statusValue = const SpeechRecognizerStatus(
+      SpeechRecognizerAvailability.ready,
+    ),
+  });
+
   final session = _FakeSpeechInputSession();
+  final SpeechRecognizerStatus statusValue;
+  bool started = false;
 
   @override
-  Future<SpeechRecognizerStatus> status() async =>
-      const SpeechRecognizerStatus(SpeechRecognizerAvailability.ready);
+  Future<SpeechRecognizerStatus> status() async => statusValue;
 
   @override
-  Future<SpeechInputSession> start() async => session;
+  Future<SpeechInputSession> start() async {
+    started = true;
+    return session;
+  }
 }
 
 final class _FakeSpeechInputSession implements SpeechInputSession {
@@ -270,6 +328,10 @@ final class _FakeSpeechInputSession implements SpeechInputSession {
 
   void emit(SpeechInputEvent event) {
     if (!_closed) _events.add(event);
+  }
+
+  void emitError(Object error) {
+    if (!_closed) _events.addError(error, StackTrace.current);
   }
 
   @override

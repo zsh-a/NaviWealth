@@ -11,6 +11,7 @@ import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/shell/settings_route_paths.dart';
+import '../../../core/speech/speech_error_copy.dart';
 import '../../../core/speech/speech_recognizer.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -41,6 +42,7 @@ class ChatComposer extends ConsumerStatefulWidget {
     this.onCancelVoice,
     this.voiceCapsuleVisible = false,
     this.voiceTranscript = '',
+    this.voiceErrorCode,
     this.voiceInputLane = InteractionInputLane.idle,
     this.voiceOutputLane = InteractionOutputLane.idle,
   });
@@ -73,6 +75,7 @@ class ChatComposer extends ConsumerStatefulWidget {
   final Future<void> Function()? onCancelVoice;
   final bool voiceCapsuleVisible;
   final String voiceTranscript;
+  final SpeechRecognitionErrorCode? voiceErrorCode;
   final InteractionInputLane voiceInputLane;
   final InteractionOutputLane voiceOutputLane;
 
@@ -201,15 +204,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
     } on SpeechRecognitionException catch (error) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
-      final message = switch (error.code) {
-        SpeechRecognitionErrorCode.modelNotInstalled =>
-          l10n.speechInputModelMissing,
-        SpeechRecognitionErrorCode.permissionDenied =>
-          l10n.speechInputPermissionDenied,
-        SpeechRecognitionErrorCode.recorderUnavailable ||
-        SpeechRecognitionErrorCode.runtimeUnavailable ||
-        SpeechRecognitionErrorCode.sessionBusy => l10n.speechInputFailed,
-      };
+      final message = speechRecognitionErrorMessage(l10n, error.code);
       AppMessenger.show(context, ToastKind.error, message);
       if (error.code == SpeechRecognitionErrorCode.modelNotInstalled) {
         unawaited(context.push(SettingsRoutes.aiModels));
@@ -347,6 +342,13 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                       ? null
                       : () => unawaited(_cancelVoice()),
                 ),
+              if (_usesInteractionVoice && widget.voiceErrorCode != null)
+                _VoiceErrorBanner(
+                  message: speechRecognitionErrorMessage(
+                    l10n,
+                    widget.voiceErrorCode!,
+                  ),
+                ),
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: colors.muted.withValues(alpha: AppOpacity.prominent),
@@ -417,6 +419,42 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _VoiceErrorBanner extends StatelessWidget {
+  const _VoiceErrorBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s2),
+            child: Icon(
+              FLucideIcons.circleAlert,
+              size: AppIconSizes.xs,
+              color: colors.destructive,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s6),
+          Expanded(
+            child: Text(
+              message,
+              style: context.captionLabelStyle.copyWith(
+                color: colors.destructive,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

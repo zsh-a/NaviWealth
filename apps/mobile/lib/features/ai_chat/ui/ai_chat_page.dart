@@ -266,6 +266,7 @@ class _ChatPane extends ConsumerWidget {
               canStartVoice: turn.canStartVoice,
               voiceCapsuleVisible: turn.voiceCapsuleVisible,
               voiceTranscript: turn.voiceTranscript,
+              voiceErrorCode: turn.voiceErrorCode,
               voiceInputLane: turn.voiceInputLane,
               voiceOutputLane: turn.voiceOutputLane,
               onStartVoice: () => ref
