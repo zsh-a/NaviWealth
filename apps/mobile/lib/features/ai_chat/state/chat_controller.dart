@@ -87,10 +87,10 @@ class ChatController extends StateNotifier<ChatTurnState> {
   String? _interactionOwnerUserId;
   SpeechRecognizerBackend? _interactionBackend;
 
-  InteractionChatSession _ensureInteractionSession({
+  Future<InteractionChatSession> _ensureInteractionSession({
     required ChatRepository repository,
     required String ownerUserId,
-  }) {
+  }) async {
     final existing = _interactionSession;
     final backend = ref.read(speechRecognizerBackendProvider);
     if (existing != null &&
@@ -98,7 +98,10 @@ class ChatController extends StateNotifier<ChatTurnState> {
         _interactionBackend == backend) {
       return existing;
     }
-    if (existing != null) unawaited(existing.close());
+    // The old session may still own the process-wide microphone lease. Wait
+    // for its cancellation before creating a session for a changed backend
+    // or user; otherwise the new voice start can race into session_busy.
+    if (existing != null) await existing.close();
 
     final session = InteractionChatSession(
       repository: repository,
@@ -195,7 +198,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
 
     try {
       final repo = await ref.read(chatRepositoryProvider.future);
-      final session = _ensureInteractionSession(
+      final session = await _ensureInteractionSession(
         repository: repo,
         ownerUserId: ownerUserId,
       );
@@ -234,7 +237,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
     if (ownerUserId == null) return;
 
     final repo = await ref.read(chatRepositoryProvider.future);
-    final session = _ensureInteractionSession(
+    final session = await _ensureInteractionSession(
       repository: repo,
       ownerUserId: ownerUserId,
     );

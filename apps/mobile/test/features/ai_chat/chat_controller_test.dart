@@ -255,6 +255,50 @@ void main() {
       );
     },
   );
+
+  test(
+    'waits for the previous interaction session before restarting for a new owner',
+    () async {
+      var activeOwner = ownerUserId;
+      final repo = _FakeChatRepository();
+      final input = _GatedSpeechInput();
+      final container = ProviderContainer(
+        overrides: [
+          activeUserIdProvider.overrideWith((_) => activeOwner),
+          chatRepositoryProvider.overrideWith((_) async => repo),
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          speechInputProvider.overrideWithValue(input),
+        ],
+      );
+      addTearDown(container.dispose);
+      final provider = chatControllerProvider(sessionId);
+      final sub = container.listen(
+        provider,
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      final controller = container.read(provider.notifier);
+      await controller.startVoice();
+      input.sessions.single.emitEnded();
+      await _flush();
+      expect(container.read(provider).voiceListening, isFalse);
+
+      activeOwner = 'owner-2';
+      container.invalidate(activeUserIdProvider);
+      final restarting = controller.startVoice();
+      await input.firstCancelStarted.future;
+      expect(input.sessions, hasLength(1));
+
+      input.allowFirstClose.complete();
+      await restarting;
+
+      expect(input.sessions, hasLength(2));
+      expect(container.read(provider).voiceActive, isTrue);
+      await controller.cancelVoice();
+    },
+  );
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -342,6 +386,78 @@ final class _FakeSpeechInputSession implements SpeechInputSession {
     cancelled = true;
     if (!_events.isClosed) {
       emit(const SpeechInputEnded(cancelled: true));
+      await _events.close();
+    }
+  }
+}
+
+final class _GatedSpeechInput implements SpeechInput {
+  final sessions = <_GatedSpeechInputSession>[];
+  final firstCancelStarted = Completer<void>();
+  final allowFirstClose = Completer<void>();
+  bool _active = false;
+
+  @override
+  Future<SpeechRecognizerStatus> status() async =>
+      const SpeechRecognizerStatus(SpeechRecognizerAvailability.ready);
+
+  @override
+  Future<SpeechInputSession> start() async {
+    if (_active) {
+      throw const SpeechRecognitionException(
+        SpeechRecognitionErrorCode.sessionBusy,
+        'A speech input session is already active',
+      );
+    }
+    _active = true;
+    final session = _GatedSpeechInputSession(
+      onClosed: () => _active = false,
+      cancelStarted: sessions.isEmpty ? firstCancelStarted : null,
+      closeGate: sessions.isEmpty ? allowFirstClose : null,
+    );
+    sessions.add(session);
+    return session;
+  }
+}
+
+final class _GatedSpeechInputSession implements SpeechInputSession {
+  _GatedSpeechInputSession({
+    required this.onClosed,
+    required this.cancelStarted,
+    required this.closeGate,
+  });
+
+  final void Function() onClosed;
+  final Completer<void>? cancelStarted;
+  final Completer<void>? closeGate;
+  final _events = StreamController<SpeechInputEvent>.broadcast();
+  bool _closed = false;
+
+  @override
+  Stream<SpeechInputEvent> get events => _events.stream;
+
+  void emitEnded() {
+    if (!_events.isClosed) {
+      _events.add(const SpeechInputEnded(cancelled: false));
+    }
+  }
+
+  @override
+  Future<void> stop() => _close(cancelled: false);
+
+  @override
+  Future<void> cancel() => _close(cancelled: true);
+
+  Future<void> _close({required bool cancelled}) async {
+    if (_closed) return;
+    if (cancelled) {
+      cancelStarted?.complete();
+      await closeGate?.future;
+    }
+    _closed = true;
+    onClosed();
+    if (!_events.isClosed) {
+      _events.add(SpeechInputEnded(cancelled: cancelled));
       await _events.close();
     }
   }
