@@ -33,6 +33,7 @@ class SherpaSpeechRecognizer implements SpeechRecognizer {
           ? SpeechRecognizerAvailability.ready
           : SpeechRecognizerAvailability.modelNotInstalled,
       reason: installed ? null : 'Streaming Zipformer model is not installed',
+      capabilities: const SpeechRecognizerCapabilities(),
     );
   }
 

@@ -97,6 +97,7 @@ class _RecognizerSpeechInputSession implements SpeechInputSession {
 
   void _onEvent(SpeechRecognitionEvent event) {
     if (_closed) return;
+    if (event.sessionEnded) _cancelled = event.cancelled;
     if (event.speechStarted) {
       _events.add(SpeechInputSpeechStarted(startedAt: event.startedAt));
     }

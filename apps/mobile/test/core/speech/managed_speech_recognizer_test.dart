@@ -187,6 +187,31 @@ void main() {
     await next.cancel();
   });
 
+  test(
+    'native cancelled terminal event is not misclassified as completion',
+    () async {
+      final delegate = _FakeRecognizer();
+      final diagnostics = SpeechDiagnosticsRecorder(
+        logger: AppLogger(environment: AppEnvironment.dev),
+      );
+      final recognizer = ManagedSpeechRecognizer(
+        delegate: delegate,
+        diagnostics: diagnostics,
+      );
+
+      final session = await recognizer.start();
+      session.events.listen((_) {});
+      delegate.sessions.single.addSessionEnded(cancelled: true);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(diagnostics.snapshot.cancelled, 1);
+      expect(diagnostics.snapshot.completed, 0);
+
+      final next = await recognizer.start();
+      await next.cancel();
+    },
+  );
+
   test('diagnostics retain timing but never transcript text', () async {
     final logger = AppLogger(environment: AppEnvironment.dev);
     final diagnostics = SpeechDiagnosticsRecorder(logger: logger);
@@ -271,6 +296,20 @@ class _FakeSession implements SpeechRecognitionSession {
   void add(String text) {
     if (_events.isClosed) return;
     _events.add(SpeechRecognitionEvent(text: text, isFinal: false));
+  }
+
+  void addSessionEnded({required bool cancelled}) {
+    if (_events.isClosed) return;
+    _events
+      ..add(
+        SpeechRecognitionEvent(
+          text: '',
+          isFinal: false,
+          sessionEnded: true,
+          cancelled: cancelled,
+        ),
+      )
+      ..close();
   }
 
   void addError(Object error) {

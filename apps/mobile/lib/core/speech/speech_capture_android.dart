@@ -273,6 +273,8 @@ SpeechCaptureCapabilities _capabilitiesFromMap(Map<Object?, Object?> map) =>
       vadFrameDurationMs: _intValue(map['vad_frame_duration_ms']),
       vadMinSpeechFrames: _intValue(map['vad_min_speech_frames']),
       vadMinSilenceFrames: _intValue(map['vad_min_silence_frames']),
+      supportsBargeIn: map['supports_barge_in'] == true,
+      fullDuplex: map['full_duplex'] == true,
     );
 
 DateTime? _dateTimeFromMillis(Object? value) => value is int

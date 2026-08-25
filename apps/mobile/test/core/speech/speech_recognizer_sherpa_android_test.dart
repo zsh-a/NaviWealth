@@ -31,6 +31,10 @@ void main() {
 
       expect(status.availability, SpeechRecognizerAvailability.ready);
       expect(status.isReady, isTrue);
+      expect(status.capabilities.supportsBargeIn, isTrue);
+      expect(status.capabilities.nativeAudioPath, isTrue);
+      expect(status.capabilities.vad, isTrue);
+      expect(status.capabilities.fullDuplex, isTrue);
     },
   );
 
@@ -123,7 +127,7 @@ void main() {
 
       final events = await session.events.toList();
 
-      expect(events, hasLength(4));
+      expect(events, hasLength(5));
       expect(events[0].speechStarted, isTrue);
       expect(
         events[0].startedAt,
@@ -139,6 +143,8 @@ void main() {
         DateTime.fromMillisecondsSinceEpoch(2345, isUtc: true),
       );
       expect(events[3].speechDuration, const Duration(milliseconds: 1111));
+      expect(events[4].sessionEnded, isTrue);
+      expect(events[4].cancelled, isFalse);
 
       final startCall = calls.singleWhere((call) => call.method == 'start');
       expect(

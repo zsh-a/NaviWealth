@@ -55,6 +55,25 @@ void main() {
 
     await subscription.cancel();
   });
+
+  test(
+    'native lifecycle cancellation reaches the semantic input session',
+    () async {
+      final recognizer = _FakeRecognizer();
+      final session = await RecognizerSpeechInput(recognizer).start();
+      final events = <SpeechInputEvent>[];
+      final subscription = session.events.listen(events.add);
+
+      recognizer.session.emitSessionEnded(cancelled: true);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(events, hasLength(1));
+      expect(events.single, isA<SpeechInputEnded>());
+      expect((events.single as SpeechInputEnded).cancelled, isTrue);
+
+      await subscription.cancel();
+    },
+  );
 }
 
 class _FakeRecognizer implements SpeechRecognizer {
@@ -99,6 +118,18 @@ class _FakeRecognitionSession implements SpeechRecognitionSession {
         speechDuration: duration,
       ),
     );
+  }
+
+  void emitSessionEnded({required bool cancelled}) {
+    _events.add(
+      SpeechRecognitionEvent(
+        text: '',
+        isFinal: false,
+        sessionEnded: true,
+        cancelled: cancelled,
+      ),
+    );
+    unawaited(_events.close());
   }
 
   @override

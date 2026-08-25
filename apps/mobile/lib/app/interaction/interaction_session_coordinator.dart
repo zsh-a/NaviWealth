@@ -464,7 +464,15 @@ class InteractionSessionCoordinator {
       case SpeechInputTranscript(:final text, :final isFinal):
         updateTranscript(text, isFinal: isFinal);
       case SpeechInputEnded(:final cancelled):
-        speechStopped();
+        // Explicit/native cancellation must discard an unfinished candidate.
+        // Treating it as a normal endpoint could commit a new response epoch
+        // while the Activity is going into the background or the user is
+        // deliberately cancelling dictation.
+        if (cancelled) {
+          resolveFalseInterruption();
+        } else {
+          speechStopped();
+        }
         _onSpeechEnded?.call(cancelled: cancelled);
         break;
     }

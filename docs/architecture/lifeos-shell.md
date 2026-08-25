@@ -564,6 +564,10 @@ Behavior:
   Zipformer is an opt-in alternative. iOS and macOS currently default to local
   Zipformer because their native system-recognizer adapters are not implemented
   yet. Web remains unsupported.
+- The selected recognizer status advertises capabilities explicitly. Android's
+  system path is low-resource push-to-talk; Android local Zipformer advertises
+  native audio, VAD, barge-in, and full-duplex support. Apple/Dart Zipformer
+  and Web retain false for those native full-duplex flags.
 - The intended provider shape is `SpeechInput` above the existing recognizer
   seam, with `SystemSpeechRecognizer` and `SherpaSpeechRecognizer` as concrete
   implementations. Provider choice is policy-driven and must never silently
@@ -579,10 +583,11 @@ Behavior:
 - Microphone PCM is consumed in memory and is neither persisted nor synced.
 - Partial/final transcripts only update an editable text controller. Sending,
   saving, tool invocation, and proposal application remain explicit user actions.
-- The current Dart path (`record` PCM stream → Dart decode → Sherpa FFI) is a
-  push-to-talk/local-ASR path, not the final full-duplex audio engine. A true
-  full-duplex implementation keeps capture, AEC/NS/AGC, VAD, and high-rate ASR
-  audio on the native hot path; Dart/FRB receives only semantic events.
+- The current Dart path (`record` PCM stream → Dart decode → Sherpa FFI) remains
+  a push-to-talk/local-ASR path. Android local Zipformer is the native
+  full-duplex path: capture, AEC/NS/AGC, VAD, and high-rate ASR stay native;
+  Dart/FRB receives only semantic events. A host stop sends a cancelled
+  terminal event before releasing the native microphone lease.
 - Full-duplex barge-in follows `BargeInCandidate → BargeInCommitted`. A VAD
   signal may duck or pause playback immediately, but only sustained speech or
   valid ASR text increments the response epoch and invalidates the old output.

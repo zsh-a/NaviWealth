@@ -42,6 +42,17 @@ final class AndroidSherpaSpeechRecognizer implements SpeechRecognizer {
   final MethodChannel _methodChannel;
   final Stream<Object?> Function() _eventStream;
 
+  /// The native AudioRecord/VAD/JNI path is the opt-in Android full-duplex
+  /// implementation. Its model requirement is kept separate from the
+  /// capability declaration so callers can explain a missing model without
+  /// silently falling back to another engine.
+  static const _capabilities = SpeechRecognizerCapabilities(
+    supportsBargeIn: true,
+    nativeAudioPath: true,
+    vad: true,
+    fullDuplex: true,
+  );
+
   @override
   Future<SpeechRecognizerStatus> status() async {
     final paths = await resolvePaths();
@@ -54,6 +65,7 @@ final class AndroidSherpaSpeechRecognizer implements SpeechRecognizer {
           ? SpeechRecognizerAvailability.ready
           : SpeechRecognizerAvailability.modelNotInstalled,
       reason: complete ? null : 'Streaming Zipformer model is not installed',
+      capabilities: _capabilities,
     );
   }
 
@@ -165,6 +177,14 @@ class _AndroidSherpaSpeechRecognitionSession
           ),
         );
       case 'capture_stopped':
+        _emit(
+          SpeechRecognitionEvent(
+            text: '',
+            isFinal: false,
+            sessionEnded: true,
+            cancelled: map?['cancelled'] == true,
+          ),
+        );
         unawaited(_finish());
       case 'error':
         final errorCode = map?['code'];

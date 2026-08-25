@@ -30,6 +30,8 @@ void main() {
         'vad_frame_duration_ms': 20,
         'vad_min_speech_frames': 2,
         'vad_min_silence_frames': 20,
+        'supports_barge_in': true,
+        'full_duplex': true,
       };
     });
 
@@ -46,6 +48,8 @@ void main() {
     expect(status.capabilities?.vadAvailable, isTrue);
     expect(status.capabilities?.vadMode, 'native_energy');
     expect(status.capabilities?.vadFrameDurationMs, 20);
+    expect(status.capabilities?.supportsBargeIn, isTrue);
+    expect(status.capabilities?.fullDuplex, isTrue);
   });
 
   test('maps native VAD boundaries without exposing audio frames', () async {

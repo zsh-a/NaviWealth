@@ -245,6 +245,31 @@ void main() {
     await coordinator.close();
   });
 
+  test('cancelled native input discards a barge-in candidate', () async {
+    final input = _FakeSpeechInput();
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      speechInput: input,
+    );
+    coordinator.startTurn(InteractionInputOrigin.voice);
+    coordinator.queueOutputSegment(
+      const OutputSegment(id: 'segment-1', text: '继续回答。'),
+    );
+    coordinator.outputPlaybackStarted();
+
+    await coordinator.startVoice();
+    input.session.emit(const SpeechInputSpeechStarted());
+    await _flush();
+    expect(coordinator.state.bargeInPhase, BargeInPhase.candidate);
+
+    await coordinator.cancelVoice();
+    expect(coordinator.state.responseEpoch.value, 0);
+    expect(coordinator.state.bargeInPhase, BargeInPhase.none);
+    expect(coordinator.state.outputLane, InteractionOutputLane.playing);
+
+    await coordinator.close();
+  });
+
   test('blocks model-missing voice start before opening a session', () async {
     final input = _FakeSpeechInput(
       statusValue: const SpeechRecognizerStatus(

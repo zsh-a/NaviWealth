@@ -70,6 +70,7 @@ internal class AndroidAudioCaptureBridge(
 
     private var audioRecord: AudioRecord? = null
     private var captureThread: Thread? = null
+    @Volatile
     private var active = false
     private var previousAudioMode: Int? = null
     private var ringBuffer = NativePcmRingBuffer(ringCapacityBytes())
@@ -170,6 +171,10 @@ internal class AndroidAudioCaptureBridge(
     }
 
     private fun startCapture(result: MethodChannel.Result, modelDirectory: String?) {
+        // A terminal event can be buffered when the previous Flutter listener
+        // disappeared during Activity teardown. It belongs to that old
+        // capture session and must never be replayed into the next one.
+        bufferedEvents.clear()
         if (!AndroidMicrophoneLease.tryAcquire(leaseOwner)) {
             result.error(
                 "session_busy",
@@ -561,6 +566,8 @@ internal class AndroidAudioCaptureBridge(
         "vad_frame_duration_ms" to NativeEnergyVad.FRAME_DURATION_MS,
         "vad_min_speech_frames" to NativeEnergyVad.MIN_SPEECH_FRAMES,
         "vad_min_silence_frames" to NativeEnergyVad.MIN_SILENCE_FRAMES,
+        "supports_barge_in" to true,
+        "full_duplex" to true,
     )
 
     private fun effectsPayload(): Map<String, Any?> = mapOf(
@@ -690,7 +697,18 @@ internal class AndroidAudioCaptureBridge(
     }
 
     fun onHostStopped() {
-        if (active) finishCapture(cancelled = true, emitTerminalEvent = false)
+        // The Dart session must observe the terminal lifecycle event while the
+        // Flutter engine is still attached. This prevents a backgrounded
+        // Activity from leaving the UI in a listening state with a released
+        // microphone lease.
+        pendingStart?.error(
+            "runtime_unavailable",
+            "Android audio capture host stopped before recording started",
+            null,
+        )
+        pendingStart = null
+        pendingModelDirectory = null
+        if (active) finishCapture(cancelled = true)
     }
 
     fun onRequestPermissionsResult(

@@ -337,6 +337,13 @@ checks the shared model installer for
 directory to the native bridge. A missing local model is reported as
 `modelNotInstalled`; it never triggers a cloud fallback.
 
+The selected recognizer status also exposes a capability descriptor. Android's
+default system-on-device path is the low-resource push-to-talk policy. The
+opt-in Android local Zipformer path reports native audio, VAD, barge-in, and
+full-duplex support; it is the path that may keep capture open while system
+TTS is playing. Apple/Dart Zipformer and Web retain false for those native
+full-duplex flags until their own native hot paths exist.
+
 On iOS and macOS, the current native path defaults to local Zipformer because
 the explicit system on-device recognizer bridge has not been implemented for
 those platforms yet. The settings UI therefore exposes only local Zipformer
@@ -359,10 +366,13 @@ AudioRecord (VOICE_COMMUNICATION, 16 kHz mono PCM16)
 `VOICE_COMMUNICATION` mode, permission handling, best-effort platform audio
 effects, native VAD, and the optional native Zipformer handle. Both Android
 speech bridges use the same process-local microphone lease and stop on Activity
-background/destroy. The bridge emits only format/effect/VAD capabilities,
-lifecycle events, semantic `speech_started` / `speech_stopped` boundaries,
-partial/final transcript events, and aggregate captured/buffered/dropped-byte
-counters. PCM is never sent over Flutter, FRB, logs, or persisted storage.
+background/destroy. A host stop emits a cancelled terminal semantic event
+while the Flutter engine is still attached, so Dart releases its session state
+and a later Activity cannot inherit a stale microphone lease or buffered event.
+The bridge emits only format/effect/VAD capabilities, lifecycle events,
+semantic `speech_started` / `speech_stopped` boundaries, partial/final
+transcript events, and aggregate captured/buffered/dropped-byte counters. PCM
+is never sent over Flutter, FRB, logs, or persisted storage.
 
 The JNI bridge loads the C API and C++ support libraries already supplied by
 the existing `sherpa_onnx` Android FFI dependency; it does not add a second

@@ -18,6 +18,7 @@ class _UnsupportedSpeechRecognizer implements SpeechRecognizer {
   Future<SpeechRecognizerStatus> status() async => const SpeechRecognizerStatus(
     SpeechRecognizerAvailability.unsupported,
     reason: 'Speech recognition is unavailable on this platform',
+    capabilities: SpeechRecognizerCapabilities.unknown,
   );
 
   @override

@@ -175,6 +175,17 @@ class _ManagedSpeechRecognitionSession implements SpeechRecognitionSession {
       );
     }
     _events.add(event);
+    if (event.sessionEnded) {
+      // Native hosts can terminate capture because an Activity stopped. The
+      // lifecycle event carries cancellation explicitly; do not let the
+      // following stream close be misclassified as a successful completion.
+      unawaited(
+        _finish(
+          event.cancelled ? _SessionEnd.cancelled : _SessionEnd.completed,
+          cancelSubscription: false,
+        ),
+      );
+    }
   }
 
   void _onError(Object error, StackTrace stackTrace) {

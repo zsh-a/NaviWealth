@@ -409,9 +409,12 @@ These are the current implementation limits:
   conversation checkpoint and Rust still provides its own final
   priority-context/recent-message fallback. A richer device-LLM checkpoint
   summarizer is not yet implemented.
-- InteractionSession full-duplex coordination is not yet a standalone runtime
-  feature. Current speech input is a managed, draft-only recognizer path; the
-  native audio hot path, two-phase barge-in, segment delivery ledger, and
-  voice-to-InteractionResponse adapter remain Host/capability work.
+- InteractionSession full-duplex coordination is intentionally not a standalone
+  runtime feature. The Host now provides the Android opt-in native
+  `localZipformer` path (`AudioRecord` → native VAD/JNI ASR), two-phase
+  barge-in, segment delivery ledger, and lifecycle cancellation; the default
+  system recognizer and Apple/Web paths remain lower-capability push-to-talk or
+  unsupported paths. None of this moves PCM or audio timing into the Agent
+  Runtime.
 
 Use this document and current tests as authority.

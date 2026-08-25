@@ -30,6 +30,8 @@ void main() {
     expect(status.availability, SpeechRecognizerAvailability.permissionDenied);
     expect(status.isReady, isFalse);
     expect(status.reason, 'Microphone permission is required');
+    expect(status.capabilities.fullDuplex, isFalse);
+    expect(status.capabilities.nativeAudioPath, isFalse);
   });
 
   test(
@@ -51,6 +53,11 @@ void main() {
               ..add(<String, Object?>{
                 'type': 'speech_started',
                 'started_at_ms': 1,
+              })
+              ..add(<String, Object?>{
+                'type': 'speech_stopped',
+                'stopped_at_ms': 241,
+                'duration_ms': 240,
               })
               ..add(<String, Object?>{
                 'type': 'transcript',
@@ -80,10 +87,14 @@ void main() {
       await session.stop();
       await Future<void>.delayed(Duration.zero);
 
-      expect(events, hasLength(2));
+      expect(events, hasLength(4));
       expect(events.first.speechStarted, isTrue);
-      expect(events.last.text, '记录午饭');
-      expect(events.last.isFinal, isTrue);
+      expect(events[1].speechStopped, isTrue);
+      expect(events[1].speechDuration, const Duration(milliseconds: 240));
+      expect(events[2].text, '记录午饭');
+      expect(events[2].isFinal, isTrue);
+      expect(events.last.sessionEnded, isTrue);
+      expect(events.last.cancelled, isFalse);
 
       await subscription.cancel();
     },

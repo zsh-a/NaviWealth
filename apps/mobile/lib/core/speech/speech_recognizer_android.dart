@@ -32,6 +32,11 @@ final class AndroidOnDeviceSpeechRecognizer implements SpeechRecognizer {
   final MethodChannel _methodChannel;
   final Stream<Object?> Function() _eventStream;
 
+  /// The platform recognizer is intentionally the low-resource push-to-talk
+  /// policy. It owns capture internally and does not expose native VAD, so it
+  /// is not advertised as the full-duplex barge-in path.
+  static const _capabilities = SpeechRecognizerCapabilities();
+
   @override
   Future<SpeechRecognizerStatus> status() async {
     try {
@@ -76,6 +81,7 @@ SpeechRecognizerStatus _statusFromPlatform(Object? value) {
   return SpeechRecognizerStatus(
     availability,
     reason: reason is String ? reason : null,
+    capabilities: AndroidOnDeviceSpeechRecognizer._capabilities,
   );
 }
 
@@ -136,6 +142,25 @@ class _AndroidSpeechRecognitionSession implements SpeechRecognitionSession {
                 : null,
           ),
         );
+      case 'speech_stopped':
+        final stoppedAtMillis = map?['stopped_at_ms'];
+        final durationMillis = map?['duration_ms'];
+        _events.add(
+          SpeechRecognitionEvent(
+            text: '',
+            isFinal: false,
+            speechStopped: true,
+            stoppedAt: stoppedAtMillis is int
+                ? DateTime.fromMillisecondsSinceEpoch(
+                    stoppedAtMillis,
+                    isUtc: true,
+                  )
+                : null,
+            speechDuration: durationMillis is int && durationMillis >= 0
+                ? Duration(milliseconds: durationMillis)
+                : null,
+          ),
+        );
       case 'transcript':
         final text = map?['text'];
         if (text is! String) return;
@@ -143,6 +168,14 @@ class _AndroidSpeechRecognitionSession implements SpeechRecognitionSession {
           SpeechRecognitionEvent(text: text, isFinal: map?['is_final'] == true),
         );
       case 'ended':
+        _events.add(
+          SpeechRecognitionEvent(
+            text: '',
+            isFinal: false,
+            sessionEnded: true,
+            cancelled: map?['cancelled'] == true,
+          ),
+        );
         unawaited(_finish());
       case 'error':
         final errorCode = map?['code'];

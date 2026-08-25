@@ -53,10 +53,13 @@ internal class AndroidSpeechBridge(
     private val bufferedEvents = ArrayDeque<Map<String, Any?>>()
 
     private var speechRecognizer: SpeechRecognizer? = null
+    @Volatile
     private var active = false
     private var pendingStart: MethodChannel.Result? = null
     private var pendingStop: MethodChannel.Result? = null
     private var previousAudioMode: Int? = null
+    private var speechStartedAtMs: Long? = null
+    private var speechStoppedEmitted = false
 
     fun attach(flutterEngine: FlutterEngine) {
         methodChannel = MethodChannel(
@@ -146,6 +149,9 @@ internal class AndroidSpeechBridge(
     }
 
     private fun startRecognition(result: MethodChannel.Result) {
+        // Do not replay a terminal event from a previous Activity/session into
+        // a new recognizer listener.
+        bufferedEvents.clear()
         if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
             result.error(
                 "runtime_unavailable",
@@ -178,6 +184,8 @@ internal class AndroidSpeechBridge(
 
         speechRecognizer = recognizer
         active = true
+        speechStartedAtMs = null
+        speechStoppedEmitted = false
         previousAudioMode = audioManager.mode
         try {
             // MODE_IN_COMMUNICATION is the platform audio mode for simultaneous
@@ -238,6 +246,8 @@ internal class AndroidSpeechBridge(
         // services synchronously invoke onError from cancel().
         active = false
         speechRecognizer = null
+        speechStartedAtMs = null
+        speechStoppedEmitted = false
         try {
             recognizer?.cancel()
         } catch (_: RuntimeException) {
@@ -256,6 +266,8 @@ internal class AndroidSpeechBridge(
 
     private fun abortStart() {
         active = false
+        speechStartedAtMs = null
+        speechStoppedEmitted = false
         val recognizer = speechRecognizer
         speechRecognizer = null
         try {
@@ -272,6 +284,7 @@ internal class AndroidSpeechBridge(
         terminalError: Pair<String, String>? = null,
     ) {
         if (!active && speechRecognizer == null) return
+        if (!cancelled) emitSpeechStoppedIfNeeded()
         active = false
         val recognizer = speechRecognizer
         speechRecognizer = null
@@ -293,6 +306,8 @@ internal class AndroidSpeechBridge(
             if (terminalError == null) stop.success(null)
             else stop.error(terminalError.first, terminalError.second, null)
         }
+        speechStartedAtMs = null
+        speechStoppedEmitted = false
     }
 
     private fun recognitionIntent(): Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -343,6 +358,8 @@ internal class AndroidSpeechBridge(
 
     override fun onBeginningOfSpeech() {
         if (!active) return
+        speechStartedAtMs = System.currentTimeMillis()
+        speechStoppedEmitted = false
         emit(
             mapOf(
                 "type" to "speech_started",
@@ -355,7 +372,10 @@ internal class AndroidSpeechBridge(
 
     override fun onBufferReceived(buffer: ByteArray?) = Unit
 
-    override fun onEndOfSpeech() = Unit
+    override fun onEndOfSpeech() {
+        if (!active) return
+        emitSpeechStoppedIfNeeded()
+    }
 
     override fun onError(error: Int) {
         if (!active) return
@@ -398,6 +418,21 @@ internal class AndroidSpeechBridge(
         )
     }
 
+    private fun emitSpeechStoppedIfNeeded() {
+        val startedAt = speechStartedAtMs ?: return
+        if (speechStoppedEmitted) return
+        speechStoppedEmitted = true
+        val stoppedAt = System.currentTimeMillis()
+        emit(
+            mapOf(
+                "type" to "speech_stopped",
+                "started_at_ms" to startedAt,
+                "stopped_at_ms" to stoppedAt,
+                "duration_ms" to (stoppedAt - startedAt).coerceAtLeast(0L),
+            ),
+        )
+    }
+
     private fun errorCode(error: Int): Pair<String, String> = when (error) {
         SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
             "permission_denied" to "Microphone permission was denied"
@@ -410,9 +445,15 @@ internal class AndroidSpeechBridge(
     }
 
     fun onHostStopped() {
-        // Pending permission requests are left alive so Android can deliver a
-        // deterministic result. Active capture, however, must never continue
-        // while the app is backgrounded.
+        // A pending permission result must not resume a recognizer after the
+        // Activity that requested it has stopped. Active capture likewise
+        // must never continue while the app is backgrounded.
+        pendingStart?.error(
+            "runtime_unavailable",
+            "Android speech host stopped before recognition started",
+            null,
+        )
+        pendingStart = null
         if (active) cancelActive()
     }
 

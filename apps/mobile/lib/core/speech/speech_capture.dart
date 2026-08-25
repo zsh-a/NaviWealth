@@ -41,6 +41,8 @@ class SpeechCaptureCapabilities {
     this.vadFrameDurationMs = 0,
     this.vadMinSpeechFrames = 0,
     this.vadMinSilenceFrames = 0,
+    this.supportsBargeIn = false,
+    this.fullDuplex = false,
   });
 
   final int sampleRateHz;
@@ -57,6 +59,8 @@ class SpeechCaptureCapabilities {
   final int vadFrameDurationMs;
   final int vadMinSpeechFrames;
   final int vadMinSilenceFrames;
+  final bool supportsBargeIn;
+  final bool fullDuplex;
 
   bool get vadAvailable => vadMode != 'none';
 }

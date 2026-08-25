@@ -7,11 +7,46 @@ enum SpeechRecognizerAvailability {
   unsupported,
 }
 
+/// Runtime capabilities of the selected speech input path.
+///
+/// These flags describe the path that owns the microphone and its timing
+/// signals; they are not a second ASR/provider abstraction. In particular,
+/// [fullDuplex] is only true when capture can remain active while the
+/// interaction session is presenting TTS and [supportsBargeIn] means that the
+/// path emits enough semantic boundary information to interrupt that output.
+final class SpeechRecognizerCapabilities {
+  const SpeechRecognizerCapabilities({
+    this.supportsBargeIn = false,
+    this.nativeAudioPath = false,
+    this.vad = false,
+    this.fullDuplex = false,
+  });
+
+  static const unknown = SpeechRecognizerCapabilities();
+
+  /// Whether speech events can be used to pause and supersede active output.
+  final bool supportsBargeIn;
+
+  /// Whether high-rate microphone processing stays on a native audio path.
+  final bool nativeAudioPath;
+
+  /// Whether the path emits native speech start/stop boundaries.
+  final bool vad;
+
+  /// Whether input and output may remain active in the same interaction turn.
+  final bool fullDuplex;
+}
+
 class SpeechRecognizerStatus {
-  const SpeechRecognizerStatus(this.availability, {this.reason});
+  const SpeechRecognizerStatus(
+    this.availability, {
+    this.reason,
+    this.capabilities = SpeechRecognizerCapabilities.unknown,
+  });
 
   final SpeechRecognizerAvailability availability;
   final String? reason;
+  final SpeechRecognizerCapabilities capabilities;
 
   bool get isReady => availability == SpeechRecognizerAvailability.ready;
 
@@ -30,6 +65,8 @@ class SpeechRecognitionEvent {
     this.speechStopped = false,
     this.stoppedAt,
     this.speechDuration,
+    this.sessionEnded = false,
+    this.cancelled = false,
   });
 
   final String text;
@@ -48,6 +85,15 @@ class SpeechRecognitionEvent {
 
   final DateTime? stoppedAt;
   final Duration? speechDuration;
+
+  /// True when the provider has emitted its terminal lifecycle signal. This
+  /// is separate from [isFinal]: a native session can end because the host
+  /// went into the background without producing a final transcript.
+  final bool sessionEnded;
+
+  /// Whether [sessionEnded] was caused by cancellation rather than a normal
+  /// provider endpoint.
+  final bool cancelled;
 }
 
 enum SpeechRecognitionErrorCode {
