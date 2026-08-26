@@ -7,6 +7,10 @@ analyzer:
     strict-raw-types: true
   errors:
     invalid_annotation_target: ignore
+    # The existing constructor style is intentionally retained across the
+    # app. Dart 3.13 reports it as an info, which would otherwise make the
+    # release gate fail under --fatal-infos.
+    prefer_initializing_formals: ignore
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
