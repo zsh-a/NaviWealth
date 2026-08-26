@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/agents/providers.dart' as app_agent_providers;
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
@@ -73,6 +74,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          app_agent_providers.latestDailyNavigatorArtifactProvider.overrideWith(
+            (_) async => null,
+          ),
           lifeEventsProvider.overrideWithValue([priority, recent]),
           lifeHeroSummaryProvider.overrideWithValue(
             const LifeHeroSummary(
@@ -152,6 +156,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          app_agent_providers.latestDailyNavigatorArtifactProvider.overrideWith(
+            (_) async => null,
+          ),
           lifeEventsProvider.overrideWithValue(const []),
           lifeHeroSummaryProvider.overrideWithValue(
             const LifeHeroSummary(
@@ -233,6 +240,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            app_agent_providers.latestDailyNavigatorArtifactProvider
+                .overrideWith((_) async => null),
             lifeEventsProvider.overrideWithValue([event]),
             lifeHeroSummaryProvider.overrideWithValue(
               const LifeHeroSummary(

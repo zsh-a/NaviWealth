@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/app/agents/providers.dart' as app_agent_providers;
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
@@ -16,6 +18,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/life/data/life_events_provider.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 import 'package:naviwealth/features/life/ui/life_event_l10n.dart';
+import 'package:naviwealth/features/life/ui/life_navi_brief.dart';
 import 'package:naviwealth/features/life/ui/life_signal_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -31,6 +34,9 @@ class LifePage extends ConsumerWidget {
     final packs = ref.watch(lifeWorkbenchDomainsProvider);
     final events = ref.watch(lifeEventsProvider);
     final hero = ref.watch(lifeHeroSummaryProvider);
+    final navigatorArtifact = ref.watch(
+      app_agent_providers.latestDailyNavigatorArtifactProvider,
+    );
     final reviewPacks = packs
         .where((pack) => pack.reviewRoutePath != null)
         .toList(growable: false);
@@ -64,11 +70,18 @@ class LifePage extends ConsumerWidget {
             ref.invalidate(lifeSignalSnapshotProvider);
             ref.invalidate(lifeEventsProvider);
             ref.invalidate(lifeHeroSummaryProvider);
+            ref.invalidate(
+              app_agent_providers.latestDailyNavigatorArtifactProvider,
+            );
           },
           maxContentWidth: AdaptiveMaxWidth.page,
           greeting: _LifeGreeting(l10n: l10n),
           stage: AppCollapsingStage(
-            child: _LifeHero(l10n: l10n, summary: hero),
+            child: _LifeHero(
+              l10n: l10n,
+              summary: hero,
+              artifactAsync: navigatorArtifact,
+            ),
           ),
           stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
             progress: progress,
@@ -286,14 +299,19 @@ class _LifeGreeting extends StatelessWidget {
   }
 }
 
-/// Compact cross-domain status. The actionable rows below own the visual
-/// hierarchy; this stage only establishes context and must not push them below
-/// the fold.
+/// Cross-domain status plus the latest evidence-backed Daily Navigator brief.
+/// The timeline below still owns the full list of actionable signals, so the
+/// stage promotes only one concise judgment instead of becoming a feed.
 class _LifeHero extends StatelessWidget {
-  const _LifeHero({required this.l10n, required this.summary});
+  const _LifeHero({
+    required this.l10n,
+    required this.summary,
+    required this.artifactAsync,
+  });
 
   final AppLocalizations l10n;
   final LifeHeroSummary summary;
+  final AsyncValue<AgentArtifact?> artifactAsync;
 
   @override
   Widget build(BuildContext context) {
@@ -308,51 +326,57 @@ class _LifeHero extends StatelessWidget {
     return SoftCard.hero(
       key: const ValueKey('life-summary-card'),
       padding: AppPageRhythm.densePadding,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppIconTile(
-            icon: FLucideIcons.sparkles,
-            color: metricColor,
-            size: 32,
-            iconSize: AppIconSizes.sm,
-            radius: AppRadius.sm,
-            backgroundOpacity: AppOpacity.subtle,
-            foregroundOpacity: 1,
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  summary.localizedHeadline(l10n),
-                  style: context.rowTitleStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AppIconTile(
+                icon: FLucideIcons.sparkles,
+                color: metricColor,
+                size: 32,
+                iconSize: AppIconSizes.sm,
+                radius: AppRadius.sm,
+                backgroundOpacity: AppOpacity.subtle,
+                foregroundOpacity: 1,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      summary.localizedHeadline(l10n),
+                      style: context.rowTitleStyle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      summary.localizedBody(l10n),
+                      style: context.captionStyle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.s4),
-                Text(
-                  summary.localizedBody(l10n),
-                  style: context.captionStyle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              ),
+              if (!summary.isCalm) ...[
+                const SizedBox(width: AppSpacing.s12),
+                AppBadge(
+                  label:
+                      '${summary.primaryMetric} ${summary.localizedMetricLabel(l10n)}',
+                  tone: summary.hasAttention
+                      ? AppBadgeTone.warning
+                      : AppBadgeTone.accent,
+                  size: AppBadgeSize.compact,
                 ),
               ],
-            ),
+            ],
           ),
-          if (!summary.isCalm) ...[
-            const SizedBox(width: AppSpacing.s12),
-            AppBadge(
-              label:
-                  '${summary.primaryMetric} ${summary.localizedMetricLabel(l10n)}',
-              tone: summary.hasAttention
-                  ? AppBadgeTone.warning
-                  : AppBadgeTone.accent,
-              size: AppBadgeSize.compact,
-            ),
-          ],
+          LifeNaviBrief(artifactAsync: artifactAsync),
         ],
       ),
     );
