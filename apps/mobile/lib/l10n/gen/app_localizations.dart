@@ -10585,6 +10585,12 @@ abstract class AppLocalizations {
   /// **'Waiting for microphone permission…'**
   String get speechInputPermissionStatus;
 
+  /// No description provided for @speechInputReadyStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognition is ready; starting microphone…'**
+  String get speechInputReadyStatus;
+
   /// No description provided for @speechInputListeningStatus.
   ///
   /// In en, this message translates to:
@@ -10620,6 +10626,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Speaking · You can interrupt by talking'**
   String get speechInputDuplexSpeakingStatus;
+
+  /// No description provided for @speechInputDuplexPausedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking paused · Keep talking to interrupt'**
+  String get speechInputDuplexPausedStatus;
+
+  /// No description provided for @speechInputSwitchToTextTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to text input'**
+  String get speechInputSwitchToTextTooltip;
 
   /// No description provided for @speechInputCancelTooltip.
   ///
@@ -10674,6 +10692,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Speech recognition could not start. Try again later'**
   String get speechInputFailed;
+
+  /// No description provided for @speechInputRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get speechInputRetry;
 
   /// No description provided for @speechOutputEngineUnavailable.
   ///

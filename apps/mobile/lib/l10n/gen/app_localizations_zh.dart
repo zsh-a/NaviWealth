@@ -5979,6 +5979,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speechInputPermissionStatus => '正在等待麦克风权限…';
 
   @override
+  String get speechInputReadyStatus => '识别已就绪，正在开启麦克风…';
+
+  @override
   String get speechInputListeningStatus => '正在聆听…';
 
   @override
@@ -5995,6 +5998,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get speechInputDuplexSpeakingStatus => '正在播报 · 直接说话即可打断';
+
+  @override
+  String get speechInputDuplexPausedStatus => '播报已暂停 · 继续说话即可打断';
+
+  @override
+  String get speechInputSwitchToTextTooltip => '切换为文字输入';
 
   @override
   String get speechInputCancelTooltip => '取消语音输入';
@@ -6022,6 +6031,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get speechInputFailed => '语音识别启动失败，请稍后重试';
+
+  @override
+  String get speechInputRetry => '重试';
 
   @override
   String get speechOutputEngineUnavailable => '当前设备无法使用文字转语音';

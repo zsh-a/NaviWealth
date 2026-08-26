@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/speech/speech_recognizer.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/ai_chat/state/chat_controller.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,6 +78,114 @@ void main() {
     expect(cancelled, 1);
     expect(sent, isEmpty);
   });
+
+  testWidgets('voice preparation remains cancellable while busy', (
+    tester,
+  ) async {
+    var cancelled = 0;
+
+    await _pumpComposer(
+      tester,
+      preferences: preferences,
+      locale: const Locale('en'),
+      isStreaming: false,
+      onSend: (_) {},
+      onCancel: () {},
+      useInteractionVoice: true,
+      voiceStarting: true,
+      voicePhase: VoiceLifecyclePhase.preparing,
+      onCancelVoice: () async => cancelled++,
+    );
+
+    expect(find.text('Preparing microphone…'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.x), findsOneWidget);
+
+    await tester.tap(find.byIcon(FLucideIcons.x));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(cancelled, 1);
+  });
+
+  testWidgets('ready startup state explains that the microphone is next', (
+    tester,
+  ) async {
+    await _pumpComposer(
+      tester,
+      preferences: preferences,
+      locale: const Locale('en'),
+      isStreaming: false,
+      onSend: (_) {},
+      onCancel: () {},
+      useInteractionVoice: true,
+      voiceStarting: true,
+      voicePhase: VoiceLifecyclePhase.ready,
+      onCancelVoice: () async {},
+    );
+
+    expect(
+      find.text('Recognition is ready; starting microphone…'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('voice error exposes an inline retry action', (tester) async {
+    var retried = 0;
+
+    await _pumpComposer(
+      tester,
+      preferences: preferences,
+      locale: const Locale('en'),
+      isStreaming: false,
+      onSend: (_) {},
+      onCancel: () {},
+      useInteractionVoice: true,
+      voicePhase: VoiceLifecyclePhase.error,
+      voiceErrorCode: SpeechRecognitionErrorCode.runtimeUnavailable,
+      onVoiceRetry: () async => retried++,
+    );
+
+    expect(
+      find.text('The on-device speech recognition service is unavailable'),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(retried, 1);
+  });
+
+  testWidgets('voice listener can switch to text and preserve its transcript', (
+    tester,
+  ) async {
+    var switched = 0;
+
+    await _pumpComposer(
+      tester,
+      preferences: preferences,
+      locale: const Locale('en'),
+      isStreaming: false,
+      onSend: (_) {},
+      onCancel: () {},
+      useInteractionVoice: true,
+      voiceActive: true,
+      voicePhase: VoiceLifecyclePhase.listening,
+      voiceTranscript: 'Check my balance',
+      onVoiceSwitchToText: () async => switched++,
+    );
+
+    expect(find.byIcon(FLucideIcons.keyboard), findsOneWidget);
+
+    await tester.tap(find.byIcon(FLucideIcons.keyboard));
+    await tester.pump(const Duration(milliseconds: 120));
+
+    expect(switched, 1);
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).controller.text,
+      'Check my balance',
+    );
+  });
 }
 
 Future<void> _pumpComposer(
@@ -86,6 +196,15 @@ Future<void> _pumpComposer(
   required ValueChanged<String> onSend,
   required VoidCallback onCancel,
   String? initialText,
+  bool useInteractionVoice = false,
+  bool voiceStarting = false,
+  bool voiceActive = false,
+  VoiceLifecyclePhase voicePhase = VoiceLifecyclePhase.idle,
+  String voiceTranscript = '',
+  SpeechRecognitionErrorCode? voiceErrorCode,
+  Future<void> Function()? onCancelVoice,
+  Future<void> Function()? onVoiceRetry,
+  Future<void> Function()? onVoiceSwitchToText,
 }) {
   return tester.pumpWidget(
     ProviderScope(
@@ -115,6 +234,23 @@ Future<void> _pumpComposer(
                   initialText: initialText,
                   onSend: onSend,
                   onCancel: onCancel,
+                  isVoiceActive: voiceActive,
+                  canStartVoice: true,
+                  onStartVoice: useInteractionVoice ? () async {} : null,
+                  onStopVoice: useInteractionVoice ? () async {} : null,
+                  onCancelVoice: useInteractionVoice
+                      ? (onCancelVoice ?? () async {})
+                      : null,
+                  onVoiceRetry: useInteractionVoice ? onVoiceRetry : null,
+                  onVoiceSwitchToText: useInteractionVoice
+                      ? onVoiceSwitchToText
+                      : null,
+                  voiceStarting: voiceStarting,
+                  voiceCapsuleVisible:
+                      useInteractionVoice && (voiceStarting || voiceActive),
+                  voicePhase: voicePhase,
+                  voiceTranscript: voiceTranscript,
+                  voiceErrorCode: voiceErrorCode,
                 ),
               ),
             ),

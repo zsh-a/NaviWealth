@@ -53,6 +53,7 @@ class ChatTurnState {
     this.cancelToken,
     this.voiceListening = false,
     this.voiceTurnActive = false,
+    this.voiceStarting = false,
     this.voicePhase = VoiceLifecyclePhase.idle,
     this.voiceTranscript = '',
     this.voiceErrorCode,
@@ -66,6 +67,12 @@ class ChatTurnState {
   final CancelToken? cancelToken;
   final bool voiceListening;
   final bool voiceTurnActive;
+
+  /// True while the voice session is being prepared or opened.
+  ///
+  /// This is separate from [voicePhase]: the recognizer can report that its
+  /// engine is ready while the microphone session is still starting.
+  final bool voiceStarting;
   final VoiceLifecyclePhase voicePhase;
   final String voiceTranscript;
   final SpeechRecognitionErrorCode? voiceErrorCode;
@@ -78,12 +85,7 @@ class ChatTurnState {
   bool get isStreaming => phase == ChatTurnPhase.streaming;
   bool get isBusy => phase != ChatTurnPhase.idle;
   bool get voiceActive => voiceListening;
-  bool get voicePreparing => switch (voicePhase) {
-    VoiceLifecyclePhase.preparing ||
-    VoiceLifecyclePhase.permission ||
-    VoiceLifecyclePhase.ready => true,
-    _ => false,
-  };
+  bool get voicePreparing => voiceStarting;
   bool get voiceFullDuplex =>
       voiceCapabilities.fullDuplex && voiceCapabilities.supportsBargeIn;
   bool get canStartVoice =>
@@ -100,6 +102,7 @@ class ChatTurnState {
     CancelToken? cancelToken,
     bool? voiceListening,
     bool? voiceTurnActive,
+    bool? voiceStarting,
     VoiceLifecyclePhase? voicePhase,
     String? voiceTranscript,
     InteractionInputLane? voiceInputLane,
@@ -114,6 +117,7 @@ class ChatTurnState {
     cancelToken: cancelToken ?? this.cancelToken,
     voiceListening: voiceListening ?? this.voiceListening,
     voiceTurnActive: voiceTurnActive ?? this.voiceTurnActive,
+    voiceStarting: voiceStarting ?? this.voiceStarting,
     voicePhase: voicePhase ?? this.voicePhase,
     voiceTranscript: voiceTranscript ?? this.voiceTranscript,
     voiceInputLane: voiceInputLane ?? this.voiceInputLane,
@@ -206,6 +210,7 @@ class ChatController extends StateNotifier<ChatTurnState>
           voiceTurnActive:
               state.voiceTurnActive ||
               request.origin == InteractionInputOrigin.voice,
+          voiceStarting: state.voiceStarting,
           voicePhase: request.origin == InteractionInputOrigin.voice
               ? VoiceLifecyclePhase.thinking
               : state.voicePhase,
@@ -227,6 +232,7 @@ class ChatController extends StateNotifier<ChatTurnState>
               ? state.voiceListening ||
                     _isVoiceOutputActive(state.voiceOutputLane)
               : state.voiceTurnActive,
+          voiceStarting: state.voiceStarting,
           voicePhase:
               request.origin == InteractionInputOrigin.voice &&
                   !_isVoiceOutputActive(state.voiceOutputLane) &&
@@ -338,6 +344,7 @@ class ChatController extends StateNotifier<ChatTurnState>
         state = ChatTurnState(
           voiceListening: state.voiceListening,
           voiceTurnActive: state.voiceTurnActive,
+          voiceStarting: state.voiceStarting,
           voicePhase: state.voicePhase,
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
@@ -357,7 +364,7 @@ class ChatController extends StateNotifier<ChatTurnState>
   /// interaction coordinator can safely supersede.
   Future<void> startVoice({String? systemContext, String? model}) {
     final starting = _voiceStarting;
-    if (starting != null || state.voiceListening || state.voicePreparing) {
+    if (starting != null || state.voiceListening || state.voiceStarting) {
       return starting ?? Future<void>.value();
     }
     final future = _startVoice(systemContext: systemContext, model: model);
@@ -374,6 +381,7 @@ class ChatController extends StateNotifier<ChatTurnState>
       // futures. The user sees a cancellable capsule in the same frame as the
       // tap instead of waiting for Drift/provider setup to finish.
       state = state.copyWith(
+        voiceStarting: true,
         voicePhase: VoiceLifecyclePhase.preparing,
         voiceListening: false,
         voiceTurnActive: state.voiceTurnActive,
@@ -386,7 +394,10 @@ class ChatController extends StateNotifier<ChatTurnState>
     final ownerUserId = ref.read(activeUserIdProvider);
     if (ownerUserId == null) {
       if (mounted) {
-        state = state.copyWith(voicePhase: VoiceLifecyclePhase.error);
+        state = state.copyWith(
+          voiceStarting: false,
+          voicePhase: VoiceLifecyclePhase.error,
+        );
       }
       return;
     }
@@ -407,7 +418,10 @@ class ChatController extends StateNotifier<ChatTurnState>
           interactionState.outputLane != InteractionOutputLane.idle;
       if (state.isBusy && !hasOutput && !hasPendingInteraction) {
         if (mounted) {
-          state = state.copyWith(voicePhase: VoiceLifecyclePhase.idle);
+          state = state.copyWith(
+            voiceStarting: false,
+            voicePhase: VoiceLifecyclePhase.idle,
+          );
         }
         return;
       }
@@ -420,9 +434,10 @@ class ChatController extends StateNotifier<ChatTurnState>
       }
       if (!mounted) return;
       state = state.copyWith(
+        voiceStarting: false,
         voiceListening: true,
         voiceTurnActive: true,
-        voicePhase: VoiceLifecyclePhase.ready,
+        voicePhase: VoiceLifecyclePhase.listening,
         clearVoiceErrorCode: true,
         clearVoiceOutputErrorCode: true,
       );
@@ -474,6 +489,7 @@ class ChatController extends StateNotifier<ChatTurnState>
           state,
           voiceListening: false,
           voiceTurnActive: false,
+          voiceStarting: false,
           voicePhase: VoiceLifecyclePhase.idle,
           voiceTranscript: '',
           voiceInputLane: InteractionInputLane.idle,
@@ -572,7 +588,7 @@ class ChatController extends StateNotifier<ChatTurnState>
     if (state.voiceTurnActive && state.isStreaming) {
       return VoiceLifecyclePhase.thinking;
     }
-    if (state.voicePreparing) return state.voicePhase;
+    if (state.voiceStarting) return state.voicePhase;
     return state.voiceTurnActive
         ? VoiceLifecyclePhase.thinking
         : VoiceLifecyclePhase.idle;
@@ -603,6 +619,7 @@ class ChatController extends StateNotifier<ChatTurnState>
       state,
       voiceListening: false,
       voiceTurnActive: keepVoiceTurn,
+      voiceStarting: false,
       voicePhase: VoiceLifecyclePhase.error,
       voiceTranscript: keepVoiceTurn ? null : '',
       voiceInputLane: keepVoiceTurn
@@ -710,6 +727,7 @@ class ChatController extends StateNotifier<ChatTurnState>
       state,
       voiceListening: false,
       voiceTurnActive: false,
+      voiceStarting: false,
       voicePhase: VoiceLifecyclePhase.idle,
       voiceTranscript: '',
       voiceInputLane: InteractionInputLane.idle,
@@ -738,6 +756,7 @@ ChatTurnState _withVoiceState(
   ChatTurnState current, {
   bool? voiceListening,
   bool? voiceTurnActive,
+  bool? voiceStarting,
   VoiceLifecyclePhase? voicePhase,
   String? voiceTranscript,
   InteractionInputLane? voiceInputLane,
@@ -752,6 +771,7 @@ ChatTurnState _withVoiceState(
   cancelToken: current.cancelToken,
   voiceListening: voiceListening ?? current.voiceListening,
   voiceTurnActive: voiceTurnActive ?? current.voiceTurnActive,
+  voiceStarting: voiceStarting ?? current.voiceStarting,
   voicePhase: voicePhase ?? current.voicePhase,
   voiceTranscript: voiceTranscript ?? current.voiceTranscript,
   voiceInputLane: voiceInputLane ?? current.voiceInputLane,

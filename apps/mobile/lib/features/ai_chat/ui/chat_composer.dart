@@ -43,6 +43,9 @@ class ChatComposer extends ConsumerStatefulWidget {
     this.onStartVoice,
     this.onStopVoice,
     this.onCancelVoice,
+    this.onVoiceRetry,
+    this.onVoiceSwitchToText,
+    this.voiceStarting = false,
     this.voiceCapsuleVisible = false,
     this.voicePhase = VoiceLifecyclePhase.idle,
     this.voiceTranscript = '',
@@ -79,6 +82,9 @@ class ChatComposer extends ConsumerStatefulWidget {
   final Future<void> Function()? onStartVoice;
   final Future<void> Function()? onStopVoice;
   final Future<void> Function()? onCancelVoice;
+  final Future<void> Function()? onVoiceRetry;
+  final Future<void> Function()? onVoiceSwitchToText;
+  final bool voiceStarting;
   final bool voiceCapsuleVisible;
   final VoiceLifecyclePhase voicePhase;
   final String voiceTranscript;
@@ -87,12 +93,7 @@ class ChatComposer extends ConsumerStatefulWidget {
   final InteractionInputLane voiceInputLane;
   final InteractionOutputLane voiceOutputLane;
 
-  bool get voicePreparing => switch (voicePhase) {
-    VoiceLifecyclePhase.preparing ||
-    VoiceLifecyclePhase.permission ||
-    VoiceLifecyclePhase.ready => true,
-    _ => false,
-  };
+  bool get voicePreparing => voiceStarting;
   bool get voiceFullDuplex =>
       voiceCapabilities.fullDuplex && voiceCapabilities.supportsBargeIn;
 
@@ -215,6 +216,33 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
         : (widget.canStartVoice ? widget.onStartVoice : null);
     if (action == null) return;
 
+    await _runVoiceAction(action);
+  }
+
+  Future<void> _retryVoice() async {
+    final action = widget.onVoiceRetry;
+    if (action == null || _voiceBusy) return;
+    await _runVoiceAction(action);
+  }
+
+  Future<void> _switchVoiceToText() async {
+    final action = widget.onVoiceSwitchToText;
+    if (action == null || _voiceBusy) return;
+    final transcript = widget.voiceTranscript.trim();
+    if (transcript.isNotEmpty) {
+      setState(() {
+        _controller
+          ..text = transcript
+          ..selection = TextSelection.collapsed(offset: transcript.length);
+        _draftInputOrigin = InteractionInputOrigin.voice;
+      });
+    }
+    await _runVoiceAction(action);
+    if (mounted) _focusNode.requestFocus();
+  }
+
+  Future<void> _runVoiceAction(Future<void> Function() action) async {
+    if (_voiceBusy) return;
     setState(() => _voiceBusy = true);
     try {
       await action();
@@ -241,7 +269,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
 
   Future<void> _cancelVoice() async {
     if (_voiceBusy &&
-        !widget.voicePreparing &&
+        !widget.voiceStarting &&
         !_isVoiceOutputLaneActive(widget.voiceOutputLane)) {
       return;
     }
@@ -358,12 +386,17 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                   isSpeaking:
                       widget.voiceOutputLane ==
                           InteractionOutputLane.synthesizing ||
-                      widget.voiceOutputLane == InteractionOutputLane.playing ||
+                      widget.voiceOutputLane == InteractionOutputLane.playing,
+                  isOutputPaused:
                       widget.voiceOutputLane == InteractionOutputLane.paused,
                   busy: _voiceBusy,
                   onCancel: widget.onCancelVoice == null
                       ? null
                       : () => unawaited(_cancelVoice()),
+                  onSwitchToText:
+                      !widget.isStreaming && widget.onVoiceSwitchToText != null
+                      ? () => unawaited(_switchVoiceToText())
+                      : null,
                   phase: widget.voicePhase,
                 ),
               if (_usesInteractionVoice &&
@@ -379,6 +412,9 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                           l10n,
                           widget.voiceOutputErrorCode!,
                         ),
+                  onRetry: widget.onVoiceRetry == null
+                      ? null
+                      : () => unawaited(_retryVoice()),
                 ),
               DecoratedBox(
                 decoration: BoxDecoration(
@@ -457,9 +493,10 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
 }
 
 class _VoiceErrorBanner extends StatelessWidget {
-  const _VoiceErrorBanner({required this.message});
+  const _VoiceErrorBanner({required this.message, this.onRetry});
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -486,6 +523,16 @@ class _VoiceErrorBanner extends StatelessWidget {
               ),
             ),
           ),
+          if (onRetry != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.sm,
+              onPress: onRetry,
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              child: Text(AppLocalizations.of(context).speechInputRetry),
+            ),
+          ],
         ],
       ),
     );
@@ -500,8 +547,10 @@ class _VoiceCapsule extends StatelessWidget {
     required this.isPreparing,
     required this.isEndpointing,
     required this.isSpeaking,
+    required this.isOutputPaused,
     required this.busy,
     required this.onCancel,
+    required this.onSwitchToText,
     required this.phase,
   });
 
@@ -511,8 +560,10 @@ class _VoiceCapsule extends StatelessWidget {
   final bool isPreparing;
   final bool isEndpointing;
   final bool isSpeaking;
+  final bool isOutputPaused;
   final bool busy;
   final VoidCallback? onCancel;
+  final VoidCallback? onSwitchToText;
   final VoiceLifecyclePhase phase;
 
   @override
@@ -520,9 +571,13 @@ class _VoiceCapsule extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final status = isPreparing
-        ? (phase == VoiceLifecyclePhase.permission
-              ? l10n.speechInputPermissionStatus
-              : l10n.speechInputPreparingStatus)
+        ? switch (phase) {
+            VoiceLifecyclePhase.permission => l10n.speechInputPermissionStatus,
+            VoiceLifecyclePhase.ready => l10n.speechInputReadyStatus,
+            _ => l10n.speechInputPreparingStatus,
+          }
+        : isOutputPaused
+        ? l10n.speechInputDuplexPausedStatus
         : isSpeaking
         ? (fullDuplex
               ? l10n.speechInputDuplexSpeakingStatus
@@ -534,7 +589,9 @@ class _VoiceCapsule extends StatelessWidget {
               ? l10n.speechInputContinuousStatus
               : l10n.speechInputListeningStatus)
         : l10n.speechInputThinkingStatus;
-    final icon = isSpeaking
+    final icon = isOutputPaused
+        ? FLucideIcons.pause
+        : isSpeaking
         ? FLucideIcons.sparkles
         : isEndpointing
         ? FLucideIcons.loaderCircle
@@ -591,6 +648,16 @@ class _VoiceCapsule extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (onSwitchToText != null && isListening && !isPreparing)
+                  FTooltip(
+                    tipBuilder: (_, _) =>
+                        Text(l10n.speechInputSwitchToTextTooltip),
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: busy ? null : onSwitchToText,
+                      child: const Icon(FLucideIcons.keyboard),
+                    ),
+                  ),
                 if (onCancel != null &&
                     (isListening || isPreparing || isSpeaking))
                   FTooltip(
@@ -605,8 +672,8 @@ class _VoiceCapsule extends StatelessWidget {
                     ),
                     child: FButton.icon(
                       variant: FButtonVariant.ghost,
-                      onPress: busy ? null : onCancel,
-                      child: busy
+                      onPress: busy && !isPreparing ? null : onCancel,
+                      child: busy && !isPreparing
                           ? const SizedBox.square(
                               dimension: AppIconSizes.sm,
                               child: FCircularProgress(),

@@ -63,6 +63,7 @@ class _ConversationComposer extends ConsumerWidget {
       sessionId: sessionId,
       isStreaming: turn.isStreaming,
       isVoiceActive: turn.voiceActive,
+      voiceStarting: turn.voiceStarting,
       canStartVoice: turn.canStartVoice,
       voiceCapabilities: turn.voiceCapabilities,
       voiceCapsuleVisible: turn.voiceCapsuleVisible,
@@ -78,6 +79,11 @@ class _ConversationComposer extends ConsumerWidget {
       onStopVoice: () =>
           ref.read(chatControllerProvider(sessionId).notifier).stopVoice(),
       onCancelVoice: () =>
+          ref.read(chatControllerProvider(sessionId).notifier).cancelVoice(),
+      onVoiceRetry: () => ref
+          .read(chatControllerProvider(sessionId).notifier)
+          .startVoice(systemContext: systemContext),
+      onVoiceSwitchToText: () =>
           ref.read(chatControllerProvider(sessionId).notifier).cancelVoice(),
       initialText: prefill,
       onSend: (text) {

@@ -6314,6 +6314,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Waiting for microphone permission…';
 
   @override
+  String get speechInputReadyStatus =>
+      'Recognition is ready; starting microphone…';
+
+  @override
   String get speechInputListeningStatus => 'Listening…';
 
   @override
@@ -6331,6 +6335,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get speechInputDuplexSpeakingStatus =>
       'Speaking · You can interrupt by talking';
+
+  @override
+  String get speechInputDuplexPausedStatus =>
+      'Speaking paused · Keep talking to interrupt';
+
+  @override
+  String get speechInputSwitchToTextTooltip => 'Switch to text input';
 
   @override
   String get speechInputCancelTooltip => 'Cancel voice input';
@@ -6365,6 +6376,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get speechInputFailed =>
       'Speech recognition could not start. Try again later';
+
+  @override
+  String get speechInputRetry => 'Retry';
 
   @override
   String get speechOutputEngineUnavailable =>
