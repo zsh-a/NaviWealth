@@ -1,7 +1,7 @@
 name: naviwealth
 description: "NaviWealth - 个人财务管理软件"
 publish_to: 'none'
-version: 0.8.54+1
+version: 0.8.55+1
 
 environment:
   sdk: ^3.13.0
