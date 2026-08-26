@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3739,6 +3740,29 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String nativeUpdateAvailable(String version) {
     return 'NaviWealth $version 可更新。';
+  }
+
+  @override
+  String get nativeUpdateCheck => '检查更新';
+
+  @override
+  String get nativeUpdateChecking => '检查中…';
+
+  @override
+  String get nativeUpdateUpToDate => '当前已是最新版本。';
+
+  @override
+  String get nativeUpdateCheckFailed => '检查更新失败，请稍后重试。';
+
+  @override
+  String get nativeUpdateUnavailable => '当前版本不支持更新检查。';
+
+  @override
+  String get nativeUpdateNotificationTitle => 'NaviWealth 有新版本';
+
+  @override
+  String nativeUpdateNotificationBody(String version) {
+    return '版本 $version 可以更新。';
   }
 
   @override

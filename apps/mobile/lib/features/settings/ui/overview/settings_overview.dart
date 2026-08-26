@@ -16,6 +16,7 @@ import '../../../../core/security/biometric_lock_preferences.dart';
 import '../../../../core/shell/auth_route_paths.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../../core/update/native_update.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 

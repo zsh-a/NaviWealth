@@ -7,7 +7,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../design_system/preferences/theme_preferences.dart';
+import '../config/app_config.dart';
 import '../config/providers.dart';
+import '../notifications/notification_service.dart';
 import 'native_update_errors.dart';
 import 'native_update_file_store.dart';
 import 'native_update_installer.dart';
@@ -20,8 +22,19 @@ const String _kNativeUpdateManifestFetchedAtKey =
     'naviwealth.update.native.github.manifest_fetched_at';
 const String _kNativeUpdateManifestSourceKey =
     'naviwealth.update.native.github.manifest_source';
+const String _kNativeUpdateNotifiedVersionKey =
+    'naviwealth.update.native.notified_version';
 
 const Duration _kNativeUpdateCacheTtl = Duration(hours: 12);
+
+const int kNativeUpdateNotificationId = 200000001;
+const String kNativeUpdateNotificationPayload = '/settings';
+const NotificationChannelSpec kNativeUpdateNotificationChannel =
+    NotificationChannelSpec(
+      id: 'naviwealth.updates',
+      name: 'NaviWealth updates',
+      description: 'Important NaviWealth version updates.',
+    );
 
 final packageInfoProvider = FutureProvider<PackageInfo>(
   (_) => PackageInfo.fromPlatform(),
@@ -39,54 +52,38 @@ final nativeUpdateServiceProvider = Provider<NativeUpdateService>((ref) {
   );
 });
 
+final nativeUpdateCheckProvider = FutureProvider.autoDispose
+    .family<NativeUpdateCheckResult, bool>((ref, forceRefresh) async {
+      if (!isAndroidNativePlatform) {
+        return NativeUpdateCheckResult.unsupported();
+      }
+
+      final config = ref.watch(appConfigProvider);
+      if (!config.hasNativeUpdateTarget) {
+        return NativeUpdateCheckResult.disabled();
+      }
+
+      final packageInfo = await ref.watch(packageInfoProvider.future);
+      return NativeUpdateChecker(
+        config: config,
+        packageInfo: packageInfo,
+        preferences: ref.watch(sharedPreferencesProvider),
+        client: ref.watch(nativeUpdateClientProvider),
+      ).check(
+        forceRefresh: forceRefresh,
+        // A manual check is an explicit request to see the update again,
+        // even when the user previously tapped "Later" for this version.
+        forceShow: forceRefresh,
+      );
+    });
+
 final nativeUpdateStateProvider = FutureProvider<NativeUpdateState>((
   ref,
 ) async {
-  if (!_isAndroidNativePlatform) return NativeUpdateState.hidden;
-
-  final config = ref.watch(appConfigProvider);
-  if (!config.hasNativeUpdateTarget) return NativeUpdateState.hidden;
-
-  final packageInfo = await ref.watch(packageInfoProvider.future);
-  final prefs = ref.watch(sharedPreferencesProvider);
-  final manifest = await ref
-      .watch(nativeUpdateClientProvider)
-      .fetchLatest(
-        manifestUrl: config.nativeUpdateManifestUrl,
-        preferences: prefs,
-      );
-  if (manifest == null || !manifest.isAndroid) {
-    return NativeUpdateState.hidden;
-  }
-
-  final currentVersion = packageInfo.version.trim();
-  final currentBuildNumber = packageInfo.buildNumber.trim();
-  final currentBuild = int.tryParse(currentBuildNumber);
-  final hasNewerBuild = currentBuild != null
-      ? isNativeBuildNewer(manifest.versionCode, currentBuild)
-      : isNativeUpdateNewer(manifest.versionName, currentVersion);
-  if (!hasNewerBuild) return NativeUpdateState.hidden;
-
-  final dismissed =
-      prefs.getString(kNativeUpdateDismissedVersionKey) ==
-          manifest.versionKey &&
-      !manifest.mandatory;
-  final required =
-      manifest.mandatory ||
-      (currentBuild != null &&
-          manifest.minSupportedVersionCode != null &&
-          currentBuild < manifest.minSupportedVersionCode!);
-
-  return NativeUpdateState(
-    currentVersion: currentVersion,
-    currentBuildNumber: currentBuildNumber,
-    manifest: manifest,
-    requiredUpdate: required,
-    shouldShow: !dismissed,
-  );
+  return (await ref.watch(nativeUpdateCheckProvider(false).future)).state;
 });
 
-bool get _isAndroidNativePlatform {
+bool get isAndroidNativePlatform {
   if (kIsWeb) return false;
   return defaultTargetPlatform == TargetPlatform.android;
 }
@@ -185,6 +182,135 @@ final class NativeUpdateManifest {
   };
 }
 
+enum NativeUpdateCheckStatus {
+  unsupported,
+  disabled,
+  noUpdate,
+  updateAvailable,
+  failed,
+}
+
+final class NativeUpdateCheckResult {
+  const NativeUpdateCheckResult({
+    required this.status,
+    required this.state,
+    this.fromCache = false,
+    this.error,
+  });
+
+  NativeUpdateCheckResult.unsupported()
+    : this(
+        status: NativeUpdateCheckStatus.unsupported,
+        state: NativeUpdateState.hidden,
+      );
+
+  NativeUpdateCheckResult.disabled()
+    : this(
+        status: NativeUpdateCheckStatus.disabled,
+        state: NativeUpdateState.hidden,
+      );
+
+  final NativeUpdateCheckStatus status;
+  final NativeUpdateState state;
+  final bool fromCache;
+  final Object? error;
+
+  bool get hasUpdate => status == NativeUpdateCheckStatus.updateAvailable;
+}
+
+final class NativeUpdateFetchResult {
+  const NativeUpdateFetchResult({
+    this.manifest,
+    this.fromCache = false,
+    this.requestAttempted = false,
+    this.error,
+  });
+
+  final NativeUpdateManifest? manifest;
+  final bool fromCache;
+  final bool requestAttempted;
+  final Object? error;
+}
+
+/// Combines the installed package identity, release configuration, and
+/// manifest fetch into one testable update decision.
+final class NativeUpdateChecker {
+  const NativeUpdateChecker({
+    required this.config,
+    required this.packageInfo,
+    required this.preferences,
+    required this.client,
+  });
+
+  final AppConfig config;
+  final PackageInfo packageInfo;
+  final SharedPreferences preferences;
+  final GitHubNativeUpdateClient client;
+
+  Future<NativeUpdateCheckResult> check({
+    bool forceRefresh = false,
+    bool forceShow = false,
+  }) async {
+    final fetch = await client.fetchLatestResult(
+      manifestUrl: config.nativeUpdateManifestUrl,
+      preferences: preferences,
+      forceRefresh: forceRefresh,
+    );
+    final manifest = fetch.manifest;
+    if (manifest == null || !manifest.isAndroid) {
+      return NativeUpdateCheckResult(
+        status: fetch.error == null
+            ? NativeUpdateCheckStatus.noUpdate
+            : NativeUpdateCheckStatus.failed,
+        state: NativeUpdateState.hidden,
+        fromCache: fetch.fromCache,
+        error: fetch.error,
+      );
+    }
+
+    final currentVersion = packageInfo.version.trim();
+    final currentBuildNumber = packageInfo.buildNumber.trim();
+    final currentBuild = int.tryParse(currentBuildNumber);
+    final hasNewerBuild = currentBuild != null
+        ? isNativeBuildNewer(manifest.versionCode, currentBuild)
+        : isNativeUpdateNewer(manifest.versionName, currentVersion);
+    if (!hasNewerBuild) {
+      return NativeUpdateCheckResult(
+        status: fetch.error == null
+            ? NativeUpdateCheckStatus.noUpdate
+            : NativeUpdateCheckStatus.failed,
+        state: NativeUpdateState.hidden,
+        fromCache: fetch.fromCache,
+        error: fetch.error,
+      );
+    }
+
+    final dismissed =
+        !forceShow &&
+        preferences.getString(kNativeUpdateDismissedVersionKey) ==
+            manifest.versionKey &&
+        !manifest.mandatory;
+    final required =
+        manifest.mandatory ||
+        (currentBuild != null &&
+            manifest.minSupportedVersionCode != null &&
+            currentBuild < manifest.minSupportedVersionCode!);
+
+    return NativeUpdateCheckResult(
+      status: NativeUpdateCheckStatus.updateAvailable,
+      state: NativeUpdateState(
+        currentVersion: currentVersion,
+        currentBuildNumber: currentBuildNumber,
+        manifest: manifest,
+        requiredUpdate: required,
+        shouldShow: !dismissed,
+      ),
+      fromCache: fetch.fromCache,
+      error: fetch.error,
+    );
+  }
+}
+
 /// Reads and caches the public GitHub Release manifest.
 final class GitHubNativeUpdateClient {
   GitHubNativeUpdateClient({Dio? dio, DateTime Function()? now})
@@ -211,18 +337,35 @@ final class GitHubNativeUpdateClient {
   Future<NativeUpdateManifest?> fetchLatest({
     required String manifestUrl,
     required SharedPreferences preferences,
+    bool forceRefresh = false,
+  }) async => (await fetchLatestResult(
+    manifestUrl: manifestUrl,
+    preferences: preferences,
+    forceRefresh: forceRefresh,
+  )).manifest;
+
+  Future<NativeUpdateFetchResult> fetchLatestResult({
+    required String manifestUrl,
+    required SharedPreferences preferences,
+    bool forceRefresh = false,
   }) async {
     final source = manifestUrl.trim();
-    if (!_isSafeManifestUrl(source)) return null;
+    if (!_isSafeManifestUrl(source)) {
+      return NativeUpdateFetchResult(
+        error: FormatException(
+          'Unsupported native update manifest URL: $source',
+        ),
+      );
+    }
 
     final cached = _readCached(preferences, source);
     final fetchedAtMs = preferences.getInt(_kNativeUpdateManifestFetchedAtKey);
-    if (cached != null && fetchedAtMs != null) {
+    if (!forceRefresh && cached != null && fetchedAtMs != null) {
       final age = _now().difference(
         DateTime.fromMillisecondsSinceEpoch(fetchedAtMs),
       );
       if (age >= Duration.zero && age < _kNativeUpdateCacheTtl) {
-        return cached;
+        return NativeUpdateFetchResult(manifest: cached, fromCache: true);
       }
     }
 
@@ -232,7 +375,16 @@ final class GitHubNativeUpdateClient {
           ? jsonDecode(response.data! as String)
           : response.data;
       final manifest = NativeUpdateManifest.tryParse(payload);
-      if (manifest == null || !manifest.isAndroid) return cached;
+      if (manifest == null || !manifest.isAndroid) {
+        return NativeUpdateFetchResult(
+          manifest: cached,
+          fromCache: cached != null,
+          requestAttempted: true,
+          error: const FormatException(
+            'GitHub native update manifest is invalid or unsupported',
+          ),
+        );
+      }
       await preferences.setString(
         _kNativeUpdateManifestCacheKey,
         jsonEncode(manifest.toJson()),
@@ -242,12 +394,20 @@ final class GitHubNativeUpdateClient {
         _kNativeUpdateManifestFetchedAtKey,
         _now().millisecondsSinceEpoch,
       );
-      return manifest;
-    } on Object {
+      return NativeUpdateFetchResult(
+        manifest: manifest,
+        requestAttempted: true,
+      );
+    } on Object catch (error) {
       // Version checks are advisory. A cached manifest is safe to use for a
       // short period when GitHub is offline; a failed network request must
       // never block app startup or the rest of the product.
-      return cached;
+      return NativeUpdateFetchResult(
+        manifest: cached,
+        fromCache: cached != null,
+        requestAttempted: true,
+        error: error,
+      );
     }
   }
 
@@ -363,6 +523,49 @@ final class NativeUpdateService {
       rethrow;
     }
   }
+}
+
+/// Posts at most one OS notification for each release version. The same
+/// version remains available in the in-app banner and through manual checks.
+final class NativeUpdateNotificationController {
+  const NativeUpdateNotificationController();
+
+  Future<bool> showIfNeeded({
+    required NativeUpdateState state,
+    required NotificationService service,
+    required SharedPreferences preferences,
+    required String title,
+    required String body,
+  }) async {
+    final manifest = state.manifest;
+    if (manifest == null || !state.shouldShow) {
+      await clear(service);
+      return false;
+    }
+    if (preferences.getString(_kNativeUpdateNotifiedVersionKey) ==
+        manifest.versionKey) {
+      return false;
+    }
+    if (!await service.isAvailable() || !await service.hasPermissions()) {
+      return false;
+    }
+
+    await service.showNow(
+      id: kNativeUpdateNotificationId,
+      title: title,
+      body: body,
+      channel: kNativeUpdateNotificationChannel,
+      payload: kNativeUpdateNotificationPayload,
+    );
+    await preferences.setString(
+      _kNativeUpdateNotifiedVersionKey,
+      manifest.versionKey,
+    );
+    return true;
+  }
+
+  Future<void> clear(NotificationService service) =>
+      service.cancel(kNativeUpdateNotificationId);
 }
 
 bool isNativeUpdateNewer(String latestVersion, String currentVersion) {

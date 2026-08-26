@@ -6675,6 +6675,48 @@ abstract class AppLocalizations {
   /// **'NaviWealth {version} is available.'**
   String nativeUpdateAvailable(String version);
 
+  /// Action to manually check for a new Android APK release
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get nativeUpdateCheck;
+
+  /// Button label while manually checking for an Android APK release
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get nativeUpdateChecking;
+
+  /// Toast shown when no newer Android APK release is available
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date.'**
+  String get nativeUpdateUpToDate;
+
+  /// Toast shown when the manual Android update check fails
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t check for updates. Please try again later.'**
+  String get nativeUpdateCheckFailed;
+
+  /// Toast shown when the Android update manifest is not configured
+  ///
+  /// In en, this message translates to:
+  /// **'Updates are unavailable for this build.'**
+  String get nativeUpdateUnavailable;
+
+  /// Title of the Android OS notification for a new release
+  ///
+  /// In en, this message translates to:
+  /// **'NaviWealth update available'**
+  String get nativeUpdateNotificationTitle;
+
+  /// Body of the Android OS notification for a new release
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is ready to install.'**
+  String nativeUpdateNotificationBody(String version);
+
   /// Action to download and install the Android APK update
   ///
   /// In en, this message translates to:

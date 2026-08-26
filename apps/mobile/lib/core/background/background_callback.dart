@@ -19,11 +19,18 @@
 /// in `app_dock_shell.dart` runs the actual agent.
 library;
 
+import 'dart:ui' show Locale;
+
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../ai/agents/agent_l10n.dart';
 import '../ai/attention/background_safe_attention.dart';
+import '../config/app_config.dart';
+import '../notifications/notification_preferences.dart';
 import '../notifications/notification_service_factory.dart';
+import '../update/native_update.dart';
 import 'background_scheduler.dart';
 
 @pragma('vm:entry-point')
@@ -63,6 +70,8 @@ void lifeosBackgroundCallback() {
             );
           }
         }
+      } else if (task.name == kNativeUpdateTaskName) {
+        await _runNativeUpdateCheck(prefs);
       }
     } on Object {
       // Background-isolate failures aren't surfaced anywhere useful.
@@ -72,4 +81,54 @@ void lifeosBackgroundCallback() {
     }
     return true;
   });
+}
+
+Future<void> _runNativeUpdateCheck(SharedPreferences preferences) async {
+  // WorkManager can also be configured by the shared iOS scheduler. The
+  // update manifest is Android-specific, so never attempt a network request
+  // or notification setup on another native platform.
+  if (!isAndroidNativePlatform) return;
+
+  final notifier = createNotificationService();
+  const controller = NativeUpdateNotificationController();
+  if (!(preferences.getBool(
+        SharedBoolPreferenceController.notificationsEnabledKey,
+      ) ??
+      true)) {
+    await controller.clear(notifier);
+    return;
+  }
+
+  const config = AppConfig.dev;
+  if (!config.hasNativeUpdateTarget) {
+    await controller.clear(notifier);
+    return;
+  }
+
+  final preferredLanguage = preferences.getString('naviwealth.locale');
+  final l10n = defaultAgentL10n(
+    preferredLanguage == null ? null : Locale(preferredLanguage),
+  );
+  final client = GitHubNativeUpdateClient();
+  try {
+    final packageInfo = await PackageInfo.fromPlatform();
+    final result = await NativeUpdateChecker(
+      config: config,
+      packageInfo: packageInfo,
+      preferences: preferences,
+      client: client,
+    ).check(forceRefresh: true);
+
+    await controller.showIfNeeded(
+      state: result.hasUpdate ? result.state : NativeUpdateState.hidden,
+      service: notifier,
+      preferences: preferences,
+      title: l10n.nativeUpdateNotificationTitle,
+      body: result.hasUpdate
+          ? l10n.nativeUpdateNotificationBody(result.state.latestVersion)
+          : '',
+    );
+  } finally {
+    client.dispose();
+  }
 }

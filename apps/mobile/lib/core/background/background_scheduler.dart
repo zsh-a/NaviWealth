@@ -35,6 +35,11 @@ const String kGarminSyncTaskName = 'com.naviwealth.garminSync';
 /// identifiers.
 const String kHealthPlatformSyncTaskName = 'com.naviwealth.healthPlatformSync';
 
+/// Stable workmanager task name for the Android GitHub self-update check.
+/// The task only reads the public release manifest and posts a local
+/// notification; APK installation remains an explicit foreground action.
+const String kNativeUpdateTaskName = 'com.naviwealth.nativeUpdate';
+
 const String kLifeAttentionDueAtKey = 'lifeos.attention.dueAt';
 
 /// SharedPreferences key set by the background callback when ExecutionOS
@@ -49,6 +54,10 @@ const String kGarminSyncDueAtKey = 'lifeos.health.garminSync.dueAt';
 /// HealthKit / Health Connect data should be refreshed in-process on next
 /// foreground launch/resume.
 const String kHealthPlatformSyncDueAtKey = 'lifeos.health.platformSync.dueAt';
+
+/// SharedPreferences key stamped when the Android update task wakes.
+const String kNativeUpdateDueAtKey =
+    'naviwealth.update.native.background.dueAt';
 
 class BackgroundTaskSpec {
   const BackgroundTaskSpec({
@@ -92,11 +101,18 @@ const BackgroundTaskSpec kHealthPlatformSyncBackgroundTask = BackgroundTaskSpec(
   defaultInterval: Duration(hours: 6),
 );
 
+const BackgroundTaskSpec kNativeUpdateBackgroundTask = BackgroundTaskSpec(
+  name: kNativeUpdateTaskName,
+  dueAtPreferenceKey: kNativeUpdateDueAtKey,
+  defaultInterval: Duration(hours: 12),
+);
+
 const List<BackgroundTaskSpec> kBackgroundTaskSpecs = <BackgroundTaskSpec>[
   kLifeAttentionBackgroundTask,
   kExecutionReviewBackgroundTask,
   kGarminSyncBackgroundTask,
   kHealthPlatformSyncBackgroundTask,
+  kNativeUpdateBackgroundTask,
 ];
 
 const NotificationChannelSpec kLifeAttentionNotificationChannel =

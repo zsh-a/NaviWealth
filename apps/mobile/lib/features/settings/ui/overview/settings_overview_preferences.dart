@@ -122,11 +122,18 @@ class _AppearanceSection extends ConsumerWidget {
       };
 }
 
-class _AboutTile extends ConsumerWidget {
+class _AboutTile extends ConsumerStatefulWidget {
   const _AboutTile();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AboutTile> createState() => _AboutTileState();
+}
+
+class _AboutTileState extends ConsumerState<_AboutTile> {
+  bool _checking = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final versionAsync = ref.watch(appVersionProvider);
     final colors = context.theme.colors;
@@ -149,31 +156,88 @@ class _AboutTile extends ConsumerWidget {
         horizontal: AppSpacing.s14,
         vertical: AppSpacing.s10,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            FLucideIcons.info,
-            size: AppIconSizes.h18,
-            color: colors.mutedForeground,
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.settingsAboutTitle,
-                  style: context.theme.typography.body.sm,
+          Row(
+            children: [
+              Icon(
+                FLucideIcons.info,
+                size: AppIconSizes.h18,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.settingsAboutTitle,
+                      style: context.theme.typography.body.sm,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(subtitle, style: context.captionStyle),
+                  ],
                 ),
-                const SizedBox(height: AppSpacing.s2),
-                Text(subtitle, style: context.captionStyle),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (isAndroidNativePlatform) ...[
+            const SizedBox(height: AppSpacing.s10),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FButton(
+                variant: FButtonVariant.outline,
+                onPress: _checking ? null : _checkForUpdates,
+                child: Text(
+                  _checking
+                      ? l10n.nativeUpdateChecking
+                      : l10n.nativeUpdateCheck,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _checkForUpdates() async {
+    if (_checking) return;
+    setState(() => _checking = true);
+    try {
+      final result = await ref.read(nativeUpdateCheckProvider(true).future);
+      // The forced request has refreshed the shared cache. Rebuild the global
+      // banner from that fresh manifest instead of waiting for its TTL.
+      ref.invalidate(nativeUpdateCheckProvider(false));
+      ref.invalidate(nativeUpdateStateProvider);
+      if (!mounted) return;
+
+      final l10n = AppLocalizations.of(context);
+      final (kind, message) = switch (result.status) {
+        NativeUpdateCheckStatus.updateAvailable => (
+          ToastKind.info,
+          l10n.nativeUpdateAvailable(result.state.latestVersion),
+        ),
+        NativeUpdateCheckStatus.noUpdate => (
+          ToastKind.success,
+          l10n.nativeUpdateUpToDate,
+        ),
+        NativeUpdateCheckStatus.failed => (
+          ToastKind.error,
+          l10n.nativeUpdateCheckFailed,
+        ),
+        NativeUpdateCheckStatus.disabled ||
+        NativeUpdateCheckStatus.unsupported => (
+          ToastKind.info,
+          l10n.nativeUpdateUnavailable,
+        ),
+      };
+      AppMessenger.show(context, kind, message);
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
   }
 }
 

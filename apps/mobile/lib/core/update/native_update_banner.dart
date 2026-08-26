@@ -6,6 +6,8 @@ import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../notifications/notification_preferences.dart';
+import '../notifications/providers.dart';
 import 'native_update.dart';
 import 'native_update_errors.dart';
 import 'native_update_installer.dart';
@@ -34,6 +36,25 @@ final class _NativeUpdateBannerState extends ConsumerState<NativeUpdateBanner>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    ref.listenManual<AsyncValue<NativeUpdateState>>(
+      nativeUpdateStateProvider,
+      (_, next) => unawaited(_syncNotification(next.value)),
+    );
+    ref.listenManual<bool>(notificationsEnabledProvider, (_, enabled) {
+      if (enabled) {
+        unawaited(_syncNotification(ref.read(nativeUpdateStateProvider).value));
+      } else {
+        unawaited(_clearNotification());
+      }
+    });
+    // `listenManual` intentionally does not fire immediately in initState.
+    // Sync once after the first frame as well, covering a provider that was
+    // already resolved before this banner was mounted.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(_syncNotification(ref.read(nativeUpdateStateProvider).value));
+      }
+    });
   }
 
   @override
@@ -46,6 +67,7 @@ final class _NativeUpdateBannerState extends ConsumerState<NativeUpdateBanner>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(packageInfoProvider);
+      ref.invalidate(nativeUpdateCheckProvider(false));
       ref.invalidate(nativeUpdateStateProvider);
     }
   }
@@ -171,6 +193,41 @@ final class _NativeUpdateBannerState extends ConsumerState<NativeUpdateBanner>
   }
 
   int get _progressPercent => ((_progress ?? 0) * 100).round();
+
+  Future<void> _syncNotification(NativeUpdateState? state) async {
+    if (!mounted) return;
+    final service = ref.read(notificationServiceProvider);
+    const controller = NativeUpdateNotificationController();
+    try {
+      if (!ref.read(notificationsEnabledProvider)) {
+        await controller.clear(service);
+        return;
+      }
+      final l10n = AppLocalizations.of(context);
+      await controller.showIfNeeded(
+        state: state ?? NativeUpdateState.hidden,
+        service: service,
+        preferences: ref.read(sharedPreferencesProvider),
+        title: l10n.nativeUpdateNotificationTitle,
+        body: state == null
+            ? ''
+            : l10n.nativeUpdateNotificationBody(state.latestVersion),
+      );
+    } on Object {
+      // Notification delivery is best-effort. The in-app update banner must
+      // remain usable when the OS has revoked permission or the plugin fails.
+    }
+  }
+
+  Future<void> _clearNotification() async {
+    try {
+      await const NativeUpdateNotificationController().clear(
+        ref.read(notificationServiceProvider),
+      );
+    } on Object {
+      // Best-effort cleanup only.
+    }
+  }
 
   Future<void> _dismiss(NativeUpdateState state) async {
     final versionKey = state.versionKey;

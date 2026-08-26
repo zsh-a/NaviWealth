@@ -1196,6 +1196,19 @@
   "pwaUpdateApply": "立即刷新",
   "pwaUpdateDismiss": "稍后",
   "nativeUpdateAvailable": "NaviWealth {version} 可更新。",
+  "nativeUpdateCheck": "检查更新",
+  "nativeUpdateChecking": "检查中…",
+  "nativeUpdateUpToDate": "当前已是最新版本。",
+  "nativeUpdateCheckFailed": "检查更新失败，请稍后重试。",
+  "nativeUpdateUnavailable": "当前版本不支持更新检查。",
+  "nativeUpdateNotificationTitle": "NaviWealth 有新版本",
+  "nativeUpdateNotificationBody": "版本 {version} 可以更新。",
+  "@nativeUpdateNotificationBody": {
+    "description": "Android 新版本系统通知正文",
+    "placeholders": {
+      "version": { "type": "String", "example": "0.8.0" }
+    }
+  },
   "nativeUpdateApply": "更新",
   "nativeUpdateDismiss": "稍后",
   "nativeUpdateDownloading": "正在下载更新（{percent}%）",

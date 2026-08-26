@@ -44,11 +44,23 @@ void main() {
       kHealthPlatformSyncBackgroundTask.defaultInterval,
       const Duration(hours: 6),
     );
+    expect(kNativeUpdateTaskName, 'com.naviwealth.nativeUpdate');
+    expect(kNativeUpdateDueAtKey, 'naviwealth.update.native.background.dueAt');
+    expect(kNativeUpdateBackgroundTask.name, kNativeUpdateTaskName);
+    expect(
+      kNativeUpdateBackgroundTask.dueAtPreferenceKey,
+      kNativeUpdateDueAtKey,
+    );
+    expect(
+      kNativeUpdateBackgroundTask.defaultInterval,
+      const Duration(hours: 12),
+    );
     expect(kBackgroundTaskSpecs.map((spec) => spec.name), <String>[
       kLifeAttentionTaskName,
       kExecutionReviewTaskName,
       kGarminSyncTaskName,
       kHealthPlatformSyncTaskName,
+      kNativeUpdateTaskName,
     ]);
     expect(
       backgroundTaskSpecForName(kExecutionReviewTaskName),
@@ -57,6 +69,10 @@ void main() {
     expect(
       backgroundTaskSpecForName(kGarminSyncTaskName),
       kGarminSyncBackgroundTask,
+    );
+    expect(
+      backgroundTaskSpecForName(kNativeUpdateTaskName),
+      kNativeUpdateBackgroundTask,
     );
     expect(backgroundTaskSpecForName('unknown'), isNull);
   });
@@ -113,10 +129,16 @@ void main() {
       kHealthPlatformSyncBackgroundTask,
       interval: const Duration(minutes: 15),
     );
+    await scheduler.registerTask(kNativeUpdateBackgroundTask);
+    await scheduler.registerTask(
+      kNativeUpdateBackgroundTask,
+      interval: const Duration(minutes: 15),
+    );
     await scheduler.cancelTask(kLifeAttentionBackgroundTask);
     await scheduler.cancelTask(kExecutionReviewBackgroundTask);
     await scheduler.cancelTask(kGarminSyncBackgroundTask);
     await scheduler.cancelTask(kHealthPlatformSyncBackgroundTask);
+    await scheduler.cancelTask(kNativeUpdateBackgroundTask);
   });
 }
 

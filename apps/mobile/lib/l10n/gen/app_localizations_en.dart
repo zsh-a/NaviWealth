@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3898,6 +3899,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String nativeUpdateAvailable(String version) {
     return 'NaviWealth $version is available.';
+  }
+
+  @override
+  String get nativeUpdateCheck => 'Check for updates';
+
+  @override
+  String get nativeUpdateChecking => 'Checking…';
+
+  @override
+  String get nativeUpdateUpToDate => 'You\'re up to date.';
+
+  @override
+  String get nativeUpdateCheckFailed =>
+      'Couldn\'t check for updates. Please try again later.';
+
+  @override
+  String get nativeUpdateUnavailable =>
+      'Updates are unavailable for this build.';
+
+  @override
+  String get nativeUpdateNotificationTitle => 'NaviWealth update available';
+
+  @override
+  String nativeUpdateNotificationBody(String version) {
+    return 'Version $version is ready to install.';
   }
 
   @override
@@ -10618,8 +10644,7 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other:
           '$n remote rows were ignored because their namespace is not supported here',
-      one:
-          '1 remote row was ignored because its namespace is not supported here',
+      one: '1 remote row was ignored because its namespace is not supported here',
     );
     return '$_temp0';
   }

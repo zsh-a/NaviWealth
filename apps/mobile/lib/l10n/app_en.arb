@@ -1960,6 +1960,25 @@
       "version": { "type": "String", "example": "0.8.0" }
     }
   },
+  "nativeUpdateCheck": "Check for updates",
+  "@nativeUpdateCheck": { "description": "Action to manually check for a new Android APK release" },
+  "nativeUpdateChecking": "Checking…",
+  "@nativeUpdateChecking": { "description": "Button label while manually checking for an Android APK release" },
+  "nativeUpdateUpToDate": "You're up to date.",
+  "@nativeUpdateUpToDate": { "description": "Toast shown when no newer Android APK release is available" },
+  "nativeUpdateCheckFailed": "Couldn't check for updates. Please try again later.",
+  "@nativeUpdateCheckFailed": { "description": "Toast shown when the manual Android update check fails" },
+  "nativeUpdateUnavailable": "Updates are unavailable for this build.",
+  "@nativeUpdateUnavailable": { "description": "Toast shown when the Android update manifest is not configured" },
+  "nativeUpdateNotificationTitle": "NaviWealth update available",
+  "@nativeUpdateNotificationTitle": { "description": "Title of the Android OS notification for a new release" },
+  "nativeUpdateNotificationBody": "Version {version} is ready to install.",
+  "@nativeUpdateNotificationBody": {
+    "description": "Body of the Android OS notification for a new release",
+    "placeholders": {
+      "version": { "type": "String", "example": "0.8.0" }
+    }
+  },
   "nativeUpdateApply": "Update",
   "@nativeUpdateApply": { "description": "Action to download and install the Android APK update" },
   "nativeUpdateDismiss": "Later",

@@ -9,6 +9,7 @@ import '../../core/ai/llm_credentials/providers.dart' as llm_credentials;
 import '../../core/config/providers.dart';
 import '../../core/logging/app_logger.dart';
 import '../../core/logging/providers.dart';
+import '../../core/update/native_update_background.dart';
 import '../domain_bootstrap.dart';
 
 /// Schedules non-visual startup after Flutter has produced its first frame.
@@ -38,6 +39,7 @@ Future<void> runPostFrameStartup(ProviderContainer container) async {
   try {
     container.read(authenticatedStartupBootstrapProvider);
     container.read(domainBackgroundBootstrapProvider);
+    container.read(nativeUpdateBackgroundBootstrapProvider);
   } on Object catch (error, stackTrace) {
     logger.w(
       'Post-frame provider startup failed',
