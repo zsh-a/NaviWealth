@@ -3,11 +3,13 @@ part of 'quote_cache.dart';
 Future<CachedSearch?> _readSearch(
   MarketCache cache,
   String query, {
+  AssetMarket? market,
   String? source,
 }) async {
   final norm = query.trim().toLowerCase();
   if (norm.isEmpty) return null;
   final q = cache._db.select(cache._db.marketSymbolSearches)
+    ..where((t) => t.market.equals(_marketKey(market)))
     ..where((t) => t.query.equals(norm));
   if (source != null) q.where((t) => t.source.equals(source));
   q.orderBy([(t) => OrderingTerm.desc(t.fetchedAt)]);
@@ -37,6 +39,7 @@ Future<void> _writeSearch(
   MarketCache cache,
   String query,
   List<SymbolInfo> results, {
+  AssetMarket? market,
   required String source,
 }) async {
   final norm = query.trim().toLowerCase();
@@ -46,6 +49,7 @@ Future<void> _writeSearch(
       .into(cache._db.marketSymbolSearches)
       .insertOnConflictUpdate(
         MarketSymbolSearchesCompanion.insert(
+          market: _marketKey(market),
           query: norm,
           source: source,
           results: jsonEncode(

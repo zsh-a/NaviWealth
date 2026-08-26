@@ -1,7 +1,10 @@
 part of 'quote_cache.dart';
 
-String _quoteKey(String symbol, String? source) =>
-    '${symbol.toUpperCase()}|${source ?? '*'}';
+String _marketKey(AssetMarket? market) =>
+    market?.wire ?? AssetMarket.unknown.wire;
+
+String _quoteKey(String symbol, AssetMarket? market, String? source) =>
+    '${_marketKey(market)}|${symbol.toUpperCase()}|${source ?? '*'}';
 
 CachedQuote? _withFreshness(MarketCache cache, CachedQuote cached) {
   final age = cache._clock.now().difference(cached.fetchedAt);

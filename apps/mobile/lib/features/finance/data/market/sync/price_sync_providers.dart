@@ -76,13 +76,17 @@ Future<FxSyncInputs?> _readFxInputs(AppDatabase db, Ref ref) async {
   final base = ref.read(baseCurrencyProvider);
   final rows = await db
       .customSelect(
-        'SELECT DISTINCT currency FROM accounts '
-        'WHERE deleted_at IS NULL '
-        'AND archived = 0 '
-        "AND id NOT LIKE 'system-account:%'",
+        'SELECT currency FROM accounts '
+        'WHERE deleted_at IS NULL AND archived = 0 '
+        "AND id NOT LIKE 'system-account:%' "
+        'UNION '
+        'SELECT currency FROM assets WHERE deleted_at IS NULL',
       )
       .get();
-  final currencies = rows.map((r) => r.read<String>('currency')).toSet();
+  final currencies = rows
+      .map((r) => r.read<String>('currency').trim().toUpperCase())
+      .where((currency) => currency.isNotEmpty)
+      .toSet();
   return FxSyncInputs(baseCurrency: base, currencies: currencies);
 }
 

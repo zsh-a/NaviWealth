@@ -154,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 77;
+  int get schemaVersion => 78;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1126,6 +1126,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 77) {
         await customStatement('DROP TABLE IF EXISTS agent_preferences');
         await _createAgentPreferences(this);
+      }
+      // v77 -> v78: separate market identity from symbol identity in the
+      // local quote/history/search caches, and preserve the distinction
+      // between an FX observation day and the time it was fetched.
+      if (from < 78) {
+        await _migrateFxRates(this);
+        await _migrateMarketDataCaches(this, m);
+        await _createMarketDataCacheIndexes(this);
       }
     },
     beforeOpen: (details) async {

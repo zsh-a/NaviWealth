@@ -278,7 +278,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
       try {
         final resp = await _market.getQuote(asset.symbol, market: market);
         warmed++;
-        if (canPersist && resp.freshness == DataFreshness.live) {
+        if (canPersist && _isSnapshotEligible(resp)) {
           final wrote = await _maybeWriteDailySnapshot(asset, resp);
           if (wrote) snapshots++;
         }
@@ -297,7 +297,8 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
   }
 
   /// Phase E. Writes one `auto:<provider>` row into the `prices` ledger per
-  /// UTC day per held asset, skipping when:
+  /// UTC day per held asset, including a same-day fresh cache hit, and
+  /// skipping when:
   ///   - the same UTC day already has a `manual*` row (user-curated wins)
   ///   - the same UTC day already has an `auto:*` row (idempotent)
   ///   - the quote's currency doesn't match the asset's preferred quote
@@ -329,7 +330,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
       }
     }
     try {
-      await prices.record(
+      await prices.upsertDailySnapshot(
         unit: asset.id,
         quoteCurrency: asset.currency,
         observedOn: observedAt,
@@ -350,6 +351,14 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
   static DateTime _floorToUtcDay(DateTime d) {
     final u = d.toUtc();
     return DateTime.utc(u.year, u.month, u.day);
+  }
+
+  bool _isSnapshotEligible(MarketResponse<Quote> response) {
+    final observedDay = _floorToUtcDay(response.data.asOf);
+    final today = _floorToUtcDay(_clock.now());
+    if (observedDay != today) return false;
+    return response.freshness == DataFreshness.live ||
+        response.freshness == DataFreshness.cachedFresh;
   }
 
   Future<void> _syncFx() async {

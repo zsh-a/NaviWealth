@@ -5777,6 +5777,132 @@ abstract class AppLocalizations {
   /// **'Syncing rates…'**
   String get fxRatesRefreshing;
 
+  /// No description provided for @fxRatesOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency monitor'**
+  String get fxRatesOverviewTitle;
+
+  /// No description provided for @fxRatesOverviewSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'A quiet view of the rates used across your wealth history.'**
+  String get fxRatesOverviewSubtitle;
+
+  /// No description provided for @fxRatesStatusSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get fxRatesStatusSyncing;
+
+  /// No description provided for @fxRatesStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get fxRatesStatusFailed;
+
+  /// No description provided for @fxRatesStatusReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get fxRatesStatusReady;
+
+  /// No description provided for @fxRatesStatusLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Local history'**
+  String get fxRatesStatusLocal;
+
+  /// No description provided for @fxRatesTrackedPairsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracked pairs'**
+  String get fxRatesTrackedPairsLabel;
+
+  /// No description provided for @fxRatesBaseCurrencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Base currency'**
+  String get fxRatesBaseCurrencyLabel;
+
+  /// No description provided for @fxRatesLastUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated'**
+  String get fxRatesLastUpdatedLabel;
+
+  /// No description provided for @fxRatesLatestObservation.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest observation'**
+  String get fxRatesLatestObservation;
+
+  /// No description provided for @fxRatesHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get fxRatesHistoryTitle;
+
+  /// No description provided for @fxRatesRange7D.
+  ///
+  /// In en, this message translates to:
+  /// **'7D'**
+  String get fxRatesRange7D;
+
+  /// No description provided for @fxRatesRange30D.
+  ///
+  /// In en, this message translates to:
+  /// **'30D'**
+  String get fxRatesRange30D;
+
+  /// No description provided for @fxRatesRange90D.
+  ///
+  /// In en, this message translates to:
+  /// **'90D'**
+  String get fxRatesRange90D;
+
+  /// No description provided for @fxRatesRangeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get fxRatesRangeAll;
+
+  /// No description provided for @fxRatesHistoryEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'Observations'**
+  String get fxRatesHistoryEntries;
+
+  /// No description provided for @fxRatesNotEnoughHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'More observations will reveal a trend.'**
+  String get fxRatesNotEnoughHistory;
+
+  /// No description provided for @fxRatesRangeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the selected window. Switch to All for the full history.'**
+  String get fxRatesRangeHint;
+
+  /// No description provided for @fxRatesAsOfValue.
+  ///
+  /// In en, this message translates to:
+  /// **'As of {date}'**
+  String fxRatesAsOfValue(String date);
+
+  /// No description provided for @fxRatesPairsTracked.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No pairs} one{1 pair} other{{count} pairs}}'**
+  String fxRatesPairsTracked(int count);
+
+  /// No description provided for @fxRatesEntriesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{1 entry} other{{count} entries}}'**
+  String fxRatesEntriesCount(int count);
+
   /// No description provided for @fxRatesSyncedFrom.
   ///
   /// In en, this message translates to:

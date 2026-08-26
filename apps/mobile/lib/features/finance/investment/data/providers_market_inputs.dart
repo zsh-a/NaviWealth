@@ -49,7 +49,7 @@ final holdingPriceSourceProvider = FutureProvider<HoldingPriceSource>((
         asOf: _floorToDay(row.observedOn),
         price: row.perUnit,
         currency: row.quoteCurrency,
-        confidence: row.source == 'manual'
+        confidence: row.source == 'manual' || row.source.startsWith('manual:')
             ? PriceConfidence.manual
             : PriceConfidence.dailyClose,
         source: row.source,

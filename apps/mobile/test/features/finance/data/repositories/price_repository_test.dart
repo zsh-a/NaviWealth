@@ -80,6 +80,54 @@ void main() {
     },
   );
 
+  test(
+    'same-day manual price wins and automatic snapshots have stable ids',
+    () async {
+      final day = DateTime.utc(2026, 5, 1, 12);
+      final auto = await repo.upsertDailySnapshot(
+        unit: 'us_stock:AAPL',
+        quoteCurrency: 'USD',
+        observedOn: day,
+        perUnit: Decimal.parse('180'),
+        source: 'auto:yfinance',
+      );
+      await repo.upsertDailySnapshot(
+        unit: 'us_stock:AAPL',
+        quoteCurrency: 'USD',
+        observedOn: day.add(const Duration(hours: 2)),
+        perUnit: Decimal.parse('181'),
+        source: 'auto:backup',
+      );
+      await repo.record(
+        unit: 'us_stock:AAPL',
+        quoteCurrency: 'USD',
+        observedOn: day.subtract(const Duration(hours: 1)),
+        perUnit: Decimal.parse('195'),
+        source: 'manual:valuation',
+      );
+
+      final latest = await repo.latestAt(
+        unit: 'us_stock:AAPL',
+        quoteCurrency: 'USD',
+        asOf: DateTime.utc(2026, 5, 1, 23, 59),
+      );
+      expect(latest?.perUnit, Decimal.parse('195'));
+      expect(latest?.source, 'manual:valuation');
+      expect(
+        (await db.select(db.prices).get()).where((row) => row.id == auto.id),
+        hasLength(1),
+      );
+      expect(
+        PriceRepository.dailySnapshotId(
+          unit: 'us_stock:AAPL',
+          quoteCurrency: 'USD',
+          observedOn: day,
+        ),
+        auto.id,
+      );
+    },
+  );
+
   test('softDelete tombstones the row and queues a dirty pointer', () async {
     final p = await repo.record(
       unit: 'us_stock:AAPL',

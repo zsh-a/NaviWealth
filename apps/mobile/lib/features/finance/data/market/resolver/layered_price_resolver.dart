@@ -207,7 +207,10 @@ class LayeredPriceResolver implements PriceResolver {
     }
     if (pick == null) return null;
     return ResolvedPrice(
-      value: pick.adjustedClose ?? pick.close,
+      // A holding's accounting value must use the raw close. Adjusted close
+      // already folds distributions into the series and can double-count a
+      // dividend that is represented by a ledger posting.
+      value: pick.close,
       currency: asset.currency,
       confidence: PriceConfidence.dailyClose,
       source: 'historical-bar:${resp.source}',

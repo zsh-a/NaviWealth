@@ -16249,6 +16249,17 @@ class $FxRatesTable extends FxRates with TableInfo<$FxRatesTable, FxRateRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _sourceMeta = const VerificationMeta('source');
   @override
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
@@ -16265,6 +16276,7 @@ class $FxRatesTable extends FxRates with TableInfo<$FxRatesTable, FxRateRow> {
     quoteCurrency,
     rate,
     asOf,
+    fetchedAt,
     source,
   ];
   @override
@@ -16314,6 +16326,14 @@ class $FxRatesTable extends FxRates with TableInfo<$FxRatesTable, FxRateRow> {
     } else if (isInserting) {
       context.missing(_asOfMeta);
     }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
     if (data.containsKey('source')) {
       context.handle(
         _sourceMeta,
@@ -16351,6 +16371,10 @@ class $FxRatesTable extends FxRates with TableInfo<$FxRatesTable, FxRateRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}as_of'],
       )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
       source: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source'],
@@ -16372,7 +16396,16 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
   final String baseCurrency;
   final String quoteCurrency;
   final Decimal rate;
+
+  /// Trading/observation date supplied by the provider. This is deliberately
+  /// separate from [fetchedAt]: a cached quote may describe an older market
+  /// day even though the app recorded it today.
   final DateTime asOf;
+
+  /// When this observation was written to the local store / received from
+  /// the provider. Used for freshness and audit UI; never used as the FX
+  /// valuation date.
+  final DateTime fetchedAt;
   final String? source;
   const FxRateRow({
     required this.id,
@@ -16380,6 +16413,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
     required this.quoteCurrency,
     required this.rate,
     required this.asOf,
+    required this.fetchedAt,
     this.source,
   });
   @override
@@ -16392,6 +16426,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
       map['rate'] = Variable<String>($FxRatesTable.$converterrate.toSql(rate));
     }
     map['as_of'] = Variable<DateTime>(asOf);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
     if (!nullToAbsent || source != null) {
       map['source'] = Variable<String>(source);
     }
@@ -16405,6 +16440,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
       quoteCurrency: Value(quoteCurrency),
       rate: Value(rate),
       asOf: Value(asOf),
+      fetchedAt: Value(fetchedAt),
       source: source == null && nullToAbsent
           ? const Value.absent()
           : Value(source),
@@ -16422,6 +16458,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
       quoteCurrency: serializer.fromJson<String>(json['quoteCurrency']),
       rate: serializer.fromJson<Decimal>(json['rate']),
       asOf: serializer.fromJson<DateTime>(json['asOf']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
       source: serializer.fromJson<String?>(json['source']),
     );
   }
@@ -16434,6 +16471,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
       'quoteCurrency': serializer.toJson<String>(quoteCurrency),
       'rate': serializer.toJson<Decimal>(rate),
       'asOf': serializer.toJson<DateTime>(asOf),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
       'source': serializer.toJson<String?>(source),
     };
   }
@@ -16444,6 +16482,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
     String? quoteCurrency,
     Decimal? rate,
     DateTime? asOf,
+    DateTime? fetchedAt,
     Value<String?> source = const Value.absent(),
   }) => FxRateRow(
     id: id ?? this.id,
@@ -16451,6 +16490,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
     quoteCurrency: quoteCurrency ?? this.quoteCurrency,
     rate: rate ?? this.rate,
     asOf: asOf ?? this.asOf,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
     source: source.present ? source.value : this.source,
   );
   FxRateRow copyWithCompanion(FxRatesCompanion data) {
@@ -16464,6 +16504,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
           : this.quoteCurrency,
       rate: data.rate.present ? data.rate.value : this.rate,
       asOf: data.asOf.present ? data.asOf.value : this.asOf,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
       source: data.source.present ? data.source.value : this.source,
     );
   }
@@ -16476,14 +16517,22 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
           ..write('quoteCurrency: $quoteCurrency, ')
           ..write('rate: $rate, ')
           ..write('asOf: $asOf, ')
+          ..write('fetchedAt: $fetchedAt, ')
           ..write('source: $source')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, baseCurrency, quoteCurrency, rate, asOf, source);
+  int get hashCode => Object.hash(
+    id,
+    baseCurrency,
+    quoteCurrency,
+    rate,
+    asOf,
+    fetchedAt,
+    source,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -16493,6 +16542,7 @@ class FxRateRow extends DataClass implements Insertable<FxRateRow> {
           other.quoteCurrency == this.quoteCurrency &&
           other.rate == this.rate &&
           other.asOf == this.asOf &&
+          other.fetchedAt == this.fetchedAt &&
           other.source == this.source);
 }
 
@@ -16502,6 +16552,7 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
   final Value<String> quoteCurrency;
   final Value<Decimal> rate;
   final Value<DateTime> asOf;
+  final Value<DateTime> fetchedAt;
   final Value<String?> source;
   final Value<int> rowid;
   const FxRatesCompanion({
@@ -16510,6 +16561,7 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
     this.quoteCurrency = const Value.absent(),
     this.rate = const Value.absent(),
     this.asOf = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
     this.source = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -16519,19 +16571,22 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
     required String quoteCurrency,
     required Decimal rate,
     required DateTime asOf,
+    required DateTime fetchedAt,
     this.source = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        baseCurrency = Value(baseCurrency),
        quoteCurrency = Value(quoteCurrency),
        rate = Value(rate),
-       asOf = Value(asOf);
+       asOf = Value(asOf),
+       fetchedAt = Value(fetchedAt);
   static Insertable<FxRateRow> custom({
     Expression<String>? id,
     Expression<String>? baseCurrency,
     Expression<String>? quoteCurrency,
     Expression<String>? rate,
     Expression<DateTime>? asOf,
+    Expression<DateTime>? fetchedAt,
     Expression<String>? source,
     Expression<int>? rowid,
   }) {
@@ -16541,6 +16596,7 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
       if (quoteCurrency != null) 'quote_currency': quoteCurrency,
       if (rate != null) 'rate': rate,
       if (asOf != null) 'as_of': asOf,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
       if (source != null) 'source': source,
       if (rowid != null) 'rowid': rowid,
     });
@@ -16552,6 +16608,7 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
     Value<String>? quoteCurrency,
     Value<Decimal>? rate,
     Value<DateTime>? asOf,
+    Value<DateTime>? fetchedAt,
     Value<String?>? source,
     Value<int>? rowid,
   }) {
@@ -16561,6 +16618,7 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
       quoteCurrency: quoteCurrency ?? this.quoteCurrency,
       rate: rate ?? this.rate,
       asOf: asOf ?? this.asOf,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
       source: source ?? this.source,
       rowid: rowid ?? this.rowid,
     );
@@ -16586,6 +16644,9 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
     if (asOf.present) {
       map['as_of'] = Variable<DateTime>(asOf.value);
     }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
     if (source.present) {
       map['source'] = Variable<String>(source.value);
     }
@@ -16603,6 +16664,7 @@ class FxRatesCompanion extends UpdateCompanion<FxRateRow> {
           ..write('quoteCurrency: $quoteCurrency, ')
           ..write('rate: $rate, ')
           ..write('asOf: $asOf, ')
+          ..write('fetchedAt: $fetchedAt, ')
           ..write('source: $source, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -33179,6 +33241,15 @@ class $MarketQuotesTable extends MarketQuotes
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $MarketQuotesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
   @override
   late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
@@ -33305,6 +33376,7 @@ class $MarketQuotesTable extends MarketQuotes
   );
   @override
   List<GeneratedColumn> get $columns => [
+    market,
     symbol,
     source,
     currency,
@@ -33330,6 +33402,14 @@ class $MarketQuotesTable extends MarketQuotes
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
     if (data.containsKey('symbol')) {
       context.handle(
         _symbolMeta,
@@ -33421,11 +33501,15 @@ class $MarketQuotesTable extends MarketQuotes
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {symbol, source};
+  Set<GeneratedColumn> get $primaryKey => {market, symbol, source};
   @override
   MarketQuoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return MarketQuoteRow(
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
       symbol: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}symbol'],
@@ -33484,6 +33568,7 @@ class $MarketQuotesTable extends MarketQuotes
 }
 
 class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
+  final String market;
   final String symbol;
   final String source;
   final String currency;
@@ -33497,6 +33582,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   final DateTime asOf;
   final DateTime fetchedAt;
   const MarketQuoteRow({
+    required this.market,
     required this.symbol,
     required this.source,
     required this.currency,
@@ -33513,6 +33599,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['market'] = Variable<String>(market);
     map['symbol'] = Variable<String>(symbol);
     map['source'] = Variable<String>(source);
     map['currency'] = Variable<String>(currency);
@@ -33542,6 +33629,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
 
   MarketQuotesCompanion toCompanion(bool nullToAbsent) {
     return MarketQuotesCompanion(
+      market: Value(market),
       symbol: Value(symbol),
       source: Value(source),
       currency: Value(currency),
@@ -33575,6 +33663,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return MarketQuoteRow(
+      market: serializer.fromJson<String>(json['market']),
       symbol: serializer.fromJson<String>(json['symbol']),
       source: serializer.fromJson<String>(json['source']),
       currency: serializer.fromJson<String>(json['currency']),
@@ -33593,6 +33682,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'market': serializer.toJson<String>(market),
       'symbol': serializer.toJson<String>(symbol),
       'source': serializer.toJson<String>(source),
       'currency': serializer.toJson<String>(currency),
@@ -33609,6 +33699,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   }
 
   MarketQuoteRow copyWith({
+    String? market,
     String? symbol,
     String? source,
     String? currency,
@@ -33622,6 +33713,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
     DateTime? asOf,
     DateTime? fetchedAt,
   }) => MarketQuoteRow(
+    market: market ?? this.market,
     symbol: symbol ?? this.symbol,
     source: source ?? this.source,
     currency: currency ?? this.currency,
@@ -33639,6 +33731,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   );
   MarketQuoteRow copyWithCompanion(MarketQuotesCompanion data) {
     return MarketQuoteRow(
+      market: data.market.present ? data.market.value : this.market,
       symbol: data.symbol.present ? data.symbol.value : this.symbol,
       source: data.source.present ? data.source.value : this.source,
       currency: data.currency.present ? data.currency.value : this.currency,
@@ -33659,6 +33752,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   @override
   String toString() {
     return (StringBuffer('MarketQuoteRow(')
+          ..write('market: $market, ')
           ..write('symbol: $symbol, ')
           ..write('source: $source, ')
           ..write('currency: $currency, ')
@@ -33677,6 +33771,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
 
   @override
   int get hashCode => Object.hash(
+    market,
     symbol,
     source,
     currency,
@@ -33694,6 +33789,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is MarketQuoteRow &&
+          other.market == this.market &&
           other.symbol == this.symbol &&
           other.source == this.source &&
           other.currency == this.currency &&
@@ -33709,6 +33805,7 @@ class MarketQuoteRow extends DataClass implements Insertable<MarketQuoteRow> {
 }
 
 class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
+  final Value<String> market;
   final Value<String> symbol;
   final Value<String> source;
   final Value<String> currency;
@@ -33723,6 +33820,7 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
   final Value<DateTime> fetchedAt;
   final Value<int> rowid;
   const MarketQuotesCompanion({
+    this.market = const Value.absent(),
     this.symbol = const Value.absent(),
     this.source = const Value.absent(),
     this.currency = const Value.absent(),
@@ -33738,6 +33836,7 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
     this.rowid = const Value.absent(),
   });
   MarketQuotesCompanion.insert({
+    required String market,
     required String symbol,
     required String source,
     required String currency,
@@ -33751,13 +33850,15 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
     required DateTime asOf,
     required DateTime fetchedAt,
     this.rowid = const Value.absent(),
-  }) : symbol = Value(symbol),
+  }) : market = Value(market),
+       symbol = Value(symbol),
        source = Value(source),
        currency = Value(currency),
        price = Value(price),
        asOf = Value(asOf),
        fetchedAt = Value(fetchedAt);
   static Insertable<MarketQuoteRow> custom({
+    Expression<String>? market,
     Expression<String>? symbol,
     Expression<String>? source,
     Expression<String>? currency,
@@ -33773,6 +33874,7 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (market != null) 'market': market,
       if (symbol != null) 'symbol': symbol,
       if (source != null) 'source': source,
       if (currency != null) 'currency': currency,
@@ -33790,6 +33892,7 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
   }
 
   MarketQuotesCompanion copyWith({
+    Value<String>? market,
     Value<String>? symbol,
     Value<String>? source,
     Value<String>? currency,
@@ -33805,6 +33908,7 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
     Value<int>? rowid,
   }) {
     return MarketQuotesCompanion(
+      market: market ?? this.market,
       symbol: symbol ?? this.symbol,
       source: source ?? this.source,
       currency: currency ?? this.currency,
@@ -33824,6 +33928,9 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
     if (symbol.present) {
       map['symbol'] = Variable<String>(symbol.value);
     }
@@ -33869,6 +33976,7 @@ class MarketQuotesCompanion extends UpdateCompanion<MarketQuoteRow> {
   @override
   String toString() {
     return (StringBuffer('MarketQuotesCompanion(')
+          ..write('market: $market, ')
           ..write('symbol: $symbol, ')
           ..write('source: $source, ')
           ..write('currency: $currency, ')
@@ -33893,6 +34001,15 @@ class $MarketHistoryBarsTable extends MarketHistoryBars
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $MarketHistoryBarsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
   @override
   late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
@@ -34004,6 +34121,7 @@ class $MarketHistoryBarsTable extends MarketHistoryBars
   );
   @override
   List<GeneratedColumn> get $columns => [
+    market,
     symbol,
     interval,
     asOf,
@@ -34028,6 +34146,14 @@ class $MarketHistoryBarsTable extends MarketHistoryBars
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
     if (data.containsKey('symbol')) {
       context.handle(
         _symbolMeta,
@@ -34119,11 +34245,21 @@ class $MarketHistoryBarsTable extends MarketHistoryBars
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {symbol, interval, asOf, source};
+  Set<GeneratedColumn> get $primaryKey => {
+    market,
+    symbol,
+    interval,
+    asOf,
+    source,
+  };
   @override
   MarketHistoryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return MarketHistoryRow(
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
       symbol: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}symbol'],
@@ -34179,6 +34315,7 @@ class $MarketHistoryBarsTable extends MarketHistoryBars
 
 class MarketHistoryRow extends DataClass
     implements Insertable<MarketHistoryRow> {
+  final String market;
   final String symbol;
   final String interval;
   final DateTime asOf;
@@ -34191,6 +34328,7 @@ class MarketHistoryRow extends DataClass
   final String? adjustedClose;
   final DateTime fetchedAt;
   const MarketHistoryRow({
+    required this.market,
     required this.symbol,
     required this.interval,
     required this.asOf,
@@ -34206,6 +34344,7 @@ class MarketHistoryRow extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['market'] = Variable<String>(market);
     map['symbol'] = Variable<String>(symbol);
     map['interval'] = Variable<String>(interval);
     map['as_of'] = Variable<DateTime>(asOf);
@@ -34226,6 +34365,7 @@ class MarketHistoryRow extends DataClass
 
   MarketHistoryBarsCompanion toCompanion(bool nullToAbsent) {
     return MarketHistoryBarsCompanion(
+      market: Value(market),
       symbol: Value(symbol),
       interval: Value(interval),
       asOf: Value(asOf),
@@ -34250,6 +34390,7 @@ class MarketHistoryRow extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return MarketHistoryRow(
+      market: serializer.fromJson<String>(json['market']),
       symbol: serializer.fromJson<String>(json['symbol']),
       interval: serializer.fromJson<String>(json['interval']),
       asOf: serializer.fromJson<DateTime>(json['asOf']),
@@ -34267,6 +34408,7 @@ class MarketHistoryRow extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'market': serializer.toJson<String>(market),
       'symbol': serializer.toJson<String>(symbol),
       'interval': serializer.toJson<String>(interval),
       'asOf': serializer.toJson<DateTime>(asOf),
@@ -34282,6 +34424,7 @@ class MarketHistoryRow extends DataClass
   }
 
   MarketHistoryRow copyWith({
+    String? market,
     String? symbol,
     String? interval,
     DateTime? asOf,
@@ -34294,6 +34437,7 @@ class MarketHistoryRow extends DataClass
     Value<String?> adjustedClose = const Value.absent(),
     DateTime? fetchedAt,
   }) => MarketHistoryRow(
+    market: market ?? this.market,
     symbol: symbol ?? this.symbol,
     interval: interval ?? this.interval,
     asOf: asOf ?? this.asOf,
@@ -34310,6 +34454,7 @@ class MarketHistoryRow extends DataClass
   );
   MarketHistoryRow copyWithCompanion(MarketHistoryBarsCompanion data) {
     return MarketHistoryRow(
+      market: data.market.present ? data.market.value : this.market,
       symbol: data.symbol.present ? data.symbol.value : this.symbol,
       interval: data.interval.present ? data.interval.value : this.interval,
       asOf: data.asOf.present ? data.asOf.value : this.asOf,
@@ -34331,6 +34476,7 @@ class MarketHistoryRow extends DataClass
   @override
   String toString() {
     return (StringBuffer('MarketHistoryRow(')
+          ..write('market: $market, ')
           ..write('symbol: $symbol, ')
           ..write('interval: $interval, ')
           ..write('asOf: $asOf, ')
@@ -34348,6 +34494,7 @@ class MarketHistoryRow extends DataClass
 
   @override
   int get hashCode => Object.hash(
+    market,
     symbol,
     interval,
     asOf,
@@ -34364,6 +34511,7 @@ class MarketHistoryRow extends DataClass
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is MarketHistoryRow &&
+          other.market == this.market &&
           other.symbol == this.symbol &&
           other.interval == this.interval &&
           other.asOf == this.asOf &&
@@ -34378,6 +34526,7 @@ class MarketHistoryRow extends DataClass
 }
 
 class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
+  final Value<String> market;
   final Value<String> symbol;
   final Value<String> interval;
   final Value<DateTime> asOf;
@@ -34391,6 +34540,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
   final Value<DateTime> fetchedAt;
   final Value<int> rowid;
   const MarketHistoryBarsCompanion({
+    this.market = const Value.absent(),
     this.symbol = const Value.absent(),
     this.interval = const Value.absent(),
     this.asOf = const Value.absent(),
@@ -34405,6 +34555,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
     this.rowid = const Value.absent(),
   });
   MarketHistoryBarsCompanion.insert({
+    required String market,
     required String symbol,
     required String interval,
     required DateTime asOf,
@@ -34417,7 +34568,8 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
     this.adjustedClose = const Value.absent(),
     required DateTime fetchedAt,
     this.rowid = const Value.absent(),
-  }) : symbol = Value(symbol),
+  }) : market = Value(market),
+       symbol = Value(symbol),
        interval = Value(interval),
        asOf = Value(asOf),
        source = Value(source),
@@ -34427,6 +34579,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
        closePrice = Value(closePrice),
        fetchedAt = Value(fetchedAt);
   static Insertable<MarketHistoryRow> custom({
+    Expression<String>? market,
     Expression<String>? symbol,
     Expression<String>? interval,
     Expression<DateTime>? asOf,
@@ -34441,6 +34594,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (market != null) 'market': market,
       if (symbol != null) 'symbol': symbol,
       if (interval != null) 'interval': interval,
       if (asOf != null) 'as_of': asOf,
@@ -34457,6 +34611,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
   }
 
   MarketHistoryBarsCompanion copyWith({
+    Value<String>? market,
     Value<String>? symbol,
     Value<String>? interval,
     Value<DateTime>? asOf,
@@ -34471,6 +34626,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
     Value<int>? rowid,
   }) {
     return MarketHistoryBarsCompanion(
+      market: market ?? this.market,
       symbol: symbol ?? this.symbol,
       interval: interval ?? this.interval,
       asOf: asOf ?? this.asOf,
@@ -34489,6 +34645,9 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
     if (symbol.present) {
       map['symbol'] = Variable<String>(symbol.value);
     }
@@ -34531,6 +34690,7 @@ class MarketHistoryBarsCompanion extends UpdateCompanion<MarketHistoryRow> {
   @override
   String toString() {
     return (StringBuffer('MarketHistoryBarsCompanion(')
+          ..write('market: $market, ')
           ..write('symbol: $symbol, ')
           ..write('interval: $interval, ')
           ..write('asOf: $asOf, ')
@@ -34554,6 +34714,15 @@ class $MarketSymbolSearchesTable extends MarketSymbolSearches
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $MarketSymbolSearchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   static const VerificationMeta _queryMeta = const VerificationMeta('query');
   @override
   late final GeneratedColumn<String> query = GeneratedColumn<String>(
@@ -34595,7 +34764,13 @@ class $MarketSymbolSearchesTable extends MarketSymbolSearches
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [query, source, results, fetchedAt];
+  List<GeneratedColumn> get $columns => [
+    market,
+    query,
+    source,
+    results,
+    fetchedAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -34608,6 +34783,14 @@ class $MarketSymbolSearchesTable extends MarketSymbolSearches
   }) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
     if (data.containsKey('query')) {
       context.handle(
         _queryMeta,
@@ -34644,11 +34827,15 @@ class $MarketSymbolSearchesTable extends MarketSymbolSearches
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {query, source};
+  Set<GeneratedColumn> get $primaryKey => {market, query, source};
   @override
   MarketSymbolSearchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return MarketSymbolSearchRow(
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
       query: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}query'],
@@ -34676,11 +34863,13 @@ class $MarketSymbolSearchesTable extends MarketSymbolSearches
 
 class MarketSymbolSearchRow extends DataClass
     implements Insertable<MarketSymbolSearchRow> {
+  final String market;
   final String query;
   final String source;
   final String results;
   final DateTime fetchedAt;
   const MarketSymbolSearchRow({
+    required this.market,
     required this.query,
     required this.source,
     required this.results,
@@ -34689,6 +34878,7 @@ class MarketSymbolSearchRow extends DataClass
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    map['market'] = Variable<String>(market);
     map['query'] = Variable<String>(query);
     map['source'] = Variable<String>(source);
     map['results'] = Variable<String>(results);
@@ -34698,6 +34888,7 @@ class MarketSymbolSearchRow extends DataClass
 
   MarketSymbolSearchesCompanion toCompanion(bool nullToAbsent) {
     return MarketSymbolSearchesCompanion(
+      market: Value(market),
       query: Value(query),
       source: Value(source),
       results: Value(results),
@@ -34711,6 +34902,7 @@ class MarketSymbolSearchRow extends DataClass
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return MarketSymbolSearchRow(
+      market: serializer.fromJson<String>(json['market']),
       query: serializer.fromJson<String>(json['query']),
       source: serializer.fromJson<String>(json['source']),
       results: serializer.fromJson<String>(json['results']),
@@ -34721,6 +34913,7 @@ class MarketSymbolSearchRow extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
+      'market': serializer.toJson<String>(market),
       'query': serializer.toJson<String>(query),
       'source': serializer.toJson<String>(source),
       'results': serializer.toJson<String>(results),
@@ -34729,11 +34922,13 @@ class MarketSymbolSearchRow extends DataClass
   }
 
   MarketSymbolSearchRow copyWith({
+    String? market,
     String? query,
     String? source,
     String? results,
     DateTime? fetchedAt,
   }) => MarketSymbolSearchRow(
+    market: market ?? this.market,
     query: query ?? this.query,
     source: source ?? this.source,
     results: results ?? this.results,
@@ -34741,6 +34936,7 @@ class MarketSymbolSearchRow extends DataClass
   );
   MarketSymbolSearchRow copyWithCompanion(MarketSymbolSearchesCompanion data) {
     return MarketSymbolSearchRow(
+      market: data.market.present ? data.market.value : this.market,
       query: data.query.present ? data.query.value : this.query,
       source: data.source.present ? data.source.value : this.source,
       results: data.results.present ? data.results.value : this.results,
@@ -34751,6 +34947,7 @@ class MarketSymbolSearchRow extends DataClass
   @override
   String toString() {
     return (StringBuffer('MarketSymbolSearchRow(')
+          ..write('market: $market, ')
           ..write('query: $query, ')
           ..write('source: $source, ')
           ..write('results: $results, ')
@@ -34760,11 +34957,12 @@ class MarketSymbolSearchRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(query, source, results, fetchedAt);
+  int get hashCode => Object.hash(market, query, source, results, fetchedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is MarketSymbolSearchRow &&
+          other.market == this.market &&
           other.query == this.query &&
           other.source == this.source &&
           other.results == this.results &&
@@ -34773,12 +34971,14 @@ class MarketSymbolSearchRow extends DataClass
 
 class MarketSymbolSearchesCompanion
     extends UpdateCompanion<MarketSymbolSearchRow> {
+  final Value<String> market;
   final Value<String> query;
   final Value<String> source;
   final Value<String> results;
   final Value<DateTime> fetchedAt;
   final Value<int> rowid;
   const MarketSymbolSearchesCompanion({
+    this.market = const Value.absent(),
     this.query = const Value.absent(),
     this.source = const Value.absent(),
     this.results = const Value.absent(),
@@ -34786,16 +34986,19 @@ class MarketSymbolSearchesCompanion
     this.rowid = const Value.absent(),
   });
   MarketSymbolSearchesCompanion.insert({
+    required String market,
     required String query,
     required String source,
     required String results,
     required DateTime fetchedAt,
     this.rowid = const Value.absent(),
-  }) : query = Value(query),
+  }) : market = Value(market),
+       query = Value(query),
        source = Value(source),
        results = Value(results),
        fetchedAt = Value(fetchedAt);
   static Insertable<MarketSymbolSearchRow> custom({
+    Expression<String>? market,
     Expression<String>? query,
     Expression<String>? source,
     Expression<String>? results,
@@ -34803,6 +35006,7 @@ class MarketSymbolSearchesCompanion
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
+      if (market != null) 'market': market,
       if (query != null) 'query': query,
       if (source != null) 'source': source,
       if (results != null) 'results': results,
@@ -34812,6 +35016,7 @@ class MarketSymbolSearchesCompanion
   }
 
   MarketSymbolSearchesCompanion copyWith({
+    Value<String>? market,
     Value<String>? query,
     Value<String>? source,
     Value<String>? results,
@@ -34819,6 +35024,7 @@ class MarketSymbolSearchesCompanion
     Value<int>? rowid,
   }) {
     return MarketSymbolSearchesCompanion(
+      market: market ?? this.market,
       query: query ?? this.query,
       source: source ?? this.source,
       results: results ?? this.results,
@@ -34830,6 +35036,9 @@ class MarketSymbolSearchesCompanion
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
     if (query.present) {
       map['query'] = Variable<String>(query.value);
     }
@@ -34851,6 +35060,7 @@ class MarketSymbolSearchesCompanion
   @override
   String toString() {
     return (StringBuffer('MarketSymbolSearchesCompanion(')
+          ..write('market: $market, ')
           ..write('query: $query, ')
           ..write('source: $source, ')
           ..write('results: $results, ')
@@ -55063,6 +55273,7 @@ typedef $$FxRatesTableCreateCompanionBuilder =
       required String quoteCurrency,
       required Decimal rate,
       required DateTime asOf,
+      required DateTime fetchedAt,
       Value<String?> source,
       Value<int> rowid,
     });
@@ -55073,6 +55284,7 @@ typedef $$FxRatesTableUpdateCompanionBuilder =
       Value<String> quoteCurrency,
       Value<Decimal> rate,
       Value<DateTime> asOf,
+      Value<DateTime> fetchedAt,
       Value<String?> source,
       Value<int> rowid,
     });
@@ -55109,6 +55321,11 @@ class $$FxRatesTableFilterComposer
 
   ColumnFilters<DateTime> get asOf => $composableBuilder(
     column: $table.asOf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -55152,6 +55369,11 @@ class $$FxRatesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get source => $composableBuilder(
     column: $table.source,
     builder: (column) => ColumnOrderings(column),
@@ -55185,6 +55407,9 @@ class $$FxRatesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get asOf =>
       $composableBuilder(column: $table.asOf, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
 
   GeneratedColumn<String> get source =>
       $composableBuilder(column: $table.source, builder: (column) => column);
@@ -55223,6 +55448,7 @@ class $$FxRatesTableTableManager
                 Value<String> quoteCurrency = const Value.absent(),
                 Value<Decimal> rate = const Value.absent(),
                 Value<DateTime> asOf = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
                 Value<String?> source = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FxRatesCompanion(
@@ -55231,6 +55457,7 @@ class $$FxRatesTableTableManager
                 quoteCurrency: quoteCurrency,
                 rate: rate,
                 asOf: asOf,
+                fetchedAt: fetchedAt,
                 source: source,
                 rowid: rowid,
               ),
@@ -55241,6 +55468,7 @@ class $$FxRatesTableTableManager
                 required String quoteCurrency,
                 required Decimal rate,
                 required DateTime asOf,
+                required DateTime fetchedAt,
                 Value<String?> source = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FxRatesCompanion.insert(
@@ -55249,6 +55477,7 @@ class $$FxRatesTableTableManager
                 quoteCurrency: quoteCurrency,
                 rate: rate,
                 asOf: asOf,
+                fetchedAt: fetchedAt,
                 source: source,
                 rowid: rowid,
               ),
@@ -62938,6 +63167,7 @@ typedef $$OpLogsTableProcessedTableManager =
     >;
 typedef $$MarketQuotesTableCreateCompanionBuilder =
     MarketQuotesCompanion Function({
+      required String market,
       required String symbol,
       required String source,
       required String currency,
@@ -62954,6 +63184,7 @@ typedef $$MarketQuotesTableCreateCompanionBuilder =
     });
 typedef $$MarketQuotesTableUpdateCompanionBuilder =
     MarketQuotesCompanion Function({
+      Value<String> market,
       Value<String> symbol,
       Value<String> source,
       Value<String> currency,
@@ -62978,6 +63209,11 @@ class $$MarketQuotesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnFilters(column),
@@ -63048,6 +63284,11 @@ class $$MarketQuotesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnOrderings(column),
@@ -63118,6 +63359,9 @@ class $$MarketQuotesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
   GeneratedColumn<String> get symbol =>
       $composableBuilder(column: $table.symbol, builder: (column) => column);
 
@@ -63188,6 +63432,7 @@ class $$MarketQuotesTableTableManager
               $$MarketQuotesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
+                Value<String> market = const Value.absent(),
                 Value<String> symbol = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<String> currency = const Value.absent(),
@@ -63202,6 +63447,7 @@ class $$MarketQuotesTableTableManager
                 Value<DateTime> fetchedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MarketQuotesCompanion(
+                market: market,
                 symbol: symbol,
                 source: source,
                 currency: currency,
@@ -63218,6 +63464,7 @@ class $$MarketQuotesTableTableManager
               ),
           createCompanionCallback:
               ({
+                required String market,
                 required String symbol,
                 required String source,
                 required String currency,
@@ -63232,6 +63479,7 @@ class $$MarketQuotesTableTableManager
                 required DateTime fetchedAt,
                 Value<int> rowid = const Value.absent(),
               }) => MarketQuotesCompanion.insert(
+                market: market,
                 symbol: symbol,
                 source: source,
                 currency: currency,
@@ -63273,6 +63521,7 @@ typedef $$MarketQuotesTableProcessedTableManager =
     >;
 typedef $$MarketHistoryBarsTableCreateCompanionBuilder =
     MarketHistoryBarsCompanion Function({
+      required String market,
       required String symbol,
       required String interval,
       required DateTime asOf,
@@ -63288,6 +63537,7 @@ typedef $$MarketHistoryBarsTableCreateCompanionBuilder =
     });
 typedef $$MarketHistoryBarsTableUpdateCompanionBuilder =
     MarketHistoryBarsCompanion Function({
+      Value<String> market,
       Value<String> symbol,
       Value<String> interval,
       Value<DateTime> asOf,
@@ -63311,6 +63561,11 @@ class $$MarketHistoryBarsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnFilters(column),
@@ -63376,6 +63631,11 @@ class $$MarketHistoryBarsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get symbol => $composableBuilder(
     column: $table.symbol,
     builder: (column) => ColumnOrderings(column),
@@ -63441,6 +63701,9 @@ class $$MarketHistoryBarsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
   GeneratedColumn<String> get symbol =>
       $composableBuilder(column: $table.symbol, builder: (column) => column);
 
@@ -63519,6 +63782,7 @@ class $$MarketHistoryBarsTableTableManager
               ),
           updateCompanionCallback:
               ({
+                Value<String> market = const Value.absent(),
                 Value<String> symbol = const Value.absent(),
                 Value<String> interval = const Value.absent(),
                 Value<DateTime> asOf = const Value.absent(),
@@ -63532,6 +63796,7 @@ class $$MarketHistoryBarsTableTableManager
                 Value<DateTime> fetchedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MarketHistoryBarsCompanion(
+                market: market,
                 symbol: symbol,
                 interval: interval,
                 asOf: asOf,
@@ -63547,6 +63812,7 @@ class $$MarketHistoryBarsTableTableManager
               ),
           createCompanionCallback:
               ({
+                required String market,
                 required String symbol,
                 required String interval,
                 required DateTime asOf,
@@ -63560,6 +63826,7 @@ class $$MarketHistoryBarsTableTableManager
                 required DateTime fetchedAt,
                 Value<int> rowid = const Value.absent(),
               }) => MarketHistoryBarsCompanion.insert(
+                market: market,
                 symbol: symbol,
                 interval: interval,
                 asOf: asOf,
@@ -63604,6 +63871,7 @@ typedef $$MarketHistoryBarsTableProcessedTableManager =
     >;
 typedef $$MarketSymbolSearchesTableCreateCompanionBuilder =
     MarketSymbolSearchesCompanion Function({
+      required String market,
       required String query,
       required String source,
       required String results,
@@ -63612,6 +63880,7 @@ typedef $$MarketSymbolSearchesTableCreateCompanionBuilder =
     });
 typedef $$MarketSymbolSearchesTableUpdateCompanionBuilder =
     MarketSymbolSearchesCompanion Function({
+      Value<String> market,
       Value<String> query,
       Value<String> source,
       Value<String> results,
@@ -63628,6 +63897,11 @@ class $$MarketSymbolSearchesTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get query => $composableBuilder(
     column: $table.query,
     builder: (column) => ColumnFilters(column),
@@ -63658,6 +63932,11 @@ class $$MarketSymbolSearchesTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get query => $composableBuilder(
     column: $table.query,
     builder: (column) => ColumnOrderings(column),
@@ -63688,6 +63967,9 @@ class $$MarketSymbolSearchesTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
   GeneratedColumn<String> get query =>
       $composableBuilder(column: $table.query, builder: (column) => column);
 
@@ -63744,12 +64026,14 @@ class $$MarketSymbolSearchesTableTableManager
               ),
           updateCompanionCallback:
               ({
+                Value<String> market = const Value.absent(),
                 Value<String> query = const Value.absent(),
                 Value<String> source = const Value.absent(),
                 Value<String> results = const Value.absent(),
                 Value<DateTime> fetchedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MarketSymbolSearchesCompanion(
+                market: market,
                 query: query,
                 source: source,
                 results: results,
@@ -63758,12 +64042,14 @@ class $$MarketSymbolSearchesTableTableManager
               ),
           createCompanionCallback:
               ({
+                required String market,
                 required String query,
                 required String source,
                 required String results,
                 required DateTime fetchedAt,
                 Value<int> rowid = const Value.absent(),
               }) => MarketSymbolSearchesCompanion.insert(
+                market: market,
                 query: query,
                 source: source,
                 results: results,

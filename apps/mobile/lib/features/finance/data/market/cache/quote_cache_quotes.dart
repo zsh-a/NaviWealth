@@ -3,13 +3,15 @@ part of 'quote_cache.dart';
 Future<CachedQuote?> _readQuote(
   MarketCache cache,
   String symbol, {
+  AssetMarket? market,
   String? source,
 }) async {
-  final key = _quoteKey(symbol, source);
+  final key = _quoteKey(symbol, market, source);
   final hot = cache._quoteHot.get(key);
   if (hot != null) return _withFreshness(cache, hot);
 
   final query = cache._db.select(cache._db.marketQuotes)
+    ..where((t) => t.market.equals(_marketKey(market)))
     ..where((t) => t.symbol.equals(symbol.toUpperCase()));
   if (source != null) {
     query.where((t) => t.source.equals(source));
@@ -28,6 +30,7 @@ Future<CachedQuote?> _readQuote(
 Future<void> _writeQuote(
   MarketCache cache,
   Quote quote, {
+  AssetMarket? market,
   required String source,
 }) async {
   final now = cache._clock.now();
@@ -35,6 +38,7 @@ Future<void> _writeQuote(
       .into(cache._db.marketQuotes)
       .insertOnConflictUpdate(
         MarketQuotesCompanion.insert(
+          market: _marketKey(market),
           symbol: quote.symbol.toUpperCase(),
           source: source,
           currency: quote.currency,
@@ -50,7 +54,7 @@ Future<void> _writeQuote(
         ),
       );
   cache._quoteHot.set(
-    _quoteKey(quote.symbol, source),
+    _quoteKey(quote.symbol, market, source),
     CachedQuote(quote: quote, fetchedAt: now, source: source),
   );
 }

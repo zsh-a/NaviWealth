@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 77', () {
-      expect(db.schemaVersion, 77);
+    test('is 78', () {
+      expect(db.schemaVersion, 78);
     });
   });
 
@@ -285,6 +285,34 @@ void main() {
   });
 
   group('Core finance tables exist', () {
+    test('market data keeps market identity and FX fetch metadata', () async {
+      final fxColumns =
+          (await db.customSelect('PRAGMA table_info(fx_rates)').get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
+      final quoteColumns =
+          (await db.customSelect('PRAGMA table_info(market_quotes)').get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
+      final historyColumns =
+          (await db
+                  .customSelect('PRAGMA table_info(market_history_bars)')
+                  .get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
+      final searchColumns =
+          (await db
+                  .customSelect('PRAGMA table_info(market_symbol_searches)')
+                  .get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
+
+      expect(fxColumns, contains('fetched_at'));
+      expect(quoteColumns, contains('market'));
+      expect(historyColumns, contains('market'));
+      expect(searchColumns, contains('market'));
+    });
+
     test('accounts table has expected columns', () async {
       final result = await db.customSelect('PRAGMA table_info(accounts)').get();
       final columns = result.map((r) => r.read<String>('name')).toSet();

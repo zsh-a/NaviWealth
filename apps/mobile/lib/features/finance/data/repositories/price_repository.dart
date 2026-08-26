@@ -58,11 +58,12 @@ class PriceRepository {
   }
 
   /// Latest known price for `(unit, currency)` at or before [asOf].
-  /// Returns `null` when nothing is on file yet — callers either
-  /// degrade to the asset's manually-entered value or surface a
-  /// "price unknown" hint. The lookup uses the
-  /// `(unit, quote_currency, observed_on)` index so it's a tight
-  /// rangescan even on hot reload.
+  ///
+  /// The newest observation day wins first; within that day explicit manual
+  /// values win over trade/import values, which win over automatic snapshots.
+  /// This matters because the append-only ledger can legitimately contain
+  /// more than one observation for a day and a plain timestamp sort made the
+  /// result depend on write timing.
   Future<PriceObservation?> latestAt({
     required String unit,
     required String quoteCurrency,
@@ -71,14 +72,27 @@ class PriceRepository {
     final query = _db.select(_db.prices)
       ..where((t) => t.unit.equals(unit))
       ..where((t) => t.quoteCurrency.equals(quoteCurrency))
-      ..where((t) => t.observedOn.isSmallerOrEqualValue(asOf))
+      ..where((t) => t.observedOn.isSmallerOrEqualValue(asOf.toUtc()))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.observedOn, mode: OrderingMode.desc),
       ])
       ..limit(1);
-    final row = await query.getSingleOrNull();
-    return row == null ? null : _toDomain(row);
+    final anchor = await query.getSingleOrNull();
+    if (anchor == null) return null;
+
+    final latestDay = _floorToUtcDay(anchor.observedOn);
+    final dayEnd = latestDay.add(const Duration(days: 1));
+    final sameDay = _db.select(_db.prices)
+      ..where((t) => t.unit.equals(unit))
+      ..where((t) => t.quoteCurrency.equals(quoteCurrency))
+      ..where((t) => t.observedOn.isBiggerOrEqualValue(latestDay))
+      ..where((t) => t.observedOn.isSmallerThanValue(dayEnd))
+      ..where((t) => t.observedOn.isSmallerOrEqualValue(asOf.toUtc()))
+      ..where((t) => t.deletedAt.isNull());
+    final candidates = (await sameDay.get()).map(_toDomain).toList();
+    candidates.sort(_compareLatest);
+    return candidates.first;
   }
 
   /// Reads one observation by its stable row id, including tombstones.
@@ -140,6 +154,75 @@ class PriceRepository {
       await _outbox.enqueue(table: _tableName, rowId: id);
     });
     return domain;
+  }
+
+  /// Upserts the deterministic automatic daily snapshot for an asset.
+  ///
+  /// The stable id closes the read-then-insert race between devices: two
+  /// coordinators writing the same asset/day converge on one sync row instead
+  /// of creating duplicate automatic observations. Manual and trade rows
+  /// continue to use their own ids and remain independently auditable.
+  Future<PriceObservation> upsertDailySnapshot({
+    required String unit,
+    required String quoteCurrency,
+    required DateTime observedOn,
+    required Decimal perUnit,
+    required String source,
+  }) async {
+    if (perUnit <= Decimal.zero) {
+      throw ArgumentError.value(perUnit, 'perUnit', 'must be positive');
+    }
+    final stamp = await _stamper.stamp();
+    final id = dailySnapshotId(
+      unit: unit,
+      quoteCurrency: quoteCurrency,
+      observedOn: observedOn,
+    );
+    final domain = PriceObservation(
+      id: id,
+      unit: unit,
+      quoteCurrency: quoteCurrency,
+      observedOn: observedOn,
+      perUnit: perUnit,
+      source: source,
+      sync: SyncMeta(
+        ownerUserId: stamp.ownerUserId,
+        updatedAt: stamp.now,
+        updatedByDevice: stamp.deviceId,
+        hlc: stamp.hlc,
+      ),
+    );
+    await _db.transaction(() async {
+      await _db
+          .into(_db.prices)
+          .insertOnConflictUpdate(
+            PricesCompanion.insert(
+              id: id,
+              unit: unit,
+              quoteCurrency: quoteCurrency,
+              observedOn: observedOn,
+              perUnit: perUnit,
+              source: source,
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+              deletedAt: const Value(null),
+            ),
+          );
+      await _outbox.enqueue(table: _tableName, rowId: id);
+    });
+    return domain;
+  }
+
+  /// Stable identity for one automatic price observation per UTC day.
+  static String dailySnapshotId({
+    required String unit,
+    required String quoteCurrency,
+    required DateTime observedOn,
+  }) {
+    final day = _floorToUtcDay(observedOn).toIso8601String().substring(0, 10);
+    return 'auto-snapshot:${unit.trim()}:${quoteCurrency.trim().toUpperCase()}:$day';
   }
 
   /// Inserts or replaces a stable observation and returns its Undo receipt.
@@ -267,4 +350,34 @@ class PriceRepository {
       deletedAt: row.deletedAt?.toUtc(),
     ),
   );
+
+  static int _sourcePriority(String source) {
+    final normalized = source.trim().toLowerCase();
+    if (normalized == 'manual' || normalized.startsWith('manual:')) return 3;
+    if (normalized == 'trade' ||
+        normalized.startsWith('trade:') ||
+        normalized == 'import' ||
+        normalized.startsWith('import:')) {
+      return 2;
+    }
+    if (normalized == 'auto' || normalized.startsWith('auto:')) return 1;
+    return 0;
+  }
+
+  static int _compareLatest(PriceObservation a, PriceObservation b) {
+    final bySource = _sourcePriority(
+      b.source,
+    ).compareTo(_sourcePriority(a.source));
+    if (bySource != 0) return bySource;
+    final byObserved = b.observedOn.compareTo(a.observedOn);
+    if (byObserved != 0) return byObserved;
+    final byUpdated = b.sync.updatedAt.compareTo(a.sync.updatedAt);
+    if (byUpdated != 0) return byUpdated;
+    return b.sync.hlc.compareTo(a.sync.hlc);
+  }
+
+  static DateTime _floorToUtcDay(DateTime value) {
+    final utc = value.toUtc();
+    return DateTime.utc(utc.year, utc.month, utc.day);
+  }
 }

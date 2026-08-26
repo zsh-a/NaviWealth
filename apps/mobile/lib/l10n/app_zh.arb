@@ -1011,6 +1011,42 @@
   "fxRatesAppBarTitle": "汇率",
   "fxRatesEmpty": "尚无汇率数据。汇率会在启动时自动同步 — 请先添加不同币种的账户。",
   "fxRatesRefreshing": "正在同步汇率…",
+  "fxRatesOverviewTitle": "币种行情",
+  "fxRatesOverviewSubtitle": "集中查看财富历史中正在使用的汇率。",
+  "fxRatesStatusSyncing": "同步中",
+  "fxRatesStatusFailed": "离线",
+  "fxRatesStatusReady": "已更新",
+  "fxRatesStatusLocal": "本地历史",
+  "fxRatesTrackedPairsLabel": "跟踪币对",
+  "fxRatesBaseCurrencyLabel": "基础货币",
+  "fxRatesLastUpdatedLabel": "最近更新",
+  "fxRatesLatestObservation": "最新观测",
+  "fxRatesHistoryTitle": "历史走势",
+  "fxRatesRange7D": "7天",
+  "fxRatesRange30D": "30天",
+  "fxRatesRange90D": "90天",
+  "fxRatesRangeAll": "全部",
+  "fxRatesHistoryEntries": "历史记录",
+  "fxRatesNotEnoughHistory": "积累更多记录后即可看到趋势。",
+  "fxRatesRangeHint": "当前显示所选时间范围，切换“全部”可查看完整历史。",
+  "fxRatesAsOfValue": "截至 {date}",
+  "@fxRatesAsOfValue": {
+    "placeholders": {
+      "date": { "type": "String", "example": "2026年4月28日" }
+    }
+  },
+  "fxRatesPairsTracked": "{count, plural, =0{暂无币对} one{已跟踪 1 个币对} other{已跟踪 {count} 个币对}}",
+  "@fxRatesPairsTracked": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "fxRatesEntriesCount": "{count, plural, one{1 条记录} other{{count} 条记录}}",
+  "@fxRatesEntriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "fxRatesSyncedFrom": "来源",
   "fxRatesAddAction": "添加汇率",
   "fxRatesEntrySheetTitle": "新增汇率",

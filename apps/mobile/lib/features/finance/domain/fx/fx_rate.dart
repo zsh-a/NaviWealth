@@ -12,9 +12,11 @@ class FxRate {
     required DateTime date,
     required this.rate,
     required this.source,
+    DateTime? fetchedAt,
   }) : base = _normalizeCurrency(base, 'base'),
        quote = _normalizeCurrency(quote, 'quote'),
-       date = _normalizeDay(date) {
+       date = _normalizeDay(date),
+       fetchedAt = _normalizeFetchedAt(fetchedAt, date) {
     if (rate <= Decimal.zero) {
       throw ArgumentError.value(rate, 'rate', 'must be positive');
     }
@@ -31,6 +33,10 @@ class FxRate {
   final Decimal rate;
   final String source;
 
+  /// Instant when this observation was fetched or manually recorded. It is
+  /// intentionally separate from [date], which is the provider's market day.
+  final DateTime fetchedAt;
+
   /// The inverse quote: 1 [quote] = `1 / rate` [base], same date and source.
   FxRate inverse() => FxRate(
     base: quote,
@@ -38,6 +44,7 @@ class FxRate {
     date: date,
     rate: (Decimal.one / rate).toDecimal(scaleOnInfinitePrecision: 20),
     source: source,
+    fetchedAt: fetchedAt,
   );
 
   @override
@@ -47,10 +54,11 @@ class FxRate {
       other.quote == quote &&
       other.date == date &&
       other.rate == rate &&
-      other.source == source;
+      other.source == source &&
+      other.fetchedAt == fetchedAt;
 
   @override
-  int get hashCode => Object.hash(base, quote, date, rate, source);
+  int get hashCode => Object.hash(base, quote, date, rate, source, fetchedAt);
 
   @override
   String toString() =>
@@ -67,4 +75,8 @@ class FxRate {
 
   static DateTime _normalizeDay(DateTime d) =>
       DateTime.utc(d.year, d.month, d.day);
+
+  static DateTime _normalizeFetchedAt(DateTime? value, DateTime fallback) =>
+      (value ?? DateTime.utc(fallback.year, fallback.month, fallback.day))
+          .toUtc();
 }

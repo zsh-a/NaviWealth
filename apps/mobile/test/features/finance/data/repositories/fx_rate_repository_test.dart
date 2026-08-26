@@ -24,11 +24,13 @@ void main() {
       quoteCurrency: 'CNY',
       rate: Decimal.parse('7.2'),
       asOf: DateTime.utc(2026, 4, 28, 13, 30),
+      fetchedAt: DateTime.utc(2026, 4, 28, 14),
     );
     expect(rate.base, 'USD');
     expect(rate.quote, 'CNY');
     // asOf normalised to a UTC calendar day.
     expect(rate.date, DateTime.utc(2026, 4, 28));
+    expect(rate.fetchedAt, DateTime.utc(2026, 4, 28, 14));
 
     final all = await repo.listAll();
     expect(all, hasLength(1));

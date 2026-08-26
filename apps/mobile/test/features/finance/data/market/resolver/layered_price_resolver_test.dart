@@ -248,6 +248,7 @@ void main() {
           high: Decimal.parse('105'),
           low: Decimal.parse('99'),
           close: Decimal.parse('103.50'),
+          adjustedClose: Decimal.parse('120'),
         ),
         HistoricalBar(
           symbol: 'AAPL',

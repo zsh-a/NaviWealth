@@ -6,11 +6,13 @@ Future<CachedHistory?> _readHistory(
   required DateTime from,
   required DateTime to,
   BarInterval interval = BarInterval.day,
+  AssetMarket? market,
   String? source,
 }) async {
   final query = cache._db.select(cache._db.marketHistoryBars)
     ..where(
       (t) =>
+          t.market.equals(_marketKey(market)) &
           t.symbol.equals(symbol.toUpperCase()) &
           t.interval.equals(_intervalKey(interval)) &
           t.asOf.isBetweenValues(from.toUtc(), to.toUtc()),
@@ -19,44 +21,62 @@ Future<CachedHistory?> _readHistory(
   query.orderBy([(t) => OrderingTerm(expression: t.asOf)]);
   final rows = await query.get();
   if (rows.isEmpty) return null;
-  final bars = rows
-      .map(
-        (r) => HistoricalBar(
-          symbol: r.symbol,
-          asOf: r.asOf,
-          open: Decimal.parse(r.openPrice),
-          high: Decimal.parse(r.high),
-          low: Decimal.parse(r.low),
-          close: Decimal.parse(r.closePrice),
-          volume: r.volume,
-          adjustedClose: r.adjustedClose == null
-              ? null
-              : Decimal.parse(r.adjustedClose!),
-        ),
-      )
-      .toList(growable: false);
-  final lastFetch = rows
-      .map((r) => r.fetchedAt)
-      .reduce((a, b) => a.isAfter(b) ? a : b);
-  final age = cache._clock.now().difference(lastFetch);
-  final freshness = _classify(
-    age,
-    fresh: cache._policy.historyFresh,
-    stale: cache._policy.historyStaleWindow,
-  );
-  if (freshness == null) return null;
-  return CachedHistory(
-    bars: bars,
-    fetchedAt: lastFetch,
-    freshness: freshness,
-    source: rows.first.source,
-  );
+
+  // Never combine bars from different providers. Their trading calendars,
+  // corporate-action adjustments and coverage can differ, so a mixed series
+  // is not a coherent cache entry even when every row is individually valid.
+  final bySource = <String, List<MarketHistoryRow>>{};
+  for (final row in rows) {
+    (bySource[row.source] ??= <MarketHistoryRow>[]).add(row);
+  }
+
+  CachedHistory? best;
+  for (final entry in bySource.entries) {
+    final sourceRows = entry.value;
+    final bars = sourceRows
+        .map(
+          (r) => HistoricalBar(
+            symbol: r.symbol,
+            asOf: r.asOf,
+            open: Decimal.parse(r.openPrice),
+            high: Decimal.parse(r.high),
+            low: Decimal.parse(r.low),
+            close: Decimal.parse(r.closePrice),
+            volume: r.volume,
+            adjustedClose: r.adjustedClose == null
+                ? null
+                : Decimal.parse(r.adjustedClose!),
+          ),
+        )
+        .toList(growable: false);
+    final lastFetch = sourceRows
+        .map((r) => r.fetchedAt)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
+    final age = cache._clock.now().difference(lastFetch);
+    final freshness = _classify(
+      age,
+      fresh: cache._policy.historyFresh,
+      stale: cache._policy.historyStaleWindow,
+    );
+    if (freshness == null) continue;
+    final candidate = CachedHistory(
+      bars: bars,
+      fetchedAt: lastFetch,
+      freshness: freshness,
+      source: entry.key,
+    );
+    if (best == null || candidate.fetchedAt.isAfter(best.fetchedAt)) {
+      best = candidate;
+    }
+  }
+  return best;
 }
 
 Future<void> _writeHistory(
   MarketCache cache,
   List<HistoricalBar> bars, {
   required BarInterval interval,
+  AssetMarket? market,
   required String source,
 }) async {
   if (bars.isEmpty) return;
@@ -66,6 +86,7 @@ Future<void> _writeHistory(
       b.insert(
         cache._db.marketHistoryBars,
         MarketHistoryBarsCompanion.insert(
+          market: _marketKey(market),
           symbol: bar.symbol.toUpperCase(),
           interval: _intervalKey(interval),
           asOf: bar.asOf,

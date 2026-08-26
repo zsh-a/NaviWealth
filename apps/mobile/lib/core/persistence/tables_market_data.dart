@@ -20,19 +20,31 @@ class FxRates extends Table {
   TextColumn get baseCurrency => text().withLength(min: 3, max: 8)();
   TextColumn get quoteCurrency => text().withLength(min: 3, max: 8)();
   TextColumn get rate => text().map(const DecimalConverter())();
+
+  /// Trading/observation date supplied by the provider. This is deliberately
+  /// separate from [fetchedAt]: a cached quote may describe an older market
+  /// day even though the app recorded it today.
   DateTimeColumn get asOf => dateTime()();
+
+  /// When this observation was written to the local store / received from
+  /// the provider. Used for freshness and audit UI; never used as the FX
+  /// valuation date.
+  DateTimeColumn get fetchedAt => dateTime()();
   TextColumn get source => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Cached latest quote per (symbol, source). Local cache only — not synced.
+/// Cached latest quote per (market, symbol, source). Local cache only — not
+/// synced. Market is part of the key because a bare ticker can exist on more
+/// than one venue/provider route.
 ///
 /// Monetary fields are stored as TEXT (Decimal-stringified) because SQLite
 /// REAL would silently truncate small fractional values used for crypto / FX.
 @DataClassName('MarketQuoteRow')
 class MarketQuotes extends Table {
+  TextColumn get market => text()();
   TextColumn get symbol => text()();
   TextColumn get source => text()();
   TextColumn get currency => text().withLength(min: 3, max: 8)();
@@ -47,12 +59,14 @@ class MarketQuotes extends Table {
   DateTimeColumn get fetchedAt => dateTime()();
 
   @override
-  Set<Column<Object>> get primaryKey => {symbol, source};
+  Set<Column<Object>> get primaryKey => {market, symbol, source};
 }
 
-/// Cached daily/weekly/monthly bar per (symbol, interval, asOf, source).
+/// Cached daily/weekly/monthly bar per (market, symbol, interval, asOf,
+/// source).
 @DataClassName('MarketHistoryRow')
 class MarketHistoryBars extends Table {
+  TextColumn get market => text()();
   TextColumn get symbol => text()();
   TextColumn get interval => text()();
   DateTimeColumn get asOf => dateTime()();
@@ -66,22 +80,29 @@ class MarketHistoryBars extends Table {
   DateTimeColumn get fetchedAt => dateTime()();
 
   @override
-  Set<Column<Object>> get primaryKey => {symbol, interval, asOf, source};
+  Set<Column<Object>> get primaryKey => {
+    market,
+    symbol,
+    interval,
+    asOf,
+    source,
+  };
 }
 
-/// Cached symbol-search results keyed by normalised query + source.
+/// Cached symbol-search results keyed by market + normalised query + source.
 ///
 /// `results` holds a JSON array of SymbolInfo rows. Encoding inline avoids
 /// a join table for what is otherwise a short-TTL convenience cache.
 @DataClassName('MarketSymbolSearchRow')
 class MarketSymbolSearches extends Table {
+  TextColumn get market => text()();
   TextColumn get query => text()();
   TextColumn get source => text()();
   TextColumn get results => text()();
   DateTimeColumn get fetchedAt => dateTime()();
 
   @override
-  Set<Column<Object>> get primaryKey => {query, source};
+  Set<Column<Object>> get primaryKey => {market, query, source};
 }
 
 /// Read-only seed catalog of major securities (A-shares full set,

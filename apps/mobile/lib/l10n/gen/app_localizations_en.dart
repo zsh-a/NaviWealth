@@ -3361,6 +3361,91 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fxRatesRefreshing => 'Syncing rates…';
 
   @override
+  String get fxRatesOverviewTitle => 'Currency monitor';
+
+  @override
+  String get fxRatesOverviewSubtitle =>
+      'A quiet view of the rates used across your wealth history.';
+
+  @override
+  String get fxRatesStatusSyncing => 'Syncing';
+
+  @override
+  String get fxRatesStatusFailed => 'Offline';
+
+  @override
+  String get fxRatesStatusReady => 'Up to date';
+
+  @override
+  String get fxRatesStatusLocal => 'Local history';
+
+  @override
+  String get fxRatesTrackedPairsLabel => 'Tracked pairs';
+
+  @override
+  String get fxRatesBaseCurrencyLabel => 'Base currency';
+
+  @override
+  String get fxRatesLastUpdatedLabel => 'Last updated';
+
+  @override
+  String get fxRatesLatestObservation => 'Latest observation';
+
+  @override
+  String get fxRatesHistoryTitle => 'History';
+
+  @override
+  String get fxRatesRange7D => '7D';
+
+  @override
+  String get fxRatesRange30D => '30D';
+
+  @override
+  String get fxRatesRange90D => '90D';
+
+  @override
+  String get fxRatesRangeAll => 'All';
+
+  @override
+  String get fxRatesHistoryEntries => 'Observations';
+
+  @override
+  String get fxRatesNotEnoughHistory =>
+      'More observations will reveal a trend.';
+
+  @override
+  String get fxRatesRangeHint =>
+      'Showing the selected window. Switch to All for the full history.';
+
+  @override
+  String fxRatesAsOfValue(String date) {
+    return 'As of $date';
+  }
+
+  @override
+  String fxRatesPairsTracked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pairs',
+      one: '1 pair',
+      zero: 'No pairs',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxRatesEntriesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get fxRatesSyncedFrom => 'Source';
 
   @override

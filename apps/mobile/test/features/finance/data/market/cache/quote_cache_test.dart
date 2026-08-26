@@ -132,6 +132,46 @@ void main() {
       expect(yf!.quote.price, Decimal.parse('100'));
       expect(fh!.quote.price, Decimal.parse('101'));
     });
+
+    test('market is part of the cache identity for the same symbol', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final clock = FakeClock();
+      final cache = MarketCache(db: db, clock: clock);
+
+      await cache.writeQuote(
+        Quote(
+          symbol: '600519',
+          currency: 'CNY',
+          price: Decimal.parse('1700'),
+          asOf: clock.now(),
+        ),
+        market: AssetMarket.cnA,
+        source: 'yfinance',
+      );
+      await cache.writeQuote(
+        Quote(
+          symbol: '600519',
+          currency: 'USD',
+          price: Decimal.parse('12'),
+          asOf: clock.now(),
+        ),
+        market: AssetMarket.usStock,
+        source: 'yfinance',
+      );
+
+      expect(
+        (await cache.readQuote('600519', market: AssetMarket.cnA))!.quote.price,
+        Decimal.parse('1700'),
+      );
+      expect(
+        (await cache.readQuote(
+          '600519',
+          market: AssetMarket.usStock,
+        ))!.quote.price,
+        Decimal.parse('12'),
+      );
+    });
   });
 
   group('MarketCache.history', () {

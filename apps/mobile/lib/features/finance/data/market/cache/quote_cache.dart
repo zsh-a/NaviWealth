@@ -49,11 +49,17 @@ class MarketCache {
 
   // ─── quotes ────────────────────────────────────────────────────────────
 
-  Future<CachedQuote?> readQuote(String symbol, {String? source}) =>
-      _readQuote(this, symbol, source: source);
+  Future<CachedQuote?> readQuote(
+    String symbol, {
+    AssetMarket? market,
+    String? source,
+  }) => _readQuote(this, symbol, market: market, source: source);
 
-  Future<void> writeQuote(Quote quote, {required String source}) =>
-      _writeQuote(this, quote, source: source);
+  Future<void> writeQuote(
+    Quote quote, {
+    AssetMarket? market,
+    required String source,
+  }) => _writeQuote(this, quote, market: market, source: source);
 
   // ─── history ───────────────────────────────────────────────────────────
 
@@ -62,6 +68,7 @@ class MarketCache {
     required DateTime from,
     required DateTime to,
     BarInterval interval = BarInterval.day,
+    AssetMarket? market,
     String? source,
   }) => _readHistory(
     this,
@@ -69,23 +76,35 @@ class MarketCache {
     from: from,
     to: to,
     interval: interval,
+    market: market,
     source: source,
   );
 
   Future<void> writeHistory(
     List<HistoricalBar> bars, {
     required BarInterval interval,
+    AssetMarket? market,
     required String source,
-  }) => _writeHistory(this, bars, interval: interval, source: source);
+  }) => _writeHistory(
+    this,
+    bars,
+    interval: interval,
+    market: market,
+    source: source,
+  );
 
   // ─── search ────────────────────────────────────────────────────────────
 
-  Future<CachedSearch?> readSearch(String query, {String? source}) =>
-      _readSearch(this, query, source: source);
+  Future<CachedSearch?> readSearch(
+    String query, {
+    AssetMarket? market,
+    String? source,
+  }) => _readSearch(this, query, market: market, source: source);
 
   Future<void> writeSearch(
     String query,
     List<SymbolInfo> results, {
+    AssetMarket? market,
     required String source,
-  }) => _writeSearch(this, query, results, source: source);
+  }) => _writeSearch(this, query, results, market: market, source: source);
 }

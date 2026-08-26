@@ -28,14 +28,22 @@ class FxRateRepository {
   /// callers can index/lookup without re-sorting.
   Stream<List<dom.FxRate>> watchAll() {
     final query = _db.select(_db.fxRates)
-      ..orderBy([(t) => OrderingTerm(expression: t.asOf)]);
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.baseCurrency),
+        (t) => OrderingTerm(expression: t.quoteCurrency),
+        (t) => OrderingTerm(expression: t.asOf),
+      ]);
     return query.watch().map((rows) => rows.map(_toDomain).toList());
   }
 
   Future<List<dom.FxRate>> listAll() async {
-    final rows = await (_db.select(
-      _db.fxRates,
-    )..orderBy([(t) => OrderingTerm(expression: t.asOf)])).get();
+    final rows =
+        await (_db.select(_db.fxRates)..orderBy([
+              (t) => OrderingTerm(expression: t.baseCurrency),
+              (t) => OrderingTerm(expression: t.quoteCurrency),
+              (t) => OrderingTerm(expression: t.asOf),
+            ]))
+            .get();
     return rows.map(_toDomain).toList();
   }
 
@@ -47,6 +55,7 @@ class FxRateRepository {
     required Decimal rate,
     required DateTime asOf,
     String? source,
+    DateTime? fetchedAt,
   }) async {
     final base = _normalize(baseCurrency, 'baseCurrency');
     final quote = _normalize(quoteCurrency, 'quoteCurrency');
@@ -59,6 +68,7 @@ class FxRateRepository {
       throw ArgumentError.value(rate, 'rate', 'must be positive');
     }
     final day = DateTime.utc(asOf.year, asOf.month, asOf.day);
+    final recordedAt = (fetchedAt ?? DateTime.now()).toUtc();
 
     return _db.transaction(() async {
       // Manual upsert: drop any existing same-day row so callers don't
@@ -80,6 +90,7 @@ class FxRateRepository {
               quoteCurrency: quote,
               rate: rate,
               asOf: day,
+              fetchedAt: recordedAt,
               source: Value(source),
             ),
           );
@@ -89,6 +100,7 @@ class FxRateRepository {
         date: day,
         rate: rate,
         source: source ?? 'manual',
+        fetchedAt: recordedAt,
       );
     });
   }
@@ -132,5 +144,6 @@ class FxRateRepository {
     date: row.asOf,
     rate: row.rate,
     source: row.source ?? 'manual',
+    fetchedAt: row.fetchedAt,
   );
 }

@@ -66,6 +66,7 @@ class FxRateSyncService {
         quoteCurrency: quote,
         rate: resp.data.price,
         asOf: resp.data.asOf,
+        fetchedAt: resp.fetchedAt,
         source: 'yfinance',
       );
     } catch (e) {
@@ -86,6 +87,7 @@ class FxRateSyncService {
         quoteCurrency: quote,
         rate: rate,
         asOf: resp.data.asOf,
+        fetchedAt: resp.fetchedAt,
         source: 'yfinance',
       );
     }

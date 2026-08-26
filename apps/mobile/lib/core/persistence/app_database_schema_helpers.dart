@@ -38,6 +38,138 @@ Future<void> _addColumnIfMissing(
   await db.customStatement('ALTER TABLE $table ADD COLUMN $column $definition');
 }
 
+Future<void> _migrateFxRates(AppDatabase db) async {
+  final columns = await db.customSelect('PRAGMA table_info(fx_rates)').get();
+  if (columns.isEmpty) return;
+
+  await _addColumnIfMissing(
+    db,
+    table: 'fx_rates',
+    column: 'fetched_at',
+    definition: 'INTEGER NOT NULL DEFAULT 0',
+  );
+  // Rows created before v78 only know the provider observation day. Keeping
+  // that day as the fallback is honest and avoids inventing a newer fetch
+  // timestamp during migration.
+  await db.customStatement(
+    'UPDATE fx_rates SET fetched_at = as_of WHERE fetched_at = 0',
+  );
+
+  // The repository already treated this as a natural key. Make that
+  // invariant database-backed as well, while retaining the last inserted row
+  // if an older development database happened to contain duplicates.
+  await db.customStatement('DROP INDEX IF EXISTS idx_fx_rates_pair_as_of');
+  await db.customStatement('''
+DELETE FROM fx_rates
+WHERE rowid NOT IN (
+  SELECT MAX(rowid)
+  FROM fx_rates
+  GROUP BY base_currency, quote_currency, as_of
+)
+''');
+  await db.customStatement(
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_fx_rates_pair_as_of '
+    'ON fx_rates(base_currency, quote_currency, as_of)',
+  );
+}
+
+Future<void> _migrateMarketDataCaches(AppDatabase db, Migrator migrator) async {
+  await _rebuildMarketQuotes(db, migrator);
+  await _rebuildMarketHistoryBars(db, migrator);
+  await _rebuildMarketSymbolSearches(db, migrator);
+}
+
+Future<void> _rebuildMarketQuotes(AppDatabase db, Migrator migrator) async {
+  if (!await _needsMarketColumn(db, 'market_quotes')) return;
+  await db.customStatement(
+    'ALTER TABLE market_quotes RENAME TO market_quotes_v77',
+  );
+  await migrator.createTable(db.marketQuotes);
+  await db.customStatement('''
+INSERT INTO market_quotes (
+  market, symbol, source, currency, price, previous_close, open_price,
+  day_high, day_low, volume, exchange, as_of, fetched_at
+)
+SELECT
+  'unknown', symbol, source, currency, price, previous_close, open_price,
+  day_high, day_low, volume, exchange, as_of, fetched_at
+FROM market_quotes_v77
+''');
+  await db.customStatement('DROP TABLE market_quotes_v77');
+}
+
+Future<void> _rebuildMarketHistoryBars(
+  AppDatabase db,
+  Migrator migrator,
+) async {
+  if (!await _needsMarketColumn(db, 'market_history_bars')) return;
+  await db.customStatement(
+    'ALTER TABLE market_history_bars RENAME TO market_history_bars_v77',
+  );
+  await migrator.createTable(db.marketHistoryBars);
+  await db.customStatement('''
+INSERT INTO market_history_bars (
+  market, symbol, interval, as_of, source, open_price, high, low,
+  close_price, volume, adjusted_close, fetched_at
+)
+SELECT
+  'unknown', symbol, interval, as_of, source, open_price, high, low,
+  close_price, volume, adjusted_close, fetched_at
+FROM market_history_bars_v77
+''');
+  await db.customStatement('DROP TABLE market_history_bars_v77');
+}
+
+Future<void> _rebuildMarketSymbolSearches(
+  AppDatabase db,
+  Migrator migrator,
+) async {
+  if (!await _needsMarketColumn(db, 'market_symbol_searches')) return;
+  await db.customStatement(
+    'ALTER TABLE market_symbol_searches '
+    'RENAME TO market_symbol_searches_v77',
+  );
+  await migrator.createTable(db.marketSymbolSearches);
+  await db.customStatement('''
+INSERT INTO market_symbol_searches (market, query, source, results, fetched_at)
+SELECT 'unknown', query, source, results, fetched_at
+FROM market_symbol_searches_v77
+''');
+  await db.customStatement('DROP TABLE market_symbol_searches_v77');
+}
+
+Future<bool> _needsMarketColumn(AppDatabase db, String table) async {
+  final columns = await db.customSelect('PRAGMA table_info($table)').get();
+  if (columns.isEmpty) return false;
+  return !columns.any((row) => row.read<String>('name') == 'market');
+}
+
+const List<String> _marketDataCacheIndexStmts = [
+  'CREATE INDEX IF NOT EXISTS idx_market_quotes_market_symbol_fetched '
+      'ON market_quotes(market, symbol, fetched_at)',
+  'CREATE INDEX IF NOT EXISTS idx_market_history_market_symbol_interval_date '
+      'ON market_history_bars(market, symbol, interval, as_of)',
+  'CREATE INDEX IF NOT EXISTS idx_market_search_market_query_fetched '
+      'ON market_symbol_searches(market, query, fetched_at)',
+];
+
+Future<void> _createMarketDataCacheIndexes(AppDatabase db) async {
+  for (final statement in _marketDataCacheIndexStmts) {
+    final table = RegExp(
+      r'\bON\s+([a-z_][a-z0-9_]*)',
+      caseSensitive: false,
+    ).firstMatch(statement)?.group(1);
+    if (table != null &&
+        (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
+      // Focused migration fixtures may intentionally omit unrelated cache
+      // tables. They are created with their indexes on the next full schema
+      // creation / applicable migration.
+      continue;
+    }
+    await db.customStatement(statement);
+  }
+}
+
 Future<void> _createChatTables(AppDatabase db) async {
   await _createChatSessionsTable(db);
   const stmts = <String>[
@@ -234,7 +366,7 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON devices(owner_user_id, hlc)',
     'CREATE INDEX IF NOT EXISTS idx_amort_liability_period '
         'ON amortization_entries(liability_id, period_index)',
-    'CREATE INDEX IF NOT EXISTS idx_fx_rates_pair_as_of '
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_fx_rates_pair_as_of '
         'ON fx_rates(base_currency, quote_currency, as_of)',
     'CREATE INDEX IF NOT EXISTS idx_tag_links_entity '
         'ON tag_links(entity_table, entity_id)',
@@ -250,6 +382,7 @@ Future<void> _createIndexes(AppDatabase db) async {
         'ON health_metrics(owner_user_id, hlc)',
     ..._securitiesAssetIndexStmts,
     ..._journalEntryIndexStmts,
+    ..._marketDataCacheIndexStmts,
     ...knowledgeIndexStmts,
     ...executionIndexStmts,
   ];

@@ -3215,6 +3215,88 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fxRatesRefreshing => '正在同步汇率…';
 
   @override
+  String get fxRatesOverviewTitle => '币种行情';
+
+  @override
+  String get fxRatesOverviewSubtitle => '集中查看财富历史中正在使用的汇率。';
+
+  @override
+  String get fxRatesStatusSyncing => '同步中';
+
+  @override
+  String get fxRatesStatusFailed => '离线';
+
+  @override
+  String get fxRatesStatusReady => '已更新';
+
+  @override
+  String get fxRatesStatusLocal => '本地历史';
+
+  @override
+  String get fxRatesTrackedPairsLabel => '跟踪币对';
+
+  @override
+  String get fxRatesBaseCurrencyLabel => '基础货币';
+
+  @override
+  String get fxRatesLastUpdatedLabel => '最近更新';
+
+  @override
+  String get fxRatesLatestObservation => '最新观测';
+
+  @override
+  String get fxRatesHistoryTitle => '历史走势';
+
+  @override
+  String get fxRatesRange7D => '7天';
+
+  @override
+  String get fxRatesRange30D => '30天';
+
+  @override
+  String get fxRatesRange90D => '90天';
+
+  @override
+  String get fxRatesRangeAll => '全部';
+
+  @override
+  String get fxRatesHistoryEntries => '历史记录';
+
+  @override
+  String get fxRatesNotEnoughHistory => '积累更多记录后即可看到趋势。';
+
+  @override
+  String get fxRatesRangeHint => '当前显示所选时间范围，切换“全部”可查看完整历史。';
+
+  @override
+  String fxRatesAsOfValue(String date) {
+    return '截至 $date';
+  }
+
+  @override
+  String fxRatesPairsTracked(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '已跟踪 $count 个币对',
+      one: '已跟踪 1 个币对',
+      zero: '暂无币对',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String fxRatesEntriesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 条记录',
+      one: '1 条记录',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get fxRatesSyncedFrom => '来源';
 
   @override

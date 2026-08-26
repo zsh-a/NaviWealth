@@ -72,7 +72,10 @@ Future<List<HoldingPriceObservation>> _historicalObservationsForAsset({
       for (final bar in response.data)
         HoldingPriceObservation(
           assetId: asset.id,
-          price: bar.adjustedClose ?? bar.close,
+          // Holdings are valued at the tradable close. Adjusted close is a
+          // total-return series and would count dividends again when the
+          // ledger already contains dividend/corporate-action postings.
+          price: bar.close,
           currency: asset.currency,
           asOf: bar.asOf.toUtc(),
           confidence: confidence,

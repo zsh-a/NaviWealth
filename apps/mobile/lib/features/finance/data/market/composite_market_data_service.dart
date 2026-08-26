@@ -45,7 +45,7 @@ class CompositeMarketDataService implements MarketDataService {
     String symbol, {
     AssetMarket? market,
   }) async {
-    final cached = await _cache.readQuote(symbol);
+    final cached = await _cache.readQuote(symbol, market: market);
     if (cached != null && cached.freshness == DataFreshness.cachedFresh) {
       _metrics?.recordCache(
         endpoint: 'getQuote',
@@ -66,7 +66,7 @@ class CompositeMarketDataService implements MarketDataService {
     for (final provider in candidates) {
       try {
         final quote = await provider.getQuote(symbol);
-        await _cache.writeQuote(quote, source: provider.name);
+        await _cache.writeQuote(quote, market: market, source: provider.name);
         if (lastProvider != null) {
           _metrics?.recordFallback(
             fromProvider: lastProvider,
@@ -93,7 +93,7 @@ class CompositeMarketDataService implements MarketDataService {
       }
     }
 
-    return _serveStaleQuote(symbol, lastError);
+    return _serveStaleQuote(symbol, market, lastError);
   }
 
   @override
@@ -109,9 +109,11 @@ class CompositeMarketDataService implements MarketDataService {
       from: from,
       to: to,
       interval: interval,
+      market: market,
     );
     final cacheCoversRange =
-        cached != null && _coversRange(cached.bars, from, to);
+        cached != null &&
+        _coversRange(cached.bars, from, to, interval: interval);
     if (cacheCoversRange && cached.freshness == DataFreshness.cachedFresh) {
       _metrics?.recordCache(
         endpoint: 'getHistorical',
@@ -143,6 +145,7 @@ class CompositeMarketDataService implements MarketDataService {
         await _cache.writeHistory(
           bars,
           interval: interval,
+          market: market,
           source: provider.name,
         );
         if (lastProvider != null) {
@@ -174,7 +177,7 @@ class CompositeMarketDataService implements MarketDataService {
       }
     }
 
-    if (cached != null) {
+    if (cached != null && cacheCoversRange) {
       _metrics?.recordCache(
         endpoint: 'getHistorical',
         outcome: CacheOutcome.hitStale,
@@ -205,7 +208,7 @@ class CompositeMarketDataService implements MarketDataService {
         fetchedAt: _clock.now(),
       );
     }
-    final cached = await _cache.readSearch(query);
+    final cached = await _cache.readSearch(query, market: market);
     if (cached != null && cached.freshness == DataFreshness.cachedFresh) {
       _metrics?.recordCache(
         endpoint: 'searchSymbol',
@@ -246,6 +249,7 @@ class CompositeMarketDataService implements MarketDataService {
       await _cache.writeSearch(
         query,
         results,
+        market: market,
         source: sourceTag ?? 'composite',
       );
       return MarketResponse(
@@ -275,9 +279,10 @@ class CompositeMarketDataService implements MarketDataService {
 
   Future<MarketResponse<Quote>> _serveStaleQuote(
     String symbol,
+    AssetMarket? market,
     Object? lastError,
   ) async {
-    final cached = await _cache.readQuote(symbol);
+    final cached = await _cache.readQuote(symbol, market: market);
     if (cached != null) {
       _metrics?.recordCache(
         endpoint: 'getQuote',
@@ -304,13 +309,37 @@ class CompositeMarketDataService implements MarketDataService {
     return routed.isEmpty ? _providers : routed;
   }
 
-  bool _coversRange(List<HistoricalBar> bars, DateTime from, DateTime to) {
+  bool _coversRange(
+    List<HistoricalBar> bars,
+    DateTime from,
+    DateTime to, {
+    required BarInterval interval,
+  }) {
     if (bars.isEmpty) return false;
     final first = bars.first.asOf;
     final last = bars.last.asOf;
-    // Permit a 3-day grace at each edge for non-trading days at boundaries.
-    return first.isBefore(from.add(const Duration(days: 3))) &&
-        last.isAfter(to.subtract(const Duration(days: 3)));
+    final edgeGrace = switch (interval) {
+      BarInterval.day => const Duration(days: 5),
+      BarInterval.week => const Duration(days: 14),
+      BarInterval.month => const Duration(days: 45),
+    };
+    if (first.isAfter(from.add(edgeGrace)) ||
+        last.isBefore(to.subtract(edgeGrace))) {
+      return false;
+    }
+
+    // Endpoint checks alone accept a cache with a large hole in the middle.
+    // A market holiday can create a few days of silence, but a gap larger
+    // than this means the requested interval is not a reliable cache hit.
+    final maxGap = switch (interval) {
+      BarInterval.day => const Duration(days: 5),
+      BarInterval.week => const Duration(days: 21),
+      BarInterval.month => const Duration(days: 90),
+    };
+    for (var i = 1; i < bars.length; i++) {
+      if (bars[i].asOf.difference(bars[i - 1].asOf) > maxGap) return false;
+    }
+    return true;
   }
 
   String _searchKey(SymbolInfo info) =>

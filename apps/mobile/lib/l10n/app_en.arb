@@ -1675,6 +1675,42 @@
   "fxRatesAppBarTitle": "FX rates",
   "fxRatesEmpty": "No FX rates recorded yet. Rates are auto-synced on app launch — add accounts in different currencies to get started.",
   "fxRatesRefreshing": "Syncing rates…",
+  "fxRatesOverviewTitle": "Currency monitor",
+  "fxRatesOverviewSubtitle": "A quiet view of the rates used across your wealth history.",
+  "fxRatesStatusSyncing": "Syncing",
+  "fxRatesStatusFailed": "Offline",
+  "fxRatesStatusReady": "Up to date",
+  "fxRatesStatusLocal": "Local history",
+  "fxRatesTrackedPairsLabel": "Tracked pairs",
+  "fxRatesBaseCurrencyLabel": "Base currency",
+  "fxRatesLastUpdatedLabel": "Last updated",
+  "fxRatesLatestObservation": "Latest observation",
+  "fxRatesHistoryTitle": "History",
+  "fxRatesRange7D": "7D",
+  "fxRatesRange30D": "30D",
+  "fxRatesRange90D": "90D",
+  "fxRatesRangeAll": "All",
+  "fxRatesHistoryEntries": "Observations",
+  "fxRatesNotEnoughHistory": "More observations will reveal a trend.",
+  "fxRatesRangeHint": "Showing the selected window. Switch to All for the full history.",
+  "fxRatesAsOfValue": "As of {date}",
+  "@fxRatesAsOfValue": {
+    "placeholders": {
+      "date": { "type": "String", "example": "Apr 28, 2026" }
+    }
+  },
+  "fxRatesPairsTracked": "{count, plural, =0{No pairs} one{1 pair} other{{count} pairs}}",
+  "@fxRatesPairsTracked": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "fxRatesEntriesCount": "{count, plural, one{1 entry} other{{count} entries}}",
+  "@fxRatesEntriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "fxRatesSyncedFrom": "Source",
   "fxRatesAddAction": "Add rate",
   "fxRatesEntrySheetTitle": "Add an FX rate",
