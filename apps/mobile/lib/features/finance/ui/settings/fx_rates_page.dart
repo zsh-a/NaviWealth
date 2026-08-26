@@ -85,6 +85,7 @@ class _FxRatesPageState extends ConsumerState<FxRatesPage> {
       await service.syncRates(
         baseCurrency: base,
         accountCurrencies: currencies,
+        fullHistory: true,
       );
     } catch (_) {
       // The local history remains useful when the provider is unavailable.

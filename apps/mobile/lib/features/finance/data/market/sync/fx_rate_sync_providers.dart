@@ -11,5 +11,9 @@ final fxRateSyncServiceProvider = FutureProvider<FxRateSyncService>((
 ) async {
   final marketData = await ref.watch(marketDataServiceProvider.future);
   final fxRepo = await ref.watch(fxRateRepositoryProvider.future);
-  return FxRateSyncService(marketData: marketData, fxRepo: fxRepo);
+  return FxRateSyncService(
+    marketData: marketData,
+    fxRepo: fxRepo,
+    clock: ref.watch(clockProvider),
+  );
 });

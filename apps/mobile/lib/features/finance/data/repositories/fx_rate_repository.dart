@@ -47,6 +47,31 @@ class FxRateRepository {
     return rows.map(_toDomain).toList();
   }
 
+  /// Returns the newest stored observation for one currency pair.
+  ///
+  /// The sync service uses this cursor to request only the missing tail of a
+  /// series while keeping a small overlap for retries and provider revisions.
+  Future<DateTime?> latestDateForPair({
+    required String base,
+    required String quote,
+  }) async {
+    final b = _normalize(base, 'base');
+    final q = _normalize(quote, 'quote');
+    final row =
+        await (_db.select(_db.fxRates)
+              ..where(
+                (t) => t.baseCurrency.equals(b) & t.quoteCurrency.equals(q),
+              )
+              ..orderBy([
+                (t) =>
+                    OrderingTerm(expression: t.asOf, mode: OrderingMode.desc),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
+    final date = row?.asOf;
+    return date == null ? null : DateTime.utc(date.year, date.month, date.day);
+  }
+
   /// Insert or replace the rate for `(base, quote, day(asOf))`. Same-day
   /// re-records overwrite the prior value; different days create new rows.
   Future<dom.FxRate> upsertDaily({
@@ -57,52 +82,59 @@ class FxRateRepository {
     String? source,
     DateTime? fetchedAt,
   }) async {
-    final base = _normalize(baseCurrency, 'baseCurrency');
-    final quote = _normalize(quoteCurrency, 'quoteCurrency');
-    if (base == quote) {
-      throw ArgumentError(
-        'baseCurrency and quoteCurrency must differ; got both = $base',
-      );
-    }
-    if (rate <= Decimal.zero) {
-      throw ArgumentError.value(rate, 'rate', 'must be positive');
-    }
-    final day = DateTime.utc(asOf.year, asOf.month, asOf.day);
-    final recordedAt = (fetchedAt ?? DateTime.now()).toUtc();
+    final value = dom.FxRate(
+      base: baseCurrency,
+      quote: quoteCurrency,
+      date: asOf,
+      rate: rate,
+      source: source ?? 'manual',
+      fetchedAt: (fetchedAt ?? DateTime.now()).toUtc(),
+    );
+    return (await upsertDailyBatch([value])).single;
+  }
 
-    return _db.transaction(() async {
-      // Manual upsert: drop any existing same-day row so callers don't
-      // accumulate duplicates when re-entering the rate.
-      await (_db.delete(_db.fxRates)..where(
-            (t) =>
-                t.baseCurrency.equals(base) &
-                t.quoteCurrency.equals(quote) &
-                t.asOf.equals(day),
-          ))
-          .go();
-      final id = _uuid.v4();
-      await _db
-          .into(_db.fxRates)
-          .insert(
-            FxRatesCompanion.insert(
-              id: id,
-              baseCurrency: base,
-              quoteCurrency: quote,
-              rate: rate,
-              asOf: day,
-              fetchedAt: recordedAt,
-              source: Value(source),
-            ),
-          );
-      return dom.FxRate(
-        base: base,
-        quote: quote,
-        date: day,
-        rate: rate,
-        source: source ?? 'manual',
-        fetchedAt: recordedAt,
-      );
+  /// Inserts or replaces a batch of daily observations in one transaction.
+  ///
+  /// Historical providers return many bars at once. Keeping the batch atomic
+  /// prevents the live history stream from exposing a partially backfilled
+  /// series and avoids one SQLite transaction per trading day.
+  Future<List<dom.FxRate>> upsertDailyBatch(Iterable<dom.FxRate> rates) async {
+    final byNaturalKey = <String, dom.FxRate>{};
+    for (final rate in rates) {
+      final key =
+          '${rate.base}\u0000${rate.quote}\u0000${rate.date.millisecondsSinceEpoch}';
+      byNaturalKey[key] = rate;
+    }
+    final values = byNaturalKey.values.toList(growable: false);
+    if (values.isEmpty) return const <dom.FxRate>[];
+
+    await _db.transaction(() async {
+      for (final rate in values) {
+        // Keep the repository's natural-key semantics explicit even on
+        // development databases that predate the unique index migration.
+        await (_db.delete(_db.fxRates)..where(
+              (t) =>
+                  t.baseCurrency.equals(rate.base) &
+                  t.quoteCurrency.equals(rate.quote) &
+                  t.asOf.equals(rate.date),
+            ))
+            .go();
+        await _db
+            .into(_db.fxRates)
+            .insert(
+              FxRatesCompanion.insert(
+                id: _uuid.v4(),
+                baseCurrency: rate.base,
+                quoteCurrency: rate.quote,
+                rate: rate.rate,
+                asOf: rate.date,
+                fetchedAt: rate.fetchedAt,
+                source: Value(rate.source),
+              ),
+            );
+      }
     });
+    return values;
   }
 
   Future<void> delete(String id) async {

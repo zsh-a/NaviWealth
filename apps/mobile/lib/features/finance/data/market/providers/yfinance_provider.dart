@@ -78,6 +78,10 @@ class YFinanceProvider implements MarketProvider {
     required DateTime to,
     BarInterval interval = BarInterval.day,
   }) async {
+    final fromDay = _floorUtcDay(from);
+    // Yahoo's period2 is exclusive, while MarketDataService's contract is
+    // inclusive on both calendar-day endpoints.
+    final toExclusive = _floorUtcDay(to).add(const Duration(days: 1));
     final response = await _http.send<Map<String, dynamic>>(
       RequestOptions(
         path: '$_chartBase/${Uri.encodeComponent(symbol)}',
@@ -85,8 +89,8 @@ class YFinanceProvider implements MarketProvider {
         responseType: ResponseType.json,
         queryParameters: {
           'interval': _intervalParam(interval),
-          'period1': (from.toUtc().millisecondsSinceEpoch ~/ 1000).toString(),
-          'period2': (to.toUtc().millisecondsSinceEpoch ~/ 1000).toString(),
+          'period1': (fromDay.millisecondsSinceEpoch ~/ 1000).toString(),
+          'period2': (toExclusive.millisecondsSinceEpoch ~/ 1000).toString(),
           'events': 'div,splits',
         },
         headers: const {'User-Agent': _userAgent},
@@ -246,6 +250,11 @@ class YFinanceProvider implements MarketProvider {
       case BarInterval.month:
         return '1mo';
     }
+  }
+
+  DateTime _floorUtcDay(DateTime value) {
+    final utc = value.toUtc();
+    return DateTime.utc(utc.year, utc.month, utc.day);
   }
 
   AssetMarket _inferMarket(String? exchange, String? type) {
