@@ -1,13 +1,38 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/config/app_config.dart';
 import 'package:naviwealth/core/data_management/data_management.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/sync_table_registry.dart';
+import 'package:talker/talker.dart';
 
 import '../persistence/test_database.dart';
 
 void main() {
   group('DataManagementService', () {
+    test('normalizes PRAGMA integer values from different drivers', () {
+      expect(
+        DataManagementService.parsePragmaIntValue(4096, pragma: 'page_size'),
+        4096,
+      );
+      expect(
+        DataManagementService.parsePragmaIntValue(4096.0, pragma: 'page_size'),
+        4096,
+      );
+      expect(
+        DataManagementService.parsePragmaIntValue('4096', pragma: 'page_size'),
+        4096,
+      );
+      expect(
+        () => DataManagementService.parsePragmaIntValue(
+          '4096.5',
+          pragma: 'page_size',
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
+
     test('inspects owner-scoped source, tombstones, and caches', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
@@ -142,6 +167,44 @@ void main() {
         ),
         throwsArgumentError,
       );
+    });
+
+    test('logs the exact source table when inspection fails', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final talker = Talker(
+        settings: TalkerSettings(useConsoleLogs: false, useHistory: true),
+      );
+      final logger = AppLogger(environment: AppEnvironment.dev, talker: talker);
+      final service = DataManagementService(
+        database: db,
+        ownerUserId: 'user-a',
+        logger: logger,
+        specs: const <DomainDataManagementSpec>[
+          DomainDataManagementSpec(
+            scope: DomainScope.finance,
+            label: 'FinanceOS',
+            sourceTables: <DataTableSpec>[
+              DataTableSpec(table: 'missing_source_table', ownerScoped: true),
+            ],
+          ),
+        ],
+      );
+
+      await expectLater(service.inspectAll(), throwsA(anything));
+
+      final history = logger.talker.history
+          .map((entry) => '${entry.message}\n${entry.error}')
+          .join('\n');
+      expect(
+        history,
+        contains(
+          'data_management.inspect_domains failed '
+          'stage=source_rows domain=finance table=missing_source_table',
+        ),
+      );
+      expect(history, contains('owner_scoped=true'));
+      expect(history, isNot(contains('user-a')));
     });
 
     test('inspects and clears only the current user shared history', () async {

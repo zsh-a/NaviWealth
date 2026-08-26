@@ -1,7 +1,9 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../auth/domain_scope.dart';
+import '../logging/app_logger.dart';
 import '../persistence/app_database.dart';
 import '../sync/sync_table_registry.dart';
 
@@ -106,10 +108,12 @@ class DataManagementService {
     required List<DomainDataManagementSpec> specs,
     Map<DomainScope, List<String>> agentIdsByDomain =
         const <DomainScope, List<String>>{},
+    AppLogger? logger,
   }) : _database = database,
        _ownerUserId = ownerUserId,
        _specs = List<DomainDataManagementSpec>.unmodifiable(specs),
-       _agentIdsByDomain = agentIdsByDomain {
+       _agentIdsByDomain = agentIdsByDomain,
+       _logger = logger ?? AppLogger.instance {
     for (final spec in _specs) {
       for (final table in <DataTableSpec>[
         ...spec.sourceTables,
@@ -124,69 +128,141 @@ class DataManagementService {
   final String _ownerUserId;
   final List<DomainDataManagementSpec> _specs;
   final Map<DomainScope, List<String>> _agentIdsByDomain;
+  final AppLogger _logger;
+
+  /// Normalizes values returned by SQLite PRAGMA statements.
+  ///
+  /// SQLite drivers do not expose PRAGMA integer results consistently: the
+  /// native driver usually returns an [int], while some platform/web drivers
+  /// return a numeric [String]. Keep the conversion at this boundary so the
+  /// storage page does not depend on a driver's runtime representation.
+  @visibleForTesting
+  static int parsePragmaIntValue(Object? value, {required String pragma}) {
+    if (value is int) return value;
+    if (value is num) {
+      if (!value.isFinite) {
+        throw StateError(
+          'PRAGMA $pragma returned a non-finite numeric value '
+          '(type=${value.runtimeType})',
+        );
+      }
+      final integer = value.toInt();
+      if (value == integer) return integer;
+    } else if (value is String) {
+      final parsed = num.tryParse(value.trim());
+      if (parsed != null && parsed.isFinite) {
+        final integer = parsed.toInt();
+        if (parsed == integer) return integer;
+      }
+    }
+    throw StateError(
+      'PRAGMA $pragma returned a non-integer value '
+      '(type=${value.runtimeType})',
+    );
+  }
 
   Future<List<DomainDataSnapshot>> inspectAll() async {
-    final snapshots = <DomainDataSnapshot>[];
-    for (final spec in _specs) {
-      var sourceRows = 0;
-      var deletedRows = 0;
-      var cacheRows = 0;
-      for (final table in spec.sourceTables) {
-        sourceRows += await _count(table, deleted: false);
-        if (table.hasTombstones) {
-          deletedRows += await _count(table, deleted: true);
+    try {
+      final snapshots = <DomainDataSnapshot>[];
+      for (final spec in _specs) {
+        var sourceRows = 0;
+        var deletedRows = 0;
+        var cacheRows = 0;
+        for (final table in spec.sourceTables) {
+          sourceRows += await _count(
+            table,
+            deleted: false,
+            domain: spec.scope.wire,
+            stage: 'source_rows',
+          );
+          if (table.hasTombstones) {
+            deletedRows += await _count(
+              table,
+              deleted: true,
+              domain: spec.scope.wire,
+              stage: 'deleted_rows',
+            );
+          }
         }
+        for (final table in spec.cacheTables) {
+          cacheRows += await _count(
+            table,
+            domain: spec.scope.wire,
+            stage: 'cache_rows',
+          );
+        }
+        snapshots.add(
+          DomainDataSnapshot(
+            scope: spec.scope,
+            label: spec.label,
+            sourceRows: sourceRows,
+            deletedRows: deletedRows,
+            cacheRows: cacheRows,
+            sourceTableCount: spec.sourceTables.length,
+            cacheTableCount: spec.cacheTables.length,
+          ),
+        );
       }
-      for (final table in spec.cacheTables) {
-        cacheRows += await _count(table);
-      }
-      snapshots.add(
-        DomainDataSnapshot(
-          scope: spec.scope,
-          label: spec.label,
-          sourceRows: sourceRows,
-          deletedRows: deletedRows,
-          cacheRows: cacheRows,
-          sourceTableCount: spec.sourceTables.length,
-          cacheTableCount: spec.cacheTables.length,
-        ),
+      return snapshots;
+    } catch (error, stackTrace) {
+      _logger.e(
+        'data_management.inspect_domains failed stage=inspect_tables '
+        'domain_count=${_specs.length}',
+        error: error,
+        stackTrace: stackTrace,
       );
+      rethrow;
     }
-    return snapshots;
   }
 
   /// Inspects local-only history that is intentionally outside every domain's
   /// synced source tables. Counts are isolated to the signed-in user.
   Future<SharedDataSnapshot> inspectSharedData() async {
-    final chatRows =
-        await _countOwnerRows('chat_sessions') +
-        await _countOwnerRows('chat_messages') +
-        await _countOwnerRows('conversation_checkpoints');
-    final aiRows =
-        await _countOwnerRows('ai_traces') +
-        await _countOwnerRows('ai_undo_stack') +
-        await _countOwnerRows('ai_touched_entities');
-    final memoryRows =
-        await _countOwnerRows('memories') +
-        await _countOwnerRows('memory_candidates') +
-        await _countOwnerRows('events') +
-        await _countOwnerRows('domain_event_log', ownerColumn: 'actor_user_id');
-    final agentRows =
-        await _countOwnerRows('agent_runs') +
-        await _countOwnerRows('agent_runtime_checkpoints') +
-        await _countOwnerRows('agent_artifacts') +
-        await _countOwnerRows('agent_findings');
-    final pageCount = await _pragmaInt('page_count');
-    final pageSize = await _pragmaInt('page_size');
-    final freePages = await _pragmaInt('freelist_count');
-    return SharedDataSnapshot(
-      chatRows: chatRows,
-      aiRows: aiRows,
-      memoryRows: memoryRows,
-      agentRows: agentRows,
-      databaseBytes: pageCount * pageSize,
-      reclaimableBytes: freePages * pageSize,
-    );
+    try {
+      final chatRows =
+          await _countOwnerRows('chat_sessions', resource: 'chat') +
+          await _countOwnerRows('chat_messages', resource: 'chat') +
+          await _countOwnerRows('conversation_checkpoints', resource: 'chat');
+      final aiRows =
+          await _countOwnerRows('ai_traces', resource: 'ai') +
+          await _countOwnerRows('ai_undo_stack', resource: 'ai') +
+          await _countOwnerRows('ai_touched_entities', resource: 'ai');
+      final memoryRows =
+          await _countOwnerRows('memories', resource: 'memory') +
+          await _countOwnerRows('memory_candidates', resource: 'memory') +
+          await _countOwnerRows('events', resource: 'memory') +
+          await _countOwnerRows(
+            'domain_event_log',
+            ownerColumn: 'actor_user_id',
+            resource: 'memory',
+          );
+      final agentRows =
+          await _countOwnerRows('agent_runs', resource: 'agent') +
+          await _countOwnerRows(
+            'agent_runtime_checkpoints',
+            resource: 'agent',
+          ) +
+          await _countOwnerRows('agent_artifacts', resource: 'agent') +
+          await _countOwnerRows('agent_findings', resource: 'agent');
+      final pageCount = await _pragmaInt('page_count');
+      final pageSize = await _pragmaInt('page_size');
+      final freePages = await _pragmaInt('freelist_count');
+      return SharedDataSnapshot(
+        chatRows: chatRows,
+        aiRows: aiRows,
+        memoryRows: memoryRows,
+        agentRows: agentRows,
+        databaseBytes: pageCount * pageSize,
+        reclaimableBytes: freePages * pageSize,
+      );
+    } catch (error, stackTrace) {
+      _logger.e(
+        'data_management.inspect_shared failed stage=inspect_shared_tables',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   /// Removes local AI/chat/memory/agent history without touching domain source
@@ -433,45 +509,107 @@ class DataManagementService {
     return rows.length;
   }
 
-  Future<int> _count(DataTableSpec table, {bool? deleted}) async {
-    final clauses = <String>[];
-    final variables = <Variable<Object>>[];
-    if (table.ownerScoped) {
-      clauses.add('owner_user_id = ?');
-      variables.add(Variable<String>(_ownerUserId));
+  Future<int> _count(
+    DataTableSpec table, {
+    bool? deleted,
+    required String domain,
+    required String stage,
+  }) async {
+    try {
+      final clauses = <String>[];
+      final variables = <Variable<Object>>[];
+      if (table.ownerScoped) {
+        clauses.add('owner_user_id = ?');
+        variables.add(Variable<String>(_ownerUserId));
+      }
+      if (deleted != null && table.hasTombstones) {
+        clauses.add('deleted_at IS ${deleted ? 'NOT ' : ''}NULL');
+      }
+      final where = clauses.isEmpty ? '' : ' WHERE ${clauses.join(' AND ')}';
+      final row = await _database
+          .customSelect(
+            'SELECT COUNT(*) AS c FROM ${table.table}$where',
+            variables: variables,
+          )
+          .getSingle();
+      return row.read<int>('c');
+    } catch (error, stackTrace) {
+      _logTableFailure(
+        operation: 'inspect_domains',
+        stage: stage,
+        domain: domain,
+        table: table.table,
+        ownerScoped: table.ownerScoped,
+        deleted: deleted,
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
     }
-    if (deleted != null && table.hasTombstones) {
-      clauses.add('deleted_at IS ${deleted ? 'NOT ' : ''}NULL');
-    }
-    final where = clauses.isEmpty ? '' : ' WHERE ${clauses.join(' AND ')}';
-    final row = await _database
-        .customSelect(
-          'SELECT COUNT(*) AS c FROM ${table.table}$where',
-          variables: variables,
-        )
-        .getSingle();
-    return row.read<int>('c');
   }
 
   Future<int> _countOwnerRows(
     String table, {
     String ownerColumn = 'owner_user_id',
+    required String resource,
   }) async {
-    _validateTableName(table);
-    _validateTableName(ownerColumn);
-    final row = await _database
-        .customSelect(
-          'SELECT COUNT(*) AS c FROM $table WHERE $ownerColumn = ?',
-          variables: <Variable<Object>>[Variable<Object>(_ownerUserId)],
-        )
-        .getSingle();
-    return row.read<int>('c');
+    try {
+      _validateTableName(table);
+      _validateTableName(ownerColumn);
+      final row = await _database
+          .customSelect(
+            'SELECT COUNT(*) AS c FROM $table WHERE $ownerColumn = ?',
+            variables: <Variable<Object>>[Variable<Object>(_ownerUserId)],
+          )
+          .getSingle();
+      return row.read<int>('c');
+    } catch (error, stackTrace) {
+      _logTableFailure(
+        operation: 'inspect_shared',
+        stage: 'count_${resource}_rows',
+        domain: 'shared',
+        table: table,
+        ownerScoped: true,
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   Future<int> _pragmaInt(String name) async {
-    _validateTableName(name);
-    final row = await _database.customSelect('PRAGMA $name').getSingle();
-    return row.data.values.single as int;
+    try {
+      _validateTableName(name);
+      final row = await _database.customSelect('PRAGMA $name').getSingle();
+      return parsePragmaIntValue(row.data.values.single, pragma: name);
+    } catch (error, stackTrace) {
+      _logger.e(
+        'data_management.inspect_shared failed stage=read_pragma pragma=$name',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  void _logTableFailure({
+    required String operation,
+    required String stage,
+    required String domain,
+    required String table,
+    required bool ownerScoped,
+    bool? deleted,
+    required Object error,
+    required StackTrace stackTrace,
+  }) {
+    _logger.e(
+      'data_management.$operation failed '
+      'stage=$stage domain=$domain table=$table '
+      'owner_scoped=$ownerScoped '
+      'deleted_filter=${deleted?.toString() ?? 'none'}',
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   static void _validateTableName(String table) {

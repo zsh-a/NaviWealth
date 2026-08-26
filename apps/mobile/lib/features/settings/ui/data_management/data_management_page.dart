@@ -65,7 +65,12 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'data_management.clear_cache',
+        ),
       );
     } finally {
       if (mounted) setState(() => _clearing.remove(snapshot.scope));
@@ -99,7 +104,12 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'data_management.run_maintenance',
+        ),
       );
     } finally {
       if (mounted) setState(() => _maintenanceRunning = false);
@@ -154,7 +164,12 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'data_management.reset_domain',
+        ),
       );
     } finally {
       if (mounted) setState(() => _resetting.remove(snapshot.scope));
@@ -193,7 +208,12 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'data_management.clear_shared_history',
+        ),
       );
     } finally {
       if (mounted) setState(() => _sharedClearing = false);
@@ -218,7 +238,12 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'data_management.compact_database',
+        ),
       );
     } finally {
       if (mounted) setState(() => _compacting = false);
@@ -270,7 +295,12 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.error,
-        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'data_management.reset_all',
+        ),
       );
     } finally {
       if (mounted) setState(() => _resettingAll = false);
@@ -351,6 +381,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                 context,
                 error,
                 stackTrace: stackTrace,
+                operation: 'data_management.load_shared_snapshot',
               ),
             ),
             data: (snapshot) => _SharedDataCard(
@@ -374,6 +405,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                 context,
                 error,
                 stackTrace: stackTrace,
+                operation: 'data_management.load_domain_snapshots',
               ),
             ),
             data: (items) => Column(

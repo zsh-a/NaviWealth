@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/current_user.dart';
 import '../auth/domain_scope.dart';
+import '../auth/providers.dart';
 import '../lifeos/domain_pack.dart';
 import '../logging/providers.dart';
 import '../persistence/providers.dart';
@@ -14,24 +15,41 @@ import 'maintenance.dart';
 final dataManagementServiceProvider = FutureProvider<DataManagementService>((
   ref,
 ) async {
-  final database = await ref.watch(appDatabaseProvider.future);
-  final ownerUserId = await ref.watch(currentUserIdProvider)();
-  final packs = ref.watch(domainPackRegistryProvider);
-  final specs = packs
-      .map((pack) => pack.dataManagementSpec)
-      .whereType<DomainDataManagementSpec>()
-      .toList(growable: false);
-  return DataManagementService(
-    database: database,
-    ownerUserId: ownerUserId,
-    specs: specs,
-    agentIdsByDomain: <DomainScope, List<String>>{
-      for (final pack in packs)
-        pack.scope: pack.agentPresentationSpecs
-            .map((spec) => spec.agentId)
-            .toList(growable: false),
-    },
-  );
+  final logger = ref.read(loggerProvider);
+  var stage = 'open_database';
+  try {
+    final database = await ref.watch(appDatabaseProvider.future);
+    stage = 'resolve_owner';
+    final ownerUserId = await ref.watch(currentUserIdProvider)();
+    stage = 'resolve_domain_inventory';
+    final packs = ref.watch(domainPackRegistryProvider);
+    final specs = packs
+        .map((pack) => pack.dataManagementSpec)
+        .whereType<DomainDataManagementSpec>()
+        .toList(growable: false);
+    stage = 'create_service';
+    return DataManagementService(
+      database: database,
+      ownerUserId: ownerUserId,
+      specs: specs,
+      logger: logger,
+      agentIdsByDomain: <DomainScope, List<String>>{
+        for (final pack in packs)
+          pack.scope: pack.agentPresentationSpecs
+              .map((spec) => spec.agentId)
+              .toList(growable: false),
+      },
+    );
+  } catch (error, stackTrace) {
+    final authState = ref.read(authStateProvider);
+    logger.e(
+      'data_management.service_init failed '
+      'stage=$stage auth_state_type=${authState?.runtimeType ?? 'null'}',
+      error: error,
+      stackTrace: stackTrace,
+    );
+    rethrow;
+  }
 });
 
 final dataManagementDomainResetHandlerProvider =
