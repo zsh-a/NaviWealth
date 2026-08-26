@@ -47951,32 +47951,30 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   ];
 }
 
-typedef $$UsersTableCreateCompanionBuilder =
-    UsersCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String name,
-      Value<String?> email,
-      required DateTime createdAt,
-      Value<int> rowid,
-    });
-typedef $$UsersTableUpdateCompanionBuilder =
-    UsersCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> name,
-      Value<String?> email,
-      Value<DateTime> createdAt,
-      Value<int> rowid,
-    });
+typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String name,
+  Value<String?> email,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> name,
+  Value<String?> email,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
 
 class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
   $$UsersTableFilterComposer({
@@ -48536,48 +48534,46 @@ typedef $$SettingsTableTableProcessedTableManager =
       SettingsRow,
       PrefetchHooks Function()
     >;
-typedef $$AccountsTableCreateCompanionBuilder =
-    AccountsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required AccountCategory type,
-      required String name,
-      required String currency,
-      Value<String?> institution,
-      Value<String?> accountNumber,
-      Value<String?> note,
-      Value<bool> archived,
-      Value<AccountSide> category,
-      Value<String?> parentId,
-      Value<String?> icon,
-      Value<String?> color,
-      Value<int> rowid,
-    });
-typedef $$AccountsTableUpdateCompanionBuilder =
-    AccountsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<AccountCategory> type,
-      Value<String> name,
-      Value<String> currency,
-      Value<String?> institution,
-      Value<String?> accountNumber,
-      Value<String?> note,
-      Value<bool> archived,
-      Value<AccountSide> category,
-      Value<String?> parentId,
-      Value<String?> icon,
-      Value<String?> color,
-      Value<int> rowid,
-    });
+typedef $$AccountsTableCreateCompanionBuilder = AccountsCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required AccountCategory type,
+  required String name,
+  required String currency,
+  Value<String?> institution,
+  Value<String?> accountNumber,
+  Value<String?> note,
+  Value<bool> archived,
+  Value<AccountSide> category,
+  Value<String?> parentId,
+  Value<String?> icon,
+  Value<String?> color,
+  Value<int> rowid,
+});
+typedef $$AccountsTableUpdateCompanionBuilder = AccountsCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<AccountCategory> type,
+  Value<String> name,
+  Value<String> currency,
+  Value<String?> institution,
+  Value<String?> accountNumber,
+  Value<String?> note,
+  Value<bool> archived,
+  Value<AccountSide> category,
+  Value<String?> parentId,
+  Value<String?> icon,
+  Value<String?> color,
+  Value<int> rowid,
+});
 
 class $$AccountsTableFilterComposer
     extends Composer<_$AppDatabase, $AccountsTable> {
@@ -48972,46 +48968,44 @@ typedef $$AccountsTableProcessedTableManager =
       AccountRow,
       PrefetchHooks Function()
     >;
-typedef $$AssetsTableCreateCompanionBuilder =
-    AssetsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required AssetType type,
-      required String symbol,
-      required String currency,
-      Value<String?> name,
-      Value<String?> market,
-      Value<String?> industry,
-      Value<String?> region,
-      Value<String?> isin,
-      Value<String?> logoUrl,
-      Value<String?> metadataJson,
-      Value<int> rowid,
-    });
-typedef $$AssetsTableUpdateCompanionBuilder =
-    AssetsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<AssetType> type,
-      Value<String> symbol,
-      Value<String> currency,
-      Value<String?> name,
-      Value<String?> market,
-      Value<String?> industry,
-      Value<String?> region,
-      Value<String?> isin,
-      Value<String?> logoUrl,
-      Value<String?> metadataJson,
-      Value<int> rowid,
-    });
+typedef $$AssetsTableCreateCompanionBuilder = AssetsCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required AssetType type,
+  required String symbol,
+  required String currency,
+  Value<String?> name,
+  Value<String?> market,
+  Value<String?> industry,
+  Value<String?> region,
+  Value<String?> isin,
+  Value<String?> logoUrl,
+  Value<String?> metadataJson,
+  Value<int> rowid,
+});
+typedef $$AssetsTableUpdateCompanionBuilder = AssetsCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<AssetType> type,
+  Value<String> symbol,
+  Value<String> currency,
+  Value<String?> name,
+  Value<String?> market,
+  Value<String?> industry,
+  Value<String?> region,
+  Value<String?> isin,
+  Value<String?> logoUrl,
+  Value<String?> metadataJson,
+  Value<int> rowid,
+});
 
 class $$AssetsTableFilterComposer
     extends Composer<_$AppDatabase, $AssetsTable> {
@@ -49730,48 +49724,46 @@ typedef $$JournalEntriesTableProcessedTableManager =
       JournalEntryRow,
       PrefetchHooks Function()
     >;
-typedef $$PostingsTableCreateCompanionBuilder =
-    PostingsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String journalEntryId,
-      required int position,
-      required String accountId,
-      required Decimal units,
-      required String unit,
-      Value<Decimal?> costPerUnit,
-      Value<String?> costCurrency,
-      Value<String?> costLotId,
-      Value<DateTime?> costAcquiredOn,
-      Value<Decimal?> pricePerUnit,
-      Value<String?> priceCurrency,
-      Value<int> rowid,
-    });
-typedef $$PostingsTableUpdateCompanionBuilder =
-    PostingsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> journalEntryId,
-      Value<int> position,
-      Value<String> accountId,
-      Value<Decimal> units,
-      Value<String> unit,
-      Value<Decimal?> costPerUnit,
-      Value<String?> costCurrency,
-      Value<String?> costLotId,
-      Value<DateTime?> costAcquiredOn,
-      Value<Decimal?> pricePerUnit,
-      Value<String?> priceCurrency,
-      Value<int> rowid,
-    });
+typedef $$PostingsTableCreateCompanionBuilder = PostingsCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String journalEntryId,
+  required int position,
+  required String accountId,
+  required Decimal units,
+  required String unit,
+  Value<Decimal?> costPerUnit,
+  Value<String?> costCurrency,
+  Value<String?> costLotId,
+  Value<DateTime?> costAcquiredOn,
+  Value<Decimal?> pricePerUnit,
+  Value<String?> priceCurrency,
+  Value<int> rowid,
+});
+typedef $$PostingsTableUpdateCompanionBuilder = PostingsCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> journalEntryId,
+  Value<int> position,
+  Value<String> accountId,
+  Value<Decimal> units,
+  Value<String> unit,
+  Value<Decimal?> costPerUnit,
+  Value<String?> costCurrency,
+  Value<String?> costLotId,
+  Value<DateTime?> costAcquiredOn,
+  Value<Decimal?> pricePerUnit,
+  Value<String?> priceCurrency,
+  Value<int> rowid,
+});
 
 class $$PostingsTableFilterComposer
     extends Composer<_$AppDatabase, $PostingsTable> {
@@ -50177,36 +50169,34 @@ typedef $$PostingsTableProcessedTableManager =
       PostingRow,
       PrefetchHooks Function()
     >;
-typedef $$PricesTableCreateCompanionBuilder =
-    PricesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String unit,
-      required String quoteCurrency,
-      required DateTime observedOn,
-      required Decimal perUnit,
-      required String source,
-      Value<int> rowid,
-    });
-typedef $$PricesTableUpdateCompanionBuilder =
-    PricesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> unit,
-      Value<String> quoteCurrency,
-      Value<DateTime> observedOn,
-      Value<Decimal> perUnit,
-      Value<String> source,
-      Value<int> rowid,
-    });
+typedef $$PricesTableCreateCompanionBuilder = PricesCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String unit,
+  required String quoteCurrency,
+  required DateTime observedOn,
+  required Decimal perUnit,
+  required String source,
+  Value<int> rowid,
+});
+typedef $$PricesTableUpdateCompanionBuilder = PricesCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> unit,
+  Value<String> quoteCurrency,
+  Value<DateTime> observedOn,
+  Value<Decimal> perUnit,
+  Value<String> source,
+  Value<int> rowid,
+});
 
 class $$PricesTableFilterComposer
     extends Composer<_$AppDatabase, $PricesTable> {
@@ -55085,22 +55075,20 @@ typedef $$AmortizationEntriesTableProcessedTableManager =
       AmortizationEntryRow,
       PrefetchHooks Function()
     >;
-typedef $$CurrenciesTableCreateCompanionBuilder =
-    CurrenciesCompanion Function({
-      required String code,
-      required String name,
-      required int decimals,
-      Value<String?> symbol,
-      Value<int> rowid,
-    });
-typedef $$CurrenciesTableUpdateCompanionBuilder =
-    CurrenciesCompanion Function({
-      Value<String> code,
-      Value<String> name,
-      Value<int> decimals,
-      Value<String?> symbol,
-      Value<int> rowid,
-    });
+typedef $$CurrenciesTableCreateCompanionBuilder = CurrenciesCompanion Function({
+  required String code,
+  required String name,
+  required int decimals,
+  Value<String?> symbol,
+  Value<int> rowid,
+});
+typedef $$CurrenciesTableUpdateCompanionBuilder = CurrenciesCompanion Function({
+  Value<String> code,
+  Value<String> name,
+  Value<int> decimals,
+  Value<String?> symbol,
+  Value<int> rowid,
+});
 
 class $$CurrenciesTableFilterComposer
     extends Composer<_$AppDatabase, $CurrenciesTable> {
@@ -55266,28 +55254,26 @@ typedef $$CurrenciesTableProcessedTableManager =
       CurrencyRow,
       PrefetchHooks Function()
     >;
-typedef $$FxRatesTableCreateCompanionBuilder =
-    FxRatesCompanion Function({
-      required String id,
-      required String baseCurrency,
-      required String quoteCurrency,
-      required Decimal rate,
-      required DateTime asOf,
-      required DateTime fetchedAt,
-      Value<String?> source,
-      Value<int> rowid,
-    });
-typedef $$FxRatesTableUpdateCompanionBuilder =
-    FxRatesCompanion Function({
-      Value<String> id,
-      Value<String> baseCurrency,
-      Value<String> quoteCurrency,
-      Value<Decimal> rate,
-      Value<DateTime> asOf,
-      Value<DateTime> fetchedAt,
-      Value<String?> source,
-      Value<int> rowid,
-    });
+typedef $$FxRatesTableCreateCompanionBuilder = FxRatesCompanion Function({
+  required String id,
+  required String baseCurrency,
+  required String quoteCurrency,
+  required Decimal rate,
+  required DateTime asOf,
+  required DateTime fetchedAt,
+  Value<String?> source,
+  Value<int> rowid,
+});
+typedef $$FxRatesTableUpdateCompanionBuilder = FxRatesCompanion Function({
+  Value<String> id,
+  Value<String> baseCurrency,
+  Value<String> quoteCurrency,
+  Value<Decimal> rate,
+  Value<DateTime> asOf,
+  Value<DateTime> fetchedAt,
+  Value<String?> source,
+  Value<int> rowid,
+});
 
 class $$FxRatesTableFilterComposer
     extends Composer<_$AppDatabase, $FxRatesTable> {
@@ -55503,32 +55489,30 @@ typedef $$FxRatesTableProcessedTableManager =
       FxRateRow,
       PrefetchHooks Function()
     >;
-typedef $$TagsTableCreateCompanionBuilder =
-    TagsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String name,
-      required TagKind kind,
-      Value<String?> color,
-      Value<int> rowid,
-    });
-typedef $$TagsTableUpdateCompanionBuilder =
-    TagsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> name,
-      Value<TagKind> kind,
-      Value<String?> color,
-      Value<int> rowid,
-    });
+typedef $$TagsTableCreateCompanionBuilder = TagsCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String name,
+  required TagKind kind,
+  Value<String?> color,
+  Value<int> rowid,
+});
+typedef $$TagsTableUpdateCompanionBuilder = TagsCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> name,
+  Value<TagKind> kind,
+  Value<String?> color,
+  Value<int> rowid,
+});
 
 class $$TagsTableFilterComposer extends Composer<_$AppDatabase, $TagsTable> {
   $$TagsTableFilterComposer({
@@ -55777,32 +55761,30 @@ typedef $$TagsTableProcessedTableManager =
       TagRow,
       PrefetchHooks Function()
     >;
-typedef $$TagLinksTableCreateCompanionBuilder =
-    TagLinksCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String tagId,
-      required String entityTable,
-      required String entityId,
-      Value<int> rowid,
-    });
-typedef $$TagLinksTableUpdateCompanionBuilder =
-    TagLinksCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> tagId,
-      Value<String> entityTable,
-      Value<String> entityId,
-      Value<int> rowid,
-    });
+typedef $$TagLinksTableCreateCompanionBuilder = TagLinksCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String tagId,
+  required String entityTable,
+  required String entityId,
+  Value<int> rowid,
+});
+typedef $$TagLinksTableUpdateCompanionBuilder = TagLinksCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> tagId,
+  Value<String> entityTable,
+  Value<String> entityId,
+  Value<int> rowid,
+});
 
 class $$TagLinksTableFilterComposer
     extends Composer<_$AppDatabase, $TagLinksTable> {
@@ -56057,46 +56039,44 @@ typedef $$TagLinksTableProcessedTableManager =
       TagLinkRow,
       PrefetchHooks Function()
     >;
-typedef $$CategoriesTableCreateCompanionBuilder =
-    CategoriesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String name,
-      Value<String?> nameOverride,
-      Value<String?> systemKey,
-      Value<String?> parentId,
-      required String ledgerAccountId,
-      Value<String?> icon,
-      Value<String?> color,
-      Value<int> sortOrder,
-      Value<bool> archived,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-typedef $$CategoriesTableUpdateCompanionBuilder =
-    CategoriesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> name,
-      Value<String?> nameOverride,
-      Value<String?> systemKey,
-      Value<String?> parentId,
-      Value<String> ledgerAccountId,
-      Value<String?> icon,
-      Value<String?> color,
-      Value<int> sortOrder,
-      Value<bool> archived,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
+typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String name,
+  Value<String?> nameOverride,
+  Value<String?> systemKey,
+  Value<String?> parentId,
+  required String ledgerAccountId,
+  Value<String?> icon,
+  Value<String?> color,
+  Value<int> sortOrder,
+  Value<bool> archived,
+  Value<String?> mergedIntoId,
+  Value<int> rowid,
+});
+typedef $$CategoriesTableUpdateCompanionBuilder = CategoriesCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> name,
+  Value<String?> nameOverride,
+  Value<String?> systemKey,
+  Value<String?> parentId,
+  Value<String> ledgerAccountId,
+  Value<String?> icon,
+  Value<String?> color,
+  Value<int> sortOrder,
+  Value<bool> archived,
+  Value<String?> mergedIntoId,
+  Value<int> rowid,
+});
 
 class $$CategoriesTableFilterComposer
     extends Composer<_$AppDatabase, $CategoriesTable> {
@@ -56477,36 +56457,34 @@ typedef $$CategoriesTableProcessedTableManager =
       CategoryRow,
       PrefetchHooks Function()
     >;
-typedef $$BudgetsTableCreateCompanionBuilder =
-    BudgetsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String categoryId,
-      required String periodMonth,
-      required Decimal amount,
-      required String currency,
-      Value<String?> note,
-      Value<int> rowid,
-    });
-typedef $$BudgetsTableUpdateCompanionBuilder =
-    BudgetsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> categoryId,
-      Value<String> periodMonth,
-      Value<Decimal> amount,
-      Value<String> currency,
-      Value<String?> note,
-      Value<int> rowid,
-    });
+typedef $$BudgetsTableCreateCompanionBuilder = BudgetsCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String categoryId,
+  required String periodMonth,
+  required Decimal amount,
+  required String currency,
+  Value<String?> note,
+  Value<int> rowid,
+});
+typedef $$BudgetsTableUpdateCompanionBuilder = BudgetsCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> categoryId,
+  Value<String> periodMonth,
+  Value<Decimal> amount,
+  Value<String> currency,
+  Value<String?> note,
+  Value<int> rowid,
+});
 
 class $$BudgetsTableFilterComposer
     extends Composer<_$AppDatabase, $BudgetsTable> {
@@ -56795,40 +56773,38 @@ typedef $$BudgetsTableProcessedTableManager =
       BudgetRow,
       PrefetchHooks Function()
     >;
-typedef $$GoalsTableCreateCompanionBuilder =
-    GoalsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required GoalType type,
-      required String name,
-      Value<String?> currency,
-      Value<Decimal?> targetAmount,
-      Value<DateTime?> targetDate,
-      Value<String?> targetAllocationJson,
-      Value<String?> note,
-      Value<int> rowid,
-    });
-typedef $$GoalsTableUpdateCompanionBuilder =
-    GoalsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<GoalType> type,
-      Value<String> name,
-      Value<String?> currency,
-      Value<Decimal?> targetAmount,
-      Value<DateTime?> targetDate,
-      Value<String?> targetAllocationJson,
-      Value<String?> note,
-      Value<int> rowid,
-    });
+typedef $$GoalsTableCreateCompanionBuilder = GoalsCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required GoalType type,
+  required String name,
+  Value<String?> currency,
+  Value<Decimal?> targetAmount,
+  Value<DateTime?> targetDate,
+  Value<String?> targetAllocationJson,
+  Value<String?> note,
+  Value<int> rowid,
+});
+typedef $$GoalsTableUpdateCompanionBuilder = GoalsCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<GoalType> type,
+  Value<String> name,
+  Value<String?> currency,
+  Value<Decimal?> targetAmount,
+  Value<DateTime?> targetDate,
+  Value<String?> targetAllocationJson,
+  Value<String?> note,
+  Value<int> rowid,
+});
 
 class $$GoalsTableFilterComposer extends Composer<_$AppDatabase, $GoalsTable> {
   $$GoalsTableFilterComposer({
@@ -59858,46 +59834,44 @@ typedef $$PortfolioCapitalAssignmentsTableProcessedTableManager =
       PortfolioCapitalAssignmentRow,
       PrefetchHooks Function()
     >;
-typedef $$FirePlansTableCreateCompanionBuilder =
-    FirePlansCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String userId,
-      required String baseCurrency,
-      required Decimal monthlyExpenses,
-      required Decimal monthlySurplus,
-      required double inflationRate,
-      required Decimal targetNetWorth,
-      required double safeWithdrawalRate,
-      required int targetCashBucketMonths,
-      required String lifestyleMode,
-      Value<String> reservesJson,
-      Value<String> riskSettingsJson,
-      Value<int> rowid,
-    });
-typedef $$FirePlansTableUpdateCompanionBuilder =
-    FirePlansCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> userId,
-      Value<String> baseCurrency,
-      Value<Decimal> monthlyExpenses,
-      Value<Decimal> monthlySurplus,
-      Value<double> inflationRate,
-      Value<Decimal> targetNetWorth,
-      Value<double> safeWithdrawalRate,
-      Value<int> targetCashBucketMonths,
-      Value<String> lifestyleMode,
-      Value<String> reservesJson,
-      Value<String> riskSettingsJson,
-      Value<int> rowid,
-    });
+typedef $$FirePlansTableCreateCompanionBuilder = FirePlansCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String userId,
+  required String baseCurrency,
+  required Decimal monthlyExpenses,
+  required Decimal monthlySurplus,
+  required double inflationRate,
+  required Decimal targetNetWorth,
+  required double safeWithdrawalRate,
+  required int targetCashBucketMonths,
+  required String lifestyleMode,
+  Value<String> reservesJson,
+  Value<String> riskSettingsJson,
+  Value<int> rowid,
+});
+typedef $$FirePlansTableUpdateCompanionBuilder = FirePlansCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> userId,
+  Value<String> baseCurrency,
+  Value<Decimal> monthlyExpenses,
+  Value<Decimal> monthlySurplus,
+  Value<double> inflationRate,
+  Value<Decimal> targetNetWorth,
+  Value<double> safeWithdrawalRate,
+  Value<int> targetCashBucketMonths,
+  Value<String> lifestyleMode,
+  Value<String> reservesJson,
+  Value<String> riskSettingsJson,
+  Value<int> rowid,
+});
 
 class $$FirePlansTableFilterComposer
     extends Composer<_$AppDatabase, $FirePlansTable> {
@@ -60800,46 +60774,44 @@ typedef $$FinancialDecisionsTableProcessedTableManager =
       FinancialDecisionRow,
       PrefetchHooks Function()
     >;
-typedef $$DcaPlansTableCreateCompanionBuilder =
-    DcaPlansCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String allocationsJson,
-      required Decimal amountPerContribution,
-      required String currency,
-      required String market,
-      required String frequency,
-      required DateTime nextDueAt,
-      Value<DateTime?> endAt,
-      Value<DateTime?> lastExecutedAt,
-      Value<bool> enabled,
-      required DateTime createdAt,
-      Value<int> rowid,
-    });
-typedef $$DcaPlansTableUpdateCompanionBuilder =
-    DcaPlansCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> allocationsJson,
-      Value<Decimal> amountPerContribution,
-      Value<String> currency,
-      Value<String> market,
-      Value<String> frequency,
-      Value<DateTime> nextDueAt,
-      Value<DateTime?> endAt,
-      Value<DateTime?> lastExecutedAt,
-      Value<bool> enabled,
-      Value<DateTime> createdAt,
-      Value<int> rowid,
-    });
+typedef $$DcaPlansTableCreateCompanionBuilder = DcaPlansCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String allocationsJson,
+  required Decimal amountPerContribution,
+  required String currency,
+  required String market,
+  required String frequency,
+  required DateTime nextDueAt,
+  Value<DateTime?> endAt,
+  Value<DateTime?> lastExecutedAt,
+  Value<bool> enabled,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$DcaPlansTableUpdateCompanionBuilder = DcaPlansCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> allocationsJson,
+  Value<Decimal> amountPerContribution,
+  Value<String> currency,
+  Value<String> market,
+  Value<String> frequency,
+  Value<DateTime> nextDueAt,
+  Value<DateTime?> endAt,
+  Value<DateTime?> lastExecutedAt,
+  Value<bool> enabled,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
 
 class $$DcaPlansTableFilterComposer
     extends Composer<_$AppDatabase, $DcaPlansTable> {
@@ -62570,36 +62542,34 @@ typedef $$FinancialReconciliationsTableProcessedTableManager =
       FinancialReconciliationRow,
       PrefetchHooks Function()
     >;
-typedef $$DevicesTableCreateCompanionBuilder =
-    DevicesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String name,
-      required DevicePlatform platform,
-      Value<String?> appVersion,
-      Value<DateTime?> lastSyncAt,
-      Value<Hlc?> lastHlc,
-      Value<int> rowid,
-    });
-typedef $$DevicesTableUpdateCompanionBuilder =
-    DevicesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> name,
-      Value<DevicePlatform> platform,
-      Value<String?> appVersion,
-      Value<DateTime?> lastSyncAt,
-      Value<Hlc?> lastHlc,
-      Value<int> rowid,
-    });
+typedef $$DevicesTableCreateCompanionBuilder = DevicesCompanion Function({
+  required String ownerUserId,
+  required DateTime updatedAt,
+  required String updatedByDevice,
+  required Hlc hlc,
+  Value<DateTime?> deletedAt,
+  required String id,
+  required String name,
+  required DevicePlatform platform,
+  Value<String?> appVersion,
+  Value<DateTime?> lastSyncAt,
+  Value<Hlc?> lastHlc,
+  Value<int> rowid,
+});
+typedef $$DevicesTableUpdateCompanionBuilder = DevicesCompanion Function({
+  Value<String> ownerUserId,
+  Value<DateTime> updatedAt,
+  Value<String> updatedByDevice,
+  Value<Hlc> hlc,
+  Value<DateTime?> deletedAt,
+  Value<String> id,
+  Value<String> name,
+  Value<DevicePlatform> platform,
+  Value<String?> appVersion,
+  Value<DateTime?> lastSyncAt,
+  Value<Hlc?> lastHlc,
+  Value<int> rowid,
+});
 
 class $$DevicesTableFilterComposer
     extends Composer<_$AppDatabase, $DevicesTable> {
@@ -62889,32 +62859,30 @@ typedef $$DevicesTableProcessedTableManager =
       DeviceRow,
       PrefetchHooks Function()
     >;
-typedef $$OpLogsTableCreateCompanionBuilder =
-    OpLogsCompanion Function({
-      required String id,
-      required String ownerUserId,
-      required String deviceId,
-      required Hlc hlc,
-      required OpKind op,
-      required String entityTable,
-      required String entityId,
-      Value<String?> patchJson,
-      Value<DateTime?> syncedAt,
-      Value<int> rowid,
-    });
-typedef $$OpLogsTableUpdateCompanionBuilder =
-    OpLogsCompanion Function({
-      Value<String> id,
-      Value<String> ownerUserId,
-      Value<String> deviceId,
-      Value<Hlc> hlc,
-      Value<OpKind> op,
-      Value<String> entityTable,
-      Value<String> entityId,
-      Value<String?> patchJson,
-      Value<DateTime?> syncedAt,
-      Value<int> rowid,
-    });
+typedef $$OpLogsTableCreateCompanionBuilder = OpLogsCompanion Function({
+  required String id,
+  required String ownerUserId,
+  required String deviceId,
+  required Hlc hlc,
+  required OpKind op,
+  required String entityTable,
+  required String entityId,
+  Value<String?> patchJson,
+  Value<DateTime?> syncedAt,
+  Value<int> rowid,
+});
+typedef $$OpLogsTableUpdateCompanionBuilder = OpLogsCompanion Function({
+  Value<String> id,
+  Value<String> ownerUserId,
+  Value<String> deviceId,
+  Value<Hlc> hlc,
+  Value<OpKind> op,
+  Value<String> entityTable,
+  Value<String> entityId,
+  Value<String?> patchJson,
+  Value<DateTime?> syncedAt,
+  Value<int> rowid,
+});
 
 class $$OpLogsTableFilterComposer
     extends Composer<_$AppDatabase, $OpLogsTable> {
