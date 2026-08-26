@@ -29,4 +29,17 @@ void main() {
     expect(second.single.text, '新的回答。');
     expect(segmenter.flush(epoch: nextEpoch), isEmpty);
   });
+
+  test('starts a long streamed answer at the first short clause', () {
+    final segmenter = OutputTextSegmenter(
+      maxSegmentLength: 160,
+      firstSegmentLength: 12,
+    );
+
+    expect(segmenter.add('本月现金流情况如下', epoch: epoch), isEmpty);
+    final first = segmenter.add('，收入稳定', epoch: epoch);
+
+    expect(first.single.text, '本月现金流情况如下，');
+    expect(segmenter.flush(epoch: epoch).single.text, '收入稳定');
+  });
 }

@@ -6,20 +6,58 @@ import 'speech_recognizer.dart';
 /// Adds process-local session ownership and bounded lifetime to a platform
 /// recognizer. Microphone plugins are exclusive resources, so a second start
 /// fails deterministically instead of racing native initialization.
-class ManagedSpeechRecognizer implements SpeechRecognizer {
+class ManagedSpeechRecognizer
+    implements
+        SpeechRecognizer,
+        SpeechRecognizerPreparation,
+        SpeechRecognizerPendingStartCancellation {
   ManagedSpeechRecognizer({
     required SpeechRecognizer delegate,
     required SpeechDiagnostics diagnostics,
     this.maxSessionDuration = const Duration(minutes: 5),
+    this.statusCacheTtl = const Duration(milliseconds: 750),
+    this.startupTimeout = const Duration(seconds: 8),
+    this.firstPartialTimeout = const Duration(milliseconds: 1800),
   }) : _delegate = delegate,
        _diagnostics = diagnostics;
 
   final SpeechRecognizer _delegate;
   final SpeechDiagnostics _diagnostics;
   final Duration maxSessionDuration;
+  final Duration statusCacheTtl;
+  final Duration startupTimeout;
+  final Duration firstPartialTimeout;
+
+  Future<SpeechRecognizerStatus>? _statusFuture;
+  DateTime? _statusCachedAt;
+
+  void _invalidateStatusCache() {
+    _statusFuture = null;
+    _statusCachedAt = null;
+  }
 
   @override
-  Future<SpeechRecognizerStatus> status() async {
+  Future<SpeechRecognizerStatus> status() {
+    final cached = _statusFuture;
+    final cachedAt = _statusCachedAt;
+    if (cached != null &&
+        cachedAt != null &&
+        DateTime.now().difference(cachedAt) < statusCacheTtl) {
+      return cached;
+    }
+    final future = _resolveStatus();
+    _statusFuture = future;
+    _statusCachedAt = DateTime.now();
+    future.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {
+        if (identical(_statusFuture, future)) _invalidateStatusCache();
+      },
+    );
+    return future;
+  }
+
+  Future<SpeechRecognizerStatus> _resolveStatus() async {
     final stopwatch = Stopwatch()..start();
     try {
       final status = await _delegate.status();
@@ -49,6 +87,23 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
   }
 
   @override
+  Future<void> prepare() async {
+    final delegate = _delegate;
+    if (delegate case final SpeechRecognizerPreparation preparation) {
+      await preparation.prepare();
+    }
+  }
+
+  @override
+  Future<void> cancelPendingStart() async {
+    final delegate = _delegate;
+    if (delegate
+        case final SpeechRecognizerPendingStartCancellation cancellation) {
+      await cancellation.cancelPendingStart();
+    }
+  }
+
+  @override
   Future<SpeechRecognitionSession> start() async {
     final release = _MicrophoneLease.tryAcquire();
     if (release == null) {
@@ -66,8 +121,9 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
     }
 
     final stopwatch = Stopwatch()..start();
+    final pendingStart = _delegate.start();
     try {
-      final session = await _delegate.start();
+      final session = await pendingStart.timeout(startupTimeout);
       _diagnostics.record(
         SpeechDiagnosticEvent(
           kind: SpeechDiagnosticEventKind.started,
@@ -79,11 +135,33 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
         diagnostics: _diagnostics,
         stopwatch: stopwatch,
         maxDuration: maxSessionDuration,
+        firstPartialTimeout: firstPartialTimeout,
         release: release,
+      );
+    } on TimeoutException catch (error, stackTrace) {
+      release();
+      stopwatch.stop();
+      _invalidateStatusCache();
+      _diagnostics.record(
+        const SpeechDiagnosticEvent(
+          kind: SpeechDiagnosticEventKind.startupTimeout,
+          elapsed: Duration.zero,
+          errorCode: SpeechRecognitionErrorCode.runtimeUnavailable,
+        ),
+      );
+      unawaited(_cancelLateStart(pendingStart));
+      Error.throwWithStackTrace(
+        SpeechRecognitionException(
+          SpeechRecognitionErrorCode.runtimeUnavailable,
+          'Speech recognition startup timed out',
+          cause: error,
+        ),
+        stackTrace,
       );
     } on SpeechRecognitionException catch (error) {
       release();
       stopwatch.stop();
+      _invalidateStatusCache();
       _diagnostics.record(
         SpeechDiagnosticEvent(
           kind: SpeechDiagnosticEventKind.failed,
@@ -95,6 +173,7 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
     } on Object {
       release();
       stopwatch.stop();
+      _invalidateStatusCache();
       _diagnostics.record(
         SpeechDiagnosticEvent(
           kind: SpeechDiagnosticEventKind.failed,
@@ -103,6 +182,17 @@ class ManagedSpeechRecognizer implements SpeechRecognizer {
         ),
       );
       rethrow;
+    }
+  }
+
+  Future<void> _cancelLateStart(
+    Future<SpeechRecognitionSession> pendingStart,
+  ) async {
+    try {
+      final session = await pendingStart;
+      await session.cancel();
+    } on Object {
+      // The typed startup timeout already represents the failure to callers.
     }
   }
 }
@@ -131,10 +221,12 @@ class _ManagedSpeechRecognitionSession implements SpeechRecognitionSession {
     required SpeechDiagnostics diagnostics,
     required Stopwatch stopwatch,
     required Duration maxDuration,
+    required Duration firstPartialTimeout,
     required void Function() release,
   }) : _delegate = delegate,
        _diagnostics = diagnostics,
        _stopwatch = stopwatch,
+       _firstPartialTimeout = firstPartialTimeout,
        _release = release {
     _subscription = delegate.events.listen(
       _onEvent,
@@ -151,11 +243,13 @@ class _ManagedSpeechRecognitionSession implements SpeechRecognitionSession {
   final SpeechRecognitionSession _delegate;
   final SpeechDiagnostics _diagnostics;
   final Stopwatch _stopwatch;
+  final Duration _firstPartialTimeout;
   final void Function() _release;
   final _events = StreamController<SpeechRecognitionEvent>.broadcast();
 
   late final StreamSubscription<SpeechRecognitionEvent> _subscription;
   late final Timer _maxDurationTimer;
+  Timer? _firstPartialTimer;
   Future<void>? _ending;
   bool _firstPartialRecorded = false;
   bool _closed = false;
@@ -173,8 +267,24 @@ class _ManagedSpeechRecognitionSession implements SpeechRecognitionSession {
         ),
       );
     }
+    if (event.speechStarted && !_firstPartialRecorded) {
+      _firstPartialTimer?.cancel();
+      if (_firstPartialTimeout > Duration.zero) {
+        _firstPartialTimer = Timer(_firstPartialTimeout, () {
+          if (_closed || _firstPartialRecorded) return;
+          _diagnostics.record(
+            SpeechDiagnosticEvent(
+              kind: SpeechDiagnosticEventKind.firstPartialTimeout,
+              elapsed: _stopwatch.elapsed,
+              errorCode: SpeechRecognitionErrorCode.runtimeUnavailable,
+            ),
+          );
+        });
+      }
+    }
     if (!_firstPartialRecorded && event.text.trim().isNotEmpty) {
       _firstPartialRecorded = true;
+      _firstPartialTimer?.cancel();
       _diagnostics.record(
         SpeechDiagnosticEvent(
           kind: SpeechDiagnosticEventKind.firstPartial,
@@ -240,6 +350,7 @@ class _ManagedSpeechRecognitionSession implements SpeechRecognitionSession {
     if (_closed) return;
     _closed = true;
     _maxDurationTimer.cancel();
+    _firstPartialTimer?.cancel();
     _stopwatch.stop();
     if (cancelSubscription) await _subscription.cancel();
     _release();

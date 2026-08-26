@@ -24,7 +24,13 @@ InteractionState reduce(InteractionState state, InteractionEvent event) {
       inputLane: InteractionInputLane.speechDetected,
     ),
     SpeechStopped() => ordered.copyWith(
-      inputLane: InteractionInputLane.endpointing,
+      // Native full-duplex recognizers can emit the final transcript before
+      // their VAD endpoint. Once the coordinator has committed that text,
+      // keep the lane committed so the next speech interval can open a new
+      // voice Turn instead of looking like a late endpoint for the old one.
+      inputLane: ordered.inputLane == InteractionInputLane.committed
+          ? InteractionInputLane.committed
+          : InteractionInputLane.endpointing,
     ),
     TranscriptUpdated() => ordered.copyWith(
       transcript: event.text,

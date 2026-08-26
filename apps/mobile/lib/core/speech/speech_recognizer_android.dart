@@ -10,7 +10,11 @@ import 'speech_recognizer.dart';
 /// class receives only semantic events over platform channels, so PCM never
 /// crosses into Dart. Android API 31+ is required because the provider uses
 /// [SpeechRecognizer.createOnDeviceSpeechRecognizer].
-final class AndroidOnDeviceSpeechRecognizer implements SpeechRecognizer {
+final class AndroidOnDeviceSpeechRecognizer
+    implements
+        SpeechRecognizer,
+        SpeechRecognizerPreparation,
+        SpeechRecognizerPendingStartCancellation {
   AndroidOnDeviceSpeechRecognizer({
     MethodChannel? methodChannel,
     EventChannel? eventChannel,
@@ -36,6 +40,24 @@ final class AndroidOnDeviceSpeechRecognizer implements SpeechRecognizer {
   /// policy. It owns capture internally and does not expose native VAD, so it
   /// is not advertised as the full-duplex barge-in path.
   static const _capabilities = SpeechRecognizerCapabilities();
+
+  @override
+  Future<void> prepare() async {
+    // Android's system recognizer is owned by the platform. Querying status
+    // lets the platform service initialize lazily without opening capture.
+    await status();
+  }
+
+  @override
+  Future<void> cancelPendingStart() async {
+    try {
+      await _methodChannel.invokeMethod<Object?>('cancel');
+    } on MissingPluginException {
+      // Host teardown is already a cancellation.
+    } on PlatformException catch (error) {
+      throw _speechExceptionFromPlatform(error);
+    }
+  }
 
   @override
   Future<SpeechRecognizerStatus> status() async {
@@ -139,6 +161,19 @@ class _AndroidSpeechRecognitionSession implements SpeechRecognitionSession {
                     startedAtMillis,
                     isUtc: true,
                   )
+                : null,
+          ),
+        );
+      case 'capture_ready':
+        final startupDurationMillis = map?['startup_duration_ms'];
+        _events.add(
+          SpeechRecognitionEvent(
+            text: '',
+            isFinal: false,
+            captureStarted: true,
+            captureStartupDuration:
+                startupDurationMillis is int && startupDurationMillis >= 0
+                ? Duration(milliseconds: startupDurationMillis)
                 : null,
           ),
         );

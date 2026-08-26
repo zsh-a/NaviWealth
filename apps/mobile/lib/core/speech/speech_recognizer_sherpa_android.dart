@@ -13,7 +13,11 @@ import 'speech_recognizer.dart';
 /// sherpa-onnx decode. This adapter receives only semantic speech and text
 /// events. It is opt-in; the platform on-device SpeechRecognizer remains the
 /// default provider.
-final class AndroidSherpaSpeechRecognizer implements SpeechRecognizer {
+final class AndroidSherpaSpeechRecognizer
+    implements
+        SpeechRecognizer,
+        SpeechRecognizerPreparation,
+        SpeechRecognizerPendingStartCancellation {
   AndroidSherpaSpeechRecognizer({
     required this.resolvePaths,
     MethodChannel? methodChannel,
@@ -52,6 +56,40 @@ final class AndroidSherpaSpeechRecognizer implements SpeechRecognizer {
     vad: true,
     fullDuplex: true,
   );
+
+  @override
+  Future<void> prepare() async {
+    final paths = await resolvePaths();
+    final bundle = streamingZipformerLargeCtcZhBundle();
+    final complete =
+        await (isBundleComplete?.call(paths, bundle) ??
+            paths.isComplete(bundle));
+    if (!complete) return;
+    try {
+      await _methodChannel.invokeMethod<Object?>('prepare', <String, Object?>{
+        'model_directory': paths.dirForBundle(bundle).path,
+      });
+    } on PlatformException catch (error) {
+      throw _speechExceptionFromPlatform(error);
+    } on Object catch (error) {
+      throw SpeechRecognitionException(
+        SpeechRecognitionErrorCode.runtimeUnavailable,
+        'Unable to prepare the native Zipformer recognizer',
+        cause: error,
+      );
+    }
+  }
+
+  @override
+  Future<void> cancelPendingStart() async {
+    try {
+      await _methodChannel.invokeMethod<Object?>('cancel');
+    } on MissingPluginException {
+      // Host teardown is already a cancellation.
+    } on PlatformException catch (error) {
+      throw _speechExceptionFromPlatform(error);
+    }
+  }
 
   @override
   Future<SpeechRecognizerStatus> status() async {

@@ -116,6 +116,19 @@ enum SpeechRecognitionErrorCode {
   sessionBusy,
 }
 
+/// Optional preparation capability for recognizers with a heavyweight local
+/// runtime. Preparation must not start microphone capture or request a
+/// permission; it only makes the next [SpeechRecognizer.start] faster.
+abstract interface class SpeechRecognizerPreparation {
+  Future<void> prepare();
+}
+
+/// Optional cancellation seam for a start which is still waiting on native
+/// permission, model loading, or recognizer construction.
+abstract interface class SpeechRecognizerPendingStartCancellation {
+  Future<void> cancelPendingStart();
+}
+
 extension SpeechRecognizerAvailabilityCode on SpeechRecognizerAvailability {
   SpeechRecognitionErrorCode? get errorCode => switch (this) {
     SpeechRecognizerAvailability.ready => null,

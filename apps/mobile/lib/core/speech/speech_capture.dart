@@ -37,6 +37,7 @@ class SpeechCaptureCapabilities {
     this.aecEnabled = false,
     this.noiseSuppressionEnabled = false,
     this.automaticGainControlEnabled = false,
+    this.audioFocusOwned = false,
     this.vadMode = 'none',
     this.vadFrameDurationMs = 0,
     this.vadMinSpeechFrames = 0,
@@ -55,6 +56,7 @@ class SpeechCaptureCapabilities {
   final bool aecEnabled;
   final bool noiseSuppressionEnabled;
   final bool automaticGainControlEnabled;
+  final bool audioFocusOwned;
   final String vadMode;
   final int vadFrameDurationMs;
   final int vadMinSpeechFrames;

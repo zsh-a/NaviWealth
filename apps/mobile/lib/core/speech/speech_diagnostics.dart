@@ -6,6 +6,8 @@ enum SpeechDiagnosticEventKind {
   started,
   captureStarted,
   firstPartial,
+  startupTimeout,
+  firstPartialTimeout,
   completed,
   cancelled,
   maxDuration,
@@ -18,6 +20,8 @@ extension on SpeechDiagnosticEventKind {
     SpeechDiagnosticEventKind.started => 'started',
     SpeechDiagnosticEventKind.captureStarted => 'capture_started',
     SpeechDiagnosticEventKind.firstPartial => 'first_partial',
+    SpeechDiagnosticEventKind.startupTimeout => 'startup_timeout',
+    SpeechDiagnosticEventKind.firstPartialTimeout => 'first_partial_timeout',
     SpeechDiagnosticEventKind.completed => 'completed',
     SpeechDiagnosticEventKind.cancelled => 'cancelled',
     SpeechDiagnosticEventKind.maxDuration => 'max_duration',
@@ -51,6 +55,8 @@ class SpeechDiagnosticsSnapshot {
     required this.failed,
     required this.statusUnavailable,
     required this.maxDurationStops,
+    required this.startupTimeouts,
+    required this.firstPartialTimeouts,
     this.lastFirstPartialLatency,
     this.lastCaptureStartupLatency,
     this.lastSessionDuration,
@@ -65,6 +71,8 @@ class SpeechDiagnosticsSnapshot {
   final int failed;
   final int statusUnavailable;
   final int maxDurationStops;
+  final int startupTimeouts;
+  final int firstPartialTimeouts;
   final Duration? lastFirstPartialLatency;
   final Duration? lastCaptureStartupLatency;
   final Duration? lastSessionDuration;
@@ -92,6 +100,8 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
   var _failed = 0;
   var _statusUnavailable = 0;
   var _maxDurationStops = 0;
+  var _startupTimeouts = 0;
+  var _firstPartialTimeouts = 0;
   Duration? _lastFirstPartialLatency;
   Duration? _lastCaptureStartupLatency;
   Duration? _lastSessionDuration;
@@ -106,6 +116,8 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
     failed: _failed,
     statusUnavailable: _statusUnavailable,
     maxDurationStops: _maxDurationStops,
+    startupTimeouts: _startupTimeouts,
+    firstPartialTimeouts: _firstPartialTimeouts,
     lastFirstPartialLatency: _lastFirstPartialLatency,
     lastCaptureStartupLatency: _lastCaptureStartupLatency,
     lastSessionDuration: _lastSessionDuration,
@@ -127,6 +139,12 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
         _lastCaptureStartupLatency = event.elapsed;
       case SpeechDiagnosticEventKind.firstPartial:
         _lastFirstPartialLatency = event.elapsed;
+      case SpeechDiagnosticEventKind.startupTimeout:
+        _startupTimeouts++;
+        _failed++;
+        _lastErrorCode = event.errorCode;
+      case SpeechDiagnosticEventKind.firstPartialTimeout:
+        _firstPartialTimeouts++;
       case SpeechDiagnosticEventKind.completed:
         _completed++;
         _lastSessionDuration = event.elapsed;
@@ -145,7 +163,9 @@ class SpeechDiagnosticsRecorder implements SpeechDiagnostics {
 
     final failure =
         event.kind == SpeechDiagnosticEventKind.failed ||
-        event.kind == SpeechDiagnosticEventKind.statusUnavailable;
+        event.kind == SpeechDiagnosticEventKind.statusUnavailable ||
+        event.kind == SpeechDiagnosticEventKind.startupTimeout ||
+        event.kind == SpeechDiagnosticEventKind.firstPartialTimeout;
     _logger.event(
       'core.speech.session.${event.kind.wire}',
       level: failure ? AppLogLevel.warning : AppLogLevel.info,

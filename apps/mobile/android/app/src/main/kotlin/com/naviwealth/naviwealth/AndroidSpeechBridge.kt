@@ -60,6 +60,7 @@ internal class AndroidSpeechBridge(
     private var previousAudioMode: Int? = null
     private var speechStartedAtMs: Long? = null
     private var speechStoppedEmitted = false
+    private var startRequestedAtMs: Long? = null
 
     fun attach(flutterEngine: FlutterEngine) {
         methodChannel = MethodChannel(
@@ -137,6 +138,7 @@ internal class AndroidSpeechBridge(
             return
         }
         if (!hasRecordAudioPermission()) {
+            startRequestedAtMs = System.currentTimeMillis()
             pendingStart = result
             ActivityCompat.requestPermissions(
                 activity,
@@ -184,6 +186,9 @@ internal class AndroidSpeechBridge(
 
         speechRecognizer = recognizer
         active = true
+        if (startRequestedAtMs == null) {
+            startRequestedAtMs = System.currentTimeMillis()
+        }
         speechStartedAtMs = null
         speechStoppedEmitted = false
         previousAudioMode = audioManager.mode
@@ -231,6 +236,18 @@ internal class AndroidSpeechBridge(
     }
 
     private fun cancel(result: MethodChannel.Result) {
+        val pending = pendingStart
+        if (pending != null) {
+            pendingStart = null
+            startRequestedAtMs = null
+            pending.error(
+                "runtime_unavailable",
+                "Android speech recognition start was cancelled",
+                null,
+            )
+            result.success(null)
+            return
+        }
         if (!active) {
             result.success(null)
             return
@@ -248,6 +265,7 @@ internal class AndroidSpeechBridge(
         speechRecognizer = null
         speechStartedAtMs = null
         speechStoppedEmitted = false
+        startRequestedAtMs = null
         try {
             recognizer?.cancel()
         } catch (_: RuntimeException) {
@@ -268,6 +286,7 @@ internal class AndroidSpeechBridge(
         active = false
         speechStartedAtMs = null
         speechStoppedEmitted = false
+        startRequestedAtMs = null
         val recognizer = speechRecognizer
         speechRecognizer = null
         try {
@@ -308,6 +327,7 @@ internal class AndroidSpeechBridge(
         }
         speechStartedAtMs = null
         speechStoppedEmitted = false
+        startRequestedAtMs = null
     }
 
     private fun recognitionIntent(): Intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -354,7 +374,19 @@ internal class AndroidSpeechBridge(
         bufferedEvents.addLast(event)
     }
 
-    override fun onReadyForSpeech(params: Bundle?) = Unit
+    override fun onReadyForSpeech(params: Bundle?) {
+        if (!active) return
+        emit(
+            mapOf(
+                "type" to "capture_ready",
+                "startup_duration_ms" to (
+                    startRequestedAtMs?.let {
+                        (System.currentTimeMillis() - it).coerceAtLeast(0L)
+                    } ?: 0L
+                ),
+            ),
+        )
+    }
 
     override fun onBeginningOfSpeech() {
         if (!active) return

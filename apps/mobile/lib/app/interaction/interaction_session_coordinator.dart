@@ -45,6 +45,8 @@ final class InteractionTurnRequest {
 typedef InteractionTurnHandler =
     Future<void> Function(InteractionTurnRequest request);
 
+typedef SpeechStatusHandler = void Function(SpeechRecognizerStatus status);
+
 /// Thin host-side coordinator around the pure InteractionSession reducer.
 ///
 /// It owns event sequencing, speech-session wiring, and cancellation hooks;
@@ -60,6 +62,9 @@ class InteractionSessionCoordinator {
     void Function()? onFalseInterruption,
     void Function(ResponseEpoch staleEpoch)? onEpochAdvanced,
     void Function({required bool cancelled})? onSpeechEnded,
+    SpeechStatusHandler? onSpeechStatus,
+    void Function(Duration? startupDuration)? onSpeechCaptureStarted,
+    Future<void> Function()? onNonDuplexVoiceStart,
     void Function(SpeechRecognitionException error, StackTrace stackTrace)?
     onSpeechError,
     void Function(InteractionState state)? onStateChanged,
@@ -78,6 +83,9 @@ class InteractionSessionCoordinator {
        _onFalseInterruption = onFalseInterruption,
        _onEpochAdvanced = onEpochAdvanced,
        _onSpeechEnded = onSpeechEnded,
+       _onSpeechStatus = onSpeechStatus,
+       _onSpeechCaptureStarted = onSpeechCaptureStarted,
+       _onNonDuplexVoiceStart = onNonDuplexVoiceStart,
        _onSpeechError = onSpeechError,
        _onStateChanged = onStateChanged,
        _onTurnError = onTurnError,
@@ -92,6 +100,9 @@ class InteractionSessionCoordinator {
   final void Function()? _onFalseInterruption;
   final void Function(ResponseEpoch staleEpoch)? _onEpochAdvanced;
   final void Function({required bool cancelled})? _onSpeechEnded;
+  final SpeechStatusHandler? _onSpeechStatus;
+  final void Function(Duration? startupDuration)? _onSpeechCaptureStarted;
+  final Future<void> Function()? _onNonDuplexVoiceStart;
   final void Function(SpeechRecognitionException error, StackTrace stackTrace)?
   _onSpeechError;
   final void Function(InteractionState state)? _onStateChanged;
@@ -104,11 +115,19 @@ class InteractionSessionCoordinator {
       StreamController<InteractionState>.broadcast();
 
   InteractionState _state;
+  SpeechRecognizerCapabilities _speechCapabilities =
+      SpeechRecognizerCapabilities.unknown;
   SpeechInputSession? _speechSession;
   StreamSubscription<SpeechInputEvent>? _speechEvents;
   Timer? _candidateTimer;
   int _sequence = 0;
   bool _disposed = false;
+  Future<void>? _voiceStartFuture;
+  bool _voiceStartCancellationRequested = false;
+
+  static const _statusTimeout = Duration(seconds: 3);
+  static const _startupTimeout = Duration(seconds: 10);
+  static const _retryDelay = Duration(milliseconds: 80);
 
   InteractionState get state => _state;
 
@@ -149,23 +168,124 @@ class InteractionSessionCoordinator {
     return turnId;
   }
 
-  Future<void> startVoice() async {
+  /// Opens the next voice Turn inside a native full-duplex session.
+  ///
+  /// The microphone session intentionally remains alive across turns. The
+  /// old response epoch is still invalidated and cancelled so generated text
+  /// or TTS that belongs to the previous utterance cannot leak into the new
+  /// response.
+  void _startNextVoiceTurn() {
+    final staleEpoch = _state.responseEpoch;
+    startTurn(InteractionInputOrigin.voice);
+    _onEpochAdvanced?.call(staleEpoch);
+  }
+
+  Future<void> startVoice() {
     _ensureOpen();
+    final inFlight = _voiceStartFuture;
+    if (inFlight != null) return inFlight;
     final input = _speechInput;
     if (input == null) {
       throw StateError('InteractionSession has no SpeechInput capability');
     }
-    await stopVoice();
+    _voiceStartCancellationRequested = false;
+    final future = _startVoiceInternal(input);
+    _voiceStartFuture = future;
+    return future.whenComplete(() {
+      if (identical(_voiceStartFuture, future)) _voiceStartFuture = null;
+    });
+  }
 
-    final status = await input.status();
+  Future<void> _startVoiceInternal(SpeechInput input) async {
+    await _endVoice(cancelled: false);
+    if (_voiceStartCancellationRequested || _disposed) {
+      _onSpeechEnded?.call(cancelled: true);
+      return;
+    }
+
+    SpeechRecognizerStatus status;
+    try {
+      status = await input.status().timeout(_statusTimeout);
+    } on TimeoutException catch (error, stackTrace) {
+      final failure = SpeechRecognitionException(
+        SpeechRecognitionErrorCode.runtimeUnavailable,
+        'Speech recognition status timed out',
+        cause: error,
+      );
+      _onSpeechError?.call(failure, stackTrace);
+      Error.throwWithStackTrace(failure, stackTrace);
+    }
+    _speechCapabilities = status.capabilities;
+    _onSpeechStatus?.call(status);
     if (!status.isReady &&
         status.availability != SpeechRecognizerAvailability.permissionDenied) {
       throw speechRecognitionExceptionForStatus(status);
     }
+    if (_voiceStartCancellationRequested || _disposed) {
+      _onSpeechEnded?.call(cancelled: true);
+      return;
+    }
 
-    final session = await input.start();
-    if (_disposed) {
+    final outputWasActive = _isOutputActive(_state.outputLane);
+    final staleOutputEpoch = _state.responseEpoch;
+    if (outputWasActive && !status.capabilities.fullDuplex) {
+      // System recognition is intentionally push-to-talk. Stop the current
+      // utterance before opening a second platform-owned microphone session;
+      // Zipformer advertises full duplex and keeps the barge-in candidate path.
+      await _onNonDuplexVoiceStart?.call();
+    }
+
+    SpeechInputSession? session;
+    Object? lastError;
+    StackTrace? lastStackTrace;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      if (_voiceStartCancellationRequested || _disposed) {
+        _onSpeechEnded?.call(cancelled: true);
+        return;
+      }
+      try {
+        final pendingStart = input.start();
+        try {
+          session = await pendingStart.timeout(_startupTimeout);
+        } on TimeoutException catch (error, stackTrace) {
+          unawaited(_cancelPendingStart(input));
+          unawaited(_cancelLateInputStart(pendingStart));
+          final failure = SpeechRecognitionException(
+            SpeechRecognitionErrorCode.runtimeUnavailable,
+            'Speech recognition startup timed out',
+            cause: error,
+          );
+          Error.throwWithStackTrace(failure, stackTrace);
+        }
+        break;
+      } on Object catch (error, stackTrace) {
+        if (_voiceStartCancellationRequested || _disposed) {
+          _onSpeechEnded?.call(cancelled: true);
+          return;
+        }
+        lastError = error;
+        lastStackTrace = stackTrace;
+        if (attempt == 0 && _isRetryableSpeechStart(error)) {
+          await _cancelPendingStart(input);
+          await Future<void>.delayed(_retryDelay);
+          continue;
+        }
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+    }
+    if (session == null) {
+      Error.throwWithStackTrace(
+        lastError ??
+            const SpeechRecognitionException(
+              SpeechRecognitionErrorCode.runtimeUnavailable,
+              'Speech recognition failed to start',
+            ),
+        lastStackTrace ?? StackTrace.current,
+      );
+    }
+    if (_voiceStartCancellationRequested || _disposed) {
       await session.cancel();
+      _onSpeechEnded?.call(cancelled: true);
       return;
     }
 
@@ -177,6 +297,13 @@ class InteractionSessionCoordinator {
     if (_state.pendingInteraction == null &&
         !_isOutputActive(_state.outputLane)) {
       startTurn(InteractionInputOrigin.voice);
+      if (outputWasActive && !status.capabilities.fullDuplex) {
+        // Push-to-talk had to stop the old utterance before opening the
+        // platform-owned recorder. Treat that as a real voice interruption so
+        // the old Agent request is cancelled as well, not merely hidden from
+        // TTS by the output suppression fence.
+        _onEpochAdvanced?.call(staleOutputEpoch);
+      }
     }
 
     _speechSession = session;
@@ -200,11 +327,52 @@ class InteractionSessionCoordinator {
     );
   }
 
+  Future<void> _cancelPendingStart(SpeechInput input) async {
+    if (input case final SpeechInputPendingStartCancellation cancellation) {
+      try {
+        await cancellation.cancelPendingStart();
+      } on Object {
+        // The subsequent typed start error remains the source of truth.
+      }
+    }
+  }
+
+  Future<void> _cancelLateInputStart(Future<SpeechInputSession> pending) async {
+    try {
+      await (await pending).cancel();
+    } on Object {
+      // The startup timeout already released the caller; clean up late native
+      // resources when the platform eventually returns them.
+    }
+  }
+
+  static bool _isRetryableSpeechStart(Object error) =>
+      error is SpeechRecognitionException &&
+      switch (error.code) {
+        SpeechRecognitionErrorCode.recorderUnavailable ||
+        SpeechRecognitionErrorCode.runtimeUnavailable ||
+        SpeechRecognitionErrorCode.sessionBusy => true,
+        _ => false,
+      };
+
   Future<void> stopVoice() async {
     await _endVoice(cancelled: false);
   }
 
   Future<void> cancelVoice() async {
+    final starting = _voiceStartFuture;
+    if (starting != null) {
+      _voiceStartCancellationRequested = true;
+      final input = _speechInput;
+      if (input != null) await _cancelPendingStart(input);
+      try {
+        await starting;
+      } on Object {
+        // Cancellation is user intent; the controller should not surface the
+        // native start failure after the user has already cancelled.
+      }
+      return;
+    }
     await _endVoice(cancelled: true);
   }
 
@@ -227,6 +395,14 @@ class InteractionSessionCoordinator {
 
   void speechStarted({DateTime? startedAt}) {
     final outputWasActive = _isOutputActive(_state.outputLane);
+    if (!outputWasActive &&
+        _speechCapabilities.fullDuplex &&
+        _state.activeTurnId != null &&
+        _state.inputOrigin == InteractionInputOrigin.voice &&
+        _state.inputLane == InteractionInputLane.committed &&
+        _state.pendingInteraction == null) {
+      _startNextVoiceTurn();
+    }
     dispatch((stamp) => SpeechStarted(stamp: stamp));
     if (!outputWasActive) return;
 
@@ -263,6 +439,19 @@ class InteractionSessionCoordinator {
   }
 
   void updateTranscript(String text, {required bool isFinal}) {
+    if (isFinal &&
+        !(_state.bargeInPhase == BargeInPhase.candidate) &&
+        _speechCapabilities.fullDuplex &&
+        _state.activeTurnId != null &&
+        _state.inputOrigin == InteractionInputOrigin.voice &&
+        _state.inputLane == InteractionInputLane.committed &&
+        _state.pendingInteraction == null &&
+        text.trim().isNotEmpty &&
+        text.trim() != _state.lastCommittedText?.trim()) {
+      // Some recognizers can produce a final segment without a separate VAD
+      // start event. Keep the turn boundary correct in that case as well.
+      _startNextVoiceTurn();
+    }
     dispatch(
       (stamp) => TranscriptUpdated(stamp: stamp, text: text, isFinal: isFinal),
     );
@@ -431,6 +620,17 @@ class InteractionSessionCoordinator {
 
   Future<void> close() async {
     if (_disposed) return;
+    _voiceStartCancellationRequested = true;
+    final starting = _voiceStartFuture;
+    if (starting != null) {
+      final input = _speechInput;
+      if (input != null) await _cancelPendingStart(input);
+      try {
+        await starting;
+      } on Object {
+        // Closing the host is itself a cancellation boundary.
+      }
+    }
     _disposed = true;
     _candidateTimer?.cancel();
     final session = _speechSession;
@@ -461,10 +661,8 @@ class InteractionSessionCoordinator {
         speechStarted(startedAt: startedAt);
       case SpeechInputSpeechStopped(:final stoppedAt, :final duration):
         speechStopped(stoppedAt: stoppedAt, duration: duration);
-      case SpeechInputCaptureStarted():
-        // Capture readiness is a diagnostic/UX boundary. The start future
-        // already resolves only after the native session is active, so it
-        // must not advance the interaction state or trigger barge-in.
+      case SpeechInputCaptureStarted(:final startupDuration):
+        _onSpeechCaptureStarted?.call(startupDuration);
         break;
       case SpeechInputTranscript(:final text, :final isFinal):
         updateTranscript(text, isFinal: isFinal);

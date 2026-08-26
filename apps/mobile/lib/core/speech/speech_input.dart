@@ -65,10 +65,25 @@ abstract interface class SpeechInput {
   Future<SpeechInputSession> start();
 }
 
+/// Optional input preparation capability. Keeping it separate lets simple
+/// platform and test adapters remain focused on the start/stream contract.
+abstract interface class SpeechInputPreparation {
+  Future<void> prepare();
+}
+
+/// Optional cancellation seam for a start which has not returned a session.
+abstract interface class SpeechInputPendingStartCancellation {
+  Future<void> cancelPendingStart();
+}
+
 /// Adapts the current managed recognizer into the InteractionSession input
 /// capability. Future native full-duplex engines can implement [SpeechInput]
 /// directly and emit [SpeechInputSpeechStarted] without changing consumers.
-class RecognizerSpeechInput implements SpeechInput {
+class RecognizerSpeechInput
+    implements
+        SpeechInput,
+        SpeechInputPreparation,
+        SpeechInputPendingStartCancellation {
   const RecognizerSpeechInput(this._recognizer);
 
   final SpeechRecognizer _recognizer;
@@ -79,6 +94,23 @@ class RecognizerSpeechInput implements SpeechInput {
   @override
   Future<SpeechInputSession> start() async =>
       _RecognizerSpeechInputSession(await _recognizer.start());
+
+  @override
+  Future<void> prepare() async {
+    final recognizer = _recognizer;
+    if (recognizer case final SpeechRecognizerPreparation preparation) {
+      await preparation.prepare();
+    }
+  }
+
+  @override
+  Future<void> cancelPendingStart() async {
+    final recognizer = _recognizer;
+    if (recognizer
+        case final SpeechRecognizerPendingStartCancellation cancellation) {
+      await cancellation.cancelPendingStart();
+    }
+  }
 }
 
 class _RecognizerSpeechInputSession implements SpeechInputSession {

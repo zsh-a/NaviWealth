@@ -11,14 +11,28 @@ import 'system_tts_driver.dart';
 /// only translates one semantic [OutputSegment] into a
 /// [SpeechOutputSession]. It deliberately does not own InteractionSession
 /// timing, queueing, or business semantics.
-final class SystemSpeechOutput implements SpeechOutput {
+final class SystemSpeechOutput
+    implements SpeechOutput, SpeechOutputPreparation {
   SystemSpeechOutput({SystemTtsDriver? driver, FlutterTts? textToSpeech})
     : _driver =
           driver ?? FlutterTtsSystemTtsDriver(textToSpeech ?? FlutterTts());
 
   final SystemTtsDriver _driver;
   Future<SpeechOutputStatus>? _statusFuture;
+  String? _configuredLanguage;
+  Future<void>? _languageFuture;
   bool _active = false;
+
+  @override
+  Future<void> prepare() async {
+    final available = await status();
+    if (!available.isReady) {
+      throw SpeechOutputException(
+        SpeechOutputErrorCode.engineUnavailable,
+        available.reason ?? 'System text-to-speech is unavailable',
+      );
+    }
+  }
 
   @override
   Future<SpeechOutputStatus> status() => _statusFuture ??= _resolveStatus();
@@ -69,6 +83,7 @@ final class SystemSpeechOutput implements SpeechOutput {
     final session = _SystemSpeechOutputSession(
       driver: _driver,
       request: request,
+      setLanguage: _setLanguageForText,
       onFinished: () => _active = false,
     );
     try {
@@ -82,19 +97,45 @@ final class SystemSpeechOutput implements SpeechOutput {
       rethrow;
     }
   }
+
+  Future<void> _setLanguageForText(String text) {
+    final language = _containsCjk(text) ? 'zh-CN' : 'en-US';
+    if (_configuredLanguage == language) return Future<void>.value();
+    final inFlight = _languageFuture;
+    if (inFlight != null) return inFlight;
+    final future = _setLanguage(language);
+    _languageFuture = future;
+    return future.whenComplete(() {
+      if (identical(_languageFuture, future)) _languageFuture = null;
+    });
+  }
+
+  Future<void> _setLanguage(String language) async {
+    try {
+      await _driver.setLanguage(language);
+    } on Object {
+      // A device may not have the requested voice installed. The platform
+      // default remains a valid fallback, but avoid retrying on every segment.
+    } finally {
+      _configuredLanguage = language;
+    }
+  }
 }
 
 final class _SystemSpeechOutputSession implements SpeechOutputSession {
   _SystemSpeechOutputSession({
     required SystemTtsDriver driver,
     required SpeechOutputRequest request,
+    required Future<void> Function(String text) setLanguage,
     required void Function() onFinished,
   }) : _driver = driver,
        _request = request,
+       _setLanguage = setLanguage,
        _onFinished = onFinished;
 
   final SystemTtsDriver _driver;
   final SpeechOutputRequest _request;
+  final Future<void> Function(String text) _setLanguage;
   final void Function() _onFinished;
   final StreamController<SpeechOutputEvent> _events =
       StreamController<SpeechOutputEvent>();
@@ -119,7 +160,7 @@ final class _SystemSpeechOutputSession implements SpeechOutputSession {
       _driver.setCancelHandler(_onNativeCancel);
       _driver.setErrorHandler(_onNativeError);
 
-      await _setLanguageForText(_request.segment.text);
+      await _setLanguage(_request.segment.text);
       // Completion is delivered through the plugin callbacks. Awaiting the
       // plugin's speak Future would make Android's pause callback look like a
       // completed utterance, which would incorrectly mark the segment done.
@@ -143,16 +184,6 @@ final class _SystemSpeechOutputSession implements SpeechOutputSession {
         if (!_started && !_closed) _emitStarted();
       }),
     );
-  }
-
-  Future<void> _setLanguageForText(String text) async {
-    final language = _containsCjk(text) ? 'zh-CN' : 'en-US';
-    try {
-      await _driver.setLanguage(language);
-    } on Object {
-      // A device may not have the requested voice installed. The platform
-      // TTS engine's default voice remains a valid fallback.
-    }
   }
 
   @override

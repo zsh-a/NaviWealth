@@ -6296,11 +6296,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechInputStopTooltip => 'Stop and keep transcript';
 
   @override
+  String get speechInputContinuousStartTooltip =>
+      'Start continuous conversation';
+
+  @override
+  String get speechInputContinuousStopTooltip => 'Stop continuous conversation';
+
+  @override
   String get speechInputStartingTooltip =>
       'Preparing on-device speech recognition…';
 
   @override
+  String get speechInputPreparingStatus => 'Preparing microphone…';
+
+  @override
+  String get speechInputPermissionStatus =>
+      'Waiting for microphone permission…';
+
+  @override
   String get speechInputListeningStatus => 'Listening…';
+
+  @override
+  String get speechInputContinuousStatus => 'Listening continuously…';
 
   @override
   String get speechInputEndpointingStatus => 'Finishing recognition…';
@@ -6312,7 +6329,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get speechInputSpeakingStatus => 'Speaking · Tap the mic to interrupt';
 
   @override
+  String get speechInputDuplexSpeakingStatus =>
+      'Speaking · You can interrupt by talking';
+
+  @override
   String get speechInputCancelTooltip => 'Cancel voice input';
+
+  @override
+  String get speechOutputStopTooltip => 'Stop speaking';
 
   @override
   String get speechInputModelMissing =>
@@ -6341,6 +6365,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get speechInputFailed =>
       'Speech recognition could not start. Try again later';
+
+  @override
+  String get speechOutputEngineUnavailable =>
+      'Text-to-speech is unavailable on this device';
+
+  @override
+  String get speechOutputSynthesisFailed =>
+      'Text-to-speech could not play this answer';
+
+  @override
+  String get speechOutputSessionBusy =>
+      'Another answer is already being spoken';
 
   @override
   String get aiChatThinking => 'Thinking…';

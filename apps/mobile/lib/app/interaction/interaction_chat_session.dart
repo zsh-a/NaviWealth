@@ -35,6 +35,8 @@ final class InteractionChatSession {
     void Function(InteractionTurnRequest request, SendOutcome outcome)?
     onTurnFinished,
     void Function({required bool cancelled})? onSpeechEnded,
+    void Function(SpeechRecognizerStatus status)? onSpeechStatus,
+    void Function(Duration? startupDuration)? onSpeechCaptureStarted,
     void Function(SpeechRecognitionException error, StackTrace stackTrace)?
     onSpeechError,
     void Function(InteractionState state)? onStateChanged,
@@ -53,6 +55,9 @@ final class InteractionChatSession {
         session._cancelEpoch(staleEpoch);
         unawaited(session._output.interrupt(staleEpoch: staleEpoch));
       },
+      onSpeechStatus: onSpeechStatus,
+      onSpeechCaptureStarted: onSpeechCaptureStarted,
+      onNonDuplexVoiceStart: () => session._output.stop(),
       onSpeechEnded: onSpeechEnded,
       onSpeechError: onSpeechError,
       onStateChanged: onStateChanged,
@@ -114,6 +119,9 @@ final class InteractionChatSession {
   Future<void> stopVoice() => _coordinator.stopVoice();
 
   Future<void> cancelVoice() => _coordinator.cancelVoice();
+
+  /// Stops current audible output without cancelling the Agent stream.
+  Future<void> stopOutput() => _output.stop();
 
   void configure({String? systemContext, String? model}) {
     if (_closed) return;

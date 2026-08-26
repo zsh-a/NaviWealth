@@ -79,6 +79,28 @@ void main() {
     },
   );
 
+  test('final transcript keeps the committed lane after the VAD endpoint', () {
+    var state = InteractionState.initial(sessionId: sessionId);
+    state = apply(
+      state,
+      TurnStarted(
+        stamp: stamp(sequence: 1),
+        origin: InteractionInputOrigin.voice,
+      ),
+    );
+    state = apply(
+      state,
+      InputCommitted(
+        stamp: stamp(sequence: 2),
+        text: '记录今天午饭',
+        origin: InteractionInputOrigin.voice,
+      ),
+    );
+    state = apply(state, SpeechStopped(stamp: stamp(sequence: 3)));
+
+    expect(state.inputLane, InteractionInputLane.committed);
+  });
+
   test(
     'committed interruption advances epoch and projects delivered prefix only',
     () {

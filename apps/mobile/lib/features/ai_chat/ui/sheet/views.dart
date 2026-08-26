@@ -64,8 +64,12 @@ class _ConversationComposer extends ConsumerWidget {
       isStreaming: turn.isStreaming,
       isVoiceActive: turn.voiceActive,
       canStartVoice: turn.canStartVoice,
+      voiceCapabilities: turn.voiceCapabilities,
       voiceCapsuleVisible: turn.voiceCapsuleVisible,
+      voicePhase: turn.voicePhase,
       voiceTranscript: turn.voiceTranscript,
+      voiceErrorCode: turn.voiceErrorCode,
+      voiceOutputErrorCode: turn.voiceOutputErrorCode,
       voiceInputLane: turn.voiceInputLane,
       voiceOutputLane: turn.voiceOutputLane,
       onStartVoice: () => ref

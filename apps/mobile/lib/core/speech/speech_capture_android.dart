@@ -269,6 +269,7 @@ SpeechCaptureCapabilities _capabilitiesFromMap(Map<Object?, Object?> map) =>
       aecEnabled: map['aec_enabled'] == true,
       noiseSuppressionEnabled: map['ns_enabled'] == true,
       automaticGainControlEnabled: map['agc_enabled'] == true,
+      audioFocusOwned: map['audio_focus_owned'] == true,
       vadMode: map['vad_mode'] is String ? map['vad_mode']! as String : 'none',
       vadFrameDurationMs: _intValue(map['vad_frame_duration_ms']),
       vadMinSpeechFrames: _intValue(map['vad_min_speech_frames']),

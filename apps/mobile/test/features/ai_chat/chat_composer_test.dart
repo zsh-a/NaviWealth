@@ -96,14 +96,27 @@ Future<void> _pumpComposer(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: locale,
+        builder: (context, child) => FAccessibilityScope(
+          data: const FAccessibility(
+            accessibleNavigation: false,
+            motion: FAccessibilityMotion.disabled,
+            focusHighlight: false,
+          ),
+          child: child!,
+        ),
         home: Scaffold(
-          body: Align(
-            alignment: Alignment.bottomCenter,
-            child: ChatComposer(
-              isStreaming: isStreaming,
-              initialText: initialText,
-              onSend: onSend,
-              onCancel: onCancel,
+          body: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: ExcludeSemantics(
+                child: ChatComposer(
+                  isStreaming: isStreaming,
+                  initialText: initialText,
+                  onSend: onSend,
+                  onCancel: onCancel,
+                ),
+              ),
             ),
           ),
         ),

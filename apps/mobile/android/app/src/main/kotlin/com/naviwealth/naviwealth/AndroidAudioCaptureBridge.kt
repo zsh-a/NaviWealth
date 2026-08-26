@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
 import android.media.AudioFormat
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -72,6 +74,7 @@ internal class AndroidAudioCaptureBridge(
     private var pendingStart: MethodChannel.Result? = null
     private var pendingModelDirectory: String? = null
     private var pendingCaptureStart: PendingCaptureStart? = null
+    private var pendingModelPrepare: PendingModelPrepare? = null
     private var pendingStop: MethodChannel.Result? = null
 
     private var audioRecord: AudioRecord? = null
@@ -79,6 +82,8 @@ internal class AndroidAudioCaptureBridge(
     @Volatile
     private var active = false
     private var previousAudioMode: Int? = null
+    private var audioFocusRequest: AudioFocusRequest? = null
+    private var audioFocusOwned = false
     private var ringBuffer = NativePcmRingBuffer(ringCapacityBytes())
     private var capturedBytes = 0L
     private var readErrors = 0
@@ -110,6 +115,7 @@ internal class AndroidAudioCaptureBridge(
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "status" -> result.success(statusPayload())
+            "prepare" -> prepareModel(result, call.arguments)
             "start" -> start(result, call.arguments)
             "stop" -> stop(result)
             "cancel" -> cancel(result)
@@ -156,7 +162,9 @@ internal class AndroidAudioCaptureBridge(
     }
 
     private fun start(result: MethodChannel.Result, arguments: Any?) {
-        if (active || pendingStart != null || pendingCaptureStart != null) {
+        if (active || pendingStart != null || pendingCaptureStart != null ||
+            pendingModelPrepare != null
+        ) {
             result.error(
                 "session_busy",
                 "Another native audio capture session is already active",
@@ -183,6 +191,83 @@ internal class AndroidAudioCaptureBridge(
             return
         }
         startCapture(result, modelDirectoryFromArguments(arguments))
+    }
+
+    /**
+     * Loads the native recognizer without opening AudioRecord. This is used
+     * while the chat surface is idle so the first microphone tap only pays for
+     * recorder setup, not the 155 MB model load.
+     */
+    private fun prepareModel(result: MethodChannel.Result, arguments: Any?) {
+        if (active || pendingStart != null || pendingCaptureStart != null ||
+            pendingModelPrepare != null
+        ) {
+            result.error(
+                "session_busy",
+                "Another native audio capture session is already active",
+                null,
+            )
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            result.error(
+                "runtime_unavailable",
+                "Native audio capture requires Android API 26 or newer",
+                null,
+            )
+            return
+        }
+        val modelDirectory = modelDirectoryFromArguments(arguments)
+        if (modelDirectory == null) {
+            result.error(
+                "runtime_unavailable",
+                "A Zipformer model directory is required",
+                null,
+            )
+            return
+        }
+        if (cachedRecognizer != null && cachedModelDirectory == modelDirectory) {
+            result.success(null)
+            return
+        }
+
+        cachedRecognizer?.let {
+            try {
+                it.close()
+            } catch (_: RuntimeException) {
+                // A stale cache must not prevent a fresh warmup attempt.
+            }
+        }
+        cachedRecognizer = null
+        cachedModelDirectory = null
+        val token = ++modelPreparationToken
+        pendingModelPrepare = PendingModelPrepare(
+            token = token,
+            result = result,
+            modelDirectory = modelDirectory,
+        )
+        try {
+            modelExecutor.execute {
+                var recognizer: NativeSherpaStreamingRecognizer? = null
+                var error: Throwable? = null
+                try {
+                    recognizer = NativeSherpaStreamingRecognizer.create(modelDirectory)
+                } catch (failure: Throwable) {
+                    error = failure
+                }
+                mainHandler.post {
+                    onModelPrepared(token, recognizer, error)
+                }
+            }
+        } catch (failure: RuntimeException) {
+            pendingModelPrepare = null
+            modelPreparationToken++
+            result.error(
+                "runtime_unavailable",
+                failure.message ?: "Unable to prepare the native Zipformer recognizer",
+                null,
+            )
+        }
     }
 
     private fun startCapture(result: MethodChannel.Result, modelDirectory: String?) {
@@ -265,30 +350,51 @@ internal class AndroidAudioCaptureBridge(
         recognizer: NativeSherpaStreamingRecognizer?,
         error: Throwable?,
     ) {
-        val pending = pendingCaptureStart
-        if (disposed || pending == null || pending.token != token) {
+        val pendingCapture = pendingCaptureStart
+        val pendingPrepare = pendingModelPrepare
+        if (disposed ||
+            (pendingCapture == null && pendingPrepare == null) ||
+            (pendingCapture != null && pendingCapture.token != token) ||
+            (pendingPrepare != null && pendingPrepare.token != token)
+        ) {
             recognizer?.close()
             return
         }
-        pendingCaptureStart = null
+        if (pendingCapture != null) {
+            pendingCaptureStart = null
+            if (error != null || recognizer == null) {
+                AndroidMicrophoneLease.release(leaseOwner)
+                startRequestedAtMs = null
+                pendingCapture.result.error(
+                    "runtime_unavailable",
+                    error?.message ?: "Unable to prepare the native Zipformer recognizer",
+                    null,
+                )
+                return
+            }
+
+            cachedRecognizer = recognizer
+            cachedModelDirectory = pendingCapture.modelDirectory
+            startCaptureWithRecognizer(
+                pendingCapture.result,
+                pendingCapture.modelDirectory,
+                recognizer,
+            )
+            return
+        }
+
+        pendingModelPrepare = null
         if (error != null || recognizer == null) {
-            AndroidMicrophoneLease.release(leaseOwner)
-            startRequestedAtMs = null
-            pending.result.error(
+            pendingPrepare!!.result.error(
                 "runtime_unavailable",
                 error?.message ?: "Unable to prepare the native Zipformer recognizer",
                 null,
             )
             return
         }
-
         cachedRecognizer = recognizer
-        cachedModelDirectory = pending.modelDirectory
-        startCaptureWithRecognizer(
-            pending.result,
-            pending.modelDirectory,
-            recognizer,
-        )
+        cachedModelDirectory = pendingPrepare!!.modelDirectory
+        pendingPrepare.result.success(null)
     }
 
     private fun startCaptureWithRecognizer(
@@ -375,6 +481,9 @@ internal class AndroidAudioCaptureBridge(
         previousAudioMode = audioManager.mode
         try {
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            if (!requestAudioFocus()) {
+                throw IllegalStateException("Audio focus is unavailable")
+            }
             configureEffects(recorder.audioSessionId)
             recorder.startRecording()
             if (recorder.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
@@ -417,6 +526,37 @@ internal class AndroidAudioCaptureBridge(
     }
 
     private fun cancel(result: MethodChannel.Result) {
+        val pendingPrepare = pendingModelPrepare
+        if (pendingPrepare != null) {
+            pendingModelPrepare = null
+            modelPreparationToken++
+            pendingPrepare.result.error(
+                "runtime_unavailable",
+                "Native Zipformer preparation was cancelled",
+                null,
+            )
+            result.success(null)
+            return
+        }
+        val pendingPermission = this.pendingStart
+        if (pendingPermission != null && pendingCaptureStart == null) {
+            this.pendingStart = null
+            pendingModelDirectory = null
+            pendingPermission.error(
+                "runtime_unavailable",
+                "Android audio capture start was cancelled",
+                null,
+            )
+            result.success(null)
+            return
+        }
+        if (pendingCaptureStart != null) {
+            cancelPendingCaptureStart(
+                "Android audio capture start was cancelled",
+            )
+            result.success(null)
+            return
+        }
         if (!active) {
             result.success(null)
             return
@@ -578,6 +718,7 @@ internal class AndroidAudioCaptureBridge(
             recorder?.release()
         } finally {
             releaseEffects()
+            releaseAudioFocus()
             restoreAudioMode()
             AndroidMicrophoneLease.release(leaseOwner)
         }
@@ -630,8 +771,64 @@ internal class AndroidAudioCaptureBridge(
         captureThread?.interrupt()
         captureThread = null
         releaseEffects()
+        releaseAudioFocus()
         restoreAudioMode()
         AndroidMicrophoneLease.release(leaseOwner)
+    }
+
+    /**
+     * Keeps the native full-duplex path and system TTS in one communication
+     * audio session. External media is allowed to yield or duck, while a
+     * genuine focus loss terminates capture through the same semantic error
+     * path as every other native recorder failure.
+     */
+    private fun requestAudioFocus(): Boolean {
+        if (audioFocusOwned) return true
+        val request = AudioFocusRequest.Builder(
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT,
+        )
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build(),
+            )
+            .setAcceptsDelayedFocusGain(false)
+            .setOnAudioFocusChangeListener { change ->
+                if (change == AudioManager.AUDIOFOCUS_LOSS ||
+                    change == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
+                ) {
+                    mainHandler.post {
+                        if (active) {
+                            finishCapture(
+                                cancelled = true,
+                                terminalError =
+                                    "runtime_unavailable" to
+                                        "Audio focus was lost during speech capture",
+                            )
+                        }
+                    }
+                }
+            }
+            .build()
+        audioFocusRequest = request
+        audioFocusOwned = audioManager.requestAudioFocus(request) ==
+            AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        if (!audioFocusOwned) audioFocusRequest = null
+        return audioFocusOwned
+    }
+
+    private fun releaseAudioFocus() {
+        val request = audioFocusRequest ?: return
+        audioFocusRequest = null
+        if (audioFocusOwned) {
+            try {
+                audioManager.abandonAudioFocusRequest(request)
+            } catch (_: RuntimeException) {
+                // The Activity may already be detached during teardown.
+            }
+        }
+        audioFocusOwned = false
     }
 
     private fun configureEffects(audioSessionId: Int) {
@@ -730,6 +927,7 @@ internal class AndroidAudioCaptureBridge(
                 "aec_enabled" to (echoCanceler != null),
                 "ns_enabled" to (noiseSuppressor != null),
                 "agc_enabled" to (automaticGainControl != null),
+                "audio_focus_owned" to audioFocusOwned,
                 "asr_mode" to if (streamingRecognizer != null) {
                     "sherpa_zipformer"
                 } else {
@@ -878,6 +1076,7 @@ internal class AndroidAudioCaptureBridge(
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
             startCapture(result, modelDirectory)
         } else {
+            startRequestedAtMs = null
             result.error(
                 "permission_denied",
                 "Microphone permission was denied",
@@ -897,6 +1096,15 @@ internal class AndroidAudioCaptureBridge(
         pendingStart = null
         pendingModelDirectory = null
         cancelPendingCaptureStart("Android audio capture host was destroyed")
+        pendingModelPrepare?.let { pending ->
+            pendingModelPrepare = null
+            modelPreparationToken++
+            pending.result.error(
+                "runtime_unavailable",
+                "Android audio capture host was destroyed",
+                null,
+            )
+        }
         if (active) finishCapture(cancelled = true, emitTerminalEvent = false)
         cachedRecognizer?.close()
         cachedRecognizer = null
@@ -912,6 +1120,12 @@ internal class AndroidAudioCaptureBridge(
     }
 
     private data class PendingCaptureStart(
+        val token: Long,
+        val result: MethodChannel.Result,
+        val modelDirectory: String,
+    )
+
+    private data class PendingModelPrepare(
         val token: Long,
         val result: MethodChannel.Result,
         val modelDirectory: String,

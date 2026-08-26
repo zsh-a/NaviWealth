@@ -28,6 +28,7 @@ final class SerializedSpeechOutputBridge {
   final void Function(Object error, StackTrace stackTrace)? onProviderError;
   final Queue<_QueuedSpeechSegment> _queue = Queue<_QueuedSpeechSegment>();
   final Set<int> _finishedEpochs = <int>{};
+  final Set<int> _suppressedEpochs = <int>{};
 
   Future<void>? _pumpFuture;
   SpeechOutputSession? _activeSession;
@@ -47,6 +48,8 @@ final class SerializedSpeechOutputBridge {
     final state = _coordinator.state;
     final turnId = state.activeTurnId;
     if (turnId == null) return;
+    if (_suppressedEpochs.contains(state.responseEpoch.value)) return;
+    _suppressedEpochs.removeWhere((epoch) => epoch < state.responseEpoch.value);
     _queue.add(
       _QueuedSpeechSegment(
         segment: segment,
@@ -132,6 +135,27 @@ final class SerializedSpeechOutputBridge {
     _ensurePump();
   }
 
+  /// Stops audible output for the current response while allowing the agent
+  /// to finish generating text. Later segments from this same epoch are
+  /// suppressed; a new response epoch automatically re-enables output.
+  Future<void> stop() async {
+    if (_closed) return;
+    final epoch = _coordinator.state.responseEpoch;
+    _generation++;
+    _paused = false;
+    _suppressedEpochs.add(epoch.value);
+    _discardEpoch(epoch);
+    final active = _activeSession;
+    final activeEntry = _activeEntry;
+    if (active != null && activeEntry?.stamp.epoch == epoch) {
+      await _cancelActive(active);
+    }
+    if (_ownsEpoch(epoch) &&
+        _coordinator.state.outputLane != InteractionOutputLane.idle) {
+      _coordinator.outputPlaybackStopped(interrupted: true);
+    }
+  }
+
   Future<void> close() async {
     if (_closed) return;
     _closed = true;
@@ -139,6 +163,7 @@ final class SerializedSpeechOutputBridge {
     _generation++;
     _queue.clear();
     _finishedEpochs.clear();
+    _suppressedEpochs.clear();
     final active = _activeSession;
     if (active != null) await _cancelActive(active);
     final pump = _pumpFuture;
@@ -327,6 +352,10 @@ final class SerializedSpeechOutputBridge {
 
   void _tryFinishOutput(ResponseEpoch epoch) {
     if (_closed || !_finishedEpochs.contains(epoch.value)) return;
+    if (_suppressedEpochs.contains(epoch.value)) {
+      _finishedEpochs.remove(epoch.value);
+      return;
+    }
     if (_activeEntry != null ||
         _queue.any((entry) => entry.stamp.epoch == epoch)) {
       return;

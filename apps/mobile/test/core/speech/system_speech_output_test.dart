@@ -133,6 +133,24 @@ void main() {
       ),
     );
   });
+
+  test(
+    'prepares the engine once and caches language setup across segments',
+    () async {
+      final driver = _FakeSystemTtsDriver();
+      final output = SystemSpeechOutput(driver: driver);
+
+      await output.prepare();
+      await output.prepare();
+      final first = await output.speak(_request('第一段。'));
+      await first.cancel();
+      final second = await output.speak(_request('第二段。'));
+      await second.cancel();
+
+      expect(driver.awaitSpeakCompletionCalls, 1);
+      expect(driver.languages, <String>['zh-CN']);
+    },
+  );
 }
 
 Future<void> _flush() => Future<void>.delayed(Duration.zero);
@@ -159,15 +177,18 @@ final class _FakeSystemTtsDriver implements SystemTtsDriver {
   Object? pauseError;
   Object? stopError;
   int stopCalls = 0;
+  int awaitSpeakCompletionCalls = 0;
+  final languages = <String>[];
 
   @override
   Future<void> awaitSpeakCompletion(bool awaitCompletion) async {
+    awaitSpeakCompletionCalls++;
     final error = availabilityError;
     if (error != null) throw error;
   }
 
   @override
-  Future<void> setLanguage(String language) async {}
+  Future<void> setLanguage(String language) async => languages.add(language);
 
   @override
   Future<void> speak(String text) async {

@@ -12,9 +12,11 @@ import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/speech/speech_error_copy.dart';
+import '../../../core/speech/speech_output.dart';
 import '../../../core/speech/speech_recognizer.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../state/chat_controller.dart';
 import '../state/composer_draft.dart';
 import 'ai_navigation.dart';
 
@@ -37,12 +39,15 @@ class ChatComposer extends ConsumerStatefulWidget {
     this.onSendWithOrigin,
     this.isVoiceActive = false,
     this.canStartVoice = true,
+    this.voiceCapabilities = SpeechRecognizerCapabilities.unknown,
     this.onStartVoice,
     this.onStopVoice,
     this.onCancelVoice,
     this.voiceCapsuleVisible = false,
+    this.voicePhase = VoiceLifecyclePhase.idle,
     this.voiceTranscript = '',
     this.voiceErrorCode,
+    this.voiceOutputErrorCode,
     this.voiceInputLane = InteractionInputLane.idle,
     this.voiceOutputLane = InteractionOutputLane.idle,
   });
@@ -70,14 +75,26 @@ class ChatComposer extends ConsumerStatefulWidget {
   /// Callers that omit them retain the draft-only dictation behavior.
   final bool isVoiceActive;
   final bool canStartVoice;
+  final SpeechRecognizerCapabilities voiceCapabilities;
   final Future<void> Function()? onStartVoice;
   final Future<void> Function()? onStopVoice;
   final Future<void> Function()? onCancelVoice;
   final bool voiceCapsuleVisible;
+  final VoiceLifecyclePhase voicePhase;
   final String voiceTranscript;
   final SpeechRecognitionErrorCode? voiceErrorCode;
+  final SpeechOutputErrorCode? voiceOutputErrorCode;
   final InteractionInputLane voiceInputLane;
   final InteractionOutputLane voiceOutputLane;
+
+  bool get voicePreparing => switch (voicePhase) {
+    VoiceLifecyclePhase.preparing ||
+    VoiceLifecyclePhase.permission ||
+    VoiceLifecyclePhase.ready => true,
+    _ => false,
+  };
+  bool get voiceFullDuplex =>
+      voiceCapabilities.fullDuplex && voiceCapabilities.supportsBargeIn;
 
   bool get _busy => isStreaming;
 
@@ -223,7 +240,11 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
   }
 
   Future<void> _cancelVoice() async {
-    if (_voiceBusy) return;
+    if (_voiceBusy &&
+        !widget.voicePreparing &&
+        !_isVoiceOutputLaneActive(widget.voiceOutputLane)) {
+      return;
+    }
     final action = widget.onCancelVoice;
     if (action == null) return;
 
@@ -330,6 +351,8 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                 _VoiceCapsule(
                   transcript: widget.voiceTranscript,
                   isListening: widget.isVoiceActive,
+                  fullDuplex: widget.voiceFullDuplex,
+                  isPreparing: widget.voicePreparing,
                   isEndpointing:
                       widget.voiceInputLane == InteractionInputLane.endpointing,
                   isSpeaking:
@@ -341,13 +364,21 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                   onCancel: widget.onCancelVoice == null
                       ? null
                       : () => unawaited(_cancelVoice()),
+                  phase: widget.voicePhase,
                 ),
-              if (_usesInteractionVoice && widget.voiceErrorCode != null)
+              if (_usesInteractionVoice &&
+                  (widget.voiceErrorCode != null ||
+                      widget.voiceOutputErrorCode != null))
                 _VoiceErrorBanner(
-                  message: speechRecognitionErrorMessage(
-                    l10n,
-                    widget.voiceErrorCode!,
-                  ),
+                  message: widget.voiceErrorCode != null
+                      ? speechRecognitionErrorMessage(
+                          l10n,
+                          widget.voiceErrorCode!,
+                        )
+                      : speechOutputErrorMessage(
+                          l10n,
+                          widget.voiceOutputErrorCode!,
+                        ),
                 ),
               DecoratedBox(
                 decoration: BoxDecoration(
@@ -395,7 +426,8 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                       if (_usesInteractionVoice)
                         _InteractionVoiceButton(
                           active: widget.isVoiceActive,
-                          busy: _voiceBusy,
+                          fullDuplex: widget.voiceFullDuplex,
+                          busy: _voiceBusy || widget.voicePreparing,
                           enabled: widget.isVoiceActive || widget.canStartVoice,
                           onPress: () => unawaited(_toggleVoice()),
                         )
@@ -464,30 +496,44 @@ class _VoiceCapsule extends StatelessWidget {
   const _VoiceCapsule({
     required this.transcript,
     required this.isListening,
+    required this.fullDuplex,
+    required this.isPreparing,
     required this.isEndpointing,
     required this.isSpeaking,
     required this.busy,
     required this.onCancel,
+    required this.phase,
   });
 
   final String transcript;
   final bool isListening;
+  final bool fullDuplex;
+  final bool isPreparing;
   final bool isEndpointing;
   final bool isSpeaking;
   final bool busy;
   final VoidCallback? onCancel;
+  final VoiceLifecyclePhase phase;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
-    final status = isListening
+    final status = isPreparing
+        ? (phase == VoiceLifecyclePhase.permission
+              ? l10n.speechInputPermissionStatus
+              : l10n.speechInputPreparingStatus)
+        : isSpeaking
+        ? (fullDuplex
+              ? l10n.speechInputDuplexSpeakingStatus
+              : l10n.speechInputSpeakingStatus)
+        : isListening
         ? (isEndpointing
               ? l10n.speechInputEndpointingStatus
+              : fullDuplex
+              ? l10n.speechInputContinuousStatus
               : l10n.speechInputListeningStatus)
-        : (isSpeaking
-              ? l10n.speechInputSpeakingStatus
-              : l10n.speechInputThinkingStatus);
+        : l10n.speechInputThinkingStatus;
     final icon = isSpeaking
         ? FLucideIcons.sparkles
         : isEndpointing
@@ -545,9 +591,18 @@ class _VoiceCapsule extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (onCancel != null && isListening)
+                if (onCancel != null &&
+                    (isListening || isPreparing || isSpeaking))
                   FTooltip(
-                    tipBuilder: (_, _) => Text(l10n.speechInputCancelTooltip),
+                    tipBuilder: (_, _) => Text(
+                      isSpeaking
+                          ? (fullDuplex
+                                ? l10n.speechInputContinuousStopTooltip
+                                : l10n.speechOutputStopTooltip)
+                          : fullDuplex
+                          ? l10n.speechInputContinuousStopTooltip
+                          : l10n.speechInputCancelTooltip,
+                    ),
                     child: FButton.icon(
                       variant: FButtonVariant.ghost,
                       onPress: busy ? null : onCancel,
@@ -605,12 +660,14 @@ class _VoiceSignal extends StatelessWidget {
 class _InteractionVoiceButton extends StatelessWidget {
   const _InteractionVoiceButton({
     required this.active,
+    required this.fullDuplex,
     required this.busy,
     required this.enabled,
     required this.onPress,
   });
 
   final bool active;
+  final bool fullDuplex;
   final bool busy;
   final bool enabled;
   final VoidCallback onPress;
@@ -619,10 +676,14 @@ class _InteractionVoiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tooltip = active
-        ? l10n.speechInputStopTooltip
+        ? (fullDuplex
+              ? l10n.speechInputContinuousStopTooltip
+              : l10n.speechInputStopTooltip)
         : busy
         ? l10n.speechInputStartingTooltip
-        : l10n.speechInputStartTooltip;
+        : (fullDuplex
+              ? l10n.speechInputContinuousStartTooltip
+              : l10n.speechInputStartTooltip);
     return FTooltip(
       tipBuilder: (_, _) => Text(tooltip),
       child: FButton.icon(
@@ -638,6 +699,11 @@ class _InteractionVoiceButton extends StatelessWidget {
     );
   }
 }
+
+bool _isVoiceOutputLaneActive(InteractionOutputLane lane) =>
+    lane == InteractionOutputLane.synthesizing ||
+    lane == InteractionOutputLane.playing ||
+    lane == InteractionOutputLane.paused;
 
 class _EditBanner extends StatelessWidget {
   const _EditBanner({required this.onCancel});

@@ -10555,17 +10555,47 @@ abstract class AppLocalizations {
   /// **'Stop and keep transcript'**
   String get speechInputStopTooltip;
 
+  /// No description provided for @speechInputContinuousStartTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Start continuous conversation'**
+  String get speechInputContinuousStartTooltip;
+
+  /// No description provided for @speechInputContinuousStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop continuous conversation'**
+  String get speechInputContinuousStopTooltip;
+
   /// No description provided for @speechInputStartingTooltip.
   ///
   /// In en, this message translates to:
   /// **'Preparing on-device speech recognition…'**
   String get speechInputStartingTooltip;
 
+  /// No description provided for @speechInputPreparingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing microphone…'**
+  String get speechInputPreparingStatus;
+
+  /// No description provided for @speechInputPermissionStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for microphone permission…'**
+  String get speechInputPermissionStatus;
+
   /// No description provided for @speechInputListeningStatus.
   ///
   /// In en, this message translates to:
   /// **'Listening…'**
   String get speechInputListeningStatus;
+
+  /// No description provided for @speechInputContinuousStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening continuously…'**
+  String get speechInputContinuousStatus;
 
   /// No description provided for @speechInputEndpointingStatus.
   ///
@@ -10585,11 +10615,23 @@ abstract class AppLocalizations {
   /// **'Speaking · Tap the mic to interrupt'**
   String get speechInputSpeakingStatus;
 
+  /// No description provided for @speechInputDuplexSpeakingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking · You can interrupt by talking'**
+  String get speechInputDuplexSpeakingStatus;
+
   /// No description provided for @speechInputCancelTooltip.
   ///
   /// In en, this message translates to:
   /// **'Cancel voice input'**
   String get speechInputCancelTooltip;
+
+  /// No description provided for @speechOutputStopTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop speaking'**
+  String get speechOutputStopTooltip;
 
   /// No description provided for @speechInputModelMissing.
   ///
@@ -10632,6 +10674,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Speech recognition could not start. Try again later'**
   String get speechInputFailed;
+
+  /// No description provided for @speechOutputEngineUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Text-to-speech is unavailable on this device'**
+  String get speechOutputEngineUnavailable;
+
+  /// No description provided for @speechOutputSynthesisFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Text-to-speech could not play this answer'**
+  String get speechOutputSynthesisFailed;
+
+  /// No description provided for @speechOutputSessionBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'Another answer is already being spoken'**
+  String get speechOutputSessionBusy;
 
   /// No description provided for @aiChatThinking.
   ///

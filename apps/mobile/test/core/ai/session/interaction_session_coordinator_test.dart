@@ -245,6 +245,46 @@ void main() {
     await coordinator.close();
   });
 
+  test('full-duplex input opens a fresh turn for the next utterance', () async {
+    ResponseEpoch? staleEpoch;
+    final input = _FakeSpeechInput(
+      statusValue: const SpeechRecognizerStatus(
+        SpeechRecognizerAvailability.ready,
+        capabilities: SpeechRecognizerCapabilities(
+          supportsBargeIn: true,
+          nativeAudioPath: true,
+          vad: true,
+          fullDuplex: true,
+        ),
+      ),
+    );
+    final coordinator = InteractionSessionCoordinator(
+      sessionId: const SessionId('session-1'),
+      speechInput: input,
+      onEpochAdvanced: (epoch) => staleEpoch = epoch,
+    );
+
+    await coordinator.startVoice();
+    final firstTurn = coordinator.state.activeTurnId;
+    input.session.emit(const SpeechInputSpeechStarted());
+    input.session.emit(
+      const SpeechInputTranscript(text: '第一句话', isFinal: true),
+    );
+    await _flush();
+    expect(coordinator.state.responseEpoch.value, 0);
+
+    input.session.emit(const SpeechInputSpeechStarted());
+    await _flush();
+
+    expect(coordinator.state.responseEpoch.value, 1);
+    expect(coordinator.state.activeTurnId, isNot(firstTurn));
+    expect(coordinator.state.inputLane, InteractionInputLane.speechDetected);
+    expect(staleEpoch?.value, 0);
+
+    await coordinator.cancelVoice();
+    await coordinator.close();
+  });
+
   test('cancelled native input discards a barge-in candidate', () async {
     final input = _FakeSpeechInput();
     final coordinator = InteractionSessionCoordinator(

@@ -5964,10 +5964,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speechInputStopTooltip => '停止并保留文字';
 
   @override
+  String get speechInputContinuousStartTooltip => '开启连续对话';
+
+  @override
+  String get speechInputContinuousStopTooltip => '结束连续对话';
+
+  @override
   String get speechInputStartingTooltip => '正在准备端侧语音识别…';
 
   @override
+  String get speechInputPreparingStatus => '正在准备麦克风…';
+
+  @override
+  String get speechInputPermissionStatus => '正在等待麦克风权限…';
+
+  @override
   String get speechInputListeningStatus => '正在聆听…';
+
+  @override
+  String get speechInputContinuousStatus => '连续聆听中…';
 
   @override
   String get speechInputEndpointingStatus => '正在收尾识别…';
@@ -5979,7 +5994,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get speechInputSpeakingStatus => '正在播报 · 点击麦克风可打断';
 
   @override
+  String get speechInputDuplexSpeakingStatus => '正在播报 · 直接说话即可打断';
+
+  @override
   String get speechInputCancelTooltip => '取消语音输入';
+
+  @override
+  String get speechOutputStopTooltip => '停止朗读';
 
   @override
   String get speechInputModelMissing => '请先下载中文实时语音模型';
@@ -6001,6 +6022,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get speechInputFailed => '语音识别启动失败，请稍后重试';
+
+  @override
+  String get speechOutputEngineUnavailable => '当前设备无法使用文字转语音';
+
+  @override
+  String get speechOutputSynthesisFailed => '这段回答暂时无法朗读';
+
+  @override
+  String get speechOutputSessionBusy => '已有另一段回答正在朗读';
 
   @override
   String get aiChatThinking => '正在思考…';

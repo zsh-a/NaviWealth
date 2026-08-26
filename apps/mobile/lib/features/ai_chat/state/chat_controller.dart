@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -9,6 +10,7 @@ import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/logging/app_logger.dart';
 import '../../../core/logging/providers.dart';
+import '../../../core/speech/speech_input.dart';
 import '../../../core/speech/speech_output.dart';
 import '../../../core/speech/speech_output_provider.dart';
 import '../../../core/speech/speech_recognizer.dart';
@@ -23,6 +25,21 @@ import '../domain/chat_turn_metadata.dart';
 ///  - [streaming]: runtime events are being consumed.
 enum ChatTurnPhase { idle, streaming }
 
+/// User-visible lifecycle of one voice interaction. This is intentionally
+/// finer grained than the modality-agnostic InteractionSession lanes so a
+/// slow native permission/model startup still has immediate UI feedback.
+enum VoiceLifecyclePhase {
+  idle,
+  preparing,
+  permission,
+  ready,
+  listening,
+  endpointing,
+  thinking,
+  speaking,
+  error,
+}
+
 /// UI-side state for one chat session: where we are in the send pipeline,
 /// and the cancel handle for the in-flight turn.
 ///
@@ -36,8 +53,11 @@ class ChatTurnState {
     this.cancelToken,
     this.voiceListening = false,
     this.voiceTurnActive = false,
+    this.voicePhase = VoiceLifecyclePhase.idle,
     this.voiceTranscript = '',
     this.voiceErrorCode,
+    this.voiceOutputErrorCode,
+    this.voiceCapabilities = SpeechRecognizerCapabilities.unknown,
     this.voiceInputLane = InteractionInputLane.idle,
     this.voiceOutputLane = InteractionOutputLane.idle,
   });
@@ -46,8 +66,11 @@ class ChatTurnState {
   final CancelToken? cancelToken;
   final bool voiceListening;
   final bool voiceTurnActive;
+  final VoiceLifecyclePhase voicePhase;
   final String voiceTranscript;
   final SpeechRecognitionErrorCode? voiceErrorCode;
+  final SpeechOutputErrorCode? voiceOutputErrorCode;
+  final SpeechRecognizerCapabilities voiceCapabilities;
   final InteractionInputLane voiceInputLane;
   final InteractionOutputLane voiceOutputLane;
 
@@ -55,46 +78,102 @@ class ChatTurnState {
   bool get isStreaming => phase == ChatTurnPhase.streaming;
   bool get isBusy => phase != ChatTurnPhase.idle;
   bool get voiceActive => voiceListening;
-  bool get canStartVoice => !isStreaming || voiceTurnActive;
+  bool get voicePreparing => switch (voicePhase) {
+    VoiceLifecyclePhase.preparing ||
+    VoiceLifecyclePhase.permission ||
+    VoiceLifecyclePhase.ready => true,
+    _ => false,
+  };
+  bool get voiceFullDuplex =>
+      voiceCapabilities.fullDuplex && voiceCapabilities.supportsBargeIn;
+  bool get canStartVoice =>
+      !voicePreparing && (!isStreaming || voiceTurnActive);
   bool get voiceEndpointing =>
       voiceListening && voiceInputLane == InteractionInputLane.endpointing;
   bool get voiceSpeaking =>
       voiceTurnActive && _isVoiceOutputActive(voiceOutputLane);
-  bool get voiceCapsuleVisible => voiceListening || voiceTurnActive;
+  bool get voiceCapsuleVisible =>
+      voicePreparing || voiceListening || voiceTurnActive;
 
   ChatTurnState copyWith({
     ChatTurnPhase? phase,
     CancelToken? cancelToken,
     bool? voiceListening,
     bool? voiceTurnActive,
+    VoiceLifecyclePhase? voicePhase,
     String? voiceTranscript,
     InteractionInputLane? voiceInputLane,
     InteractionOutputLane? voiceOutputLane,
     SpeechRecognitionErrorCode? voiceErrorCode,
+    SpeechOutputErrorCode? voiceOutputErrorCode,
+    SpeechRecognizerCapabilities? voiceCapabilities,
     bool clearVoiceErrorCode = false,
+    bool clearVoiceOutputErrorCode = false,
   }) => ChatTurnState(
     phase: phase ?? this.phase,
     cancelToken: cancelToken ?? this.cancelToken,
     voiceListening: voiceListening ?? this.voiceListening,
     voiceTurnActive: voiceTurnActive ?? this.voiceTurnActive,
+    voicePhase: voicePhase ?? this.voicePhase,
     voiceTranscript: voiceTranscript ?? this.voiceTranscript,
     voiceInputLane: voiceInputLane ?? this.voiceInputLane,
     voiceOutputLane: voiceOutputLane ?? this.voiceOutputLane,
     voiceErrorCode: clearVoiceErrorCode
         ? null
         : voiceErrorCode ?? this.voiceErrorCode,
+    voiceOutputErrorCode: clearVoiceOutputErrorCode
+        ? null
+        : voiceOutputErrorCode ?? this.voiceOutputErrorCode,
+    voiceCapabilities: voiceCapabilities ?? this.voiceCapabilities,
   );
 }
 
-class ChatController extends StateNotifier<ChatTurnState> {
+class ChatController extends StateNotifier<ChatTurnState>
+    with WidgetsBindingObserver {
   ChatController({required this.ref, required this.sessionId})
-    : super(const ChatTurnState());
+    : super(const ChatTurnState()) {
+    WidgetsBinding.instance.addObserver(this);
+    ref.onDispose(() => _warmupCancelled = true);
+    unawaited(_warmUpVoiceCapabilities());
+  }
 
   final Ref ref;
   final String sessionId;
   InteractionChatSession? _interactionSession;
   String? _interactionOwnerUserId;
   SpeechRecognizerBackend? _interactionBackend;
+  Future<void>? _voiceStarting;
+  bool _voiceCancelRequested = false;
+  bool _warmupCancelled = false;
+
+  Future<void> _warmUpVoiceCapabilities() async {
+    try {
+      if (_warmupCancelled || !ref.mounted) return;
+      final input = ref.read(speechInputProvider);
+      if (input case final SpeechInputPreparation preparation) {
+        await preparation.prepare();
+      }
+      if (_warmupCancelled || !ref.mounted) return;
+      final output = ref.read(speechOutputProvider);
+      if (output case final SpeechOutputPreparation preparation) {
+        await preparation.prepare();
+      }
+    } on Object catch (error, stackTrace) {
+      if (_warmupCancelled || !ref.mounted) return;
+      ref
+          .read(loggerProvider)
+          .event(
+            'core.speech.warmup.failed',
+            level: AppLogLevel.info,
+            fields: <String, Object?>{
+              'outcome': 'warmup_failed',
+              'error_code': diagnosticErrorCode(error),
+            },
+            error: error,
+            stackTrace: stackTrace,
+          );
+    }
+  }
 
   Future<InteractionChatSession> _ensureInteractionSession({
     required ChatRepository repository,
@@ -127,10 +206,15 @@ class ChatController extends StateNotifier<ChatTurnState> {
           voiceTurnActive:
               state.voiceTurnActive ||
               request.origin == InteractionInputOrigin.voice,
+          voicePhase: request.origin == InteractionInputOrigin.voice
+              ? VoiceLifecyclePhase.thinking
+              : state.voicePhase,
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
           voiceOutputLane: state.voiceOutputLane,
           voiceErrorCode: state.voiceErrorCode,
+          voiceOutputErrorCode: state.voiceOutputErrorCode,
+          voiceCapabilities: state.voiceCapabilities,
         );
       },
       onTurnFinished: (request, _) {
@@ -143,28 +227,39 @@ class ChatController extends StateNotifier<ChatTurnState> {
               ? state.voiceListening ||
                     _isVoiceOutputActive(state.voiceOutputLane)
               : state.voiceTurnActive,
+          voicePhase:
+              request.origin == InteractionInputOrigin.voice &&
+                  !_isVoiceOutputActive(state.voiceOutputLane) &&
+                  !state.voiceListening
+              ? VoiceLifecyclePhase.idle
+              : state.voicePhase,
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
           voiceOutputLane: state.voiceOutputLane,
           voiceErrorCode: state.voiceErrorCode,
+          voiceOutputErrorCode: state.voiceOutputErrorCode,
+          voiceCapabilities: state.voiceCapabilities,
         );
       },
       onSpeechEnded: ({required cancelled}) {
         if (!mounted) return;
         final keepVoiceTurn =
-            !cancelled ||
-            state.isStreaming ||
-            _isVoiceOutputActive(state.voiceOutputLane);
+            state.isStreaming || _isVoiceOutputActive(state.voiceOutputLane);
         state = _withVoiceState(
           state,
           voiceListening: false,
           voiceTurnActive: keepVoiceTurn,
+          voicePhase: keepVoiceTurn
+              ? state.voicePhase
+              : VoiceLifecyclePhase.idle,
           voiceTranscript: keepVoiceTurn ? null : '',
           voiceInputLane: keepVoiceTurn
               ? state.voiceInputLane
               : InteractionInputLane.idle,
         );
       },
+      onSpeechStatus: _onSpeechStatus,
+      onSpeechCaptureStarted: (_) => _onSpeechCaptureStarted(),
       onSpeechError: _onSpeechInputError,
       onStateChanged: _onInteractionStateChanged,
       onSpeechOutputError: (error, stackTrace) {
@@ -183,6 +278,13 @@ class ChatController extends StateNotifier<ChatTurnState> {
               error: error,
               stackTrace: stackTrace,
             );
+        if (mounted && error is SpeechOutputException) {
+          state = _withVoiceState(
+            state,
+            voicePhase: VoiceLifecyclePhase.error,
+            voiceOutputErrorCode: error.code,
+          );
+        }
       },
     );
     _interactionSession = session;
@@ -236,10 +338,13 @@ class ChatController extends StateNotifier<ChatTurnState> {
         state = ChatTurnState(
           voiceListening: state.voiceListening,
           voiceTurnActive: state.voiceTurnActive,
+          voicePhase: state.voicePhase,
           voiceTranscript: state.voiceTranscript,
           voiceInputLane: state.voiceInputLane,
           voiceOutputLane: state.voiceOutputLane,
           voiceErrorCode: state.voiceErrorCode,
+          voiceOutputErrorCode: state.voiceOutputErrorCode,
+          voiceCapabilities: state.voiceCapabilities,
         );
       }
     }
@@ -250,26 +355,79 @@ class ChatController extends StateNotifier<ChatTurnState> {
   /// A voice response may be interrupted while it is streaming; an unrelated
   /// keyboard response is left alone until it has produced output that the
   /// interaction coordinator can safely supersede.
-  Future<void> startVoice({String? systemContext, String? model}) async {
-    if (state.voiceListening) return;
+  Future<void> startVoice({String? systemContext, String? model}) {
+    final starting = _voiceStarting;
+    if (starting != null || state.voiceListening || state.voicePreparing) {
+      return starting ?? Future<void>.value();
+    }
+    final future = _startVoice(systemContext: systemContext, model: model);
+    _voiceStarting = future;
+    return future.whenComplete(() {
+      if (identical(_voiceStarting, future)) _voiceStarting = null;
+    });
+  }
+
+  Future<void> _startVoice({String? systemContext, String? model}) async {
+    _voiceCancelRequested = false;
+    if (mounted) {
+      // This assignment intentionally happens before the repository/session
+      // futures. The user sees a cancellable capsule in the same frame as the
+      // tap instead of waiting for Drift/provider setup to finish.
+      state = state.copyWith(
+        voicePhase: VoiceLifecyclePhase.preparing,
+        voiceListening: false,
+        voiceTurnActive: state.voiceTurnActive,
+        voiceTranscript: '',
+        voiceCapabilities: SpeechRecognizerCapabilities.unknown,
+        clearVoiceErrorCode: true,
+        clearVoiceOutputErrorCode: true,
+      );
+    }
     final ownerUserId = ref.read(activeUserIdProvider);
-    if (ownerUserId == null) return;
+    if (ownerUserId == null) {
+      if (mounted) {
+        state = state.copyWith(voicePhase: VoiceLifecyclePhase.error);
+      }
+      return;
+    }
 
-    final repo = await ref.read(chatRepositoryProvider.future);
-    final session = await _ensureInteractionSession(
-      repository: repo,
-      ownerUserId: ownerUserId,
-    );
-    final interactionState = session.coordinator.state;
-    final hasPendingInteraction = interactionState.pendingInteraction != null;
-    final hasOutput = interactionState.outputLane != InteractionOutputLane.idle;
-    if (state.isBusy && !hasOutput && !hasPendingInteraction) return;
-
-    if (mounted) state = state.copyWith(clearVoiceErrorCode: true);
-    session.configure(systemContext: systemContext, model: model);
     try {
+      final repo = await ref.read(chatRepositoryProvider.future);
+      final session = await _ensureInteractionSession(
+        repository: repo,
+        ownerUserId: ownerUserId,
+      );
+      if (_voiceCancelRequested) {
+        await session.cancelVoice();
+        return;
+      }
+      final interactionState = session.coordinator.state;
+      final hasPendingInteraction = interactionState.pendingInteraction != null;
+      final hasOutput =
+          interactionState.outputLane != InteractionOutputLane.idle;
+      if (state.isBusy && !hasOutput && !hasPendingInteraction) {
+        if (mounted) {
+          state = state.copyWith(voicePhase: VoiceLifecyclePhase.idle);
+        }
+        return;
+      }
+
+      session.configure(systemContext: systemContext, model: model);
       await session.startVoice();
+      if (_voiceCancelRequested) {
+        await session.cancelVoice();
+        return;
+      }
+      if (!mounted) return;
+      state = state.copyWith(
+        voiceListening: true,
+        voiceTurnActive: true,
+        voicePhase: VoiceLifecyclePhase.ready,
+        clearVoiceErrorCode: true,
+        clearVoiceOutputErrorCode: true,
+      );
     } on Object catch (error, stackTrace) {
+      if (_voiceCancelRequested) return;
       final speechError = error is SpeechRecognitionException
           ? error
           : SpeechRecognitionException(
@@ -280,12 +438,6 @@ class ChatController extends StateNotifier<ChatTurnState> {
       _onSpeechInputError(speechError, stackTrace);
       rethrow;
     }
-    if (!mounted) return;
-    state = state.copyWith(
-      voiceListening: true,
-      voiceTurnActive: true,
-      clearVoiceErrorCode: true,
-    );
   }
 
   Future<void> stopVoice() async {
@@ -297,6 +449,9 @@ class ChatController extends StateNotifier<ChatTurnState> {
       if (mounted) {
         state = state.copyWith(
           voiceListening: false,
+          voicePhase: state.voiceTurnActive
+              ? state.voicePhase
+              : VoiceLifecyclePhase.idle,
           clearVoiceErrorCode: true,
         );
       }
@@ -304,23 +459,52 @@ class ChatController extends StateNotifier<ChatTurnState> {
   }
 
   Future<void> cancelVoice() async {
+    final starting = _voiceStarting;
+    if (starting != null) {
+      _voiceCancelRequested = true;
+      final session = _interactionSession;
+      if (session != null) unawaited(session.cancelVoice());
+      try {
+        await starting;
+      } on Object {
+        // The user already cancelled the preparation operation.
+      }
+      if (mounted) {
+        state = _withVoiceState(
+          state,
+          voiceListening: false,
+          voiceTurnActive: false,
+          voicePhase: VoiceLifecyclePhase.idle,
+          voiceTranscript: '',
+          voiceInputLane: InteractionInputLane.idle,
+          clearVoiceErrorCode: true,
+          clearVoiceOutputErrorCode: true,
+        );
+      }
+      return;
+    }
     final session = _interactionSession;
     if (session == null) return;
+    final outputWasActive = _isVoiceOutputActive(state.voiceOutputLane);
     try {
-      await session.cancelVoice();
+      if (state.voiceListening) await session.cancelVoice();
+      if (outputWasActive) await session.stopOutput();
     } finally {
       if (mounted) {
-        final keepVoiceTurn =
-            state.isStreaming || _isVoiceOutputActive(state.voiceOutputLane);
+        final keepVoiceTurn = state.isStreaming && !outputWasActive;
         state = _withVoiceState(
           state,
           voiceListening: false,
           voiceTurnActive: keepVoiceTurn,
+          voicePhase: keepVoiceTurn
+              ? VoiceLifecyclePhase.thinking
+              : VoiceLifecyclePhase.idle,
           voiceTranscript: keepVoiceTurn ? null : '',
           voiceInputLane: keepVoiceTurn
               ? state.voiceInputLane
               : InteractionInputLane.idle,
           clearVoiceErrorCode: true,
+          clearVoiceOutputErrorCode: true,
         );
       }
     }
@@ -333,13 +517,65 @@ class ChatController extends StateNotifier<ChatTurnState> {
         !state.voiceListening &&
         !state.isStreaming &&
         interaction.outputLane == InteractionOutputLane.idle;
+    final nextPhase = shouldFinishVoiceTurn
+        ? VoiceLifecyclePhase.idle
+        : _voicePhaseForInteraction(interaction);
     state = _withVoiceState(
       state,
       voiceTurnActive: shouldFinishVoiceTurn ? false : state.voiceTurnActive,
+      voicePhase: nextPhase,
       voiceTranscript: interaction.transcript,
       voiceInputLane: interaction.inputLane,
       voiceOutputLane: interaction.outputLane,
     );
+  }
+
+  void _onSpeechStatus(SpeechRecognizerStatus status) {
+    if (!mounted) return;
+    final phase = switch (status.availability) {
+      SpeechRecognizerAvailability.permissionDenied =>
+        VoiceLifecyclePhase.permission,
+      SpeechRecognizerAvailability.ready when state.voicePreparing =>
+        VoiceLifecyclePhase.ready,
+      _ => state.voicePhase,
+    };
+    state = _withVoiceState(
+      state,
+      voicePhase: phase,
+      voiceCapabilities: status.capabilities,
+    );
+  }
+
+  void _onSpeechCaptureStarted() {
+    if (!mounted) return;
+    state = _withVoiceState(
+      state,
+      voiceListening: true,
+      voiceTurnActive: true,
+      voicePhase: VoiceLifecyclePhase.listening,
+    );
+  }
+
+  VoiceLifecyclePhase _voicePhaseForInteraction(InteractionState interaction) {
+    if (state.voiceErrorCode != null || state.voiceOutputErrorCode != null) {
+      return VoiceLifecyclePhase.error;
+    }
+    if (state.voiceListening) {
+      return interaction.inputLane == InteractionInputLane.endpointing ||
+              interaction.inputLane == InteractionInputLane.committed
+          ? VoiceLifecyclePhase.endpointing
+          : VoiceLifecyclePhase.listening;
+    }
+    if (state.voiceTurnActive && _isVoiceOutputActive(interaction.outputLane)) {
+      return VoiceLifecyclePhase.speaking;
+    }
+    if (state.voiceTurnActive && state.isStreaming) {
+      return VoiceLifecyclePhase.thinking;
+    }
+    if (state.voicePreparing) return state.voicePhase;
+    return state.voiceTurnActive
+        ? VoiceLifecyclePhase.thinking
+        : VoiceLifecyclePhase.idle;
   }
 
   void _onSpeechInputError(
@@ -367,6 +603,7 @@ class ChatController extends StateNotifier<ChatTurnState> {
       state,
       voiceListening: false,
       voiceTurnActive: keepVoiceTurn,
+      voicePhase: VoiceLifecyclePhase.error,
       voiceTranscript: keepVoiceTurn ? null : '',
       voiceInputLane: keepVoiceTurn
           ? state.voiceInputLane
@@ -448,7 +685,45 @@ class ChatController extends StateNotifier<ChatTurnState> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) return;
+    unawaited(_stopVoiceForLifecycle());
+  }
+
+  Future<void> _stopVoiceForLifecycle() async {
+    final starting = _voiceStarting;
+    if (starting != null) {
+      await cancelVoice();
+    } else {
+      final session = _interactionSession;
+      if (session == null) return;
+      try {
+        await session.cancelVoice();
+        await session.stopOutput();
+      } on Object {
+        // Background teardown is best effort; the native host also owns a
+        // terminal cancellation boundary for microphone resources.
+      }
+    }
+    if (!mounted) return;
+    state = _withVoiceState(
+      state,
+      voiceListening: false,
+      voiceTurnActive: false,
+      voicePhase: VoiceLifecyclePhase.idle,
+      voiceTranscript: '',
+      voiceInputLane: InteractionInputLane.idle,
+      voiceOutputLane: InteractionOutputLane.idle,
+      clearVoiceErrorCode: true,
+      clearVoiceOutputErrorCode: true,
+    );
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _warmupCancelled = true;
+    _voiceCancelRequested = true;
     unawaited(_interactionSession?.close());
     super.dispose();
   }
@@ -463,22 +738,31 @@ ChatTurnState _withVoiceState(
   ChatTurnState current, {
   bool? voiceListening,
   bool? voiceTurnActive,
+  VoiceLifecyclePhase? voicePhase,
   String? voiceTranscript,
   InteractionInputLane? voiceInputLane,
   InteractionOutputLane? voiceOutputLane,
   SpeechRecognitionErrorCode? voiceErrorCode,
+  SpeechOutputErrorCode? voiceOutputErrorCode,
+  SpeechRecognizerCapabilities? voiceCapabilities,
   bool clearVoiceErrorCode = false,
+  bool clearVoiceOutputErrorCode = false,
 }) => ChatTurnState(
   phase: current.phase,
   cancelToken: current.cancelToken,
   voiceListening: voiceListening ?? current.voiceListening,
   voiceTurnActive: voiceTurnActive ?? current.voiceTurnActive,
+  voicePhase: voicePhase ?? current.voicePhase,
   voiceTranscript: voiceTranscript ?? current.voiceTranscript,
   voiceInputLane: voiceInputLane ?? current.voiceInputLane,
   voiceOutputLane: voiceOutputLane ?? current.voiceOutputLane,
   voiceErrorCode: clearVoiceErrorCode
       ? null
       : voiceErrorCode ?? current.voiceErrorCode,
+  voiceOutputErrorCode: clearVoiceOutputErrorCode
+      ? null
+      : voiceOutputErrorCode ?? current.voiceOutputErrorCode,
+  voiceCapabilities: voiceCapabilities ?? current.voiceCapabilities,
 );
 
 /// Per-session controller. Riverpod auto-disposes when the chat page

@@ -128,3 +128,9 @@ abstract interface class SpeechOutput {
 
   Future<SpeechOutputSession> speak(SpeechOutputRequest request);
 }
+
+/// Optional output warmup capability. It may initialize the platform engine,
+/// but must not start audible playback.
+abstract interface class SpeechOutputPreparation {
+  Future<void> prepare();
+}

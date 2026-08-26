@@ -32,6 +32,7 @@ void main() {
         'vad_min_silence_frames': 20,
         'supports_barge_in': true,
         'full_duplex': true,
+        'audio_focus_owned': true,
       };
     });
 
@@ -139,6 +140,7 @@ void main() {
             'ns_enabled': true,
             'agc_available': true,
             'agc_enabled': false,
+            'audio_focus_owned': true,
           });
         case 'stop':
           nativeEvents.add(<String, Object?>{
@@ -169,6 +171,10 @@ void main() {
     expect(events.first, isA<SpeechCaptureStarted>());
     expect(
       (events.first as SpeechCaptureStarted).capabilities.aecEnabled,
+      isTrue,
+    );
+    expect(
+      (events.first as SpeechCaptureStarted).capabilities.audioFocusOwned,
       isTrue,
     );
     expect(events.last, isA<SpeechCaptureStopped>());
