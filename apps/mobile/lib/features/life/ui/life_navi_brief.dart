@@ -55,7 +55,7 @@ class _LifeNaviBriefResult extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: AppSpacing.s16),
-        Divider(color: context.theme.colors.border, height: 1),
+        const AppDivider(horizontalPadding: AppSpacing.s0),
         const SizedBox(height: AppSpacing.s12),
         Row(
           children: [
