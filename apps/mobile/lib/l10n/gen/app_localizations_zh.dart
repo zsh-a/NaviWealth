@@ -3666,7 +3666,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nativeUpdateDismiss => '稍后';
 
   @override
-  String get nativeUpdateOpenFailed => '无法打开更新链接。';
+  String nativeUpdateDownloading(int percent) {
+    return '正在下载更新（$percent%）';
+  }
+
+  @override
+  String get nativeUpdateInstallPermission =>
+      '请在 Android 设置中允许 NaviWealth 安装更新，然后再次点击更新。';
+
+  @override
+  String get nativeUpdateVerificationFailed => '下载的更新完整性校验失败。';
+
+  @override
+  String get nativeUpdatePackageMismatch => '下载的文件不是有效的 NaviWealth 安装包。';
+
+  @override
+  String get nativeUpdateInstallFailed => 'Android 无法启动更新安装器。';
+
+  @override
+  String get nativeUpdateDownloadFailed => '更新下载失败，请稍后重试。';
+
+  @override
+  String get nativeUpdateInstallStarted => '更新已下载，请在 Android 中确认安装。';
 
   @override
   String get authLoginTitle => '欢迎回来';

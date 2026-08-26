@@ -21,20 +21,18 @@ void main() {
   });
 
   group('AppConfig native updates', () {
-    test('stay disabled unless both latest version and URL are supplied', () {
-      expect(AppConfig.dev.latestNativeVersion, isEmpty);
-      expect(AppConfig.dev.nativeUpdateUrl, isEmpty);
+    test('stays disabled for local builds without a release define', () {
+      expect(AppConfig.dev.nativeUpdateManifestUrl, isEmpty);
       expect(AppConfig.dev.hasNativeUpdateTarget, isFalse);
     });
 
-    test('enable once a version and distribution URL are supplied', () {
+    test('can be disabled for a build with an empty manifest URL', () {
       const config = AppConfig(
         apiBaseUrl: 'http://localhost:8787',
         environment: AppEnvironment.staging,
-        latestNativeVersion: '0.8.0',
-        nativeUpdateUrl: 'https://example.com/download',
+        nativeUpdateManifestUrl: '',
       );
-      expect(config.hasNativeUpdateTarget, isTrue);
+      expect(config.hasNativeUpdateTarget, isFalse);
     });
   });
 }

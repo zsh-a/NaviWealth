@@ -6543,13 +6543,13 @@ abstract class AppLocalizations {
   /// **'Later'**
   String get pwaUpdateDismiss;
 
-  /// Banner shown when an iOS or Android native app update is available
+  /// Banner shown when an Android GitHub APK update is available
   ///
   /// In en, this message translates to:
   /// **'NaviWealth {version} is available.'**
   String nativeUpdateAvailable(String version);
 
-  /// Action to open the native app update URL
+  /// Action to download and install the Android APK update
   ///
   /// In en, this message translates to:
   /// **'Update'**
@@ -6561,11 +6561,47 @@ abstract class AppLocalizations {
   /// **'Later'**
   String get nativeUpdateDismiss;
 
-  /// Toast shown when the native update URL cannot be opened
+  /// Progress label shown while the Android APK is downloaded
   ///
   /// In en, this message translates to:
-  /// **'Could not open update link.'**
-  String get nativeUpdateOpenFailed;
+  /// **'Downloading update ({percent}%)'**
+  String nativeUpdateDownloading(int percent);
+
+  /// Toast shown when Android blocks installs from this app
+  ///
+  /// In en, this message translates to:
+  /// **'Allow NaviWealth to install updates in Android settings, then tap Update again.'**
+  String get nativeUpdateInstallPermission;
+
+  /// Toast shown when the APK SHA-256 does not match the GitHub manifest
+  ///
+  /// In en, this message translates to:
+  /// **'The downloaded update failed integrity verification.'**
+  String get nativeUpdateVerificationFailed;
+
+  /// Toast shown when package, signature, or version checks reject the APK
+  ///
+  /// In en, this message translates to:
+  /// **'The downloaded update is not a valid NaviWealth package.'**
+  String get nativeUpdatePackageMismatch;
+
+  /// Toast shown when the system package installer cannot be started
+  ///
+  /// In en, this message translates to:
+  /// **'Android could not start the update installer.'**
+  String get nativeUpdateInstallFailed;
+
+  /// Toast shown when a GitHub update download fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not download the update. Please try again later.'**
+  String get nativeUpdateDownloadFailed;
+
+  /// Toast shown after the Android package installer is launched
+  ///
+  /// In en, this message translates to:
+  /// **'Update downloaded. Confirm installation in Android.'**
+  String get nativeUpdateInstallStarted;
 
   /// Subtitle on the login screen, sits below the app name.
   ///

@@ -1919,17 +1919,34 @@
   "@pwaUpdateDismiss": { "description": "Action to dismiss the PWA update banner without refreshing" },
   "nativeUpdateAvailable": "NaviWealth {version} is available.",
   "@nativeUpdateAvailable": {
-    "description": "Banner shown when an iOS or Android native app update is available",
+    "description": "Banner shown when an Android GitHub APK update is available",
     "placeholders": {
       "version": { "type": "String", "example": "0.8.0" }
     }
   },
   "nativeUpdateApply": "Update",
-  "@nativeUpdateApply": { "description": "Action to open the native app update URL" },
+  "@nativeUpdateApply": { "description": "Action to download and install the Android APK update" },
   "nativeUpdateDismiss": "Later",
   "@nativeUpdateDismiss": { "description": "Action to dismiss the native app update banner for this version" },
-  "nativeUpdateOpenFailed": "Could not open update link.",
-  "@nativeUpdateOpenFailed": { "description": "Toast shown when the native update URL cannot be opened" },
+  "nativeUpdateDownloading": "Downloading update ({percent}%)",
+  "@nativeUpdateDownloading": {
+    "description": "Progress label shown while the Android APK is downloaded",
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "nativeUpdateInstallPermission": "Allow NaviWealth to install updates in Android settings, then tap Update again.",
+  "@nativeUpdateInstallPermission": { "description": "Toast shown when Android blocks installs from this app" },
+  "nativeUpdateVerificationFailed": "The downloaded update failed integrity verification.",
+  "@nativeUpdateVerificationFailed": { "description": "Toast shown when the APK SHA-256 does not match the GitHub manifest" },
+  "nativeUpdatePackageMismatch": "The downloaded update is not a valid NaviWealth package.",
+  "@nativeUpdatePackageMismatch": { "description": "Toast shown when package, signature, or version checks reject the APK" },
+  "nativeUpdateInstallFailed": "Android could not start the update installer.",
+  "@nativeUpdateInstallFailed": { "description": "Toast shown when the system package installer cannot be started" },
+  "nativeUpdateDownloadFailed": "Could not download the update. Please try again later.",
+  "@nativeUpdateDownloadFailed": { "description": "Toast shown when a GitHub update download fails" },
+  "nativeUpdateInstallStarted": "Update downloaded. Confirm installation in Android.",
+  "@nativeUpdateInstallStarted": { "description": "Toast shown after the Android package installer is launched" },
 
   "authLoginTitle": "Welcome back",
   "@authLoginTitle": { "description": "Subtitle on the login screen, sits below the app name." },

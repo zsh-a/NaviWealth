@@ -2,10 +2,11 @@ name: release
 
 # Unified release workflow. Convention:
 #   v0.2.0 — stamps the mobile version, creates a GitHub Release with Android
-#            artifacts, deploys the web PWA, and optionally deploys the backend.
+#            artifacts and an in-app update manifest, deploys the web PWA, and
+#            optionally deploys the backend.
 #
-# Tag push (vX.Y.Z) always builds the Android artifacts, deploys the web PWA,
-# and optionally deploys the backend from the tagged source.
+# Tag push (vX.Y.Z) always builds the Android artifacts and update manifest,
+# deploys the web PWA, and optionally deploys the backend from the tagged source.
 # Manual dispatch allows skipping the backend deploy via the `backend` input.
 
 on:
@@ -150,8 +151,19 @@ jobs:
         id: api-url
         working-directory: ${{ github.workspace }}
         run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
+      - name: Require Android release signing credentials
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64" || { echo "::error::KEYSTORE_BASE64 is required for GitHub self-update artifacts"; exit 1; }
+          test -n "$KEYSTORE_PASSWORD" || { echo "::error::KEYSTORE_PASSWORD is required"; exit 1; }
+          test -n "$KEY_ALIAS" || { echo "::error::KEY_ALIAS is required"; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo "::error::KEY_PASSWORD is required"; exit 1; }
       - name: Decode signing keystore
-        if: env.KEYSTORE_BASE64 != ''
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: echo "$KEYSTORE_BASE64" | base64 -d > "${{ runner.temp }}/release.keystore"
@@ -161,14 +173,14 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: flutter build apk --release --target-platform android-arm64 --android-project-arg=naviwealth-arm64-only=true --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+        run: flutter build apk --release --target-platform android-arm64 --android-project-arg=naviwealth-arm64-only=true --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }} --dart-define=NATIVE_UPDATE_MANIFEST_URL=https://github.com/${{ github.repository }}/releases/latest/download/latest.json
       - name: Build release app bundle
         env:
           KEYSTORE_FILE: ${{ runner.temp }}/release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: flutter build appbundle --release --target-platform android-arm64 --android-project-arg=naviwealth-arm64-only=true --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
+        run: flutter build appbundle --release --target-platform android-arm64 --android-project-arg=naviwealth-arm64-only=true --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }} --dart-define=NATIVE_UPDATE_MANIFEST_URL=https://github.com/${{ github.repository }}/releases/latest/download/latest.json
       - name: Verify Android native payload and 16 KiB compatibility
         run: |
           ../../tool/check-android-native-libs.sh build/app/outputs/flutter-apk/app-release.apk
@@ -203,6 +215,68 @@ jobs:
             "$BUILD_NUMBER" \
             "$API_URL" \
             "$RELEASE_NOTES"
+      - name: Generate Android update manifest
+        working-directory: ${{ github.workspace }}
+        env:
+          APK_PATH: apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk
+          MANIFEST_PATH: apps/mobile/build/latest.json
+          RELEASE_NOTES_PATH: ${{ runner.temp }}/release-notes.md
+          RELEASE_TAG: ${{ needs.meta.outputs.release_tag }}
+          SEMVER: ${{ needs.meta.outputs.semver }}
+          BUILD_NUMBER: ${{ needs.meta.outputs.build_number }}
+          REPOSITORY: ${{ github.repository }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          set -euo pipefail
+          sha256="$(sha256sum "$APK_PATH" | awk '{print $1}')"
+          size="$(stat -c '%s' "$APK_PATH")"
+          apk_name="$(basename "$APK_PATH")"
+          export APK_NAME="$apk_name"
+          export APK_SHA256="$sha256"
+          export APK_SIZE="$size"
+          python3 - "$MANIFEST_PATH" <<'PY'
+          import json
+          import os
+          import pathlib
+          import re
+          import sys
+
+          release_notes = []
+          notes_path = pathlib.Path(os.environ["RELEASE_NOTES_PATH"])
+          if notes_path.exists():
+              for line in notes_path.read_text(encoding="utf-8").splitlines():
+                  if not line.startswith("- "):
+                      continue
+                  note = line[2:].strip()
+                  note = re.sub(r"\s+\(\[[^]]+\]\([^)]+\)\)$", "", note)
+                  if note and note not in release_notes:
+                      release_notes.append(note)
+          if not release_notes:
+              release_notes = ["See the GitHub Release notes for this version."]
+
+          payload = {
+              "schemaVersion": 1,
+              "platform": "android",
+              "channel": "github",
+              "versionName": os.environ["SEMVER"],
+              "versionCode": int(os.environ["BUILD_NUMBER"]),
+              "apkUrl": (
+                  f"{os.environ['SERVER_URL']}/{os.environ['REPOSITORY']}/"
+                  f"releases/download/{os.environ['RELEASE_TAG']}/"
+                  f"{os.environ['APK_NAME']}"
+              ),
+              "sha256": os.environ["APK_SHA256"],
+              "size": int(os.environ["APK_SIZE"]),
+              "mandatory": False,
+              "releaseNotes": release_notes[:8],
+          }
+          pathlib.Path(sys.argv[1]).write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          python3 -m json.tool "$MANIFEST_PATH" >/dev/null
+          echo "Generated $MANIFEST_PATH for ${SEMVER}+${BUILD_NUMBER}"
       - name: Check Pages deploy credentials
         id: pages-deploy-gate
         env:
@@ -233,6 +307,7 @@ jobs:
           files: |
             apps/mobile/build/app/outputs/flutter-apk/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.apk
             apps/mobile/build/app/outputs/bundle/release/naviwealth-android-arm64-v${{ needs.meta.outputs.semver }}+${{ needs.meta.outputs.build_number }}.aab
+            apps/mobile/build/latest.json
 
   backend-deploy:
     name: backend deploy

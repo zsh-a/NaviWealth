@@ -6,11 +6,15 @@ import io.flutter.embedding.engine.FlutterEngine
 class MainActivity : FlutterFragmentActivity() {
     private var speechBridge: AndroidSpeechBridge? = null
     private var audioCaptureBridge: AndroidAudioCaptureBridge? = null
+    private var nativeUpdateBridge: AndroidNativeUpdateBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         speechBridge = AndroidSpeechBridge(this).also { it.attach(flutterEngine) }
         audioCaptureBridge = AndroidAudioCaptureBridge(this).also { it.attach(flutterEngine) }
+        nativeUpdateBridge = AndroidNativeUpdateBridge(this).also {
+            it.attach(flutterEngine)
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -36,6 +40,8 @@ class MainActivity : FlutterFragmentActivity() {
         speechBridge = null
         audioCaptureBridge?.dispose()
         audioCaptureBridge = null
+        nativeUpdateBridge?.dispose()
+        nativeUpdateBridge = null
         super.onDestroy()
     }
 }

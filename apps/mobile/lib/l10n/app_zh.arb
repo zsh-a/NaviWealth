@@ -1162,7 +1162,19 @@
   "nativeUpdateAvailable": "NaviWealth {version} 可更新。",
   "nativeUpdateApply": "更新",
   "nativeUpdateDismiss": "稍后",
-  "nativeUpdateOpenFailed": "无法打开更新链接。",
+  "nativeUpdateDownloading": "正在下载更新（{percent}%）",
+  "@nativeUpdateDownloading": {
+    "description": "下载 Android APK 时显示的进度",
+    "placeholders": {
+      "percent": { "type": "int" }
+    }
+  },
+  "nativeUpdateInstallPermission": "请在 Android 设置中允许 NaviWealth 安装更新，然后再次点击更新。",
+  "nativeUpdateVerificationFailed": "下载的更新完整性校验失败。",
+  "nativeUpdatePackageMismatch": "下载的文件不是有效的 NaviWealth 安装包。",
+  "nativeUpdateInstallFailed": "Android 无法启动更新安装器。",
+  "nativeUpdateDownloadFailed": "更新下载失败，请稍后重试。",
+  "nativeUpdateInstallStarted": "更新已下载，请在 Android 中确认安装。",
 
   "authLoginTitle": "欢迎回来",
   "authRegisterTitle": "创建账号",

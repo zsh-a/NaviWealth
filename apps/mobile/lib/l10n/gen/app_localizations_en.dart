@@ -3822,7 +3822,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nativeUpdateDismiss => 'Later';
 
   @override
-  String get nativeUpdateOpenFailed => 'Could not open update link.';
+  String nativeUpdateDownloading(int percent) {
+    return 'Downloading update ($percent%)';
+  }
+
+  @override
+  String get nativeUpdateInstallPermission =>
+      'Allow NaviWealth to install updates in Android settings, then tap Update again.';
+
+  @override
+  String get nativeUpdateVerificationFailed =>
+      'The downloaded update failed integrity verification.';
+
+  @override
+  String get nativeUpdatePackageMismatch =>
+      'The downloaded update is not a valid NaviWealth package.';
+
+  @override
+  String get nativeUpdateInstallFailed =>
+      'Android could not start the update installer.';
+
+  @override
+  String get nativeUpdateDownloadFailed =>
+      'Could not download the update. Please try again later.';
+
+  @override
+  String get nativeUpdateInstallStarted =>
+      'Update downloaded. Confirm installation in Android.';
 
   @override
   String get authLoginTitle => 'Welcome back';

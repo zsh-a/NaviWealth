@@ -7,9 +7,7 @@ class AppConfig {
     this.rustEmbedderModelDir = '',
     this.rustEmbedderLibraryPath = '',
     this.rustEmbedderOrtDylibPath = '',
-    this.latestNativeVersion = '',
-    this.nativeUpdateUrl = '',
-    this.nativeUpdateRequired = false,
+    this.nativeUpdateManifestUrl = '',
   });
 
   final String apiBaseUrl;
@@ -61,28 +59,15 @@ class AppConfig {
 
   bool get hasRustEmbedder => rustEmbedderModelDir.isNotEmpty;
 
-  /// Latest iOS/Android app version advertised by the release channel.
-  /// Empty means native update prompts are disabled for this build.
+  /// GitHub Release manifest used by the Android self-update flow.
   ///
-  /// Inject via `--dart-define=LATEST_NATIVE_VERSION=0.8.0`.
-  final String latestNativeVersion;
+  /// Release builds inject the stable `latest.json` asset published by the
+  /// NaviWealth GitHub workflow. Empty disables checks for local/debug builds.
+  /// Forks or staging builds can override it with
+  /// `--dart-define=NATIVE_UPDATE_MANIFEST_URL=https://...`.
+  final String nativeUpdateManifestUrl;
 
-  /// Store/TestFlight/enterprise distribution URL opened by the native
-  /// update prompt. Empty means native update prompts are disabled.
-  ///
-  /// Inject via `--dart-define=NATIVE_UPDATE_URL=https://...`.
-  final String nativeUpdateUrl;
-
-  /// When true, the native update banner cannot be dismissed for the
-  /// advertised version. This is still only a prompt; platform stores own
-  /// the actual update flow.
-  ///
-  /// Inject via `--dart-define=NATIVE_UPDATE_REQUIRED=true`.
-  final bool nativeUpdateRequired;
-
-  bool get hasNativeUpdateTarget =>
-      latestNativeVersion.trim().isNotEmpty &&
-      nativeUpdateUrl.trim().isNotEmpty;
+  bool get hasNativeUpdateTarget => nativeUpdateManifestUrl.trim().isNotEmpty;
 
   static const AppConfig dev = AppConfig(
     apiBaseUrl: String.fromEnvironment(
@@ -104,17 +89,9 @@ class AppConfig {
       'RUST_EMBEDDER_ORT_DYLIB_PATH',
       defaultValue: '',
     ),
-    latestNativeVersion: String.fromEnvironment(
-      'LATEST_NATIVE_VERSION',
+    nativeUpdateManifestUrl: String.fromEnvironment(
+      'NATIVE_UPDATE_MANIFEST_URL',
       defaultValue: '',
-    ),
-    nativeUpdateUrl: String.fromEnvironment(
-      'NATIVE_UPDATE_URL',
-      defaultValue: '',
-    ),
-    nativeUpdateRequired: bool.fromEnvironment(
-      'NATIVE_UPDATE_REQUIRED',
-      defaultValue: false,
     ),
   );
 }
