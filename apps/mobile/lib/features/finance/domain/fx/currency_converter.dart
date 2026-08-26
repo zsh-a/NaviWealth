@@ -73,7 +73,10 @@ class InMemoryFxRateLookup implements FxRateLookup {
     // Prefer whichever observation is most recent — same-day stored
     // forward beats older inverse, and vice versa.
     if (direct != null && inverse != null) {
-      return direct.date.isAfter(inverse.date) ? direct : inverse.inverse();
+      return direct.date.isAtSameMomentAs(inverse.date) ||
+              direct.date.isAfter(inverse.date)
+          ? direct
+          : inverse.inverse();
     }
     final result = direct ?? inverse?.inverse();
     if (result == null && _byPair.isNotEmpty) {
@@ -88,22 +91,19 @@ class InMemoryFxRateLookup implements FxRateLookup {
   static FxRate? _pickForDate(List<FxRate>? rates, DateTime? on) {
     if (rates == null || rates.isEmpty) return null;
     if (on == null) return rates.last;
-    // Normalize to UTC calendar day — rate dates are stored as UTC, but
-    // callers may pass local-time DateTime (e.g. DateTime.now()). Treating
-    // the local year/month/day as the lookup day keeps the comparison
-    // consistent regardless of the caller's timezone.
-    final local = on.toLocal();
-    final cutoff = DateTime.utc(local.year, local.month, local.day);
+    // Normalize to the UTC calendar day — rate dates and historical market
+    // bars are stored as UTC date-only values. Using local wall-clock fields
+    // here makes a UTC end-of-day sample select the following day's FX rate
+    // in time zones east of UTC.
+    final utc = on.toUtc();
+    final cutoff = DateTime.utc(utc.year, utc.month, utc.day);
     // rates is sorted ascending by date; walk backwards for nearest <= cutoff.
     for (var i = rates.length - 1; i >= 0; i--) {
       if (!rates[i].date.isAfter(cutoff)) return rates[i];
     }
-    // No rate on or before the cutoff. Use the earliest available rate if
-    // it's within 2 days — this absorbs timezone-induced off-by-one (a rate
-    // synced at 4pm UTC+8 is stored as the previous UTC day). Rates far in
-    // the past are left as null so historical trend points show 0.
-    final earliest = rates.first;
-    if (cutoff.difference(earliest.date).inDays.abs() <= 2) return earliest;
+    // Never use a future rate for a historical sample. A provider gap before
+    // the first stored observation is genuinely unknown and must remain
+    // visible to the trend quality/banner layer.
     return null;
   }
 

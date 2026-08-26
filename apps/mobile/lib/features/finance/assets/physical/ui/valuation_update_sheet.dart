@@ -105,7 +105,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
                   return l10n.physicalAssetValidationRequired;
                 }
                 final parsed = Decimal.tryParse(v.trim());
-                if (parsed == null || parsed < Decimal.zero) {
+                if (parsed == null || parsed <= Decimal.zero) {
                   return l10n.physicalAssetValidationPositive;
                 }
                 return null;
@@ -116,7 +116,7 @@ class _ValuationUpdateSheetState extends ConsumerState<ValuationUpdateSheet>
             DateField(
               label: l10n.physicalAssetUpdateValuationDate,
               initialValue: _asOf,
-              firstDate: DateTime(1970),
+              firstDate: widget.asset.purchaseDate,
               lastDate: DateTime.now().add(const Duration(days: 1)),
               required: true,
               enabled: !_saving,

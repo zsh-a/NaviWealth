@@ -41,6 +41,27 @@ class PortfolioTrendService {
         ),
     };
     final allDates = datesByPortfolio.values.expand((dates) => dates).toSet();
+    // A chart cadence can skip over an assignment event. Add every event
+    // inside its portfolio window so flow valuation uses the fair value at
+    // the event, not the market value at the next weekly/monthly sample.
+    for (final assignment in assignmentHistory) {
+      final dates = datesByPortfolio[assignment.portfolioId];
+      if (dates == null || dates.isEmpty) continue;
+      final from = dates.first;
+      final to = dates.last;
+      if (_inside(
+        assignment.assignedAt,
+        fromExclusive: from,
+        toInclusive: to,
+      )) {
+        allDates.add(assignment.assignedAt.toUtc());
+      }
+      final unassignedAt = assignment.unassignedAt;
+      if (unassignedAt != null &&
+          _inside(unassignedAt, fromExclusive: from, toInclusive: to)) {
+        allDates.add(unassignedAt.toUtc());
+      }
+    }
     final holdingsService = holdings;
     final samples =
         priceSource != null &&
@@ -93,7 +114,7 @@ class PortfolioTrendService {
               portfolioId: portfolio.id,
               fromExclusive: previousAt,
               toInclusive: date,
-              sample: sample,
+              sampleByInstant: sampleByInstant,
               history: assignmentHistory,
             );
 
@@ -235,7 +256,7 @@ class PortfolioTrendService {
     required String portfolioId,
     required DateTime fromExclusive,
     required DateTime toInclusive,
-    required HoldingSample sample,
+    required Map<DateTime, HoldingSample> sampleByInstant,
     required List<PortfolioCapitalAssignment> history,
   }) {
     var result = Decimal.zero;
@@ -246,7 +267,10 @@ class PortfolioTrendService {
         fromExclusive: fromExclusive,
         toInclusive: toInclusive,
       )) {
-        result += _assignmentValueAt(assignment, sample);
+        final sample = sampleByInstant[assignment.assignedAt.toUtc()];
+        if (sample != null) {
+          result += _assignmentValueAt(assignment, sample);
+        }
       }
       final unassignedAt = assignment.unassignedAt;
       if (unassignedAt != null &&
@@ -255,7 +279,10 @@ class PortfolioTrendService {
             fromExclusive: fromExclusive,
             toInclusive: toInclusive,
           )) {
-        result -= _assignmentValueAt(assignment, sample);
+        final sample = sampleByInstant[unassignedAt.toUtc()];
+        if (sample != null) {
+          result -= _assignmentValueAt(assignment, sample);
+        }
       }
     }
     return result;

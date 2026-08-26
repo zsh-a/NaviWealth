@@ -21,6 +21,33 @@ DateTime _floorToDay(DateTime d) {
   return DateTime.utc(u.year, u.month, u.day);
 }
 
+int _comparePriceRows(PriceRow a, PriceRow b) {
+  final byObserved = _floorToDay(a.observedOn)
+      .compareTo(_floorToDay(b.observedOn));
+  if (byObserved != 0) return byObserved;
+  final bySource = _sourcePriority(a.source)
+      .compareTo(_sourcePriority(b.source));
+  if (bySource != 0) return bySource;
+  final byUpdated = a.updatedAt.compareTo(b.updatedAt);
+  if (byUpdated != 0) return byUpdated;
+  final byHlc = a.hlc.compareTo(b.hlc);
+  if (byHlc != 0) return byHlc;
+  return a.id.compareTo(b.id);
+}
+
+int _sourcePriority(String source) {
+  final normalized = source.trim().toLowerCase();
+  if (normalized == 'manual' || normalized.startsWith('manual:')) return 3;
+  if (normalized == 'trade' ||
+      normalized.startsWith('trade:') ||
+      normalized == 'import' ||
+      normalized.startsWith('import:')) {
+    return 2;
+  }
+  if (normalized == 'auto' || normalized.startsWith('auto:')) return 1;
+  return 0;
+}
+
 /// Composed price source for the holdings pipeline:
 ///   1. Pre-resolved live prices from [priceResolverProvider] for "now-ish"
 ///      asOf lookups (drives the live dashboard / FIRE / AI snapshot).
@@ -42,8 +69,9 @@ final holdingPriceSourceProvider = FutureProvider<HoldingPriceSource>((
     ),
   );
   final rows = ref.watch(_priceRowsStreamProvider).value ?? const <PriceRow>[];
+  final sortedRows = rows.toList()..sort(_comparePriceRows);
   final ledgerSource = InMemoryHoldingPriceSource([
-    for (final row in rows)
+    for (final row in sortedRows)
       HoldingPriceObservation(
         assetId: row.unit,
         asOf: _floorToDay(row.observedOn),

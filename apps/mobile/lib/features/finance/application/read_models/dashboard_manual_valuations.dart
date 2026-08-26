@@ -182,11 +182,10 @@ List<ManualAssetValuation> _buildManualAssetValuations({
 
       // 2. Fall back to price-row observations (created by
       //    _recordValuation when the cash asset was first set up).
-      final assetPriceRows =
-          (pricesByUnit[asset.id] ?? const <PriceRow>[])
-              .where((row) => row.quoteCurrency == asset.currency)
-              .toList(growable: false)
-            ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
+      final assetPriceRows = (pricesByUnit[asset.id] ?? const <PriceRow>[])
+          .where((row) => row.quoteCurrency == asset.currency)
+          .toList(growable: false);
+      assetPriceRows.sort(_comparePriceRowsChronologically);
       if (assetPriceRows.isNotEmpty) {
         out.add(
           ManualAssetValuation(
@@ -210,11 +209,10 @@ List<ManualAssetValuation> _buildManualAssetValuations({
       continue;
     }
     // Non-cash manual assets: use price-row observations.
-    final rows =
-        (pricesByUnit[asset.id] ?? const <PriceRow>[])
-            .where((row) => row.quoteCurrency == asset.currency)
-            .toList(growable: false)
-          ..sort((a, b) => a.observedOn.compareTo(b.observedOn));
+    final rows = (pricesByUnit[asset.id] ?? const <PriceRow>[])
+        .where((row) => row.quoteCurrency == asset.currency)
+        .toList(growable: false);
+    rows.sort(_comparePriceRowsChronologically);
     if (rows.isNotEmpty) {
       out.add(
         ManualAssetValuation(
@@ -233,6 +231,33 @@ List<ManualAssetValuation> _buildManualAssetValuations({
     }
   }
   return List.unmodifiable(out);
+}
+
+int _comparePriceRowsChronologically(PriceRow a, PriceRow b) {
+  final byObserved = _floorToDay(a.observedOn)
+      .compareTo(_floorToDay(b.observedOn));
+  if (byObserved != 0) return byObserved;
+  final bySource = _priceSourcePriority(a.source)
+      .compareTo(_priceSourcePriority(b.source));
+  if (bySource != 0) return bySource;
+  final byUpdated = a.updatedAt.compareTo(b.updatedAt);
+  if (byUpdated != 0) return byUpdated;
+  final byHlc = a.hlc.compareTo(b.hlc);
+  if (byHlc != 0) return byHlc;
+  return a.id.compareTo(b.id);
+}
+
+int _priceSourcePriority(String source) {
+  final normalized = source.trim().toLowerCase();
+  if (normalized == 'manual' || normalized.startsWith('manual:')) return 3;
+  if (normalized == 'trade' ||
+      normalized.startsWith('trade:') ||
+      normalized == 'import' ||
+      normalized.startsWith('import:')) {
+    return 2;
+  }
+  if (normalized == 'auto' || normalized.startsWith('auto:')) return 1;
+  return 0;
 }
 
 Future<List<ManualAssetValuation>> _manualAssetValuationsForHeader(

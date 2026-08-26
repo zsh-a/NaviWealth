@@ -5,6 +5,32 @@ import 'package:naviwealth/features/finance/market/domain/price_confidence.dart'
 import 'package:naviwealth/features/finance/market/domain/resolved_price.dart';
 
 void main() {
+  test('same-day manual observation wins over automatic snapshots', () {
+    final source = InMemoryHoldingPriceSource([
+      HoldingPriceObservation(
+        assetId: 'AAPL',
+        price: Decimal.fromInt(200),
+        currency: 'USD',
+        asOf: DateTime.utc(2026, 1, 1),
+        confidence: PriceConfidence.manual,
+        source: 'manual:valuation',
+      ),
+      HoldingPriceObservation(
+        assetId: 'AAPL',
+        price: Decimal.fromInt(180),
+        currency: 'USD',
+        asOf: DateTime.utc(2026, 1, 1),
+        confidence: PriceConfidence.dailyClose,
+        source: 'auto:yfinance',
+      ),
+    ]);
+
+    expect(
+      source.priceFor('AAPL', asOf: DateTime.utc(2026, 1, 1, 23))?.price,
+      Decimal.fromInt(200),
+    );
+  });
+
   test(
     'resolved source never leaks a future observation into an as-of read',
     () {

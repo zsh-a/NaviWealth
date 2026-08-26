@@ -172,17 +172,19 @@ class PriceRepository {
     if (perUnit <= Decimal.zero) {
       throw ArgumentError.value(perUnit, 'perUnit', 'must be positive');
     }
+    final observedOnUtc = observedOn.toUtc();
+    final normalizedObservedOn = _floorToUtcDay(observedOnUtc);
     final stamp = await _stamper.stamp();
     final id = dailySnapshotId(
       unit: unit,
       quoteCurrency: quoteCurrency,
-      observedOn: observedOn,
+      observedOn: normalizedObservedOn,
     );
     final domain = PriceObservation(
       id: id,
       unit: unit,
       quoteCurrency: quoteCurrency,
-      observedOn: observedOn,
+      observedOn: observedOnUtc,
       perUnit: perUnit,
       source: source,
       sync: SyncMeta(
@@ -200,7 +202,7 @@ class PriceRepository {
               id: id,
               unit: unit,
               quoteCurrency: quoteCurrency,
-              observedOn: observedOn,
+              observedOn: observedOnUtc,
               perUnit: perUnit,
               source: source,
               ownerUserId: stamp.ownerUserId,
@@ -365,12 +367,12 @@ class PriceRepository {
   }
 
   static int _compareLatest(PriceObservation a, PriceObservation b) {
-    final bySource = _sourcePriority(
-      b.source,
-    ).compareTo(_sourcePriority(a.source));
-    if (bySource != 0) return bySource;
-    final byObserved = b.observedOn.compareTo(a.observedOn);
+    final byObserved = _floorToUtcDay(b.observedOn)
+        .compareTo(_floorToUtcDay(a.observedOn));
     if (byObserved != 0) return byObserved;
+    final bySource = _sourcePriority(b.source)
+        .compareTo(_sourcePriority(a.source));
+    if (bySource != 0) return bySource;
     final byUpdated = b.sync.updatedAt.compareTo(a.sync.updatedAt);
     if (byUpdated != 0) return byUpdated;
     return b.sync.hlc.compareTo(a.sync.hlc);

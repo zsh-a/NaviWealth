@@ -155,6 +155,37 @@ void main() {
       );
     });
 
+    test('floors UTC end-of-day samples to the same UTC FX day', () {
+      final converter = FxRateCurrencyConverter(
+        InMemoryFxRateLookup([
+          rate(date: day(2026, 1, 15), rate: '7.0'),
+          rate(date: day(2026, 1, 16), rate: '8.0'),
+        ]),
+      );
+      expect(
+        converter.convert(
+          Money.fromInt(100, 'USD'),
+          'CNY',
+          on: DateTime.utc(2026, 1, 15, 23, 59, 59),
+        ),
+        Money.parse('700.0', 'CNY'),
+      );
+    });
+
+    test('does not use a future FX rate for a nearby earlier day', () {
+      final converter = FxRateCurrencyConverter(
+        InMemoryFxRateLookup([rate(date: day(2026, 1, 3), rate: '7.0')]),
+      );
+      expect(
+        () => converter.convert(
+          Money.fromInt(100, 'USD'),
+          'CNY',
+          on: day(2026, 1, 1),
+        ),
+        throwsA(isA<FxRateNotFoundError>()),
+      );
+    });
+
     test(
       'prefers most recent observation when forward and inverse conflict',
       () {

@@ -4,6 +4,19 @@ import 'package:naviwealth/features/finance/assets/physical/data/physical_asset_
 
 void main() {
   group('PhysicalAssetMeta', () {
+    test('normalizes calendar dates to UTC without timezone drift', () {
+      final meta = PhysicalAssetMeta(
+        purchaseDate: DateTime(2024, 1, 15, 0, 30),
+        purchasePrice: Decimal.fromInt(100),
+      );
+
+      expect(meta.purchaseDate, DateTime.utc(2024, 1, 15));
+      expect(
+        PhysicalAssetMeta.tryDecode(meta.encode())?.purchaseDate,
+        DateTime.utc(2024, 1, 15),
+      );
+    });
+
     test('round-trips encode/decode for real estate fields', () {
       final meta = PhysicalAssetMeta(
         address: '123 Main St',

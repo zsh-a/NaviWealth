@@ -21,16 +21,17 @@ SyncMeta _meta() => SyncMeta(
   hlc: Hlc.zero('test'),
 );
 
-InvestmentPortfolio _portfolio(String id) => InvestmentPortfolio(
-  id: id,
-  name: id,
-  baseCurrency: 'USD',
-  goalId: null,
-  color: null,
-  createdAt: DateTime.utc(2026, 6, 30),
-  archived: false,
-  sync: _meta(),
-);
+InvestmentPortfolio _portfolio(String id, {DateTime? createdAt}) =>
+    InvestmentPortfolio(
+      id: id,
+      name: id,
+      baseCurrency: 'USD',
+      goalId: null,
+      color: null,
+      createdAt: createdAt ?? DateTime.utc(2026, 6, 30),
+      archived: false,
+      sync: _meta(),
+    );
 
 PortfolioCapitalAssignment _assignment({
   required String id,
@@ -66,9 +67,10 @@ class _SameCurrencyConverter implements CurrencyConverter {
 }
 
 class _SampledHoldings implements SampledHoldingService {
-  const _SampledHoldings({this.growsOnLastDay = false});
+  const _SampledHoldings({this.growsOnLastDay = false, this.growsAfter});
 
   final bool growsOnLastDay;
+  final DateTime? growsAfter;
 
   Lot get lot => Lot(
     id: 'lot',
@@ -84,7 +86,11 @@ class _SampledHoldings implements SampledHoldingService {
 
   HoldingSample _sample(DateTime asOf) {
     final unitPrice =
-        growsOnLastDay && asOf.year == 2026 && asOf.month == 7 && asOf.day == 30
+        (growsOnLastDay &&
+                asOf.year == 2026 &&
+                asOf.month == 7 &&
+                asOf.day == 30) ||
+            (growsAfter != null && !asOf.isBefore(growsAfter!))
         ? _d('110')
         : _d('100');
     final value = unitPrice * _d('10');
@@ -226,4 +232,33 @@ void main() {
     expect(destination.periodNetFlow, _d('1000'));
     expect(destination.periodPerformanceRatio, closeTo(0.1, 0.000001));
   });
+
+  test(
+    'values an assignment removal at its event price between samples',
+    () async {
+      final service = PortfolioTrendService(
+        holdings: _SampledHoldings(growsAfter: DateTime.utc(2026, 1, 3)),
+        converter: converter,
+        baseCurrency: 'USD',
+      );
+      final result = await service.computeMany(
+        portfolios: [_portfolio('source', createdAt: DateTime.utc(2026, 1, 1))],
+        assignmentHistory: [
+          _assignment(
+            id: 'source-period',
+            portfolioId: 'source',
+            assignedAt: DateTime.utc(2026, 1, 1),
+            unassignedAt: DateTime.utc(2026, 1, 2),
+          ),
+        ],
+        range: PortfolioTrendRange.all,
+        now: DateTime.utc(2026, 7, 30),
+      );
+
+      final series = result['source']!;
+      expect(series.currentValue, Decimal.zero);
+      expect(series.periodNetFlow, _d('-1000'));
+      expect(series.periodPerformanceRatio, closeTo(0, 0.000001));
+    },
+  );
 }

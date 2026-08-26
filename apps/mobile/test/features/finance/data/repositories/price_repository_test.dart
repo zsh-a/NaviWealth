@@ -91,6 +91,7 @@ void main() {
         perUnit: Decimal.parse('180'),
         source: 'auto:yfinance',
       );
+      expect(auto.observedOn, day);
       await repo.upsertDailySnapshot(
         unit: 'us_stock:AAPL',
         quoteCurrency: 'USD',

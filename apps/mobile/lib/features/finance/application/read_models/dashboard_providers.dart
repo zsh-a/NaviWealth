@@ -91,14 +91,74 @@ final dashboardSelectedRangeProvider = StateProvider<DashboardRangePreset>(
 final dashboardCustomRangeProvider =
     StateProvider<({DateTime from, DateTime to})?>((ref) => null);
 
+/// Best-known first date for user-owned financial data. The `all` preset uses
+/// this instead of an arbitrary five-year cutoff. It intentionally combines
+/// ledger-backed observations, physical-asset purchase dates, liability
+/// start dates, and the earliest persisted price row; sources that have no
+/// event date fall back to their last-write timestamp until richer history is
+/// available.
+final dashboardEarliestDataDateProvider = Provider<DateTime?>((ref) {
+  final assets = ref.watch(allAssetsStreamProvider).value ?? const <Asset>[];
+  final prices =
+      ref.watch(dashboardPriceRowsProvider).value ?? const <PriceRow>[];
+  final manual =
+      ref.watch(dashboardManualAssetValuationsProvider).value ??
+      const <ManualAssetValuation>[];
+  final physical =
+      ref.watch(physicalAssetsListProvider).value ?? const <PhysicalAsset>[];
+  final liabilities =
+      ref.watch(liabilitiesStreamProvider).value ?? const <Liability>[];
+
+  final candidates = <DateTime>[];
+  final priceDatesByAsset = <(String, String), DateTime>{};
+  for (final row in prices) {
+    final key = (row.unit, row.quoteCurrency.trim().toUpperCase());
+    final current = priceDatesByAsset[key];
+    if (current == null || row.observedOn.isBefore(current)) {
+      priceDatesByAsset[key] = row.observedOn;
+    }
+  }
+  final manualDatesByAsset = <String, DateTime>{};
+  for (final valuation in manual) {
+    for (final point in valuation.observations) {
+      final current = manualDatesByAsset[valuation.asset.id];
+      if (current == null || point.observedOn.isBefore(current)) {
+        manualDatesByAsset[valuation.asset.id] = point.observedOn;
+      }
+    }
+  }
+  for (final asset in assets) {
+    final priceKey = (asset.id, asset.currency.trim().toUpperCase());
+    candidates.add(
+      priceDatesByAsset[priceKey] ??
+          manualDatesByAsset[asset.id] ??
+          asset.sync.updatedAt,
+    );
+  }
+  for (final asset in physical) {
+    candidates.add(asset.purchaseDate);
+    for (final point in asset.valuationHistory) {
+      candidates.add(point.asOf);
+    }
+  }
+  for (final liability in liabilities) {
+    candidates.add(liability.startDate ?? liability.sync.updatedAt);
+  }
+  if (candidates.isEmpty) return null;
+  final normalized = candidates.map(_floorToUtcDay).toList()..sort();
+  return normalized.first;
+});
+
 /// Resolved [DashboardTimeRange] for the trend chart. Recomputes whenever
-/// the selected preset (or the custom range) changes.
+/// the selected preset, available history, or custom range changes.
 final dashboardTimeRangeProvider = Provider<DashboardTimeRange>((ref) {
   final preset = ref.watch(dashboardSelectedRangeProvider);
   final custom = ref.watch(dashboardCustomRangeProvider);
+  final earliestDataDate = ref.watch(dashboardEarliestDataDateProvider);
   return DashboardTimeRange.resolve(
     preset: preset,
     now: DateTime.now(),
+    earliestDataDate: earliestDataDate,
     customFrom: custom?.from,
     customTo: custom?.to,
   );
@@ -196,6 +256,11 @@ List<DashboardPhysicalAsset> dashboardPhysicalAssetsFrom(
         address: asset.address,
         autoDepreciation: asset.autoDepreciation,
         annualResidualRate: asset.annualResidualRate,
+        valuationHistory: [
+          for (final point in asset.valuationHistory)
+            if (point.kind != ValuationPointKind.projected)
+              DashboardPhysicalValuation(asOf: point.asOf, value: point.value),
+        ],
       ),
   ];
 }
@@ -337,4 +402,9 @@ DateTime _endOfUtcDay(DateTime date) {
     utc.month,
     utc.day + 1,
   ).subtract(const Duration(microseconds: 1));
+}
+
+DateTime _floorToUtcDay(DateTime date) {
+  final utc = date.toUtc();
+  return DateTime.utc(utc.year, utc.month, utc.day);
 }

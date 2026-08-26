@@ -7,6 +7,7 @@ import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../data/physical_asset.dart';
 import '../data/providers.dart';
 import '../domain/vehicle_depreciation.dart';
@@ -209,14 +210,13 @@ class _DetailBody extends ConsumerWidget {
       return null;
     }
     final estimate = VehicleDepreciation.estimate(
-      purchasePrice: a.purchasePrice,
-      purchaseDate: a.purchaseDate,
+      purchasePrice: a.currentValuation,
+      purchaseDate: a.lastValuationAt ?? a.purchaseDate,
       annualResidualRate: a.annualResidualRate!,
       asOf: DateTime.now(),
     );
-    return NumberFormat.simpleCurrency(
-      name: a.currency,
-    ).format(estimate.toDouble());
+    return NumberFormat.simpleCurrency(name: a.currency)
+        .format(estimate.toDouble());
   }
 
   List<ValuationPoint> _projectionFor(
@@ -226,18 +226,21 @@ class _DetailBody extends ConsumerWidget {
     if (!a.isVehicle || !a.autoDepreciation || a.annualResidualRate == null) {
       return const [];
     }
-    final lastManual = history
-        .where((p) => p.kind != ValuationPointKind.projected)
-        .fold<DateTime?>(
-          null,
-          (acc, p) => acc == null || p.asOf.isAfter(acc) ? p.asOf : acc,
-        );
-    final from = lastManual ?? a.purchaseDate;
+    ValuationPoint? lastManual;
+    for (final point in history) {
+      if (point.kind == ValuationPointKind.projected) continue;
+      final previous = lastManual;
+      if (previous == null || !point.asOf.isBefore(previous.asOf)) {
+        lastManual = point;
+      }
+    }
+    final from = lastManual?.asOf ?? a.purchaseDate;
+    final anchorValue = lastManual?.value ?? a.purchasePrice;
     final to = DateTime.now();
     if (!to.isAfter(from)) return const [];
     return VehicleDepreciation.projectMonthly(
-      purchasePrice: a.purchasePrice,
-      purchaseDate: a.purchaseDate,
+      purchasePrice: anchorValue,
+      purchaseDate: from,
       annualResidualRate: a.annualResidualRate!,
       from: from,
       to: to,
@@ -261,9 +264,8 @@ class _FactsCard extends StatelessWidget {
       ),
       (
         l10n.physicalAssetFieldPurchasePrice,
-        NumberFormat.simpleCurrency(
-          name: asset.currency,
-        ).format(asset.purchasePrice.toDouble()),
+        NumberFormat.simpleCurrency(name: asset.currency)
+            .format(asset.purchasePrice.toDouble()),
       ),
       if (asset.address != null && asset.address!.isNotEmpty)
         (l10n.physicalAssetFieldAddress, asset.address!),

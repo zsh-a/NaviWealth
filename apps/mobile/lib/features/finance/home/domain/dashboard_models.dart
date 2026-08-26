@@ -23,6 +23,14 @@ enum AssetCategory {
 }
 
 @immutable
+class DashboardPhysicalValuation {
+  const DashboardPhysicalValuation({required this.asOf, required this.value});
+
+  final DateTime asOf;
+  final Decimal value;
+}
+
+@immutable
 class DashboardPhysicalAsset {
   const DashboardPhysicalAsset({
     required this.id,
@@ -36,6 +44,7 @@ class DashboardPhysicalAsset {
     this.address,
     this.autoDepreciation = false,
     this.annualResidualRate,
+    this.valuationHistory = const [],
   });
 
   final String id;
@@ -49,6 +58,11 @@ class DashboardPhysicalAsset {
   final String? address;
   final bool autoDepreciation;
   final Decimal? annualResidualRate;
+
+  /// Actual purchase/manual valuation points used by the historical trend.
+  /// Keeping this dashboard-owned type avoids coupling the home read model
+  /// to the physical-assets persistence implementation.
+  final List<DashboardPhysicalValuation> valuationHistory;
 }
 
 /// One row in a category breakdown drill-down.

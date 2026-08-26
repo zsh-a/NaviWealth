@@ -49,12 +49,15 @@ void main() {
         currency: 'USD',
         purchaseDate: purchaseDate,
         purchasePrice: Decimal.parse('42000'),
+        currentValuation: Decimal.parse('40000'),
         annualResidualRate: Decimal.parse('0.82'),
       );
 
       expect(asset.name, 'Model 3');
       expect(asset.isVehicle, isTrue);
       expect(asset.purchasePrice, Decimal.parse('42000'));
+      expect(asset.currentValuation, Decimal.parse('40000'));
+      expect(asset.lastValuationAt, isNull);
       expect(asset.annualResidualRate, Decimal.parse('0.82'));
 
       final history = await repo.getValuationHistory(asset.id);
@@ -129,6 +132,9 @@ void main() {
         ValuationPointKind.manual,
       ]);
       expect(history.last.value, Decimal.parse('24000'));
+      final updated = await repo.getById(asset.id);
+      expect(updated?.currentValuation, Decimal.parse('24000'));
+      expect(updated?.lastValuationAt, DateTime.utc(2024, 1, 1));
       expect(
         history.last.asOf.isAtSameMomentAs(DateTime.utc(2024, 1, 1)),
         isTrue,
@@ -147,6 +153,21 @@ void main() {
         asOf: DateTime.utc(2024, 1, 1),
       ),
       throwsStateError,
+    );
+
+    final beforePurchase = await repo.createVehicle(
+      name: 'Future car',
+      currency: 'USD',
+      purchaseDate: DateTime.utc(2023, 1, 1),
+      purchasePrice: Decimal.parse('30000'),
+    );
+    await expectLater(
+      repo.updateValuation(
+        assetId: beforePurchase.id,
+        newValuation: Decimal.parse('29000'),
+        asOf: DateTime.utc(2022, 12, 31),
+      ),
+      throwsArgumentError,
     );
 
     final asset = await repo.createVehicle(

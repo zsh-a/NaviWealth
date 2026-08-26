@@ -1,5 +1,6 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/foundation.dart';
+import 'package:naviwealth/features/finance/assets/physical/domain/vehicle_depreciation.dart';
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -211,8 +212,8 @@ class TrendChartSegment {
 /// signals:
 ///
 ///   1. asset value over time (held flat for cash / deposits / wealth
-///      products until valuation history lands; interpolated from
-///      purchase-price → current-valuation for real estate / vehicles);
+///      products until valuation history lands; physical assets replay their
+///      valuation observations and vehicles may project depreciation);
 ///   2. outstanding liability principal over time (walked through the
 ///      persisted amortization schedule via [AmortizationLiabilitySource]);
 ///   3. the difference of the two, expressed in [baseCurrency].
@@ -371,12 +372,13 @@ class DashboardTrendBuilder {
     }
     for (final pa in physicalAssets) {
       final key = 'physical:${pa.id}';
-      if (pa.purchaseDate.isAfter(date)) {
+      if (_floorToUtcDay(pa.purchaseDate).isAfter(_floorToUtcDay(date))) {
         qualities[key] = TrendComponentQuality.unheld;
         continue;
       }
-      qualities[key] = TrendComponentQuality.observed;
-      final value = _valueOfPhysicalAt(pa, date);
+      final valued = _valueOfPhysicalAt(pa, date);
+      qualities[key] = valued.quality;
+      final value = valued.value;
       if (value.sign <= 0) continue;
       final amount = Money(value, pa.currency);
       final converted = _addInBase(total, amount, date, pa.id, report);
@@ -480,28 +482,126 @@ class DashboardTrendBuilder {
     return estimated ? TrendPointQuality.estimated : TrendPointQuality.complete;
   }
 
-  /// Linear-interpolated value of a physical asset at [date]. Anchors are
-  /// `(purchaseDate, purchasePrice)` and `(lastValuationAt, currentValuation)`.
-  /// Outside both anchors we clamp to the nearest endpoint — the alternative
-  /// of extrapolating produced visible artifacts on the trend chart for
-  /// new purchases.
-  Decimal _valueOfPhysicalAt(DashboardPhysicalAsset pa, DateTime date) {
-    final t0 = pa.purchaseDate;
-    final v0 = pa.purchasePrice;
-    final t1 = pa.lastValuationAt;
-    final v1 = pa.currentValuation;
-    if (t1 == null || !t1.isAfter(t0) || v0 == v1) {
-      return v1;
+  /// Value a physical asset at a historical sample date.
+  ///
+  /// Manual valuations are observations, not endpoints for an invented
+  /// straight line: between observations we carry forward the latest known
+  /// value. Vehicles with automatic depreciation project only after the last
+  /// manual observation, using that observation as the model anchor.
+  _PhysicalAssetValue _valueOfPhysicalAt(
+    DashboardPhysicalAsset pa,
+    DateTime date,
+  ) {
+    final asOf = _floorToUtcDay(date);
+    if (pa.valuationHistory.isEmpty) {
+      return _legacyPhysicalValue(pa, asOf);
     }
-    if (!date.isAfter(t0)) return v0;
-    if (!date.isBefore(t1)) return v1;
-    final span = t1.difference(t0).inDays;
-    if (span == 0) return v1;
-    final pos = date.difference(t0).inDays;
-    final fraction = Decimal.fromInt(pos) / Decimal.fromInt(span);
-    final fractionDecimal = fraction.toDecimal(scaleOnInfinitePrecision: 8);
-    return v0 + ((v1 - v0) * fractionDecimal);
+    DashboardPhysicalValuation? latest;
+    for (final point in [
+      DashboardPhysicalValuation(
+        asOf: pa.purchaseDate,
+        value: pa.purchasePrice,
+      ),
+      ...pa.valuationHistory,
+    ]) {
+      final pointDay = _floorToUtcDay(point.asOf);
+      final latestDay = latest == null ? null : _floorToUtcDay(latest.asOf);
+      // The history is already chronologically ordered by the repository.
+      // Allow the later point to win on the same day so a manual valuation
+      // overrides the synthetic purchase baseline deterministically.
+      if (!pointDay.isAfter(asOf) &&
+          (latestDay == null || !pointDay.isBefore(latestDay))) {
+        latest = point;
+      }
+    }
+
+    if (latest != null) {
+      final rate = pa.annualResidualRate;
+      if (pa.autoDepreciation &&
+          pa.type == AssetType.vehicle &&
+          rate != null &&
+          asOf.isAfter(_floorToUtcDay(latest.asOf))) {
+        return _PhysicalAssetValue(
+          value: VehicleDepreciation.estimate(
+            purchasePrice: latest.value,
+            purchaseDate: _floorToUtcDay(latest.asOf),
+            annualResidualRate: rate,
+            asOf: asOf,
+          ),
+          quality: TrendComponentQuality.estimated,
+        );
+      }
+      return _PhysicalAssetValue(
+        value: latest.value,
+        quality: TrendComponentQuality.observed,
+      );
+    }
+
+    return _PhysicalAssetValue(
+      value: pa.purchasePrice,
+      quality: TrendComponentQuality.observed,
+    );
   }
+
+  // Preserve compatibility for callers constructing the old compact DTO
+  // without history. Production assets always carry the history above.
+  _PhysicalAssetValue _legacyPhysicalValue(
+    DashboardPhysicalAsset pa,
+    DateTime asOf,
+  ) {
+    final t0 = _floorToUtcDay(pa.purchaseDate);
+    final t1 = pa.lastValuationAt == null
+        ? null
+        : _floorToUtcDay(pa.lastValuationAt!);
+    if (t1 == null ||
+        !t1.isAfter(t0) ||
+        pa.purchasePrice == pa.currentValuation) {
+      return _PhysicalAssetValue(
+        value: pa.currentValuation,
+        quality: TrendComponentQuality.observed,
+      );
+    }
+    if (!asOf.isAfter(t0)) {
+      return _PhysicalAssetValue(
+        value: pa.purchasePrice,
+        quality: TrendComponentQuality.observed,
+      );
+    }
+    if (!asOf.isBefore(t1)) {
+      return _PhysicalAssetValue(
+        value: pa.currentValuation,
+        quality: TrendComponentQuality.observed,
+      );
+    }
+    final span = t1.difference(t0).inDays;
+    if (span == 0) {
+      return _PhysicalAssetValue(
+        value: pa.currentValuation,
+        quality: TrendComponentQuality.observed,
+      );
+    }
+    final fraction =
+        (Decimal.fromInt(asOf.difference(t0).inDays) / Decimal.fromInt(span))
+            .toDecimal(scaleOnInfinitePrecision: 8);
+    return _PhysicalAssetValue(
+      value:
+          pa.purchasePrice +
+          ((pa.currentValuation - pa.purchasePrice) * fraction),
+      quality: TrendComponentQuality.estimated,
+    );
+  }
+}
+
+class _PhysicalAssetValue {
+  const _PhysicalAssetValue({required this.value, required this.quality});
+
+  final Decimal value;
+  final TrendComponentQuality quality;
+}
+
+DateTime _floorToUtcDay(DateTime date) {
+  final utc = date.toUtc();
+  return DateTime.utc(utc.year, utc.month, utc.day);
 }
 
 List<DateTime> dashboardTrendSampleDates(DashboardTimeRange range) {

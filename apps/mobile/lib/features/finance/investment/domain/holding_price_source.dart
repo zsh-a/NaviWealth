@@ -97,9 +97,26 @@ class InMemoryHoldingPriceSource implements HoldingPriceSource {
       map.putIfAbsent(o.assetId, () => []).add(o);
     }
     for (final list in map.values) {
-      list.sort((a, b) => a.asOf.compareTo(b.asOf));
+      list.sort((a, b) {
+        final byDate = a.asOf.compareTo(b.asOf);
+        if (byDate != 0) return byDate;
+        return _sourcePriority(a.source).compareTo(_sourcePriority(b.source));
+      });
     }
     return map;
+  }
+
+  static int _sourcePriority(String? source) {
+    final normalized = source?.trim().toLowerCase() ?? '';
+    if (normalized == 'manual' || normalized.startsWith('manual:')) return 3;
+    if (normalized == 'trade' ||
+        normalized.startsWith('trade:') ||
+        normalized == 'import' ||
+        normalized.startsWith('import:')) {
+      return 2;
+    }
+    if (normalized == 'auto' || normalized.startsWith('auto:')) return 1;
+    return 0;
   }
 }
 

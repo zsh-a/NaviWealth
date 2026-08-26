@@ -14,13 +14,14 @@ import 'package:decimal/decimal.dart';
 class PhysicalAssetMeta {
   PhysicalAssetMeta({
     this.address,
-    required this.purchaseDate,
+    required DateTime purchaseDate,
     required this.purchasePrice,
     this.linkedLiabilityId,
     this.annualResidualRate,
     this.autoDepreciation = false,
     Map<String, Object?>? extra,
-  }) : extra = extra ?? const <String, Object?>{};
+  }) : purchaseDate = _calendarDay(purchaseDate),
+       extra = extra ?? const <String, Object?>{};
 
   /// Optional street address (real-estate only). Free-form text, not parsed.
   final String? address;
@@ -70,6 +71,9 @@ class PhysicalAssetMeta {
     _kAnnualResidualRate,
     _kAutoDepreciation,
   };
+
+  static DateTime _calendarDay(DateTime value) =>
+      DateTime.utc(value.year, value.month, value.day);
 
   Map<String, Object?> toJson() {
     final out = <String, Object?>{

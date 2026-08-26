@@ -26,11 +26,13 @@ class VehicleDepreciation {
     required Decimal annualResidualRate,
     required DateTime asOf,
   }) {
-    if (!asOf.isAfter(purchaseDate)) return purchasePrice;
+    final purchaseDay = _calendarDay(purchaseDate);
+    final asOfDay = _calendarDay(asOf);
+    if (!asOfDay.isAfter(purchaseDay)) return purchasePrice;
     if (annualResidualRate <= Decimal.zero) return Decimal.zero;
     if (annualResidualRate >= Decimal.one) return purchasePrice;
 
-    final daysSincePurchase = asOf.difference(purchaseDate).inDays;
+    final daysSincePurchase = asOfDay.difference(purchaseDay).inDays;
     // 365.2425 ≈ Gregorian average year length, scaled by 10000 so we can
     // do all the arithmetic in integers and stay bit-stable across devices.
     const int daysPerYearTimes10000 = 3652425;
@@ -69,13 +71,16 @@ class VehicleDepreciation {
     required DateTime to,
     int maxPoints = 96,
   }) {
-    if (!to.isAfter(from)) return const [];
-    final totalMonths = ((to.year - from.year) * 12) + (to.month - from.month);
+    final start = _calendarDay(from);
+    final end = _calendarDay(to);
+    if (!end.isAfter(start)) return const [];
+    final totalMonths =
+        ((end.year - start.year) * 12) + (end.month - start.month);
     if (totalMonths <= 0) return const [];
     final stride = (totalMonths / maxPoints).ceil().clamp(1, totalMonths);
     final out = <ValuationPoint>[];
     for (var m = 0; m <= totalMonths; m += stride) {
-      final at = DateTime(from.year, from.month + m, from.day);
+      final at = DateTime.utc(start.year, start.month + m, start.day);
       final value = estimate(
         purchasePrice: purchasePrice,
         purchaseDate: purchaseDate,
@@ -92,4 +97,7 @@ class VehicleDepreciation {
     }
     return out;
   }
+
+  static DateTime _calendarDay(DateTime value) =>
+      DateTime.utc(value.year, value.month, value.day);
 }
