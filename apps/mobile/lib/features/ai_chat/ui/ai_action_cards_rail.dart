@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/composition/ask_ai.dart';
 import '../../../core/ai/composition/chat_rail_content.dart';
@@ -9,6 +8,7 @@ import '../../../core/ai/composition/chat_rail_provider.dart';
 import '../../../core/async/deferred_provider_snapshot.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'ai_navigation.dart';
 
 /// Horizontal rail of "next action" cards rendered between the AI
 /// context summary and the chat conversation.
@@ -91,7 +91,7 @@ class _ActionCard extends ConsumerWidget {
     final route = item.route;
     final intent = item.intent;
     final onPress = route != null
-        ? () => context.push(route)
+        ? () => pushFromAiSurface(context, route)
         : intent == null
         ? null
         : () => askAi(

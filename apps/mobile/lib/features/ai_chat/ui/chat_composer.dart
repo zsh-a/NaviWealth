@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/llm_credentials/providers.dart';
 import '../../../core/ai/session/interaction_state.dart';
@@ -252,7 +251,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
       final message = speechRecognitionErrorMessage(l10n, error.code);
       AppMessenger.show(context, ToastKind.error, message);
       if (error.code == SpeechRecognitionErrorCode.modelNotInstalled) {
-        unawaited(context.push(SettingsRoutes.aiModels));
+        pushFromAiSurface(context, SettingsRoutes.aiModels);
       }
     } on Object {
       if (mounted) {

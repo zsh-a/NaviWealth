@@ -15,6 +15,9 @@ import '../tokens/motion_tokens.dart';
 ///   translate plus a fade. A full screen-width slide reads as visual noise
 ///   on wide windows; translate + fade keeps the transition calm and lets
 ///   the Hero do the visual work.
+/// * Outgoing pages stay static while the next page enters. This keeps large
+///   render trees, especially AI conversations, out of the per-frame
+///   transition work.
 /// * Reduce motion — a plain cross-fade.
 ///
 /// Registering this at the theme level means plain `GoRoute(builder:)`
@@ -72,34 +75,12 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
-    final incoming = buildAppTransition(context, animation, child);
-    if (AppMotionPolicy.reduceMotion(context)) {
-      // buildAppTransition already resolved to a plain cross-fade.
-      return incoming;
-    }
-    // Outgoing-page parallax (iOS-style): while the next route pushes in,
-    // this page drifts a fraction of its width in the exit direction and
-    // dims slightly instead of freezing underneath the incoming page.
-    final curved = CurvedAnimation(
-      parent: secondaryAnimation,
-      curve: Motion.emphasizedDecelerate,
-      reverseCurve: Motion.standardAccelerate,
-    );
-    final width = MediaQuery.sizeOf(context).width;
-    // Mobile exits by ~30% of the page width; wide viewports keep the same
-    // calm 16dp translate as the entrance so the shift stays subtle.
-    final exitFraction = Breakpoints.isMobile(width)
-        ? 0.3
-        : (width > 0 ? AppSpacing.s16 / width : 0.0);
-    return FadeTransition(
-      opacity: Tween<double>(begin: 1, end: 0.75).animate(curved),
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: Offset.zero,
-          end: Offset(-exitFraction, 0),
-        ).animate(curved),
-        child: incoming,
-      ),
-    );
+    // Keep the outgoing page static while a new route enters. Moving and
+    // dimming a large page (especially an AI conversation with Markdown,
+    // tool cards, and charts) forces its entire render tree to participate in
+    // the transition. The incoming page already supplies the visual cue;
+    // leaving the old page static also makes every AI-originated deep link
+    // cheaper without requiring route-specific knowledge here.
+    return buildAppTransition(context, animation, child);
   }
 }

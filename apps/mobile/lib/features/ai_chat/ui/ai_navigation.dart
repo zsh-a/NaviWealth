@@ -18,6 +18,12 @@ String aiHistoryLocation(String sessionId) {
   ).toString();
 }
 
+/// Pushes a route from an AI surface through the shared router seam.
+///
+/// Keep AI-originated links here instead of calling `context.push` at each
+/// card/indicator. The router owns the lightweight AI destination transition;
+/// this seam keeps future AI navigation changes from reintroducing one-off
+/// pushes that bypass it.
 void pushFromAiSurface(BuildContext context, String location) {
   context.push(location);
 }

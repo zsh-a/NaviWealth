@@ -85,6 +85,7 @@ import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings
 import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
+import 'package:naviwealth/features/settings/ui/ai/ai_transparency_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -411,6 +412,26 @@ void main() {
         await tester.pumpWidget(const SizedBox.shrink());
       }
     });
+
+    testWidgets(
+      'AI transparency detail skips the Settings and trace-list parents',
+      (tester) async {
+        const requestId = 'trace-1';
+        final container = await _pumpAt(
+          tester,
+          initialLocation: AppRoutes.settingsAiTransparencyDetail(requestId),
+        );
+
+        expect(
+          _currentPath(container),
+          AppRoutes.settingsAiTransparencyDetail(requestId),
+        );
+        expect(find.byType(AiTransparencyDetailPage), findsOneWidget);
+        expect(find.byType(AiTransparencyPage), findsNothing);
+        expect(find.byType(SettingsPage), findsNothing);
+        await _drainTimers(tester);
+      },
+    );
 
     testWidgets('all Agent outcome action routes resolve in the real router', (
       tester,

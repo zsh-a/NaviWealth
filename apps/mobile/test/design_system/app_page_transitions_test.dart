@@ -39,10 +39,10 @@ List<SlideTransition> _ancestorSlides(WidgetTester tester) => tester
     .toList();
 
 void main() {
-  testWidgets('outgoing page slides and dims while the next route pushes in', (
+  testWidgets('outgoing page stays static while the next route pushes in', (
     tester,
   ) async {
-    // Page fully entered; only the parallax (secondary) animation may move it.
+    // Page fully entered; the secondary animation must not move or dim it.
     final primary = AnimationController(
       vsync: tester,
       duration: Motion.pageTransition,
@@ -60,24 +60,19 @@ void main() {
       _buildTransition(primary: primary, secondary: secondary),
     );
 
-    // iOS-style parallax: the outgoing page drifts in the exit direction
-    // (negative x, bounded at ~30% width) and fades slightly instead of
-    // freezing underneath the incoming page.
-    final slides = _ancestorSlides(tester);
-    final parallax = slides.where((s) => s.position.value.dx < 0).toList();
-    expect(parallax, hasLength(1));
-    expect(parallax.single.position.value.dx, greaterThanOrEqualTo(-0.3));
-
-    final fade = tester.widget<FadeTransition>(
+    expect(
+      _ancestorSlides(tester).where((s) => s.position.value.dx < 0),
+      isEmpty,
+    );
+    expect(
       find.ancestor(
         of: find.text('page'),
         matching: find.byType(FadeTransition),
       ),
+      findsNothing,
     );
-    expect(fade.opacity.value, lessThan(1));
-    expect(fade.opacity.value, greaterThan(0.75));
 
-    // At rest (nothing pushing over this page) there is no offset or dim.
+    // At rest (nothing pushing over this page) the result is unchanged too.
     secondary.value = 0;
     await tester.pump();
     expect(
@@ -85,16 +80,11 @@ void main() {
       isEmpty,
     );
     expect(
-      tester
-          .widget<FadeTransition>(
-            find.ancestor(
-              of: find.text('page'),
-              matching: find.byType(FadeTransition),
-            ),
-          )
-          .opacity
-          .value,
-      1,
+      find.ancestor(
+        of: find.text('page'),
+        matching: find.byType(FadeTransition),
+      ),
+      findsNothing,
     );
   });
 

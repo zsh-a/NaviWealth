@@ -67,36 +67,52 @@ class AiTraceWaterfall extends StatefulWidget {
 
 class _AiTraceWaterfallState extends State<AiTraceWaterfall> {
   String? _selectedId;
+  late List<SpanRow> _rows;
+  late Map<String, AiSpan> _spansById;
+  late int _scaleMs;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _rebuildLayoutModel();
+  }
+
+  @override
+  void didUpdateWidget(covariant AiTraceWaterfall oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trace != widget.trace) {
+      _selectedId = null;
+      _rebuildLayoutModel();
+    }
+  }
+
+  void _rebuildLayoutModel() {
     final rows = buildSpanTree(widget.trace.spans);
-    // Waterfall reference: longest of declared turn duration and the
-    // furthest span end, never zero (avoids div-by-zero on instant
-    // turns).
     var scale = widget.trace.totalDurationMs;
     for (final r in rows) {
       if (r.span.endOffsetMs > scale) scale = r.span.endOffsetMs;
     }
-    if (scale <= 0) scale = 1;
+    _rows = rows;
+    _spansById = {for (final r in rows) r.span.id: r.span};
+    _scaleMs = scale <= 0 ? 1 : scale;
+  }
 
-    final selected = _selectedId == null
-        ? null
-        : rows
-              .map((r) => r.span)
-              .where((s) => s.id == _selectedId)
-              .cast<AiSpan?>()
-              .firstWhere((s) => true, orElse: () => null);
+  @override
+  Widget build(BuildContext context) {
+    // Span tree construction and scale calculation are intentionally kept
+    // out of build. Selecting a row only changes the inspector; it must not
+    // re-sort and re-walk every span in the trace on each tap.
+    final selected = _selectedId == null ? null : _spansById[_selectedId];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _RollupHeader(trace: widget.trace),
         const SizedBox(height: AppSpacing.s16),
-        for (final r in rows)
+        for (final r in _rows)
           _WaterfallRow(
             row: r,
-            scaleMs: scale,
+            scaleMs: _scaleMs,
             selected: r.span.id == _selectedId,
             onTap: () => setState(
               () => _selectedId = r.span.id == _selectedId ? null : r.span.id,

@@ -328,7 +328,11 @@ void main() {
       (tester) async {
         final router = await _boot(tester, AppRoutes.settingsAiLlm);
         expect(_path(router), AppRoutes.settingsAiLlm);
-        expect(router.canPop(), isTrue, reason: 'parent /settings is in stack');
+        expect(
+          router.canPop(),
+          isFalse,
+          reason: 'AI settings routes are standalone deep-link pages',
+        );
 
         final first = await tester.binding.handlePopRoute();
         await _drain(tester);

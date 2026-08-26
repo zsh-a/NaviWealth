@@ -1,4 +1,5 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,6 +12,8 @@ import '../../core/shell/auth_route_paths.dart';
 import '../../core/shell/deferred_route.dart';
 import '../../core/shell/route_error_page.dart';
 import '../../core/shell/settings_route_paths.dart';
+import '../../design_system/tokens/app_motion_policy.dart';
+import '../../design_system/tokens/motion_tokens.dart';
 import '../../design_system/widgets/system_back_scope.dart';
 import '../../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../../features/auth/ui/devices_page.dart' deferred as devices_lib;
@@ -106,6 +109,14 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
         builder: (context, state) =>
             const ExitConfirmingSystemBackScope(child: OnboardingPage()),
       ),
+      // AI settings are deliberately sibling routes rather than children of
+      // `/settings`. An AI surface can open these pages while carrying a
+      // large message list; keeping the settings overview in the matched
+      // stack would build and paint it during the transition for no user
+      // value. The routes retain their canonical URLs and names, but use a
+      // short fade so the outgoing AI surface does not run the global
+      // slide/parallax transition at the same time.
+      ..._aiSurfaceRoutes(),
       // Settings — global meta, accessed from Today's header gear. Lives
       // outside the dock shell so it covers the full canvas while open and
       // returns to whatever tab the user came from on pop.
@@ -137,6 +148,139 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
           ],
         ),
     ],
+  );
+}
+
+/// AI settings and audit pages are mounted directly on the root navigator.
+///
+/// A nested `/settings/<page>` route makes GoRouter build `/settings` and all
+/// matched parents before the destination is visible. That is particularly
+/// expensive when the source is the AI conversation: the source already has
+/// markdown, tool cards, and charts, while the transparency list also parses
+/// recent trace JSON. These sibling routes preserve the URL contract and
+/// let Back return to the actual originating page without constructing the
+/// unrelated Settings overview.
+List<RouteBase> _aiSurfaceRoutes() {
+  return [
+    GoRoute(
+      path: SettingsRoutes.ai,
+      name: SettingsRouteNames.ai,
+      pageBuilder: (context, state) =>
+          _aiSurfacePage(context, state, _backSafe(const AiSettingsHubPage())),
+    ),
+    GoRoute(
+      path: SettingsRoutes.aiHistory,
+      name: SettingsRouteNames.aiHistory,
+      pageBuilder: (context, state) => _aiSurfacePage(
+        context,
+        state,
+        _backSafe(
+          DeferredRoute(
+            load: ai_chat_lib.loadLibrary,
+            builder: (_) => ai_chat_lib.AiChatPage(),
+          ),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: SettingsRoutes.aiPrivacy,
+      name: SettingsRouteNames.aiPrivacy,
+      pageBuilder: (context, state) =>
+          _aiSurfacePage(context, state, _backSafe(const AiPrivacyPage())),
+    ),
+    GoRoute(
+      path: SettingsRoutes.aiLlm,
+      name: SettingsRouteNames.aiLlm,
+      pageBuilder: (context, state) => _aiSurfacePage(
+        context,
+        state,
+        _backSafe(const AiLlmCredentialsPage()),
+      ),
+    ),
+    GoRoute(
+      path: SettingsRoutes.aiModels,
+      name: SettingsRouteNames.aiModels,
+      pageBuilder: (context, state) =>
+          _aiSurfacePage(context, state, _backSafe(const AiModelsPage())),
+    ),
+    GoRoute(
+      path: SettingsRoutes.personalMemory,
+      name: SettingsRouteNames.personalMemory,
+      pageBuilder: (context, state) =>
+          _aiSurfacePage(context, state, _backSafe(const PersonalMemoryPage())),
+    ),
+    GoRoute(
+      path: SettingsRoutes.agents,
+      name: SettingsRouteNames.agents,
+      pageBuilder: (context, state) =>
+          _aiSurfacePage(context, state, _backSafe(const AgentsSettingsPage())),
+    ),
+    GoRoute(
+      path: SettingsRoutes.aiTransparency,
+      name: SettingsRouteNames.aiTransparency,
+      pageBuilder: (context, state) =>
+          _aiSurfacePage(context, state, _backSafe(const AiTransparencyPage())),
+    ),
+    GoRoute(
+      path: '${SettingsRoutes.aiTransparency}/:requestId',
+      name: SettingsRouteNames.aiTransparencyDetail,
+      pageBuilder: (context, state) => _aiSurfacePage(
+        context,
+        state,
+        _backSafe(
+          AiTransparencyDetailPage(
+            requestId: state.pathParameters['requestId'] ?? '',
+          ),
+        ),
+      ),
+    ),
+  ];
+}
+
+/// AI pages enter with a short fade and no secondary-page animation on
+/// non-iOS platforms. iOS keeps its native Cupertino route for edge-swipe
+/// back behavior.
+///
+/// The default app transition intentionally parallax-dims the outgoing page,
+/// which is pleasant for light pages but makes a conversation full of
+/// Markdown/tool/chart render objects participate in every frame. The trace
+/// and settings destinations show their own skeleton immediately, so a
+/// 120ms fade gives feedback without extending the expensive overlap window.
+Page<void> _aiSurfacePage(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  // Keep the native Cupertino route on iOS so the edge-swipe back gesture
+  // remains available. Android, desktop, and web use the short fade below;
+  // their app-level transition is the one that previously parallax-dimmed
+  // the large outgoing AI render tree.
+  if (defaultTargetPlatform == TargetPlatform.iOS) {
+    return CupertinoPage<void>(
+      key: state.pageKey,
+      name: state.name,
+      child: child,
+    );
+  }
+  final duration = AppMotionPolicy.duration(
+    context,
+    Motion.fast,
+    role: AppMotionRole.transition,
+  );
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    name: state.name,
+    transitionDuration: duration,
+    reverseTransitionDuration: duration,
+    child: child,
+    transitionsBuilder: (context, animation, _, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Motion.aiCalm,
+        reverseCurve: Motion.standardAccelerate,
+      );
+      return FadeTransition(opacity: curved, child: child);
+    },
   );
 }
 
@@ -214,11 +358,6 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         builder: (context, state) => _backSafe(const SyncStatusPage()),
       ),
       GoRoute(
-        path: 'ai',
-        name: SettingsRouteNames.ai,
-        builder: (context, state) => _backSafe(const AiSettingsHubPage()),
-      ),
-      GoRoute(
         path: 'advanced',
         name: SettingsRouteNames.advanced,
         builder: (context, state) => _backSafe(const AdvancedSettingsPage()),
@@ -230,57 +369,6 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
       ),
       ..._domainSettingsRoutes(packs),
       ..._domainOwnedSettingsRoutes(packs),
-      GoRoute(
-        path: 'ai-history',
-        name: SettingsRouteNames.aiHistory,
-        builder: (context, state) => _backSafe(
-          DeferredRoute(
-            load: ai_chat_lib.loadLibrary,
-            builder: (_) => ai_chat_lib.AiChatPage(),
-          ),
-        ),
-      ),
-      GoRoute(
-        path: 'ai-privacy',
-        name: SettingsRouteNames.aiPrivacy,
-        builder: (context, state) => _backSafe(const AiPrivacyPage()),
-      ),
-      GoRoute(
-        path: 'ai-llm',
-        name: SettingsRouteNames.aiLlm,
-        builder: (context, state) => _backSafe(const AiLlmCredentialsPage()),
-      ),
-      GoRoute(
-        path: 'ai-models',
-        name: SettingsRouteNames.aiModels,
-        builder: (context, state) => _backSafe(const AiModelsPage()),
-      ),
-      GoRoute(
-        path: 'personal-memory',
-        name: SettingsRouteNames.personalMemory,
-        builder: (context, state) => _backSafe(const PersonalMemoryPage()),
-      ),
-      GoRoute(
-        path: 'agents',
-        name: SettingsRouteNames.agents,
-        builder: (context, state) => _backSafe(const AgentsSettingsPage()),
-      ),
-      GoRoute(
-        path: 'ai-transparency',
-        name: SettingsRouteNames.aiTransparency,
-        builder: (context, state) => _backSafe(const AiTransparencyPage()),
-        routes: [
-          GoRoute(
-            path: ':requestId',
-            name: SettingsRouteNames.aiTransparencyDetail,
-            builder: (context, state) => _backSafe(
-              AiTransparencyDetailPage(
-                requestId: state.pathParameters['requestId'] ?? '',
-              ),
-            ),
-          ),
-        ],
-      ),
     ],
   );
 }
