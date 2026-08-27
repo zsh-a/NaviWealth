@@ -72,6 +72,30 @@ class FxRateRepository {
     return date == null ? null : DateTime.utc(date.year, date.month, date.day);
   }
 
+  /// Returns every stored UTC calendar day for one currency pair.
+  ///
+  /// The FX sync cursor is normally based on the newest observation, but a
+  /// newest-only cursor cannot notice a hole in the middle of a series. The
+  /// sync service uses this lightweight date-only read to locate unusually
+  /// large gaps and request a repair from the gap's beginning.
+  Future<List<DateTime>> listDatesForPair({
+    required String base,
+    required String quote,
+  }) async {
+    final b = _normalize(base, 'base');
+    final q = _normalize(quote, 'quote');
+    final rows =
+        await (_db.select(_db.fxRates)
+              ..where(
+                (t) => t.baseCurrency.equals(b) & t.quoteCurrency.equals(q),
+              )
+              ..orderBy([(t) => OrderingTerm(expression: t.asOf)]))
+            .get();
+    return rows
+        .map((row) => DateTime.utc(row.asOf.year, row.asOf.month, row.asOf.day))
+        .toList(growable: false);
+  }
+
   /// Insert or replace the rate for `(base, quote, day(asOf))`. Same-day
   /// re-records overwrite the prior value; different days create new rows.
   Future<dom.FxRate> upsertDaily({

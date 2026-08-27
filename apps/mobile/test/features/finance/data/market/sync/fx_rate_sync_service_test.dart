@@ -17,6 +17,7 @@ class _FakeMarketData implements MarketDataService {
   _FakeMarketData({required this.fetchedAt});
 
   final DateTime fetchedAt;
+  DataFreshness quoteFreshness = DataFreshness.live;
   final Map<String, List<HistoricalBar>> historical = {};
   final Set<String> historyFailures = {};
   final Map<String, Decimal> quotes = {};
@@ -41,7 +42,7 @@ class _FakeMarketData implements MarketDataService {
         price: price,
         asOf: fetchedAt,
       ),
-      freshness: DataFreshness.live,
+      freshness: quoteFreshness,
       source: 'fake',
       fetchedAt: fetchedAt,
     );
@@ -126,7 +127,7 @@ void main() {
       marketData: market,
       fxRepo: repo,
       clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
-      historyLookback: const Duration(days: 30),
+      historyLookback: const Duration(days: 3),
     );
 
     expect(
@@ -137,7 +138,7 @@ void main() {
       1,
     );
     expect(market.historyRequests, hasLength(1));
-    expect(market.historyRequests.single.from, DateTime.utc(2026, 4, 15));
+    expect(market.historyRequests.single.from, DateTime.utc(2026, 5, 12));
     expect(market.historyRequests.single.to, DateTime.utc(2026, 5, 14));
     expect(market.quoteRequests, isEmpty);
 
@@ -160,6 +161,7 @@ void main() {
     );
     final market = _FakeMarketData(fetchedAt: DateTime.utc(2026, 5, 14, 12))
       ..historical['USDCNY=X'] = [
+        _bar(symbol: 'USDCNY=X', date: DateTime.utc(2026, 5, 8), close: '7.08'),
         _bar(
           symbol: 'USDCNY=X',
           date: DateTime.utc(2026, 5, 11),
@@ -175,7 +177,7 @@ void main() {
       marketData: market,
       fxRepo: repo,
       clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
-      historyLookback: const Duration(days: 30),
+      historyLookback: const Duration(days: 8),
       incrementalOverlap: const Duration(days: 7),
     );
 
@@ -184,10 +186,11 @@ void main() {
       accountCurrencies: {'USD', 'CNY'},
     );
 
-    expect(market.historyRequests.single.from, DateTime.utc(2026, 5, 3));
+    expect(market.historyRequests.single.from, DateTime.utc(2026, 5, 7));
     final rates = await repo.listAll();
-    expect(rates, hasLength(3));
+    expect(rates, hasLength(4));
     expect(rates.map((rate) => rate.date), [
+      DateTime.utc(2026, 5, 8),
       DateTime.utc(2026, 5, 10),
       DateTime.utc(2026, 5, 11),
       DateTime.utc(2026, 5, 14),
@@ -200,7 +203,7 @@ void main() {
       ..historical['CNYUSD=X'] = [
         _bar(
           symbol: 'CNYUSD=X',
-          date: DateTime.utc(2026, 5, 13),
+          date: DateTime.utc(2026, 5, 14),
           close: '0.14',
         ),
       ];
@@ -208,7 +211,7 @@ void main() {
       marketData: market,
       fxRepo: repo,
       clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
-      historyLookback: const Duration(days: 30),
+      historyLookback: const Duration(days: 1),
     );
 
     await service.syncRates(
@@ -225,6 +228,88 @@ void main() {
     expect(rates.single.base, 'USD');
     expect(rates.single.quote, 'CNY');
     expect(rates.single.rate, Decimal.parse('7.14285714'));
+  });
+
+  test('repairs a long middle gap before syncing the recent tail', () async {
+    await repo.upsertDaily(
+      baseCurrency: 'USD',
+      quoteCurrency: 'CNY',
+      rate: Decimal.parse('7.10'),
+      asOf: DateTime.utc(2026, 5, 10),
+    );
+    await repo.upsertDaily(
+      baseCurrency: 'USD',
+      quoteCurrency: 'CNY',
+      rate: Decimal.parse('7.20'),
+      asOf: DateTime.utc(2026, 5, 20),
+    );
+    final market = _FakeMarketData(fetchedAt: DateTime.utc(2026, 5, 20, 12))
+      ..historical['USDCNY=X'] = [
+        _bar(
+          symbol: 'USDCNY=X',
+          date: DateTime.utc(2026, 5, 11),
+          close: '7.11',
+        ),
+        _bar(
+          symbol: 'USDCNY=X',
+          date: DateTime.utc(2026, 5, 15),
+          close: '7.15',
+        ),
+        _bar(
+          symbol: 'USDCNY=X',
+          date: DateTime.utc(2026, 5, 20),
+          close: '7.20',
+        ),
+      ];
+    final service = FxRateSyncService(
+      marketData: market,
+      fxRepo: repo,
+      clock: FakeClock(DateTime.utc(2026, 5, 20, 12)),
+      historyLookback: const Duration(days: 15),
+      incrementalOverlap: const Duration(days: 7),
+    );
+
+    final result = await service.syncRatesDetailed(
+      baseCurrency: 'USD',
+      accountCurrencies: {'USD', 'CNY'},
+    );
+
+    expect(result.syncedPairs, {'USD/CNY'});
+    expect(market.historyRequests.single.from, DateTime.utc(2026, 5, 11));
+    expect((await repo.listAll()).map((rate) => rate.date), [
+      DateTime.utc(2026, 5, 10),
+      DateTime.utc(2026, 5, 11),
+      DateTime.utc(2026, 5, 15),
+      DateTime.utc(2026, 5, 20),
+    ]);
+  });
+
+  test('does not persist a non-empty history with a middle gap', () async {
+    final market = _FakeMarketData(fetchedAt: DateTime.utc(2026, 5, 14, 12))
+      ..historical['USDCNY=X'] = [
+        _bar(symbol: 'USDCNY=X', date: DateTime.utc(2026, 5, 5), close: '7.10'),
+        _bar(
+          symbol: 'USDCNY=X',
+          date: DateTime.utc(2026, 5, 14),
+          close: '7.20',
+        ),
+      ];
+    final service = FxRateSyncService(
+      marketData: market,
+      fxRepo: repo,
+      clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
+      historyLookback: const Duration(days: 10),
+    );
+
+    final result = await service.syncRatesDetailed(
+      baseCurrency: 'USD',
+      accountCurrencies: {'USD', 'CNY'},
+    );
+
+    expect(result.syncedPairs, isEmpty);
+    expect(result.failures.keys, contains('USD/CNY'));
+    expect(await repo.listAll(), isEmpty);
+    expect(market.quoteRequests, isEmpty);
   });
 
   test(
@@ -271,5 +356,27 @@ void main() {
     expect(result.syncedPairs, isEmpty);
     expect(result.failures.keys, contains('USD/CNY'));
     expect(result.failureSummary, contains('USD/CNY'));
+  });
+
+  test('does not treat a stale quote fallback as a successful sync', () async {
+    final market = _FakeMarketData(fetchedAt: DateTime.utc(2026, 5, 14, 12))
+      ..quoteFreshness = DataFreshness.stale
+      ..historyFailures.addAll({'USDCNY=X', 'CNYUSD=X'})
+      ..quotes['USDCNY=X'] = Decimal.parse('7.20');
+    final service = FxRateSyncService(
+      marketData: market,
+      fxRepo: repo,
+      clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
+      historyLookback: const Duration(days: 30),
+    );
+
+    final result = await service.syncRatesDetailed(
+      baseCurrency: 'USD',
+      accountCurrencies: {'USD', 'CNY'},
+    );
+
+    expect(result.syncedPairs, isEmpty);
+    expect(result.failures.keys, contains('USD/CNY'));
+    expect(await repo.listAll(), isEmpty);
   });
 }

@@ -117,6 +117,35 @@ void main() {
     expect(await repo.latestDateForPair(base: 'CNY', quote: 'JPY'), isNull);
   });
 
+  test(
+    'listDatesForPair returns normalized dates in ascending order',
+    () async {
+      await repo.upsertDaily(
+        baseCurrency: 'USD',
+        quoteCurrency: 'CNY',
+        rate: Decimal.parse('7.20'),
+        asOf: DateTime.utc(2026, 4, 30, 23),
+      );
+      await repo.upsertDaily(
+        baseCurrency: 'USD',
+        quoteCurrency: 'CNY',
+        rate: Decimal.parse('7.21'),
+        asOf: DateTime.utc(2026, 5, 2, 8),
+      );
+      await repo.upsertDaily(
+        baseCurrency: 'HKD',
+        quoteCurrency: 'CNY',
+        rate: Decimal.parse('0.92'),
+        asOf: DateTime.utc(2026, 5, 1),
+      );
+
+      expect(await repo.listDatesForPair(base: 'usd', quote: 'cny'), [
+        DateTime.utc(2026, 4, 30),
+        DateTime.utc(2026, 5, 2),
+      ]);
+    },
+  );
+
   test('upsertDaily rejects same-currency pairs and non-positive rates', () {
     expect(
       () => repo.upsertDaily(

@@ -54,6 +54,19 @@ class _FxFetchAttempt {
   final Object? error;
 }
 
+class _IncompleteFxHistoryException extends StateError {
+  _IncompleteFxHistoryException({
+    required String symbol,
+    required DateTime from,
+    required DateTime to,
+    required String reason,
+  }) : super(
+         '$symbol returned incomplete history '
+         'for ${from.toIso8601String().substring(0, 10)}..'
+         '${to.toIso8601String().substring(0, 10)} ($reason)',
+       );
+}
+
 /// Fetches daily FX history and persists it to the local `fx_rates` table.
 ///
 /// The service derives which currency pairs to fetch from the user's
@@ -95,6 +108,12 @@ class FxRateSyncService {
   final Clock _clock;
   final Duration _historyLookback;
   final Duration _incrementalOverlap;
+
+  // FX normally has a weekend gap, and providers may also omit a short
+  // holiday. A longer gap is treated as missing data and is repaired rather
+  // than being accepted as a complete historical response.
+  static const _historyEdgeGrace = Duration(days: 5);
+  static const _historyMaxGap = Duration(days: 5);
 
   /// Fetch and persist FX rates for all needed pairs.
   ///
@@ -211,17 +230,58 @@ class FxRateSyncService {
     );
     if (fullHistory) return earliestAllowed;
 
-    final latest = await _fxRepo.latestDateForPair(base: base, quote: quote);
-    if (latest == null) return earliestAllowed;
+    final dates = await _fxRepo.listDatesForPair(base: base, quote: quote);
+    if (dates.isEmpty) return earliestAllowed;
+    final latest = dates.last;
 
     final overlapStart = latest.subtract(
       Duration(days: _incrementalOverlap.inDays),
     );
-    return overlapStart.isBefore(earliestAllowed)
+    final tailStart = overlapStart.isBefore(earliestAllowed)
         ? earliestAllowed
         : overlapStart.isAfter(end)
         ? end
         : overlapStart;
+    final repairStart = _earliestRepairStart(
+      dates: dates,
+      earliestAllowed: earliestAllowed,
+      end: end,
+    );
+    if (repairStart != null && repairStart.isBefore(tailStart)) {
+      return repairStart;
+    }
+    return tailStart;
+  }
+
+  DateTime? _earliestRepairStart({
+    required List<DateTime> dates,
+    required DateTime earliestAllowed,
+    required DateTime end,
+  }) {
+    if (dates.isEmpty) return earliestAllowed;
+
+    // A lone recent quote (or a partially backfilled first response) must not
+    // turn the next pass into a tail-only request forever. Treat the missing
+    // leading history as a repairable edge.
+    if (dates.first.difference(earliestAllowed) > _historyMaxGap) {
+      return earliestAllowed;
+    }
+
+    for (var i = 1; i < dates.length; i++) {
+      final previous = dates[i - 1];
+      final current = dates[i];
+      if (current.difference(previous) <= _historyMaxGap) continue;
+
+      final missingStart = previous.add(const Duration(days: 1));
+      final missingEnd = current.subtract(const Duration(days: 1));
+      if (missingEnd.isBefore(earliestAllowed) || missingStart.isAfter(end)) {
+        continue;
+      }
+      return missingStart.isBefore(earliestAllowed)
+          ? earliestAllowed
+          : missingStart;
+    }
+    return null;
   }
 
   /// Fetch a single pair from historical market data and upsert every
@@ -270,6 +330,15 @@ class FxRateSyncService {
       return;
     }
     if (inverseHistory.error != null) failures.add(inverseHistory.error!);
+
+    // A non-empty but incomplete history response is more dangerous than a
+    // plain provider outage: persisting it would make the missing interval
+    // look repaired and the newest-date cursor would stop revisiting it. Do
+    // not hide that condition behind today's quote fallback.
+    if (_isIncompleteHistory(directHistory.error) ||
+        _isIncompleteHistory(inverseHistory.error)) {
+      throw _noDataError(base: base, quote: quote, failures: failures);
+    }
 
     // History is the source of truth for continuity, but retaining the old
     // quote fallback means a provider outage can still record today's mark.
@@ -333,6 +402,22 @@ class FxRateSyncService {
         AppLogger.instance.d('FX history: $error');
         return _FxFetchAttempt.failure(error);
       }
+      observations.sort((a, b) => a.date.compareTo(b.date));
+      final incompleteReason = _historyCompletenessIssue(
+        observations,
+        from: from,
+        to: to,
+      );
+      if (incompleteReason != null) {
+        final error = _IncompleteFxHistoryException(
+          symbol: symbol,
+          from: from,
+          to: to,
+          reason: incompleteReason,
+        );
+        AppLogger.instance.d('FX history: $error');
+        return _FxFetchAttempt.failure(error);
+      }
       await _fxRepo.upsertDailyBatch(observations);
       return const _FxFetchAttempt.success();
     } catch (e) {
@@ -352,6 +437,11 @@ class FxRateSyncService {
         symbol,
         market: AssetMarket.fx,
       );
+      if (response.freshness == DataFreshness.stale) {
+        return _FxFetchAttempt.failure(
+          StateError('$symbol returned stale quote data'),
+        );
+      }
       final price = response.data.price;
       if (price <= Decimal.zero) {
         return _FxFetchAttempt.failure(
@@ -400,6 +490,32 @@ class FxRateSyncService {
     if (error is RateLimitException) return true;
     if (error is MarketDataException) return _isRateLimited(error.cause);
     return false;
+  }
+
+  bool _isIncompleteHistory(Object? error) =>
+      error is _IncompleteFxHistoryException;
+
+  String? _historyCompletenessIssue(
+    List<FxRate> observations, {
+    required DateTime from,
+    required DateTime to,
+  }) {
+    final first = observations.first.date;
+    final last = observations.last.date;
+    if (first.isAfter(from.add(_historyEdgeGrace))) {
+      return 'first bar is too far after the requested start';
+    }
+    if (last.isBefore(to.subtract(_historyEdgeGrace))) {
+      return 'last bar is too far before the requested end';
+    }
+    for (var i = 1; i < observations.length; i++) {
+      if (observations[i].date.difference(observations[i - 1].date) >
+          _historyMaxGap) {
+        return 'gap between ${observations[i - 1].date.toIso8601String().substring(0, 10)} '
+            'and ${observations[i].date.toIso8601String().substring(0, 10)}';
+      }
+    }
+    return null;
   }
 
   static Decimal _invert(Decimal value) =>
