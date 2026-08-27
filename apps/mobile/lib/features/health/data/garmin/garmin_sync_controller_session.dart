@@ -199,9 +199,8 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
       final ownerUserId = await _ownerUserId();
       if (_initialized) await _bridge.logout();
       await _tokenStore.clearAll(ownerUserId: ownerUserId);
-      await GarminSyncStatusStore(
-        ref.read(sharedPreferencesProvider),
-      ).clear(ownerUserId);
+      await GarminSyncStatusStore(ref.read(sharedPreferencesProvider))
+          .clear(ownerUserId);
       _initialized = false;
       _initializedRegion = null;
       _clearPendingCredentials();
@@ -236,12 +235,13 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
   }
 
   GarminConnected _restoredConnectedState(String ownerUserId) {
-    final status = GarminSyncStatusStore(
-      ref.read(sharedPreferencesProvider),
-    ).read(ownerUserId);
+    final status = GarminSyncStatusStore(ref.read(sharedPreferencesProvider))
+        .read(ownerUserId);
     return GarminConnected(
       lastSyncAt: status?.lastSuccessAt,
       totalMetrics: status?.totalMetrics ?? 0,
+      lastAttemptAt: status?.lastAttemptAt,
+      lastErrorCode: status?.errorCode,
     );
   }
 
@@ -260,14 +260,30 @@ mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
       lastAttemptAt: attemptedAt,
       lastSuccessAt: completedAt,
       totalMetrics: totalMetrics,
+      errorCode: null,
     );
     return GarminConnected(lastSyncAt: completedAt, totalMetrics: totalMetrics);
   }
 
+  Future<void> _recordFailedSync({
+    required DateTime attemptedAt,
+    required GarminSyncIssue issue,
+  }) async {
+    final ownerUserId = await _ownerUserId();
+    final store = GarminSyncStatusStore(ref.read(sharedPreferencesProvider));
+    final previous = store.read(ownerUserId);
+    await store.write(
+      ownerUserId: ownerUserId,
+      lastAttemptAt: attemptedAt,
+      lastSuccessAt: previous?.lastSuccessAt,
+      totalMetrics: previous?.totalMetrics ?? 0,
+      errorCode: issue.code,
+    );
+  }
+
   Future<void> _clearSyncStatus() async {
-    await GarminSyncStatusStore(
-      ref.read(sharedPreferencesProvider),
-    ).clear(await _ownerUserId());
+    await GarminSyncStatusStore(ref.read(sharedPreferencesProvider))
+        .clear(await _ownerUserId());
   }
 
   Future<bool> _recoverWithSavedCredentials({AppLogger? logger}) async {

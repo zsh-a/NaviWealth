@@ -317,6 +317,9 @@ class _RecoveryEvidenceRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final metric = component['metric']?.toString() ?? '';
     final recent = (component['recent_value'] as num?)?.toDouble();
+    final baseline = (component['baseline_value'] as num?)?.toDouble();
+    final recentSamples = (component['recent_samples'] as num?)?.toInt();
+    final baselineSamples = (component['baseline_samples'] as num?)?.toInt();
     final delta = (component['delta_pct'] as num?)?.toDouble();
     if (recent == null) return const SizedBox.shrink();
     final recentLabel = _recoveryValue(metric, recent);
@@ -332,6 +335,15 @@ class _RecoveryEvidenceRow extends StatelessWidget {
                 ? l10n.healthRecoveryDeltaUp(delta.abs().toStringAsFixed(1))
                 : l10n.healthRecoveryDeltaDown(delta.abs().toStringAsFixed(1)),
           );
+    final evidenceMeta = baseline != null
+        ? l10n.healthRecoveryEvidenceBaseline(
+            _recoveryValue(metric, baseline),
+            recentSamples ?? 0,
+            baselineSamples ?? 0,
+          )
+        : recentSamples == null
+        ? null
+        : l10n.healthRecoveryEvidenceNoBaselineSamples(recentSamples);
     final score = (component['score'] as num?)?.toDouble() ?? 50;
     final status = context.appTheme.status;
     final color = score >= 60
@@ -349,7 +361,18 @@ class _RecoveryEvidenceRow extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: AppSpacing.s8),
-        Expanded(child: Text(message, style: context.captionStyle)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message, style: context.captionStyle),
+              if (evidenceMeta != null) ...[
+                const SizedBox(height: AppSpacing.s2),
+                Text(evidenceMeta, style: context.microCaptionStyle),
+              ],
+            ],
+          ),
+        ),
       ],
     );
   }

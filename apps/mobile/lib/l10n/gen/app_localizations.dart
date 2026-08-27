@@ -21898,6 +21898,66 @@ abstract class AppLocalizations {
   /// **'Sync failed'**
   String get healthSyncFailed;
 
+  /// No description provided for @healthSourceChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking connection…'**
+  String get healthSourceChecking;
+
+  /// No description provided for @healthSourceReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get healthSourceReady;
+
+  /// No description provided for @healthSourcePermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission needed'**
+  String get healthSourcePermissionRequired;
+
+  /// No description provided for @healthSourceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get healthSourceUnavailable;
+
+  /// No description provided for @healthSourceSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get healthSourceSyncFailed;
+
+  /// No description provided for @healthSourceLastSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {time}'**
+  String healthSourceLastSync(String time);
+
+  /// No description provided for @healthSourceLastAttempt.
+  ///
+  /// In en, this message translates to:
+  /// **'Tried {time}'**
+  String healthSourceLastAttempt(String time);
+
+  /// No description provided for @healthSourceLastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Last success {time}'**
+  String healthSourceLastSuccess(String time);
+
+  /// No description provided for @healthSourceDataAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Data {time}'**
+  String healthSourceDataAt(String time);
+
+  /// No description provided for @healthSourceNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data imported yet'**
+  String get healthSourceNoData;
+
   /// No description provided for @healthSyncButton.
   ///
   /// In en, this message translates to:
@@ -29633,6 +29693,22 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{metric}: {recent} · building your baseline'**
   String healthRecoveryEvidenceNoBaseline(String metric, String recent);
+
+  /// No description provided for @healthRecoveryEvidenceBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline {baseline} · {recentSamples} recent / {baselineSamples} baseline samples'**
+  String healthRecoveryEvidenceBaseline(
+    String baseline,
+    int recentSamples,
+    int baselineSamples,
+  );
+
+  /// No description provided for @healthRecoveryEvidenceNoBaselineSamples.
+  ///
+  /// In en, this message translates to:
+  /// **'{recentSamples} recent samples · baseline forming'**
+  String healthRecoveryEvidenceNoBaselineSamples(int recentSamples);
 
   /// No description provided for @healthRecoveryDeltaUp.
   ///

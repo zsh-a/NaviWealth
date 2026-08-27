@@ -33,9 +33,16 @@ class GarminPendingMfa extends GarminSyncState {
 
 /// Connected and idle.
 class GarminConnected extends GarminSyncState {
-  const GarminConnected({this.lastSyncAt, this.totalMetrics = 0});
+  const GarminConnected({
+    this.lastSyncAt,
+    this.totalMetrics = 0,
+    this.lastAttemptAt,
+    this.lastErrorCode,
+  });
   final DateTime? lastSyncAt;
   final int totalMetrics;
+  final DateTime? lastAttemptAt;
+  final String? lastErrorCode;
 }
 
 /// Sync in progress.

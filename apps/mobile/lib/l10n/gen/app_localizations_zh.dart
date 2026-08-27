@@ -12368,6 +12368,44 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthSyncFailed => '同步失败';
 
   @override
+  String get healthSourceChecking => '正在检查连接…';
+
+  @override
+  String get healthSourceReady => '已就绪';
+
+  @override
+  String get healthSourcePermissionRequired => '需要权限';
+
+  @override
+  String get healthSourceUnavailable => '不可用';
+
+  @override
+  String get healthSourceSyncFailed => '同步失败';
+
+  @override
+  String healthSourceLastSync(String time) {
+    return '同步于 $time';
+  }
+
+  @override
+  String healthSourceLastAttempt(String time) {
+    return '最近尝试于 $time';
+  }
+
+  @override
+  String healthSourceLastSuccess(String time) {
+    return '上次成功于 $time';
+  }
+
+  @override
+  String healthSourceDataAt(String time) {
+    return '数据于 $time';
+  }
+
+  @override
+  String get healthSourceNoData => '还没有导入数据';
+
+  @override
   String get healthSyncButton => '同步';
 
   @override
@@ -16716,6 +16754,20 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String healthRecoveryEvidenceNoBaseline(String metric, String recent) {
     return '$metric：当前 $recent · 正在建立个人基线';
+  }
+
+  @override
+  String healthRecoveryEvidenceBaseline(
+    String baseline,
+    int recentSamples,
+    int baselineSamples,
+  ) {
+    return '基线 $baseline · 近期 $recentSamples 条 / 基线 $baselineSamples 条';
+  }
+
+  @override
+  String healthRecoveryEvidenceNoBaselineSamples(int recentSamples) {
+    return '近期 $recentSamples 条 · 正在建立个人基线';
   }
 
   @override

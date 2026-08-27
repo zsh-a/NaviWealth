@@ -3883,6 +3883,28 @@
   "healthSyncReady": "同步最近 30 天健康数据",
   "healthSyncResult": "已同步 {upserted} 新数据 · {unchanged} 未变",
   "healthSyncFailed": "同步失败",
+  "healthSourceChecking": "正在检查连接…",
+  "healthSourceReady": "已就绪",
+  "healthSourcePermissionRequired": "需要权限",
+  "healthSourceUnavailable": "不可用",
+  "healthSourceSyncFailed": "同步失败",
+  "healthSourceLastSync": "同步于 {time}",
+  "@healthSourceLastSync": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceLastAttempt": "最近尝试于 {time}",
+  "@healthSourceLastAttempt": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceLastSuccess": "上次成功于 {time}",
+  "@healthSourceLastSuccess": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceDataAt": "数据于 {time}",
+  "@healthSourceDataAt": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceNoData": "还没有导入数据",
   "healthSyncButton": "同步",
   "healthSyncingButton": "同步中",
   "healthRecoveryTitle": "今日恢复",
@@ -5292,6 +5314,18 @@
       "metric": { "type": "String" },
       "recent": { "type": "String" }
     }
+  },
+  "healthRecoveryEvidenceBaseline": "基线 {baseline} · 近期 {recentSamples} 条 / 基线 {baselineSamples} 条",
+  "@healthRecoveryEvidenceBaseline": {
+    "placeholders": {
+      "baseline": { "type": "String" },
+      "recentSamples": { "type": "int" },
+      "baselineSamples": { "type": "int" }
+    }
+  },
+  "healthRecoveryEvidenceNoBaselineSamples": "近期 {recentSamples} 条 · 正在建立个人基线",
+  "@healthRecoveryEvidenceNoBaselineSamples": {
+    "placeholders": { "recentSamples": { "type": "int" } }
   },
   "healthRecoveryDeltaUp": "高 {value}%",
   "@healthRecoveryDeltaUp": {

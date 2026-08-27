@@ -338,7 +338,7 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
         message: l10n.healthRefreshPartialFailure(failureCount),
         details:
             persistedPlatformFailure &&
-                platform?.errorCode?.contains('permission-denied') == true
+                _isHealthPermissionError(platform?.errorCode)
             ? l10n.healthSyncPermissionDenied
             : latest == null
             ? l10n.healthRefreshPullHint
@@ -374,8 +374,15 @@ DateTime? _latestDate(DateTime? left, DateTime? right) {
   return left.isAfter(right) ? left : right;
 }
 
+bool _isHealthPermissionError(String? errorCode) {
+  final normalized = errorCode?.toLowerCase() ?? '';
+  return normalized.contains('permission') || normalized.contains('权限');
+}
+
 void _invalidateHealthSurfaces(WidgetRef ref) {
   ref.invalidate(health_data.healthSyncStatusProvider);
+  ref.invalidate(health_data.healthPlatformStatusProvider);
+  ref.invalidate(health_data.healthSourceDataSummaryProvider);
   ref.invalidate(healthTodaySnapshotProvider);
 }
 
@@ -524,6 +531,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
           });
           await service.recordResult(_lastResult!);
           ref.invalidate(health_data.healthSyncStatusProvider);
+          ref.invalidate(health_data.healthPlatformStatusProvider);
           return;
         }
       }
@@ -531,6 +539,8 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
       if (!mounted) return;
       setState(() => _lastResult = result);
       ref.invalidate(health_data.healthSyncStatusProvider);
+      ref.invalidate(health_data.healthPlatformStatusProvider);
+      ref.invalidate(health_data.healthSourceDataSummaryProvider);
       ref.invalidate(healthTodaySnapshotProvider);
     } finally {
       if (mounted) setState(() => _syncing = false);
@@ -543,6 +553,9 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
     final persisted = ref.watch(health_data.healthSyncStatusProvider);
+    final platformStatus = ref.watch(health_data.healthPlatformStatusProvider);
+    final sourceData = ref.watch(health_data.healthSourceDataSummaryProvider);
+    final latestDataAt = sourceData.value?.platformLatestAt;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -550,63 +563,108 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
         return SoftCard(
           level: SoftCardLevel.raised,
           padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppIconTile(
-                icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
-                color: _healthKitColor(enabled),
-                size: 32,
-                iconSize: AppIconSizes.h18,
-                backgroundOpacity: AppOpacity.whisper,
-                foregroundOpacity: AppOpacity.strong,
-              ),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
+              Row(
+                children: [
+                  AppIconTile(
+                    icon: enabled
+                        ? FLucideIcons.activity
+                        : FLucideIcons.circleOff,
+                    color: _healthKitColor(
+                      enabled,
+                      platformStatus: platformStatus,
+                      persisted: persisted,
+                    ),
+                    size: 32,
+                    iconSize: AppIconSizes.h18,
+                    backgroundOpacity: AppOpacity.whisper,
+                    foregroundOpacity: AppOpacity.strong,
+                  ),
+                  const SizedBox(width: AppSpacing.s10),
+                  Expanded(
+                    child: Text(
                       l10n.healthKitTitle,
                       style: context.labelStyle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      _healthKitText(l10n, enabled, persisted),
-                      style: context.captionStyle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  AppBadge(
+                    label: _healthKitBadge(
+                      l10n,
+                      enabled,
+                      platformStatus: platformStatus,
+                      persisted: persisted,
                     ),
-                  ],
+                    tone: _healthKitBadgeTone(
+                      enabled,
+                      platformStatus: platformStatus,
+                      persisted: persisted,
+                    ),
+                    size: AppBadgeSize.compact,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  if (compactAction)
+                    AppIconButton(
+                      icon: FLucideIcons.refreshCw,
+                      onPress: enabled ? _syncHealthKit : null,
+                      tooltip: l10n.healthSyncAction,
+                      surface: AppIconButtonSurface.softMuted,
+                      size: 40,
+                      iconSize: AppIconSizes.xs,
+                      busy: _syncing,
+                    )
+                  else if (_syncing)
+                    const SizedBox(
+                      width: AppIconSizes.sm,
+                      height: AppIconSizes.sm,
+                      child: FCircularProgress(),
+                    )
+                  else
+                    FButton(
+                      variant: FButtonVariant.outline,
+                      onPress: enabled ? _syncHealthKit : null,
+                      prefix: const Icon(
+                        FLucideIcons.refreshCw,
+                        size: AppIconSizes.xs,
+                      ),
+                      child: Text(l10n.healthSyncAction),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              Padding(
+                padding: const EdgeInsets.only(left: 42),
+                child: Text(
+                  _healthKitText(
+                    l10n,
+                    enabled,
+                    platformStatus: platformStatus,
+                    persisted: persisted,
+                  ),
+                  style: context.captionStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s8),
-              if (compactAction)
-                AppIconButton(
-                  icon: FLucideIcons.refreshCw,
-                  onPress: enabled ? _syncHealthKit : null,
-                  tooltip: l10n.healthSyncAction,
-                  surface: AppIconButtonSurface.softMuted,
-                  size: 40,
-                  iconSize: AppIconSizes.xs,
-                  busy: _syncing,
-                )
-              else if (_syncing)
-                const SizedBox(
-                  width: AppIconSizes.sm,
-                  height: AppIconSizes.sm,
-                  child: FCircularProgress(),
-                )
-              else
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: enabled ? _syncHealthKit : null,
-                  prefix: const Icon(
-                    FLucideIcons.refreshCw,
-                    size: AppIconSizes.xs,
+              if (_healthKitMetadata(
+                    l10n,
+                    platformStatus: platformStatus,
+                    persisted: persisted,
+                    latestDataAt: latestDataAt,
+                  )
+                  case final String metadata)
+                Padding(
+                  padding: const EdgeInsets.only(left: 42, top: AppSpacing.s2),
+                  child: Text(
+                    metadata,
+                    style: context.microCaptionStyle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  child: Text(l10n.healthSyncAction),
                 ),
             ],
           ),
@@ -615,35 +673,121 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     );
   }
 
-  Color _healthKitColor(bool enabled) {
+  Color _healthKitColor(
+    bool enabled, {
+    required AsyncValue<health_data.HealthPlatformStatus> platformStatus,
+    required HealthSyncStatus? persisted,
+  }) {
     final colors = context.theme.colors;
     if (!enabled) return colors.mutedForeground;
-    final result = _lastResult;
     if (_syncing) return colors.primary;
-    if (result == null) {
-      final persisted = ref.read(health_data.healthSyncStatusProvider);
-      if (persisted == null) return colors.mutedForeground;
-      return persisted.ok ? colors.primary : colors.destructive;
+    final status = platformStatus.value;
+    if (status?.needsPermission == true) {
+      return context.appTheme.status.warning.fg;
     }
-    return result.ok ? colors.primary : colors.destructive;
+    if (_hasSyncFailure(persisted)) return colors.destructive;
+    if (status?.ready == true) return context.appTheme.status.success.fg;
+    return colors.mutedForeground;
   }
+
+  String _healthKitBadge(
+    AppLocalizations l10n,
+    bool enabled, {
+    required AsyncValue<health_data.HealthPlatformStatus> platformStatus,
+    required HealthSyncStatus? persisted,
+  }) {
+    if (!enabled) return l10n.healthNotEnabled;
+    if (_syncing || platformStatus.isLoading) return l10n.healthSourceChecking;
+    final status = platformStatus.value;
+    if (status == null || !status.available || status.checkFailed) {
+      return l10n.healthSourceUnavailable;
+    }
+    if (status.needsPermission) return l10n.healthSourcePermissionRequired;
+    if (_hasSyncFailure(persisted)) return l10n.healthSourceSyncFailed;
+    return l10n.healthSourceReady;
+  }
+
+  AppBadgeTone _healthKitBadgeTone(
+    bool enabled, {
+    required AsyncValue<health_data.HealthPlatformStatus> platformStatus,
+    required HealthSyncStatus? persisted,
+  }) {
+    if (!enabled) return AppBadgeTone.neutral;
+    if (_syncing || platformStatus.isLoading) return AppBadgeTone.info;
+    final status = platformStatus.value;
+    if (status == null || !status.available || status.checkFailed) {
+      return AppBadgeTone.neutral;
+    }
+    if (status.needsPermission) return AppBadgeTone.warning;
+    if (_hasSyncFailure(persisted)) return AppBadgeTone.error;
+    return AppBadgeTone.success;
+  }
+
+  bool _hasSyncFailure(HealthSyncStatus? persisted) =>
+      _lastResult?.ok == false || persisted?.ok == false;
 
   String _healthKitText(
     AppLocalizations l10n,
-    bool enabled,
-    HealthSyncStatus? persisted,
-  ) {
+    bool enabled, {
+    required AsyncValue<health_data.HealthPlatformStatus> platformStatus,
+    required HealthSyncStatus? persisted,
+  }) {
     if (!enabled) return l10n.healthNotEnabled;
     if (_syncing) return l10n.healthSyncingData;
+    if (platformStatus.isLoading) return l10n.healthSourceChecking;
+    final status = platformStatus.value;
+    if (status == null || !status.available || status.checkFailed) {
+      return l10n.healthSourceUnavailable;
+    }
+    if (status.needsPermission) return l10n.healthSourcePermissionRequired;
     final result = _lastResult;
     if (result == null) {
       if (persisted == null) return l10n.healthSyncReady;
-      if (!persisted.ok) return l10n.healthSyncFailed;
-      return '${l10n.healthSyncResult('${persisted.unchanged}', '${persisted.upserted}')} · ${_ago(l10n, persisted.completedAt)}';
+      if (!persisted.ok) return _syncFailureText(l10n, persisted.errorCode);
+      return l10n.healthSourceReady;
     }
     if (result.ok) {
-      return l10n.healthSyncResult('${result.unchanged}', '${result.upserted}');
+      return l10n.healthSourceReady;
     }
-    return result.errorMessage ?? l10n.healthSyncFailed;
+    return _syncFailureText(l10n, result.errorMessage);
+  }
+
+  String _syncFailureText(AppLocalizations l10n, String? errorCode) {
+    final normalized = errorCode?.toLowerCase() ?? '';
+    if (normalized.contains('permission') || normalized.contains('权限')) {
+      return l10n.healthSyncPermissionDenied;
+    }
+    return l10n.healthSyncFailed;
+  }
+
+  String? _healthKitMetadata(
+    AppLocalizations l10n, {
+    required AsyncValue<health_data.HealthPlatformStatus> platformStatus,
+    required HealthSyncStatus? persisted,
+    required DateTime? latestDataAt,
+  }) {
+    final details = <String>[];
+    final status = persisted;
+    final localResult = _lastResult;
+    if (status?.ok == false || localResult?.ok == false) {
+      final attemptedAt = localResult?.completedAt ?? status?.completedAt;
+      if (attemptedAt != null) {
+        details.add(l10n.healthSourceLastAttempt(_ago(l10n, attemptedAt)));
+      }
+      if (status?.lastSuccessAt != null) {
+        details.add(
+          l10n.healthSourceLastSuccess(_ago(l10n, status!.lastSuccessAt!)),
+        );
+      }
+    } else if (status != null) {
+      details.add(l10n.healthSourceLastSync(_ago(l10n, status.completedAt)));
+    }
+    if (latestDataAt != null) {
+      details.add(l10n.healthSourceDataAt(_ago(l10n, latestDataAt)));
+    } else if (platformStatus.value?.ready == true && details.isEmpty) {
+      details.add(l10n.healthSourceNoData);
+    }
+    if (details.isEmpty) return null;
+    return details.join(' · ');
   }
 }

@@ -9,24 +9,31 @@ class GarminSyncStatus {
     required this.lastAttemptAt,
     required this.lastSuccessAt,
     required this.totalMetrics,
+    this.errorCode,
   });
 
   final DateTime lastAttemptAt;
-  final DateTime lastSuccessAt;
+  final DateTime? lastSuccessAt;
   final int totalMetrics;
+  final String? errorCode;
 
   factory GarminSyncStatus.fromJson(Map<String, Object?> json) {
     return GarminSyncStatus(
       lastAttemptAt: DateTime.parse(json['last_attempt_at']! as String).toUtc(),
-      lastSuccessAt: DateTime.parse(json['last_success_at']! as String).toUtc(),
+      lastSuccessAt: switch (json['last_success_at']) {
+        final String value => DateTime.parse(value).toUtc(),
+        _ => null,
+      },
       totalMetrics: json['total_metrics']! as int,
+      errorCode: json['error_code'] as String?,
     );
   }
 
   Map<String, Object?> toJson() => <String, Object?>{
     'last_attempt_at': lastAttemptAt.toUtc().toIso8601String(),
-    'last_success_at': lastSuccessAt.toUtc().toIso8601String(),
+    'last_success_at': lastSuccessAt?.toUtc().toIso8601String(),
     'total_metrics': totalMetrics,
+    'error_code': errorCode,
   };
 }
 
@@ -52,8 +59,9 @@ class GarminSyncStatusStore {
   Future<void> write({
     required String ownerUserId,
     required DateTime lastAttemptAt,
-    required DateTime lastSuccessAt,
+    DateTime? lastSuccessAt,
     required int totalMetrics,
+    String? errorCode,
   }) {
     return _preferences.setString(
       _key(ownerUserId),
@@ -62,6 +70,7 @@ class GarminSyncStatusStore {
           lastAttemptAt: lastAttemptAt,
           lastSuccessAt: lastSuccessAt,
           totalMetrics: totalMetrics,
+          errorCode: errorCode,
         ).toJson(),
       ),
     );

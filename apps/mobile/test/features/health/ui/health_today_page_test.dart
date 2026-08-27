@@ -28,9 +28,8 @@ void main() {
 
     final db = makeTestDatabase();
     addTearDown(db.close);
-    await DomainOptInStore(
-      db,
-    ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+    await DomainOptInStore(db)
+        .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
 
     await tester.pumpWidget(
       _wrap(
@@ -42,6 +41,19 @@ void main() {
             (_, _) => const GarminInitial(),
           ),
           health_data.healthSyncStatusProvider.overrideWithValue(null),
+          health_data.healthPlatformStatusProvider.overrideWith(
+            (ref) async => const health_data.HealthPlatformStatus(
+              available: true,
+              permissionsGranted: true,
+            ),
+          ),
+          health_data.healthSourceDataSummaryProvider.overrideWith(
+            (ref) async => health_data.HealthSourceDataSummary(
+              platformLatestAt: DateTime.now().toUtc().subtract(
+                const Duration(hours: 2),
+              ),
+            ),
+          ),
           healthHasAnyDataProvider.overrideWith((ref) async => true),
           healthTodayMetricGridProvider.overrideWith(
             (ref) async => HealthTodayMetricGridModel.empty(),
@@ -57,6 +69,9 @@ void main() {
                 <String, Object?>{
                   'metric': 'hrv',
                   'recent_value': 48.0,
+                  'baseline_value': 52.0,
+                  'recent_samples': 6,
+                  'baseline_samples': 12,
                   'delta_pct': -8.0,
                   'score': 58.0,
                 },
@@ -88,6 +103,15 @@ void main() {
     expect(find.text('Weekly status'), findsOneWidget);
     expect(find.text('Steps'), findsOneWidget);
     expect(find.textContaining('Agent'), findsNothing);
+
+    await tester.tap(find.text('Why this score'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Baseline 52.0'), findsOneWidget);
+
+    await tester.tap(find.text('Data sources'));
+    await tester.pumpAndSettle();
+    expect(find.text('HealthKit / Health Connect'), findsOneWidget);
+    expect(find.text('Ready'), findsOneWidget);
   });
 }
 

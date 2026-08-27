@@ -13035,6 +13035,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthSyncFailed => 'Sync failed';
 
   @override
+  String get healthSourceChecking => 'Checking connection…';
+
+  @override
+  String get healthSourceReady => 'Ready';
+
+  @override
+  String get healthSourcePermissionRequired => 'Permission needed';
+
+  @override
+  String get healthSourceUnavailable => 'Unavailable';
+
+  @override
+  String get healthSourceSyncFailed => 'Sync failed';
+
+  @override
+  String healthSourceLastSync(String time) {
+    return 'Synced $time';
+  }
+
+  @override
+  String healthSourceLastAttempt(String time) {
+    return 'Tried $time';
+  }
+
+  @override
+  String healthSourceLastSuccess(String time) {
+    return 'Last success $time';
+  }
+
+  @override
+  String healthSourceDataAt(String time) {
+    return 'Data $time';
+  }
+
+  @override
+  String get healthSourceNoData => 'No data imported yet';
+
+  @override
   String get healthSyncButton => 'Sync';
 
   @override
@@ -17636,6 +17674,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String healthRecoveryEvidenceNoBaseline(String metric, String recent) {
     return '$metric: $recent · building your baseline';
+  }
+
+  @override
+  String healthRecoveryEvidenceBaseline(
+    String baseline,
+    int recentSamples,
+    int baselineSamples,
+  ) {
+    return 'Baseline $baseline · $recentSamples recent / $baselineSamples baseline samples';
+  }
+
+  @override
+  String healthRecoveryEvidenceNoBaselineSamples(int recentSamples) {
+    return '$recentSamples recent samples · baseline forming';
   }
 
   @override

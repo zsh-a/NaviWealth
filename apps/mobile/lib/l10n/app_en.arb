@@ -6849,6 +6849,28 @@
   "healthSyncReady": "Sync last 30 days of health data",
   "healthSyncResult": "Synced {upserted} new · {unchanged} unchanged",
   "healthSyncFailed": "Sync failed",
+  "healthSourceChecking": "Checking connection…",
+  "healthSourceReady": "Ready",
+  "healthSourcePermissionRequired": "Permission needed",
+  "healthSourceUnavailable": "Unavailable",
+  "healthSourceSyncFailed": "Sync failed",
+  "healthSourceLastSync": "Synced {time}",
+  "@healthSourceLastSync": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceLastAttempt": "Tried {time}",
+  "@healthSourceLastAttempt": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceLastSuccess": "Last success {time}",
+  "@healthSourceLastSuccess": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceDataAt": "Data {time}",
+  "@healthSourceDataAt": {
+    "placeholders": { "time": { "type": "String" } }
+  },
+  "healthSourceNoData": "No data imported yet",
   "healthSyncButton": "Sync",
   "healthSyncingButton": "Syncing",
   "healthRecoveryTitle": "Today's Recovery",
@@ -8324,6 +8346,18 @@
       "metric": { "type": "String" },
       "recent": { "type": "String" }
     }
+  },
+  "healthRecoveryEvidenceBaseline": "Baseline {baseline} · {recentSamples} recent / {baselineSamples} baseline samples",
+  "@healthRecoveryEvidenceBaseline": {
+    "placeholders": {
+      "baseline": { "type": "String" },
+      "recentSamples": { "type": "int" },
+      "baselineSamples": { "type": "int" }
+    }
+  },
+  "healthRecoveryEvidenceNoBaselineSamples": "{recentSamples} recent samples · baseline forming",
+  "@healthRecoveryEvidenceNoBaselineSamples": {
+    "placeholders": { "recentSamples": { "type": "int" } }
   },
   "healthRecoveryDeltaUp": "{value}% above",
   "@healthRecoveryDeltaUp": {

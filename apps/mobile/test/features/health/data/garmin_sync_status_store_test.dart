@@ -41,4 +41,29 @@ void main() {
     expect(store.read('owner-a'), isNull);
     expect(store.read('owner-b'), isNotNull);
   });
+
+  test('persists a failed attempt without losing the last success', () async {
+    SharedPreferences.setMockInitialValues(const <String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final store = GarminSyncStatusStore(preferences);
+
+    await store.write(
+      ownerUserId: 'owner-a',
+      lastAttemptAt: DateTime.utc(2026, 7, 31, 8),
+      lastSuccessAt: DateTime.utc(2026, 7, 31, 7, 0, 5),
+      totalMetrics: 42,
+    );
+    await store.write(
+      ownerUserId: 'owner-a',
+      lastAttemptAt: DateTime.utc(2026, 7, 31, 9),
+      lastSuccessAt: DateTime.utc(2026, 7, 31, 7, 0, 5),
+      totalMetrics: 42,
+      errorCode: 'auth_expired',
+    );
+
+    final restored = store.read('owner-a');
+    expect(restored!.lastAttemptAt, DateTime.utc(2026, 7, 31, 9));
+    expect(restored.lastSuccessAt, DateTime.utc(2026, 7, 31, 7, 0, 5));
+    expect(restored.errorCode, 'auth_expired');
+  });
 }

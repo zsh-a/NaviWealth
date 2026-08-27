@@ -24,21 +24,38 @@ class GarminSyncStatusCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(health_data.garminSyncControllerProvider);
+    final latestDataAt = ref
+        .watch(health_data.healthSourceDataSummaryProvider)
+        .value
+        ?.garminLatestAt;
 
     return SoftCard(
       level: SoftCardLevel.raised,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: switch (state) {
-        GarminInitial() => _Disconnected(ref: ref),
+        GarminInitial() => _Disconnected(ref: ref, latestDataAt: latestDataAt),
         GarminRestoring() => const _Restoring(),
         GarminPendingMfa() => const _MfaPending(),
-        GarminConnected(:final lastSyncAt, :final totalMetrics) => _Connected(
-          ref: ref,
-          lastSyncAt: lastSyncAt,
-          totalMetrics: totalMetrics,
-        ),
+        GarminConnected(
+          :final lastSyncAt,
+          :final totalMetrics,
+          :final lastAttemptAt,
+          :final lastErrorCode,
+        ) =>
+          _Connected(
+            ref: ref,
+            lastSyncAt: lastSyncAt,
+            totalMetrics: totalMetrics,
+            latestDataAt: latestDataAt,
+            lastAttemptAt: lastAttemptAt,
+            lastErrorCode: lastErrorCode,
+          ),
         GarminSyncing() => const _Syncing(),
-        GarminError(:final issue) => _Error(ref: ref, issue: issue),
+        GarminError(:final issue) => _Error(
+          ref: ref,
+          issue: issue,
+          latestDataAt: latestDataAt,
+        ),
       },
     );
   }
@@ -84,32 +101,45 @@ Widget _buildHeader(
 // ---------------------------------------------------------------------------
 
 class _Disconnected extends StatelessWidget {
-  const _Disconnected({required this.ref});
+  const _Disconnected({required this.ref, required this.latestDataAt});
   final WidgetRef ref;
+  final DateTime? latestDataAt;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _buildHeader(
-            context,
-            icon: FLucideIcons.watch,
-            title: l10n.healthGarminTitle,
-            badge: AppBadge(
-              label: l10n.healthGarminDisconnected,
-              tone: AppBadgeTone.neutral,
-              size: AppBadgeSize.compact,
+        Row(
+          children: [
+            Expanded(
+              child: _buildHeader(
+                context,
+                icon: FLucideIcons.watch,
+                title: l10n.healthGarminTitle,
+                badge: AppBadge(
+                  label: l10n.healthGarminDisconnected,
+                  tone: AppBadgeTone.neutral,
+                  size: AppBadgeSize.compact,
+                ),
+              ),
             ),
+            const SizedBox(width: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => showGarminAccountBindSheet(context: context),
+              child: Text(l10n.healthGarminConnect),
+            ),
+          ],
+        ),
+        if (latestDataAt != null) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.healthSourceDataAt(_formatRelative(l10n, latestDataAt!)),
+            style: context.captionStyle,
           ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        FButton(
-          variant: FButtonVariant.outline,
-          onPress: () => showGarminAccountBindSheet(context: context),
-          child: Text(l10n.healthGarminConnect),
-        ),
+        ],
       ],
     );
   }
@@ -182,10 +212,16 @@ class _Connected extends StatelessWidget {
     required this.ref,
     required this.lastSyncAt,
     required this.totalMetrics,
+    required this.latestDataAt,
+    required this.lastAttemptAt,
+    required this.lastErrorCode,
   });
   final WidgetRef ref;
   final DateTime? lastSyncAt;
   final int totalMetrics;
+  final DateTime? latestDataAt;
+  final DateTime? lastAttemptAt;
+  final String? lastErrorCode;
 
   @override
   Widget build(BuildContext context) {
@@ -202,8 +238,12 @@ class _Connected extends StatelessWidget {
                 icon: FLucideIcons.watch,
                 title: l10n.healthGarminTitle,
                 badge: AppBadge(
-                  label: l10n.healthGarminConnected,
-                  tone: AppBadgeTone.success,
+                  label: lastErrorCode == null
+                      ? l10n.healthGarminConnected
+                      : l10n.healthGarminErrorBadge,
+                  tone: lastErrorCode == null
+                      ? AppBadgeTone.success
+                      : AppBadgeTone.error,
                   size: AppBadgeSize.compact,
                 ),
               ),
@@ -218,6 +258,33 @@ class _Connected extends StatelessWidget {
               ),
           ],
         ),
+        if (lastErrorCode != null) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            _issueCodeMessage(l10n, lastErrorCode!),
+            style: context.captionStyle.copyWith(
+              color: context.appTheme.status.danger.fg,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (lastAttemptAt != null) ...[
+            const SizedBox(height: AppSpacing.s2),
+            Text(
+              l10n.healthSourceLastAttempt(
+                _formatRelative(l10n, lastAttemptAt!),
+              ),
+              style: context.microCaptionStyle,
+            ),
+          ],
+        ],
+        if (latestDataAt != null) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.healthSourceDataAt(_formatRelative(l10n, latestDataAt!)),
+            style: context.captionStyle,
+          ),
+        ],
         const SizedBox(height: AppSpacing.s4),
         Row(
           children: [
@@ -241,9 +308,7 @@ class _Connected extends StatelessWidget {
             Expanded(
               child: FButton(
                 variant: FButtonVariant.outline,
-                onPress: () => ref
-                    .read(health_data.garminSyncControllerProvider.notifier)
-                    .syncNow(),
+                onPress: () => _syncGarmin(context),
                 child: Text(l10n.healthGarminSync),
               ),
             ),
@@ -277,6 +342,13 @@ class _Connected extends StatelessWidget {
       await ref
           .read(health_data.garminSyncControllerProvider.notifier)
           .disconnect();
+    }
+  }
+
+  Future<void> _syncGarmin(BuildContext context) async {
+    await ref.read(health_data.garminSyncControllerProvider.notifier).syncNow();
+    if (context.mounted) {
+      ref.invalidate(health_data.healthSourceDataSummaryProvider);
     }
   }
 }
@@ -361,9 +433,14 @@ class _Syncing extends ConsumerWidget {
 }
 
 class _Error extends StatelessWidget {
-  const _Error({required this.ref, required this.issue});
+  const _Error({
+    required this.ref,
+    required this.issue,
+    required this.latestDataAt,
+  });
   final WidgetRef ref;
   final GarminSyncIssue issue;
+  final DateTime? latestDataAt;
 
   @override
   Widget build(BuildContext context) {
@@ -391,6 +468,13 @@ class _Error extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
+              if (latestDataAt != null) ...[
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  l10n.healthSourceDataAt(_formatRelative(l10n, latestDataAt!)),
+                  style: context.microCaptionStyle,
+                ),
+              ],
             ],
           ),
         ),
@@ -404,13 +488,18 @@ class _Error extends StatelessWidget {
               showGarminAccountBindSheet(context: context);
               return;
             }
-            ref
-                .read(health_data.garminSyncControllerProvider.notifier)
-                .syncNow();
+            _retryGarmin(context);
           },
         ),
       ],
     );
+  }
+
+  Future<void> _retryGarmin(BuildContext context) async {
+    await ref.read(health_data.garminSyncControllerProvider.notifier).syncNow();
+    if (context.mounted) {
+      ref.invalidate(health_data.healthSourceDataSummaryProvider);
+    }
   }
 }
 
@@ -452,4 +541,18 @@ String _issueMessage(AppLocalizations l10n, GarminSyncIssue issue) {
     default:
       return l10n.healthGarminErrorGeneric;
   }
+}
+
+String _issueCodeMessage(AppLocalizations l10n, String code) {
+  return switch (code) {
+    'auth_expired' => l10n.healthGarminErrorAuthExpired,
+    'credentials_invalid' => l10n.healthGarminErrorCredentialsInvalid,
+    'rate_limited' => l10n.healthGarminErrorRateLimited,
+    'endpoint_unavailable' => l10n.healthGarminErrorEndpointUnavailable,
+    'snapshot_missing' ||
+    'snapshot_not_persisted' ||
+    'persist_failed' => l10n.healthGarminErrorPersistFailed,
+    'snapshot_unsupported' => l10n.healthGarminErrorUnsupportedSnapshot,
+    _ => l10n.healthGarminErrorGeneric,
+  };
 }

@@ -32,6 +32,9 @@ mixin GarminSyncControllerSyncMixin
     try {
       final canSync = await _ensureSessionForSync(logger);
       if (!canSync) {
+        if (state case GarminError(:final issue)) {
+          await _recordFailedSync(attemptedAt: now, issue: issue);
+        }
         if (state is! GarminError) state = const GarminInitial();
         return;
       }
@@ -75,12 +78,16 @@ mixin GarminSyncControllerSyncMixin
                 return;
               }
               if (state is GarminPendingMfa) return;
-              if (state is GarminError) return;
+              if (state case GarminError(:final issue)) {
+                await _recordFailedSync(attemptedAt: now, issue: issue);
+                return;
+              }
             }
           }
           logger.w(
             'HealthOS Garmin sync failed: ${fatalIssues.first.logLabel}',
           );
+          await _recordFailedSync(attemptedAt: now, issue: fatalIssues.first);
           state = GarminError(fatalIssues.first);
           return;
         }
@@ -108,6 +115,7 @@ mixin GarminSyncControllerSyncMixin
         }
       }
       state = GarminError(issue);
+      await _recordFailedSync(attemptedAt: now, issue: issue);
     }
   }
 
