@@ -99,17 +99,53 @@ void main() {
     expect(find.text('1 data source failed to refresh'), findsOneWidget);
     expect(find.textContaining('health-platform-fetch-failed'), findsNothing);
   });
+
+  testWidgets('today distinguishes a recent data point from a stale failure', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1000, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await DomainOptInStore(db)
+        .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+
+    final now = DateTime.now().toUtc();
+    await tester.pumpWidget(
+      _wrap(
+        const HealthTodayPage(),
+        overrides: _todayOverrides(
+          db: db,
+          latestDataAt: now.subtract(const Duration(hours: 2)),
+          garminState: GarminConnected(
+            lastSyncAt: now.subtract(const Duration(hours: 2)),
+            totalMetrics: 12,
+            lastErrorCode: 'endpoint_unavailable',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('1 data source failed to refresh'), findsOneWidget);
+    expect(find.textContaining('Health data updated'), findsOneWidget);
+    expect(find.textContaining('may be out of date'), findsNothing);
+  });
 }
 
 List<Override> _todayOverrides({
   required AppDatabase db,
   required DateTime? latestDataAt,
   HealthSyncStatus? syncStatus,
+  GarminSyncState garminState = const GarminInitial(),
 }) => [
   appDatabaseProvider.overrideWith((ref) async => db),
   currentUserIdProvider.overrideWithValue(() async => 'user-1'),
   health_data.garminSyncControllerProvider.overrideWithBuild(
-    (_, _) => const GarminInitial(),
+    (_, _) => garminState,
   ),
   health_data.healthSyncStatusProvider.overrideWithValue(syncStatus),
   health_data.healthPlatformStatusProvider.overrideWith(

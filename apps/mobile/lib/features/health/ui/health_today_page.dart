@@ -334,7 +334,12 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final failures = lastRefresh?.failedCount ?? 0;
     final persistedPlatformFailure = platform?.ok == false;
-    final garminFailure = garmin is health_data.GarminError;
+    final garminFailure = switch (garmin) {
+      health_data.GarminError() => true,
+      health_data.GarminConnected(:final lastErrorCode) =>
+        lastErrorCode != null,
+      _ => false,
+    };
     final persistedFailureCount =
         (persistedPlatformFailure ? 1 : 0) + (garminFailure ? 1 : 0);
     if (failures > 0 || persistedFailureCount > 0) {
@@ -346,7 +351,9 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
                 _isHealthPermissionError(platform?.errorCode)
             ? l10n.healthSyncPermissionDenied
             : latestDataAt != null
-            ? l10n.healthRefreshStale(_ago(l10n, latestDataAt))
+            ? _isHealthDataStale(latestDataAt)
+                  ? l10n.healthRefreshStale(_ago(l10n, latestDataAt))
+                  : l10n.healthRefreshFresh(_ago(l10n, latestDataAt))
             : latestSyncAt == null
             ? l10n.healthRefreshPullHint
             : l10n.healthRefreshFresh(_ago(l10n, latestSyncAt)),
@@ -379,6 +386,9 @@ DateTime? _latestDate(DateTime? left, DateTime? right) {
   if (right == null) return left;
   return left.isAfter(right) ? left : right;
 }
+
+bool _isHealthDataStale(DateTime at) =>
+    DateTime.now().toUtc().difference(at.toUtc()) > const Duration(hours: 36);
 
 bool _isHealthPermissionError(String? errorCode) {
   final normalized = errorCode?.toLowerCase() ?? '';
@@ -563,119 +573,82 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     final sourceData = ref.watch(health_data.healthSourceDataSummaryProvider);
     final latestDataAt = sourceData.value?.platformLatestAt;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compactAction = constraints.maxWidth < Breakpoints.compactContent;
-        return SoftCard(
-          level: SoftCardLevel.raised,
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  AppIconTile(
-                    icon: enabled
-                        ? FLucideIcons.activity
-                        : FLucideIcons.circleOff,
-                    color: _healthKitColor(
-                      enabled,
-                      platformStatus: platformStatus,
-                      persisted: persisted,
-                    ),
-                    size: 32,
-                    iconSize: AppIconSizes.h18,
-                    backgroundOpacity: AppOpacity.whisper,
-                    foregroundOpacity: AppOpacity.strong,
-                  ),
-                  const SizedBox(width: AppSpacing.s10),
-                  Expanded(
-                    child: Text(
-                      l10n.healthKitTitle,
-                      style: context.labelStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  AppBadge(
-                    label: _healthKitBadge(
-                      l10n,
-                      enabled,
-                      platformStatus: platformStatus,
-                      persisted: persisted,
-                    ),
-                    tone: _healthKitBadgeTone(
-                      enabled,
-                      platformStatus: platformStatus,
-                      persisted: persisted,
-                    ),
-                    size: AppBadgeSize.compact,
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  if (compactAction)
-                    AppIconButton(
-                      icon: FLucideIcons.refreshCw,
-                      onPress: enabled ? _syncHealthKit : null,
-                      tooltip: l10n.healthSyncAction,
-                      surface: AppIconButtonSurface.softMuted,
-                      size: 40,
-                      iconSize: AppIconSizes.xs,
-                      busy: _syncing,
-                    )
-                  else if (_syncing)
-                    const SizedBox(
-                      width: AppIconSizes.sm,
-                      height: AppIconSizes.sm,
-                      child: FCircularProgress(),
-                    )
-                  else
-                    FButton(
-                      variant: FButtonVariant.outline,
-                      onPress: enabled ? _syncHealthKit : null,
-                      prefix: const Icon(
-                        FLucideIcons.refreshCw,
-                        size: AppIconSizes.xs,
-                      ),
-                      child: Text(l10n.healthSyncAction),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              Padding(
-                padding: const EdgeInsets.only(left: 42),
-                child: Text(
-                  _healthKitText(
-                    l10n,
-                    enabled,
-                    platformStatus: platformStatus,
-                    persisted: persisted,
-                  ),
-                  style: context.captionStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (_healthKitMetadata(
-                    l10n,
-                    platformStatus: platformStatus,
-                    persisted: persisted,
-                    latestDataAt: latestDataAt,
-                  )
-                  case final String metadata)
-                Padding(
-                  padding: const EdgeInsets.only(left: 42, top: AppSpacing.s2),
-                  child: Text(
-                    metadata,
-                    style: context.microCaptionStyle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
+    final badge = AppBadge(
+      label: _healthKitBadge(
+        l10n,
+        enabled,
+        platformStatus: platformStatus,
+        persisted: persisted,
+      ),
+      tone: _healthKitBadgeTone(
+        enabled,
+        platformStatus: platformStatus,
+        persisted: persisted,
+      ),
+      size: AppBadgeSize.compact,
+    );
+    return SoftCard(
+      level: SoftCardLevel.raised,
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppMetricHeader(
+            icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
+            title: l10n.healthKitTitle,
+            color: _healthKitColor(
+              enabled,
+              platformStatus: platformStatus,
+              persisted: persisted,
+            ),
+            showChevron: false,
+            trailing: Padding(
+              padding: const EdgeInsetsDirectional.only(start: AppSpacing.s8),
+              child: badge,
+            ),
           ),
-        );
-      },
+          const SizedBox(height: AppSpacing.s6),
+          Text(
+            _healthKitText(
+              l10n,
+              enabled,
+              platformStatus: platformStatus,
+              persisted: persisted,
+            ),
+            style: context.captionStyle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (_healthKitMetadata(
+                l10n,
+                platformStatus: platformStatus,
+                persisted: persisted,
+                latestDataAt: latestDataAt,
+              )
+              case final String metadata)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: Text(
+                metadata,
+                style: context.microCaptionStyle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: AppBusyButton(
+              label: l10n.healthSyncAction,
+              busyLabel: l10n.healthSyncingButton,
+              busy: _syncing,
+              variant: FButtonVariant.outline,
+              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
+              onPress: enabled ? _syncHealthKit : null,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

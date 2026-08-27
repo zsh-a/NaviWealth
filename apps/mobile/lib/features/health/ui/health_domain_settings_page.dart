@@ -38,6 +38,7 @@ class HealthDomainSettingsPage extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(children: <Widget>[_HealthPlatformSyncRow()]),
           ),
+          const SizedBox(height: AppPageRhythm.row),
           const GarminSyncStatusCard(),
         ],
       ),
@@ -103,9 +104,10 @@ class _HealthPlatformSyncRowState
   }) {
     final r = _lastResult;
     if (_running) return l10n.settingsDomainsHealthSyncRunning;
-    if (platformStatus == null || platformStatus.checkFailed) {
+    if (platformStatus == null) {
       return l10n.healthSourceChecking;
     }
+    if (platformStatus.checkFailed) return l10n.healthSourceUnavailable;
     if (!platformStatus.available) return l10n.healthSourceUnavailable;
     if (platformStatus.needsPermission) {
       return l10n.healthSourcePermissionRequired;
