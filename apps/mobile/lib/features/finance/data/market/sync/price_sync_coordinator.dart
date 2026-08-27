@@ -147,6 +147,12 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
   /// Total number of completed cycles since [start]. Includes errored runs.
   int cycleCount = 0;
 
+  /// Result of the most recent FX pass, when that pass reached the FX stage.
+  /// Settings surfaces use this to distinguish a partial pair failure from a
+  /// completely unavailable provider while the status bus carries the
+  /// cycle-level state.
+  FxRateSyncResult? lastFxResult;
+
   /// Idempotent. Safe to call from bootstrap.
   void start() {
     if (_started) return;
@@ -362,16 +368,27 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
   }
 
   Future<void> _syncFx() async {
+    lastFxResult = null;
     final inputs = await _fxInputs();
     if (inputs == null) return;
     if (inputs.currencies.isEmpty) return;
     try {
-      final synced = await _fxSync.syncRates(
+      final result = await _fxSync.syncRatesDetailed(
         baseCurrency: inputs.baseCurrency,
         accountCurrencies: inputs.currencies,
       );
-      if (synced > 0) {
-        _logger.d('price_sync_coordinator: fx synced $synced pair(s)');
+      lastFxResult = result;
+      if (result.syncedCount > 0) {
+        _logger.d(
+          'price_sync_coordinator: fx synced '
+          '${result.syncedCount} pair(s)',
+        );
+      }
+      if (result.hasFailures) {
+        throw StateError(
+          'FX sync failed for ${result.failedCount} pair(s): '
+          '${result.failureSummary ?? 'unknown error'}',
+        );
       }
     } catch (e, st) {
       _logger.w(
@@ -379,6 +396,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
         error: e,
         stackTrace: st,
       );
+      rethrow;
     }
   }
 

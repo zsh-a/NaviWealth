@@ -1673,6 +1673,21 @@
   "fxRatesAppBarTitle": "FX rates",
   "fxRatesEmpty": "No FX rates recorded yet. Rates are auto-synced on app launch — add accounts in different currencies to get started.",
   "fxRatesRefreshing": "Syncing rates…",
+  "fxRatesSyncCompleted": "Rates updated",
+  "fxRatesSyncFailed": "Could not sync rates: {error}",
+  "@fxRatesSyncFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "fxRatesSyncPartial": "Updated {synced} of {total} currency pairs. {error}",
+  "@fxRatesSyncPartial": {
+    "placeholders": {
+      "synced": { "type": "int" },
+      "total": { "type": "int" },
+      "error": { "type": "String" }
+    }
+  },
   "fxRatesOverviewTitle": "Currency monitor",
   "fxRatesOverviewSubtitle": "A quiet view of the rates used across your wealth history.",
   "fxRatesStatusSyncing": "Syncing",

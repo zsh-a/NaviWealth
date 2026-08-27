@@ -307,6 +307,7 @@ final fxRatesStreamProvider = StreamProvider.autoDispose<List<dom.FxRate>>((
   ref,
 ) async* {
   final repo = await ref.watch(fxRateRepositoryProvider.future);
+  if (!ref.mounted) return;
   yield* repo.watchAll();
 });
 

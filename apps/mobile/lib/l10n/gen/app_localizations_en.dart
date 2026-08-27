@@ -3356,6 +3356,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fxRatesRefreshing => 'Syncing rates…';
 
   @override
+  String get fxRatesSyncCompleted => 'Rates updated';
+
+  @override
+  String fxRatesSyncFailed(String error) {
+    return 'Could not sync rates: $error';
+  }
+
+  @override
+  String fxRatesSyncPartial(int synced, int total, String error) {
+    return 'Updated $synced of $total currency pairs. $error';
+  }
+
+  @override
   String get fxRatesOverviewTitle => 'Currency monitor';
 
   @override

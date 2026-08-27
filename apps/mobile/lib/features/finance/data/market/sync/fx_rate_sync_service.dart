@@ -6,7 +6,53 @@ import '../../../market/domain/asset_market.dart';
 import '../../../market/domain/historical_bar.dart';
 import '../../../market/domain/market_data_service.dart';
 import '../../repositories/fx_rate_repository.dart';
+import '../exceptions.dart';
 import '../http/clock.dart';
+
+/// Outcome of one FX sync pass.
+///
+/// FX is derived market data, so one unavailable pair should not discard
+/// rates that were fetched successfully for the other pairs. The old integer
+/// return value made that partial failure invisible to callers; this report
+/// keeps the compatibility wrapper below while giving UI and coordinator
+/// callers enough information to explain what happened.
+class FxRateSyncResult {
+  FxRateSyncResult({
+    required Set<String> requestedPairs,
+    required Set<String> syncedPairs,
+    required Map<String, String> failures,
+  }) : requestedPairs = Set.unmodifiable(requestedPairs),
+       syncedPairs = Set.unmodifiable(syncedPairs),
+       failures = Map.unmodifiable(failures);
+
+  final Set<String> requestedPairs;
+  final Set<String> syncedPairs;
+  final Map<String, String> failures;
+
+  int get syncedCount => syncedPairs.length;
+  int get failedCount => failures.length;
+  bool get hasFailures => failures.isNotEmpty;
+
+  String? get failureSummary {
+    if (failures.isEmpty) return null;
+    final summary = failures.entries
+        .map((entry) => '${entry.key}: ${entry.value}')
+        .join(' · ');
+    // Keep a provider response from turning a small toast into a full-screen
+    // diagnostic dump. The complete exception remains in the application log.
+    return summary.length <= 280 ? summary : '${summary.substring(0, 279)}…';
+  }
+}
+
+class _FxFetchAttempt {
+  const _FxFetchAttempt.success() : succeeded = true, error = null;
+  const _FxFetchAttempt.failure(Object value)
+    : succeeded = false,
+      error = value;
+
+  final bool succeeded;
+  final Object? error;
+}
 
 /// Fetches daily FX history and persists it to the local `fx_rates` table.
 ///
@@ -63,8 +109,9 @@ class FxRateSyncService {
   /// an explicit repair/backfill action. [from] and [to] are inclusive UTC
   /// calendar-day overrides intended for repair tools and tests.
   ///
-  /// Returns the number of rates successfully synced.
-  Future<int> syncRates({
+  /// Returns a per-pair report. A failed pair is recorded in [failures] and
+  /// does not prevent the remaining pairs from being attempted.
+  Future<FxRateSyncResult> syncRatesDetailed({
     required String baseCurrency,
     required Set<String> accountCurrencies,
     bool fullHistory = false,
@@ -72,12 +119,28 @@ class FxRateSyncService {
     DateTime? to,
   }) async {
     final base = baseCurrency.trim().toUpperCase();
-    final foreigns = accountCurrencies
-        .map((c) => c.trim().toUpperCase())
-        .where((c) => c.isNotEmpty && c != base)
-        .toSet();
+    if (base.isEmpty) {
+      throw ArgumentError.value(
+        baseCurrency,
+        'baseCurrency',
+        'must not be empty',
+      );
+    }
+    final foreigns =
+        accountCurrencies
+            .map((c) => c.trim().toUpperCase())
+            .where((c) => c.isNotEmpty && c != base)
+            .toSet()
+            .toList()
+          ..sort();
 
-    if (foreigns.isEmpty) return 0;
+    if (foreigns.isEmpty) {
+      return FxRateSyncResult(
+        requestedPairs: const {},
+        syncedPairs: const {},
+        failures: const {},
+      );
+    }
 
     final end = _floorUtcDay(to ?? _clock.now());
     final explicitStart = from == null ? null : _floorUtcDay(from);
@@ -85,8 +148,12 @@ class FxRateSyncService {
       throw ArgumentError.value(from, 'from', 'must not be after to');
     }
 
-    var synced = 0;
+    final requestedPairs = <String>{};
+    final syncedPairs = <String>{};
+    final failures = <String, String>{};
     for (final foreign in foreigns) {
+      final pair = '$base/$foreign';
+      requestedPairs.add(pair);
       try {
         final start =
             explicitStart ??
@@ -97,12 +164,40 @@ class FxRateSyncService {
               fullHistory: fullHistory,
             );
         await _fetchAndPersist(base, foreign, from: start, to: end);
-        synced++;
-      } catch (e) {
-        AppLogger.instance.w('FX sync: failed to fetch $base→$foreign: $e');
+        syncedPairs.add(pair);
+      } catch (e, st) {
+        final message = _describeError(e);
+        failures[pair] = message;
+        AppLogger.instance.w(
+          'FX sync: failed to fetch $base→$foreign: $message',
+          error: e,
+          stackTrace: st,
+        );
       }
     }
-    return synced;
+    return FxRateSyncResult(
+      requestedPairs: requestedPairs,
+      syncedPairs: syncedPairs,
+      failures: failures,
+    );
+  }
+
+  /// Backwards-compatible count-only API for non-UI callers.
+  Future<int> syncRates({
+    required String baseCurrency,
+    required Set<String> accountCurrencies,
+    bool fullHistory = false,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final result = await syncRatesDetailed(
+      baseCurrency: baseCurrency,
+      accountCurrencies: accountCurrencies,
+      fullHistory: fullHistory,
+      from: from,
+      to: to,
+    );
+    return result.syncedCount;
   }
 
   Future<DateTime> _startForPair({
@@ -143,46 +238,66 @@ class FxRateSyncService {
     required DateTime to,
   }) async {
     final symbol = '$base$quote=X';
-    if (await _fetchHistoricalAndPersist(
+    final failures = <Object>[];
+    final directHistory = await _fetchHistoricalAndPersist(
       symbol: symbol,
       base: base,
       quote: quote,
       from: from,
       to: to,
-    )) {
+    );
+    if (directHistory.succeeded) {
       return;
+    }
+    if (directHistory.error != null) failures.add(directHistory.error!);
+    // The direct and inverse symbols still hit the same Yahoo IP quota. Once
+    // the provider has explicitly rate-limited us, trying all four fallbacks
+    // only turns one failed refresh into a larger burst of 429s.
+    if (_isRateLimited(directHistory.error)) {
+      throw _noDataError(base: base, quote: quote, failures: failures);
     }
 
     final inverseSymbol = '$quote$base=X';
-    if (await _fetchHistoricalAndPersist(
+    final inverseHistory = await _fetchHistoricalAndPersist(
       symbol: inverseSymbol,
       base: base,
       quote: quote,
       from: from,
       to: to,
       invert: true,
-    )) {
+    );
+    if (inverseHistory.succeeded) {
       return;
     }
+    if (inverseHistory.error != null) failures.add(inverseHistory.error!);
 
     // History is the source of truth for continuity, but retaining the old
     // quote fallback means a provider outage can still record today's mark.
-    if (await _fetchQuoteAndPersist(symbol: symbol, base: base, quote: quote)) {
+    final directQuote = await _fetchQuoteAndPersist(
+      symbol: symbol,
+      base: base,
+      quote: quote,
+    );
+    if (directQuote.succeeded) {
       return;
     }
-    if (await _fetchQuoteAndPersist(
+    if (directQuote.error != null) failures.add(directQuote.error!);
+
+    final inverseQuote = await _fetchQuoteAndPersist(
       symbol: inverseSymbol,
       base: base,
       quote: quote,
       invert: true,
-    )) {
+    );
+    if (inverseQuote.succeeded) {
       return;
     }
+    if (inverseQuote.error != null) failures.add(inverseQuote.error!);
 
-    throw StateError('no FX data available for $base→$quote');
+    throw _noDataError(base: base, quote: quote, failures: failures);
   }
 
-  Future<bool> _fetchHistoricalAndPersist({
+  Future<_FxFetchAttempt> _fetchHistoricalAndPersist({
     required String symbol,
     required String base,
     required String quote,
@@ -214,18 +329,19 @@ class FxRateSyncService {
         );
       }
       if (observations.isEmpty) {
-        AppLogger.instance.d('FX history: $symbol returned no usable bars');
-        return false;
+        final error = StateError('$symbol returned no usable bars');
+        AppLogger.instance.d('FX history: $error');
+        return _FxFetchAttempt.failure(error);
       }
       await _fxRepo.upsertDailyBatch(observations);
-      return true;
+      return const _FxFetchAttempt.success();
     } catch (e) {
       AppLogger.instance.d('FX history: $symbol failed ($e)');
-      return false;
+      return _FxFetchAttempt.failure(e);
     }
   }
 
-  Future<bool> _fetchQuoteAndPersist({
+  Future<_FxFetchAttempt> _fetchQuoteAndPersist({
     required String symbol,
     required String base,
     required String quote,
@@ -237,7 +353,11 @@ class FxRateSyncService {
         market: AssetMarket.fx,
       );
       final price = response.data.price;
-      if (price <= Decimal.zero) return false;
+      if (price <= Decimal.zero) {
+        return _FxFetchAttempt.failure(
+          StateError('$symbol returned a non-positive quote'),
+        );
+      }
       await _fxRepo.upsertDaily(
         baseCurrency: base,
         quoteCurrency: quote,
@@ -246,11 +366,40 @@ class FxRateSyncService {
         fetchedAt: response.fetchedAt,
         source: response.source,
       );
-      return true;
+      return const _FxFetchAttempt.success();
     } catch (e) {
       AppLogger.instance.d('FX quote: $symbol failed ($e)');
-      return false;
+      return _FxFetchAttempt.failure(e);
     }
+  }
+
+  String _describeError(Object error) {
+    if (error is MarketDataException) {
+      final cause = error.cause;
+      final causeText = cause == null ? '' : ' (${_describeError(cause)})';
+      final provider = error.provider == null ? '' : ' [${error.provider}]';
+      return '${error.runtimeType}$provider: ${error.message}$causeText';
+    }
+    return error.toString();
+  }
+
+  NoMarketDataAvailableException _noDataError({
+    required String base,
+    required String quote,
+    required List<Object> failures,
+  }) {
+    final details = failures.map(_describeError).take(2).join('; ');
+    return NoMarketDataAvailableException(
+      'no FX data available for $base→$quote'
+      '${details.isEmpty ? '' : ' ($details)'}',
+      cause: failures.isEmpty ? null : failures.last,
+    );
+  }
+
+  bool _isRateLimited(Object? error) {
+    if (error is RateLimitException) return true;
+    if (error is MarketDataException) return _isRateLimited(error.cause);
+    return false;
   }
 
   static Decimal _invert(Decimal value) =>

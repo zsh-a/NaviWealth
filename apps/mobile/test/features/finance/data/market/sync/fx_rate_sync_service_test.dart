@@ -251,4 +251,25 @@ void main() {
       expect(rates.single.date, DateTime.utc(2026, 5, 14));
     },
   );
+
+  test('reports failed pairs instead of silently returning zero', () async {
+    final market = _FakeMarketData(fetchedAt: DateTime.utc(2026, 5, 14, 12))
+      ..historyFailures.addAll({'USDCNY=X', 'CNYUSD=X'});
+    final service = FxRateSyncService(
+      marketData: market,
+      fxRepo: repo,
+      clock: FakeClock(DateTime.utc(2026, 5, 14, 12)),
+      historyLookback: const Duration(days: 30),
+    );
+
+    final result = await service.syncRatesDetailed(
+      baseCurrency: 'USD',
+      accountCurrencies: {'USD', 'CNY'},
+    );
+
+    expect(result.requestedPairs, {'USD/CNY'});
+    expect(result.syncedPairs, isEmpty);
+    expect(result.failures.keys, contains('USD/CNY'));
+    expect(result.failureSummary, contains('USD/CNY'));
+  });
 }

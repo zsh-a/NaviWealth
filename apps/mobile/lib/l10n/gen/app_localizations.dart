@@ -5765,6 +5765,24 @@ abstract class AppLocalizations {
   /// **'Syncing rates…'**
   String get fxRatesRefreshing;
 
+  /// No description provided for @fxRatesSyncCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Rates updated'**
+  String get fxRatesSyncCompleted;
+
+  /// No description provided for @fxRatesSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not sync rates: {error}'**
+  String fxRatesSyncFailed(String error);
+
+  /// No description provided for @fxRatesSyncPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {synced} of {total} currency pairs. {error}'**
+  String fxRatesSyncPartial(int synced, int total, String error);
+
   /// No description provided for @fxRatesOverviewTitle.
   ///
   /// In en, this message translates to:

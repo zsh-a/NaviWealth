@@ -1009,6 +1009,21 @@
   "fxRatesAppBarTitle": "汇率",
   "fxRatesEmpty": "尚无汇率数据。汇率会在启动时自动同步 — 请先添加不同币种的账户。",
   "fxRatesRefreshing": "正在同步汇率…",
+  "fxRatesSyncCompleted": "汇率已更新",
+  "fxRatesSyncFailed": "无法同步汇率：{error}",
+  "@fxRatesSyncFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "fxRatesSyncPartial": "已更新 {synced}/{total} 个币对。{error}",
+  "@fxRatesSyncPartial": {
+    "placeholders": {
+      "synced": { "type": "int" },
+      "total": { "type": "int" },
+      "error": { "type": "String" }
+    }
+  },
   "fxRatesOverviewTitle": "币种行情",
   "fxRatesOverviewSubtitle": "集中查看财富历史中正在使用的汇率。",
   "fxRatesStatusSyncing": "同步中",

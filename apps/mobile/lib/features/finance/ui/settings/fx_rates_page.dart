@@ -6,13 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
-import 'package:naviwealth/features/finance/data/market/sync/fx_rate_sync_providers.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart' as dom;
-import 'package:naviwealth/features/finance/investment/data/providers.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -49,7 +47,7 @@ class _FxRatesPageState extends ConsumerState<FxRatesPage> {
           icon: Icon(
             _refreshing ? FLucideIcons.loaderCircle : FLucideIcons.refreshCw,
           ),
-          onPress: _refreshing ? null : () => _refresh(context),
+          onPress: _refreshing ? null : _refresh,
         ),
       ],
       childPad: false,
@@ -69,26 +67,44 @@ class _FxRatesPageState extends ConsumerState<FxRatesPage> {
     );
   }
 
-  Future<void> _refresh(BuildContext context) async {
+  Future<void> _refresh() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _refreshing = true);
     AppMessenger.show(context, ToastKind.info, l10n.fxRatesRefreshing);
     try {
-      final service = await ref.read(fxRateSyncServiceProvider.future);
-      final base = ref.read(baseCurrencyProvider);
-      final accounts = await ref.read(accountsStreamProvider.future);
-      final assets = await ref.read(allAssetsStreamProvider.future);
-      final currencies = {
-        for (final account in accounts) account.currency,
-        for (final asset in assets) asset.currency,
-      };
-      await service.syncRates(
-        baseCurrency: base,
-        accountCurrencies: currencies,
-        fullHistory: true,
-      );
-    } catch (_) {
-      // The local history remains useful when the provider is unavailable.
+      final coordinator = await ref.read(priceSyncCoordinatorProvider.future);
+      if (!mounted) return;
+      await coordinator.triggerNow(reason: PriceSyncReason.manual);
+      if (!mounted) return;
+      final status = ref.read(priceSyncStatusBusProvider).current;
+      if (status.status == PriceSyncStatus.failed) {
+        final result = coordinator.lastFxResult;
+        final message =
+            result != null && result.hasFailures && result.syncedCount > 0
+            ? l10n.fxRatesSyncPartial(
+                result.syncedCount,
+                result.requestedPairs.length,
+                result.failureSummary ?? l10n.commonSafeErrorMessage,
+              )
+            : l10n.fxRatesSyncFailed(
+                status.lastError ?? l10n.commonSafeErrorMessage,
+              );
+        AppMessenger.show(context, ToastKind.error, message);
+      } else if (status.status == PriceSyncStatus.fresh) {
+        AppMessenger.show(
+          context,
+          ToastKind.success,
+          l10n.fxRatesSyncCompleted,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          l10n.fxRatesSyncFailed(e.toString()),
+        );
+      }
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }

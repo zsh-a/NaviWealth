@@ -74,7 +74,7 @@ Dio _marketDio(Ref ref) {
 /// in 2023; without it the API returns `401 Invalid Crumb`. The session
 /// caches the handshake for the app lifetime and refreshes on 401.
 final yahooCrumbSessionProvider = Provider<YahooCrumbSession>((ref) {
-  return YahooCrumbSession();
+  return YahooCrumbSession(dio: _marketDio(ref));
 });
 
 /// Options chain provider. Reuses the same [MarketHttpClient]/[RateLimiter]
@@ -114,7 +114,10 @@ final yfinanceProviderProvider = Provider<MarketProvider>((ref) {
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
   );
-  return YFinanceProvider(http: http);
+  return YFinanceProvider(
+    http: http,
+    session: ref.watch(yahooCrumbSessionProvider),
+  );
 });
 
 final coingeckoProviderProvider = Provider<MarketProvider>((ref) {

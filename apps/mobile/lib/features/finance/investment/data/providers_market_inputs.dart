@@ -4,6 +4,7 @@ final allAssetsStreamProvider = StreamProvider.autoDispose<List<Asset>>((
   ref,
 ) async* {
   final db = await ref.watch(appDatabaseProvider.future);
+  if (!ref.mounted) return;
   final query = db.select(db.assets)..where((t) => t.deletedAt.isNull());
   yield* query.watch().map((rows) => rows.map(_assetFromRow).toList());
 });

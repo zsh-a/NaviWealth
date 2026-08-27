@@ -3210,6 +3210,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fxRatesRefreshing => '正在同步汇率…';
 
   @override
+  String get fxRatesSyncCompleted => '汇率已更新';
+
+  @override
+  String fxRatesSyncFailed(String error) {
+    return '无法同步汇率：$error';
+  }
+
+  @override
+  String fxRatesSyncPartial(int synced, int total, String error) {
+    return '已更新 $synced/$total 个币对。$error';
+  }
+
+  @override
   String get fxRatesOverviewTitle => '币种行情';
 
   @override

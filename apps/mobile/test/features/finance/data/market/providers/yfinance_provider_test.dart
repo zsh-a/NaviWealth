@@ -5,6 +5,7 @@ import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/http/retry_policy.dart';
+import 'package:naviwealth/features/finance/data/market/providers/yahoo_crumb_session.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yfinance_provider.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
@@ -12,7 +13,11 @@ import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import '../canned_adapter.dart';
 import '../fake_clock.dart';
 
-YFinanceProvider _makeProvider(CannedAdapter adapter, FakeClock clock) {
+YFinanceProvider _makeProvider(
+  CannedAdapter adapter,
+  FakeClock clock, {
+  YahooCrumbSession? session,
+}) {
   final dio = Dio()..httpClientAdapter = adapter;
   return YFinanceProvider(
     http: MarketHttpClient(
@@ -26,6 +31,7 @@ YFinanceProvider _makeProvider(CannedAdapter adapter, FakeClock clock) {
       retryPolicy: const RetryPolicy(maxAttempts: 1),
       clock: clock,
     ),
+    session: session,
   );
 }
 
@@ -59,6 +65,55 @@ void main() {
       expect(quote.price, Decimal.parse('250.1'));
       expect(quote.previousClose, Decimal.parse('249.0'));
       expect(quote.exchange, 'NMS');
+    });
+
+    test('attaches the shared Yahoo crumb session to chart requests', () async {
+      final marketAdapter = CannedAdapter()
+        ..enqueue('finance/chart/USDCNY', {
+          'chart': {
+            'result': [
+              {
+                'meta': {'currency': 'CNY', 'regularMarketPrice': 7.2},
+              },
+            ],
+            'error': null,
+          },
+        });
+      final sessionAdapter = CannedAdapter()
+        ..enqueueRaw(
+          'fc.yahoo.com',
+          CannedResponse(
+            '',
+            status: 404,
+            headers: {
+              'set-cookie': ['A1=chart-session'],
+              Headers.contentTypeHeader: ['text/html'],
+            },
+          ),
+        )
+        ..enqueueRaw(
+          'getcrumb',
+          CannedResponse(
+            'CHART_CRUMB',
+            headers: const {
+              Headers.contentTypeHeader: ['text/plain'],
+            },
+          ),
+        );
+      final sessionDio = Dio(BaseOptions(validateStatus: (_) => true))
+        ..httpClientAdapter = sessionAdapter;
+      final provider = _makeProvider(
+        marketAdapter,
+        FakeClock(),
+        session: YahooCrumbSession(dio: sessionDio),
+      );
+
+      await provider.getQuote('USDCNY=X');
+
+      final request = marketAdapter.calls.single;
+      expect(request.queryParameters['crumb'], 'CHART_CRUMB');
+      expect(request.headers['Cookie'], 'A1=chart-session');
+      expect(request.headers['User-Agent'], contains('Safari'));
     });
 
     test(
