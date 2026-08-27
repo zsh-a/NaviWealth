@@ -66,30 +66,5 @@ List<CommandPaletteEntry> healthCommandPaletteEntries(AppLocalizations l10n) {
       ],
       run: (BuildContext ctx) => ctx.go(HealthRoutes.trend),
     ),
-    CommandPaletteEntry(
-      id: 'nav.health.plan',
-      label: l10n.healthCommandPlan,
-      icon: FLucideIcons.zap,
-      keywords: <String>[
-        HealthRoutes.plan,
-        'health',
-        'plan',
-        'recovery',
-        'readiness',
-        'workout',
-        'rest',
-        'sleep plan',
-        l10n.healthPlanTitle,
-        l10n.healthPlanTodayActions,
-        l10n.healthPlanLightActivity,
-        '健康',
-        '计划',
-        '恢复',
-        '训练',
-        '休息',
-      ],
-      // Plan merged into Today hero guidance.
-      run: (BuildContext ctx) => ctx.go(HealthRoutes.today),
-    ),
   ];
 }

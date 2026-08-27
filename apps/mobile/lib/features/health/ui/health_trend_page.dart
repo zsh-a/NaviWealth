@@ -22,6 +22,7 @@ import '../composition/health_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
+import 'body_measurement_entry_sheet.dart';
 import 'health_metric_colors.dart';
 
 part 'health_trend_card.dart';
@@ -70,9 +71,12 @@ class HealthTrendPage extends ConsumerStatefulWidget {
 }
 
 class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
+  static const int _previewMetricCount = 3;
+
   late TrendGroup _group;
   late _TrendWindow _window;
   HealthMetricKind? _metricKind;
+  bool _showAllMetrics = false;
 
   @override
   void initState() {
@@ -91,6 +95,7 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       _group = widget.initialGroup;
       _window = _trendWindowForDays(widget.initialWindowDays);
       _metricKind = widget.initialMetricKind;
+      _showAllMetrics = false;
     }
   }
 
@@ -117,8 +122,28 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       },
       orElse: () => specs,
     );
+    final hasRenderableData = groupData.maybeWhen(
+      data: (pointsByKind) =>
+          pointsByKind.values.any((points) => points.length >= 2),
+      orElse: () => true,
+    );
+    final showEmptyState =
+        groupData.hasValue && !hasRenderableData && _metricKind == null;
+    final displayedSpecs = _showAllMetrics
+        ? visibleSpecs
+        : visibleSpecs.take(_previewMetricCount).toList(growable: false);
+    final canRevealMore = visibleSpecs.length > _previewMetricCount;
     return ShellTabScaffold(
       title: l10n.healthTrendTitle,
+      actions: _group == TrendGroup.body
+          ? [
+              ShellHeaderActionSpec(
+                icon: FLucideIcons.plus,
+                label: l10n.healthRecordBodyMetricAction,
+                onPress: () => _recordBodyMetric(context),
+              ),
+            ]
+          : const <ShellHeaderActionSpec>[],
       child: ShellTabPause(
         routePath: HealthRoutes.trend,
         child: ListView(
@@ -168,17 +193,51 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
               },
             ),
             const SizedBox(height: AppSpacing.s16),
-            AdaptiveSummaryGrid(
-              items: [
-                for (final spec in visibleSpecs)
-                  AdaptiveSummaryTile(
-                    child: _TrendCard(
-                      spec: spec,
-                      points: groupData.whenData((m) => m[spec.kind]),
+            if (showEmptyState)
+              SoftCard.raised(
+                padding: AppPageRhythm.cardPadding,
+                child: AppEmptyState(
+                  icon: FLucideIcons.activity,
+                  title: l10n.healthNoData,
+                  message: l10n.healthTrendNotEnoughData,
+                  compact: true,
+                  iconSize: AppIconSizes.lg,
+                  action: FButton(
+                    variant: FButtonVariant.ghost,
+                    prefix: const Icon(
+                      FLucideIcons.arrowRight,
+                      size: AppIconSizes.xs,
                     ),
+                    onPress: () => context.go(HealthRoutes.today),
+                    child: Text(l10n.healthTodayTitle),
                   ),
+                ),
+              )
+            else ...[
+              AdaptiveSummaryGrid(
+                items: [
+                  for (final spec in displayedSpecs)
+                    AdaptiveSummaryTile(
+                      child: _TrendCard(
+                        spec: spec,
+                        points: groupData.whenData((m) => m[spec.kind]),
+                      ),
+                    ),
+                ],
+              ),
+              if (canRevealMore) ...[
+                const SizedBox(height: AppSpacing.s8),
+                AppRevealControl(
+                  expanded: _showAllMetrics,
+                  collapsedLabel: l10n.commonRevealMore(
+                    visibleSpecs.length - _previewMetricCount,
+                  ),
+                  expandedLabel: l10n.commonRevealLess,
+                  onToggle: () =>
+                      setState(() => _showAllMetrics = !_showAllMetrics),
+                ),
               ],
-            ),
+            ],
           ],
         ),
       ),
@@ -192,6 +251,13 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
         metricKind: group == null ? _metricKind : null,
         windowDays: (window ?? _window).days,
       ),
+    );
+  }
+
+  Future<void> _recordBodyMetric(BuildContext context) async {
+    await showBodyMeasurementEntrySheet(
+      context: context,
+      initialKind: HealthMetricKind.weight,
     );
   }
 

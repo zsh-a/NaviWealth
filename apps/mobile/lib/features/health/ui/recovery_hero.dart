@@ -8,7 +8,7 @@ class _RecoveryHero extends ConsumerStatefulWidget {
 }
 
 class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
-  static const int _visibleActionCount = 2;
+  static const int _visibleActionCount = 1;
   bool _showAllActions = false;
   bool _showEvidence = false;
 

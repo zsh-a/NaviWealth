@@ -103,8 +103,18 @@ class _TrendCard extends StatelessWidget {
                   );
                 }
                 return NwLineChart(
-                  filled: true,
-                  heroDots: true,
+                  // Trends are observed data, so keep the line analytical
+                  // rather than smoothing or decorating every card like a
+                  // hero chart. The crosshair remains the precise inspection
+                  // affordance.
+                  interpolation: ChartInterpolation.linear,
+                  showDots: false,
+                  yAxis: spec.kind == HealthMetricKind.bodyFat
+                      ? const ValueAxis(
+                          format: ValueAxisFormat.percent,
+                          fractionDigits: 1,
+                        )
+                      : const ValueAxis(),
                   series: <ChartSeries>[
                     ChartSeries(
                       name: spec.title,
@@ -130,8 +140,18 @@ class _TrendCard extends StatelessWidget {
         '${(value * 10).round() / 10}km',
       HealthMetricKind.workoutSession => '${value.round()}m',
       HealthMetricKind.stepsDaily => _formatSteps(value),
-      HealthMetricKind.weight ||
-      HealthMetricKind.bodyFat => '${(value * 10).round() / 10}',
+      HealthMetricKind.weight => '${(value * 10).round() / 10} kg',
+      HealthMetricKind.bodyFat => '${(value * 10).round() / 10}%',
+      HealthMetricKind.hrvDaily => '${value.round()} ms',
+      HealthMetricKind.rhrDaily ||
+      HealthMetricKind.heartRateDaily => '${value.round()} bpm',
+      HealthMetricKind.spo2Daily => '${value.round()}%',
+      HealthMetricKind.respiratoryRateDaily => '${value.round()} rpm',
+      HealthMetricKind.activeEnergyDaily ||
+      HealthMetricKind.totalEnergyDaily => '${value.round()} kcal',
+      HealthMetricKind.bodyBatteryDaily ||
+      HealthMetricKind.stressDaily => '${value.round()}/100',
+      HealthMetricKind.vo2Max => '${(value * 10).round() / 10}',
       _ => value.round().toString(),
     };
   }

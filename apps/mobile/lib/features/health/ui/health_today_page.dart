@@ -123,14 +123,16 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                     role: AdaptiveSummaryTileRole.supporting,
                     child: _SourcesSection(),
                   ),
-                  const AdaptiveSummaryTile(child: _WeeklySummaryPanel()),
-                ])
-              : staggeredSummaryTiles(const [
-                  AdaptiveSummaryTile(
+                  const AdaptiveSummaryTile(
                     role: AdaptiveSummaryTileRole.continuous,
-                    child: _SourcesSection(),
+                    child: _WeeklySummaryPanel(),
                   ),
-                ]),
+                ])
+              // The activation card already exposes the three first-run
+              // source actions. Repeating the same collapsed source section
+              // below it makes the empty state feel like two onboarding
+              // surfaces instead of one clear next step.
+              : const <AdaptiveSummaryTile>[],
         ),
       ),
     );
@@ -324,14 +326,21 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
       _ => null,
     };
     final latest = _latestDate(platformAt, garminAt);
-    if (latest == null && lastRefresh == null) return const SizedBox.shrink();
-
     final l10n = AppLocalizations.of(context);
     final failures = lastRefresh?.failedCount ?? 0;
-    if (failures > 0) {
+    final persistedPlatformFailure = platform?.ok == false;
+    final garminFailure = garmin is health_data.GarminError;
+    final persistedFailureCount =
+        (persistedPlatformFailure ? 1 : 0) + (garminFailure ? 1 : 0);
+    if (failures > 0 || persistedFailureCount > 0) {
+      final failureCount = failures > 0 ? failures : persistedFailureCount;
       return AppStatusBanner(
-        message: l10n.healthRefreshPartialFailure(failures),
-        details: latest == null
+        message: l10n.healthRefreshPartialFailure(failureCount),
+        details:
+            persistedPlatformFailure &&
+                platform?.errorCode?.contains('permission-denied') == true
+            ? l10n.healthSyncPermissionDenied
+            : latest == null
             ? l10n.healthRefreshPullHint
             : l10n.healthRefreshFresh(_ago(l10n, latest)),
         kind: AppStatusKind.warning,
@@ -339,16 +348,16 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
         compact: true,
       );
     }
+    if (latest == null && lastRefresh == null) return const SizedBox.shrink();
     if (latest == null) return const SizedBox.shrink();
     final stale =
         DateTime.now().toUtc().difference(latest.toUtc()) >
         const Duration(hours: 36);
-    if (!stale) {
-      return AppStatusLine(
-        message: l10n.healthRefreshFresh(_ago(l10n, latest)),
-        icon: FLucideIcons.refreshCw,
-      );
-    }
+    // A successful, recent sync is already implicit in the source details
+    // and recovery freshness badge. Keep this module reserved for states
+    // that need attention so Today does not spend a full row repeating
+    // healthy status.
+    if (!stale) return const SizedBox.shrink();
     return AppStatusBanner(
       message: l10n.healthRefreshStale(_ago(l10n, latest)),
       details: l10n.healthRefreshPullHint,
@@ -509,9 +518,8 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
           setState(() {
             _lastResult = HealthSyncResult.skipped(
               startedAt: DateTime.now().toUtc(),
-              errorMessage: AppLocalizations.of(
-                context,
-              ).healthSyncPermissionDenied,
+              errorMessage: AppLocalizations.of(context)
+                  .healthSyncPermissionDenied,
             );
           });
           await service.recordResult(_lastResult!);

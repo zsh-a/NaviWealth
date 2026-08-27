@@ -75,7 +75,6 @@ List<ChartPoint> _projectToPoints(
     case HealthMetricKind.stepsDaily:
     case HealthMetricKind.activeEnergyDaily:
     case HealthMetricKind.weight:
-    case HealthMetricKind.bodyFat:
     case HealthMetricKind.vo2Max:
     case HealthMetricKind.heartRateDaily:
     case HealthMetricKind.totalEnergyDaily:
@@ -94,6 +93,21 @@ List<ChartPoint> _projectToPoints(
           ChartPoint(
             x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
             y: r.value,
+          ),
+        );
+      }
+      pts.sort((a, b) => a.x.compareTo(b.x));
+      return pts;
+    case HealthMetricKind.bodyFat:
+      // Health metrics store body fat as a fraction (0.0–1.0), while charts
+      // and labels are user-facing percentage points (18.4%).
+      final pts = <ChartPoint>[];
+      for (final r in rows) {
+        if (r.capturedAt.isBefore(cutoff)) continue;
+        pts.add(
+          ChartPoint(
+            x: r.capturedAt.toUtc().millisecondsSinceEpoch.toDouble(),
+            y: r.value * 100,
           ),
         );
       }

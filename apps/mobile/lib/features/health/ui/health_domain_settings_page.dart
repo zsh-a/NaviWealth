@@ -95,7 +95,11 @@ class _HealthPlatformSyncRowState
     if (r == null) {
       if (persisted == null) return l10n.settingsDomainsHealthSyncIdle;
       if (!persisted.ok) {
-        return persisted.errorCode ?? l10n.settingsDomainsHealthSyncFailed;
+        final code = persisted.errorCode?.toLowerCase() ?? '';
+        if (code.contains('permission-denied')) {
+          return l10n.settingsDomainsHealthPermissionDenied;
+        }
+        return l10n.settingsDomainsHealthSyncFailed;
       }
       return l10n.settingsDomainsHealthSyncSummary(
         persisted.upserted,

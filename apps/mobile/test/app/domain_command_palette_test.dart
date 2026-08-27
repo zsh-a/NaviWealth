@@ -47,7 +47,7 @@ void main() {
     );
     expect(
       health.where((entry) => entry.matches('sleep')).map((entry) => entry.id),
-      containsAll(<String>['nav.health.trend', 'nav.health.plan']),
+      contains('nav.health.trend'),
     );
     expect(
       health.where((entry) => entry.matches('garmin')).map((entry) => entry.id),

@@ -101,6 +101,22 @@ void main() {
       expect(pts.single.y, 7.0);
     });
 
+    test('body fat rows → percentage points', () {
+      final pts = healthTrendProject(
+        rows: [
+          _row(
+            id: 'bf1',
+            kind: HealthMetricKind.bodyFat,
+            at: now.subtract(const Duration(days: 1)),
+            value: 0.184,
+          ),
+        ],
+        kind: HealthMetricKind.bodyFat,
+        cutoff: cutoff,
+      );
+      expect(pts.single.y, closeTo(18.4, 1e-6));
+    });
+
     test('workout rows aggregate per UTC day, value = minutes', () {
       final day = DateTime.utc(2026, 5, 25);
       final pts = healthTrendProject(
