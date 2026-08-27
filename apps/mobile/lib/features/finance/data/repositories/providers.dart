@@ -82,8 +82,14 @@ final accountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
   await ref.watch(systemAccountsSeedProvider.future);
+  if (!ref.mounted) return;
+
   final repo = await ref.watch(accountRepositoryProvider.future);
+  if (!ref.mounted) return;
+
   final ownerUserId = await ref.watch(currentUserIdProvider)();
+  if (!ref.mounted) return;
+
   yield* repo.watchActiveForOwner(ownerUserId);
 });
 
@@ -94,8 +100,14 @@ final allAccountsStreamProvider = StreamProvider.autoDispose<List<Account>>((
   ref,
 ) async* {
   await ref.watch(systemAccountsSeedProvider.future);
+  if (!ref.mounted) return;
+
   final ownerUserId = await ref.watch(currentUserIdProvider)();
+  if (!ref.mounted) return;
+
   final repo = await ref.watch(accountRepositoryProvider.future);
+  if (!ref.mounted) return;
+
   yield* repo.watchActiveIncludingSystem(ownerUserId);
 });
 
