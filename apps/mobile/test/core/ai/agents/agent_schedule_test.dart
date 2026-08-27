@@ -82,6 +82,38 @@ void main() {
     });
   });
 
+  group('AgentSchedule.nextRunAt', () {
+    test('returns now when an interval-only schedule is due', () {
+      const s = AgentSchedule(interval: Duration(hours: 1));
+      final now = DateTime(2026, 5, 27, 14, 23);
+
+      expect(s.nextRunAt(now: now), now);
+    });
+
+    test('returns the interval boundary when a run is still fresh', () {
+      const s = AgentSchedule(interval: Duration(hours: 1));
+      final last = DateTime(2026, 5, 27, 14);
+      final now = DateTime(2026, 5, 27, 14, 23);
+
+      expect(s.nextRunAt(now: now, lastRunAt: last), last.add(s.interval));
+    });
+
+    test('returns the next preferred hour before today is eligible', () {
+      final s = AgentSchedule.daily(hourLocal: 7);
+      final now = DateTime(2026, 5, 27, 6);
+
+      expect(s.nextRunAt(now: now), DateTime(2026, 5, 27, 7));
+    });
+
+    test('moves to tomorrow after a same-day run', () {
+      final s = AgentSchedule.daily(hourLocal: 7);
+      final last = DateTime(2026, 5, 27, 7, 2);
+      final now = DateTime(2026, 5, 27, 9);
+
+      expect(s.nextRunAt(now: now, lastRunAt: last), last.add(s.interval));
+    });
+  });
+
   test('equality + hash consider all fields', () {
     const a = AgentSchedule(
       interval: Duration(hours: 1),

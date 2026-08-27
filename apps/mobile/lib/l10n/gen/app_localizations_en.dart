@@ -8330,6 +8330,25 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String agentSettingsNextRunAt(String date) {
+    return 'Next $date';
+  }
+
+  @override
+  String get agentSettingsNextRunOnOpen => 'Next check when the app opens';
+
+  @override
+  String get agentSettingsExecutionTitle => 'Execution';
+
+  @override
+  String get agentSettingsExecutionForeground =>
+      'Checks when the app opens or returns to the foreground';
+
+  @override
+  String get agentSettingsRunNowHint =>
+      'Runs once without changing the automatic schedule';
+
+  @override
   String agentSettingsAroundTime(String time) {
     return 'around $time';
   }
@@ -8337,6 +8356,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String agentSettingsEveryHours(int hours) {
     return 'Every $hours hour(s)';
+  }
+
+  @override
+  String agentSettingsEveryMinutes(int minutes) {
+    return 'Every $minutes min';
+  }
+
+  @override
+  String agentSettingsEveryHoursMinutes(int hours, int minutes) {
+    return 'Every ${hours}h ${minutes}m';
   }
 
   @override

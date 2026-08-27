@@ -243,9 +243,14 @@ void main() {
     expect(await runner.lastRunAt('boom'), isNull);
   });
 
-  test('skipped runs advance lastRunAt so tick does not loop', () async {
+  test('manual runs do not advance the automatic schedule', () async {
     final rt = _runtime();
-    final runner = AgentRunner(runtime: rt, ownerUserId: 'u');
+    final runStore = InMemoryAgentRunStore();
+    final runner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: runStore,
+    );
     final agent = _StubAgent(
       id: 'quiet',
       onRun: (ctx) => AgentRunResult.skipped(
@@ -262,12 +267,55 @@ void main() {
       now.add(const Duration(milliseconds: 10)),
     );
 
+    final automaticRun = await runner.tick(
+      agents: [agent],
+      context: _context(rt, now.add(const Duration(minutes: 30))),
+    );
+    expect(automaticRun, hasLength(1));
+    expect(agent.runCount, 2);
+    expect(
+      await runStore.lastAutomaticRunAt(ownerUserId: 'u', agentId: 'quiet'),
+      now.add(const Duration(minutes: 30, milliseconds: 10)),
+    );
+  });
+
+  test('automatic skipped runs advance the schedule cursor', () async {
+    final rt = _runtime();
+    final runStore = InMemoryAgentRunStore();
+    final runner = AgentRunner(
+      runtime: rt,
+      ownerUserId: 'u',
+      runStore: runStore,
+    );
+    final agent = _StubAgent(
+      id: 'quiet-automatic',
+      onRun: (ctx) => AgentRunResult.skipped(
+        agentId: 'quiet-automatic',
+        startedAt: ctx.now,
+        finishedAt: ctx.now.add(const Duration(milliseconds: 10)),
+        reason: 'nothing new',
+      ),
+    );
+
+    final first = await runner.tick(
+      agents: [agent],
+      context: _context(rt, now),
+    );
     final tooSoon = await runner.tick(
       agents: [agent],
       context: _context(rt, now.add(const Duration(minutes: 30))),
     );
+
+    expect(first, hasLength(1));
     expect(tooSoon, isEmpty);
     expect(agent.runCount, 1);
+    expect(
+      await runStore.lastAutomaticRunAt(
+        ownerUserId: 'u',
+        agentId: 'quiet-automatic',
+      ),
+      now.add(const Duration(milliseconds: 10)),
+    );
   });
 
   test(

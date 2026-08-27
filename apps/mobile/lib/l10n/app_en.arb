@@ -4258,6 +4258,19 @@
     "description": "Badge showing when an agent last ran.",
     "placeholders": { "date": { "type": "String", "example": "7/5/2026 9:00 AM" } }
   },
+  "agentSettingsNextRunAt": "Next {date}",
+  "@agentSettingsNextRunAt": {
+    "description": "Badge showing the next eligible automatic agent run.",
+    "placeholders": { "date": { "type": "String", "example": "7/6/2026 8:00 AM" } }
+  },
+  "agentSettingsNextRunOnOpen": "Next check when the app opens",
+  "@agentSettingsNextRunOnOpen": { "description": "Schedule status when an agent is due on the next foreground tick." },
+  "agentSettingsExecutionTitle": "Execution",
+  "@agentSettingsExecutionTitle": { "description": "Label for the agent execution mode shown in agent details." },
+  "agentSettingsExecutionForeground": "Checks when the app opens or returns to the foreground",
+  "@agentSettingsExecutionForeground": { "description": "Explanation that the current mobile scheduler catches up scheduled agents on foreground." },
+  "agentSettingsRunNowHint": "Runs once without changing the automatic schedule",
+  "@agentSettingsRunNowHint": { "description": "Explanation below the manual run action." },
   "agentSettingsAroundTime": "around {time}",
   "@agentSettingsAroundTime": {
     "description": "Schedule hint for agents with a preferred local run time.",
@@ -4267,6 +4280,19 @@
   "@agentSettingsEveryHours": {
     "description": "Schedule cadence for agents that run every N hours.",
     "placeholders": { "hours": { "type": "int", "example": "6" } }
+  },
+  "agentSettingsEveryMinutes": "Every {minutes} min",
+  "@agentSettingsEveryMinutes": {
+    "description": "Schedule cadence for agents that run every N minutes.",
+    "placeholders": { "minutes": { "type": "int", "example": "15" } }
+  },
+  "agentSettingsEveryHoursMinutes": "Every {hours}h {minutes}m",
+  "@agentSettingsEveryHoursMinutes": {
+    "description": "Schedule cadence for agents whose interval contains both hours and minutes.",
+    "placeholders": {
+      "hours": { "type": "int", "example": "1" },
+      "minutes": { "type": "int", "example": "30" }
+    }
   },
   "agentSettingsCadenceDaily": "Daily",
   "@agentSettingsCadenceDaily": { "description": "Agent schedule cadence label for once per day." },

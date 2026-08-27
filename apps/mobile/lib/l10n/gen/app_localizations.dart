@@ -13949,6 +13949,36 @@ abstract class AppLocalizations {
   /// **'Last run {date}'**
   String agentSettingsLastRunAt(String date);
 
+  /// Badge showing the next eligible automatic agent run.
+  ///
+  /// In en, this message translates to:
+  /// **'Next {date}'**
+  String agentSettingsNextRunAt(String date);
+
+  /// Schedule status when an agent is due on the next foreground tick.
+  ///
+  /// In en, this message translates to:
+  /// **'Next check when the app opens'**
+  String get agentSettingsNextRunOnOpen;
+
+  /// Label for the agent execution mode shown in agent details.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution'**
+  String get agentSettingsExecutionTitle;
+
+  /// Explanation that the current mobile scheduler catches up scheduled agents on foreground.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks when the app opens or returns to the foreground'**
+  String get agentSettingsExecutionForeground;
+
+  /// Explanation below the manual run action.
+  ///
+  /// In en, this message translates to:
+  /// **'Runs once without changing the automatic schedule'**
+  String get agentSettingsRunNowHint;
+
   /// Schedule hint for agents with a preferred local run time.
   ///
   /// In en, this message translates to:
@@ -13960,6 +13990,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Every {hours} hour(s)'**
   String agentSettingsEveryHours(int hours);
+
+  /// Schedule cadence for agents that run every N minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {minutes} min'**
+  String agentSettingsEveryMinutes(int minutes);
+
+  /// Schedule cadence for agents whose interval contains both hours and minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {hours}h {minutes}m'**
+  String agentSettingsEveryHoursMinutes(int hours, int minutes);
 
   /// Agent schedule cadence label for once per day.
   ///

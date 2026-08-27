@@ -184,6 +184,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Run now'), findsOneWidget);
+    expect(find.textContaining('Execution'), findsOneWidget);
+    expect(
+      find.text('Runs once without changing the automatic schedule'),
+      findsOneWidget,
+    );
     expect(find.text('Notifications'), findsNothing);
   });
 

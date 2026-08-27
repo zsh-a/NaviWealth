@@ -7895,6 +7895,23 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String agentSettingsNextRunAt(String date) {
+    return '下次 $date';
+  }
+
+  @override
+  String get agentSettingsNextRunOnOpen => '下次打开 App 时检查';
+
+  @override
+  String get agentSettingsExecutionTitle => '运行方式';
+
+  @override
+  String get agentSettingsExecutionForeground => '打开或回到 App 前台时检查并补跑';
+
+  @override
+  String get agentSettingsRunNowHint => '只运行一次，不会改变自动计划';
+
+  @override
   String agentSettingsAroundTime(String time) {
     return '约 $time';
   }
@@ -7902,6 +7919,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String agentSettingsEveryHours(int hours) {
     return '每 $hours 小时';
+  }
+
+  @override
+  String agentSettingsEveryMinutes(int minutes) {
+    return '每 $minutes 分钟';
+  }
+
+  @override
+  String agentSettingsEveryHoursMinutes(int hours, int minutes) {
+    return '每 $hours 小时 $minutes 分钟';
   }
 
   @override

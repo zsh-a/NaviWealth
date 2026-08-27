@@ -160,6 +160,14 @@ abstract interface class AgentRunStore {
     required String ownerUserId,
     required String agentId,
   });
+
+  /// Returns the latest successful or no-finding run that was initiated by
+  /// an automatic trigger. Manual runs are deliberately excluded so an
+  /// explicit "run once" action cannot move the user's recurring schedule.
+  Future<DateTime?> lastAutomaticRunAt({
+    required String ownerUserId,
+    required String agentId,
+  });
 }
 
 class InMemoryAgentRunStore implements AgentRunStore {
@@ -297,13 +305,34 @@ class InMemoryAgentRunStore implements AgentRunStore {
     required String ownerUserId,
     required String agentId,
   }) async {
+    return _latestNonFailedRunAt(ownerUserId: ownerUserId, agentId: agentId);
+  }
+
+  @override
+  Future<DateTime?> lastAutomaticRunAt({
+    required String ownerUserId,
+    required String agentId,
+  }) async {
+    return _latestNonFailedRunAt(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+      automaticOnly: true,
+    );
+  }
+
+  Future<DateTime?> _latestNonFailedRunAt({
+    required String ownerUserId,
+    required String agentId,
+    bool automaticOnly = false,
+  }) async {
     final rows =
         _runs.values
             .where(
               (run) =>
                   run.ownerUserId == ownerUserId &&
                   run.agentId == agentId &&
-                  run.isNonFailed,
+                  run.isNonFailed &&
+                  (!automaticOnly || run.trigger != AgentRunTrigger.manual),
             )
             .toList()
           ..sort((a, b) {
@@ -524,6 +553,27 @@ class SqliteAgentRunStore implements AgentRunStore {
     required String ownerUserId,
     required String agentId,
   }) async {
+    return _lastNonFailedRunAt(ownerUserId: ownerUserId, agentId: agentId);
+  }
+
+  @override
+  Future<DateTime?> lastAutomaticRunAt({
+    required String ownerUserId,
+    required String agentId,
+  }) async {
+    return _lastNonFailedRunAt(
+      ownerUserId: ownerUserId,
+      agentId: agentId,
+      automaticOnly: true,
+    );
+  }
+
+  Future<DateTime?> _lastNonFailedRunAt({
+    required String ownerUserId,
+    required String agentId,
+    bool automaticOnly = false,
+  }) async {
+    final triggerClause = automaticOnly ? "AND trigger <> 'manual'" : '';
     final row = await _db
         .customSelect(
           '''
@@ -532,6 +582,7 @@ class SqliteAgentRunStore implements AgentRunStore {
           WHERE owner_user_id = ?
             AND agent_id = ?
             AND status IN ('ready', 'no_finding')
+            $triggerClause
           ORDER BY last_non_failed_at DESC
           LIMIT 1
           ''',

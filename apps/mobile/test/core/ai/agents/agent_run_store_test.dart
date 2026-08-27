@@ -121,6 +121,88 @@ void main() {
     );
   });
 
+  test('lastAutomaticRunAt ignores successful manual runs', () async {
+    const agent = _RunStoreAgent();
+    final automaticStartedAt = DateTime.utc(2026, 7, 5, 8);
+    final automaticFinishedAt = automaticStartedAt.add(
+      const Duration(minutes: 1),
+    );
+    final manualStartedAt = automaticStartedAt.add(const Duration(hours: 1));
+    final manualFinishedAt = manualStartedAt.add(const Duration(minutes: 1));
+
+    final inMemory = InMemoryAgentRunStore();
+    await _record(
+      inMemory,
+      agent: agent,
+      startedAt: automaticStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: automaticStartedAt,
+        finishedAt: automaticFinishedAt,
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await _record(
+      inMemory,
+      agent: agent,
+      startedAt: manualStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: manualStartedAt,
+        finishedAt: manualFinishedAt,
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+    expect(
+      await inMemory.lastNonFailedRunAt(
+        ownerUserId: 'user-1',
+        agentId: agent.id,
+      ),
+      manualFinishedAt,
+    );
+    expect(
+      await inMemory.lastAutomaticRunAt(
+        ownerUserId: 'user-1',
+        agentId: agent.id,
+      ),
+      automaticFinishedAt,
+    );
+
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final sqlite = SqliteAgentRunStore(db: db);
+    await _record(
+      sqlite,
+      agent: agent,
+      startedAt: automaticStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: automaticStartedAt,
+        finishedAt: automaticFinishedAt,
+      ),
+      trigger: AgentRunTrigger.schedule,
+    );
+    await _record(
+      sqlite,
+      agent: agent,
+      startedAt: manualStartedAt,
+      result: AgentRunResult(
+        agentId: agent.id,
+        status: AgentRunStatus.completed,
+        startedAt: manualStartedAt,
+        finishedAt: manualFinishedAt,
+      ),
+      trigger: AgentRunTrigger.manual,
+    );
+    expect(
+      await sqlite.lastAutomaticRunAt(ownerUserId: 'user-1', agentId: agent.id),
+      automaticFinishedAt,
+    );
+  });
+
   test(
     'in-memory lastNonFailedRunAt matches sqlite completion semantics',
     () async {

@@ -28,21 +28,25 @@ import '../../../l10n/gen/app_localizations.dart';
 
 final _agentSettingsRowsProvider =
     FutureProvider.autoDispose<List<_AgentSettingsRow>>((ref) async {
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final preferenceStore = await ref.watch(
-        agent_providers.agentPreferenceStoreProvider.future,
-      );
-      final runStore = await ref.watch(
-        agent_providers.agentRunStoreProvider.future,
-      );
       final registrations = ref.watch(agentRegistrationProvider);
       final presentations = ref.watch(agentPresentationSpecsProvider);
       final agentIds = [
         for (final registration in registrations) registration.agent.id,
       ];
+      final ownerUserId = await ref.read(currentUserIdProvider)();
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
+      final preferenceStore = await ref.watch(
+        agent_providers.agentPreferenceStoreProvider.future,
+      );
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
+      final runStore = await ref.watch(
+        agent_providers.agentRunStoreProvider.future,
+      );
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
       final preferences = await preferenceStore.listForOwner(
         ownerUserId: ownerUserId,
       );
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
       final preferencesByAgentId = {
         for (final preference in preferences) preference.agentId: preference,
       };
@@ -50,12 +54,26 @@ final _agentSettingsRowsProvider =
         ownerUserId: ownerUserId,
         agentIds: agentIds,
       );
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
+      final automaticRunTimes = await Future.wait<DateTime?>([
+        for (final agentId in agentIds)
+          runStore.lastAutomaticRunAt(
+            ownerUserId: ownerUserId,
+            agentId: agentId,
+          ),
+      ]);
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
+      final automaticRunTimesByAgentId = <String, DateTime?>{
+        for (var i = 0; i < agentIds.length; i++)
+          agentIds[i]: automaticRunTimes[i],
+      };
       final artifactIds = {
         for (final run in latestRunsByAgentId.values) ?run.artifactId,
       };
       final artifactStore = artifactIds.isEmpty
           ? null
           : await ref.watch(agent_providers.agentArtifactStoreProvider.future);
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
       final visibleAt = DateTime.now().toUtc();
       final artifacts = artifactStore == null
           ? const <AgentArtifact?>[]
@@ -63,6 +81,7 @@ final _agentSettingsRowsProvider =
               for (final artifactId in artifactIds)
                 artifactStore.read(artifactId),
             ]);
+      if (!ref.mounted) return const <_AgentSettingsRow>[];
       final artifactsById = <String, AgentArtifact>{
         for (final artifact in artifacts.whereType<AgentArtifact>())
           if (artifact.isVisibleAt(visibleAt)) artifact.id: artifact,
@@ -80,6 +99,7 @@ final _agentSettingsRowsProvider =
                 preferencesByAgentId[agent.id] ??
                 _defaultAgentPreference(ownerUserId, agent.id),
             latestRun: latestRun,
+            lastAutomaticRunAt: automaticRunTimesByAgentId[agent.id],
             latestArtifact: latestRun?.artifactId == null
                 ? null
                 : artifactsById[latestRun!.artifactId!],
@@ -156,6 +176,7 @@ class _AgentSettingsRow {
     required this.presentation,
     required this.preference,
     required this.latestRun,
+    required this.lastAutomaticRunAt,
     required this.latestArtifact,
   });
 
@@ -164,6 +185,7 @@ class _AgentSettingsRow {
   final AgentPresentationSpec? presentation;
   final AgentPreference preference;
   final AgentRunRecord? latestRun;
+  final DateTime? lastAutomaticRunAt;
   final AgentArtifact? latestArtifact;
 }
 
@@ -610,6 +632,11 @@ class _AgentSettingsDetailSheetState
                           size: AppBadgeSize.compact,
                           tone: AppBadgeTone.neutral,
                         ),
+                      AppBadge(
+                        label: _nextRunLabel(l10n, row, formatters),
+                        size: AppBadgeSize.compact,
+                        tone: AppBadgeTone.accent,
+                      ),
                       if (presentation == null)
                         AppBadge(
                           label: l10n.agentSettingsMissingPresentationBadge,
@@ -652,6 +679,28 @@ class _AgentSettingsDetailSheetState
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                FLucideIcons.calendarClock,
+                size: AppIconSizes.sm,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  '${l10n.agentSettingsExecutionTitle} · '
+                  '${l10n.agentSettingsExecutionForeground}',
+                  style: context.captionStyle,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
         Wrap(
           spacing: AppSpacing.s8,
           runSpacing: AppSpacing.s8,
@@ -682,6 +731,27 @@ class _AgentSettingsDetailSheetState
                 prefix: const Icon(FLucideIcons.history, size: AppIconSizes.xs),
               ),
           ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                FLucideIcons.info,
+                size: AppIconSizes.sm,
+                color: colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  l10n.agentSettingsRunNowHint,
+                  style: context.captionStyle,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -929,6 +999,22 @@ String _scheduleLabel(AppLocalizations l10n, AgentSchedule schedule) {
   return '$cadence · ${l10n.agentSettingsAroundTime(time)}';
 }
 
+String _nextRunLabel(
+  AppLocalizations l10n,
+  _AgentSettingsRow row,
+  AppFormatters formatters,
+) {
+  final now = DateTime.now();
+  final next = row.agent.schedule.nextRunAt(
+    now: now,
+    lastRunAt: row.lastAutomaticRunAt,
+  );
+  if (next == null || !next.isAfter(now)) {
+    return l10n.agentSettingsNextRunOnOpen;
+  }
+  return l10n.agentSettingsNextRunAt(formatters.dateTime(next.toLocal()));
+}
+
 String _intervalLabel(AppLocalizations l10n, Duration interval) {
   if (interval.inDays > 0 && interval.inHours == interval.inDays * 24) {
     final days = interval.inDays;
@@ -940,6 +1026,13 @@ String _intervalLabel(AppLocalizations l10n, Duration interval) {
     if (days % 7 == 0) return l10n.recurringEveryWeek(days ~/ 7);
     if (days == 1) return l10n.agentSettingsCadenceDaily;
     return l10n.recurringEveryDay(days);
+  }
+  final minutes = interval.inMinutes;
+  if (minutes > 0 && minutes < 60) {
+    return l10n.agentSettingsEveryMinutes(minutes);
+  }
+  if (minutes > 0 && minutes % 60 != 0) {
+    return l10n.agentSettingsEveryHoursMinutes(minutes ~/ 60, minutes % 60);
   }
   final hours = interval.inHours <= 0 ? 1 : interval.inHours;
   return l10n.agentSettingsEveryHours(hours);

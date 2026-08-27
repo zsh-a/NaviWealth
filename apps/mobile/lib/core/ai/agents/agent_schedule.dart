@@ -65,6 +65,43 @@ class AgentSchedule {
     return !localNow.isBefore(target.subtract(jitter));
   }
 
+  /// The next point at which this schedule is eligible to run.
+  ///
+  /// A schedule is evaluated by a foreground or platform tick, so a due
+  /// schedule returns [now] rather than pretending that the app can execute
+  /// at an exact wall-clock instant. Callers can use that value to explain
+  /// "ready when the app opens" in the UI.
+  ///
+  /// `null` means there is no wall-clock prediction yet (for example, an
+  /// interval-only schedule that has never run). Such schedules become due
+  /// on the next tick.
+  DateTime? nextRunAt({required DateTime now, DateTime? lastRunAt}) {
+    final localNow = now.toLocal();
+    if (shouldFire(now: now, lastRunAt: lastRunAt)) return localNow;
+
+    final hour = preferredHourLocal;
+    if (hour == null) {
+      final last = lastRunAt?.toLocal();
+      if (last == null) return null;
+      return last.add(interval);
+    }
+
+    var candidate = DateTime(localNow.year, localNow.month, localNow.day, hour);
+    if (!candidate.isAfter(localNow)) {
+      candidate = _addLocalDays(candidate, 1);
+    }
+
+    final last = lastRunAt?.toLocal();
+    if (last != null) {
+      final minimum = last.add(interval);
+      if (minimum.isAfter(candidate)) candidate = minimum;
+      if (_isSameLocalDay(candidate, last)) {
+        candidate = _addLocalDays(candidate, 1);
+      }
+    }
+    return candidate;
+  }
+
   @override
   bool operator ==(Object other) =>
       other is AgentSchedule &&
@@ -78,3 +115,14 @@ class AgentSchedule {
 
 bool _isSameLocalDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+DateTime _addLocalDays(DateTime value, int days) => DateTime(
+  value.year,
+  value.month,
+  value.day + days,
+  value.hour,
+  value.minute,
+  value.second,
+  value.millisecond,
+  value.microsecond,
+);

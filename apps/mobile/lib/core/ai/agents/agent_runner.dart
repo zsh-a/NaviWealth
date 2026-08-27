@@ -120,7 +120,10 @@ class AgentRunner {
         agentId: agent.id,
       );
       if (!enabled) continue;
-      final last = await _runStore.lastNonFailedRunAt(
+      // Manual runs are explicit previews and must not move the recurring
+      // schedule. Automatic event/background/catch-up runs still suppress a
+      // redundant scheduled pass through the same persisted cursor.
+      final last = await _runStore.lastAutomaticRunAt(
         ownerUserId: ownerUserId,
         agentId: agent.id,
       );
