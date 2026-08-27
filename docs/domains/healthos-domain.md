@@ -67,11 +67,19 @@ Pull-to-refresh is a real source refresh, not a local-query reload:
 - Daily Navigator consumes the refreshed Health `LifeSignal` only after the
   app-level freshness and material-change gates.
 
+Today and Trends expose the same pull-to-refresh affordance. Trends refreshes
+all connected sources through the shared coordinator, then reloads the active
+chart group; a partial source failure remains visible inline without adding a
+permanent status panel.
+
 The last platform-sync attempt, last successful refresh, and its
 fetched/upserted/unchanged counts are persisted locally by
-`health_sync_status.dart`. Garmin persists its last successful refresh and
-import count per NaviWealth owner. Today and Health Settings restore this
-operational state after restart; it does not sync.
+`health_sync_status.dart`. Garmin persists its last attempt, last successful
+refresh, import count, and latest failure code per NaviWealth owner. Today and
+Health Settings restore this operational state after restart; it does not
+sync. Source cards derive the latest imported data time from local Health
+rows, so a successful refresh that only returns old data can still be marked
+stale.
 
 ### Garmin session lifecycle
 
