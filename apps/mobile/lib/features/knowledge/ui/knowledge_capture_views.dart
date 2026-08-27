@@ -59,7 +59,8 @@ class _ComposeBody extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.s8,
                       ),
-                      child: Center(
+                      child: Align(
+                        alignment: Alignment.center,
                         child: Text(
                           draftDiscarded
                               ? l10n.knowledgeCaptureDraftCleared

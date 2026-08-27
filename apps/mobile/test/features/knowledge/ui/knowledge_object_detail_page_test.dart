@@ -13,6 +13,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/ui/_widgets.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_object_detail_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -183,6 +184,28 @@ void main() {
     expect(captured?.title, 'Follow up: Prepare the launch brief');
     expect(find.text('Open action'), findsOneWidget);
     expect(find.text('Create action'), findsNothing);
+  });
+
+  testWidgets('note source URL uses the shared external-source affordance', (
+    tester,
+  ) async {
+    const sourceUrl = 'https://example.com/knowledge/source';
+    final note = KnowledgeNote(
+      id: 'note-source',
+      title: 'Source-backed note',
+      bodyMd: 'A note with an external source.',
+      tags: const [],
+      sourceUrl: sourceUrl,
+      createdAt: created,
+      sync: meta(),
+    );
+    await repo.upsertNote(note);
+
+    await pumpDetail(tester, note.id, kind: 'note');
+
+    expect(find.byType(KnowledgeSourceLink), findsOneWidget);
+    expect(find.text(sourceUrl), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.copy), findsOneWidget);
   });
 
   testWidgets('active experiment exposes a source-preserving next step', (

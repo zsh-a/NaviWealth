@@ -34,95 +34,45 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '_widgets.dart';
 
-/// Bumped on each accept / dismiss so the parent FutureBuilder refetches.
+/// Bumped on each accept / dismiss so the Review snapshot refetches.
 /// Side-table writes don't hit Drift streams (raw SQL via
 /// `customStatement`), so we need this explicit pulse to refresh the
 /// list. Cheap and self-contained — no global state.
 final aiSuggestionsRefreshProvider = StateProvider<int>((ref) => 0);
 
-class KnowledgeAiSuggestionsCard extends ConsumerWidget {
-  const KnowledgeAiSuggestionsCard({super.key});
+class KnowledgeAiSuggestionsCard extends StatelessWidget {
+  const KnowledgeAiSuggestionsCard({
+    super.key,
+    required this.records,
+    required this.notesById,
+  });
+
+  final List<InboxTriageRecord> records;
+  final Map<String, KnowledgeNote?> notesById;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tick = ref.watch(aiSuggestionsRefreshProvider);
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<String>(
-      future: ref.watch(knowledgeOwnerUserIdProvider.future),
-      builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
-        final owner = ownerSnap.data!;
-        final triageAsync = ref.watch(inboxTriageRepositoryProvider);
-        return triageAsync.when(
-          // loading: intentionally empty — the card only appears when triage
-          // proposals are pending; a skeleton would flash for a section that
-          // is usually hidden ("empty triage does not occupy Review chrome").
-          loading: () => const SizedBox.shrink(),
-          error: (e, stackTrace) => KnowledgeSection.group(
-            title: l10n.knowledgeAiSuggestionsTitle,
-            children: [
-              AppEmptyState.inline(
-                icon: FLucideIcons.circleX,
-                title: userSafeErrorMessage(
-                  context,
-                  e,
-                  stackTrace: stackTrace,
-                  operation: 'load knowledge AI suggestions',
-                ),
-                tone: AppEmptyStateTone.error,
-                retryLabel: l10n.commonRetry,
-                onRetry: () => ref.invalidate(inboxTriageRepositoryProvider),
-              ),
-            ],
+    if (records.isEmpty) return const SizedBox.shrink();
+    final pendingCount = _pendingCount(records);
+    return KnowledgeSection.group(
+      title: l10n.knowledgeAiSuggestionsTitle,
+      trailing: AppBadge(
+        label: '$pendingCount',
+        icon: FLucideIcons.sparkles,
+        size: AppBadgeSize.compact,
+        tone: AppBadgeTone.info,
+      ),
+      children: [
+        for (final record in records)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: _NoteSuggestionGroup(
+              record: record,
+              note: notesById[record.noteId],
+            ),
           ),
-          data: (triage) => FutureBuilder<List<InboxTriageRecord>>(
-            // `tick` ensures invalidate-after-resolve refetches.
-            future: triage.listPending(ownerUserId: owner),
-            key: ValueKey<int>(tick),
-            builder: (context, snap) {
-              if (snap.hasError) {
-                return KnowledgeSection.group(
-                  title: l10n.knowledgeAiSuggestionsTitle,
-                  children: [
-                    AppEmptyState.inline(
-                      icon: FLucideIcons.circleX,
-                      title: userSafeErrorMessage(
-                        context,
-                        snap.error!,
-                        stackTrace: snap.stackTrace,
-                        operation: 'load knowledge AI suggestions',
-                      ),
-                      tone: AppEmptyStateTone.error,
-                    ),
-                  ],
-                );
-              }
-              final list = (snap.data ?? const <InboxTriageRecord>[])
-                  .where((record) => record.pending.isNotEmpty)
-                  .toList(growable: false);
-              // Signal only — empty triage does not occupy Review chrome.
-              if (list.isEmpty) return const SizedBox.shrink();
-              final pendingCount = _pendingCount(list);
-              return KnowledgeSection.group(
-                title: l10n.knowledgeAiSuggestionsTitle,
-                trailing: AppBadge(
-                  label: '$pendingCount',
-                  icon: FLucideIcons.sparkles,
-                  size: AppBadgeSize.compact,
-                  tone: AppBadgeTone.info,
-                ),
-                children: [
-                  for (final rec in list)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.s8),
-                      child: _NoteSuggestionGroup(record: rec),
-                    ),
-                ],
-              );
-            },
-          ),
-        );
-      },
+      ],
     );
   }
 
@@ -130,55 +80,22 @@ class KnowledgeAiSuggestionsCard extends ConsumerWidget {
       list.fold(0, (sum, rec) => sum + rec.pending.length);
 }
 
-class _NoteSuggestionGroup extends ConsumerStatefulWidget {
-  const _NoteSuggestionGroup({required this.record});
+class _NoteSuggestionGroup extends StatelessWidget {
+  const _NoteSuggestionGroup({required this.record, required this.note});
   final InboxTriageRecord record;
-
-  @override
-  ConsumerState<_NoteSuggestionGroup> createState() =>
-      _NoteSuggestionGroupState();
-}
-
-class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
-  KnowledgeNote? _note;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadNote();
-  }
-
-  Future<void> _loadNote() async {
-    final repo = await ref.read(knowledgeRepositoryProvider.future);
-    final note = await repo.findNote(
-      ownerUserId: widget.record.ownerUserId,
-      id: widget.record.noteId,
-    );
-    if (mounted) {
-      setState(() {
-        _note = note;
-        _loading = false;
-      });
-    }
-  }
+  final KnowledgeNote? note;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    if (_loading) {
-      return const KnowledgeSectionSkeleton();
-    }
-    final note = _note;
     if (note == null) {
       return AppEmptyState.inline(
         icon: FLucideIcons.fileX,
-        title: l10n.knowledgeNoteDeleted(widget.record.noteId),
+        title: l10n.knowledgeNoteDeleted(record.noteId),
       );
     }
-    final pending = widget.record.proposals
-        .where((p) => p.status.isPending)
-        .toList();
+    final resolvedNote = note!;
+    final pending = record.proposals.where((p) => p.status.isPending).toList();
     if (pending.isEmpty) {
       return AppEmptyState.inline(
         icon: FLucideIcons.sparkles,
@@ -186,7 +103,9 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
       );
     }
     return KnowledgeSection.item(
-      title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+      title: resolvedNote.title.isEmpty
+          ? l10n.knowledgeUntitled
+          : resolvedNote.title,
       trailing: AppBadge(
         label: l10n.knowledgeAiSuggestionCount(pending.length),
         size: AppBadgeSize.compact,
@@ -199,7 +118,7 @@ class _NoteSuggestionGroupState extends ConsumerState<_NoteSuggestionGroup> {
             const AppDivider(horizontalPadding: AppSpacing.s0),
             const SizedBox(height: AppSpacing.s10),
           ],
-          _ProposalRow(note: note, proposal: pending[index]),
+          _ProposalRow(note: resolvedNote, proposal: pending[index]),
         ],
       ],
     );

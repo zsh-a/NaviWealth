@@ -1,124 +1,56 @@
 part of 'knowledge_review_page.dart';
 
 class _DueRoutinesCard extends ConsumerWidget {
-  const _DueRoutinesCard();
+  const _DueRoutinesCard({required this.routines});
+
+  final List<KnowledgeRoutine> routines;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<String>(
-      future: ref.watch(knowledgeOwnerUserIdProvider.future),
-      builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
-        final owner = ownerSnap.data!;
-        final repoAsync = ref.watch(knowledgeRepositoryProvider);
-        return repoAsync.when(
-          // loading: intentionally empty — the card only appears when routines
-          // are due; a skeleton would flash for a usually-hidden section.
-          loading: () => const SizedBox.shrink(),
-          error: (e, stackTrace) => KnowledgeSection.group(
-            title: l10n.knowledgeReviewRoutinesTitle,
-            children: [
-              AppEmptyState.inline(
-                icon: FLucideIcons.circleX,
-                title: userSafeErrorMessage(
-                  context,
-                  e,
-                  stackTrace: stackTrace,
-                  operation: 'load routine reviews',
-                ),
-                tone: AppEmptyStateTone.error,
-                retryLabel: l10n.commonRetry,
-                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
-              ),
-            ],
+    if (routines.isEmpty) return const SizedBox.shrink();
+    final orderPrefsKey = _reviewOrderPrefsKey(
+      ref,
+      _kReviewRoutineOrderPrefsKey,
+    );
+    final ordered = _orderedReviewItems<KnowledgeRoutine>(
+      items: routines,
+      order:
+          ref.read(sharedPreferencesProvider).getStringList(orderPrefsKey) ??
+          const <String>[],
+      idOf: (routine) => routine.id,
+    );
+    final visible = ordered.take(kReviewCardMaxItems).toList(growable: false);
+    return KnowledgeSection.group(
+      title: l10n.knowledgeReviewRoutinesTitle,
+      trailing: _ReviewBulkActionButton(
+        label: l10n.knowledgeReviewMarkAllDone,
+        icon: FLucideIcons.checkCheck,
+        onPress: () =>
+            _markRoutinesDone(context: context, ref: ref, routines: routines),
+      ),
+      children: [
+        _ReviewCountHint(
+          visibleCount: visible.length,
+          totalCount: routines.length,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        _ReviewSelectableList<KnowledgeRoutine>(
+          items: visible,
+          idOf: (routine) => routine.id,
+          itemBuilder: (routine) => _DueRoutineRow(routine: routine),
+          actionLabel: l10n.knowledgeReviewMarkSelectedDone,
+          icon: FLucideIcons.checkCheck,
+          onBulkAction: (selected) =>
+              _markRoutinesDone(context: context, ref: ref, routines: selected),
+          orderPrefsKey: orderPrefsKey,
+          onOrderChanged: (ids) => _persistReviewOrder(
+            ref: ref,
+            prefsKey: orderPrefsKey,
+            visibleIds: ids,
           ),
-          data: (repo) {
-            return StreamBuilder<List<KnowledgeRoutine>>(
-              stream: repo.watchRoutines(ownerUserId: owner),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return KnowledgeSection.group(
-                    title: l10n.knowledgeReviewRoutinesTitle,
-                    children: [
-                      AppEmptyState.inline(
-                        icon: FLucideIcons.circleX,
-                        title: userSafeErrorMessage(
-                          context,
-                          snap.error!,
-                          stackTrace: snap.stackTrace,
-                          operation: 'load routine reviews',
-                        ),
-                        tone: AppEmptyStateTone.error,
-                      ),
-                    ],
-                  );
-                }
-                // Quiet until the stream emits; empty due list hides the card.
-                if (!snap.hasData) return const SizedBox.shrink();
-                final now = DateTime.now();
-                final due = (snap.data ?? const <KnowledgeRoutine>[])
-                    .where((r) => shouldShowRoutineInReview(r, now))
-                    .toList(growable: false);
-                if (due.isEmpty) return const SizedBox.shrink();
-                final orderPrefsKey = _reviewOrderPrefsKey(
-                  ref,
-                  _kReviewRoutineOrderPrefsKey,
-                );
-                final ordered = _orderedReviewItems<KnowledgeRoutine>(
-                  items: due,
-                  order:
-                      ref
-                          .read(sharedPreferencesProvider)
-                          .getStringList(orderPrefsKey) ??
-                      const <String>[],
-                  idOf: (r) => r.id,
-                );
-                final visible = ordered
-                    .take(kReviewCardMaxItems)
-                    .toList(growable: false);
-                return KnowledgeSection.group(
-                  title: l10n.knowledgeReviewRoutinesTitle,
-                  trailing: _ReviewBulkActionButton(
-                    label: l10n.knowledgeReviewMarkAllDone,
-                    icon: FLucideIcons.checkCheck,
-                    onPress: () => _markRoutinesDone(
-                      context: context,
-                      ref: ref,
-                      routines: due,
-                    ),
-                  ),
-                  children: [
-                    _ReviewCountHint(
-                      visibleCount: visible.length,
-                      totalCount: due.length,
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    _ReviewSelectableList<KnowledgeRoutine>(
-                      items: visible,
-                      idOf: (r) => r.id,
-                      itemBuilder: (r) => _DueRoutineRow(routine: r),
-                      actionLabel: l10n.knowledgeReviewMarkSelectedDone,
-                      icon: FLucideIcons.checkCheck,
-                      onBulkAction: (selected) => _markRoutinesDone(
-                        context: context,
-                        ref: ref,
-                        routines: selected,
-                      ),
-                      orderPrefsKey: orderPrefsKey,
-                      onOrderChanged: (ids) => _persistReviewOrder(
-                        ref: ref,
-                        prefsKey: orderPrefsKey,
-                        visibleIds: ids,
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
+        ),
+      ],
     );
   }
 }
@@ -228,44 +160,60 @@ class _DueRoutineRowState extends ConsumerState<_DueRoutineRow> {
       label: l10n.knowledgeReviewMarkDone,
       icon: FLucideIcons.check,
       onComplete: _markDone,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-        child: Row(
-          children: [
-            Icon(
-              FLucideIcons.repeat,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground,
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.routine.statement,
-                    style: typography.body.sm,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+      child: Semantics(
+        button: true,
+        label: widget.routine.statement,
+        child: AppTappable(
+          onPress: () => context.pushNamed(
+            KnowledgeRouteNames.objectDetail,
+            pathParameters: {'kind': 'routine', 'id': widget.routine.id},
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+            child: Row(
+              children: [
+                Icon(
+                  FLucideIcons.repeat,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.routine.statement,
+                        style: typography.body.sm,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        l10n.knowledgeReviewRoutineMeta(
+                          dueLabel,
+                          widget.routine.intervalDays,
+                        ),
+                        style: context.captionStyle.copyWith(color: dueColor),
+                      ),
+                    ],
                   ),
-                  Text(
-                    l10n.knowledgeReviewRoutineMeta(
-                      dueLabel,
-                      widget.routine.intervalDays,
-                    ),
-                    style: context.captionStyle.copyWith(color: dueColor),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: AppSpacing.s4),
+                _ReviewIconButton(
+                  icon: FLucideIcons.check,
+                  busy: _busy,
+                  tooltip: l10n.knowledgeReviewMarkDone,
+                  onPress: _markDone,
+                ),
+                const SizedBox(width: AppSpacing.s2),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.xs,
+                  color: colors.mutedForeground,
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.s4),
-            _ReviewIconButton(
-              icon: FLucideIcons.check,
-              busy: _busy,
-              tooltip: l10n.knowledgeReviewMarkDone,
-              onPress: _markDone,
-            ),
-          ],
+          ),
         ),
       ),
     );

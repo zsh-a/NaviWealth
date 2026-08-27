@@ -109,7 +109,7 @@ List<Widget> _noteSections(BuildContext context, KnowledgeNote n) {
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
         title: l10n.knowledgeDetailSourceTitle,
-        children: [Text(n.sourceUrl!, style: context.bodyCaptionStyle)],
+        children: [KnowledgeSourceLink(url: n.sourceUrl!)],
       ),
     ],
   ];
@@ -211,9 +211,8 @@ List<Widget> _experimentSections(
     if (targetAssumption != null) ...[
       const SizedBox(height: AppSpacing.s12),
       KnowledgeSection.group(
-        title: AppLocalizations.of(
-          context,
-        ).knowledgeDetailTargetAssumptionTitle,
+        title: AppLocalizations.of(context)
+            .knowledgeDetailTargetAssumptionTitle,
         children: [
           _RelatedObjectLink(
             label: targetAssumption.statement,
@@ -337,9 +336,8 @@ List<Widget> _assumptionSections(
         ),
         if (a.lastVerifiedAt != null)
           _MetaItem(
-            label: AppLocalizations.of(
-              context,
-            ).knowledgeDetailLastVerifiedLabel,
+            label: AppLocalizations.of(context)
+                .knowledgeDetailLastVerifiedLabel,
             value: knowledgeDate(context, a.lastVerifiedAt!, long: true),
           ),
         _MetaItem(

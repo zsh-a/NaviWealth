@@ -133,6 +133,135 @@ class KnowledgeDocumentSection extends StatelessWidget {
   }
 }
 
+/// External source link used by KnowledgeOS detail views.
+///
+/// Source URLs are user-provided data, but they still leave the app and
+/// should use the same explicit confirmation and copy affordance everywhere.
+class KnowledgeSourceLink extends StatelessWidget {
+  const KnowledgeSourceLink({super.key, required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: AppTappable(
+            onPress: () => _open(context),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    FLucideIcons.externalLink,
+                    size: AppIconSizes.xs,
+                    color: context.theme.colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: AppSelectableText(
+                      url,
+                      maxLines: 4,
+                      style: context.bodyCaptionStyle.copyWith(
+                        color: context.theme.colors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s4),
+        AppIconButton(
+          icon: FLucideIcons.copy,
+          tooltip: l10n.knowledgeSourceCopyAction,
+          onPress: () => _copy(context),
+          iconSize: AppIconSizes.xs,
+          surface: AppIconButtonSurface.softMuted,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _open(BuildContext context) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !_isSafeExternalSource(uri)) {
+      if (context.mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          AppLocalizations.of(context).knowledgeSourceOpenFailed,
+        );
+      }
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.knowledgeSourceOpenConfirmTitle),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(l10n.knowledgeSourceOpenConfirmBody),
+          const SizedBox(height: AppSpacing.s8),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: context.theme.colors.muted.withValues(
+                alpha: AppOpacity.prominent,
+              ),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              border: Border.all(color: context.theme.colors.border),
+            ),
+            child: Padding(
+              padding: AppPageRhythm.densePadding,
+              child: AppSelectableText(
+                url,
+                maxLines: 4,
+                style: TypographyTokens.bodySmall.copyWith(
+                  fontFamily: TypographyTokens.fontFamilyMono,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      confirmLabel: l10n.knowledgeSourceOpenAction,
+      cancelLabel: l10n.commonCancel,
+    );
+    if (confirmed != true || !context.mounted) return;
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        l10n.knowledgeSourceOpenFailed,
+      );
+    }
+  }
+
+  Future<void> _copy(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: url));
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        AppLocalizations.of(context).knowledgeItemCopiedToast,
+      );
+    }
+  }
+}
+
+bool _isSafeExternalSource(Uri uri) {
+  final scheme = uri.scheme.toLowerCase();
+  return (scheme == 'http' || scheme == 'https') && uri.host.isNotEmpty;
+}
+
 /// Compact single-row surface for KnowledgeOS prompt/assistant controls.
 ///
 /// Keeps KnowledgeOS card chrome centralized while still allowing dense,

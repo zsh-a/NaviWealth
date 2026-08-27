@@ -57,7 +57,9 @@ class _LibraryList extends ConsumerWidget {
             searchableText: (entry) => entry.searchText,
             searchSuggestions: (context, entry) => [
               _segmentLabel(l10n, entry.segment),
-              entry.status,
+              entry.status == null
+                  ? null
+                  : knowledgeStatusWireLabel(l10n, entry.status!),
               ...entry.suggestions,
             ].whereType<String>().toList(growable: false),
             statusOf: (entry) => _segmentLabel(l10n, entry.segment),
@@ -92,7 +94,7 @@ class _LibraryList extends ConsumerWidget {
               d.expectedOutcome,
             ].whereType<String>().join('\n'),
             searchSuggestions: (context, d) => [
-              d.status.wire,
+              knowledgeStatusWireLabel(l10n, d.status.wire),
               d.selectedLabel,
               d.reviewDate == null
                   ? null
@@ -123,8 +125,10 @@ class _LibraryList extends ConsumerWidget {
             stream: repo.watchPrinciples(ownerUserId: owner),
             searchableText: (p) =>
                 [p.statement, p.rationaleMd, p.scope, p.status.wire].join('\n'),
-            searchSuggestions: (_, p) =>
-                [p.status.wire, p.scope].toList(growable: false),
+            searchSuggestions: (_, p) => [
+              knowledgeStatusWireLabel(l10n, p.status.wire),
+              p.scope,
+            ].toList(growable: false),
             emptyIcon: FLucideIcons.badgeCheck,
             emptyTitle: l10n.knowledgeLibraryEmptyPrinciplesTitle,
             emptyMessage: l10n.knowledgeLibraryEmptyPrinciplesBody,
@@ -155,7 +159,7 @@ class _LibraryList extends ConsumerWidget {
               a.confidence.toStringAsFixed(2),
             ].join('\n'),
             searchSuggestions: (_, a) => [
-              a.status.wire,
+              knowledgeStatusWireLabel(l10n, a.status.wire),
               a.scope,
               a.confidence.toStringAsFixed(2),
             ],
@@ -251,8 +255,10 @@ class _LibraryList extends ConsumerWidget {
               e.resultMd,
               ...e.metrics,
             ].whereType<String>().join('\n'),
-            searchSuggestions: (_, e) =>
-                [e.status.wire, ...e.metrics].toList(growable: false),
+            searchSuggestions: (_, e) => [
+              knowledgeStatusWireLabel(l10n, e.status.wire),
+              ...e.metrics,
+            ].toList(growable: false),
             emptyIcon: FLucideIcons.flaskConical,
             emptyTitle: l10n.knowledgeLibraryEmptyExperimentsTitle,
             emptyMessage: l10n.knowledgeLibraryEmptyExperimentsBody,
@@ -277,8 +283,10 @@ class _LibraryList extends ConsumerWidget {
           _LibrarySegment.routines => _segmentList<KnowledgeRoutine>(
             stream: repo.watchRoutines(ownerUserId: owner),
             searchableText: (r) => [r.statement, r.scope].join('\n'),
-            searchSuggestions: (_, r) =>
-                [r.status.wire, r.scope].toList(growable: false),
+            searchSuggestions: (_, r) => [
+              knowledgeStatusWireLabel(l10n, r.status.wire),
+              r.scope,
+            ].toList(growable: false),
             emptyIcon: FLucideIcons.calendarClock,
             emptyTitle: l10n.knowledgeLibraryEmptyRoutinesTitle,
             emptyMessage: l10n.knowledgeLibraryEmptyRoutinesBody,

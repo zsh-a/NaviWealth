@@ -9564,6 +9564,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeDetailSourceTitle => 'Source';
 
   @override
+  String get knowledgeSourceOpenConfirmTitle => 'Open source link?';
+
+  @override
+  String get knowledgeSourceOpenConfirmBody =>
+      'You\'ll leave NaviWealth to open this external source. Confirm the destination.';
+
+  @override
+  String get knowledgeSourceOpenAction => 'Open';
+
+  @override
+  String get knowledgeSourceOpenFailed => 'Could not open the source link.';
+
+  @override
+  String get knowledgeSourceCopyAction => 'Copy source URL';
+
+  @override
   String knowledgeDetailAliases(Object aliases) {
     return 'Aliases: $aliases';
   }
@@ -13880,8 +13896,9 @@ class AppLocalizationsEn extends AppLocalizations {
     int decisions,
     int assumptions,
     int suggestions,
+    int findings,
   ) {
-    return '$routines routines · $decisions decisions · $assumptions assumptions · $suggestions AI suggestions';
+    return '$routines routines · $decisions decisions · $assumptions assumptions · $suggestions AI suggestions · $findings conflicts';
   }
 
   @override

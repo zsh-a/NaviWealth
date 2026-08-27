@@ -1,100 +1,36 @@
 part of 'knowledge_review_page.dart';
 
 class _DueReviewsCard extends ConsumerWidget {
-  const _DueReviewsCard();
+  const _DueReviewsCard({required this.decisions});
+
+  final List<KnowledgeDecision> decisions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<String>(
-      future: ref.watch(knowledgeOwnerUserIdProvider.future),
-      builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
-        final owner = ownerSnap.data!;
-        final repoAsync = ref.watch(knowledgeRepositoryProvider);
-        return repoAsync.when(
-          // loading: intentionally empty — the card only appears when reviews
-          // are due; a skeleton would flash for a usually-hidden section.
-          loading: () => const SizedBox.shrink(),
-          error: (e, stackTrace) => KnowledgeSection.group(
-            title: l10n.knowledgeReviewDecisionsTitle,
-            children: [
-              AppEmptyState.inline(
-                icon: FLucideIcons.circleX,
-                title: userSafeErrorMessage(
-                  context,
-                  e,
-                  stackTrace: stackTrace,
-                  operation: 'load decision reviews',
-                ),
-                tone: AppEmptyStateTone.error,
-                retryLabel: l10n.commonRetry,
-                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
-              ),
-            ],
-          ),
-          data: (repo) {
-            final tick = ref.watch(_reviewActionsRefreshProvider);
-            return FutureBuilder<List<KnowledgeDecision>>(
-              key: ValueKey<int>(tick),
-              future: repo.listDueReviews(
-                ownerUserId: owner,
-                asOf: DateTime.now().toUtc(),
-              ),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return KnowledgeSection.group(
-                    title: l10n.knowledgeReviewDecisionsTitle,
-                    children: [
-                      AppEmptyState.inline(
-                        icon: FLucideIcons.circleX,
-                        title: userSafeErrorMessage(
-                          context,
-                          snap.error!,
-                          stackTrace: snap.stackTrace,
-                          operation: 'load decision reviews',
-                        ),
-                        tone: AppEmptyStateTone.error,
-                      ),
-                    ],
-                  );
-                }
-                if (!snap.hasData) return const SizedBox.shrink();
-                final list = snap.data ?? const [];
-                if (list.isEmpty) return const SizedBox.shrink();
-                final orderPrefsKey = _reviewOrderPrefsKey(
-                  ref,
-                  _kReviewDecisionOrderPrefsKey,
-                );
-                final ordered = _orderedReviewItems<KnowledgeDecision>(
-                  items: list,
-                  order:
-                      ref
-                          .read(sharedPreferencesProvider)
-                          .getStringList(orderPrefsKey) ??
-                      const <String>[],
-                  idOf: (d) => d.id,
-                );
-                final visible = ordered
-                    .take(kReviewCardMaxItems)
-                    .toList(growable: false);
-                return KnowledgeSection.group(
-                  title: l10n.knowledgeReviewDecisionsTitle,
-                  children: [
-                    _ReviewCountHint(
-                      visibleCount: visible.length,
-                      totalCount: list.length,
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    for (final decision in visible)
-                      _DueDecisionRow(decision: decision),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
+    if (decisions.isEmpty) return const SizedBox.shrink();
+    final orderPrefsKey = _reviewOrderPrefsKey(
+      ref,
+      _kReviewDecisionOrderPrefsKey,
+    );
+    final ordered = _orderedReviewItems<KnowledgeDecision>(
+      items: decisions,
+      order:
+          ref.read(sharedPreferencesProvider).getStringList(orderPrefsKey) ??
+          const <String>[],
+      idOf: (decision) => decision.id,
+    );
+    final visible = ordered.take(kReviewCardMaxItems).toList(growable: false);
+    return KnowledgeSection.group(
+      title: l10n.knowledgeReviewDecisionsTitle,
+      children: [
+        _ReviewCountHint(
+          visibleCount: visible.length,
+          totalCount: decisions.length,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        for (final decision in visible) _DueDecisionRow(decision: decision),
+      ],
     );
   }
 }

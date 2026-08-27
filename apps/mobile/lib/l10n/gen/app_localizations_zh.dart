@@ -9062,6 +9062,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDetailSourceTitle => '来源';
 
   @override
+  String get knowledgeSourceOpenConfirmTitle => '打开来源链接？';
+
+  @override
+  String get knowledgeSourceOpenConfirmBody =>
+      '即将离开 NaviWealth 打开外部来源，请确认目标地址。';
+
+  @override
+  String get knowledgeSourceOpenAction => '打开';
+
+  @override
+  String get knowledgeSourceOpenFailed => '无法打开来源链接。';
+
+  @override
+  String get knowledgeSourceCopyAction => '复制来源链接';
+
+  @override
   String knowledgeDetailAliases(Object aliases) {
     return '别名：$aliases';
   }
@@ -13163,8 +13179,9 @@ class AppLocalizationsZh extends AppLocalizations {
     int decisions,
     int assumptions,
     int suggestions,
+    int findings,
   ) {
-    return '$routines 个 Routine · $decisions 个 Decision · $assumptions 个 Assumption · $suggestions 条 AI 建议';
+    return '$routines 个 Routine · $decisions 个 Decision · $assumptions 个 Assumption · $suggestions 条 AI 建议 · $findings 条冲突';
   }
 
   @override

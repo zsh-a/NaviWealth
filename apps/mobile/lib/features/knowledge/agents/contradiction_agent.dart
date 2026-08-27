@@ -180,7 +180,9 @@ class ContradictionAgent implements Agent {
             payload: <String, Object?>{
               'subject_kind': issue.subjectKind,
               'subject_id': issue.decisionId,
+              'subject_label': issue.decisionQuestion,
               'reference_id': issue.referenceId,
+              'detail': issue.detail,
             },
           ),
       ],

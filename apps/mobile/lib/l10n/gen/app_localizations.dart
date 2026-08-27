@@ -16020,6 +16020,36 @@ abstract class AppLocalizations {
   /// **'Source'**
   String get knowledgeDetailSourceTitle;
 
+  /// No description provided for @knowledgeSourceOpenConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source link?'**
+  String get knowledgeSourceOpenConfirmTitle;
+
+  /// No description provided for @knowledgeSourceOpenConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll leave NaviWealth to open this external source. Confirm the destination.'**
+  String get knowledgeSourceOpenConfirmBody;
+
+  /// No description provided for @knowledgeSourceOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get knowledgeSourceOpenAction;
+
+  /// No description provided for @knowledgeSourceOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open the source link.'**
+  String get knowledgeSourceOpenFailed;
+
+  /// No description provided for @knowledgeSourceCopyAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy source URL'**
+  String get knowledgeSourceCopyAction;
+
   /// No description provided for @knowledgeDetailAliases.
   ///
   /// In en, this message translates to:
@@ -23333,12 +23363,13 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeReviewAttentionSummary.
   ///
   /// In en, this message translates to:
-  /// **'{routines} routines · {decisions} decisions · {assumptions} assumptions · {suggestions} AI suggestions'**
+  /// **'{routines} routines · {decisions} decisions · {assumptions} assumptions · {suggestions} AI suggestions · {findings} conflicts'**
   String knowledgeReviewAttentionSummary(
     int routines,
     int decisions,
     int assumptions,
     int suggestions,
+    int findings,
   );
 
   /// No description provided for @knowledgeReviewAgentNotRun.

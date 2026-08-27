@@ -4870,6 +4870,11 @@
   "knowledgeDetailEvidenceTitle": "Evidence",
   "knowledgeDetailBodyTitle": "Body",
   "knowledgeDetailSourceTitle": "Source",
+  "knowledgeSourceOpenConfirmTitle": "Open source link?",
+  "knowledgeSourceOpenConfirmBody": "You'll leave NaviWealth to open this external source. Confirm the destination.",
+  "knowledgeSourceOpenAction": "Open",
+  "knowledgeSourceOpenFailed": "Could not open the source link.",
+  "knowledgeSourceCopyAction": "Copy source URL",
   "knowledgeDetailAliases": "Aliases: {aliases}",
   "knowledgeDetailRelatedConceptCount": "{count} related",
   "knowledgeDetailEvidenceCount": "{count} references",
@@ -7148,13 +7153,14 @@
   "knowledgeReviewAllClearBody": "There are no due reviews or pending suggestions. Your deterministic review remains available even without AI.",
   "knowledgeReviewBrowseLibrary": "Browse library",
   "knowledgeReviewReorder": "Drag to reorder",
-  "knowledgeReviewAttentionSummary": "{routines} routines · {decisions} decisions · {assumptions} assumptions · {suggestions} AI suggestions",
+  "knowledgeReviewAttentionSummary": "{routines} routines · {decisions} decisions · {assumptions} assumptions · {suggestions} AI suggestions · {findings} conflicts",
   "@knowledgeReviewAttentionSummary": {
     "placeholders": {
       "routines": { "type": "int" },
       "decisions": { "type": "int" },
       "assumptions": { "type": "int" },
-      "suggestions": { "type": "int" }
+      "suggestions": { "type": "int" },
+      "findings": { "type": "int" }
     }
   },
   "knowledgeReviewAgentNotRun": "The Knowledge Review agent has not run yet.",

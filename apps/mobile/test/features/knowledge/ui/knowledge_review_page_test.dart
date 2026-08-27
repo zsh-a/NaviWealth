@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/agents/agent_finding_store.dart';
+import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
+import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -124,6 +128,69 @@ void main() {
     expect(find.text('All clear'), findsOneWidget);
     expect(find.text('Browse library'), findsOneWidget);
     expect(find.textContaining('Agent'), findsNothing);
+  });
+
+  testWidgets('review page keeps agent signals in the unified queue', (
+    tester,
+  ) async {
+    final at = DateTime.utc(2026, 6, 1, 9);
+    final snapshot = KnowledgeReviewSnapshot(
+      ownerUserId: 'user-1',
+      dueRoutines: const <KnowledgeRoutine>[],
+      dueDecisions: const <KnowledgeDecision>[],
+      staleAssumptions: const <KnowledgeAssumption>[],
+      pendingSuggestions: const <InboxTriageRecord>[],
+      suggestionNotes: const <String, KnowledgeNote?>{},
+      agentResults: agent_providers.AgentResultBundle(
+        artifacts: [
+          AgentArtifact(
+            id: 'artifact-1',
+            ownerUserId: 'user-1',
+            agentId: 'knowledge-review',
+            domain: 'knowledge',
+            kind: AgentArtifactKind.review,
+            severity: AgentArtifactSeverity.warning,
+            title: 'Agent conflict signal',
+            summary: 'A review requires attention.',
+            createdAt: at,
+          ),
+        ],
+        latestRuns: const <AgentRunRecord>[],
+      ),
+      findings: [
+        StoredAgentFinding(
+          id: 'finding-1',
+          agentId: 'knowledge-contradiction',
+          domain: 'knowledge',
+          kind: 'contradiction',
+          severity: AgentArtifactSeverity.warning,
+          confidence: 0.92,
+          payload: const <String, Object?>{
+            'subject_kind': 'concept',
+            'subject_id': 'concept-1',
+            'subject_label': 'Conflicting concept',
+            'detail': 'Evidence changed',
+          },
+          firstSeenAt: at,
+          lastSeenAt: at,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeReviewPage(),
+        overrides: [
+          knowledgeReviewSnapshotProvider.overrideWith((ref) async => snapshot),
+        ],
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Agent conflict signal'), findsOneWidget);
+    expect(find.text('Conflicting concept'), findsOneWidget);
+    expect(find.text('Evidence changed'), findsOneWidget);
+    expect(find.text('All clear'), findsNothing);
   });
 }
 

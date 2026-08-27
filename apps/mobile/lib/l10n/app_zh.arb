@@ -2882,6 +2882,11 @@
   "knowledgeDetailEvidenceTitle": "证据",
   "knowledgeDetailBodyTitle": "正文",
   "knowledgeDetailSourceTitle": "来源",
+  "knowledgeSourceOpenConfirmTitle": "打开来源链接？",
+  "knowledgeSourceOpenConfirmBody": "即将离开 NaviWealth 打开外部来源，请确认目标地址。",
+  "knowledgeSourceOpenAction": "打开",
+  "knowledgeSourceOpenFailed": "无法打开来源链接。",
+  "knowledgeSourceCopyAction": "复制来源链接",
   "knowledgeDetailAliases": "别名：{aliases}",
   "knowledgeDetailRelatedConceptCount": "{count} 个关联",
   "knowledgeDetailEvidenceCount": "{count} 条引用",
@@ -4150,7 +4155,16 @@
   "knowledgeReviewAllClearBody": "当前没有到期复盘或待确认建议。即使未配置 AI，确定性复盘仍然可用。",
   "knowledgeReviewBrowseLibrary": "浏览知识库",
   "knowledgeReviewReorder": "拖动调整顺序",
-  "knowledgeReviewAttentionSummary": "{routines} 个 Routine · {decisions} 个 Decision · {assumptions} 个 Assumption · {suggestions} 条 AI 建议",
+  "knowledgeReviewAttentionSummary": "{routines} 个 Routine · {decisions} 个 Decision · {assumptions} 个 Assumption · {suggestions} 条 AI 建议 · {findings} 条冲突",
+  "@knowledgeReviewAttentionSummary": {
+    "placeholders": {
+      "routines": { "type": "int" },
+      "decisions": { "type": "int" },
+      "assumptions": { "type": "int" },
+      "suggestions": { "type": "int" },
+      "findings": { "type": "int" }
+    }
+  },
   "knowledgeReviewAgentNotRun": "Knowledge Review Agent 尚未运行。",
   "knowledgeReviewLastRun": "最近一次 Agent 复盘：{date}",
   "knowledgeReviewAiUnavailable": "尚未配置可用的设备端 LLM，AI 建议不可用；到期复盘仍可正常使用。",

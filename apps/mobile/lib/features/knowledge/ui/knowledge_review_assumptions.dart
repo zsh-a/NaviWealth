@@ -1,103 +1,38 @@
 part of 'knowledge_review_page.dart';
 
 class _StaleAssumptionsCard extends ConsumerWidget {
-  const _StaleAssumptionsCard();
+  const _StaleAssumptionsCard({required this.assumptions});
+
+  final List<KnowledgeAssumption> assumptions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return FutureBuilder<String>(
-      future: ref.watch(knowledgeOwnerUserIdProvider.future),
-      builder: (context, ownerSnap) {
-        if (!ownerSnap.hasData) return const SizedBox.shrink();
-        final owner = ownerSnap.data!;
-        final repoAsync = ref.watch(knowledgeRepositoryProvider);
-        return repoAsync.when(
-          // loading: intentionally empty — the card only appears when stale
-          // assumptions exist; a skeleton would flash for a usually-hidden
-          // section.
-          loading: () => const SizedBox.shrink(),
-          error: (e, stackTrace) => KnowledgeSection.group(
-            title: l10n.knowledgeReviewAssumptionsTitle,
-            children: [
-              AppEmptyState.inline(
-                icon: FLucideIcons.circleX,
-                title: userSafeErrorMessage(
-                  context,
-                  e,
-                  stackTrace: stackTrace,
-                  operation: 'load assumption reviews',
-                ),
-                tone: AppEmptyStateTone.error,
-                retryLabel: l10n.commonRetry,
-                onRetry: () => ref.invalidate(knowledgeRepositoryProvider),
-              ),
-            ],
-          ),
-          data: (repo) {
-            final tick = ref.watch(_reviewActionsRefreshProvider);
-            const staleDays = kKnowledgeAssumptionStaleDays;
-            return FutureBuilder(
-              key: ValueKey<int>(tick),
-              future: repo.listOpenAssumptions(ownerUserId: owner),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return KnowledgeSection.group(
-                    title: l10n.knowledgeReviewAssumptionsTitle,
-                    children: [
-                      AppEmptyState.inline(
-                        icon: FLucideIcons.circleX,
-                        title: userSafeErrorMessage(
-                          context,
-                          snap.error!,
-                          stackTrace: snap.stackTrace,
-                          operation: 'load assumption reviews',
-                        ),
-                        tone: AppEmptyStateTone.error,
-                      ),
-                    ],
-                  );
-                }
-                if (!snap.hasData) return const SizedBox.shrink();
-                final all = snap.data ?? const [];
-                final now = DateTime.now().toUtc();
-                final stale = all
-                    .where((a) => a.daysSinceVerify(now) >= staleDays)
-                    .toList();
-                if (stale.isEmpty) return const SizedBox.shrink();
-                final orderPrefsKey = _reviewOrderPrefsKey(
-                  ref,
-                  _kReviewAssumptionOrderPrefsKey,
-                );
-                final ordered = _orderedReviewItems<KnowledgeAssumption>(
-                  items: stale,
-                  order:
-                      ref
-                          .read(sharedPreferencesProvider)
-                          .getStringList(orderPrefsKey) ??
-                      const <String>[],
-                  idOf: (a) => a.id,
-                );
-                final visible = ordered
-                    .take(kReviewCardMaxItems)
-                    .toList(growable: false);
-                return KnowledgeSection.group(
-                  title: l10n.knowledgeReviewAssumptionsTitle,
-                  children: [
-                    _ReviewCountHint(
-                      visibleCount: visible.length,
-                      totalCount: stale.length,
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    for (final assumption in visible)
-                      _StaleAssumptionRow(assumption: assumption, now: now),
-                  ],
-                );
-              },
-            );
-          },
-        );
-      },
+    if (assumptions.isEmpty) return const SizedBox.shrink();
+    final now = DateTime.now().toUtc();
+    final orderPrefsKey = _reviewOrderPrefsKey(
+      ref,
+      _kReviewAssumptionOrderPrefsKey,
+    );
+    final ordered = _orderedReviewItems<KnowledgeAssumption>(
+      items: assumptions,
+      order:
+          ref.read(sharedPreferencesProvider).getStringList(orderPrefsKey) ??
+          const <String>[],
+      idOf: (assumption) => assumption.id,
+    );
+    final visible = ordered.take(kReviewCardMaxItems).toList(growable: false);
+    return KnowledgeSection.group(
+      title: l10n.knowledgeReviewAssumptionsTitle,
+      children: [
+        _ReviewCountHint(
+          visibleCount: visible.length,
+          totalCount: assumptions.length,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        for (final assumption in visible)
+          _StaleAssumptionRow(assumption: assumption, now: now),
+      ],
     );
   }
 }
