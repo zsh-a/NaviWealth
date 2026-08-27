@@ -5711,18 +5711,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsAppBarTitle;
 
-  /// No description provided for @settingsAccountTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Account'**
-  String get settingsAccountTitle;
-
-  /// No description provided for @settingsAccountSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign-in & multi-device sync'**
-  String get settingsAccountSubtitle;
-
   /// No description provided for @settingsBaseCurrencyTitle.
   ///
   /// In en, this message translates to:
@@ -6927,17 +6915,17 @@ abstract class AppLocalizations {
   /// **'View signed-in devices and revoke access'**
   String get settingsDevicesSubtitle;
 
-  /// Settings row title for signing out / switching to local-only mode.
+  /// Settings row title for disabling cloud sync while keeping this device local.
   ///
   /// In en, this message translates to:
-  /// **'Sign out'**
-  String get settingsSignOutTitle;
+  /// **'Switch to Local Mode'**
+  String get settingsSwitchToLocalTitle;
 
-  /// Settings row subtitle for signing out / switching to local-only mode.
+  /// Settings row subtitle for switching a cloud account to local-only mode.
   ///
   /// In en, this message translates to:
-  /// **'Disable cloud sync and keep this device in local mode'**
-  String get settingsSignOutSubtitle;
+  /// **'Disable cloud sync while keeping data on this device'**
+  String get settingsSwitchToLocalSubtitle;
 
   /// AppBar title on the devices list page.
   ///
@@ -13093,19 +13081,7 @@ abstract class AppLocalizations {
   /// **'Account'**
   String get settingsAccountSection;
 
-  /// Settings section header for base currency / FX rates — formatting + financial semantics, not just display
-  ///
-  /// In en, this message translates to:
-  /// **'Numbers & Money'**
-  String get settingsNumbersAndMoneySection;
-
-  /// Settings section header for Plan-related parameters (risk appetite, target allocation, monthly expense, thresholds, stress test). Renamed from 'Investment Preferences' to match the Plan tab.
-  ///
-  /// In en, this message translates to:
-  /// **'Planning'**
-  String get settingsPlanningSection;
-
-  /// Settings section header for AI privacy, LLM provider key, and chat history/transparency
+  /// No description provided for @settingsAiSection.
   ///
   /// In en, this message translates to:
   /// **'AI'**
@@ -13134,6 +13110,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Privacy & transparency'**
   String get settingsAiHubTrustSection;
+
+  /// Settings row that opens saved AI conversation history.
+  ///
+  /// In en, this message translates to:
+  /// **'AI history'**
+  String get settingsAiHistoryTitle;
+
+  /// Settings row subtitle for saved AI conversation history.
+  ///
+  /// In en, this message translates to:
+  /// **'Review saved AI conversations'**
+  String get settingsAiHistorySubtitle;
 
   /// No description provided for @personalMemoryTitle.
   ///
@@ -13297,17 +13285,23 @@ abstract class AppLocalizations {
   /// **'Logs and performance tools'**
   String get settingsAdvancedHubSubtitle;
 
-  /// Settings section header for the About tile (version, commit, etc.)
+  /// Settings section header for app version and low-frequency diagnostics.
   ///
   /// In en, this message translates to:
-  /// **'About'**
-  String get settingsAboutSection;
+  /// **'About & diagnostics'**
+  String get settingsAboutDiagnosticsSection;
 
-  /// Settings section header for sync + backup/restore (AI rows moved to the AI section)
+  /// Settings section header for sync, backup/restore, and storage maintenance.
   ///
   /// In en, this message translates to:
-  /// **'Data'**
+  /// **'Data & sync'**
   String get settingsDataSection;
+
+  /// Settings section header for notification, device privacy, and optional telemetry controls.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications & privacy'**
+  String get settingsNotificationsPrivacySection;
 
   /// Settings tile and page title for LifeOS data management
   ///
@@ -14033,10 +14027,10 @@ abstract class AppLocalizations {
   /// **'Catch-up'**
   String get agentSettingsTriggerCatchUp;
 
-  /// Settings section header for diagnostics, version, logs, and performance tools
+  /// Settings sub-page section header for logs, performance, and developer tools.
   ///
   /// In en, this message translates to:
-  /// **'Diagnostics'**
+  /// **'Diagnostic tools'**
   String get settingsAdvancedSection;
 
   /// Settings tile and page title for local AI model management

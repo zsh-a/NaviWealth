@@ -24,7 +24,7 @@ class _AppearanceSection extends ConsumerWidget {
             ref.read(themeModeProvider.notifier).set(m);
           },
         ),
-        const AppGradientDivider(),
+        const AppGroupedDivider(),
         InlineSettingRow<AppSurfaceStyle>(
           icon: FLucideIcons.palette,
           label: l10n.settingsSurfaceStyleTitle,
@@ -38,7 +38,7 @@ class _AppearanceSection extends ConsumerWidget {
             ref.read(surfaceStyleProvider.notifier).set(s);
           },
         ),
-        const AppGradientDivider(),
+        const AppGroupedDivider(),
         InlineSettingRow<AppAccentSeed>(
           icon: FLucideIcons.paintbrush,
           label: l10n.settingsAccentSeedTitle,
@@ -51,7 +51,7 @@ class _AppearanceSection extends ConsumerWidget {
             ref.read(accentSeedProvider.notifier).set(a);
           },
         ),
-        const AppGradientDivider(),
+        const AppGroupedDivider(),
         InlineSettingRow<MarketColorMode>(
           icon: FLucideIcons.arrowUpDown,
           label: l10n.settingsMarketColorTitle,
@@ -72,7 +72,7 @@ class _AppearanceSection extends ConsumerWidget {
           ),
           child: _MarketColorPreview(),
         ),
-        const AppGradientDivider(),
+        const AppGroupedDivider(),
         InlineSettingRow<String>(
           icon: FLucideIcons.languages,
           label: l10n.settingsLanguageTitle,
@@ -136,7 +136,6 @@ class _AboutTileState extends ConsumerState<_AboutTile> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final versionAsync = ref.watch(appVersionProvider);
-    final colors = context.theme.colors;
     final subtitle = versionAsync.when(
       loading: () => l10n.settingsAboutSubtitle('…'),
       error: (_, _) => l10n.settingsAboutSubtitle('?'),
@@ -161,11 +160,7 @@ class _AboutTileState extends ConsumerState<_AboutTile> {
         children: [
           Row(
             children: [
-              Icon(
-                FLucideIcons.info,
-                size: AppIconSizes.h18,
-                color: colors.mutedForeground,
-              ),
+              const SettingsIconChip(icon: FLucideIcons.info),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
@@ -190,10 +185,15 @@ class _AboutTileState extends ConsumerState<_AboutTile> {
               child: FButton(
                 variant: FButtonVariant.outline,
                 onPress: _checking ? null : _checkForUpdates,
-                child: Text(
-                  _checking
-                      ? l10n.nativeUpdateChecking
-                      : l10n.nativeUpdateCheck,
+                child: Flexible(
+                  child: Text(
+                    _checking
+                        ? l10n.nativeUpdateChecking
+                        : l10n.nativeUpdateCheck,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ),
             ),
@@ -299,12 +299,13 @@ class _ProductMetricsRow extends ConsumerWidget {
               ref.read(productMetricsProvider.notifier).setEnabled(next),
         ),
         if (enabled) ...[
-          const AppGradientDivider(),
-          InlineLinkRow(
+          const AppGroupedDivider(),
+          InlineActionRow(
             icon: FLucideIcons.copy,
             label: l10n.settingsProductMetricsCopy,
             subtitle: l10n.settingsProductMetricsCopySubtitle,
-            onTap: () async {
+            actionIcon: FLucideIcons.copy,
+            onPress: () async {
               final report = ref
                   .read(productMetricsProvider.notifier)
                   .exportAggregates();

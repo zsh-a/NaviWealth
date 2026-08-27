@@ -59,7 +59,7 @@ class NotificationSettingsPage extends ConsumerWidget {
                       .setEnabled(next),
                 ),
                 for (final row in domainRows) ...[
-                  const AppGradientDivider(),
+                  const AppGroupedDivider(),
                   row,
                 ],
               ],

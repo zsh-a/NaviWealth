@@ -28,12 +28,13 @@ part 'settings_overview_sections.dart';
 ///
 /// Section order maps to user mental model (most-personal → least):
 ///
-///   1. Account            cloud / device identity
-///   2. Appearance         theme / market color / language
-///   3. AI                 privacy → LLM provider → transparency
-///   4. Data               sync + backup
-///   5. LifeOS Domains     FinanceOS / HealthOS / KnowledgeOS
-///   6. Diagnostics        version / logs / performance
+///   1. Account             cloud / device identity
+///   2. Appearance          theme / market color / language
+///   3. AI                  providers, models, agents → privacy and history
+///   4. Data & Sync         sync + backup / storage
+///   5. Notifications       notifications + device/privacy switches
+///   6. LifeOS Domains      FinanceOS / HealthOS / KnowledgeOS
+///   7. About & Diagnostics version / logs / performance
 ///
 /// The previous `_AccountHeader` decorative tile is gone — the page
 /// title comes from `appSubPageHeader` in `settings_page.dart`, so the
@@ -41,7 +42,7 @@ part 'settings_overview_sections.dart';
 class SettingsOverview extends ConsumerWidget {
   const SettingsOverview({super.key});
 
-  static const double _twoColumnBreakpoint = Breakpoints.contentThreeColumn;
+  static const double _twoColumnBreakpoint = Breakpoints.contentTwoColumn;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,7 +89,7 @@ class SettingsOverview extends ConsumerWidget {
                 subtitle: l10n.settingsSyncSubtitle,
                 onTap: () => context.pushNamed(SettingsRouteNames.sync),
               ),
-              const AppDivider(),
+              const AppGroupedDivider(),
             ],
             InlineLinkRow(
               icon: FLucideIcons.database,
@@ -96,25 +97,34 @@ class SettingsOverview extends ConsumerWidget {
               subtitle: l10n.settingsDataManagementSubtitle,
               onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
             ),
-            const AppDivider(),
+            const AppGroupedDivider(),
             InlineLinkRow(
               icon: FLucideIcons.cloudUpload,
               label: l10n.settingsDataTitle,
               subtitle: l10n.settingsDataSubtitle,
               onTap: () => context.pushNamed(SettingsRouteNames.backup),
             ),
-            const AppDivider(),
+          ],
+        ),
+      ),
+    );
+    final notificationsPrivacyGroup = AppEntrance(
+      role: AppMotionRole.decorative,
+      child: _Section(
+        title: l10n.settingsNotificationsPrivacySection,
+        child: Column(
+          children: [
             InlineLinkRow(
               icon: FLucideIcons.bell,
               label: l10n.settingsNotificationsTitle,
               subtitle: l10n.settingsNotificationsSubtitle,
               onTap: () => context.pushNamed(SettingsRouteNames.notifications),
             ),
-            const AppDivider(),
+            const AppGroupedDivider(),
             const _BiometricUnlockRow(),
-            const AppDivider(),
+            const AppGroupedDivider(),
             const _CrashReportingRow(),
-            const AppDivider(),
+            const AppGroupedDivider(),
             const _ProductMetricsRow(),
           ],
         ),
@@ -141,7 +151,7 @@ class SettingsOverview extends ConsumerWidget {
     final advancedGroup = AppEntrance(
       role: AppMotionRole.decorative,
       child: _Section(
-        title: l10n.settingsAdvancedSection,
+        title: l10n.settingsAboutDiagnosticsSection,
         child: Column(
           children: [
             InlineLinkRow(
@@ -150,19 +160,28 @@ class SettingsOverview extends ConsumerWidget {
               subtitle: l10n.settingsAdvancedHubSubtitle,
               onTap: () => context.pushNamed(SettingsRouteNames.advanced),
             ),
-            const AppGradientDivider(),
+            const AppGroupedDivider(),
             const _AboutTile(),
           ],
         ),
       ),
     );
 
+    final groups = <Widget>[
+      accountGroup,
+      appearanceGroup,
+      aiGroup,
+      dataGroup,
+      notificationsPrivacyGroup,
+      domainsGroup,
+      advancedGroup,
+    ];
+
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Two-column at a list-specific breakpoint instead of the global
-        // page breakpoint — settings is
-        // list-heavy and benefits from horizontal density on phones in
-        // landscape, foldables, and small tablets.
+        // Settings rows carry explanatory copy, so wait for a real desktop
+        // content width before introducing columns. The wide layout pairs
+        // adjacent sections to preserve the mobile reading order.
         final isWide = constraints.maxWidth >= _twoColumnBreakpoint;
         final basePadding = Breakpoints.isMobile(constraints.maxWidth)
             ? const EdgeInsets.all(AppSpacing.s16)
@@ -174,22 +193,7 @@ class SettingsOverview extends ConsumerWidget {
               MediaQuery.paddingOf(context).bottom,
         );
 
-        final allGroupsSingleColumn = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            accountGroup,
-            const SizedBox(height: AppSpacing.s20),
-            appearanceGroup,
-            const SizedBox(height: AppSpacing.s20),
-            aiGroup,
-            const SizedBox(height: AppSpacing.s20),
-            dataGroup,
-            const SizedBox(height: AppSpacing.s20),
-            domainsGroup,
-            const SizedBox(height: AppSpacing.s20),
-            advancedGroup,
-          ],
-        );
+        final allGroupsSingleColumn = _SettingsGroupColumn(groups: groups);
 
         return ListView(
           padding: EdgeInsets.zero,
@@ -198,40 +202,63 @@ class SettingsOverview extends ConsumerWidget {
               maxWidth: isWide
                   ? AdaptiveMaxWidth.page
                   : AdaptiveMaxWidth.narrow,
-              layout: isWide
-                  ? AdaptiveFrameLayout.twoColumn
-                  : AdaptiveFrameLayout.singleColumn,
-              primaryFlex: 1,
-              secondaryFlex: 1,
+              layout: AdaptiveFrameLayout.singleColumn,
               padding: padding,
               primary: isWide
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        accountGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        appearanceGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        dataGroup,
-                      ],
-                    )
+                  ? _SettingsWideGrid(groups: groups)
                   : allGroupsSingleColumn,
-              secondary: isWide
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        aiGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        domainsGroup,
-                        const SizedBox(height: AppSpacing.s20),
-                        advancedGroup,
-                      ],
-                    )
-                  : null,
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _SettingsGroupColumn extends StatelessWidget {
+  const _SettingsGroupColumn({required this.groups});
+
+  final List<Widget> groups;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var index = 0; index < groups.length; index++) ...[
+          if (index > 0) const SizedBox(height: AppSpacing.s20),
+          groups[index],
+        ],
+      ],
+    );
+  }
+}
+
+class _SettingsWideGrid extends StatelessWidget {
+  const _SettingsWideGrid({required this.groups});
+
+  final List<Widget> groups;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var index = 0; index < groups.length; index += 2) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: groups[index]),
+              const SizedBox(width: AppSpacing.s24),
+              Expanded(
+                child: index + 1 < groups.length
+                    ? groups[index + 1]
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+          if (index + 2 < groups.length) const SizedBox(height: AppSpacing.s20),
+        ],
+      ],
     );
   }
 }

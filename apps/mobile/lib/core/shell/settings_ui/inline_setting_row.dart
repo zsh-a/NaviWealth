@@ -98,7 +98,7 @@ class _InlineSettingRowState<T> extends State<InlineSettingRow<T>>
                 ? CrossAxisAlignment.start
                 : CrossAxisAlignment.center,
             children: [
-              _IconChip(icon: widget.icon, colors: colors),
+              SettingsIconChip(icon: widget.icon),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
@@ -302,7 +302,6 @@ class InlineSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
@@ -310,7 +309,7 @@ class InlineSwitchRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _IconChip(icon: icon, colors: colors),
+          SettingsIconChip(icon: icon),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
@@ -345,6 +344,76 @@ class InlineSwitchRow extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Immediate action row with the same visual rhythm as navigation rows, but
+/// without a chevron. Use it for actions such as copying or exporting where
+/// tapping performs work instead of opening another page.
+class InlineActionRow extends StatelessWidget {
+  const InlineActionRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPress,
+    this.subtitle,
+    this.actionIcon = FLucideIcons.arrowUpRight,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPress;
+  final String? subtitle;
+  final IconData actionIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    return Semantics(
+      button: true,
+      label: label,
+      child: AppTappable(
+        onPress: onPress,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s10,
+          ),
+          child: Row(
+            children: [
+              SettingsIconChip(icon: icon),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: context.theme.typography.body.sm,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (subtitle != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.s2),
+                        child: Text(
+                          subtitle!,
+                          style: context.captionStyle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Icon(actionIcon, size: AppIconSizes.sm, color: colors.primary),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -405,7 +474,7 @@ class InlineLinkRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _IconChip(icon: icon, colors: colors),
+            SettingsIconChip(icon: icon),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
@@ -474,14 +543,14 @@ class InlineLinkRow extends StatelessWidget {
 /// Tinted icon chip — gives settings row icons the same premium feel
 /// as [AppActionSheetTile]. A 32x32 rounded container with a subtle
 /// primary-tinted background makes each row feel more polished.
-class _IconChip extends StatelessWidget {
-  const _IconChip({required this.icon, required this.colors});
+class SettingsIconChip extends StatelessWidget {
+  const SettingsIconChip({super.key, required this.icon});
 
   final IconData icon;
-  final FColors colors;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.theme.colors;
     return Container(
       width: AppSpacing.s32,
       height: AppSpacing.s32,

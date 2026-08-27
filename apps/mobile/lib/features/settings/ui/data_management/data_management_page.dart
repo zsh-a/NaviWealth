@@ -95,9 +95,8 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
       AppMessenger.show(
         context,
         ToastKind.success,
-        AppLocalizations.of(
-          context,
-        ).dataManagementMaintenanceSuccess(run.rowsAffected),
+        AppLocalizations.of(context)
+            .dataManagementMaintenanceSuccess(run.rowsAffected),
       );
     } catch (error, stackTrace) {
       if (!mounted) return;
@@ -333,9 +332,9 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                   icon: FLucideIcons.shieldCheck,
                   label: l10n.dataManagementBackupTitle,
                   subtitle: l10n.dataManagementBackupSubtitle,
-                  onTap: () => context.goNamed(SettingsRouteNames.backup),
+                  onTap: () => context.pushNamed(SettingsRouteNames.backup),
                 ),
-                const AppGradientDivider(),
+                const AppGroupedDivider(),
                 InlineSwitchRow(
                   icon: FLucideIcons.calendarClock,
                   label: l10n.dataManagementAutomaticTitle,
@@ -345,7 +344,7 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                       ? (_) {}
                       : _setAutomaticMaintenance,
                 ),
-                const AppGradientDivider(),
+                const AppGroupedDivider(),
                 InlineLinkRow(
                   icon: FLucideIcons.sparkles,
                   label: l10n.dataManagementRunMaintenanceTitle,
@@ -769,7 +768,7 @@ class _DomainDataCard extends StatelessWidget {
                 variant: FButtonVariant.outline,
                 onPress: resetting || !actionsEnabled
                     ? null
-                    : () => context.goNamed(
+                    : () => context.pushNamed(
                         SettingsRouteNames.backup,
                         queryParameters: <String, String>{
                           'domain': snapshot.scope.wire,

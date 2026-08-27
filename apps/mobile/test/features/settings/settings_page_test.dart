@@ -86,6 +86,8 @@ GoRouter _router({
 Future<Widget> _wrap(
   SharedPreferences prefs, {
   String initialLocation = AppRoutes.settingsDomains,
+  Locale? locale,
+  TextScaler? textScaler,
 }) async {
   final db = makeTestDatabase();
   addTearDown(db.close);
@@ -101,6 +103,16 @@ Future<Widget> _wrap(
       routerConfig: _router(initialLocation: initialLocation),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      locale: locale,
+      builder: (context, child) => FTheme(
+        data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+        child: textScaler == null
+            ? child!
+            : MediaQuery(
+                data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+                child: child!,
+              ),
+      ),
     ),
   );
 }
@@ -166,11 +178,20 @@ void main() {
               routerConfig: _router(),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
-              builder: (context, child) => Consumer(
-                builder: (context, ref, _) {
-                  container = ProviderScope.containerOf(context, listen: false);
-                  return child!;
-                },
+              builder: (context, child) => FTheme(
+                data: buildAppForuiTheme(
+                  brightness: Brightness.light,
+                  touch: true,
+                ),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    container = ProviderScope.containerOf(
+                      context,
+                      listen: false,
+                    );
+                    return child!;
+                  },
+                ),
               ),
             ),
           ),
@@ -262,6 +283,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('app.back')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Advanced diagnostics'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Advanced diagnostics'));
       await tester.pumpAndSettle();
 
@@ -324,6 +346,75 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Configure HealthOS'), findsOneWidget);
       expect(find.text('Domain management'), findsOneWidget);
+    });
+  });
+
+  group('Settings → hierarchy', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    _testWidgets('shows the new grouped labels in Chinese', (tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(
+          prefs,
+          initialLocation: AppRoutes.settings,
+          locale: const Locale('zh'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('数据与同步'), findsOneWidget);
+      expect(find.text('通知与隐私'), findsOneWidget);
+      expect(find.text('关于与诊断'), findsOneWidget);
+    });
+
+    _testWidgets('keeps adjacent settings groups aligned on a wide surface', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1280, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settings),
+      );
+      await tester.pumpAndSettle();
+
+      final aiY = tester.getTopLeft(find.text('AI')).dy;
+      final dataY = tester.getTopLeft(find.text('Data & sync')).dy;
+      expect((aiY - dataY).abs(), lessThan(1));
+    });
+
+    _testWidgets('exposes saved AI history from the AI hub', (tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settingsAi),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('AI history'), findsOneWidget);
+      expect(find.text('Review saved AI conversations'), findsOneWidget);
+    });
+
+    _testWidgets('does not overflow at large text scale', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(
+          prefs,
+          initialLocation: AppRoutes.settings,
+          textScaler: const TextScaler.linear(2),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final exception = tester.takeException();
+      expect(exception, isNull);
+      expect(find.text('AI & device intelligence'), findsOneWidget);
     });
   });
 

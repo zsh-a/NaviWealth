@@ -3181,12 +3181,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAppBarTitle => '设置';
 
   @override
-  String get settingsAccountTitle => '账户';
-
-  @override
-  String get settingsAccountSubtitle => '登录与多端同步';
-
-  @override
   String get settingsBaseCurrencyTitle => '基础货币';
 
   @override
@@ -3874,10 +3868,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDevicesSubtitle => '查看已登录的设备并远程登出';
 
   @override
-  String get settingsSignOutTitle => '登出';
+  String get settingsSwitchToLocalTitle => '切换到本地模式';
 
   @override
-  String get settingsSignOutSubtitle => '关闭云同步，并将此设备保留为本地模式';
+  String get settingsSwitchToLocalSubtitle => '关闭云同步，但保留本机数据';
 
   @override
   String get authDevicesTitle => '已登录设备';
@@ -7387,12 +7381,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountSection => '账户';
 
   @override
-  String get settingsNumbersAndMoneySection => '货币与数字';
-
-  @override
-  String get settingsPlanningSection => '规划';
-
-  @override
   String get settingsAiSection => 'AI';
 
   @override
@@ -7406,6 +7394,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAiHubTrustSection => '隐私与透明度';
+
+  @override
+  String get settingsAiHistoryTitle => 'AI 历史会话';
+
+  @override
+  String get settingsAiHistorySubtitle => '查看已保存的 AI 对话';
 
   @override
   String get personalMemoryTitle => '个人记忆';
@@ -7491,10 +7485,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAdvancedHubSubtitle => '日志与性能工具';
 
   @override
-  String get settingsAboutSection => '关于';
+  String get settingsAboutDiagnosticsSection => '关于与诊断';
 
   @override
-  String get settingsDataSection => '数据';
+  String get settingsDataSection => '数据与同步';
+
+  @override
+  String get settingsNotificationsPrivacySection => '通知与隐私';
 
   @override
   String get settingsDataManagementTitle => '数据与存储';
@@ -7948,7 +7945,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsTriggerCatchUp => '补跑';
 
   @override
-  String get settingsAdvancedSection => '诊断';
+  String get settingsAdvancedSection => '诊断工具';
 
   @override
   String get settingsAiModelsTitle => 'AI 模型';

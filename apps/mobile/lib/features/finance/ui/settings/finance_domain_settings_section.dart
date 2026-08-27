@@ -30,21 +30,21 @@ class FinanceDomainSettingsSection extends ConsumerWidget {
       child: Column(
         children: [
           const _FinanceHeaderRow(),
-          const AppGradientDivider(),
+          const AppGroupedDivider(),
           const _NumbersAndMoneyRows(),
-          const AppGradientDivider(),
+          const AppGroupedDivider(),
           const _RiskAppetiteRow(),
-          const AppGradientDivider(),
+          const AppGroupedDivider(),
           _MonthlyExpenseLink(
-            onTap: () => context.goNamed(SettingsRouteNames.monthlyExpense),
+            onTap: () => context.pushNamed(SettingsRouteNames.monthlyExpense),
           ),
-          const AppGradientDivider(),
+          const AppGroupedDivider(),
           _RiskThresholdsLink(
-            onTap: () => context.goNamed(SettingsRouteNames.riskThresholds),
+            onTap: () => context.pushNamed(SettingsRouteNames.riskThresholds),
           ),
-          const AppGradientDivider(),
+          const AppGroupedDivider(),
           _StressTestLink(
-            onTap: () => context.goNamed(SettingsRouteNames.stressTest),
+            onTap: () => context.pushNamed(SettingsRouteNames.stressTest),
           ),
         ],
       ),
@@ -58,7 +58,6 @@ class _FinanceHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s14,
@@ -66,20 +65,7 @@ class _FinanceHeaderRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: AppSpacing.s32,
-            height: AppSpacing.s32,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: AppOpacity.subtle),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              FLucideIcons.walletCards,
-              size: AppIconSizes.sm,
-              color: colors.primary,
-            ),
-          ),
+          const SettingsIconChip(icon: FLucideIcons.walletCards),
           const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
@@ -126,12 +112,12 @@ class _NumbersAndMoneyRows extends ConsumerWidget {
           onChanged: (picked) =>
               ref.read(baseCurrencyProvider.notifier).set(picked),
         ),
-        const AppGradientDivider(),
+        const AppGroupedDivider(),
         InlineLinkRow(
           icon: FLucideIcons.refreshCw,
           label: l10n.settingsFxRatesTitle,
           subtitle: l10n.settingsFxRatesSubtitle,
-          onTap: () => context.goNamed(SettingsRouteNames.fxRates),
+          onTap: () => context.pushNamed(SettingsRouteNames.fxRates),
         ),
       ],
     );

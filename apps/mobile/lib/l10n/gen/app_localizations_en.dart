@@ -3324,12 +3324,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppBarTitle => 'Settings';
 
   @override
-  String get settingsAccountTitle => 'Account';
-
-  @override
-  String get settingsAccountSubtitle => 'Sign-in & multi-device sync';
-
-  @override
   String get settingsBaseCurrencyTitle => 'Base currency';
 
   @override
@@ -4049,11 +4043,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'View signed-in devices and revoke access';
 
   @override
-  String get settingsSignOutTitle => 'Sign out';
+  String get settingsSwitchToLocalTitle => 'Switch to Local Mode';
 
   @override
-  String get settingsSignOutSubtitle =>
-      'Disable cloud sync and keep this device in local mode';
+  String get settingsSwitchToLocalSubtitle =>
+      'Disable cloud sync while keeping data on this device';
 
   @override
   String get authDevicesTitle => 'Signed-in devices';
@@ -7801,12 +7795,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccountSection => 'Account';
 
   @override
-  String get settingsNumbersAndMoneySection => 'Numbers & Money';
-
-  @override
-  String get settingsPlanningSection => 'Planning';
-
-  @override
   String get settingsAiSection => 'AI';
 
   @override
@@ -7821,6 +7809,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiHubTrustSection => 'Privacy & transparency';
+
+  @override
+  String get settingsAiHistoryTitle => 'AI history';
+
+  @override
+  String get settingsAiHistorySubtitle => 'Review saved AI conversations';
 
   @override
   String get personalMemoryTitle => 'Personal memory';
@@ -7911,10 +7905,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAdvancedHubSubtitle => 'Logs and performance tools';
 
   @override
-  String get settingsAboutSection => 'About';
+  String get settingsAboutDiagnosticsSection => 'About & diagnostics';
 
   @override
-  String get settingsDataSection => 'Data';
+  String get settingsDataSection => 'Data & sync';
+
+  @override
+  String get settingsNotificationsPrivacySection => 'Notifications & privacy';
 
   @override
   String get settingsDataManagementTitle => 'Data & storage';
@@ -8383,7 +8380,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsTriggerCatchUp => 'Catch-up';
 
   @override
-  String get settingsAdvancedSection => 'Diagnostics';
+  String get settingsAdvancedSection => 'Diagnostic tools';
 
   @override
   String get settingsAiModelsTitle => 'AI Models';
