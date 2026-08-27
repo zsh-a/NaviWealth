@@ -325,7 +325,12 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
       health_data.GarminConnected(:final lastSyncAt) => lastSyncAt,
       _ => null,
     };
-    final latest = _latestDate(platformAt, garminAt);
+    final latestSyncAt = _latestDate(platformAt, garminAt);
+    final sourceData = ref.watch(health_data.healthSourceDataSummaryProvider);
+    final latestDataAt = _latestDate(
+      sourceData.value?.platformLatestAt,
+      sourceData.value?.garminLatestAt,
+    );
     final l10n = AppLocalizations.of(context);
     final failures = lastRefresh?.failedCount ?? 0;
     final persistedPlatformFailure = platform?.ok == false;
@@ -340,18 +345,19 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
             persistedPlatformFailure &&
                 _isHealthPermissionError(platform?.errorCode)
             ? l10n.healthSyncPermissionDenied
-            : latest == null
+            : latestDataAt != null
+            ? l10n.healthRefreshStale(_ago(l10n, latestDataAt))
+            : latestSyncAt == null
             ? l10n.healthRefreshPullHint
-            : l10n.healthRefreshFresh(_ago(l10n, latest)),
+            : l10n.healthRefreshFresh(_ago(l10n, latestSyncAt)),
         kind: AppStatusKind.warning,
         icon: FLucideIcons.circleAlert,
         compact: true,
       );
     }
-    if (latest == null && lastRefresh == null) return const SizedBox.shrink();
-    if (latest == null) return const SizedBox.shrink();
+    if (latestDataAt == null) return const SizedBox.shrink();
     final stale =
-        DateTime.now().toUtc().difference(latest.toUtc()) >
+        DateTime.now().toUtc().difference(latestDataAt.toUtc()) >
         const Duration(hours: 36);
     // A successful, recent sync is already implicit in the source details
     // and recovery freshness badge. Keep this module reserved for states
@@ -359,7 +365,7 @@ class _HealthDataFreshnessBanner extends ConsumerWidget {
     // healthy status.
     if (!stale) return const SizedBox.shrink();
     return AppStatusBanner(
-      message: l10n.healthRefreshStale(_ago(l10n, latest)),
+      message: l10n.healthRefreshStale(_ago(l10n, latestDataAt)),
       details: l10n.healthRefreshPullHint,
       kind: AppStatusKind.warning,
       icon: FLucideIcons.clockAlert,
