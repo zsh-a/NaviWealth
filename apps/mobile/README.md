@@ -38,7 +38,7 @@ macOS 上可运行固定模型和普通话 WAV 的原生 ASR 回归。脚本会�
 tool/run-asr-native-smoke.sh .cache/asr-native-smoke
 ```
 
-> Web 字体子集化的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中文字符并产出 ≤250 KB 首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
+> Web 字体子集化的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中文字符并产出 ≤335,000 B（约 327 KiB）的首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
 
 ## 目录结构
 
@@ -47,8 +47,8 @@ lib/
 ├── app/                   启动、路由、域注册（DomainPack）、组合根、Shell chrome
 │   ├── bootstrap.dart     Provider overrides 和 Shell 组合
 │   ├── domain_packs.dart  生产域清单（Finance / Health / Knowledge / Execution）
-│   ├── router_builder.dart 外层 dock Shell + 域路由
-│   └── app_dock_shell.dart 多域导航 chrome
+│   ├── routing/            外层 dock Shell + 域路由
+│   └── shell/              多域导航 chrome
 ├── core/                  跨域基础设施（域中立）
 │   ├── ai/                运行时契约、设备端 agent loop、本地记忆、嵌入、组合接缝
 │   ├── auth/              JWT / session / 域启用（DomainScope）
@@ -68,24 +68,13 @@ lib/
 │   ├── knowledge/         KnowledgeOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── execution/         ExecutionOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── ai_chat/           跨域 AI 对话 UI
-│   ├── accounts/          账户管理
-│   ├── assets/            资产总览
-│   ├── cashflow/          现金流分析
-│   ├── investment/        投资组合
-│   ├── options_income/    期权收入引擎
-│   ├── fire/              FIRE 追踪与压力测试
-│   ├── activity/          交易活动
-│   ├── expense/           支出管理
-│   ├── rebalance/         再平衡提醒
 │   ├── settings/          设置（含域启用页）
-│   ├── shared/            跨域共享 UI 组件
-│   └── ...                analytics / auth / home / ingest / liabilities / plan / wealth
-├── design_system/         W3C 设计令牌 / 主题 / 图表 / 通用 widgets（基于 Forui）
-├── domain/                遗留纯金融中立值/服务（仍被 Finance 共享）
+│   └── life/              跨域 Life hub
+├── design_system/         W3C 设计令牌 / 主题 / 图表 / 通用 widgets（Forui + 本地组件）
 └── l10n/                  en + zh ARB
 ```
 
-每个 feature 内部按 `ui/`（或 `presentation/`）/ `data/` / `domain/` 组织。域级 feature 额外包含 `ai_tools/`、`agents/`、`composition/`。新增功能默认进入 `lib/features/<feature>/`。
+FinanceOS 及各可选域按 `ui/`、`data/`、`domain/` 组织；域级目录还可包含 `ai_tools/`、`agents/`、`composition/`。新增域功能默认进入 `lib/features/<domain>/`，跨域装配留在 `lib/app/`。
 
 ## 域架构
 
@@ -107,16 +96,16 @@ NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
 
 | 用途 | 包 |
 |----|----|
-| 状态管理 | `flutter_riverpod` + `riverpod_annotation` |
+| 状态管理 | `flutter_riverpod` |
 | 路由 | `go_router`（PathUrlStrategy、深链路、Web code-splitting） |
-| UI 组件 | `forui`（FCard / FButton / FTheme(zinc)） |
-| 数据模型 | `freezed` + `json_serializable` |
+| UI 组件 | `forui` + 本地设计系统（`SoftCard` / `AppSection` / `FButton` / `AppTheme`） |
+| 数据模型 | `freezed` + 显式 JSON / Drift 适配器 |
 | 本地存储 | `drift` + `drift_flutter`（Web 走 sqlite3 wasm） |
 | 健康数据 | `package:health`（HealthKit / Health Connect，仅原生端） |
 | 原生嵌入 | `flutter_rust_bridge`（EmbeddingGemma ONNX） |
 | HTTP | `dio` |
 | i18n / 数字货币 | `intl` |
-| 日志 | `logger` |
+| 日志 | `talker` + `talker_dio_logger` |
 
 ## 设备端 AI
 
@@ -131,7 +120,7 @@ AI 仅在设备端运行，无后端中继：
 
 ## Web 路由
 
-使用 **Path URL strategy**（`/accounts` 而非 `/#/accounts`）。`bootstrap()` 调用 `usePathUrlStrategy()`；部署到 Cloudflare Pages 时需把未匹配路径 fallback 到 `index.html`，否则刷新子路由会 404。
+使用 **Path URL strategy**（`/wealth` 而非 `/#/wealth`）。`bootstrap()` 调用 `usePathUrlStrategy()`；部署到 Cloudflare Pages 时需把未匹配路径 fallback 到 `index.html`，否则刷新子路由会 404。
 
 `web/index.html` 的 `<base href="$FLUTTER_BASE_HREF">` 由 `flutter build web --base-href=...` 在构建时替换，默认 `/`。手动验证清单见 [`../../docs/development/web-routing.md`](../../docs/development/web-routing.md)。
 

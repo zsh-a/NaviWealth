@@ -3,8 +3,9 @@
 This is the regression baseline for `flutter build web --release` output.
 The first-paint target is **`main.dart.js` gzip <= 800 KB**.
 
-The numbers below are what we ship today; the deferred-imports infrastructure
-keeps heavy secondary routes out of the initial `main.dart.js` payload.
+The numeric snapshot below was recorded on 2026-04-28. The route map and font
+budget are maintained against the current source; remeasure the bundle when
+the baseline numbers themselves need to be refreshed.
 
 ## How to measure
 
@@ -26,7 +27,7 @@ done
 `--no-source-maps` is what production should use — see
 [Source maps](#source-maps) below for the rationale.
 
-## Baseline (2026-04-28)
+## Recorded snapshot (2026-04-28)
 
 Build flags: `--release --tree-shake-icons --no-source-maps`
 Renderer: CanvasKit (default; loaded from canvaskit/ alongside `main.dart.js`).
@@ -50,18 +51,29 @@ Renderer: CanvasKit (default; loaded from canvaskit/ alongside `main.dart.js`).
 Home is *not* deferred — it ships in `main.dart.js` so the first paint after
 the user authenticates needs no extra round-trip.
 
-| Current route     | Entry file / feature                         | Trigger                    |
-| ----------------- | -------------------------------------------- | -------------------------- |
-| `/portfolio`      | `features/finance/investment/presentation/portfolio_hub_page.dart` | Open Investment Portfolio  |
-| `/plan/analytics` | `features/finance/analytics/analytics_page.dart` | Open Planning > Analytics  |
-| `/plan/fire`      | `features/finance/fire/presentation/fire_page.dart` | Open Planning > FIRE       |
-| `/plan/rebalance` | `features/finance/rebalance/ui/rebalance_page.dart` | Open Planning > Rebalance  |
-| `/ai`             | `features/ai_chat/ui/ai_chat_page.dart`      | Open AI assistant          |
-| `/settings`       | `features/settings/ui/settings_page.dart`    | Open Settings              |
+| Current route(s) | Entry file / feature | Trigger |
+| ---------------- | -------------------- | ------- |
+| `/wealth/physical/:id` | `features/finance/assets/physical/ui/physical_asset_detail_page.dart` | Open physical asset detail |
+| `/wealth/corporate-action` | `features/finance/investment/ui/corporate_action_entry_route.dart` | Record a corporate action |
+| `/wealth/portfolio` and `/wealth/portfolio/*` | `features/finance/investment/ui/portfolio_hub_page.dart` | Open Investment Portfolio |
+| `/wealth/watchlist` | `features/finance/investment/ui/watchlist_page.dart` | Open Watchlist |
+| `/wealth/liabilities` | `features/finance/liabilities/ui/liabilities_page.dart` | Open Liabilities |
+| `/wealth/liabilities/:id` | `features/finance/liabilities/ui/liability_detail_page.dart` | Open liability detail |
+| `/plan/fire` | `features/finance/fire/ui/fire_page.dart` | Open Planning > FIRE |
+| `/plan/rebalance` and `/plan/rebalance/execution/:sessionId` | `features/finance/rebalance/ui/rebalance_page.dart` and `features/finance/rebalance/ui/rebalance_execution_workspace_page.dart` | Open Planning > Rebalance |
+| `/plan/income` | `features/finance/income_strategy/ui/income_strategy_page.dart` | Open Income Strategy |
+| `/plan/income/options` | `features/finance/options_income/ui/income_planner/income_planner_page.dart` | Open Income Planner |
+| `/plan/income/stats` | `features/finance/options_income/ui/options_trade_stats_page.dart` | Open Options Stats |
+| `/plan/income/wheel` | `features/finance/options_income/ui/wheel_lifecycle_page.dart` | Open Wheel Lifecycle |
+| `/plan/dca` | `features/finance/investment/ui/dca_simulator_page.dart` | Open DCA Simulator |
+| `/settings` | `features/settings/ui/settings_page.dart` | Open Settings |
+| `/settings/devices` | `features/auth/ui/devices_page.dart` | Open Devices |
+| `/settings/ai-history` | `features/ai_chat/ui/ai_chat_page.dart` | Open read-only AI history |
 
 > The numeric suffix dart2js assigns to part files is not stable across builds;
 > identify parts by content (or by the entry file in
-> `lib/app/routing/router.dart`) when comparing across CI runs.
+> `lib/app/routing/router_builder.dart` / `lib/features/finance/composition/finance_routes.dart`)
+> when comparing across CI runs.
 
 `/settings` is heavy relative to its 149-line source because the page pulls
 in `SegmentedButton` + `PopupMenuButton` + theme-preference Riverpod
@@ -102,13 +114,14 @@ pays for them on the cold first visit only.
 What's *not* a meaningful share today: the lightweight route shell. The big
 wins come from keeping expensive feature dependencies deferred:
 
-- the AI assistant route (streaming client, chat history, markdown rendering).
-- the analytics route (`fl_chart`, multi-series breakdowns).
+- the AI history route (streaming client, chat history, markdown rendering).
+- the portfolio route (`fl_chart`, multi-series breakdowns).
 - the rebalance route (optimization and transaction preview).
 
 These are already wired through `DeferredRoute` in
-`lib/app/routing/router.dart`, so route-level bundle boundaries should stay
-visible during future changes.
+`lib/app/routing/router_builder.dart` and
+`lib/features/finance/composition/finance_routes.dart`, so route-level bundle
+boundaries should stay visible during future changes.
 
 ## Source maps
 
@@ -153,8 +166,8 @@ tiers that `flutter build web` loads via `@font-face`:
   Holds every CJK glyph that literally appears in first-paint UI/l10n
   (`lib/**` Dart string literals + `*.arb`), plus ASCII and punctuation.
 - `app-cn-ext.woff2` — the rest of GB 2312, lazy-loaded only when a glyph
-  outside `base` is first needed (server text, free input, the deferred
-  `/ai` route).
+  outside `base` is first needed (server text, free input, or the deferred
+  `/settings/ai-history` route).
 
 woff2 is already brotli-compressed, so the on-disk size *is* the wire size.
 It is **not** part of the `main.dart.js` 800 KB target above — it is a

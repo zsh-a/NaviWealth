@@ -44,7 +44,7 @@
             "name": "资产总览",
             "short_name": "资产",
             "description": "查看资产列表与持仓明细",
-            "url": "/assets",
+            "url": "/wealth",
             "icons": [
                 {
                     "src": "icons/Icon-192.png",
@@ -57,7 +57,7 @@
             "name": "记一笔交易",
             "short_name": "记账",
             "description": "快速录入一笔买入或卖出",
-            "url": "/transactions/new",
+            "url": "/activity/trade",
             "icons": [
                 {
                     "src": "icons/Icon-192.png",
@@ -70,7 +70,7 @@
             "name": "分析",
             "short_name": "分析",
             "description": "收益率、归因与 FIRE 进度",
-            "url": "/analytics",
+            "url": "/plan",
             "icons": [
                 {
                     "src": "icons/Icon-192.png",

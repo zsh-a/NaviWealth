@@ -20,7 +20,7 @@ apps/mobile/
 │   ├── build-cn-fonts.sh        # 主入口：venv → 取源 → 扫描 → 子集化 → 校验大小
 │   └── cn_font_chars.py         # 扫描 lib/ 抽取 CJK，叠加 ASCII / 标点 / GB 2312
 ├── assets/fonts/                # 产物（gitignored）
-│   ├── app-cn-base.woff2        # 首屏约 301 KiB（预算 ≤ 315,000 B）
+│   ├── app-cn-base.woff2        # 脚本校验大小（预算 ≤ 335,000 B）
 │   └── app-cn-ext.woff2         # 扩展包 ≈ 1.7 MB（按需）
 ├── pubspec.yaml                 # 注册 AppCnSans 字体族
 ├── web/index.html               # @font-face + preload + font-display: swap
@@ -56,7 +56,7 @@ apps/mobile/
 - **base** = `ASCII printable` ∪ `Latin-1 currency / sign` ∪ `general punctuation` ∪ `arrows / bullets` ∪ `currency block` ∪ `CJK punctuation (U+3000-303F)` ∪ `halfwidth/fullwidth (U+FF00-FFEF)` ∪ **`lib/` 中出现过的全部 CJK 字符**。
 - **ext** = `GB 2312 Level-1 + Level-2`（≈ 6763 字）减去 base 已覆盖的部分。
 
-> 当前扫描产生 156 个真实使用的 CJK 字符；叠加 ASCII / 标点后 base 集合 ~654 个 code points，woff2 产物 ~120 KB。
+> base 字符集由脚本按当前 UI 与 l10n 自动生成；产物大小由 CI 校验，预算为 335,000 B。不要把设备端 AI prompt、工具描述或测试 fixture 纳入首屏字体。
 
 ## @font-face 加载行为
 
@@ -111,7 +111,7 @@ static const List<String> fontFamilyFallback = <String>[
 ## 运维
 
 - **本地**：`apps/mobile/tool/build-cn-fonts.sh`，与 `setup-drift-web.sh` 一起在 `flutter run -d chrome` 之前跑一次。源字体与 venv 缓存在 `.dart_tool/cn_fonts/`，重复执行近似 zero-cost。
-- **CI**：`.github/workflows/mobile.yml` 的 `build-web` 任务在 `flutter build web` 之前调用脚本；脚本内置 250 KB 预算硬校验（`BASE_BUDGET_BYTES`），超标即失败。
+- **CI**：`.github/workflows/mobile.yml` 的 `build-web` 任务在 `flutter build web` 之前调用脚本；脚本内置 335,000 B 预算硬校验（`BASE_BUDGET_BYTES`），超标即失败。
 - **升级源字体**：把 `NOTO_SHA256` 设为新的 sha256；脚本会重新拉取并校验。
 - **新增 UI 文案**：脚本会自动把新的 CJK 字符纳入 base 子集，下一次 `build-web` 即生效，无需手工维护字符表。
 - **真正的高频字符进 base**：如发现某些动态字段（如行情来源名）频繁触发 ext 下载，可在 `cn_font_chars.py` 的 `_ALWAYS_INCLUDE` 中显式补入。
@@ -125,7 +125,7 @@ static const List<String> fontFamilyFallback = <String>[
 | 输出 `app-cn-base.woff2` + 按需扩展包 | base + ext 两级；`unicode-range` 触发懒加载。 |
 | `pubspec.yaml` 与 Web 字体注册 | 已注册 `AppCnSans` 字体族，HTML 同步声明 `@font-face`。 |
 | `font-display: swap` | base / ext 两个 `@font-face` 块均启用。 |
-| 首屏字体下载 ≤ 250 KB | base 实测 ~120 KB，CI 内置硬校验。 |
+| 首屏字体下载 ≤ 335,000 B（约 327 KiB） | CI 对 base 产物执行硬校验。 |
 | 离线 fallback 到系统 SC 字体 | `local()` 优先 + `fontFamilyFallback` + `html, body` font stack 三层兜底。 |
 
 ## 后续可选优化

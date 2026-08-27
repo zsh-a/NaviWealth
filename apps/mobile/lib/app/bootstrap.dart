@@ -24,7 +24,7 @@ import 'bootstrap/bootstrap_provider_overrides.dart';
 Future<ProviderContainer> bootstrap({AppConfig? config}) async {
   final started = Stopwatch()..start();
   WidgetsFlutterBinding.ensureInitialized();
-  // Clean URLs on web (e.g. /portfolio instead of /#/portfolio).
+  // Clean URLs on web (e.g. /wealth instead of /#/wealth).
   // No-op elsewhere.
   usePathUrlStrategy();
   final effectiveConfig = config ?? AppConfig.dev;

@@ -23,7 +23,7 @@
 **选择 `fl_chart` 作为基础渲染层。** 理由：
 
 1. **许可干净。** NaviWealth 走开源 / 自托管路线，不引入需要登记 + 续期的商用依赖；后续若要发个人版 + 团队版双轨，许可成本会再翻倍。
-2. **包体积。** Web 首屏预算 ≤ 250 KB（见 `13-web-fonts.md`），多出 ~1.7 MB 不可接受。
+2. **包体积。** Web 首屏 JavaScript 预算为 gzip ≤ 800 KB（见 `../web-bundle.md`），多出 ~1.7 MB 不可接受。
 3. **够用。** 当前所有页面（Dashboard / Analytics / FIRE / Rebalance / Asset Detail）只需要 line / bar / pie / area / stacked，fl_chart 全部覆盖。
 4. **可替换。** 通过 `lib/design_system/charts/` 的统一封装层屏蔽底层 API；将来真正出现 Syncfusion 才有的图表（Funnel / Gauge / OHLC），只需新增一个 `syncfusion` adapter，业务代码无感。
 

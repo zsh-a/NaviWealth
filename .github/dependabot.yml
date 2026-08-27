@@ -23,7 +23,7 @@ updates:
       prefix: 'chore(mobile-deps)'
     groups:
       flutter-dev:
-        patterns: ['flutter_lints', 'build_runner', 'freezed*', 'json_serializable', 'drift_dev']
+        patterns: ['flutter_lints', 'build_runner', 'freezed*', 'drift_dev']
       drift:
         patterns: ['drift', 'sqlite3*', 'sqlcipher*']
 

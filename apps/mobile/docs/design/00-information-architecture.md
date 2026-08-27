@@ -1,6 +1,6 @@
 # 00 · 信息架构 / IA Contract
 
-> **状态（2026-05-24）**: 迁移完成。当前代码就是目标 IA
+> **状态（2026-08-27）**: 迁移完成。当前代码就是目标 IA
 > `Today / Activity / Wealth / Plan` + 全局 `Search` / `Settings`。
 > Phase A → B → C → D 全部 shipped；`/accounts/*` 旧路径和 redirect 安全网已删除。
 > 任何新功能在写代码前必须先用 §3 边界规则判定归位。
@@ -22,29 +22,39 @@ NaviWealth
 │   ├── /activity/transfer
 │   ├── /activity/journal
 │   ├── /activity/ingest
-│   └── /activity/dividends         （事件流：已收股息）
+│   ├── /activity/inbox
+│   ├── /activity/monthly-close
+│   └── /activity/cashflow           （含 recurring）
 ├── /wealth                 Wealth     我拥有什么
 │   ├── /wealth/accounts
 │   ├── /wealth/portfolio
 │   ├── /wealth/watchlist
 │   ├── /wealth/liabilities
-│   ├── /wealth/income-projection   （由资产推导的收入展望）
+│   ├── /wealth/portfolio/dividends （已收股息 / corporate actions）
+│   ├── /wealth/corporate-action
+│   ├── /wealth/physical/:id
 │   └── /wealth/assets/:id
 ├── /plan                   Plan       我要去哪 / 怎么调
 │   ├── /plan/fire
-│   ├── /plan/goals
 │   ├── /plan/rebalance
 │   ├── /plan/income                （options income 策略）
+│   │   ├── /plan/income/options
+│   │   ├── /plan/income/stats
+│   │   └── /plan/income/wheel
 │   ├── /plan/dca
-│   ├── /plan/scenarios
-│   └── /plan/projection            （FIRE projection / scenario analytics）
+│   ├── /plan/runway
+│   ├── /plan/life-events
+│   ├── /plan/budget
+│   └── /plan/expense-categories
+├── /life                   Life       跨域聚合入口
 └── /settings               全局偏好（不是主导航场景）
     ├── /settings/devices, /fx-rates, /backup, /sync, /logs
-    ├── /settings/ai-history, /ai-privacy, /ai-llm, /ai-transparency
-    └── /settings/risk-thresholds, /stress-test, /monthly-expense
+    ├── /settings/data-management, /notifications, /performance, /advanced
+    ├── /settings/ai, /ai-history, /ai-privacy, /ai-llm, /ai-models
+    └── /settings/ai-transparency, /personal-memory, /agents, /domains
 ```
 
-主导航四个一级目的地（所有断点共享）：
+FinanceOS 主导航四个一级目的地（所有断点共享）：
 
 ```
 Today      /
@@ -103,13 +113,13 @@ Settings 在 `/settings`，不占主导航——通过 Today 顶栏 ⚙ 进入�
 
 ### Wealth — 拥有的对象 + 当前状态
 
-- **允许**: accounts / assets / holdings / portfolio / watchlist / liabilities / income projection（按持仓推导的收益展望）。
+- **允许**: accounts / assets / holdings / portfolio / watchlist / liabilities，以及按持仓查看收入相关信息。
 - **禁止**: 目标路径、退休模拟、参数调优、决策 UI。
 - **规则**: Wealth 只回答"我现在有什么、值多少"。
 
 ### Plan — 决策 + 未来状态
 
-- **允许**: FIRE / goals / rebalance / income strategy / DCA / scenarios / stress test entry / scenario analytics / FIRE projection。
+- **允许**: FIRE / rebalance / income strategy / DCA / runway / life events / budget / expense categories，以及这些页面内的情景参数与投影。
 - **禁止**: 原始账户列表、全量事件流、通用偏好页。
 - **规则**: Plan 是所有"调参 → 看结果"循环的家。每个决策都有自己的 hub 落地页（hero + sections）。
 
@@ -129,8 +139,8 @@ Settings 在 `/settings`，不占主导航——通过 Today 顶栏 ⚙ 进入�
 
 | 旧 | 新 |
 |----|----|
-| `/accounts/analytics` | `/wealth/portfolio` 下的 "Portfolio Analytics" section |
-| FIRE 投影 | `/plan/projection` 下的 "Scenario Analytics / FIRE Projection" |
+| `/accounts/analytics` | `/wealth/portfolio` 下的 Portfolio Hub / Insights sections |
+| FIRE 投影 | `/plan/fire` 下的 FIRE Projection / scenario sections |
 
 ### Dividends 歧义消解
 

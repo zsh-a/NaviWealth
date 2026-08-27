@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use serde::Serialize;
 use worker::{Response, Result as WorkerResult};
 
@@ -48,10 +46,6 @@ impl AppError {
             "device_mismatch",
             "device_id does not match the authenticated device",
         )
-    }
-
-    pub fn rate_limited() -> Self {
-        Self::coded(429, "rate_limited", "rate limit exceeded")
     }
 
     pub fn protocol_version() -> Self {

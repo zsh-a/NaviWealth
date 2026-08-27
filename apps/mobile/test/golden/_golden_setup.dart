@@ -324,8 +324,9 @@ extension ResponsiveGoldenProfileData on ResponsiveGoldenProfile {
 
 const _responsiveGoldenMediaKey = ValueKey('responsive-golden.media-query');
 
-/// New dark-only responsive golden path. The legacy mobile/theme helpers above
-/// intentionally remain independent so their 48 baselines cannot drift.
+/// Dark-only responsive golden path. It remains independent from the
+/// theme-matrix helpers above so responsive layout changes do not alter the
+/// page/component baselines.
 Future<void> pumpAndSnapshotResponsive(
   WidgetTester tester, {
   required String name,

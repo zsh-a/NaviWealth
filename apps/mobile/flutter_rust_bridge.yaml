@@ -1,5 +1,5 @@
 # flutter_rust_bridge codegen config (D-1.7c per
-# `docs/lifeos-shell.md` §6.6).
+# `docs/architecture/lifeos-shell.md` §6.6).
 #
 # We point at the existing `apps/mobile/native/lifeos_native/` crate
 # (not FRB's default `rust/` location) so the layout reflects

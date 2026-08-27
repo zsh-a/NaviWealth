@@ -21,7 +21,7 @@
 | 10 | [设置](./10-settings.md) | 账户、币种、主题、涨跌色、隐私、关于 |
 | 11 | [动效与交互](./11-motion-and-interactions.md) | 数字滚动、骨架屏、过渡曲线、键盘快捷键 |
 | 12 | [可用性自查](./12-usability-self-check.md) | 走查清单、可访问性、暗黑模式、空态/错误态 |
-| 13 | [Web 字体子集化](./13-web-fonts.md) | Noto Sans SC 子集流水线、`@font-face` 加载、首屏 250 KB 预算 |
+| 13 | [Web 字体子集化](./13-web-fonts.md) | Noto Sans SC 子集流水线、`@font-face` 加载、首屏 335,000 B（约 327 KiB）预算 |
 | 14 | [图表库 / Charts](./14-charts.md) | fl_chart vs syncfusion 选型、统一封装、主题接入、降采样、钻取 |
 | 15 | [UI 统一重构蓝图](./15-ui-refactor-blueprint.md) | 主题系统目标架构(AppTheme/ColorRole/resolver)、组件收敛、跨域 UI 契约、六期迁移计划与守护机制 |
 

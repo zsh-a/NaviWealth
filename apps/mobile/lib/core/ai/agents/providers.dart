@@ -161,9 +161,6 @@ class AgentResultBundle {
     return run;
   }
 
-  /// Legacy name — same as [runOverlay]. Prefer [runOverlay].
-  AgentRunRecord? get runToShowBeforeArtifacts => runOverlay;
-
   /// Whether [run] is a live interrupt (running / failed) relative to [artifact].
   /// Used as an overlay signal, not as permission to hide the artifact.
   static bool shouldPrioritizeRun(AgentRunRecord run, AgentArtifact? artifact) {

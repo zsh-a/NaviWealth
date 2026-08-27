@@ -15,7 +15,7 @@ Analytics
 └── 流动性 / 期限 (Liquidity)
 ```
 
-URL：规划中心下的 `/plan/analytics`。收益、配置、流动性作为页内视图切换，不再暴露旧的顶层分析路径。
+URL：财富中心的 `/wealth/portfolio`。收益、配置、流动性作为 Portfolio Hub 的页内视图切换，不再暴露 `/plan/analytics` 或旧的顶层分析路径。
 
 ## 3. Wireframe
 

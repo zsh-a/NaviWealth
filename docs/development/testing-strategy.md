@@ -169,11 +169,10 @@ surface evolves.
 `test/golden/` uses Flutter's native `matchesGoldenFile` matcher through the
 repository's deterministic harness. Comparison remains Linux-pinned (other
 hosts still pump the surfaces; CI `golden-regression` is the source of truth).
-17 golden test files currently produce 68 PNG baselines; page
-surfaces primarily run dark + colorblind variants, while AI primitive
-goldens use component-scoped light surfaces. Expand to every Task's
-primary surface and add responsive breakpoints (phone/tablet/web) ahead
-of layout refactors.
+21 golden test files currently produce 108 PNG baselines; theme-matrix pages
+run light, dark, and dark-colorblind variants, while AI primitive goldens use
+component-scoped light surfaces. Keep new Task primary surfaces and
+responsive breakpoints (phone/tablet/web) covered as layout refactors land.
 
 ### Sync protocol E2E (best-in-class — keep)
 `test/e2e/sync_e2e_test.dart` + `SyncCluster`/`VirtualDevice` simulate

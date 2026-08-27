@@ -48,6 +48,11 @@ test.describe('PWA prerequisites', () => {
     expect(sizes.has('192x192'), 'needs 192px icon').toBe(true);
     expect(sizes.has('512x512'), 'needs 512px icon').toBe(true);
 
+    expect(
+      (m.shortcuts as Array<{ url?: string }>).map((shortcut) => shortcut.url),
+      'shortcuts must target canonical app routes',
+    ).toEqual(['/wealth', '/activity/trade', '/plan']);
+
     // Maskable icons aren't strictly required, but missing them produces
     // an awkward letterboxed home-screen icon on Android. Treat as a
     // warning by annotation, not a failure.
