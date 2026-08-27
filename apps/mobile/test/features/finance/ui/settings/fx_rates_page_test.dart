@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -71,5 +72,20 @@ void main() {
     expect(find.text('History'), findsOneWidget);
     expect(find.text('7D'), findsOneWidget);
     expect(find.text('1 USD = 7.2 CNY'), findsOneWidget);
+
+    final chart = tester.widget<LineChart>(find.byType(LineChart));
+    expect(chart.data.titlesData.leftTitles.sideTitles.showTitles, isTrue);
+    expect(chart.data.minY, closeTo(7.178, 0.000001));
+    expect(chart.data.maxY, closeTo(7.202, 0.000001));
+    expect(find.text('4/27/2026'), findsNothing);
+
+    final detailsButton = find.text('View details');
+    await tester.drag(find.byType(ListView), const Offset(0, -240));
+    await tester.pumpAndSettle();
+    await tester.tap(detailsButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('4/27/2026'), findsOneWidget);
+    expect(find.text('4/28/2026'), findsOneWidget);
   });
 }

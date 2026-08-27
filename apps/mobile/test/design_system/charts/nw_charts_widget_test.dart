@@ -70,6 +70,46 @@ void main() {
       expect(find.byType(LineChart), findsOneWidget);
     });
 
+    testWidgets('adapts Y range for low-magnitude values', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'USD/CNY',
+                points: [ChartPoint(x: 0, y: 7.18), ChartPoint(x: 1, y: 7.20)],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.minY, closeTo(7.178, 0.000001));
+      expect(chart.data.maxY, closeTo(7.202, 0.000001));
+    });
+
+    testWidgets('uses a relative fallback when all Y values are equal', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'USD/CNY',
+                points: [ChartPoint(x: 0, y: 7.2), ChartPoint(x: 1, y: 7.2)],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.minY, closeTo(7.128, 0.000001));
+      expect(chart.data.maxY, closeTo(7.272, 0.000001));
+    });
+
     testWidgets('provides fallback semantics and adjustable actions', (
       tester,
     ) async {

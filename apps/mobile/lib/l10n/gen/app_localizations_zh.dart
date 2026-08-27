@@ -3271,6 +3271,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fxRatesHistoryEntries => '历史记录';
 
   @override
+  String get fxRatesViewDetails => '查看明细';
+
+  @override
   String get fxRatesNotEnoughHistory => '积累更多记录后即可看到趋势。';
 
   @override

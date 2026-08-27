@@ -19,8 +19,8 @@ import '../../../../l10n/gen/app_localizations.dart';
 ///
 /// Rates are grouped by currency pair rather than rendered as one long
 /// undifferentiated table. The chart answers "what changed?" at a glance;
-/// the flat history rows below it keep every stored observation auditable and
-/// swipe-deletable.
+/// the detail sheet keeps every stored observation auditable and
+/// swipe-deletable when needed.
 class FxRatesPage extends ConsumerStatefulWidget {
   const FxRatesPage({super.key});
 
@@ -302,6 +302,82 @@ class _FxPairHistory {
   dom.FxRate get latest => rates.last;
 }
 
+int _fxRatePrecision(Decimal rate) {
+  final raw = rate.toString();
+  final dot = raw.indexOf('.');
+  if (dot < 0) return 0;
+  return math.min(6, raw.length - dot - 1);
+}
+
+Future<void> _showFxRateHistorySheet({
+  required BuildContext context,
+  required _FxPairHistory history,
+  required _FxPairHistory fullHistory,
+  required _FxRange range,
+  required AppFormatters formatters,
+  required Future<bool> Function(dom.FxRate rate) onDelete,
+}) async {
+  final l10n = AppLocalizations.of(context);
+  await showAppSheet<void>(
+    context: context,
+    title: '${history.base} / ${history.quote}',
+    subtitle: l10n.fxRatesEntriesCount(history.rates.length),
+    maxHeightFactor: 0.88,
+    builder: (_) => _FxRateHistorySheet(
+      history: history,
+      fullHistory: fullHistory,
+      range: range,
+      formatters: formatters,
+      onDelete: onDelete,
+    ),
+  );
+}
+
+class _FxRateHistorySheet extends StatelessWidget {
+  const _FxRateHistorySheet({
+    required this.history,
+    required this.fullHistory,
+    required this.range,
+    required this.formatters,
+    required this.onDelete,
+  });
+
+  final _FxPairHistory history;
+  final _FxPairHistory fullHistory;
+  final _FxRange range;
+  final AppFormatters formatters;
+  final Future<bool> Function(dom.FxRate rate) onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final precision = _fxRatePrecision(history.latest.rate);
+    final hasHiddenHistory =
+        range != _FxRange.all &&
+        history.rates.length < fullHistory.rates.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (hasHiddenHistory) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+            child: Text(l10n.fxRatesRangeHint, style: context.captionStyle),
+          ),
+        ],
+        for (var i = history.rates.length - 1; i >= 0; i--)
+          _RateHistoryRow(
+            rate: history.rates[i],
+            precision: precision,
+            formatters: formatters,
+            onDelete: onDelete,
+            isLast: i == 0,
+          ),
+      ],
+    );
+  }
+}
+
 class _OverviewCard extends StatelessWidget {
   const _OverviewCard({
     required this.pairCount,
@@ -441,7 +517,7 @@ class _FxPairCard extends StatelessWidget {
                   ) -
                   Decimal.one)
               .toDouble();
-    final precision = _ratePrecision(latest.rate);
+    final precision = _fxRatePrecision(latest.rate);
     final points = [
       for (final rate in history.rates)
         ChartPoint(
@@ -480,7 +556,7 @@ class _FxPairCard extends StatelessWidget {
               interpolation: ChartInterpolation.linear,
               showDots: false,
               heroDots: true,
-              showYAxis: false,
+              showYAxis: true,
               showTouchXAxisLabel: true,
               semanticLabel: '${history.base}/${history.quote}',
             ),
@@ -544,26 +620,35 @@ class _FxPairCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  l10n.fxRatesHistoryEntries,
-                  style: context.captionStyle,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.fxRatesHistoryEntries,
+                      style: context.captionStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s2),
+                    Text(
+                      l10n.fxRatesEntriesCount(history.rates.length),
+                      style: context.microCaptionStyle,
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                l10n.fxRatesEntriesCount(history.rates.length),
-                style: context.microCaptionStyle,
+              AppQuietButton(
+                label: l10n.fxRatesViewDetails,
+                prefix: const Icon(FLucideIcons.list, size: AppIconSizes.xs),
+                onPress: () => _showFxRateHistorySheet(
+                  context: context,
+                  history: history,
+                  fullHistory: fullHistory,
+                  range: range,
+                  formatters: formatters,
+                  onDelete: onDelete,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s6),
-          for (var i = history.rates.length - 1; i >= 0; i--)
-            _RateHistoryRow(
-              rate: history.rates[i],
-              precision: precision,
-              formatters: formatters,
-              onDelete: onDelete,
-              isLast: i == 0,
-            ),
           if (range != _FxRange.all &&
               history.rates.length < fullHistory.rates.length) ...[
             const SizedBox(height: AppSpacing.s6),
@@ -572,13 +657,6 @@ class _FxPairCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static int _ratePrecision(Decimal rate) {
-    final raw = rate.toString();
-    final dot = raw.indexOf('.');
-    if (dot < 0) return 0;
-    return math.min(6, raw.length - dot - 1);
   }
 }
 

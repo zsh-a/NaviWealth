@@ -50,13 +50,27 @@ extension _NwLineChartData on _NwLineChartState {
       maxX: maxX,
       minY: minY,
       maxY: maxY,
-      yPad: (maxY - minY).abs() * 0.1 + 1,
+      yPad: _adaptiveYPadding(minY, maxY),
     );
     _prepared = prepared;
     _preparedSource = widget.series;
     _preparedDownsample = widget.downsample;
     _preparedDownsampleTarget = widget.downsampleTarget;
     return prepared;
+  }
+
+  /// Keep the visible Y range proportional to the observed values.
+  ///
+  /// A fixed padding value makes low-magnitude series such as FX rates look
+  /// flat: the difference between 7.18 and 7.20 is only 0.02, so adding 1
+  /// on both sides wastes almost the entire vertical scale. A relative
+  /// fallback is only needed when every sample has the same value.
+  double _adaptiveYPadding(double minY, double maxY) {
+    final span = (maxY - minY).abs();
+    if (span > 0) return span * 0.1;
+
+    final magnitude = math.max(minY.abs(), maxY.abs());
+    return math.max(magnitude * 0.01, 0.000001);
   }
 
   bool _sameSeriesData(List<ChartSeries>? previous, List<ChartSeries> next) {

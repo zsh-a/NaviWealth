@@ -3418,6 +3418,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fxRatesHistoryEntries => 'Observations';
 
   @override
+  String get fxRatesViewDetails => 'View details';
+
+  @override
   String get fxRatesNotEnoughHistory =>
       'More observations will reveal a trend.';
 

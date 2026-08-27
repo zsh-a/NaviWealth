@@ -1704,6 +1704,7 @@
   "fxRatesRange90D": "90D",
   "fxRatesRangeAll": "All",
   "fxRatesHistoryEntries": "Observations",
+  "fxRatesViewDetails": "View details",
   "fxRatesNotEnoughHistory": "More observations will reveal a trend.",
   "fxRatesRangeHint": "Showing the selected window. Switch to All for the full history.",
   "fxRatesAsOfValue": "As of {date}",

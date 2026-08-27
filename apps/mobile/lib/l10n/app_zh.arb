@@ -1040,6 +1040,7 @@
   "fxRatesRange90D": "90天",
   "fxRatesRangeAll": "全部",
   "fxRatesHistoryEntries": "历史记录",
+  "fxRatesViewDetails": "查看明细",
   "fxRatesNotEnoughHistory": "积累更多记录后即可看到趋势。",
   "fxRatesRangeHint": "当前显示所选时间范围，切换“全部”可查看完整历史。",
   "fxRatesAsOfValue": "截至 {date}",

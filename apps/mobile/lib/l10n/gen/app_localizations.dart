@@ -5879,6 +5879,12 @@ abstract class AppLocalizations {
   /// **'Observations'**
   String get fxRatesHistoryEntries;
 
+  /// No description provided for @fxRatesViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get fxRatesViewDetails;
+
   /// No description provided for @fxRatesNotEnoughHistory.
   ///
   /// In en, this message translates to:
