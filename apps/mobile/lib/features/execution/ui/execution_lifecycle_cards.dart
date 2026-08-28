@@ -163,11 +163,6 @@ class _CommitmentBody extends StatelessWidget {
                   : AppBadgeTone.info,
               size: AppBadgeSize.compact,
             ),
-            AppBadge(
-              label: executionHorizonLabel(l10n, commitment.horizon),
-              size: AppBadgeSize.compact,
-              icon: FLucideIcons.calendarClock,
-            ),
             if (commitment.targetDate != null)
               _ExecutionTargetBadge(date: commitment.targetDate!),
             if (projectLabel != null)
@@ -349,11 +344,6 @@ class _ProjectBody extends StatelessWidget {
                   ? AppBadgeTone.warning
                   : AppBadgeTone.info,
               size: AppBadgeSize.compact,
-            ),
-            AppBadge(
-              label: executionHorizonLabel(l10n, project.horizon),
-              size: AppBadgeSize.compact,
-              icon: FLucideIcons.calendarClock,
             ),
             if (project.targetDate != null)
               _ExecutionTargetBadge(date: project.targetDate!),

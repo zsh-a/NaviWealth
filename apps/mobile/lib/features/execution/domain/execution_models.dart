@@ -168,7 +168,6 @@ class ExecutionAction {
 
   bool get isBacklog =>
       status == ExecutionActionStatus.todo &&
-      priority != ExecutionPriority.high &&
       scheduledFor == null &&
       dueAt == null;
 

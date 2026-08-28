@@ -67,15 +67,6 @@ String executionPriorityLabel(
   };
 }
 
-String executionHorizonLabel(AppLocalizations l10n, ExecutionHorizon horizon) {
-  return switch (horizon) {
-    ExecutionHorizon.week => l10n.executionHorizonWeek,
-    ExecutionHorizon.month => l10n.executionHorizonMonth,
-    ExecutionHorizon.quarter => l10n.executionHorizonQuarter,
-    ExecutionHorizon.open => l10n.executionHorizonOpen,
-  };
-}
-
 String executionProgressKindLabel(
   AppLocalizations l10n,
   ExecutionProgressKind kind,
@@ -89,27 +80,23 @@ String executionProgressKindLabel(
   };
 }
 
-/// Today lens: focus, unscheduled backlog, blocked work, or all open work.
-enum ExecutionTodayFilter { focus, backlog, blocked, open }
+/// Today lens: scheduled work or blocked work.
+enum ExecutionTodayFilter { today, blocked }
 
 String executionTodayFilterLabel(
   AppLocalizations l10n,
   ExecutionTodayFilter filter,
 ) {
   return switch (filter) {
-    ExecutionTodayFilter.focus => l10n.executionOverviewFocus,
-    ExecutionTodayFilter.backlog => l10n.executionOverviewBacklog,
+    ExecutionTodayFilter.today => l10n.executionOverviewFocus,
     ExecutionTodayFilter.blocked => l10n.executionOverviewBlocked,
-    ExecutionTodayFilter.open => l10n.executionOverviewOpen,
   };
 }
 
 IconData executionTodayFilterIcon(ExecutionTodayFilter filter) {
   return switch (filter) {
-    ExecutionTodayFilter.focus => FLucideIcons.sun,
-    ExecutionTodayFilter.backlog => FLucideIcons.archive,
+    ExecutionTodayFilter.today => FLucideIcons.sun,
     ExecutionTodayFilter.blocked => FLucideIcons.octagonAlert,
-    ExecutionTodayFilter.open => FLucideIcons.inbox,
   };
 }
 
@@ -122,15 +109,27 @@ List<ExecutionAction> filteredExecutionActions({
       .where((action) => action.isOpen)
       .toList(growable: false);
   return switch (filter) {
-    ExecutionTodayFilter.focus => todayActions,
-    ExecutionTodayFilter.backlog =>
-      open.where((action) => action.isBacklog).toList(growable: false),
+    ExecutionTodayFilter.today => todayActions,
     ExecutionTodayFilter.blocked =>
       open
           .where((action) => action.status == ExecutionActionStatus.blocked)
           .toList(growable: false),
-    ExecutionTodayFilter.open => open,
   };
+}
+
+String? executionRelationLabel({
+  required AppLocalizations l10n,
+  required String? projectLabel,
+  required String? commitmentLabel,
+}) {
+  final labels = <String>[
+    if (projectLabel != null && projectLabel.trim().isNotEmpty)
+      projectLabel.trim(),
+    if (commitmentLabel != null && commitmentLabel.trim().isNotEmpty)
+      commitmentLabel.trim(),
+  ];
+  if (labels.isEmpty) return null;
+  return '${l10n.executionRelationField}: ${labels.join(' · ')}';
 }
 
 String? executionProjectRelationLabel(

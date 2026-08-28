@@ -1,7 +1,7 @@
 # ExecutionOS Domain SSOT
 
 ExecutionOS is the LifeOS execution layer. It is user opt-in, local-first, and
-focused on personal commitments, next actions, and progress review.
+focused on plans, next actions, and progress review.
 
 ## Document Contract
 
@@ -15,8 +15,8 @@ focused Execution tests are authoritative for the current implementation.
 Included:
 
 - Personal todos as lightweight Actions.
-- Projects for bounded delivery work that contains actions and commitments.
-- Commitments for work that needs a longer-running promise.
+- Plans for bounded delivery work or a longer-running promise. The current
+  storage keeps these as Project and Commitment records for compatibility.
 - Progress entries for check-ins, blockers, scope changes, and completion.
 - Today and Plans shell tabs. Review is a contextual destination reached from
   signals and the command palette.
@@ -29,9 +29,10 @@ Excluded:
 - Kanban-first workflows, gantt charts, dependency graphs, or timesheets.
 - Automatic AI writes to user commitments or actions without confirmation.
 
-Core rule: Action is the reusable todo primitive. Project is a lightweight
-roll-up, not a separate task system. Milestones can be added later only when a
-current workflow needs them.
+Core rule: Action is the reusable next-step primitive. A Plan is a lightweight
+roll-up, not a separate task system. The Project/Commitment distinction is
+secondary context; Milestones can be added later only when a current workflow
+needs them.
 
 ## Shell Registration
 
@@ -55,10 +56,9 @@ ExecutionOS is active only when the user enables it in Settings.
 
 | Object | Purpose | Storage |
 |---|---|---|
-| Project | Bounded delivery container for actions / commitments | `execution_projects` |
+| Plan | Bounded or ongoing container for actions | `execution_projects` / `execution_commitments` |
 | Action | Personal todo / next concrete step | `execution_actions` |
-| Commitment | Longer-running promise or focus area | `execution_commitments` |
-| ProgressEntry | Check-in, blocker, scope change, completion note | `execution_progress_entries` |
+| Update | Check-in, blocker, scope change, completion note | `execution_progress_entries` |
 
 Domain models:
 
@@ -88,7 +88,7 @@ boundary.
 
 | Tab | Purpose |
 |---|---|
-| Today | Persistent daily Top 3 plus today's open actions, blockers, and high-priority follow-through |
+| Today | Persistent daily Top 3 plus explicitly scheduled actions, due work, and blocked follow-through |
 | Plans | Later actions, active plans, existing long-term commitments, and a closed-work archive |
 | Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
 
@@ -106,16 +106,25 @@ the recommendation is never adopted until the user explicitly confirms it.
 
 Today exposes only the daily focus and blocked-work lenses. Unscheduled backlog
 and the complete open inventory belong to Plans, not the daily workspace.
+An Action enters Today because it is scheduled for today or earlier, is already
+in progress, or is blocked; priority alone does not promote an unscheduled
+Action into Today. Focus is a separate local Top 3 selection, not another
+Action status.
 Plans uses one Add entry point that offers Action or multi-step Plan creation;
 search is also owned there instead of repeated on every tab.
 
 The shared Add entry asks only whether the user is creating an Action or a
 multi-step Plan. New Action capture starts with title plus Inbox / Today /
 Tomorrow and keeps priority, dates, one unified `Belongs to` relation, and
-notes behind an optional detail disclosure. Choosing a Commitment inherits its
+notes behind an optional detail disclosure. Plans use a target date as the
+primary time expression; the stored horizon remains compatibility metadata and
+is not a second user-facing planning choice. Choosing a Commitment inherits its
 Project atomically instead of asking the user to configure both fields.
 Manual status changes show a short Undo action. Blocking requires a concrete
 reason, which is stored as blocker progress instead of a generic placeholder.
+Progress recorded from an Action, Project, or Commitment is context-bound in
+the UI. Status changes create their own progress entry; a manual update does
+not require a second choice about whether it should also mutate Action status.
 
 Actions created from a Knowledge decision preserve the source family and row
 id. App-level composition de-duplicates that source link, so a decision has one

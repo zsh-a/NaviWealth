@@ -61,7 +61,6 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
   String? _actionId;
   String? _projectId;
   String? _commitmentId;
-  bool _syncActionStatus = false;
   bool _saving = false;
 
   @override
@@ -109,7 +108,6 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
       commit: () async {
         final repo = await ref.read(executionRepositoryProvider.future);
         final sync = await stampExecutionSync(ref);
-        final linkedAction = _linkedAction();
         await repo.recordProgress(
           ExecutionProgressEntry(
             id: widget.progress?.id ?? kExecutionUuid.v4(),
@@ -121,8 +119,6 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
             createdAt: widget.progress?.createdAt ?? sync.updatedAt,
             sync: sync,
           ),
-          linkedAction: _syncActionStatus ? linkedAction : null,
-          linkedActionStatus: _syncActionStatus ? _linkedActionStatus : null,
         );
       },
     );
@@ -134,34 +130,26 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
 
   void _markDirty() => widget.dirty.markDirty();
 
-  ExecutionAction? _linkedAction() {
-    final actionId = _actionId;
-    if (actionId == null || actionId.isEmpty) return null;
-    final actions =
-        ref.read(executionOpenActionsProvider).value ??
-        const <ExecutionAction>[];
-    for (final action in actions) {
-      if (action.id == actionId) return action;
+  bool get _hasFixedContext =>
+      widget.progress == null &&
+      (widget.action != null ||
+          widget.projectId != null ||
+          widget.commitmentId != null);
+
+  List<ExecutionProgressKind> get _availableKinds {
+    final kinds = <ExecutionProgressKind>[
+      ExecutionProgressKind.checkin,
+      ExecutionProgressKind.scopeChange,
+    ];
+    // Blocking an Action is a lifecycle operation with a required reason.
+    // Keep that flow on the Action itself instead of asking users to decide
+    // whether a progress note should also mutate status.
+    if (widget.action == null) {
+      kinds.insert(1, ExecutionProgressKind.blocker);
     }
-    final initialAction = widget.action;
-    return initialAction?.id == actionId ? initialAction : null;
-  }
-
-  ExecutionActionStatus? get _linkedActionStatus {
-    return switch (_kind) {
-      ExecutionProgressKind.blocker => ExecutionActionStatus.blocked,
-      ExecutionProgressKind.completion => ExecutionActionStatus.done,
-      ExecutionProgressKind.dropped => ExecutionActionStatus.dropped,
-      ExecutionProgressKind.checkin ||
-      ExecutionProgressKind.scopeChange => null,
-    };
-  }
-
-  void _syncActionStatusWithKind() {
-    _syncActionStatus =
-        _actionId != null &&
-        _actionId!.isNotEmpty &&
-        _linkedActionStatus != null;
+    final existing = widget.progress?.kind;
+    if (existing != null && !kinds.contains(existing)) kinds.add(existing);
+    return kinds;
   }
 
   @override
@@ -185,8 +173,6 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
         ? null
         : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
-    final linkedStatus = _linkedActionStatus;
-    final canSyncActionStatus = _linkedAction() != null && linkedStatus != null;
     return AppSheet(
       title: widget.progress == null
           ? l10n.executionCreateProgressTitle
@@ -219,17 +205,14 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
             const SizedBox(height: AppSpacing.s6),
             AppAdaptiveChoice<ExecutionProgressKind>(
               title: l10n.executionProgressKindField,
-              options: ExecutionProgressKind.values,
+              options: _availableKinds,
               value: _kind,
               labelOf: (kind) => executionProgressKindLabel(l10n, kind),
               iconOf: _progressKindIcon,
               onChanged: _saving
                   ? (_) {}
                   : (kind) {
-                      setState(() {
-                        _kind = kind;
-                        _syncActionStatusWithKind();
-                      });
+                      setState(() => _kind = kind);
                       _markDirty();
                     },
             ),
@@ -246,107 +229,106 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
                   : null,
             ),
             const SizedBox(height: AppSpacing.s12),
-            FormPickerRow(
-              label: l10n.executionActionField,
-              value:
-                  selectedAction?.title ??
-                  executionActionPickerLabel(l10n, actions, _actionId),
-              leading: const Icon(FLucideIcons.listTodo),
-              enabled: !_saving,
-              onPress: () async {
-                final picked = await showExecutionActionPicker(
-                  context: context,
-                  actions: actions,
-                  selectedId: _actionId,
-                );
-                if (picked == null) return;
-                setState(() {
-                  if (picked == kExecutionPickerNone) {
-                    _actionId = null;
-                    _syncActionStatus = false;
-                    return;
-                  }
-                  _actionId = picked;
-                  final action = actions
-                      .where((ExecutionAction a) => a.id == picked)
-                      .first;
-                  _projectId = action.projectId;
-                  _commitmentId = action.commitmentId;
-                  _syncActionStatusWithKind();
-                });
-                _markDirty();
-              },
-            ),
-            if (canSyncActionStatus) ...[
-              const SizedBox(height: AppSpacing.s12),
-              _LinkedActionStatusRow(
-                value: _syncActionStatus,
-                status: linkedStatus,
+            if (_hasFixedContext)
+              _ProgressContextSummary(
+                label: l10n.executionRelationField,
+                value:
+                    selectedAction?.title ??
+                    widget.action?.title ??
+                    executionRelationPickerLabel(l10n, projects, commitments, (
+                      projectId: _projectId,
+                      commitmentId: _commitmentId,
+                    )),
+              )
+            else ...[
+              FormPickerRow(
+                label: l10n.executionActionField,
+                value:
+                    selectedAction?.title ??
+                    executionActionPickerLabel(l10n, actions, _actionId),
+                leading: const Icon(FLucideIcons.listTodo),
                 enabled: !_saving,
-                onChanged: (value) {
-                  setState(() => _syncActionStatus = value);
+                onPress: () async {
+                  final picked = await showExecutionActionPicker(
+                    context: context,
+                    actions: actions,
+                    selectedId: _actionId,
+                  );
+                  if (picked == null) return;
+                  setState(() {
+                    if (picked == kExecutionPickerNone) {
+                      _actionId = null;
+                      return;
+                    }
+                    _actionId = picked;
+                    final action = actions
+                        .where((ExecutionAction a) => a.id == picked)
+                        .first;
+                    _projectId = action.projectId;
+                    _commitmentId = action.commitmentId;
+                  });
+                  _markDirty();
+                },
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FormPickerRow(
+                label: l10n.executionProjectField,
+                value:
+                    selectedProject?.title ??
+                    executionProjectPickerLabel(l10n, projects, _projectId),
+                leading: const Icon(FLucideIcons.folder),
+                enabled: !_saving,
+                onPress: () async {
+                  final picked = await showExecutionProjectPicker(
+                    context: context,
+                    projects: projects,
+                    selectedId: _projectId,
+                  );
+                  if (picked == null) return;
+                  setState(() {
+                    final next = executionRelationAfterProjectPick(
+                      commitments: commitments,
+                      currentCommitmentId: _commitmentId,
+                      pickedProjectId: picked,
+                    );
+                    _projectId = next.projectId;
+                    _commitmentId = next.commitmentId;
+                  });
+                  _markDirty();
+                },
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FormPickerRow(
+                label: l10n.executionCommitmentField,
+                value:
+                    selectedCommitment?.title ??
+                    executionCommitmentPickerLabel(
+                      l10n,
+                      commitments,
+                      _commitmentId,
+                    ),
+                leading: const Icon(FLucideIcons.target),
+                enabled: !_saving,
+                onPress: () async {
+                  final picked = await showExecutionCommitmentPicker(
+                    context: context,
+                    commitments: commitments,
+                    selectedId: _commitmentId,
+                  );
+                  if (picked == null) return;
+                  setState(() {
+                    final next = executionRelationAfterCommitmentPick(
+                      commitments: commitments,
+                      currentProjectId: _projectId,
+                      pickedCommitmentId: picked,
+                    );
+                    _projectId = next.projectId;
+                    _commitmentId = next.commitmentId;
+                  });
                   _markDirty();
                 },
               ),
             ],
-            const SizedBox(height: AppSpacing.s12),
-            FormPickerRow(
-              label: l10n.executionProjectField,
-              value:
-                  selectedProject?.title ??
-                  executionProjectPickerLabel(l10n, projects, _projectId),
-              leading: const Icon(FLucideIcons.folder),
-              enabled: !_saving,
-              onPress: () async {
-                final picked = await showExecutionProjectPicker(
-                  context: context,
-                  projects: projects,
-                  selectedId: _projectId,
-                );
-                if (picked == null) return;
-                setState(() {
-                  final next = executionRelationAfterProjectPick(
-                    commitments: commitments,
-                    currentCommitmentId: _commitmentId,
-                    pickedProjectId: picked,
-                  );
-                  _projectId = next.projectId;
-                  _commitmentId = next.commitmentId;
-                });
-                _markDirty();
-              },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FormPickerRow(
-              label: l10n.executionCommitmentField,
-              value:
-                  selectedCommitment?.title ??
-                  executionCommitmentPickerLabel(
-                    l10n,
-                    commitments,
-                    _commitmentId,
-                  ),
-              leading: const Icon(FLucideIcons.target),
-              enabled: !_saving,
-              onPress: () async {
-                final picked = await showExecutionCommitmentPicker(
-                  context: context,
-                  commitments: commitments,
-                  selectedId: _commitmentId,
-                );
-                if (picked == null) return;
-                setState(() {
-                  final next = executionRelationAfterCommitmentPick(
-                    commitments: commitments,
-                    currentProjectId: _projectId,
-                    pickedCommitmentId: picked,
-                  );
-                  _projectId = next.projectId;
-                  _commitmentId = next.commitmentId;
-                });
-                _markDirty();
-              },
-            ),
           ],
         ),
       ),
@@ -354,29 +336,21 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
   }
 }
 
-class _LinkedActionStatusRow extends StatelessWidget {
-  const _LinkedActionStatusRow({
-    required this.value,
-    required this.status,
-    required this.enabled,
-    required this.onChanged,
-  });
+class _ProgressContextSummary extends StatelessWidget {
+  const _ProgressContextSummary({required this.label, required this.value});
 
-  final bool value;
-  final ExecutionActionStatus status;
-  final bool enabled;
-  final ValueChanged<bool> onChanged;
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     return SoftCard.flat(
       padding: AppPageRhythm.densePadding,
       child: Row(
         children: [
           AppIconTile(
-            icon: FLucideIcons.listChecks,
+            icon: FLucideIcons.layers,
             color: colors.mutedForeground,
             size: 28,
             iconSize: AppIconSizes.sm,
@@ -389,22 +363,17 @@ class _LinkedActionStatusRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  l10n.executionProgressSyncActionStatus,
-                  style: context.labelStyle,
-                ),
+                Text(label, style: context.captionLabelStyle),
                 const SizedBox(height: AppSpacing.s2),
                 Text(
-                  l10n.executionProgressSyncActionStatusBody(
-                    executionStatusLabel(l10n, status),
-                  ),
-                  style: context.captionStyle,
+                  value,
+                  style: context.labelStyle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.s12),
-          FSwitch(value: value, onChange: enabled ? onChanged : null),
         ],
       ),
     );

@@ -14729,8 +14729,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCommitmentsTitle => 'Plans';
 
   @override
-  String get executionPlansSelectItem =>
-      'Select a project or commitment to review it here';
+  String get executionPlansSelectItem => 'Select a plan to review it here';
 
   @override
   String get executionReviewTitle => 'Review';
@@ -14841,12 +14840,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionOverviewFocus => 'Today';
-
-  @override
-  String get executionOverviewBacklog => 'Backlog';
-
-  @override
-  String get executionOverviewOpen => 'Open';
 
   @override
   String get executionOverviewBlocked => 'Blocked';
@@ -14973,18 +14966,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionPriorityHigh => 'High';
-
-  @override
-  String get executionHorizonWeek => 'Week';
-
-  @override
-  String get executionHorizonMonth => 'Month';
-
-  @override
-  String get executionHorizonQuarter => 'Quarter';
-
-  @override
-  String get executionHorizonOpen => 'Open';
 
   @override
   String executionDueBadge(String date) {
@@ -15181,7 +15162,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProgressNoteHint =>
-      'What changed, what is blocked, or what got done?';
+      'Record a change or note. Use the action controls to change status.';
 
   @override
   String get executionProgressNoteRequired => 'Add a progress note';
@@ -15240,14 +15221,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionReviewGenerateAction => 'Generate review';
-
-  @override
-  String get executionProgressSyncActionStatus => 'Update linked action';
-
-  @override
-  String executionProgressSyncActionStatusBody(Object status) {
-    return 'Also move the action to $status.';
-  }
 
   @override
   String get executionProposalActionLabel => 'Action';
@@ -17942,14 +17915,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionSearchFilterAll => 'All';
 
   @override
-  String get executionSearchHint => 'Search actions, projects, and commitments';
+  String get executionSearchHint => 'Search actions and plans';
 
   @override
   String get executionSearchEmptyTitle => 'Search all execution work';
 
   @override
   String get executionSearchEmptyBody =>
-      'Results include open and closed actions, projects, and commitments.';
+      'Results include open and closed actions and plans.';
 
   @override
   String get executionSearchStartAction => 'Start searching';
@@ -17967,10 +17940,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionSearchKindAction => 'Action';
 
   @override
-  String get executionSearchKindProject => 'Project';
-
-  @override
-  String get executionSearchKindCommitment => 'Commitment';
+  String get executionSearchKindProject => 'Plan';
 
   @override
   String get executionSearchKindProgress => 'Progress';

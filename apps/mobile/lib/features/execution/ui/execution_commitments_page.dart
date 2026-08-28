@@ -334,7 +334,6 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               openActionCount: actionCountByProject[project.id] ?? 0,
               blockedActionCount: blockedCountByProject[project.id] ?? 0,
               commitmentCount: commitmentCountByProject[project.id] ?? 0,
-              showTypeLabel: true,
               onCreateAction: () => showExecutionActionSheet(
                 context: context,
                 initialProjectId: project.id,
@@ -365,7 +364,6 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
               commitment: commitment,
               openActionCount: actionCountByCommitment[commitment.id] ?? 0,
               blockedActionCount: blockedCountByCommitment[commitment.id] ?? 0,
-              showTypeLabel: true,
               projectLabel:
                   relations?.projectLabel(commitment.projectId) ??
                   executionProjectRelationLabel(projects, commitment.projectId),

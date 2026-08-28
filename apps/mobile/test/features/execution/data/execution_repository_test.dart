@@ -94,39 +94,45 @@ void main() {
     expect(outbox.queued, [(table: 'execution_actions', rowId: 'a1')]);
   });
 
-  test('watchTodayActions excludes ordinary unscheduled backlog', () async {
-    final now = DateTime.utc(2026, 6, 8, 9);
-    await repo.upsertAction(_action(id: 'backlog', title: 'Unscheduled todo'));
-    await repo.upsertAction(
-      _action(
-        id: 'high',
-        title: 'High priority follow-up',
-        priority: ExecutionPriority.high,
-      ),
-    );
-    await repo.upsertAction(
-      _action(
-        id: 'scheduled',
-        title: 'Scheduled today',
-        scheduledFor: DateTime.utc(2026, 6, 8, 12),
-      ),
-    );
-    await repo.upsertAction(
-      _action(
-        id: 'doing',
-        title: 'Already in progress',
-        status: ExecutionActionStatus.doing,
-      ),
-    );
+  test(
+    'watchTodayActions only promotes scheduled or active follow-through',
+    () async {
+      final now = DateTime.utc(2026, 6, 8, 9);
+      await repo.upsertAction(
+        _action(id: 'backlog', title: 'Unscheduled todo'),
+      );
+      await repo.upsertAction(
+        _action(
+          id: 'high',
+          title: 'High priority follow-up',
+          priority: ExecutionPriority.high,
+        ),
+      );
+      await repo.upsertAction(
+        _action(
+          id: 'scheduled',
+          title: 'Scheduled today',
+          scheduledFor: DateTime.utc(2026, 6, 8, 12),
+        ),
+      );
+      await repo.upsertAction(
+        _action(
+          id: 'doing',
+          title: 'Already in progress',
+          status: ExecutionActionStatus.doing,
+        ),
+      );
 
-    final rows = await repo
-        .watchTodayActions(ownerUserId: _userId, asOf: now)
-        .first;
-    final ids = rows.map((action) => action.id).toSet();
+      final rows = await repo
+          .watchTodayActions(ownerUserId: _userId, asOf: now)
+          .first;
+      final ids = rows.map((action) => action.id).toSet();
 
-    expect(ids, containsAll(<String>{'high', 'scheduled', 'doing'}));
-    expect(ids, isNot(contains('backlog')));
-  });
+      expect(ids, containsAll(<String>{'scheduled', 'doing'}));
+      expect(ids, isNot(contains('high')));
+      expect(ids, isNot(contains('backlog')));
+    },
+  );
 
   test('updateActionStatus can complete action and record progress', () async {
     final action = _action(

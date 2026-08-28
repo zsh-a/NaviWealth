@@ -79,28 +79,30 @@ class ExecutionProgressCard extends StatelessWidget {
                   Wrap(
                     spacing: AppSpacing.s6,
                     runSpacing: AppSpacing.s6,
-                    children: [
-                      if (actionLabel != null)
-                        _ProgressRelationBadge(
-                          label: '${l10n.executionActionField}: $actionLabel',
-                          icon: FLucideIcons.listTodo,
-                          onPress: onActionOpen,
-                        ),
-                      if (projectLabel != null)
-                        _ProgressRelationBadge(
-                          label: '${l10n.executionProjectField}: $projectLabel',
-                          icon: FLucideIcons.folder,
-                          onPress: onProjectOpen,
-                        ),
-                      if (commitmentLabel != null)
-                        _ProgressRelationBadge(
-                          label:
-                              '${l10n.executionCommitmentField}: '
-                              '$commitmentLabel',
-                          icon: FLucideIcons.target,
-                          onPress: onCommitmentOpen,
-                        ),
-                    ],
+                    children: actionLabel != null
+                        ? [
+                            _ProgressRelationBadge(
+                              label:
+                                  '${l10n.executionActionField}: $actionLabel',
+                              icon: FLucideIcons.listTodo,
+                              onPress: onActionOpen,
+                            ),
+                          ]
+                        : [
+                            if (executionRelationLabel(
+                                  l10n: l10n,
+                                  projectLabel: projectLabel,
+                                  commitmentLabel: commitmentLabel,
+                                )
+                                case final relationLabel?)
+                              _ProgressRelationBadge(
+                                label: relationLabel,
+                                icon: FLucideIcons.layers,
+                                onPress: commitmentLabel != null
+                                    ? onCommitmentOpen
+                                    : onProjectOpen,
+                              ),
+                          ],
                   ),
                 ],
               ],

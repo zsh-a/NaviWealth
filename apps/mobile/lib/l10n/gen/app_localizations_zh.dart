@@ -13958,7 +13958,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCommitmentsTitle => '计划';
 
   @override
-  String get executionPlansSelectItem => '选择项目或承诺，在此处查看详情';
+  String get executionPlansSelectItem => '选择一个计划，在此处查看详情';
 
   @override
   String get executionReviewTitle => '复盘';
@@ -14066,12 +14066,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionOverviewFocus => '今日';
-
-  @override
-  String get executionOverviewBacklog => '待排期';
-
-  @override
-  String get executionOverviewOpen => '全部';
 
   @override
   String get executionOverviewBlocked => '阻塞';
@@ -14191,18 +14185,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionPriorityHigh => '高优先级';
-
-  @override
-  String get executionHorizonWeek => '本周';
-
-  @override
-  String get executionHorizonMonth => '本月';
-
-  @override
-  String get executionHorizonQuarter => '本季度';
-
-  @override
-  String get executionHorizonOpen => '开放';
 
   @override
   String executionDueBadge(String date) {
@@ -14374,7 +14356,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProgressNoteField => '进展记录';
 
   @override
-  String get executionProgressNoteHint => '记录变化、阻塞或已完成的事情。';
+  String get executionProgressNoteHint => '记录变化或备注；如需改变行动状态，请使用行动操作。';
 
   @override
   String get executionProgressNoteRequired => '请填写进展记录';
@@ -14432,14 +14414,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionReviewGenerateAction => '生成复盘';
-
-  @override
-  String get executionProgressSyncActionStatus => '同步更新关联行动';
-
-  @override
-  String executionProgressSyncActionStatusBody(Object status) {
-    return '同时把行动状态改为「$status」。';
-  }
 
   @override
   String get executionProposalActionLabel => '行动';
@@ -17007,13 +16981,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionSearchFilterAll => '全部';
 
   @override
-  String get executionSearchHint => '搜索行动、项目和承诺';
+  String get executionSearchHint => '搜索行动和计划';
 
   @override
   String get executionSearchEmptyTitle => '搜索全部执行事项';
 
   @override
-  String get executionSearchEmptyBody => '结果包含进行中和已关闭的行动、项目与承诺。';
+  String get executionSearchEmptyBody => '结果包含进行中和已关闭的行动与计划。';
 
   @override
   String get executionSearchStartAction => '开始搜索';
@@ -17031,10 +17005,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionSearchKindAction => '行动';
 
   @override
-  String get executionSearchKindProject => '项目';
-
-  @override
-  String get executionSearchKindCommitment => '承诺';
+  String get executionSearchKindProject => '计划';
 
   @override
   String get executionSearchKindProgress => '进展';

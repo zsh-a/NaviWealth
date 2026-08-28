@@ -133,22 +133,18 @@ class ExecutionActionCard extends StatelessWidget {
                                     size: AppBadgeSize.compact,
                                     icon: FLucideIcons.calendarClock,
                                   ),
-                                if (!compact && projectLabel != null)
-                                  AppBadge(
-                                    label:
-                                        '${l10n.executionProjectField}: '
-                                        '$projectLabel',
-                                    size: AppBadgeSize.compact,
-                                    icon: FLucideIcons.folder,
-                                  ),
-                                if (!compact && commitmentLabel != null)
-                                  AppBadge(
-                                    label:
-                                        '${l10n.executionCommitmentField}: '
-                                        '$commitmentLabel',
-                                    size: AppBadgeSize.compact,
-                                    icon: FLucideIcons.target,
-                                  ),
+                                if (!compact)
+                                  if (executionRelationLabel(
+                                        l10n: l10n,
+                                        projectLabel: projectLabel,
+                                        commitmentLabel: commitmentLabel,
+                                      )
+                                      case final relationLabel?)
+                                    AppBadge(
+                                      label: relationLabel,
+                                      size: AppBadgeSize.compact,
+                                      icon: FLucideIcons.layers,
+                                    ),
                                 if (!compact &&
                                     action.source.labelSnapshot != null &&
                                     action.source.labelSnapshot!.isNotEmpty)

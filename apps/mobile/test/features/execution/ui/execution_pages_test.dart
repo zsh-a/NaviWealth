@@ -21,6 +21,7 @@ import 'package:naviwealth/features/execution/ui/execution_action_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_commitments_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_create_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_lifecycle_card_controller.dart';
+import 'package:naviwealth/features/execution/ui/execution_progress_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -230,6 +231,32 @@ void main() {
       expect(find.text('Fewer details'), findsOneWidget);
     },
   );
+
+  testWidgets('progress capture keeps an action context fixed', (tester) async {
+    final action = _action(id: 'action-1', title: 'Review the launch plan');
+    await tester.pumpWidget(
+      _wrap(
+        Builder(
+          builder: (context) => FButton(
+            onPress: () =>
+                showExecutionProgressSheet(context: context, action: action),
+            child: const Text('Open progress'),
+          ),
+        ),
+        overrides: _executionOverrides(openActions: [action]),
+      ),
+    );
+
+    await tester.tap(find.text('Open progress'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Belongs to'), findsOneWidget);
+    expect(find.text('Review the launch plan'), findsOneWidget);
+    expect(find.text('Action'), findsNothing);
+    expect(find.text('Project'), findsNothing);
+    expect(find.text('Commitment'), findsNothing);
+    expect(find.text('Update linked action'), findsNothing);
+  });
 
   testWidgets('action uses one relation picker and inherits a plan', (
     tester,

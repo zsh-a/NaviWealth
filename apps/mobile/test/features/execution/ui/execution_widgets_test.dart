@@ -97,7 +97,7 @@ void main() {
 
     expect(
       filteredExecutionActions(
-        filter: ExecutionTodayFilter.focus,
+        filter: ExecutionTodayFilter.today,
         todayActions: [today],
         openActions: open,
       ),
@@ -110,22 +110,6 @@ void main() {
         openActions: open,
       ),
       [blocked],
-    );
-    expect(
-      filteredExecutionActions(
-        filter: ExecutionTodayFilter.open,
-        todayActions: [today],
-        openActions: open,
-      ),
-      open,
-    );
-    expect(
-      filteredExecutionActions(
-        filter: ExecutionTodayFilter.backlog,
-        todayActions: [today],
-        openActions: open,
-      ),
-      [today, backlog],
     );
   });
 
@@ -193,7 +177,7 @@ void main() {
   testWidgets('overview strip exposes tappable action filters', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    var selected = ExecutionTodayFilter.focus;
+    var selected = ExecutionTodayFilter.today;
     const snapshot = ExecutionOverviewSnapshot(
       todayCount: 3,
       blockedCount: 1,
@@ -253,7 +237,7 @@ void main() {
       _wrap(
         ExecutionOverviewStrip(
           snapshot: snapshot,
-          selectedFilter: ExecutionTodayFilter.focus,
+          selectedFilter: ExecutionTodayFilter.today,
           onFilterChanged: (_) {},
         ),
       ),
@@ -305,8 +289,10 @@ void main() {
     expect(find.text('High'), findsOneWidget);
     expect(find.textContaining('Overdue'), findsOneWidget);
     expect(find.textContaining('Scheduled'), findsOneWidget);
-    expect(find.text('Plan: Execution polish'), findsOneWidget);
-    expect(find.text('Commitment: Weekly review'), findsOneWidget);
+    expect(
+      find.text('Belongs to: Execution polish · Weekly review'),
+      findsOneWidget,
+    );
     expect(find.text('Budget alert'), findsOneWidget);
 
     await tester.tap(find.text('Budget alert'));
@@ -543,7 +529,6 @@ void main() {
 
     expect(find.text('Ship execution loop'), findsOneWidget);
     expect(find.text('Active'), findsOneWidget);
-    expect(find.text('Quarter'), findsOneWidget);
     expect(find.text('Actions: 3'), findsOneWidget);
     expect(find.text('Blocked: 1'), findsOneWidget);
 
@@ -756,7 +741,6 @@ void main() {
 
     expect(find.text('Weekly review'), findsOneWidget);
     expect(find.text('Paused'), findsOneWidget);
-    expect(find.text('Week'), findsOneWidget);
     expect(find.text('Actions: 2'), findsOneWidget);
     expect(find.text('Blocked: 0'), findsNothing);
 
@@ -819,8 +803,8 @@ void main() {
     expect(find.text('Completion'), findsOneWidget);
     expect(find.text('Completed proposal coverage.'), findsOneWidget);
     expect(find.text('Action: Review budget delta'), findsOneWidget);
-    expect(find.text('Plan: Execution polish'), findsOneWidget);
-    expect(find.text('Commitment: Weekly review'), findsOneWidget);
+    expect(find.textContaining('Plan: Execution polish'), findsNothing);
+    expect(find.textContaining('Commitment: Weekly review'), findsNothing);
 
     await tester.tap(find.text('Action: Review budget delta'));
     await tester.pump();

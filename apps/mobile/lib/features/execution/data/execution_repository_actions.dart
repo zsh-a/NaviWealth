@@ -30,8 +30,7 @@ mixin ExecutionActionRepositoryMixin {
             (t.status.equals(ExecutionActionStatus.doing.wire) |
                 t.status.equals(ExecutionActionStatus.blocked.wire) |
                 t.scheduledFor.isSmallerThanValue(endOfToday) |
-                t.dueAt.isSmallerThanValue(endOfToday) |
-                t.priority.equals(ExecutionPriority.high.wire)),
+                t.dueAt.isSmallerThanValue(endOfToday)),
       )
       ..orderBy([
         (t) => OrderingTerm(

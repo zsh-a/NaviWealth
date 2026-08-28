@@ -24789,7 +24789,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionPlansSelectItem.
   ///
   /// In en, this message translates to:
-  /// **'Select a project or commitment to review it here'**
+  /// **'Select a plan to review it here'**
   String get executionPlansSelectItem;
 
   /// No description provided for @executionReviewTitle.
@@ -25001,18 +25001,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today'**
   String get executionOverviewFocus;
-
-  /// No description provided for @executionOverviewBacklog.
-  ///
-  /// In en, this message translates to:
-  /// **'Backlog'**
-  String get executionOverviewBacklog;
-
-  /// Execution Today lens: all open actions
-  ///
-  /// In en, this message translates to:
-  /// **'Open'**
-  String get executionOverviewOpen;
 
   /// No description provided for @executionOverviewBlocked.
   ///
@@ -25247,30 +25235,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'High'**
   String get executionPriorityHigh;
-
-  /// No description provided for @executionHorizonWeek.
-  ///
-  /// In en, this message translates to:
-  /// **'Week'**
-  String get executionHorizonWeek;
-
-  /// No description provided for @executionHorizonMonth.
-  ///
-  /// In en, this message translates to:
-  /// **'Month'**
-  String get executionHorizonMonth;
-
-  /// No description provided for @executionHorizonQuarter.
-  ///
-  /// In en, this message translates to:
-  /// **'Quarter'**
-  String get executionHorizonQuarter;
-
-  /// No description provided for @executionHorizonOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'Open'**
-  String get executionHorizonOpen;
 
   /// No description provided for @executionDueBadge.
   ///
@@ -25581,7 +25545,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionProgressNoteHint.
   ///
   /// In en, this message translates to:
-  /// **'What changed, what is blocked, or what got done?'**
+  /// **'Record a change or note. Use the action controls to change status.'**
   String get executionProgressNoteHint;
 
   /// No description provided for @executionProgressNoteRequired.
@@ -25697,18 +25661,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generate review'**
   String get executionReviewGenerateAction;
-
-  /// No description provided for @executionProgressSyncActionStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'Update linked action'**
-  String get executionProgressSyncActionStatus;
-
-  /// No description provided for @executionProgressSyncActionStatusBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Also move the action to {status}.'**
-  String executionProgressSyncActionStatusBody(Object status);
 
   /// No description provided for @executionProposalActionLabel.
   ///
@@ -30110,7 +30062,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionSearchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search actions, projects, and commitments'**
+  /// **'Search actions and plans'**
   String get executionSearchHint;
 
   /// No description provided for @executionSearchEmptyTitle.
@@ -30122,7 +30074,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionSearchEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Results include open and closed actions, projects, and commitments.'**
+  /// **'Results include open and closed actions and plans.'**
   String get executionSearchEmptyBody;
 
   /// No description provided for @executionSearchStartAction.
@@ -30158,14 +30110,8 @@ abstract class AppLocalizations {
   /// No description provided for @executionSearchKindProject.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Plan'**
   String get executionSearchKindProject;
-
-  /// No description provided for @executionSearchKindCommitment.
-  ///
-  /// In en, this message translates to:
-  /// **'Commitment'**
-  String get executionSearchKindCommitment;
 
   /// No description provided for @executionSearchKindProgress.
   ///

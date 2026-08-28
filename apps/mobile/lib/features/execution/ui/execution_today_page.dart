@@ -78,7 +78,7 @@ final _executionTodayViewProvider =
         final visibleActions = filteredActions
             .where(
               (action) =>
-                  filter != ExecutionTodayFilter.focus ||
+                  filter != ExecutionTodayFilter.today ||
                   !focusOrder.containsKey(action.id),
             )
             .toList(growable: false);
@@ -142,7 +142,7 @@ class _TodayList extends ConsumerStatefulWidget {
 }
 
 class _TodayListState extends ConsumerState<_TodayList> {
-  ExecutionTodayFilter _filter = ExecutionTodayFilter.focus;
+  ExecutionTodayFilter _filter = ExecutionTodayFilter.today;
 
   Future<void> _refresh() async {
     ref.invalidate(executionTodayActionsProvider);
@@ -191,7 +191,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
           final suggestedFocus = view.suggestedFocus;
 
           final actionModules = <Widget>[
-            if (_filter == ExecutionTodayFilter.focus && openActions.isNotEmpty)
+            if (_filter == ExecutionTodayFilter.today && openActions.isNotEmpty)
               _DailyFocusPanel(
                 actions: openActions,
                 selectedIds: focusIds,
@@ -205,19 +205,19 @@ class _TodayListState extends ConsumerState<_TodayList> {
                     context.push(ExecutionRoutes.action(action.id)),
               ),
             if (visibleActions.isEmpty) ...[
-              if (!(_filter == ExecutionTodayFilter.focus &&
+              if (!(_filter == ExecutionTodayFilter.today &&
                   focusIds.isNotEmpty))
                 AppEmptyState(
-                  icon: _filter == ExecutionTodayFilter.focus
+                  icon: _filter == ExecutionTodayFilter.today
                       ? FLucideIcons.checkCheck
                       : executionTodayFilterIcon(_filter),
-                  title: _filter == ExecutionTodayFilter.focus
+                  title: _filter == ExecutionTodayFilter.today
                       ? l10n.executionTodayEmptyTitle
                       : l10n.executionTodayFilteredEmptyTitle,
-                  message: _filter == ExecutionTodayFilter.focus
+                  message: _filter == ExecutionTodayFilter.today
                       ? l10n.executionTodayEmptyBody
                       : l10n.executionTodayFilteredEmptyBody,
-                  action: _filter == ExecutionTodayFilter.focus
+                  action: _filter == ExecutionTodayFilter.today
                       ? AppActionButton(
                           onPress: () =>
                               showExecutionActionSheet(context: context),
@@ -275,7 +275,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
             listHeader: visibleActions.isEmpty
                 ? null
                 : ExecutionSectionHeader(
-                    title: _filter == ExecutionTodayFilter.focus
+                    title: _filter == ExecutionTodayFilter.today
                         ? l10n.executionTodayNextActions
                         : executionTodayFilterLabel(l10n, _filter),
                     count: visibleActions.length,

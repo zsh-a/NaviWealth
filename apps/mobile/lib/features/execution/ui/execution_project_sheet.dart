@@ -12,7 +12,6 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_delete_confirm.dart';
 import 'execution_sheet_footer.dart';
-import 'execution_widgets.dart';
 
 Future<bool?> showExecutionProjectSheet({
   required BuildContext context,
@@ -202,22 +201,6 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
                   : null,
             ),
             const SizedBox(height: AppSpacing.s12),
-            Text(l10n.executionHorizonField, style: context.captionLabelStyle),
-            const SizedBox(height: AppSpacing.s6),
-            AppAdaptiveChoice<ExecutionHorizon>(
-              title: l10n.executionHorizonField,
-              options: ExecutionHorizon.values,
-              value: _horizon,
-              labelOf: (horizon) => executionHorizonLabel(l10n, horizon),
-              iconOf: _horizonIcon,
-              onChanged: _saving
-                  ? (_) {}
-                  : (horizon) {
-                      setState(() => _horizon = horizon);
-                      _markDirty();
-                    },
-            ),
-            const SizedBox(height: AppSpacing.s12),
             DateField(
               label: l10n.executionTargetDateField,
               initialValue: _targetDate,
@@ -251,13 +234,4 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
       ),
     );
   }
-}
-
-IconData _horizonIcon(ExecutionHorizon horizon) {
-  return switch (horizon) {
-    ExecutionHorizon.week => FLucideIcons.calendarDays,
-    ExecutionHorizon.month => FLucideIcons.calendar,
-    ExecutionHorizon.quarter => FLucideIcons.calendarRange,
-    ExecutionHorizon.open => FLucideIcons.infinity,
-  };
 }

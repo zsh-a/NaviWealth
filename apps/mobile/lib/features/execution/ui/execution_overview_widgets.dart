@@ -23,16 +23,15 @@ class ExecutionOverviewStrip extends StatelessWidget {
     return AppAdaptiveChoice<ExecutionTodayFilter>(
       title: l10n.executionTodayTitle,
       options: const <ExecutionTodayFilter>[
-        ExecutionTodayFilter.focus,
+        ExecutionTodayFilter.today,
         ExecutionTodayFilter.blocked,
       ],
       value: selectedFilter,
       labelOf: (filter) => switch (filter) {
-        ExecutionTodayFilter.focus =>
+        ExecutionTodayFilter.today =>
           '${l10n.executionOverviewFocus} ${snapshot.todayCount}',
         ExecutionTodayFilter.blocked =>
           '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}',
-        ExecutionTodayFilter.backlog || ExecutionTodayFilter.open => '',
       },
       semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
       iconOf: executionTodayFilterIcon,
