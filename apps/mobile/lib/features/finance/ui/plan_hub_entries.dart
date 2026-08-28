@@ -6,12 +6,7 @@ part of 'plan_hub_page.dart';
 /// [_PlanEntrySpec] view models (icon, copy, tone, destination). Page
 /// composition and widgets stay in `plan_hub_page.dart`; this part only owns
 /// the status-to-entry derivation so the page file reads as pure layout.
-enum _PlanEntryGroup {
-  cashSafety,
-  longTermGoals,
-  investmentPlan,
-  incomeStrategies,
-}
+enum _PlanEntryGroup { cashSafety, longTermGoals, investmentPlan }
 
 class _PlanEntrySpec {
   const _PlanEntrySpec({
@@ -194,7 +189,7 @@ _PlanEntrySpec _incomeStrategyEntry(
 ) {
   final activeOptions = status.wheelOpenPositionCount ?? 0;
   return _PlanEntrySpec(
-    group: _PlanEntryGroup.incomeStrategies,
+    group: _PlanEntryGroup.investmentPlan,
     icon: FLucideIcons.candlestickChart,
     title: l10n.incomeStrategyTitle,
     subtitle: activeOptions > 0

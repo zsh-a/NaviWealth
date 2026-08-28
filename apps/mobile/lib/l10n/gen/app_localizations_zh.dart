@@ -96,10 +96,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planCashSafetyTitle => '现金安全';
 
   @override
-  String get planLongTermGoalsTitle => '长期目标与场景';
+  String get planLongTermGoalsTitle => '目标与场景';
 
   @override
-  String get planInvestmentPlanTitle => '投资执行';
+  String get planInvestmentPlanTitle => '投资';
 
   @override
   String get planIncomeStrategiesTitle => '收益策略';

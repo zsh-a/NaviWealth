@@ -98,10 +98,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planCashSafetyTitle => 'Cash safety';
 
   @override
-  String get planLongTermGoalsTitle => 'Long-term goals & scenarios';
+  String get planLongTermGoalsTitle => 'Goals & scenarios';
 
   @override
-  String get planInvestmentPlanTitle => 'Investment execution';
+  String get planInvestmentPlanTitle => 'Investing';
 
   @override
   String get planIncomeStrategiesTitle => 'Income strategies';

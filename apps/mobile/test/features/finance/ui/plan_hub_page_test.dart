@@ -108,7 +108,6 @@ void main() {
     expect(find.text(l10n.planCashSafetyTitle), findsOneWidget);
     expect(find.text(l10n.planLongTermGoalsTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
-    expect(find.text(l10n.planIncomeStrategiesTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
@@ -146,6 +145,7 @@ void main() {
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
     expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
+    expect(find.text(l10n.planIncomeStrategiesTitle), findsNothing);
     expect(find.text(l10n.lifeEventScenariosTitle), findsWidgets);
     expect(find.text('Planning tools'), findsNothing);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);

@@ -251,13 +251,13 @@ abstract class AppLocalizations {
   /// Plan hub section for financial independence and life-event scenarios
   ///
   /// In en, this message translates to:
-  /// **'Long-term goals & scenarios'**
+  /// **'Goals & scenarios'**
   String get planLongTermGoalsTitle;
 
   /// Plan hub section for recurring investing and rebalancing
   ///
   /// In en, this message translates to:
-  /// **'Investment execution'**
+  /// **'Investing'**
   String get planInvestmentPlanTitle;
 
   /// Plan hub section for dividend and options-income workflows

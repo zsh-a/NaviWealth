@@ -110,7 +110,7 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
 }
 
 /// Ordered overview tiles for the brief grid: near-term cash safety, long-term
-/// goals, investment execution, and income strategies.
+/// goals, and investment actions.
 List<AdaptiveSummaryTile> _planningSummaryTiles(
   AppLocalizations l10n,
   List<_PlanEntrySpec> entries,
@@ -124,10 +124,6 @@ List<AdaptiveSummaryTile> _planningSummaryTiles(
   final investmentPlan = entries
       .where((entry) => entry.group == _PlanEntryGroup.investmentPlan)
       .toList(growable: false);
-  final incomeStrategies = entries
-      .where((entry) => entry.group == _PlanEntryGroup.incomeStrategies)
-      .toList(growable: false);
-
   return [
     AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.featured,
@@ -151,14 +147,6 @@ List<AdaptiveSummaryTile> _planningSummaryTiles(
         key: const ValueKey('plan-investment-plan-section'),
         title: l10n.planInvestmentPlanTitle,
         entries: investmentPlan,
-      ),
-    ),
-    AdaptiveSummaryTile(
-      role: AdaptiveSummaryTileRole.standard,
-      child: _PlanSection(
-        key: const ValueKey('plan-income-strategies-section'),
-        title: l10n.planIncomeStrategiesTitle,
-        entries: incomeStrategies,
       ),
     ),
   ];

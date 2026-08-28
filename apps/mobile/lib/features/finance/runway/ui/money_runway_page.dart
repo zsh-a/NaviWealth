@@ -146,9 +146,6 @@ class _RunwayContent extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.s16),
-        Text(l10n.moneyRunwayHorizonsTitle, style: context.mutedLabelStyle),
-        const SizedBox(height: AppSpacing.s8),
         _RunwayHorizonGrid(
           formatValue: (days) => formatters.compactCurrency(
             snapshot.balanceAt(days),
@@ -402,47 +399,66 @@ class _RunwayHorizonGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final cards = [
-      for (final days in const [30, 60])
-        SoftCard.flat(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.moneyRunwayDays(days), style: context.captionStyle),
-              const SizedBox(height: AppSpacing.s6),
-              Text(
-                formatValue(days),
-                style: TypographyTokens.numericTitleStrong,
-              ),
-            ],
-          ),
-        ),
-    ];
+    const horizons = [30, 60];
     return LayoutBuilder(
       builder: (context, constraints) {
         final textScale = MediaQuery.textScalerOf(context).scale(1);
         if (constraints.maxWidth < Breakpoints.formColumn || textScale > 1.3) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          return AppSection.group(
+            key: const ValueKey('money-runway-horizons'),
+            title: l10n.moneyRunwayHorizonsTitle,
             children: [
-              for (var i = 0; i < cards.length; i++) ...[
-                if (i > 0) const SizedBox(height: AppSpacing.s8),
-                cards[i],
+              for (var i = 0; i < horizons.length; i++) ...[
+                if (i > 0) const FDivider(),
+                _HorizonValue(
+                  days: horizons[i],
+                  value: formatValue(horizons[i]),
+                ),
               ],
             ],
           );
         }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return AppSection.group(
+          key: const ValueKey('money-runway-horizons'),
+          title: l10n.moneyRunwayHorizonsTitle,
           children: [
-            for (var i = 0; i < cards.length; i++) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.s8),
-              Expanded(child: cards[i]),
-            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < horizons.length; i++) ...[
+                  if (i > 0) const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: _HorizonValue(
+                      days: horizons[i],
+                      value: formatValue(horizons[i]),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ],
         );
       },
+    );
+  }
+}
+
+class _HorizonValue extends StatelessWidget {
+  const _HorizonValue({required this.days, required this.value});
+
+  final int days;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.moneyRunwayDays(days), style: context.captionStyle),
+        const SizedBox(height: AppSpacing.s4),
+        Text(value, style: TypographyTokens.numericTitleStrong),
+      ],
     );
   }
 }
@@ -475,57 +491,56 @@ class _RunwayAssumptionsState extends ConsumerState<_RunwayAssumptions> {
         AnimatedSizeFade(
           visible: _open,
           child: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.s8),
-            child: SoftCard.flat(
-              padding: AppPageRhythm.cardPadding,
-              child: Column(
-                children: [
-                  _ValueRow(
-                    label: l10n.moneyRunwayStartingCash,
-                    value: formatters.currency(
-                      snapshot.startingBalance,
-                      code: snapshot.currency,
-                    ),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.s8,
+              left: AppSpacing.s4,
+              right: AppSpacing.s4,
+            ),
+            child: Column(
+              children: [
+                _ValueRow(
+                  label: l10n.moneyRunwayStartingCash,
+                  value: formatters.currency(
+                    snapshot.startingBalance,
+                    code: snapshot.currency,
                   ),
-                  _ValueRow(
-                    label: l10n.moneyRunwayReserveTarget,
-                    value:
-                        '${formatters.currency(snapshot.reserveTarget, code: snapshot.currency)}'
-                        ' · ${_assumptionSourceLabel(l10n, snapshot.reserveSource)}',
+                ),
+                _ValueRow(
+                  label: l10n.moneyRunwayReserveTarget,
+                  value:
+                      '${formatters.currency(snapshot.reserveTarget, code: snapshot.currency)}'
+                      ' · ${_assumptionSourceLabel(l10n, snapshot.reserveSource)}',
+                ),
+                _ValueRow(
+                  label: l10n.moneyRunwayVariableEstimate,
+                  value:
+                      '${formatters.currency(snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30), code: snapshot.currency)}'
+                      ' · ${_assumptionSourceLabel(l10n, snapshot.monthlyExpenseSource)}',
+                ),
+                _ValueRow(
+                  label: l10n.moneyRunwayCoverage,
+                  value: snapshot.emergencyCoverageMonths == null
+                      ? l10n.commonNotAvailable
+                      : l10n.moneyRunwayCoverageMonths(
+                          snapshot.emergencyCoverageMonths!.toStringAsFixed(1),
+                        ),
+                ),
+                _ValueRow(
+                  label: l10n.moneyRunwayCompleteness,
+                  value: formatters.percent(
+                    snapshot.dataCompleteness,
+                    decimalDigits: 0,
                   ),
+                ),
+                if (snapshot.historicalForecastError != null)
                   _ValueRow(
-                    label: l10n.moneyRunwayVariableEstimate,
-                    value:
-                        '${formatters.currency(snapshot.estimatedDailyVariableOutflow * Decimal.fromInt(30), code: snapshot.currency)}'
-                        ' · ${_assumptionSourceLabel(l10n, snapshot.monthlyExpenseSource)}',
-                  ),
-                  _ValueRow(
-                    label: l10n.moneyRunwayCoverage,
-                    value: snapshot.emergencyCoverageMonths == null
-                        ? l10n.commonNotAvailable
-                        : l10n.moneyRunwayCoverageMonths(
-                            snapshot.emergencyCoverageMonths!.toStringAsFixed(
-                              1,
-                            ),
-                          ),
-                  ),
-                  _ValueRow(
-                    label: l10n.moneyRunwayCompleteness,
+                    label: l10n.moneyRunwayHistoricalError,
                     value: formatters.percent(
-                      snapshot.dataCompleteness,
-                      decimalDigits: 0,
+                      snapshot.historicalForecastError!,
+                      decimalDigits: 1,
                     ),
                   ),
-                  if (snapshot.historicalForecastError != null)
-                    _ValueRow(
-                      label: l10n.moneyRunwayHistoricalError,
-                      value: formatters.percent(
-                        snapshot.historicalForecastError!,
-                        decimalDigits: 1,
-                      ),
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
         ),
