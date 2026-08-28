@@ -14346,7 +14346,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String executionLifecycleCompleteConfirmBody(int count) {
-    return '完成后仍会保留 $count 条开放行动。';
+    return '完成后仍会保留 $count 条开放行动，并移入收集箱。';
   }
 
   @override
@@ -14354,7 +14354,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String executionLifecycleArchiveConfirmBody(int count) {
-    return '归档后仍会保留 $count 条开放行动。';
+    return '归档后仍会保留 $count 条开放行动，并移入收集箱。';
+  }
+
+  @override
+  String executionLifecycleStatusUpdated(Object status) {
+    return '状态已更新为「$status」';
+  }
+
+  @override
+  String executionDeleteWithOpenActionsBody(int count) {
+    return '删除后，该条目下的 $count 条开放行动会移入收集箱。';
   }
 
   @override
@@ -14389,6 +14399,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionStandaloneActionsSection => '独立行动';
+
+  @override
+  String get executionUnplacedActionsSection => '待安置行动';
 
   @override
   String get executionProjectCommitmentsSection => '项目承诺';

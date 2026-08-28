@@ -17,6 +17,7 @@ class ExecutionActionCard extends StatelessWidget {
     this.onOpen,
     this.onSourceOpen,
     this.showActions = true,
+    this.compact = false,
     this.outcome,
     this.focusSelected = false,
     this.onToggleFocus,
@@ -36,6 +37,7 @@ class ExecutionActionCard extends StatelessWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onSourceOpen;
   final bool showActions;
+  final bool compact;
   final ActionOutcomeSummary? outcome;
   final bool focusSelected;
   final VoidCallback? onToggleFocus;
@@ -92,7 +94,7 @@ class ExecutionActionCard extends StatelessWidget {
                               Text(
                                 action.note.trim(),
                                 style: context.captionStyle,
-                                maxLines: 2,
+                                maxLines: compact ? 1 : 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
@@ -118,7 +120,8 @@ class ExecutionActionCard extends StatelessWidget {
                                   ),
                                 if (action.dueAt != null)
                                   _ActionDueBadge(dueAt: action.dueAt!),
-                                if (action.scheduledFor != null)
+                                if (action.scheduledFor != null &&
+                                    (!compact || action.dueAt == null))
                                   AppBadge(
                                     label: l10n.executionScheduledBadge(
                                       executionDate(
@@ -130,7 +133,7 @@ class ExecutionActionCard extends StatelessWidget {
                                     size: AppBadgeSize.compact,
                                     icon: FLucideIcons.calendarClock,
                                   ),
-                                if (projectLabel != null)
+                                if (!compact && projectLabel != null)
                                   AppBadge(
                                     label:
                                         '${l10n.executionProjectField}: '
@@ -138,7 +141,7 @@ class ExecutionActionCard extends StatelessWidget {
                                     size: AppBadgeSize.compact,
                                     icon: FLucideIcons.folder,
                                   ),
-                                if (commitmentLabel != null)
+                                if (!compact && commitmentLabel != null)
                                   AppBadge(
                                     label:
                                         '${l10n.executionCommitmentField}: '
@@ -146,13 +149,14 @@ class ExecutionActionCard extends StatelessWidget {
                                     size: AppBadgeSize.compact,
                                     icon: FLucideIcons.target,
                                   ),
-                                if (action.source.labelSnapshot != null &&
+                                if (!compact &&
+                                    action.source.labelSnapshot != null &&
                                     action.source.labelSnapshot!.isNotEmpty)
                                   _ActionSourceBadge(
                                     label: action.source.labelSnapshot!,
                                     onPress: onSourceOpen,
                                   ),
-                                if (outcome != null)
+                                if (!compact && outcome != null)
                                   AppBadge(
                                     label: switch (outcome!.status) {
                                       ActionOutcomeStatus.signalCleared =>

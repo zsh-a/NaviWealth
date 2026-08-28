@@ -15136,8 +15136,8 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count open actions will remain active.',
-      one: '1 open action will remain active.',
+      other: '$count open actions will remain active and move to Inbox.',
+      one: '1 open action will remain active and move to Inbox.',
     );
     return '$_temp0';
   }
@@ -15151,10 +15151,26 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count open actions will remain active.',
-      one: '1 open action will remain active.',
+      other: '$count open actions will remain active and move to Inbox.',
+      one: '1 open action will remain active and move to Inbox.',
     );
     return '$_temp0';
+  }
+
+  @override
+  String executionLifecycleStatusUpdated(Object status) {
+    return 'Status updated to $status';
+  }
+
+  @override
+  String executionDeleteWithOpenActionsBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count open actions will move to Inbox.',
+      one: '1 open action will move to Inbox.',
+    );
+    return 'This deletes the item. $_temp0';
   }
 
   @override
@@ -15190,6 +15206,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionStandaloneActionsSection => 'Standalone actions';
+
+  @override
+  String get executionUnplacedActionsSection => 'Open actions to place';
 
   @override
   String get executionProjectCommitmentsSection => 'Project commitments';

@@ -159,6 +159,39 @@ void main() {
     expect(find.text('No active work'), findsNothing);
   });
 
+  testWidgets('Plans surfaces open actions from closed containers', (
+    tester,
+  ) async {
+    final action =
+        _action(
+          id: 'orphaned-open',
+          title: 'Recover an open archived-plan action',
+        ).copyWith(
+          projectId: 'closed-plan',
+          sync: _sync(ownerUserId: 'user'),
+        );
+    final closed = ExecutionProject(
+      id: 'closed-plan',
+      title: 'Archived plan',
+      status: ExecutionProjectStatus.archived,
+      createdAt: DateTime.utc(2026, 7, 24),
+      sync: _sync(ownerUserId: 'user'),
+    );
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionCommitmentsPage(),
+        overrides: _executionOverrides(
+          openActions: [action],
+          closedProjects: [closed],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Open actions to place'), findsOneWidget);
+    expect(find.text('Recover an open archived-plan action'), findsOneWidget);
+  });
+
   testWidgets(
     'new action capture starts compact and reveals details on demand',
     (tester) async {
@@ -402,6 +435,151 @@ void main() {
     expect(removedProgress?.sync.deletedAt, isNotNull);
   });
 
+  test(
+    'project lifecycle undo restores detached actions and progress',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = ExecutionRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+      );
+      final project = ExecutionProject(
+        id: 'undo-project',
+        title: 'Undo project completion',
+        createdAt: DateTime.utc(2026, 7, 24),
+        sync: _sync(ownerUserId: 'user'),
+      );
+      final action =
+          _action(
+            id: 'undo-project-action',
+            title: 'Restore relation',
+          ).copyWith(
+            projectId: project.id,
+            commitmentId: 'undo-project-commitment',
+            sync: _sync(ownerUserId: 'user'),
+          );
+      await repository.upsertProject(project);
+      await repository.upsertAction(action);
+
+      final appliedSync = _sync(ownerUserId: 'user', tick: 1);
+      final progress = ExecutionProgressEntry(
+        id: 'undo-project-progress',
+        projectId: project.id,
+        kind: ExecutionProgressKind.completion,
+        note: 'Project completed.',
+        createdAt: appliedSync.updatedAt,
+        sync: appliedSync,
+      );
+      final affectedActions = await repository.updateProjectStatus(
+        project: project,
+        status: ExecutionProjectStatus.completed,
+        sync: appliedSync,
+        progress: progress,
+      );
+      final undo = ExecutionProjectStatusUndo(
+        repository: repository,
+        before: project,
+        affectedActions: affectedActions,
+        appliedSync: appliedSync,
+        stamp: () async => _sync(ownerUserId: 'user', tick: 2),
+        progressId: progress.id,
+      );
+
+      await undo.restore();
+
+      final restoredProject = await repository.findProject(
+        ownerUserId: 'user',
+        id: project.id,
+      );
+      final restoredAction = await repository.findAction(
+        ownerUserId: 'user',
+        id: action.id,
+      );
+      final restoredProgress = await repository.findProgress(
+        ownerUserId: 'user',
+        id: progress.id,
+      );
+      expect(restoredProject?.status, ExecutionProjectStatus.active);
+      expect(restoredAction?.projectId, project.id);
+      expect(restoredAction?.commitmentId, action.commitmentId);
+      expect(restoredProgress?.sync.deletedAt, isNotNull);
+    },
+  );
+
+  test(
+    'commitment lifecycle undo restores detached actions and progress',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = ExecutionRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+      );
+      final commitment = ExecutionCommitment(
+        id: 'undo-commitment',
+        title: 'Undo commitment completion',
+        projectId: 'undo-commitment-project',
+        createdAt: DateTime.utc(2026, 7, 24),
+        sync: _sync(ownerUserId: 'user'),
+      );
+      final action =
+          _action(
+            id: 'undo-commitment-action',
+            title: 'Restore commitment relation',
+          ).copyWith(
+            projectId: commitment.projectId,
+            commitmentId: commitment.id,
+            sync: _sync(ownerUserId: 'user'),
+          );
+      await repository.upsertCommitment(commitment);
+      await repository.upsertAction(action);
+
+      final appliedSync = _sync(ownerUserId: 'user', tick: 1);
+      final progress = ExecutionProgressEntry(
+        id: 'undo-commitment-progress',
+        commitmentId: commitment.id,
+        kind: ExecutionProgressKind.completion,
+        note: 'Commitment completed.',
+        createdAt: appliedSync.updatedAt,
+        sync: appliedSync,
+      );
+      final affectedActions = await repository.updateCommitmentStatus(
+        commitment: commitment,
+        status: ExecutionCommitmentStatus.completed,
+        sync: appliedSync,
+        progress: progress,
+      );
+      final undo = ExecutionCommitmentStatusUndo(
+        repository: repository,
+        before: commitment,
+        affectedActions: affectedActions,
+        appliedSync: appliedSync,
+        stamp: () async => _sync(ownerUserId: 'user', tick: 2),
+        progressId: progress.id,
+      );
+
+      await undo.restore();
+
+      final restoredCommitment = await repository.findCommitment(
+        ownerUserId: 'user',
+        id: commitment.id,
+      );
+      final restoredAction = await repository.findAction(
+        ownerUserId: 'user',
+        id: action.id,
+      );
+      final restoredProgress = await repository.findProgress(
+        ownerUserId: 'user',
+        id: progress.id,
+      );
+      expect(restoredCommitment?.status, ExecutionCommitmentStatus.active);
+      expect(restoredAction?.projectId, commitment.projectId);
+      expect(restoredAction?.commitmentId, commitment.id);
+      expect(restoredProgress?.sync.deletedAt, isNotNull);
+    },
+  );
+
   testWidgets('blocking an action requires and records a reason', (
     tester,
   ) async {
@@ -594,8 +772,8 @@ ExecutionAction _action({required String id, required String title}) {
   );
 }
 
-SyncMeta _sync({String ownerUserId = 'u-test'}) {
-  final now = DateTime.utc(2026, 7, 24);
+SyncMeta _sync({String ownerUserId = 'u-test', int tick = 0}) {
+  final now = DateTime.utc(2026, 7, 24, 0, 0, tick);
   return SyncMeta(
     ownerUserId: ownerUserId,
     updatedAt: now,

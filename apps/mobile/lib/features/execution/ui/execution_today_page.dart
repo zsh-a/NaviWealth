@@ -298,6 +298,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                         action.commitmentId,
                       ),
                   onOpen: () => context.push(ExecutionRoutes.action(action.id)),
+                  compact: true,
                   onSourceOpen: executionSourceOpen(
                     context,
                     ref,

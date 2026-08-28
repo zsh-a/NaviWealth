@@ -92,7 +92,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Search by title or note'), findsOneWidget);
-    await tester.enterText(find.byType(FTextField), 'polish');
+    await tester.enterText(find.byType(TextField), 'polish');
     await tester.pumpAndSettle();
 
     expect(find.text('Execution polish'), findsOneWidget);

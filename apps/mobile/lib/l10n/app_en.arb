@@ -7577,15 +7577,27 @@
   "executionCommitmentCompletedDefault": "Commitment completed.",
   "executionCommitmentArchivedDefault": "Commitment archived.",
   "executionLifecycleCompleteConfirmTitle": "Complete with open actions?",
-  "executionLifecycleCompleteConfirmBody": "{count, plural, =1{1 open action will remain active.} other{{count} open actions will remain active.}}",
+  "executionLifecycleCompleteConfirmBody": "{count, plural, =1{1 open action will remain active and move to Inbox.} other{{count} open actions will remain active and move to Inbox.}}",
   "@executionLifecycleCompleteConfirmBody": {
     "placeholders": {
       "count": { "type": "int" }
     }
   },
   "executionLifecycleArchiveConfirmTitle": "Archive with open actions?",
-  "executionLifecycleArchiveConfirmBody": "{count, plural, =1{1 open action will remain active.} other{{count} open actions will remain active.}}",
+  "executionLifecycleArchiveConfirmBody": "{count, plural, =1{1 open action will remain active and move to Inbox.} other{{count} open actions will remain active and move to Inbox.}}",
   "@executionLifecycleArchiveConfirmBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "executionLifecycleStatusUpdated": "Status updated to {status}",
+  "@executionLifecycleStatusUpdated": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "executionDeleteWithOpenActionsBody": "This deletes the item. {count, plural, =1{1 open action will move to Inbox.} other{{count} open actions will move to Inbox.}}",
+  "@executionDeleteWithOpenActionsBody": {
     "placeholders": {
       "count": { "type": "int" }
     }
@@ -7601,6 +7613,7 @@
   "executionProgressKindCheckin": "Check-in",
   "executionOpenActionsSection": "Open actions",
   "executionStandaloneActionsSection": "Standalone actions",
+  "executionUnplacedActionsSection": "Open actions to place",
   "executionProjectCommitmentsSection": "Project commitments",
   "executionReviewWindow7d": "7 days",
   "executionReviewWindow30d": "30 days",

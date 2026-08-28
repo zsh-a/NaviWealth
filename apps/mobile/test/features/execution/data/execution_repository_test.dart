@@ -357,6 +357,50 @@ void main() {
     ]);
   });
 
+  test('closing a project moves open actions to Inbox', () async {
+    final project = ExecutionProject(
+      id: 'proj-inbox',
+      title: 'Project with follow-through',
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(20),
+    );
+    final action = _action(
+      id: 'action-inbox',
+      title: 'Keep the follow-through visible',
+      projectId: project.id,
+      commitmentId: 'commitment-inbox',
+    );
+    await repo.upsertProject(project);
+    await repo.upsertAction(action);
+    outbox.clearQueued();
+
+    final progress = _progress(
+      id: 'progress-project-inbox',
+      projectId: project.id,
+      sync: _sync(21),
+    );
+    final moved = await repo.updateProjectStatus(
+      project: project,
+      status: ExecutionProjectStatus.completed,
+      sync: _sync(21),
+      progress: progress,
+    );
+
+    expect(moved.map((item) => item.id), ['action-inbox']);
+    final stored = await repo.findAction(ownerUserId: _userId, id: action.id);
+    expect(stored!.status, ExecutionActionStatus.todo);
+    expect(stored.projectId, isNull);
+    expect(stored.commitmentId, isNull);
+    expect(
+      (await repo.listOpenActions(ownerUserId: _userId)).map((item) => item.id),
+      contains('action-inbox'),
+    );
+    expect(
+      outbox.queued,
+      contains((table: 'execution_actions', rowId: 'action-inbox')),
+    );
+  });
+
   test(
     'watchClosedProjects shows completed and archived projects only',
     () async {
@@ -609,6 +653,38 @@ void main() {
     },
   );
 
+  test('closing a commitment moves open actions to Inbox', () async {
+    final commitment = ExecutionCommitment(
+      id: 'commit-inbox',
+      title: 'Commitment with follow-through',
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(22),
+    );
+    final action = _action(
+      id: 'commitment-action-inbox',
+      title: 'Keep the commitment follow-through visible',
+      commitmentId: commitment.id,
+    );
+    await repo.upsertCommitment(commitment);
+    await repo.upsertAction(action);
+
+    final moved = await repo.updateCommitmentStatus(
+      commitment: commitment,
+      status: ExecutionCommitmentStatus.archived,
+      sync: _sync(23),
+      progress: _progress(
+        id: 'progress-commitment-inbox',
+        commitmentId: commitment.id,
+        sync: _sync(23),
+      ),
+    );
+
+    expect(moved.map((item) => item.id), ['commitment-action-inbox']);
+    final stored = await repo.findAction(ownerUserId: _userId, id: action.id);
+    expect(stored!.projectId, isNull);
+    expect(stored.commitmentId, isNull);
+  });
+
   test('upsertProgress stores manual review entry and enqueues sync', () async {
     await repo.upsertProgress(
       ExecutionProgressEntry(
@@ -823,6 +899,32 @@ void main() {
       ]);
     },
   );
+
+  test('softDeleteProject moves open actions to Inbox', () async {
+    final project = ExecutionProject(
+      id: 'proj-delete-inbox',
+      title: 'Project to delete',
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(24),
+    );
+    final action = _action(
+      id: 'action-delete-inbox',
+      title: 'Preserve deleted project follow-through',
+      projectId: project.id,
+    );
+    await repo.upsertProject(project);
+    await repo.upsertAction(action);
+
+    final moved = await repo.softDeleteProject(
+      project: project,
+      sync: _sync(25),
+    );
+
+    expect(moved.map((item) => item.id), ['action-delete-inbox']);
+    final stored = await repo.findAction(ownerUserId: _userId, id: action.id);
+    expect(stored!.projectId, isNull);
+    expect(stored.commitmentId, isNull);
+  });
 
   test(
     'softDeleteCommitment tombstones commitment and hides it from active lists',

@@ -110,6 +110,11 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
           ? executionOpenActionsProvider
           : executionClosedActionsProvider,
     );
+    // Closed containers can still own open actions. Keep the open inventory
+    // available for lifecycle warnings and roll-ups even while the archive is
+    // selected; otherwise archiving a closed Plan could detach actions without
+    // telling the user.
+    final openActionsAsync = ref.watch(executionOpenActionsProvider);
     final commitmentsAsync = ref.watch(
       _view == _CommitmentsView.active
           ? executionCommitmentsProvider
@@ -117,7 +122,10 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
     );
     final relations = ref.watch(executionActionRelationsProvider).value;
     final error =
-        actionsAsync.error ?? projectsAsync.error ?? commitmentsAsync.error;
+        actionsAsync.error ??
+        openActionsAsync.error ??
+        projectsAsync.error ??
+        commitmentsAsync.error;
     if (error != null) {
       return AppEmptyState.error(
         title: l10n.commonLoadFailed,
@@ -134,27 +142,50 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
       );
     }
     if ((actionsAsync.isLoading && !actionsAsync.hasValue) ||
+        (openActionsAsync.isLoading && !openActionsAsync.hasValue) ||
         (projectsAsync.isLoading && !projectsAsync.hasValue) ||
         (commitmentsAsync.isLoading && !commitmentsAsync.hasValue)) {
       return AppListPageSkeleton(padding: shellTabContentPadding(context));
     }
 
     final actions = actionsAsync.value ?? const <ExecutionAction>[];
+    final openActions = openActionsAsync.value ?? const <ExecutionAction>[];
+    final projects = projectsAsync.value ?? const <ExecutionProject>[];
+    final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
+    final activeView = _view == _CommitmentsView.active;
+    final activeProjectIds = projects.map((project) => project.id).toSet();
+    final activeCommitmentIds = commitments
+        .map((commitment) => commitment.id)
+        .toSet();
     final standaloneActions = actions
         .where(
           (action) => action.projectId == null && action.commitmentId == null,
         )
         .toList(growable: false);
-    final projects = projectsAsync.value ?? const <ExecutionProject>[];
-    final commitments = commitmentsAsync.value ?? const <ExecutionCommitment>[];
-    final activeView = _view == _CommitmentsView.active;
+    // Surface legacy/orphaned open actions whose container was closed or
+    // deleted before the Inbox migration was introduced. This keeps the
+    // repair path visible without duplicating actions represented by an
+    // active Plan or Commitment card.
+    final unplacedOpenActions = activeView
+        ? openActions
+              .where(
+                (action) =>
+                    !activeProjectIds.contains(action.projectId) &&
+                    !activeCommitmentIds.contains(action.commitmentId),
+              )
+              .where(
+                (action) =>
+                    action.projectId != null || action.commitmentId != null,
+              )
+              .toList(growable: false)
+        : const <ExecutionAction>[];
     final empty = projects.isEmpty && commitments.isEmpty && actions.isEmpty;
     final actionCountByProject = <String, int>{};
     final blockedCountByProject = <String, int>{};
     final actionCountByCommitment = <String, int>{};
     final blockedCountByCommitment = <String, int>{};
     final commitmentCountByProject = <String, int>{};
-    for (final action in actions) {
+    for (final action in openActions) {
       if (action.projectId case final projectId?) {
         actionCountByProject.update(
           projectId,
@@ -226,19 +257,34 @@ class _CommitmentsBodyState extends ConsumerState<_CommitmentsBody> {
         ),
       );
     }
-    if (standaloneActions.isNotEmpty) {
+    final actionSections =
+        <({String title, IconData icon, List<ExecutionAction> actions})>[
+          if (standaloneActions.isNotEmpty)
+            (
+              title: activeView
+                  ? l10n.executionInboxSection
+                  : l10n.executionClosedActionsSection,
+              icon: activeView ? FLucideIcons.inbox : FLucideIcons.archive,
+              actions: standaloneActions,
+            ),
+          if (unplacedOpenActions.isNotEmpty)
+            (
+              title: l10n.executionUnplacedActionsSection,
+              icon: FLucideIcons.listTodo,
+              actions: unplacedOpenActions,
+            ),
+        ];
+    for (final section in actionSections) {
       itemBuilders
         ..add(
           (_) => ExecutionSectionHeader(
-            title: activeView
-                ? l10n.executionInboxSection
-                : l10n.executionClosedActionsSection,
-            count: standaloneActions.length,
-            icon: activeView ? FLucideIcons.inbox : FLucideIcons.archive,
+            title: section.title,
+            count: section.actions.length,
+            icon: section.icon,
           ),
         )
         ..add((_) => const SizedBox(height: AppSpacing.s8));
-      for (final action in standaloneActions) {
+      for (final action in section.actions) {
         itemBuilders.add(
           (_) => Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),

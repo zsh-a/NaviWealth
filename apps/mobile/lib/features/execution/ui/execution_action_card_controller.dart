@@ -25,6 +25,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     this.onOpen,
     this.onSourceOpen,
     this.showActions = true,
+    this.compact = false,
     this.outcome,
     this.focusSelected = false,
     this.onToggleFocus,
@@ -40,6 +41,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
   final VoidCallback? onOpen;
   final VoidCallback? onSourceOpen;
   final bool showActions;
+  final bool compact;
   final ActionOutcomeSummary? outcome;
   final bool focusSelected;
   final VoidCallback? onToggleFocus;
@@ -143,6 +145,7 @@ class _ExecutionActionCardControllerState
       onOpen: _busy ? null : widget.onOpen,
       onSourceOpen: _busy ? null : widget.onSourceOpen,
       showActions: widget.showActions,
+      compact: widget.compact,
       outcome: widget.outcome,
       focusSelected: widget.focusSelected,
       onToggleFocus: widget.onToggleFocus,
@@ -150,16 +153,14 @@ class _ExecutionActionCardControllerState
       onRecordProgress: widget.onRecordProgress,
       onStart: () => _changeStatus(
         ExecutionActionStatus.doing,
-        progressNote: AppLocalizations.of(
-          context,
-        ).executionProgressStartedDefault,
+        progressNote: AppLocalizations.of(context)
+            .executionProgressStartedDefault,
       ),
       onBlock: _blockWithReason,
       onResume: () => _changeStatus(
         ExecutionActionStatus.doing,
-        progressNote: AppLocalizations.of(
-          context,
-        ).executionProgressResumedDefault,
+        progressNote: AppLocalizations.of(context)
+            .executionProgressResumedDefault,
       ),
       onDone: () => _changeStatus(
         ExecutionActionStatus.done,

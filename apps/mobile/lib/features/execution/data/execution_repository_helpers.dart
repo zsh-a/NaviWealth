@@ -32,3 +32,73 @@ ExecutionAction _executionActionWithStatus(
     sync: sync,
   );
 }
+
+/// Moves open child actions back to Inbox when their container is closed or
+/// deleted.
+///
+/// Keeping the action open is useful, but keeping a relation to a container
+/// that is no longer in the active inventory makes the action very easy to
+/// lose. The previous action snapshot is returned so a lifecycle undo can
+/// restore the relation without guessing it later.
+Future<List<ExecutionAction>> _detachOpenActionsToInbox({
+  required AppDatabase db,
+  required OutboxStore outbox,
+  required String ownerUserId,
+  String? projectId,
+  String? commitmentId,
+  required SyncMeta sync,
+}) async {
+  final q = db.select(db.executionActions)
+    ..where((t) => t.ownerUserId.equals(ownerUserId))
+    ..where((t) => t.deletedAt.isNull())
+    ..where(
+      (t) => t.status.isIn(<String>[
+        ExecutionActionStatus.todo.wire,
+        ExecutionActionStatus.doing.wire,
+        ExecutionActionStatus.blocked.wire,
+      ]),
+    );
+  if (projectId != null) {
+    q.where((t) => t.projectId.equals(projectId));
+  }
+  if (commitmentId != null) {
+    q.where((t) => t.commitmentId.equals(commitmentId));
+  }
+
+  final rows = await q.get();
+  final actions = rows.map(executionActionFromRow).toList(growable: false);
+  for (final action in actions) {
+    final moved = action.copyWith(
+      projectId: null,
+      commitmentId: null,
+      sync: sync,
+    );
+    await db
+        .into(db.executionActions)
+        .insert(
+          executionActionCompanion(moved),
+          mode: InsertMode.insertOrReplace,
+        );
+    await outbox.enqueue(
+      table: ExecutionRepository._actionsTable,
+      rowId: moved.id,
+    );
+  }
+  return actions;
+}
+
+ExecutionProgressEntry _tombstonedProgress(
+  ExecutionProgressEntry progress,
+  SyncMeta sync,
+) {
+  return ExecutionProgressEntry(
+    id: progress.id,
+    actionId: progress.actionId,
+    projectId: progress.projectId,
+    commitmentId: progress.commitmentId,
+    kind: progress.kind,
+    note: progress.note,
+    createdAt: progress.createdAt,
+    sync: _executionTombstone(sync),
+  );
+}

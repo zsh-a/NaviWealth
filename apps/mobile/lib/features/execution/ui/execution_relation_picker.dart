@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
@@ -164,48 +164,15 @@ class _RelationPickerListState extends State<_RelationPickerList> {
   final TextEditingController _query = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _query.addListener(_refresh);
-  }
-
-  @override
   void dispose() {
-    _query.removeListener(_refresh);
     _query.dispose();
     super.dispose();
-  }
-
-  void _refresh() {
-    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final query = _query.text.trim().toLowerCase();
     final showSearch = widget.projects.length + widget.commitments.length > 6;
-    final independent = widget.commitments
-        .where((commitment) => commitment.projectId == null)
-        .toList(growable: false);
-    final visibleProjects = widget.projects
-        .where((project) {
-          if (query.isEmpty || _matchesProject(project, query)) return true;
-          return widget.commitments.any(
-            (commitment) =>
-                commitment.projectId == project.id &&
-                _matchesCommitment(commitment, query),
-          );
-        })
-        .toList(growable: false);
-    final visibleIndependent = independent
-        .where(
-          (commitment) =>
-              query.isEmpty || _matchesCommitment(commitment, query),
-        )
-        .toList(growable: false);
-    final hasMatches =
-        visibleProjects.isNotEmpty || visibleIndependent.isNotEmpty;
     final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
 
     return Column(
@@ -213,6 +180,7 @@ class _RelationPickerListState extends State<_RelationPickerList> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ExecutionPickerTile(
+          key: const ValueKey('relation:none'),
           icon: FLucideIcons.inbox,
           title: l10n.executionNoRelation,
           selected:
@@ -224,56 +192,82 @@ class _RelationPickerListState extends State<_RelationPickerList> {
         if (showSearch) ...[
           const AppDivider(),
           const SizedBox(height: AppSpacing.s8),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _query),
+          _ExecutionPickerSearchField(
+            controller: _query,
             hint: l10n.executionPickerSearchHint,
-            prefixBuilder: (ctx, style, variants) => const Padding(
-              padding: EdgeInsetsDirectional.only(
-                start: AppSpacing.s12,
-                end: AppSpacing.s8,
-              ),
-              child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-            ),
           ),
           const SizedBox(height: AppSpacing.s8),
         ] else
           const AppDivider(),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxListHeight),
-          child: !hasMatches
-              ? AppEmptyState(
-                  icon: FLucideIcons.searchX,
-                  title: l10n.executionPickerSearchEmpty,
-                  action: query.isEmpty
-                      ? null
-                      : FButton(
-                          variant: FButtonVariant.outline,
-                          onPress: _query.clear,
-                          child: Text(l10n.aiChatSessionsSearchClear),
-                        ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _query,
+          builder: (context, value, _) {
+            final query = value.text.trim().toLowerCase();
+            final independent = widget.commitments
+                .where((commitment) => commitment.projectId == null)
+                .toList(growable: false);
+            final visibleProjects = widget.projects
+                .where((project) {
+                  if (query.isEmpty || _matchesProject(project, query)) {
+                    return true;
+                  }
+                  return widget.commitments.any(
+                    (commitment) =>
+                        commitment.projectId == project.id &&
+                        _matchesCommitment(commitment, query),
+                  );
+                })
+                .toList(growable: false);
+            final visibleIndependent = independent
+                .where(
+                  (commitment) =>
+                      query.isEmpty || _matchesCommitment(commitment, query),
                 )
-              : ListView(
-                  shrinkWrap: true,
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  children: [
-                    for (var index = 0; index < visibleProjects.length; index++)
-                      ..._projectGroup(
-                        context,
-                        visibleProjects[index],
-                        query,
-                        showDivider: index > 0,
-                      ),
-                    if (visibleIndependent.isNotEmpty) ...[
-                      if (visibleProjects.isNotEmpty) const AppDivider(),
-                      _RelationGroupLabel(
-                        label: l10n.executionCommitmentsSection,
-                      ),
-                      for (final commitment in visibleIndependent)
-                        _commitmentTile(context, commitment),
-                    ],
-                  ],
-                ),
+                .toList(growable: false);
+            final hasMatches =
+                visibleProjects.isNotEmpty || visibleIndependent.isNotEmpty;
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxListHeight),
+              child: !hasMatches
+                  ? AppEmptyState(
+                      icon: FLucideIcons.searchX,
+                      title: l10n.executionPickerSearchEmpty,
+                      action: query.isEmpty
+                          ? null
+                          : FButton(
+                              variant: FButtonVariant.outline,
+                              onPress: _query.clear,
+                              child: Text(l10n.aiChatSessionsSearchClear),
+                            ),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      children: [
+                        for (
+                          var index = 0;
+                          index < visibleProjects.length;
+                          index++
+                        )
+                          ..._projectGroup(
+                            context,
+                            visibleProjects[index],
+                            query,
+                            showDivider: index > 0,
+                          ),
+                        if (visibleIndependent.isNotEmpty) ...[
+                          if (visibleProjects.isNotEmpty) const AppDivider(),
+                          _RelationGroupLabel(
+                            label: l10n.executionCommitmentsSection,
+                          ),
+                          for (final commitment in visibleIndependent)
+                            _commitmentTile(context, commitment),
+                        ],
+                      ],
+                    ),
+            );
+          },
         ),
       ],
     );
@@ -295,15 +289,16 @@ class _RelationPickerListState extends State<_RelationPickerList> {
     return [
       if (showDivider) const AppDivider(),
       ExecutionPickerTile(
+        key: ValueKey('relation:project:${project.id}'),
         icon: FLucideIcons.folder,
         title: project.title,
         subtitle: AppLocalizations.of(context).executionProjectField,
         selected:
             widget.selected.projectId == project.id &&
             widget.selected.commitmentId == null,
-        onPress: () => Navigator.of(
-          context,
-        ).pop((projectId: project.id, commitmentId: null)),
+        onPress: () =>
+            Navigator.of(context)
+                .pop((projectId: project.id, commitmentId: null)),
       ),
       for (final commitment in commitments)
         Padding(
@@ -315,13 +310,13 @@ class _RelationPickerListState extends State<_RelationPickerList> {
 
   Widget _commitmentTile(BuildContext context, ExecutionCommitment commitment) {
     return ExecutionPickerTile(
+      key: ValueKey('relation:commitment:${commitment.id}'),
       icon: FLucideIcons.target,
       title: commitment.title,
       subtitle: AppLocalizations.of(context).executionCommitmentField,
       selected: widget.selected.commitmentId == commitment.id,
-      onPress: () => Navigator.of(
-        context,
-      ).pop((projectId: commitment.projectId, commitmentId: commitment.id)),
+      onPress: () => Navigator.of(context)
+          .pop((projectId: commitment.projectId, commitmentId: commitment.id)),
     );
   }
 
@@ -468,42 +463,22 @@ class _PickerListState extends State<_PickerList> {
   final TextEditingController _query = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _query.addListener(_onQueryChanged);
-  }
-
-  @override
   void dispose() {
-    _query.removeListener(_onQueryChanged);
     _query.dispose();
     super.dispose();
-  }
-
-  void _onQueryChanged() {
-    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final showSearch = widget.items.length > 6;
-    final query = _query.text.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? widget.items
-        : widget.items
-              .where(
-                (item) =>
-                    item.label.toLowerCase().contains(query) ||
-                    item.detail.toLowerCase().contains(query),
-              )
-              .toList(growable: false);
 
     if (widget.items.isEmpty) {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ExecutionPickerTile(
+            key: const ValueKey('picker:none'),
             icon: widget.clearIcon,
             title: widget.clearLabel,
             selected: widget.selectedId == null || widget.selectedId!.isEmpty,
@@ -520,6 +495,7 @@ class _PickerListState extends State<_PickerList> {
       mainAxisSize: MainAxisSize.min,
       children: [
         ExecutionPickerTile(
+          key: const ValueKey('picker:none'),
           icon: widget.clearIcon,
           title: widget.clearLabel,
           selected: widget.selectedId == null || widget.selectedId!.isEmpty,
@@ -528,51 +504,124 @@ class _PickerListState extends State<_PickerList> {
         const AppDivider(),
         if (showSearch) ...[
           const SizedBox(height: AppSpacing.s8),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _query),
+          _ExecutionPickerSearchField(
+            controller: _query,
             hint: l10n.executionPickerSearchHint,
-            prefixBuilder: (ctx, style, variants) => const Padding(
-              padding: EdgeInsetsDirectional.only(
-                start: AppSpacing.s12,
-                end: AppSpacing.s8,
-              ),
-              child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-            ),
           ),
           const SizedBox(height: AppSpacing.s8),
         ],
-        ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxListHeight),
-          child: filtered.isEmpty
-              ? AppEmptyState(
-                  icon: FLucideIcons.searchX,
-                  title: l10n.executionPickerSearchEmpty,
-                  action: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: _query.clear,
-                    child: Text(l10n.aiChatSessionsSearchClear),
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  keyboardDismissBehavior:
-                      ScrollViewKeyboardDismissBehavior.onDrag,
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final item = filtered[index];
-                    return ExecutionPickerTile(
-                      icon: item.icon,
-                      title: item.label,
-                      subtitle: item.detail.trim().isEmpty
-                          ? null
-                          : item.detail.trim(),
-                      selected: item.id == widget.selectedId,
-                      onPress: () => Navigator.of(context).pop(item.id),
-                    );
-                  },
-                ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _query,
+          builder: (context, value, _) {
+            final query = value.text.trim().toLowerCase();
+            final filtered = query.isEmpty
+                ? widget.items
+                : widget.items
+                      .where(
+                        (item) =>
+                            item.label.toLowerCase().contains(query) ||
+                            item.detail.toLowerCase().contains(query),
+                      )
+                      .toList(growable: false);
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxListHeight),
+              child: filtered.isEmpty
+                  ? AppEmptyState(
+                      icon: FLucideIcons.searchX,
+                      title: l10n.executionPickerSearchEmpty,
+                      action: FButton(
+                        variant: FButtonVariant.outline,
+                        onPress: _query.clear,
+                        child: Text(l10n.aiChatSessionsSearchClear),
+                      ),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      children: [
+                        for (final item in filtered)
+                          ExecutionPickerTile(
+                            key: ValueKey('picker:${item.id}'),
+                            icon: item.icon,
+                            title: item.label,
+                            subtitle: item.detail.trim().isEmpty
+                                ? null
+                                : item.detail.trim(),
+                            selected: item.id == widget.selectedId,
+                            onPress: () => Navigator.of(context).pop(item.id),
+                          ),
+                      ],
+                    ),
+            );
+          },
         ),
       ],
+    );
+  }
+}
+
+/// Search fields are the one picker control that intentionally uses Flutter's
+/// editable field instead of [FTextField]. Forui 0.25 wraps [FTextField] in a
+/// [MergeSemantics] node that is not stable while Flutter 3.47 updates text
+/// and focused descendants in the same frame. Keeping this small control
+/// local preserves the app's field tokens while avoiding a11y tree churn in
+/// every searchable picker.
+class _ExecutionPickerSearchField extends StatelessWidget {
+  const _ExecutionPickerSearchField({
+    required this.controller,
+    required this.hint,
+  });
+
+  final TextEditingController controller;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    final fieldStyle = context.theme.textFieldStyles.resolve({
+      FTextFieldSizeVariant.md,
+      context.platformVariant,
+    });
+    final variants = <FTextFieldVariant>{
+      context.platformVariant as FTextFieldVariant,
+    };
+    final border = fieldStyle.border.resolve(variants);
+    final focusedBorder = fieldStyle.border.resolve({
+      ...variants,
+      FTextFieldVariant.focused,
+    });
+
+    return Material(
+      color: Colors.transparent,
+      child: TextField(
+        controller: controller,
+        textInputAction: TextInputAction.search,
+        style: fieldStyle.contentTextStyle.resolve(variants),
+        cursorColor: fieldStyle.cursorColor,
+        cursorWidth: fieldStyle.cursorWidth,
+        decoration: InputDecoration(
+          isDense: true,
+          constraints: fieldStyle.constraints,
+          hintText: hint,
+          hintStyle: fieldStyle.hintTextStyle.resolve(variants),
+          filled:
+              fieldStyle.color.base != null ||
+              fieldStyle.color.variants.isNotEmpty,
+          fillColor: fieldStyle.color.resolve(variants),
+          contentPadding: fieldStyle.contentPadding,
+          border: border,
+          enabledBorder: border,
+          focusedBorder: focusedBorder,
+          prefixIcon: Padding(
+            padding: const EdgeInsetsDirectional.only(start: 12, end: 8),
+            child: IconTheme(
+              data: fieldStyle.iconStyle.resolve(variants),
+              child: const Icon(FLucideIcons.search),
+            ),
+          ),
+          prefixIconConstraints: const BoxConstraints(),
+        ),
+      ),
     );
   }
 }

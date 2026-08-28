@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/sync/mutation_context.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/execution_repository.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_widgets.dart';
@@ -46,6 +51,8 @@ class _ExecutionProjectCardControllerState
   Future<void> _changeStatus(ExecutionProjectStatus status) async {
     if (_busy) return;
     final l10n = AppLocalizations.of(context);
+    final feedbackContext = context;
+    AppMessenger.cacheOverlay(feedbackContext);
     if ((status == ExecutionProjectStatus.completed ||
             status == ExecutionProjectStatus.archived) &&
         !await _confirmOpenActions(
@@ -55,35 +62,81 @@ class _ExecutionProjectCardControllerState
         )) {
       return;
     }
-    if (!mounted) return;
+    if (!feedbackContext.mounted || !mounted) return;
     setState(() => _busy = true);
     try {
       final repo = await ref.read(executionRepositoryProvider.future);
       final sync = await stampExecutionSync(ref);
-      await repo.updateProjectStatus(
+      final progress = ExecutionProgressEntry(
+        id: kExecutionUuid.v4(),
+        projectId: widget.project.id,
+        kind: _projectProgressKind(status),
+        note: _projectProgressNote(l10n, status),
+        createdAt: sync.updatedAt,
+        sync: sync,
+      );
+      final affectedActions = await repo.updateProjectStatus(
         project: widget.project,
         status: status,
         sync: sync,
-        progress: ExecutionProgressEntry(
-          id: kExecutionUuid.v4(),
-          projectId: widget.project.id,
-          kind: _projectProgressKind(status),
-          note: _projectProgressNote(l10n, status),
-          createdAt: sync.updatedAt,
-          sync: sync,
-        ),
+        progress: progress,
       );
-    } catch (_) {
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
+      final undo = ExecutionProjectStatusUndo(
+        repository: repo,
+        before: widget.project,
+        affectedActions: affectedActions,
+        appliedSync: sync,
+        stamp: () => _stampForUndo(ref),
+        progressId: progress.id,
+      );
+      if (feedbackContext.mounted) {
         AppMessenger.show(
-          context,
+          feedbackContext,
+          ToastKind.success,
+          l10n.executionLifecycleStatusUpdated(
+            executionProjectStatusLabel(l10n, status),
+          ),
+          duration: const Duration(seconds: 6),
+          actionLabel: l10n.commonUndo,
+          onAction: () =>
+              unawaited(_undoProjectStatus(feedbackContext, undo, l10n)),
+        );
+      }
+    } catch (_) {
+      if (feedbackContext.mounted) {
+        AppMessenger.show(
+          feedbackContext,
           ToastKind.error,
           l10n.executionProjectStatusUpdateFailed,
         );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _undoProjectStatus(
+    BuildContext feedbackContext,
+    ExecutionProjectStatusUndo undo,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      await undo.restore();
+      if (feedbackContext.mounted) {
+        AppMessenger.show(
+          feedbackContext,
+          ToastKind.success,
+          l10n.commonUndoSucceeded,
+        );
+      }
+    } on Object {
+      if (feedbackContext.mounted) {
+        AppMessenger.show(
+          feedbackContext,
+          ToastKind.error,
+          l10n.commonUndoFailed,
+        );
+      }
     }
   }
 
@@ -147,6 +200,8 @@ class _ExecutionCommitmentCardControllerState
   Future<void> _changeStatus(ExecutionCommitmentStatus status) async {
     if (_busy) return;
     final l10n = AppLocalizations.of(context);
+    final feedbackContext = context;
+    AppMessenger.cacheOverlay(feedbackContext);
     if ((status == ExecutionCommitmentStatus.completed ||
             status == ExecutionCommitmentStatus.archived) &&
         !await _confirmOpenActions(
@@ -156,36 +211,82 @@ class _ExecutionCommitmentCardControllerState
         )) {
       return;
     }
-    if (!mounted) return;
+    if (!feedbackContext.mounted || !mounted) return;
     setState(() => _busy = true);
     try {
       final repo = await ref.read(executionRepositoryProvider.future);
       final sync = await stampExecutionSync(ref);
-      await repo.updateCommitmentStatus(
+      final progress = ExecutionProgressEntry(
+        id: kExecutionUuid.v4(),
+        projectId: widget.commitment.projectId,
+        commitmentId: widget.commitment.id,
+        kind: _commitmentProgressKind(status),
+        note: _commitmentProgressNote(l10n, status),
+        createdAt: sync.updatedAt,
+        sync: sync,
+      );
+      final affectedActions = await repo.updateCommitmentStatus(
         commitment: widget.commitment,
         status: status,
         sync: sync,
-        progress: ExecutionProgressEntry(
-          id: kExecutionUuid.v4(),
-          projectId: widget.commitment.projectId,
-          commitmentId: widget.commitment.id,
-          kind: _commitmentProgressKind(status),
-          note: _commitmentProgressNote(l10n, status),
-          createdAt: sync.updatedAt,
-          sync: sync,
-        ),
+        progress: progress,
       );
-    } catch (_) {
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
+      final undo = ExecutionCommitmentStatusUndo(
+        repository: repo,
+        before: widget.commitment,
+        affectedActions: affectedActions,
+        appliedSync: sync,
+        stamp: () => _stampForUndo(ref),
+        progressId: progress.id,
+      );
+      if (feedbackContext.mounted) {
         AppMessenger.show(
-          context,
+          feedbackContext,
+          ToastKind.success,
+          l10n.executionLifecycleStatusUpdated(
+            executionCommitmentStatusLabel(l10n, status),
+          ),
+          duration: const Duration(seconds: 6),
+          actionLabel: l10n.commonUndo,
+          onAction: () =>
+              unawaited(_undoCommitmentStatus(feedbackContext, undo, l10n)),
+        );
+      }
+    } catch (_) {
+      if (feedbackContext.mounted) {
+        AppMessenger.show(
+          feedbackContext,
           ToastKind.error,
           l10n.executionCommitmentStatusUpdateFailed,
         );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _undoCommitmentStatus(
+    BuildContext feedbackContext,
+    ExecutionCommitmentStatusUndo undo,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      await undo.restore();
+      if (feedbackContext.mounted) {
+        AppMessenger.show(
+          feedbackContext,
+          ToastKind.success,
+          l10n.commonUndoSucceeded,
+        );
+      }
+    } on Object {
+      if (feedbackContext.mounted) {
+        AppMessenger.show(
+          feedbackContext,
+          ToastKind.error,
+          l10n.commonUndoFailed,
+        );
+      }
     }
   }
 
@@ -237,6 +338,105 @@ Future<bool> _confirmOpenActions(
         icon: FLucideIcons.triangleAlert,
       ) ==
       true;
+}
+
+Future<SyncMeta> _stampForUndo(WidgetRef ref) async {
+  final next = await ref.read(mutationStamperProvider.future);
+  final stamp = await next.stamp();
+  return SyncMeta(
+    ownerUserId: stamp.ownerUserId,
+    updatedAt: stamp.now,
+    updatedByDevice: stamp.deviceId,
+    hlc: stamp.hlc,
+  );
+}
+
+class ExecutionProjectStatusUndo {
+  const ExecutionProjectStatusUndo({
+    required this.repository,
+    required this.before,
+    required this.affectedActions,
+    required this.appliedSync,
+    required this.stamp,
+    required this.progressId,
+  });
+
+  final ExecutionRepository repository;
+  final ExecutionProject before;
+  final List<ExecutionAction> affectedActions;
+  final SyncMeta appliedSync;
+  final Future<SyncMeta> Function() stamp;
+  final String progressId;
+
+  Future<void> restore() async {
+    final current = await repository.findProject(
+      ownerUserId: before.sync.ownerUserId,
+      id: before.id,
+    );
+    if (current == null || current.sync.hlc != appliedSync.hlc) {
+      throw StateError('Plan changed after the status update.');
+    }
+    for (final action in affectedActions) {
+      final currentAction = await repository.findAction(
+        ownerUserId: before.sync.ownerUserId,
+        id: action.id,
+      );
+      if (currentAction == null || currentAction.sync.hlc != appliedSync.hlc) {
+        throw StateError('Action changed after the status update.');
+      }
+    }
+    final sync = await stamp();
+    await repository.restoreProjectLifecycle(
+      project: before,
+      actions: affectedActions,
+      progressId: progressId,
+      sync: sync,
+    );
+  }
+}
+
+class ExecutionCommitmentStatusUndo {
+  const ExecutionCommitmentStatusUndo({
+    required this.repository,
+    required this.before,
+    required this.affectedActions,
+    required this.appliedSync,
+    required this.stamp,
+    required this.progressId,
+  });
+
+  final ExecutionRepository repository;
+  final ExecutionCommitment before;
+  final List<ExecutionAction> affectedActions;
+  final SyncMeta appliedSync;
+  final Future<SyncMeta> Function() stamp;
+  final String progressId;
+
+  Future<void> restore() async {
+    final current = await repository.findCommitment(
+      ownerUserId: before.sync.ownerUserId,
+      id: before.id,
+    );
+    if (current == null || current.sync.hlc != appliedSync.hlc) {
+      throw StateError('Commitment changed after the status update.');
+    }
+    for (final action in affectedActions) {
+      final currentAction = await repository.findAction(
+        ownerUserId: before.sync.ownerUserId,
+        id: action.id,
+      );
+      if (currentAction == null || currentAction.sync.hlc != appliedSync.hlc) {
+        throw StateError('Action changed after the status update.');
+      }
+    }
+    final sync = await stamp();
+    await repository.restoreCommitmentLifecycle(
+      commitment: before,
+      actions: affectedActions,
+      progressId: progressId,
+      sync: sync,
+    );
+  }
 }
 
 ExecutionProgressKind _projectProgressKind(ExecutionProjectStatus status) {

@@ -341,6 +341,45 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
+  testWidgets('compact action card defers secondary context', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        ExecutionActionCard(
+          action: _action(
+            priority: ExecutionPriority.high,
+            dueAt: DateTime.utc(2026, 1, 1),
+            scheduledFor: DateTime.utc(2026, 1, 2),
+            projectId: 'proj-1',
+            commitmentId: 'commit-1',
+            source: const ExecutionSourceRef(labelSnapshot: 'Budget alert'),
+          ),
+          compact: true,
+          projectLabel: 'Execution polish',
+          commitmentLabel: 'Weekly review',
+          onSourceOpen: () {},
+          onEdit: () {},
+          onStart: () {},
+          onBlock: () {},
+          onResume: () {},
+          onDone: () {},
+          onDrop: () {},
+          onRecordProgress: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Review budget delta'), findsOneWidget);
+    expect(find.text('High'), findsOneWidget);
+    expect(find.text('Overdue 1/1/2026'), findsOneWidget);
+    expect(find.textContaining('Scheduled'), findsNothing);
+    expect(find.textContaining('Plan:'), findsNothing);
+    expect(find.textContaining('Commitment:'), findsNothing);
+    expect(find.text('Budget alert'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 200));
+  });
+
   testWidgets('action card shows a single busy affordance', (tester) async {
     var edited = false;
 
@@ -540,6 +579,35 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
+  testWidgets('project target shows overdue state', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        ExecutionProjectCard(
+          project: ExecutionProject(
+            id: 'overdue-project',
+            title: 'Overdue project',
+            targetDate: DateTime.utc(2026, 1, 1),
+            createdAt: DateTime.utc(2026, 6, 1),
+            sync: _sync(),
+          ),
+          onCreateAction: () {},
+          onEdit: () {},
+          onPause: () {},
+          onResume: () {},
+          onComplete: () {},
+          onArchive: () {},
+          onRecordProgress: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Overdue 1/1/2026'), findsOneWidget);
+    expect(find.textContaining('Target'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 200));
+  });
+
   testWidgets('project detail renders scoped actions and progress', (
     tester,
   ) async {
@@ -574,18 +642,14 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          executionProjectDetailProvider(
-            project.id,
-          ).overrideWith((ref) => Stream.value(project)),
-          executionActionsForProjectProvider(
-            project.id,
-          ).overrideWith((ref) => Stream.value([action])),
-          executionCommitmentsForProjectProvider(
-            project.id,
-          ).overrideWith((ref) => Stream.value([commitment])),
-          executionProgressForProjectProvider(
-            project.id,
-          ).overrideWith((ref) => Stream.value([progress])),
+          executionProjectDetailProvider(project.id)
+              .overrideWith((ref) => Stream.value(project)),
+          executionActionsForProjectProvider(project.id)
+              .overrideWith((ref) => Stream.value([action])),
+          executionCommitmentsForProjectProvider(project.id)
+              .overrideWith((ref) => Stream.value([commitment])),
+          executionProgressForProjectProvider(project.id)
+              .overrideWith((ref) => Stream.value([progress])),
           executionActionRelationsProvider.overrideWith(
             (ref) async => ExecutionRelations(
               actions: {action.id: action},

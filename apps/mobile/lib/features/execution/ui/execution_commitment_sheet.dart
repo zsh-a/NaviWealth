@@ -7,6 +7,7 @@ import '../../../core/forms/forms.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/execution_repository.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_delete_confirm.dart';
@@ -108,12 +109,37 @@ class _ExecutionCommitmentFormState
   Future<void> _delete() async {
     final commitment = widget.commitment;
     if (_saving || commitment == null) return;
+    final l10n = AppLocalizations.of(context);
+    final ExecutionRepository repo;
+    final int openActionCount;
+    try {
+      repo = await ref.read(executionRepositoryProvider.future);
+      final relatedActions = await repo
+          .watchActionsForCommitment(
+            ownerUserId: commitment.sync.ownerUserId,
+            commitmentId: commitment.id,
+          )
+          .first;
+      openActionCount = relatedActions.where((action) => action.isOpen).length;
+    } on Object catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
+      return;
+    }
+    if (!mounted) return;
     final confirmed = await confirmExecutionDelete(
       context: context,
       item: commitment.title,
+      body: openActionCount == 0
+          ? null
+          : l10n.executionDeleteWithOpenActionsBody(openActionCount),
     );
     if (!confirmed || !mounted) return;
-    final l10n = AppLocalizations.of(context);
     await submitForm<void>(
       dirty: widget.dirty,
       onBusyChanged: _setSaving,
@@ -122,7 +148,6 @@ class _ExecutionCommitmentFormState
       failureMessage: (_) => l10n.commonDeleteFailed,
       successMessage: l10n.commonDeleted,
       commit: () async {
-        final repo = await ref.read(executionRepositoryProvider.future);
         final sync = await stampExecutionSync(ref);
         await repo.softDeleteCommitment(commitment: commitment, sync: sync);
       },

@@ -4545,9 +4545,21 @@
   "executionCommitmentCompletedDefault": "承诺已完成。",
   "executionCommitmentArchivedDefault": "承诺已归档。",
   "executionLifecycleCompleteConfirmTitle": "仍有未完成行动，确认完成？",
-  "executionLifecycleCompleteConfirmBody": "完成后仍会保留 {count} 条开放行动。",
+  "executionLifecycleCompleteConfirmBody": "完成后仍会保留 {count} 条开放行动，并移入收集箱。",
   "executionLifecycleArchiveConfirmTitle": "仍有未完成行动，确认归档？",
-  "executionLifecycleArchiveConfirmBody": "归档后仍会保留 {count} 条开放行动。",
+  "executionLifecycleArchiveConfirmBody": "归档后仍会保留 {count} 条开放行动，并移入收集箱。",
+  "executionLifecycleStatusUpdated": "状态已更新为「{status}」",
+  "@executionLifecycleStatusUpdated": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "executionDeleteWithOpenActionsBody": "删除后，该条目下的 {count} 条开放行动会移入收集箱。",
+  "@executionDeleteWithOpenActionsBody": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "executionProgressKindField": "进展类型",
   "executionProgressNoteField": "进展记录",
   "executionProgressNoteHint": "记录变化、阻塞或已完成的事情。",
@@ -4559,6 +4571,7 @@
   "executionProgressKindCheckin": "进展记录",
   "executionOpenActionsSection": "开放行动",
   "executionStandaloneActionsSection": "独立行动",
+  "executionUnplacedActionsSection": "待安置行动",
   "executionProjectCommitmentsSection": "项目承诺",
   "executionReviewWindow7d": "7 天",
   "executionReviewWindow30d": "30 天",

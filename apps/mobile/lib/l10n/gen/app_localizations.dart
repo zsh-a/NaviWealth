@@ -25539,7 +25539,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionLifecycleCompleteConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 open action will remain active.} other{{count} open actions will remain active.}}'**
+  /// **'{count, plural, =1{1 open action will remain active and move to Inbox.} other{{count} open actions will remain active and move to Inbox.}}'**
   String executionLifecycleCompleteConfirmBody(int count);
 
   /// No description provided for @executionLifecycleArchiveConfirmTitle.
@@ -25551,8 +25551,20 @@ abstract class AppLocalizations {
   /// No description provided for @executionLifecycleArchiveConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'{count, plural, =1{1 open action will remain active.} other{{count} open actions will remain active.}}'**
+  /// **'{count, plural, =1{1 open action will remain active and move to Inbox.} other{{count} open actions will remain active and move to Inbox.}}'**
   String executionLifecycleArchiveConfirmBody(int count);
+
+  /// No description provided for @executionLifecycleStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Status updated to {status}'**
+  String executionLifecycleStatusUpdated(Object status);
+
+  /// No description provided for @executionDeleteWithOpenActionsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes the item. {count, plural, =1{1 open action will move to Inbox.} other{{count} open actions will move to Inbox.}}'**
+  String executionDeleteWithOpenActionsBody(int count);
 
   /// No description provided for @executionProgressKindField.
   ///
@@ -25619,6 +25631,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Standalone actions'**
   String get executionStandaloneActionsSection;
+
+  /// No description provided for @executionUnplacedActionsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Open actions to place'**
+  String get executionUnplacedActionsSection;
 
   /// No description provided for @executionProjectCommitmentsSection.
   ///

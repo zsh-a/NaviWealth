@@ -169,14 +169,7 @@ class _CommitmentBody extends StatelessWidget {
               icon: FLucideIcons.calendarClock,
             ),
             if (commitment.targetDate != null)
-              AppBadge(
-                label: l10n.executionTargetBadge(
-                  executionDate(context, commitment.targetDate!),
-                ),
-                tone: AppBadgeTone.info,
-                size: AppBadgeSize.compact,
-                icon: FLucideIcons.calendarDays,
-              ),
+              _ExecutionTargetBadge(date: commitment.targetDate!),
             if (projectLabel != null)
               AppBadge(
                 label: '${l10n.executionProjectField}: $projectLabel',
@@ -363,14 +356,7 @@ class _ProjectBody extends StatelessWidget {
               icon: FLucideIcons.calendarClock,
             ),
             if (project.targetDate != null)
-              AppBadge(
-                label: l10n.executionTargetBadge(
-                  executionDate(context, project.targetDate!),
-                ),
-                tone: AppBadgeTone.info,
-                size: AppBadgeSize.compact,
-                icon: FLucideIcons.calendarDays,
-              ),
+              _ExecutionTargetBadge(date: project.targetDate!),
             ..._rollupBadges(
               l10n,
               openActionCount: openActionCount,
@@ -409,6 +395,30 @@ List<Widget> _rollupBadges(
         icon: FLucideIcons.octagonAlert,
       ),
   ];
+}
+
+class _ExecutionTargetBadge extends StatelessWidget {
+  const _ExecutionTargetBadge({required this.date});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final local = date.toLocal();
+    final day = DateTime(local.year, local.month, local.day);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final overdue = day.isBefore(today);
+    return AppBadge(
+      label: overdue
+          ? l10n.executionOverdueBadge(executionDate(context, date))
+          : l10n.executionTargetBadge(executionDate(context, date)),
+      tone: overdue ? AppBadgeTone.error : AppBadgeTone.info,
+      size: AppBadgeSize.compact,
+      icon: overdue ? FLucideIcons.triangleAlert : FLucideIcons.calendarDays,
+    );
+  }
 }
 
 class _LifecycleQuickButtons extends StatelessWidget {

@@ -2,20 +2,13 @@ part of 'execution_repository.dart';
 
 mixin ExecutionProjectRepositoryMixin {
   AppDatabase get _db;
+  OutboxStore get _outbox;
 
   Future<void> _upsertAndEnqueue<R>(
     TableInfo<Table, R> table,
     Insertable<R> companion, {
     required String tableName,
     required String rowId,
-  });
-
-  Future<void> _upsertAndRecordProgress<R>(
-    TableInfo<Table, R> table,
-    Insertable<R> companion, {
-    required String tableName,
-    required String rowId,
-    required ExecutionProgressEntry progress,
   });
 
   Stream<List<ExecutionProject>> watchActiveProjects({
@@ -106,13 +99,13 @@ mixin ExecutionProjectRepositoryMixin {
     );
   }
 
-  Future<void> softDeleteProject({
+  Future<List<ExecutionAction>> softDeleteProject({
     required ExecutionProject project,
     required SyncMeta sync,
-  }) {
+  }) async {
     final tombstone = sync.copyWith(deletedAt: sync.updatedAt);
-    return upsertProject(
-      ExecutionProject(
+    return _db.transaction(() async {
+      final deleted = ExecutionProject(
         id: project.id,
         title: project.title,
         description: project.description,
@@ -123,24 +116,123 @@ mixin ExecutionProjectRepositoryMixin {
         createdAt: project.createdAt,
         completedAt: project.completedAt,
         sync: tombstone,
-      ),
-    );
+      );
+      await _db
+          .into(_db.executionProjects)
+          .insert(
+            executionProjectCompanion(deleted),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: ExecutionRepository._projectsTable,
+        rowId: project.id,
+      );
+      return await _detachOpenActionsToInbox(
+        db: _db,
+        outbox: _outbox,
+        ownerUserId: sync.ownerUserId,
+        projectId: project.id,
+        sync: sync,
+      );
+    });
   }
 
-  Future<void> updateProjectStatus({
+  Future<List<ExecutionAction>> updateProjectStatus({
     required ExecutionProject project,
     required ExecutionProjectStatus status,
     required SyncMeta sync,
     required ExecutionProgressEntry progress,
-  }) {
+  }) async {
     final updated = _projectWithStatus(project, status: status, sync: sync);
-    return _upsertAndRecordProgress(
-      _db.executionProjects,
-      executionProjectCompanion(updated),
-      tableName: ExecutionRepository._projectsTable,
-      rowId: project.id,
-      progress: progress,
-    );
+    return _db.transaction(() async {
+      await _db
+          .into(_db.executionProjects)
+          .insert(
+            executionProjectCompanion(updated),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: ExecutionRepository._projectsTable,
+        rowId: project.id,
+      );
+      await _db
+          .into(_db.executionProgressEntries)
+          .insert(
+            executionProgressCompanion(progress),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: ExecutionRepository._progressTable,
+        rowId: progress.id,
+      );
+      if (status != ExecutionProjectStatus.completed &&
+          status != ExecutionProjectStatus.archived) {
+        return <ExecutionAction>[];
+      }
+      return await _detachOpenActionsToInbox(
+        db: _db,
+        outbox: _outbox,
+        ownerUserId: sync.ownerUserId,
+        projectId: project.id,
+        sync: sync,
+      );
+    });
+  }
+
+  Future<void> restoreProjectLifecycle({
+    required ExecutionProject project,
+    required List<ExecutionAction> actions,
+    required String? progressId,
+    required SyncMeta sync,
+  }) async {
+    await _db.transaction(() async {
+      await _db
+          .into(_db.executionProjects)
+          .insert(
+            executionProjectCompanion(project.copyWith(sync: sync)),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: ExecutionRepository._projectsTable,
+        rowId: project.id,
+      );
+      for (final action in actions) {
+        final restored = action.copyWith(sync: sync);
+        await _db
+            .into(_db.executionActions)
+            .insert(
+              executionActionCompanion(restored),
+              mode: InsertMode.insertOrReplace,
+            );
+        await _outbox.enqueue(
+          table: ExecutionRepository._actionsTable,
+          rowId: restored.id,
+        );
+      }
+      if (progressId == null) return;
+      final row =
+          await (_db.select(_db.executionProgressEntries)..where(
+                (t) =>
+                    t.id.equals(progressId) &
+                    t.ownerUserId.equals(sync.ownerUserId),
+              ))
+              .getSingleOrNull();
+      if (row == null) return;
+      final tombstone = _tombstonedProgress(
+        executionProgressFromRow(row),
+        sync,
+      );
+      await _db
+          .into(_db.executionProgressEntries)
+          .insert(
+            executionProgressCompanion(tombstone),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: ExecutionRepository._progressTable,
+        rowId: progressId,
+      );
+    });
   }
 
   Future<ExecutionProject?> findProject({
