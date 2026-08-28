@@ -63,6 +63,104 @@ void main() {
     expect(runway.balanceAt(30), Decimal.fromInt(10000));
     expect(runway.status, MoneyRunwayStatus.healthy);
     expect(runway.firstShortfallDate, isNull);
+    expect(runway.firstReserveBreachDate, isNull);
+  });
+
+  test('keeps status dates aligned with the initial balance', () {
+    final runway = buildMoneyRunway(
+      asOf: DateTime.utc(2026, 7, 1),
+      currency: 'USD',
+      startingBalance: Decimal.fromInt(100),
+      reserveTarget: Decimal.fromInt(500),
+      averageMonthlyExpense: Decimal.zero,
+      estimatedDailyVariableOutflow: Decimal.zero,
+      scheduledFlows: [
+        RunwayScheduledFlow(
+          id: 'salary',
+          date: DateTime.utc(2026, 7, 1, 18),
+          amount: Decimal.fromInt(1000),
+          label: 'Salary',
+        ),
+      ],
+      confidence: MoneyRunwayConfidence.high,
+    );
+
+    expect(runway.status, MoneyRunwayStatus.watch);
+    expect(runway.firstReserveBreachDate, runway.asOf);
+    expect(runway.minimumExpectedBalanceDate, runway.asOf);
+  });
+
+  test('keeps only flows inside the forecast window', () {
+    final runway = buildMoneyRunway(
+      asOf: DateTime.utc(2026, 7, 10),
+      currency: 'USD',
+      startingBalance: Decimal.fromInt(1000),
+      reserveTarget: Decimal.zero,
+      averageMonthlyExpense: Decimal.zero,
+      estimatedDailyVariableOutflow: Decimal.zero,
+      scheduledFlows: [
+        RunwayScheduledFlow(
+          id: 'past',
+          date: DateTime.utc(2026, 7, 9),
+          amount: Decimal.fromInt(100),
+          label: 'Past',
+        ),
+        RunwayScheduledFlow(
+          id: 'inside',
+          date: DateTime.utc(2026, 7, 11),
+          amount: Decimal.fromInt(100),
+          label: 'Inside',
+        ),
+        RunwayScheduledFlow(
+          id: 'future',
+          date: DateTime.utc(2026, 7, 12),
+          amount: Decimal.fromInt(100),
+          label: 'Future',
+        ),
+      ],
+      confidence: MoneyRunwayConfidence.high,
+      horizonDays: 1,
+    );
+
+    expect(runway.scheduledFlows.map((flow) => flow.id), ['inside']);
+    expect(runway.balanceAt(1), Decimal.fromInt(1100));
+  });
+
+  test('resolves event-day balances and risk dates from the forecast', () {
+    final runway = buildMoneyRunway(
+      asOf: DateTime.utc(2026, 7, 1),
+      currency: 'USD',
+      startingBalance: Decimal.fromInt(1000),
+      reserveTarget: Decimal.fromInt(900),
+      averageMonthlyExpense: Decimal.zero,
+      estimatedDailyVariableOutflow: Decimal.zero,
+      scheduledFlows: [
+        RunwayScheduledFlow(
+          id: 'bill',
+          date: DateTime.utc(2026, 7, 10, 18),
+          amount: Decimal.fromInt(-200),
+          label: 'Bill',
+        ),
+      ],
+      confidence: MoneyRunwayConfidence.high,
+      horizonDays: 30,
+    );
+
+    expect(
+      runway.pointOn(DateTime.utc(2026, 7, 10, 8))?.expectedBalance,
+      Decimal.fromInt(800),
+    );
+    expect(
+      runway.expectedBalanceAfter(DateTime.utc(2026, 7, 10, 8)),
+      Decimal.fromInt(800),
+    );
+    expect(runway.firstReserveBreachDate, DateTime.utc(2026, 7, 10));
+    expect(runway.minimumExpectedBalance, Decimal.fromInt(800));
+    expect(runway.minimumExpectedBalanceDate, DateTime.utc(2026, 7, 10));
+    expect(
+      runway.toEvidenceJson()['first_reserve_breach_date'],
+      '2026-07-10T00:00:00.000Z',
+    );
   });
 
   test('detects first expected shortfall', () {

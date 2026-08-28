@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/runway/data/money_runway_providers.dart';
 import 'package:naviwealth/features/finance/runway/data/runway_forecast_repository.dart';
@@ -63,7 +64,10 @@ void main() {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en', 'US'),
-          home: const MoneyRunwayPage(),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: const MoneyRunwayPage(),
+          ),
         ),
       ),
     );

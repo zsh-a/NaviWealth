@@ -132,9 +132,40 @@ class MoneyRunwaySnapshot {
     return includeEstimates ? point.expectedBalance : point.knownBalance;
   }
 
+  /// Returns the projected point for a calendar day in the forecast.
+  ///
+  /// Keeping the lookup on the snapshot lets UI surfaces show an event's
+  /// effect without rebuilding the forecast or duplicating its day-normalising
+  /// rules.
+  MoneyRunwayPoint? pointOn(DateTime date) {
+    final target = _day(date);
+    for (final point in points) {
+      if (point.date == target) return point;
+    }
+    return null;
+  }
+
+  /// Expected balance at the end of the day containing [date].
+  Decimal expectedBalanceAfter(DateTime date) {
+    final point = pointOn(date);
+    if (point != null) return point.expectedBalance;
+    final days = _day(date).difference(_day(asOf)).inDays;
+    return balanceAt(days);
+  }
+
   DateTime? get firstShortfallDate {
+    if (startingBalance < Decimal.zero) return asOf;
     for (final point in points) {
       if (point.expectedBalance < Decimal.zero) return point.date;
+    }
+    return null;
+  }
+
+  DateTime? get firstReserveBreachDate {
+    if (reserveTarget <= Decimal.zero) return null;
+    if (startingBalance < reserveTarget) return asOf;
+    for (final point in points) {
+      if (point.expectedBalance < reserveTarget) return point.date;
     }
     return null;
   }
@@ -145,6 +176,19 @@ class MoneyRunwaySnapshot {
       if (point.expectedBalance < minimum) minimum = point.expectedBalance;
     }
     return minimum;
+  }
+
+  DateTime? get minimumExpectedBalanceDate {
+    if (points.isEmpty) return null;
+    var minimum = startingBalance;
+    var minimumDate = asOf;
+    for (final point in points) {
+      if (point.expectedBalance < minimum) {
+        minimum = point.expectedBalance;
+        minimumDate = point.date;
+      }
+    }
+    return minimumDate;
   }
 
   double? get emergencyCoverageMonths {
@@ -164,7 +208,10 @@ class MoneyRunwaySnapshot {
     'balance_60d': balanceAt(60).toString(),
     'balance_90d': balanceAt(90).toString(),
     'minimum_expected_balance': minimumExpectedBalance.toString(),
+    'minimum_expected_balance_date': minimumExpectedBalanceDate
+        ?.toIso8601String(),
     'first_shortfall_date': firstShortfallDate?.toIso8601String(),
+    'first_reserve_breach_date': firstReserveBreachDate?.toIso8601String(),
     'status': status.name,
     'confidence': confidence.name,
     'data_completeness': dataCompleteness,
@@ -201,14 +248,17 @@ MoneyRunwaySnapshot buildMoneyRunway({
   final start = _day(asOf);
   final flows = scheduledFlows.toList(growable: false)
     ..sort((a, b) => a.date.compareTo(b.date));
+  final includedFlows = flows
+      .where((flow) {
+        final day = _day(flow.date);
+        return !day.isBefore(start) &&
+            !day.isAfter(start.add(Duration(days: horizonDays)));
+      })
+      .toList(growable: false);
   final flowsByDay = <DateTime, Decimal>{};
   final knownFlowsByDay = <DateTime, Decimal>{};
-  for (final flow in flows) {
+  for (final flow in includedFlows) {
     final day = _day(flow.date);
-    if (day.isBefore(start) ||
-        day.isAfter(start.add(Duration(days: horizonDays)))) {
-      continue;
-    }
     flowsByDay[day] = (flowsByDay[day] ?? Decimal.zero) + flow.amount;
     if (flow.certainty == RunwayFlowCertainty.known) {
       knownFlowsByDay[day] =
@@ -254,7 +304,7 @@ MoneyRunwaySnapshot buildMoneyRunway({
     reserveTarget: reserveTarget,
     averageMonthlyExpense: averageMonthlyExpense,
     estimatedDailyVariableOutflow: estimatedDailyVariableOutflow,
-    scheduledFlows: List<RunwayScheduledFlow>.unmodifiable(flows),
+    scheduledFlows: List<RunwayScheduledFlow>.unmodifiable(includedFlows),
     points: List<MoneyRunwayPoint>.unmodifiable(points),
     status: status,
     confidence: confidence,
@@ -271,7 +321,7 @@ MoneyRunwaySnapshot applyMoneyRunwayScenario(
   MoneyRunwaySnapshot base,
   MoneyRunwayScenario scenario,
 ) {
-  final horizonEnd = base.asOf.add(const Duration(days: 90));
+  final horizonEnd = base.points.isEmpty ? base.asOf : base.points.last.date;
   final flows = <RunwayScheduledFlow>[];
   for (final flow in base.scheduledFlows) {
     switch (scenario.kind) {

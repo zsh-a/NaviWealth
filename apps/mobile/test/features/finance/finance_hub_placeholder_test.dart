@@ -39,10 +39,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('Needs attention'), findsOneWidget);
-      expect(find.text('Goals & cash flow'), findsOneWidget);
+      expect(find.text('Cash safety'), findsOneWidget);
       expect(find.text('Money runway'), findsOneWidget);
       expect(find.text('Financial independence'), findsOneWidget);
-      expect(find.text('Investment strategies'), findsOneWidget);
+      expect(find.text('Investment execution'), findsOneWidget);
       expect(find.text('Budget'), findsOneWidget);
       expect(find.text('Income Planner'), findsNothing);
       expect(find.text('Scenario analytics'), findsNothing);
@@ -51,50 +51,57 @@ void main() {
     },
   );
 
-  testWidgets('Plan hub pairs goals with investment strategies on wide canvas', (
-    tester,
-  ) async {
-    await _setDesktopSurface(tester);
-    await tester.pumpWidget(
-      _wrap(
-        overrides: [
-          fireDashboardViewProvider.overrideWith(
-            (_) => const AsyncValue.loading(),
-          ),
-          planningHubStatusProvider.overrideWith(
-            (_) => PlanningHubStatus(
-              runway: PlanningRunwayStatus.healthy,
-              pendingLifeEventReviews: 0,
-              rebalance: PlanningRebalanceStatus.active,
-              rebalanceDriftPct: 0.08,
-              budgetCount: 1,
-              budgetSignal: null,
-              budgetProgress: 0.4,
-              dcaPlanCount: 1,
-              dcaNextDueAt: DateTime.utc(2026, 8, 8),
-              dcaDue: false,
-              wheelCycleCount: 0,
-              wheelOpenPositionCount: 0,
-              isLoading: false,
-              hasError: false,
+  testWidgets(
+    'Plan hub pairs goals with investment strategies on wide canvas',
+    (tester) async {
+      await _setDesktopSurface(tester);
+      await tester.pumpWidget(
+        _wrap(
+          overrides: [
+            fireDashboardViewProvider.overrideWith(
+              (_) => const AsyncValue.loading(),
             ),
-          ),
-        ],
-        child: const PlanHubPage(),
-      ),
-    );
-    await tester.pump();
+            planningHubStatusProvider.overrideWith(
+              (_) => PlanningHubStatus(
+                runway: PlanningRunwayStatus.healthy,
+                pendingLifeEventReviews: 0,
+                rebalance: PlanningRebalanceStatus.active,
+                rebalanceDriftPct: 0.08,
+                budgetCount: 1,
+                budgetSignal: null,
+                budgetProgress: 0.4,
+                dcaPlanCount: 1,
+                dcaNextDueAt: DateTime.utc(2026, 8, 8),
+                dcaDue: false,
+                wheelCycleCount: 0,
+                wheelOpenPositionCount: 0,
+                isLoading: false,
+                hasError: false,
+              ),
+            ),
+          ],
+          child: const PlanHubPage(),
+        ),
+      );
+      await tester.pump();
 
-    final goals = tester.getRect(
-      find.byKey(const ValueKey('plan-goals-cashflow-section')),
-    );
-    final strategies = tester.getRect(
-      find.byKey(const ValueKey('plan-investment-strategies-section')),
-    );
-    expect(strategies.top, goals.top);
-    expect(strategies.left, greaterThan(goals.right));
-    expect(goals.width, greaterThan(strategies.width * 1.9));
-  });
+      final cashSafety = tester.getRect(
+        find.byKey(const ValueKey('plan-cash-safety-section')),
+      );
+      final longTermGoals = tester.getRect(
+        find.byKey(const ValueKey('plan-long-term-goals-section')),
+      );
+      final investmentPlan = tester.getRect(
+        find.byKey(const ValueKey('plan-investment-plan-section')),
+      );
+      final incomeStrategies = tester.getRect(
+        find.byKey(const ValueKey('plan-income-strategies-section')),
+      );
+      expect(longTermGoals.top, cashSafety.top);
+      expect(cashSafety.width, greaterThan(longTermGoals.width));
+      expect(incomeStrategies.top, investmentPlan.top);
+    },
+  );
 
   testWidgets('Wealth hub hides placeholder-only entries', (tester) async {
     await _setDesktopSurface(tester);

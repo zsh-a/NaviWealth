@@ -20,6 +20,8 @@ void main() {
     final defaults = container.read(formDefaultsProvider);
     expect(defaults.tradeAccountId, isNull);
     expect(defaults.expenseAccountId, isNull);
+    expect(defaults.incomeAccountId, isNull);
+    expect(defaults.incomeCurrency, isNull);
     expect(defaults.assetAccountId, isNull);
     expect(defaults.expenseCategoryId, isNull);
   });
@@ -31,6 +33,8 @@ void main() {
       'naviwealth.forms.expense.account': 'acct-bank',
       'naviwealth.forms.expense.category': 'cat-food',
       'naviwealth.forms.expense.currency': 'CNY',
+      'naviwealth.forms.income.account': 'acct-income',
+      'naviwealth.forms.income.currency': 'USD',
       'naviwealth.forms.asset.account': 'acct-broker',
       'naviwealth.forms.asset.currency': 'HKD',
     });
@@ -44,6 +48,8 @@ void main() {
     expect(defaults.expenseAccountId, 'acct-bank');
     expect(defaults.expenseCategoryId, 'cat-food');
     expect(defaults.expenseCurrency, 'CNY');
+    expect(defaults.incomeAccountId, 'acct-income');
+    expect(defaults.incomeCurrency, 'USD');
     expect(defaults.assetAccountId, 'acct-broker');
     expect(defaults.assetCurrency, 'HKD');
   });
@@ -102,6 +108,26 @@ void main() {
     expect(state.assetCurrency, 'CNY');
     // Trade fields stayed put after the asset write.
     expect(state.expenseAccountId, isNull);
+  });
+
+  test('rememberIncome persists account and currency independently', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final prefs = await SharedPreferences.getInstance();
+    final container = _container(prefs);
+    addTearDown(container.dispose);
+
+    await container
+        .read(formDefaultsProvider.notifier)
+        .rememberIncome(accountId: 'bank-1', currency: 'CNY');
+    await container
+        .read(formDefaultsProvider.notifier)
+        .rememberIncome(accountId: 'bank-2');
+
+    final state = container.read(formDefaultsProvider);
+    expect(state.incomeAccountId, 'bank-2');
+    expect(state.incomeCurrency, 'CNY');
+    expect(prefs.getString('naviwealth.forms.income.account'), 'bank-2');
+    expect(prefs.getString('naviwealth.forms.income.currency'), 'CNY');
   });
 
   test('empty strings are skipped (treated as no-op)', () async {

@@ -20,6 +20,8 @@ class FormDefaults {
     this.expenseAccountId,
     this.expenseCategoryId,
     this.expenseCurrency,
+    this.incomeAccountId,
+    this.incomeCurrency,
     this.assetAccountId,
     this.assetCurrency,
   });
@@ -30,6 +32,8 @@ class FormDefaults {
   final String? expenseAccountId;
   final String? expenseCategoryId;
   final String? expenseCurrency;
+  final String? incomeAccountId;
+  final String? incomeCurrency;
   final String? assetAccountId;
   final String? assetCurrency;
 
@@ -40,6 +44,8 @@ class FormDefaults {
     Object? expenseAccountId = _sentinel,
     Object? expenseCategoryId = _sentinel,
     Object? expenseCurrency = _sentinel,
+    Object? incomeAccountId = _sentinel,
+    Object? incomeCurrency = _sentinel,
     Object? assetAccountId = _sentinel,
     Object? assetCurrency = _sentinel,
   }) {
@@ -62,6 +68,12 @@ class FormDefaults {
       expenseCurrency: expenseCurrency == _sentinel
           ? this.expenseCurrency
           : expenseCurrency as String?,
+      incomeAccountId: incomeAccountId == _sentinel
+          ? this.incomeAccountId
+          : incomeAccountId as String?,
+      incomeCurrency: incomeCurrency == _sentinel
+          ? this.incomeCurrency
+          : incomeCurrency as String?,
       assetAccountId: assetAccountId == _sentinel
           ? this.assetAccountId
           : assetAccountId as String?,
@@ -95,6 +107,8 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
   static const _kExpenseAccount = 'naviwealth.forms.expense.account';
   static const _kExpenseCategory = 'naviwealth.forms.expense.category';
   static const _kExpenseCurrency = 'naviwealth.forms.expense.currency';
+  static const _kIncomeAccount = 'naviwealth.forms.income.account';
+  static const _kIncomeCurrency = 'naviwealth.forms.income.currency';
   static const _kAssetAccount = 'naviwealth.forms.asset.account';
   static const _kAssetCurrency = 'naviwealth.forms.asset.currency';
 
@@ -105,6 +119,8 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
     expenseAccountId: _read(p, _kExpenseAccount),
     expenseCategoryId: _read(p, _kExpenseCategory),
     expenseCurrency: _read(p, _kExpenseCurrency),
+    incomeAccountId: _read(p, _kIncomeAccount),
+    incomeCurrency: _read(p, _kIncomeCurrency),
     assetAccountId: _read(p, _kAssetAccount),
     assetCurrency: _read(p, _kAssetCurrency),
   );
@@ -143,6 +159,15 @@ class FormDefaultsController extends StateNotifier<FormDefaults> {
     await _writeIfPresent(_kExpenseAccount, accountId);
     await _writeIfPresent(_kExpenseCategory, categoryId);
     await _writeIfPresent(_kExpenseCurrency, currency);
+  }
+
+  Future<void> rememberIncome({String? accountId, String? currency}) async {
+    state = state.copyWith(
+      incomeAccountId: accountId ?? state.incomeAccountId,
+      incomeCurrency: currency ?? state.incomeCurrency,
+    );
+    await _writeIfPresent(_kIncomeAccount, accountId);
+    await _writeIfPresent(_kIncomeCurrency, currency);
   }
 
   Future<void> rememberAsset({String? accountId, String? currency}) async {

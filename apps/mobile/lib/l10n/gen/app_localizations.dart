@@ -140,16 +140,16 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get navSettings;
 
-  /// Bottom nav: activity tab (single timeline of events)
+  /// Bottom nav: records tab (single timeline of events)
   ///
   /// In en, this message translates to:
-  /// **'Activity'**
+  /// **'Records'**
   String get navActivity;
 
-  /// Deprecated alias for navWealth. Renders the same label.
+  /// Account management page label; the Wealth tab remains the owned-object overview.
   ///
   /// In en, this message translates to:
-  /// **'Wealth'**
+  /// **'Accounts'**
   String get navAccounts;
 
   /// Bottom nav: wealth tab (owned objects + current state)
@@ -242,17 +242,29 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 item} other{{count} items}}'**
   String planAttentionCount(int count);
 
-  /// Plan hub section for goals, liquidity, and spending constraints
+  /// Plan hub section for the monthly budget and near-term cash runway
   ///
   /// In en, this message translates to:
-  /// **'Goals & cash flow'**
-  String get planGoalsCashflowTitle;
+  /// **'Cash safety'**
+  String get planCashSafetyTitle;
 
-  /// Plan hub section for recurring investing, rebalancing, and income strategies
+  /// Plan hub section for financial independence and life-event scenarios
   ///
   /// In en, this message translates to:
-  /// **'Investment strategies'**
-  String get planInvestmentStrategiesTitle;
+  /// **'Long-term goals & scenarios'**
+  String get planLongTermGoalsTitle;
+
+  /// Plan hub section for recurring investing and rebalancing
+  ///
+  /// In en, this message translates to:
+  /// **'Investment execution'**
+  String get planInvestmentPlanTitle;
+
+  /// Plan hub section for dividend and options-income workflows
+  ///
+  /// In en, this message translates to:
+  /// **'Income strategies'**
+  String get planIncomeStrategiesTitle;
 
   /// No description provided for @planExploreActiveOptions.
   ///
@@ -4373,6 +4385,12 @@ abstract class AppLocalizations {
   /// **'Cash out for goods or services'**
   String get activityActionExpenseHint;
 
+  /// Affordance under Income in the Activity actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Record salary, dividend or other income'**
+  String get activityActionIncomeHint;
+
   /// Affordance under Trade in the Activity actions sheet
   ///
   /// In en, this message translates to:
@@ -4462,6 +4480,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expense'**
   String get superFabExpense;
+
+  /// No description provided for @superFabIncome.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get superFabIncome;
 
   /// No description provided for @superFabAsset.
   ///
@@ -10002,6 +10026,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create account'**
   String get expenseFormNoAccountsCta;
+
+  /// No description provided for @incomeFormCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record income'**
+  String get incomeFormCreateTitle;
+
+  /// No description provided for @incomeFormAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get incomeFormAmountLabel;
+
+  /// No description provided for @incomeFormAmountInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount must be greater than 0'**
+  String get incomeFormAmountInvalid;
+
+  /// No description provided for @incomeFormKindLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Income type'**
+  String get incomeFormKindLabel;
+
+  /// No description provided for @incomeFormAccountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Deposit account'**
+  String get incomeFormAccountLabel;
+
+  /// No description provided for @incomeFormAccountRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a deposit account and currency'**
+  String get incomeFormAccountRequired;
+
+  /// No description provided for @incomeFormAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & note'**
+  String get incomeFormAdvancedTitle;
+
+  /// No description provided for @incomeFormDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & time'**
+  String get incomeFormDateLabel;
+
+  /// No description provided for @incomeFormDefaultNarration.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get incomeFormDefaultNarration;
+
+  /// No description provided for @incomeFormNoAccountsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account first'**
+  String get incomeFormNoAccountsTitle;
+
+  /// No description provided for @incomeFormNoAccountsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Income needs a deposit account. Create one under Accounts, then come back here.'**
+  String get incomeFormNoAccountsBody;
+
+  /// No description provided for @incomeFormNoAccountsCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get incomeFormNoAccountsCta;
 
   /// No description provided for @expenseHistorySectionTitle.
   ///
@@ -28039,6 +28135,30 @@ abstract class AppLocalizations {
   /// **'Forward balance'**
   String get moneyRunwayHorizonsTitle;
 
+  /// No description provided for @moneyRunwayMinimumBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest expected balance: {amount}'**
+  String moneyRunwayMinimumBalance(String amount);
+
+  /// No description provided for @moneyRunwayMinimumBalanceDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowest point: {date}'**
+  String moneyRunwayMinimumBalanceDate(String date);
+
+  /// No description provided for @moneyRunwayRiskDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash shortfall expected {date}'**
+  String moneyRunwayRiskDate(String date);
+
+  /// No description provided for @moneyRunwayReserveBreachDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Below reserve target {date}'**
+  String moneyRunwayReserveBreachDate(String date);
+
   /// No description provided for @moneyRunwayDays.
   ///
   /// In en, this message translates to:
@@ -28272,6 +28392,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 upcoming item included} other{{count} upcoming items included}}'**
   String moneyRunwayScheduledCount(int count);
+
+  /// No description provided for @moneyRunwayTimelineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming cash timeline'**
+  String get moneyRunwayTimelineTitle;
+
+  /// No description provided for @moneyRunwayTimelineMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count}'**
+  String moneyRunwayTimelineMore(int count);
+
+  /// No description provided for @moneyRunwayTimelineLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse timeline'**
+  String get moneyRunwayTimelineLess;
+
+  /// No description provided for @moneyRunwayTimelineBalanceAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected balance that day: {amount}'**
+  String moneyRunwayTimelineBalanceAfter(String amount);
+
+  /// No description provided for @moneyRunwayTimelineEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No scheduled flows in the next 90 days. Add recurring income or bills to make this forecast more useful.'**
+  String get moneyRunwayTimelineEmpty;
+
+  /// No description provided for @moneyRunwayManageScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage scheduled flows'**
+  String get moneyRunwayManageScheduled;
 
   /// No description provided for @moneyRunwayDeclaredDividend.
   ///

@@ -33,10 +33,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettings => '设置';
 
   @override
-  String get navActivity => '流水';
+  String get navActivity => '记录';
 
   @override
-  String get navAccounts => '资产';
+  String get navAccounts => '账户';
 
   @override
   String get navWealth => '资产';
@@ -93,10 +93,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get planGoalsCashflowTitle => '目标与现金流';
+  String get planCashSafetyTitle => '现金安全';
 
   @override
-  String get planInvestmentStrategiesTitle => '投资策略';
+  String get planLongTermGoalsTitle => '长期目标与场景';
+
+  @override
+  String get planInvestmentPlanTitle => '投资执行';
+
+  @override
+  String get planIncomeStrategiesTitle => '收益策略';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -2459,6 +2465,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityActionExpenseHint => '记一笔支出';
 
   @override
+  String get activityActionIncomeHint => '记一笔工资、股息或其它收入';
+
+  @override
   String get activityActionTradeHint => '买入或卖出证券';
 
   @override
@@ -2502,6 +2511,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get superFabExpense => '记账';
+
+  @override
+  String get superFabIncome => '收入';
 
   @override
   String get superFabAsset => '资产';
@@ -5627,6 +5639,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expenseFormNoAccountsCta => '去创建';
+
+  @override
+  String get incomeFormCreateTitle => '记录收入';
+
+  @override
+  String get incomeFormAmountLabel => '金额';
+
+  @override
+  String get incomeFormAmountInvalid => '金额必须大于 0';
+
+  @override
+  String get incomeFormKindLabel => '收入类型';
+
+  @override
+  String get incomeFormAccountLabel => '入账账户';
+
+  @override
+  String get incomeFormAccountRequired => '请选择入账账户和币种';
+
+  @override
+  String get incomeFormAdvancedTitle => '日期与备注';
+
+  @override
+  String get incomeFormDateLabel => '日期时间';
+
+  @override
+  String get incomeFormDefaultNarration => '收入';
+
+  @override
+  String get incomeFormNoAccountsTitle => '先创建一个账户';
+
+  @override
+  String get incomeFormNoAccountsBody => '收入需要选择入账账户。前往「账户」新建后再来录入。';
+
+  @override
+  String get incomeFormNoAccountsCta => '去创建';
 
   @override
   String get expenseHistorySectionTitle => '变更历史';
@@ -15836,28 +15884,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moneyRunwayActionConfirmTitle => '创建 Execution 行动？';
 
   @override
-  String get moneyRunwayActionConfirmBody => '当前资金续航依据会附在行动中，确认前不会创建任何内容。';
+  String get moneyRunwayActionConfirmBody => '当前现金安全依据会附在行动中，确认前不会创建任何内容。';
 
   @override
-  String get moneyRunwayActionTitle => '改善近期资金续航';
+  String get moneyRunwayActionTitle => '改善近期现金安全';
 
   @override
   String get moneyRunwayActionCreated => '已创建 Execution 行动';
 
   @override
-  String get moneyRunwayTitle => '资金续航';
+  String get moneyRunwayTitle => '现金安全';
 
   @override
   String get moneyRunwayNinetyDayBalance => '90 天后预计余额';
 
   @override
-  String get moneyRunwayEmptyTitle => '建立第一份资金续航';
+  String get moneyRunwayEmptyTitle => '建立现金安全基线';
 
   @override
   String get moneyRunwayEmptyBody => '导入账单或添加账户，即可查看未来 90 天。';
 
   @override
   String get moneyRunwayHorizonsTitle => '未来余额';
+
+  @override
+  String moneyRunwayMinimumBalance(String amount) {
+    return '未来最低余额：$amount';
+  }
+
+  @override
+  String moneyRunwayMinimumBalanceDate(String date) {
+    return '最低点日期：$date';
+  }
+
+  @override
+  String moneyRunwayRiskDate(String date) {
+    return '预计 $date 出现现金缺口';
+  }
+
+  @override
+  String moneyRunwayReserveBreachDate(String date) {
+    return '预计 $date 低于储备目标';
+  }
 
   @override
   String moneyRunwayDays(Object days) {
@@ -15985,6 +16053,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String moneyRunwayScheduledCount(int count) {
     return '已计入 $count 项未来收支';
   }
+
+  @override
+  String get moneyRunwayTimelineTitle => '未来现金时间线';
+
+  @override
+  String moneyRunwayTimelineMore(int count) {
+    return '查看全部 $count 项';
+  }
+
+  @override
+  String get moneyRunwayTimelineLess => '收起时间线';
+
+  @override
+  String moneyRunwayTimelineBalanceAfter(String amount) {
+    return '当日预计余额：$amount';
+  }
+
+  @override
+  String get moneyRunwayTimelineEmpty => '未来 90 天没有已排期收支，可添加周期收入或账单。';
+
+  @override
+  String get moneyRunwayManageScheduled => '管理未来收支';
 
   @override
   String get moneyRunwayDeclaredDividend => '已宣告税后股息';

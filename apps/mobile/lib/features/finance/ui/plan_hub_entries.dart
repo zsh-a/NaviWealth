@@ -6,7 +6,12 @@ part of 'plan_hub_page.dart';
 /// [_PlanEntrySpec] view models (icon, copy, tone, destination). Page
 /// composition and widgets stay in `plan_hub_page.dart`; this part only owns
 /// the status-to-entry derivation so the page file reads as pure layout.
-enum _PlanEntryGroup { goalsAndCashflow, investmentStrategies, lifeScenarios }
+enum _PlanEntryGroup {
+  cashSafety,
+  longTermGoals,
+  investmentPlan,
+  incomeStrategies,
+}
 
 class _PlanEntrySpec {
   const _PlanEntrySpec({
@@ -50,7 +55,7 @@ List<_PlanEntrySpec> _planningEntries(
 _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
   final runway = status.runway;
   return _PlanEntrySpec(
-    group: _PlanEntryGroup.goalsAndCashflow,
+    group: _PlanEntryGroup.cashSafety,
     icon: FLucideIcons.calendarRange,
     title: l10n.moneyRunwayTitle,
     subtitle: _runwayStatusLabel(l10n, runway),
@@ -86,7 +91,7 @@ _PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
           (progress * 100).clamp(0, 999).toStringAsFixed(0),
         );
   return _PlanEntrySpec(
-    group: _PlanEntryGroup.goalsAndCashflow,
+    group: _PlanEntryGroup.cashSafety,
     icon: FLucideIcons.piggyBank,
     title: l10n.planBudgetSectionTitle,
     subtitle: subtitle,
@@ -109,7 +114,7 @@ _PlanEntrySpec _lifeEventsEntry(
 ) {
   final pending = status.pendingLifeEventReviews;
   return _PlanEntrySpec(
-    group: _PlanEntryGroup.lifeScenarios,
+    group: _PlanEntryGroup.longTermGoals,
     icon: FLucideIcons.waypoints,
     title: l10n.lifeEventScenariosTitle,
     subtitle: pending == null
@@ -145,7 +150,7 @@ _PlanEntrySpec _fireEntry(
       ? null
       : (months / 12).toStringAsFixed(months < 24 ? 1 : 0);
   return _PlanEntrySpec(
-    group: _PlanEntryGroup.goalsAndCashflow,
+    group: _PlanEntryGroup.longTermGoals,
     icon: FLucideIcons.mountain,
     title: l10n.planFireGoalTitle,
     subtitle: fire.isLoading
@@ -169,7 +174,7 @@ _PlanEntrySpec _dcaEntry(
   AppLocalizations l10n,
   PlanningHubStatus status,
 ) => _PlanEntrySpec(
-  group: _PlanEntryGroup.investmentStrategies,
+  group: _PlanEntryGroup.investmentPlan,
   icon: FLucideIcons.calendarClock,
   title: l10n.planDcaPlanTitle,
   subtitle: _dcaStatusLabel(context, l10n, status),
@@ -189,7 +194,7 @@ _PlanEntrySpec _incomeStrategyEntry(
 ) {
   final activeOptions = status.wheelOpenPositionCount ?? 0;
   return _PlanEntrySpec(
-    group: _PlanEntryGroup.investmentStrategies,
+    group: _PlanEntryGroup.incomeStrategies,
     icon: FLucideIcons.candlestickChart,
     title: l10n.incomeStrategyTitle,
     subtitle: activeOptions > 0
@@ -204,7 +209,7 @@ _PlanEntrySpec _rebalanceEntry(
   AppLocalizations l10n,
   PlanningHubStatus status,
 ) => _PlanEntrySpec(
-  group: _PlanEntryGroup.investmentStrategies,
+  group: _PlanEntryGroup.investmentPlan,
   icon: FLucideIcons.scale,
   title: l10n.planRebalanceSectionTitle,
   subtitle: _rebalanceStatusLabel(l10n, status),

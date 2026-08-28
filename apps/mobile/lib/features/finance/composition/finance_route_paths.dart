@@ -58,6 +58,7 @@ abstract final class FinanceRoutes {
 
   static const spending = '/activity/spending';
   static const expenseNew = '/activity/expense/new';
+  static const incomeNew = '/activity/income/new';
   static const cashflow = '/activity/cashflow';
   static const cashflowRecurring = '/activity/cashflow/recurring';
   static const cashflowDividends = '/wealth/portfolio/dividends';
@@ -240,6 +241,7 @@ abstract final class FinanceRouteNames {
   static const activityEntryDetail = 'activity-entry-detail';
   static const spending = 'spending';
   static const expenseNew = 'expense-new';
+  static const incomeNew = 'income-new';
   static const cashflow = 'cashflow';
   static const cashflowRecurring = 'cashflow-recurring';
   static const expenseDetail = 'expense-detail';

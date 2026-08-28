@@ -61,6 +61,7 @@ import '../accounts/ui/journal_entry_list_page.dart';
 import '../accounts/ui/transfer_form_page.dart';
 import '../activity/ui/activity_entry_detail_page.dart';
 import '../activity/ui/activity_page.dart';
+import '../cashflow/ui/income_form_page.dart';
 import '../inbox/ui/financial_inbox_page.dart';
 import '../ingest/ui/ingest_review_page.dart';
 import '../monthly_close/ui/monthly_close_page.dart';
@@ -123,6 +124,11 @@ StatefulShellRoute financeShellRoute() {
                 path: 'expense/new',
                 name: FinanceRouteNames.expenseNew,
                 builder: (context, state) => const ExpenseFormPage(),
+              ),
+              GoRoute(
+                path: 'income/new',
+                name: FinanceRouteNames.incomeNew,
+                builder: (context, state) => const IncomeFormPage(),
               ),
               GoRoute(
                 path: 'expense/:expenseId',

@@ -30,6 +30,13 @@ Future<void> showActivityActionPanel(BuildContext context) {
               _closeAndPush(sheetContext, context, FinanceRoutes.expenseNew),
         ),
         AppActionSheetTile(
+          icon: FLucideIcons.banknote,
+          title: l10n.superFabIncome,
+          subtitle: l10n.activityActionIncomeHint,
+          onPress: () =>
+              _closeAndPush(sheetContext, context, FinanceRoutes.incomeNew),
+        ),
+        AppActionSheetTile(
           icon: FLucideIcons.chartLine,
           title: l10n.superFabTrade,
           subtitle: l10n.activityActionTradeHint,

@@ -109,45 +109,56 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
   }
 }
 
-/// Ordered overview tiles for the brief grid: goals and cash flow, investment
-/// strategies, then life-event scenarios.
+/// Ordered overview tiles for the brief grid: near-term cash safety, long-term
+/// goals, investment execution, and income strategies.
 List<AdaptiveSummaryTile> _planningSummaryTiles(
   AppLocalizations l10n,
   List<_PlanEntrySpec> entries,
 ) {
-  final goalsAndCashflow = entries
-      .where((entry) => entry.group == _PlanEntryGroup.goalsAndCashflow)
+  final cashSafety = entries
+      .where((entry) => entry.group == _PlanEntryGroup.cashSafety)
       .toList(growable: false);
-  final investmentStrategies = entries
-      .where((entry) => entry.group == _PlanEntryGroup.investmentStrategies)
+  final longTermGoals = entries
+      .where((entry) => entry.group == _PlanEntryGroup.longTermGoals)
       .toList(growable: false);
-  final lifeScenarios = entries
-      .where((entry) => entry.group == _PlanEntryGroup.lifeScenarios)
+  final investmentPlan = entries
+      .where((entry) => entry.group == _PlanEntryGroup.investmentPlan)
+      .toList(growable: false);
+  final incomeStrategies = entries
+      .where((entry) => entry.group == _PlanEntryGroup.incomeStrategies)
       .toList(growable: false);
 
   return [
     AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.featured,
       child: _PlanSection(
-        key: const ValueKey('plan-goals-cashflow-section'),
-        title: l10n.planGoalsCashflowTitle,
-        entries: goalsAndCashflow,
+        key: const ValueKey('plan-cash-safety-section'),
+        title: l10n.planCashSafetyTitle,
+        entries: cashSafety,
       ),
     ),
     AdaptiveSummaryTile(
-      role: AdaptiveSummaryTileRole.supporting,
+      role: AdaptiveSummaryTileRole.standard,
       child: _PlanSection(
-        key: const ValueKey('plan-investment-strategies-section'),
-        title: l10n.planInvestmentStrategiesTitle,
-        entries: investmentStrategies,
+        key: const ValueKey('plan-long-term-goals-section'),
+        title: l10n.planLongTermGoalsTitle,
+        entries: longTermGoals,
       ),
     ),
     AdaptiveSummaryTile(
-      role: AdaptiveSummaryTileRole.continuous,
+      role: AdaptiveSummaryTileRole.standard,
       child: _PlanSection(
-        key: const ValueKey('plan-life-scenarios-section'),
-        title: l10n.lifeEventScenariosTitle,
-        entries: lifeScenarios,
+        key: const ValueKey('plan-investment-plan-section'),
+        title: l10n.planInvestmentPlanTitle,
+        entries: investmentPlan,
+      ),
+    ),
+    AdaptiveSummaryTile(
+      role: AdaptiveSummaryTileRole.standard,
+      child: _PlanSection(
+        key: const ValueKey('plan-income-strategies-section'),
+        title: l10n.planIncomeStrategiesTitle,
+        entries: incomeStrategies,
       ),
     ),
   ];

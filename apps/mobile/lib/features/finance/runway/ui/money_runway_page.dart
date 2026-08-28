@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/product/product_metrics.dart';
@@ -131,6 +132,8 @@ class _RunwayContent extends ConsumerWidget {
                 ),
                 style: context.captionStyle,
               ),
+              const SizedBox(height: AppSpacing.s10),
+              _RunwayRiskSummary(snapshot: snapshot, formatters: formatters),
               if (snapshot.status != MoneyRunwayStatus.healthy) ...[
                 const SizedBox(height: AppSpacing.s12),
                 FButton(
@@ -153,41 +156,12 @@ class _RunwayContent extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.s16),
+        _RunwayTimeline(snapshot: snapshot, formatters: formatters),
+        const SizedBox(height: AppSpacing.s16),
         _ScenarioSection(snapshot: snapshot),
         const SizedBox(height: AppSpacing.s16),
         _RunwayAssumptions(snapshot: snapshot),
         const SizedBox(height: AppSpacing.s16),
-        SoftCard.flat(
-          onPress: () => context.push(FinanceRoutes.cashflowRecurring),
-          padding: AppPageRhythm.densePadding,
-          child: Row(
-            children: [
-              const Icon(FLucideIcons.calendarSync, size: AppIconSizes.md),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.moneyRunwayScheduledTitle,
-                      style: context.labelStyle,
-                    ),
-                    const SizedBox(height: AppSpacing.s2),
-                    Text(
-                      snapshot.scheduledFlows.isEmpty
-                          ? l10n.moneyRunwayScheduledEmpty
-                          : l10n.moneyRunwayScheduledCount(
-                              snapshot.scheduledFlows.length,
-                            ),
-                      style: context.captionStyle,
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
-            ],
-          ),
-        ),
         if (snapshot.missingCurrencies.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           Text(
@@ -205,6 +179,216 @@ class _RunwayContent extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _RunwayRiskSummary extends StatelessWidget {
+  const _RunwayRiskSummary({required this.snapshot, required this.formatters});
+
+  final MoneyRunwaySnapshot snapshot;
+  final AppFormatters formatters;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final minimum = formatters.compactCurrency(
+      snapshot.minimumExpectedBalance,
+      code: snapshot.currency,
+    );
+    final minimumDate = snapshot.minimumExpectedBalanceDate;
+    final shortfallDate = snapshot.firstShortfallDate;
+    final reserveBreachDate = snapshot.firstReserveBreachDate;
+    final alertColor = switch (snapshot.status) {
+      MoneyRunwayStatus.healthy => context.appTheme.status.success.fg,
+      MoneyRunwayStatus.watch => context.appTheme.status.warning.fg,
+      MoneyRunwayStatus.shortfall => context.appTheme.status.danger.fg,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.moneyRunwayMinimumBalance(minimum),
+          style: context.captionStyle,
+        ),
+        if (minimumDate != null)
+          Text(
+            l10n.moneyRunwayMinimumBalanceDate(
+              formatters.date(minimumDate.toLocal()),
+            ),
+            style: context.captionStyle,
+          ),
+        if (shortfallDate != null)
+          Text(
+            l10n.moneyRunwayRiskDate(formatters.date(shortfallDate.toLocal())),
+            style: context.captionStyle.copyWith(color: alertColor),
+          )
+        else if (reserveBreachDate != null)
+          Text(
+            l10n.moneyRunwayReserveBreachDate(
+              formatters.date(reserveBreachDate.toLocal()),
+            ),
+            style: context.captionStyle.copyWith(color: alertColor),
+          ),
+      ],
+    );
+  }
+}
+
+class _RunwayTimeline extends StatefulWidget {
+  const _RunwayTimeline({required this.snapshot, required this.formatters});
+
+  final MoneyRunwaySnapshot snapshot;
+  final AppFormatters formatters;
+
+  @override
+  State<_RunwayTimeline> createState() => _RunwayTimelineState();
+}
+
+class _RunwayTimelineState extends State<_RunwayTimeline> {
+  static const _collapsedCount = 6;
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final flows = widget.snapshot.scheduledFlows;
+    final visibleFlows = _expanded
+        ? flows
+        : flows.take(_collapsedCount).toList(growable: false);
+    final remaining = flows.length - visibleFlows.length;
+
+    return AppSection.group(
+      key: const ValueKey('money-runway-timeline'),
+      title: l10n.moneyRunwayTimelineTitle,
+      trailing: flows.isEmpty
+          ? null
+          : AppBadge(
+              label: l10n.moneyRunwayScheduledCount(flows.length),
+              size: AppBadgeSize.compact,
+            ),
+      children: [
+        if (flows.isEmpty)
+          Text(l10n.moneyRunwayTimelineEmpty, style: context.captionStyle)
+        else ...[
+          for (final (index, flow) in visibleFlows.indexed) ...[
+            if (index > 0) const FDivider(),
+            _RunwayFlowRow(
+              snapshot: widget.snapshot,
+              flow: flow,
+              formatters: widget.formatters,
+            ),
+          ],
+          if (remaining > 0 || _expanded) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => setState(() => _expanded = !_expanded),
+                prefix: Icon(
+                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.listChecks,
+                  size: AppIconSizes.sm,
+                ),
+                child: Text(
+                  _expanded
+                      ? l10n.moneyRunwayTimelineLess
+                      : l10n.moneyRunwayTimelineMore(remaining),
+                ),
+              ),
+            ),
+          ],
+        ],
+        const SizedBox(height: AppSpacing.s4),
+        FButton(
+          variant: FButtonVariant.ghost,
+          prefix: const Icon(FLucideIcons.calendarSync, size: AppIconSizes.sm),
+          onPress: () => context.push(FinanceRoutes.cashflowRecurring),
+          child: Text(l10n.moneyRunwayManageScheduled),
+        ),
+      ],
+    );
+  }
+}
+
+class _RunwayFlowRow extends StatelessWidget {
+  const _RunwayFlowRow({
+    required this.snapshot,
+    required this.flow,
+    required this.formatters,
+  });
+
+  final MoneyRunwaySnapshot snapshot;
+  final RunwayScheduledFlow flow;
+  final AppFormatters formatters;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isInflow = flow.amount > Decimal.zero;
+    final amountColor = isInflow
+        ? context.appTheme.status.success.fg
+        : context.appTheme.status.danger.fg;
+    final after = formatters.compactCurrency(
+      snapshot.expectedBalanceAfter(flow.date),
+      code: snapshot.currency,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              formatters.date(flow.date.toLocal()),
+              style: context.captionStyle,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(flow.label, style: context.labelStyle),
+                if (flow.certainty == RunwayFlowCertainty.estimated)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.s2),
+                    child: AppBadge(
+                      label: l10n.moneyRunwayEstimatedFlow,
+                      tone: AppBadgeTone.neutral,
+                      size: AppBadgeSize.compact,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.s8),
+          Flexible(
+            fit: FlexFit.loose,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  formatters.signedMoney(flow.amount, unit: snapshot.currency),
+                  style: context.labelStyle.copyWith(color: amountColor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  l10n.moneyRunwayTimelineBalanceAfter(after),
+                  style: context.captionStyle,
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

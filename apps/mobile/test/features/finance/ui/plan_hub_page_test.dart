@@ -31,9 +31,8 @@ Widget _wrapAsync(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     builder: (context, child) => MediaQuery(
-      data: MediaQuery.of(
-        context,
-      ).copyWith(textScaler: TextScaler.linear(textScale)),
+      data: MediaQuery.of(context)
+          .copyWith(textScaler: TextScaler.linear(textScale)),
       child: AppMessenger.init(child: child!),
     ),
     home: const PlanHubPage(),
@@ -106,8 +105,10 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.byType(SkeletonBox), findsWidgets);
-    expect(find.text(l10n.planGoalsCashflowTitle), findsOneWidget);
-    expect(find.text(l10n.planInvestmentStrategiesTitle), findsOneWidget);
+    expect(find.text(l10n.planCashSafetyTitle), findsOneWidget);
+    expect(find.text(l10n.planLongTermGoalsTitle), findsOneWidget);
+    expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
+    expect(find.text(l10n.planIncomeStrategiesTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
@@ -124,7 +125,7 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planStatusUnavailable), findsOneWidget);
     expect(find.text('Bad state: fire failed'), findsNothing);
-    expect(find.text(l10n.planGoalsCashflowTitle), findsOneWidget);
+    expect(find.text(l10n.planCashSafetyTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
@@ -144,7 +145,7 @@ void main() {
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
     expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
-    expect(find.text(l10n.planInvestmentStrategiesTitle), findsOneWidget);
+    expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
     expect(find.text(l10n.lifeEventScenariosTitle), findsWidgets);
     expect(find.text('Planning tools'), findsNothing);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);

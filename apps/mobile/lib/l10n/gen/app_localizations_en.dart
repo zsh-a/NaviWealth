@@ -34,10 +34,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Settings';
 
   @override
-  String get navActivity => 'Activity';
+  String get navActivity => 'Records';
 
   @override
-  String get navAccounts => 'Wealth';
+  String get navAccounts => 'Accounts';
 
   @override
   String get navWealth => 'Wealth';
@@ -95,10 +95,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get planGoalsCashflowTitle => 'Goals & cash flow';
+  String get planCashSafetyTitle => 'Cash safety';
 
   @override
-  String get planInvestmentStrategiesTitle => 'Investment strategies';
+  String get planLongTermGoalsTitle => 'Long-term goals & scenarios';
+
+  @override
+  String get planInvestmentPlanTitle => 'Investment execution';
+
+  @override
+  String get planIncomeStrategiesTitle => 'Income strategies';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -2564,6 +2570,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityActionExpenseHint => 'Cash out for goods or services';
 
   @override
+  String get activityActionIncomeHint =>
+      'Record salary, dividend or other income';
+
+  @override
   String get activityActionTradeHint => 'Buy or sell a security';
 
   @override
@@ -2611,6 +2621,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get superFabExpense => 'Expense';
+
+  @override
+  String get superFabIncome => 'Income';
 
   @override
   String get superFabAsset => 'Asset';
@@ -5904,6 +5917,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expenseFormNoAccountsCta => 'Create account';
+
+  @override
+  String get incomeFormCreateTitle => 'Record income';
+
+  @override
+  String get incomeFormAmountLabel => 'Amount';
+
+  @override
+  String get incomeFormAmountInvalid => 'Amount must be greater than 0';
+
+  @override
+  String get incomeFormKindLabel => 'Income type';
+
+  @override
+  String get incomeFormAccountLabel => 'Deposit account';
+
+  @override
+  String get incomeFormAccountRequired =>
+      'Choose a deposit account and currency';
+
+  @override
+  String get incomeFormAdvancedTitle => 'Date & note';
+
+  @override
+  String get incomeFormDateLabel => 'Date & time';
+
+  @override
+  String get incomeFormDefaultNarration => 'Income';
+
+  @override
+  String get incomeFormNoAccountsTitle => 'Create an account first';
+
+  @override
+  String get incomeFormNoAccountsBody =>
+      'Income needs a deposit account. Create one under Accounts, then come back here.';
+
+  @override
+  String get incomeFormNoAccountsCta => 'Create account';
 
   @override
   String get expenseHistorySectionTitle => 'Change history';
@@ -16728,6 +16779,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moneyRunwayHorizonsTitle => 'Forward balance';
 
   @override
+  String moneyRunwayMinimumBalance(String amount) {
+    return 'Lowest expected balance: $amount';
+  }
+
+  @override
+  String moneyRunwayMinimumBalanceDate(String date) {
+    return 'Lowest point: $date';
+  }
+
+  @override
+  String moneyRunwayRiskDate(String date) {
+    return 'Cash shortfall expected $date';
+  }
+
+  @override
+  String moneyRunwayReserveBreachDate(String date) {
+    return 'Below reserve target $date';
+  }
+
+  @override
   String moneyRunwayDays(Object days) {
     return '$days days';
   }
@@ -16867,6 +16938,29 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get moneyRunwayTimelineTitle => 'Upcoming cash timeline';
+
+  @override
+  String moneyRunwayTimelineMore(int count) {
+    return 'Show all $count';
+  }
+
+  @override
+  String get moneyRunwayTimelineLess => 'Collapse timeline';
+
+  @override
+  String moneyRunwayTimelineBalanceAfter(String amount) {
+    return 'Expected balance that day: $amount';
+  }
+
+  @override
+  String get moneyRunwayTimelineEmpty =>
+      'No scheduled flows in the next 90 days. Add recurring income or bills to make this forecast more useful.';
+
+  @override
+  String get moneyRunwayManageScheduled => 'Manage scheduled flows';
 
   @override
   String get moneyRunwayDeclaredDividend => 'Declared after-tax dividend';
