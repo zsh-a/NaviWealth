@@ -11,7 +11,9 @@ import 'package:naviwealth/design_system/theme/app_theme.dart';
 import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
+import 'package:naviwealth/features/execution/ui/execution_action_card_controller.dart';
 import 'package:naviwealth/features/execution/ui/execution_review_page.dart';
+import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -91,6 +93,50 @@ void main() {
 
     expect(find.text('Recent execution progress'), findsOneWidget);
     expect(find.text('Old execution blocker'), findsNothing);
+  });
+
+  testWidgets('review does not repeat an action in progress and closed lists', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1024, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final now = DateTime.now();
+    final action = ExecutionAction(
+      id: 'closed-action',
+      title: 'Publish the release note',
+      status: ExecutionActionStatus.done,
+      completedAt: now.subtract(const Duration(days: 1)),
+      createdAt: now.subtract(const Duration(days: 3)),
+      sync: _sync(now),
+    );
+    final completion = ExecutionProgressEntry(
+      id: 'closed-action-progress',
+      actionId: action.id,
+      kind: ExecutionProgressKind.completion,
+      note: 'Release note published.',
+      createdAt: now.subtract(const Duration(days: 1)),
+      sync: _sync(now),
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionReviewPage(),
+        overrides: _reviewOverrides(
+          actions: <ExecutionAction>[action],
+          progress: <ExecutionProgressEntry>[completion],
+          closedActions: <ExecutionAction>[action],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Recent activity · 1'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ExecutionProgressCard), findsOneWidget);
+    expect(find.byType(ExecutionActionCardController), findsNothing);
+    expect(find.text('Release note published.'), findsOneWidget);
   });
 
   testWidgets('review creates only selected missing next actions', (

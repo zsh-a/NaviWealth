@@ -290,11 +290,25 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     final entries = (progressAsync.value ?? const <ExecutionProgressEntry>[])
         .where((entry) => !entry.createdAt.toLocal().isBefore(cutoff))
         .toList(growable: false);
+    // A lifecycle transition writes a completion/dropped progress entry. The
+    // same action also appears in the closed-actions source, but Review is a
+    // digest rather than a raw event log: show that action once, through its
+    // progress entry, instead of repeating it in a second section.
+    final terminalProgressActionIds = entries
+        .where(
+          (entry) =>
+              entry.actionId != null &&
+              (entry.kind == ExecutionProgressKind.completion ||
+                  entry.kind == ExecutionProgressKind.dropped),
+        )
+        .map((entry) => entry.actionId!)
+        .toSet();
     final closedActions =
         (closedActionsAsync.value ?? const <ExecutionAction>[])
             .where((action) {
               final at = action.completedAt ?? action.createdAt;
-              return !at.toLocal().isBefore(cutoff);
+              return !at.toLocal().isBefore(cutoff) &&
+                  !terminalProgressActionIds.contains(action.id);
             })
             .toList(growable: false);
     final empty = entries.isEmpty && closedActions.isEmpty;
