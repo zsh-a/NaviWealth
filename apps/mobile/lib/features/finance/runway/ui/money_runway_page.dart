@@ -301,8 +301,9 @@ class _RunwayTimelineState extends State<_RunwayTimeline> {
           ],
         ],
         const SizedBox(height: AppSpacing.s4),
-        FButton(
+        AppActionButton(
           variant: FButtonVariant.ghost,
+          mainAxisSize: MainAxisSize.min,
           prefix: const Icon(FLucideIcons.calendarSync, size: AppIconSizes.sm),
           onPress: () => context.push(FinanceRoutes.cashflowRecurring),
           child: Text(l10n.moneyRunwayManageScheduled),
