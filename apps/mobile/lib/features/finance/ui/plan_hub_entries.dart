@@ -6,113 +6,51 @@ part of 'plan_hub_page.dart';
 /// [_PlanEntrySpec] view models (icon, copy, tone, destination). Page
 /// composition and widgets stay in `plan_hub_page.dart`; this part only owns
 /// the status-to-entry derivation so the page file reads as pure layout.
+enum _PlanEntryGroup { goalsAndCashflow, investmentStrategies, lifeScenarios }
+
 class _PlanEntrySpec {
   const _PlanEntrySpec({
+    required this.group,
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.path,
     required this.tone,
-    this.badge,
+    this.requiresAttention = false,
     this.priority = 100,
   });
 
+  final _PlanEntryGroup group;
   final IconData icon;
   final String title;
   final String subtitle;
   final String path;
   final AppBadgeTone tone;
-  final String? badge;
+  final bool requiresAttention;
   final int priority;
 }
 
-List<_PlanEntrySpec> _attentionItems(
+List<_PlanEntrySpec> _planningEntries(
   BuildContext context,
+  AppLocalizations l10n,
   PlanningHubStatus status,
+  AsyncValue<FireDashboardView> fire,
 ) {
-  final l10n = AppLocalizations.of(context);
-  final items = <_PlanEntrySpec>[
-    if (status.runway == PlanningRunwayStatus.shortfall)
-      _PlanEntrySpec(
-        icon: FLucideIcons.triangleAlert,
-        title: l10n.moneyRunwayTitle,
-        subtitle: l10n.moneyRunwayStatusShortfall,
-        path: FinanceRoutes.planRunway,
-        tone: AppBadgeTone.error,
-        priority: 0,
-      ),
-    if (status.budgetSignal == BudgetSignal.overBudget)
-      _PlanEntrySpec(
-        icon: FLucideIcons.piggyBank,
-        title: l10n.planBudgetSectionTitle,
-        subtitle: l10n.planStatusBudgetOver,
-        path: FinanceRoutes.planBudget,
-        tone: AppBadgeTone.error,
-        priority: 1,
-      ),
-    if (status.dcaDue)
-      _PlanEntrySpec(
-        icon: FLucideIcons.calendarClock,
-        title: l10n.planDcaPlanTitle,
-        subtitle: l10n.planStatusDcaDue,
-        path: FinanceRoutes.planDca,
-        tone: AppBadgeTone.warning,
-        priority: 2,
-      ),
-    if ((status.pendingLifeEventReviews ?? 0) > 0)
-      _PlanEntrySpec(
-        icon: FLucideIcons.waypoints,
-        title: l10n.lifeEventScenariosTitle,
-        subtitle: l10n.planStatusPendingReviews(
-          status.pendingLifeEventReviews!,
-        ),
-        path: FinanceRoutes.planLifeEvents,
-        tone: AppBadgeTone.warning,
-        priority: 3,
-      ),
-    if (status.rebalance == PlanningRebalanceStatus.attention)
-      _PlanEntrySpec(
-        icon: FLucideIcons.scale,
-        title: l10n.planRebalanceSectionTitle,
-        subtitle: _rebalanceStatusLabel(l10n, status),
-        path: FinanceRoutes.planRebalance,
-        tone: AppBadgeTone.warning,
-        priority: 4,
-      ),
-    if (status.runway == PlanningRunwayStatus.watch)
-      _PlanEntrySpec(
-        icon: FLucideIcons.calendarRange,
-        title: l10n.moneyRunwayTitle,
-        subtitle: l10n.moneyRunwayStatusWatch,
-        path: FinanceRoutes.planRunway,
-        tone: AppBadgeTone.warning,
-        priority: 5,
-      ),
-    if (status.budgetSignal == BudgetSignal.strained)
-      _PlanEntrySpec(
-        icon: FLucideIcons.gauge,
-        title: l10n.planBudgetSectionTitle,
-        subtitle: l10n.planStatusBudgetStrained,
-        path: FinanceRoutes.planBudget,
-        tone: AppBadgeTone.warning,
-        priority: 6,
-      ),
-    if (status.rebalance == PlanningRebalanceStatus.active)
-      _PlanEntrySpec(
-        icon: FLucideIcons.listChecks,
-        title: l10n.planRebalanceSectionTitle,
-        subtitle: l10n.planStatusRebalanceActive,
-        path: FinanceRoutes.planRebalance,
-        tone: AppBadgeTone.accent,
-        priority: 7,
-      ),
-  ]..sort((a, b) => a.priority.compareTo(b.priority));
-  return items;
+  return <_PlanEntrySpec>[
+    _runwayEntry(l10n, status),
+    _budgetEntry(l10n, status),
+    _fireEntry(l10n, fire),
+    _dcaEntry(context, l10n, status),
+    _rebalanceEntry(l10n, status),
+    if (!kIsWeb) _incomeStrategyEntry(l10n, status),
+    _lifeEventsEntry(l10n, status),
+  ];
 }
 
 _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
   final runway = status.runway;
   return _PlanEntrySpec(
+    group: _PlanEntryGroup.goalsAndCashflow,
     icon: FLucideIcons.calendarRange,
     title: l10n.moneyRunwayTitle,
     subtitle: _runwayStatusLabel(l10n, runway),
@@ -123,6 +61,10 @@ _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
       PlanningRunwayStatus.shortfall => AppBadgeTone.error,
       PlanningRunwayStatus.needsData || null => AppBadgeTone.neutral,
     },
+    requiresAttention:
+        runway == PlanningRunwayStatus.watch ||
+        runway == PlanningRunwayStatus.shortfall,
+    priority: runway == PlanningRunwayStatus.shortfall ? 0 : 5,
   );
 }
 
@@ -144,6 +86,7 @@ _PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
           (progress * 100).clamp(0, 999).toStringAsFixed(0),
         );
   return _PlanEntrySpec(
+    group: _PlanEntryGroup.goalsAndCashflow,
     icon: FLucideIcons.piggyBank,
     title: l10n.planBudgetSectionTitle,
     subtitle: subtitle,
@@ -154,6 +97,9 @@ _PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
       BudgetSignal.comfortable => AppBadgeTone.success,
       BudgetSignal.noData || null => AppBadgeTone.neutral,
     },
+    requiresAttention:
+        signal == BudgetSignal.overBudget || signal == BudgetSignal.strained,
+    priority: signal == BudgetSignal.overBudget ? 1 : 6,
   );
 }
 
@@ -163,6 +109,7 @@ _PlanEntrySpec _lifeEventsEntry(
 ) {
   final pending = status.pendingLifeEventReviews;
   return _PlanEntrySpec(
+    group: _PlanEntryGroup.lifeScenarios,
     icon: FLucideIcons.waypoints,
     title: l10n.lifeEventScenariosTitle,
     subtitle: pending == null
@@ -176,12 +123,13 @@ _PlanEntrySpec _lifeEventsEntry(
         : pending > 0
         ? AppBadgeTone.warning
         : AppBadgeTone.success,
+    requiresAttention: pending != null && pending > 0,
+    priority: 3,
   );
 }
 
 _PlanEntrySpec _fireEntry(
   AppLocalizations l10n,
-  AppFormatters formatters,
   AsyncValue<FireDashboardView> fire,
 ) {
   final view = fire.value;
@@ -197,6 +145,7 @@ _PlanEntrySpec _fireEntry(
       ? null
       : (months / 12).toStringAsFixed(months < 24 ? 1 : 0);
   return _PlanEntrySpec(
+    group: _PlanEntryGroup.goalsAndCashflow,
     icon: FLucideIcons.mountain,
     title: l10n.planFireGoalTitle,
     subtitle: fire.isLoading
@@ -212,9 +161,6 @@ _PlanEntrySpec _fireEntry(
           ),
     path: FinanceRoutes.planFire,
     tone: progress == null ? AppBadgeTone.neutral : AppBadgeTone.accent,
-    badge: progress == null
-        ? l10n.planStatusNeedsSetup
-        : formatters.percent(progress.clamp(0, 1), decimalDigits: 0),
   );
 }
 
@@ -223,6 +169,7 @@ _PlanEntrySpec _dcaEntry(
   AppLocalizations l10n,
   PlanningHubStatus status,
 ) => _PlanEntrySpec(
+  group: _PlanEntryGroup.investmentStrategies,
   icon: FLucideIcons.calendarClock,
   title: l10n.planDcaPlanTitle,
   subtitle: _dcaStatusLabel(context, l10n, status),
@@ -232,6 +179,8 @@ _PlanEntrySpec _dcaEntry(
       : (status.dcaPlanCount ?? 0) > 0
       ? AppBadgeTone.success
       : AppBadgeTone.neutral,
+  requiresAttention: status.dcaDue,
+  priority: 2,
 );
 
 _PlanEntrySpec _incomeStrategyEntry(
@@ -240,6 +189,7 @@ _PlanEntrySpec _incomeStrategyEntry(
 ) {
   final activeOptions = status.wheelOpenPositionCount ?? 0;
   return _PlanEntrySpec(
+    group: _PlanEntryGroup.investmentStrategies,
     icon: FLucideIcons.candlestickChart,
     title: l10n.incomeStrategyTitle,
     subtitle: activeOptions > 0
@@ -254,6 +204,7 @@ _PlanEntrySpec _rebalanceEntry(
   AppLocalizations l10n,
   PlanningHubStatus status,
 ) => _PlanEntrySpec(
+  group: _PlanEntryGroup.investmentStrategies,
   icon: FLucideIcons.scale,
   title: l10n.planRebalanceSectionTitle,
   subtitle: _rebalanceStatusLabel(l10n, status),
@@ -264,6 +215,8 @@ _PlanEntrySpec _rebalanceEntry(
     PlanningRebalanceStatus.active => AppBadgeTone.accent,
     PlanningRebalanceStatus.needsData || null => AppBadgeTone.neutral,
   },
+  requiresAttention: status.rebalance == PlanningRebalanceStatus.attention,
+  priority: 4,
 );
 
 String _runwayStatusLabel(
@@ -298,9 +251,8 @@ String _dcaStatusLabel(
   final nextDue = status.dcaNextDueAt;
   if (nextDue == null) return l10n.planStatusDcaPaused;
   if (status.dcaDue) return l10n.planStatusDcaDue;
-  final date = MaterialLocalizations.of(
-    context,
-  ).formatShortDate(nextDue.toLocal());
+  final date = MaterialLocalizations.of(context)
+      .formatShortDate(nextDue.toLocal());
   return l10n.planStatusDcaNext(date);
 }
 

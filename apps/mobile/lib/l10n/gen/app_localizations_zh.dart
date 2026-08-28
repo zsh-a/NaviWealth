@@ -63,46 +63,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planHubTitle => '规划';
 
   @override
-  String get planHubSubtitle => '决策、模型与目标。';
-
-  @override
-  String get planCoreSectionTitle => '下一步';
-
-  @override
-  String get planCoreSectionSubtitle => '用清晰的行动持续推进计划';
-
-  @override
-  String get planStrategyToolsSectionTitle => '策略';
-
-  @override
-  String get planStrategyToolsSectionSubtitle => '探索可选的投资方法';
-
-  @override
-  String get planFireSectionTitle => 'FIRE';
-
-  @override
-  String get planFireSectionSubtitle => '距离财务自由还有几年';
-
-  @override
   String get planRebalanceSectionTitle => '再平衡';
-
-  @override
-  String get planRebalanceSectionSubtitle => '偏离目标配置情况';
 
   @override
   String get planIncomeSectionSubtitle => '股息、Wheel 与 LEAPS';
 
   @override
-  String get planDcaSectionTitle => 'DCA 模拟';
-
-  @override
-  String get planDcaSectionSubtitle => '定投计划';
-
-  @override
   String get planBudgetSectionTitle => '预算';
-
-  @override
-  String get planBudgetSectionSubtitle => '按月按类别设定上限';
 
   @override
   String get planAttentionTitle => '需要关注';
@@ -126,13 +93,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get planOverviewTitle => '财务展望';
+  String get planGoalsCashflowTitle => '目标与现金流';
 
   @override
-  String get planMyPlansTitle => '进行中的投资计划';
-
-  @override
-  String get planAddPlanAction => '规划工具';
+  String get planInvestmentStrategiesTitle => '投资策略';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -243,26 +207,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planStatusDcaPaused => '计划均已暂停';
-
-  @override
-  String planStatusWheelOpen(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 个持仓中头寸',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String planStatusWheelCycles(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '跟踪 $count 个周期',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get planBudgetTitle => '预算';

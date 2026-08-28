@@ -39,10 +39,10 @@ void main() {
       await tester.pump();
 
       expect(find.text('Needs attention'), findsOneWidget);
-      expect(find.text('Financial outlook'), findsOneWidget);
+      expect(find.text('Goals & cash flow'), findsOneWidget);
       expect(find.text('Money runway'), findsOneWidget);
       expect(find.text('Financial independence'), findsOneWidget);
-      expect(find.text('Active investment plans'), findsOneWidget);
+      expect(find.text('Investment strategies'), findsOneWidget);
       expect(find.text('Budget'), findsOneWidget);
       expect(find.text('Income Planner'), findsNothing);
       expect(find.text('Scenario analytics'), findsNothing);
@@ -51,7 +51,7 @@ void main() {
     },
   );
 
-  testWidgets('Plan hub pairs outlook with active plans on wide canvas', (
+  testWidgets('Plan hub pairs goals with investment strategies on wide canvas', (
     tester,
   ) async {
     await _setDesktopSurface(tester);
@@ -85,15 +85,15 @@ void main() {
     );
     await tester.pump();
 
-    final outlook = tester.getRect(
-      find.byKey(const ValueKey('plan-outlook-section')),
+    final goals = tester.getRect(
+      find.byKey(const ValueKey('plan-goals-cashflow-section')),
     );
-    final investments = tester.getRect(
-      find.byKey(const ValueKey('plan-investments-section')),
+    final strategies = tester.getRect(
+      find.byKey(const ValueKey('plan-investment-strategies-section')),
     );
-    expect(investments.top, outlook.top);
-    expect(investments.left, greaterThan(outlook.right));
-    expect(investments.width, greaterThan(outlook.width * 1.9));
+    expect(strategies.top, goals.top);
+    expect(strategies.left, greaterThan(goals.right));
+    expect(goals.width, greaterThan(strategies.width * 1.9));
   });
 
   testWidgets('Wealth hub hides placeholder-only entries', (tester) async {

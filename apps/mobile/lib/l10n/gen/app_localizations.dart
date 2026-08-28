@@ -200,59 +200,11 @@ abstract class AppLocalizations {
   /// **'Plan'**
   String get planHubTitle;
 
-  /// Plan hub subtitle / one-liner under the title
-  ///
-  /// In en, this message translates to:
-  /// **'Decisions, models, and goals.'**
-  String get planHubSubtitle;
-
-  /// Plan hub grouped section title for core long-term planning workflows
-  ///
-  /// In en, this message translates to:
-  /// **'Next steps'**
-  String get planCoreSectionTitle;
-
-  /// Plan hub grouped section subtitle for core planning workflows
-  ///
-  /// In en, this message translates to:
-  /// **'Keep your plan moving with clear actions'**
-  String get planCoreSectionSubtitle;
-
-  /// Plan hub grouped section title for investment strategy tools
-  ///
-  /// In en, this message translates to:
-  /// **'Strategies'**
-  String get planStrategyToolsSectionTitle;
-
-  /// Plan hub grouped section subtitle for investment strategy tools
-  ///
-  /// In en, this message translates to:
-  /// **'Explore optional investing approaches'**
-  String get planStrategyToolsSectionSubtitle;
-
-  /// Plan hub: FIRE section card title
-  ///
-  /// In en, this message translates to:
-  /// **'FIRE'**
-  String get planFireSectionTitle;
-
-  /// Plan hub: FIRE section card subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Years to financial independence'**
-  String get planFireSectionSubtitle;
-
   /// Plan hub: rebalance section card title
   ///
   /// In en, this message translates to:
   /// **'Rebalance'**
   String get planRebalanceSectionTitle;
-
-  /// Plan hub: rebalance section card subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Drift from target allocation'**
-  String get planRebalanceSectionSubtitle;
 
   /// Plan hub: options-income section subtitle
   ///
@@ -260,29 +212,11 @@ abstract class AppLocalizations {
   /// **'Dividends, Wheel & LEAPS'**
   String get planIncomeSectionSubtitle;
 
-  /// Plan hub: DCA simulator section title
-  ///
-  /// In en, this message translates to:
-  /// **'DCA simulator'**
-  String get planDcaSectionTitle;
-
-  /// Plan hub: DCA simulator section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring buy plan'**
-  String get planDcaSectionSubtitle;
-
   /// Plan hub: monthly category budget section title
   ///
   /// In en, this message translates to:
   /// **'Budget'**
   String get planBudgetSectionTitle;
-
-  /// Plan hub: budget section subtitle
-  ///
-  /// In en, this message translates to:
-  /// **'Monthly category caps'**
-  String get planBudgetSectionSubtitle;
 
   /// No description provided for @planAttentionTitle.
   ///
@@ -308,23 +242,17 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 item} other{{count} items}}'**
   String planAttentionCount(int count);
 
-  /// No description provided for @planOverviewTitle.
+  /// Plan hub section for goals, liquidity, and spending constraints
   ///
   /// In en, this message translates to:
-  /// **'Financial outlook'**
-  String get planOverviewTitle;
+  /// **'Goals & cash flow'**
+  String get planGoalsCashflowTitle;
 
-  /// No description provided for @planMyPlansTitle.
+  /// Plan hub section for recurring investing, rebalancing, and income strategies
   ///
   /// In en, this message translates to:
-  /// **'Active investment plans'**
-  String get planMyPlansTitle;
-
-  /// No description provided for @planAddPlanAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Planning tools'**
-  String get planAddPlanAction;
+  /// **'Investment strategies'**
+  String get planInvestmentStrategiesTitle;
 
   /// No description provided for @planExploreActiveOptions.
   ///
@@ -487,18 +415,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All plans paused'**
   String get planStatusDcaPaused;
-
-  /// No description provided for @planStatusWheelOpen.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 open position} other{{count} open positions}}'**
-  String planStatusWheelOpen(int count);
-
-  /// No description provided for @planStatusWheelCycles.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 tracked cycle} other{{count} tracked cycles}}'**
-  String planStatusWheelCycles(int count);
 
   /// Title shown on the /plan/budget page header
   ///

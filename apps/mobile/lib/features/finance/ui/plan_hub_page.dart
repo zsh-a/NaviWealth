@@ -15,7 +15,6 @@ import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
 import 'package:naviwealth/features/finance/runway/data/money_runway_providers.dart';
 
-import '../../../core/format/formatters.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -33,7 +32,7 @@ const Widget _kNoGreetingHeader = SizedBox.shrink();
 /// Finance planning workspace.
 ///
 /// The surface is deliberately action-first: due and risky work is promoted,
-/// ongoing plans stay visible, and calculators remain secondary.
+/// while goals and investment strategies stay visible as stable entry points.
 class PlanHubPage extends ConsumerWidget {
   const PlanHubPage({super.key});
 
@@ -42,8 +41,13 @@ class PlanHubPage extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final status = ref.watch(planningHubStatusProvider);
     final fire = ref.watch(fireDashboardViewProvider);
-    final attentionItems = _attentionItems(context, status);
-    final showNextAction =
+    final entries = _planningEntries(context, l10n, status, fire);
+    final attentionItems =
+        entries
+            .where((entry) => entry.requiresAttention)
+            .toList(growable: false)
+          ..sort((a, b) => a.priority.compareTo(b.priority));
+    final showAttention =
         attentionItems.isNotEmpty || status.isLoading || status.hasError;
 
     return ShellTabScaffold(
@@ -67,10 +71,10 @@ class PlanHubPage extends ConsumerWidget {
             padding: shellTabContentPadding(context, top: AppSpacing.s8),
             onRefresh: () => _refreshPlanningWorkspace(ref),
             greeting: _kNoGreetingHeader,
-            stage: showNextAction
-                ? _NextActionSection(status: status, items: attentionItems)
+            stage: showAttention
+                ? _AttentionSection(status: status, items: attentionItems)
                 : const SizedBox.shrink(),
-            summaryTiles: _planningSummaryTiles(context, l10n, status, fire),
+            summaryTiles: _planningSummaryTiles(l10n, entries),
           ),
         ),
       ),
@@ -105,74 +109,65 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
   }
 }
 
-/// Ordered overview tiles for the brief grid: outlook, active plans, review
-/// history, then the secondary "add plan" entry point.
+/// Ordered overview tiles for the brief grid: goals and cash flow, investment
+/// strategies, then life-event scenarios.
 List<AdaptiveSummaryTile> _planningSummaryTiles(
-  BuildContext context,
   AppLocalizations l10n,
-  PlanningHubStatus status,
-  AsyncValue<FireDashboardView> fire,
+  List<_PlanEntrySpec> entries,
 ) {
-  final formatters = AppFormatters(locale: Localizations.localeOf(context));
-  final outlook = <_PlanEntrySpec>[
-    _runwayEntry(l10n, status),
-    _budgetEntry(l10n, status),
-    _fireEntry(l10n, formatters, fire),
-  ];
-  final investments = <_PlanEntrySpec>[
-    _dcaEntry(context, l10n, status),
-    _rebalanceEntry(l10n, status),
-    if (!kIsWeb) _incomeStrategyEntry(l10n, status),
-  ];
-  final reviews = <_PlanEntrySpec>[_lifeEventsEntry(l10n, status)];
+  final goalsAndCashflow = entries
+      .where((entry) => entry.group == _PlanEntryGroup.goalsAndCashflow)
+      .toList(growable: false);
+  final investmentStrategies = entries
+      .where((entry) => entry.group == _PlanEntryGroup.investmentStrategies)
+      .toList(growable: false);
+  final lifeScenarios = entries
+      .where((entry) => entry.group == _PlanEntryGroup.lifeScenarios)
+      .toList(growable: false);
 
   return [
     AdaptiveSummaryTile(
-      role: AdaptiveSummaryTileRole.supporting,
-      child: _PlanSection(
-        key: const ValueKey('plan-outlook-section'),
-        title: l10n.planOverviewTitle,
-        entries: outlook,
-      ),
-    ),
-    AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.featured,
       child: _PlanSection(
-        key: const ValueKey('plan-investments-section'),
-        title: l10n.planMyPlansTitle,
-        entries: investments,
+        key: const ValueKey('plan-goals-cashflow-section'),
+        title: l10n.planGoalsCashflowTitle,
+        entries: goalsAndCashflow,
+      ),
+    ),
+    AdaptiveSummaryTile(
+      role: AdaptiveSummaryTileRole.supporting,
+      child: _PlanSection(
+        key: const ValueKey('plan-investment-strategies-section'),
+        title: l10n.planInvestmentStrategiesTitle,
+        entries: investmentStrategies,
       ),
     ),
     AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.continuous,
       child: _PlanSection(
-        key: const ValueKey('plan-reviews-section'),
-        title: l10n.lifeEventDecisionHistory,
-        entries: reviews,
+        key: const ValueKey('plan-life-scenarios-section'),
+        title: l10n.lifeEventScenariosTitle,
+        entries: lifeScenarios,
       ),
-    ),
-    const AdaptiveSummaryTile(
-      role: AdaptiveSummaryTileRole.continuous,
-      child: _PlanAddPlanMenu(),
     ),
   ];
 }
 
-class _NextActionSection extends StatefulWidget {
-  const _NextActionSection({required this.status, required this.items});
+class _AttentionSection extends StatefulWidget {
+  const _AttentionSection({required this.status, required this.items});
 
   final PlanningHubStatus status;
   final List<_PlanEntrySpec> items;
 
   @override
-  State<_NextActionSection> createState() => _NextActionSectionState();
+  State<_AttentionSection> createState() => _AttentionSectionState();
 }
 
-class _NextActionSectionState extends State<_NextActionSection> {
+class _AttentionSectionState extends State<_AttentionSection> {
   bool _expanded = false;
 
   @override
-  void didUpdateWidget(covariant _NextActionSection oldWidget) {
+  void didUpdateWidget(covariant _AttentionSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.items.length <= 1 && _expanded) _expanded = false;
   }
@@ -333,95 +328,12 @@ class _PlanRow extends StatelessWidget {
       subtitleMaxLines: 2,
       trailing: needsAttention
           ? AppBadge(
-              label: spec.badge ?? _toneLabel(context, spec.tone),
+              label: _toneLabel(context, spec.tone),
               tone: spec.tone,
               size: AppBadgeSize.compact,
             )
           : null,
       onTap: () => context.push(spec.path),
-    );
-  }
-}
-
-/// Secondary entry point: calculators and plan creation stay one tap away
-/// without competing with the status-driven sections above.
-class _PlanAddPlanMenu extends StatelessWidget {
-  const _PlanAddPlanMenu();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return AppAdaptiveActionMenu(
-      title: l10n.planAddPlanAction,
-      actions: [
-        AppAdaptiveAction(
-          icon: FLucideIcons.piggyBank,
-          title: l10n.planBudgetSectionTitle,
-          onPress: () => context.push(FinanceRoutes.planBudget),
-        ),
-        AppAdaptiveAction(
-          icon: FLucideIcons.scale,
-          title: l10n.planRebalanceSectionTitle,
-          onPress: () => context.push(FinanceRoutes.planRebalance),
-        ),
-        AppAdaptiveAction(
-          icon: FLucideIcons.calendarClock,
-          title: l10n.planDcaPlanTitle,
-          onPress: () => context.push(FinanceRoutes.planDca),
-        ),
-        if (!kIsWeb)
-          AppAdaptiveAction(
-            icon: FLucideIcons.candlestickChart,
-            title: l10n.incomeStrategyTitle,
-            onPress: () => context.push(FinanceRoutes.planIncome),
-          ),
-        AppAdaptiveAction(
-          icon: FLucideIcons.waypoints,
-          title: l10n.lifeEventScenariosTitle,
-          onPress: () => context.push(FinanceRoutes.planLifeEvents),
-        ),
-      ],
-      triggerBuilder: (context, openMenu, focusNode) => Focus(
-        focusNode: focusNode,
-        child: Semantics(
-          button: true,
-          label: l10n.planAddPlanAction,
-          child: AppGroupedSurface(
-            padding: EdgeInsets.zero,
-            child: AppTappable(
-              onPress: openMenu,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s16,
-                  vertical: AppSpacing.s12,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      FLucideIcons.layoutGrid,
-                      size: AppIconSizes.sm,
-                      color: context.theme.colors.primary,
-                    ),
-                    const SizedBox(width: AppSpacing.s10),
-                    Expanded(
-                      child: Text(
-                        l10n.planAddPlanAction,
-                        style: context.labelStyle,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.s8),
-                    Icon(
-                      FLucideIcons.chevronRight,
-                      size: AppIconSizes.sm,
-                      color: context.theme.colors.mutedForeground,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

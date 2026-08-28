@@ -766,36 +766,27 @@ class PlanPageObject {
   }
 
   Future<void> openRebalance() async {
-    await _openExploreAction('Rebalance');
+    await _openPlanAction('Rebalance');
   }
 
   Future<void> openBudget() async {
-    await _openExploreAction('Budget');
+    await _openPlanAction('Budget');
   }
 
   Future<void> openIncomeStrategy() async {
-    await _openExploreAction('Income strategy');
+    await _openPlanAction('Income strategy');
   }
 
-  Future<void> _openExploreAction(String label) async {
+  Future<void> _openPlanAction(String label) async {
     var action = find.text(label).hitTestable();
     if (action.evaluate().isEmpty) {
-      // The plan hub is a lazy brief list: scroll the section into view
-      // before falling back to the "Planning tools" action menu.
+      // The plan hub is a lazy brief list: scroll the section into view.
       final scrollable = find.byType(Scrollable).hitTestable().first;
       await tester.scrollUntilVisible(
         find.text(label),
         200,
         scrollable: scrollable,
       );
-      await settle(tester);
-      action = find.text(label).hitTestable();
-    }
-    if (action.evaluate().isEmpty) {
-      final explore = find.text('Planning tools').hitTestable();
-      expect(explore, findsOneWidget, reason: 'plan actions menu missing');
-      await tester.ensureVisible(explore);
-      await tester.tap(explore);
       await settle(tester);
       action = find.text(label).hitTestable();
     }

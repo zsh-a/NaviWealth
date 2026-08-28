@@ -64,48 +64,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planHubTitle => 'Plan';
 
   @override
-  String get planHubSubtitle => 'Decisions, models, and goals.';
-
-  @override
-  String get planCoreSectionTitle => 'Next steps';
-
-  @override
-  String get planCoreSectionSubtitle =>
-      'Keep your plan moving with clear actions';
-
-  @override
-  String get planStrategyToolsSectionTitle => 'Strategies';
-
-  @override
-  String get planStrategyToolsSectionSubtitle =>
-      'Explore optional investing approaches';
-
-  @override
-  String get planFireSectionTitle => 'FIRE';
-
-  @override
-  String get planFireSectionSubtitle => 'Years to financial independence';
-
-  @override
   String get planRebalanceSectionTitle => 'Rebalance';
-
-  @override
-  String get planRebalanceSectionSubtitle => 'Drift from target allocation';
 
   @override
   String get planIncomeSectionSubtitle => 'Dividends, Wheel & LEAPS';
 
   @override
-  String get planDcaSectionTitle => 'DCA simulator';
-
-  @override
-  String get planDcaSectionSubtitle => 'Recurring buy plan';
-
-  @override
   String get planBudgetSectionTitle => 'Budget';
-
-  @override
-  String get planBudgetSectionSubtitle => 'Monthly category caps';
 
   @override
   String get planAttentionTitle => 'Needs attention';
@@ -130,13 +95,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get planOverviewTitle => 'Financial outlook';
+  String get planGoalsCashflowTitle => 'Goals & cash flow';
 
   @override
-  String get planMyPlansTitle => 'Active investment plans';
-
-  @override
-  String get planAddPlanAction => 'Planning tools';
+  String get planInvestmentStrategiesTitle => 'Investment strategies';
 
   @override
   String planExploreActiveOptions(int count) {
@@ -252,28 +214,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get planStatusDcaPaused => 'All plans paused';
-
-  @override
-  String planStatusWheelOpen(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count open positions',
-      one: '1 open position',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String planStatusWheelCycles(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count tracked cycles',
-      one: '1 tracked cycle',
-    );
-    return '$_temp0';
-  }
 
   @override
   String get planBudgetTitle => 'Budget';

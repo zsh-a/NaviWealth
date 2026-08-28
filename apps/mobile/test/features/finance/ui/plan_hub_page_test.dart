@@ -106,8 +106,8 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.byType(SkeletonBox), findsWidgets);
-    expect(find.text(l10n.planOverviewTitle), findsOneWidget);
-    expect(find.text(l10n.planMyPlansTitle), findsOneWidget);
+    expect(find.text(l10n.planGoalsCashflowTitle), findsOneWidget);
+    expect(find.text(l10n.planInvestmentStrategiesTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
@@ -124,7 +124,7 @@ void main() {
     expect(find.byType(PlanHubPage), findsOneWidget);
     expect(find.text(l10n.planStatusUnavailable), findsOneWidget);
     expect(find.text('Bad state: fire failed'), findsNothing);
-    expect(find.text(l10n.planOverviewTitle), findsOneWidget);
+    expect(find.text(l10n.planGoalsCashflowTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
   });
 
@@ -144,7 +144,9 @@ void main() {
     expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
     expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
-    expect(find.text(l10n.planAddPlanAction), findsOneWidget);
+    expect(find.text(l10n.planInvestmentStrategiesTitle), findsOneWidget);
+    expect(find.text(l10n.lifeEventScenariosTitle), findsWidgets);
+    expect(find.text('Planning tools'), findsNothing);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);
   });
 
@@ -272,7 +274,24 @@ void main() {
     );
   });
 
-  testWidgets('expands more tools and navigates to feature routes', (
+  testWidgets('does not treat active rebalance as an attention item', (
+    tester,
+  ) async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+
+    await tester.pumpWidget(
+      _wrapAsync(
+        AsyncValue.data(_view(FireGoal.unset())),
+        status: _settledStatus(rebalance: PlanningRebalanceStatus.active),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(l10n.planAttentionTitle), findsNothing);
+    expect(find.text(l10n.planStatusRebalanceActive), findsOneWidget);
+  });
+
+  testWidgets('visible strategy rows navigate to feature routes', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -280,9 +299,7 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
-    await tester.ensureVisible(find.text(l10n.planAddPlanAction));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.planAddPlanAction));
+    await tester.ensureVisible(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.incomeStrategyTitle).last);
     await tester.pumpAndSettle();
