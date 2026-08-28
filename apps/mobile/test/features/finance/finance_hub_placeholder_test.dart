@@ -42,7 +42,7 @@ void main() {
       expect(find.text('Cash safety'), findsOneWidget);
       expect(find.text('Money runway'), findsOneWidget);
       expect(find.text('Financial independence'), findsOneWidget);
-      expect(find.text('Investment execution'), findsOneWidget);
+      expect(find.text('Investing'), findsOneWidget);
       expect(find.text('Budget'), findsOneWidget);
       expect(find.text('Income Planner'), findsNothing);
       expect(find.text('Scenario analytics'), findsNothing);
@@ -94,12 +94,9 @@ void main() {
       final investmentPlan = tester.getRect(
         find.byKey(const ValueKey('plan-investment-plan-section')),
       );
-      final incomeStrategies = tester.getRect(
-        find.byKey(const ValueKey('plan-income-strategies-section')),
-      );
       expect(longTermGoals.top, cashSafety.top);
       expect(cashSafety.width, greaterThan(longTermGoals.width));
-      expect(incomeStrategies.top, investmentPlan.top);
+      expect(investmentPlan.top, greaterThan(longTermGoals.bottom));
     },
   );
 
@@ -160,6 +157,11 @@ void main() {
     await tester.tap(find.byIcon(FLucideIcons.plus).first);
     await tester.pumpAndSettle();
 
+    expect(
+      find.text(l10n.wealthActionPanelAccountsAndLiabilitiesGroup),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.wealthActionPanelAssetsGroup), findsWidgets);
     expect(find.text(l10n.accountFormCreateTitle), findsOneWidget);
     expect(find.text(l10n.assetsAddCashTitle), findsOneWidget);
     expect(find.text(l10n.assetsAddDepositTitle), findsOneWidget);

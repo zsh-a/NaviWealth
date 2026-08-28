@@ -4418,44 +4418,20 @@ abstract class AppLocalizations {
   /// Subtitle for the Wealth quick-add panel
   ///
   /// In en, this message translates to:
-  /// **'Choose what you want to add to your net worth.'**
+  /// **'Choose what to add.'**
   String get wealthActionPanelSubtitle;
 
-  /// Summary under the progressive Asset choice in the Wealth quick-add panel
+  /// Wealth quick-add section heading for account containers and liabilities
   ///
   /// In en, this message translates to:
-  /// **'Cash, deposits, investments, or physical assets'**
-  String get wealthActionPanelAssetHint;
+  /// **'Accounts & liabilities'**
+  String get wealthActionPanelAccountsAndLiabilitiesGroup;
 
-  /// Subtitle for the second-level asset type picker
+  /// Wealth quick-add section heading for financial and physical assets
   ///
   /// In en, this message translates to:
-  /// **'Choose the type that best fits this asset.'**
-  String get wealthActionPanelAssetSubtitle;
-
-  /// Wealth quick-add section heading for account containers
-  ///
-  /// In en, this message translates to:
-  /// **'Accounts'**
-  String get wealthActionPanelAccountsGroup;
-
-  /// Wealth quick-add section heading for cash/deposit/wealth products
-  ///
-  /// In en, this message translates to:
-  /// **'Deposits & products'**
-  String get wealthActionPanelFinancialGroup;
-
-  /// Wealth quick-add section heading for real estate and vehicles
-  ///
-  /// In en, this message translates to:
-  /// **'Physical assets'**
-  String get wealthActionPanelPhysicalGroup;
-
-  /// Wealth quick-add section heading for liabilities
-  ///
-  /// In en, this message translates to:
-  /// **'Liabilities'**
-  String get wealthActionPanelLiabilitiesGroup;
+  /// **'Assets'**
+  String get wealthActionPanelAssetsGroup;
 
   /// Affordance under New account in the Accounts actions sheet
   ///

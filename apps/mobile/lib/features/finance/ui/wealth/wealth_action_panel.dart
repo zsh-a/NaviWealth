@@ -11,11 +11,10 @@ import '../../composition/finance_route_paths.dart';
 /// Wealth-scoped quick-add panel.
 ///
 /// Surfaced from the Wealth hub's "+" header action. Lists only the
-/// **structural** entries — anything that creates a new wealth
-/// container or asset / liability instance. Activities (record an
-/// expense, log a trade, transfer cash) live on the Activity page's
-/// action panel instead, so this menu reads as "what kind of thing am
-/// I adding to my net worth?".
+/// **structural** entries — anything that creates a new wealth container or
+/// asset / liability instance. Activities (record an expense, log a trade,
+/// transfer cash) live on the Activity page's action panel instead, so this
+/// menu reads as "what kind of thing am I adding to my net worth?".
 ///
 /// Renamed from `showAccountsActionPanel` under the IA contract — the
 /// l10n strings still use the legacy `accountsAction*` keys (their
@@ -31,7 +30,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _WealthActionSection(
-          title: l10n.wealthObjectsTitle,
+          title: l10n.wealthActionPanelAccountsAndLiabilitiesGroup,
           actions: [
             _WealthAction(
               icon: FLucideIcons.landmark,
@@ -57,7 +56,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
         ),
         const SizedBox(height: AppSpacing.s16),
         _WealthActionSection(
-          title: l10n.wealthActionPanelFinancialGroup,
+          title: l10n.wealthActionPanelAssetsGroup,
           actions: [
             _WealthAction(
               icon: FLucideIcons.wallet,
@@ -89,12 +88,6 @@ Future<void> showWealthActionPanel(BuildContext context) {
                 FinanceRoutes.wealthNewWealth,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        _WealthActionSection(
-          title: l10n.wealthActionPanelPhysicalGroup,
-          actions: [
             _WealthAction(
               icon: FLucideIcons.house,
               title: l10n.physicalAssetAddRealEstate,
