@@ -102,9 +102,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planInvestmentPlanTitle => '投资';
 
   @override
-  String get planIncomeStrategiesTitle => '收益策略';
-
-  @override
   String planExploreActiveOptions(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2477,7 +2474,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityActionConvertHint => '在同一账户内换汇';
 
   @override
-  String get accountsActionsTitle => '添加资产项目';
+  String get wealthActionsTitle => '添加资产项目';
 
   @override
   String get wealthActionPanelSubtitle => '选择要添加的对象。';
@@ -2489,10 +2486,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthActionPanelAssetsGroup => '资产';
 
   @override
-  String get accountsActionAccountHint => '银行、券商或加密账户';
+  String get wealthActionAccountHint => '银行、券商或加密账户';
 
   @override
-  String get accountsActionLiabilityHint => '房贷、车贷或信用余额';
+  String get wealthActionLiabilityHint => '房贷、车贷或信用余额';
 
   @override
   String get superFabTrade => '交易';
@@ -2502,9 +2499,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get superFabIncome => '收入';
-
-  @override
-  String get superFabAsset => '资产';
 
   @override
   String get superFabTransfer => '转账';

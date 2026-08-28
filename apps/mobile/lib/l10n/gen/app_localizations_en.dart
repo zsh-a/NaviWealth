@@ -104,9 +104,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planInvestmentPlanTitle => 'Investing';
 
   @override
-  String get planIncomeStrategiesTitle => 'Income strategies';
-
-  @override
   String planExploreActiveOptions(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2584,7 +2581,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Exchange currency inside one account';
 
   @override
-  String get accountsActionsTitle => 'Add wealth item';
+  String get wealthActionsTitle => 'Add wealth item';
 
   @override
   String get wealthActionPanelSubtitle => 'Choose what to add.';
@@ -2597,10 +2594,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthActionPanelAssetsGroup => 'Assets';
 
   @override
-  String get accountsActionAccountHint => 'Bank, brokerage or crypto account';
+  String get wealthActionAccountHint => 'Bank, brokerage or crypto account';
 
   @override
-  String get accountsActionLiabilityHint => 'Mortgage, loan or credit balance';
+  String get wealthActionLiabilityHint => 'Mortgage, loan or credit balance';
 
   @override
   String get superFabTrade => 'Trade';
@@ -2610,9 +2607,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get superFabIncome => 'Income';
-
-  @override
-  String get superFabAsset => 'Asset';
 
   @override
   String get superFabTransfer => 'Transfer';

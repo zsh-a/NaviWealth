@@ -16,14 +16,11 @@ import '../../composition/finance_route_paths.dart';
 /// transfer cash) live on the Activity page's action panel instead, so this
 /// menu reads as "what kind of thing am I adding to my net worth?".
 ///
-/// Renamed from `showAccountsActionPanel` under the IA contract — the
-/// l10n strings still use the legacy `accountsAction*` keys (their
-/// English / Chinese copy is correct regardless of the hub label).
 Future<void> showWealthActionPanel(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
     context: context,
-    title: l10n.accountsActionsTitle,
+    title: l10n.wealthActionsTitle,
     subtitle: l10n.wealthActionPanelSubtitle,
     maxHeightFactor: 0.9,
     builder: (sheetContext) => Column(
@@ -35,7 +32,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
             _WealthAction(
               icon: FLucideIcons.landmark,
               title: l10n.accountFormCreateTitle,
-              subtitle: l10n.accountsActionAccountHint,
+              subtitle: l10n.wealthActionAccountHint,
               onPress: () => _closeAndPush(
                 sheetContext,
                 context,
@@ -45,7 +42,7 @@ Future<void> showWealthActionPanel(BuildContext context) {
             _WealthAction(
               icon: FLucideIcons.arrowDownRight,
               title: l10n.superFabLiability,
-              subtitle: l10n.accountsActionLiabilityHint,
+              subtitle: l10n.wealthActionLiabilityHint,
               onPress: () => _closeAndPush(
                 sheetContext,
                 context,

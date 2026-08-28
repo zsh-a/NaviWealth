@@ -260,12 +260,6 @@ abstract class AppLocalizations {
   /// **'Investing'**
   String get planInvestmentPlanTitle;
 
-  /// Plan hub section for dividend and options-income workflows
-  ///
-  /// In en, this message translates to:
-  /// **'Income strategies'**
-  String get planIncomeStrategiesTitle;
-
   /// No description provided for @planExploreActiveOptions.
   ///
   /// In en, this message translates to:
@@ -4409,11 +4403,11 @@ abstract class AppLocalizations {
   /// **'Exchange currency inside one account'**
   String get activityActionConvertHint;
 
-  /// Title of the Accounts-page '+' action sheet — only structural creation (account/asset/liability)
+  /// Title of the Wealth-page '+' action sheet for structural creation
   ///
   /// In en, this message translates to:
   /// **'Add wealth item'**
-  String get accountsActionsTitle;
+  String get wealthActionsTitle;
 
   /// Subtitle for the Wealth quick-add panel
   ///
@@ -4433,17 +4427,17 @@ abstract class AppLocalizations {
   /// **'Assets'**
   String get wealthActionPanelAssetsGroup;
 
-  /// Affordance under New account in the Accounts actions sheet
+  /// Affordance under New account in the Wealth actions sheet
   ///
   /// In en, this message translates to:
   /// **'Bank, brokerage or crypto account'**
-  String get accountsActionAccountHint;
+  String get wealthActionAccountHint;
 
-  /// Affordance under New liability in the Accounts actions sheet
+  /// Affordance under New liability in the Wealth actions sheet
   ///
   /// In en, this message translates to:
   /// **'Mortgage, loan or credit balance'**
-  String get accountsActionLiabilityHint;
+  String get wealthActionLiabilityHint;
 
   /// No description provided for @superFabTrade.
   ///
@@ -4462,12 +4456,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Income'**
   String get superFabIncome;
-
-  /// No description provided for @superFabAsset.
-  ///
-  /// In en, this message translates to:
-  /// **'Asset'**
-  String get superFabAsset;
 
   /// No description provided for @superFabTransfer.
   ///

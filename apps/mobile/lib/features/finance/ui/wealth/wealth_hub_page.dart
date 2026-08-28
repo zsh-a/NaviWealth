@@ -41,7 +41,7 @@ class WealthHubPage extends ConsumerWidget {
       actions: [
         ShellHeaderActionSpec(
           icon: FLucideIcons.plus,
-          label: l10n.accountsActionsTitle,
+          label: l10n.wealthActionsTitle,
           onPress: () => showWealthActionPanel(context),
         ),
       ],
