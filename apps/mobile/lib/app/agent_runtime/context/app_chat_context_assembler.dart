@@ -13,9 +13,34 @@ import 'package:naviwealth/core/ai/contracts/memory_record.dart';
 import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart';
 import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_fact.dart';
 import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_snapshot.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_context_block_prep.dart';
+
+/// Builds the trusted, app-owned instruction block for an interactive chat
+/// turn.  It is deliberately a ContextBlock instead of a synthetic user
+/// message so the Rust runtime can keep it pinned as system context while
+/// still budgeting and snapshotting it with the rest of the turn.
+AgentRuntimeContextBlock buildAppChatSystemInstructionBlock({
+  required String systemPrompt,
+  required DateTime now,
+}) {
+  final prompt = systemPrompt.trim().isEmpty
+      ? kDeviceSystemPromptBase
+      : systemPrompt.trim();
+  return AgentRuntimeContextBlock(
+    id: 'naviwealth:system_instructions',
+    kind: AgentRuntimeContextBlockKind.runtimeInstructions,
+    source: 'naviwealth.device_system_prompt',
+    priority: 1000,
+    content: '$prompt\n\n当前时间: ${now.toUtc().toIso8601String()}',
+    metadata: const <String, Object?>{
+      'scope': 'active_domains',
+      'trusted_as_instruction': true,
+    },
+  );
+}
 
 Future<List<AgentRuntimeContextBlock>> prepareAppChatContextBlocks({
   required ContextBuilder contextBuilder,

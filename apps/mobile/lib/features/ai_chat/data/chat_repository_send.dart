@@ -95,13 +95,10 @@ mixin _ChatRepositorySend {
 
     final ctx = buildContextWindow(history: history, pending: content);
 
-    // Prepend route context without using a system role; the backend owns the
-    // system prompt and accepts only user / assistant turns on this endpoint.
-    final wireMessages = <WireMessage>[
-      if (systemContext != null && systemContext.isNotEmpty)
-        WireMessage(role: 'user', content: 'Context:\n$systemContext'),
-      ...ctx.wire,
-    ];
+    // Route state is soft context, not a user turn. Keeping it in the typed
+    // context channel prevents it from polluting the conversational
+    // transcript or looking like an additional user request.
+    final wireMessages = <WireMessage>[...ctx.wire];
     if (ctx.droppedTurns > 0) {
       await insertSystemNotice(
         sessionId: sessionId,
@@ -110,17 +107,33 @@ mixin _ChatRepositorySend {
       );
     }
     final portfolioSnapshot = await _portfolioSnapshotReader?.call();
-    var contextBlocks = const <AgentRuntimeContextBlock>[];
+    var contextBlocks = <AgentRuntimeContextBlock>[
+      if (systemContext case final routeContext?
+          when routeContext.trim().isNotEmpty)
+        AgentRuntimeContextBlock(
+          id: 'naviwealth:route_context',
+          kind: AgentRuntimeContextBlockKind.resource,
+          source: 'naviwealth.route_context',
+          priority: 80,
+          content: <String, Object?>{'context': routeContext},
+          metadata: const <String, Object?>{
+            'scope': 'current_route',
+            'trusted_as_instruction': false,
+          },
+        ),
+    ];
     final contextBlockPrep = _contextBlockPrep;
     if (contextBlockPrep != null) {
       try {
-        contextBlocks = await contextBlockPrep(
-          ChatContextPrepRequest(
-            ownerUserId: ownerUserId,
-            sessionId: sessionId,
-            turnId: assistantId,
-            userMessage: content,
-            systemContext: systemContext,
+        contextBlocks.addAll(
+          await contextBlockPrep(
+            ChatContextPrepRequest(
+              ownerUserId: ownerUserId,
+              sessionId: sessionId,
+              turnId: assistantId,
+              userMessage: content,
+              systemContext: systemContext,
+            ),
           ),
         );
       } catch (_) {

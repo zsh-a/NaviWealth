@@ -67,30 +67,50 @@ extension ToolInvocationStatusX on ToolInvocationStatus {
 ///    visible text is incomplete.
 ///  * [toolUse] — backend hit `MAX_TOOL_ROUNDS` while still wanting to
 ///    call tools; emitted alongside an `error` frame from the backend.
+///  * [requiresInteraction] — the turn is paused at a pending human
+///    interaction; the interaction card owns the next action.
 ///  * [refusal] — model declined to answer.
 ///  * [error] — stream ended before `done`, or the backend reported an
 ///    upstream failure.
 ///  * [unknown] — anything else, surfaced for forward compat so we don't
 ///    silently swallow new Anthropic stop reasons.
-enum ChatStopReason { endTurn, maxTokens, toolUse, refusal, error, unknown }
+enum ChatStopReason {
+  endTurn,
+  maxTokens,
+  toolUse,
+  requiresInteraction,
+  refusal,
+  error,
+  unknown,
+}
 
 extension ChatStopReasonX on ChatStopReason {
   /// `true` when the user should be told the reply may be incomplete.
   /// `endTurn` is the only "all good" outcome.
-  bool get isAbnormal => this != ChatStopReason.endTurn;
+  bool get isAbnormal => switch (this) {
+    ChatStopReason.endTurn || ChatStopReason.requiresInteraction => false,
+    ChatStopReason.maxTokens ||
+    ChatStopReason.toolUse ||
+    ChatStopReason.refusal ||
+    ChatStopReason.error ||
+    ChatStopReason.unknown => true,
+  };
 
   bool get allowsContinuation => switch (this) {
     ChatStopReason.maxTokens ||
     ChatStopReason.toolUse ||
     ChatStopReason.error ||
     ChatStopReason.unknown => true,
-    ChatStopReason.refusal || ChatStopReason.endTurn => false,
+    ChatStopReason.endTurn ||
+    ChatStopReason.requiresInteraction ||
+    ChatStopReason.refusal => false,
   };
 
   static ChatStopReason parse(String? wire) => switch (wire) {
     'end_turn' => ChatStopReason.endTurn,
     'max_tokens' => ChatStopReason.maxTokens,
     'tool_use' => ChatStopReason.toolUse,
+    'requires_interaction' => ChatStopReason.requiresInteraction,
     'refusal' || 'stop_sequence' => ChatStopReason.refusal,
     'error' => ChatStopReason.error,
     null => ChatStopReason.unknown,

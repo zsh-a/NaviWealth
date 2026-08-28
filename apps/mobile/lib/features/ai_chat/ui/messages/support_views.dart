@@ -18,6 +18,7 @@ class _TruncationFooter extends ConsumerWidget {
     final label = switch (reason) {
       ChatStopReason.maxTokens => l10n.aiChatTruncatedMaxTokens,
       ChatStopReason.toolUse => l10n.aiChatTruncatedToolBudget,
+      ChatStopReason.requiresInteraction => '',
       ChatStopReason.refusal => l10n.aiChatTruncatedRefusal,
       ChatStopReason.error => l10n.aiChatTruncatedNetwork,
       ChatStopReason.unknown => l10n.aiChatTruncatedUnknown,

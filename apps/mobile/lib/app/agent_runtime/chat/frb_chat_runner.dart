@@ -24,6 +24,10 @@ import 'package:naviwealth/core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
 
 const String kFrbChatRunnerAgentId = 'ai_chat';
+const String _kInteractionEnvelopeErrorCode =
+    'frb_chat_interaction_envelope_invalid';
+const String _kInteractionEnvelopeErrorMessage =
+    'ask_user tool result must include a valid pending chat interaction envelope';
 
 class FrbChatRunner implements ChatAgent {
   FrbChatRunner({
@@ -146,8 +150,14 @@ class FrbChatRunner implements ChatAgent {
         chatState = recovery.chatState;
         toolResults = recovery.toolResults;
         roundsUsed = recovery.round;
-        if (recovery.awaitingUser && interactionResponse == null) {
-          yield DoneEvent(stopReason: 'end_turn', rounds: recovery.round);
+        suspendInteraction = recovery.suspendInteraction;
+        if (record.status == 'requires_interaction' &&
+            recovery.awaitingUser &&
+            interactionResponse == null) {
+          yield DoneEvent(
+            stopReason: 'requires_interaction',
+            rounds: recovery.round,
+          );
           return;
         }
       }
@@ -373,7 +383,7 @@ class FrbChatRunner implements ChatAgent {
             expectedRevision: snapshotRecord?.revision,
           );
         }
-        yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
+        yield DoneEvent(stopReason: 'requires_interaction', rounds: roundsUsed);
         return;
       }
       if (state.status != 'requires_tool_results') {
@@ -525,10 +535,27 @@ class FrbChatRunner implements ChatAgent {
           );
         }
         if (call.name == kAskUserToolName && !outcome.result.isError) {
+          final interaction = _pendingInteractionFromToolResult(outcome.result);
+          if (interaction == null) {
+            yield frbLlmSpan(
+              round: roundsUsed == 0 ? nextRound : roundsUsed,
+              roundId: roundId,
+              startedAt: roundStart,
+              state: state,
+              requestedModel: model,
+              status: AiSpanStatus.error,
+              errorCode: _kInteractionEnvelopeErrorCode,
+              errorMessage: _kInteractionEnvelopeErrorMessage,
+            );
+            yield const ErrorEvent(
+              _kInteractionEnvelopeErrorMessage,
+              code: _kInteractionEnvelopeErrorCode,
+            );
+            yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+            return;
+          }
           awaitingUser = true;
-          suspendInteraction = _pendingInteractionFromToolResult(
-            outcome.result,
-          );
+          suspendInteraction = interaction;
         }
       }
       if (readOnlyBatch.isNotEmpty) {
@@ -634,6 +661,7 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
       events: const <AiChatEvent>[],
       round: round,
       awaitingUser: true,
+      suspendInteraction: null,
     );
   }
   var currentRecord = record;
@@ -643,6 +671,7 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
   final events = <AiChatEvent>[];
   final results = <Map<String, Object?>>[];
   var awaitingUser = false;
+  Map<String, Object?>? suspendInteraction;
   final rawDispatches = snapshot['tool_dispatches'];
   if (rawDispatches is! List) {
     return _ChatSnapshotRecovery.failed(
@@ -670,8 +699,31 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
         'snapshot.tool_dispatch.result',
       );
       results.add(result);
+      // A completed dispatch may be restored after the native stream was
+      // interrupted. Re-emit its result so the current chat subscriber sees
+      // the recovered tool lifecycle before the next model round.
+      events.add(
+        ToolCallEvent(id: call.stringId, name: call.name, input: call.input),
+      );
+      events.add(
+        ToolResultEvent(
+          id: call.stringId,
+          name: call.name,
+          output: result['output'],
+        ),
+      );
       if (call.name == kAskUserToolName && result['is_error'] != true) {
+        final interaction = _pendingInteractionFromChatToolResult(result);
+        if (interaction == null) {
+          return _ChatSnapshotRecovery.failed(
+            record: currentRecord,
+            round: round,
+            code: _kInteractionEnvelopeErrorCode,
+            message: _kInteractionEnvelopeErrorMessage,
+          );
+        }
         awaitingUser = true;
+        suspendInteraction = interaction;
       }
       continue;
     }
@@ -713,6 +765,9 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
       );
     }
     final startedAt = DateTime.now().toUtc();
+    events.add(
+      ToolCallEvent(id: call.stringId, name: call.name, input: call.input),
+    );
     events.add(_toolProgress(call, startedAt));
     snapshot = _withDispatchState(
       snapshot,
@@ -744,7 +799,17 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
       expectedRevision: currentRecord.revision,
     );
     if (call.name == kAskUserToolName && !outcome.result.isError) {
+      final interaction = _pendingInteractionFromToolResult(outcome.result);
+      if (interaction == null) {
+        return _ChatSnapshotRecovery.failed(
+          record: currentRecord,
+          round: round,
+          code: _kInteractionEnvelopeErrorCode,
+          message: _kInteractionEnvelopeErrorMessage,
+        );
+      }
       awaitingUser = true;
+      suspendInteraction = interaction;
     }
   }
   return _ChatSnapshotRecovery(
@@ -754,6 +819,7 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
     events: events,
     round: round,
     awaitingUser: awaitingUser,
+    suspendInteraction: suspendInteraction,
   );
 }
 
@@ -868,6 +934,7 @@ final class _ChatSnapshotRecovery {
     required this.events,
     required this.round,
     required this.awaitingUser,
+    required this.suspendInteraction,
   }) : errorCode = null,
        errorMessage = null;
 
@@ -880,6 +947,7 @@ final class _ChatSnapshotRecovery {
        toolResults = const <Map<String, Object?>>[],
        events = const <AiChatEvent>[],
        awaitingUser = false,
+       suspendInteraction = null,
        errorCode = code,
        errorMessage = message;
 
@@ -889,6 +957,7 @@ final class _ChatSnapshotRecovery {
   final List<AiChatEvent> events;
   final int round;
   final bool awaitingUser;
+  final Map<String, Object?>? suspendInteraction;
   final String? errorCode;
   final String? errorMessage;
 }
@@ -907,10 +976,20 @@ bool _canParallelizeTool(AgentRuntimeToolCall call, Set<String> readOnlyTools) {
 
 Map<String, Object?>? _pendingInteractionFromToolResult(
   AgentRuntimeToolResult result,
+) => _pendingInteractionFromOutput(result.output);
+
+Map<String, Object?>? _pendingInteractionFromChatToolResult(
+  Map<String, Object?> result,
 ) {
-  if (result.isError) return null;
-  final output = frbObjectOrNull(result.output);
-  final interaction = AiInteractionEnvelope.tryParse(output?['interaction']);
+  if (result['is_error'] == true) return null;
+  return _pendingInteractionFromOutput(result['output']);
+}
+
+Map<String, Object?>? _pendingInteractionFromOutput(Object? output) {
+  final outputObject = frbObjectOrNull(output);
+  final interaction = AiInteractionEnvelope.tryParse(
+    outputObject?['interaction'],
+  );
   if (interaction == null ||
       interaction.status != AiInteractionStatus.pending ||
       interaction.resumeKind != AiInteractionResumeKind.chatTurn) {
@@ -998,9 +1077,8 @@ Stream<Map<String, Object?>> _cancelableFrbStream(
   }
 
   final iterator = StreamIterator<Map<String, Object?>>(source);
-  final cancellation = _waitForCancel(
-    cancelToken,
-  ).then((_) => const _FrbStreamOutcome.cancelled());
+  final cancellation = _waitForCancel(cancelToken)
+      .then((_) => const _FrbStreamOutcome.cancelled());
   try {
     while (true) {
       if (cancelToken.isCancelled) {

@@ -463,6 +463,7 @@ class ChatHistoryStore {
     ChatStopReason.endTurn => 'end_turn',
     ChatStopReason.maxTokens => 'max_tokens',
     ChatStopReason.toolUse => 'tool_use',
+    ChatStopReason.requiresInteraction => 'requires_interaction',
     ChatStopReason.refusal => 'refusal',
     ChatStopReason.error => 'error',
     ChatStopReason.unknown => 'unknown',

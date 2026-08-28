@@ -69,6 +69,18 @@ EventRecord _event({
 }
 
 void main() {
+  test('builds a trusted system block for the active domain prompt', () {
+    final block = buildAppChatSystemInstructionBlock(
+      systemPrompt: 'FinanceOS and HealthOS are active.',
+      now: _now,
+    );
+
+    expect(block.kind, AgentRuntimeContextBlockKind.runtimeInstructions);
+    expect(block.content, contains('FinanceOS and HealthOS are active.'));
+    expect(block.content, contains('当前时间: 2026-07-23T00:00:00.000Z'));
+    expect(block.metadata['trusted_as_instruction'], isTrue);
+  });
+
   test(
     'inactive domain memories and events never enter chat context',
     () async {

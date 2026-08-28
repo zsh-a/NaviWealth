@@ -62,14 +62,27 @@ void main() {
     );
   });
 
+  test('accepts a response-less interaction pause event', () {
+    final event = FrbChatStreamEvent.parse(const <String, Object?>{
+      'kind': 'round_finished',
+      'round': 1,
+      'metadata': <String, Object?>{
+        'status': 'requires_interaction',
+        'chat_state': <String, Object?>{
+          'pending_interaction': <String, Object?>{},
+        },
+      },
+    });
+
+    expect(event, isA<FrbChatRoundFinishedEvent>());
+    expect((event as FrbChatRoundFinishedEvent).response, isEmpty);
+  });
+
   test('parses the shared agent chat turn event fixture', () {
-    final fixture =
-        jsonDecode(
-              File(
-                '../../docs/fixtures/agent_chat_turn_events.json',
-              ).readAsStringSync(),
-            )
-            as List<Object?>;
+    final fixture = jsonDecode(
+      File('../../docs/fixtures/agent_chat_turn_events.json')
+          .readAsStringSync(),
+    ) as List<Object?>;
     final events = [
       for (final raw in fixture)
         FrbChatStreamEvent.parse((raw as Map).cast<String, Object?>()),

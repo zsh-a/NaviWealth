@@ -332,48 +332,51 @@ void main() {
     ]);
   });
 
-  test('resumes completed tool results from a persisted chat snapshot', () async {
-    final store = InMemoryAgentRuntimeChatSnapshotStore();
-    await store.save(
-      snapshot: _chatRecoverySnapshot(dispatchStatus: 'completed'),
-    );
-    final streamBridge = _streamBridge(
-      _FakeLlmBridge(),
-      events: const <String>[
-        '{"kind":"round_finished","response":{"content":"recovered","finish_reason":"stop"},"round":2,"metadata":{"status":"completed","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-recovery","provider":"mock","model":"mock","messages":[],"round":2,"pending_tool_calls":[]}}}',
-        '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
-      ],
-    );
-    var toolCalls = 0;
-    final runner = FrbChatRunner(
-      streamBridge: streamBridge,
-      snapshotStore: store,
-      toolLineHandler: (_) async {
-        toolCalls += 1;
-        throw StateError('completed tools must not replay');
-      },
-    );
+  test(
+    'resumes completed tool results from a persisted chat snapshot',
+    () async {
+      final store = InMemoryAgentRuntimeChatSnapshotStore();
+      await store.save(
+        snapshot: _chatRecoverySnapshot(dispatchStatus: 'completed'),
+      );
+      final streamBridge = _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"round_finished","response":{"content":"recovered","finish_reason":"stop"},"round":2,"metadata":{"status":"completed","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-recovery","provider":"mock","model":"mock","messages":[],"round":2,"pending_tool_calls":[]}}}',
+          '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
+        ],
+      );
+      var toolCalls = 0;
+      final runner = FrbChatRunner(
+        streamBridge: streamBridge,
+        snapshotStore: store,
+        toolLineHandler: (_) async {
+          toolCalls += 1;
+          throw StateError('completed tools must not replay');
+        },
+      );
 
-    final events = await runner
-        .runTurn(
-          const ChatAgentTurnRequest(
-            turnId: 'turn-recovery',
-            messages: <ChatAgentMessage>[
-              ChatAgentMessage(role: 'user', content: 'resume'),
-            ],
-          ),
-        )
-        .toList();
+      final events = await runner
+          .runTurn(
+            const ChatAgentTurnRequest(
+              turnId: 'turn-recovery',
+              messages: <ChatAgentMessage>[
+                ChatAgentMessage(role: 'user', content: 'resume'),
+              ],
+            ),
+          )
+          .toList();
 
-    expect(toolCalls, 0);
-    expect(streamBridge.requests, hasLength(1));
-    final metadata =
-        streamBridge.requests.single['metadata'] as Map<String, Object?>;
-    expect(metadata['chat_state'], isA<Map<String, Object?>>());
-    expect(metadata['tool_results'], hasLength(1));
-    expect(events.whereType<TextEvent>().single.text, 'recovered');
-    expect(await store.loadResumable('turn-recovery'), isNull);
-  });
+      expect(toolCalls, 0);
+      expect(streamBridge.requests, hasLength(1));
+      final metadata =
+          streamBridge.requests.single['metadata'] as Map<String, Object?>;
+      expect(metadata['chat_state'], isA<Map<String, Object?>>());
+      expect(metadata['tool_results'], hasLength(1));
+      expect(events.whereType<TextEvent>().single.text, 'recovered');
+      expect(await store.loadResumable('turn-recovery'), isNull);
+    },
+  );
 
   test('does not replay interrupted at-most-once tools', () async {
     final store = InMemoryAgentRuntimeChatSnapshotStore();
@@ -507,256 +510,431 @@ void main() {
     expect(done.rounds, 1);
   });
 
-  test('stops after ask_user tool result without another model round', () async {
-    final bridge = _FakeLlmBridge();
-    final streamBridge = _streamBridgeBatches(
-      bridge,
-      eventBatches: const <List<String>>[
-        <String>[
-          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
-          '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
-          '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"}]},"metadata":{"stream":true}}',
-          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"status":"requires_tool_results","chat_state":{"round":1,"pending_tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"}]}}]},"tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"}]}}]}}',
-        ],
-        <String>[
-          '{"kind":"delta","content":"should not run","metadata":{"stream":true}}',
-          '{"kind":"finished","response":{"content":"should not run","finish_reason":"stop"},"metadata":{"stream":true}}',
-        ],
-      ],
-    );
-    final runner = FrbChatRunner(
-      streamBridge: streamBridge,
-      toolLineHandler: (line) async {
-        return jsonEncode(<String, Object?>{
-          'jsonrpc': '2.0',
-          'id': 'decision_1',
-          'result': <String, Object?>{
-            'type': 'decision_request',
-            'question': 'Pick one',
-            'options': <Object?>[
-              <String, Object?>{'id': 'a', 'label': 'A'},
-            ],
-          },
-        });
-      },
-    );
-
-    final events = await runner
-        .run(
-          messages: const <WireMessage>[
-            WireMessage(role: 'user', content: 'Need a decision'),
-          ],
-        )
-        .toList();
-
-    expect(streamBridge.requests, hasLength(1));
-    expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
-    expect(events.whereType<TextEvent>(), isEmpty);
-    final done = events.last as DoneEvent;
-    expect(done.stopReason, 'end_turn');
-    expect(done.rounds, 1);
-  });
-
   test(
-    'suspends ask_user as a durable pending interaction without another model response',
+    'rejects ask_user results without a valid interaction envelope',
     () async {
-      final interaction = <String, Object?>{
-        'protocol_version': 'agent.v1',
-        'interaction_id': 'interaction-decision-1',
-        'kind': 'choice',
-        'mode': 'one_tap',
-        'status': 'pending',
-        'title': 'Pick one',
-        'prompt': 'Choose the option to continue.',
-        'options': const <Object?>[
-          <String, Object?>{
-            'id': 'a',
-            'label': 'A',
-            'description': '',
-            'metadata': <String, Object?>{},
-          },
-          <String, Object?>{
-            'id': 'b',
-            'label': 'B',
-            'description': '',
-            'metadata': <String, Object?>{},
-          },
-        ],
-        'response_schema': const <String, Object?>{},
-        'payload': const <String, Object?>{},
-        'metadata': const <String, Object?>{},
-        'resume': const <String, Object?>{'kind': 'chat_turn'},
-        'created_at': '2026-07-23T00:00:00.000Z',
-      };
-      final pendingState = <String, Object?>{
-        'protocol_version': 'agent.v1',
-        'turn_id': 'turn-interaction',
-        'provider': 'mock',
-        'model': 'mock',
-        'messages': const <Object?>[],
-        'round': 1,
-        'pending_tool_calls': const <Object?>[],
-        'pending_interaction': interaction,
-      };
+      final bridge = _FakeLlmBridge();
       final streamBridge = _streamBridgeBatches(
-        _FakeLlmBridge(),
-        eventBatches: <List<String>>[
-          const <String>[
-            '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
-            '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
-            '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]},"metadata":{"stream":true}}',
-            '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-interaction","provider":"mock","model":"mock","messages":[],"round":1,"pending_tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]}}]},"tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]}}]}}',
-          ],
+        bridge,
+        eventBatches: const <List<String>>[
           <String>[
             '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
-            jsonEncode(<String, Object?>{
-              'kind': 'round_finished',
-              'response': const <String, Object?>{
-                'content': '',
-                'finish_reason': 'stop',
-              },
-              'round': 1,
-              'metadata': <String, Object?>{
-                'status': 'requires_interaction',
-                'chat_state': pendingState,
-              },
-            }),
-            '{"kind":"done","round":1,"metadata":{"stop_reason":"end_turn"}}',
+            '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
+            '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"}]},"metadata":{"stream":true}}',
+            '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call","usage":{"input_tokens":4,"output_tokens":2,"total_tokens":6}},"metadata":{"status":"requires_tool_results","chat_state":{"round":1,"pending_tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"}]}}]},"tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"}]}}]}}',
+          ],
+          <String>[
+            '{"kind":"delta","content":"should not run","metadata":{"stream":true}}',
+            '{"kind":"finished","response":{"content":"should not run","finish_reason":"stop"},"metadata":{"stream":true}}',
           ],
         ],
       );
+      final runner = FrbChatRunner(
+        streamBridge: streamBridge,
+        toolLineHandler: (line) async {
+          return jsonEncode(<String, Object?>{
+            'jsonrpc': '2.0',
+            'id': 'decision_1',
+            'result': <String, Object?>{
+              'type': 'decision_request',
+              'question': 'Pick one',
+              'options': <Object?>[
+                <String, Object?>{'id': 'a', 'label': 'A'},
+              ],
+            },
+          });
+        },
+      );
+
+      final events = await runner
+          .run(
+            messages: const <WireMessage>[
+              WireMessage(role: 'user', content: 'Need a decision'),
+            ],
+          )
+          .toList();
+
+      expect(streamBridge.requests, hasLength(1));
+      expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
+      expect(events.whereType<TextEvent>(), isEmpty);
+      final error = events.whereType<ErrorEvent>().single;
+      expect(error.code, 'frb_chat_interaction_envelope_invalid');
+      expect(
+        error.message,
+        'ask_user tool result must include a valid pending chat interaction envelope',
+      );
+      final done = events.last as DoneEvent;
+      expect(done.stopReason, 'error');
+      expect(done.rounds, 1);
+    },
+  );
+
+  test('suspends ask_user as a durable pending interaction without another model response', () async {
+    final interaction = <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'interaction_id': 'interaction-decision-1',
+      'kind': 'choice',
+      'mode': 'one_tap',
+      'status': 'pending',
+      'title': 'Pick one',
+      'prompt': 'Choose the option to continue.',
+      'options': const <Object?>[
+        <String, Object?>{
+          'id': 'a',
+          'label': 'A',
+          'description': '',
+          'metadata': <String, Object?>{},
+        },
+        <String, Object?>{
+          'id': 'b',
+          'label': 'B',
+          'description': '',
+          'metadata': <String, Object?>{},
+        },
+      ],
+      'response_schema': const <String, Object?>{},
+      'payload': const <String, Object?>{},
+      'metadata': const <String, Object?>{},
+      'resume': const <String, Object?>{'kind': 'chat_turn'},
+      'created_at': '2026-07-23T00:00:00.000Z',
+    };
+    final pendingState = <String, Object?>{
+      'protocol_version': 'agent.v1',
+      'turn_id': 'turn-interaction',
+      'provider': 'mock',
+      'model': 'mock',
+      'messages': const <Object?>[],
+      'round': 1,
+      'pending_tool_calls': const <Object?>[],
+      'pending_interaction': interaction,
+    };
+    final streamBridge = _streamBridgeBatches(
+      _FakeLlmBridge(),
+      eventBatches: <List<String>>[
+        const <String>[
+          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+          '{"kind":"tool_call_start","tool_call_id":"decision_1","tool_name":"ask_user","metadata":{"stream":true}}',
+          '{"kind":"tool_call_end","tool_call_id":"decision_1","tool_name":"ask_user","tool_input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]},"metadata":{"stream":true}}',
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-interaction","provider":"mock","model":"mock","messages":[],"round":1,"pending_tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]}}]},"tool_calls":[{"id":"decision_1","name":"ask_user","input":{"question":"Pick one","options":[{"id":"a","label":"A"},{"id":"b","label":"B"}]}}]}}',
+        ],
+        <String>[
+          '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}',
+          jsonEncode(<String, Object?>{
+            'kind': 'round_finished',
+            'round': 1,
+            'metadata': <String, Object?>{
+              'status': 'requires_interaction',
+              'chat_state': pendingState,
+            },
+          }),
+          '{"kind":"done","round":1,"metadata":{"stop_reason":"requires_interaction"}}',
+        ],
+      ],
+    );
+    final store = InMemoryAgentRuntimeChatSnapshotStore();
+    final runner = FrbChatRunner(
+      streamBridge: streamBridge,
+      snapshotStore: store,
+      toolLineHandler: (line) async => jsonEncode(<String, Object?>{
+        'jsonrpc': '2.0',
+        'id': 'decision_1',
+        'result': <String, Object?>{
+          'type': 'decision_request',
+          'question': 'Pick one',
+          'options': const <Object?>[
+            <String, Object?>{'id': 'a', 'label': 'A'},
+            <String, Object?>{'id': 'b', 'label': 'B'},
+          ],
+          'interaction': interaction,
+        },
+      }),
+    );
+
+    final events = await runner
+        .runTurn(
+          const ChatAgentTurnRequest(
+            turnId: 'turn-interaction',
+            messages: <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'Need a decision'),
+            ],
+          ),
+        )
+        .toList();
+
+    expect(streamBridge.requests, hasLength(2));
+    final secondMetadata =
+        streamBridge.requests[1]['metadata'] as Map<String, Object?>;
+    expect(secondMetadata['tool_results'], hasLength(1));
+    expect(secondMetadata['suspend_interaction'], interaction);
+    expect(events.whereType<TextEvent>(), isEmpty);
+    expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
+    final snapshot = store.debugRecord('turn-interaction');
+    expect(snapshot?.status, 'requires_interaction');
+    final snapshotState = snapshot?.snapshot['state'] as Map<String, Object?>?;
+    expect(snapshotState?['pending_tool_calls'], isEmpty);
+    expect(
+      (snapshotState?['pending_interaction'] as Map?)?['interaction_id'],
+      'interaction-decision-1',
+    );
+    final done = events.last as DoneEvent;
+    expect(done.stopReason, 'requires_interaction');
+  });
+
+  test(
+    'resumes a pending interaction through the original chat turn',
+    () async {
       final store = InMemoryAgentRuntimeChatSnapshotStore();
+      await store.save(
+        snapshot: <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'snapshot_version': 1,
+          'status': 'requires_interaction',
+          'state': <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'turn_id': 'turn-interaction-resume',
+            'provider': 'mock',
+            'model': 'mock',
+            'messages': const <Object?>[],
+            'round': 1,
+            'pending_tool_calls': const <Object?>[],
+            'pending_interaction': <String, Object?>{
+              'protocol_version': 'agent.v1',
+              'interaction_id': 'interaction-resume-1',
+              'kind': 'choice',
+              'mode': 'one_tap',
+              'status': 'pending',
+              'title': 'Pick one',
+              'options': const <Object?>[
+                <String, Object?>{'id': 'a', 'label': 'A'},
+                <String, Object?>{'id': 'b', 'label': 'B'},
+              ],
+              'response_schema': const <String, Object?>{},
+              'payload': const <String, Object?>{},
+              'metadata': const <String, Object?>{},
+              'resume': const <String, Object?>{'kind': 'chat_turn'},
+              'created_at': '2026-07-23T00:00:00Z',
+            },
+          },
+          'tool_dispatches': const <Object?>[],
+        },
+      );
+      final streamBridge = _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"started","round":1,"metadata":{"provider":"mock","model":"mock"}}',
+          '{"kind":"delta","content":"Continuing with A","round":2,"metadata":{"stream":true}}',
+          '{"kind":"round_finished","response":{"content":"Continuing with A","finish_reason":"stop"},"round":2,"metadata":{"status":"completed","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-interaction-resume","provider":"mock","model":"mock","messages":[],"round":2,"pending_tool_calls":[]}}}',
+          '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
+        ],
+      );
       final runner = FrbChatRunner(
         streamBridge: streamBridge,
         snapshotStore: store,
-        toolLineHandler: (line) async => jsonEncode(<String, Object?>{
-          'jsonrpc': '2.0',
-          'id': 'decision_1',
-          'result': <String, Object?>{
-            'type': 'decision_request',
-            'question': 'Pick one',
-            'options': const <Object?>[
-              <String, Object?>{'id': 'a', 'label': 'A'},
-              <String, Object?>{'id': 'b', 'label': 'B'},
-            ],
-            'interaction': interaction,
+      );
+
+      final events = await runner
+          .runTurn(
+            ChatAgentTurnRequest(
+              turnId: 'turn-interaction-resume',
+              messages: const <ChatAgentMessage>[
+                ChatAgentMessage(role: 'user', content: 'Choose A'),
+              ],
+              interactionResponse: AiInteractionResponse(
+                interactionId: 'interaction-resume-1',
+                action: AiInteractionAction.submit,
+                value: const <String, Object?>{'option_id': 'a'},
+                respondedAt: DateTime.utc(2026, 7, 23, 0, 1),
+              ),
+            ),
+          )
+          .toList();
+
+      expect(streamBridge.requests, hasLength(1));
+      final metadata =
+          streamBridge.requests.single['metadata'] as Map<String, Object?>;
+      expect(metadata['chat_state'], isA<Map<String, Object?>>());
+      expect(metadata, isNot(contains('tool_results')));
+      expect(
+        (metadata['interaction_response']
+            as Map<String, Object?>)['interaction_id'],
+        'interaction-resume-1',
+      );
+      expect(events.whereType<TextEvent>().single.text, 'Continuing with A');
+      expect((events.last as DoneEvent).stopReason, 'end_turn');
+      expect(await store.loadResumable('turn-interaction-resume'), isNull);
+    },
+  );
+
+  test(
+    'returns requires_interaction when recovery is waiting for the user',
+    () async {
+      final interaction = _pendingInteractionJson('interaction-recovered');
+      final store = InMemoryAgentRuntimeChatSnapshotStore();
+      await store.save(
+        snapshot: <String, Object?>{
+          'protocol_version': 'agent.v1',
+          'snapshot_version': 1,
+          'status': 'requires_interaction',
+          'state': <String, Object?>{
+            'protocol_version': 'agent.v1',
+            'turn_id': 'turn-recovered-interaction',
+            'provider': 'mock',
+            'model': 'mock',
+            'messages': const <Object?>[],
+            'round': 2,
+            'pending_tool_calls': const <Object?>[],
+            'pending_interaction': interaction,
           },
-        }),
+          'tool_dispatches': const <Object?>[],
+        },
+      );
+      final streamBridge = _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[],
+      );
+      final runner = FrbChatRunner(
+        streamBridge: streamBridge,
+        snapshotStore: store,
       );
 
       final events = await runner
           .runTurn(
             const ChatAgentTurnRequest(
-              turnId: 'turn-interaction',
+              turnId: 'turn-recovered-interaction',
               messages: <ChatAgentMessage>[
-                ChatAgentMessage(role: 'user', content: 'Need a decision'),
+                ChatAgentMessage(role: 'user', content: 'resume'),
               ],
             ),
           )
           .toList();
 
-      expect(streamBridge.requests, hasLength(2));
-      final secondMetadata =
-          streamBridge.requests[1]['metadata'] as Map<String, Object?>;
-      expect(secondMetadata['tool_results'], hasLength(1));
-      expect(secondMetadata['suspend_interaction'], interaction);
-      expect(events.whereType<TextEvent>(), isEmpty);
-      expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
-      final snapshot = store.debugRecord('turn-interaction');
-      expect(snapshot?.status, 'requires_interaction');
-      final snapshotState =
-          snapshot?.snapshot['state'] as Map<String, Object?>?;
-      expect(snapshotState?['pending_tool_calls'], isEmpty);
-      expect(
-        (snapshotState?['pending_interaction'] as Map?)?['interaction_id'],
-        'interaction-decision-1',
-      );
-      final done = events.last as DoneEvent;
-      expect(done.stopReason, 'end_turn');
+      expect(streamBridge.requests, isEmpty);
+      expect(events, hasLength(1));
+      expect((events.single as DoneEvent).stopReason, 'requires_interaction');
     },
   );
 
-  test('resumes a pending interaction through the original chat turn', () async {
-    final store = InMemoryAgentRuntimeChatSnapshotStore();
-    await store.save(
-      snapshot: <String, Object?>{
-        'protocol_version': 'agent.v1',
-        'snapshot_version': 1,
-        'status': 'requires_interaction',
-        'state': <String, Object?>{
+  test(
+    'recovery restores suspend_interaction from a completed ask_user call',
+    () async {
+      final interaction = _pendingInteractionJson('interaction-recovery');
+      final store = InMemoryAgentRuntimeChatSnapshotStore();
+      await store.save(
+        snapshot: <String, Object?>{
           'protocol_version': 'agent.v1',
-          'turn_id': 'turn-interaction-resume',
-          'provider': 'mock',
-          'model': 'mock',
-          'messages': const <Object?>[],
-          'round': 1,
-          'pending_tool_calls': const <Object?>[],
-          'pending_interaction': <String, Object?>{
+          'snapshot_version': 1,
+          'status': 'requires_tool_results',
+          'state': <String, Object?>{
             'protocol_version': 'agent.v1',
-            'interaction_id': 'interaction-resume-1',
-            'kind': 'choice',
-            'mode': 'one_tap',
-            'status': 'pending',
-            'title': 'Pick one',
-            'options': const <Object?>[
-              <String, Object?>{'id': 'a', 'label': 'A'},
-              <String, Object?>{'id': 'b', 'label': 'B'},
+            'turn_id': 'turn-recover-ask-user',
+            'provider': 'mock',
+            'model': 'mock',
+            'messages': const <Object?>[],
+            'round': 1,
+            'pending_tool_calls': const <Object?>[
+              <String, Object?>{
+                'id': 'decision-recovery',
+                'name': 'ask_user',
+                'input': <String, Object?>{
+                  'title': 'Pick one',
+                  'options': <Object?>[
+                    <String, Object?>{'label': 'A'},
+                    <String, Object?>{'label': 'B'},
+                  ],
+                },
+              },
             ],
-            'response_schema': const <String, Object?>{},
-            'payload': const <String, Object?>{},
-            'metadata': const <String, Object?>{},
-            'resume': const <String, Object?>{'kind': 'chat_turn'},
-            'created_at': '2026-07-23T00:00:00Z',
           },
+          'tool_dispatches': <Object?>[
+            <String, Object?>{
+              'call': <String, Object?>{
+                'id': 'decision-recovery',
+                'name': 'ask_user',
+                'input': <String, Object?>{
+                  'title': 'Pick one',
+                  'options': <Object?>[
+                    <String, Object?>{'label': 'A'},
+                    <String, Object?>{'label': 'B'},
+                  ],
+                },
+              },
+              'replay_policy': 'at_most_once',
+              'status': 'completed',
+              'result': <String, Object?>{
+                'tool_call_id': 'decision-recovery',
+                'tool_name': 'ask_user',
+                'output': <String, Object?>{
+                  'type': 'decision_request',
+                  'title': 'Pick one',
+                  'options': <Object?>[
+                    <String, Object?>{'id': 'a', 'label': 'A'},
+                    <String, Object?>{'id': 'b', 'label': 'B'},
+                  ],
+                  'interaction': interaction,
+                },
+                'is_error': false,
+                'outcome': <String, Object?>{
+                  'status': 'ok',
+                  'retryable': false,
+                  'details': <String, Object?>{},
+                },
+              },
+            },
+          ],
         },
-        'tool_dispatches': const <Object?>[],
-      },
-    );
-    final streamBridge = _streamBridge(
-      _FakeLlmBridge(),
-      events: const <String>[
-        '{"kind":"started","round":1,"metadata":{"provider":"mock","model":"mock"}}',
-        '{"kind":"delta","content":"Continuing with A","round":2,"metadata":{"stream":true}}',
-        '{"kind":"round_finished","response":{"content":"Continuing with A","finish_reason":"stop"},"round":2,"metadata":{"status":"completed","chat_state":{"protocol_version":"agent.v1","turn_id":"turn-interaction-resume","provider":"mock","model":"mock","messages":[],"round":2,"pending_tool_calls":[]}}}',
-        '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
-      ],
-    );
-    final runner = FrbChatRunner(
-      streamBridge: streamBridge,
-      snapshotStore: store,
-    );
+      );
+      final streamBridge = _streamBridge(
+        _FakeLlmBridge(),
+        events: <String>[
+          jsonEncode(<String, Object?>{
+            'kind': 'round_finished',
+            'round': 1,
+            'metadata': <String, Object?>{
+              'status': 'requires_interaction',
+              'chat_state': <String, Object?>{
+                'protocol_version': 'agent.v1',
+                'turn_id': 'turn-recover-ask-user',
+                'provider': 'mock',
+                'model': 'mock',
+                'messages': const <Object?>[],
+                'round': 1,
+                'pending_tool_calls': const <Object?>[],
+                'pending_interaction': interaction,
+              },
+            },
+          }),
+          '{"kind":"done","round":1,"metadata":{"stop_reason":"requires_interaction"}}',
+        ],
+      );
+      final runner = FrbChatRunner(
+        streamBridge: streamBridge,
+        snapshotStore: store,
+      );
 
-    final events = await runner
-        .runTurn(
-          ChatAgentTurnRequest(
-            turnId: 'turn-interaction-resume',
-            messages: const <ChatAgentMessage>[
-              ChatAgentMessage(role: 'user', content: 'Choose A'),
-            ],
-            interactionResponse: AiInteractionResponse(
-              interactionId: 'interaction-resume-1',
-              action: AiInteractionAction.submit,
-              value: const <String, Object?>{'option_id': 'a'},
-              respondedAt: DateTime.utc(2026, 7, 23, 0, 1),
+      final events = await runner
+          .runTurn(
+            const ChatAgentTurnRequest(
+              turnId: 'turn-recover-ask-user',
+              messages: <ChatAgentMessage>[
+                ChatAgentMessage(role: 'user', content: 'resume'),
+              ],
             ),
-          ),
-        )
-        .toList();
+          )
+          .toList();
 
-    expect(streamBridge.requests, hasLength(1));
-    final metadata =
-        streamBridge.requests.single['metadata'] as Map<String, Object?>;
-    expect(metadata['chat_state'], isA<Map<String, Object?>>());
-    expect(metadata, isNot(contains('tool_results')));
-    expect(
-      (metadata['interaction_response']
-          as Map<String, Object?>)['interaction_id'],
-      'interaction-resume-1',
-    );
-    expect(events.whereType<TextEvent>().single.text, 'Continuing with A');
-    expect((events.last as DoneEvent).stopReason, 'end_turn');
-    expect(await store.loadResumable('turn-interaction-resume'), isNull);
-  });
+      expect(streamBridge.requests, hasLength(1));
+      final metadata =
+          streamBridge.requests.single['metadata'] as Map<String, Object?>;
+      expect(metadata['tool_results'], hasLength(1));
+      expect(metadata['suspend_interaction'], interaction);
+      expect(events.whereType<ToolResultEvent>().single.name, 'ask_user');
+      expect((events.last as DoneEvent).stopReason, 'requires_interaction');
+      expect(
+        store.debugRecord('turn-recover-ask-user')?.status,
+        'requires_interaction',
+      );
+    },
+  );
 
   test('fails closed when an interaction response has no snapshot', () async {
     final streamBridge = _streamBridge(
@@ -972,8 +1150,10 @@ void main() {
     final cases = <String, String>{
       'length': 'max_tokens',
       'tool_call': 'tool_use',
+      'requires_interaction': 'requires_interaction',
       'content_filter': 'refusal',
       'error': 'error',
+      '': 'unknown',
     };
 
     for (final entry in cases.entries) {
@@ -1027,6 +1207,35 @@ void main() {
     expect((events[2] as DoneEvent).stopReason, 'error');
   });
 }
+
+Map<String, Object?> _pendingInteractionJson(String id) => <String, Object?>{
+  'protocol_version': 'agent.v1',
+  'interaction_id': id,
+  'kind': 'choice',
+  'mode': 'one_tap',
+  'status': 'pending',
+  'title': 'Pick one',
+  'prompt': 'Choose an option.',
+  'options': <Object?>[
+    <String, Object?>{
+      'id': 'a',
+      'label': 'A',
+      'description': '',
+      'metadata': <String, Object?>{},
+    },
+    <String, Object?>{
+      'id': 'b',
+      'label': 'B',
+      'description': '',
+      'metadata': <String, Object?>{},
+    },
+  ],
+  'response_schema': <String, Object?>{},
+  'payload': <String, Object?>{},
+  'metadata': <String, Object?>{},
+  'resume': <String, Object?>{'kind': 'chat_turn'},
+  'created_at': '2026-07-23T00:00:00.000Z',
+};
 
 Map<String, Object?> _chatRecoverySnapshot({
   required String dispatchStatus,

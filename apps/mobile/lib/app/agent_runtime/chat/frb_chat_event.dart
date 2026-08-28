@@ -310,8 +310,15 @@ FrbChatStreamEvent _parseRoundFinished(
   required int round,
   required Map<String, Object?> metadata,
 }) {
-  final response = frbObjectOrNull(raw['response']);
-  if (response == null) {
+  final rawResponse = raw['response'];
+  final response = frbObjectOrNull(rawResponse);
+  final isInteractionPause =
+      frbString(metadata['status']) == 'requires_interaction';
+  // The native host intentionally emits no provider response when it resumes
+  // a pending human interaction: no LLM request was made for that boundary.
+  // Keep accepting that one typed shape, while still rejecting scalar or
+  // otherwise malformed responses from every other finished event.
+  if (response == null && !(isInteractionPause && rawResponse == null)) {
     return FrbInvalidChatEvent(
       kind: kind,
       round: round,
@@ -323,6 +330,6 @@ FrbChatStreamEvent _parseRoundFinished(
     kind: kind,
     round: round,
     metadata: metadata,
-    response: response,
+    response: response ?? const <String, Object?>{},
   );
 }

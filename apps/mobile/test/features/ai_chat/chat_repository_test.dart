@@ -272,9 +272,9 @@ void main() {
       );
       expect(outcome, SendOutcome.completed);
 
-      final assistant = (await store.listMessages(
-        id,
-      )).where((m) => m.role == ChatRole.assistant).single;
+      final assistant = (await store.listMessages(id))
+          .where((m) => m.role == ChatRole.assistant)
+          .single;
       expect(assistant.content, 'done');
       expect(assistant.progress, isNull);
     });
@@ -365,9 +365,8 @@ void main() {
           content: '帮我看看持仓和 XIRR',
         );
 
-        final assistant = (await store.listMessages(
-          id,
-        )).firstWhere((m) => m.role == ChatRole.assistant);
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
         expect(assistant.toolCalls.map((t) => t.name), [
           'get_holdings',
           'compute_xirr',
@@ -406,9 +405,8 @@ void main() {
         content: '查持仓',
       );
 
-      final assistant = (await store.listMessages(
-        id,
-      )).firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
       final invocation = assistant.toolCalls.single;
       expect(invocation.status, ToolInvocationStatus.completed);
       expect(invocation.partialInputJson, '{"as_of":"today"}');
@@ -498,9 +496,8 @@ void main() {
           ),
         );
 
-        final updated = (await store.listMessages(
-          id,
-        )).firstWhere((message) => message.id == assistant.id);
+        final updated = (await store.listMessages(id))
+            .firstWhere((message) => message.id == assistant.id);
         expect(updated.toolCalls.single.decisionSelection?.optionId, 'a');
         expect(
           updated.toolCalls.single.interactionResponse?.interactionId,
@@ -541,9 +538,8 @@ void main() {
       );
       expect(outcome, SendOutcome.errored);
 
-      final assistant = (await store.listMessages(
-        id,
-      )).firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.errored);
       expect(assistant.errorMessage, 'boom');
     });
@@ -557,9 +553,8 @@ void main() {
       );
 
       expect(outcome, SendOutcome.errored);
-      final assistant = (await store.listMessages(
-        id,
-      )).firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.errored);
       expect(
         assistant.errorMessage,
@@ -584,9 +579,8 @@ void main() {
         );
 
         expect(outcome, SendOutcome.errored);
-        final assistant = (await store.listMessages(
-          id,
-        )).firstWhere((m) => m.role == ChatRole.assistant);
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
         expect(assistant.content, 'partial');
         expect(assistant.status, ChatMessageStatus.errored);
         expect(assistant.errorMessage, 'AI response stream ended before done');
@@ -611,9 +605,8 @@ void main() {
         );
 
         expect(outcome, SendOutcome.errored);
-        final assistant = (await store.listMessages(
-          id,
-        )).firstWhere((m) => m.role == ChatRole.assistant);
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
         expect(assistant.status, ChatMessageStatus.errored);
         expect(assistant.errorMessage, 'stream closed');
       },
@@ -635,9 +628,8 @@ void main() {
       );
 
       expect(outcome, SendOutcome.cancelled);
-      final assistant = (await store.listMessages(
-        id,
-      )).firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.errored);
       expect(assistant.errorMessage, kCancelledError);
     });
@@ -677,9 +669,8 @@ void main() {
           ownerUserId: 'user-1',
           content: '帮我看 XIRR',
         );
-        final assistant = (await store.listMessages(
-          id,
-        )).firstWhere((m) => m.role == ChatRole.assistant);
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
         expect(assistant.toolCalls.map((t) => t.name), [
           'compute_xirr',
           'get_transactions',
@@ -711,9 +702,8 @@ void main() {
         ownerUserId: 'user-1',
         content: 'long question',
       );
-      final assistant = (await store.listMessages(
-        id,
-      )).firstWhere((m) => m.role == ChatRole.assistant);
+      final assistant = (await store.listMessages(id))
+          .firstWhere((m) => m.role == ChatRole.assistant);
       expect(assistant.status, ChatMessageStatus.complete);
       expect(assistant.stopReason, ChatStopReason.maxTokens);
     });
@@ -734,9 +724,8 @@ void main() {
           content: 'q',
         );
         expect(outcome, SendOutcome.errored);
-        final assistant = (await store.listMessages(
-          id,
-        )).firstWhere((m) => m.role == ChatRole.assistant);
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
         expect(assistant.status, ChatMessageStatus.errored);
         expect(assistant.stopReason, ChatStopReason.error);
       },
@@ -754,7 +743,7 @@ void main() {
       expect(session!.title, '我的总资产是多少？');
     });
 
-    test('sends route context as a user turn, not a system role', () async {
+    test('sends route context as a resource block, not a user turn', () async {
       api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
       final id = await activeSessionId();
       await repo.sendMessage(
@@ -764,11 +753,15 @@ void main() {
         systemContext: 'User is currently on: /ai',
       );
 
-      expect(api.lastMessages!.map((m) => m.role), ['user', 'user']);
-      expect(
-        api.lastMessages!.first.content,
-        'Context:\nUser is currently on: /ai',
-      );
+      expect(api.lastMessages!.map((m) => m.role), ['user']);
+      expect(api.lastMessages!.single.content, '你好');
+      final routeContext = api.lastContextBlocks!.single;
+      expect(routeContext.kind, AgentRuntimeContextBlockKind.resource);
+      expect(routeContext.source, 'naviwealth.route_context');
+      expect(routeContext.metadata['trusted_as_instruction'], isFalse);
+      expect(routeContext.content, <String, Object?>{
+        'context': 'User is currently on: /ai',
+      });
     });
 
     test('replays prior turns to the API for follow-up questions', () async {

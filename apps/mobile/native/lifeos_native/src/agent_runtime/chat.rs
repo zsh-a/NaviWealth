@@ -323,7 +323,9 @@ fn tool_call_from_event(event: &LlmEvent) -> Result<ChatToolCall> {
     Ok(ChatToolCall {
         id,
         name,
-        input: event.tool_input.clone().unwrap_or_else(|| json!({})),
+        // Preserve a missing input so `chat_turn_apply_response` can reject
+        // the malformed call instead of silently turning it into `{}`.
+        input: event.tool_input.clone().unwrap_or_else(|| json!(null)),
     })
 }
 

@@ -149,9 +149,10 @@ String frbChatStopReason(String reason) {
     'length' => 'max_tokens',
     'tool_call' || 'tool_calls' || 'tool_use' => 'tool_use',
     'content_filter' => 'refusal',
+    'requires_interaction' => 'requires_interaction',
     'error' => 'error',
     _ when reason.isNotEmpty => reason,
-    _ => 'end_turn',
+    _ => 'unknown',
   };
 }
 

@@ -19,9 +19,11 @@ import 'package:naviwealth/app/agents/daily_navigator_agent.dart';
 import 'package:naviwealth/app/agents/daily_navigator_synthesizer.dart';
 import 'package:naviwealth/app/agents/providers.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/ai/composition/system_prompt_blocks.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
     as llm_credentials;
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
+import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/lifeos/personal_profile/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -83,18 +85,35 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
   }),
   ai_chat_providers.chatContextBlockPrepProvider.overrideWith((ref) {
     return (request) async {
-      final contextBuilder = await ref.read(contextBuilderProvider.future);
-      final profileBuilder = await ref.read(
-        personalProfileSnapshotBuilderProvider.future,
+      // Keep the trusted system instructions independent from retrieval. A
+      // local index/embedder failure must not silently remove the active OS
+      // rules from the Chat request.
+      final systemInstructions = buildAppChatSystemInstructionBlock(
+        systemPrompt: ref.read(assembledSystemPromptProvider),
+        now: DateTime.now().toUtc(),
       );
-      return prepareAppChatContextBlocks(
-        contextBuilder: contextBuilder,
-        accessPolicy: ref.read(memoryAccessPolicyProvider),
-        profileBuilder: profileBuilder,
-        activeDomainScopes: ref.read(activePersonalProfileDomainScopesProvider),
-        aiContext: ref.read(aiContextProvider),
-        request: request,
-      );
+      try {
+        final contextBuilder = await ref.read(contextBuilderProvider.future);
+        final profileBuilder = await ref.read(
+          personalProfileSnapshotBuilderProvider.future,
+        );
+        final blocks = await prepareAppChatContextBlocks(
+          contextBuilder: contextBuilder,
+          accessPolicy: ref.read(memoryAccessPolicyProvider),
+          profileBuilder: profileBuilder,
+          activeDomainScopes: ref.read(
+            activePersonalProfileDomainScopesProvider,
+          ),
+          aiContext: ref.read(aiContextProvider),
+          request: request,
+        );
+        return List<AgentRuntimeContextBlock>.unmodifiable([
+          systemInstructions,
+          ...blocks,
+        ]);
+      } catch (_) {
+        return <AgentRuntimeContextBlock>[systemInstructions];
+      }
     };
   }),
   activityEntryInsightClientProvider.overrideWith((ref) {

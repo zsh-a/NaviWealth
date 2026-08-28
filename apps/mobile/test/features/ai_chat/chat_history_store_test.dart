@@ -172,6 +172,33 @@ void main() {
       expect(rows.single.toolCalls.single.name, 'compute_xirr');
     });
 
+    test('round-trips a pending interaction stop reason', () async {
+      await store.insertSession(
+        ChatSession(
+          id: 'interaction-session',
+          ownerUserId: 'u',
+          title: '交互',
+          createdAt: DateTime.utc(2026, 4, 30),
+          updatedAt: DateTime.utc(2026, 4, 30),
+        ),
+      );
+      await store.insertMessage(
+        ChatMessage(
+          id: 'interaction-message',
+          sessionId: 'interaction-session',
+          ownerUserId: 'u',
+          role: ChatRole.assistant,
+          content: '请先选择一个方案。',
+          status: ChatMessageStatus.complete,
+          stopReason: ChatStopReason.requiresInteraction,
+          createdAt: DateTime.utc(2026, 4, 30, 0, 0, 1),
+        ),
+      );
+
+      final restored = (await store.listMessages('interaction-session')).single;
+      expect(restored.stopReason, ChatStopReason.requiresInteraction);
+    });
+
     test('watchSessions emits a fresh snapshot after each mutation', () async {
       final collected = <List<ChatSession>>[];
       final sub = store.watchSessions('u').listen(collected.add);

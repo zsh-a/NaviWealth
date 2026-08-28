@@ -39,6 +39,22 @@ void main() {
     expect(find.text('连接中断，回复未完整接收'), findsNothing);
     expect(find.text('继续'), findsNothing);
   });
+
+  testWidgets('pending interaction does not offer truncation continuation', (
+    tester,
+  ) async {
+    await _pumpMessage(
+      tester,
+      _message(
+        content: '请先选择一个方案。',
+        status: ChatMessageStatus.complete,
+        stopReason: ChatStopReason.requiresInteraction,
+      ),
+    );
+
+    expect(find.text('继续'), findsNothing);
+    expect(find.text('回答未完整接收'), findsNothing);
+  });
 }
 
 ChatMessage _message({
