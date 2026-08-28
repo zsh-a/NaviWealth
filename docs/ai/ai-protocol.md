@@ -56,6 +56,16 @@ that FRB runner.
 `ToolCallEvent` arrives. Consumers that need stable input should use
 `ToolCallEvent.input`.
 
+### Round boundaries
+
+`round_finished` closes one native provider round; it is not by itself the end
+of the user turn. For a completed, refused, or otherwise terminal round, the
+native stream must emit a following `done` frame. If that frame is missing,
+Flutter fails the turn with `frb_chat_terminal_done_missing` instead of
+showing a premature `end_turn`. A round with
+`status: "requires_tool_results"` must not emit `done`; Flutter dispatches the
+validated calls and resumes the native loop with their results.
+
 ## Stop Reasons
 
 `DoneEvent.stopReason` follows provider stop names where available:
@@ -65,6 +75,7 @@ that FRB runner.
 | `end_turn` | The assistant completed the turn normally. |
 | `max_tokens` | The provider stopped because the output token limit was reached. |
 | `tool_use` | The provider requested more tool execution than the loop allows. |
+| `requires_interaction` | The turn is paused until the user answers a structured decision. |
 | `refusal` | The provider refused the request. |
 | `error` | The runtime stopped after an error. An `ErrorEvent` should also be present. |
 
@@ -129,7 +140,7 @@ Flow:
 1. `AskUserTool.invoke` validates + normalises and echoes the request as the
    `tool_result` (2–4 options, each with a non-empty `label`).
 2. The agent loop treats `ask_user` as **terminal**: it records the result and
-   **pauses** (ends the turn on `end_turn`) instead of re-invoking the model —
+   **pauses** with `requires_interaction` instead of re-invoking the model —
    the model never answers its own question.
 3. The Host renders `DecisionCard` (`features/ai_chat/ui/decision_card.dart`)
    from the parsed `decision_request`; only the trailing turn's decision is

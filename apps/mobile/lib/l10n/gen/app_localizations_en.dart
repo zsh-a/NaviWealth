@@ -14662,7 +14662,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsExecutionEnabledSubtitle =>
-      'Today, commitments, progress, and personal todos.';
+      'Today, actions, plans, and review.';
 
   @override
   String get settingsDomainsExecutionDisabledSubtitle =>
@@ -14670,7 +14670,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsExecutionTodaySubtitle =>
-      'Review today\'s actions, blockers, and progress.';
+      'Review today\'s actions, blockers, and updates.';
 
   @override
   String get executionTabToday => 'Today';
@@ -14733,13 +14733,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionCreateProjectTitle => 'New Plan';
 
   @override
-  String get executionCreateCommitmentTitle => 'New Commitment';
+  String get executionCreateCommitmentTitle => 'New Ongoing Plan';
 
   @override
-  String get executionCreateProgressTitle => 'New Progress';
+  String get executionCreateProgressTitle => 'New Update';
 
   @override
-  String get executionEditProgressTitle => 'Edit Progress';
+  String get executionEditProgressTitle => 'Edit Update';
 
   @override
   String get executionEditActionTitle => 'Edit Action';
@@ -14748,7 +14748,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionEditProjectTitle => 'Edit Plan';
 
   @override
-  String get executionEditCommitmentTitle => 'Edit Commitment';
+  String get executionEditCommitmentTitle => 'Edit Ongoing Plan';
 
   @override
   String get executionActionField => 'Action';
@@ -14757,7 +14757,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProjectField => 'Plan';
 
   @override
-  String get executionCommitmentField => 'Commitment';
+  String get executionCommitmentField => 'Ongoing plan';
 
   @override
   String get executionRelationField => 'Belongs to';
@@ -14803,7 +14803,8 @@ class AppLocalizationsEn extends AppLocalizations {
       'Optional outcome, scope, or finish line';
 
   @override
-  String get executionCommitmentTitleHint => 'What are you committing to?';
+  String get executionCommitmentTitleHint =>
+      'What do you want to keep moving over time?';
 
   @override
   String get executionCommitmentDescriptionHint =>
@@ -14825,10 +14826,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionOverviewProjects => 'Plans';
 
   @override
-  String get executionOverviewCommitments => 'Commitments';
+  String get executionOverviewCommitments => 'Ongoing plans';
 
   @override
-  String get executionOverviewProgress7d => '7d progress';
+  String get executionOverviewProgress7d => '7d updates';
 
   @override
   String get executionTodayEmptyTitle => 'No actions for today';
@@ -14868,7 +14869,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Completed and archived plans will appear here.';
 
   @override
-  String get executionReviewEmptyTitle => 'No progress yet';
+  String get executionReviewEmptyTitle => 'No updates yet';
 
   @override
   String get executionReviewEmptyBody =>
@@ -14881,7 +14882,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProjectsSection => 'Plans';
 
   @override
-  String get executionCommitmentsSection => 'Ongoing';
+  String get executionCommitmentsSection => 'Ongoing plans';
 
   @override
   String get executionInboxSection => 'Inbox';
@@ -14968,23 +14969,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionNoActionsAvailable => 'No open actions available';
 
   @override
-  String get executionNoProject => 'No project';
+  String get executionNoProject => 'No plan';
 
   @override
-  String get executionUnknownProject => 'Unknown project';
+  String get executionUnknownProject => 'Unknown plan';
 
   @override
-  String get executionNoProjectsAvailable => 'No active projects available';
+  String get executionNoProjectsAvailable => 'No active plans available';
 
   @override
-  String get executionNoCommitment => 'No commitment';
+  String get executionNoCommitment => 'No ongoing plan';
 
   @override
-  String get executionUnknownCommitment => 'Unknown commitment';
+  String get executionUnknownCommitment => 'Unknown ongoing plan';
 
   @override
   String get executionNoCommitmentsAvailable =>
-      'No active commitments available';
+      'No active ongoing plans available';
 
   @override
   String get executionPickerSearchHint => 'Search by title or note';
@@ -15037,11 +15038,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionProjectStatusUpdateFailed =>
-      'Couldn\'t update project status.';
+      'Couldn\'t update plan status.';
 
   @override
   String get executionCommitmentStatusUpdateFailed =>
-      'Couldn\'t update commitment status.';
+      'Couldn\'t update ongoing plan status.';
 
   @override
   String get executionProgressDoneDefault => 'Marked done.';
@@ -15056,28 +15057,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProgressResumedDefault => 'Resumed work.';
 
   @override
-  String get executionProjectPausedDefault => 'Project paused.';
+  String get executionProjectPausedDefault => 'Plan paused.';
 
   @override
-  String get executionProjectResumedDefault => 'Project resumed.';
+  String get executionProjectResumedDefault => 'Plan resumed.';
 
   @override
-  String get executionProjectCompletedDefault => 'Project completed.';
+  String get executionProjectCompletedDefault => 'Plan completed.';
 
   @override
-  String get executionProjectArchivedDefault => 'Project archived.';
+  String get executionProjectArchivedDefault => 'Plan archived.';
 
   @override
-  String get executionCommitmentPausedDefault => 'Commitment paused.';
+  String get executionCommitmentPausedDefault => 'Ongoing plan paused.';
 
   @override
-  String get executionCommitmentResumedDefault => 'Commitment resumed.';
+  String get executionCommitmentResumedDefault => 'Ongoing plan resumed.';
 
   @override
-  String get executionCommitmentCompletedDefault => 'Commitment completed.';
+  String get executionCommitmentCompletedDefault => 'Ongoing plan completed.';
 
   @override
-  String get executionCommitmentArchivedDefault => 'Commitment archived.';
+  String get executionCommitmentArchivedDefault => 'Ongoing plan archived.';
 
   @override
   String get executionLifecycleCompleteConfirmTitle =>
@@ -15126,17 +15127,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get executionProgressKindField => 'Progress type';
+  String get executionProgressKindField => 'Update type';
 
   @override
-  String get executionProgressNoteField => 'Progress note';
+  String get executionProgressNoteField => 'Update note';
 
   @override
   String get executionProgressNoteHint =>
       'Record a change or note. Use the action controls to change status.';
 
   @override
-  String get executionProgressNoteRequired => 'Add a progress note';
+  String get executionProgressNoteRequired => 'Add an update';
 
   @override
   String get executionProgressKindBlocker => 'Blocker';
@@ -15163,7 +15164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionUnplacedActionsSection => 'Open actions to place';
 
   @override
-  String get executionProjectCommitmentsSection => 'Project commitments';
+  String get executionProjectCommitmentsSection => 'Ongoing plans';
 
   @override
   String get executionReviewWindow7d => '7 days';
@@ -15181,14 +15182,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionReviewBlockedMetric => 'Blockers';
 
   @override
-  String get executionReviewProgressMetric => 'Progress';
+  String get executionReviewProgressMetric => 'Updates';
 
   @override
   String get executionReviewGenerateTitle => 'Execution review';
 
   @override
   String get executionReviewGenerateBody =>
-      'Generate a local review of focus, blockers, due work, and recent progress.';
+      'Generate a local review of focus, blockers, due work, and recent updates.';
 
   @override
   String get executionReviewGenerateAction => 'Generate review';
@@ -15200,13 +15201,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProposalActionStatusLabel => 'Action Status';
 
   @override
-  String get executionProposalProjectLabel => 'Project';
+  String get executionProposalProjectLabel => 'Plan';
 
   @override
-  String get executionProposalCommitmentLabel => 'Commitment';
+  String get executionProposalCommitmentLabel => 'Ongoing plan';
 
   @override
-  String get executionProposalProgressLabel => 'Progress';
+  String get executionProposalProgressLabel => 'Update';
 
   @override
   String get executionProposalRowAction => 'Action';
@@ -15215,13 +15216,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionProposalRowPriority => 'Priority';
 
   @override
-  String get executionProposalRowProject => 'Project';
+  String get executionProposalRowProject => 'Plan';
 
   @override
-  String get executionProposalRowCommitment => 'Commitment';
+  String get executionProposalRowCommitment => 'Ongoing plan';
 
   @override
-  String get executionProposalRowProgress => 'Progress';
+  String get executionProposalRowProgress => 'Update';
 
   @override
   String get executionProposalRowDue => 'Due';
@@ -15919,17 +15920,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String executionAgentReviewSummaryPartProjects(Object count) {
-    return '$count active projects';
+    return '$count active plans';
   }
 
   @override
   String executionAgentReviewSummaryPartCommitments(Object count) {
-    return '$count active commitments';
+    return '$count ongoing plans';
   }
 
   @override
   String executionAgentReviewSummaryPartProgress(Object count) {
-    return '$count progress entries this week';
+    return '$count updates this week';
   }
 
   @override
@@ -15975,7 +15976,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get executionAgentReviewInsightProgressTitle => 'Weekly progress';
+  String get executionAgentReviewInsightProgressTitle => 'Weekly updates';
 
   @override
   String executionAgentReviewInsightProgressBody(
@@ -15983,7 +15984,7 @@ class AppLocalizationsEn extends AppLocalizations {
     Object progressCount,
     Object projectCount,
   ) {
-    return '$progressCount progress entries across $projectCount active projects and $commitmentCount active commitments.';
+    return '$progressCount updates across $projectCount active plans and $commitmentCount ongoing plans.';
   }
 
   @override
@@ -16003,7 +16004,7 @@ class AppLocalizationsEn extends AppLocalizations {
     Object commitmentCount,
     Object projectCount,
   ) {
-    return '$projectCount active projects and $commitmentCount active commitments have no open next action.';
+    return '$projectCount active plans and $commitmentCount ongoing plans have no open next action.';
   }
 
   @override
@@ -16015,7 +16016,7 @@ class AppLocalizationsEn extends AppLocalizations {
     Object commitmentCount,
     Object projectCount,
   ) {
-    return '$projectCount projects and $commitmentCount commitments are past their target date.';
+    return '$projectCount plans and $commitmentCount ongoing plans are past their target date.';
   }
 
   @override
@@ -17880,7 +17881,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionReviewCreateNextActionsBody =>
-      'Create one high-priority action for every project or commitment that still has no open next action?';
+      'Create one high-priority action for every plan or ongoing plan that still has no open next action?';
 
   @override
   String executionReviewCreatedNextActions(int count) {
@@ -17957,7 +17958,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get executionSearchKindProject => 'Plan';
 
   @override
-  String get executionSearchKindProgress => 'Progress';
+  String get executionSearchKindProgress => 'Update';
 
   @override
   String get knowledgeSettingsReviewCadence => 'Review cadence';

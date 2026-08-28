@@ -28,6 +28,11 @@ const String _kInteractionEnvelopeErrorCode =
     'frb_chat_interaction_envelope_invalid';
 const String _kInteractionEnvelopeErrorMessage =
     'ask_user tool result must include a valid pending chat interaction envelope';
+const String _kToolNotAllowedErrorCode = 'frb_chat_tool_not_allowed';
+const String _kAskUserBatchErrorCode = 'frb_chat_ask_user_not_exclusive';
+const String _kTerminalDoneMissingErrorCode = 'frb_chat_terminal_done_missing';
+const String _kToolCancelledErrorCode = 'cancelled';
+const String _kToolCancelledMessage = 'FRB chat tool dispatch cancelled';
 
 class FrbChatRunner implements ChatAgent {
   FrbChatRunner({
@@ -137,10 +142,16 @@ class FrbChatRunner implements ChatAgent {
           record: record,
           store: snapshotStore,
           toolLineHandler: _toolLineHandler,
+          allowedToolNames: _toolNames(tools),
+          cancelToken: cancelToken,
         );
         snapshotRecord = recovery.record;
         for (final event in recovery.events) {
           yield event;
+        }
+        if (recovery.cancelled) {
+          yield DoneEvent(stopReason: 'error', rounds: recovery.round);
+          return;
         }
         if (recovery.errorCode case final code?) {
           yield ErrorEvent(recovery.errorMessage!, code: code);
@@ -218,6 +229,7 @@ class FrbChatRunner implements ChatAgent {
       toolResults = const <Map<String, Object?>>[];
       interactionResponse = null;
       suspendInteraction = null;
+      var doneReceived = false;
       await for (final rawEvent in stream) {
         final event = FrbChatStreamEvent.parse(rawEvent);
         final eventRound = event.round;
@@ -257,6 +269,7 @@ class FrbChatRunner implements ChatAgent {
             state.recordUsage(usage);
             yield UsageEvent(usage);
           case FrbChatDoneEvent(:final metadata):
+            doneReceived = true;
             state.finishDone(metadata);
             break;
           case FrbChatDeltaEvent(:final content):
@@ -356,6 +369,67 @@ class FrbChatRunner implements ChatAgent {
         return;
       }
 
+      final roundStatus = _effectiveRoundStatus(state);
+      if (roundStatus != 'requires_tool_results' && !doneReceived) {
+        yield frbLlmSpan(
+          round: roundsUsed == 0 ? nextRound : roundsUsed,
+          roundId: roundId,
+          startedAt: roundStart,
+          state: state,
+          requestedModel: model,
+          status: AiSpanStatus.error,
+          errorCode: _kTerminalDoneMissingErrorCode,
+          errorMessage:
+              'FRB LLM stream ended after round_finished without terminal done',
+        );
+        yield const ErrorEvent(
+          'FRB LLM stream ended after round_finished without terminal done',
+          code: _kTerminalDoneMissingErrorCode,
+        );
+        yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+        return;
+      }
+      if (roundStatus == 'requires_tool_results' && doneReceived) {
+        yield frbLlmSpan(
+          round: roundsUsed == 0 ? nextRound : roundsUsed,
+          roundId: roundId,
+          startedAt: roundStart,
+          state: state,
+          requestedModel: model,
+          status: AiSpanStatus.error,
+          errorCode: 'frb_chat_tool_round_terminal',
+          errorMessage:
+              'FRB LLM tool round emitted terminal done before tool results',
+        );
+        yield const ErrorEvent(
+          'FRB LLM tool round emitted terminal done before tool results',
+          code: 'frb_chat_tool_round_terminal',
+        );
+        yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+        return;
+      }
+      if (roundStatus == 'requires_tool_results') {
+        final validation = _validateToolCalls(
+          state.requiredToolCalls,
+          _toolNames(tools),
+        );
+        if (validation case final failure?) {
+          yield frbLlmSpan(
+            round: roundsUsed == 0 ? nextRound : roundsUsed,
+            roundId: roundId,
+            startedAt: roundStart,
+            state: state,
+            requestedModel: model,
+            status: AiSpanStatus.error,
+            errorCode: failure.code,
+            errorMessage: failure.message,
+          );
+          yield ErrorEvent(failure.message, code: failure.code);
+          yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+          return;
+        }
+      }
+
       yield frbLlmSpan(
         round: roundsUsed == 0 ? nextRound : roundsUsed,
         roundId: roundId,
@@ -364,7 +438,7 @@ class FrbChatRunner implements ChatAgent {
         requestedModel: model,
         status: AiSpanStatus.ok,
       );
-      if (state.status == 'requires_interaction') {
+      if (roundStatus == 'requires_interaction') {
         final pendingState = state.chatState;
         if (pendingState == null) {
           yield const ErrorEvent(
@@ -386,7 +460,7 @@ class FrbChatRunner implements ChatAgent {
         yield DoneEvent(stopReason: 'requires_interaction', rounds: roundsUsed);
         return;
       }
-      if (state.status != 'requires_tool_results') {
+      if (roundStatus != 'requires_tool_results') {
         final terminalState = state.chatState;
         if (snapshotStore != null &&
             turnId != null &&
@@ -479,10 +553,29 @@ class FrbChatRunner implements ChatAgent {
                 dispatcher: dispatcher,
                 call: batchCall,
                 startedAt: toolStart,
+                cancelToken: cancelToken,
               ),
             );
           }
+          var cancelled = false;
           for (final outcome in await Future.wait(outcomes)) {
+            if (outcome.cancelled) {
+              if (activeSnapshot != null && snapshotRecord != null) {
+                final persisted = await _persistCancelledDispatch(
+                  snapshot: activeSnapshot,
+                  snapshotRecord: snapshotRecord,
+                  store: snapshotStore!,
+                  call: outcome.call,
+                  replayPolicy: _replayPolicyForTool(tools, outcome.call.name),
+                );
+                activeSnapshot = persisted.snapshot;
+                snapshotRecord = persisted.record;
+              }
+              cancelled = true;
+              yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
+              yield _toolResult(outcome);
+              continue;
+            }
             yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
             yield _toolResult(outcome);
             resultBlocks.add(outcome.result.toChatToolResult());
@@ -498,6 +591,10 @@ class FrbChatRunner implements ChatAgent {
                 expectedRevision: snapshotRecord?.revision,
               );
             }
+          }
+          if (cancelled) {
+            yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+            return;
           }
           readOnlyBatch.clear();
         }
@@ -518,7 +615,25 @@ class FrbChatRunner implements ChatAgent {
           dispatcher: dispatcher,
           call: call,
           startedAt: toolStart,
+          cancelToken: cancelToken,
         );
+        if (outcome.cancelled) {
+          if (activeSnapshot != null && snapshotRecord != null) {
+            final persisted = await _persistCancelledDispatch(
+              snapshot: activeSnapshot,
+              snapshotRecord: snapshotRecord,
+              store: snapshotStore!,
+              call: call,
+              replayPolicy: _replayPolicyForTool(tools, call.name),
+            );
+            activeSnapshot = persisted.snapshot;
+            snapshotRecord = persisted.record;
+          }
+          yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
+          yield _toolResult(outcome);
+          yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+          return;
+        }
         yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
         yield _toolResult(outcome);
         resultBlocks.add(outcome.result.toChatToolResult());
@@ -579,10 +694,29 @@ class FrbChatRunner implements ChatAgent {
               dispatcher: dispatcher,
               call: batchCall,
               startedAt: toolStart,
+              cancelToken: cancelToken,
             ),
           );
         }
+        var cancelled = false;
         for (final outcome in await Future.wait(outcomes)) {
+          if (outcome.cancelled) {
+            if (activeSnapshot != null && snapshotRecord != null) {
+              final persisted = await _persistCancelledDispatch(
+                snapshot: activeSnapshot,
+                snapshotRecord: snapshotRecord,
+                store: snapshotStore!,
+                call: outcome.call,
+                replayPolicy: _replayPolicyForTool(tools, outcome.call.name),
+              );
+              activeSnapshot = persisted.snapshot;
+              snapshotRecord = persisted.record;
+            }
+            cancelled = true;
+            yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
+            yield _toolResult(outcome);
+            continue;
+          }
           yield _toolSpan(outcome, parentId: roundId, round: roundsUsed);
           yield _toolResult(outcome);
           resultBlocks.add(outcome.result.toChatToolResult());
@@ -599,10 +733,18 @@ class FrbChatRunner implements ChatAgent {
             );
           }
         }
+        if (cancelled) {
+          yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
+          return;
+        }
       }
       if (awaitingUser) {
         if (suspendInteraction == null) {
-          yield DoneEvent(stopReason: 'end_turn', rounds: roundsUsed);
+          yield const ErrorEvent(
+            'FRB chat ask_user result did not produce a pending interaction',
+            code: 'frb_chat_interaction_state_missing',
+          );
+          yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
           return;
         }
         toolResults = resultBlocks;
@@ -647,6 +789,8 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
   required AgentRuntimeChatSnapshotRecord record,
   required AgentRuntimeChatSnapshotStore store,
   required AgentRuntimeToolLineHandler? toolLineHandler,
+  required Set<String> allowedToolNames,
+  required CancelToken? cancelToken,
 }) async {
   if (record.status == 'requires_interaction') {
     final state = chatSnapshotObject(
@@ -681,17 +825,41 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
       message: 'Persisted chat snapshot has no tool dispatch journal',
     );
   }
+  final recoveredCalls = <AgentRuntimeToolCall>[];
   for (final value in rawDispatches) {
     final dispatch = chatSnapshotObject(value, 'snapshot.tool_dispatch');
     final callObject = chatSnapshotObject(
       dispatch['call'],
       'snapshot.tool_dispatch.call',
     );
-    final call = AgentRuntimeToolCall(
-      id: callObject['id'] ?? '',
-      name: frbString(callObject['name']),
-      input: callObject['input'],
+    recoveredCalls.add(
+      AgentRuntimeToolCall(
+        id: callObject['id'] ?? '',
+        name: frbString(callObject['name']),
+        input: callObject['input'],
+      ),
     );
+  }
+  if (_validateToolCalls(recoveredCalls, allowedToolNames)
+      case final failure?) {
+    return _ChatSnapshotRecovery.failed(
+      record: record,
+      round: round,
+      code: failure.code,
+      message: failure.message,
+    );
+  }
+  for (var index = 0; index < rawDispatches.length; index++) {
+    if (cancelToken?.isCancelled == true) {
+      return _ChatSnapshotRecovery.cancelled(
+        record: currentRecord,
+        round: round,
+        events: events,
+      );
+    }
+    final value = rawDispatches[index];
+    final dispatch = chatSnapshotObject(value, 'snapshot.tool_dispatch');
+    final call = recoveredCalls[index];
     final status = frbString(dispatch['status']);
     if (status == 'completed') {
       final result = chatSnapshotObject(
@@ -782,10 +950,25 @@ Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
       dispatcher: AgentRuntimeToolDispatcher(handler: toolLineHandler),
       call: call,
       startedAt: startedAt,
+      cancelToken: cancelToken,
     );
     events
       ..add(_toolSpan(outcome, parentId: 'r$round', round: round))
       ..add(_toolResult(outcome));
+    if (outcome.cancelled) {
+      final persisted = await _persistCancelledDispatch(
+        snapshot: snapshot,
+        snapshotRecord: currentRecord,
+        store: store,
+        call: call,
+        replayPolicy: replayPolicy,
+      );
+      return _ChatSnapshotRecovery.cancelled(
+        record: persisted.record,
+        round: round,
+        events: events,
+      );
+    }
     final result = outcome.result.toChatToolResult();
     results.add(result);
     snapshot = _withDispatchState(
@@ -842,10 +1025,7 @@ Map<String, Object?> _buildPendingChatSnapshot({
 }) {
   final replayPolicies = <String, String>{
     for (final tool in tools)
-      if (tool['name'] case final String name)
-        name:
-            tool['replay_policy'] as String? ??
-            (tool['risk'] == 'read_only' ? 'safe_retry' : 'at_most_once'),
+      if (tool['name'] case final String name) name: _toolReplayPolicy(tool),
   };
   return <String, Object?>{
     'protocol_version': 'agent.v1',
@@ -865,6 +1045,19 @@ Map<String, Object?> _buildPendingChatSnapshot({
         },
     ],
   };
+}
+
+String _toolReplayPolicy(Map<String, Object?> tool) {
+  final explicit = tool['replay_policy'];
+  if (explicit is String && explicit.isNotEmpty) return explicit;
+  return tool['risk'] == 'read_only' ? 'safe_retry' : 'at_most_once';
+}
+
+String _replayPolicyForTool(List<Map<String, Object?>> tools, String name) {
+  for (final tool in tools) {
+    if (tool['name'] == name) return _toolReplayPolicy(tool);
+  }
+  return 'at_most_once';
 }
 
 Map<String, Object?> _buildTerminalChatSnapshot({
@@ -926,6 +1119,52 @@ Map<String, Object?> _withDispatchState(
   return <String, Object?>{...snapshot, 'tool_dispatches': dispatches};
 }
 
+Future<_CancelledDispatchPersistence> _persistCancelledDispatch({
+  required Map<String, Object?> snapshot,
+  required AgentRuntimeChatSnapshotRecord snapshotRecord,
+  required AgentRuntimeChatSnapshotStore store,
+  required AgentRuntimeToolCall call,
+  required String replayPolicy,
+}) async {
+  if (replayPolicy != 'at_most_once') {
+    return _CancelledDispatchPersistence(
+      snapshot: snapshot,
+      record: snapshotRecord,
+    );
+  }
+  var failedSnapshot = _withDispatchState(
+    snapshot,
+    callId: call.stringId,
+    status: 'interrupted',
+  );
+  failedSnapshot = <String, Object?>{
+    ...failedSnapshot,
+    'status': 'failed',
+    'error': <String, Object?>{
+      'code': 'interrupted_at_most_once',
+      'message': "Tool '${call.name}' may already have executed",
+    },
+  };
+  final record = await store.save(
+    snapshot: failedSnapshot,
+    expectedRevision: snapshotRecord.revision,
+  );
+  return _CancelledDispatchPersistence(
+    snapshot: failedSnapshot,
+    record: record,
+  );
+}
+
+final class _CancelledDispatchPersistence {
+  const _CancelledDispatchPersistence({
+    required this.snapshot,
+    required this.record,
+  });
+
+  final Map<String, Object?> snapshot;
+  final AgentRuntimeChatSnapshotRecord record;
+}
+
 final class _ChatSnapshotRecovery {
   const _ChatSnapshotRecovery({
     required this.record,
@@ -936,7 +1175,8 @@ final class _ChatSnapshotRecovery {
     required this.awaitingUser,
     required this.suspendInteraction,
   }) : errorCode = null,
-       errorMessage = null;
+       errorMessage = null,
+       cancelled = false;
 
   const _ChatSnapshotRecovery.failed({
     required this.record,
@@ -949,7 +1189,20 @@ final class _ChatSnapshotRecovery {
        awaitingUser = false,
        suspendInteraction = null,
        errorCode = code,
-       errorMessage = message;
+       errorMessage = message,
+       cancelled = false;
+
+  const _ChatSnapshotRecovery.cancelled({
+    required this.record,
+    required this.round,
+    this.events = const <AiChatEvent>[],
+  }) : chatState = null,
+       toolResults = const <Map<String, Object?>>[],
+       awaitingUser = false,
+       suspendInteraction = null,
+       errorCode = null,
+       errorMessage = null,
+       cancelled = true;
 
   final AgentRuntimeChatSnapshotRecord record;
   final Map<String, Object?>? chatState;
@@ -960,6 +1213,7 @@ final class _ChatSnapshotRecovery {
   final Map<String, Object?>? suspendInteraction;
   final String? errorCode;
   final String? errorMessage;
+  final bool cancelled;
 }
 
 Set<String> _readOnlyToolNames(List<Map<String, Object?>> tools) {
@@ -968,6 +1222,58 @@ Set<String> _readOnlyToolNames(List<Map<String, Object?>> tools) {
       if (tool['risk'] == 'read_only')
         if (tool['name'] case final String name) name,
   };
+}
+
+Set<String> _toolNames(List<Map<String, Object?>> tools) {
+  return {
+    for (final tool in tools)
+      if (tool['name'] case final String name)
+        if (name.trim().isNotEmpty) name.trim(),
+  };
+}
+
+String _effectiveRoundStatus(FrbStreamRoundState state) {
+  final status = state.status;
+  if (status.isNotEmpty) return status;
+  return state.stopReason == 'tool_use' ? 'requires_tool_results' : 'completed';
+}
+
+({String code, String message})? _validateToolCalls(
+  List<AgentRuntimeToolCall> calls,
+  Set<String> allowedToolNames,
+) {
+  if (calls.isEmpty) {
+    return (
+      code: _kToolNotAllowedErrorCode,
+      message: 'FRB LLM requested tool results without a tool call',
+    );
+  }
+  final ids = <String>{};
+  for (final call in calls) {
+    if (call.stringId.isEmpty || !ids.add(call.stringId)) {
+      return (
+        code: _kToolNotAllowedErrorCode,
+        message: 'FRB LLM returned duplicate or empty tool call ids',
+      );
+    }
+    if (!allowedToolNames.contains(call.name)) {
+      return (
+        code: _kToolNotAllowedErrorCode,
+        message:
+            "FRB LLM requested tool '${call.name}', which is not in the active tool catalog",
+      );
+    }
+  }
+  final askUserCalls = calls
+      .where((call) => call.name == kAskUserToolName)
+      .length;
+  if (askUserCalls > 0 && calls.length != 1) {
+    return (
+      code: _kAskUserBatchErrorCode,
+      message: 'ask_user must be the only tool call in a round',
+    );
+  }
+  return null;
 }
 
 bool _canParallelizeTool(AgentRuntimeToolCall call, Set<String> readOnlyTools) {
@@ -1013,14 +1319,24 @@ Future<_ToolDispatchOutcome> _dispatchChatTool({
   required AgentRuntimeToolDispatcher dispatcher,
   required AgentRuntimeToolCall call,
   required DateTime startedAt,
+  CancelToken? cancelToken,
 }) async {
-  final result = await dispatcher.call(call);
-  return _ToolDispatchOutcome(
-    call: call,
-    result: result,
-    startedAt: startedAt,
-    endedAt: DateTime.now().toUtc(),
-  );
+  final dispatch = () async {
+    final result = await dispatcher.call(call);
+    return _ToolDispatchOutcome(
+      call: call,
+      result: result,
+      startedAt: startedAt,
+      endedAt: DateTime.now().toUtc(),
+    );
+  }();
+  if (cancelToken == null) return dispatch;
+  final outcome = await Future.any<_ToolDispatchOutcome?>([
+    dispatch,
+    _waitForCancel(cancelToken).then((_) => null),
+  ]);
+  return outcome ??
+      _ToolDispatchOutcome.cancelled(call: call, startedAt: startedAt);
 }
 
 SpanEvent _toolSpan(
@@ -1037,7 +1353,11 @@ SpanEvent _toolSpan(
     name: 'tool:${call.name}',
     startedAt: outcome.startedAt,
     endedAt: outcome.endedAt,
-    status: result.isError ? AiSpanStatus.error : AiSpanStatus.ok,
+    status: outcome.cancelled
+        ? AiSpanStatus.cancelled
+        : result.isError
+        ? AiSpanStatus.error
+        : AiSpanStatus.ok,
     errorCode: result.errorCode,
     input: call.input,
     output: result.output,
@@ -1059,12 +1379,48 @@ class _ToolDispatchOutcome {
     required this.result,
     required this.startedAt,
     required this.endedAt,
+    this.cancelled = false,
   });
+
+  factory _ToolDispatchOutcome.cancelled({
+    required AgentRuntimeToolCall call,
+    required DateTime startedAt,
+  }) {
+    final output = <String, Object?>{
+      'code': _kToolCancelledErrorCode,
+      'message': _kToolCancelledMessage,
+    };
+    return _ToolDispatchOutcome(
+      call: call,
+      result: AgentRuntimeToolResult(
+        id: call.id,
+        name: call.name,
+        response: <String, Object?>{
+          'jsonrpc': '2.0',
+          'id': call.id,
+          'error': output,
+        },
+        output: output,
+        outcome: <String, Object?>{
+          'status': 'cancelled',
+          'retryable': true,
+          'code': _kToolCancelledErrorCode,
+          'message': _kToolCancelledMessage,
+          'details': const <String, Object?>{},
+        },
+        isError: true,
+      ),
+      startedAt: startedAt,
+      endedAt: DateTime.now().toUtc(),
+      cancelled: true,
+    );
+  }
 
   final AgentRuntimeToolCall call;
   final AgentRuntimeToolResult result;
   final DateTime startedAt;
   final DateTime endedAt;
+  final bool cancelled;
 }
 
 Stream<Map<String, Object?>> _cancelableFrbStream(

@@ -315,28 +315,20 @@ class _RelatedCommitmentsSection extends StatelessWidget {
     return commitmentsAsync.when(
       loading: () => const _DetailSectionSkeleton(),
       error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
-      data: (commitments) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ExecutionSectionHeader(
-            title: l10n.executionProjectCommitmentsSection,
-            count: commitments.length,
-            icon: FLucideIcons.target,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          if (commitments.isEmpty)
-            AppEmptyState(
+      data: (commitments) {
+        // Ongoing plans are secondary context. Keep an empty project detail
+        // focused on its Actions instead of teaching users a third creation
+        // concept before they have work to place there.
+        if (commitments.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ExecutionSectionHeader(
+              title: l10n.executionProjectCommitmentsSection,
+              count: commitments.length,
               icon: FLucideIcons.target,
-              title: l10n.executionNoCommitmentsAvailable,
-              action: FButton(
-                onPress: () => showExecutionCommitmentSheet(
-                  context: context,
-                  initialProjectId: project.id,
-                ),
-                child: Text(l10n.executionCreateCommitmentTitle),
-              ),
-            )
-          else
+            ),
+            const SizedBox(height: AppSpacing.s8),
             for (final commitment in commitments) ...[
               ExecutionCommitmentCardController(
                 commitment: commitment,
@@ -356,7 +348,7 @@ class _RelatedCommitmentsSection extends StatelessWidget {
                     .length,
                 onCreateAction: () => showExecutionActionSheet(
                   context: context,
-                  initialProjectId: project.id,
+                  initialProjectId: commitment.projectId,
                   initialCommitmentId: commitment.id,
                 ),
                 onEdit: () => showExecutionCommitmentSheet(
@@ -365,7 +357,7 @@ class _RelatedCommitmentsSection extends StatelessWidget {
                 ),
                 onRecordProgress: () => showExecutionProgressSheet(
                   context: context,
-                  projectId: project.id,
+                  projectId: commitment.projectId,
                   commitmentId: commitment.id,
                 ),
                 onOpen: () =>
@@ -373,8 +365,9 @@ class _RelatedCommitmentsSection extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.s8),
             ],
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 }

@@ -265,7 +265,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       appliedEntityId: project.id,
       appliedTable: 'execution_projects',
       appliedAt: _now(),
-      shortLabel: '已创建 Project：${project.title}',
+      shortLabel: '已创建计划：${project.title}',
     );
   }
 
@@ -296,7 +296,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       appliedEntityId: commitment.id,
       appliedTable: 'execution_commitments',
       appliedAt: _now(),
-      shortLabel: '已创建 Commitment：${commitment.title}',
+      shortLabel: '已创建持续计划：${commitment.title}',
     );
   }
 
@@ -333,7 +333,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       appliedEntityId: progress.id,
       appliedTable: 'execution_progress_entries',
       appliedAt: _now(),
-      shortLabel: '已记录 ExecutionOS 进展',
+      shortLabel: '已记录更新',
     );
   }
 

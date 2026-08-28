@@ -13,6 +13,28 @@ import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
     show kMaxToolRounds;
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 
+const _readTaskTool = <String, Object?>{
+  'name': 'read_task',
+  'description': 'Read a task',
+  'input_schema': <String, Object?>{'type': 'object'},
+  'risk': 'read_only',
+};
+
+const _writeTaskTool = <String, Object?>{
+  'name': 'write_task',
+  'description': 'Write a task',
+  'input_schema': <String, Object?>{'type': 'object'},
+  'risk': 'write',
+  'replay_policy': 'at_most_once',
+};
+
+const _askUserTool = <String, Object?>{
+  'name': 'ask_user',
+  'description': 'Ask the user for a decision',
+  'input_schema': <String, Object?>{'type': 'object'},
+  'risk': 'read_only',
+};
+
 void main() {
   test('maps FRB native stream events into chat events', () async {
     final bridge = _FakeLlmBridge();
@@ -255,6 +277,7 @@ void main() {
         ],
         <String>[
           '{"kind":"round_finished","response":{"content":"done","finish_reason":"stop"},"metadata":{"status":"completed"}}',
+          '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
         ],
       ],
     );
@@ -350,6 +373,7 @@ void main() {
       final runner = FrbChatRunner(
         streamBridge: streamBridge,
         snapshotStore: store,
+        tools: const <Map<String, Object?>>[_writeTaskTool],
         toolLineHandler: (_) async {
           toolCalls += 1;
           throw StateError('completed tools must not replay');
@@ -395,6 +419,7 @@ void main() {
     final runner = FrbChatRunner(
       streamBridge: streamBridge,
       snapshotStore: store,
+      tools: const <Map<String, Object?>>[_writeTaskTool],
       toolLineHandler: (_) async {
         toolCalls += 1;
         return '{}';
@@ -531,6 +556,7 @@ void main() {
       );
       final runner = FrbChatRunner(
         streamBridge: streamBridge,
+        tools: const <Map<String, Object?>>[_askUserTool],
         toolLineHandler: (line) async {
           return jsonEncode(<String, Object?>{
             'jsonrpc': '2.0',
@@ -635,6 +661,7 @@ void main() {
     final runner = FrbChatRunner(
       streamBridge: streamBridge,
       snapshotStore: store,
+      tools: const <Map<String, Object?>>[_askUserTool],
       toolLineHandler: (line) async => jsonEncode(<String, Object?>{
         'jsonrpc': '2.0',
         'id': 'decision_1',
@@ -730,6 +757,7 @@ void main() {
       final runner = FrbChatRunner(
         streamBridge: streamBridge,
         snapshotStore: store,
+        tools: const <Map<String, Object?>>[_askUserTool],
       );
 
       final events = await runner
@@ -795,6 +823,7 @@ void main() {
       final runner = FrbChatRunner(
         streamBridge: streamBridge,
         snapshotStore: store,
+        tools: const <Map<String, Object?>>[_askUserTool],
       );
 
       final events = await runner
@@ -909,6 +938,7 @@ void main() {
       final runner = FrbChatRunner(
         streamBridge: streamBridge,
         snapshotStore: store,
+        tools: const <Map<String, Object?>>[_askUserTool],
       );
 
       final events = await runner
@@ -1115,6 +1145,96 @@ void main() {
     );
   });
 
+  test('requires native done after a terminal round_finished event', () async {
+    final runner = FrbChatRunner(
+      streamBridge: _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"round_finished","response":{"content":"partial","finish_reason":"stop"},"round":1,"metadata":{"status":"completed"}}',
+        ],
+      ),
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Hello'),
+          ],
+        )
+        .toList();
+
+    expect(events.whereType<TextEvent>().single.text, 'partial');
+    expect(
+      events.whereType<ErrorEvent>().single.code,
+      'frb_chat_terminal_done_missing',
+    );
+    expect((events.last as DoneEvent).stopReason, 'error');
+  });
+
+  test('rejects tool calls outside the active catalog', () async {
+    var toolHostCalls = 0;
+    final runner = FrbChatRunner(
+      streamBridge: _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"round":1},"tool_calls":[{"id":"call_1","name":"write_task","input":{}}]}}',
+        ],
+      ),
+      tools: const <Map<String, Object?>>[_readTaskTool],
+      toolLineHandler: (_) async {
+        toolHostCalls += 1;
+        return '{}';
+      },
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Write a task'),
+          ],
+        )
+        .toList();
+
+    expect(toolHostCalls, 0);
+    expect(
+      events.whereType<ErrorEvent>().single.code,
+      'frb_chat_tool_not_allowed',
+    );
+    expect((events.last as DoneEvent).stopReason, 'error');
+  });
+
+  test('keeps ask_user exclusive from other tool calls', () async {
+    var toolHostCalls = 0;
+    final runner = FrbChatRunner(
+      streamBridge: _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"round":1},"tool_calls":[{"id":"call_1","name":"read_task","input":{}},{"id":"call_2","name":"ask_user","input":{}}]}}',
+        ],
+      ),
+      tools: const <Map<String, Object?>>[_readTaskTool, _askUserTool],
+      toolLineHandler: (_) async {
+        toolHostCalls += 1;
+        return '{}';
+      },
+    );
+
+    final events = await runner
+        .run(
+          messages: const <WireMessage>[
+            WireMessage(role: 'user', content: 'Choose and continue'),
+          ],
+        )
+        .toList();
+
+    expect(toolHostCalls, 0);
+    expect(
+      events.whereType<ErrorEvent>().single.code,
+      'frb_chat_ask_user_not_exclusive',
+    );
+    expect((events.last as DoneEvent).stopReason, 'error');
+  });
+
   test('emits a cancelled span when the turn token is cancelled', () async {
     late CancelToken cancelToken;
     Stream<String> hangingStream() async* {
@@ -1146,10 +1266,161 @@ void main() {
     expect((events[1] as DoneEvent).stopReason, 'error');
   });
 
+  test(
+    'cancelling a safe-retry tool dispatch returns without waiting',
+    () async {
+      final store = InMemoryAgentRuntimeChatSnapshotStore();
+      final cancelToken = CancelToken();
+      final dispatchStarted = Completer<void>();
+      final releaseDispatch = Completer<String>();
+      final runner = FrbChatRunner(
+        streamBridge: _streamBridge(
+          _FakeLlmBridge(),
+          events: const <String>[
+            '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"turn_id":"turn-cancel-safe-retry","round":1,"pending_tool_calls":[{"id":"call_1","name":"read_task","input":{}}]},"tool_calls":[{"id":"call_1","name":"read_task","input":{}}]}}',
+          ],
+        ),
+        snapshotStore: store,
+        tools: const <Map<String, Object?>>[_readTaskTool],
+        toolLineHandler: (_) {
+          dispatchStarted.complete();
+          return releaseDispatch.future;
+        },
+      );
+
+      final eventsFuture = runner
+          .runTurn(
+            ChatAgentTurnRequest(
+              turnId: 'turn-cancel-safe-retry',
+              messages: const <ChatAgentMessage>[
+                ChatAgentMessage(role: 'user', content: 'Read a task'),
+              ],
+              cancelToken: cancelToken,
+            ),
+          )
+          .toList();
+      await dispatchStarted.future.timeout(const Duration(seconds: 1));
+      cancelToken.cancel('user cancelled');
+      final events = await eventsFuture.timeout(const Duration(seconds: 1));
+      releaseDispatch.complete('{"result":{"ok":true}}');
+
+      final toolSpan = events.whereType<SpanEvent>().singleWhere(
+        (span) => span.kind == AiSpanKind.tool,
+      );
+      expect(toolSpan.status, AiSpanStatus.cancelled);
+      expect((events.last as DoneEvent).stopReason, 'error');
+      final snapshot = store.debugRecord('turn-cancel-safe-retry');
+      expect(snapshot?.status, 'requires_tool_results');
+      final dispatch =
+          (snapshot?.snapshot['tool_dispatches'] as List).single
+              as Map<String, Object?>;
+      expect(dispatch['status'], 'dispatching');
+    },
+  );
+
+  test('cancelling an at-most-once tool makes recovery fail closed', () async {
+    final store = InMemoryAgentRuntimeChatSnapshotStore();
+    final cancelToken = CancelToken();
+    final dispatchStarted = Completer<void>();
+    final releaseDispatch = Completer<String>();
+    final runner = FrbChatRunner(
+      streamBridge: _streamBridge(
+        _FakeLlmBridge(),
+        events: const <String>[
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"round":1,"metadata":{"status":"requires_tool_results","chat_state":{"turn_id":"turn-cancel-at-most-once","round":1,"pending_tool_calls":[{"id":"call_1","name":"write_task","input":{}}]},"tool_calls":[{"id":"call_1","name":"write_task","input":{}}]}}',
+        ],
+      ),
+      snapshotStore: store,
+      tools: const <Map<String, Object?>>[_writeTaskTool],
+      toolLineHandler: (_) {
+        dispatchStarted.complete();
+        return releaseDispatch.future;
+      },
+    );
+
+    final eventsFuture = runner
+        .runTurn(
+          ChatAgentTurnRequest(
+            turnId: 'turn-cancel-at-most-once',
+            messages: const <ChatAgentMessage>[
+              ChatAgentMessage(role: 'user', content: 'Write a task'),
+            ],
+            cancelToken: cancelToken,
+          ),
+        )
+        .toList();
+    await dispatchStarted.future.timeout(const Duration(seconds: 1));
+    cancelToken.cancel('user cancelled');
+    final events = await eventsFuture.timeout(const Duration(seconds: 1));
+    releaseDispatch.complete('{"result":{"ok":true}}');
+
+    expect((events.last as DoneEvent).stopReason, 'error');
+    final snapshot = store.debugRecord('turn-cancel-at-most-once');
+    expect(snapshot?.status, 'failed');
+    expect(await store.loadResumable('turn-cancel-at-most-once'), isNull);
+    final dispatch =
+        (snapshot?.snapshot['tool_dispatches'] as List).single
+            as Map<String, Object?>;
+    expect(dispatch['status'], 'interrupted');
+  });
+
+  test(
+    'cancelling a safe-retry tool during recovery remains resumable',
+    () async {
+      final store = InMemoryAgentRuntimeChatSnapshotStore();
+      await store.save(
+        snapshot: _chatRecoverySnapshot(
+          dispatchStatus: 'dispatching',
+          replayPolicy: 'safe_retry',
+          includeResult: false,
+        ),
+      );
+      final cancelToken = CancelToken();
+      final dispatchStarted = Completer<void>();
+      final releaseDispatch = Completer<String>();
+      final runner = FrbChatRunner(
+        streamBridge: _streamBridge(_FakeLlmBridge(), events: const <String>[]),
+        snapshotStore: store,
+        tools: const <Map<String, Object?>>[_writeTaskTool],
+        toolLineHandler: (_) {
+          dispatchStarted.complete();
+          return releaseDispatch.future;
+        },
+      );
+
+      final eventsFuture = runner
+          .runTurn(
+            ChatAgentTurnRequest(
+              turnId: 'turn-recovery',
+              messages: const <ChatAgentMessage>[
+                ChatAgentMessage(role: 'user', content: 'Resume the task'),
+              ],
+              cancelToken: cancelToken,
+            ),
+          )
+          .toList();
+      await dispatchStarted.future.timeout(const Duration(seconds: 1));
+      cancelToken.cancel('user cancelled');
+      final events = await eventsFuture.timeout(const Duration(seconds: 1));
+      releaseDispatch.complete('{"result":{"ok":true}}');
+
+      expect(
+        events.whereType<SpanEvent>().single.status,
+        AiSpanStatus.cancelled,
+      );
+      expect((events.last as DoneEvent).stopReason, 'error');
+      final snapshot = store.debugRecord('turn-recovery');
+      expect(snapshot?.status, 'requires_tool_results');
+      final dispatch =
+          (snapshot?.snapshot['tool_dispatches'] as List).single
+              as Map<String, Object?>;
+      expect(dispatch['status'], 'dispatching');
+    },
+  );
+
   test('maps native finish reasons to chat stop reasons', () async {
     final cases = <String, String>{
       'length': 'max_tokens',
-      'tool_call': 'tool_use',
       'requires_interaction': 'requires_interaction',
       'content_filter': 'refusal',
       'error': 'error',
@@ -1169,6 +1440,11 @@ void main() {
               },
               'round': 1,
               'metadata': <String, Object?>{'finish_reason': entry.key},
+            }),
+            jsonEncode(<String, Object?>{
+              'kind': 'done',
+              'round': 1,
+              'metadata': <String, Object?>{'stop_reason': entry.value},
             }),
           ],
         ),

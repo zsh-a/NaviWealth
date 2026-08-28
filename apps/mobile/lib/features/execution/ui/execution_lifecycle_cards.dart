@@ -450,11 +450,19 @@ class _LifecycleQuickButtons extends StatelessWidget {
     final colors = context.theme.colors;
     final primaryIcon = canResume
         ? FLucideIcons.play
+        : canCreateAction
+        ? FLucideIcons.plus
         : FLucideIcons.messageSquareText;
     final primaryTooltip = canResume
         ? l10n.executionLifecycleResume
+        : canCreateAction
+        ? l10n.executionCreateActionTitle
         : l10n.executionCreateProgressTitle;
-    final primaryAction = canResume ? onResume : onRecordProgress;
+    final primaryAction = canResume
+        ? onResume
+        : canCreateAction
+        ? onCreateAction
+        : onRecordProgress;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -472,13 +480,13 @@ class _LifecycleQuickButtons extends StatelessWidget {
               title: editTooltip,
               onPress: onEdit,
             ),
-            if (canResume)
+            if (canCreateAction || canResume)
               AppAdaptiveAction(
                 icon: FLucideIcons.messageSquareText,
                 title: l10n.executionCreateProgressTitle,
                 onPress: onRecordProgress,
               ),
-            if (canCreateAction)
+            if (canCreateAction && canResume)
               AppAdaptiveAction(
                 icon: FLucideIcons.plus,
                 title: l10n.executionCreateActionTitle,

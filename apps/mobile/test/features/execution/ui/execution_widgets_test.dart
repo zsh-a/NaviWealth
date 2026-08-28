@@ -310,7 +310,7 @@ void main() {
     }
 
     await selectMoreAction('Edit Action');
-    await selectMoreAction('New Progress');
+    await selectMoreAction('New Update');
     await selectMoreAction('Block');
     await selectMoreAction('Done');
     await selectMoreAction('Drop');
@@ -536,7 +536,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(opened, isTrue);
 
-    await tester.tap(find.byIcon(FLucideIcons.messageSquareText));
+    await tester.tap(find.byIcon(FLucideIcons.plus));
     await tester.pump(const Duration(milliseconds: 200));
 
     Future<void> selectMoreAction(String label) async {
@@ -547,7 +547,7 @@ void main() {
     }
 
     await selectMoreAction('Edit Plan');
-    await selectMoreAction('New Action');
+    await selectMoreAction('New Update');
     await selectMoreAction('Pause');
     await selectMoreAction('Complete');
     await selectMoreAction('Archive');
@@ -754,8 +754,8 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await selectMoreAction('Edit Commitment');
-    await selectMoreAction('New Progress');
+    await selectMoreAction('Edit Ongoing Plan');
+    await selectMoreAction('New Update');
     await selectMoreAction('New Action');
     await selectMoreAction('Complete');
     await selectMoreAction('Archive');
@@ -812,7 +812,7 @@ void main() {
 
     await tester.tap(find.byIcon(FLucideIcons.ellipsis));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Edit Progress'));
+    await tester.tap(find.text('Edit Update'));
     await tester.pumpAndSettle();
     expect(edited, isTrue);
 

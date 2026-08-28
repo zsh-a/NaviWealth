@@ -24693,7 +24693,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDomainsExecutionEnabledSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Today, commitments, progress, and personal todos.'**
+  /// **'Today, actions, plans, and review.'**
   String get settingsDomainsExecutionEnabledSubtitle;
 
   /// No description provided for @settingsDomainsExecutionDisabledSubtitle.
@@ -24705,7 +24705,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDomainsExecutionTodaySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Review today\'s actions, blockers, and progress.'**
+  /// **'Review today\'s actions, blockers, and updates.'**
   String get settingsDomainsExecutionTodaySubtitle;
 
   /// No description provided for @executionTabToday.
@@ -24825,19 +24825,19 @@ abstract class AppLocalizations {
   /// No description provided for @executionCreateCommitmentTitle.
   ///
   /// In en, this message translates to:
-  /// **'New Commitment'**
+  /// **'New Ongoing Plan'**
   String get executionCreateCommitmentTitle;
 
   /// No description provided for @executionCreateProgressTitle.
   ///
   /// In en, this message translates to:
-  /// **'New Progress'**
+  /// **'New Update'**
   String get executionCreateProgressTitle;
 
   /// No description provided for @executionEditProgressTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit Progress'**
+  /// **'Edit Update'**
   String get executionEditProgressTitle;
 
   /// No description provided for @executionEditActionTitle.
@@ -24855,7 +24855,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionEditCommitmentTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit Commitment'**
+  /// **'Edit Ongoing Plan'**
   String get executionEditCommitmentTitle;
 
   /// No description provided for @executionActionField.
@@ -24873,7 +24873,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentField.
   ///
   /// In en, this message translates to:
-  /// **'Commitment'**
+  /// **'Ongoing plan'**
   String get executionCommitmentField;
 
   /// No description provided for @executionRelationField.
@@ -24963,7 +24963,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentTitleHint.
   ///
   /// In en, this message translates to:
-  /// **'What are you committing to?'**
+  /// **'What do you want to keep moving over time?'**
   String get executionCommitmentTitleHint;
 
   /// No description provided for @executionCommitmentDescriptionHint.
@@ -25005,13 +25005,13 @@ abstract class AppLocalizations {
   /// No description provided for @executionOverviewCommitments.
   ///
   /// In en, this message translates to:
-  /// **'Commitments'**
+  /// **'Ongoing plans'**
   String get executionOverviewCommitments;
 
   /// No description provided for @executionOverviewProgress7d.
   ///
   /// In en, this message translates to:
-  /// **'7d progress'**
+  /// **'7d updates'**
   String get executionOverviewProgress7d;
 
   /// No description provided for @executionTodayEmptyTitle.
@@ -25077,7 +25077,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionReviewEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'No progress yet'**
+  /// **'No updates yet'**
   String get executionReviewEmptyTitle;
 
   /// No description provided for @executionReviewEmptyBody.
@@ -25101,7 +25101,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionCommitmentsSection.
   ///
   /// In en, this message translates to:
-  /// **'Ongoing'**
+  /// **'Ongoing plans'**
   String get executionCommitmentsSection;
 
   /// No description provided for @executionInboxSection.
@@ -25257,37 +25257,37 @@ abstract class AppLocalizations {
   /// No description provided for @executionNoProject.
   ///
   /// In en, this message translates to:
-  /// **'No project'**
+  /// **'No plan'**
   String get executionNoProject;
 
   /// No description provided for @executionUnknownProject.
   ///
   /// In en, this message translates to:
-  /// **'Unknown project'**
+  /// **'Unknown plan'**
   String get executionUnknownProject;
 
   /// No description provided for @executionNoProjectsAvailable.
   ///
   /// In en, this message translates to:
-  /// **'No active projects available'**
+  /// **'No active plans available'**
   String get executionNoProjectsAvailable;
 
   /// No description provided for @executionNoCommitment.
   ///
   /// In en, this message translates to:
-  /// **'No commitment'**
+  /// **'No ongoing plan'**
   String get executionNoCommitment;
 
   /// No description provided for @executionUnknownCommitment.
   ///
   /// In en, this message translates to:
-  /// **'Unknown commitment'**
+  /// **'Unknown ongoing plan'**
   String get executionUnknownCommitment;
 
   /// No description provided for @executionNoCommitmentsAvailable.
   ///
   /// In en, this message translates to:
-  /// **'No active commitments available'**
+  /// **'No active ongoing plans available'**
   String get executionNoCommitmentsAvailable;
 
   /// No description provided for @executionPickerSearchHint.
@@ -25389,13 +25389,13 @@ abstract class AppLocalizations {
   /// No description provided for @executionProjectStatusUpdateFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t update project status.'**
+  /// **'Couldn\'t update plan status.'**
   String get executionProjectStatusUpdateFailed;
 
   /// No description provided for @executionCommitmentStatusUpdateFailed.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t update commitment status.'**
+  /// **'Couldn\'t update ongoing plan status.'**
   String get executionCommitmentStatusUpdateFailed;
 
   /// No description provided for @executionProgressDoneDefault.
@@ -25425,49 +25425,49 @@ abstract class AppLocalizations {
   /// No description provided for @executionProjectPausedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Project paused.'**
+  /// **'Plan paused.'**
   String get executionProjectPausedDefault;
 
   /// No description provided for @executionProjectResumedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Project resumed.'**
+  /// **'Plan resumed.'**
   String get executionProjectResumedDefault;
 
   /// No description provided for @executionProjectCompletedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Project completed.'**
+  /// **'Plan completed.'**
   String get executionProjectCompletedDefault;
 
   /// No description provided for @executionProjectArchivedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Project archived.'**
+  /// **'Plan archived.'**
   String get executionProjectArchivedDefault;
 
   /// No description provided for @executionCommitmentPausedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Commitment paused.'**
+  /// **'Ongoing plan paused.'**
   String get executionCommitmentPausedDefault;
 
   /// No description provided for @executionCommitmentResumedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Commitment resumed.'**
+  /// **'Ongoing plan resumed.'**
   String get executionCommitmentResumedDefault;
 
   /// No description provided for @executionCommitmentCompletedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Commitment completed.'**
+  /// **'Ongoing plan completed.'**
   String get executionCommitmentCompletedDefault;
 
   /// No description provided for @executionCommitmentArchivedDefault.
   ///
   /// In en, this message translates to:
-  /// **'Commitment archived.'**
+  /// **'Ongoing plan archived.'**
   String get executionCommitmentArchivedDefault;
 
   /// No description provided for @executionLifecycleCompleteConfirmTitle.
@@ -25509,13 +25509,13 @@ abstract class AppLocalizations {
   /// No description provided for @executionProgressKindField.
   ///
   /// In en, this message translates to:
-  /// **'Progress type'**
+  /// **'Update type'**
   String get executionProgressKindField;
 
   /// No description provided for @executionProgressNoteField.
   ///
   /// In en, this message translates to:
-  /// **'Progress note'**
+  /// **'Update note'**
   String get executionProgressNoteField;
 
   /// No description provided for @executionProgressNoteHint.
@@ -25527,7 +25527,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionProgressNoteRequired.
   ///
   /// In en, this message translates to:
-  /// **'Add a progress note'**
+  /// **'Add an update'**
   String get executionProgressNoteRequired;
 
   /// No description provided for @executionProgressKindBlocker.
@@ -25581,7 +25581,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionProjectCommitmentsSection.
   ///
   /// In en, this message translates to:
-  /// **'Project commitments'**
+  /// **'Ongoing plans'**
   String get executionProjectCommitmentsSection;
 
   /// No description provided for @executionReviewWindow7d.
@@ -25617,7 +25617,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionReviewProgressMetric.
   ///
   /// In en, this message translates to:
-  /// **'Progress'**
+  /// **'Updates'**
   String get executionReviewProgressMetric;
 
   /// No description provided for @executionReviewGenerateTitle.
@@ -25629,7 +25629,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionReviewGenerateBody.
   ///
   /// In en, this message translates to:
-  /// **'Generate a local review of focus, blockers, due work, and recent progress.'**
+  /// **'Generate a local review of focus, blockers, due work, and recent updates.'**
   String get executionReviewGenerateBody;
 
   /// No description provided for @executionReviewGenerateAction.
@@ -25653,19 +25653,19 @@ abstract class AppLocalizations {
   /// No description provided for @executionProposalProjectLabel.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Plan'**
   String get executionProposalProjectLabel;
 
   /// No description provided for @executionProposalCommitmentLabel.
   ///
   /// In en, this message translates to:
-  /// **'Commitment'**
+  /// **'Ongoing plan'**
   String get executionProposalCommitmentLabel;
 
   /// No description provided for @executionProposalProgressLabel.
   ///
   /// In en, this message translates to:
-  /// **'Progress'**
+  /// **'Update'**
   String get executionProposalProgressLabel;
 
   /// No description provided for @executionProposalRowAction.
@@ -25683,19 +25683,19 @@ abstract class AppLocalizations {
   /// No description provided for @executionProposalRowProject.
   ///
   /// In en, this message translates to:
-  /// **'Project'**
+  /// **'Plan'**
   String get executionProposalRowProject;
 
   /// No description provided for @executionProposalRowCommitment.
   ///
   /// In en, this message translates to:
-  /// **'Commitment'**
+  /// **'Ongoing plan'**
   String get executionProposalRowCommitment;
 
   /// No description provided for @executionProposalRowProgress.
   ///
   /// In en, this message translates to:
-  /// **'Progress'**
+  /// **'Update'**
   String get executionProposalRowProgress;
 
   /// No description provided for @executionProposalRowDue.
@@ -26735,19 +26735,19 @@ abstract class AppLocalizations {
   /// No description provided for @executionAgentReviewSummaryPartProjects.
   ///
   /// In en, this message translates to:
-  /// **'{count} active projects'**
+  /// **'{count} active plans'**
   String executionAgentReviewSummaryPartProjects(Object count);
 
   /// No description provided for @executionAgentReviewSummaryPartCommitments.
   ///
   /// In en, this message translates to:
-  /// **'{count} active commitments'**
+  /// **'{count} ongoing plans'**
   String executionAgentReviewSummaryPartCommitments(Object count);
 
   /// No description provided for @executionAgentReviewSummaryPartProgress.
   ///
   /// In en, this message translates to:
-  /// **'{count} progress entries this week'**
+  /// **'{count} updates this week'**
   String executionAgentReviewSummaryPartProgress(Object count);
 
   /// No description provided for @executionAgentReviewSummaryPartBlocked.
@@ -26810,13 +26810,13 @@ abstract class AppLocalizations {
   /// No description provided for @executionAgentReviewInsightProgressTitle.
   ///
   /// In en, this message translates to:
-  /// **'Weekly progress'**
+  /// **'Weekly updates'**
   String get executionAgentReviewInsightProgressTitle;
 
   /// No description provided for @executionAgentReviewInsightProgressBody.
   ///
   /// In en, this message translates to:
-  /// **'{progressCount} progress entries across {projectCount} active projects and {commitmentCount} active commitments.'**
+  /// **'{progressCount} updates across {projectCount} active plans and {commitmentCount} ongoing plans.'**
   String executionAgentReviewInsightProgressBody(
     Object commitmentCount,
     Object progressCount,
@@ -26844,7 +26844,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionAgentReviewInsightNoNextActionBody.
   ///
   /// In en, this message translates to:
-  /// **'{projectCount} active projects and {commitmentCount} active commitments have no open next action.'**
+  /// **'{projectCount} active plans and {commitmentCount} ongoing plans have no open next action.'**
   String executionAgentReviewInsightNoNextActionBody(
     Object commitmentCount,
     Object projectCount,
@@ -26859,7 +26859,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionAgentReviewInsightOverdueTargetsBody.
   ///
   /// In en, this message translates to:
-  /// **'{projectCount} projects and {commitmentCount} commitments are past their target date.'**
+  /// **'{projectCount} plans and {commitmentCount} ongoing plans are past their target date.'**
   String executionAgentReviewInsightOverdueTargetsBody(
     Object commitmentCount,
     Object projectCount,
@@ -30020,7 +30020,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionReviewCreateNextActionsBody.
   ///
   /// In en, this message translates to:
-  /// **'Create one high-priority action for every project or commitment that still has no open next action?'**
+  /// **'Create one high-priority action for every plan or ongoing plan that still has no open next action?'**
   String get executionReviewCreateNextActionsBody;
 
   /// No description provided for @executionReviewCreatedNextActions.
@@ -30152,7 +30152,7 @@ abstract class AppLocalizations {
   /// No description provided for @executionSearchKindProgress.
   ///
   /// In en, this message translates to:
-  /// **'Progress'**
+  /// **'Update'**
   String get executionSearchKindProgress;
 
   /// No description provided for @knowledgeSettingsReviewCadence.

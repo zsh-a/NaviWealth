@@ -8,7 +8,6 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
-import 'execution_relation_picker.dart';
 import 'execution_sheet_footer.dart';
 import 'execution_widgets.dart';
 
@@ -130,12 +129,6 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
 
   void _markDirty() => widget.dirty.markDirty();
 
-  bool get _hasFixedContext =>
-      widget.progress == null &&
-      (widget.action != null ||
-          widget.projectId != null ||
-          widget.commitmentId != null);
-
   List<ExecutionProgressKind> get _availableKinds {
     final kinds = <ExecutionProgressKind>[
       ExecutionProgressKind.checkin,
@@ -155,15 +148,6 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final actions =
-        ref.watch(executionOpenActionsProvider).value ??
-        const <ExecutionAction>[];
-    final projects =
-        ref.watch(executionProjectsProvider).value ??
-        const <ExecutionProject>[];
-    final commitments =
-        ref.watch(executionCommitmentsProvider).value ??
-        const <ExecutionCommitment>[];
     final selectedAction = _actionId == null || _actionId!.isEmpty
         ? null
         : ref.watch(executionActionByIdProvider(_actionId!)).value;
@@ -173,6 +157,18 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
         ? null
         : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
+    final contextValue =
+        selectedAction?.title ??
+        widget.action?.title ??
+        selectedCommitment?.title ??
+        selectedProject?.title ??
+        (_actionId?.isNotEmpty == true
+            ? l10n.executionUnknownAction
+            : _commitmentId?.isNotEmpty == true
+            ? l10n.executionUnknownCommitment
+            : _projectId?.isNotEmpty == true
+            ? l10n.executionUnknownProject
+            : l10n.executionNoRelation);
     return AppSheet(
       title: widget.progress == null
           ? l10n.executionCreateProgressTitle
@@ -229,106 +225,10 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
                   : null,
             ),
             const SizedBox(height: AppSpacing.s12),
-            if (_hasFixedContext)
-              _ProgressContextSummary(
-                label: l10n.executionRelationField,
-                value:
-                    selectedAction?.title ??
-                    widget.action?.title ??
-                    executionRelationPickerLabel(l10n, projects, commitments, (
-                      projectId: _projectId,
-                      commitmentId: _commitmentId,
-                    )),
-              )
-            else ...[
-              FormPickerRow(
-                label: l10n.executionActionField,
-                value:
-                    selectedAction?.title ??
-                    executionActionPickerLabel(l10n, actions, _actionId),
-                leading: const Icon(FLucideIcons.listTodo),
-                enabled: !_saving,
-                onPress: () async {
-                  final picked = await showExecutionActionPicker(
-                    context: context,
-                    actions: actions,
-                    selectedId: _actionId,
-                  );
-                  if (picked == null) return;
-                  setState(() {
-                    if (picked == kExecutionPickerNone) {
-                      _actionId = null;
-                      return;
-                    }
-                    _actionId = picked;
-                    final action = actions
-                        .where((ExecutionAction a) => a.id == picked)
-                        .first;
-                    _projectId = action.projectId;
-                    _commitmentId = action.commitmentId;
-                  });
-                  _markDirty();
-                },
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              FormPickerRow(
-                label: l10n.executionProjectField,
-                value:
-                    selectedProject?.title ??
-                    executionProjectPickerLabel(l10n, projects, _projectId),
-                leading: const Icon(FLucideIcons.folder),
-                enabled: !_saving,
-                onPress: () async {
-                  final picked = await showExecutionProjectPicker(
-                    context: context,
-                    projects: projects,
-                    selectedId: _projectId,
-                  );
-                  if (picked == null) return;
-                  setState(() {
-                    final next = executionRelationAfterProjectPick(
-                      commitments: commitments,
-                      currentCommitmentId: _commitmentId,
-                      pickedProjectId: picked,
-                    );
-                    _projectId = next.projectId;
-                    _commitmentId = next.commitmentId;
-                  });
-                  _markDirty();
-                },
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              FormPickerRow(
-                label: l10n.executionCommitmentField,
-                value:
-                    selectedCommitment?.title ??
-                    executionCommitmentPickerLabel(
-                      l10n,
-                      commitments,
-                      _commitmentId,
-                    ),
-                leading: const Icon(FLucideIcons.target),
-                enabled: !_saving,
-                onPress: () async {
-                  final picked = await showExecutionCommitmentPicker(
-                    context: context,
-                    commitments: commitments,
-                    selectedId: _commitmentId,
-                  );
-                  if (picked == null) return;
-                  setState(() {
-                    final next = executionRelationAfterCommitmentPick(
-                      commitments: commitments,
-                      currentProjectId: _projectId,
-                      pickedCommitmentId: picked,
-                    );
-                    _projectId = next.projectId;
-                    _commitmentId = next.commitmentId;
-                  });
-                  _markDirty();
-                },
-              ),
-            ],
+            _ProgressContextSummary(
+              label: l10n.executionRelationField,
+              value: contextValue,
+            ),
           ],
         ),
       ),

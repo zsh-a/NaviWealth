@@ -720,7 +720,7 @@ void main() {
     );
     final progress = await repository.listRecentProgress(ownerUserId: 'u-test');
     expect(archived?.status, ExecutionProjectStatus.archived);
-    expect(progress.single.note, 'Project archived.');
+    expect(progress.single.note, 'Plan archived.');
   });
 }
 

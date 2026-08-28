@@ -13896,13 +13896,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthGarminErrorGeneric => 'Garmin 同步失败，请重试。';
 
   @override
-  String get settingsDomainsExecutionEnabledSubtitle => '今日行动、承诺、进展和个人待办事项';
+  String get settingsDomainsExecutionEnabledSubtitle => '今日行动、计划与复盘';
 
   @override
   String get settingsDomainsExecutionDisabledSubtitle => '把决策与计划转成可追踪的行动';
 
   @override
-  String get settingsDomainsExecutionTodaySubtitle => '查看今天的行动、阻塞与进展';
+  String get settingsDomainsExecutionTodaySubtitle => '查看今天的行动、阻塞与更新';
 
   @override
   String get executionTabToday => '今天';
@@ -13964,13 +13964,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCreateProjectTitle => '新建计划';
 
   @override
-  String get executionCreateCommitmentTitle => '新建承诺';
+  String get executionCreateCommitmentTitle => '新建持续计划';
 
   @override
-  String get executionCreateProgressTitle => '新建进展';
+  String get executionCreateProgressTitle => '记录更新';
 
   @override
-  String get executionEditProgressTitle => '编辑进展';
+  String get executionEditProgressTitle => '编辑更新';
 
   @override
   String get executionEditActionTitle => '编辑行动';
@@ -13979,7 +13979,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionEditProjectTitle => '编辑计划';
 
   @override
-  String get executionEditCommitmentTitle => '编辑承诺';
+  String get executionEditCommitmentTitle => '编辑持续计划';
 
   @override
   String get executionActionField => '行动';
@@ -13988,7 +13988,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProjectField => '计划';
 
   @override
-  String get executionCommitmentField => '承诺';
+  String get executionCommitmentField => '持续计划';
 
   @override
   String get executionRelationField => '归属';
@@ -14033,7 +14033,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProjectDescriptionHint => '可选结果、范围或完成标准';
 
   @override
-  String get executionCommitmentTitleHint => '你承诺推进什么？';
+  String get executionCommitmentTitleHint => '你想持续推进什么？';
 
   @override
   String get executionCommitmentDescriptionHint => '可选范围、原因或目标结果';
@@ -14054,10 +14054,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionOverviewProjects => '计划';
 
   @override
-  String get executionOverviewCommitments => '承诺';
+  String get executionOverviewCommitments => '持续计划';
 
   @override
-  String get executionOverviewProgress7d => '7 日进展';
+  String get executionOverviewProgress7d => '近 7 日更新';
 
   @override
   String get executionTodayEmptyTitle => '今天没有行动';
@@ -14092,7 +14092,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionCommitmentsClosedEmptyBody => '已完成或已归档的计划会出现在这里。';
 
   @override
-  String get executionReviewEmptyTitle => '还没有进展记录';
+  String get executionReviewEmptyTitle => '还没有更新';
 
   @override
   String get executionReviewEmptyBody => '完成与阻塞记录会出现在这里，方便复盘。';
@@ -14104,7 +14104,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProjectsSection => '计划';
 
   @override
-  String get executionCommitmentsSection => '持续事项';
+  String get executionCommitmentsSection => '持续计划';
 
   @override
   String get executionInboxSection => '收集箱';
@@ -14190,22 +14190,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionNoActionsAvailable => '暂无可关联的未完成行动';
 
   @override
-  String get executionNoProject => '不关联项目';
+  String get executionNoProject => '不关联计划';
 
   @override
-  String get executionUnknownProject => '未知项目';
+  String get executionUnknownProject => '未知计划';
 
   @override
-  String get executionNoProjectsAvailable => '暂无可关联的活跃项目';
+  String get executionNoProjectsAvailable => '暂无可关联的活跃计划';
 
   @override
-  String get executionNoCommitment => '不关联承诺';
+  String get executionNoCommitment => '不关联持续计划';
 
   @override
-  String get executionUnknownCommitment => '未知承诺';
+  String get executionUnknownCommitment => '未知持续计划';
 
   @override
-  String get executionNoCommitmentsAvailable => '暂无可关联的活跃承诺';
+  String get executionNoCommitmentsAvailable => '暂无可关联的活跃持续计划';
 
   @override
   String get executionPickerSearchHint => '按标题或备注搜索';
@@ -14256,10 +14256,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionActiveWorkEntry => '返回进行中事项';
 
   @override
-  String get executionProjectStatusUpdateFailed => '更新项目状态失败。';
+  String get executionProjectStatusUpdateFailed => '更新计划状态失败。';
 
   @override
-  String get executionCommitmentStatusUpdateFailed => '更新承诺状态失败。';
+  String get executionCommitmentStatusUpdateFailed => '更新持续计划状态失败。';
 
   @override
   String get executionProgressDoneDefault => '已标记为完成。';
@@ -14274,28 +14274,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProgressResumedDefault => '已恢复推进。';
 
   @override
-  String get executionProjectPausedDefault => '项目已暂停。';
+  String get executionProjectPausedDefault => '计划已暂停。';
 
   @override
-  String get executionProjectResumedDefault => '项目已恢复。';
+  String get executionProjectResumedDefault => '计划已恢复。';
 
   @override
-  String get executionProjectCompletedDefault => '项目已完成。';
+  String get executionProjectCompletedDefault => '计划已完成。';
 
   @override
-  String get executionProjectArchivedDefault => '项目已归档。';
+  String get executionProjectArchivedDefault => '计划已归档。';
 
   @override
-  String get executionCommitmentPausedDefault => '承诺已暂停。';
+  String get executionCommitmentPausedDefault => '持续计划已暂停。';
 
   @override
-  String get executionCommitmentResumedDefault => '承诺已恢复。';
+  String get executionCommitmentResumedDefault => '持续计划已恢复。';
 
   @override
-  String get executionCommitmentCompletedDefault => '承诺已完成。';
+  String get executionCommitmentCompletedDefault => '持续计划已完成。';
 
   @override
-  String get executionCommitmentArchivedDefault => '承诺已归档。';
+  String get executionCommitmentArchivedDefault => '持续计划已归档。';
 
   @override
   String get executionLifecycleCompleteConfirmTitle => '仍有未完成行动，确认完成？';
@@ -14324,16 +14324,16 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get executionProgressKindField => '进展类型';
+  String get executionProgressKindField => '更新类型';
 
   @override
-  String get executionProgressNoteField => '进展记录';
+  String get executionProgressNoteField => '更新记录';
 
   @override
   String get executionProgressNoteHint => '记录变化或备注；如需改变行动状态，请使用行动操作。';
 
   @override
-  String get executionProgressNoteRequired => '请填写进展记录';
+  String get executionProgressNoteRequired => '请填写更新';
 
   @override
   String get executionProgressKindBlocker => '阻塞';
@@ -14360,7 +14360,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionUnplacedActionsSection => '待安置行动';
 
   @override
-  String get executionProjectCommitmentsSection => '项目承诺';
+  String get executionProjectCommitmentsSection => '持续计划';
 
   @override
   String get executionReviewWindow7d => '7 天';
@@ -14378,13 +14378,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionReviewBlockedMetric => '阻塞';
 
   @override
-  String get executionReviewProgressMetric => '进展';
+  String get executionReviewProgressMetric => '更新';
 
   @override
   String get executionReviewGenerateTitle => '执行复盘';
 
   @override
-  String get executionReviewGenerateBody => '在本地生成焦点、阻塞、到期事项和近期进展摘要。';
+  String get executionReviewGenerateBody => '在本地生成焦点、阻塞、到期事项和近期更新摘要。';
 
   @override
   String get executionReviewGenerateAction => '生成复盘';
@@ -14396,13 +14396,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProposalActionStatusLabel => '行动状态';
 
   @override
-  String get executionProposalProjectLabel => '项目';
+  String get executionProposalProjectLabel => '计划';
 
   @override
-  String get executionProposalCommitmentLabel => '承诺';
+  String get executionProposalCommitmentLabel => '持续计划';
 
   @override
-  String get executionProposalProgressLabel => '进展';
+  String get executionProposalProgressLabel => '更新';
 
   @override
   String get executionProposalRowAction => '行动';
@@ -14411,13 +14411,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionProposalRowPriority => '优先级';
 
   @override
-  String get executionProposalRowProject => '项目';
+  String get executionProposalRowProject => '计划';
 
   @override
-  String get executionProposalRowCommitment => '承诺';
+  String get executionProposalRowCommitment => '持续计划';
 
   @override
-  String get executionProposalRowProgress => '进展';
+  String get executionProposalRowProgress => '更新';
 
   @override
   String get executionProposalRowDue => '截止';
@@ -15085,17 +15085,17 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String executionAgentReviewSummaryPartProjects(Object count) {
-    return '$count 个活跃项目';
+    return '$count 个活跃计划';
   }
 
   @override
   String executionAgentReviewSummaryPartCommitments(Object count) {
-    return '$count 个活跃承诺';
+    return '$count 个持续计划';
   }
 
   @override
   String executionAgentReviewSummaryPartProgress(Object count) {
-    return '本周 $count 条进展';
+    return '本周 $count 条更新';
   }
 
   @override
@@ -15141,7 +15141,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get executionAgentReviewInsightProgressTitle => '每周进展';
+  String get executionAgentReviewInsightProgressTitle => '每周更新';
 
   @override
   String executionAgentReviewInsightProgressBody(
@@ -15149,7 +15149,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object progressCount,
     Object projectCount,
   ) {
-    return '$projectCount 个活跃项目和 $commitmentCount 个活跃承诺下有 $progressCount 条进展。';
+    return '$projectCount 个活跃计划和 $commitmentCount 个持续计划下有 $progressCount 条更新。';
   }
 
   @override
@@ -15168,7 +15168,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object commitmentCount,
     Object projectCount,
   ) {
-    return '$projectCount 个活跃项目和 $commitmentCount 个活跃承诺没有未完成的下一步行动。';
+    return '$projectCount 个活跃计划和 $commitmentCount 个持续计划没有未完成的下一步行动。';
   }
 
   @override
@@ -15179,7 +15179,7 @@ class AppLocalizationsZh extends AppLocalizations {
     Object commitmentCount,
     Object projectCount,
   ) {
-    return '$projectCount 个项目和 $commitmentCount 个承诺已超过目标日期。';
+    return '$projectCount 个计划和 $commitmentCount 个持续计划已超过目标日期。';
   }
 
   @override
@@ -16949,7 +16949,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionReviewCreateNextActionsBody =>
-      '是否为仍缺少下一步行动的每个项目或承诺创建一个高优先级行动？';
+      '是否为仍缺少下一步行动的每个计划或持续计划创建一个高优先级行动？';
 
   @override
   String executionReviewCreatedNextActions(int count) {
@@ -17024,7 +17024,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get executionSearchKindProject => '计划';
 
   @override
-  String get executionSearchKindProgress => '进展';
+  String get executionSearchKindProgress => '更新';
 
   @override
   String get knowledgeSettingsReviewCadence => '复盘频率';
