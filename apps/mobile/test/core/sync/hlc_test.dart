@@ -14,8 +14,8 @@ void main() {
     });
 
     test('zero-pads the hex counter so string order matches tuple order', () {
-      final a = Hlc(wallMillis: 100, counter: 0x000f, nodeId: 'dev-1');
-      final b = Hlc(wallMillis: 100, counter: 0x0010, nodeId: 'dev-1');
+      const a = Hlc(wallMillis: 100, counter: 0x000f, nodeId: 'dev-1');
+      const b = Hlc(wallMillis: 100, counter: 0x0010, nodeId: 'dev-1');
       expect(a < b, isTrue);
       expect(a.toString().compareTo(b.toString()) < 0, isTrue);
     });
@@ -43,19 +43,19 @@ void main() {
 
   group('Hlc.tick', () {
     test('advances the wall clock when it leads', () {
-      final last = Hlc(wallMillis: 100, counter: 7, nodeId: 'dev-1');
+      const last = Hlc(wallMillis: 100, counter: 7, nodeId: 'dev-1');
       final next = Hlc.tick(lastSeen: last, nowMillis: 200);
       expect(next, const Hlc(wallMillis: 200, counter: 0, nodeId: 'dev-1'));
     });
 
     test('bumps the counter within the same millisecond', () {
-      final last = Hlc(wallMillis: 100, counter: 7, nodeId: 'dev-1');
+      const last = Hlc(wallMillis: 100, counter: 7, nodeId: 'dev-1');
       final next = Hlc.tick(lastSeen: last, nowMillis: 100);
       expect(next, const Hlc(wallMillis: 100, counter: 8, nodeId: 'dev-1'));
     });
 
     test('carries overflow into the next millisecond', () {
-      final last = Hlc(
+      const last = Hlc(
         wallMillis: 100,
         counter: Hlc.counterMax,
         nodeId: 'dev-1',
@@ -65,7 +65,7 @@ void main() {
     });
 
     test('never regresses behind a higher lastSeen wall clock', () {
-      final last = Hlc(wallMillis: 500, counter: 2, nodeId: 'dev-1');
+      const last = Hlc(wallMillis: 500, counter: 2, nodeId: 'dev-1');
       final next = Hlc.tick(lastSeen: last, nowMillis: 100);
       expect(next >= last, isTrue);
     });
