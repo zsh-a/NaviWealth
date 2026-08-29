@@ -205,12 +205,12 @@ void main() {
         expect(
           outbox.queued.map((operation) => operation.table),
           containsAll([
-            InvestmentPortfolioRepository.portfoliosTable,
-            InvestmentPortfolioRepository.universesTable,
-            InvestmentPortfolioRepository.portfolioTargetsTable,
-            InvestmentPortfolioRepository.groupsTable,
-            InvestmentPortfolioRepository.strategiesTable,
-            InvestmentPortfolioRepository.assignmentsTable,
+            portfoliosTable,
+            universesTable,
+            portfolioTargetsTable,
+            groupsTable,
+            strategiesTable,
+            assignmentsTable,
           ]),
         );
       },
@@ -481,11 +481,7 @@ void main() {
         );
         expect(
           outbox.queued.map((operation) => operation.table),
-          containsAll([
-            InvestmentPortfolioRepository.groupsTable,
-            InvestmentPortfolioRepository.strategiesTable,
-            InvestmentPortfolioRepository.assignmentsTable,
-          ]),
+          containsAll([groupsTable, strategiesTable, assignmentsTable]),
         );
 
         final readded = await repository.addCapitalStrategy(
@@ -643,11 +639,7 @@ void main() {
         );
         expect(
           outbox.queued
-              .where(
-                (operation) =>
-                    operation.table ==
-                    InvestmentPortfolioRepository.assignmentsTable,
-              )
+              .where((operation) => operation.table == assignmentsTable)
               .length,
           3,
         );
