@@ -23,7 +23,7 @@ This documentation uses a docs-as-code structure:
 | Change architecture or cross-domain code | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) |
 | Add or modify a domain | [LifeOS Shell](architecture/lifeos-shell.md), then the owning domain SSOT |
 | Work on device AI | [Device AI Architecture](ai/ai-architecture.md), [Runtime Event Contract](ai/ai-protocol.md), [Agent Experience](ai/agent-experience.md) |
-| Plan Personal Memory V1 | [Personal Memory V1 Implementation Plan](ai/personal-memory-implementation-plan.md), then confirm sequencing in the [LifeOS Roadmap](roadmap/roadmap-lifeos.md) |
+| Work on personal memory beyond V1 | [AI Architecture](ai/ai-architecture.md) for current Memory behavior; the [Personal Memory Implementation Plan](ai/personal-memory-implementation-plan.md) retains only the deferred Phases 4–5 |
 | Work on Rust agent runtime | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md) |
 | Work on sync | [Sync v3 Protocol](sync/sync-v3.md), [Protocol Test Catalogue](sync/sync-protocol-tests.md) |
 | Add business diagnostics | [Structured Logging](development/logging.md) |

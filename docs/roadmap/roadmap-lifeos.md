@@ -2,7 +2,7 @@
 
 Status: active cross-domain sequencing SSOT.
 
-Last reviewed: 2026-08-23.
+Last reviewed: 2026-08-29.
 
 This roadmap contains only work that changes cross-domain product outcomes or
 shared delivery risk. Current architecture belongs in the architecture SSOTs,
@@ -27,7 +27,16 @@ remains a schema-agnostic Sync v3 row store.
 The first production cross-domain loop is complete: Life signals expose local
 evidence, confirmed proposals create source-preserving Execution actions, and
 Execution Review shows whether the current source signal is cleared or still
-active without claiming causality.
+active without claiming causality. The Personal Intelligence Loop and Personal
+Memory V1 are delivered; their current behavior is owned by the AI and
+architecture SSOTs.
+
+Recent releases simplified Finance planning and cashflow, Execution plans and
+review, Knowledge review, and Settings without changing domain boundaries.
+Mobile AI chat now supports hands-free voice turns through on-device ASR/TTS
+inside the existing interaction session, and Android builds self-update
+through GitHub releases. These are current capabilities owned by the domain
+SSOTs and [AI Architecture](../ai/ai-architecture.md), not roadmap items.
 
 ## Now
 
@@ -101,180 +110,52 @@ changes sequencing for all downstream roadmap work.
 
 ## Delivered
 
-These cross-domain initiatives have repository exit evidence. Follow-up work
-must enter `Now` or `Next` with a new measurable outcome instead of reopening
-the removed legacy architecture.
+These cross-domain initiatives have repository exit evidence and are complete.
+This section records outcomes and ownership only; current guarantees belong in
+the SSOTs and executable tests named below. Follow-up work must enter `Now` or
+`Next` with a new measurable outcome instead of reopening the removed legacy
+architecture.
 
 ### Personal Intelligence Loop
 
-Outcome: turn the existing domain Agents, Memory Runtime, Life signals, and
-proposal safety seams into one personal intelligence loop that correlates
-active-domain evidence, stays silent when nothing material changed, and gives
-the user one traceable next-step judgment on the Life surface.
+Outcome: correlate active-domain evidence into one traceable next-step
+judgment on the Life surface while staying silent when nothing material
+changed.
 
-Delivered evidence:
+Delivered in five vertical slices: typed event and evidence identity across
+all four domains; the confirmed `PersonalProfileSnapshot` and fingerprinted
+`LifeContextSnapshot`; the app-owned Daily Navigator gated on material change
+and evidence freshness; signal-driven triggers with one global attention
+arbiter (`silent` / `surface` / `interrupt`); and memory hygiene with Agent
+feedback and policy evaluation. Personal Memory V1 (Phases 0–3) shipped in the
+same loop; Phases 4–5 remain deferred in
+[its implementation plan](../ai/personal-memory-implementation-plan.md).
 
-- The Life hub already composes bounded deterministic signals contributed by
-  active `DomainPack`s, and source-preserving Life actions can be evaluated
-  against later domain state.
-- `AgentArtifact`, stable findings, trace links, evidence navigation,
-  dismiss/snooze state, proposal confirmation, and outcome corpus evaluation
-  already provide most of the trust and presentation substrate.
-- `EventRecord` now requires typed domain/kind/time/source identity, confidence,
-  facts, entities, and evidence anchors. Schema v73 rebuilt the derived event
-  index directly; no legacy free-form event contract remains.
-- `PersonalProfileSnapshot` materializes explicitly confirmed structured
-  profile facts with authority, provenance, scope, and validity metadata.
-  `LifeContextSnapshot` combines that stable profile with fingerprinted
-  active-domain state, freshness, changes, goals, constraints, and relevant
-  history.
-- The app-owned Daily Navigator consumes domain-owned `LifeSignal`s, gates on
-  material change and evidence freshness before any model call, and owns the
-  Life-surface cross-domain judgment. The retired Health-owned briefing code,
-  preferences, UI, schedules, notifications, and tests were removed.
-- `AgentTrigger` supports schedule, event, threshold, state transition,
-  freshness, and manual triggers. Knowledge write debounce uses the shared
-  coordinator, while Daily Navigator combines signal triggers with a schedule
-  fallback.
-- `AttentionArbiter` is the only notification policy owner. It persists
-  `silent`, `surface`, or `interrupt` decisions under a global interrupt
-  budget; the background-safe callback reads only a precomputed primitive
-  snapshot and never invokes an LLM or writes business data.
-- Durable Memory has explicit retrieval role, evidence authority, provenance,
-  and supersede lineage. Domain Agents no longer write periodic summaries into
-  Memory or directly send notifications; Agent Artifacts remain temporary
-  unless the user explicitly confirms a Memory proposal.
-- Structured Agent feedback links accepted, dismissed, snoozed, completed, and
-  undone outcomes to Life context, finding, and attention fingerprints. The
-  policy corpus evaluates silence, duplication, stale data, evidence,
-  actionability, severity, domain isolation, and interrupt budget behavior.
-- Advanced Settings now exposes local-only Developer Issue capture. It retains
-  the last domain route, build identity, latest trace id, at most five tool
-  error codes, and optional screenshot identity; export is explicit, excludes
-  user identity and local paths, and never creates a remote issue.
-
-Delivered vertical slices:
-
-1. **Typed event and evidence identity.** Added explicit domain, namespaced kind,
-   occurred/observed times, source row family/id/fingerprint, confidence, and
-   stable evidence identity to the cross-domain event contract. Migrated
-   storage and all four current domain indexers directly. Unknown domains fail
-   closed rather than defaulting to Finance; source routes resolve through
-   registered domain contributions.
-2. **Personal profile and Life context.** Materialized a structured
-   `PersonalProfileSnapshot` for goals, preferences, constraints, and rules,
-   with authority, provenance, confirmation, validity, and update metadata.
-   Domain baselines and routines remain deterministic current-state inputs or
-   explicitly confirmed profile rules rather than model-authored profile data.
-   Composed it with deterministic active-domain state, freshness, recent
-   changes, goals, and relevant history into a fingerprinted
-   `LifeContextSnapshot`. Domain business calculations remain domain-owned;
-   app composition assembles only domain-neutral slices.
-3. **Daily Navigator vertical slice.** Added one app-owned Life synthesis Agent
-   and a Life-surface presentation owner without creating a new opt-in domain.
-   It starts with available Health and Finance findings, with Execution context
-   included only when enabled and relevant. The Agent correlates, prioritizes,
-   explains, and proposes a next step; it does not recalculate domain metrics
-   or write business rows directly. It invokes the device LLM only after a
-   deterministic material-change gate, retains a deterministic fallback, and
-   replaces the removed duplicate domain-owned briefing implementation.
-4. **Signal-driven triggers and attention arbitration.** Introduced event,
-   threshold, state-transition, freshness, schedule, and manual trigger specs
-   without conflating them with persisted run provenance. Migrated the existing
-   Knowledge debounce path first, then connect real Finance import and Health
-   refresh transitions. Routed every candidate through one global attention
-   decision (`silent`, `surface`, or `interrupt`) that considers novelty,
-   severity, confidence, actionability, recent notifications, and current
-   dismiss/snooze state. A bounded background-safe path may inspect only a
-   precomputed snapshot and record pending attention; it must not invoke an
-   LLM or mutate business data.
-5. **Memory hygiene, feedback, and policy evaluation.** Distinguished source
-   facts, user-confirmed records, deterministic derived records, model-derived
-   candidates, and temporary Agent artifacts through evidence authority,
-   provenance, retrieval role, and access policy. Agent
-   artifacts do not become durable Memory by default; periodic reviews remain
-   artifacts, and only explicit confirmation can promote an Agent inference
-   into durable Memory or the personal profile. Linked accepted,
-   dismissed, snoozed, completed, and undone suggestions back to their
-   snapshot/finding fingerprints. Extended the Agent corpus to test whether a
-   result should appear at all, and added Developer Mode issue capture with
-   explicit local export of route, build, trace, bounded tool errors, and an
-   optional screenshot.
-
-Repository verification:
-
-- Every event written by Finance, Health, Knowledge, and Execution has an
-  explicit domain and source identity. Regression fixtures prove that unknown,
-  Knowledge, and Execution events cannot enter Finance synthesis by exclusion.
-- Every evidence-bearing ready artifact in the vertical slice resolves to the
-  correct active-domain source route. Missing or inactive-domain evidence
-  fails closed instead of routing to a generic or wrong domain page.
-- A deterministic fixture produces the same personal profile and Life context
-  fingerprint from the same inputs. Stale inputs are marked explicitly, and
-  unconfirmed profile candidates cannot act as hard constraints or authorize
-  a proposal.
-- A checked-in Health/Finance fixture produces one Daily Navigator artifact
-  with conclusion-level evidence and at most one confirmed action path. A
-  no-material-change fixture produces no visible artifact and records zero LLM
-  calls; inactive-domain and stale-data fixtures make no cross-domain claim.
-- Trigger tests prove debounce/idempotency, threshold and state-transition
-  behavior, and schedule fallback. Background tests prove that the
-  background-safe path performs no LLM call, tool effect, proposal apply, or
-  business write.
-- Every notification is backed by a persisted attention decision. Duplicate,
-  unchanged, dismissed, and actively snoozed findings cannot consume the
-  interrupt budget, while silent decisions remain available to local quality
-  evaluation.
-- Retrieval tests prove that temporary Agent artifacts are excluded from
-  durable personal context unless explicitly promoted; periodic Agent reviews
-  no longer write durable Memory rows.
-- The Agent policy corpus covers `should_surface`, `should_stay_silent`,
-  severity, evidence completeness, actionability, duplicate suppression,
-  stale data, wrong-domain combination, and no-model-call gating. Architecture
-  composition and lint tests continue to enforce active-domain isolation and
-  the boundaries owned by the LifeOS Northstar and Agent Experience SSOT.
-- The local dogfood surface records export state and Agent feedback records
-  real outcome transitions without promoting either record into Memory.
-
-Owner: cross-domain app composition. Domains own deterministic facts,
-findings, routes, and proposal application; shared contracts and lifecycle
-policy remain in their existing core seams.
+Owning SSOTs: [LifeOS Shell](../architecture/lifeos-shell.md) for composition,
+trigger, and attention seams; [AI Architecture](../ai/ai-architecture.md) for
+the agent runtime and memory; [Agent Experience](../ai/agent-experience.md)
+for findings, artifacts, and feedback. Coverage lives in the Agent policy
+corpus and the attention, memory, event, and composition test suites.
 
 ### Agent Runtime Capability Contract
 
-Outcome: keep NaviWealth's runtime integration documentation aligned with the
-exact pinned standalone runtime instead of manually copying a fast-moving
-capability inventory.
-
-Delivered evidence:
-
-- NaviWealth pins `third_party/agent-runtime` at
-  `a89e11b0924107b637e741aeb8d75950b6430ac6`.
-- That commit contains the dependency-light `bindings/ts` package and lists it
-  in the runtime README.
-- Exact runtime APIs are already owned by the submodule crates, schemas,
-  fixtures, and contract tests; the host documentation should describe the
-  integration boundary rather than duplicate their feature list.
-
-Repository verification:
-
-- `tool/generate_agent_runtime_capabilities.dart` derives a machine-readable
-  manifest from the pinned submodule's Cargo metadata, package metadata,
-  schemas, and README.
-- `docs/architecture/agent-runtime-capabilities.json` records the pinned commit,
-  bindings, transports, stores, providers, and protocol/snapshot versions.
-- `tool/check-mobile-static.sh` runs the generator in `--check` mode, and CI
-  checks out the submodule before that gate.
-- `agent-runtime-current.md` references the generated manifest and retains only
-  NaviWealth-owned integration boundaries and host limitations.
-
-Owner: native Agent Runtime integration. This track may proceed independently
-and does not block the Personal Intelligence Loop vertical slice.
+Outcome: keep runtime integration documentation aligned with the pinned
+standalone runtime instead of manually copying a fast-moving capability
+inventory. `third_party/agent-runtime` is pinned; the generated manifest
+`docs/architecture/agent-runtime-capabilities.json` is checked in CI by
+`tool/check-mobile-static.sh`; `agent-runtime-current.md` documents only
+NaviWealth-owned integration boundaries and host limitations.
 
 ## Next
 
 These are accepted follow-ups but are not allowed to displace `Now` work
 without an explicit reorder.
+
+Shared delivery risk: the Android emulator integration workflow is
+temporarily skipped on CI while an upstream Flutter Semantics assertion blocks
+the integration flow (flutter/flutter#191095). The on-device exit evidence of
+the first two initiatives below is pending the restored gate
+(`RUN_FLUTTER_TESTS` in `.github/workflows/integration-device.yml`).
 
 ### Data Portability Recovery Correctness
 
@@ -344,8 +225,7 @@ Current evidence:
   and successful reopen after the original key is restored. Its CI wrapper
   rejects a nominally green Flutter run when any encryption, migration,
   Keystore, or backup/restore evidence marker is missing, and emits a separate
-  privacy-safe JSON summary. A green emulator artifact is still required
-  before this initiative can leave `Now`.
+  privacy-safe JSON summary.
 
 Exit evidence:
 
@@ -372,10 +252,10 @@ feature parity on Web without weakening device-only guarantees.
 
 Current evidence:
 
-- Scroll perf analysis identified repeated `List<_FeedItem>` and
-  `List<_TimelineItem>` allocations in Activity Feed and AI Chat that were
-  causing GC pressure on every scroll tick. Caching these lists removes the
-  per-frame allocation spike.
+- The identified scroll hotspots are fixed: Activity Feed and AI Chat cache
+  their flattened feed/timeline lists instead of rebuilding them per frame,
+  and AI navigation transitions were smoothed. Remaining hotspots must be
+  found by measurement, not by re-deriving the fixed list.
 - Web builds exclude AI runtime and Health platform integration by design; the
   remaining parity gap is UI completeness, not architecture.
 - The project has lint gates for cross-feature imports, domain-neutral
@@ -383,12 +263,11 @@ Current evidence:
 
 Exit evidence:
 
-- Activity Feed and AI Chat maintain 8ms frame budget on 120Hz test devices
-  during sustained scroll, measured in Flutter DevTools performance traces.
+- Sustained-scroll frame budgets are validated by measurement on 120Hz test
+  devices in Flutter DevTools performance traces, with a targeted widget or
+  integration test guarding each identified hotspot.
 - Web parity checklist covers every cross-domain shell route, settings panel,
   Finance view, and Knowledge view currently available on mobile.
-- Platform quality regressions are caught by a targeted widget or integration
-  test added for each identified hotspot.
 
 ## Triggered Bets
 

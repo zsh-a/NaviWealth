@@ -2,7 +2,7 @@
 
 Status: active FinanceOS sequencing SSOT.
 
-Last reviewed: 2026-08-01.
+Last reviewed: 2026-08-29.
 
 FinanceOS is the always-on seed domain. This document contains only
 Finance-specific product sequencing. Cross-domain shell, Memory Runtime,
@@ -99,6 +99,9 @@ Current evidence:
 Exit evidence:
 
 - Prove interruption recovery on the production Android file-backed database.
+  The shared Android emulator integration gate is temporarily skipped on CI
+  pending an upstream Flutter fix; see the shared delivery-risk note in
+  `roadmap-lifeos.md` Next.
 - Expand the representative dataset only when measured production exports
   exceed the current 1,000-row boundary.
 
