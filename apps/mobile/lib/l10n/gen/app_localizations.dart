@@ -254,11 +254,23 @@ abstract class AppLocalizations {
   /// **'Goals & scenarios'**
   String get planLongTermGoalsTitle;
 
-  /// Plan hub section for recurring investing and rebalancing
+  /// Plan hub section for optional hands-on investment tools
   ///
   /// In en, this message translates to:
-  /// **'Investing'**
+  /// **'Advanced investing'**
   String get planInvestmentPlanTitle;
+
+  /// Plan hub disclosure for optional investment workflows
+  ///
+  /// In en, this message translates to:
+  /// **'Explore investment tools'**
+  String get planInvestmentToolsTitle;
+
+  /// Summary of the investment tools hidden behind progressive disclosure
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring plans, rebalancing, and income strategies'**
+  String get planInvestmentToolsSummary;
 
   /// No description provided for @planExploreActiveOptions.
   ///

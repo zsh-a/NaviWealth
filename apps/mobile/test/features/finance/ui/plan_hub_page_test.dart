@@ -108,7 +108,9 @@ void main() {
     expect(find.text(l10n.planCashSafetyTitle), findsOneWidget);
     expect(find.text(l10n.planLongTermGoalsTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
+    expect(find.text(l10n.planInvestmentToolsTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planDcaPlanTitle), findsNothing);
   });
 
   testWidgets('keeps the workspace usable when FIRE status errors', (
@@ -141,10 +143,11 @@ void main() {
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.text(l10n.planFireGoalNotConfigured), findsOneWidget);
     expect(find.text(l10n.planFireGoalTitle), findsOneWidget);
-    expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
-    expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
+    expect(find.text(l10n.planInvestmentToolsTitle), findsOneWidget);
+    expect(find.text(l10n.planRebalanceSectionTitle), findsNothing);
+    expect(find.text(l10n.planDcaPlanTitle), findsNothing);
     expect(find.text(l10n.lifeEventScenariosTitle), findsWidgets);
     expect(find.text('Planning tools'), findsNothing);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);
@@ -204,14 +207,19 @@ void main() {
       findsNWidgets(2),
       reason: 'Attention promotion must not hide the stable plan entry.',
     );
-    expect(find.text('7.5% drift'), findsWidgets);
+    expect(find.text('7.5% drift'), findsNothing);
     expect(find.text('62% used this month'), findsOneWidget);
 
     await tester.scrollUntilVisible(
-      find.text(l10n.incomeStrategyTitle),
+      find.text(l10n.planInvestmentToolsTitle),
       160,
       scrollable: find.byType(Scrollable).last,
     );
+    await tester.ensureVisible(find.text(l10n.planInvestmentToolsTitle));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.planInvestmentToolsTitle));
+    await tester.pumpAndSettle();
+    expect(find.text('7.5% drift'), findsOneWidget);
     expect(find.text(l10n.incomeStrategyTitle), findsOneWidget);
     expect(find.text(l10n.planExploreActiveOptions(1)), findsOneWidget);
   });
@@ -233,7 +241,8 @@ void main() {
     await tester.pump();
 
     expect(find.text('Needs attention'), findsNothing);
-    expect(find.text('Recurring investment plan'), findsOneWidget);
+    expect(find.text('Explore investment tools'), findsOneWidget);
+    expect(find.text('Recurring investment plan'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -288,7 +297,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(l10n.planAttentionTitle), findsNothing);
-    expect(find.text(l10n.planStatusRebalanceActive), findsOneWidget);
+    expect(find.text(l10n.planStatusRebalanceActive), findsNothing);
   });
 
   testWidgets('visible strategy rows navigate to feature routes', (
@@ -299,6 +308,9 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
+    await tester.ensureVisible(find.text(l10n.planInvestmentToolsTitle));
+    await tester.tap(find.text(l10n.planInvestmentToolsTitle));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.incomeStrategyTitle).last);
@@ -328,6 +340,13 @@ void main() {
     );
     await tester.pump();
 
+    await tester.scrollUntilVisible(
+      find.text(l10n.planInvestmentToolsTitle),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text(l10n.planInvestmentToolsTitle));
+    await tester.pumpAndSettle();
     await tester.drag(find.byType(Scrollable).last, const Offset(0, -200));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.planRebalanceSectionTitle).last);

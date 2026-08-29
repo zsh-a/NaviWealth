@@ -101,7 +101,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planLongTermGoalsTitle => 'Goals & scenarios';
 
   @override
-  String get planInvestmentPlanTitle => 'Investing';
+  String get planInvestmentPlanTitle => 'Advanced investing';
+
+  @override
+  String get planInvestmentToolsTitle => 'Explore investment tools';
+
+  @override
+  String get planInvestmentToolsSummary =>
+      'Recurring plans, rebalancing, and income strategies';
 
   @override
   String planExploreActiveOptions(int count) {

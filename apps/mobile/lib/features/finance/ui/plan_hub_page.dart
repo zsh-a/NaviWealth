@@ -143,7 +143,7 @@ List<AdaptiveSummaryTile> _planningSummaryTiles(
     ),
     AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.standard,
-      child: _PlanSection(
+      child: _CollapsiblePlanSection(
         key: const ValueKey('plan-investment-plan-section'),
         title: l10n.planInvestmentPlanTitle,
         entries: investmentPlan,
@@ -304,6 +304,58 @@ class _PlanSection extends StatelessWidget {
           if (index > 0) const FDivider(),
           _PlanRow(spec: entry),
         ],
+      ],
+    );
+  }
+}
+
+class _CollapsiblePlanSection extends StatefulWidget {
+  const _CollapsiblePlanSection({
+    super.key,
+    required this.title,
+    required this.entries,
+  });
+
+  final String title;
+  final List<_PlanEntrySpec> entries;
+
+  @override
+  State<_CollapsiblePlanSection> createState() =>
+      _CollapsiblePlanSectionState();
+}
+
+class _CollapsiblePlanSectionState extends State<_CollapsiblePlanSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSection.group(
+      title: widget.title,
+      children: [
+        Semantics(
+          expanded: _expanded,
+          child: AppNavRow(
+            key: const ValueKey('plan-investment-tools-disclosure'),
+            icon: FLucideIcons.layers,
+            title: l10n.planInvestmentToolsTitle,
+            subtitle: l10n.planInvestmentToolsSummary,
+            titleMaxLines: 2,
+            subtitleMaxLines: 2,
+            showChevron: false,
+            trailing: Icon(
+              _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+              size: AppIconSizes.sm,
+              color: context.theme.colors.mutedForeground,
+            ),
+            onTap: () => setState(() => _expanded = !_expanded),
+          ),
+        ),
+        if (_expanded)
+          for (final entry in widget.entries) ...[
+            const FDivider(),
+            _PlanRow(spec: entry),
+          ],
       ],
     );
   }

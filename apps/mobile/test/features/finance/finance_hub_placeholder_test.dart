@@ -20,7 +20,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
   testWidgets(
-    'Plan hub keeps all planning capabilities visible while loading',
+    'Plan hub keeps core planning visible and advanced tools discoverable',
     (tester) async {
       await _setDesktopSurface(tester);
       await tester.pumpWidget(
@@ -42,7 +42,9 @@ void main() {
       expect(find.text('Cash safety'), findsOneWidget);
       expect(find.text('Money runway'), findsOneWidget);
       expect(find.text('Financial independence'), findsOneWidget);
-      expect(find.text('Investing'), findsOneWidget);
+      expect(find.text('Advanced investing'), findsOneWidget);
+      expect(find.text('Explore investment tools'), findsOneWidget);
+      expect(find.text('Recurring investment plan'), findsNothing);
       expect(find.text('Budget'), findsOneWidget);
       expect(find.text('Income Planner'), findsNothing);
       expect(find.text('Scenario analytics'), findsNothing);
@@ -51,54 +53,53 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Plan hub pairs goals with investment strategies on wide canvas',
-    (tester) async {
-      await _setDesktopSurface(tester);
-      await tester.pumpWidget(
-        _wrap(
-          overrides: [
-            fireDashboardViewProvider.overrideWith(
-              (_) => const AsyncValue.loading(),
+  testWidgets('Plan hub pairs goals with progressive investment disclosure', (
+    tester,
+  ) async {
+    await _setDesktopSurface(tester);
+    await tester.pumpWidget(
+      _wrap(
+        overrides: [
+          fireDashboardViewProvider.overrideWith(
+            (_) => const AsyncValue.loading(),
+          ),
+          planningHubStatusProvider.overrideWith(
+            (_) => PlanningHubStatus(
+              runway: PlanningRunwayStatus.healthy,
+              pendingLifeEventReviews: 0,
+              rebalance: PlanningRebalanceStatus.active,
+              rebalanceDriftPct: 0.08,
+              budgetCount: 1,
+              budgetSignal: null,
+              budgetProgress: 0.4,
+              dcaPlanCount: 1,
+              dcaNextDueAt: DateTime.utc(2026, 8, 8),
+              dcaDue: false,
+              wheelCycleCount: 0,
+              wheelOpenPositionCount: 0,
+              isLoading: false,
+              hasError: false,
             ),
-            planningHubStatusProvider.overrideWith(
-              (_) => PlanningHubStatus(
-                runway: PlanningRunwayStatus.healthy,
-                pendingLifeEventReviews: 0,
-                rebalance: PlanningRebalanceStatus.active,
-                rebalanceDriftPct: 0.08,
-                budgetCount: 1,
-                budgetSignal: null,
-                budgetProgress: 0.4,
-                dcaPlanCount: 1,
-                dcaNextDueAt: DateTime.utc(2026, 8, 8),
-                dcaDue: false,
-                wheelCycleCount: 0,
-                wheelOpenPositionCount: 0,
-                isLoading: false,
-                hasError: false,
-              ),
-            ),
-          ],
-          child: const PlanHubPage(),
-        ),
-      );
-      await tester.pump();
+          ),
+        ],
+        child: const PlanHubPage(),
+      ),
+    );
+    await tester.pump();
 
-      final cashSafety = tester.getRect(
-        find.byKey(const ValueKey('plan-cash-safety-section')),
-      );
-      final longTermGoals = tester.getRect(
-        find.byKey(const ValueKey('plan-long-term-goals-section')),
-      );
-      final investmentPlan = tester.getRect(
-        find.byKey(const ValueKey('plan-investment-plan-section')),
-      );
-      expect(longTermGoals.top, cashSafety.top);
-      expect(cashSafety.width, greaterThan(longTermGoals.width));
-      expect(investmentPlan.top, greaterThan(longTermGoals.bottom));
-    },
-  );
+    final cashSafety = tester.getRect(
+      find.byKey(const ValueKey('plan-cash-safety-section')),
+    );
+    final longTermGoals = tester.getRect(
+      find.byKey(const ValueKey('plan-long-term-goals-section')),
+    );
+    final investmentPlan = tester.getRect(
+      find.byKey(const ValueKey('plan-investment-plan-section')),
+    );
+    expect(longTermGoals.top, cashSafety.top);
+    expect(cashSafety.width, greaterThan(longTermGoals.width));
+    expect(investmentPlan.top, greaterThan(longTermGoals.bottom));
+  });
 
   testWidgets('Wealth hub hides placeholder-only entries', (tester) async {
     await _setDesktopSurface(tester);

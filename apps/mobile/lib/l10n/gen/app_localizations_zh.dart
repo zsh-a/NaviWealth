@@ -99,7 +99,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planLongTermGoalsTitle => '目标与场景';
 
   @override
-  String get planInvestmentPlanTitle => '投资';
+  String get planInvestmentPlanTitle => '进阶投资';
+
+  @override
+  String get planInvestmentToolsTitle => '查看投资工具';
+
+  @override
+  String get planInvestmentToolsSummary => '定投、再平衡与收益策略';
 
   @override
   String planExploreActiveOptions(int count) {
