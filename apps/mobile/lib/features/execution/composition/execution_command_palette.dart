@@ -21,7 +21,6 @@ List<CommandPaletteEntry> executionCommandPaletteEntries(
         'execution',
         'action',
         'plan',
-        'project',
         'todo',
         'capture',
         '行动',
@@ -44,18 +43,18 @@ List<CommandPaletteEntry> executionCommandPaletteEntries(
       run: (BuildContext ctx) => ctx.go(ExecutionRoutes.today),
     ),
     CommandPaletteEntry(
-      id: 'nav.execution.commitments',
-      label: l10n.executionCommandCommitments,
+      id: 'nav.execution.plans',
+      label: l10n.executionCommandPlans,
       icon: FLucideIcons.target,
       keywords: <String>[
-        ExecutionRoutes.commitments,
+        ExecutionRoutes.plans,
         'execution',
-        'commitment',
+        'plan',
         'todo',
         'next action',
-        l10n.executionCommandCommitments,
+        l10n.executionCommandPlans,
       ],
-      run: (BuildContext ctx) => ctx.go(ExecutionRoutes.commitments),
+      run: (BuildContext ctx) => ctx.go(ExecutionRoutes.plans),
     ),
   ];
 }

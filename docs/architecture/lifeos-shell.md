@@ -431,7 +431,7 @@ Indexers:
 - Options trade journal to trade events and episodic memories.
 - Health metrics to health events and selected sleep episodic memories.
 - Knowledge objects and decisions to `know:*` memories.
-- Execution actions, commitments, projects, and progress to `execution:*`
+- Execution plans, actions, and progress to `execution:*`
   memories/events.
 
 Rules:

@@ -34,8 +34,7 @@ ExecutionAction _action({
   ExecutionPriority priority = ExecutionPriority.normal,
   DateTime? dueAt,
   DateTime? scheduledFor,
-  String? projectId,
-  String? commitmentId,
+  String? planId,
 }) {
   return ExecutionAction(
     id: id,
@@ -44,8 +43,7 @@ ExecutionAction _action({
     priority: priority,
     dueAt: dueAt,
     scheduledFor: scheduledFor,
-    projectId: projectId,
-    commitmentId: commitmentId,
+    planId: planId,
     createdAt: DateTime.utc(2026, 6, 1),
     sync: _sync(0),
   );
@@ -54,13 +52,11 @@ ExecutionAction _action({
 ExecutionProgressEntry _progress({
   required String id,
   required SyncMeta sync,
-  String? projectId,
-  String? commitmentId,
+  String? planId,
 }) {
   return ExecutionProgressEntry(
     id: id,
-    projectId: projectId,
-    commitmentId: commitmentId,
+    planId: planId,
     kind: ExecutionProgressKind.checkin,
     note: 'Lifecycle changed',
     createdAt: sync.updatedAt,
@@ -138,7 +134,7 @@ void main() {
     final action = _action(
       id: 'a1',
       title: 'Book recovery workout',
-      projectId: 'proj-1',
+      planId: 'proj-1',
     );
     await repo.upsertAction(action);
     outbox.clearQueued();
@@ -157,7 +153,7 @@ void main() {
     expect(open, isEmpty);
     expect(progress, hasLength(1));
     expect(progress.single.kind, ExecutionProgressKind.completion);
-    expect(progress.single.projectId, 'proj-1');
+    expect(progress.single.planId, 'proj-1');
     expect(progress.single.note, 'Finished after HealthOS review.');
     expect(outbox.queued, [
       (table: 'execution_actions', rowId: 'a1'),
@@ -281,113 +277,100 @@ void main() {
     expect(closedAfterDelete.map((action) => action.id), ['a-dropped']);
   });
 
-  test(
-    'upsertProject stores active project and enqueues sync pointer',
-    () async {
-      await repo.upsertProject(
-        ExecutionProject(
-          id: 'proj-1',
-          title: 'Launch execution dashboard',
-          description: 'Group actions and progress under one delivery thread.',
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(3),
-        ),
-      );
+  test('upsertPlan stores active plan and enqueues sync pointer', () async {
+    await repo.upsertPlan(
+      ExecutionPlan(
+        id: 'proj-1',
+        title: 'Launch execution dashboard',
+        description: 'Group actions and progress under one delivery thread.',
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(3),
+      ),
+    );
 
-      final rows = await repo.watchActiveProjects(ownerUserId: _userId).first;
+    final rows = await repo.watchActivePlans(ownerUserId: _userId).first;
 
-      expect(rows, hasLength(1));
-      expect(rows.single.title, 'Launch execution dashboard');
-      expect(rows.single.status, ExecutionProjectStatus.active);
-      expect(outbox.queued.last, (
-        table: 'execution_projects',
-        rowId: 'proj-1',
-      ));
-    },
-  );
+    expect(rows, hasLength(1));
+    expect(rows.single.title, 'Launch execution dashboard');
+    expect(rows.single.status, ExecutionPlanStatus.active);
+    expect(outbox.queued.last, (table: 'execution_plans', rowId: 'proj-1'));
+  });
 
-  test('updateProjectStatus completes and reopens project lifecycle', () async {
-    final project = ExecutionProject(
+  test('updatePlanStatus completes and reopens plan lifecycle', () async {
+    final plan = ExecutionPlan(
       id: 'proj-life',
       title: 'Launch execution dashboard',
       createdAt: DateTime.utc(2026, 6, 1),
       sync: _sync(3),
     );
-    await repo.upsertProject(project);
+    await repo.upsertPlan(plan);
     outbox.clearQueued();
 
-    await repo.updateProjectStatus(
-      project: project,
-      status: ExecutionProjectStatus.completed,
+    await repo.updatePlanStatus(
+      plan: plan,
+      status: ExecutionPlanStatus.completed,
       sync: _sync(4),
       progress: _progress(
-        id: 'progress-project-complete',
-        projectId: project.id,
+        id: 'progress-plan-complete',
+        planId: plan.id,
         sync: _sync(4),
       ),
     );
-    final completed = await repo.findProject(
-      ownerUserId: _userId,
-      id: project.id,
-    );
+    final completed = await repo.findPlan(ownerUserId: _userId, id: plan.id);
     final activeAfterComplete = await repo
-        .watchActiveProjects(ownerUserId: _userId)
+        .watchActivePlans(ownerUserId: _userId)
         .first;
 
-    expect(completed!.status, ExecutionProjectStatus.completed);
+    expect(completed!.status, ExecutionPlanStatus.completed);
     expect(completed.completedAt, isNotNull);
     expect(activeAfterComplete, isEmpty);
 
-    await repo.updateProjectStatus(
-      project: completed,
-      status: ExecutionProjectStatus.active,
+    await repo.updatePlanStatus(
+      plan: completed,
+      status: ExecutionPlanStatus.active,
       sync: _sync(5),
       progress: _progress(
-        id: 'progress-project-reopen',
-        projectId: project.id,
+        id: 'progress-plan-reopen',
+        planId: plan.id,
         sync: _sync(5),
       ),
     );
-    final reopened = await repo.findProject(
-      ownerUserId: _userId,
-      id: project.id,
-    );
+    final reopened = await repo.findPlan(ownerUserId: _userId, id: plan.id);
 
-    expect(reopened!.status, ExecutionProjectStatus.active);
+    expect(reopened!.status, ExecutionPlanStatus.active);
     expect(reopened.completedAt, isNull);
     expect(outbox.queued, [
-      (table: 'execution_projects', rowId: 'proj-life'),
-      (table: 'execution_progress_entries', rowId: 'progress-project-complete'),
-      (table: 'execution_projects', rowId: 'proj-life'),
-      (table: 'execution_progress_entries', rowId: 'progress-project-reopen'),
+      (table: 'execution_plans', rowId: 'proj-life'),
+      (table: 'execution_progress_entries', rowId: 'progress-plan-complete'),
+      (table: 'execution_plans', rowId: 'proj-life'),
+      (table: 'execution_progress_entries', rowId: 'progress-plan-reopen'),
     ]);
   });
 
-  test('closing a project moves open actions to Inbox', () async {
-    final project = ExecutionProject(
+  test('closing a plan moves open actions to Inbox', () async {
+    final plan = ExecutionPlan(
       id: 'proj-inbox',
-      title: 'Project with follow-through',
+      title: 'Plan with follow-through',
       createdAt: DateTime.utc(2026, 6, 1),
       sync: _sync(20),
     );
     final action = _action(
       id: 'action-inbox',
       title: 'Keep the follow-through visible',
-      projectId: project.id,
-      commitmentId: 'commitment-inbox',
+      planId: plan.id,
     );
-    await repo.upsertProject(project);
+    await repo.upsertPlan(plan);
     await repo.upsertAction(action);
     outbox.clearQueued();
 
     final progress = _progress(
-      id: 'progress-project-inbox',
-      projectId: project.id,
+      id: 'progress-plan-inbox',
+      planId: plan.id,
       sync: _sync(21),
     );
-    final moved = await repo.updateProjectStatus(
-      project: project,
-      status: ExecutionProjectStatus.completed,
+    final moved = await repo.updatePlanStatus(
+      plan: plan,
+      status: ExecutionPlanStatus.completed,
       sync: _sync(21),
       progress: progress,
     );
@@ -395,8 +378,7 @@ void main() {
     expect(moved.map((item) => item.id), ['action-inbox']);
     final stored = await repo.findAction(ownerUserId: _userId, id: action.id);
     expect(stored!.status, ExecutionActionStatus.todo);
-    expect(stored.projectId, isNull);
-    expect(stored.commitmentId, isNull);
+    expect(stored.planId, isNull);
     expect(
       (await repo.listOpenActions(ownerUserId: _userId)).map((item) => item.id),
       contains('action-inbox'),
@@ -407,296 +389,77 @@ void main() {
     );
   });
 
-  test(
-    'watchClosedProjects shows completed and archived projects only',
-    () async {
-      final active = ExecutionProject(
-        id: 'proj-active',
-        title: 'Active project',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(1),
-      );
-      final completed = ExecutionProject(
-        id: 'proj-completed',
-        title: 'Completed project',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(2),
-      );
-      final archived = ExecutionProject(
-        id: 'proj-archived',
-        title: 'Archived project',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(3),
-      );
-      await repo.upsertProject(active);
-      await repo.upsertProject(completed);
-      await repo.upsertProject(archived);
-      await repo.updateProjectStatus(
-        project: completed,
-        status: ExecutionProjectStatus.completed,
-        sync: _sync(4),
-        progress: _progress(
-          id: 'progress-project-closed',
-          projectId: completed.id,
-          sync: _sync(4),
-        ),
-      );
-      await repo.updateProjectStatus(
-        project: archived,
-        status: ExecutionProjectStatus.archived,
-        sync: _sync(5),
-        progress: _progress(
-          id: 'progress-project-archived',
-          projectId: archived.id,
-          sync: _sync(5),
-        ),
-      );
-      final closedBeforeDelete = await repo
-          .watchClosedProjects(ownerUserId: _userId)
-          .first;
-
-      expect(
-        closedBeforeDelete.map((project) => project.id),
-        containsAll(<String>{'proj-completed', 'proj-archived'}),
-      );
-      expect(
-        closedBeforeDelete.map((project) => project.id),
-        isNot(contains('proj-active')),
-      );
-
-      await repo.softDeleteProject(
-        project: closedBeforeDelete.firstWhere(
-          (project) => project.id == 'proj-archived',
-        ),
-        sync: _sync(6),
-      );
-      final closedAfterDelete = await repo
-          .watchClosedProjects(ownerUserId: _userId)
-          .first;
-
-      expect(closedAfterDelete.map((project) => project.id), [
-        'proj-completed',
-      ]);
-    },
-  );
-
-  test('upsertCommitment stores active commitment', () async {
-    await repo.upsertCommitment(
-      ExecutionCommitment(
-        id: 'c1',
-        title: 'Ship execution loop',
-        description: 'Action, commitment, and review MVP.',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(2),
-      ),
-    );
-
-    final rows = await repo.watchActiveCommitments(ownerUserId: _userId).first;
-
-    expect(rows, hasLength(1));
-    expect(rows.single.title, 'Ship execution loop');
-    expect(outbox.queued.last, (table: 'execution_commitments', rowId: 'c1'));
-  });
-
-  test(
-    'updateCommitmentStatus pauses completes and reopens commitment lifecycle',
-    () async {
-      final commitment = ExecutionCommitment(
-        id: 'commit-life',
-        title: 'Ship execution loop',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(2),
-      );
-      await repo.upsertCommitment(commitment);
-      outbox.clearQueued();
-
-      await repo.updateCommitmentStatus(
-        commitment: commitment,
-        status: ExecutionCommitmentStatus.paused,
-        sync: _sync(3),
-        progress: _progress(
-          id: 'progress-commitment-pause',
-          commitmentId: commitment.id,
-          sync: _sync(3),
-        ),
-      );
-      final paused = await repo.findCommitment(
-        ownerUserId: _userId,
-        id: commitment.id,
-      );
-      expect(paused!.status, ExecutionCommitmentStatus.paused);
-      expect(paused.completedAt, isNull);
-
-      await repo.updateCommitmentStatus(
-        commitment: paused,
-        status: ExecutionCommitmentStatus.completed,
-        sync: _sync(4),
-        progress: _progress(
-          id: 'progress-commitment-complete',
-          commitmentId: commitment.id,
-          sync: _sync(4),
-        ),
-      );
-      final completed = await repo.findCommitment(
-        ownerUserId: _userId,
-        id: commitment.id,
-      );
-      final activeAfterComplete = await repo
-          .watchActiveCommitments(ownerUserId: _userId)
-          .first;
-
-      expect(completed!.status, ExecutionCommitmentStatus.completed);
-      expect(completed.completedAt, isNotNull);
-      expect(activeAfterComplete, isEmpty);
-
-      await repo.updateCommitmentStatus(
-        commitment: completed,
-        status: ExecutionCommitmentStatus.active,
-        sync: _sync(5),
-        progress: _progress(
-          id: 'progress-commitment-reopen',
-          commitmentId: commitment.id,
-          sync: _sync(5),
-        ),
-      );
-      final reopened = await repo.findCommitment(
-        ownerUserId: _userId,
-        id: commitment.id,
-      );
-
-      expect(reopened!.status, ExecutionCommitmentStatus.active);
-      expect(reopened.completedAt, isNull);
-      expect(outbox.queued, [
-        (table: 'execution_commitments', rowId: 'commit-life'),
-        (
-          table: 'execution_progress_entries',
-          rowId: 'progress-commitment-pause',
-        ),
-        (table: 'execution_commitments', rowId: 'commit-life'),
-        (
-          table: 'execution_progress_entries',
-          rowId: 'progress-commitment-complete',
-        ),
-        (table: 'execution_commitments', rowId: 'commit-life'),
-        (
-          table: 'execution_progress_entries',
-          rowId: 'progress-commitment-reopen',
-        ),
-      ]);
-    },
-  );
-
-  test(
-    'watchClosedCommitments shows completed and archived commitments only',
-    () async {
-      final active = ExecutionCommitment(
-        id: 'commit-active',
-        title: 'Active commitment',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(1),
-      );
-      final completed = ExecutionCommitment(
-        id: 'commit-completed',
-        title: 'Completed commitment',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(2),
-      );
-      final archived = ExecutionCommitment(
-        id: 'commit-archived',
-        title: 'Archived commitment',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(3),
-      );
-      await repo.upsertCommitment(active);
-      await repo.upsertCommitment(completed);
-      await repo.upsertCommitment(archived);
-      await repo.updateCommitmentStatus(
-        commitment: completed,
-        status: ExecutionCommitmentStatus.completed,
-        sync: _sync(4),
-        progress: _progress(
-          id: 'progress-commitment-closed',
-          commitmentId: completed.id,
-          sync: _sync(4),
-        ),
-      );
-      await repo.updateCommitmentStatus(
-        commitment: archived,
-        status: ExecutionCommitmentStatus.archived,
-        sync: _sync(5),
-        progress: _progress(
-          id: 'progress-commitment-archived',
-          commitmentId: archived.id,
-          sync: _sync(5),
-        ),
-      );
-      final closedBeforeDelete = await repo
-          .watchClosedCommitments(ownerUserId: _userId)
-          .first;
-
-      expect(
-        closedBeforeDelete.map((commitment) => commitment.id),
-        containsAll(<String>{'commit-completed', 'commit-archived'}),
-      );
-      expect(
-        closedBeforeDelete.map((commitment) => commitment.id),
-        isNot(contains('commit-active')),
-      );
-
-      await repo.softDeleteCommitment(
-        commitment: closedBeforeDelete.firstWhere(
-          (commitment) => commitment.id == 'commit-archived',
-        ),
-        sync: _sync(6),
-      );
-      final closedAfterDelete = await repo
-          .watchClosedCommitments(ownerUserId: _userId)
-          .first;
-
-      expect(closedAfterDelete.map((commitment) => commitment.id), [
-        'commit-completed',
-      ]);
-    },
-  );
-
-  test('closing a commitment moves open actions to Inbox', () async {
-    final commitment = ExecutionCommitment(
-      id: 'commit-inbox',
-      title: 'Commitment with follow-through',
+  test('watchClosedPlans shows completed and archived plans only', () async {
+    final active = ExecutionPlan(
+      id: 'proj-active',
+      title: 'Active plan',
       createdAt: DateTime.utc(2026, 6, 1),
-      sync: _sync(22),
+      sync: _sync(1),
     );
-    final action = _action(
-      id: 'commitment-action-inbox',
-      title: 'Keep the commitment follow-through visible',
-      commitmentId: commitment.id,
+    final completed = ExecutionPlan(
+      id: 'proj-completed',
+      title: 'Completed plan',
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(2),
     );
-    await repo.upsertCommitment(commitment);
-    await repo.upsertAction(action);
-
-    final moved = await repo.updateCommitmentStatus(
-      commitment: commitment,
-      status: ExecutionCommitmentStatus.archived,
-      sync: _sync(23),
+    final archived = ExecutionPlan(
+      id: 'proj-archived',
+      title: 'Archived plan',
+      createdAt: DateTime.utc(2026, 6, 1),
+      sync: _sync(3),
+    );
+    await repo.upsertPlan(active);
+    await repo.upsertPlan(completed);
+    await repo.upsertPlan(archived);
+    await repo.updatePlanStatus(
+      plan: completed,
+      status: ExecutionPlanStatus.completed,
+      sync: _sync(4),
       progress: _progress(
-        id: 'progress-commitment-inbox',
-        commitmentId: commitment.id,
-        sync: _sync(23),
+        id: 'progress-plan-closed',
+        planId: completed.id,
+        sync: _sync(4),
       ),
     );
+    await repo.updatePlanStatus(
+      plan: archived,
+      status: ExecutionPlanStatus.archived,
+      sync: _sync(5),
+      progress: _progress(
+        id: 'progress-plan-archived',
+        planId: archived.id,
+        sync: _sync(5),
+      ),
+    );
+    final closedBeforeDelete = await repo
+        .watchClosedPlans(ownerUserId: _userId)
+        .first;
 
-    expect(moved.map((item) => item.id), ['commitment-action-inbox']);
-    final stored = await repo.findAction(ownerUserId: _userId, id: action.id);
-    expect(stored!.projectId, isNull);
-    expect(stored.commitmentId, isNull);
+    expect(
+      closedBeforeDelete.map((plan) => plan.id),
+      containsAll(<String>{'proj-completed', 'proj-archived'}),
+    );
+    expect(
+      closedBeforeDelete.map((plan) => plan.id),
+      isNot(contains('proj-active')),
+    );
+
+    await repo.softDeletePlan(
+      plan: closedBeforeDelete.firstWhere((plan) => plan.id == 'proj-archived'),
+      sync: _sync(6),
+    );
+    final closedAfterDelete = await repo
+        .watchClosedPlans(ownerUserId: _userId)
+        .first;
+
+    expect(closedAfterDelete.map((plan) => plan.id), ['proj-completed']);
   });
 
   test('upsertProgress stores manual review entry and enqueues sync', () async {
     await repo.upsertProgress(
       ExecutionProgressEntry(
         id: 'p-review',
-        projectId: 'proj-1',
-        commitmentId: 'c1',
+        planId: 'plan-1',
         kind: ExecutionProgressKind.checkin,
         note: 'Weekly review captured manually.',
         createdAt: DateTime.utc(2026, 6, 2),
@@ -708,51 +471,35 @@ void main() {
 
     expect(rows, hasLength(1));
     expect(rows.single.kind, ExecutionProgressKind.checkin);
-    expect(rows.single.projectId, 'proj-1');
-    expect(rows.single.commitmentId, 'c1');
+    expect(rows.single.planId, 'plan-1');
     expect(outbox.queued.last, (
       table: 'execution_progress_entries',
       rowId: 'p-review',
     ));
   });
 
-  test('detail watchers resolve project and commitment scoped data', () async {
-    await repo.upsertProject(
-      ExecutionProject(
-        id: 'project-detail',
-        title: 'Project detail',
+  test('detail watchers resolve plan-scoped data', () async {
+    await repo.upsertPlan(
+      ExecutionPlan(
+        id: 'plan-detail',
+        title: 'Plan detail',
         createdAt: DateTime.utc(2026, 6, 1),
         sync: _sync(1),
-      ),
-    );
-    await repo.upsertCommitment(
-      ExecutionCommitment(
-        id: 'c-detail',
-        title: 'Ship detail view',
-        projectId: 'project-detail',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(2),
       ),
     );
     final linked = _action(
       id: 'a-linked',
       title: 'Open linked action',
-      projectId: 'project-detail',
-      commitmentId: 'c-detail',
+      planId: 'plan-detail',
     );
-    final other = _action(
-      id: 'a-other',
-      title: 'Unrelated action',
-      commitmentId: 'c-other',
-    );
+    final other = _action(id: 'a-other', title: 'Unrelated action');
     await repo.upsertAction(linked);
     await repo.upsertAction(other);
     await repo.upsertProgress(
       ExecutionProgressEntry(
         id: 'p-linked',
         actionId: linked.id,
-        projectId: 'project-detail',
-        commitmentId: 'c-detail',
+        planId: 'plan-detail',
         kind: ExecutionProgressKind.checkin,
         note: 'Detail progress',
         createdAt: DateTime.utc(2026, 6, 2),
@@ -763,7 +510,6 @@ void main() {
       ExecutionProgressEntry(
         id: 'p-other',
         actionId: other.id,
-        commitmentId: 'c-other',
         kind: ExecutionProgressKind.checkin,
         note: 'Other progress',
         createdAt: DateTime.utc(2026, 6, 2),
@@ -771,50 +517,23 @@ void main() {
       ),
     );
 
-    final project = await repo
-        .watchProjectById(ownerUserId: _userId, id: 'project-detail')
+    final plan = await repo
+        .watchPlanById(ownerUserId: _userId, id: 'plan-detail')
         .first;
-    final actions = await repo
-        .watchActionsForCommitment(
-          ownerUserId: _userId,
-          commitmentId: 'c-detail',
-        )
-        .first;
-    final projectActions = await repo
-        .watchActionsForProject(
-          ownerUserId: _userId,
-          projectId: 'project-detail',
-        )
-        .first;
-    final projectCommitments = await repo
-        .watchCommitmentsForProject(
-          ownerUserId: _userId,
-          projectId: 'project-detail',
-        )
+    final planActions = await repo
+        .watchActionsForPlan(ownerUserId: _userId, planId: 'plan-detail')
         .first;
     final actionProgress = await repo
         .watchProgressForAction(ownerUserId: _userId, actionId: linked.id)
         .first;
-    final commitmentProgress = await repo
-        .watchProgressForCommitment(
-          ownerUserId: _userId,
-          commitmentId: 'c-detail',
-        )
-        .first;
-    final projectProgress = await repo
-        .watchProgressForProject(
-          ownerUserId: _userId,
-          projectId: 'project-detail',
-        )
+    final planProgress = await repo
+        .watchProgressForPlan(ownerUserId: _userId, planId: 'plan-detail')
         .first;
 
-    expect(project?.id, 'project-detail');
-    expect(actions.map((action) => action.id), ['a-linked']);
-    expect(projectActions.map((action) => action.id), ['a-linked']);
-    expect(projectCommitments.map((commitment) => commitment.id), ['c-detail']);
+    expect(plan?.id, 'plan-detail');
+    expect(planActions.map((action) => action.id), ['a-linked']);
     expect(actionProgress.map((entry) => entry.id), ['p-linked']);
-    expect(commitmentProgress.map((entry) => entry.id), ['p-linked']);
-    expect(projectProgress.map((entry) => entry.id), ['p-linked']);
+    expect(planProgress.map((entry) => entry.id), ['p-linked']);
   });
 
   test('recordProgress can update linked action status atomically', () async {
@@ -874,98 +593,54 @@ void main() {
   );
 
   test(
-    'softDeleteProject tombstones project and hides it from active lists',
+    'softDeletePlan tombstones plan and hides it from active lists',
     () async {
-      final project = ExecutionProject(
+      final plan = ExecutionPlan(
         id: 'proj-delete',
-        title: 'Stale project',
+        title: 'Stale plan',
         createdAt: DateTime.utc(2026, 6, 1),
         sync: _sync(7),
       );
-      await repo.upsertProject(project);
+      await repo.upsertPlan(plan);
       outbox.clearQueued();
 
-      await repo.softDeleteProject(project: project, sync: _sync(8));
+      await repo.softDeletePlan(plan: plan, sync: _sync(8));
 
-      final active = await repo.watchActiveProjects(ownerUserId: _userId).first;
-      final tombstoned = await repo.findProject(
+      final active = await repo.watchActivePlans(ownerUserId: _userId).first;
+      final tombstoned = await repo.findPlan(ownerUserId: _userId, id: plan.id);
+      final resolved = await repo.listPlansByIds(
         ownerUserId: _userId,
-        id: project.id,
-      );
-      final resolved = await repo.listProjectsByIds(
-        ownerUserId: _userId,
-        ids: {project.id},
+        ids: {plan.id},
       );
 
       expect(active, isEmpty);
       expect(tombstoned!.sync.deletedAt, isNotNull);
-      expect(resolved.single.title, 'Stale project');
-      expect(outbox.queued, [
-        (table: 'execution_projects', rowId: 'proj-delete'),
-      ]);
+      expect(resolved.single.title, 'Stale plan');
+      expect(outbox.queued, [(table: 'execution_plans', rowId: 'proj-delete')]);
     },
   );
 
-  test('softDeleteProject moves open actions to Inbox', () async {
-    final project = ExecutionProject(
+  test('softDeletePlan moves open actions to Inbox', () async {
+    final plan = ExecutionPlan(
       id: 'proj-delete-inbox',
-      title: 'Project to delete',
+      title: 'Plan to delete',
       createdAt: DateTime.utc(2026, 6, 1),
       sync: _sync(24),
     );
     final action = _action(
       id: 'action-delete-inbox',
-      title: 'Preserve deleted project follow-through',
-      projectId: project.id,
+      title: 'Preserve deleted plan follow-through',
+      planId: plan.id,
     );
-    await repo.upsertProject(project);
+    await repo.upsertPlan(plan);
     await repo.upsertAction(action);
 
-    final moved = await repo.softDeleteProject(
-      project: project,
-      sync: _sync(25),
-    );
+    final moved = await repo.softDeletePlan(plan: plan, sync: _sync(25));
 
     expect(moved.map((item) => item.id), ['action-delete-inbox']);
     final stored = await repo.findAction(ownerUserId: _userId, id: action.id);
-    expect(stored!.projectId, isNull);
-    expect(stored.commitmentId, isNull);
+    expect(stored!.planId, isNull);
   });
-
-  test(
-    'softDeleteCommitment tombstones commitment and hides it from active lists',
-    () async {
-      final commitment = ExecutionCommitment(
-        id: 'commit-delete',
-        title: 'Stale commitment',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(9),
-      );
-      await repo.upsertCommitment(commitment);
-      outbox.clearQueued();
-
-      await repo.softDeleteCommitment(commitment: commitment, sync: _sync(10));
-
-      final active = await repo
-          .watchActiveCommitments(ownerUserId: _userId)
-          .first;
-      final tombstoned = await repo.findCommitment(
-        ownerUserId: _userId,
-        id: commitment.id,
-      );
-      final resolved = await repo.listCommitmentsByIds(
-        ownerUserId: _userId,
-        ids: {commitment.id},
-      );
-
-      expect(active, isEmpty);
-      expect(tombstoned!.sync.deletedAt, isNotNull);
-      expect(resolved.single.title, 'Stale commitment');
-      expect(outbox.queued, [
-        (table: 'execution_commitments', rowId: 'commit-delete'),
-      ]);
-    },
-  );
 
   test(
     'softDeleteProgress tombstones progress and hides it from review',
@@ -996,73 +671,52 @@ void main() {
     },
   );
 
-  test(
-    'search covers closed actions and project or commitment descriptions',
-    () async {
-      await repo.upsertAction(
-        ExecutionAction(
-          id: 'closed-search',
-          title: 'Ship allocation review',
-          note: 'Contains 100% and underscore_value literally',
-          status: ExecutionActionStatus.done,
-          completedAt: DateTime.utc(2026, 6, 2),
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(20),
+  test('search covers closed actions and plan descriptions', () async {
+    await repo.upsertAction(
+      ExecutionAction(
+        id: 'closed-search',
+        title: 'Ship allocation review',
+        note: 'Contains 100% and underscore_value literally',
+        status: ExecutionActionStatus.done,
+        completedAt: DateTime.utc(2026, 6, 2),
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(20),
+      ),
+    );
+    await repo.upsertPlan(
+      ExecutionPlan(
+        id: 'plan-search',
+        title: 'Portfolio cleanup',
+        description: 'Consolidate brokerage accounts',
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: _sync(21),
+      ),
+    );
+    await repo.upsertAction(
+      ExecutionAction(
+        id: 'other-owner',
+        title: 'Consolidate brokerage accounts privately',
+        createdAt: DateTime.utc(2026, 6, 1),
+        sync: SyncMeta(
+          ownerUserId: 'another-owner',
+          updatedAt: DateTime.utc(2026, 6, 1),
+          updatedByDevice: _deviceId,
+          hlc: Hlc.zero(_deviceId),
         ),
-      );
-      await repo.upsertProject(
-        ExecutionProject(
-          id: 'project-search',
-          title: 'Portfolio cleanup',
-          description: 'Consolidate brokerage accounts',
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(21),
-        ),
-      );
-      await repo.upsertCommitment(
-        ExecutionCommitment(
-          id: 'commitment-search',
-          title: 'Weekly operating rhythm',
-          description: 'Protect deep work time',
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(22),
-        ),
-      );
-      await repo.upsertAction(
-        ExecutionAction(
-          id: 'other-owner',
-          title: 'Consolidate brokerage accounts privately',
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: SyncMeta(
-            ownerUserId: 'another-owner',
-            updatedAt: DateTime.utc(2026, 6, 1),
-            updatedByDevice: _deviceId,
-            hlc: Hlc.zero(_deviceId),
-          ),
-        ),
-      );
+      ),
+    );
 
-      final projectHits = await repo.search(
-        ownerUserId: _userId,
-        query: 'brokerage',
-      );
-      final commitmentHits = await repo.search(
-        ownerUserId: _userId,
-        query: 'deep work',
-      );
-      final percentHits = await repo.search(ownerUserId: _userId, query: '%');
-      final underscoreHits = await repo.search(
-        ownerUserId: _userId,
-        query: '_',
-      );
+    final planHits = await repo.search(
+      ownerUserId: _userId,
+      query: 'brokerage',
+    );
+    final percentHits = await repo.search(ownerUserId: _userId, query: '%');
+    final underscoreHits = await repo.search(ownerUserId: _userId, query: '_');
 
-      expect(projectHits.map((hit) => hit.id), ['project-search']);
-      expect(projectHits.single.kind, ExecutionEntryKind.project);
-      expect(commitmentHits.map((hit) => hit.id), ['commitment-search']);
-      expect(commitmentHits.single.kind, ExecutionEntryKind.commitment);
-      expect(percentHits.map((hit) => hit.id), ['closed-search']);
-      expect(underscoreHits.map((hit) => hit.id), ['closed-search']);
-      expect(percentHits.single.status, ExecutionActionStatus.done.wire);
-    },
-  );
+    expect(planHits.map((hit) => hit.id), ['plan-search']);
+    expect(planHits.single.kind, ExecutionEntryKind.plan);
+    expect(percentHits.map((hit) => hit.id), ['closed-search']);
+    expect(underscoreHits.map((hit) => hit.id), ['closed-search']);
+    expect(percentHits.single.status, ExecutionActionStatus.done.wire);
+  });
 }

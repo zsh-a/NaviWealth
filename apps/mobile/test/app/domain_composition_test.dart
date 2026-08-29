@@ -333,8 +333,6 @@ void main() {
 
     final execution = names(ExecutionRoutes.today, DomainScope.execution);
     expect(execution, contains('propose_plan'));
-    expect(execution, isNot(contains('propose_project')));
-    expect(execution, isNot(contains('propose_commitment')));
   });
 
   test('command palette keeps advanced and Review routes contextual', () {
@@ -405,11 +403,11 @@ void main() {
     expect(
       resolver(
         const EntityRouteRef(
-          entityTable: 'execution_projects',
-          entityId: 'project-1',
+          entityTable: 'execution_plans',
+          entityId: 'plan-1',
         ),
       ),
-      ExecutionRoutes.project('project-1'),
+      ExecutionRoutes.plan('plan-1'),
     );
     expect(
       resolver(
@@ -643,17 +641,13 @@ void main() {
     );
     expect(
       kExecutionPack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
-      <String>[AppRoutes.executionToday, AppRoutes.executionCommitments],
+      <String>[AppRoutes.executionToday, AppRoutes.executionPlans],
     );
     final executionCommandIds = kExecutionPack
         .commandPaletteEntriesBuilder!(l10n)
         .map((entry) => entry.id);
     expect(executionCommandIds, contains('create.execution'));
-    for (final retiredId in const <String>[
-      'create.execution.action',
-      'create.execution.project',
-      'create.execution.commitment',
-    ]) {
+    for (final retiredId in const <String>['create.execution.action']) {
       expect(executionCommandIds, isNot(contains(retiredId)));
     }
     expect(

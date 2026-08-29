@@ -83,15 +83,12 @@ void main() {
         label: 'ExecutionOS',
         icon: const IconData(0xe000),
         selectedIcon: const IconData(0xe001),
-        tabs: <DomainShellTab>[
-          _tab('/execution'),
-          _tab('/execution/commitments'),
-        ],
+        tabs: <DomainShellTab>[_tab('/execution'), _tab('/execution/plans')],
         hiddenTabs: <DomainShellTab>[_tab('/execution/review')],
       );
 
       final navRoutes = spec.tabs.map((t) => t.routePath).toList();
-      expect(navRoutes, <String>['/execution', '/execution/commitments']);
+      expect(navRoutes, <String>['/execution', '/execution/plans']);
       expect(navRoutes, isNot(contains(spec.hiddenTabs.single.routePath)));
     });
 

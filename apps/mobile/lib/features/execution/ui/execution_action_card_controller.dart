@@ -20,8 +20,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     required this.onRecordProgress,
     required this.doneProgressNote,
     required this.droppedProgressNote,
-    this.projectLabel,
-    this.commitmentLabel,
+    this.planLabel,
     this.onOpen,
     this.onSourceOpen,
     this.showActions = true,
@@ -36,8 +35,7 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
   final VoidCallback onRecordProgress;
   final String doneProgressNote;
   final String droppedProgressNote;
-  final String? projectLabel;
-  final String? commitmentLabel;
+  final String? planLabel;
   final VoidCallback? onOpen;
   final VoidCallback? onSourceOpen;
   final bool showActions;
@@ -140,8 +138,7 @@ class _ExecutionActionCardControllerState
     return ExecutionActionCard(
       action: widget.action,
       busy: _busy,
-      projectLabel: widget.projectLabel,
-      commitmentLabel: widget.commitmentLabel,
+      planLabel: widget.planLabel,
       onOpen: _busy ? null : widget.onOpen,
       onSourceOpen: _busy ? null : widget.onSourceOpen,
       showActions: widget.showActions,

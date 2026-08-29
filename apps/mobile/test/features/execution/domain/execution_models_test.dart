@@ -7,15 +7,11 @@ const _userId = 'u-exec-models';
 const _deviceId = 'dev-exec-models';
 
 void main() {
-  test('project and commitment statuses expose open lifecycle semantics', () {
-    expect(ExecutionProjectStatus.active.isOpen, isTrue);
-    expect(ExecutionProjectStatus.paused.isOpen, isTrue);
-    expect(ExecutionProjectStatus.completed.isOpen, isFalse);
-    expect(ExecutionProjectStatus.archived.isOpen, isFalse);
-    expect(ExecutionCommitmentStatus.active.isOpen, isTrue);
-    expect(ExecutionCommitmentStatus.paused.isOpen, isTrue);
-    expect(ExecutionCommitmentStatus.completed.isOpen, isFalse);
-    expect(ExecutionCommitmentStatus.archived.isOpen, isFalse);
+  test('plan statuses expose open lifecycle semantics', () {
+    expect(ExecutionPlanStatus.active.isOpen, isTrue);
+    expect(ExecutionPlanStatus.paused.isOpen, isTrue);
+    expect(ExecutionPlanStatus.completed.isOpen, isFalse);
+    expect(ExecutionPlanStatus.archived.isOpen, isFalse);
   });
 
   test('ExecutionAction.copyWith can clear nullable scheduling and links', () {
@@ -24,8 +20,7 @@ void main() {
       title: 'Review stale execution link',
       dueAt: DateTime.utc(2026, 6, 8),
       scheduledFor: DateTime.utc(2026, 6, 7),
-      projectId: 'proj-1',
-      commitmentId: 'commit-1',
+      planId: 'plan-1',
       completedAt: DateTime.utc(2026, 6, 9),
       createdAt: DateTime.utc(2026, 6, 1),
       sync: _sync(1),
@@ -34,23 +29,21 @@ void main() {
     final cleared = original.copyWith(
       dueAt: null,
       scheduledFor: null,
-      projectId: null,
-      commitmentId: null,
+      planId: null,
       completedAt: null,
       sync: _sync(2),
     );
 
     expect(cleared.dueAt, isNull);
     expect(cleared.scheduledFor, isNull);
-    expect(cleared.projectId, isNull);
-    expect(cleared.commitmentId, isNull);
+    expect(cleared.planId, isNull);
     expect(cleared.completedAt, isNull);
   });
 
-  test('ExecutionProject.copyWith can clear target and completion dates', () {
-    final original = ExecutionProject(
-      id: 'proj-1',
-      title: 'Execution project',
+  test('ExecutionPlan.copyWith can clear target and completion dates', () {
+    final original = ExecutionPlan(
+      id: 'plan-1',
+      title: 'Execution plan',
       targetDate: DateTime.utc(2026, 7, 1),
       completedAt: DateTime.utc(2026, 7, 2),
       createdAt: DateTime.utc(2026, 6, 1),
@@ -66,32 +59,6 @@ void main() {
     expect(cleared.targetDate, isNull);
     expect(cleared.completedAt, isNull);
   });
-
-  test(
-    'ExecutionCommitment.copyWith can clear target project and completion',
-    () {
-      final original = ExecutionCommitment(
-        id: 'commit-1',
-        title: 'Execution commitment',
-        targetDate: DateTime.utc(2026, 7, 1),
-        projectId: 'proj-1',
-        completedAt: DateTime.utc(2026, 7, 2),
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(1),
-      );
-
-      final cleared = original.copyWith(
-        targetDate: null,
-        projectId: null,
-        completedAt: null,
-        sync: _sync(2),
-      );
-
-      expect(cleared.targetDate, isNull);
-      expect(cleared.projectId, isNull);
-      expect(cleared.completedAt, isNull);
-    },
-  );
 }
 
 SyncMeta _sync(int tick) {

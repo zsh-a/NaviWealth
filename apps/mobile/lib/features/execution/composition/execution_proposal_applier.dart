@@ -34,8 +34,7 @@ class ExecutionProposalApplier implements ProposalApplier {
         'execution_action_status_update' => await _applyActionStatusUpdate(
           plan,
         ),
-        'execution_project' => await _applyProject(plan),
-        'execution_commitment' => await _applyCommitment(plan),
+        'execution_plan' => await _applyPlan(plan),
         'execution_progress' => await _applyProgress(plan),
         _ => throw ProposalApplyException(
           'unknown execution proposal kind: ${plan.kind}',
@@ -71,41 +70,20 @@ class ExecutionProposalApplier implements ProposalApplier {
         );
         if (existing == null) return;
         await repo.upsertAction(existing.copyWith(sync: tombstone));
-      case 'execution_projects':
-        final existing = await repo.findProject(
+      case 'execution_plans':
+        final existing = await repo.findPlan(
           ownerUserId: ownerUserId,
           id: rowId,
         );
         if (existing == null) return;
-        await repo.upsertProject(
-          ExecutionProject(
+        await repo.upsertPlan(
+          ExecutionPlan(
             id: existing.id,
             title: existing.title,
             description: existing.description,
             status: existing.status,
             horizon: existing.horizon,
             targetDate: existing.targetDate,
-            source: existing.source,
-            createdAt: existing.createdAt,
-            completedAt: existing.completedAt,
-            sync: tombstone,
-          ),
-        );
-      case 'execution_commitments':
-        final existing = await repo.findCommitment(
-          ownerUserId: ownerUserId,
-          id: rowId,
-        );
-        if (existing == null) return;
-        await repo.upsertCommitment(
-          ExecutionCommitment(
-            id: existing.id,
-            title: existing.title,
-            description: existing.description,
-            status: existing.status,
-            horizon: existing.horizon,
-            targetDate: existing.targetDate,
-            projectId: existing.projectId,
             source: existing.source,
             createdAt: existing.createdAt,
             completedAt: existing.completedAt,
@@ -122,8 +100,7 @@ class ExecutionProposalApplier implements ProposalApplier {
           ExecutionProgressEntry(
             id: existing.id,
             actionId: existing.actionId,
-            projectId: existing.projectId,
-            commitmentId: existing.commitmentId,
+            planId: existing.planId,
             kind: existing.kind,
             note: existing.note,
             createdAt: existing.createdAt,
@@ -140,11 +117,7 @@ class ExecutionProposalApplier implements ProposalApplier {
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
     final source = _sourceRef(plan);
-    final relations = await _validatedRelations(
-      repo,
-      projectId: plan.get('project_id'),
-      commitmentId: plan.get('commitment_id'),
-    );
+    final planId = await _validatedPlanId(repo, plan.get('plan_id'));
     final openActions = await repo.listOpenActions(
       ownerUserId: ownerUserId,
       limit: 500,
@@ -163,8 +136,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       priority: ExecutionPriority.parse(plan.get('priority') ?? 'normal'),
       dueAt: _parseOptionalUtc(plan.get('due_at')),
       scheduledFor: _parseOptionalUtc(plan.get('scheduled_for')),
-      projectId: relations.projectId,
-      commitmentId: relations.commitmentId,
+      planId: planId,
       source: source,
       createdAt: meta.updatedAt,
       sync: meta,
@@ -245,11 +217,11 @@ class ExecutionProposalApplier implements ProposalApplier {
     );
   }
 
-  Future<ProposalApplyState> _applyProject(ReadyProposalPlan plan) async {
+  Future<ProposalApplyState> _applyPlan(ReadyProposalPlan plan) async {
     final title = _require(plan, 'title');
     final meta = await stamp();
     final repo = await ref.read(executionRepositoryProvider.future);
-    final project = ExecutionProject(
+    final executionPlan = ExecutionPlan(
       id: kExecutionUuid.v4(),
       title: title,
       description: plan.get('description') ?? '',
@@ -259,44 +231,13 @@ class ExecutionProposalApplier implements ProposalApplier {
       createdAt: meta.updatedAt,
       sync: meta,
     );
-    await repo.upsertProject(project);
+    await repo.upsertPlan(executionPlan);
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
-      appliedEntityId: project.id,
-      appliedTable: 'execution_projects',
+      appliedEntityId: executionPlan.id,
+      appliedTable: 'execution_plans',
       appliedAt: _now(),
-      shortLabel: '已创建计划：${project.title}',
-    );
-  }
-
-  Future<ProposalApplyState> _applyCommitment(ReadyProposalPlan plan) async {
-    final title = _require(plan, 'title');
-    final meta = await stamp();
-    final repo = await ref.read(executionRepositoryProvider.future);
-    final projectId = plan.get('project_id');
-    if (projectId != null &&
-        await repo.findProject(ownerUserId: ownerUserId, id: projectId) ==
-            null) {
-      throw ProposalApplyException('execution project not found: $projectId');
-    }
-    final commitment = ExecutionCommitment(
-      id: kExecutionUuid.v4(),
-      title: title,
-      description: plan.get('description') ?? '',
-      horizon: ExecutionHorizon.parse(plan.get('horizon') ?? 'open'),
-      targetDate: _parseOptionalUtc(plan.get('target_date')),
-      projectId: projectId,
-      source: _sourceRef(plan),
-      createdAt: meta.updatedAt,
-      sync: meta,
-    );
-    await repo.upsertCommitment(commitment);
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: commitment.id,
-      appliedTable: 'execution_commitments',
-      appliedAt: _now(),
-      shortLabel: '已创建持续计划：${commitment.title}',
+      shortLabel: '已创建计划：${executionPlan.title}',
     );
   }
 
@@ -312,16 +253,14 @@ class ExecutionProposalApplier implements ProposalApplier {
         throw ProposalApplyException('execution action not found: $actionId');
       }
     }
-    final relations = await _validatedRelations(
+    final planId = await _validatedPlanId(
       repo,
-      projectId: plan.get('project_id') ?? action?.projectId,
-      commitmentId: plan.get('commitment_id') ?? action?.commitmentId,
+      plan.get('plan_id') ?? action?.planId,
     );
     final progress = ExecutionProgressEntry(
       id: kExecutionUuid.v4(),
       actionId: actionId,
-      projectId: relations.projectId,
-      commitmentId: relations.commitmentId,
+      planId: planId,
       kind: ExecutionProgressKind.parse(plan.get('kind') ?? 'checkin'),
       note: note,
       createdAt: meta.updatedAt,
@@ -337,40 +276,20 @@ class ExecutionProposalApplier implements ProposalApplier {
     );
   }
 
-  Future<({String? projectId, String? commitmentId})> _validatedRelations(
-    ExecutionRepository repo, {
-    required String? projectId,
-    required String? commitmentId,
-  }) async {
-    ExecutionProject? project;
-    ExecutionCommitment? commitment;
-    if (projectId != null && projectId.isNotEmpty) {
-      project = await repo.findProject(ownerUserId: ownerUserId, id: projectId);
-      if (project == null) {
-        throw ProposalApplyException('execution project not found: $projectId');
-      }
-    }
-    if (commitmentId != null && commitmentId.isNotEmpty) {
-      commitment = await repo.findCommitment(
+  Future<String?> _validatedPlanId(
+    ExecutionRepository repo,
+    String? planId,
+  ) async {
+    if (planId != null && planId.isNotEmpty) {
+      final executionPlan = await repo.findPlan(
         ownerUserId: ownerUserId,
-        id: commitmentId,
+        id: planId,
       );
-      if (commitment == null) {
-        throw ProposalApplyException(
-          'execution commitment not found: $commitmentId',
-        );
+      if (executionPlan == null) {
+        throw ProposalApplyException('execution plan not found: $planId');
       }
     }
-    final commitmentProjectId = commitment?.projectId;
-    if (commitmentProjectId != null && commitmentProjectId.isNotEmpty) {
-      if (project != null && project.id != commitmentProjectId) {
-        throw ProposalApplyException(
-          'execution commitment belongs to another project: $commitmentId',
-        );
-      }
-      return (projectId: commitmentProjectId, commitmentId: commitmentId);
-    }
-    return (projectId: projectId, commitmentId: commitmentId);
+    return planId;
   }
 
   Future<void> _undoActionStatusUpdate(
@@ -402,8 +321,7 @@ class ExecutionProposalApplier implements ProposalApplier {
         priority: existing.priority,
         dueAt: existing.dueAt,
         scheduledFor: existing.scheduledFor,
-        projectId: existing.projectId,
-        commitmentId: existing.commitmentId,
+        planId: existing.planId,
         source: existing.source,
         createdAt: existing.createdAt,
         completedAt: previousCompletedAt,
@@ -422,8 +340,7 @@ class ExecutionProposalApplier implements ProposalApplier {
       ExecutionProgressEntry(
         id: progress.id,
         actionId: progress.actionId,
-        projectId: progress.projectId,
-        commitmentId: progress.commitmentId,
+        planId: progress.planId,
         kind: progress.kind,
         note: progress.note,
         createdAt: progress.createdAt,

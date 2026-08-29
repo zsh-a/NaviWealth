@@ -3,9 +3,7 @@ import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import '../domain/execution_models.dart';
 import '_tool_support.dart';
 
-/// User-facing Plan proposal. The existing project/commitment rows remain the
-/// compatibility storage layer; `cadence` chooses the backing row without
-/// exposing those implementation names in Assistant conversations.
+/// User-facing Plan proposal. Plan is the single ExecutionOS grouping type.
 class ProposePlanTool implements DeviceTool {
   const ProposePlanTool();
 
@@ -13,9 +11,7 @@ class ProposePlanTool implements DeviceTool {
   String get name => 'propose_plan';
 
   @override
-  String get description =>
-      '建议新建一个 ExecutionOS Plan。bounded 表示有明确交付边界，ongoing '
-      '表示持续维护；不会直接写库，用户确认后才创建。';
+  String get description => '建议新建一个 ExecutionOS Plan；不会直接写库，用户确认后才创建。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -23,22 +19,12 @@ class ProposePlanTool implements DeviceTool {
     'properties': {
       'title': {'type': 'string', 'description': '计划名称。'},
       'description': {'type': 'string', 'description': '可选背景或范围。'},
-      'cadence': {
-        'type': 'string',
-        'enum': ['bounded', 'ongoing'],
-        'default': 'bounded',
-        'description': '有明确完成边界，或需要持续维护。',
-      },
       'horizon': {
         'type': 'string',
         'enum': ['week', 'month', 'quarter', 'open'],
         'default': 'open',
       },
       'target_date': {'type': 'string', 'description': '可选 ISO8601 目标日期。'},
-      'parent_plan_id': {
-        'type': 'string',
-        'description': 'ongoing 计划可选的上级 bounded plan id。',
-      },
       'source_domain': {'type': 'string', 'description': '可选来源域。'},
       'source_row_family': {
         'type': 'string',
@@ -61,10 +47,6 @@ class ProposePlanTool implements DeviceTool {
     if (title.isEmpty || reason.isEmpty) {
       return badRequest('title / reason 必填。');
     }
-    final cadence = (input['cadence'] as String?)?.trim() ?? 'bounded';
-    if (cadence != 'bounded' && cadence != 'ongoing') {
-      return badRequest('cadence 只支持 bounded / ongoing。');
-    }
     final description = (input['description'] as String?)?.trim() ?? '';
     final horizon = ExecutionHorizon.parse(
       (input['horizon'] as String?)?.trim() ?? 'open',
@@ -78,18 +60,13 @@ class ProposePlanTool implements DeviceTool {
         'target_date': targetDate.toUtc().toIso8601String(),
       'reason': reason,
     };
-    if (cadence == 'ongoing') {
-      addOptionalString(payload, 'project_id', input['parent_plan_id']);
-    }
     addSourceRefPayload(payload, input);
 
     return proposalEnvelope(
-      kind: cadence == 'ongoing' ? 'execution_commitment' : 'execution_project',
-      summaryZh:
-          '建议新建${cadence == 'ongoing' ? '持续' : ''}计划：'
-          '"${shortText(title)}" — $reason',
+      kind: 'execution_plan',
+      summaryZh: '建议新建计划："${shortText(title)}" — $reason',
       payload: payload,
-      note: '用户确认后创建 Plan；底层兼容存储类型不会暴露为新的产品概念。',
+      note: '用户确认后创建 ExecutionOS Plan；AI 不直接写入执行系统。',
     );
   }
 }

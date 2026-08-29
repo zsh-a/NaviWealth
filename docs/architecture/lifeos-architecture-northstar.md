@@ -18,7 +18,7 @@ NaviWealth is a Personal LifeOS with multiple opt-in domains:
 | FinanceOS | Seed domain: wealth, cashflow, portfolio, FIRE, options income | Always on |
 | HealthOS | Health signals, recovery, and trends | User opt-in |
 | KnowledgeOS | Decision memory, review, assumptions, routines | User opt-in |
-| ExecutionOS | Personal actions, projects, commitments, and progress review | User opt-in |
+| ExecutionOS | Plans, concrete actions, and progress review | User opt-in |
 
 Future domains such as TimeOS or LivingOS require a separate ADR before code or planning starts.
 

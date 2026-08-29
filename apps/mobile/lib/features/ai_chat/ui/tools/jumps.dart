@@ -110,8 +110,7 @@ _Jump? _jumpFromEvidence(AppLocalizations l10n, EvidenceAnchor anchor) {
     'knowledge_experiments' ||
     'knowledge_routines' ||
     'execution_actions' ||
-    'execution_projects' ||
-    'execution_commitments' ||
+    'execution_plans' ||
     'execution_progress' => fallbackId,
     _ => null,
   };

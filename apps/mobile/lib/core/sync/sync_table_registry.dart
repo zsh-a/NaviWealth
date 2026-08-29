@@ -16,7 +16,7 @@ const String kHealthDomainPrefix = 'health:';
 /// KnowledgeOS rows (`docs/domains/knowledgeos-domain.md` section 2, 11).
 const String kKnowledgeDomainPrefix = 'know:';
 
-/// ExecutionOS rows: projects, personal actions, commitments, and progress.
+/// ExecutionOS rows: plans, actions, and progress.
 const String kExecutionDomainPrefix = 'exec:';
 
 /// All prefixes the applier is willing to accept inbound. Adding a prefix here
@@ -190,15 +190,11 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kKnowledgeDomainPrefix,
   ),
   SyncTableRegistration(
-    'execution_projects',
+    'execution_plans',
     domainPrefix: kExecutionDomainPrefix,
   ),
   SyncTableRegistration(
     'execution_actions',
-    domainPrefix: kExecutionDomainPrefix,
-  ),
-  SyncTableRegistration(
-    'execution_commitments',
     domainPrefix: kExecutionDomainPrefix,
   ),
   SyncTableRegistration(
@@ -259,12 +255,13 @@ final Set<String> kSyncableTables = Set<String>.unmodifiable(
 );
 
 /// Primary-key column for tables whose PK is not `id`.
-final Map<String, String> kSyncPkOverrides =
-    Map<String, String>.unmodifiable(<String, String>{
-      for (final registration in kSyncTableRegistrations)
-        if (registration.primaryKey != 'id')
-          registration.table: registration.primaryKey,
-    });
+final Map<String, String> kSyncPkOverrides = Map<String, String>.unmodifiable(
+  <String, String>{
+    for (final registration in kSyncTableRegistrations)
+      if (registration.primaryKey != 'id')
+        registration.table: registration.primaryKey,
+  },
+);
 
 /// Owner-scoped sync tables that should be scanned when enabling sync for
 /// historical local data.

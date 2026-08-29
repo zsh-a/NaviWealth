@@ -34,46 +34,24 @@ enum ExecutionPriority {
   }
 }
 
-enum ExecutionCommitmentStatus {
+enum ExecutionPlanStatus {
   active('active'),
   paused('paused'),
   completed('completed'),
   archived('archived');
 
-  const ExecutionCommitmentStatus(this.wire);
+  const ExecutionPlanStatus(this.wire);
   final String wire;
 
-  static ExecutionCommitmentStatus parse(String value) {
-    return ExecutionCommitmentStatus.values.firstWhere(
+  static ExecutionPlanStatus parse(String value) {
+    return ExecutionPlanStatus.values.firstWhere(
       (s) => s.wire == value,
-      orElse: () => ExecutionCommitmentStatus.active,
+      orElse: () => ExecutionPlanStatus.active,
     );
   }
 
   bool get isOpen =>
-      this == ExecutionCommitmentStatus.active ||
-      this == ExecutionCommitmentStatus.paused;
-}
-
-enum ExecutionProjectStatus {
-  active('active'),
-  paused('paused'),
-  completed('completed'),
-  archived('archived');
-
-  const ExecutionProjectStatus(this.wire);
-  final String wire;
-
-  static ExecutionProjectStatus parse(String value) {
-    return ExecutionProjectStatus.values.firstWhere(
-      (s) => s.wire == value,
-      orElse: () => ExecutionProjectStatus.active,
-    );
-  }
-
-  bool get isOpen =>
-      this == ExecutionProjectStatus.active ||
-      this == ExecutionProjectStatus.paused;
+      this == ExecutionPlanStatus.active || this == ExecutionPlanStatus.paused;
 }
 
 enum ExecutionHorizon {
@@ -139,8 +117,7 @@ class ExecutionAction {
     this.priority = ExecutionPriority.normal,
     this.dueAt,
     this.scheduledFor,
-    this.projectId,
-    this.commitmentId,
+    this.planId,
     this.source = const ExecutionSourceRef(),
     required this.createdAt,
     this.completedAt,
@@ -154,8 +131,7 @@ class ExecutionAction {
   final ExecutionPriority priority;
   final DateTime? dueAt;
   final DateTime? scheduledFor;
-  final String? projectId;
-  final String? commitmentId;
+  final String? planId;
   final ExecutionSourceRef source;
   final DateTime createdAt;
   final DateTime? completedAt;
@@ -184,8 +160,7 @@ class ExecutionAction {
     ExecutionPriority? priority,
     Object? dueAt = _sentinel,
     Object? scheduledFor = _sentinel,
-    Object? projectId = _sentinel,
-    Object? commitmentId = _sentinel,
+    Object? planId = _sentinel,
     ExecutionSourceRef? source,
     Object? completedAt = _sentinel,
     required SyncMeta sync,
@@ -200,10 +175,7 @@ class ExecutionAction {
       scheduledFor: scheduledFor == _sentinel
           ? this.scheduledFor
           : scheduledFor as DateTime?,
-      projectId: projectId == _sentinel ? this.projectId : projectId as String?,
-      commitmentId: commitmentId == _sentinel
-          ? this.commitmentId
-          : commitmentId as String?,
+      planId: planId == _sentinel ? this.planId : planId as String?,
       source: source ?? this.source,
       createdAt: createdAt,
       completedAt: completedAt == _sentinel
@@ -214,12 +186,12 @@ class ExecutionAction {
   }
 }
 
-class ExecutionProject {
-  const ExecutionProject({
+class ExecutionPlan {
+  const ExecutionPlan({
     required this.id,
     required this.title,
     this.description = '',
-    this.status = ExecutionProjectStatus.active,
+    this.status = ExecutionPlanStatus.active,
     this.horizon = ExecutionHorizon.open,
     this.targetDate,
     this.source = const ExecutionSourceRef(),
@@ -231,7 +203,7 @@ class ExecutionProject {
   final String id;
   final String title;
   final String description;
-  final ExecutionProjectStatus status;
+  final ExecutionPlanStatus status;
   final ExecutionHorizon horizon;
   final DateTime? targetDate;
   final ExecutionSourceRef source;
@@ -239,17 +211,17 @@ class ExecutionProject {
   final DateTime? completedAt;
   final SyncMeta sync;
 
-  ExecutionProject copyWith({
+  ExecutionPlan copyWith({
     String? title,
     String? description,
-    ExecutionProjectStatus? status,
+    ExecutionPlanStatus? status,
     ExecutionHorizon? horizon,
     Object? targetDate = _sentinel,
     ExecutionSourceRef? source,
     Object? completedAt = _sentinel,
     required SyncMeta sync,
   }) {
-    return ExecutionProject(
+    return ExecutionPlan(
       id: id,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -258,64 +230,6 @@ class ExecutionProject {
       targetDate: targetDate == _sentinel
           ? this.targetDate
           : targetDate as DateTime?,
-      source: source ?? this.source,
-      createdAt: createdAt,
-      completedAt: completedAt == _sentinel
-          ? this.completedAt
-          : completedAt as DateTime?,
-      sync: sync,
-    );
-  }
-}
-
-class ExecutionCommitment {
-  const ExecutionCommitment({
-    required this.id,
-    required this.title,
-    this.description = '',
-    this.status = ExecutionCommitmentStatus.active,
-    this.horizon = ExecutionHorizon.open,
-    this.targetDate,
-    this.projectId,
-    this.source = const ExecutionSourceRef(),
-    required this.createdAt,
-    this.completedAt,
-    required this.sync,
-  });
-
-  final String id;
-  final String title;
-  final String description;
-  final ExecutionCommitmentStatus status;
-  final ExecutionHorizon horizon;
-  final DateTime? targetDate;
-  final String? projectId;
-  final ExecutionSourceRef source;
-  final DateTime createdAt;
-  final DateTime? completedAt;
-  final SyncMeta sync;
-
-  ExecutionCommitment copyWith({
-    String? title,
-    String? description,
-    ExecutionCommitmentStatus? status,
-    ExecutionHorizon? horizon,
-    Object? targetDate = _sentinel,
-    Object? projectId = _sentinel,
-    ExecutionSourceRef? source,
-    Object? completedAt = _sentinel,
-    required SyncMeta sync,
-  }) {
-    return ExecutionCommitment(
-      id: id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      status: status ?? this.status,
-      horizon: horizon ?? this.horizon,
-      targetDate: targetDate == _sentinel
-          ? this.targetDate
-          : targetDate as DateTime?,
-      projectId: projectId == _sentinel ? this.projectId : projectId as String?,
       source: source ?? this.source,
       createdAt: createdAt,
       completedAt: completedAt == _sentinel
@@ -330,8 +244,7 @@ class ExecutionProgressEntry {
   const ExecutionProgressEntry({
     required this.id,
     this.actionId,
-    this.projectId,
-    this.commitmentId,
+    this.planId,
     required this.kind,
     required this.note,
     required this.createdAt,
@@ -340,8 +253,7 @@ class ExecutionProgressEntry {
 
   final String id;
   final String? actionId;
-  final String? projectId;
-  final String? commitmentId;
+  final String? planId;
   final ExecutionProgressKind kind;
   final String note;
   final DateTime createdAt;
@@ -356,8 +268,7 @@ class ExecutionOverviewSnapshot {
     required this.backlogCount,
     required this.highPriorityCount,
     required this.dueCount,
-    required this.activeProjectCount,
-    required this.activeCommitmentCount,
+    required this.activePlanCount,
     required this.recentProgressCount,
   });
 
@@ -367,15 +278,13 @@ class ExecutionOverviewSnapshot {
   final int backlogCount;
   final int highPriorityCount;
   final int dueCount;
-  final int activeProjectCount;
-  final int activeCommitmentCount;
+  final int activePlanCount;
   final int recentProgressCount;
 
   factory ExecutionOverviewSnapshot.fromLists({
     required List<ExecutionAction> todayActions,
     required List<ExecutionAction> openActions,
-    required List<ExecutionProject> projects,
-    required List<ExecutionCommitment> commitments,
+    required List<ExecutionPlan> plans,
     required List<ExecutionProgressEntry> recentProgress,
     required DateTime now,
   }) {
@@ -392,8 +301,7 @@ class ExecutionOverviewSnapshot {
           .where((action) => action.priority == ExecutionPriority.high)
           .length,
       dueCount: open.where((action) => action.isDue(now)).length,
-      activeProjectCount: projects.length,
-      activeCommitmentCount: commitments.length,
+      activePlanCount: plans.length,
       recentProgressCount: recentProgress
           .where((entry) => !entry.createdAt.toLocal().isBefore(recentSince))
           .length,

@@ -13,31 +13,30 @@ import '../domain/execution_models.dart';
 import 'execution_delete_confirm.dart';
 import 'execution_sheet_footer.dart';
 
-Future<bool?> showExecutionProjectSheet({
+Future<bool?> showExecutionPlanSheet({
   required BuildContext context,
-  ExecutionProject? project,
+  ExecutionPlan? plan,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
     context: context,
     dirtyGuard: dirty,
-    builder: (_) => _ExecutionProjectForm(project: project, dirty: dirty),
+    builder: (_) => _ExecutionPlanForm(plan: plan, dirty: dirty),
   ).whenComplete(dirty.dispose);
 }
 
-class _ExecutionProjectForm extends ConsumerStatefulWidget {
-  const _ExecutionProjectForm({required this.project, required this.dirty});
+class _ExecutionPlanForm extends ConsumerStatefulWidget {
+  const _ExecutionPlanForm({required this.plan, required this.dirty});
 
-  final ExecutionProject? project;
+  final ExecutionPlan? plan;
   final FormDirtyController dirty;
 
   @override
-  ConsumerState<_ExecutionProjectForm> createState() =>
-      _ExecutionProjectFormState();
+  ConsumerState<_ExecutionPlanForm> createState() => _ExecutionPlanFormState();
 }
 
-class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
-    with FormSubmission<_ExecutionProjectForm> {
+class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
+    with FormSubmission<_ExecutionPlanForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _description = TextEditingController();
@@ -48,11 +47,11 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
   @override
   void initState() {
     super.initState();
-    final project = widget.project;
-    _title.text = project?.title ?? '';
-    _description.text = project?.description ?? '';
-    _horizon = project?.horizon ?? ExecutionHorizon.open;
-    _targetDate = project?.targetDate;
+    final plan = widget.plan;
+    _title.text = plan?.title ?? '';
+    _description.text = plan?.description ?? '';
+    _horizon = plan?.horizon ?? ExecutionHorizon.open;
+    _targetDate = plan?.targetDate;
     widget.dirty.bindTextControllers([_title, _description]);
     _title.addListener(_onTitleChanged);
   }
@@ -80,29 +79,29 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
       dirty: widget.dirty,
       onBusyChanged: _setSaving,
       leave: () => Navigator.of(context).pop(true),
-      tag: 'execution-project',
+      tag: 'execution-plan',
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
       commit: () async {
         final repo = await ref.read(executionRepositoryProvider.future);
         final sync = await stampExecutionSync(ref);
-        await repo.upsertProject(_buildProject(sync, title));
+        await repo.upsertPlan(_buildPlan(sync, title));
       },
     );
   }
 
   Future<void> _delete() async {
-    final project = widget.project;
-    if (_saving || project == null) return;
+    final plan = widget.plan;
+    if (_saving || plan == null) return;
     final l10n = AppLocalizations.of(context);
     final ExecutionRepository repo;
     final int openActionCount;
     try {
       repo = await ref.read(executionRepositoryProvider.future);
       final relatedActions = await repo
-          .watchActionsForProject(
-            ownerUserId: project.sync.ownerUserId,
-            projectId: project.id,
+          .watchActionsForPlan(
+            ownerUserId: plan.sync.ownerUserId,
+            planId: plan.id,
           )
           .first;
       openActionCount = relatedActions.where((action) => action.isOpen).length;
@@ -119,7 +118,7 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
     if (!mounted) return;
     final confirmed = await confirmExecutionDelete(
       context: context,
-      item: project.title,
+      item: plan.title,
       body: openActionCount == 0
           ? null
           : l10n.executionDeleteWithOpenActionsBody(openActionCount),
@@ -129,12 +128,12 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
       dirty: widget.dirty,
       onBusyChanged: _setSaving,
       leave: () => Navigator.of(context).pop(true),
-      tag: 'execution-project-delete',
+      tag: 'execution-plan-delete',
       failureMessage: (_) => l10n.commonDeleteFailed,
       successMessage: l10n.commonDeleted,
       commit: () async {
         final sync = await stampExecutionSync(ref);
-        await repo.softDeleteProject(project: project, sync: sync);
+        await repo.softDeletePlan(plan: plan, sync: sync);
       },
     );
   }
@@ -143,13 +142,13 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
     if (mounted && _saving != value) setState(() => _saving = value);
   }
 
-  ExecutionProject _buildProject(SyncMeta sync, String title) {
-    final existing = widget.project;
-    return ExecutionProject(
+  ExecutionPlan _buildPlan(SyncMeta sync, String title) {
+    final existing = widget.plan;
+    return ExecutionPlan(
       id: existing?.id ?? kExecutionUuid.v4(),
       title: title,
       description: _description.text.trim(),
-      status: existing?.status ?? ExecutionProjectStatus.active,
+      status: existing?.status ?? ExecutionPlanStatus.active,
       horizon: _horizon,
       targetDate: _targetDate,
       source: existing?.source ?? const ExecutionSourceRef(),
@@ -164,11 +163,11 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isEditing = widget.project != null;
+    final isEditing = widget.plan != null;
     return AppSheet(
       title: isEditing
-          ? l10n.executionEditProjectTitle
-          : l10n.executionCreateProjectTitle,
+          ? l10n.executionEditPlanTitle
+          : l10n.executionCreatePlanTitle,
       footer: ExecutionSheetFooter(
         submitLabel: l10n.commonSave,
         cancelLabel: l10n.commonCancel,
@@ -192,8 +191,8 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
             ],
             FTextFormField(
               control: FTextFieldControl.managed(controller: _title),
-              label: Text(l10n.executionProjectField),
-              hint: l10n.executionProjectTitleHint,
+              label: Text(l10n.executionPlanField),
+              hint: l10n.executionPlanTitleHint,
               maxLines: 1,
               textInputAction: TextInputAction.next,
               validator: (value) => (value == null || value.trim().isEmpty)
@@ -214,7 +213,7 @@ class _ExecutionProjectFormState extends ConsumerState<_ExecutionProjectForm>
             FTextFormField(
               control: FTextFieldControl.managed(controller: _description),
               label: Text(l10n.executionDescriptionField),
-              hint: l10n.executionProjectDescriptionHint,
+              hint: l10n.executionPlanDescriptionHint,
               minLines: 3,
               maxLines: 5,
               textInputAction: TextInputAction.newline,

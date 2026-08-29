@@ -1,28 +1,16 @@
 import '../domain/execution_models.dart';
 
-String? executionProjectTitle(List<ExecutionProject> projects, String? id) {
+String? executionPlanTitle(List<ExecutionPlan> plans, String? id) {
   if (id == null || id.isEmpty) return null;
-  for (final project in projects) {
-    if (project.id == id) return project.title;
-  }
-  return null;
-}
-
-String? executionCommitmentTitle(
-  List<ExecutionCommitment> commitments,
-  String? id,
-) {
-  if (id == null || id.isEmpty) return null;
-  for (final commitment in commitments) {
-    if (commitment.id == id) return commitment.title;
+  for (final plan in plans) {
+    if (plan.id == id) return plan.title;
   }
   return null;
 }
 
 Map<String, Object?> executionActionJson(
   ExecutionAction action, {
-  List<ExecutionProject> projects = const <ExecutionProject>[],
-  List<ExecutionCommitment> commitments = const <ExecutionCommitment>[],
+  List<ExecutionPlan> plans = const <ExecutionPlan>[],
 }) => <String, Object?>{
   'id': action.id,
   'title': action.title,
@@ -31,13 +19,8 @@ Map<String, Object?> executionActionJson(
   'priority': action.priority.wire,
   'due_at': action.dueAt?.toUtc().toIso8601String(),
   'scheduled_for': action.scheduledFor?.toUtc().toIso8601String(),
-  'project_id': action.projectId,
-  'project_title': executionProjectTitle(projects, action.projectId),
-  'commitment_id': action.commitmentId,
-  'commitment_title': executionCommitmentTitle(
-    commitments,
-    action.commitmentId,
-  ),
+  'plan_id': action.planId,
+  'plan_title': executionPlanTitle(plans, action.planId),
   'source_domain': action.source.domain,
   'source_row_family': action.source.rowFamily,
   'source_row_id': action.source.rowId,
@@ -47,26 +30,11 @@ Map<String, Object?> executionActionJson(
   'completed_at': action.completedAt?.toUtc().toIso8601String(),
 };
 
-Map<String, Object?> executionProjectJson(ExecutionProject project) =>
-    <String, Object?>{
-      'id': project.id,
-      'title': project.title,
-      'description': project.description,
-      'status': project.status.wire,
-      'horizon': project.horizon.wire,
-      'target_date': project.targetDate?.toUtc().toIso8601String(),
-    };
-
-Map<String, Object?> executionCommitmentJson(
-  ExecutionCommitment commitment, {
-  required List<ExecutionProject> projects,
-}) => <String, Object?>{
-  'id': commitment.id,
-  'title': commitment.title,
-  'description': commitment.description,
-  'status': commitment.status.wire,
-  'horizon': commitment.horizon.wire,
-  'target_date': commitment.targetDate?.toUtc().toIso8601String(),
-  'project_id': commitment.projectId,
-  'project_title': executionProjectTitle(projects, commitment.projectId),
+Map<String, Object?> executionPlanJson(ExecutionPlan plan) => <String, Object?>{
+  'id': plan.id,
+  'title': plan.title,
+  'description': plan.description,
+  'status': plan.status.wire,
+  'horizon': plan.horizon.wire,
+  'target_date': plan.targetDate?.toUtc().toIso8601String(),
 };

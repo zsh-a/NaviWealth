@@ -37,7 +37,7 @@ MemoryRuntime _runtime() {
 }
 
 void main() {
-  test('reindex mirrors actions projects and commitments as events', () async {
+  test('reindex mirrors actions, plans, and progress as events', () async {
     final runtime = _runtime();
     const indexer = ExecutionMemoryIndexer();
 
@@ -57,9 +57,9 @@ void main() {
         sync: _sync(1),
       ),
     ], ownerUserId: _userId);
-    await indexer.reindexProjects(runtime, [
-      ExecutionProject(
-        id: 'project-health',
+    await indexer.reindexPlans(runtime, [
+      ExecutionPlan(
+        id: 'plan-health',
         title: 'Stabilize recovery routine',
         source: const ExecutionSourceRef(
           domain: 'health',
@@ -71,24 +71,15 @@ void main() {
         sync: _sync(2),
       ),
     ], ownerUserId: _userId);
-    await indexer.reindexCommitments(runtime, [
-      ExecutionCommitment(
-        id: 'commit-review',
-        title: 'Weekly review',
-        projectId: 'project-health',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(3),
-      ),
-    ], ownerUserId: _userId);
     await indexer.reindexProgress(runtime, [
       ExecutionProgressEntry(
         id: 'progress-blocker',
         actionId: 'act-finance',
-        projectId: 'project-health',
+        planId: 'plan-health',
         kind: ExecutionProgressKind.blocker,
         note: 'Waiting for a verified budget snapshot.',
         createdAt: DateTime.utc(2026, 6, 2),
-        sync: _sync(4),
+        sync: _sync(3),
       ),
     ], ownerUserId: _userId);
 
@@ -97,7 +88,7 @@ void main() {
       window: const Duration(days: 9999),
     );
 
-    expect(events, hasLength(4));
+    expect(events, hasLength(3));
     final action = events.firstWhere(
       (event) =>
           event.sourceIdentity.rowFamily == kExecutionActionEventSourceFamily,
@@ -108,19 +99,12 @@ void main() {
     expect(action.entities, contains('source_domain:finance'));
     expect(action.entities, contains('status:blocked'));
 
-    final project = events.firstWhere(
+    final plan = events.firstWhere(
       (event) =>
-          event.sourceIdentity.rowFamily == kExecutionProjectEventSourceFamily,
+          event.sourceIdentity.rowFamily == kExecutionPlanEventSourceFamily,
     );
-    expect(project.facts['source_domain'], 'health');
-    expect(project.entities, contains('source_domain:health'));
-
-    final commitment = events.firstWhere(
-      (event) =>
-          event.sourceIdentity.rowFamily ==
-          kExecutionCommitmentEventSourceFamily,
-    );
-    expect(commitment.entities, contains('execution_project:project-health'));
+    expect(plan.facts['source_domain'], 'health');
+    expect(plan.entities, contains('source_domain:health'));
 
     final progress = events.firstWhere(
       (event) =>

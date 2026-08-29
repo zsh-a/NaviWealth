@@ -18,9 +18,9 @@ import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_action_card_controller.dart';
 import 'package:naviwealth/features/execution/ui/execution_action_sheet.dart';
-import 'package:naviwealth/features/execution/ui/execution_commitments_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_create_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_lifecycle_card_controller.dart';
+import 'package:naviwealth/features/execution/ui/execution_plans_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_progress_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -143,13 +143,11 @@ void main() {
     expect(find.text('Next actions'), findsNothing);
   });
 
-  testWidgets('Commitments renders open actions without a container', (
-    tester,
-  ) async {
+  testWidgets('Plans renders open actions without a container', (tester) async {
     final action = _action(id: 'open', title: 'Capture standalone follow-up');
     await tester.pumpWidget(
       _wrap(
-        const ExecutionCommitmentsPage(),
+        const ExecutionPlansPage(),
         overrides: _executionOverrides(openActions: [action]),
       ),
     );
@@ -168,22 +166,22 @@ void main() {
           id: 'orphaned-open',
           title: 'Recover an open archived-plan action',
         ).copyWith(
-          projectId: 'closed-plan',
+          planId: 'closed-plan',
           sync: _sync(ownerUserId: 'user'),
         );
-    final closed = ExecutionProject(
+    final closed = ExecutionPlan(
       id: 'closed-plan',
       title: 'Archived plan',
-      status: ExecutionProjectStatus.archived,
+      status: ExecutionPlanStatus.archived,
       createdAt: DateTime.utc(2026, 7, 24),
       sync: _sync(ownerUserId: 'user'),
     );
     await tester.pumpWidget(
       _wrap(
-        const ExecutionCommitmentsPage(),
+        const ExecutionPlansPage(),
         overrides: _executionOverrides(
           openActions: [action],
-          closedProjects: [closed],
+          closedPlans: [closed],
         ),
       ),
     );
@@ -227,7 +225,6 @@ void main() {
       expect(find.text('Due'), findsOneWidget);
       expect(find.text('Belongs to'), findsOneWidget);
       expect(find.text('Plan'), findsNothing);
-      expect(find.text('Commitment'), findsNothing);
       expect(find.text('Fewer details'), findsOneWidget);
     },
   );
@@ -253,24 +250,16 @@ void main() {
     expect(find.text('Belongs to'), findsOneWidget);
     expect(find.text('Review the launch plan'), findsOneWidget);
     expect(find.text('Action'), findsNothing);
-    expect(find.text('Project'), findsNothing);
-    expect(find.text('Commitment'), findsNothing);
+    expect(find.text('Plan'), findsNothing);
     expect(find.text('Update linked action'), findsNothing);
   });
 
   testWidgets('action uses one relation picker and inherits a plan', (
     tester,
   ) async {
-    final project = ExecutionProject(
-      id: 'project',
+    final plan = ExecutionPlan(
+      id: 'plan',
       title: 'Launch plan',
-      createdAt: DateTime.utc(2026, 7, 24),
-      sync: _sync(),
-    );
-    final commitment = ExecutionCommitment(
-      id: 'commitment',
-      projectId: project.id,
-      title: 'Ship the launch',
       createdAt: DateTime.utc(2026, 7, 24),
       sync: _sync(),
     );
@@ -282,10 +271,7 @@ void main() {
             child: const Text('Open capture'),
           ),
         ),
-        overrides: _executionOverrides(
-          projects: [project],
-          commitments: [commitment],
-        ),
+        overrides: _executionOverrides(plans: [plan]),
       ),
     );
 
@@ -298,15 +284,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Launch plan'), findsOneWidget);
-    expect(find.text('Ship the launch'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('Ship the launch')).dx,
-      greaterThan(tester.getTopLeft(find.text('Launch plan')).dx),
-    );
 
-    await tester.tap(find.text('Ship the launch'));
+    await tester.tap(find.text('Launch plan'));
     await tester.pumpAndSettle();
-    expect(find.text('Ship the launch'), findsOneWidget);
+    expect(find.text('Launch plan'), findsOneWidget);
     expect(find.text('Belongs to'), findsOneWidget);
   });
 
@@ -343,26 +324,23 @@ void main() {
   });
 
   testWidgets('Plans demotes closed work to an archive entry', (tester) async {
-    final active = ExecutionProject(
+    final active = ExecutionPlan(
       id: 'active',
       title: 'Active launch',
       createdAt: DateTime.utc(2026, 7, 24),
       sync: _sync(),
     );
-    final closed = ExecutionProject(
+    final closed = ExecutionPlan(
       id: 'closed',
       title: 'Closed launch',
-      status: ExecutionProjectStatus.completed,
+      status: ExecutionPlanStatus.completed,
       createdAt: DateTime.utc(2026, 7, 24),
       sync: _sync(),
     );
     await tester.pumpWidget(
       _wrap(
-        const ExecutionCommitmentsPage(),
-        overrides: _executionOverrides(
-          projects: [active],
-          closedProjects: [closed],
-        ),
+        const ExecutionPlansPage(),
+        overrides: _executionOverrides(plans: [active], closedPlans: [closed]),
       ),
     );
     await tester.pumpAndSettle();
@@ -396,8 +374,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('New Action'), findsOneWidget);
-    expect(find.text('New Plan'), findsOneWidget);
-    expect(find.text('New Commitment'), findsNothing);
+    expect(find.text('New Plan'), findsWidgets);
   });
 
   testWidgets('manual action status changes can be restored', (tester) async {
@@ -462,150 +439,69 @@ void main() {
     expect(removedProgress?.sync.deletedAt, isNotNull);
   });
 
-  test(
-    'project lifecycle undo restores detached actions and progress',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final repository = ExecutionRepository(
-        db: db,
-        outbox: InMemoryOutboxStore(),
-      );
-      final project = ExecutionProject(
-        id: 'undo-project',
-        title: 'Undo project completion',
-        createdAt: DateTime.utc(2026, 7, 24),
-        sync: _sync(ownerUserId: 'user'),
-      );
-      final action =
-          _action(
-            id: 'undo-project-action',
-            title: 'Restore relation',
-          ).copyWith(
-            projectId: project.id,
-            commitmentId: 'undo-project-commitment',
-            sync: _sync(ownerUserId: 'user'),
-          );
-      await repository.upsertProject(project);
-      await repository.upsertAction(action);
+  test('plan lifecycle undo restores detached actions and progress', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repository = ExecutionRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+    );
+    final plan = ExecutionPlan(
+      id: 'undo-plan',
+      title: 'Undo plan completion',
+      createdAt: DateTime.utc(2026, 7, 24),
+      sync: _sync(ownerUserId: 'user'),
+    );
+    final action = _action(id: 'undo-plan-action', title: 'Restore relation')
+        .copyWith(
+          planId: plan.id,
+          sync: _sync(ownerUserId: 'user'),
+        );
+    await repository.upsertPlan(plan);
+    await repository.upsertAction(action);
 
-      final appliedSync = _sync(ownerUserId: 'user', tick: 1);
-      final progress = ExecutionProgressEntry(
-        id: 'undo-project-progress',
-        projectId: project.id,
-        kind: ExecutionProgressKind.completion,
-        note: 'Project completed.',
-        createdAt: appliedSync.updatedAt,
-        sync: appliedSync,
-      );
-      final affectedActions = await repository.updateProjectStatus(
-        project: project,
-        status: ExecutionProjectStatus.completed,
-        sync: appliedSync,
-        progress: progress,
-      );
-      final undo = ExecutionProjectStatusUndo(
-        repository: repository,
-        before: project,
-        affectedActions: affectedActions,
-        appliedSync: appliedSync,
-        stamp: () async => _sync(ownerUserId: 'user', tick: 2),
-        progressId: progress.id,
-      );
+    final appliedSync = _sync(ownerUserId: 'user', tick: 1);
+    final progress = ExecutionProgressEntry(
+      id: 'undo-plan-progress',
+      planId: plan.id,
+      kind: ExecutionProgressKind.completion,
+      note: 'Plan completed.',
+      createdAt: appliedSync.updatedAt,
+      sync: appliedSync,
+    );
+    final affectedActions = await repository.updatePlanStatus(
+      plan: plan,
+      status: ExecutionPlanStatus.completed,
+      sync: appliedSync,
+      progress: progress,
+    );
+    final undo = ExecutionPlanStatusUndo(
+      repository: repository,
+      before: plan,
+      affectedActions: affectedActions,
+      appliedSync: appliedSync,
+      stamp: () async => _sync(ownerUserId: 'user', tick: 2),
+      progressId: progress.id,
+    );
 
-      await undo.restore();
+    await undo.restore();
 
-      final restoredProject = await repository.findProject(
-        ownerUserId: 'user',
-        id: project.id,
-      );
-      final restoredAction = await repository.findAction(
-        ownerUserId: 'user',
-        id: action.id,
-      );
-      final restoredProgress = await repository.findProgress(
-        ownerUserId: 'user',
-        id: progress.id,
-      );
-      expect(restoredProject?.status, ExecutionProjectStatus.active);
-      expect(restoredAction?.projectId, project.id);
-      expect(restoredAction?.commitmentId, action.commitmentId);
-      expect(restoredProgress?.sync.deletedAt, isNotNull);
-    },
-  );
-
-  test(
-    'commitment lifecycle undo restores detached actions and progress',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final repository = ExecutionRepository(
-        db: db,
-        outbox: InMemoryOutboxStore(),
-      );
-      final commitment = ExecutionCommitment(
-        id: 'undo-commitment',
-        title: 'Undo commitment completion',
-        projectId: 'undo-commitment-project',
-        createdAt: DateTime.utc(2026, 7, 24),
-        sync: _sync(ownerUserId: 'user'),
-      );
-      final action =
-          _action(
-            id: 'undo-commitment-action',
-            title: 'Restore commitment relation',
-          ).copyWith(
-            projectId: commitment.projectId,
-            commitmentId: commitment.id,
-            sync: _sync(ownerUserId: 'user'),
-          );
-      await repository.upsertCommitment(commitment);
-      await repository.upsertAction(action);
-
-      final appliedSync = _sync(ownerUserId: 'user', tick: 1);
-      final progress = ExecutionProgressEntry(
-        id: 'undo-commitment-progress',
-        commitmentId: commitment.id,
-        kind: ExecutionProgressKind.completion,
-        note: 'Commitment completed.',
-        createdAt: appliedSync.updatedAt,
-        sync: appliedSync,
-      );
-      final affectedActions = await repository.updateCommitmentStatus(
-        commitment: commitment,
-        status: ExecutionCommitmentStatus.completed,
-        sync: appliedSync,
-        progress: progress,
-      );
-      final undo = ExecutionCommitmentStatusUndo(
-        repository: repository,
-        before: commitment,
-        affectedActions: affectedActions,
-        appliedSync: appliedSync,
-        stamp: () async => _sync(ownerUserId: 'user', tick: 2),
-        progressId: progress.id,
-      );
-
-      await undo.restore();
-
-      final restoredCommitment = await repository.findCommitment(
-        ownerUserId: 'user',
-        id: commitment.id,
-      );
-      final restoredAction = await repository.findAction(
-        ownerUserId: 'user',
-        id: action.id,
-      );
-      final restoredProgress = await repository.findProgress(
-        ownerUserId: 'user',
-        id: progress.id,
-      );
-      expect(restoredCommitment?.status, ExecutionCommitmentStatus.active);
-      expect(restoredAction?.projectId, commitment.projectId);
-      expect(restoredAction?.commitmentId, commitment.id);
-      expect(restoredProgress?.sync.deletedAt, isNotNull);
-    },
-  );
+    final restoredPlan = await repository.findPlan(
+      ownerUserId: 'user',
+      id: plan.id,
+    );
+    final restoredAction = await repository.findAction(
+      ownerUserId: 'user',
+      id: action.id,
+    );
+    final restoredProgress = await repository.findProgress(
+      ownerUserId: 'user',
+      id: progress.id,
+    );
+    expect(restoredPlan?.status, ExecutionPlanStatus.active);
+    expect(restoredAction?.planId, plan.id);
+    expect(restoredProgress?.sync.deletedAt, isNotNull);
+  });
 
   testWidgets('blocking an action requires and records a reason', (
     tester,
@@ -669,7 +565,7 @@ void main() {
     await tester.pump(const Duration(seconds: 7));
   });
 
-  testWidgets('archiving open project confirms and records progress', (
+  testWidgets('archiving open plan confirms and records progress', (
     tester,
   ) async {
     final db = makeTestDatabase();
@@ -678,18 +574,18 @@ void main() {
       db: db,
       outbox: InMemoryOutboxStore(),
     );
-    final project = ExecutionProject(
-      id: 'archive-project',
-      title: 'Archive project',
+    final plan = ExecutionPlan(
+      id: 'archive-plan',
+      title: 'Archive plan',
       createdAt: DateTime.utc(2026, 7, 1),
       sync: _sync(),
     );
-    await repository.upsertProject(project);
+    await repository.upsertPlan(plan);
 
     await tester.pumpWidget(
       _wrap(
-        ExecutionProjectCardController(
-          project: project,
+        ExecutionPlanCardController(
+          plan: plan,
           openActionCount: 1,
           onCreateAction: () {},
           onEdit: () {},
@@ -714,12 +610,12 @@ void main() {
     await tester.tap(find.widgetWithText(FButton, 'Archive').last);
     await tester.pumpAndSettle();
 
-    final archived = await repository.findProject(
+    final archived = await repository.findPlan(
       ownerUserId: 'u-test',
-      id: project.id,
+      id: plan.id,
     );
     final progress = await repository.listRecentProgress(ownerUserId: 'u-test');
-    expect(archived?.status, ExecutionProjectStatus.archived);
+    expect(archived?.status, ExecutionPlanStatus.archived);
     expect(progress.single.note, 'Plan archived.');
   });
 }
@@ -728,10 +624,8 @@ List<Override> _executionOverrides({
   List<ExecutionAction> todayActions = const [],
   List<ExecutionAction> openActions = const [],
   List<ExecutionAction> closedActions = const [],
-  List<ExecutionProject> projects = const [],
-  List<ExecutionProject> closedProjects = const [],
-  List<ExecutionCommitment> commitments = const [],
-  List<ExecutionCommitment> closedCommitments = const [],
+  List<ExecutionPlan> plans = const [],
+  List<ExecutionPlan> closedPlans = const [],
 }) {
   return [
     executionTodayActionsProvider.overrideWith(
@@ -740,15 +634,9 @@ List<Override> _executionOverrides({
     executionOpenActionsProvider.overrideWith(
       (ref) => Stream.value(openActions),
     ),
-    executionProjectsProvider.overrideWith((ref) => Stream.value(projects)),
-    executionClosedProjectsProvider.overrideWith(
-      (ref) => Stream.value(closedProjects),
-    ),
-    executionCommitmentsProvider.overrideWith(
-      (ref) => Stream.value(commitments),
-    ),
-    executionClosedCommitmentsProvider.overrideWith(
-      (ref) => Stream.value(closedCommitments),
+    executionPlansProvider.overrideWith((ref) => Stream.value(plans)),
+    executionClosedPlansProvider.overrideWith(
+      (ref) => Stream.value(closedPlans),
     ),
     executionClosedActionsProvider.overrideWith(
       (ref) => Stream.value(closedActions),
@@ -759,10 +647,7 @@ List<Override> _executionOverrides({
     executionActionRelationsProvider.overrideWith(
       (ref) async => ExecutionRelations(
         actions: {for (final action in openActions) action.id: action},
-        projects: {for (final project in projects) project.id: project},
-        commitments: {
-          for (final commitment in commitments) commitment.id: commitment,
-        },
+        plans: {for (final plan in plans) plan.id: plan},
       ),
     ),
   ];

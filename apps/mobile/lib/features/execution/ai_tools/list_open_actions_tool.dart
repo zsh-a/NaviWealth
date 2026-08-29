@@ -38,20 +38,11 @@ class ListOpenActionsTool implements DeviceTool {
       ownerUserId: ownerUserId,
       limit: limit,
     );
-    final projects = await repo.listActiveProjects(ownerUserId: ownerUserId);
-    final commitments = await repo.listActiveCommitments(
-      ownerUserId: ownerUserId,
-    );
+    final plans = await repo.listActivePlans(ownerUserId: ownerUserId);
     return withEvidence(
       result: <String, Object?>{
         'actions': actions
-            .map(
-              (action) => executionActionJson(
-                action,
-                projects: projects,
-                commitments: commitments,
-              ),
-            )
+            .map((action) => executionActionJson(action, plans: plans))
             .toList(growable: false),
       },
       anchors: actions

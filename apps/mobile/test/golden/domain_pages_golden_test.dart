@@ -92,17 +92,11 @@ List<Override> _emptyExecutionOverrides() => [
   executionOpenActionsProvider.overrideWith(
     (_) => Stream.value(const <ExecutionAction>[]),
   ),
-  executionProjectsProvider.overrideWith(
-    (_) => Stream.value(const <ExecutionProject>[]),
+  executionPlansProvider.overrideWith(
+    (_) => Stream.value(const <ExecutionPlan>[]),
   ),
-  executionClosedProjectsProvider.overrideWith(
-    (_) => Stream.value(const <ExecutionProject>[]),
-  ),
-  executionCommitmentsProvider.overrideWith(
-    (_) => Stream.value(const <ExecutionCommitment>[]),
-  ),
-  executionClosedCommitmentsProvider.overrideWith(
-    (_) => Stream.value(const <ExecutionCommitment>[]),
+  executionClosedPlansProvider.overrideWith(
+    (_) => Stream.value(const <ExecutionPlan>[]),
   ),
   executionRecentProgressProvider.overrideWith(
     (_) => Stream.value(const <ExecutionProgressEntry>[]),
@@ -110,8 +104,7 @@ List<Override> _emptyExecutionOverrides() => [
   executionActionRelationsProvider.overrideWith(
     (_) async => const ExecutionRelations(
       actions: <String, ExecutionAction>{},
-      projects: <String, ExecutionProject>{},
-      commitments: <String, ExecutionCommitment>{},
+      plans: <String, ExecutionPlan>{},
     ),
   ),
 ];

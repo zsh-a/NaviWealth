@@ -2,8 +2,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../ui/execution_commitments_page.dart';
 import '../ui/execution_detail_page.dart';
+import '../ui/execution_plans_page.dart';
 import '../ui/execution_review_page.dart';
 import '../ui/execution_today_page.dart';
 import 'execution_domain_shell.dart';
@@ -37,22 +37,15 @@ StatefulShellRoute executionShellRoute() {
       StatefulShellBranch(
         routes: [
           GoRoute(
-            path: ExecutionRoutes.commitments,
-            name: ExecutionRouteNames.commitments,
-            builder: (context, state) => const ExecutionCommitmentsPage(),
+            path: ExecutionRoutes.plans,
+            name: ExecutionRouteNames.plans,
+            builder: (context, state) => const ExecutionPlansPage(),
             routes: [
               GoRoute(
-                path: 'projects/:id',
-                name: ExecutionRouteNames.projectDetail,
-                builder: (context, state) => ExecutionProjectDetailPage(
-                  projectId: state.pathParameters['id'] ?? '',
-                ),
-              ),
-              GoRoute(
                 path: ':id',
-                name: ExecutionRouteNames.commitmentDetail,
-                builder: (context, state) => ExecutionCommitmentDetailPage(
-                  commitmentId: state.pathParameters['id'] ?? '',
+                name: ExecutionRouteNames.planDetail,
+                builder: (context, state) => ExecutionPlanDetailPage(
+                  planId: state.pathParameters['id'] ?? '',
                 ),
               ),
             ],

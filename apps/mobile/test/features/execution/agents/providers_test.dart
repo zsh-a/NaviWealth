@@ -162,24 +162,26 @@ void main() {
         agent_providers.agentRunStoreProvider.overrideWith(
           (ref) async => runStore,
         ),
-        agentRegistrationProvider
-            .overrideWithValue(const <DomainAgentRegistration>[
-              DomainAgentRegistration(
-                agent: ExecutionReviewAgent(),
-                domain: DomainScope.execution,
-              ),
-            ]),
-        agentPresentationSpecsProvider
-            .overrideWithValue(const <String, AgentPresentationSpec>{
-              kExecutionReviewAgentId: AgentPresentationSpec(
-                agentId: kExecutionReviewAgentId,
-                domain: DomainScope.execution,
-                icon: Icons.check,
-                label: _agentLabel,
-                description: _agentDescription,
-                placement: AgentResultPlacement.domainReview,
-              ),
-            }),
+        agentRegistrationProvider.overrideWithValue(
+          const <DomainAgentRegistration>[
+            DomainAgentRegistration(
+              agent: ExecutionReviewAgent(),
+              domain: DomainScope.execution,
+            ),
+          ],
+        ),
+        agentPresentationSpecsProvider.overrideWithValue(
+          const <String, AgentPresentationSpec>{
+            kExecutionReviewAgentId: AgentPresentationSpec(
+              agentId: kExecutionReviewAgentId,
+              domain: DomainScope.execution,
+              icon: Icons.check,
+              label: _agentLabel,
+              description: _agentDescription,
+              placement: AgentResultPlacement.domainReview,
+            ),
+          },
+        ),
       ],
     );
     addTearDown(c.dispose);

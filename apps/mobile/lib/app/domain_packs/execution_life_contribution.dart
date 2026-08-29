@@ -77,8 +77,7 @@ DomainLifeSignalSlice executionLifeSignals(Ref ref, DateTime now) {
 String? executionSourceRouteContribution(String family, String rowId) =>
     switch (family) {
       'exec:execution_actions' => ExecutionRoutes.action(rowId),
-      'exec:execution_projects' => ExecutionRoutes.project(rowId),
-      'exec:execution_commitments' => ExecutionRoutes.commitment(rowId),
+      'exec:execution_plans' => ExecutionRoutes.plan(rowId),
       'exec:execution_progress_entries' => ExecutionRoutes.review,
       _ => null,
     };

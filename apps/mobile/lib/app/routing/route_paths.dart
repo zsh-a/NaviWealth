@@ -82,13 +82,12 @@ abstract final class AppRoutes {
   static const knowledgeDecisionDetail = KnowledgeRoutes.decisionDetail;
   static const knowledgeObjectDetail = KnowledgeRoutes.objectDetail;
 
-  // ── ExecutionOS — optional personal action / commitment loop.
+  // ── ExecutionOS — optional personal action / plan loop.
   static const executionToday = ExecutionRoutes.today;
-  static const executionCommitments = ExecutionRoutes.commitments;
+  static const executionPlans = ExecutionRoutes.plans;
   static const executionReview = ExecutionRoutes.review;
   static const executionActionDetail = ExecutionRoutes.actionDetail;
-  static const executionCommitmentDetail = ExecutionRoutes.commitmentDetail;
-  static const executionProjectDetail = ExecutionRoutes.projectDetail;
+  static const executionPlanDetail = ExecutionRoutes.planDetail;
 
   // ── Global meta (not a tab) ────────────────────────────────────────────
   static const settings = SettingsRoutes.root;
@@ -178,8 +177,7 @@ abstract final class AppRoutes {
 
   static String executionAction(String id) => ExecutionRoutes.action(id);
 
-  static String executionCommitment(String id) =>
-      ExecutionRoutes.commitment(id);
+  static String executionPlan(String id) => ExecutionRoutes.plan(id);
 }
 
 /// Canonical GoRouter route names. Used by tests and named navigation
@@ -243,10 +241,10 @@ abstract final class AppRouteNames {
 
   // ── ExecutionOS — gated by opt-in. ─────────────────────────────────────
   static const executionToday = ExecutionRouteNames.today;
-  static const executionCommitments = ExecutionRouteNames.commitments;
+  static const executionPlans = ExecutionRouteNames.plans;
   static const executionReview = ExecutionRouteNames.review;
   static const executionActionDetail = ExecutionRouteNames.actionDetail;
-  static const executionCommitmentDetail = ExecutionRouteNames.commitmentDetail;
+  static const executionPlanDetail = ExecutionRouteNames.planDetail;
 
   // ── Plan ────────────────────────────────────────────────────────────────
   static const plan = FinanceRouteNames.plan;

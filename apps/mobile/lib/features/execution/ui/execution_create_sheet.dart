@@ -4,13 +4,11 @@ import 'package:forui/forui.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'execution_action_sheet.dart';
-import 'execution_project_sheet.dart';
+import 'execution_plan_sheet.dart';
 
 /// The single ExecutionOS creation entry.
 ///
 /// Users choose only between a concrete next action and a multi-step plan.
-/// Commitments remain readable for existing data, but are no longer a separate
-/// concept users must understand before capturing work.
 Future<void> showExecutionCreateSheet(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
@@ -29,11 +27,11 @@ Future<void> showExecutionCreateSheet(BuildContext context) {
         ),
         AppActionSheetTile(
           icon: FLucideIcons.folder,
-          title: l10n.executionCreateProjectTitle,
-          subtitle: l10n.executionProjectTitleHint,
+          title: l10n.executionCreatePlanTitle,
+          subtitle: l10n.executionPlanTitleHint,
           onPress: () {
             Navigator.of(sheetContext).pop();
-            showExecutionProjectSheet(context: context);
+            showExecutionPlanSheet(context: context);
           },
         ),
       ],

@@ -121,11 +121,9 @@ final class AppDatabaseTransactionScope {
     KnowledgeExperiments,
     KnowledgeRoutines,
     KnowledgeRelations,
-    // ExecutionOS Action Kernel: projects, personal todos, commitments,
-    // progress.
-    ExecutionProjects,
+    // ExecutionOS Action Kernel: plans, personal actions, and updates.
+    ExecutionPlans,
     ExecutionActions,
-    ExecutionCommitments,
     ExecutionProgressEntries,
   ],
 )
@@ -154,7 +152,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 79;
+  int get schemaVersion => 80;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -514,39 +512,27 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(corporateActions);
         await _createCorporateActionIndexes(this);
       }
-      // v27 -> v28: ExecutionOS Action Kernel. These three tables form the
-      // reusable personal todo / commitment / progress layer; Project and
-      // Milestone can later attach without changing the first-order action
-      // model.
+      // v27 -> v28: ExecutionOS action kernel with plans, actions, and
+      // progress as first-order rows.
       if (from < 28) {
-        await m.createTable(executionProjects);
+        await m.createTable(executionPlans);
         await m.createTable(executionActions);
-        await m.createTable(executionCommitments);
         await m.createTable(executionProgressEntries);
         await _createExecutionIndexes(this);
       }
-      // v28 -> v29: lightweight projects for ExecutionOS. Actions,
-      // commitments, and progress entries keep their first-order shape and
-      // gain an optional `project_id` roll-up rather than forking into a
-      // separate project-task model.
+      // v28 -> v29: add the plan roll-up to actions and progress entries.
       if (from >= 28 && from < 29) {
-        await m.createTable(executionProjects);
+        await m.createTable(executionPlans);
         await _addColumnIfMissing(
           this,
           table: 'execution_actions',
-          column: 'project_id',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'execution_commitments',
-          column: 'project_id',
+          column: 'plan_id',
           definition: 'TEXT',
         );
         await _addColumnIfMissing(
           this,
           table: 'execution_progress_entries',
-          column: 'project_id',
+          column: 'plan_id',
           definition: 'TEXT',
         );
         await _createExecutionIndexes(this);
@@ -1148,6 +1134,22 @@ class AppDatabase extends _$AppDatabase {
           column: 'source_id',
           definition: 'TEXT',
         );
+      }
+      // v79 -> v80: reset ExecutionOS to its canonical three-table model.
+      // Plan is the only grouping primitive and actions/progress expose one
+      // `plan_id` relation.
+      if (from < 80) {
+        await customStatement(
+          'DROP TABLE IF EXISTS execution_progress_entries',
+        );
+        await customStatement('DROP TABLE IF EXISTS execution_actions');
+        await customStatement('DROP TABLE IF EXISTS execution_commitments');
+        await customStatement('DROP TABLE IF EXISTS execution_projects');
+        await customStatement('DROP TABLE IF EXISTS execution_plans');
+        await m.createTable(executionPlans);
+        await m.createTable(executionActions);
+        await m.createTable(executionProgressEntries);
+        await _createExecutionIndexes(this);
       }
     },
     beforeOpen: (details) async {

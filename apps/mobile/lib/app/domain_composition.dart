@@ -348,8 +348,7 @@ String? appEntityRouteResolver(EntityRouteRef ref) {
     ),
     'knowledge_routines' => KnowledgeRoutes.object('routine', ref.entityId),
     'execution_actions' => ExecutionRoutes.action(ref.entityId),
-    'execution_commitments' => ExecutionRoutes.commitment(ref.entityId),
-    'execution_projects' => ExecutionRoutes.project(ref.entityId),
+    'execution_plans' => ExecutionRoutes.plan(ref.entityId),
     'execution_progress' => ExecutionRoutes.review,
     _ => null,
   };

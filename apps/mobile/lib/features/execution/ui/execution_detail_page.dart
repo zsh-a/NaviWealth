@@ -10,10 +10,9 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_action_card_controller.dart';
 import 'execution_action_sheet.dart';
-import 'execution_commitment_sheet.dart';
 import 'execution_lifecycle_card_controller.dart';
+import 'execution_plan_sheet.dart';
 import 'execution_progress_sheet.dart';
-import 'execution_project_sheet.dart';
 import 'execution_source_route.dart';
 import 'execution_widgets.dart';
 
@@ -56,21 +55,19 @@ class ExecutionActionDetailPage extends ConsumerWidget {
   }
 }
 
-class ExecutionCommitmentDetailPage extends ConsumerWidget {
-  const ExecutionCommitmentDetailPage({super.key, required this.commitmentId});
+class ExecutionPlanDetailPage extends ConsumerWidget {
+  const ExecutionPlanDetailPage({super.key, required this.planId});
 
-  final String commitmentId;
+  final String planId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final commitmentAsync = ref.watch(
-      executionCommitmentDetailProvider(commitmentId),
-    );
+    final planAsync = ref.watch(executionPlanDetailProvider(planId));
     return ObjectDetailScaffold(
-      title: l10n.executionCommitmentField,
+      title: l10n.executionPlanField,
       actions: const [],
-      child: commitmentAsync.when(
+      child: planAsync.when(
         loading: () => AppListPageSkeleton(
           padding: _detailPadding(context),
           itemCount: 3,
@@ -80,114 +77,55 @@ class ExecutionCommitmentDetailPage extends ConsumerWidget {
           context,
           error,
           stackTrace,
-          onRetry: () =>
-              ref.invalidate(executionCommitmentDetailProvider(commitmentId)),
+          onRetry: () => ref.invalidate(executionPlanDetailProvider(planId)),
         ),
-        data: (commitment) {
-          if (commitment == null) {
+        data: (plan) {
+          if (plan == null) {
             return _DetailMissingState(
               title: l10n.executionDetailMissingTitle,
               message: l10n.executionDetailMissingBody,
             );
           }
-          return _CommitmentDetailBody(commitment: commitment);
+          return _PlanDetailBody(plan: plan);
         },
       ),
     );
   }
 }
 
-class ExecutionProjectDetailPage extends ConsumerWidget {
-  const ExecutionProjectDetailPage({super.key, required this.projectId});
+class _PlanDetailBody extends ConsumerWidget {
+  const _PlanDetailBody({required this.plan});
 
-  final String projectId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final projectAsync = ref.watch(executionProjectDetailProvider(projectId));
-    return ObjectDetailScaffold(
-      title: l10n.executionProjectField,
-      actions: const [],
-      child: projectAsync.when(
-        loading: () => AppListPageSkeleton(
-          padding: _detailPadding(context),
-          itemCount: 3,
-          showControls: false,
-        ),
-        error: (error, stackTrace) => kDefaultError(
-          context,
-          error,
-          stackTrace,
-          onRetry: () =>
-              ref.invalidate(executionProjectDetailProvider(projectId)),
-        ),
-        data: (project) {
-          if (project == null) {
-            return _DetailMissingState(
-              title: l10n.executionDetailMissingTitle,
-              message: l10n.executionDetailMissingBody,
-            );
-          }
-          return _ProjectDetailBody(project: project);
-        },
-      ),
-    );
-  }
-}
-
-class _ProjectDetailBody extends ConsumerWidget {
-  const _ProjectDetailBody({required this.project});
-
-  final ExecutionProject project;
+  final ExecutionPlan plan;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final relations = ref.watch(executionActionRelationsProvider).value;
-    final actionsAsync = ref.watch(
-      executionActionsForProjectProvider(project.id),
-    );
-    final commitmentsAsync = ref.watch(
-      executionCommitmentsForProjectProvider(project.id),
-    );
-    final progressAsync = ref.watch(
-      executionProgressForProjectProvider(project.id),
-    );
+    final actionsAsync = ref.watch(executionActionsForPlanProvider(plan.id));
+    final progressAsync = ref.watch(executionProgressForPlanProvider(plan.id));
     final actions = actionsAsync.asData?.value ?? const <ExecutionAction>[];
-    final commitments =
-        commitmentsAsync.asData?.value ?? const <ExecutionCommitment>[];
     return ListView(
       padding: _detailPadding(context),
       children: [
-        ExecutionProjectCardController(
-          project: project,
+        ExecutionPlanCardController(
+          plan: plan,
           openActionCount: actions.where((action) => action.isOpen).length,
           blockedActionCount: actions
               .where((action) => action.status == ExecutionActionStatus.blocked)
               .length,
-          commitmentCount: commitments.length,
           onCreateAction: () => showExecutionActionSheet(
             context: context,
-            initialProjectId: project.id,
+            initialPlanId: plan.id,
           ),
-          onEdit: () =>
-              showExecutionProjectSheet(context: context, project: project),
-          onRecordProgress: () => showExecutionProgressSheet(
-            context: context,
-            projectId: project.id,
-          ),
+          onEdit: () => showExecutionPlanSheet(context: context, plan: plan),
+          onRecordProgress: () =>
+              showExecutionProgressSheet(context: context, planId: plan.id),
         ),
         const SizedBox(height: AppSpacing.s20),
         _RelatedActionsSection(
           actionsAsync: actionsAsync,
           relations: relations,
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _RelatedCommitmentsSection(
-          project: project,
-          commitmentsAsync: commitmentsAsync,
-          actions: actions,
         ),
         const SizedBox(height: AppSpacing.s20),
         _ProgressTimeline(
@@ -218,8 +156,7 @@ class _ActionDetailBody extends ConsumerWidget {
       children: [
         ExecutionActionCardController(
           action: action,
-          projectLabel: relations?.projectLabel(action.projectId),
-          commitmentLabel: relations?.commitmentLabel(action.commitmentId),
+          planLabel: relations?.planLabel(action.planId),
           onSourceOpen: executionSourceOpen(context, ref, action.source),
           onEdit: () =>
               showExecutionActionSheet(context: context, action: action),
@@ -236,138 +173,6 @@ class _ActionDetailBody extends ConsumerWidget {
           relationLabels: relations,
         ),
       ],
-    );
-  }
-}
-
-class _CommitmentDetailBody extends ConsumerWidget {
-  const _CommitmentDetailBody({required this.commitment});
-
-  final ExecutionCommitment commitment;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final relations = ref.watch(executionActionRelationsProvider).value;
-    final actionsAsync = ref.watch(
-      executionActionsForCommitmentProvider(commitment.id),
-    );
-    final progressAsync = ref.watch(
-      executionProgressForCommitmentProvider(commitment.id),
-    );
-    final actions = actionsAsync.asData?.value ?? const <ExecutionAction>[];
-    return ListView(
-      padding: _detailPadding(context),
-      children: [
-        ExecutionCommitmentCardController(
-          commitment: commitment,
-          projectLabel: relations?.projectLabel(commitment.projectId),
-          openActionCount: actions.where((action) => action.isOpen).length,
-          blockedActionCount: actions
-              .where((action) => action.status == ExecutionActionStatus.blocked)
-              .length,
-          onCreateAction: () => showExecutionActionSheet(
-            context: context,
-            initialProjectId: commitment.projectId,
-            initialCommitmentId: commitment.id,
-          ),
-          onEdit: () => showExecutionCommitmentSheet(
-            context: context,
-            commitment: commitment,
-          ),
-          onRecordProgress: () => showExecutionProgressSheet(
-            context: context,
-            projectId: commitment.projectId,
-            commitmentId: commitment.id,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _RelatedActionsSection(
-          actionsAsync: actionsAsync,
-          relations: relations,
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _ProgressTimeline(
-          entries: progressAsync,
-          title: l10n.executionTimelineSection,
-          emptyMessage: l10n.executionReviewEmptyBody,
-          relationLabels: relations,
-        ),
-      ],
-    );
-  }
-}
-
-class _RelatedCommitmentsSection extends StatelessWidget {
-  const _RelatedCommitmentsSection({
-    required this.project,
-    required this.commitmentsAsync,
-    required this.actions,
-  });
-
-  final ExecutionProject project;
-  final AsyncValue<List<ExecutionCommitment>> commitmentsAsync;
-  final List<ExecutionAction> actions;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return commitmentsAsync.when(
-      loading: () => const _DetailSectionSkeleton(),
-      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
-      data: (commitments) {
-        // Ongoing plans are secondary context. Keep an empty project detail
-        // focused on its Actions instead of teaching users a third creation
-        // concept before they have work to place there.
-        if (commitments.isEmpty) return const SizedBox.shrink();
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ExecutionSectionHeader(
-              title: l10n.executionProjectCommitmentsSection,
-              count: commitments.length,
-              icon: FLucideIcons.target,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            for (final commitment in commitments) ...[
-              ExecutionCommitmentCardController(
-                commitment: commitment,
-                projectLabel: project.title,
-                openActionCount: actions
-                    .where(
-                      (action) =>
-                          action.isOpen && action.commitmentId == commitment.id,
-                    )
-                    .length,
-                blockedActionCount: actions
-                    .where(
-                      (action) =>
-                          action.status == ExecutionActionStatus.blocked &&
-                          action.commitmentId == commitment.id,
-                    )
-                    .length,
-                onCreateAction: () => showExecutionActionSheet(
-                  context: context,
-                  initialProjectId: commitment.projectId,
-                  initialCommitmentId: commitment.id,
-                ),
-                onEdit: () => showExecutionCommitmentSheet(
-                  context: context,
-                  commitment: commitment,
-                ),
-                onRecordProgress: () => showExecutionProgressSheet(
-                  context: context,
-                  projectId: commitment.projectId,
-                  commitmentId: commitment.id,
-                ),
-                onOpen: () =>
-                    context.push(ExecutionRoutes.commitment(commitment.id)),
-              ),
-              const SizedBox(height: AppSpacing.s8),
-            ],
-          ],
-        );
-      },
     );
   }
 }
@@ -401,16 +206,13 @@ class _RelatedActionsSection extends ConsumerWidget {
               AppEmptyState(
                 icon: FLucideIcons.listTodo,
                 title: l10n.executionTodayFilteredEmptyTitle,
-                message: l10n.executionCommitmentsEmptyBody,
+                message: l10n.executionPlansEmptyBody,
               )
             else
               for (final action in actions) ...[
                 ExecutionActionCardController(
                   action: action,
-                  projectLabel: relations?.projectLabel(action.projectId),
-                  commitmentLabel: relations?.commitmentLabel(
-                    action.commitmentId,
-                  ),
+                  planLabel: relations?.planLabel(action.planId),
                   onOpen: () => context.push(ExecutionRoutes.action(action.id)),
                   onSourceOpen: executionSourceOpen(
                     context,
@@ -476,10 +278,7 @@ class _ProgressTimeline extends StatelessWidget {
               ExecutionProgressCard(
                 entry: entry,
                 actionLabel: relationLabels?.actionLabel(entry.actionId),
-                projectLabel: relationLabels?.projectLabel(entry.projectId),
-                commitmentLabel: relationLabels?.commitmentLabel(
-                  entry.commitmentId,
-                ),
+                planLabel: relationLabels?.planLabel(entry.planId),
                 onEdit: () => showExecutionProgressSheet(
                   context: context,
                   progress: entry,
@@ -488,16 +287,9 @@ class _ProgressTimeline extends StatelessWidget {
                     ? null
                     : () =>
                           context.push(ExecutionRoutes.action(entry.actionId!)),
-                onProjectOpen: entry.projectId == null
+                onPlanOpen: entry.planId == null
                     ? null
-                    : () => context.push(
-                        ExecutionRoutes.project(entry.projectId!),
-                      ),
-                onCommitmentOpen: entry.commitmentId == null
-                    ? null
-                    : () => context.push(
-                        ExecutionRoutes.commitment(entry.commitmentId!),
-                      ),
+                    : () => context.push(ExecutionRoutes.plan(entry.planId!)),
               ),
               const SizedBox(height: AppSpacing.s8),
             ],

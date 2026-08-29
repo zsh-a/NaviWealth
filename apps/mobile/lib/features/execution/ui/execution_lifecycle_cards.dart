@@ -1,9 +1,9 @@
 part of 'execution_widgets.dart';
 
-class ExecutionCommitmentCard extends StatelessWidget {
-  const ExecutionCommitmentCard({
+class ExecutionPlanCard extends StatelessWidget {
+  const ExecutionPlanCard({
     super.key,
-    required this.commitment,
+    required this.plan,
     required this.onEdit,
     required this.onCreateAction,
     required this.onPause,
@@ -13,14 +13,13 @@ class ExecutionCommitmentCard extends StatelessWidget {
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
-    this.projectLabel,
     this.onOpen,
     this.busy = false,
     this.showActions = true,
     this.showTypeLabel = false,
   });
 
-  final ExecutionCommitment commitment;
+  final ExecutionPlan plan;
   final VoidCallback onEdit;
   final VoidCallback onCreateAction;
   final VoidCallback onPause;
@@ -30,190 +29,6 @@ class ExecutionCommitmentCard extends StatelessWidget {
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
-  final String? projectLabel;
-  final VoidCallback? onOpen;
-  final bool busy;
-  final bool showActions;
-  final bool showTypeLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final l10n = AppLocalizations.of(context);
-    return SoftCard.flat(
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: _CardOpenRegion(
-              onOpen: onOpen,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppIconTile(
-                    icon: FLucideIcons.target,
-                    color: colors.primary,
-                    size: 34,
-                    iconSize: AppIconSizes.sm,
-                    backgroundOpacity: AppOpacity.whisper,
-                    foregroundOpacity: 1,
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: _CommitmentBody(
-                      commitment: commitment,
-                      openActionCount: openActionCount,
-                      blockedActionCount: blockedActionCount,
-                      projectLabel: projectLabel,
-                      showTypeLabel: showTypeLabel,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (showActions) const SizedBox(width: AppSpacing.s8),
-          if (showActions && busy)
-            const SizedBox(
-              width: AppIconSizes.xl,
-              height: AppIconSizes.xl,
-              child: Center(
-                child: FCircularProgress(size: FCircularProgressSizeVariant.xs),
-              ),
-            )
-          else if (showActions)
-            _LifecycleQuickButtons(
-              menuTitle: commitment.title,
-              canPause: commitment.status == ExecutionCommitmentStatus.active,
-              canResume:
-                  commitment.status == ExecutionCommitmentStatus.paused ||
-                  commitment.status == ExecutionCommitmentStatus.completed ||
-                  commitment.status == ExecutionCommitmentStatus.archived,
-              canComplete:
-                  commitment.status == ExecutionCommitmentStatus.active ||
-                  commitment.status == ExecutionCommitmentStatus.paused,
-              canArchive:
-                  commitment.status != ExecutionCommitmentStatus.archived,
-              canCreateAction: commitment.status.isOpen,
-              editTooltip: l10n.executionEditCommitmentTitle,
-              onPause: onPause,
-              onResume: onResume,
-              onComplete: onComplete,
-              onArchive: onArchive,
-              onRecordProgress: onRecordProgress,
-              onCreateAction: onCreateAction,
-              onEdit: onEdit,
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CommitmentBody extends StatelessWidget {
-  const _CommitmentBody({
-    required this.commitment,
-    required this.openActionCount,
-    required this.blockedActionCount,
-    required this.projectLabel,
-    required this.showTypeLabel,
-  });
-
-  final ExecutionCommitment commitment;
-  final int? openActionCount;
-  final int? blockedActionCount;
-  final String? projectLabel;
-  final bool showTypeLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (showTypeLabel) ...[
-          Text(l10n.executionCommitmentField, style: context.captionLabelStyle),
-          const SizedBox(height: AppSpacing.s2),
-        ],
-        Text(
-          commitment.title,
-          style: context.rowTitleStyle,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        if (commitment.description.trim().isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s4),
-          Text(
-            commitment.description.trim(),
-            style: context.bodyCaptionStyle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-        const SizedBox(height: AppSpacing.s10),
-        Wrap(
-          spacing: AppSpacing.s6,
-          runSpacing: AppSpacing.s6,
-          children: [
-            AppBadge(
-              label: executionCommitmentStatusLabel(l10n, commitment.status),
-              tone: commitment.status == ExecutionCommitmentStatus.paused
-                  ? AppBadgeTone.warning
-                  : AppBadgeTone.info,
-              size: AppBadgeSize.compact,
-            ),
-            if (commitment.targetDate != null)
-              _ExecutionTargetBadge(date: commitment.targetDate!),
-            if (projectLabel != null)
-              AppBadge(
-                label: '${l10n.executionProjectField}: $projectLabel',
-                size: AppBadgeSize.compact,
-                icon: FLucideIcons.folder,
-              ),
-            ..._rollupBadges(
-              l10n,
-              openActionCount: openActionCount,
-              blockedActionCount: blockedActionCount,
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class ExecutionProjectCard extends StatelessWidget {
-  const ExecutionProjectCard({
-    super.key,
-    required this.project,
-    required this.onEdit,
-    required this.onCreateAction,
-    required this.onPause,
-    required this.onResume,
-    required this.onComplete,
-    required this.onArchive,
-    required this.onRecordProgress,
-    this.openActionCount,
-    this.blockedActionCount,
-    this.commitmentCount,
-    this.onOpen,
-    this.busy = false,
-    this.showActions = true,
-    this.showTypeLabel = false,
-  });
-
-  final ExecutionProject project;
-  final VoidCallback onEdit;
-  final VoidCallback onCreateAction;
-  final VoidCallback onPause;
-  final VoidCallback onResume;
-  final VoidCallback onComplete;
-  final VoidCallback onArchive;
-  final VoidCallback onRecordProgress;
-  final int? openActionCount;
-  final int? blockedActionCount;
-  final int? commitmentCount;
   final VoidCallback? onOpen;
   final bool busy;
   final bool showActions;
@@ -244,11 +59,10 @@ class ExecutionProjectCard extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.s12),
                   Expanded(
-                    child: _ProjectBody(
-                      project: project,
+                    child: _PlanBody(
+                      plan: plan,
                       openActionCount: openActionCount,
                       blockedActionCount: blockedActionCount,
-                      commitmentCount: commitmentCount,
                       showTypeLabel: showTypeLabel,
                     ),
                   ),
@@ -267,18 +81,18 @@ class ExecutionProjectCard extends StatelessWidget {
             )
           else if (showActions)
             _LifecycleQuickButtons(
-              menuTitle: project.title,
-              canPause: project.status == ExecutionProjectStatus.active,
+              menuTitle: plan.title,
+              canPause: plan.status == ExecutionPlanStatus.active,
               canResume:
-                  project.status == ExecutionProjectStatus.paused ||
-                  project.status == ExecutionProjectStatus.completed ||
-                  project.status == ExecutionProjectStatus.archived,
+                  plan.status == ExecutionPlanStatus.paused ||
+                  plan.status == ExecutionPlanStatus.completed ||
+                  plan.status == ExecutionPlanStatus.archived,
               canComplete:
-                  project.status == ExecutionProjectStatus.active ||
-                  project.status == ExecutionProjectStatus.paused,
-              canArchive: project.status != ExecutionProjectStatus.archived,
-              canCreateAction: project.status.isOpen,
-              editTooltip: l10n.executionEditProjectTitle,
+                  plan.status == ExecutionPlanStatus.active ||
+                  plan.status == ExecutionPlanStatus.paused,
+              canArchive: plan.status != ExecutionPlanStatus.archived,
+              canCreateAction: plan.status.isOpen,
+              editTooltip: l10n.executionEditPlanTitle,
               onPause: onPause,
               onResume: onResume,
               onComplete: onComplete,
@@ -293,19 +107,17 @@ class ExecutionProjectCard extends StatelessWidget {
   }
 }
 
-class _ProjectBody extends StatelessWidget {
-  const _ProjectBody({
-    required this.project,
+class _PlanBody extends StatelessWidget {
+  const _PlanBody({
+    required this.plan,
     required this.openActionCount,
     required this.blockedActionCount,
-    required this.commitmentCount,
     required this.showTypeLabel,
   });
 
-  final ExecutionProject project;
+  final ExecutionPlan plan;
   final int? openActionCount;
   final int? blockedActionCount;
-  final int? commitmentCount;
   final bool showTypeLabel;
 
   @override
@@ -315,19 +127,19 @@ class _ProjectBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (showTypeLabel) ...[
-          Text(l10n.executionProjectField, style: context.captionLabelStyle),
+          Text(l10n.executionPlanField, style: context.captionLabelStyle),
           const SizedBox(height: AppSpacing.s2),
         ],
         Text(
-          project.title,
+          plan.title,
           style: context.rowTitleStyle,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        if (project.description.trim().isNotEmpty) ...[
+        if (plan.description.trim().isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s4),
           Text(
-            project.description.trim(),
+            plan.description.trim(),
             style: context.bodyCaptionStyle,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -339,25 +151,19 @@ class _ProjectBody extends StatelessWidget {
           runSpacing: AppSpacing.s6,
           children: [
             AppBadge(
-              label: executionProjectStatusLabel(l10n, project.status),
-              tone: project.status == ExecutionProjectStatus.paused
+              label: executionPlanStatusLabel(l10n, plan.status),
+              tone: plan.status == ExecutionPlanStatus.paused
                   ? AppBadgeTone.warning
                   : AppBadgeTone.info,
               size: AppBadgeSize.compact,
             ),
-            if (project.targetDate != null)
-              _ExecutionTargetBadge(date: project.targetDate!),
+            if (plan.targetDate != null)
+              _ExecutionTargetBadge(date: plan.targetDate!),
             ..._rollupBadges(
               l10n,
               openActionCount: openActionCount,
               blockedActionCount: blockedActionCount,
             ),
-            if (commitmentCount != null)
-              AppBadge(
-                label: '${l10n.executionCommitmentsSection}: $commitmentCount',
-                size: AppBadgeSize.compact,
-                icon: FLucideIcons.target,
-              ),
           ],
         ),
       ],

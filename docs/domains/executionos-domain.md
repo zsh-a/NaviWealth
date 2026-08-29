@@ -1,154 +1,122 @@
 # ExecutionOS Domain SSOT
 
-ExecutionOS is the LifeOS execution layer. It is user opt-in, local-first, and
-focused on plans, next actions, and progress review.
+ExecutionOS is the local-first LifeOS execution layer. It turns intent into a
+small set of plans, concrete next actions, and reviewable progress.
 
 ## Document Contract
 
-Owns ExecutionOS objects, Today/Plans/Review behavior, source references,
-tools, and Agents. It does not own sibling-domain evidence semantics or shared
-proposal infrastructure. `execution_pack.dart`, Execution repositories, and
-focused Execution tests are authoritative for the current implementation.
+This document owns ExecutionOS objects, Today/Plans/Review behavior, neutral
+source references, tools, and agents. Shared proposal infrastructure and the
+meaning of sibling-domain evidence remain outside this domain.
 
-## Scope
+Production code is authoritative:
+
+- `apps/mobile/lib/app/domain_packs/execution_pack.dart`
+- `apps/mobile/lib/features/execution/`
+- focused tests under `apps/mobile/test/features/execution/`
+
+## Product Boundary
 
 Included:
 
-- Personal todos as lightweight Actions.
-- Plans for bounded delivery work or a longer-running promise. The current
-  storage keeps these as Project and Commitment records for compatibility.
-- Progress entries for check-ins, blockers, scope changes, and completion.
-- Today and Plans shell tabs. Review is a contextual destination reached from
-  the domain header, the Life review entry, and relevant signals or artifacts.
-- Cross-domain source references by neutral row-family metadata.
+- Plans for outcomes that need more than one action.
+- Actions as concrete next steps.
+- Progress entries for check-ins, blockers, scope changes, completion, and
+  dropped work.
+- Today, Plans, and contextual Review workflows.
+- Neutral references to source rows in FinanceOS, HealthOS, or KnowledgeOS.
 
 Excluded:
 
-- Team collaboration, comments, assignment, permissions, or publishing.
-- Jira / Linear style project management.
-- Kanban-first workflows, gantt charts, dependency graphs, or timesheets.
-- Automatic AI writes to user commitments or actions without confirmation.
+- Team assignment, comments, permissions, or publishing.
+- Kanban-first project management, gantt charts, dependencies, or timesheets.
+- Milestones, recurring-task engines, or another hierarchy above Plan.
+- AI writes without explicit proposal confirmation.
 
-Core rule: Action is the reusable next-step primitive. A Plan is a lightweight
-roll-up, not a separate task system. The Project/Commitment distinction is
-secondary context; Milestones can be added later only when a current workflow
-needs them.
+The core rule is deliberately small: Plan is the only grouping primitive and
+Action is the only next-step primitive.
 
 ## Shell Registration
 
-ExecutionOS is registered through `kExecutionPack` in
-`apps/mobile/lib/app/domain_packs.dart`.
+`kExecutionPack` registers the domain through
+`apps/mobile/lib/app/domain_packs.dart` and contributes:
 
-Contributions:
+- scope `DomainScope.execution`;
+- Today and Plans shell tabs;
+- contextual Review and detail routes;
+- device tools and prompt blocks;
+- command-palette entries;
+- proposal kinds and their applier;
+- ExecutionOS agents.
 
-- Scope: `DomainScope.execution`.
-- Shell: `features/execution/composition/execution_domain_shell.dart`.
-- Routes: `features/execution/composition/execution_routes.dart`.
-- Primary tabs: Today, Plans.
-- Tools: `features/execution/execution_ai_tools.dart`.
-- Command palette: `features/execution/composition/execution_command_palette.dart`.
-- Proposal kinds: `features/execution/composition/execution_proposal_kinds.dart`.
-- Proposal applier: `features/execution/composition/execution_proposal_applier.dart`.
-
-ExecutionOS is active only when the user enables it in Settings.
+ExecutionOS is active only when enabled in Settings.
 
 ## Domain Objects
 
 | Object | Purpose | Storage |
 |---|---|---|
-| Plan | Bounded or ongoing container for actions | `execution_projects` / `execution_commitments` |
-| Action | Personal todo / next concrete step | `execution_actions` |
-| Update | Check-in, blocker, scope change, completion note | `execution_progress_entries` |
+| Plan | Multi-step outcome or ongoing area of focus | `execution_plans` |
+| Action | Concrete personal next step | `execution_actions` |
+| Progress | Check-in, blocker, scope change, completion, or drop record | `execution_progress_entries` |
 
-Domain models:
+Models live in `features/execution/domain/execution_models.dart`. Repository
+operations are composed by `features/execution/data/execution_repository.dart`.
 
-- `features/execution/domain/execution_models.dart`
-
-Repository:
-
-- `features/execution/data/execution_repository.dart`
+Every Action and Progress row has at most one optional `plan_id`. Closing or
+deleting a Plan moves its open Actions to Inbox so follow-through is not lost.
 
 ## Persistence And Sync
 
-Tables:
+Tables are defined in `core/persistence/execution_tables.dart`. All three
+families sync with the `exec:` prefix:
 
-- `core/persistence/execution_tables.dart`
-
-Synced tables use `SyncableTable` and the `exec:` row-family prefix:
-
-- `exec:execution_projects`
+- `exec:execution_plans`
 - `exec:execution_actions`
-- `exec:execution_commitments`
 - `exec:execution_progress_entries`
 
-Local table names stay unprefixed. Prefixing and stripping happen at the sync
-boundary.
+Local table names stay unprefixed; prefixing happens only at the Sync v3
+boundary. Derived review findings, daily focus selection, events, and memory
+indexes are local-only.
+
+Schema v80 intentionally resets ExecutionOS data to this canonical model. It
+does not preserve the removed hierarchy.
 
 ## UI
 
-| Tab | Purpose |
+| Surface | Responsibility |
 |---|---|
-| Today | Persistent daily Top 3 plus explicitly scheduled actions, due work, and blocked follow-through |
-| Plans | Later actions, active plans, existing long-term commitments, and a closed-work archive |
-| Review (contextual) | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
+| Today | Daily Top 3, scheduled/due work, and blocked follow-through |
+| Plans | Inbox actions, active Plans, search, and a subordinate closed archive |
+| Review | Current-week attention, throughput, findings, and confirmed batch next actions |
 
 Key files:
 
 - `features/execution/ui/execution_today_page.dart`
-- `features/execution/ui/execution_commitments_page.dart`
+- `features/execution/ui/execution_plans_page.dart`
 - `features/execution/ui/execution_review_page.dart`
 - `features/execution/ui/execution_search_sheet.dart`
 
-The daily Top 3 is device-local, persists for the current local calendar day,
-and resets the next day. Users pin or remove Actions from the Action menu. An
-empty Top 3 can show the latest Review artifact's `recommended_focus_ids`, but
-the recommendation is never adopted until the user explicitly confirms it.
+The daily Top 3 is device-local and resets with the local calendar day. Review
+may recommend focus IDs, but Today adopts them only after confirmation.
+Unscheduled backlog stays in Plans; priority alone never promotes an Action to
+Today.
 
-Today exposes only the daily focus and blocked-work lenses. Unscheduled backlog
-and the complete open inventory belong to Plans, not the daily workspace.
-An Action enters Today because it is scheduled for today or earlier, is already
-in progress, or is blocked; priority alone does not promote an unscheduled
-Action into Today. Focus is a separate local Top 3 selection, not another
-Action status.
-Plans uses one Add entry point that offers Action or multi-step Plan creation;
-search is also owned there instead of repeated on every tab.
+The shared Add entry offers only Action or Plan. Action capture starts with a
+title and quick scheduling, while priority, dates, one `Belongs to` Plan
+relation, and notes are progressively disclosed. Plan capture uses a target
+date as its primary time expression.
 
-The shared Add entry asks only whether the user is creating an Action or a
-multi-step Plan. New Action capture starts with title plus Inbox / Today /
-Tomorrow and keeps priority, dates, one unified `Belongs to` relation, and
-notes behind an optional detail disclosure. Plans use a target date as the
-primary time expression; the stored horizon remains compatibility metadata and
-is not a second user-facing planning choice. Choosing a Commitment inherits its
-Project atomically instead of asking the user to configure both fields.
-Manual status changes show a short Undo action. Blocking requires a concrete
-reason, which is stored as blocker progress instead of a generic placeholder.
-Progress recorded from an Action, Project, or Commitment is context-bound in
-the UI. Status changes create their own progress entry; a manual update does
-not require a second choice about whether it should also mutate Action status.
+Blocking requires a concrete reason and records blocker progress. Manual
+status changes expose Undo. Progress opened from an Action or Plan keeps that
+context fixed instead of asking the user to choose it again.
 
-Actions created from a Knowledge decision preserve the source family and row
-id. App-level composition de-duplicates that source link, so a decision has one
-current follow-up action while a dropped action can be replaced explicitly.
-
-Plans presents Projects and Commitments in one plan inventory, with object type
-as secondary context. Closed work is a subordinate archive entry rather than a
-peer mode competing with active work.
-
-Review is a current-week digest. Attention findings and the one batch
-next-action CTA come first. Weekly activity is collapsed by default, while
-Agent run status and freshness live behind Review details. Progress is normally recorded from the Action,
-Project, or Commitment that owns it; Review does not expose a global create
-Progress action or historical time-window switcher.
-
-Today, Plans, and Review share an all-status search across Action title
-and note, Project title and description, and Commitment title and description.
-Default open-list reads are complete rather than silently capped; explicit
-limits are reserved for callers that intentionally paginate.
+Today, Plans, and Review share search across Action title/note and Plan
+title/description. Default open-list reads are complete; explicit limits are
+reserved for intentional pagination or agent snapshot bounds.
 
 ## Cross-Domain References
 
-ExecutionOS may reference source work from FinanceOS, HealthOS, or KnowledgeOS
-through neutral metadata only:
+ExecutionOS stores neutral source identity only:
 
 ```text
 sourceDomain
@@ -157,22 +125,15 @@ sourceRowId
 sourceLabelSnapshot
 ```
 
-It must not import sibling domain business entities.
+The domain must not import sibling business entities. App composition
+de-duplicates source-linked Actions so a source decision has one current
+follow-up; a dropped Action may be explicitly replaced.
 
-Completed-action outcome badges are observational before/after comparisons,
-not causal attribution. A result is emitted only when the Action has a concrete
-source row id, that source family completed a successful current evaluation,
-and the evaluation occurred after completion. Loading, failed, disabled, or
-otherwise unevaluated source families produce no outcome instead of being
-misreported as cleared. User copy says whether the signal is currently
-detected; it never says the Action caused the change.
+Completed-action outcome badges are observational comparisons, not causal
+claims. They appear only after a successful, current evaluation of the exact
+source identity.
 
-Aggregate read-model sources use a stable, bounded identity rather than a
-guessed business row id. The current Finance budget-pressure loop uses
-`fin:budgets` plus `month:YYYY-MM`; a settled monthly read can therefore match
-the same posture signal or establish that it is no longer detected.
-
-## AI Tools
+## AI Tools And Proposals
 
 Tool barrel: `features/execution/execution_ai_tools.dart`.
 
@@ -189,60 +150,34 @@ Proposal tools:
 - `propose_plan`
 - `propose_progress`
 
-`propose_project` and `propose_commitment` remain internal compatibility tools.
-`propose_plan` is the Assistant vocabulary: `cadence=bounded` applies through
-the existing Project proposal kind, while `cadence=ongoing` applies through the
-existing Commitment kind. No storage or Sync v3 migration is required.
-
 Rules:
 
-- `propose_*` tools return `ProposalEnvelope`s; they do not directly write
-  ExecutionOS tables.
-- Confirmed `execution_*` proposals route through
-  `ExecutionProposalApplier`.
-- AI should keep suggested actions concrete, next-step sized, and tied to
-  source references when they came from another domain.
-- `list_open_actions` and `summarize_execution_progress` should include
-  relation titles where available so AI can attach proposals to the right
-  Project or Commitment without guessing from ids.
-- Existing Action status changes must use `propose_action_status_update`
-  after identifying the target Action. Do not create a duplicate Action just
-  to represent completion, blocking, resuming, or dropping an existing one.
-- Cross-domain source identity is atomic: `source_domain`,
-  `source_row_family`, and `source_row_id` must be supplied together.
-  Applying a proposal rejects a near-identical open Action tied to the same
-  concrete source.
-- Proposal application validates every referenced Action, Project, and
-  Commitment. A Commitment's Project is inherited when omitted, while
-  conflicting Project / Commitment relations are rejected.
+- Proposal tools return envelopes and never write domain tables directly.
+- Confirmed `execution_*` proposals pass through `ExecutionProposalApplier`.
+- Referenced Action and Plan IDs must exist for the current owner.
+- Cross-domain identity is atomic: domain, row family, and row ID are supplied
+  together.
+- Status changes update the existing Action; they do not create duplicate
+  Actions.
+- Read tools include Plan titles where available so the runtime does not infer
+  relations from opaque IDs.
 
 ## Agents, Review, And Memory
 
-The weekly Review agent reads complete bounded snapshots of open Actions,
-active Projects/Commitments, the last seven days of progress and closed
-Actions, and observational source-outcome summaries. It emits stable local
-findings for blocked/due/stalled Actions, Projects or Commitments without a
-next Action, overdue targets, repeated blocker entries, and Today overload.
-Findings resolve when the signal disappears; dismiss/snooze applies only while
-the evidence fingerprint remains unchanged.
+The weekly Review agent reads bounded snapshots of open Actions, active Plans,
+recent Progress, and closed Actions. It emits stable local findings for blocked
+or due work, stalled Actions, Plans without a next Action, overdue targets,
+repeated blockers, and Today overload.
 
 Review artifacts preserve human-readable titles, recommend a Top 3 focus set,
-show weekly completed/dropped throughput, and expose a proposal action for
-turning diagnostics into concrete next Actions. Progress entries are also
-indexed into typed local Event storage and `source_fact` Memory; blockers and
-completion/scope changes receive higher event importance. Derived findings and
-memory indexes do not sync.
+show weekly throughput, and can propose high-priority next Actions for selected
+Plans after confirmation. The UI re-checks current open Actions before applying
+the batch.
 
-The Review page can turn selected missing Project/Commitment next steps from
-the artifact proposal payload into high-priority Actions after explicit user
-confirmation. It re-checks current open Actions before presenting the batch
-and writes only the selected rows through the repository.
+Actions, Plans, and Progress are indexed into typed local events. Blockers,
+completion, and scope changes receive higher importance. These indexes and
+derived findings do not sync.
 
-Review is the user-facing surface. Its preparation agent is not exposed as a
-second toggleable “Review Agent” or rendered as a duplicate artifact card;
-run freshness remains subordinate Review detail.
-
-`ExecutionDueActionAgent` runs daily, finds open Actions due within the next
-24 hours (including overdue Actions), and writes a reminder artifact with
-action-detail evidence routes. It never posts a notification directly; any
-proactive interruption must pass through the global attention policy.
+`ExecutionDueActionAgent` runs daily, finds open Actions due within 24 hours,
+and writes a reminder artifact with Action detail evidence. Any proactive
+interruption still passes through the global attention policy.

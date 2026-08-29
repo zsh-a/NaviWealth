@@ -27,36 +27,27 @@ import 'execution_widgets.dart';
 final _executionAttentionProvider =
     Provider.autoDispose<AsyncValue<_ExecutionAttentionSnapshot>>((ref) {
       final actions = ref.watch(executionOpenActionsProvider);
-      final projects = ref.watch(executionProjectsProvider);
-      final commitments = ref.watch(executionCommitmentsProvider);
+      final plans = ref.watch(executionPlansProvider);
       if (actions.hasError && !actions.hasValue) {
         return AsyncValue.error(
           actions.error!,
           actions.stackTrace ?? StackTrace.current,
         );
       }
-      if (projects.hasError && !projects.hasValue) {
+      if (plans.hasError && !plans.hasValue) {
         return AsyncValue.error(
-          projects.error!,
-          projects.stackTrace ?? StackTrace.current,
-        );
-      }
-      if (commitments.hasError && !commitments.hasValue) {
-        return AsyncValue.error(
-          commitments.error!,
-          commitments.stackTrace ?? StackTrace.current,
+          plans.error!,
+          plans.stackTrace ?? StackTrace.current,
         );
       }
       if ((actions.isLoading && !actions.hasValue) ||
-          (projects.isLoading && !projects.hasValue) ||
-          (commitments.isLoading && !commitments.hasValue)) {
+          (plans.isLoading && !plans.hasValue)) {
         return const AsyncValue.loading();
       }
       return AsyncValue.data(
         _ExecutionAttentionSnapshot.build(
           actions: actions.value ?? const <ExecutionAction>[],
-          projects: projects.value ?? const <ExecutionProject>[],
-          commitments: commitments.value ?? const <ExecutionCommitment>[],
+          plans: plans.value ?? const <ExecutionPlan>[],
           now: DateTime.now(),
         ),
       );
@@ -70,8 +61,7 @@ class _ExecutionAttentionSnapshot {
 
   factory _ExecutionAttentionSnapshot.build({
     required List<ExecutionAction> actions,
-    required List<ExecutionProject> projects,
-    required List<ExecutionCommitment> commitments,
+    required List<ExecutionPlan> plans,
     required DateTime now,
   }) {
     final actionItems = <_ExecutionActionAttention>[];
@@ -106,32 +96,18 @@ class _ExecutionAttentionSnapshot {
       return leftRank.compareTo(rightRank);
     });
 
-    final projectIdsWithActions = actions
-        .map((action) => action.projectId)
-        .whereType<String>()
-        .toSet();
-    final commitmentIdsWithActions = actions
-        .map((action) => action.commitmentId)
+    final planIdsWithActions = actions
+        .map((action) => action.planId)
         .whereType<String>()
         .toSet();
     final targetItems = <_ExecutionTargetAttention>[
-      for (final project in projects)
-        if (!projectIdsWithActions.contains(project.id) ||
-            _isTargetOverdue(project.targetDate, now))
-          _ExecutionTargetAttention.project(
-            project,
-            missingNextAction: !projectIdsWithActions.contains(project.id),
-            overdue: _isTargetOverdue(project.targetDate, now),
-          ),
-      for (final commitment in commitments)
-        if (!commitmentIdsWithActions.contains(commitment.id) ||
-            _isTargetOverdue(commitment.targetDate, now))
-          _ExecutionTargetAttention.commitment(
-            commitment,
-            missingNextAction: !commitmentIdsWithActions.contains(
-              commitment.id,
-            ),
-            overdue: _isTargetOverdue(commitment.targetDate, now),
+      for (final plan in plans)
+        if (!planIdsWithActions.contains(plan.id) ||
+            _isTargetOverdue(plan.targetDate, now))
+          _ExecutionTargetAttention(
+            plan,
+            missingNextAction: !planIdsWithActions.contains(plan.id),
+            overdue: _isTargetOverdue(plan.targetDate, now),
           ),
     ];
     targetItems.sort((left, right) {
@@ -150,14 +126,9 @@ class _ExecutionAttentionSnapshot {
 
   int get count => actions.length + targets.length;
 
-  List<String> get projectsWithoutNextAction => targets
-      .where((item) => item.project != null && item.missingNextAction)
-      .map((item) => item.project!.id)
-      .toList(growable: false);
-
-  List<String> get commitmentsWithoutNextAction => targets
-      .where((item) => item.commitment != null && item.missingNextAction)
-      .map((item) => item.commitment!.id)
+  List<String> get plansWithoutNextAction => targets
+      .where((item) => item.missingNextAction)
+      .map((item) => item.plan.id)
       .toList(growable: false);
 }
 
@@ -176,45 +147,21 @@ class _ExecutionActionAttention {
 }
 
 class _ExecutionTargetAttention {
-  const _ExecutionTargetAttention._({
-    this.project,
-    this.commitment,
+  const _ExecutionTargetAttention(
+    this.plan, {
     required this.missingNextAction,
     required this.overdue,
   });
 
-  factory _ExecutionTargetAttention.project(
-    ExecutionProject value, {
-    required bool missingNextAction,
-    required bool overdue,
-  }) => _ExecutionTargetAttention._(
-    project: value,
-    missingNextAction: missingNextAction,
-    overdue: overdue,
-  );
-
-  factory _ExecutionTargetAttention.commitment(
-    ExecutionCommitment value, {
-    required bool missingNextAction,
-    required bool overdue,
-  }) => _ExecutionTargetAttention._(
-    commitment: value,
-    missingNextAction: missingNextAction,
-    overdue: overdue,
-  );
-
-  final ExecutionProject? project;
-  final ExecutionCommitment? commitment;
+  final ExecutionPlan plan;
   final bool missingNextAction;
   final bool overdue;
 
-  String get id => project?.id ?? commitment!.id;
-  String get title => project?.title ?? commitment!.title;
-  String get description => project?.description ?? commitment!.description;
-  DateTime? get targetDate => project?.targetDate ?? commitment?.targetDate;
-  String get route => project != null
-      ? ExecutionRoutes.project(project!.id)
-      : ExecutionRoutes.commitment(commitment!.id);
+  String get id => plan.id;
+  String get title => plan.title;
+  String get description => plan.description;
+  DateTime? get targetDate => plan.targetDate;
+  String get route => ExecutionRoutes.plan(plan.id);
 }
 
 bool _isTargetOverdue(DateTime? target, DateTime now) =>
@@ -239,8 +186,7 @@ class ExecutionReviewPage extends ConsumerWidget {
             ref.invalidate(executionClosedActionsProvider);
             ref.invalidate(executionReviewRelationsProvider);
             ref.invalidate(executionOpenActionsProvider);
-            ref.invalidate(executionProjectsProvider);
-            ref.invalidate(executionCommitmentsProvider);
+            ref.invalidate(executionPlansProvider);
             await Future.wait([
               ref.read(executionRecentProgressProvider.future),
               ref.read(executionClosedActionsProvider.future),
@@ -362,27 +308,18 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
               actionLabel:
                   relations?.actionLabel(entry.actionId) ??
                   _fallbackRelationLabel(entry.actionId),
-              projectLabel:
-                  relations?.projectLabel(entry.projectId) ??
-                  _fallbackRelationLabel(entry.projectId),
-              commitmentLabel:
-                  relations?.commitmentLabel(entry.commitmentId) ??
-                  _fallbackRelationLabel(entry.commitmentId),
+              planLabel:
+                  relations?.planLabel(entry.planId) ??
+                  _fallbackRelationLabel(entry.planId),
               onEdit: () =>
                   showExecutionProgressSheet(context: context, progress: entry),
               onDelete: () => _deleteProgress(context, ref, entry),
               onActionOpen: entry.actionId == null
                   ? null
                   : () => context.push(ExecutionRoutes.action(entry.actionId!)),
-              onProjectOpen: entry.projectId == null
+              onPlanOpen: entry.planId == null
                   ? null
-                  : () =>
-                        context.push(ExecutionRoutes.project(entry.projectId!)),
-              onCommitmentOpen: entry.commitmentId == null
-                  ? null
-                  : () => context.push(
-                      ExecutionRoutes.commitment(entry.commitmentId!),
-                    ),
+                  : () => context.push(ExecutionRoutes.plan(entry.planId!)),
             ),
           ),
         );
@@ -405,12 +342,9 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),
             child: ExecutionActionCardController(
               action: action,
-              projectLabel:
-                  relations?.projectLabel(action.projectId) ??
-                  _fallbackRelationLabel(action.projectId),
-              commitmentLabel:
-                  relations?.commitmentLabel(action.commitmentId) ??
-                  _fallbackRelationLabel(action.commitmentId),
+              planLabel:
+                  relations?.planLabel(action.planId) ??
+                  _fallbackRelationLabel(action.planId),
               onOpen: () => context.push(ExecutionRoutes.action(action.id)),
               onSourceOpen: executionSourceOpen(context, ref, action.source),
               onEdit: () =>
@@ -494,13 +428,9 @@ class _ExecutionAttentionSection extends ConsumerWidget {
                 onAction: () => context.push(item.route!),
               ),
             ),
-            if (snapshot.projectsWithoutNextAction.isNotEmpty ||
-                snapshot.commitmentsWithoutNextAction.isNotEmpty) ...[
+            if (snapshot.plansWithoutNextAction.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s10),
-              _ReviewNextActionsBatch(
-                projectIds: snapshot.projectsWithoutNextAction,
-                commitmentIds: snapshot.commitmentsWithoutNextAction,
-              ),
+              _ReviewNextActionsBatch(planIds: snapshot.plansWithoutNextAction),
             ],
           ],
         );
@@ -561,7 +491,7 @@ class _ExecutionAttentionSection extends ConsumerWidget {
         l10n.executionAgentReviewInsightNoNextActionTitle,
     ];
     return AttentionItem(
-      id: 'execution:${entry.project != null ? 'project' : 'commitment'}:${entry.id}',
+      id: 'execution:plan:${entry.id}',
       domain: DomainScope.execution,
       headline: entry.title,
       rationale: reasons.join(' · '),
@@ -570,9 +500,7 @@ class _ExecutionAttentionSection extends ConsumerWidget {
           : AttentionItemSeverity.attention,
       facts: <AttentionFact>[
         AttentionFact(
-          label: entry.project != null
-              ? l10n.executionProjectField
-              : l10n.executionCommitmentField,
+          label: l10n.executionPlanField,
           value: entry.missingNextAction
               ? l10n.executionAgentReviewInsightNoNextActionTitle
               : l10n.executionAgentReviewInsightOverdueTargetsTitle,
@@ -585,9 +513,7 @@ class _ExecutionAttentionSection extends ConsumerWidget {
       ],
       evidence: <AttentionEvidence>[
         AttentionEvidence(
-          label: entry.project != null
-              ? l10n.executionProjectField
-              : l10n.executionCommitmentField,
+          label: l10n.executionPlanField,
           detail: entry.description.trim().isEmpty
               ? null
               : entry.description.trim(),
@@ -595,8 +521,7 @@ class _ExecutionAttentionSection extends ConsumerWidget {
         ),
       ],
       route: entry.route,
-      observedAt:
-          entry.project?.sync.updatedAt ?? entry.commitment?.sync.updatedAt,
+      observedAt: entry.plan.sync.updatedAt,
     );
   }
 }
@@ -663,13 +588,9 @@ class _ReviewDisclosure extends StatelessWidget {
 }
 
 class _ReviewNextActionsBatch extends ConsumerStatefulWidget {
-  const _ReviewNextActionsBatch({
-    required this.projectIds,
-    required this.commitmentIds,
-  });
+  const _ReviewNextActionsBatch({required this.planIds});
 
-  final List<String> projectIds;
-  final List<String> commitmentIds;
+  final List<String> planIds;
 
   @override
   ConsumerState<_ReviewNextActionsBatch> createState() =>
@@ -680,59 +601,33 @@ class _ReviewNextActionsBatchState
     extends ConsumerState<_ReviewNextActionsBatch> {
   @override
   Widget build(BuildContext context) {
-    final count = widget.projectIds.length + widget.commitmentIds.length;
+    final count = widget.planIds.length;
     if (count == 0) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: FButton(
-        onPress: () => _review(
-          projectIds: widget.projectIds,
-          commitmentIds: widget.commitmentIds,
-        ),
+        onPress: () => _review(planIds: widget.planIds),
         child: Text(l10n.executionReviewDraftNextActions(count)),
       ),
     );
   }
 
-  Future<void> _review({
-    required List<String> projectIds,
-    required List<String> commitmentIds,
-  }) async {
+  Future<void> _review({required List<String> planIds}) async {
     try {
       final owner = await ref.read(executionOwnerUserIdProvider.future);
       final repository = await ref.read(executionRepositoryProvider.future);
       final open = await repository.listOpenActions(ownerUserId: owner);
-      final projectsWithAction = open
-          .map((action) => action.projectId)
+      final plansWithAction = open
+          .map((action) => action.planId)
           .whereType<String>()
           .toSet();
-      final commitmentsWithAction = open
-          .map((action) => action.commitmentId)
-          .whereType<String>()
-          .toSet();
-      final drafts = <({String id, String title, bool project})>[];
-      for (final id in projectIds) {
-        if (projectsWithAction.contains(id)) continue;
-        final project = await repository.findProject(
-          ownerUserId: owner,
-          id: id,
-        );
-        if (project == null) continue;
-        drafts.add((id: project.id, title: project.title, project: true));
-      }
-      for (final id in commitmentIds) {
-        if (commitmentsWithAction.contains(id)) continue;
-        final commitment = await repository.findCommitment(
-          ownerUserId: owner,
-          id: id,
-        );
-        if (commitment == null) continue;
-        drafts.add((
-          id: commitment.id,
-          title: commitment.title,
-          project: false,
-        ));
+      final drafts = <({String id, String title})>[];
+      for (final id in planIds) {
+        if (plansWithAction.contains(id)) continue;
+        final plan = await repository.findPlan(ownerUserId: owner, id: id);
+        if (plan == null) continue;
+        drafts.add((id: plan.id, title: plan.title));
       }
       if (!mounted) return;
       await showAppFormSheet<void>(
@@ -758,7 +653,7 @@ class _ReviewNextActionsBatchState
 
   Future<void> _createBatch(
     ExecutionRepository repository,
-    List<({String id, String title, bool project})> drafts,
+    List<({String id, String title})> drafts,
   ) async {
     if (drafts.isEmpty) return;
     final l10n = AppLocalizations.of(context);
@@ -770,8 +665,7 @@ class _ReviewNextActionsBatchState
             id: kExecutionUuid.v4(),
             title: l10n.executionReviewNextActionFor(draft.title),
             priority: ExecutionPriority.high,
-            projectId: draft.project ? draft.id : null,
-            commitmentId: draft.project ? null : draft.id,
+            planId: draft.id,
             createdAt: sync.updatedAt,
             sync: sync,
           ),
@@ -799,8 +693,8 @@ class _ReviewNextActionsBatchState
 class _ReviewBatchDraftSheet extends StatefulWidget {
   const _ReviewBatchDraftSheet({required this.drafts, required this.onConfirm});
 
-  final List<({String id, String title, bool project})> drafts;
-  final ValueChanged<List<({String id, String title, bool project})>> onConfirm;
+  final List<({String id, String title})> drafts;
+  final ValueChanged<List<({String id, String title})>> onConfirm;
 
   @override
   State<_ReviewBatchDraftSheet> createState() => _ReviewBatchDraftSheetState();
@@ -808,14 +702,14 @@ class _ReviewBatchDraftSheet extends StatefulWidget {
 
 class _ReviewBatchDraftSheetState extends State<_ReviewBatchDraftSheet> {
   late final Set<String> _selected = widget.drafts
-      .map((draft) => '${draft.project}:${draft.id}')
+      .map((draft) => draft.id)
       .toSet();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final selected = widget.drafts
-        .where((draft) => _selected.contains('${draft.project}:${draft.id}'))
+        .where((draft) => _selected.contains(draft.id))
         .toList(growable: false);
     return AppSheet(
       title: l10n.executionReviewDraftNextActions(widget.drafts.length),
@@ -844,7 +738,7 @@ class _ReviewBatchDraftSheetState extends State<_ReviewBatchDraftSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     FCheckbox(
-                      value: _selected.contains('${draft.project}:${draft.id}'),
+                      value: _selected.contains(draft.id),
                       onChange: (_) => _toggle(draft),
                     ),
                     const SizedBox(width: AppSpacing.s10),
@@ -870,10 +764,9 @@ class _ReviewBatchDraftSheetState extends State<_ReviewBatchDraftSheet> {
     );
   }
 
-  void _toggle(({String id, String title, bool project}) draft) {
+  void _toggle(({String id, String title}) draft) {
     setState(() {
-      final key = '${draft.project}:${draft.id}';
-      if (!_selected.add(key)) _selected.remove(key);
+      if (!_selected.add(draft.id)) _selected.remove(draft.id);
     });
   }
 }

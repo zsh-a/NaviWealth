@@ -13,7 +13,7 @@ class ProposeProgressTool implements DeviceTool {
   String get description =>
       '建议记录一条 ExecutionOS ProgressEntry。不会直接写库,返回 proposal envelope,'
       '用户确认后由 ExecutionProposalApplier 创建 ProgressEntry。适合把复盘、阻塞、'
-      '范围变化或完成情况记录到执行系统,可选关联 Action / Project / Commitment。';
+      '范围变化或完成情况记录到执行系统,可选关联 Action / Plan。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -26,8 +26,7 @@ class ProposeProgressTool implements DeviceTool {
         'default': 'checkin',
       },
       'action_id': {'type': 'string', 'description': '可选 Action id。'},
-      'project_id': {'type': 'string', 'description': '可选 Project id。'},
-      'commitment_id': {'type': 'string', 'description': '可选 Commitment id。'},
+      'plan_id': {'type': 'string', 'description': '可选 Plan id。'},
       'reason': {
         'type': 'string',
         'description': '中文说明为什么建议记录这个 ProgressEntry。',
@@ -52,8 +51,7 @@ class ProposeProgressTool implements DeviceTool {
     final summary = '建议记录 Progress:"${shortText(note)}" — $reason';
     final payload = <String, Object?>{'note': note, 'kind': kind.wire};
     addOptionalString(payload, 'action_id', input['action_id']);
-    addOptionalString(payload, 'project_id', input['project_id']);
-    addOptionalString(payload, 'commitment_id', input['commitment_id']);
+    addOptionalString(payload, 'plan_id', input['plan_id']);
     payload['reason'] = reason;
 
     return proposalEnvelope(

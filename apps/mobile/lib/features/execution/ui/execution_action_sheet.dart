@@ -19,8 +19,7 @@ import 'execution_widgets.dart';
 Future<bool?> showExecutionActionSheet({
   required BuildContext context,
   ExecutionAction? action,
-  String? initialProjectId,
-  String? initialCommitmentId,
+  String? initialPlanId,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
@@ -28,8 +27,7 @@ Future<bool?> showExecutionActionSheet({
     dirtyGuard: dirty,
     builder: (_) => _ExecutionActionForm(
       action: action,
-      initialProjectId: initialProjectId,
-      initialCommitmentId: initialCommitmentId,
+      initialPlanId: initialPlanId,
       dirty: dirty,
     ),
   ).whenComplete(dirty.dispose);
@@ -38,14 +36,12 @@ Future<bool?> showExecutionActionSheet({
 class _ExecutionActionForm extends ConsumerStatefulWidget {
   const _ExecutionActionForm({
     required this.action,
-    required this.initialProjectId,
-    required this.initialCommitmentId,
+    required this.initialPlanId,
     required this.dirty,
   });
 
   final ExecutionAction? action;
-  final String? initialProjectId;
-  final String? initialCommitmentId;
+  final String? initialPlanId;
   final FormDirtyController dirty;
 
   @override
@@ -61,8 +57,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
   late ExecutionPriority _priority;
   DateTime? _dueAt;
   DateTime? _scheduledFor;
-  String? _projectId;
-  String? _commitmentId;
+  String? _planId;
   late bool _showDetails;
   bool _saving = false;
 
@@ -75,12 +70,8 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     _priority = action?.priority ?? ExecutionPriority.normal;
     _dueAt = action?.dueAt;
     _scheduledFor = action?.scheduledFor;
-    _projectId = action == null ? widget.initialProjectId : action.projectId;
-    _commitmentId = action == null
-        ? widget.initialCommitmentId
-        : action.commitmentId;
-    _showDetails =
-        action != null || _projectId != null || _commitmentId != null;
+    _planId = action == null ? widget.initialPlanId : action.planId;
+    _showDetails = action != null || _planId != null;
     widget.dirty.bindTextControllers([_title, _note]);
     _title.addListener(_onTitleChanged);
   }
@@ -167,8 +158,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       priority: _priority,
       dueAt: _dueAt,
       scheduledFor: _scheduledFor,
-      projectId: _projectId,
-      commitmentId: _commitmentId,
+      planId: _planId,
       source: existing?.source ?? const ExecutionSourceRef(),
       createdAt: existing?.createdAt ?? sync.updatedAt,
       completedAt: existing?.completedAt,
@@ -181,12 +171,8 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final projects =
-        ref.watch(executionProjectsProvider).value ??
-        const <ExecutionProject>[];
-    final commitments =
-        ref.watch(executionCommitmentsProvider).value ??
-        const <ExecutionCommitment>[];
+    final plans =
+        ref.watch(executionPlansProvider).value ?? const <ExecutionPlan>[];
     final isEditing = widget.action != null;
 
     return AppSheet(
@@ -329,29 +315,21 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
               const SizedBox(height: AppSpacing.s12),
               FormPickerRow(
                 label: l10n.executionRelationField,
-                value: executionRelationPickerLabel(
-                  l10n,
-                  projects,
-                  commitments,
-                  (projectId: _projectId, commitmentId: _commitmentId),
-                ),
+                value: executionPlanPickerLabel(l10n, plans, _planId),
                 leading: const Icon(FLucideIcons.layers),
                 enabled: !_saving,
                 onPress: () async {
-                  final picked = await showExecutionRelationPicker(
+                  final picked = await showExecutionPlanPicker(
                     context: context,
-                    projects: projects,
-                    commitments: commitments,
-                    selected: (
-                      projectId: _projectId,
-                      commitmentId: _commitmentId,
-                    ),
+                    plans: plans,
+                    selectedId: _planId,
                   );
                   if (picked == null) return;
-                  setState(() {
-                    _projectId = picked.projectId;
-                    _commitmentId = picked.commitmentId;
-                  });
+                  setState(
+                    () => _planId = picked == kExecutionPickerNone
+                        ? null
+                        : picked,
+                  );
                   _markDirty();
                 },
               ),

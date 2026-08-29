@@ -1,6 +1,6 @@
 /// ExecutionOS object → event indexer.
 ///
-/// Actions, Projects, and Commitments are execution state, not just UI rows.
+/// Actions and Plans are execution state, not just UI rows.
 /// This indexer mirrors their current non-deleted state into the cross-domain
 /// event log so ContextBuilder can surface "what changed in execution" beside
 /// Finance, Health, and Knowledge signals without core importing ExecutionOS.
@@ -19,20 +19,16 @@ import '../domain/execution_models.dart';
 import 'providers.dart';
 
 const String kExecutionActionMemorySource = 'execution:actions';
-const String kExecutionProjectMemorySource = 'execution:projects';
-const String kExecutionCommitmentMemorySource = 'execution:commitments';
+const String kExecutionPlanMemorySource = 'execution:plans';
 const String kExecutionProgressMemorySource = 'execution:progress';
 
 const String kExecutionActionEventSourceFamily = 'exec:execution_actions';
-const String kExecutionProjectEventSourceFamily = 'exec:execution_projects';
-const String kExecutionCommitmentEventSourceFamily =
-    'exec:execution_commitments';
+const String kExecutionPlanEventSourceFamily = 'exec:execution_plans';
 const String kExecutionProgressEventSourceFamily =
     'exec:execution_progress_entries';
 
 const String kExecutionActionEventType = 'execution_action_state';
-const String kExecutionProjectEventType = 'execution_project_state';
-const String kExecutionCommitmentEventType = 'execution_commitment_state';
+const String kExecutionPlanEventType = 'execution_plan_state';
 const String kExecutionProgressEventType = 'execution_progress_recorded';
 
 class ExecutionMemoryIndexer {
@@ -51,27 +47,14 @@ class ExecutionMemoryIndexer {
     return events;
   }
 
-  Future<int> reindexProjects(
+  Future<int> reindexPlans(
     MemoryRuntime runtime,
-    Iterable<ExecutionProject> projects, {
+    Iterable<ExecutionPlan> plans, {
     required String ownerUserId,
   }) async {
     var events = 0;
-    for (final project in projects) {
-      await runtime.recordEvent(_projectEvent(project, ownerUserId));
-      events++;
-    }
-    return events;
-  }
-
-  Future<int> reindexCommitments(
-    MemoryRuntime runtime,
-    Iterable<ExecutionCommitment> commitments, {
-    required String ownerUserId,
-  }) async {
-    var events = 0;
-    for (final commitment in commitments) {
-      await runtime.recordEvent(_commitmentEvent(commitment, ownerUserId));
+    for (final plan in plans) {
+      await runtime.recordEvent(_planEvent(plan, ownerUserId));
       events++;
     }
     return events;
@@ -117,8 +100,7 @@ class ExecutionMemoryIndexer {
         if (dueAt != null) 'due_at': dueAt.toUtc().toIso8601String(),
         if (scheduledFor != null)
           'scheduled_for': scheduledFor.toUtc().toIso8601String(),
-        if (action.projectId != null) 'project_id': action.projectId,
-        if (action.commitmentId != null) 'commitment_id': action.commitmentId,
+        if (action.planId != null) 'plan_id': action.planId,
         if (action.completedAt != null)
           'completed_at': action.completedAt!.toUtc().toIso8601String(),
         ..._sourcePayload(action.source),
@@ -129,9 +111,7 @@ class ExecutionMemoryIndexer {
         'execution_action:${action.id}',
         'status:${action.status.wire}',
         'priority:${action.priority.wire}',
-        if (action.projectId != null) 'execution_project:${action.projectId}',
-        if (action.commitmentId != null)
-          'execution_commitment:${action.commitmentId}',
+        if (action.planId != null) 'execution_plan:${action.planId}',
         ..._sourceEntities(action.source),
       },
       importance: _actionImportance(action),
@@ -139,95 +119,44 @@ class ExecutionMemoryIndexer {
     );
   }
 
-  EventRecord _projectEvent(ExecutionProject project, String ownerUserId) {
-    final targetDate = project.targetDate;
+  EventRecord _planEvent(ExecutionPlan plan, String ownerUserId) {
+    final targetDate = plan.targetDate;
     return EventRecord(
-      id: '$kExecutionProjectMemorySource:${project.id}',
+      id: '$kExecutionPlanMemorySource:${plan.id}',
       domain: DomainScope.execution,
-      kind: EventKind.domain(DomainScope.execution, kExecutionProjectEventType),
-      occurredAt: project.sync.updatedAt.toUtc(),
-      observedAt: project.sync.updatedAt.toUtc(),
+      kind: EventKind.domain(DomainScope.execution, kExecutionPlanEventType),
+      occurredAt: plan.sync.updatedAt.toUtc(),
+      observedAt: plan.sync.updatedAt.toUtc(),
       sourceIdentity: SourceIdentity(
         domain: DomainScope.execution,
-        rowFamily: kExecutionProjectEventSourceFamily,
-        rowId: project.id,
-        fingerprint: project.sync.hlc.toString(),
+        rowFamily: kExecutionPlanEventSourceFamily,
+        rowId: plan.id,
+        fingerprint: plan.sync.hlc.toString(),
       ),
       ownerUserId: ownerUserId,
-      title: 'Project ${project.status.wire}: ${project.title}',
-      summary: _projectSummary(project),
+      title: 'Plan ${plan.status.wire}: ${plan.title}',
+      summary: _planSummary(plan),
       facts: <String, Object?>{
-        'id': project.id,
-        'title': project.title,
-        'description': project.description,
-        'status': project.status.wire,
-        'horizon': project.horizon.wire,
+        'id': plan.id,
+        'title': plan.title,
+        'description': plan.description,
+        'status': plan.status.wire,
+        'horizon': plan.horizon.wire,
         if (targetDate != null)
           'target_date': targetDate.toUtc().toIso8601String(),
-        if (project.completedAt != null)
-          'completed_at': project.completedAt!.toUtc().toIso8601String(),
-        ..._sourcePayload(project.source),
+        if (plan.completedAt != null)
+          'completed_at': plan.completedAt!.toUtc().toIso8601String(),
+        ..._sourcePayload(plan.source),
       },
       entities: <String>{
         'execution',
-        'execution_project',
-        'execution_project:${project.id}',
-        'status:${project.status.wire}',
-        'horizon:${project.horizon.wire}',
-        ..._sourceEntities(project.source),
+        'execution_plan',
+        'execution_plan:${plan.id}',
+        'status:${plan.status.wire}',
+        'horizon:${plan.horizon.wire}',
+        ..._sourceEntities(plan.source),
       },
-      importance: _projectImportance(project),
-      confidence: 1,
-    );
-  }
-
-  EventRecord _commitmentEvent(
-    ExecutionCommitment commitment,
-    String ownerUserId,
-  ) {
-    final targetDate = commitment.targetDate;
-    return EventRecord(
-      id: '$kExecutionCommitmentMemorySource:${commitment.id}',
-      domain: DomainScope.execution,
-      kind: EventKind.domain(
-        DomainScope.execution,
-        kExecutionCommitmentEventType,
-      ),
-      occurredAt: commitment.sync.updatedAt.toUtc(),
-      observedAt: commitment.sync.updatedAt.toUtc(),
-      sourceIdentity: SourceIdentity(
-        domain: DomainScope.execution,
-        rowFamily: kExecutionCommitmentEventSourceFamily,
-        rowId: commitment.id,
-        fingerprint: commitment.sync.hlc.toString(),
-      ),
-      ownerUserId: ownerUserId,
-      title: 'Commitment ${commitment.status.wire}: ${commitment.title}',
-      summary: _commitmentSummary(commitment),
-      facts: <String, Object?>{
-        'id': commitment.id,
-        'title': commitment.title,
-        'description': commitment.description,
-        'status': commitment.status.wire,
-        'horizon': commitment.horizon.wire,
-        if (targetDate != null)
-          'target_date': targetDate.toUtc().toIso8601String(),
-        if (commitment.projectId != null) 'project_id': commitment.projectId,
-        if (commitment.completedAt != null)
-          'completed_at': commitment.completedAt!.toUtc().toIso8601String(),
-        ..._sourcePayload(commitment.source),
-      },
-      entities: <String>{
-        'execution',
-        'execution_commitment',
-        'execution_commitment:${commitment.id}',
-        'status:${commitment.status.wire}',
-        'horizon:${commitment.horizon.wire}',
-        if (commitment.projectId != null)
-          'execution_project:${commitment.projectId}',
-        ..._sourceEntities(commitment.source),
-      },
-      importance: _commitmentImportance(commitment),
+      importance: _planImportance(plan),
       confidence: 1,
     );
   }
@@ -262,8 +191,7 @@ class ExecutionMemoryIndexer {
         'kind': entry.kind.wire,
         'note': entry.note,
         if (entry.actionId != null) 'action_id': entry.actionId,
-        if (entry.projectId != null) 'project_id': entry.projectId,
-        if (entry.commitmentId != null) 'commitment_id': entry.commitmentId,
+        if (entry.planId != null) 'plan_id': entry.planId,
       },
       entities: <String>{
         'execution',
@@ -271,9 +199,7 @@ class ExecutionMemoryIndexer {
         'execution_progress:${entry.id}',
         'progress_kind:${entry.kind.wire}',
         if (entry.actionId != null) 'execution_action:${entry.actionId}',
-        if (entry.projectId != null) 'execution_project:${entry.projectId}',
-        if (entry.commitmentId != null)
-          'execution_commitment:${entry.commitmentId}',
+        if (entry.planId != null) 'execution_plan:${entry.planId}',
       },
       importance: highSignal ? 0.82 : 0.5,
       confidence: 1,
@@ -289,40 +215,21 @@ String _actionSummary(ExecutionAction action) {
   if (action.dueAt != null) {
     parts.add('due ${action.dueAt!.toUtc().toIso8601String()}');
   }
-  if (action.projectId != null) parts.add('project ${action.projectId}');
-  if (action.commitmentId != null) {
-    parts.add('commitment ${action.commitmentId}');
-  }
+  if (action.planId != null) parts.add('plan ${action.planId}');
   final source = _sourceSummary(action.source);
   if (source != null) parts.add(source);
   return '${parts.join('; ')}.';
 }
 
-String _projectSummary(ExecutionProject project) {
+String _planSummary(ExecutionPlan plan) {
   final parts = <String>[
-    'Project "${project.title}" is ${project.status.wire}',
-    'horizon ${project.horizon.wire}',
+    'Plan "${plan.title}" is ${plan.status.wire}',
+    'horizon ${plan.horizon.wire}',
   ];
-  if (project.targetDate != null) {
-    parts.add('target ${project.targetDate!.toUtc().toIso8601String()}');
+  if (plan.targetDate != null) {
+    parts.add('target ${plan.targetDate!.toUtc().toIso8601String()}');
   }
-  final source = _sourceSummary(project.source);
-  if (source != null) parts.add(source);
-  return '${parts.join('; ')}.';
-}
-
-String _commitmentSummary(ExecutionCommitment commitment) {
-  final parts = <String>[
-    'Commitment "${commitment.title}" is ${commitment.status.wire}',
-    'horizon ${commitment.horizon.wire}',
-  ];
-  if (commitment.targetDate != null) {
-    parts.add('target ${commitment.targetDate!.toUtc().toIso8601String()}');
-  }
-  if (commitment.projectId != null) {
-    parts.add('project ${commitment.projectId}');
-  }
-  final source = _sourceSummary(commitment.source);
+  final source = _sourceSummary(plan.source);
   if (source != null) parts.add(source);
   return '${parts.join('; ')}.';
 }
@@ -368,21 +275,12 @@ double _actionImportance(ExecutionAction action) {
   return 0.55;
 }
 
-double _projectImportance(ExecutionProject project) {
-  return switch (project.status) {
-    ExecutionProjectStatus.active => 0.72,
-    ExecutionProjectStatus.paused => 0.55,
-    ExecutionProjectStatus.completed => 0.68,
-    ExecutionProjectStatus.archived => 0.4,
-  };
-}
-
-double _commitmentImportance(ExecutionCommitment commitment) {
-  return switch (commitment.status) {
-    ExecutionCommitmentStatus.active => 0.78,
-    ExecutionCommitmentStatus.paused => 0.58,
-    ExecutionCommitmentStatus.completed => 0.7,
-    ExecutionCommitmentStatus.archived => 0.42,
+double _planImportance(ExecutionPlan plan) {
+  return switch (plan.status) {
+    ExecutionPlanStatus.active => 0.72,
+    ExecutionPlanStatus.paused => 0.55,
+    ExecutionPlanStatus.completed => 0.68,
+    ExecutionPlanStatus.archived => 0.4,
   };
 }
 
@@ -402,17 +300,11 @@ final executionMemoryIndexerProvider = Provider<void>((ref) {
       reindex: (rows) =>
           indexer.reindexActions(runtime, rows, ownerUserId: userId),
     );
-    _subscribeExecutionIndexer<ExecutionProject>(
+    _subscribeExecutionIndexer<ExecutionPlan>(
       ref,
-      stream: repo.watchProjectsForMemoryIndex(ownerUserId: userId),
+      stream: repo.watchPlansForMemoryIndex(ownerUserId: userId),
       reindex: (rows) =>
-          indexer.reindexProjects(runtime, rows, ownerUserId: userId),
-    );
-    _subscribeExecutionIndexer<ExecutionCommitment>(
-      ref,
-      stream: repo.watchCommitmentsForMemoryIndex(ownerUserId: userId),
-      reindex: (rows) =>
-          indexer.reindexCommitments(runtime, rows, ownerUserId: userId),
+          indexer.reindexPlans(runtime, rows, ownerUserId: userId),
     );
     _subscribeExecutionIndexer<ExecutionProgressEntry>(
       ref,

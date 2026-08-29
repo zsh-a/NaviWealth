@@ -24,8 +24,7 @@ ExecutionAction _executionActionWithStatus(
     priority: action.priority,
     dueAt: action.dueAt,
     scheduledFor: action.scheduledFor,
-    projectId: action.projectId,
-    commitmentId: action.commitmentId,
+    planId: action.planId,
     source: action.source,
     createdAt: action.createdAt,
     completedAt: completedAt,
@@ -44,8 +43,7 @@ Future<List<ExecutionAction>> _detachOpenActionsToInbox({
   required AppDatabase db,
   required OutboxStore outbox,
   required String ownerUserId,
-  String? projectId,
-  String? commitmentId,
+  String? planId,
   required SyncMeta sync,
 }) async {
   final q = db.select(db.executionActions)
@@ -58,21 +56,14 @@ Future<List<ExecutionAction>> _detachOpenActionsToInbox({
         ExecutionActionStatus.blocked.wire,
       ]),
     );
-  if (projectId != null) {
-    q.where((t) => t.projectId.equals(projectId));
-  }
-  if (commitmentId != null) {
-    q.where((t) => t.commitmentId.equals(commitmentId));
+  if (planId != null) {
+    q.where((t) => t.planId.equals(planId));
   }
 
   final rows = await q.get();
   final actions = rows.map(executionActionFromRow).toList(growable: false);
   for (final action in actions) {
-    final moved = action.copyWith(
-      projectId: null,
-      commitmentId: null,
-      sync: sync,
-    );
+    final moved = action.copyWith(planId: null, sync: sync);
     await db
         .into(db.executionActions)
         .insert(
@@ -94,8 +85,7 @@ ExecutionProgressEntry _tombstonedProgress(
   return ExecutionProgressEntry(
     id: progress.id,
     actionId: progress.actionId,
-    projectId: progress.projectId,
-    commitmentId: progress.commitmentId,
+    planId: progress.planId,
     kind: progress.kind,
     note: progress.note,
     createdAt: progress.createdAt,

@@ -86,7 +86,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
             labelOf: (scope) => switch (scope) {
               _ExecutionSearchScope.all => l10n.executionSearchFilterAll,
               _ExecutionSearchScope.action => l10n.executionSearchKindAction,
-              _ExecutionSearchScope.plan => l10n.executionSearchKindProject,
+              _ExecutionSearchScope.plan => l10n.executionSearchKindPlan,
             },
             iconOf: (scope) => switch (scope) {
               _ExecutionSearchScope.all => FLucideIcons.search,
@@ -174,17 +174,8 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
     final kind = switch (_scope) {
       _ExecutionSearchScope.all => null,
       _ExecutionSearchScope.action => ExecutionEntryKind.action,
-      _ExecutionSearchScope.plan => null,
+      _ExecutionSearchScope.plan => ExecutionEntryKind.plan,
     };
-    if (_scope == _ExecutionSearchScope.plan) {
-      return _hits
-          .where(
-            (hit) =>
-                hit.kind == ExecutionEntryKind.project ||
-                hit.kind == ExecutionEntryKind.commitment,
-          )
-          .toList(growable: false);
-    }
     return kind == null
         ? _hits
         : _hits.where((hit) => hit.kind == kind).toList(growable: false);
@@ -207,8 +198,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
     Navigator.of(context).pop();
     context.push(switch (hit.kind) {
       ExecutionEntryKind.action => ExecutionRoutes.action(hit.id),
-      ExecutionEntryKind.project => ExecutionRoutes.project(hit.id),
-      ExecutionEntryKind.commitment => ExecutionRoutes.commitment(hit.id),
+      ExecutionEntryKind.plan => ExecutionRoutes.plan(hit.id),
       ExecutionEntryKind.progressEntry => ExecutionRoutes.review,
     });
   }
@@ -218,16 +208,14 @@ enum _ExecutionSearchScope { all, action, plan }
 
 IconData _icon(ExecutionEntryKind kind) => switch (kind) {
   ExecutionEntryKind.action => FLucideIcons.listTodo,
-  ExecutionEntryKind.project => FLucideIcons.folder,
-  ExecutionEntryKind.commitment => FLucideIcons.layers,
+  ExecutionEntryKind.plan => FLucideIcons.layers,
   ExecutionEntryKind.progressEntry => FLucideIcons.messageSquareText,
 };
 
 String _kindLabel(AppLocalizations l10n, ExecutionEntryKind kind) =>
     switch (kind) {
       ExecutionEntryKind.action => l10n.executionSearchKindAction,
-      ExecutionEntryKind.project => l10n.executionSearchKindProject,
-      ExecutionEntryKind.commitment => l10n.executionSearchKindProject,
+      ExecutionEntryKind.plan => l10n.executionSearchKindPlan,
       ExecutionEntryKind.progressEntry => l10n.executionSearchKindProgress,
     };
 
@@ -237,13 +225,9 @@ String _statusLabel(AppLocalizations l10n, ExecutionSearchHit hit) {
       l10n,
       ExecutionActionStatus.parse(hit.status),
     ),
-    ExecutionEntryKind.project => executionProjectStatusLabel(
+    ExecutionEntryKind.plan => executionPlanStatusLabel(
       l10n,
-      ExecutionProjectStatus.parse(hit.status),
-    ),
-    ExecutionEntryKind.commitment => executionCommitmentStatusLabel(
-      l10n,
-      ExecutionCommitmentStatus.parse(hit.status),
+      ExecutionPlanStatus.parse(hit.status),
     ),
     ExecutionEntryKind.progressEntry => executionProgressKindLabel(
       l10n,

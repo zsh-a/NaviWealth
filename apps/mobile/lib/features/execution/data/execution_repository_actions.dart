@@ -98,48 +98,15 @@ mixin ExecutionActionRepositoryMixin {
     return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
   }
 
-  Stream<List<ExecutionAction>> watchActionsForCommitment({
+  Stream<List<ExecutionAction>> watchActionsForPlan({
     required String ownerUserId,
-    required String commitmentId,
+    required String planId,
     int limit = 200,
   }) {
     final q = _db.select(_db.executionActions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
-      ..where((t) => t.commitmentId.equals(commitmentId))
-      ..orderBy([
-        (t) => OrderingTerm(
-          expression: t.status.isIn(<String>[
-            ExecutionActionStatus.todo.wire,
-            ExecutionActionStatus.doing.wire,
-            ExecutionActionStatus.blocked.wire,
-          ]),
-          mode: OrderingMode.desc,
-        ),
-        (t) => OrderingTerm(
-          expression: t.status.equals(ExecutionActionStatus.blocked.wire),
-          mode: OrderingMode.desc,
-        ),
-        (t) => OrderingTerm(
-          expression: t.priority.equals(ExecutionPriority.high.wire),
-          mode: OrderingMode.desc,
-        ),
-        (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionActionFromRow).toList());
-  }
-
-  Stream<List<ExecutionAction>> watchActionsForProject({
-    required String ownerUserId,
-    required String projectId,
-    int limit = 200,
-  }) {
-    final q = _db.select(_db.executionActions)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where((t) => t.projectId.equals(projectId))
+      ..where((t) => t.planId.equals(planId))
       ..orderBy([
         (t) => OrderingTerm(
           expression: t.status.isIn(<String>[
@@ -332,8 +299,7 @@ mixin ExecutionActionRepositoryMixin {
         final progress = ExecutionProgressEntry(
           id: progressId,
           actionId: action.id,
-          projectId: action.projectId,
-          commitmentId: action.commitmentId,
+          planId: action.planId,
           kind: switch (status) {
             ExecutionActionStatus.blocked => ExecutionProgressKind.blocker,
             ExecutionActionStatus.done => ExecutionProgressKind.completion,

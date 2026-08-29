@@ -427,8 +427,8 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
     };
     projects.add(project);
     return _readyProposal(
-      id: 'proposal_execution_project_${projects.length}',
-      kind: 'execution_project',
+      id: 'proposal_execution_plan_${projects.length}',
+      kind: 'execution_plan',
       summary: 'Create project ${project['title']}',
       payload: project,
     );
@@ -438,8 +438,8 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
     final action = <String, Object?>{
       'id': _string(input['id'], fallback: 'action_${actions.length + 1}'),
       'title': _string(input['title'], fallback: 'Runtime validation action'),
-      'project_id': _string(
-        input['project_id'],
+      'plan_id': _string(
+        input['plan_id'],
         fallback: projects.isEmpty ? 'project_1' : '${projects.last['id']}',
       ),
       'due_at': _string(input['due_at'] ?? input['due_date'], fallback: ''),
@@ -462,7 +462,7 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
   Map<String, Object?> _proposeProgress(Map<String, Object?> input) {
     final progress = <String, Object?>{
       'id': 'progress_${progressEntries.length + 1}',
-      'project_id': _string(input['project_id'], fallback: 'project_1'),
+      'plan_id': _string(input['plan_id'], fallback: 'project_1'),
       'action_id': _string(input['action_id'], fallback: ''),
       'note': _string(input['note'], fallback: jsonEncode(input)),
       'kind': _string(input['kind'], fallback: 'checkin'),

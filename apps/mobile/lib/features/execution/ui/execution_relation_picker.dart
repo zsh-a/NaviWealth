@@ -5,347 +5,43 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/execution_models.dart';
 
-const String kExecutionPickerNone = '';
+const String kExecutionPickerNone = '__none__';
 
-typedef ExecutionRelationSelection = ({
-  String? projectId,
-  String? commitmentId,
-});
-
-String executionRelationPickerLabel(
+String executionPlanPickerLabel(
   AppLocalizations l10n,
-  List<ExecutionProject> projects,
-  List<ExecutionCommitment> commitments,
-  ExecutionRelationSelection selection,
+  List<ExecutionPlan> plans,
+  String? planId,
 ) {
-  final commitment = executionCommitmentById(
-    commitments,
-    selection.commitmentId,
-  );
-  if (commitment != null) return commitment.title;
-  final projectId = selection.projectId;
-  if (projectId != null && projectId.isNotEmpty) {
-    for (final project in projects) {
-      if (project.id == projectId) return project.title;
-    }
-    return l10n.executionUnknownProject;
+  if (planId == null || planId.isEmpty) return l10n.executionNoRelation;
+  for (final plan in plans) {
+    if (plan.id == planId) return plan.title;
   }
-  return l10n.executionNoRelation;
+  return l10n.executionUnknownPlan;
 }
 
-String executionProjectPickerLabel(
-  AppLocalizations l10n,
-  List<ExecutionProject> projects,
-  String? projectId,
-) {
-  if (projectId == null || projectId.isEmpty) {
-    return l10n.executionNoProject;
-  }
-  for (final project in projects) {
-    if (project.id == projectId) return project.title;
-  }
-  return l10n.executionUnknownProject;
-}
-
-String executionActionPickerLabel(
-  AppLocalizations l10n,
-  List<ExecutionAction> actions,
-  String? actionId,
-) {
-  if (actionId == null || actionId.isEmpty) {
-    return l10n.executionNoAction;
-  }
-  for (final action in actions) {
-    if (action.id == actionId) return action.title;
-  }
-  return l10n.executionUnknownAction;
-}
-
-String executionCommitmentPickerLabel(
-  AppLocalizations l10n,
-  List<ExecutionCommitment> commitments,
-  String? commitmentId,
-) {
-  if (commitmentId == null || commitmentId.isEmpty) {
-    return l10n.executionNoCommitment;
-  }
-  for (final commitment in commitments) {
-    if (commitment.id == commitmentId) return commitment.title;
-  }
-  return l10n.executionUnknownCommitment;
-}
-
-ExecutionCommitment? executionCommitmentById(
-  List<ExecutionCommitment> commitments,
-  String? commitmentId,
-) {
-  if (commitmentId == null || commitmentId.isEmpty) return null;
-  for (final commitment in commitments) {
-    if (commitment.id == commitmentId) return commitment;
-  }
-  return null;
-}
-
-({String? projectId, String? commitmentId}) executionRelationAfterProjectPick({
-  required List<ExecutionCommitment> commitments,
-  required String? currentCommitmentId,
-  required String pickedProjectId,
-}) {
-  final nextProjectId = pickedProjectId == kExecutionPickerNone
-      ? null
-      : pickedProjectId;
-  final commitment = executionCommitmentById(commitments, currentCommitmentId);
-  final commitmentProjectId = commitment?.projectId;
-  final clearsCommitment =
-      commitmentProjectId != null &&
-      commitmentProjectId.isNotEmpty &&
-      commitmentProjectId != nextProjectId;
-  return (
-    projectId: nextProjectId,
-    commitmentId: clearsCommitment ? null : currentCommitmentId,
-  );
-}
-
-({String? projectId, String? commitmentId})
-executionRelationAfterCommitmentPick({
-  required List<ExecutionCommitment> commitments,
-  required String? currentProjectId,
-  required String pickedCommitmentId,
-}) {
-  if (pickedCommitmentId == kExecutionPickerNone) {
-    return (projectId: currentProjectId, commitmentId: null);
-  }
-  final commitment = executionCommitmentById(commitments, pickedCommitmentId);
-  final commitmentProjectId = commitment?.projectId;
-  return (
-    projectId: commitmentProjectId == null || commitmentProjectId.isEmpty
-        ? currentProjectId
-        : commitmentProjectId,
-    commitmentId: pickedCommitmentId,
-  );
-}
-
-Future<ExecutionRelationSelection?> showExecutionRelationPicker({
+Future<String?> showExecutionPlanPicker({
   required BuildContext context,
-  required List<ExecutionProject> projects,
-  required List<ExecutionCommitment> commitments,
-  required ExecutionRelationSelection selected,
+  required List<ExecutionPlan> plans,
+  required String? selectedId,
 }) {
   final l10n = AppLocalizations.of(context);
-  return showAppSheet<ExecutionRelationSelection>(
+  return _showPicker(
     context: context,
-    title: l10n.executionRelationField,
-    scrollable: false,
-    maxHeightFactor: 0.82,
-    builder: (sheetContext) => _RelationPickerList(
-      projects: projects,
-      commitments: commitments,
-      selected: selected,
-    ),
+    title: l10n.executionPlanField,
+    selectedId: selectedId,
+    clearLabel: l10n.executionNoRelation,
+    emptyTitle: l10n.executionNoPlansAvailable,
+    emptyIcon: FLucideIcons.folderOpen,
+    items: [
+      for (final plan in plans)
+        _PickerItem(
+          id: plan.id,
+          label: plan.title,
+          detail: plan.description,
+          icon: FLucideIcons.layers,
+        ),
+    ],
   );
-}
-
-class _RelationPickerList extends StatefulWidget {
-  const _RelationPickerList({
-    required this.projects,
-    required this.commitments,
-    required this.selected,
-  });
-
-  final List<ExecutionProject> projects;
-  final List<ExecutionCommitment> commitments;
-  final ExecutionRelationSelection selected;
-
-  @override
-  State<_RelationPickerList> createState() => _RelationPickerListState();
-}
-
-class _RelationPickerListState extends State<_RelationPickerList> {
-  final TextEditingController _query = TextEditingController();
-
-  @override
-  void dispose() {
-    _query.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final showSearch = widget.projects.length + widget.commitments.length > 6;
-    final maxListHeight = MediaQuery.sizeOf(context).height * 0.5;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ExecutionPickerTile(
-          key: const ValueKey('relation:none'),
-          icon: FLucideIcons.inbox,
-          title: l10n.executionNoRelation,
-          selected:
-              widget.selected.projectId == null &&
-              widget.selected.commitmentId == null,
-          onPress: () =>
-              Navigator.of(context).pop((projectId: null, commitmentId: null)),
-        ),
-        if (showSearch) ...[
-          const AppDivider(),
-          const SizedBox(height: AppSpacing.s8),
-          _ExecutionPickerSearchField(
-            controller: _query,
-            hint: l10n.executionPickerSearchHint,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-        ] else
-          const AppDivider(),
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _query,
-          builder: (context, value, _) {
-            final query = value.text.trim().toLowerCase();
-            final independent = widget.commitments
-                .where((commitment) => commitment.projectId == null)
-                .toList(growable: false);
-            final visibleProjects = widget.projects
-                .where((project) {
-                  if (query.isEmpty || _matchesProject(project, query)) {
-                    return true;
-                  }
-                  return widget.commitments.any(
-                    (commitment) =>
-                        commitment.projectId == project.id &&
-                        _matchesCommitment(commitment, query),
-                  );
-                })
-                .toList(growable: false);
-            final visibleIndependent = independent
-                .where(
-                  (commitment) =>
-                      query.isEmpty || _matchesCommitment(commitment, query),
-                )
-                .toList(growable: false);
-            final hasMatches =
-                visibleProjects.isNotEmpty || visibleIndependent.isNotEmpty;
-            return ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxListHeight),
-              child: !hasMatches
-                  ? AppEmptyState(
-                      icon: FLucideIcons.searchX,
-                      title: l10n.executionPickerSearchEmpty,
-                      action: query.isEmpty
-                          ? null
-                          : FButton(
-                              variant: FButtonVariant.outline,
-                              onPress: _query.clear,
-                              child: Text(l10n.aiChatSessionsSearchClear),
-                            ),
-                    )
-                  : ListView(
-                      shrinkWrap: true,
-                      keyboardDismissBehavior:
-                          ScrollViewKeyboardDismissBehavior.onDrag,
-                      children: [
-                        for (
-                          var index = 0;
-                          index < visibleProjects.length;
-                          index++
-                        )
-                          ..._projectGroup(
-                            context,
-                            visibleProjects[index],
-                            query,
-                            showDivider: index > 0,
-                          ),
-                        if (visibleIndependent.isNotEmpty) ...[
-                          if (visibleProjects.isNotEmpty) const AppDivider(),
-                          _RelationGroupLabel(
-                            label: l10n.executionCommitmentsSection,
-                          ),
-                          for (final commitment in visibleIndependent)
-                            _commitmentTile(context, commitment),
-                        ],
-                      ],
-                    ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  List<Widget> _projectGroup(
-    BuildContext context,
-    ExecutionProject project,
-    String query, {
-    required bool showDivider,
-  }) {
-    final commitments = widget.commitments
-        .where(
-          (commitment) =>
-              commitment.projectId == project.id &&
-              (query.isEmpty || _matchesCommitment(commitment, query)),
-        )
-        .toList(growable: false);
-    return [
-      if (showDivider) const AppDivider(),
-      ExecutionPickerTile(
-        key: ValueKey('relation:project:${project.id}'),
-        icon: FLucideIcons.folder,
-        title: project.title,
-        subtitle: AppLocalizations.of(context).executionProjectField,
-        selected:
-            widget.selected.projectId == project.id &&
-            widget.selected.commitmentId == null,
-        onPress: () =>
-            Navigator.of(context)
-                .pop((projectId: project.id, commitmentId: null)),
-      ),
-      for (final commitment in commitments)
-        Padding(
-          padding: const EdgeInsetsDirectional.only(start: AppSpacing.s20),
-          child: _commitmentTile(context, commitment),
-        ),
-    ];
-  }
-
-  Widget _commitmentTile(BuildContext context, ExecutionCommitment commitment) {
-    return ExecutionPickerTile(
-      key: ValueKey('relation:commitment:${commitment.id}'),
-      icon: FLucideIcons.target,
-      title: commitment.title,
-      subtitle: AppLocalizations.of(context).executionCommitmentField,
-      selected: widget.selected.commitmentId == commitment.id,
-      onPress: () => Navigator.of(context)
-          .pop((projectId: commitment.projectId, commitmentId: commitment.id)),
-    );
-  }
-
-  bool _matchesProject(ExecutionProject project, String query) =>
-      project.title.toLowerCase().contains(query) ||
-      project.description.toLowerCase().contains(query);
-
-  bool _matchesCommitment(ExecutionCommitment commitment, String query) =>
-      commitment.title.toLowerCase().contains(query) ||
-      commitment.description.toLowerCase().contains(query);
-}
-
-class _RelationGroupLabel extends StatelessWidget {
-  const _RelationGroupLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(
-        AppSpacing.s16,
-        AppSpacing.s12,
-        AppSpacing.s16,
-        AppSpacing.s4,
-      ),
-      child: Text(label, style: context.captionLabelStyle),
-    );
-  }
 }
 
 Future<String?> showExecutionActionPicker({
@@ -354,86 +50,45 @@ Future<String?> showExecutionActionPicker({
   required String? selectedId,
 }) {
   final l10n = AppLocalizations.of(context);
-  return showAppSheet<String>(
+  return _showPicker(
     context: context,
     title: l10n.executionActionField,
-    scrollable: false,
-    maxHeightFactor: 0.82,
-    builder: (sheetContext) => _PickerList(
-      emptyIcon: FLucideIcons.listTodo,
-      emptyTitle: l10n.executionNoActionsAvailable,
-      clearLabel: l10n.executionNoAction,
-      clearIcon: FLucideIcons.x,
-      selectedId: selectedId,
-      items: [
-        for (final a in actions)
-          _PickerItem(
-            id: a.id,
-            label: a.title,
-            detail: a.note,
-            icon: FLucideIcons.listTodo,
-          ),
-      ],
-    ),
+    selectedId: selectedId,
+    clearLabel: l10n.executionNoAction,
+    emptyTitle: l10n.executionNoActionsAvailable,
+    emptyIcon: FLucideIcons.listTodo,
+    items: [
+      for (final action in actions)
+        _PickerItem(
+          id: action.id,
+          label: action.title,
+          detail: action.note,
+          icon: FLucideIcons.listTodo,
+        ),
+    ],
   );
 }
 
-Future<String?> showExecutionProjectPicker({
+Future<String?> _showPicker({
   required BuildContext context,
-  required List<ExecutionProject> projects,
+  required String title,
+  required List<_PickerItem> items,
   required String? selectedId,
+  required String clearLabel,
+  required IconData emptyIcon,
+  required String emptyTitle,
 }) {
-  final l10n = AppLocalizations.of(context);
   return showAppSheet<String>(
     context: context,
-    title: l10n.executionProjectField,
+    title: title,
     scrollable: false,
     maxHeightFactor: 0.82,
-    builder: (sheetContext) => _PickerList(
-      emptyIcon: FLucideIcons.folderOpen,
-      emptyTitle: l10n.executionNoProjectsAvailable,
-      clearLabel: l10n.executionNoProject,
-      clearIcon: FLucideIcons.x,
+    builder: (_) => _PickerList(
+      items: items,
       selectedId: selectedId,
-      items: [
-        for (final p in projects)
-          _PickerItem(
-            id: p.id,
-            label: p.title,
-            detail: p.description,
-            icon: FLucideIcons.folder,
-          ),
-      ],
-    ),
-  );
-}
-
-Future<String?> showExecutionCommitmentPicker({
-  required BuildContext context,
-  required List<ExecutionCommitment> commitments,
-  required String? selectedId,
-}) {
-  final l10n = AppLocalizations.of(context);
-  return showAppSheet<String>(
-    context: context,
-    title: l10n.executionCommitmentField,
-    scrollable: false,
-    maxHeightFactor: 0.82,
-    builder: (sheetContext) => _PickerList(
-      emptyIcon: FLucideIcons.target,
-      emptyTitle: l10n.executionNoCommitmentsAvailable,
-      clearLabel: l10n.executionNoCommitment,
-      clearIcon: FLucideIcons.x,
-      selectedId: selectedId,
-      items: [
-        for (final c in commitments)
-          _PickerItem(
-            id: c.id,
-            label: c.title,
-            detail: c.description,
-            icon: FLucideIcons.target,
-          ),
-      ],
+      clearLabel: clearLabel,
+      emptyIcon: emptyIcon,
+      emptyTitle: emptyTitle,
     ),
   );
 }
@@ -443,7 +98,6 @@ class _PickerList extends StatefulWidget {
     required this.items,
     required this.selectedId,
     required this.clearLabel,
-    required this.clearIcon,
     required this.emptyIcon,
     required this.emptyTitle,
   });
@@ -451,7 +105,6 @@ class _PickerList extends StatefulWidget {
   final List<_PickerItem> items;
   final String? selectedId;
   final String clearLabel;
-  final IconData clearIcon;
   final IconData emptyIcon;
   final String emptyTitle;
 
@@ -472,31 +125,12 @@ class _PickerListState extends State<_PickerList> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final showSearch = widget.items.length > 6;
-
-    if (widget.items.isEmpty) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ExecutionPickerTile(
-            key: const ValueKey('picker:none'),
-            icon: widget.clearIcon,
-            title: widget.clearLabel,
-            selected: widget.selectedId == null || widget.selectedId!.isEmpty,
-            onPress: () => Navigator.of(context).pop(kExecutionPickerNone),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          AppEmptyState(icon: widget.emptyIcon, title: widget.emptyTitle),
-        ],
-      );
-    }
-
-    final maxListHeight = MediaQuery.sizeOf(context).height * 0.44;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ExecutionPickerTile(
           key: const ValueKey('picker:none'),
-          icon: widget.clearIcon,
+          icon: FLucideIcons.x,
           title: widget.clearLabel,
           selected: widget.selectedId == null || widget.selectedId!.isEmpty,
           onPress: () => Navigator.of(context).pop(kExecutionPickerNone),
@@ -504,7 +138,7 @@ class _PickerListState extends State<_PickerList> {
         const AppDivider(),
         if (showSearch) ...[
           const SizedBox(height: AppSpacing.s8),
-          _ExecutionPickerSearchField(
+          _PickerSearchField(
             controller: _query,
             hint: l10n.executionPickerSearchHint,
           ),
@@ -523,17 +157,13 @@ class _PickerListState extends State<_PickerList> {
                             item.detail.toLowerCase().contains(query),
                       )
                       .toList(growable: false);
+            final maxHeight = MediaQuery.sizeOf(context).height * 0.44;
             return ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxListHeight),
+              constraints: BoxConstraints(maxHeight: maxHeight),
               child: filtered.isEmpty
                   ? AppEmptyState(
-                      icon: FLucideIcons.searchX,
-                      title: l10n.executionPickerSearchEmpty,
-                      action: FButton(
-                        variant: FButtonVariant.outline,
-                        onPress: _query.clear,
-                        child: Text(l10n.aiChatSessionsSearchClear),
-                      ),
+                      icon: widget.emptyIcon,
+                      title: widget.emptyTitle,
                     )
                   : ListView(
                       shrinkWrap: true,
@@ -561,17 +191,8 @@ class _PickerListState extends State<_PickerList> {
   }
 }
 
-/// Search fields are the one picker control that intentionally uses Flutter's
-/// editable field instead of [FTextField]. Forui 0.25 wraps [FTextField] in a
-/// [MergeSemantics] node that is not stable while Flutter 3.47 updates text
-/// and focused descendants in the same frame. Keeping this small control
-/// local preserves the app's field tokens while avoiding a11y tree churn in
-/// every searchable picker.
-class _ExecutionPickerSearchField extends StatelessWidget {
-  const _ExecutionPickerSearchField({
-    required this.controller,
-    required this.hint,
-  });
+class _PickerSearchField extends StatelessWidget {
+  const _PickerSearchField({required this.controller, required this.hint});
 
   final TextEditingController controller;
   final String hint;
@@ -586,11 +207,6 @@ class _ExecutionPickerSearchField extends StatelessWidget {
       context.platformVariant as FTextFieldVariant,
     };
     final border = fieldStyle.border.resolve(variants);
-    final focusedBorder = fieldStyle.border.resolve({
-      ...variants,
-      FTextFieldVariant.focused,
-    });
-
     return Material(
       color: Colors.transparent,
       child: TextField(
@@ -598,28 +214,20 @@ class _ExecutionPickerSearchField extends StatelessWidget {
         textInputAction: TextInputAction.search,
         style: fieldStyle.contentTextStyle.resolve(variants),
         cursorColor: fieldStyle.cursorColor,
-        cursorWidth: fieldStyle.cursorWidth,
         decoration: InputDecoration(
           isDense: true,
-          constraints: fieldStyle.constraints,
           hintText: hint,
           hintStyle: fieldStyle.hintTextStyle.resolve(variants),
-          filled:
-              fieldStyle.color.base != null ||
-              fieldStyle.color.variants.isNotEmpty,
+          filled: true,
           fillColor: fieldStyle.color.resolve(variants),
           contentPadding: fieldStyle.contentPadding,
           border: border,
           enabledBorder: border,
-          focusedBorder: focusedBorder,
-          prefixIcon: Padding(
-            padding: const EdgeInsetsDirectional.only(start: 12, end: 8),
-            child: IconTheme(
-              data: fieldStyle.iconStyle.resolve(variants),
-              child: const Icon(FLucideIcons.search),
-            ),
-          ),
-          prefixIconConstraints: const BoxConstraints(),
+          focusedBorder: fieldStyle.border.resolve({
+            ...variants,
+            FTextFieldVariant.focused,
+          }),
+          prefixIcon: const Icon(FLucideIcons.search),
         ),
       ),
     );

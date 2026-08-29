@@ -54,20 +54,12 @@ final _knowledgeNotes = <KnowledgeNote>[
   ),
 ];
 
-final _executionProject = ExecutionProject(
-  id: 'execution:project',
+final _executionPlan = ExecutionPlan(
+  id: 'execution:plan',
   title: '完成季度 LifeOS 复盘',
   description: '连接健康、财富与执行数据',
   horizon: ExecutionHorizon.quarter,
   createdAt: _domainShowcaseNow.subtract(const Duration(days: 20)),
-  sync: _domainShowcaseSync,
-);
-
-final _executionCommitment = ExecutionCommitment(
-  id: 'execution:commitment',
-  title: '每周保留两个深度工作时段',
-  horizon: ExecutionHorizon.week,
-  createdAt: _domainShowcaseNow.subtract(const Duration(days: 30)),
   sync: _domainShowcaseSync,
 );
 
@@ -78,8 +70,7 @@ final _executionActions = <ExecutionAction>[
     note: '只保留会改变下一步行动的信息。',
     priority: ExecutionPriority.high,
     status: ExecutionActionStatus.doing,
-    projectId: _executionProject.id,
-    commitmentId: _executionCommitment.id,
+    planId: _executionPlan.id,
     createdAt: _domainShowcaseNow.subtract(const Duration(days: 2)),
     sync: _domainShowcaseSync,
   ),
@@ -87,8 +78,7 @@ final _executionActions = <ExecutionAction>[
     id: 'execution:plan',
     title: '安排下周的深度工作时间块',
     priority: ExecutionPriority.normal,
-    projectId: _executionProject.id,
-    commitmentId: _executionCommitment.id,
+    planId: _executionPlan.id,
     createdAt: _domainShowcaseNow.subtract(const Duration(days: 1)),
     sync: _domainShowcaseSync,
   ),
@@ -130,15 +120,8 @@ List<Override> readmeDomainShowcaseOverrides() => <Override>[
   executionOpenActionsProvider.overrideWith(
     (_) => Stream<List<ExecutionAction>>.value(_executionActions),
   ),
-  executionProjectsProvider.overrideWith(
-    (_) => Stream<List<ExecutionProject>>.value(<ExecutionProject>[
-      _executionProject,
-    ]),
-  ),
-  executionCommitmentsProvider.overrideWith(
-    (_) => Stream<List<ExecutionCommitment>>.value(<ExecutionCommitment>[
-      _executionCommitment,
-    ]),
+  executionPlansProvider.overrideWith(
+    (_) => Stream<List<ExecutionPlan>>.value(<ExecutionPlan>[_executionPlan]),
   ),
   executionRecentProgressProvider.overrideWith(
     (_) => Stream<List<ExecutionProgressEntry>>.value(
@@ -150,12 +133,7 @@ List<Override> readmeDomainShowcaseOverrides() => <Override>[
       actions: <String, ExecutionAction>{
         for (final action in _executionActions) action.id: action,
       },
-      projects: <String, ExecutionProject>{
-        _executionProject.id: _executionProject,
-      },
-      commitments: <String, ExecutionCommitment>{
-        _executionCommitment.id: _executionCommitment,
-      },
+      plans: <String, ExecutionPlan>{_executionPlan.id: _executionPlan},
     ),
   ),
 ];

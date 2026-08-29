@@ -351,22 +351,22 @@ void main() {
       );
     });
 
-    testWidgets('Execution Project detail deep link resolves by project id', (
+    testWidgets('Execution Plan detail deep link resolves by plan id', (
       tester,
     ) async {
-      final route = ExecutionRoutes.project('project/with spaces');
+      final route = ExecutionRoutes.plan('plan/with spaces');
       final container = await _pumpAt(tester, initialLocation: route);
 
       expect(_currentPath(container), route);
       expect(find.byType(RouteErrorPage), findsNothing);
-      expect(find.byType(ExecutionProjectDetailPage), findsOneWidget);
+      expect(find.byType(ExecutionPlanDetailPage), findsOneWidget);
       expect(
         tester
-            .widget<ExecutionProjectDetailPage>(
-              find.byType(ExecutionProjectDetailPage),
+            .widget<ExecutionPlanDetailPage>(
+              find.byType(ExecutionPlanDetailPage),
             )
-            .projectId,
-        'project/with spaces',
+            .planId,
+        'plan/with spaces',
       );
     });
 

@@ -291,7 +291,7 @@ List<File> _domainTabRootFiles() {
     'lib/features/knowledge/ui/knowledge_library_page.dart',
     'lib/features/knowledge/ui/knowledge_review_page.dart',
     'lib/features/execution/ui/execution_today_page.dart',
-    'lib/features/execution/ui/execution_commitments_page.dart',
+    'lib/features/execution/ui/execution_plans_page.dart',
     'lib/features/execution/ui/execution_review_page.dart',
   ].map((path) => File('${root.path}/$path')).toList(growable: false);
 }

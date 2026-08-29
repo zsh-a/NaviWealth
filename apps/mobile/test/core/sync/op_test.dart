@@ -65,7 +65,7 @@ void main() {
       expect(SyncBackfill.tables, expected);
       expect(kSyncBackfillTables, contains('corporate_actions'));
       expect(kSyncBackfillTables, contains('health_metrics'));
-      expect(kSyncBackfillTables, contains('execution_projects'));
+      expect(kSyncBackfillTables, contains('execution_plans'));
       expect(kSyncBackfillTables, isNot(contains('fx_rates')));
     });
 

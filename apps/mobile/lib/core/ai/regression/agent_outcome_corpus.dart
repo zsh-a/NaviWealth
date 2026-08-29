@@ -487,8 +487,7 @@ agentOutcomeRegressionCorpus = <AgentOutcomeRegressionCase>[
     expectedEvidenceTypes: <String>{'execution_action'},
     expectedEvidenceRoutePatterns: <String, String>{
       'execution_action': '/execution/action/*',
-      'execution_project': '/execution/commitments',
-      'execution_commitment': '/execution/commitments/*',
+      'execution_plan': '/execution/plans/*',
     },
     expectedActionKinds: <String>{'review', 'proposal'},
     expectedActionIntents: <String>{

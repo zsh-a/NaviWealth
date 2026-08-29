@@ -42,38 +42,22 @@ void main() {
     'by-id providers resolve lifecycle rows hidden from active lists',
     () async {
       final repo = await container.read(executionRepositoryProvider.future);
-      await repo.upsertProject(
-        ExecutionProject(
+      await repo.upsertPlan(
+        ExecutionPlan(
           id: 'proj-completed',
           title: 'Completed execution migration',
-          status: ExecutionProjectStatus.completed,
+          status: ExecutionPlanStatus.completed,
           createdAt: DateTime.utc(2026, 6, 1),
           completedAt: DateTime.utc(2026, 6, 2),
           sync: _sync(1),
         ),
       );
-      await repo.upsertCommitment(
-        ExecutionCommitment(
-          id: 'commit-archived',
-          title: 'Archived weekly promise',
-          status: ExecutionCommitmentStatus.archived,
-          createdAt: DateTime.utc(2026, 6, 1),
-          completedAt: DateTime.utc(2026, 6, 2),
-          sync: _sync(2),
-        ),
+      final plan = await container.read(
+        executionPlanByIdProvider('proj-completed').future,
       );
 
-      final project = await container.read(
-        executionProjectByIdProvider('proj-completed').future,
-      );
-      final commitment = await container.read(
-        executionCommitmentByIdProvider('commit-archived').future,
-      );
-
-      expect(project?.title, 'Completed execution migration');
-      expect(project?.status, ExecutionProjectStatus.completed);
-      expect(commitment?.title, 'Archived weekly promise');
-      expect(commitment?.status, ExecutionCommitmentStatus.archived);
+      expect(plan?.title, 'Completed execution migration');
+      expect(plan?.status, ExecutionPlanStatus.completed);
     },
   );
 
@@ -81,36 +65,26 @@ void main() {
     'review relations resolve relation labels from closed actions',
     () async {
       final repo = await container.read(executionRepositoryProvider.future);
-      await repo.upsertProject(
-        ExecutionProject(
+      await repo.upsertPlan(
+        ExecutionPlan(
           id: 'proj-1',
-          title: 'Completed project relation',
+          title: 'Completed plan relation',
           createdAt: DateTime.utc(2026, 6, 1),
           sync: _sync(1),
-        ),
-      );
-      await repo.upsertCommitment(
-        ExecutionCommitment(
-          id: 'commit-1',
-          title: 'Completed commitment relation',
-          projectId: 'proj-1',
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(2),
         ),
       );
       final action = ExecutionAction(
         id: 'action-closed',
         title: 'Closed action relation',
-        projectId: 'proj-1',
-        commitmentId: 'commit-1',
+        planId: 'proj-1',
         createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(3),
+        sync: _sync(2),
       );
       await repo.upsertAction(action);
       await repo.updateActionStatus(
         action: action,
         status: ExecutionActionStatus.done,
-        sync: _sync(4),
+        sync: _sync(3),
       );
 
       final subscription = container.listen(
@@ -123,11 +97,7 @@ void main() {
       );
 
       expect(relations.actionLabel('action-closed'), 'Closed action relation');
-      expect(relations.projectLabel('proj-1'), 'Completed project relation');
-      expect(
-        relations.commitmentLabel('commit-1'),
-        'Completed commitment relation',
-      );
+      expect(relations.planLabel('proj-1'), 'Completed plan relation');
     },
   );
 }

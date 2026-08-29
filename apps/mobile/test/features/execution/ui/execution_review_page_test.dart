@@ -148,29 +148,19 @@ void main() {
       db: db,
       outbox: InMemoryOutboxStore(),
     );
-    final project = ExecutionProject(
-      id: 'project-missing',
-      title: 'Launch project',
+    final plan = ExecutionPlan(
+      id: 'plan-missing',
+      title: 'Launch plan',
       createdAt: DateTime.utc(2026, 7, 1),
       sync: _sync(DateTime.utc(2026, 7, 1)),
     );
-    final commitment = ExecutionCommitment(
-      id: 'commitment-missing',
-      title: 'Weekly planning',
-      createdAt: DateTime.utc(2026, 7, 1),
-      sync: _sync(DateTime.utc(2026, 7, 1)),
-    );
-    await repository.upsertProject(project);
-    await repository.upsertCommitment(commitment);
+    await repository.upsertPlan(plan);
 
     await tester.pumpWidget(
       _wrap(
         const ExecutionReviewPage(),
         overrides: [
-          ..._reviewOverrides(
-            projects: <ExecutionProject>[project],
-            commitments: <ExecutionCommitment>[commitment],
-          ),
+          ..._reviewOverrides(plans: <ExecutionPlan>[plan]),
           executionRepositoryProvider.overrideWith((_) async => repository),
           executionOwnerUserIdProvider.overrideWith((_) async => 'user-1'),
           mutationStamperProvider.overrideWith(
@@ -181,36 +171,28 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Review 2 missing next actions'));
+    await tester.tap(find.text('Review 1 missing next actions'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Launch project'), findsWidgets);
-    expect(find.text('Weekly planning'), findsWidgets);
-    expect(find.text('Create 2 next actions'), findsOneWidget);
-
-    await tester.tap(find.text('Weekly planning').last);
-    await tester.pumpAndSettle();
+    expect(find.text('Launch plan'), findsWidgets);
     await tester.tap(find.text('Create 1 next actions'));
     await tester.pumpAndSettle();
 
     final actions = await repository.listOpenActions(ownerUserId: 'user-1');
     expect(actions, hasLength(1));
-    expect(actions.single.projectId, project.id);
-    expect(actions.single.commitmentId, isNull);
+    expect(actions.single.planId, plan.id);
     expect(actions.single.priority, ExecutionPriority.high);
   });
 }
 
 List<Override> _reviewOverrides({
   List<ExecutionAction> actions = const <ExecutionAction>[],
-  List<ExecutionProject> projects = const <ExecutionProject>[],
-  List<ExecutionCommitment> commitments = const <ExecutionCommitment>[],
+  List<ExecutionPlan> plans = const <ExecutionPlan>[],
   List<ExecutionProgressEntry> progress = const <ExecutionProgressEntry>[],
   List<ExecutionAction> closedActions = const <ExecutionAction>[],
 }) => <Override>[
   executionOpenActionsProvider.overrideWith((ref) => Stream.value(actions)),
-  executionProjectsProvider.overrideWith((ref) => Stream.value(projects)),
-  executionCommitmentsProvider.overrideWith((ref) => Stream.value(commitments)),
+  executionPlansProvider.overrideWith((ref) => Stream.value(plans)),
   executionRecentProgressProvider.overrideWith((ref) => Stream.value(progress)),
   executionClosedActionsProvider.overrideWith(
     (ref) => Stream.value(closedActions),
@@ -218,10 +200,7 @@ List<Override> _reviewOverrides({
   executionReviewRelationsProvider.overrideWith(
     (ref) async => ExecutionReviewRelations(
       actions: {for (final action in actions) action.id: action},
-      projects: {for (final project in projects) project.id: project},
-      commitments: {
-        for (final commitment in commitments) commitment.id: commitment,
-      },
+      plans: {for (final plan in plans) plan.id: plan},
     ),
   ),
 ];

@@ -79,31 +79,15 @@ mixin ExecutionProgressRepositoryMixin {
     return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
   }
 
-  Stream<List<ExecutionProgressEntry>> watchProgressForCommitment({
+  Stream<List<ExecutionProgressEntry>> watchProgressForPlan({
     required String ownerUserId,
-    required String commitmentId,
+    required String planId,
     int limit = 100,
   }) {
     final q = _db.select(_db.executionProgressEntries)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
-      ..where((t) => t.commitmentId.equals(commitmentId))
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
-  }
-
-  Stream<List<ExecutionProgressEntry>> watchProgressForProject({
-    required String ownerUserId,
-    required String projectId,
-    int limit = 100,
-  }) {
-    final q = _db.select(_db.executionProgressEntries)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..where((t) => t.projectId.equals(projectId))
+      ..where((t) => t.planId.equals(planId))
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
@@ -160,8 +144,7 @@ mixin ExecutionProgressRepositoryMixin {
       ExecutionProgressEntry(
         id: progress.id,
         actionId: progress.actionId,
-        projectId: progress.projectId,
-        commitmentId: progress.commitmentId,
+        planId: progress.planId,
         kind: progress.kind,
         note: progress.note,
         createdAt: progress.createdAt,

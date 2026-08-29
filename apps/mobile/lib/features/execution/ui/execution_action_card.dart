@@ -12,8 +12,7 @@ class ExecutionActionCard extends StatelessWidget {
     required this.onDrop,
     required this.onRecordProgress,
     this.busy = false,
-    this.projectLabel,
-    this.commitmentLabel,
+    this.planLabel,
     this.onOpen,
     this.onSourceOpen,
     this.showActions = true,
@@ -32,8 +31,7 @@ class ExecutionActionCard extends StatelessWidget {
   final VoidCallback onDrop;
   final VoidCallback onRecordProgress;
   final bool busy;
-  final String? projectLabel;
-  final String? commitmentLabel;
+  final String? planLabel;
   final VoidCallback? onOpen;
   final VoidCallback? onSourceOpen;
   final bool showActions;
@@ -136,8 +134,7 @@ class ExecutionActionCard extends StatelessWidget {
                                 if (!compact)
                                   if (executionRelationLabel(
                                         l10n: l10n,
-                                        projectLabel: projectLabel,
-                                        commitmentLabel: commitmentLabel,
+                                        planLabel: planLabel,
                                       )
                                       case final relationLabel?)
                                     AppBadge(

@@ -60,89 +60,42 @@ final executionActionDetailProvider = StreamProvider.autoDispose
       yield* repository.watchActionById(ownerUserId: ownerUserId, id: id);
     });
 
-final executionProjectsProvider =
-    StreamProvider.autoDispose<List<ExecutionProject>>((ref) async* {
+final executionPlansProvider = StreamProvider.autoDispose<List<ExecutionPlan>>((
+  ref,
+) async* {
+  final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
+  final repository = await ref.watch(executionRepositoryProvider.future);
+  yield* repository.watchActivePlans(ownerUserId: ownerUserId);
+});
+
+final executionClosedPlansProvider =
+    StreamProvider.autoDispose<List<ExecutionPlan>>((ref) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchActiveProjects(ownerUserId: ownerUserId);
+      yield* repository.watchClosedPlans(ownerUserId: ownerUserId);
     });
 
-final executionClosedProjectsProvider =
-    StreamProvider.autoDispose<List<ExecutionProject>>((ref) async* {
+final executionPlanByIdProvider = FutureProvider.autoDispose
+    .family<ExecutionPlan?, String>((ref, id) async {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchClosedProjects(ownerUserId: ownerUserId);
+      return repository.findPlan(ownerUserId: ownerUserId, id: id);
     });
 
-final executionProjectByIdProvider = FutureProvider.autoDispose
-    .family<ExecutionProject?, String>((ref, id) async {
+final executionPlanDetailProvider = StreamProvider.autoDispose
+    .family<ExecutionPlan?, String>((ref, id) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
-      return repository.findProject(ownerUserId: ownerUserId, id: id);
+      yield* repository.watchPlanById(ownerUserId: ownerUserId, id: id);
     });
 
-final executionProjectDetailProvider = StreamProvider.autoDispose
-    .family<ExecutionProject?, String>((ref, id) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchProjectById(ownerUserId: ownerUserId, id: id);
-    });
-
-final executionCommitmentsProvider =
-    StreamProvider.autoDispose<List<ExecutionCommitment>>((ref) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchActiveCommitments(ownerUserId: ownerUserId);
-    });
-
-final executionClosedCommitmentsProvider =
-    StreamProvider.autoDispose<List<ExecutionCommitment>>((ref) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchClosedCommitments(ownerUserId: ownerUserId);
-    });
-
-final executionCommitmentByIdProvider = FutureProvider.autoDispose
-    .family<ExecutionCommitment?, String>((ref, id) async {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      return repository.findCommitment(ownerUserId: ownerUserId, id: id);
-    });
-
-final executionCommitmentDetailProvider = StreamProvider.autoDispose
-    .family<ExecutionCommitment?, String>((ref, id) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchCommitmentById(ownerUserId: ownerUserId, id: id);
-    });
-
-final executionActionsForCommitmentProvider = StreamProvider.autoDispose
+final executionActionsForPlanProvider = StreamProvider.autoDispose
     .family<List<ExecutionAction>, String>((ref, id) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchActionsForCommitment(
+      yield* repository.watchActionsForPlan(
         ownerUserId: ownerUserId,
-        commitmentId: id,
-      );
-    });
-
-final executionActionsForProjectProvider = StreamProvider.autoDispose
-    .family<List<ExecutionAction>, String>((ref, id) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchActionsForProject(
-        ownerUserId: ownerUserId,
-        projectId: id,
-      );
-    });
-
-final executionCommitmentsForProjectProvider = StreamProvider.autoDispose
-    .family<List<ExecutionCommitment>, String>((ref, id) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchCommitmentsForProject(
-        ownerUserId: ownerUserId,
-        projectId: id,
+        planId: id,
       );
     });
 
@@ -163,45 +116,27 @@ final executionProgressForActionProvider = StreamProvider.autoDispose
       );
     });
 
-final executionProgressForCommitmentProvider = StreamProvider.autoDispose
+final executionProgressForPlanProvider = StreamProvider.autoDispose
     .family<List<ExecutionProgressEntry>, String>((ref, id) async* {
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchProgressForCommitment(
+      yield* repository.watchProgressForPlan(
         ownerUserId: ownerUserId,
-        commitmentId: id,
-      );
-    });
-
-final executionProgressForProjectProvider = StreamProvider.autoDispose
-    .family<List<ExecutionProgressEntry>, String>((ref, id) async* {
-      final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
-      final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchProgressForProject(
-        ownerUserId: ownerUserId,
-        projectId: id,
+        planId: id,
       );
     });
 
 class ExecutionRelations {
-  const ExecutionRelations({
-    required this.actions,
-    required this.projects,
-    required this.commitments,
-  });
+  const ExecutionRelations({required this.actions, required this.plans});
 
   final Map<String, ExecutionAction> actions;
-  final Map<String, ExecutionProject> projects;
-  final Map<String, ExecutionCommitment> commitments;
+  final Map<String, ExecutionPlan> plans;
 
   String? actionLabel(String? id) =>
       id == null || id.isEmpty ? null : actions[id]?.title ?? id;
 
-  String? projectLabel(String? id) =>
-      id == null || id.isEmpty ? null : projects[id]?.title ?? id;
-
-  String? commitmentLabel(String? id) =>
-      id == null || id.isEmpty ? null : commitments[id]?.title ?? id;
+  String? planLabel(String? id) =>
+      id == null || id.isEmpty ? null : plans[id]?.title ?? id;
 }
 
 typedef ExecutionReviewRelations = ExecutionRelations;
@@ -214,33 +149,21 @@ final executionActionRelationsProvider =
       final List<ExecutionAction> actions =
           actionsAsync.maybeWhen(data: (value) => value, orElse: () => null) ??
           await ref.watch(executionOpenActionsProvider.future);
-      final projectIds = <String>{};
-      final commitmentIds = <String>{};
+      final planIds = <String>{};
       for (final action in actions) {
-        final projectId = action.projectId;
-        if (projectId != null && projectId.isNotEmpty) {
-          projectIds.add(projectId);
-        }
-        final commitmentId = action.commitmentId;
-        if (commitmentId != null && commitmentId.isNotEmpty) {
-          commitmentIds.add(commitmentId);
+        final planId = action.planId;
+        if (planId != null && planId.isNotEmpty) {
+          planIds.add(planId);
         }
       }
 
-      final projects = await repository.listProjectsByIds(
+      final plans = await repository.listPlansByIds(
         ownerUserId: ownerUserId,
-        ids: projectIds,
-      );
-      final commitments = await repository.listCommitmentsByIds(
-        ownerUserId: ownerUserId,
-        ids: commitmentIds,
+        ids: planIds,
       );
       return ExecutionRelations(
         actions: {for (final action in actions) action.id: action},
-        projects: {for (final project in projects) project.id: project},
-        commitments: {
-          for (final commitment in commitments) commitment.id: commitment,
-        },
+        plans: {for (final plan in plans) plan.id: plan},
       );
     });
 
@@ -260,28 +183,19 @@ final executionReviewRelationsProvider =
           ) ??
           await ref.watch(executionClosedActionsProvider.future);
       final actionIds = <String>{};
-      final projectIds = <String>{};
-      final commitmentIds = <String>{};
+      final planIds = <String>{};
       for (final entry in progress) {
         final actionId = entry.actionId;
         if (actionId != null && actionId.isNotEmpty) actionIds.add(actionId);
-        final projectId = entry.projectId;
-        if (projectId != null && projectId.isNotEmpty) {
-          projectIds.add(projectId);
-        }
-        final commitmentId = entry.commitmentId;
-        if (commitmentId != null && commitmentId.isNotEmpty) {
-          commitmentIds.add(commitmentId);
+        final planId = entry.planId;
+        if (planId != null && planId.isNotEmpty) {
+          planIds.add(planId);
         }
       }
       for (final action in closedActions) {
-        final projectId = action.projectId;
-        if (projectId != null && projectId.isNotEmpty) {
-          projectIds.add(projectId);
-        }
-        final commitmentId = action.commitmentId;
-        if (commitmentId != null && commitmentId.isNotEmpty) {
-          commitmentIds.add(commitmentId);
+        final planId = action.planId;
+        if (planId != null && planId.isNotEmpty) {
+          planIds.add(planId);
         }
       }
 
@@ -289,23 +203,16 @@ final executionReviewRelationsProvider =
         ownerUserId: ownerUserId,
         ids: actionIds,
       );
-      final projects = await repository.listProjectsByIds(
+      final plans = await repository.listPlansByIds(
         ownerUserId: ownerUserId,
-        ids: projectIds,
-      );
-      final commitments = await repository.listCommitmentsByIds(
-        ownerUserId: ownerUserId,
-        ids: commitmentIds,
+        ids: planIds,
       );
       return ExecutionRelations(
         actions: {
           for (final action in actions) action.id: action,
           for (final action in closedActions) action.id: action,
         },
-        projects: {for (final project in projects) project.id: project},
-        commitments: {
-          for (final commitment in commitments) commitment.id: commitment,
-        },
+        plans: {for (final plan in plans) plan.id: plan},
       );
     });
 

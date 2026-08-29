@@ -5,24 +5,20 @@ class ExecutionProgressCard extends StatelessWidget {
     super.key,
     required this.entry,
     this.actionLabel,
-    this.projectLabel,
-    this.commitmentLabel,
+    this.planLabel,
     this.onEdit,
     this.onDelete,
     this.onActionOpen,
-    this.onProjectOpen,
-    this.onCommitmentOpen,
+    this.onPlanOpen,
   });
 
   final ExecutionProgressEntry entry;
   final String? actionLabel;
-  final String? projectLabel;
-  final String? commitmentLabel;
+  final String? planLabel;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onActionOpen;
-  final VoidCallback? onProjectOpen;
-  final VoidCallback? onCommitmentOpen;
+  final VoidCallback? onPlanOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +68,7 @@ class ExecutionProgressCard extends StatelessWidget {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (actionLabel != null ||
-                    projectLabel != null ||
-                    commitmentLabel != null) ...[
+                if (actionLabel != null || planLabel != null) ...[
                   const SizedBox(height: AppSpacing.s10),
                   Wrap(
                     spacing: AppSpacing.s6,
@@ -91,16 +85,13 @@ class ExecutionProgressCard extends StatelessWidget {
                         : [
                             if (executionRelationLabel(
                                   l10n: l10n,
-                                  projectLabel: projectLabel,
-                                  commitmentLabel: commitmentLabel,
+                                  planLabel: planLabel,
                                 )
                                 case final relationLabel?)
                               _ProgressRelationBadge(
                                 label: relationLabel,
                                 icon: FLucideIcons.layers,
-                                onPress: commitmentLabel != null
-                                    ? onCommitmentOpen
-                                    : onProjectOpen,
+                                onPress: onPlanOpen,
                               ),
                           ],
                   ),

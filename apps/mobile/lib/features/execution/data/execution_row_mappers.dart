@@ -4,25 +4,25 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 
-ExecutionProjectsCompanion executionProjectCompanion(ExecutionProject project) {
-  return ExecutionProjectsCompanion.insert(
-    id: project.id,
-    title: project.title,
-    description: Value(project.description),
-    status: Value(project.status.wire),
-    horizon: Value(project.horizon.wire),
-    targetDate: Value(project.targetDate),
-    sourceDomain: Value(project.source.domain),
-    sourceRowFamily: Value(project.source.rowFamily),
-    sourceRowId: Value(project.source.rowId),
-    sourceLabelSnapshot: Value(project.source.labelSnapshot),
-    createdAt: project.createdAt,
-    completedAt: Value(project.completedAt),
-    ownerUserId: project.sync.ownerUserId,
-    updatedAt: project.sync.updatedAt,
-    updatedByDevice: project.sync.updatedByDevice,
-    hlc: project.sync.hlc,
-    deletedAt: Value(project.sync.deletedAt),
+ExecutionPlansCompanion executionPlanCompanion(ExecutionPlan plan) {
+  return ExecutionPlansCompanion.insert(
+    id: plan.id,
+    title: plan.title,
+    description: Value(plan.description),
+    status: Value(plan.status.wire),
+    horizon: Value(plan.horizon.wire),
+    targetDate: Value(plan.targetDate),
+    sourceDomain: Value(plan.source.domain),
+    sourceRowFamily: Value(plan.source.rowFamily),
+    sourceRowId: Value(plan.source.rowId),
+    sourceLabelSnapshot: Value(plan.source.labelSnapshot),
+    createdAt: plan.createdAt,
+    completedAt: Value(plan.completedAt),
+    ownerUserId: plan.sync.ownerUserId,
+    updatedAt: plan.sync.updatedAt,
+    updatedByDevice: plan.sync.updatedByDevice,
+    hlc: plan.sync.hlc,
+    deletedAt: Value(plan.sync.deletedAt),
   );
 }
 
@@ -35,8 +35,7 @@ ExecutionActionsCompanion executionActionCompanion(ExecutionAction action) {
     priority: Value(action.priority.wire),
     dueAt: Value(action.dueAt),
     scheduledFor: Value(action.scheduledFor),
-    projectId: Value(action.projectId),
-    commitmentId: Value(action.commitmentId),
+    planId: Value(action.planId),
     sourceDomain: Value(action.source.domain),
     sourceRowFamily: Value(action.source.rowFamily),
     sourceRowId: Value(action.source.rowId),
@@ -51,39 +50,13 @@ ExecutionActionsCompanion executionActionCompanion(ExecutionAction action) {
   );
 }
 
-ExecutionCommitmentsCompanion executionCommitmentCompanion(
-  ExecutionCommitment commitment,
-) {
-  return ExecutionCommitmentsCompanion.insert(
-    id: commitment.id,
-    title: commitment.title,
-    description: Value(commitment.description),
-    status: Value(commitment.status.wire),
-    horizon: Value(commitment.horizon.wire),
-    targetDate: Value(commitment.targetDate),
-    projectId: Value(commitment.projectId),
-    sourceDomain: Value(commitment.source.domain),
-    sourceRowFamily: Value(commitment.source.rowFamily),
-    sourceRowId: Value(commitment.source.rowId),
-    sourceLabelSnapshot: Value(commitment.source.labelSnapshot),
-    createdAt: commitment.createdAt,
-    completedAt: Value(commitment.completedAt),
-    ownerUserId: commitment.sync.ownerUserId,
-    updatedAt: commitment.sync.updatedAt,
-    updatedByDevice: commitment.sync.updatedByDevice,
-    hlc: commitment.sync.hlc,
-    deletedAt: Value(commitment.sync.deletedAt),
-  );
-}
-
 ExecutionProgressEntriesCompanion executionProgressCompanion(
   ExecutionProgressEntry progress,
 ) {
   return ExecutionProgressEntriesCompanion.insert(
     id: progress.id,
     actionId: Value(progress.actionId),
-    projectId: Value(progress.projectId),
-    commitmentId: Value(progress.commitmentId),
+    planId: Value(progress.planId),
     kind: Value(progress.kind.wire),
     note: progress.note,
     createdAt: progress.createdAt,
@@ -104,8 +77,7 @@ ExecutionAction executionActionFromRow(ExecutionActionRow r) {
     priority: ExecutionPriority.parse(r.priority),
     dueAt: r.dueAt,
     scheduledFor: r.scheduledFor,
-    projectId: r.projectId,
-    commitmentId: r.commitmentId,
+    planId: r.planId,
     source: ExecutionSourceRef(
       domain: r.sourceDomain,
       rowFamily: r.sourceRowFamily,
@@ -124,41 +96,14 @@ ExecutionAction executionActionFromRow(ExecutionActionRow r) {
   );
 }
 
-ExecutionProject executionProjectFromRow(ExecutionProjectRow r) {
-  return ExecutionProject(
+ExecutionPlan executionPlanFromRow(ExecutionPlanRow r) {
+  return ExecutionPlan(
     id: r.id,
     title: r.title,
     description: r.description,
-    status: ExecutionProjectStatus.parse(r.status),
+    status: ExecutionPlanStatus.parse(r.status),
     horizon: ExecutionHorizon.parse(r.horizon),
     targetDate: r.targetDate,
-    source: ExecutionSourceRef(
-      domain: r.sourceDomain,
-      rowFamily: r.sourceRowFamily,
-      rowId: r.sourceRowId,
-      labelSnapshot: r.sourceLabelSnapshot,
-    ),
-    createdAt: r.createdAt,
-    completedAt: r.completedAt,
-    sync: _syncFromRow(
-      ownerUserId: r.ownerUserId,
-      updatedAt: r.updatedAt,
-      updatedByDevice: r.updatedByDevice,
-      hlc: r.hlc,
-      deletedAt: r.deletedAt,
-    ),
-  );
-}
-
-ExecutionCommitment executionCommitmentFromRow(ExecutionCommitmentRow r) {
-  return ExecutionCommitment(
-    id: r.id,
-    title: r.title,
-    description: r.description,
-    status: ExecutionCommitmentStatus.parse(r.status),
-    horizon: ExecutionHorizon.parse(r.horizon),
-    targetDate: r.targetDate,
-    projectId: r.projectId,
     source: ExecutionSourceRef(
       domain: r.sourceDomain,
       rowFamily: r.sourceRowFamily,
@@ -181,8 +126,7 @@ ExecutionProgressEntry executionProgressFromRow(ExecutionProgressEntryRow r) {
   return ExecutionProgressEntry(
     id: r.id,
     actionId: r.actionId,
-    projectId: r.projectId,
-    commitmentId: r.commitmentId,
+    planId: r.planId,
     kind: ExecutionProgressKind.parse(r.kind),
     note: r.note,
     createdAt: r.createdAt,

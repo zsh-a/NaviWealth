@@ -34,18 +34,10 @@ void main() {
     final snapshot = ExecutionOverviewSnapshot.fromLists(
       todayActions: [blocked, due],
       openActions: [blocked, high, due, backlog, done],
-      projects: [
-        ExecutionProject(
+      plans: [
+        ExecutionPlan(
           id: 'proj-1',
-          title: 'Project',
-          createdAt: now,
-          sync: _sync(),
-        ),
-      ],
-      commitments: [
-        ExecutionCommitment(
-          id: 'commit-1',
-          title: 'Commitment',
+          title: 'Plan',
           createdAt: now,
           sync: _sync(),
         ),
@@ -75,8 +67,7 @@ void main() {
     expect(snapshot.backlogCount, 1);
     expect(snapshot.highPriorityCount, 1);
     expect(snapshot.dueCount, 1);
-    expect(snapshot.activeProjectCount, 1);
-    expect(snapshot.activeCommitmentCount, 1);
+    expect(snapshot.activePlanCount, 1);
     expect(snapshot.recentProgressCount, 1);
   });
 
@@ -115,8 +106,8 @@ void main() {
 
   test('execution relation labels resolve known rows and fall back to ids', () {
     expect(
-      executionProjectRelationLabel([
-        ExecutionProject(
+      executionPlanRelationLabel([
+        ExecutionPlan(
           id: 'proj-1',
           title: 'Execution polish',
           createdAt: DateTime.utc(2026, 6, 1),
@@ -125,53 +116,25 @@ void main() {
       ], 'proj-1'),
       'Execution polish',
     );
-    expect(
-      executionCommitmentRelationLabel([
-        ExecutionCommitment(
-          id: 'commit-1',
-          title: 'Weekly review',
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(),
-        ),
-      ], 'missing-commitment'),
-      'missing-commitment',
-    );
-    expect(executionProjectRelationLabel(const [], null), isNull);
+    expect(executionPlanRelationLabel(const [], null), isNull);
   });
 
   test('execution relation map preserves labels outside active lists', () {
     final relations = ExecutionRelations(
       actions: const {},
-      projects: {
-        'proj-done': ExecutionProject(
+      plans: {
+        'proj-done': ExecutionPlan(
           id: 'proj-done',
           title: 'Completed execution migration',
-          status: ExecutionProjectStatus.completed,
-          createdAt: DateTime.utc(2026, 6, 1),
-          sync: _sync(),
-        ),
-      },
-      commitments: {
-        'commit-archived': ExecutionCommitment(
-          id: 'commit-archived',
-          title: 'Archived weekly promise',
-          status: ExecutionCommitmentStatus.archived,
+          status: ExecutionPlanStatus.completed,
           createdAt: DateTime.utc(2026, 6, 1),
           sync: _sync(),
         ),
       },
     );
 
-    expect(
-      relations.projectLabel('proj-done'),
-      'Completed execution migration',
-    );
-    expect(
-      relations.commitmentLabel('commit-archived'),
-      'Archived weekly promise',
-    );
-    expect(relations.projectLabel('missing-project'), 'missing-project');
-    expect(relations.commitmentLabel(null), isNull);
+    expect(relations.planLabel('proj-done'), 'Completed execution migration');
+    expect(relations.planLabel('missing-plan'), 'missing-plan');
   });
 
   testWidgets('overview strip exposes tappable action filters', (tester) async {
@@ -185,8 +148,7 @@ void main() {
       backlogCount: 2,
       highPriorityCount: 2,
       dueCount: 1,
-      activeProjectCount: 4,
-      activeCommitmentCount: 2,
+      activePlanCount: 4,
       recentProgressCount: 5,
     );
 
@@ -228,8 +190,7 @@ void main() {
       backlogCount: 0,
       highPriorityCount: 0,
       dueCount: 0,
-      activeProjectCount: 0,
-      activeCommitmentCount: 0,
+      activePlanCount: 0,
       recentProgressCount: 0,
     );
 
@@ -243,8 +204,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Projects'), findsNothing);
-    expect(find.text('Commitments'), findsNothing);
+    expect(find.text('Plans'), findsNothing);
     expect(find.textContaining('7d progress'), findsNothing);
     expect(find.textContaining('Today'), findsOneWidget);
     expect(find.textContaining('Due'), findsNothing);
@@ -267,12 +227,10 @@ void main() {
             priority: ExecutionPriority.high,
             dueAt: DateTime.utc(2026, 1, 1),
             scheduledFor: DateTime.utc(2026, 6, 3),
-            projectId: 'proj-1',
-            commitmentId: 'commit-1',
+            planId: 'proj-1',
             source: const ExecutionSourceRef(labelSnapshot: 'Budget alert'),
           ),
-          projectLabel: 'Execution polish',
-          commitmentLabel: 'Weekly review',
+          planLabel: 'Execution polish',
           onSourceOpen: () => sourceOpened = true,
           onEdit: () => edited = true,
           onStart: () => started = true,
@@ -289,10 +247,7 @@ void main() {
     expect(find.text('High'), findsOneWidget);
     expect(find.textContaining('Overdue'), findsOneWidget);
     expect(find.textContaining('Scheduled'), findsOneWidget);
-    expect(
-      find.text('Belongs to: Execution polish · Weekly review'),
-      findsOneWidget,
-    );
+    expect(find.text('Belongs to: Execution polish'), findsOneWidget);
     expect(find.text('Budget alert'), findsOneWidget);
 
     await tester.tap(find.text('Budget alert'));
@@ -335,13 +290,11 @@ void main() {
             priority: ExecutionPriority.high,
             dueAt: DateTime.utc(2026, 1, 1),
             scheduledFor: DateTime.utc(2026, 1, 2),
-            projectId: 'proj-1',
-            commitmentId: 'commit-1',
+            planId: 'proj-1',
             source: const ExecutionSourceRef(labelSnapshot: 'Budget alert'),
           ),
           compact: true,
-          projectLabel: 'Execution polish',
-          commitmentLabel: 'Weekly review',
+          planLabel: 'Execution polish',
           onSourceOpen: () {},
           onEdit: () {},
           onStart: () {},
@@ -359,7 +312,6 @@ void main() {
     expect(find.text('Overdue 1/1/2026'), findsOneWidget);
     expect(find.textContaining('Scheduled'), findsNothing);
     expect(find.textContaining('Plan:'), findsNothing);
-    expect(find.textContaining('Commitment:'), findsNothing);
     expect(find.text('Budget alert'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -489,7 +441,7 @@ void main() {
     },
   );
 
-  testWidgets('project card renders lifecycle fields and edit action', (
+  testWidgets('plan card renders lifecycle fields and edit action', (
     tester,
   ) async {
     var created = false;
@@ -503,12 +455,12 @@ void main() {
 
     await tester.pumpWidget(
       _wrap(
-        ExecutionProjectCard(
-          project: ExecutionProject(
+        ExecutionPlanCard(
+          plan: ExecutionPlan(
             id: 'proj-1',
             title: 'Ship execution loop',
             description: 'Action and review workflow',
-            status: ExecutionProjectStatus.active,
+            status: ExecutionPlanStatus.active,
             horizon: ExecutionHorizon.quarter,
             createdAt: DateTime.utc(2026, 6, 1),
             sync: _sync(),
@@ -564,13 +516,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
-  testWidgets('project target shows overdue state', (tester) async {
+  testWidgets('plan target shows overdue state', (tester) async {
     await tester.pumpWidget(
       _wrap(
-        ExecutionProjectCard(
-          project: ExecutionProject(
-            id: 'overdue-project',
-            title: 'Overdue project',
+        ExecutionPlanCard(
+          plan: ExecutionPlan(
+            id: 'overdue-plan',
+            title: 'Overdue plan',
             targetDate: DateTime.utc(2026, 1, 1),
             createdAt: DateTime.utc(2026, 6, 1),
             sync: _sync(),
@@ -593,33 +545,26 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
-  testWidgets('project detail renders scoped actions and progress', (
+  testWidgets('plan detail renders scoped actions and progress', (
     tester,
   ) async {
-    final project = ExecutionProject(
+    final plan = ExecutionPlan(
       id: 'proj-detail',
-      title: 'Canonical project detail',
-      description: 'Project-owned execution context',
+      title: 'Canonical plan detail',
+      description: 'Plan-owned execution context',
       createdAt: DateTime.utc(2026, 6, 1),
       sync: _sync(),
     );
     final action = _action(
       id: 'action-detail',
-      title: 'Scoped project action',
-      projectId: project.id,
-    );
-    final commitment = ExecutionCommitment(
-      id: 'commitment-detail',
-      title: 'Scoped project commitment',
-      projectId: project.id,
-      createdAt: DateTime.utc(2026, 6, 1),
-      sync: _sync(),
+      title: 'Scoped plan action',
+      planId: plan.id,
     );
     final progress = ExecutionProgressEntry(
       id: 'progress-detail',
-      projectId: project.id,
+      planId: plan.id,
       kind: ExecutionProgressKind.checkin,
-      note: 'Scoped project progress',
+      note: 'Scoped plan progress',
       createdAt: DateTime.utc(2026, 6, 2),
       sync: _sync(),
     );
@@ -627,35 +572,31 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          executionProjectDetailProvider(project.id)
-              .overrideWith((ref) => Stream.value(project)),
-          executionActionsForProjectProvider(project.id)
+          executionPlanDetailProvider(plan.id)
+              .overrideWith((ref) => Stream.value(plan)),
+          executionActionsForPlanProvider(plan.id)
               .overrideWith((ref) => Stream.value([action])),
-          executionCommitmentsForProjectProvider(project.id)
-              .overrideWith((ref) => Stream.value([commitment])),
-          executionProgressForProjectProvider(project.id)
+          executionProgressForPlanProvider(plan.id)
               .overrideWith((ref) => Stream.value([progress])),
           executionActionRelationsProvider.overrideWith(
             (ref) async => ExecutionRelations(
               actions: {action.id: action},
-              projects: {project.id: project},
-              commitments: {commitment.id: commitment},
+              plans: {plan.id: plan},
             ),
           ),
         ],
-        child: _wrap(ExecutionProjectDetailPage(projectId: project.id)),
+        child: _wrap(ExecutionPlanDetailPage(planId: plan.id)),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Canonical project detail'), findsOneWidget);
-    expect(find.text('Scoped project action'), findsOneWidget);
-    expect(find.text('Scoped project commitment'), findsOneWidget);
-    expect(find.text('Scoped project progress'), findsOneWidget);
+    expect(find.text('Canonical plan detail'), findsOneWidget);
+    expect(find.text('Scoped plan action'), findsOneWidget);
+    expect(find.text('Scoped plan progress'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('closed project card exposes resume without close actions', (
+  testWidgets('closed plan card exposes resume without close actions', (
     tester,
   ) async {
     var paused = false;
@@ -664,11 +605,11 @@ void main() {
 
     await tester.pumpWidget(
       _wrap(
-        ExecutionProjectCard(
-          project: ExecutionProject(
+        ExecutionPlanCard(
+          plan: ExecutionPlan(
             id: 'proj-closed',
-            title: 'Closed project',
-            status: ExecutionProjectStatus.completed,
+            title: 'Closed plan',
+            status: ExecutionPlanStatus.completed,
             createdAt: DateTime.utc(2026, 6, 1),
             completedAt: DateTime.utc(2026, 6, 2),
             sync: _sync(),
@@ -684,7 +625,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Closed project'), findsOneWidget);
+    expect(find.text('Closed plan'), findsOneWidget);
     expect(find.text('Completed'), findsOneWidget);
     expect(find.byIcon(FLucideIcons.play), findsOneWidget);
     expect(find.byIcon(FLucideIcons.pause), findsNothing);
@@ -702,76 +643,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
   });
 
-  testWidgets('commitment card exposes create action and edit affordances', (
-    tester,
-  ) async {
-    var created = false;
-    var edited = false;
-    var paused = false;
-    var resumed = false;
-    var completed = false;
-    var archived = false;
-    var progressed = false;
-
-    await tester.pumpWidget(
-      _wrap(
-        ExecutionCommitmentCard(
-          commitment: ExecutionCommitment(
-            id: 'commit-1',
-            title: 'Weekly review',
-            description: 'Keep execution commitments current',
-            status: ExecutionCommitmentStatus.paused,
-            horizon: ExecutionHorizon.week,
-            targetDate: DateTime.utc(2026, 6, 8),
-            createdAt: DateTime.utc(2026, 6, 1),
-            sync: _sync(),
-          ),
-          openActionCount: 2,
-          blockedActionCount: 0,
-          onCreateAction: () => created = true,
-          onEdit: () => edited = true,
-          onPause: () => paused = true,
-          onResume: () => resumed = true,
-          onComplete: () => completed = true,
-          onArchive: () => archived = true,
-          onRecordProgress: () => progressed = true,
-        ),
-      ),
-    );
-
-    expect(find.text('Weekly review'), findsOneWidget);
-    expect(find.text('Paused'), findsOneWidget);
-    expect(find.text('Actions: 2'), findsOneWidget);
-    expect(find.text('Blocked: 0'), findsNothing);
-
-    await tester.tap(find.byIcon(FLucideIcons.play));
-    await tester.pump(const Duration(milliseconds: 200));
-
-    Future<void> selectMoreAction(String label) async {
-      await tester.tap(find.byIcon(FLucideIcons.ellipsis));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(label));
-      await tester.pumpAndSettle();
-    }
-
-    await selectMoreAction('Edit Ongoing Plan');
-    await selectMoreAction('New Update');
-    await selectMoreAction('New Action');
-    await selectMoreAction('Complete');
-    await selectMoreAction('Archive');
-
-    expect(created, isTrue);
-    expect(edited, isTrue);
-    expect(paused, isFalse);
-    expect(resumed, isTrue);
-    expect(completed, isTrue);
-    expect(archived, isTrue);
-    expect(progressed, isTrue);
-
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(milliseconds: 200));
-  });
-
   testWidgets('progress card renders relation context badges', (tester) async {
     var deleted = false;
     var edited = false;
@@ -783,16 +654,14 @@ void main() {
           entry: ExecutionProgressEntry(
             id: 'p1',
             actionId: 'a1',
-            projectId: 'proj-1',
-            commitmentId: 'commit-1',
+            planId: 'proj-1',
             kind: ExecutionProgressKind.completion,
             note: 'Completed proposal coverage.',
             createdAt: DateTime.utc(2026, 6, 1),
             sync: _sync(),
           ),
           actionLabel: 'Review budget delta',
-          projectLabel: 'Execution polish',
-          commitmentLabel: 'Weekly review',
+          planLabel: 'Execution polish',
           onEdit: () => edited = true,
           onDelete: () => deleted = true,
           onActionOpen: () => openedAction = true,
@@ -804,7 +673,6 @@ void main() {
     expect(find.text('Completed proposal coverage.'), findsOneWidget);
     expect(find.text('Action: Review budget delta'), findsOneWidget);
     expect(find.textContaining('Plan: Execution polish'), findsNothing);
-    expect(find.textContaining('Commitment: Weekly review'), findsNothing);
 
     await tester.tap(find.text('Action: Review budget delta'));
     await tester.pump();
@@ -844,8 +712,7 @@ ExecutionAction _action({
   ExecutionPriority priority = ExecutionPriority.normal,
   DateTime? dueAt,
   DateTime? scheduledFor,
-  String? projectId,
-  String? commitmentId,
+  String? planId,
   ExecutionSourceRef source = const ExecutionSourceRef(),
 }) {
   return ExecutionAction(
@@ -855,8 +722,7 @@ ExecutionAction _action({
     priority: priority,
     dueAt: dueAt,
     scheduledFor: scheduledFor,
-    projectId: projectId,
-    commitmentId: commitmentId,
+    planId: planId,
     source: source,
     createdAt: DateTime.utc(2026, 6, 1),
     sync: _sync(),

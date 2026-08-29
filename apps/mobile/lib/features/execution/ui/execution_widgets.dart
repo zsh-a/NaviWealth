@@ -14,9 +14,8 @@ part 'execution_progress_card.dart';
 part 'execution_overview_widgets.dart';
 
 String executionDate(BuildContext context, DateTime date) {
-  return AppFormatters(
-    locale: Localizations.localeOf(context),
-  ).date(date.toLocal());
+  return AppFormatters(locale: Localizations.localeOf(context))
+      .date(date.toLocal());
 }
 
 String executionStatusLabel(
@@ -32,27 +31,15 @@ String executionStatusLabel(
   };
 }
 
-String executionProjectStatusLabel(
+String executionPlanStatusLabel(
   AppLocalizations l10n,
-  ExecutionProjectStatus status,
+  ExecutionPlanStatus status,
 ) {
   return switch (status) {
-    ExecutionProjectStatus.active => l10n.executionProjectStatusActive,
-    ExecutionProjectStatus.paused => l10n.executionProjectStatusPaused,
-    ExecutionProjectStatus.completed => l10n.executionProjectStatusCompleted,
-    ExecutionProjectStatus.archived => l10n.executionProjectStatusArchived,
-  };
-}
-
-String executionCommitmentStatusLabel(
-  AppLocalizations l10n,
-  ExecutionCommitmentStatus status,
-) {
-  return switch (status) {
-    ExecutionCommitmentStatus.active => l10n.executionProjectStatusActive,
-    ExecutionCommitmentStatus.paused => l10n.executionProjectStatusPaused,
-    ExecutionCommitmentStatus.completed => l10n.executionProjectStatusCompleted,
-    ExecutionCommitmentStatus.archived => l10n.executionProjectStatusArchived,
+    ExecutionPlanStatus.active => l10n.executionPlanStatusActive,
+    ExecutionPlanStatus.paused => l10n.executionPlanStatusPaused,
+    ExecutionPlanStatus.completed => l10n.executionPlanStatusCompleted,
+    ExecutionPlanStatus.archived => l10n.executionPlanStatusArchived,
   };
 }
 
@@ -119,37 +106,16 @@ List<ExecutionAction> filteredExecutionActions({
 
 String? executionRelationLabel({
   required AppLocalizations l10n,
-  required String? projectLabel,
-  required String? commitmentLabel,
+  required String? planLabel,
 }) {
-  final labels = <String>[
-    if (projectLabel != null && projectLabel.trim().isNotEmpty)
-      projectLabel.trim(),
-    if (commitmentLabel != null && commitmentLabel.trim().isNotEmpty)
-      commitmentLabel.trim(),
-  ];
-  if (labels.isEmpty) return null;
-  return '${l10n.executionRelationField}: ${labels.join(' · ')}';
+  if (planLabel == null || planLabel.trim().isEmpty) return null;
+  return '${l10n.executionRelationField}: ${planLabel.trim()}';
 }
 
-String? executionProjectRelationLabel(
-  List<ExecutionProject> projects,
-  String? projectId,
-) {
-  if (projectId == null || projectId.isEmpty) return null;
-  for (final project in projects) {
-    if (project.id == projectId) return project.title;
+String? executionPlanRelationLabel(List<ExecutionPlan> plans, String? planId) {
+  if (planId == null || planId.isEmpty) return null;
+  for (final plan in plans) {
+    if (plan.id == planId) return plan.title;
   }
-  return projectId;
-}
-
-String? executionCommitmentRelationLabel(
-  List<ExecutionCommitment> commitments,
-  String? commitmentId,
-) {
-  if (commitmentId == null || commitmentId.isEmpty) return null;
-  for (final commitment in commitments) {
-    if (commitment.id == commitmentId) return commitment.title;
-  }
-  return commitmentId;
+  return planId;
 }

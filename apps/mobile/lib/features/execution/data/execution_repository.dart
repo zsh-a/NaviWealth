@@ -1,6 +1,6 @@
 /// ExecutionOS repository.
 ///
-/// Owns Drift access for actions, commitments, and progress entries. Callers
+/// Owns Drift access for actions, plans, and progress entries. Callers
 /// provide stamped sync metadata; the repository performs the write and
 /// enqueues the changed row for sync.
 library;
@@ -14,15 +14,13 @@ import '../domain/execution_models.dart';
 import 'execution_row_mappers.dart';
 
 part 'execution_repository_actions.dart';
-part 'execution_repository_commitments.dart';
 part 'execution_repository_helpers.dart';
 part 'execution_repository_progress.dart';
-part 'execution_repository_projects.dart';
+part 'execution_repository_plans.dart';
 
 enum ExecutionEntryKind {
-  project('execution_projects'),
+  plan('execution_plans'),
   action('execution_actions'),
-  commitment('execution_commitments'),
   progressEntry('execution_progress_entries');
 
   const ExecutionEntryKind(this.tableName);
@@ -45,8 +43,7 @@ class ExecutionSearchHit {
 
 class ExecutionRepository
     with
-        ExecutionProjectRepositoryMixin,
-        ExecutionCommitmentRepositoryMixin,
+        ExecutionPlanRepositoryMixin,
         ExecutionActionRepositoryMixin,
         ExecutionProgressRepositoryMixin {
   ExecutionRepository({required AppDatabase db, required OutboxStore outbox})
@@ -58,9 +55,8 @@ class ExecutionRepository
   @override
   final OutboxStore _outbox;
 
-  static const String _projectsTable = 'execution_projects';
+  static const String _plansTable = 'execution_plans';
   static const String _actionsTable = 'execution_actions';
-  static const String _commitmentsTable = 'execution_commitments';
   static const String _progressTable = 'execution_progress_entries';
 
   Future<List<ExecutionSearchHit>> search({
@@ -83,13 +79,8 @@ FROM execution_actions
 WHERE owner_user_id = ? AND deleted_at IS NULL
   AND (LOWER(title) LIKE ? ESCAPE '\\' OR LOWER(note) LIKE ? ESCAPE '\\')
 UNION ALL
-SELECT 'project' AS kind, id, title, status
-FROM execution_projects
-WHERE owner_user_id = ? AND deleted_at IS NULL
-  AND (LOWER(title) LIKE ? ESCAPE '\\' OR LOWER(description) LIKE ? ESCAPE '\\')
-UNION ALL
-SELECT 'commitment' AS kind, id, title, status
-FROM execution_commitments
+SELECT 'plan' AS kind, id, title, status
+FROM execution_plans
 WHERE owner_user_id = ? AND deleted_at IS NULL
   AND (LOWER(title) LIKE ? ESCAPE '\\' OR LOWER(description) LIKE ? ESCAPE '\\')
 ORDER BY title COLLATE NOCASE
@@ -102,15 +93,11 @@ LIMIT ?
             Variable<String>(ownerUserId),
             Variable<String>(pattern),
             Variable<String>(pattern),
-            Variable<String>(ownerUserId),
-            Variable<String>(pattern),
-            Variable<String>(pattern),
             Variable<int>(limit.clamp(1, 200)),
           ],
           readsFrom: <TableInfo<Table, Object?>>{
             _db.executionActions,
-            _db.executionProjects,
-            _db.executionCommitments,
+            _db.executionPlans,
           },
         )
         .get();
@@ -118,8 +105,7 @@ LIMIT ?
         .map(
           (row) => ExecutionSearchHit(
             kind: switch (row.read<String>('kind')) {
-              'project' => ExecutionEntryKind.project,
-              'commitment' => ExecutionEntryKind.commitment,
+              'plan' => ExecutionEntryKind.plan,
               _ => ExecutionEntryKind.action,
             },
             id: row.read<String>('id'),

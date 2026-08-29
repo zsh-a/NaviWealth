@@ -38,10 +38,7 @@ class ListBlockedActionsTool implements DeviceTool {
       ownerUserId: ownerUserId,
       limit: 200,
     );
-    final projects = await repo.listActiveProjects(ownerUserId: ownerUserId);
-    final commitments = await repo.listActiveCommitments(
-      ownerUserId: ownerUserId,
-    );
+    final plans = await repo.listActivePlans(ownerUserId: ownerUserId);
     final blockedActions = actions
         .where((a) => a.status == ExecutionActionStatus.blocked)
         .take(limit)
@@ -54,13 +51,8 @@ class ListBlockedActionsTool implements DeviceTool {
             'note': a.note,
             'priority': a.priority.wire,
             'due_at': a.dueAt?.toUtc().toIso8601String(),
-            'project_id': a.projectId,
-            'project_title': executionProjectTitle(projects, a.projectId),
-            'commitment_id': a.commitmentId,
-            'commitment_title': executionCommitmentTitle(
-              commitments,
-              a.commitmentId,
-            ),
+            'plan_id': a.planId,
+            'plan_title': executionPlanTitle(plans, a.planId),
             'source_label': a.source.labelSnapshot,
           },
         )

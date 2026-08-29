@@ -20,18 +20,11 @@ const List<ProposalKindMeta> kExecutionProposalKinds = [
     previewRows: _actionStatusRows,
   ),
   ProposalKindMeta(
-    kind: 'execution_project',
+    kind: 'execution_plan',
     icon: FLucideIcons.folder,
-    label: _projectLabel,
+    label: _planLabel,
     toolName: 'propose_plan',
-    previewRows: _projectRows,
-  ),
-  ProposalKindMeta(
-    kind: 'execution_commitment',
-    icon: FLucideIcons.target,
-    label: _commitmentLabel,
-    toolName: 'propose_plan',
-    previewRows: _commitmentRows,
+    previewRows: _planRows,
   ),
   ProposalKindMeta(
     kind: 'execution_progress',
@@ -48,10 +41,7 @@ Set<String> get kExecutionProposalAppliedKinds =>
 String _actionLabel(AppLocalizations l10n) => l10n.executionProposalActionLabel;
 String _actionStatusLabel(AppLocalizations l10n) =>
     l10n.executionProposalActionStatusLabel;
-String _projectLabel(AppLocalizations l10n) =>
-    l10n.executionProposalProjectLabel;
-String _commitmentLabel(AppLocalizations l10n) =>
-    l10n.executionProposalCommitmentLabel;
+String _planLabel(AppLocalizations l10n) => l10n.executionProposalPlanLabel;
 String _progressLabel(AppLocalizations l10n) =>
     l10n.executionProposalProgressLabel;
 
@@ -64,11 +54,8 @@ List<ProposalKindRow> _actionRows(
     ProposalKindRow(l10n.executionProposalRowAction, plan.get('title') ?? '—'),
     if (plan.get('priority') != null)
       ProposalKindRow(l10n.executionProposalRowPriority, plan.get('priority')!),
-    if (plan.get('project_id') != null)
-      ProposalKindRow(
-        l10n.executionProposalRowProject,
-        plan.get('project_id')!,
-      ),
+    if (plan.get('plan_id') != null)
+      ProposalKindRow(l10n.executionProposalRowPlan, plan.get('plan_id')!),
     if (plan.get('due_at') != null)
       ProposalKindRow(l10n.executionProposalRowDue, plan.get('due_at')!),
     if (plan.get('source_label') != null)
@@ -98,27 +85,13 @@ List<ProposalKindRow> _actionStatusRows(
   ];
 }
 
-List<ProposalKindRow> _projectRows(
+List<ProposalKindRow> _planRows(
   AppLocalizations l10n,
   ReadyProposalPlan plan,
   Map<String, Object?>? overrides,
 ) {
   return <ProposalKindRow>[
-    ProposalKindRow(l10n.executionProposalRowProject, plan.get('title') ?? '—'),
-    ..._sharedRollupRows(l10n, plan),
-  ];
-}
-
-List<ProposalKindRow> _commitmentRows(
-  AppLocalizations l10n,
-  ReadyProposalPlan plan,
-  Map<String, Object?>? overrides,
-) {
-  return <ProposalKindRow>[
-    ProposalKindRow(
-      l10n.executionProposalRowCommitment,
-      plan.get('title') ?? '—',
-    ),
+    ProposalKindRow(l10n.executionProposalRowPlan, plan.get('title') ?? '—'),
     ..._sharedRollupRows(l10n, plan),
   ];
 }
@@ -134,16 +107,8 @@ List<ProposalKindRow> _progressRows(
       ProposalKindRow(l10n.executionProgressKindField, plan.get('kind')!),
     if (plan.get('action_id') != null)
       ProposalKindRow(l10n.executionProposalRowAction, plan.get('action_id')!),
-    if (plan.get('project_id') != null)
-      ProposalKindRow(
-        l10n.executionProposalRowProject,
-        plan.get('project_id')!,
-      ),
-    if (plan.get('commitment_id') != null)
-      ProposalKindRow(
-        l10n.executionProposalRowCommitment,
-        plan.get('commitment_id')!,
-      ),
+    if (plan.get('plan_id') != null)
+      ProposalKindRow(l10n.executionProposalRowPlan, plan.get('plan_id')!),
   ];
 }
 
@@ -156,11 +121,6 @@ List<ProposalKindRow> _sharedRollupRows(
       ProposalKindRow(l10n.executionHorizonField, plan.get('horizon')!),
     if (plan.get('target_date') != null)
       ProposalKindRow(l10n.executionTargetDateField, plan.get('target_date')!),
-    if (plan.get('project_id') != null)
-      ProposalKindRow(
-        l10n.executionProposalRowProject,
-        plan.get('project_id')!,
-      ),
     if (plan.get('source_label') != null)
       ProposalKindRow(
         l10n.executionProposalRowSource,

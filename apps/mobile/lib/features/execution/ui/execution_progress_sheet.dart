@@ -15,8 +15,7 @@ Future<bool?> showExecutionProgressSheet({
   required BuildContext context,
   ExecutionProgressEntry? progress,
   ExecutionAction? action,
-  String? projectId,
-  String? commitmentId,
+  String? planId,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
@@ -26,8 +25,7 @@ Future<bool?> showExecutionProgressSheet({
       dirty: dirty,
       progress: progress,
       action: action,
-      projectId: projectId,
-      commitmentId: commitmentId,
+      planId: planId,
     ),
   ).whenComplete(dirty.dispose);
 }
@@ -37,15 +35,13 @@ class _ExecutionProgressForm extends ConsumerStatefulWidget {
     required this.dirty,
     required this.progress,
     required this.action,
-    required this.projectId,
-    required this.commitmentId,
+    required this.planId,
   });
 
   final FormDirtyController dirty;
   final ExecutionProgressEntry? progress;
   final ExecutionAction? action;
-  final String? projectId;
-  final String? commitmentId;
+  final String? planId;
 
   @override
   ConsumerState<_ExecutionProgressForm> createState() =>
@@ -58,8 +54,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
   final TextEditingController _note = TextEditingController();
   late ExecutionProgressKind _kind;
   String? _actionId;
-  String? _projectId;
-  String? _commitmentId;
+  String? _planId;
   bool _saving = false;
 
   @override
@@ -69,12 +64,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     _note.text = progress?.note ?? '';
     _kind = progress?.kind ?? ExecutionProgressKind.checkin;
     _actionId = progress?.actionId ?? widget.action?.id;
-    _projectId =
-        progress?.projectId ?? widget.action?.projectId ?? widget.projectId;
-    _commitmentId =
-        progress?.commitmentId ??
-        widget.action?.commitmentId ??
-        widget.commitmentId;
+    _planId = progress?.planId ?? widget.action?.planId ?? widget.planId;
     widget.dirty.bindTextControllers([_note]);
     _note.addListener(_onNoteChanged);
   }
@@ -111,8 +101,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
           ExecutionProgressEntry(
             id: widget.progress?.id ?? kExecutionUuid.v4(),
             actionId: _actionId,
-            projectId: _projectId,
-            commitmentId: _commitmentId,
+            planId: _planId,
             kind: _kind,
             note: note,
             createdAt: widget.progress?.createdAt ?? sync.updatedAt,
@@ -151,23 +140,17 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     final selectedAction = _actionId == null || _actionId!.isEmpty
         ? null
         : ref.watch(executionActionByIdProvider(_actionId!)).value;
-    final selectedProject = _projectId == null || _projectId!.isEmpty
+    final selectedPlan = _planId == null || _planId!.isEmpty
         ? null
-        : ref.watch(executionProjectByIdProvider(_projectId!)).value;
-    final selectedCommitment = _commitmentId == null || _commitmentId!.isEmpty
-        ? null
-        : ref.watch(executionCommitmentByIdProvider(_commitmentId!)).value;
+        : ref.watch(executionPlanByIdProvider(_planId!)).value;
     final contextValue =
         selectedAction?.title ??
         widget.action?.title ??
-        selectedCommitment?.title ??
-        selectedProject?.title ??
+        selectedPlan?.title ??
         (_actionId?.isNotEmpty == true
             ? l10n.executionUnknownAction
-            : _commitmentId?.isNotEmpty == true
-            ? l10n.executionUnknownCommitment
-            : _projectId?.isNotEmpty == true
-            ? l10n.executionUnknownProject
+            : _planId?.isNotEmpty == true
+            ? l10n.executionUnknownPlan
             : l10n.executionNoRelation);
     return AppSheet(
       title: widget.progress == null

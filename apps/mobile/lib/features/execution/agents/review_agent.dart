@@ -1,7 +1,7 @@
 /// `execution_review` — weekly ExecutionOS review agent.
 ///
 /// Summarises the open execution surface (today-worthy actions, blocked work,
-/// active projects/commitments, and recent progress) into a temporary artifact.
+/// active plans and recent progress) into a temporary artifact.
 library;
 
 import '../../../core/ai/agents/agent.dart';
@@ -50,8 +50,7 @@ class ExecutionReviewAgent implements Agent {
 
     final snapshot = await reviewReader.read(ctx);
     final openActions = snapshot.openActions;
-    final projects = snapshot.activeProjects;
-    final commitments = snapshot.activeCommitments;
+    final plans = snapshot.activePlans;
     final recentProgress = snapshot.recentProgress;
     final recentClosedActions = snapshot.recentClosedActions;
 
@@ -85,34 +84,18 @@ class ExecutionReviewAgent implements Agent {
               startedAt.toUtc().difference(action.updatedAt).inDays >= 7,
         )
         .toList(growable: false);
-    final projectIdsWithActions = openActions
-        .map((action) => action.projectId)
+    final planIdsWithActions = openActions
+        .map((action) => action.planId)
         .whereType<String>()
         .toSet();
-    final commitmentIdsWithActions = openActions
-        .map((action) => action.commitmentId)
-        .whereType<String>()
-        .toSet();
-    final projectsWithoutNextAction = projects
-        .where((project) => !projectIdsWithActions.contains(project.id))
+    final plansWithoutNextAction = plans
+        .where((plan) => !planIdsWithActions.contains(plan.id))
         .toList(growable: false);
-    final commitmentsWithoutNextAction = commitments
+    final overduePlans = plans
         .where(
-          (commitment) => !commitmentIdsWithActions.contains(commitment.id),
-        )
-        .toList(growable: false);
-    final overdueProjects = projects
-        .where(
-          (project) =>
-              project.targetDate != null &&
-              !project.targetDate!.toUtc().isAfter(startedAt.toUtc()),
-        )
-        .toList(growable: false);
-    final overdueCommitments = commitments
-        .where(
-          (commitment) =>
-              commitment.targetDate != null &&
-              !commitment.targetDate!.toUtc().isAfter(startedAt.toUtc()),
+          (plan) =>
+              plan.targetDate != null &&
+              !plan.targetDate!.toUtc().isAfter(startedAt.toUtc()),
         )
         .toList(growable: false);
     final blockerOccurrences = <String, int>{};
@@ -198,62 +181,30 @@ class ExecutionReviewAgent implements Agent {
               'updated_at': action.updatedAt.toIso8601String(),
             },
           ),
-        for (final project in projectsWithoutNextAction)
+        for (final plan in plansWithoutNextAction)
           AgentFinding(
-            id: 'execution_finding:no_next_action:project:${project.id}',
+            id: 'execution_finding:no_next_action:plan:${plan.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
             domain: 'execution',
-            kind: 'project_without_next_action',
+            kind: 'plan_without_next_action',
             severity: AgentArtifactSeverity.attention,
             confidence: 1,
-            payload: <String, Object?>{
-              'project_id': project.id,
-              'title': project.title,
-            },
+            payload: <String, Object?>{'plan_id': plan.id, 'title': plan.title},
           ),
-        for (final commitment in commitmentsWithoutNextAction)
+        for (final plan in overduePlans)
           AgentFinding(
-            id: 'execution_finding:no_next_action:commitment:${commitment.id}',
+            id: 'execution_finding:overdue_plan:${plan.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
             domain: 'execution',
-            kind: 'commitment_without_next_action',
-            severity: AgentArtifactSeverity.attention,
-            confidence: 1,
-            payload: <String, Object?>{
-              'commitment_id': commitment.id,
-              'title': commitment.title,
-            },
-          ),
-        for (final project in overdueProjects)
-          AgentFinding(
-            id: 'execution_finding:overdue_project:${project.id}',
-            ownerUserId: ownerUserId,
-            agentId: kExecutionReviewAgentId,
-            domain: 'execution',
-            kind: 'overdue_project',
+            kind: 'overdue_plan',
             severity: AgentArtifactSeverity.warning,
             confidence: 1,
             payload: <String, Object?>{
-              'project_id': project.id,
-              'title': project.title,
-              'target_date': project.targetDate?.toIso8601String(),
-            },
-          ),
-        for (final commitment in overdueCommitments)
-          AgentFinding(
-            id: 'execution_finding:overdue_commitment:${commitment.id}',
-            ownerUserId: ownerUserId,
-            agentId: kExecutionReviewAgentId,
-            domain: 'execution',
-            kind: 'overdue_commitment',
-            severity: AgentArtifactSeverity.warning,
-            confidence: 1,
-            payload: <String, Object?>{
-              'commitment_id': commitment.id,
-              'title': commitment.title,
-              'target_date': commitment.targetDate?.toIso8601String(),
+              'plan_id': plan.id,
+              'title': plan.title,
+              'target_date': plan.targetDate?.toIso8601String(),
             },
           ),
         for (final actionId in repeatedBlockerActionIds)
@@ -290,8 +241,7 @@ class ExecutionReviewAgent implements Agent {
     );
 
     if (openActions.isEmpty &&
-        snapshot.activeProjectCount == 0 &&
-        snapshot.activeCommitmentCount == 0 &&
+        snapshot.activePlanCount == 0 &&
         weeklyProgress.isEmpty) {
       return AgentRunResult.skipped(
         agentId: kExecutionReviewAgentId,
@@ -310,8 +260,7 @@ class ExecutionReviewAgent implements Agent {
       openActions: openActions,
       blockedActions: blockedActions,
       dueActions: dueActions,
-      activeProjectCount: snapshot.activeProjectCount,
-      activeCommitmentCount: snapshot.activeCommitmentCount,
+      activePlanCount: snapshot.activePlanCount,
       weeklyProgress: weeklyProgress,
     );
     final artifactStore = await ctx.ref.read(
@@ -327,15 +276,12 @@ class ExecutionReviewAgent implements Agent {
         openActions: openActions,
         blockedActions: blockedActions,
         dueActions: dueActions,
-        projects: projects,
-        commitments: commitments,
+        plans: plans,
         weeklyProgress: weeklyProgress,
         recentClosedActions: recentClosedActions,
         stalledActions: stalledActions,
-        projectsWithoutNextAction: projectsWithoutNextAction,
-        commitmentsWithoutNextAction: commitmentsWithoutNextAction,
-        overdueProjects: overdueProjects,
-        overdueCommitments: overdueCommitments,
+        plansWithoutNextAction: plansWithoutNextAction,
+        overduePlans: overduePlans,
         repeatedBlockerActionIds: repeatedBlockerActionIds,
         overloaded: overloaded,
         completedThisWeek: completedThisWeek,
@@ -357,8 +303,7 @@ class ExecutionReviewAgent implements Agent {
         'open_action_count': openActions.length,
         'blocked_action_count': blockedActions.length,
         'due_action_count': dueActions.length,
-        'active_project_count': snapshot.activeProjectCount,
-        'active_commitment_count': snapshot.activeCommitmentCount,
+        'active_plan_count': snapshot.activePlanCount,
         'weekly_progress_count': weeklyProgress.length,
         if (snapshot.traceId != null) 'trace_id': snapshot.traceId,
       },
@@ -376,15 +321,12 @@ class ExecutionReviewAgent implements Agent {
     required List<ExecutionReviewAction> openActions,
     required List<ExecutionReviewAction> blockedActions,
     required List<ExecutionReviewAction> dueActions,
-    required List<ExecutionReviewRef> projects,
-    required List<ExecutionReviewRef> commitments,
+    required List<ExecutionReviewRef> plans,
     required List<ExecutionReviewProgress> weeklyProgress,
     required List<ExecutionReviewAction> recentClosedActions,
     required List<ExecutionReviewAction> stalledActions,
-    required List<ExecutionReviewRef> projectsWithoutNextAction,
-    required List<ExecutionReviewRef> commitmentsWithoutNextAction,
-    required List<ExecutionReviewRef> overdueProjects,
-    required List<ExecutionReviewRef> overdueCommitments,
+    required List<ExecutionReviewRef> plansWithoutNextAction,
+    required List<ExecutionReviewRef> overduePlans,
     required Set<String> repeatedBlockerActionIds,
     required bool overloaded,
     required int completedThisWeek,
@@ -533,14 +475,12 @@ class ExecutionReviewAgent implements Agent {
           title: l10n.executionAgentReviewInsightProgressTitle,
           body: l10n.executionAgentReviewInsightProgressBody(
             weeklyProgress.length,
-            projects.length,
-            commitments.length,
+            plans.length,
           ),
           route: ExecutionRoutes.review,
           payload: <String, Object?>{
             'weekly_progress_count': weeklyProgress.length,
-            'active_project_count': projects.length,
-            'active_commitment_count': commitments.length,
+            'active_plan_count': plans.length,
           },
         ),
         if (stalledActions.isNotEmpty)
@@ -563,53 +503,39 @@ class ExecutionReviewAgent implements Agent {
               'stale_days': 7,
             },
           ),
-        if (projectsWithoutNextAction.isNotEmpty ||
-            commitmentsWithoutNextAction.isNotEmpty)
+        if (plansWithoutNextAction.isNotEmpty)
           AgentInsight(
             id: 'execution_finding:no_next_action',
             title: l10n.executionAgentReviewInsightNoNextActionTitle,
             body: l10n.executionAgentReviewInsightNoNextActionBody(
-              projectsWithoutNextAction.length,
-              commitmentsWithoutNextAction.length,
+              plansWithoutNextAction.length,
             ),
             severity: AgentArtifactSeverity.attention,
             evidenceIds: <String>[
-              for (final project in projectsWithoutNextAction) project.id,
-              for (final commitment in commitmentsWithoutNextAction)
-                commitment.id,
+              for (final plan in plansWithoutNextAction) plan.id,
             ],
-            route: ExecutionRoutes.commitments,
+            route: ExecutionRoutes.plans,
             payload: <String, Object?>{
               'finding_id': 'execution_finding:no_next_action',
-              'project_ids': projectsWithoutNextAction
-                  .map((project) => project.id)
-                  .toList(growable: false),
-              'commitment_ids': commitmentsWithoutNextAction
-                  .map((commitment) => commitment.id)
+              'plan_ids': plansWithoutNextAction
+                  .map((plan) => plan.id)
                   .toList(growable: false),
             },
           ),
-        if (overdueProjects.isNotEmpty || overdueCommitments.isNotEmpty)
+        if (overduePlans.isNotEmpty)
           AgentInsight(
             id: 'execution_finding:overdue_targets',
             title: l10n.executionAgentReviewInsightOverdueTargetsTitle,
             body: l10n.executionAgentReviewInsightOverdueTargetsBody(
-              overdueProjects.length,
-              overdueCommitments.length,
+              overduePlans.length,
             ),
             severity: AgentArtifactSeverity.warning,
-            evidenceIds: <String>[
-              for (final project in overdueProjects) project.id,
-              for (final commitment in overdueCommitments) commitment.id,
-            ],
-            route: ExecutionRoutes.commitments,
+            evidenceIds: <String>[for (final plan in overduePlans) plan.id],
+            route: ExecutionRoutes.plans,
             payload: <String, Object?>{
               'finding_id': 'execution_finding:overdue_targets',
-              'project_ids': overdueProjects
-                  .map((project) => project.id)
-                  .toList(growable: false),
-              'commitment_ids': overdueCommitments
-                  .map((commitment) => commitment.id)
+              'plan_ids': overduePlans
+                  .map((plan) => plan.id)
                   .toList(growable: false),
             },
           ),
@@ -672,19 +598,12 @@ class ExecutionReviewAgent implements Agent {
               'priority': action.priority.wire,
             },
           ),
-        for (final project in projects.take(5))
+        for (final plan in plans.take(5))
           AgentEvidenceRef(
-            type: 'execution_project',
-            id: project.id,
-            label: project.title,
-            route: ExecutionRoutes.commitments,
-          ),
-        for (final commitment in commitments.take(5))
-          AgentEvidenceRef(
-            type: 'execution_commitment',
-            id: commitment.id,
-            label: commitment.title,
-            route: ExecutionRoutes.commitment(commitment.id),
+            type: 'execution_plan',
+            id: plan.id,
+            label: plan.title,
+            route: ExecutionRoutes.plan(plan.id),
           ),
       ],
       actions: <AgentAction>[
@@ -697,10 +616,8 @@ class ExecutionReviewAgent implements Agent {
           route: ExecutionRoutes.review,
         ),
         if (stalledActions.isNotEmpty ||
-            projectsWithoutNextAction.isNotEmpty ||
-            commitmentsWithoutNextAction.isNotEmpty ||
-            overdueProjects.isNotEmpty ||
-            overdueCommitments.isNotEmpty ||
+            plansWithoutNextAction.isNotEmpty ||
+            overduePlans.isNotEmpty ||
             repeatedBlockerActionIds.isNotEmpty ||
             overloaded)
           AgentAction(
@@ -715,18 +632,12 @@ class ExecutionReviewAgent implements Agent {
               'stalled_action_ids': stalledActions
                   .map((action) => action.id)
                   .toList(growable: false),
-              'projects_without_next_action': projectsWithoutNextAction
-                  .map((project) => project.id)
-                  .toList(growable: false),
-              'commitments_without_next_action': commitmentsWithoutNextAction
-                  .map((commitment) => commitment.id)
+              'plans_without_next_action': plansWithoutNextAction
+                  .map((plan) => plan.id)
                   .toList(growable: false),
               'today_overloaded': overloaded,
-              'overdue_project_ids': overdueProjects
-                  .map((project) => project.id)
-                  .toList(growable: false),
-              'overdue_commitment_ids': overdueCommitments
-                  .map((commitment) => commitment.id)
+              'overdue_plan_ids': overduePlans
+                  .map((plan) => plan.id)
                   .toList(growable: false),
               'repeated_blocker_action_ids': repeatedBlockerActionIds.toList(
                 growable: false,
@@ -757,15 +668,13 @@ class ExecutionReviewAgent implements Agent {
     required List<ExecutionReviewAction> openActions,
     required List<ExecutionReviewAction> blockedActions,
     required List<ExecutionReviewAction> dueActions,
-    required int activeProjectCount,
-    required int activeCommitmentCount,
+    required int activePlanCount,
     required List<ExecutionReviewProgress> weeklyProgress,
   }) {
     final parts = <String>[
       l10n.executionAgentReviewSummaryPartToday(todayActions.length),
       l10n.executionAgentReviewSummaryPartOpen(openActions.length),
-      l10n.executionAgentReviewSummaryPartProjects(activeProjectCount),
-      l10n.executionAgentReviewSummaryPartCommitments(activeCommitmentCount),
+      l10n.executionAgentReviewSummaryPartPlans(activePlanCount),
       l10n.executionAgentReviewSummaryPartProgress(weeklyProgress.length),
     ];
     if (blockedActions.isNotEmpty) {
@@ -795,10 +704,7 @@ class RepositoryExecutionReviewReader implements ExecutionReviewReader {
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final repo = await ctx.ref.read(executionRepositoryProvider.future);
     final openActions = await repo.listOpenActions(ownerUserId: ownerUserId);
-    final projects = await repo.listActiveProjects(ownerUserId: ownerUserId);
-    final commitments = await repo.listActiveCommitments(
-      ownerUserId: ownerUserId,
-    );
+    final plans = await repo.listActivePlans(ownerUserId: ownerUserId);
     final recentProgress = await repo.listRecentProgress(
       ownerUserId: ownerUserId,
       limit: 500,
@@ -812,22 +718,12 @@ class RepositoryExecutionReviewReader implements ExecutionReviewReader {
       openActions: openActions
           .map(ExecutionReviewAction.fromAction)
           .toList(growable: false),
-      activeProjects: projects
+      activePlans: plans
           .map(
-            (project) => ExecutionReviewRef(
-              id: project.id,
-              title: project.title,
-              targetDate: project.targetDate,
-            ),
-          )
-          .toList(growable: false),
-      activeCommitments: commitments
-          .map(
-            (commitment) => ExecutionReviewRef(
-              id: commitment.id,
-              title: commitment.title,
-              targetDate: commitment.targetDate,
-              projectId: commitment.projectId,
+            (plan) => ExecutionReviewRef(
+              id: plan.id,
+              title: plan.title,
+              targetDate: plan.targetDate,
             ),
           )
           .toList(growable: false),
@@ -837,8 +733,7 @@ class RepositoryExecutionReviewReader implements ExecutionReviewReader {
       recentClosedActions: recentClosedActions
           .map(ExecutionReviewAction.fromAction)
           .toList(growable: false),
-      activeProjectCount: projects.length,
-      activeCommitmentCount: commitments.length,
+      activePlanCount: plans.length,
     );
   }
 }
@@ -878,22 +773,18 @@ class FrbExecutionReviewReader implements ExecutionReviewReader {
 class ExecutionReviewSnapshot {
   const ExecutionReviewSnapshot({
     required this.openActions,
-    required this.activeProjects,
-    required this.activeCommitments,
+    required this.activePlans,
     required this.recentProgress,
     this.recentClosedActions = const <ExecutionReviewAction>[],
-    required this.activeProjectCount,
-    required this.activeCommitmentCount,
+    required this.activePlanCount,
     this.traceId,
   });
 
   final List<ExecutionReviewAction> openActions;
-  final List<ExecutionReviewRef> activeProjects;
-  final List<ExecutionReviewRef> activeCommitments;
+  final List<ExecutionReviewRef> activePlans;
   final List<ExecutionReviewProgress> recentProgress;
   final List<ExecutionReviewAction> recentClosedActions;
-  final int activeProjectCount;
-  final int activeCommitmentCount;
+  final int activePlanCount;
   final String? traceId;
 }
 
@@ -905,8 +796,7 @@ class ExecutionReviewAction {
     required this.priority,
     this.dueAt,
     this.scheduledFor,
-    this.projectId,
-    this.commitmentId,
+    this.planId,
     DateTime? createdAt,
     DateTime? updatedAt,
     this.completedAt,
@@ -923,8 +813,7 @@ class ExecutionReviewAction {
       priority: action.priority,
       dueAt: action.dueAt,
       scheduledFor: action.scheduledFor,
-      projectId: action.projectId,
-      commitmentId: action.commitmentId,
+      planId: action.planId,
       createdAt: action.createdAt,
       updatedAt: action.sync.updatedAt,
       completedAt: action.completedAt,
@@ -937,8 +826,7 @@ class ExecutionReviewAction {
   final ExecutionPriority priority;
   final DateTime? dueAt;
   final DateTime? scheduledFor;
-  final String? projectId;
-  final String? commitmentId;
+  final String? planId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime? completedAt;
@@ -969,13 +857,11 @@ class ExecutionReviewRef {
     required this.id,
     this.title = '',
     this.targetDate,
-    this.projectId,
   });
 
   final String id;
   final String title;
   final DateTime? targetDate;
-  final String? projectId;
 }
 
 class ExecutionReviewProgress {
@@ -985,8 +871,7 @@ class ExecutionReviewProgress {
     this.kind = ExecutionProgressKind.checkin,
     this.note = '',
     this.actionId,
-    this.projectId,
-    this.commitmentId,
+    this.planId,
   });
 
   factory ExecutionReviewProgress.fromProgress(ExecutionProgressEntry entry) {
@@ -996,8 +881,7 @@ class ExecutionReviewProgress {
       kind: entry.kind,
       note: entry.note,
       actionId: entry.actionId,
-      projectId: entry.projectId,
-      commitmentId: entry.commitmentId,
+      planId: entry.planId,
     );
   }
 
@@ -1006,8 +890,7 @@ class ExecutionReviewProgress {
   final ExecutionProgressKind kind;
   final String note;
   final String? actionId;
-  final String? projectId;
-  final String? commitmentId;
+  final String? planId;
 }
 
 ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
@@ -1019,30 +902,22 @@ ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
     byTool['list_open_actions'],
   );
   final summary = byTool['summarize_execution_progress'];
-  final projects = _refsFromList(summary?['active_projects']);
-  final commitments = _refsFromList(summary?['active_commitments']);
+  final plans = _refsFromList(summary?['active_plans']);
   final progress = executionReviewProgressFromToolResult(summary);
   final closedActions = executionReviewClosedActionsFromToolResult(summary);
-  final projectCount = agentRuntimeIntOrNull(summary?['active_project_count']);
-  final commitmentCount = agentRuntimeIntOrNull(
-    summary?['active_commitment_count'],
-  );
+  final planCount = agentRuntimeIntOrNull(summary?['active_plan_count']);
   if (actions == null ||
-      projects == null ||
-      commitments == null ||
+      plans == null ||
       progress == null ||
-      projectCount == null ||
-      commitmentCount == null) {
+      planCount == null) {
     return null;
   }
   return ExecutionReviewSnapshot(
     openActions: actions,
-    activeProjects: projects,
-    activeCommitments: commitments,
+    activePlans: plans,
     recentProgress: progress,
     recentClosedActions: closedActions ?? const <ExecutionReviewAction>[],
-    activeProjectCount: projectCount,
-    activeCommitmentCount: commitmentCount,
+    activePlanCount: planCount,
     traceId: traceId,
   );
 }
@@ -1073,8 +948,7 @@ List<ExecutionReviewAction>? executionReviewActionsFromToolResult(
         priority: ExecutionPriority.parse(priority),
         dueAt: agentRuntimeDateTimeOrNull(action?['due_at']),
         scheduledFor: agentRuntimeDateTimeOrNull(action?['scheduled_for']),
-        projectId: action?['project_id'] as String?,
-        commitmentId: action?['commitment_id'] as String?,
+        planId: action?['plan_id'] as String?,
         createdAt: agentRuntimeDateTimeOrNull(action?['created_at']),
         updatedAt: agentRuntimeDateTimeOrNull(action?['updated_at']),
         completedAt: agentRuntimeDateTimeOrNull(action?['completed_at']),
@@ -1104,8 +978,7 @@ List<ExecutionReviewProgress>? executionReviewProgressFromToolResult(
       kind: ExecutionProgressKind.parse(entry?['kind'] as String? ?? 'checkin'),
       note: entry?['note'] as String? ?? '',
       actionId: entry?['action_id'] as String?,
-      projectId: entry?['project_id'] as String?,
-      commitmentId: entry?['commitment_id'] as String?,
+      planId: entry?['plan_id'] as String?,
     );
   }
   return progress;
@@ -1123,7 +996,6 @@ List<ExecutionReviewRef>? _refsFromList(Object? value) {
         id: id,
         title: object?['title'] as String? ?? '',
         targetDate: agentRuntimeDateTimeOrNull(object?['target_date']),
-        projectId: object?['project_id'] as String?,
       ),
     );
   }

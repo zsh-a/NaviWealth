@@ -13,52 +13,50 @@ import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_widgets.dart';
 
-class ExecutionProjectCardController extends ConsumerStatefulWidget {
-  const ExecutionProjectCardController({
+class ExecutionPlanCardController extends ConsumerStatefulWidget {
+  const ExecutionPlanCardController({
     super.key,
-    required this.project,
+    required this.plan,
     required this.onCreateAction,
     required this.onEdit,
     required this.onRecordProgress,
     this.openActionCount,
     this.blockedActionCount,
-    this.commitmentCount,
     this.onOpen,
     this.showActions = true,
     this.showTypeLabel = false,
   });
 
-  final ExecutionProject project;
+  final ExecutionPlan plan;
   final VoidCallback onCreateAction;
   final VoidCallback onEdit;
   final VoidCallback onRecordProgress;
   final int? openActionCount;
   final int? blockedActionCount;
-  final int? commitmentCount;
   final VoidCallback? onOpen;
   final bool showActions;
   final bool showTypeLabel;
 
   @override
-  ConsumerState<ExecutionProjectCardController> createState() =>
-      _ExecutionProjectCardControllerState();
+  ConsumerState<ExecutionPlanCardController> createState() =>
+      _ExecutionPlanCardControllerState();
 }
 
-class _ExecutionProjectCardControllerState
-    extends ConsumerState<ExecutionProjectCardController> {
+class _ExecutionPlanCardControllerState
+    extends ConsumerState<ExecutionPlanCardController> {
   bool _busy = false;
 
-  Future<void> _changeStatus(ExecutionProjectStatus status) async {
+  Future<void> _changeStatus(ExecutionPlanStatus status) async {
     if (_busy) return;
     final l10n = AppLocalizations.of(context);
     final feedbackContext = context;
     AppMessenger.cacheOverlay(feedbackContext);
-    if ((status == ExecutionProjectStatus.completed ||
-            status == ExecutionProjectStatus.archived) &&
+    if ((status == ExecutionPlanStatus.completed ||
+            status == ExecutionPlanStatus.archived) &&
         !await _confirmOpenActions(
           context,
           widget.openActionCount ?? 0,
-          archive: status == ExecutionProjectStatus.archived,
+          archive: status == ExecutionPlanStatus.archived,
         )) {
       return;
     }
@@ -69,21 +67,21 @@ class _ExecutionProjectCardControllerState
       final sync = await stampExecutionSync(ref);
       final progress = ExecutionProgressEntry(
         id: kExecutionUuid.v4(),
-        projectId: widget.project.id,
-        kind: _projectProgressKind(status),
-        note: _projectProgressNote(l10n, status),
+        planId: widget.plan.id,
+        kind: _planProgressKind(status),
+        note: _planProgressNote(l10n, status),
         createdAt: sync.updatedAt,
         sync: sync,
       );
-      final affectedActions = await repo.updateProjectStatus(
-        project: widget.project,
+      final affectedActions = await repo.updatePlanStatus(
+        plan: widget.plan,
         status: status,
         sync: sync,
         progress: progress,
       );
-      final undo = ExecutionProjectStatusUndo(
+      final undo = ExecutionPlanStatusUndo(
         repository: repo,
-        before: widget.project,
+        before: widget.plan,
         affectedActions: affectedActions,
         appliedSync: sync,
         stamp: () => _stampForUndo(ref),
@@ -94,12 +92,12 @@ class _ExecutionProjectCardControllerState
           feedbackContext,
           ToastKind.success,
           l10n.executionLifecycleStatusUpdated(
-            executionProjectStatusLabel(l10n, status),
+            executionPlanStatusLabel(l10n, status),
           ),
           duration: const Duration(seconds: 6),
           actionLabel: l10n.commonUndo,
           onAction: () =>
-              unawaited(_undoProjectStatus(feedbackContext, undo, l10n)),
+              unawaited(_undoPlanStatus(feedbackContext, undo, l10n)),
         );
       }
     } catch (_) {
@@ -107,7 +105,7 @@ class _ExecutionProjectCardControllerState
         AppMessenger.show(
           feedbackContext,
           ToastKind.error,
-          l10n.executionProjectStatusUpdateFailed,
+          l10n.executionPlanStatusUpdateFailed,
         );
       }
     } finally {
@@ -115,9 +113,9 @@ class _ExecutionProjectCardControllerState
     }
   }
 
-  Future<void> _undoProjectStatus(
+  Future<void> _undoPlanStatus(
     BuildContext feedbackContext,
-    ExecutionProjectStatusUndo undo,
+    ExecutionPlanStatusUndo undo,
     AppLocalizations l10n,
   ) async {
     try {
@@ -142,11 +140,10 @@ class _ExecutionProjectCardControllerState
 
   @override
   Widget build(BuildContext context) {
-    return ExecutionProjectCard(
-      project: widget.project,
+    return ExecutionPlanCard(
+      plan: widget.plan,
       openActionCount: widget.openActionCount,
       blockedActionCount: widget.blockedActionCount,
-      commitmentCount: widget.commitmentCount,
       busy: _busy,
       onOpen: _busy ? null : widget.onOpen,
       showActions: widget.showActions,
@@ -154,160 +151,10 @@ class _ExecutionProjectCardControllerState
       onCreateAction: widget.onCreateAction,
       onEdit: widget.onEdit,
       onRecordProgress: widget.onRecordProgress,
-      onPause: () => _changeStatus(ExecutionProjectStatus.paused),
-      onResume: () => _changeStatus(ExecutionProjectStatus.active),
-      onComplete: () => _changeStatus(ExecutionProjectStatus.completed),
-      onArchive: () => _changeStatus(ExecutionProjectStatus.archived),
-    );
-  }
-}
-
-class ExecutionCommitmentCardController extends ConsumerStatefulWidget {
-  const ExecutionCommitmentCardController({
-    super.key,
-    required this.commitment,
-    required this.onCreateAction,
-    required this.onEdit,
-    required this.onRecordProgress,
-    this.openActionCount,
-    this.blockedActionCount,
-    this.projectLabel,
-    this.onOpen,
-    this.showActions = true,
-    this.showTypeLabel = false,
-  });
-
-  final ExecutionCommitment commitment;
-  final VoidCallback onCreateAction;
-  final VoidCallback onEdit;
-  final VoidCallback onRecordProgress;
-  final int? openActionCount;
-  final int? blockedActionCount;
-  final String? projectLabel;
-  final VoidCallback? onOpen;
-  final bool showActions;
-  final bool showTypeLabel;
-
-  @override
-  ConsumerState<ExecutionCommitmentCardController> createState() =>
-      _ExecutionCommitmentCardControllerState();
-}
-
-class _ExecutionCommitmentCardControllerState
-    extends ConsumerState<ExecutionCommitmentCardController> {
-  bool _busy = false;
-
-  Future<void> _changeStatus(ExecutionCommitmentStatus status) async {
-    if (_busy) return;
-    final l10n = AppLocalizations.of(context);
-    final feedbackContext = context;
-    AppMessenger.cacheOverlay(feedbackContext);
-    if ((status == ExecutionCommitmentStatus.completed ||
-            status == ExecutionCommitmentStatus.archived) &&
-        !await _confirmOpenActions(
-          context,
-          widget.openActionCount ?? 0,
-          archive: status == ExecutionCommitmentStatus.archived,
-        )) {
-      return;
-    }
-    if (!feedbackContext.mounted || !mounted) return;
-    setState(() => _busy = true);
-    try {
-      final repo = await ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(ref);
-      final progress = ExecutionProgressEntry(
-        id: kExecutionUuid.v4(),
-        projectId: widget.commitment.projectId,
-        commitmentId: widget.commitment.id,
-        kind: _commitmentProgressKind(status),
-        note: _commitmentProgressNote(l10n, status),
-        createdAt: sync.updatedAt,
-        sync: sync,
-      );
-      final affectedActions = await repo.updateCommitmentStatus(
-        commitment: widget.commitment,
-        status: status,
-        sync: sync,
-        progress: progress,
-      );
-      final undo = ExecutionCommitmentStatusUndo(
-        repository: repo,
-        before: widget.commitment,
-        affectedActions: affectedActions,
-        appliedSync: sync,
-        stamp: () => _stampForUndo(ref),
-        progressId: progress.id,
-      );
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.success,
-          l10n.executionLifecycleStatusUpdated(
-            executionCommitmentStatusLabel(l10n, status),
-          ),
-          duration: const Duration(seconds: 6),
-          actionLabel: l10n.commonUndo,
-          onAction: () =>
-              unawaited(_undoCommitmentStatus(feedbackContext, undo, l10n)),
-        );
-      }
-    } catch (_) {
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.error,
-          l10n.executionCommitmentStatusUpdateFailed,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _undoCommitmentStatus(
-    BuildContext feedbackContext,
-    ExecutionCommitmentStatusUndo undo,
-    AppLocalizations l10n,
-  ) async {
-    try {
-      await undo.restore();
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.success,
-          l10n.commonUndoSucceeded,
-        );
-      }
-    } on Object {
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.error,
-          l10n.commonUndoFailed,
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ExecutionCommitmentCard(
-      commitment: widget.commitment,
-      openActionCount: widget.openActionCount,
-      blockedActionCount: widget.blockedActionCount,
-      projectLabel: widget.projectLabel,
-      busy: _busy,
-      onOpen: _busy ? null : widget.onOpen,
-      showActions: widget.showActions,
-      showTypeLabel: widget.showTypeLabel,
-      onCreateAction: widget.onCreateAction,
-      onEdit: widget.onEdit,
-      onRecordProgress: widget.onRecordProgress,
-      onPause: () => _changeStatus(ExecutionCommitmentStatus.paused),
-      onResume: () => _changeStatus(ExecutionCommitmentStatus.active),
-      onComplete: () => _changeStatus(ExecutionCommitmentStatus.completed),
-      onArchive: () => _changeStatus(ExecutionCommitmentStatus.archived),
+      onPause: () => _changeStatus(ExecutionPlanStatus.paused),
+      onResume: () => _changeStatus(ExecutionPlanStatus.active),
+      onComplete: () => _changeStatus(ExecutionPlanStatus.completed),
+      onArchive: () => _changeStatus(ExecutionPlanStatus.archived),
     );
   }
 }
@@ -351,8 +198,8 @@ Future<SyncMeta> _stampForUndo(WidgetRef ref) async {
   );
 }
 
-class ExecutionProjectStatusUndo {
-  const ExecutionProjectStatusUndo({
+class ExecutionPlanStatusUndo {
+  const ExecutionPlanStatusUndo({
     required this.repository,
     required this.before,
     required this.affectedActions,
@@ -362,14 +209,14 @@ class ExecutionProjectStatusUndo {
   });
 
   final ExecutionRepository repository;
-  final ExecutionProject before;
+  final ExecutionPlan before;
   final List<ExecutionAction> affectedActions;
   final SyncMeta appliedSync;
   final Future<SyncMeta> Function() stamp;
   final String progressId;
 
   Future<void> restore() async {
-    final current = await repository.findProject(
+    final current = await repository.findPlan(
       ownerUserId: before.sync.ownerUserId,
       id: before.id,
     );
@@ -386,8 +233,8 @@ class ExecutionProjectStatusUndo {
       }
     }
     final sync = await stamp();
-    await repository.restoreProjectLifecycle(
-      project: before,
+    await repository.restorePlanLifecycle(
+      plan: before,
       actions: affectedActions,
       progressId: progressId,
       sync: sync,
@@ -395,92 +242,20 @@ class ExecutionProjectStatusUndo {
   }
 }
 
-class ExecutionCommitmentStatusUndo {
-  const ExecutionCommitmentStatusUndo({
-    required this.repository,
-    required this.before,
-    required this.affectedActions,
-    required this.appliedSync,
-    required this.stamp,
-    required this.progressId,
-  });
-
-  final ExecutionRepository repository;
-  final ExecutionCommitment before;
-  final List<ExecutionAction> affectedActions;
-  final SyncMeta appliedSync;
-  final Future<SyncMeta> Function() stamp;
-  final String progressId;
-
-  Future<void> restore() async {
-    final current = await repository.findCommitment(
-      ownerUserId: before.sync.ownerUserId,
-      id: before.id,
-    );
-    if (current == null || current.sync.hlc != appliedSync.hlc) {
-      throw StateError('Commitment changed after the status update.');
-    }
-    for (final action in affectedActions) {
-      final currentAction = await repository.findAction(
-        ownerUserId: before.sync.ownerUserId,
-        id: action.id,
-      );
-      if (currentAction == null || currentAction.sync.hlc != appliedSync.hlc) {
-        throw StateError('Action changed after the status update.');
-      }
-    }
-    final sync = await stamp();
-    await repository.restoreCommitmentLifecycle(
-      commitment: before,
-      actions: affectedActions,
-      progressId: progressId,
-      sync: sync,
-    );
-  }
-}
-
-ExecutionProgressKind _projectProgressKind(ExecutionProjectStatus status) {
+ExecutionProgressKind _planProgressKind(ExecutionPlanStatus status) {
   return switch (status) {
-    ExecutionProjectStatus.completed => ExecutionProgressKind.completion,
-    ExecutionProjectStatus.paused ||
-    ExecutionProjectStatus.archived => ExecutionProgressKind.scopeChange,
-    ExecutionProjectStatus.active => ExecutionProgressKind.checkin,
+    ExecutionPlanStatus.completed => ExecutionProgressKind.completion,
+    ExecutionPlanStatus.paused ||
+    ExecutionPlanStatus.archived => ExecutionProgressKind.scopeChange,
+    ExecutionPlanStatus.active => ExecutionProgressKind.checkin,
   };
 }
 
-String _projectProgressNote(
-  AppLocalizations l10n,
-  ExecutionProjectStatus status,
-) {
+String _planProgressNote(AppLocalizations l10n, ExecutionPlanStatus status) {
   return switch (status) {
-    ExecutionProjectStatus.paused => l10n.executionProjectPausedDefault,
-    ExecutionProjectStatus.active => l10n.executionProjectResumedDefault,
-    ExecutionProjectStatus.completed => l10n.executionProjectCompletedDefault,
-    ExecutionProjectStatus.archived => l10n.executionProjectArchivedDefault,
-  };
-}
-
-ExecutionProgressKind _commitmentProgressKind(
-  ExecutionCommitmentStatus status,
-) {
-  return switch (status) {
-    ExecutionCommitmentStatus.completed => ExecutionProgressKind.completion,
-    ExecutionCommitmentStatus.paused ||
-    ExecutionCommitmentStatus.archived => ExecutionProgressKind.scopeChange,
-    ExecutionCommitmentStatus.active => ExecutionProgressKind.checkin,
-  };
-}
-
-String _commitmentProgressNote(
-  AppLocalizations l10n,
-  ExecutionCommitmentStatus status,
-) {
-  return switch (status) {
-    ExecutionCommitmentStatus.paused => l10n.executionCommitmentPausedDefault,
-    ExecutionCommitmentStatus.active => l10n.executionCommitmentResumedDefault,
-    ExecutionCommitmentStatus.completed =>
-      l10n.executionCommitmentCompletedDefault,
-    ExecutionCommitmentStatus.archived =>
-      l10n.executionCommitmentArchivedDefault,
+    ExecutionPlanStatus.paused => l10n.executionPlanPausedDefault,
+    ExecutionPlanStatus.active => l10n.executionPlanResumedDefault,
+    ExecutionPlanStatus.completed => l10n.executionPlanCompletedDefault,
+    ExecutionPlanStatus.archived => l10n.executionPlanArchivedDefault,
   };
 }

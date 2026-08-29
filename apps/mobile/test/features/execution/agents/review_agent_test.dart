@@ -91,36 +91,18 @@ void main() {
 
   test('writes weekly execution review memory from workflow signals', () async {
     final repo = await container.read(executionRepositoryProvider.future);
-    await repo.upsertProject(
-      ExecutionProject(
-        id: 'project-review',
+    await repo.upsertPlan(
+      ExecutionPlan(
+        id: 'plan-review',
         title: 'Close execution workflow gaps',
         createdAt: DateTime.utc(2026, 6, 1),
         sync: _sync(1),
       ),
     );
-    await repo.upsertCommitment(
-      ExecutionCommitment(
-        id: 'commit-review',
-        title: 'Run weekly execution review',
-        projectId: 'project-review',
-        createdAt: DateTime.utc(2026, 6, 1),
-        sync: _sync(2),
-      ),
-    );
-    await repo.upsertProject(
-      ExecutionProject(
-        id: 'project-no-next',
-        title: 'Project without a next action',
-        targetDate: DateTime.utc(2026, 5, 20),
-        createdAt: DateTime.utc(2026, 5, 1),
-        sync: _sync(2),
-      ),
-    );
-    await repo.upsertCommitment(
-      ExecutionCommitment(
-        id: 'commit-no-next',
-        title: 'Commitment without a next action',
+    await repo.upsertPlan(
+      ExecutionPlan(
+        id: 'plan-no-next',
+        title: 'Plan without a next action',
         targetDate: DateTime.utc(2026, 5, 20),
         createdAt: DateTime.utc(2026, 5, 1),
         sync: _sync(2),
@@ -132,8 +114,7 @@ void main() {
         title: 'Finish review coverage',
         status: ExecutionActionStatus.blocked,
         priority: ExecutionPriority.high,
-        projectId: 'project-review',
-        commitmentId: 'commit-review',
+        planId: 'plan-review',
         dueAt: DateTime.utc(2026, 6, 2),
         createdAt: DateTime.utc(2026, 6, 1),
         sync: _sync(3),
@@ -142,8 +123,7 @@ void main() {
     await repo.upsertProgress(
       ExecutionProgressEntry(
         id: 'progress-review',
-        projectId: 'project-review',
-        commitmentId: 'commit-review',
+        planId: 'plan-review',
         kind: ExecutionProgressKind.checkin,
         note: 'Review workflow connected to memory.',
         createdAt: DateTime.utc(2026, 6, 3),
@@ -155,8 +135,7 @@ void main() {
         ExecutionProgressEntry(
           id: 'progress-blocker-$i',
           actionId: 'action-review',
-          projectId: 'project-review',
-          commitmentId: 'commit-review',
+          planId: 'plan-review',
           kind: ExecutionProgressKind.blocker,
           note: 'The same dependency is still blocked.',
           createdAt: DateTime.utc(2026, 6, 3 + i),
@@ -204,11 +183,10 @@ void main() {
     expect(result.memoryId, isNull);
     expect(result.artifactId, '$kExecutionReviewAgentId:2026-06-05');
     expect(result.summary, contains('1 blocked'));
-    expect(result.summary, contains('2 ongoing plans'));
+    expect(result.summary, contains('2 active plans'));
 
-    final artifact = await SqliteAgentArtifactStore(
-      db: db,
-    ).read('$kExecutionReviewAgentId:2026-06-05');
+    final artifact = await SqliteAgentArtifactStore(db: db)
+        .read('$kExecutionReviewAgentId:2026-06-05');
     expect(artifact, isNotNull);
     expect(artifact!.agentId, kExecutionReviewAgentId);
     expect(artifact.domain, 'execution');
@@ -260,13 +238,9 @@ void main() {
                 dueAt: DateTime.utc(2026, 6, 5),
               ),
             ],
-            activeProjects: const [ExecutionReviewRef(id: 'project-trace')],
-            activeCommitments: const [
-              ExecutionReviewRef(id: 'commitment-trace'),
-            ],
+            activePlans: const [ExecutionReviewRef(id: 'plan-trace')],
             recentProgress: const [],
-            activeProjectCount: 1,
-            activeCommitmentCount: 1,
+            activePlanCount: 1,
             traceId: 'trace-execution-1',
           ),
         ),
@@ -276,9 +250,8 @@ void main() {
     expect(result.status, AgentRunStatus.completed);
     expect(result.traceId, 'trace-execution-1');
 
-    final artifact = await SqliteAgentArtifactStore(
-      db: db,
-    ).read('$kExecutionReviewAgentId:2026-06-05');
+    final artifact = await SqliteAgentArtifactStore(db: db)
+        .read('$kExecutionReviewAgentId:2026-06-05');
     expect(artifact?.traceId, 'trace-execution-1');
 
     expect(result.payload['trace_id'], 'trace-execution-1');
@@ -371,13 +344,9 @@ void main() {
                 },
                 'effect_response': <String, Object?>{
                   'result': <String, Object?>{
-                    'active_project_count': 1,
-                    'active_commitment_count': 1,
-                    'active_projects': <Object?>[
-                      <String, Object?>{'id': 'project_1'},
-                    ],
-                    'active_commitments': <Object?>[
-                      <String, Object?>{'id': 'commitment_1'},
+                    'active_plan_count': 1,
+                    'active_plans': <Object?>[
+                      <String, Object?>{'id': 'plan_1'},
                     ],
                     'recent_progress': <Object?>[
                       <String, Object?>{
@@ -398,8 +367,8 @@ void main() {
       expect(snapshot!.traceId, 'trace-parser-1');
       expect(snapshot.openActions.single.status, ExecutionActionStatus.blocked);
       expect(snapshot.openActions.single.priority, ExecutionPriority.high);
-      expect(snapshot.activeProjectCount, 1);
-      expect(snapshot.activeProjects.single.id, 'project_1');
+      expect(snapshot.activePlanCount, 1);
+      expect(snapshot.activePlans.single.id, 'plan_1');
       expect(snapshot.recentProgress.single.id, 'progress_1');
     });
 
@@ -434,7 +403,7 @@ void main() {
 
         expect(snapshot.openActions.single.id, 'action_1');
         expect(snapshot.traceId, 'agent-runtime:execution_review:run_1');
-        expect(snapshot.activeProjectCount, 1);
+        expect(snapshot.activePlanCount, 1);
         expect(dispatcher.calls.map((c) => c.name), <String>[
           'list_open_actions',
           'summarize_execution_progress',
@@ -454,11 +423,9 @@ void main() {
       final fallback = _FallbackReader(
         const ExecutionReviewSnapshot(
           openActions: <ExecutionReviewAction>[],
-          activeProjects: <ExecutionReviewRef>[],
-          activeCommitments: <ExecutionReviewRef>[],
+          activePlans: <ExecutionReviewRef>[],
           recentProgress: <ExecutionReviewProgress>[],
-          activeProjectCount: 0,
-          activeCommitmentCount: 0,
+          activePlanCount: 0,
         ),
       );
       final reader = FrbExecutionReviewReader(
@@ -481,11 +448,9 @@ void main() {
         final fallback = _FallbackReader(
           const ExecutionReviewSnapshot(
             openActions: <ExecutionReviewAction>[],
-            activeProjects: <ExecutionReviewRef>[],
-            activeCommitments: <ExecutionReviewRef>[],
+            activePlans: <ExecutionReviewRef>[],
             recentProgress: <ExecutionReviewProgress>[],
-            activeProjectCount: 0,
-            activeCommitmentCount: 0,
+            activePlanCount: 0,
           ),
         );
         final reader = FrbExecutionReviewReader(
@@ -501,7 +466,7 @@ void main() {
         final snapshot = await reader.read(_context());
 
         expect(snapshot.openActions.single.id, 'action_1');
-        expect(snapshot.activeProjectCount, 1);
+        expect(snapshot.activePlanCount, 1);
         expect(fallback.calls, 0);
       },
     );
@@ -596,13 +561,9 @@ class _ExecutionDispatcher implements DeviceToolDispatcher {
       'summarize_execution_progress' => <String, Object?>{
         'open_action_count': 1,
         'blocked_action_count': 0,
-        'active_project_count': 1,
-        'active_commitment_count': 1,
-        'active_projects': <Object?>[
-          <String, Object?>{'id': 'project_1'},
-        ],
-        'active_commitments': <Object?>[
-          <String, Object?>{'id': 'commitment_1'},
+        'active_plan_count': 1,
+        'active_plans': <Object?>[
+          <String, Object?>{'id': 'plan_1'},
         ],
         'recent_progress': <Object?>[
           <String, Object?>{

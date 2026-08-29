@@ -48,12 +48,8 @@ final _executionTodayViewProvider =
     ) {
       final actionsAsync = ref.watch(executionTodayActionsProvider);
       final openActionsAsync = ref.watch(executionOpenActionsProvider);
-      final projects =
-          ref.watch(executionProjectsProvider).value ??
-          const <ExecutionProject>[];
-      final commitments =
-          ref.watch(executionCommitmentsProvider).value ??
-          const <ExecutionCommitment>[];
+      final plans =
+          ref.watch(executionPlansProvider).value ?? const <ExecutionPlan>[];
       final recentProgress =
           ref.watch(executionRecentProgressProvider).value ??
           const <ExecutionProgressEntry>[];
@@ -94,16 +90,14 @@ final _executionTodayViewProvider =
         });
         return _ExecutionTodayView(
           openActions: openActions,
-          projects: projects,
-          commitments: commitments,
+          plans: plans,
           relations: relations,
           focusIds: focusIds,
           visibleActions: visibleActions,
           snapshot: ExecutionOverviewSnapshot.fromLists(
             todayActions: actions,
             openActions: openActions,
-            projects: projects,
-            commitments: commitments,
+            plans: plans,
             recentProgress: recentProgress,
             now: DateTime.now(),
           ),
@@ -117,8 +111,7 @@ final _executionTodayViewProvider =
 class _ExecutionTodayView {
   const _ExecutionTodayView({
     required this.openActions,
-    required this.projects,
-    required this.commitments,
+    required this.plans,
     required this.relations,
     required this.focusIds,
     required this.visibleActions,
@@ -127,8 +120,7 @@ class _ExecutionTodayView {
   });
 
   final List<ExecutionAction> openActions;
-  final List<ExecutionProject> projects;
-  final List<ExecutionCommitment> commitments;
+  final List<ExecutionPlan> plans;
   final ExecutionRelations? relations;
   final List<String> focusIds;
   final List<ExecutionAction> visibleActions;
@@ -147,8 +139,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
   Future<void> _refresh() async {
     ref.invalidate(executionTodayActionsProvider);
     ref.invalidate(executionOpenActionsProvider);
-    ref.invalidate(executionProjectsProvider);
-    ref.invalidate(executionCommitmentsProvider);
+    ref.invalidate(executionPlansProvider);
     ref.invalidate(executionRecentProgressProvider);
     ref.invalidate(executionActionRelationsProvider);
     await ref.read(executionTodayActionsProvider.future);
@@ -182,8 +173,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
         ),
         data: (view) {
           final openActions = view.openActions;
-          final projects = view.projects;
-          final commitments = view.commitments;
+          final plans = view.plans;
           final relations = view.relations;
           final focusIds = view.focusIds;
           final visibleActions = view.visibleActions;
@@ -288,15 +278,9 @@ class _TodayListState extends ConsumerState<_TodayList> {
                 index: index,
                 child: ExecutionActionCardController(
                   action: action,
-                  projectLabel:
-                      relations?.projectLabel(action.projectId) ??
-                      executionProjectRelationLabel(projects, action.projectId),
-                  commitmentLabel:
-                      relations?.commitmentLabel(action.commitmentId) ??
-                      executionCommitmentRelationLabel(
-                        commitments,
-                        action.commitmentId,
-                      ),
+                  planLabel:
+                      relations?.planLabel(action.planId) ??
+                      executionPlanRelationLabel(plans, action.planId),
                   onOpen: () => context.push(ExecutionRoutes.action(action.id)),
                   compact: true,
                   onSourceOpen: executionSourceOpen(

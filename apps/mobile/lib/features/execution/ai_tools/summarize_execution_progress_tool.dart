@@ -14,7 +14,7 @@ class SummarizeExecutionProgressTool implements DeviceTool {
 
   @override
   String get description =>
-      '汇总近期 ExecutionOS 进展:open actions 数量、blocked 数量、active projects/commitments 数量、'
+      '汇总近期 ExecutionOS 进展:open actions 数量、blocked 数量、active plans 数量、'
       '最近 progress entries。用于周复盘和执行状态总结。';
 
   @override
@@ -36,10 +36,7 @@ class SummarizeExecutionProgressTool implements DeviceTool {
         ? (input['limit'] as num).toInt().clamp(1, 100)
         : 20;
     final actions = await repo.listOpenActions(ownerUserId: ownerUserId);
-    final projects = await repo.listActiveProjects(ownerUserId: ownerUserId);
-    final commitments = await repo.listActiveCommitments(
-      ownerUserId: ownerUserId,
-    );
+    final plans = await repo.listActivePlans(ownerUserId: ownerUserId);
     final progress = await repo.listRecentProgress(
       ownerUserId: ownerUserId,
       limit: limit,
@@ -56,26 +53,12 @@ class SummarizeExecutionProgressTool implements DeviceTool {
         'blocked_action_count': actions
             .where((a) => a.status == ExecutionActionStatus.blocked)
             .length,
-        'active_project_count': projects.length,
-        'active_commitment_count': commitments.length,
+        'active_plan_count': plans.length,
         'recent_closed_actions': closedActions
-            .map(
-              (action) => executionActionJson(
-                action,
-                projects: projects,
-                commitments: commitments,
-              ),
-            )
+            .map((action) => executionActionJson(action, plans: plans))
             .toList(growable: false),
-        'active_projects': projects
-            .map(executionProjectJson)
-            .take(20)
-            .toList(growable: false),
-        'active_commitments': commitments
-            .map(
-              (commitment) =>
-                  executionCommitmentJson(commitment, projects: projects),
-            )
+        'active_plans': plans
+            .map(executionPlanJson)
             .take(20)
             .toList(growable: false),
         'recent_progress': progress
@@ -83,13 +66,8 @@ class SummarizeExecutionProgressTool implements DeviceTool {
               (p) => <String, Object?>{
                 'id': p.id,
                 'action_id': p.actionId,
-                'project_id': p.projectId,
-                'project_title': executionProjectTitle(projects, p.projectId),
-                'commitment_id': p.commitmentId,
-                'commitment_title': executionCommitmentTitle(
-                  commitments,
-                  p.commitmentId,
-                ),
+                'plan_id': p.planId,
+                'plan_title': executionPlanTitle(plans, p.planId),
                 'kind': p.kind.wire,
                 'note': p.note,
                 'created_at': p.createdAt.toUtc().toIso8601String(),

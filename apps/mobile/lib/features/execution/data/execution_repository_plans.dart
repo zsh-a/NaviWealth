@@ -1,6 +1,6 @@
 part of 'execution_repository.dart';
 
-mixin ExecutionProjectRepositoryMixin {
+mixin ExecutionPlanRepositoryMixin {
   AppDatabase get _db;
   OutboxStore get _outbox;
 
@@ -11,17 +11,17 @@ mixin ExecutionProjectRepositoryMixin {
     required String rowId,
   });
 
-  Stream<List<ExecutionProject>> watchActiveProjects({
+  Stream<List<ExecutionPlan>> watchActivePlans({
     required String ownerUserId,
     int limit = 100,
   }) {
-    final q = _db.select(_db.executionProjects)
+    final q = _db.select(_db.executionPlans)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..where(
         (t) => t.status.isIn(<String>[
-          ExecutionProjectStatus.active.wire,
-          ExecutionProjectStatus.paused.wire,
+          ExecutionPlanStatus.active.wire,
+          ExecutionPlanStatus.paused.wire,
         ]),
       )
       ..orderBy([
@@ -29,20 +29,20 @@ mixin ExecutionProjectRepositoryMixin {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionPlanFromRow).toList());
   }
 
-  Stream<List<ExecutionProject>> watchClosedProjects({
+  Stream<List<ExecutionPlan>> watchClosedPlans({
     required String ownerUserId,
     int limit = 100,
   }) {
-    final q = _db.select(_db.executionProjects)
+    final q = _db.select(_db.executionPlans)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..where(
         (t) => t.status.isIn(<String>[
-          ExecutionProjectStatus.completed.wire,
-          ExecutionProjectStatus.archived.wire,
+          ExecutionPlanStatus.completed.wire,
+          ExecutionPlanStatus.archived.wire,
         ]),
       )
       ..orderBy([
@@ -50,20 +50,20 @@ mixin ExecutionProjectRepositoryMixin {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionPlanFromRow).toList());
   }
 
-  Future<List<ExecutionProject>> listActiveProjects({
+  Future<List<ExecutionPlan>> listActivePlans({
     required String ownerUserId,
     int limit = 100,
   }) async {
-    final q = _db.select(_db.executionProjects)
+    final q = _db.select(_db.executionPlans)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..where(
         (t) => t.status.isIn(<String>[
-          ExecutionProjectStatus.active.wire,
-          ExecutionProjectStatus.paused.wire,
+          ExecutionPlanStatus.active.wire,
+          ExecutionPlanStatus.paused.wire,
         ]),
       )
       ..orderBy([
@@ -72,14 +72,14 @@ mixin ExecutionProjectRepositoryMixin {
       ])
       ..limit(limit);
     final rows = await q.get();
-    return rows.map(executionProjectFromRow).toList();
+    return rows.map(executionPlanFromRow).toList();
   }
 
-  Stream<List<ExecutionProject>> watchProjectsForMemoryIndex({
+  Stream<List<ExecutionPlan>> watchPlansForMemoryIndex({
     required String ownerUserId,
     int limit = 500,
   }) {
-    final q = _db.select(_db.executionProjects)
+    final q = _db.select(_db.executionPlans)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
@@ -87,73 +87,73 @@ mixin ExecutionProjectRepositoryMixin {
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
       ])
       ..limit(limit);
-    return q.watch().map((rows) => rows.map(executionProjectFromRow).toList());
+    return q.watch().map((rows) => rows.map(executionPlanFromRow).toList());
   }
 
-  Future<void> upsertProject(ExecutionProject project) {
+  Future<void> upsertPlan(ExecutionPlan plan) {
     return _upsertAndEnqueue(
-      _db.executionProjects,
-      executionProjectCompanion(project),
-      tableName: ExecutionRepository._projectsTable,
-      rowId: project.id,
+      _db.executionPlans,
+      executionPlanCompanion(plan),
+      tableName: ExecutionRepository._plansTable,
+      rowId: plan.id,
     );
   }
 
-  Future<List<ExecutionAction>> softDeleteProject({
-    required ExecutionProject project,
+  Future<List<ExecutionAction>> softDeletePlan({
+    required ExecutionPlan plan,
     required SyncMeta sync,
   }) async {
     final tombstone = sync.copyWith(deletedAt: sync.updatedAt);
     return _db.transaction(() async {
-      final deleted = ExecutionProject(
-        id: project.id,
-        title: project.title,
-        description: project.description,
-        status: project.status,
-        horizon: project.horizon,
-        targetDate: project.targetDate,
-        source: project.source,
-        createdAt: project.createdAt,
-        completedAt: project.completedAt,
+      final deleted = ExecutionPlan(
+        id: plan.id,
+        title: plan.title,
+        description: plan.description,
+        status: plan.status,
+        horizon: plan.horizon,
+        targetDate: plan.targetDate,
+        source: plan.source,
+        createdAt: plan.createdAt,
+        completedAt: plan.completedAt,
         sync: tombstone,
       );
       await _db
-          .into(_db.executionProjects)
+          .into(_db.executionPlans)
           .insert(
-            executionProjectCompanion(deleted),
+            executionPlanCompanion(deleted),
             mode: InsertMode.insertOrReplace,
           );
       await _outbox.enqueue(
-        table: ExecutionRepository._projectsTable,
-        rowId: project.id,
+        table: ExecutionRepository._plansTable,
+        rowId: plan.id,
       );
       return await _detachOpenActionsToInbox(
         db: _db,
         outbox: _outbox,
         ownerUserId: sync.ownerUserId,
-        projectId: project.id,
+        planId: plan.id,
         sync: sync,
       );
     });
   }
 
-  Future<List<ExecutionAction>> updateProjectStatus({
-    required ExecutionProject project,
-    required ExecutionProjectStatus status,
+  Future<List<ExecutionAction>> updatePlanStatus({
+    required ExecutionPlan plan,
+    required ExecutionPlanStatus status,
     required SyncMeta sync,
     required ExecutionProgressEntry progress,
   }) async {
-    final updated = _projectWithStatus(project, status: status, sync: sync);
+    final updated = _planWithStatus(plan, status: status, sync: sync);
     return _db.transaction(() async {
       await _db
-          .into(_db.executionProjects)
+          .into(_db.executionPlans)
           .insert(
-            executionProjectCompanion(updated),
+            executionPlanCompanion(updated),
             mode: InsertMode.insertOrReplace,
           );
       await _outbox.enqueue(
-        table: ExecutionRepository._projectsTable,
-        rowId: project.id,
+        table: ExecutionRepository._plansTable,
+        rowId: plan.id,
       );
       await _db
           .into(_db.executionProgressEntries)
@@ -165,36 +165,36 @@ mixin ExecutionProjectRepositoryMixin {
         table: ExecutionRepository._progressTable,
         rowId: progress.id,
       );
-      if (status != ExecutionProjectStatus.completed &&
-          status != ExecutionProjectStatus.archived) {
+      if (status != ExecutionPlanStatus.completed &&
+          status != ExecutionPlanStatus.archived) {
         return <ExecutionAction>[];
       }
       return await _detachOpenActionsToInbox(
         db: _db,
         outbox: _outbox,
         ownerUserId: sync.ownerUserId,
-        projectId: project.id,
+        planId: plan.id,
         sync: sync,
       );
     });
   }
 
-  Future<void> restoreProjectLifecycle({
-    required ExecutionProject project,
+  Future<void> restorePlanLifecycle({
+    required ExecutionPlan plan,
     required List<ExecutionAction> actions,
     required String? progressId,
     required SyncMeta sync,
   }) async {
     await _db.transaction(() async {
       await _db
-          .into(_db.executionProjects)
+          .into(_db.executionPlans)
           .insert(
-            executionProjectCompanion(project.copyWith(sync: sync)),
+            executionPlanCompanion(plan.copyWith(sync: sync)),
             mode: InsertMode.insertOrReplace,
           );
       await _outbox.enqueue(
-        table: ExecutionRepository._projectsTable,
-        rowId: project.id,
+        table: ExecutionRepository._plansTable,
+        rowId: plan.id,
       );
       for (final action in actions) {
         final restored = action.copyWith(sync: sync);
@@ -235,61 +235,57 @@ mixin ExecutionProjectRepositoryMixin {
     });
   }
 
-  Future<ExecutionProject?> findProject({
+  Future<ExecutionPlan?> findPlan({
     required String ownerUserId,
     required String id,
   }) async {
     final row =
-        await (_db.select(_db.executionProjects)..where(
+        await (_db.select(_db.executionPlans)..where(
               (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
             ))
             .getSingleOrNull();
-    return row == null ? null : executionProjectFromRow(row);
+    return row == null ? null : executionPlanFromRow(row);
   }
 
-  Stream<ExecutionProject?> watchProjectById({
+  Stream<ExecutionPlan?> watchPlanById({
     required String ownerUserId,
     required String id,
   }) {
-    final q = _db.select(_db.executionProjects)
+    final q = _db.select(_db.executionPlans)
       ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId))
       ..limit(1);
     return q.watchSingleOrNull().map(
       (row) => row == null || row.deletedAt != null
           ? null
-          : executionProjectFromRow(row),
+          : executionPlanFromRow(row),
     );
   }
 
-  Future<List<ExecutionProject>> listProjectsByIds({
+  Future<List<ExecutionPlan>> listPlansByIds({
     required String ownerUserId,
     required Set<String> ids,
   }) async {
-    if (ids.isEmpty) return const <ExecutionProject>[];
-    final q = _db.select(_db.executionProjects)
+    if (ids.isEmpty) return const <ExecutionPlan>[];
+    final q = _db.select(_db.executionPlans)
       ..where(
         (t) =>
             t.ownerUserId.equals(ownerUserId) &
             t.id.isIn(ids.toList(growable: false)),
       );
     final rows = await q.get();
-    return rows.map(executionProjectFromRow).toList(growable: false);
+    return rows.map(executionPlanFromRow).toList(growable: false);
   }
 
-  ExecutionProject _projectWithStatus(
-    ExecutionProject project, {
-    required ExecutionProjectStatus status,
+  ExecutionPlan _planWithStatus(
+    ExecutionPlan plan, {
+    required ExecutionPlanStatus status,
     required SyncMeta sync,
   }) {
     final completedAt = switch (status) {
-      ExecutionProjectStatus.completed ||
-      ExecutionProjectStatus.archived => sync.updatedAt,
-      ExecutionProjectStatus.active || ExecutionProjectStatus.paused => null,
+      ExecutionPlanStatus.completed ||
+      ExecutionPlanStatus.archived => sync.updatedAt,
+      ExecutionPlanStatus.active || ExecutionPlanStatus.paused => null,
     };
-    return project.copyWith(
-      status: status,
-      completedAt: completedAt,
-      sync: sync,
-    );
+    return plan.copyWith(status: status, completedAt: completedAt, sync: sync);
   }
 }

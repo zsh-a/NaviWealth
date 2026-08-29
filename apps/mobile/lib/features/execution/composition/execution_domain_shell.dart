@@ -21,8 +21,8 @@ DomainShellSpec executionDomainShell(AppLocalizations l10n) {
       DomainShellTab(
         icon: FLucideIcons.target,
         selectedIcon: FLucideIcons.target,
-        label: l10n.executionTabCommitments,
-        routePath: ExecutionRoutes.commitments,
+        label: l10n.executionTabPlans,
+        routePath: ExecutionRoutes.plans,
       ),
     ],
     hiddenTabs: <DomainShellTab>[

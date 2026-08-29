@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 79', () {
-      expect(db.schemaVersion, 79);
+    test('is 80', () {
+      expect(db.schemaVersion, 80);
     });
   });
 
@@ -544,9 +544,8 @@ void main() {
 
   group('ExecutionOS tables exist', () {
     for (final table in [
-      'execution_projects',
+      'execution_plans',
       'execution_actions',
-      'execution_commitments',
       'execution_progress_entries',
     ]) {
       test('$table has sync columns', () async {
@@ -565,12 +564,6 @@ void main() {
           (await db.customSelect('PRAGMA table_info(execution_actions)').get())
               .map((r) => r.read<String>('name'))
               .toSet();
-      final commitmentColumns =
-          (await db
-                  .customSelect('PRAGMA table_info(execution_commitments)')
-                  .get())
-              .map((r) => r.read<String>('name'))
-              .toSet();
       final progressColumns =
           (await db
                   .customSelect('PRAGMA table_info(execution_progress_entries)')
@@ -578,9 +571,8 @@ void main() {
               .map((r) => r.read<String>('name'))
               .toSet();
 
-      expect(actionColumns, contains('project_id'));
-      expect(commitmentColumns, contains('project_id'));
-      expect(progressColumns, contains('project_id'));
+      expect(actionColumns, contains('plan_id'));
+      expect(progressColumns, contains('plan_id'));
     });
   });
 
@@ -850,24 +842,19 @@ void main() {
       );
     });
 
-    test(
-      'accounts has sync columns (owner_user_id, deleted_at, hlc, updated_at, updated_by_device)',
-      () async {
-        final result = await db
-            .customSelect('PRAGMA table_info(accounts)')
-            .get();
-        final columns = result.map((r) => r.read<String>('name')).toSet();
-        expect(
-          columns,
-          containsAll([
-            'owner_user_id',
-            'deleted_at',
-            'hlc',
-            'updated_at',
-            'updated_by_device',
-          ]),
-        );
-      },
-    );
+    test('accounts has sync columns (owner_user_id, deleted_at, hlc, updated_at, updated_by_device)', () async {
+      final result = await db.customSelect('PRAGMA table_info(accounts)').get();
+      final columns = result.map((r) => r.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'owner_user_id',
+          'deleted_at',
+          'hlc',
+          'updated_at',
+          'updated_by_device',
+        ]),
+      );
+    });
   });
 }
