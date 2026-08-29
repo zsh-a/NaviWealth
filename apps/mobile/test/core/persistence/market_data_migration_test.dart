@@ -116,6 +116,6 @@ void main() {
     expect(search.read<String>('market'), 'unknown');
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 78);
+    expect(version.read<int>('user_version'), db.schemaVersion);
   });
 }

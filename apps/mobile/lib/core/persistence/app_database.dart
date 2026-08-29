@@ -154,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 78;
+  int get schemaVersion => 79;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1134,6 +1134,20 @@ class AppDatabase extends _$AppDatabase {
         await _migrateFxRates(this);
         await _migrateMarketDataCaches(this, m);
         await _createMarketDataCacheIndexes(this);
+      }
+      // v78 → v79: dedicated `source_id` on health_metrics. Source
+      // identity used to live only in row-id prefixes (`garmin:`, `hk:`,
+      // `hc:`, `manual:`) plus the free-text `source_device`; the column
+      // persists the same attribution so SQL-level per-source queries no
+      // longer parse ids. Nullable: legacy rows keep deriving their
+      // source from the prefix and are never rewritten in place.
+      if (from < 79) {
+        await _addColumnIfMissing(
+          this,
+          table: 'health_metrics',
+          column: 'source_id',
+          definition: 'TEXT',
+        );
       }
     },
     beforeOpen: (details) async {

@@ -20,8 +20,18 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 78', () {
-      expect(db.schemaVersion, 78);
+    test('is 79', () {
+      expect(db.schemaVersion, 79);
+    });
+  });
+
+  group('Health metric source identity', () {
+    test('health_metrics carries the v79 source_id column', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(health_metrics)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(columns, contains('source_id'));
     });
   });
 

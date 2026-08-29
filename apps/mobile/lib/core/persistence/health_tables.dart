@@ -56,6 +56,13 @@ class HealthMetrics extends Table with SyncableTable {
   /// HealthKit / Health Connect surfaces.
   TextColumn get sourceDevice => text().nullable()();
 
+  /// Stable source identity written by the owning adapter: one of the
+  /// [HealthMetricSource] wire ids (`garmin`, `healthkit`,
+  /// `health_connect`, `manual`). Nullable so pre-v79 rows and rows
+  /// synced from older devices keep their id-prefix / device-name
+  /// attribution instead of being rewritten.
+  TextColumn get sourceId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

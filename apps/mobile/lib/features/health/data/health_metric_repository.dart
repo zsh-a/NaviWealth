@@ -14,6 +14,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
+import 'health_metric_source.dart';
 
 class HealthMetricRepository {
   HealthMetricRepository({required AppDatabase db, required OutboxStore outbox})
@@ -151,6 +152,7 @@ class HealthMetricRepository {
       unit: metric.unit,
       payloadJson: Value(metric.payloadJson),
       sourceDevice: Value(metric.sourceDevice),
+      sourceId: Value(sourceForHealthMetric(metric).id),
       ownerUserId: metric.sync.ownerUserId,
       updatedAt: metric.sync.updatedAt,
       updatedByDevice: metric.sync.updatedByDevice,

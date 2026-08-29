@@ -36187,6 +36187,17 @@ class $HealthMetricsTable extends HealthMetrics
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -36201,6 +36212,7 @@ class $HealthMetricsTable extends HealthMetrics
     unit,
     payloadJson,
     sourceDevice,
+    sourceId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -36305,6 +36317,12 @@ class $HealthMetricsTable extends HealthMetrics
         ),
       );
     }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    }
     return context;
   }
 
@@ -36363,6 +36381,10 @@ class $HealthMetricsTable extends HealthMetrics
       sourceDevice: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}source_device'],
+      ),
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
       ),
     );
   }
@@ -36433,6 +36455,13 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
   /// Free-text so the on-device adapter can pass through whatever
   /// HealthKit / Health Connect surfaces.
   final String? sourceDevice;
+
+  /// Stable source identity written by the owning adapter: one of the
+  /// [HealthMetricSource] wire ids (`garmin`, `healthkit`,
+  /// `health_connect`, `manual`). Nullable so pre-v79 rows and rows
+  /// synced from older devices keep their id-prefix / device-name
+  /// attribution instead of being rewritten.
+  final String? sourceId;
   const HealthMetricRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -36446,6 +36475,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
     required this.unit,
     this.payloadJson,
     this.sourceDevice,
+    this.sourceId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -36472,6 +36502,9 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
     if (!nullToAbsent || sourceDevice != null) {
       map['source_device'] = Variable<String>(sourceDevice);
     }
+    if (!nullToAbsent || sourceId != null) {
+      map['source_id'] = Variable<String>(sourceId);
+    }
     return map;
   }
 
@@ -36495,6 +36528,9 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
       sourceDevice: sourceDevice == null && nullToAbsent
           ? const Value.absent()
           : Value(sourceDevice),
+      sourceId: sourceId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceId),
     );
   }
 
@@ -36516,6 +36552,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
       unit: serializer.fromJson<String>(json['unit']),
       payloadJson: serializer.fromJson<String?>(json['payloadJson']),
       sourceDevice: serializer.fromJson<String?>(json['sourceDevice']),
+      sourceId: serializer.fromJson<String?>(json['sourceId']),
     );
   }
   @override
@@ -36534,6 +36571,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
       'unit': serializer.toJson<String>(unit),
       'payloadJson': serializer.toJson<String?>(payloadJson),
       'sourceDevice': serializer.toJson<String?>(sourceDevice),
+      'sourceId': serializer.toJson<String?>(sourceId),
     };
   }
 
@@ -36550,6 +36588,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
     String? unit,
     Value<String?> payloadJson = const Value.absent(),
     Value<String?> sourceDevice = const Value.absent(),
+    Value<String?> sourceId = const Value.absent(),
   }) => HealthMetricRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -36563,6 +36602,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
     unit: unit ?? this.unit,
     payloadJson: payloadJson.present ? payloadJson.value : this.payloadJson,
     sourceDevice: sourceDevice.present ? sourceDevice.value : this.sourceDevice,
+    sourceId: sourceId.present ? sourceId.value : this.sourceId,
   );
   HealthMetricRow copyWithCompanion(HealthMetricsCompanion data) {
     return HealthMetricRow(
@@ -36588,6 +36628,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
       sourceDevice: data.sourceDevice.present
           ? data.sourceDevice.value
           : this.sourceDevice,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
     );
   }
 
@@ -36605,7 +36646,8 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
           ..write('value: $value, ')
           ..write('unit: $unit, ')
           ..write('payloadJson: $payloadJson, ')
-          ..write('sourceDevice: $sourceDevice')
+          ..write('sourceDevice: $sourceDevice, ')
+          ..write('sourceId: $sourceId')
           ..write(')'))
         .toString();
   }
@@ -36624,6 +36666,7 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
     unit,
     payloadJson,
     sourceDevice,
+    sourceId,
   );
   @override
   bool operator ==(Object other) =>
@@ -36640,7 +36683,8 @@ class HealthMetricRow extends DataClass implements Insertable<HealthMetricRow> {
           other.value == this.value &&
           other.unit == this.unit &&
           other.payloadJson == this.payloadJson &&
-          other.sourceDevice == this.sourceDevice);
+          other.sourceDevice == this.sourceDevice &&
+          other.sourceId == this.sourceId);
 }
 
 class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
@@ -36656,6 +36700,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
   final Value<String> unit;
   final Value<String?> payloadJson;
   final Value<String?> sourceDevice;
+  final Value<String?> sourceId;
   final Value<int> rowid;
   const HealthMetricsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -36670,6 +36715,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
     this.unit = const Value.absent(),
     this.payloadJson = const Value.absent(),
     this.sourceDevice = const Value.absent(),
+    this.sourceId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   HealthMetricsCompanion.insert({
@@ -36685,6 +36731,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
     required String unit,
     this.payloadJson = const Value.absent(),
     this.sourceDevice = const Value.absent(),
+    this.sourceId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -36708,6 +36755,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
     Expression<String>? unit,
     Expression<String>? payloadJson,
     Expression<String>? sourceDevice,
+    Expression<String>? sourceId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -36723,6 +36771,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
       if (unit != null) 'unit': unit,
       if (payloadJson != null) 'payload_json': payloadJson,
       if (sourceDevice != null) 'source_device': sourceDevice,
+      if (sourceId != null) 'source_id': sourceId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -36740,6 +36789,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
     Value<String>? unit,
     Value<String?>? payloadJson,
     Value<String?>? sourceDevice,
+    Value<String?>? sourceId,
     Value<int>? rowid,
   }) {
     return HealthMetricsCompanion(
@@ -36755,6 +36805,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
       unit: unit ?? this.unit,
       payloadJson: payloadJson ?? this.payloadJson,
       sourceDevice: sourceDevice ?? this.sourceDevice,
+      sourceId: sourceId ?? this.sourceId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -36800,6 +36851,9 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
     if (sourceDevice.present) {
       map['source_device'] = Variable<String>(sourceDevice.value);
     }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -36821,6 +36875,7 @@ class HealthMetricsCompanion extends UpdateCompanion<HealthMetricRow> {
           ..write('unit: $unit, ')
           ..write('payloadJson: $payloadJson, ')
           ..write('sourceDevice: $sourceDevice, ')
+          ..write('sourceId: $sourceId, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -64591,6 +64646,7 @@ typedef $$HealthMetricsTableCreateCompanionBuilder =
       required String unit,
       Value<String?> payloadJson,
       Value<String?> sourceDevice,
+      Value<String?> sourceId,
       Value<int> rowid,
     });
 typedef $$HealthMetricsTableUpdateCompanionBuilder =
@@ -64607,6 +64663,7 @@ typedef $$HealthMetricsTableUpdateCompanionBuilder =
       Value<String> unit,
       Value<String?> payloadJson,
       Value<String?> sourceDevice,
+      Value<String?> sourceId,
       Value<int> rowid,
     });
 
@@ -64679,6 +64736,11 @@ class $$HealthMetricsTableFilterComposer
     column: $table.sourceDevice,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$HealthMetricsTableOrderingComposer
@@ -64749,6 +64811,11 @@ class $$HealthMetricsTableOrderingComposer
     column: $table.sourceDevice,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$HealthMetricsTableAnnotationComposer
@@ -64805,6 +64872,9 @@ class $$HealthMetricsTableAnnotationComposer
     column: $table.sourceDevice,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
 }
 
 class $$HealthMetricsTableTableManager
@@ -64850,6 +64920,7 @@ class $$HealthMetricsTableTableManager
                 Value<String> unit = const Value.absent(),
                 Value<String?> payloadJson = const Value.absent(),
                 Value<String?> sourceDevice = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HealthMetricsCompanion(
                 ownerUserId: ownerUserId,
@@ -64864,6 +64935,7 @@ class $$HealthMetricsTableTableManager
                 unit: unit,
                 payloadJson: payloadJson,
                 sourceDevice: sourceDevice,
+                sourceId: sourceId,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -64880,6 +64952,7 @@ class $$HealthMetricsTableTableManager
                 required String unit,
                 Value<String?> payloadJson = const Value.absent(),
                 Value<String?> sourceDevice = const Value.absent(),
+                Value<String?> sourceId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HealthMetricsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -64894,6 +64967,7 @@ class $$HealthMetricsTableTableManager
                 unit: unit,
                 payloadJson: payloadJson,
                 sourceDevice: sourceDevice,
+                sourceId: sourceId,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
