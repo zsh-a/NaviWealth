@@ -29,6 +29,7 @@ import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
@@ -409,7 +410,7 @@ List<KnowledgeNote>? inboxTriageNotesFromToolResult(
   if (rawNotes is! List) return null;
   final out = <KnowledgeNote>[];
   for (final raw in rawNotes) {
-    final note = _asObject(raw);
+    final note = agentRuntimeObjectOrNull(raw);
     final id = note?['id'];
     final title = note?['title'];
     final body = note?['body_md'];
@@ -439,7 +440,7 @@ List<KnowledgeDecision>? inboxTriageDecisionsFromToolResult(
   if (rawDecisions is! List) return null;
   final out = <KnowledgeDecision>[];
   for (final raw in rawDecisions) {
-    final decision = _asObject(raw);
+    final decision = agentRuntimeObjectOrNull(raw);
     final id = decision?['id'];
     final question = decision?['question'];
     final selected = decision?['selected'];
@@ -467,14 +468,6 @@ List<KnowledgeDecision>? inboxTriageDecisionsFromToolResult(
     );
   }
   return out;
-}
-
-Map<String, Object?>? _asObject(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return null;
 }
 
 List<String> _stringList(Object? value) {

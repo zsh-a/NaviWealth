@@ -36,6 +36,20 @@ int agentRuntimeInt(Object? value) {
   return 0;
 }
 
+/// Nullable variant of [agentRuntimeInt]: returns `null` unless [value] is a
+/// num, so callers can distinguish "field absent" from "field is zero".
+int? agentRuntimeIntOrNull(Object? value) {
+  if (value is num) return value.toInt();
+  return null;
+}
+
+/// Parses an ISO-8601 string into a UTC datetime, returning `null` for
+/// absent, empty, or unparseable values.
+DateTime? agentRuntimeDateTimeOrNull(Object? value) {
+  if (value is! String || value.isEmpty) return null;
+  return DateTime.tryParse(value)?.toUtc();
+}
+
 String agentRuntimeEncodeToolCallLine({
   required Object id,
   required String name,

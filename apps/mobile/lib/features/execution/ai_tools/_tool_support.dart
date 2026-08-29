@@ -1,20 +1,12 @@
-import '../../../core/ai/composition/proposal_envelope.dart'
-    as proposal_envelope;
+/// ExecutionOS device-tool payload shaping helpers.
+///
+/// Envelope and error wrappers delegate to
+/// `core/ai/composition/proposal_tool_support.dart`. Only ExecutionOS-specific
+/// payload shaping lives here.
+library;
 
-Map<String, Object?> proposalEnvelope({
-  required String kind,
-  required String summaryZh,
-  required Map<String, Object?> payload,
-  String note = proposal_envelope.kProposalConfirmNote,
-}) => proposal_envelope.readyPlan(
-  kind: kind,
-  summaryZh: summaryZh,
-  payload: payload,
-  note: note,
-);
-
-Map<String, Object?> badRequest(String message) =>
-    proposal_envelope.proposalBadRequest(message);
+export '../../../core/ai/composition/proposal_tool_support.dart'
+    show badRequest, proposalEnvelope;
 
 String shortText(String value, {int max = 96}) {
   final trimmed = value.trim().replaceAll(RegExp(r'\s+'), ' ');

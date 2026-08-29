@@ -204,7 +204,7 @@ void main() {
     expect(result.memoryId, isNull);
     expect(result.artifactId, '$kExecutionReviewAgentId:2026-06-05');
     expect(result.summary, contains('1 blocked'));
-    expect(result.summary, contains('2 active commitments'));
+    expect(result.summary, contains('2 ongoing plans'));
 
     final artifact = await SqliteAgentArtifactStore(
       db: db,

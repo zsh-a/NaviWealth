@@ -15,6 +15,7 @@ import '../../../core/ai/agents/agent_intents.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
@@ -289,7 +290,7 @@ List<AssumptionReviewItem>? assumptionReviewItemsFromToolResult(
   if (rawAssumptions is! List) return null;
   final items = <AssumptionReviewItem>[];
   for (final raw in rawAssumptions) {
-    final assumption = _asObject(raw);
+    final assumption = agentRuntimeObjectOrNull(raw);
     final id = assumption?['id'];
     final statement = assumption?['statement'];
     final daysSinceVerify = assumption?['days_since_verify'];
@@ -305,12 +306,4 @@ List<AssumptionReviewItem>? assumptionReviewItemsFromToolResult(
     );
   }
   return items;
-}
-
-Map<String, Object?>? _asObject(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return null;
 }

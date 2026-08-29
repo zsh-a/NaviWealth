@@ -15,6 +15,7 @@ import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
@@ -397,14 +398,6 @@ RecoveryAlertSignalRead recoveryAlertSignalFromValues(
   );
 }
 
-Map<String, Object?>? _asObject(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return null;
-}
-
 List<RecoveryAlertHrvPoint>? _hrvPointsFromToolResult(
   Map<String, Object?>? result,
 ) {
@@ -412,7 +405,7 @@ List<RecoveryAlertHrvPoint>? _hrvPointsFromToolResult(
   if (rawPoints is! List) return null;
   final points = <RecoveryAlertHrvPoint>[];
   for (final raw in rawPoints) {
-    final point = _asObject(raw);
+    final point = agentRuntimeObjectOrNull(raw);
     final date = point?['date'];
     final hrv = point?['hrv_ms'];
     if (date is! String || hrv is! num) return null;

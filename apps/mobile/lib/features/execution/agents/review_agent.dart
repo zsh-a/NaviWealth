@@ -13,6 +13,7 @@ import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
@@ -1022,8 +1023,10 @@ ExecutionReviewSnapshot? executionReviewSnapshotFromTerminalStep(
   final commitments = _refsFromList(summary?['active_commitments']);
   final progress = executionReviewProgressFromToolResult(summary);
   final closedActions = executionReviewClosedActionsFromToolResult(summary);
-  final projectCount = _intValue(summary?['active_project_count']);
-  final commitmentCount = _intValue(summary?['active_commitment_count']);
+  final projectCount = agentRuntimeIntOrNull(summary?['active_project_count']);
+  final commitmentCount = agentRuntimeIntOrNull(
+    summary?['active_commitment_count'],
+  );
   if (actions == null ||
       projects == null ||
       commitments == null ||
@@ -1051,7 +1054,7 @@ List<ExecutionReviewAction>? executionReviewActionsFromToolResult(
   if (rawActions is! List) return null;
   final actions = <ExecutionReviewAction>[];
   for (final raw in rawActions) {
-    final action = _asObject(raw);
+    final action = agentRuntimeObjectOrNull(raw);
     final id = action?['id'];
     final title = action?['title'];
     final status = action?['status'];
@@ -1068,13 +1071,13 @@ List<ExecutionReviewAction>? executionReviewActionsFromToolResult(
         title: title,
         status: ExecutionActionStatus.parse(status),
         priority: ExecutionPriority.parse(priority),
-        dueAt: _dateTime(action?['due_at']),
-        scheduledFor: _dateTime(action?['scheduled_for']),
+        dueAt: agentRuntimeDateTimeOrNull(action?['due_at']),
+        scheduledFor: agentRuntimeDateTimeOrNull(action?['scheduled_for']),
         projectId: action?['project_id'] as String?,
         commitmentId: action?['commitment_id'] as String?,
-        createdAt: _dateTime(action?['created_at']),
-        updatedAt: _dateTime(action?['updated_at']),
-        completedAt: _dateTime(action?['completed_at']),
+        createdAt: agentRuntimeDateTimeOrNull(action?['created_at']),
+        updatedAt: agentRuntimeDateTimeOrNull(action?['updated_at']),
+        completedAt: agentRuntimeDateTimeOrNull(action?['completed_at']),
       ),
     );
   }
@@ -1088,7 +1091,7 @@ List<ExecutionReviewProgress>? executionReviewProgressFromToolResult(
   if (rawProgress is! List) return null;
   final progress = <ExecutionReviewProgress>[];
   for (final raw in rawProgress) {
-    final entry = _asObject(raw);
+    final entry = agentRuntimeObjectOrNull(raw);
     final id = entry?['id'];
     final createdAt = entry?['created_at'];
     if (id is! String || createdAt is! String) return null;
@@ -1112,14 +1115,14 @@ List<ExecutionReviewRef>? _refsFromList(Object? value) {
   if (value is! List) return null;
   final refs = <ExecutionReviewRef>[];
   for (final raw in value) {
-    final object = _asObject(raw);
+    final object = agentRuntimeObjectOrNull(raw);
     final id = object?['id'];
     if (id is! String) return null;
     refs.add(
       ExecutionReviewRef(
         id: id,
         title: object?['title'] as String? ?? '',
-        targetDate: _dateTime(object?['target_date']),
+        targetDate: agentRuntimeDateTimeOrNull(object?['target_date']),
         projectId: object?['project_id'] as String?,
       ),
     );
@@ -1142,22 +1145,4 @@ bool _isAfterLocalDay(DateTime value, DateTime day) {
   final local = value.toLocal();
   final end = DateTime(day.year, day.month, day.day + 1);
   return !local.isBefore(end);
-}
-
-DateTime? _dateTime(Object? value) {
-  if (value is! String || value.isEmpty) return null;
-  return DateTime.tryParse(value)?.toUtc();
-}
-
-int? _intValue(Object? value) {
-  if (value is num) return value.toInt();
-  return null;
-}
-
-Map<String, Object?>? _asObject(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return null;
 }

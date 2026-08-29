@@ -120,7 +120,7 @@ List<KnowledgeDecision>? contradictionDecisionsFromToolResult(
   if (rawDecisions is! List) return null;
   final out = <KnowledgeDecision>[];
   for (final raw in rawDecisions) {
-    final decision = _asObject(raw);
+    final decision = agentRuntimeObjectOrNull(raw);
     final id = decision?['id'];
     final question = decision?['question'];
     final selected = decision?['selected'];
@@ -158,7 +158,7 @@ List<KnowledgePrinciple>? contradictionPrinciplesFromToolResult(
   if (rawPrinciples is! List) return null;
   final out = <KnowledgePrinciple>[];
   for (final raw in rawPrinciples) {
-    final principle = _asObject(raw);
+    final principle = agentRuntimeObjectOrNull(raw);
     final id = principle?['id'];
     final statement = principle?['statement'];
     final declaredAt = DateTime.tryParse(
@@ -189,7 +189,7 @@ List<KnowledgeAssumption>? contradictionAssumptionsFromToolResult(
   if (rawAssumptions is! List) return null;
   final out = <KnowledgeAssumption>[];
   for (final raw in rawAssumptions) {
-    final assumption = _asObject(raw);
+    final assumption = agentRuntimeObjectOrNull(raw);
     final id = assumption?['id'];
     final statement = assumption?['statement'];
     final confidence = assumption?['confidence'];
@@ -214,14 +214,6 @@ List<KnowledgeAssumption>? contradictionAssumptionsFromToolResult(
     );
   }
   return out;
-}
-
-Map<String, Object?>? _asObject(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
-  return null;
 }
 
 List<String> _stringList(Object? value) {

@@ -14,6 +14,7 @@ import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
+import '../../../core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_terminal_output.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
@@ -469,17 +470,17 @@ WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
   final activity = byTool['get_activity_summary'];
   if (recovery == null || sleep == null || activity == null) return null;
 
-  final sleepSummary = _asObject(sleep['summary']);
-  final activitySummary = _asObject(activity['summary']);
+  final sleepSummary = agentRuntimeObjectOrNull(sleep['summary']);
+  final activitySummary = agentRuntimeObjectOrNull(activity['summary']);
   if (sleepSummary == null || activitySummary == null) return null;
   final sessions = sleep['sessions'];
   final days = activity['days'];
   if (sessions is! List || days is! List) return null;
-  final recoveryScore = _intValue(recovery['score']);
+  final recoveryScore = agentRuntimeIntOrNull(recovery['score']);
   final recoveryVerdict = recovery['verdict'];
   final avgSleep = _doubleValue(sleepSummary['average_hours']);
   final totalSteps = _doubleValue(activitySummary['total_steps']);
-  final workoutCount = _intValue(activitySummary['workout_count']);
+  final workoutCount = agentRuntimeIntOrNull(activitySummary['workout_count']);
   final workoutMinutes = _doubleValue(activitySummary['workout_total_minutes']);
   if (totalSteps == null || workoutCount == null || workoutMinutes == null) {
     return null;
@@ -502,21 +503,8 @@ WeeklySummarySnapshot? weeklySummarySnapshotFromTerminalStep(
   );
 }
 
-int? _intValue(Object? value) {
-  if (value is num) return value.toInt();
-  return null;
-}
-
 double? _doubleValue(Object? value) {
   if (value is num) return value.toDouble();
-  return null;
-}
-
-Map<String, Object?>? _asObject(Object? value) {
-  if (value is Map<String, Object?>) return value;
-  if (value is Map) {
-    return value.map((key, value) => MapEntry(key.toString(), value));
-  }
   return null;
 }
 
