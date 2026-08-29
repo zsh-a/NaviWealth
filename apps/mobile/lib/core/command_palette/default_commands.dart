@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../ai/composition/assistant_route_paths.dart';
 import '../shell/settings_route_paths.dart';
 import '../shortcuts/shortcut_help_dialog.dart';
 import 'command_palette_entry.dart';
@@ -24,7 +25,7 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
   AppLocalizations l10n, {
   String homePath = '/',
   String settingsPath = SettingsRoutes.root,
-  String aiHistoryPath = SettingsRoutes.aiHistory,
+  String assistantPath = AssistantRoutes.home,
   VoidCallback? onToggleTheme,
   VoidCallback? onToggleColorMode,
   VoidCallback? onToggleLanguage,
@@ -75,17 +76,17 @@ List<CommandPaletteEntry> defaultCommandPaletteEntries(
         run: onAskAi,
       ),
     CommandPaletteEntry(
-      id: 'action.aiHistory',
+      id: 'action.assistant',
       label: l10n.commandPaletteAiHistory,
       icon: FLucideIcons.bot,
       keywords: <String>[
-        aiHistoryPath,
+        assistantPath,
         'ai',
         'history',
         'sessions',
         l10n.commandPaletteAiHistory,
       ],
-      run: (BuildContext ctx) => ctx.push(aiHistoryPath),
+      run: (BuildContext ctx) => ctx.push(assistantPath),
     ),
 
     // ── System actions ──

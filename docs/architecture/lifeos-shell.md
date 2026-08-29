@@ -87,8 +87,9 @@ Execution so users navigate by task area rather than architecture terminology.
 
 Hidden tabs are declared through `DomainShellSpec.hiddenTabs`: routable branches
 that own a real shell index but are not rendered in the tab bar, switcher, or
-sidebar (Review is reached via header actions, the command palette, and
-signals).
+sidebar. Review is reached from one domain header action, the Life review
+entry, or a relevant signal/artifact; it is not duplicated in the command
+palette.
 
 ## Adding Or Changing A Domain
 
@@ -126,7 +127,8 @@ Important files:
 
 Rules:
 
-- Settings, login, onboarding, AI history, and global configuration routes stay outside the domain dock shell.
+- Settings, login, onboarding, the `/assistant` conversation workspace, and
+  global configuration routes stay outside the domain dock shell.
 - A domain owns its tab paths through `DomainPack.tabPaths`.
 - Additional route prefixes that belong to a domain but are not tabs use `DomainPack.additionalPathPrefixes`.
 - Desktop uses one visual sidebar at the large window class (1200dp+). Its
@@ -134,9 +136,17 @@ Rules:
   are the tabs of the current domain. Do not stack a domain dock beside a
   second tab sidebar.
 - Compact and medium layouts keep domain-local bottom/rail navigation and use
-  the header workspace switcher. A single registered domain can still switch
-  with Life, so the desktop workspace affordance remains useful.
+  the header workspace switcher. Finance-only installations resolve `/life`
+  to Finance Today; the Life workspace becomes useful only when at least one
+  optional domain is active.
 - The Life hub does not repeat domain destinations inside its content.
+
+Settings uses the same progressive-disclosure rule. Data & storage contains
+backup/export and destructive user-data actions. Cache counts, retention,
+automatic cleanup, and database compaction live under Advanced → Storage
+maintenance. Runtime diagnostics, app logs, performance evidence, and
+developer-issue tooling are debug-build surfaces; normal release builds keep
+only user-actionable AI model, Agent, transparency, and storage controls.
 
 ## Identity And Opt-In
 
@@ -350,6 +360,8 @@ KnowledgeOS and ExecutionOS contribute their contextual review destinations
 through `DomainPack.reviewRoutePath`. The Life hub renders one review entry and
 offers only active domains with a real destination. Review data and pages stay
 domain-owned; generic Life signals are not presented as a review backlog.
+Domain Review agents may prepare that page, but they do not create a second
+named Review destination or a duplicate result card.
 
 ## Agent Runtime
 

@@ -17,6 +17,7 @@ import 'package:naviwealth/features/execution/ai_tools/list_open_actions_tool.da
 import 'package:naviwealth/features/execution/ai_tools/propose_action_status_update_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_action_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_commitment_tool.dart';
+import 'package:naviwealth/features/execution/ai_tools/propose_plan_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_progress_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/propose_project_tool.dart';
 import 'package:naviwealth/features/execution/ai_tools/summarize_execution_progress_tool.dart';
@@ -111,16 +112,18 @@ void main() {
   test('propose_action returns a ready proposal envelope', () async {
     final out = await _withRef(
       container,
-      (ref) => const ProposeActionTool()
-          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-            'title': 'Review FIRE budget strain',
-            'priority': 'high',
-            'reason': '预算压力需要一个明确下一步',
-            'source_domain': 'finance',
-            'source_row_family': 'fin:budgets',
-            'source_row_id': 'budget:2026-06',
-            'source_label': 'June budget',
-          }),
+      (ref) => const ProposeActionTool().invoke(
+        DeviceToolContext(ref: ref, session: _session()),
+        const {
+          'title': 'Review FIRE budget strain',
+          'priority': 'high',
+          'reason': '预算压力需要一个明确下一步',
+          'source_domain': 'finance',
+          'source_row_family': 'fin:budgets',
+          'source_row_id': 'budget:2026-06',
+          'source_label': 'June budget',
+        },
+      ),
     );
 
     final proposal = out! as Map;
@@ -154,14 +157,16 @@ void main() {
   test('propose_project returns a ready proposal envelope', () async {
     final out = await _withRef(
       container,
-      (ref) => const ProposeProjectTool()
-          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-            'title': 'Ship ExecutionOS prod-basic',
-            'description': 'Close MVP gaps before broader dogfooding.',
-            'horizon': 'month',
-            'target_date': '2026-06-30T00:00:00Z',
-            'reason': 'ExecutionOS needs a bounded delivery container',
-          }),
+      (ref) => const ProposeProjectTool().invoke(
+        DeviceToolContext(ref: ref, session: _session()),
+        const {
+          'title': 'Ship ExecutionOS prod-basic',
+          'description': 'Close MVP gaps before broader dogfooding.',
+          'horizon': 'month',
+          'target_date': '2026-06-30T00:00:00Z',
+          'reason': 'ExecutionOS needs a bounded delivery container',
+        },
+      ),
     );
 
     final proposal = out! as Map<Object?, Object?>;
@@ -176,12 +181,14 @@ void main() {
   test('propose_commitment returns a ready proposal envelope', () async {
     final out = await _withRef(
       container,
-      (ref) => const ProposeCommitmentTool()
-          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-            'title': 'Weekly execution review',
-            'project_id': 'proj-execution',
-            'reason': 'A recurring review keeps progress visible',
-          }),
+      (ref) => const ProposeCommitmentTool().invoke(
+        DeviceToolContext(ref: ref, session: _session()),
+        const {
+          'title': 'Weekly execution review',
+          'project_id': 'proj-execution',
+          'reason': 'A recurring review keeps progress visible',
+        },
+      ),
     );
 
     final proposal = out! as Map<Object?, Object?>;
@@ -193,16 +200,55 @@ void main() {
     expect(payload['horizon'], 'open');
   });
 
+  test('propose_plan keeps bounded and ongoing storage compatible', () async {
+    Future<Map<Object?, Object?>> invoke(Map<String, Object?> input) async {
+      final out = await _withRef(
+        container,
+        (ref) => const ProposePlanTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          input,
+        ),
+      );
+      return out! as Map<Object?, Object?>;
+    }
+
+    final bounded = await invoke(const <String, Object?>{
+      'title': 'Ship the release',
+      'cadence': 'bounded',
+      'reason': 'It needs several actions',
+    });
+    final ongoing = await invoke(const <String, Object?>{
+      'title': 'Maintain weekly review',
+      'cadence': 'ongoing',
+      'parent_plan_id': 'plan-release',
+      'reason': 'It repeats without a fixed finish',
+    });
+
+    expect(bounded['kind'], 'execution_project');
+    expect(ongoing['kind'], 'execution_commitment');
+    expect(ongoing['payload'], containsPair('project_id', 'plan-release'));
+    expect(
+      kExecutionAssistantDeviceTools.map((tool) => tool.name),
+      contains('propose_plan'),
+    );
+    expect(
+      kExecutionAssistantDeviceTools.map((tool) => tool.name),
+      isNot(contains('propose_project')),
+    );
+  });
+
   test('propose_progress returns a ready proposal envelope', () async {
     final out = await _withRef(
       container,
-      (ref) => const ProposeProgressTool()
-          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-            'note': 'Blocked on final proposal coverage.',
-            'kind': 'blocker',
-            'action_id': 'act-ai',
-            'reason': 'The blocker should be visible in review',
-          }),
+      (ref) => const ProposeProgressTool().invoke(
+        DeviceToolContext(ref: ref, session: _session()),
+        const {
+          'note': 'Blocked on final proposal coverage.',
+          'kind': 'blocker',
+          'action_id': 'act-ai',
+          'reason': 'The blocker should be visible in review',
+        },
+      ),
     );
 
     final proposal = out! as Map<Object?, Object?>;
@@ -219,13 +265,15 @@ void main() {
     () async {
       final out = await _withRef(
         container,
-        (ref) => const ProposeActionStatusUpdateTool()
-            .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-              'action_id': 'act-ai',
-              'status': 'done',
-              'progress_note': 'Finished from chat follow-up.',
-              'reason': '用户明确说这个行动已经完成',
-            }),
+        (ref) => const ProposeActionStatusUpdateTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          const {
+            'action_id': 'act-ai',
+            'status': 'done',
+            'progress_note': 'Finished from chat follow-up.',
+            'reason': '用户明确说这个行动已经完成',
+          },
+        ),
       );
 
       final proposal = out! as Map<Object?, Object?>;
@@ -264,16 +312,18 @@ void main() {
 
     final proposal = await _withRef(
       container,
-      (ref) => const ProposeActionTool()
-          .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-            'title': 'Book Zone 2 workout',
-            'project_id': 'proj-health',
-            'reason': 'HealthOS recovery is good enough',
-            'source_domain': 'finance',
-            'source_row_family': 'fin:cashflow',
-            'source_row_id': 'cashflow-2026-06',
-            'source_label': 'June cashflow plan',
-          }),
+      (ref) => const ProposeActionTool().invoke(
+        DeviceToolContext(ref: ref, session: _session()),
+        const {
+          'title': 'Book Zone 2 workout',
+          'project_id': 'proj-health',
+          'reason': 'HealthOS recovery is good enough',
+          'source_domain': 'finance',
+          'source_row_family': 'fin:cashflow',
+          'source_row_id': 'cashflow-2026-06',
+          'source_label': 'June cashflow plan',
+        },
+      ),
     );
     final plan = ProposalPlan.tryParse(proposal);
     expect(plan, isA<ReadyProposalPlan>());
@@ -341,12 +391,14 @@ void main() {
       final inheritedPlan = _readyPlan(
         await _withRef(
           container,
-          (ref) => const ProposeActionTool()
-              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-                'title': 'Honor the commitment relationship',
-                'commitment_id': 'commitment-a',
-                'reason': 'The commitment already identifies its project',
-              }),
+          (ref) => const ProposeActionTool().invoke(
+            DeviceToolContext(ref: ref, session: _session()),
+            const {
+              'title': 'Honor the commitment relationship',
+              'commitment_id': 'commitment-a',
+              'reason': 'The commitment already identifies its project',
+            },
+          ),
         ),
       );
       final inheritedState = await _applyReadyPlan(container, inheritedPlan);
@@ -360,13 +412,15 @@ void main() {
       final conflictingPlan = _readyPlan(
         await _withRef(
           container,
-          (ref) => const ProposeActionTool()
-              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-                'title': 'Create an inconsistent relationship',
-                'project_id': 'project-b',
-                'commitment_id': 'commitment-a',
-                'reason': 'This proposal should be rejected',
-              }),
+          (ref) => const ProposeActionTool().invoke(
+            DeviceToolContext(ref: ref, session: _session()),
+            const {
+              'title': 'Create an inconsistent relationship',
+              'project_id': 'project-b',
+              'commitment_id': 'commitment-a',
+              'reason': 'This proposal should be rejected',
+            },
+          ),
         ),
       );
       final applier = await container.read(
@@ -385,15 +439,17 @@ void main() {
       final plan = _readyPlan(
         await _withRef(
           container,
-          (ref) => const ProposeCommitmentTool()
-              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-                'title': 'Protect recovery before hard workouts',
-                'reason': 'HealthOS trend flagged recovery risk',
-                'source_domain': 'health',
-                'source_row_family': 'health:health_metrics',
-                'source_row_id': 'sleep-short-1',
-                'source_label': 'Short sleep trend',
-              }),
+          (ref) => const ProposeCommitmentTool().invoke(
+            DeviceToolContext(ref: ref, session: _session()),
+            const {
+              'title': 'Protect recovery before hard workouts',
+              'reason': 'HealthOS trend flagged recovery risk',
+              'source_domain': 'health',
+              'source_row_family': 'health:health_metrics',
+              'source_row_id': 'sleep-short-1',
+              'source_label': 'Short sleep trend',
+            },
+          ),
         ),
       );
 
@@ -429,13 +485,15 @@ void main() {
     final plan = _readyPlan(
       await _withRef(
         container,
-        (ref) => const ProposeActionStatusUpdateTool()
-            .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-              'action_id': 'a-status',
-              'status': 'done',
-              'progress_note': 'Completed through confirmed AI proposal.',
-              'reason': '用户要求标记完成',
-            }),
+        (ref) => const ProposeActionStatusUpdateTool().invoke(
+          DeviceToolContext(ref: ref, session: _session()),
+          const {
+            'action_id': 'a-status',
+            'status': 'done',
+            'progress_note': 'Completed through confirmed AI proposal.',
+            'reason': '用户要求标记完成',
+          },
+        ),
       ),
     );
     final state = await _applyReadyPlan(container, plan);
@@ -473,12 +531,14 @@ void main() {
       final projectPlan = _readyPlan(
         await _withRef(
           container,
-          (ref) => const ProposeProjectTool()
-              .invoke(DeviceToolContext(ref: ref, session: _session()), const {
-                'title': 'Close ExecutionOS MVP gaps',
-                'horizon': 'month',
-                'reason': 'The work is larger than one action',
-              }),
+          (ref) => const ProposeProjectTool().invoke(
+            DeviceToolContext(ref: ref, session: _session()),
+            const {
+              'title': 'Close ExecutionOS MVP gaps',
+              'horizon': 'month',
+              'reason': 'The work is larger than one action',
+            },
+          ),
         ),
       );
       final projectState = await _applyReadyPlan(container, projectPlan);
@@ -496,12 +556,14 @@ void main() {
       final commitmentPlan = _readyPlan(
         await _withRef(
           container,
-          (ref) => const ProposeCommitmentTool()
-              .invoke(DeviceToolContext(ref: ref, session: _session()), {
-                'title': 'Review execution every Friday',
-                'project_id': project.id,
-                'reason': 'Weekly review keeps the system useful',
-              }),
+          (ref) => const ProposeCommitmentTool().invoke(
+            DeviceToolContext(ref: ref, session: _session()),
+            {
+              'title': 'Review execution every Friday',
+              'project_id': project.id,
+              'reason': 'Weekly review keeps the system useful',
+            },
+          ),
         ),
       );
       final commitmentState = await _applyReadyPlan(container, commitmentPlan);
@@ -517,14 +579,16 @@ void main() {
       final progressPlan = _readyPlan(
         await _withRef(
           container,
-          (ref) => const ProposeProgressTool()
-              .invoke(DeviceToolContext(ref: ref, session: _session()), {
-                'note': 'Proposal flow now covers all ExecutionOS entities.',
-                'kind': 'completion',
-                'project_id': project.id,
-                'commitment_id': commitment.id,
-                'reason': 'Review should show the completed system improvement',
-              }),
+          (ref) => const ProposeProgressTool().invoke(
+            DeviceToolContext(ref: ref, session: _session()),
+            {
+              'note': 'Proposal flow now covers all ExecutionOS entities.',
+              'kind': 'completion',
+              'project_id': project.id,
+              'commitment_id': commitment.id,
+              'reason': 'Review should show the completed system improvement',
+            },
+          ),
         ),
       );
       final progressState = await _applyReadyPlan(container, progressPlan);

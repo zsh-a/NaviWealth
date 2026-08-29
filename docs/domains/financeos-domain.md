@@ -46,6 +46,12 @@ inventory. It contributes:
 The registry and composition tests are authoritative for the exact inventory;
 do not duplicate full tool or route lists here.
 
+The command palette favors frequent Finance work. FIRE, Income Strategy,
+Options, Wheel lifecycle, and strategy statistics remain available through the
+Plan tab's progressive disclosure instead of competing as global commands.
+Their Assistant tools are likewise added only while the user is on the owning
+Plan route.
+
 ## Data And Sync
 
 Finance repositories own Finance business-table access even though Drift table

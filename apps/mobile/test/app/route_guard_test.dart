@@ -334,4 +334,34 @@ void main() {
       isNull,
     );
   });
+
+  test('Life home redirects Finance-only users to Finance Today', () async {
+    final container = _container();
+    await container.read(domainOptInsProvider.future);
+
+    expect(
+      container
+          .read(lifeHomeRouteGuardProvider)
+          .redirect(_stateFor(AppRoutes.life)),
+      AppRoutes.home,
+    );
+  });
+
+  test(
+    'Life home remains available when multiple domains are active',
+    () async {
+      final container = _container();
+      await container.read(domainOptInsProvider.future);
+      await container
+          .read(domainOptInsProvider.notifier)
+          .setEnabled(DomainScope.health, true);
+
+      expect(
+        container
+            .read(lifeHomeRouteGuardProvider)
+            .redirect(_stateFor(AppRoutes.life)),
+        isNull,
+      );
+    },
+  );
 }

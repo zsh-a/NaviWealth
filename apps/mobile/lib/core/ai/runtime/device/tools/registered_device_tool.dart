@@ -16,6 +16,7 @@ class RegisteredDeviceTool {
     required this.allowedContextTier,
     required this.domain,
     this.sideEffect = SideEffect.none,
+    this.visibleInAssistant = true,
   });
 
   final DeviceTool tool;
@@ -25,6 +26,13 @@ class RegisteredDeviceTool {
   final BudgetTier allowedContextTier;
   final SideEffect sideEffect;
   final String domain;
+
+  /// Whether this tool is advertised to the conversational Assistant.
+  ///
+  /// Internal agents may still use registrations hidden here. This keeps
+  /// deterministic detector/triage plumbing out of the user's generic tool
+  /// catalog without weakening the device allow-list.
+  final bool visibleInAssistant;
 
   ToolDescriptor get descriptor => ToolDescriptor(
     name: tool.name,
@@ -51,6 +59,7 @@ class DeviceToolRegistrationBuilder {
     DeviceTool tool, {
     RiskLevel risk = RiskLevel.info,
     BudgetTier tier = BudgetTier.small,
+    bool visibleInAssistant = true,
   }) => RegisteredDeviceTool(
     tool: tool,
     access: Access.read,
@@ -58,12 +67,14 @@ class DeviceToolRegistrationBuilder {
     requiresConfirmation: Confirmation.none,
     allowedContextTier: tier,
     domain: domain,
+    visibleInAssistant: visibleInAssistant,
   );
 
   RegisteredDeviceTool propose(
     DeviceTool tool, {
     RiskLevel risk = RiskLevel.propose,
     BudgetTier tier = BudgetTier.small,
+    bool visibleInAssistant = true,
   }) => RegisteredDeviceTool(
     tool: tool,
     access: Access.propose,
@@ -72,11 +83,18 @@ class DeviceToolRegistrationBuilder {
     allowedContextTier: tier,
     sideEffect: SideEffect.deviceLocalWrite,
     domain: domain,
+    visibleInAssistant: visibleInAssistant,
   );
 }
 
 List<DeviceTool> registeredDeviceTools(List<RegisteredDeviceTool> entries) =>
     List<DeviceTool>.unmodifiable(entries.map((e) => e.tool));
+
+List<DeviceTool> registeredAssistantDeviceTools(
+  List<RegisteredDeviceTool> entries,
+) => List<DeviceTool>.unmodifiable(
+  entries.where((entry) => entry.visibleInAssistant).map((entry) => entry.tool),
+);
 
 Map<String, ToolDescriptor> registeredToolDescriptors(
   List<RegisteredDeviceTool> entries,

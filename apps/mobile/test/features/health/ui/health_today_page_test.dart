@@ -62,6 +62,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('HealthKit / Health Connect'), findsOneWidget);
     expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('Sync'), findsNothing);
   });
 
   testWidgets('today surfaces a persisted source failure', (tester) async {

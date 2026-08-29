@@ -29,6 +29,7 @@ import 'package:naviwealth/features/knowledge/data/knowledge_object_memory_index
 import 'package:naviwealth/features/knowledge/data_management/knowledge_data_management.dart';
 import 'package:naviwealth/features/knowledge/knowledge_ai_tools.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../agent_runtime/overrides/agent_runtime_knowledge_overrides.dart';
 import '../routing/route_paths.dart';
 import 'knowledge_life_contribution.dart';
@@ -37,6 +38,7 @@ import 'proposal_applier_route.dart';
 final DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
   deviceTools: kKnowledgeDeviceTools,
+  assistantToolsBuilder: (_) => kKnowledgeAssistantDeviceTools,
   toolDescriptors: kKnowledgeToolDescriptors,
   intentDescriptors: kKnowledgeAgentIntentDescriptors,
   proposalKinds: kKnowledgeProposalKinds,
@@ -60,7 +62,9 @@ final DomainPack kKnowledgePack = DomainPack(
       icon: FLucideIcons.clipboardCheck,
       label: _knowledgeReviewLabel,
       description: _knowledgeReviewDescription,
-      placement: AgentResultPlacement.domainReview,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
     AgentPresentationSpec(
       agentId: kKnowledgeAssumptionAgentId,
@@ -68,7 +72,9 @@ final DomainPack kKnowledgePack = DomainPack(
       icon: FLucideIcons.brain,
       label: _knowledgeAssumptionLabel,
       description: _knowledgeAssumptionDescription,
-      placement: AgentResultPlacement.domainReview,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
     AgentPresentationSpec(
       agentId: kKnowledgeContradictionAgentId,
@@ -76,7 +82,9 @@ final DomainPack kKnowledgePack = DomainPack(
       icon: FLucideIcons.triangleAlert,
       label: _knowledgeContradictionLabel,
       description: _knowledgeContradictionDescription,
-      placement: AgentResultPlacement.domainReview,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
     AgentPresentationSpec(
       agentId: kKnowledgeInboxTriageAgentId,
@@ -84,7 +92,9 @@ final DomainPack kKnowledgePack = DomainPack(
       icon: FLucideIcons.fileText,
       label: _knowledgeInboxTriageLabel,
       description: _knowledgeInboxTriageDescription,
-      placement: AgentResultPlacement.domainReview,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
   ],
   memorySourcePrefixes: const ['know:'],

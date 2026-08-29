@@ -299,6 +299,7 @@ void main() {
         'propose_merge',
         'propose_options_journal_entry',
         'propose_options_profile_update',
+        'propose_plan',
         'propose_progress',
         'propose_project',
         'propose_routine',

@@ -242,9 +242,8 @@ Future<ProviderContainer> _pumpAt(
       ),
       devicesProvider.overrideWith(_StaticDevicesNotifier.new),
       if (executionSession != null)
-        rebalanceExecutionSessionProvider(
-          executionSession.id,
-        ).overrideWith((_) async => executionSession),
+        rebalanceExecutionSessionProvider(executionSession.id)
+            .overrideWith((_) async => executionSession),
     ],
   );
   addTearDown(container.dispose);
@@ -395,7 +394,7 @@ void main() {
         AppRoutes.wealthAsset('asset-1'): AssetDetailPage,
         AppRoutes.spending: SpendingPage,
         AppRoutes.planFire: FirePage,
-        AppRoutes.settingsAiHistory: AiChatPage,
+        AppRoutes.assistant: AiChatPage,
         AppRoutes.settingsDevices: DevicesPage,
         AppRoutes.settingsFxRates: FxRatesPage,
         AppRoutes.settingsRiskThresholds: RiskThresholdsPage,

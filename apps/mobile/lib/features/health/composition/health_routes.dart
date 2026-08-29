@@ -1,4 +1,4 @@
-/// HealthOS routing tree — Today + Trends; `/health/plan` redirects to Today.
+/// HealthOS routing tree — Today + Trends.
 library;
 
 import 'package:go_router/go_router.dart';
@@ -28,14 +28,6 @@ StatefulShellRoute healthShellRoute() {
               load: today_lib.loadLibrary,
               builder: (_) => today_lib.HealthTodayPage(),
             ),
-            routes: [
-              // Legacy Plan deep-link → Today (plan content lives on hero).
-              GoRoute(
-                path: 'plan',
-                name: HealthRouteNames.plan,
-                redirect: (context, state) => HealthRoutes.today,
-              ),
-            ],
           ),
         ],
       ),

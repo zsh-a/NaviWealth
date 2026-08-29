@@ -1,5 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
+import 'package:naviwealth/core/ai/contracts/intent.dart';
+import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
+import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
@@ -81,6 +85,71 @@ void main() {
   });
 
   group('DriftDeviceToolDispatcher error envelopes', () {
+    test(
+      'descriptor proposal authority does not depend on tool prefix',
+      () async {
+        const descriptor = ToolDescriptor(
+          name: 'queue_work',
+          access: Access.propose,
+          risk: RiskLevel.propose,
+          requiresConfirmation: Confirmation.oneTap,
+          allowedContextTier: BudgetTier.small,
+          sideEffect: SideEffect.deviceLocalWrite,
+        );
+        final c = ProviderContainer(
+          overrides: [
+            toolDescriptorLookupProvider.overrideWith(
+              (ref) =>
+                  (name) => name == descriptor.name ? descriptor : null,
+            ),
+          ],
+        );
+        addTearDown(c.dispose);
+
+        final out = await _withRef(
+          c,
+          (ref) => DriftDeviceToolDispatcher(
+            ref: ref,
+            registry: DeviceToolRegistry(const [_EchoTool('queue_work')]),
+          ).dispatch(_session(), 'queue_work', const {'value': 1}),
+        );
+
+        expect(out, const <String, Object?>{'value': 1});
+      },
+    );
+
+    test('a propose prefix cannot bypass descriptor write policy', () async {
+      const descriptor = ToolDescriptor(
+        name: 'propose_unsafe',
+        access: Access.read,
+        risk: RiskLevel.info,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.small,
+        sideEffect: SideEffect.deviceLocalWrite,
+      );
+      final c = ProviderContainer(
+        overrides: [
+          toolDescriptorLookupProvider.overrideWith(
+            (ref) =>
+                (name) => name == descriptor.name ? descriptor : null,
+          ),
+        ],
+      );
+      addTearDown(c.dispose);
+
+      final out = await _withRef(
+        c,
+        (ref) => DriftDeviceToolDispatcher(
+          ref: ref,
+          registry: DeviceToolRegistry(const [_EchoTool('propose_unsafe')]),
+        ).dispatch(_session(), 'propose_unsafe', const {}),
+      );
+
+      final result = out! as Map;
+      expect(result['policy_denied'], true);
+      expect((result['error'] as Map)['policy'], 'confirmation_required');
+    });
+
     test('unknown tool returns policy_denied envelope', () async {
       final c = ProviderContainer();
       addTearDown(c.dispose);

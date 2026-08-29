@@ -134,24 +134,22 @@ void main() {
     );
     expect(
       (jsonDecode(
-            await host.handleLine(
-              jsonEncode(<String, Object?>{'method': 'unknown'}),
-            ),
-          )
-          as Map<String, Object?>)['error'],
+        await host.handleLine(
+          jsonEncode(<String, Object?>{'method': 'unknown'}),
+        ),
+      ) as Map<String, Object?>)['error'],
       containsPair('code', -32601),
     );
     expect(
       (jsonDecode(
-            await host.handleLine(
-              jsonEncode(<String, Object?>{
-                'id': 'bad',
-                'method': 'tool.call',
-                'params': <String, Object?>{},
-              }),
-            ),
-          )
-          as Map<String, Object?>)['error'],
+        await host.handleLine(
+          jsonEncode(<String, Object?>{
+            'id': 'bad',
+            'method': 'tool.call',
+            'params': <String, Object?>{},
+          }),
+        ),
+      ) as Map<String, Object?>)['error'],
       containsPair('code', -32602),
     );
   });
@@ -202,6 +200,35 @@ void main() {
       'active_tool': true,
       'input': <String, Object?>{'value': 11},
     });
+  });
+
+  test('Assistant host rejects tools outside its scoped catalog', () async {
+    final container = ProviderContainer(
+      overrides: [
+        deviceToolsProvider.overrideWith(
+          (ref) => const <DeviceTool>[
+            _EchoDeviceTool(),
+            _NamedEchoDeviceTool('internal_only'),
+          ],
+        ),
+        assistantDeviceToolsProvider.overrideWith(
+          (ref) => const <DeviceTool>[_EchoDeviceTool()],
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final host = container.read(assistantRuntimeToolHostProvider);
+    final response = await host.handleLine(
+      jsonEncode(<String, Object?>{
+        'id': 'internal-tool',
+        'method': 'tool.call',
+        'params': <String, Object?>{'name': 'internal_only'},
+      }),
+    );
+
+    final json = jsonDecode(response) as Map<String, Object?>;
+    expect(json['outcome'], containsPair('status', 'policy_denied'));
   });
 
   test(
@@ -281,4 +308,25 @@ class _EchoDeviceTool implements DeviceTool {
   ) async {
     return <String, Object?>{'active_tool': true, 'input': input};
   }
+}
+
+class _NamedEchoDeviceTool implements DeviceTool {
+  const _NamedEchoDeviceTool(this.name);
+
+  @override
+  final String name;
+
+  @override
+  String get description => 'Named internal test tool';
+
+  @override
+  Map<String, Object?> get inputSchema => const <String, Object?>{
+    'type': 'object',
+  };
+
+  @override
+  Future<Object?> invoke(
+    DeviceToolContext ctx,
+    Map<String, Object?> input,
+  ) async => input;
 }

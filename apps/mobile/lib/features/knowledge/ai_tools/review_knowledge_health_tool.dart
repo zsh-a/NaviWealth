@@ -4,8 +4,6 @@
 /// The pull counterpart to the five background agents: one call aggregates
 /// everything the user should act on right now —
 ///   - decisions due for review (`review_date <= now`)
-///   - routines due this week (`next_due_at <= now + 7d`)
-///   - stale assumptions (never verified, or not in > 90d)
 ///   - orphan notes (no tags, no project — never triaged / linked)
 /// Read-only: it returns a prioritised digest; the agent turns individual
 /// items into `propose_*` actions. Backs the Inbox「本周建议」chip.
@@ -30,7 +28,7 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
   @override
   String get description =>
       '汇总当前知识库里需要用户关注的事项,返回一个按优先级排序的摘要:'
-      '到期复盘的决策 / 本周到期的定期事项 / 长期未校验的假设 / 没有标签也没有链接的孤儿笔记。'
+      '到期复盘的决策 / 待确认建议 / 知识冲突 / 没有标签也没有链接的孤儿笔记。'
       '只读,不写库;用户说「给我点建议 / 本周该做什么 / 我的知识库健康吗」时调用,'
       '再据此用 propose_* 工具给出具体行动。';
 
@@ -38,12 +36,6 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
   Map<String, Object?> get inputSchema => <String, Object?>{
     'type': 'object',
     'properties': {
-      'lookahead_days': {
-        'type': 'integer',
-        'minimum': 0,
-        'maximum': 30,
-        'description': '定期事项的前瞻窗口,默认 7 天。',
-      },
       'sample': {
         'type': 'integer',
         'minimum': 1,
@@ -59,9 +51,6 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final lookahead = (input['lookahead_days'] is num)
-        ? (input['lookahead_days'] as num).toInt().clamp(0, 30)
-        : 7;
     final sample = (input['sample'] is num)
         ? (input['sample'] as num).toInt().clamp(1, 10)
         : 5;
@@ -69,23 +58,11 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
     final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
     final now = DateTime.now().toUtc();
-    const staleDays = kKnowledgeAssumptionStaleDays;
 
     final dueReviews = await repo.listDueReviews(
       ownerUserId: ownerUserId,
       asOf: now,
     );
-    final dueRoutines = await repo.listDueRoutines(
-      ownerUserId: ownerUserId,
-      asOf: now.add(Duration(days: lookahead)),
-      excludeDoneSince: _startOfLocalDay(now),
-    );
-    final assumptions = await repo.listOpenAssumptions(
-      ownerUserId: ownerUserId,
-    );
-    final staleAssumptions = assumptions
-        .where((a) => a.daysSinceVerify(now) >= staleDays)
-        .toList(growable: false);
     final notes = await _listAllNotes(repo, ownerUserId);
     final relatedNoteIds = await repo.listRelatedObjectIds(
       ownerUserId: ownerUserId,
@@ -149,18 +126,6 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
             ),
       ),
       _section(
-        'due_routines',
-        '本周到期的定期事项',
-        dueRoutines.length,
-        dueRoutines.take(sample).map((r) => _item(r.id, r.statement)),
-      ),
-      _section(
-        'stale_assumptions',
-        '长期未校验的假设',
-        staleAssumptions.length,
-        staleAssumptions.take(sample).map((a) => _item(a.id, a.statement)),
-      ),
-      _section(
         'orphan_notes',
         '没有标签 / 链接的孤儿笔记',
         orphans.length,
@@ -177,9 +142,9 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
       // large low-risk cleanup backlog.
       'sections': sections.where((s) => (s['count'] as int) > 0).toList()
         ..sort(
-          (a, b) => _sectionPriority(
-            a['key'] as String,
-          ).compareTo(_sectionPriority(b['key'] as String)),
+          (a, b) =>
+              _sectionPriority(a['key'] as String)
+                  .compareTo(_sectionPriority(b['key'] as String)),
         ),
       if (total == 0) 'note': '知识库当前没有待办事项 —— 一切都在掌控中。',
     };
@@ -204,10 +169,8 @@ class ReviewKnowledgeHealthTool implements DeviceTool {
 int _sectionPriority(String key) => switch (key) {
   'contradictions' => 0,
   'due_reviews' => 1,
-  'stale_assumptions' => 2,
-  'due_routines' => 3,
-  'inbox_triage' => 4,
-  'orphan_notes' => 5,
+  'inbox_triage' => 2,
+  'orphan_notes' => 3,
   _ => 99,
 };
 
@@ -228,9 +191,4 @@ Future<List<KnowledgeNote>> _listAllNotes(
     if (page.length < pageSize) return out;
     offset += page.length;
   }
-}
-
-DateTime _startOfLocalDay(DateTime value) {
-  final local = value.toLocal();
-  return DateTime(local.year, local.month, local.day);
 }

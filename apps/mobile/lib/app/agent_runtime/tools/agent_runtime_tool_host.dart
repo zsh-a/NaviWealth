@@ -25,6 +25,17 @@ final agentRuntimeToolHostProvider = Provider<AgentRuntimeToolHost>((ref) {
   );
 });
 
+/// Assistant-only host with the same policy enforcement but a smaller,
+/// route-aware registry. Hallucinated internal tool names therefore fail the
+/// allow-list even though scheduled agents can still use them through
+/// [agentRuntimeToolHostProvider].
+final assistantRuntimeToolHostProvider = Provider<AgentRuntimeToolHost>((ref) {
+  final registry = DeviceToolRegistry(ref.watch(assistantDeviceToolsProvider));
+  return AgentRuntimeToolHost(
+    dispatcher: DriftDeviceToolDispatcher(ref: ref, registry: registry),
+  );
+});
+
 class AgentRuntimeToolHost {
   AgentRuntimeToolHost({
     required DeviceToolDispatcher dispatcher,

@@ -171,9 +171,8 @@ class _SearchAssistChip extends StatelessWidget {
             const SizedBox(width: AppSpacing.s2),
             AppIconButton(
               icon: FLucideIcons.x,
-              tooltip: AppLocalizations.of(
-                context,
-              ).knowledgeLibraryDeleteTooltip,
+              tooltip: AppLocalizations.of(context)
+                  .knowledgeLibraryDeleteTooltip,
               onPress: onDelete,
               size: AppControlHeights.touchTarget,
               iconSize: AppIconSizes.xs,
@@ -212,8 +211,9 @@ class _LibraryFilterTrigger extends StatelessWidget {
   }
 }
 
-/// A single compact type picker keeps the eight-object taxonomy out of the
-/// primary reading flow on every screen size.
+/// The primary picker exposes only the two user-authored concepts. Legacy
+/// object families remain searchable from All without making users learn the
+/// underlying ontology.
 class _LibraryTabBar extends ConsumerWidget {
   const _LibraryTabBar({required this.selected, required this.onChanged});
 
@@ -323,26 +323,7 @@ Future<_LibrarySegment?> _showLibraryTypePicker({
     (null, const <_LibrarySegment>[_LibrarySegment.all]),
     (
       l10n.knowledgeLibraryTypeGroupCore,
-      const <_LibrarySegment>[
-        _LibrarySegment.decisions,
-        _LibrarySegment.assumptions,
-      ],
-    ),
-    (
-      l10n.knowledgeLibraryTypeGroupSources,
-      const <_LibrarySegment>[_LibrarySegment.notes],
-    ),
-    (
-      l10n.knowledgeLibraryTypeGroupThinking,
-      const <_LibrarySegment>[
-        _LibrarySegment.principles,
-        _LibrarySegment.concepts,
-        _LibrarySegment.experiments,
-      ],
-    ),
-    (
-      l10n.knowledgeLibraryTypeGroupAction,
-      const <_LibrarySegment>[_LibrarySegment.routines],
+      const <_LibrarySegment>[_LibrarySegment.notes, _LibrarySegment.decisions],
     ),
   ];
   return showAppSheet<_LibrarySegment>(
@@ -369,9 +350,9 @@ Future<_LibrarySegment?> _showLibraryTypePicker({
                     segment: groups[groupIndex].$2[index],
                     count: counts[groups[groupIndex].$2[index]],
                     selected: groups[groupIndex].$2[index] == selected,
-                    onPress: () => Navigator.of(
-                      sheetContext,
-                    ).pop(groups[groupIndex].$2[index]),
+                    onPress: () =>
+                        Navigator.of(sheetContext)
+                            .pop(groups[groupIndex].$2[index]),
                   ),
                   if (index != groups[groupIndex].$2.length - 1)
                     const AppGroupedDivider(

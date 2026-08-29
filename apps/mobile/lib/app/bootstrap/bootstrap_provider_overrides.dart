@@ -42,6 +42,7 @@ List<Override> buildBootstrapProviderOverrides({
       (ref) => <RouteGuard>[
         if (!config.bypassAuth) ref.watch(authRouteGuardProvider),
         ref.watch(domainOptInRouteGuardProvider),
+        ref.watch(lifeHomeRouteGuardProvider),
       ],
     ),
     ...agentRuntimeProviderOverrides(),

@@ -20,3 +20,12 @@ import '../runtime/device/tools/device_tool.dart';
 final deviceToolsProvider = Provider<List<DeviceTool>>(
   (ref) => const <DeviceTool>[],
 );
+
+/// Route-bounded subset advertised to the conversational Assistant.
+///
+/// The full registry above remains available to scheduled/internal agents.
+/// Keeping these providers separate prevents agent-only triage and advanced
+/// workflow tools from leaking into every chat turn.
+final assistantDeviceToolsProvider = Provider<List<DeviceTool>>(
+  (ref) => const <DeviceTool>[],
+);

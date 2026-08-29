@@ -51,6 +51,11 @@ Do not copy this list into another roadmap. Composition contract tests must
 continue to enforce one presentation spec and one executable outcome fixture
 for every production agent.
 
+Knowledge and Execution Review agents are implementation collaborators for the
+single domain Review surface. They are hidden from Settings and do not render a
+second named result card. Specialized detector agents may also be hidden when
+their output is already owned by a primary product surface.
+
 ## User-Visible States
 
 | State | Meaning | UI behavior |
@@ -114,7 +119,7 @@ Presentation rules:
 
 ## Preferences, Triggers, And Attention
 
-Settings exposes active agents only and supports:
+Settings exposes active, user-configurable presentation specs only and supports:
 
 - enable/disable;
 - manual run;

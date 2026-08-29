@@ -44,12 +44,24 @@ const DeviceToolRegistrationBuilder _knowledgeTool =
 final List<RegisteredDeviceTool>
 kKnowledgeToolRegistrations = <RegisteredDeviceTool>[
   _knowledgeTool.read(const RecallDecisionTool()),
-  _knowledgeTool.read(const ListActivePrinciplesTool()),
-  _knowledgeTool.read(const ListOpenAssumptionsTool()),
+  _knowledgeTool.read(
+    const ListActivePrinciplesTool(),
+    visibleInAssistant: false,
+  ),
+  _knowledgeTool.read(
+    const ListOpenAssumptionsTool(),
+    visibleInAssistant: false,
+  ),
   _knowledgeTool.read(const ListDueReviewsTool()),
-  _knowledgeTool.read(const ListDueRoutinesTool()),
-  _knowledgeTool.read(const ListInboxTriageCandidatesTool()),
-  _knowledgeTool.read(const ListTriageDecisionsTool()),
+  _knowledgeTool.read(const ListDueRoutinesTool(), visibleInAssistant: false),
+  _knowledgeTool.read(
+    const ListInboxTriageCandidatesTool(),
+    visibleInAssistant: false,
+  ),
+  _knowledgeTool.read(
+    const ListTriageDecisionsTool(),
+    visibleInAssistant: false,
+  ),
   _knowledgeTool.read(const SearchNotesTool()),
   _knowledgeTool.read(const SearchKnowledgeTool(), tier: BudgetTier.standard),
   _knowledgeTool.read(const FindSimilarKnowledgeTool()),
@@ -60,12 +72,23 @@ kKnowledgeToolRegistrations = <RegisteredDeviceTool>[
   _knowledgeTool.propose(
     const ProposeConceptLinkTool(),
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
-  _knowledgeTool.propose(const ProposeMergeTool(), tier: BudgetTier.standard),
-  _knowledgeTool.propose(const QueueInboxClassificationTool()),
-  _knowledgeTool.propose(const QueueInboxTagsTool()),
-  _knowledgeTool.propose(const QueueLinkToDecisionTool()),
-  _knowledgeTool.propose(const ProposeRoutineTool()),
+  _knowledgeTool.propose(
+    const ProposeMergeTool(),
+    tier: BudgetTier.standard,
+    visibleInAssistant: false,
+  ),
+  _knowledgeTool.propose(
+    const QueueInboxClassificationTool(),
+    visibleInAssistant: false,
+  ),
+  _knowledgeTool.propose(const QueueInboxTagsTool(), visibleInAssistant: false),
+  _knowledgeTool.propose(
+    const QueueLinkToDecisionTool(),
+    visibleInAssistant: false,
+  ),
+  _knowledgeTool.propose(const ProposeRoutineTool(), visibleInAssistant: false),
   _knowledgeTool.propose(const ProposeCaptureTool()),
   _knowledgeTool.read(
     const SummarizeTopicEvolutionTool(),
@@ -78,6 +101,9 @@ final List<DeviceTool> kKnowledgeDeviceTools = registeredDeviceTools(
   kKnowledgeToolRegistrations,
 );
 
+final List<DeviceTool> kKnowledgeAssistantDeviceTools =
+    registeredAssistantDeviceTools(kKnowledgeToolRegistrations);
+
 final Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
     registeredToolDescriptors(kKnowledgeToolRegistrations);
 
@@ -86,21 +112,10 @@ final Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
 /// the Knowledge domain (`domainOptInsProvider`).
 const String kKnowledgeSystemPromptBlock =
     '[KnowledgeOS 域]\n'
-    '- 编辑知识库条目时调用 propose_* 工具，工具返回「待确认计划」：\n'
-    '  • queue_inbox_classification / queue_inbox_tags / queue_link_to_decision（收件箱分诊与归档）\n'
-    '  • propose_concept_link（在两个概念 / 笔记之间建立关联）\n'
-    '  • propose_routine（用户表达「每 X 时间做一次 Y」/「需要定期活跃 / 续期 / 缴费」时调用，'
-    'AI 选择合理 interval_days，由用户在 UI 一键确认）\n'
-    '  • propose_capture（用户问「这条该归到哪里 / 是不是个 Routine」、'
-    '或想让 AI 评估一段自由文本的合适落点时调用；kind == note 表示无需升级）\n'
-    '  • propose_merge（去重：发现重复条目时建议合并，支持 note / concept / '
-    'principle / assumption / decision / experiment；合并 assumption/principle/decision '
-    '会自动重定向引用它们的决策与实验）\n'
-    '- 录入 / 查重场景：先用 find_similar_knowledge 找近似条目；'
-    'similarity ≥ 阈值说明可能重复，再用 propose_merge 建议合并（保留一条、其余软删）。\n'
-    '- 跨类型检索「关于 X 我都记过什么 / 在哪写过」用 search_knowledge（笔记/概念/决策/原则/假设/实验一起搜）。\n'
+    '- 用户只需要理解 Note 与 Decision：Note 保存材料和想法，Decision 保存已经做出的判断及复盘日期。\n'
+    '- 录入时使用 propose_capture；它只会建议保留为 Note 或升级为 Decision，且只返回待确认计划。\n'
+    '- 查重先用 find_similar_knowledge；搜索历史内容用 search_notes / search_knowledge。旧版对象仍可被搜索，但不要主动要求用户选择底层对象类型。\n'
     '- 用户问「给我点建议 / 本周该做什么 / 知识库健康吗」时调用 review_knowledge_health，'
-    '它汇总到期复盘 / 本周到期定期事项 / 长期未校验假设 / 孤儿笔记，再据此用 propose_* 给出行动。\n'
+    '它汇总到期复盘 / 待确认建议 / 知识冲突 / 孤儿笔记。需要周期执行的事项交给 ExecutionOS。\n'
     '- 用户问「我以前对 X 的判断是什么」时优先调用 recall_decision；不要凭记忆复述决策内容。\n'
-    '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。\n'
-    '- 「我现在有什么定期事项要做 / 本周到期」用 list_due_routines，结合 list_due_reviews 给出综合提醒。';
+    '- 跨主题演变 / 历史观点对比用 summarize_topic_evolution，时间线以工具返回为准。';

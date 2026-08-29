@@ -142,8 +142,7 @@ void main() {
       );
 
       expect(bridge.calls, 1);
-      expect(out.single.kind, InboxProposalKind.classification);
-      expect(out.single.payload['kind'], 'concept');
+      expect(out, isEmpty, reason: 'ordinary definitions remain Notes');
     });
 
     test('drops low-confidence proposals without heuristic noise', () async {
@@ -395,7 +394,10 @@ void main() {
               InboxProposal(
                 kind: InboxProposalKind.classification,
                 summaryZh: 'old',
-                payload: const <String, Object?>{'note_id': 'n1'},
+                payload: const <String, Object?>{
+                  'note_id': 'n1',
+                  'kind': 'decision',
+                },
                 status: InboxProposalStatus.pending,
               ),
             ],
@@ -465,17 +467,41 @@ void main() {
         heuristicRec!.proposals.map((p) => p.kind),
         fallbackRec!.proposals.map((p) => p.kind),
       );
-      expect(
-        heuristicRec.proposals.single.payload['kind'],
-        fallbackRec.proposals.single.payload['kind'],
+      expect(heuristicRec.proposals, isEmpty);
+      expect(fallbackRec.proposals, isEmpty);
+    });
+
+    test('hides legacy non-Decision classification from Review', () async {
+      await triage.upsert(
+        InboxTriageRecord(
+          noteId: 'legacy-concept',
+          ownerUserId: _owner,
+          sourceFingerprint: 'legacy-fingerprint',
+          lastTriagedAt: _created,
+          proposals: <InboxProposal>[
+            InboxProposal(
+              kind: InboxProposalKind.classification,
+              summaryZh: 'legacy concept proposal',
+              payload: const <String, Object?>{
+                'note_id': 'legacy-concept',
+                'kind': 'concept',
+              },
+              status: InboxProposalStatus.pending,
+            ),
+          ],
+        ),
       );
-      expect(heuristicRec.proposals.single.payload['kind'], 'concept');
+
+      expect(await triage.listPending(ownerUserId: _owner), isEmpty);
+      final stored = await triage.findForNote('legacy-concept');
+      expect(stored?.proposals.single.payload['kind'], 'concept');
+      expect(stored?.pending, isEmpty);
     });
 
     test('honours kInboxTriageMaxNotesPerRun', () async {
       final c = container();
-      // One more than the cap; each is a short concept candidate so the
-      // heuristic always emits exactly one proposal.
+      // One more than the cap; even Notes with no suggestion receive a
+      // fingerprint so the same content is not rescanned every tick.
       for (var i = 0; i < kInboxTriageMaxNotesPerRun + 3; i++) {
         await repo.upsertNote(_note(id: 'n$i', title: 't$i', body: 'short'));
       }

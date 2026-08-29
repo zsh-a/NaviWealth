@@ -14,7 +14,7 @@ import 'local_query_result_pane_provider.dart';
 /// hammer.
 ///
 /// [onAskAi] is called with the user's query when a domain-provided local
-/// result pane offers a "continue in AI history" affordance. Core owns the
+/// result pane offers a "continue in Assistant" affordance. Core owns the
 /// palette chrome; domains can contribute the inline result pane through
 /// [localQueryResultPaneBuilderProvider].
 Future<void> showCommandPalette(

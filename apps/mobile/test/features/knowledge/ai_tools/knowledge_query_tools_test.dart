@@ -415,79 +415,76 @@ void main() {
       expect(d.sideEffect, SideEffect.none);
     });
 
-    test(
-      'aggregates due reviews, due routines, stale assumptions, orphans',
-      () async {
-        final past = DateTime.utc(2020, 1, 1);
-        final c = await seededRepo((repo) async {
-          // Due decision (review_date in the past, status active).
-          await repo.upsertDecision(
-            KnowledgeDecision(
-              id: 'dec1',
-              question: '该不该满仓?',
-              options: const [],
-              selectedLabel: '',
-              rationaleMd: '',
-              principleIds: const [],
-              assumptionIds: const [],
-              status: DecisionStatus.active,
-              reviewDate: past,
-              decidedAt: past,
-              sync: meta(),
-            ),
-          );
-          // Due routine (next_due in the past).
-          await repo.upsertRoutine(
-            KnowledgeRoutine(
-              id: 'r1',
-              statement: '港卡活跃',
-              intervalDays: 180,
-              nextDueAt: past,
-              scope: '*',
-              status: RoutineStatus.active,
-              createdAt: past,
-              sync: meta(),
-            ),
-          );
-          // Stale assumption (never verified).
-          await repo.upsertAssumption(
-            KnowledgeAssumption(
-              id: 'a1',
-              statement: '美股长期向上',
-              confidence: 0.7,
-              scope: '*',
-              evidenceIds: const [],
-              status: AssumptionStatus.active,
-              declaredAt: past,
-              sync: meta(),
-            ),
-          );
-          // Orphan note (no tags, no project).
-          await repo.upsertNote(
-            KnowledgeNote(
-              id: 'n1',
-              title: '随手记',
-              bodyMd: '',
-              tags: const [],
-              createdAt: created,
-              sync: meta(),
-            ),
-          );
-        });
+    test('aggregates Note and Decision review work only', () async {
+      final past = DateTime.utc(2020, 1, 1);
+      final c = await seededRepo((repo) async {
+        // Due decision (review_date in the past, status active).
+        await repo.upsertDecision(
+          KnowledgeDecision(
+            id: 'dec1',
+            question: '该不该满仓?',
+            options: const [],
+            selectedLabel: '',
+            rationaleMd: '',
+            principleIds: const [],
+            assumptionIds: const [],
+            status: DecisionStatus.active,
+            reviewDate: past,
+            decidedAt: past,
+            sync: meta(),
+          ),
+        );
+        // Due routine (next_due in the past).
+        await repo.upsertRoutine(
+          KnowledgeRoutine(
+            id: 'r1',
+            statement: '港卡活跃',
+            intervalDays: 180,
+            nextDueAt: past,
+            scope: '*',
+            status: RoutineStatus.active,
+            createdAt: past,
+            sync: meta(),
+          ),
+        );
+        // Stale assumption (never verified).
+        await repo.upsertAssumption(
+          KnowledgeAssumption(
+            id: 'a1',
+            statement: '美股长期向上',
+            confidence: 0.7,
+            scope: '*',
+            evidenceIds: const [],
+            status: AssumptionStatus.active,
+            declaredAt: past,
+            sync: meta(),
+          ),
+        );
+        // Orphan note (no tags, no project).
+        await repo.upsertNote(
+          KnowledgeNote(
+            id: 'n1',
+            title: '随手记',
+            bodyMd: '',
+            tags: const [],
+            createdAt: created,
+            sync: meta(),
+          ),
+        );
+      });
 
-        final out = await _invoke(c, tool, const {});
-        expect(out['total_items'], 4);
-        final sections = (out['sections'] as List).cast<Object?>();
-        final byKey = {
-          for (final s in sections)
-            (s as Map)['key'] as String: s['count'] as int,
-        };
-        expect(byKey['due_reviews'], 1);
-        expect(byKey['due_routines'], 1);
-        expect(byKey['stale_assumptions'], 1);
-        expect(byKey['orphan_notes'], 1);
-      },
-    );
+      final out = await _invoke(c, tool, const {});
+      expect(out['total_items'], 2);
+      final sections = (out['sections'] as List).cast<Object?>();
+      final byKey = {
+        for (final s in sections)
+          (s as Map)['key'] as String: s['count'] as int,
+      };
+      expect(byKey['due_reviews'], 1);
+      expect(byKey['due_routines'], isNull);
+      expect(byKey['stale_assumptions'], isNull);
+      expect(byKey['orphan_notes'], 1);
+    });
 
     test('new assumptions and related notes are not unhealthy', () async {
       final now = DateTime.now().toUtc();

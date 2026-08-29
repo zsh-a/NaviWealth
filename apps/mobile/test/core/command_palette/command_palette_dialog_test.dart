@@ -411,7 +411,7 @@ void main() {
           'nav.home',
           'domain.fake',
           'nav.settings',
-          'action.aiHistory',
+          'action.assistant',
           'action.shortcutHelp',
         ]),
       );

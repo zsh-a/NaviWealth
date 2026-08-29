@@ -19,7 +19,7 @@ Included:
   storage keeps these as Project and Commitment records for compatibility.
 - Progress entries for check-ins, blockers, scope changes, and completion.
 - Today and Plans shell tabs. Review is a contextual destination reached from
-  signals and the command palette.
+  the domain header, the Life review entry, and relevant signals or artifacts.
 - Cross-domain source references by neutral row-family metadata.
 
 Excluded:
@@ -90,7 +90,7 @@ boundary.
 |---|---|
 | Today | Persistent daily Top 3 plus explicitly scheduled actions, due work, and blocked follow-through |
 | Plans | Later actions, active plans, existing long-term commitments, and a closed-work archive |
-| Review | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
+| Review (contextual) | Focus, stalled/blocked work, missing next actions, overdue targets, repeated blockers, throughput, source outcomes, recently closed actions, and confirmed batch next-action creation |
 
 Key files:
 
@@ -140,7 +140,7 @@ Agent run status and freshness live behind Review details. Progress is normally 
 Project, or Commitment that owns it; Review does not expose a global create
 Progress action or historical time-window switcher.
 
-Today, Commitments, and Review share an all-status search across Action title
+Today, Plans, and Review share an all-status search across Action title
 and note, Project title and description, and Commitment title and description.
 Default open-list reads are complete rather than silently capped; explicit
 limits are reserved for callers that intentionally paginate.
@@ -186,9 +186,13 @@ Proposal tools:
 
 - `propose_action`
 - `propose_action_status_update`
-- `propose_project`
-- `propose_commitment`
+- `propose_plan`
 - `propose_progress`
+
+`propose_project` and `propose_commitment` remain internal compatibility tools.
+`propose_plan` is the Assistant vocabulary: `cadence=bounded` applies through
+the existing Project proposal kind, while `cadence=ongoing` applies through the
+existing Commitment kind. No storage or Sync v3 migration is required.
 
 Rules:
 
@@ -233,6 +237,10 @@ The Review page can turn selected missing Project/Commitment next steps from
 the artifact proposal payload into high-priority Actions after explicit user
 confirmation. It re-checks current open Actions before presenting the batch
 and writes only the selected rows through the repository.
+
+Review is the user-facing surface. Its preparation agent is not exposed as a
+second toggleable “Review Agent” or rendered as a duplicate artifact card;
+run freshness remains subordinate Review detail.
 
 `ExecutionDueActionAgent` runs daily, finds open Actions due within the next
 24 hours (including overdue Actions), and writes a reminder artifact with

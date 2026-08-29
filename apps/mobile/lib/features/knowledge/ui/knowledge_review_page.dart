@@ -1,11 +1,8 @@
 /// KnowledgeOS Review tab (`docs/domains/knowledgeos-domain.md` §5).
 ///
-/// 3 cards: due Routines (next_due_at within 7d), due Decisions
-/// (review_date passed) and stale Assumptions (active && > 90d
-/// unverified). Forui chrome with widget-layer pull-to-refresh.
+/// One attention queue for due Decisions and captured-note suggestions. Forui
+/// chrome with widget-layer pull-to-refresh.
 library;
-
-import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,13 +10,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/ai/agents/agent_artifact.dart';
-import '../../../core/ai/agents/agent_artifact_routes.dart';
 import '../../../core/ai/agents/agent_finding_store.dart';
-import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
-import '../../../core/ai/agents/ui/agent_result_card.dart';
-import '../../../core/ai/agents/ui/agent_results_panel.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as core_auth;
@@ -30,7 +22,6 @@ import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../agents/providers.dart' as knowledge_agent_providers;
-import '../application/knowledge_lifecycle_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/inbox_triage_repository.dart';
 import '../data/knowledge_repository.dart';
@@ -41,16 +32,11 @@ import '_decision_lifecycle_sheet.dart';
 import '_widgets.dart';
 import 'knowledge_object_detail_page.dart';
 
-part 'knowledge_review_assumptions.dart';
 part 'knowledge_review_decisions.dart';
-part 'knowledge_review_routines.dart';
 part 'knowledge_review_selection.dart';
 
 const int _kDecisionReviewRescheduleDays = 90;
-const Duration kRoutineDueLookahead = Duration(days: 7);
-const String _kReviewRoutineOrderPrefsKey = 'routine_order';
 const String _kReviewDecisionOrderPrefsKey = 'decision_order';
-const String _kReviewAssumptionOrderPrefsKey = 'assumption_order';
 
 String _reviewOrderPrefsKey(WidgetRef ref, String family) {
   final owner = ref.read(activeUserIdProvider) ?? kLocalOnlyUserId;
@@ -69,9 +55,7 @@ final _reviewActionsRefreshProvider = StateProvider<int>((ref) => 0);
 class KnowledgeReviewSnapshot {
   const KnowledgeReviewSnapshot({
     required this.ownerUserId,
-    required this.dueRoutines,
     required this.dueDecisions,
-    required this.staleAssumptions,
     required this.pendingSuggestions,
     required this.suggestionNotes,
     required this.agentResults,
@@ -79,9 +63,7 @@ class KnowledgeReviewSnapshot {
   });
 
   final String ownerUserId;
-  final List<KnowledgeRoutine> dueRoutines;
   final List<KnowledgeDecision> dueDecisions;
-  final List<KnowledgeAssumption> staleAssumptions;
   final List<InboxTriageRecord> pendingSuggestions;
   final Map<String, KnowledgeNote?> suggestionNotes;
   final agent_providers.AgentResultBundle agentResults;
@@ -93,14 +75,9 @@ class KnowledgeReviewSnapshot {
   );
 
   int get attentionCount =>
-      dueRoutines.length +
-      dueDecisions.length +
-      staleAssumptions.length +
-      pendingSuggestionCount +
-      findings.length;
+      dueDecisions.length + pendingSuggestionCount + findings.length;
 
-  bool get isEmpty =>
-      attentionCount == 0 && agentResults.visibleEntries.isEmpty;
+  bool get isEmpty => attentionCount == 0;
 }
 
 final knowledgeReviewSnapshotProvider =
@@ -139,30 +116,14 @@ final knowledgeReviewSnapshotProvider =
       // Start all independent reads together. The page should wait once for a
       // coherent snapshot instead of revealing one section at a time.
       final values = await Future.wait<Object>([
-        repo.listDueRoutines(
-          ownerUserId: owner,
-          asOf: now.add(kRoutineDueLookahead),
-        ),
         repo.listDueReviews(ownerUserId: owner, asOf: now.toUtc()),
-        repo.listOpenAssumptions(ownerUserId: owner),
         triage.listPending(ownerUserId: owner),
         agentResultsFuture,
         findingsFuture,
       ]);
 
-      final dueRoutines = (values[0] as List<KnowledgeRoutine>)
-          .where((routine) => shouldShowRoutineInReview(routine, now))
-          .toList(growable: false);
-      final dueDecisions = values[1] as List<KnowledgeDecision>;
-      final openAssumptions = values[2] as List<KnowledgeAssumption>;
-      final staleAssumptions = openAssumptions
-          .where(
-            (assumption) =>
-                assumption.daysSinceVerify(now.toUtc()) >=
-                kKnowledgeAssumptionStaleDays,
-          )
-          .toList(growable: false);
-      final pendingSuggestions = (values[3] as List<InboxTriageRecord>)
+      final dueDecisions = values[0] as List<KnowledgeDecision>;
+      final pendingSuggestions = (values[1] as List<InboxTriageRecord>)
           .where((record) => record.pending.isNotEmpty)
           .toList(growable: false);
       final noteEntries = await Future.wait(
@@ -179,37 +140,15 @@ final knowledgeReviewSnapshotProvider =
 
       return KnowledgeReviewSnapshot(
         ownerUserId: owner,
-        dueRoutines: dueRoutines,
         dueDecisions: dueDecisions,
-        staleAssumptions: staleAssumptions,
         pendingSuggestions: pendingSuggestions,
         suggestionNotes: Map<String, KnowledgeNote?>.unmodifiable(
           suggestionNotes,
         ),
-        agentResults: values[4] as agent_providers.AgentResultBundle,
-        findings: values[5] as List<StoredAgentFinding>,
+        agentResults: values[2] as agent_providers.AgentResultBundle,
+        findings: values[3] as List<StoredAgentFinding>,
       );
     });
-
-@visibleForTesting
-bool shouldShowRoutineInReview(
-  KnowledgeRoutine routine,
-  DateTime now, {
-  Duration lookahead = kRoutineDueLookahead,
-}) {
-  if (routine.status != RoutineStatus.active) return false;
-  final doneAt = routine.lastDoneAt;
-  if (doneAt != null && _isSameLocalDay(doneAt, now)) return false;
-  return !routine.nextDueAt.toUtc().isAfter(now.add(lookahead).toUtc());
-}
-
-bool _isSameLocalDay(DateTime a, DateTime b) {
-  final localA = a.toLocal();
-  final localB = b.toLocal();
-  return localA.year == localB.year &&
-      localA.month == localB.month &&
-      localA.day == localB.day;
-}
 
 List<T> _orderedReviewItems<T>({
   required List<T> items,
@@ -229,22 +168,6 @@ List<T> _orderedReviewItems<T>({
     return ai.compareTo(bi);
   });
   return out;
-}
-
-Future<void> _persistReviewOrder({
-  required WidgetRef ref,
-  required String prefsKey,
-  required List<String> visibleIds,
-}) async {
-  final prefs = ref.read(sharedPreferencesProvider);
-  final stored = prefs.getStringList(prefsKey) ?? const <String>[];
-  final visible = visibleIds.toSet();
-  await prefs.setStringList(prefsKey, <String>[
-    ...visibleIds,
-    for (final id in stored)
-      if (!visible.contains(id)) id,
-  ]);
-  ref.read(_reviewActionsRefreshProvider.notifier).state++;
 }
 
 class KnowledgeReviewPage extends ConsumerStatefulWidget {
@@ -329,9 +252,6 @@ class _KnowledgeReviewContent extends StatelessWidget {
     if (snapshot.attentionCount > 0) {
       sections.add(_KnowledgeReviewOverview(snapshot: snapshot));
     }
-    if (snapshot.agentResults.visibleEntries.isNotEmpty) {
-      sections.add(_KnowledgeReviewAgentResults(bundle: snapshot.agentResults));
-    }
     if (snapshot.pendingSuggestions.isNotEmpty) {
       sections.add(
         KnowledgeAiSuggestionsCard(
@@ -343,16 +263,8 @@ class _KnowledgeReviewContent extends StatelessWidget {
     if (snapshot.findings.isNotEmpty) {
       sections.add(_KnowledgeReviewFindingsCard(findings: snapshot.findings));
     }
-    if (snapshot.dueRoutines.isNotEmpty) {
-      sections.add(_DueRoutinesCard(routines: snapshot.dueRoutines));
-    }
     if (snapshot.dueDecisions.isNotEmpty) {
       sections.add(_DueReviewsCard(decisions: snapshot.dueDecisions));
-    }
-    if (snapshot.staleAssumptions.isNotEmpty) {
-      sections.add(
-        _StaleAssumptionsCard(assumptions: snapshot.staleAssumptions),
-      );
     }
     if (snapshot.isEmpty) {
       sections.add(const _KnowledgeReviewCompleteState());
@@ -390,9 +302,9 @@ class _KnowledgeReviewOverview extends StatelessWidget {
       children: [
         Text(
           l10n.knowledgeReviewAttentionSummary(
-            snapshot.dueRoutines.length,
+            0,
             snapshot.dueDecisions.length,
-            snapshot.staleAssumptions.length,
+            0,
             snapshot.pendingSuggestionCount,
             snapshot.findings.length,
           ),
@@ -414,51 +326,6 @@ class _KnowledgeReviewOverview extends StatelessWidget {
       ],
     );
   }
-}
-
-class _KnowledgeReviewAgentResults extends ConsumerWidget {
-  const _KnowledgeReviewAgentResults({required this.bundle});
-
-  final agent_providers.AgentResultBundle bundle;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return AgentResultsSection(
-      bundle: bundle,
-      metaLabelBuilder: (at) => agentResultMetaLabel(l10n, at),
-      summaryMaxLines: 3,
-      onOpen: (artifact) => _openAgentArtifact(context, ref, artifact),
-      onRetry: (agentId) => _retryKnowledgeAgent(context, ref, agentId),
-    );
-  }
-}
-
-Future<void> _retryKnowledgeAgent(
-  BuildContext context,
-  WidgetRef ref,
-  String agentId,
-) async {
-  final controller = await ref.read(agentRunControllerProvider.future);
-  if (!context.mounted) return;
-  await controller.runOnceById(agentId);
-  if (!context.mounted) return;
-  ref.invalidate(
-    knowledge_agent_providers.latestKnowledgeReviewResultsProvider,
-  );
-  ref.invalidate(knowledgeReviewSnapshotProvider);
-}
-
-void _openAgentArtifact(
-  BuildContext context,
-  WidgetRef ref,
-  AgentArtifact artifact,
-) {
-  unawaited(
-    context.push(AgentArtifactRoutes.detail(artifact.id)).then((_) {
-      if (context.mounted) ref.invalidate(knowledgeReviewSnapshotProvider);
-    }),
-  );
 }
 
 class _KnowledgeReviewFindingsCard extends StatelessWidget {

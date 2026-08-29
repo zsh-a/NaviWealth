@@ -89,12 +89,14 @@ final _agentSettingsRowsProvider =
       final rows = <_AgentSettingsRow>[];
       for (final registration in registrations) {
         final agent = registration.agent;
+        final presentation = presentations[agent.id];
+        if (presentation?.visibleInSettings == false) continue;
         final latestRun = latestRunsByAgentId[agent.id];
         rows.add(
           _AgentSettingsRow(
             agent: agent,
             domain: registration.domain,
-            presentation: presentations[agent.id],
+            presentation: presentation,
             preference:
                 preferencesByAgentId[agent.id] ??
                 _defaultAgentPreference(ownerUserId, agent.id),

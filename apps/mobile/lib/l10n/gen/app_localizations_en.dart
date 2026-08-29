@@ -7898,10 +7898,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsAdvancedHubTitle => 'Advanced diagnostics';
+  String get settingsAdvancedHubTitle => 'Advanced';
 
   @override
-  String get settingsAdvancedHubSubtitle => 'Logs and performance tools';
+  String get settingsAdvancedHubSubtitle =>
+      'Storage maintenance, agents, transparency, and diagnostics';
 
   @override
   String get settingsAboutDiagnosticsSection => 'About & diagnostics';
@@ -7918,6 +7919,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsDataManagementSubtitle =>
       'Inspect, export, clean, and reset each OS from one place';
+
+  @override
+  String get dataManagementAdvancedTitle => 'Storage maintenance';
+
+  @override
+  String get dataManagementAdvancedSubtitle =>
+      'Cache cleanup, retention, and database compaction';
 
   @override
   String get dataManagementBackupTitle => 'Encrypted backup & restore';
@@ -8106,7 +8114,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataManagementResetAllDeviceConfirmBody =>
-      'All local OS source data, caches, AI history, memories, and agent results will be removed. Cloud data can download again during sync.';
+      'All local OS source data, caches, Assistant conversations, memories, and agent results will be removed. Cloud data can download again during sync.';
 
   @override
   String get dataManagementResetAllEverywhereConfirmTitle =>
@@ -8408,7 +8416,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get agentSettingsTriggerCatchUp => 'Catch-up';
 
   @override
-  String get settingsAdvancedSection => 'Diagnostic tools';
+  String get settingsAdvancedSection => 'Advanced controls';
 
   @override
   String get settingsAiModelsTitle => 'AI Models';
@@ -8984,19 +8992,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsDomainsKnowledgeDisabledSubtitle =>
-      'Personal decisions and cognitive memory';
+      'A personal memory for notes and decisions';
 
   @override
   String get settingsDomainsKnowledgeInboxSubtitle =>
-      'Capture notes, write decisions, and review the library';
+      'Quickly capture notes and ideas to organize';
 
   @override
   String get settingsDomainsKnowledgeLibrarySubtitle =>
-      'Browse decisions, assumptions, routines, concepts, and notes';
+      'Browse notes and decisions you have made';
 
   @override
   String get settingsDomainsKnowledgeReviewSubtitle =>
-      'Review due decisions, stale assumptions, and due routines';
+      'Review due decisions and pending suggestions';
 
   @override
   String get settingsDomainsKnowledgeMemoryTitle => 'KnowledgeOS Memory';
@@ -16685,7 +16693,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeEventAskAi => 'Explore with assistant';
 
   @override
-  String get lifeEventChooseScenario => 'Save decision';
+  String get lifeEventChooseScenario => 'Save scenario';
 
   @override
   String get lifeEventOpenAction => 'Open follow-up';
@@ -16694,11 +16702,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lifeEventAdjustPlan => 'Adjust budget';
 
   @override
-  String get lifeEventDecisionSaved => 'Decision and assumptions saved';
+  String get lifeEventDecisionSaved => 'Scenario and key assumptions saved';
 
   @override
   String lifeEventReviewActionTitle(String decision) {
-    return 'Review decision: $decision';
+    return 'Review scenario: $decision';
   }
 
   @override
@@ -16706,7 +16714,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Compare the deterministic forecast with observed financial data. Do not infer causality.';
 
   @override
-  String get lifeEventDecisionHistory => 'Decisions to review';
+  String get lifeEventDecisionHistory => 'Scenarios to review';
 
   @override
   String get lifeEventPendingReview => 'Pending review';

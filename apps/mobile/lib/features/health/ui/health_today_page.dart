@@ -497,18 +497,18 @@ class _DataSourcePanel extends StatelessWidget {
           return const Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _HealthKitSyncCard(),
+              _HealthKitSyncCard(showActions: false),
               SizedBox(height: AppSpacing.s8),
-              GarminSyncStatusCard(),
+              GarminSyncStatusCard(showActions: false),
             ],
           );
         }
         return const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _HealthKitSyncCard()),
+            Expanded(child: _HealthKitSyncCard(showActions: false)),
             SizedBox(width: AppSpacing.s8),
-            Expanded(child: GarminSyncStatusCard()),
+            Expanded(child: GarminSyncStatusCard(showActions: false)),
           ],
         );
       },
@@ -517,7 +517,9 @@ class _DataSourcePanel extends StatelessWidget {
 }
 
 class _HealthKitSyncCard extends ConsumerStatefulWidget {
-  const _HealthKitSyncCard();
+  const _HealthKitSyncCard({required this.showActions});
+
+  final bool showActions;
 
   @override
   ConsumerState<_HealthKitSyncCard> createState() => _HealthKitSyncCardState();
@@ -635,18 +637,23 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-          const SizedBox(height: AppSpacing.s8),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: AppBusyButton(
-              label: l10n.healthSyncAction,
-              busyLabel: l10n.healthSyncingButton,
-              busy: _syncing,
-              variant: FButtonVariant.outline,
-              prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-              onPress: enabled ? _syncHealthKit : null,
+          if (widget.showActions) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: AppBusyButton(
+                label: l10n.healthSyncAction,
+                busyLabel: l10n.healthSyncingButton,
+                busy: _syncing,
+                variant: FButtonVariant.outline,
+                prefix: const Icon(
+                  FLucideIcons.refreshCw,
+                  size: AppIconSizes.xs,
+                ),
+                onPress: enabled ? _syncHealthKit : null,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

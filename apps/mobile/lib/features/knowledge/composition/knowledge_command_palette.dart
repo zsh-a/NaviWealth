@@ -54,27 +54,11 @@ List<CommandPaletteEntry> knowledgeCommandPaletteEntries(
         'knowledge',
         'library',
         'decision',
-        'concept',
         l10n.knowledgeCommandLibrary,
         l10n.knowledgeLibraryTitle,
         l10n.knowledgeSegmentDecisions,
-        l10n.knowledgeSegmentConcepts,
       ],
       run: (BuildContext ctx) => ctx.go(KnowledgeRoutes.library),
-    ),
-    CommandPaletteEntry(
-      id: 'nav.knowledge.review',
-      label: l10n.knowledgeCommandReview,
-      icon: FLucideIcons.scrollText,
-      keywords: <String>[
-        KnowledgeRoutes.review,
-        'knowledge',
-        'review',
-        'reflect',
-        l10n.knowledgeCommandReview,
-        l10n.knowledgeReviewTitle,
-      ],
-      run: (BuildContext ctx) => ctx.go(KnowledgeRoutes.review),
     ),
   ];
 }

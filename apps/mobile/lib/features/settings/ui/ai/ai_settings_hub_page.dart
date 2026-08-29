@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/ai/composition/assistant_route_paths.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
@@ -64,7 +65,7 @@ class AiSettingsHubPage extends StatelessWidget {
                 icon: FLucideIcons.history,
                 label: l10n.settingsAiHistoryTitle,
                 subtitle: l10n.settingsAiHistorySubtitle,
-                onTap: () => context.pushNamed(SettingsRouteNames.aiHistory),
+                onTap: () => context.pushNamed(AssistantRouteNames.home),
               ),
             ],
           ),

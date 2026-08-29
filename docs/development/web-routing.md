@@ -31,7 +31,7 @@ from the registered domain packs:
 | `/plan` | Plan | Index 3 |
 
 There is **no `/ai` tab**. AI is not a destination: it lives in the command-palette
-overlay and inline capsules; chat history is read-only under `/settings/ai-history`.
+overlay and inline capsules; saved conversations live in the `/assistant` workspace.
 The former `/ai/insights/*` dashboards (FIRE / Rebalance / Analytics) are
 deterministic and now live under `/plan/*` or `/wealth/*` according to the IA
 boundary.
@@ -41,7 +41,8 @@ Common deep links (sample — `route_paths.dart` is the full list):
 - `/wealth/assets/<id>`, `/wealth/physical/<id>`, `/wealth/liabilities/<id>` — detail pages
 - `/plan/{fire,rebalance}` — plan dashboards (formerly `/ai/insights/*`)
 - `/activity/spending`, `/activity/expense/<id>`, `/activity/trade`, `/activity/transfer`
-- `/settings/{devices,fx-rates,backup,logs,sync,ai-history}`
+- `/assistant`, `/settings/{devices,fx-rates,backup,sync}` (`/settings/logs`
+  exists in debug builds only)
 - `/login` (with optional `?redirect=`)
 
 ## Checklist
@@ -69,7 +70,7 @@ For each URL: paste into a fresh tab, press Enter, confirm the listed page rende
 - [ ] `/wealth/assets/<known-id>` — asset detail
 - [ ] `/activity/spending` — spending analysis
 - [ ] `/plan/fire` — FIRE plan dashboard
-- [ ] `/settings/ai-history` — read-only chat history
+- [ ] `/assistant` — saved and active conversations
 - [ ] `/settings/devices`
 
 ### C. Hard refresh (F5 / ⌘R)

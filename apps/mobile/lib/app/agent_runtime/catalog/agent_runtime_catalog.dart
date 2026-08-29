@@ -12,7 +12,9 @@ import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
+import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
+import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart' show RiskLevel;
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
@@ -32,6 +34,16 @@ final agentRuntimeCatalogProvider = Provider<AgentRuntimeCatalog>((ref) {
     agentRegistrations: ref.watch(agentRegistrationProvider),
     generatedAt: DateTime.now().toUtc(),
   );
+});
+
+final assistantRuntimeToolsProvider = Provider<List<AgentRuntimeToolSpec>>((
+  ref,
+) {
+  final descriptorFor = ref.watch(toolDescriptorLookupProvider);
+  return List<AgentRuntimeToolSpec>.unmodifiable([
+    for (final tool in ref.watch(assistantDeviceToolsProvider))
+      AgentRuntimeToolSpec.fromTool(tool, descriptor: descriptorFor(tool.name)),
+  ]);
 });
 
 AgentRuntimeCatalog buildAgentRuntimeCatalog({

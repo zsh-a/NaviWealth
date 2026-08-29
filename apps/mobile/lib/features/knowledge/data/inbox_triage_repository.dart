@@ -115,6 +115,11 @@ class InboxProposal {
       status == InboxProposalStatus.pending &&
       (snoozedUntil == null || !snoozedUntil!.isAfter(now.toUtc()));
 
+  /// Legacy classification rows remain decodable and applicable, but the
+  /// primary Review queue exposes only the Note → Decision upgrade.
+  bool get visibleInPrimaryProduct =>
+      kind != InboxProposalKind.classification || payload['kind'] == 'decision';
+
   InboxProposal copyWith({
     InboxProposalStatus? status,
     DateTime? resolvedAt,
@@ -179,8 +184,10 @@ class InboxTriageRecord {
   final DateTime lastTriagedAt;
   final List<InboxProposal> proposals;
 
-  Iterable<InboxProposal> pendingAt(DateTime now) =>
-      proposals.where((p) => p.isVisiblePending(now));
+  Iterable<InboxProposal> pendingAt(DateTime now) => proposals.where(
+    (proposal) =>
+        proposal.visibleInPrimaryProduct && proposal.isVisiblePending(now),
+  );
 
   Iterable<InboxProposal> get pending => pendingAt(DateTime.now().toUtc());
 

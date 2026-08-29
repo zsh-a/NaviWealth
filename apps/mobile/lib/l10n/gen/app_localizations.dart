@@ -6447,7 +6447,7 @@ abstract class AppLocalizations {
   /// **'Can\'t answer this here. Continue in the AI assistant for a full conversation.'**
   String get askAiResultNoLocalMatch;
 
-  /// Link below the no-local-match notice that opens /settings/ai-history with the query prefilled
+  /// Link below the no-local-match notice that opens /assistant with the query prefilled
   ///
   /// In en, this message translates to:
   /// **'Continue in AI assistant'**
@@ -13294,13 +13294,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAdvancedHubTitle.
   ///
   /// In en, this message translates to:
-  /// **'Advanced diagnostics'**
+  /// **'Advanced'**
   String get settingsAdvancedHubTitle;
 
   /// No description provided for @settingsAdvancedHubSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Logs and performance tools'**
+  /// **'Storage maintenance, agents, transparency, and diagnostics'**
   String get settingsAdvancedHubSubtitle;
 
   /// Settings section header for app version and low-frequency diagnostics.
@@ -13332,6 +13332,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Inspect, export, clean, and reset each OS from one place'**
   String get settingsDataManagementSubtitle;
+
+  /// No description provided for @dataManagementAdvancedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage maintenance'**
+  String get dataManagementAdvancedTitle;
+
+  /// No description provided for @dataManagementAdvancedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cache cleanup, retention, and database compaction'**
+  String get dataManagementAdvancedSubtitle;
 
   /// No description provided for @dataManagementBackupTitle.
   ///
@@ -13636,7 +13648,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataManagementResetAllDeviceConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'All local OS source data, caches, AI history, memories, and agent results will be removed. Cloud data can download again during sync.'**
+  /// **'All local OS source data, caches, Assistant conversations, memories, and agent results will be removed. Cloud data can download again during sync.'**
   String get dataManagementResetAllDeviceConfirmBody;
 
   /// No description provided for @dataManagementResetAllEverywhereConfirmTitle.
@@ -14087,10 +14099,10 @@ abstract class AppLocalizations {
   /// **'Catch-up'**
   String get agentSettingsTriggerCatchUp;
 
-  /// Settings sub-page section header for logs, performance, and developer tools.
+  /// Settings sub-page section header for maintenance, agent, transparency, and debug controls.
   ///
   /// In en, this message translates to:
-  /// **'Diagnostic tools'**
+  /// **'Advanced controls'**
   String get settingsAdvancedSection;
 
   /// Settings tile and page title for local AI model management
@@ -15080,25 +15092,25 @@ abstract class AppLocalizations {
   /// No description provided for @settingsDomainsKnowledgeDisabledSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Personal decisions and cognitive memory'**
+  /// **'A personal memory for notes and decisions'**
   String get settingsDomainsKnowledgeDisabledSubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeInboxSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Capture notes, write decisions, and review the library'**
+  /// **'Quickly capture notes and ideas to organize'**
   String get settingsDomainsKnowledgeInboxSubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeLibrarySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Browse decisions, assumptions, routines, concepts, and notes'**
+  /// **'Browse notes and decisions you have made'**
   String get settingsDomainsKnowledgeLibrarySubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeReviewSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Review due decisions, stale assumptions, and due routines'**
+  /// **'Review due decisions and pending suggestions'**
   String get settingsDomainsKnowledgeReviewSubtitle;
 
   /// No description provided for @settingsDomainsKnowledgeMemoryTitle.
@@ -27964,7 +27976,7 @@ abstract class AppLocalizations {
   /// No description provided for @lifeEventChooseScenario.
   ///
   /// In en, this message translates to:
-  /// **'Save decision'**
+  /// **'Save scenario'**
   String get lifeEventChooseScenario;
 
   /// No description provided for @lifeEventOpenAction.
@@ -27982,13 +27994,13 @@ abstract class AppLocalizations {
   /// No description provided for @lifeEventDecisionSaved.
   ///
   /// In en, this message translates to:
-  /// **'Decision and assumptions saved'**
+  /// **'Scenario and key assumptions saved'**
   String get lifeEventDecisionSaved;
 
   /// No description provided for @lifeEventReviewActionTitle.
   ///
   /// In en, this message translates to:
-  /// **'Review decision: {decision}'**
+  /// **'Review scenario: {decision}'**
   String lifeEventReviewActionTitle(String decision);
 
   /// No description provided for @lifeEventReviewActionBody.
@@ -28000,7 +28012,7 @@ abstract class AppLocalizations {
   /// No description provided for @lifeEventDecisionHistory.
   ///
   /// In en, this message translates to:
-  /// **'Decisions to review'**
+  /// **'Scenarios to review'**
   String get lifeEventDecisionHistory;
 
   /// No description provided for @lifeEventPendingReview.

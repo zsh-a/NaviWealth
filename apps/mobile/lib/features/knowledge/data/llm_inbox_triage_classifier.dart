@@ -37,10 +37,9 @@ const String _kInboxTriageSystemPrompt =
     '你是 NaviWealth KnowledgeOS 的 Inbox 整理助手。给定一条用户的 Inbox '
     'Note(标题 + 正文),以及一份候选 Decision 列表,判断是否值得给出最多三类建议:\n'
     '\n'
-    '1. classification — 这条 note 该归为哪一类:\n'
-    '   - note: 普通笔记(默认,没有明显结构 → 不要给 classification 建议)\n'
-    '   - decision: 在权衡某个选项的决策(含 "应该 / vs / 对比 / 选项")\n'
-    '   - concept: 短小的概念定义\n'
+    '1. classification — 只判断这条 Note 是否应升级为 Decision:\n'
+    '   - 普通材料、想法或定义继续保留为 Note,不要给 classification 建议\n'
+    '   - 只有明确权衡选项(含 "应该 / vs / 对比 / 选项")时建议 decision\n'
     '2. tags — 适合这条 note 的 1..4 个小写短 tag(例如 fire / options / health)。'
     '若 note 已有 tag 或想不出合适的就留空。\n'
     '3. link_to_decision — 这条 note 与候选列表里哪些 Decision 相关(用它们的 id)。'
@@ -51,7 +50,7 @@ const String _kInboxTriageSystemPrompt =
     '\n'
     '仅输出一个 JSON 对象,**不要任何额外文字 / Markdown / 代码栅栏**。schema:\n'
     '{\n'
-    '  "classification": {"kind": "decision|concept", '
+    '  "classification": {"kind": "decision", '
     '"confidence": 数字, "reason_zh": "一句中文", '
     '"decision_options": ["选项 A", "选项 B"], '
     '"expected_outcome": "可选预期结果"} 或 null,\n'
@@ -240,9 +239,7 @@ InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
   if (raw is! Map) return null;
   final m = raw.map((k, v) => MapEntry(k.toString(), v));
   final kind = (m['kind'] as String?)?.trim() ?? '';
-  if (kind != 'decision' && kind != 'concept') {
-    return null;
-  }
+  if (kind != 'decision') return null;
   final confidence = _coerceDouble(m['confidence']) ?? 0.0;
   if (confidence < _kMinConfidence) return null;
   final reason = (m['reason_zh'] as String?)?.trim();
@@ -251,12 +248,9 @@ InboxProposal? _parseClassification(KnowledgeNote note, Object? raw) {
   if (kind == 'decision' && decisionOptions.length < 2) return null;
   final expectedOutcome = (m['expected_outcome'] as String?)?.trim();
 
-  final label = kind == 'decision'
-      ? '看起来像在权衡某个选项 — 建议升级为 Decision draft'
-      : '短小定义型笔记 — 建议提取为 Concept';
   return InboxProposal(
     kind: InboxProposalKind.classification,
-    summaryZh: label,
+    summaryZh: '看起来像在权衡某个选项 — 建议升级为 Decision draft',
     payload: <String, Object?>{
       'note_id': note.id,
       'kind': kind,

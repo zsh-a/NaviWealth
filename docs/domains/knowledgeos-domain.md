@@ -14,9 +14,9 @@ authoritative for the current implementation inventory.
 Included:
 
 - Inbox capture for high-signal notes.
-- Library of Notes, Concepts, Principles, Assumptions, Decisions, Experiments, and Routines.
+- A primary Library model of Notes and Decisions.
 - Decision log with assumptions, principles, rationale, expected outcome, review date, and actual outcome.
-- Review workflow for due decisions, stale assumptions, contradictions, inbox triage, and due routines.
+- Review workflow for due decisions, contradictions, inbox triage, and orphan Notes.
 - Cross-domain recall through Memory Runtime.
 - AI tools that read, search, and propose changes.
 - Agents that surface review work and contradictions.
@@ -44,8 +44,8 @@ Contributions:
 - Shell: `features/knowledge/composition/knowledge_domain_shell.dart`.
 - Routes: `features/knowledge/composition/knowledge_routes.dart`.
 - Primary tabs: Inbox, Library. Review is a contextual destination reached from
-  the Inbox and Library header actions, due signals, and the command palette
-  rather than a permanent shell tab.
+  the Inbox header, the Life review entry, and relevant signals or artifacts
+  rather than a permanent shell tab or command-palette duplicate.
 - Tools: `features/knowledge/knowledge_ai_tools.dart`.
 - Agents: `features/knowledge/agents/providers.dart`.
 - Command palette: `features/knowledge/composition/knowledge_command_palette.dart`.
@@ -56,6 +56,10 @@ KnowledgeOS is active only when the user enables it in Settings.
 
 ## Domain Objects
 
+Note and Decision are the product vocabulary. The other rows remain supported
+for storage, sync, search, import, and existing-user compatibility; they are not
+peer navigation or creation choices. Recurring work belongs in ExecutionOS.
+
 | Object | Purpose | Storage |
 |---|---|---|
 | Note | Raw capture and source material | `knowledge_notes` |
@@ -64,7 +68,7 @@ KnowledgeOS is active only when the user enables it in Settings.
 | Assumption | Falsifiable belief used by decisions | `knowledge_assumptions` |
 | Decision | Chosen option, rationale, assumptions, outcome, revisit conditions, review lifecycle | `knowledge_decisions` |
 | Experiment | Hypothesis, method, metrics, result | `knowledge_experiments` |
-| Routine | Recurring personal reminder with next due date | `knowledge_routines` |
+| Routine | Legacy recurring reminder retained for compatibility | `knowledge_routines` |
 | Relation | Typed, queryable edge between knowledge objects | `knowledge_relations` |
 
 Domain models:
@@ -110,8 +114,8 @@ workflow state.
 | Tab | Purpose |
 |---|---|
 | Inbox | Fast capture with optional pre-save AI organization and an offline original-text path |
-| Library | Browse, search, and edit the complete knowledge collection; Decision is the primary object |
-| Review (contextual) | Due decisions, stale assumptions, contradictions, inbox AI suggestions, and existing due routines |
+| Library | Browse Notes and Decisions directly; search legacy objects through All |
+| Review (contextual) | Due decisions, contradictions, inbox AI suggestions, and orphan Notes |
 
 Key files:
 
@@ -134,22 +138,20 @@ tags, links, and merge suggestions remain asynchronous review work after save.
 Users create an explicitly structured object from Library only when they already
 know the intended type.
 
-Library exposes every object family in its adaptive picker for browsing.
-Creation remains intentionally narrower: Notes, Decisions, and Assumptions are
-the primary user-authored choices, while Principles, Concepts, Experiments, and
-Routines have no primary create action. Library filtering has one contextual
-dimension: All filters by object type, while a typed collection filters by its
-status. Tags, scope, and dates remain searchable content rather than separate
-filter configuration.
+Library exposes All, Notes, and Decisions in its adaptive picker. All preserves
+search and detail access for legacy Concepts, Principles, Assumptions,
+Experiments, and Routines without asking users to understand the old taxonomy.
+Creation offers only Note and Decision. Tags, scope, and dates remain searchable
+content rather than separate filter configuration.
 
 Decision detail exposes one source-preserving follow-up action when ExecutionOS
 is active. Creation uses the domain-neutral Life action dispatcher with
 `know:knowledge_decisions` plus the decision id, reuses an existing linked
 action, and opens that action on later visits instead of creating duplicates.
 Concept relationships render as accessible links, never as a graph
-visualization. Review is a signal-first work queue: suggestions, due routines,
-due decisions, stale assumptions, and agent findings appear without a duplicate
-dashboard or manual agent-control surface.
+visualization. Review is a signal-first work queue: suggestions, due decisions,
+contradictions, orphan Notes, and agent findings appear without a duplicate
+dashboard, named Agent result card, or manual agent-control surface.
 
 Repository writes debounce an event-triggered agent run. New or edited Notes
 schedule Inbox Triage and contradiction detection; changes to Decisions,
@@ -160,32 +162,35 @@ identify these runs with the `event` trigger.
 
 Tool barrel: `features/knowledge/knowledge_ai_tools.dart`.
 
-Read tools:
+Assistant-visible tools:
 
 - `recall_decision`
-- `list_open_assumptions`
 - `list_due_reviews`
-- `list_due_routines`
 - `search_notes`
 - `search_knowledge`
 - `find_similar_knowledge`
 - `review_knowledge_health`
 - `summarize_topic_evolution`
+- `propose_capture`
 
-Write/proposal tools:
+Internal compatibility and agent tools additionally include:
 
+- `list_open_assumptions`
+- `list_due_routines`
 - `propose_concept_link`
 - `propose_merge`
 - `queue_inbox_classification`
 - `queue_inbox_tags`
 - `queue_link_to_decision`
 - `propose_routine`
-- `propose_capture`
 
 Rules:
 
 - `propose_*` tools return `ProposalEnvelope`; they do not directly mutate synced KnowledgeOS tables.
 - `queue_*` inbox triage tools persist derived envelopes to `knowledge_inbox_triage` for the Review tab; they are not chat proposal-card apply kinds.
+- `propose_capture` presents only Note or Decision. Legacy classification may
+  still normalize existing data internally but is not exposed as user-facing
+  ontology.
 - Before creating new knowledge, prefer search or similarity tools to avoid duplicates.
 - The model must not invent decisions, principles, assumptions, or outcomes. User confirmation is required.
 - Decision, Note, and active Experiment detail pages may create one explicit
@@ -194,10 +199,9 @@ Rules:
   `know:knowledge_experiments` plus row id), reopen an existing linked Action,
   and never auto-write. Concept, Principle, and Assumption pages do not expose
   generic create-action controls.
-- `review_knowledge_health`, Review agents, and Review UI share product defaults:
-  a 7-day review cadence and a 90-day stale-assumption threshold. These are
-  workflow semantics rather than user-facing expert settings. Orphan Notes
-  must be older than 24 hours and have neither
+- `review_knowledge_health`, Review agents, and Review UI share a 7-day review
+  cadence. This is workflow semantics rather than a user-facing expert
+  setting. Orphan Notes must be older than 24 hours and have neither
   tags, project membership, nor incoming/outgoing Knowledge relations.
 - Topic evolution expands the query through matched Concept aliases, paginates
   Notes and Decisions, and reports truncation metadata instead of silently
@@ -262,8 +266,8 @@ Current agents:
 
 | Agent | Purpose |
 |---|---|
-| ReviewAgent | Surfaces decisions due for review and stale assumptions |
-| AssumptionAgent | Finds assumptions that need verification |
+| ReviewAgent | Prepares Review freshness and due-decision context; legacy assumption reads remain internal |
+| AssumptionAgent | Compatibility detector for existing assumptions; not a user-configurable surface |
 | ContradictionAgent | Detects structural and semantic conflicts against active principles, assumptions, Notes, and all active Decisions |
 | InboxTriageAgent | Produces async proposals for new or materially edited captured notes |
 
@@ -293,26 +297,26 @@ User saves Note
   -> propose classification, tags, and decision links
   -> proposals stored in knowledge_inbox_triage
   -> Review tab shows accept/dismiss cards
-  -> accepted classification atomically creates the typed object
+  -> accepted Decision classification atomically creates the Decision
      and records promoted_to_kind / promoted_to_id on the source Note
   -> promoted source Notes remain provenance but leave normal Note queries
 ```
 
-Classification is a domain transition, not a `kind:*` tag. Typed Library
-segments must always be backed by their corresponding `knowledge_*` table.
-Deterministic promotion ids make repeated acceptance idempotent. This preserves
-zero-latency capture and makes AI suggestions reviewable.
+Classification is a Note → Decision transition, not a `kind:*` tag. Ordinary
+materials and definitions stay Notes. Deterministic promotion ids make repeated
+acceptance idempotent. Legacy classification envelopes remain decodable and
+applicable for compatibility, but non-Decision classifications are neither
+generated nor shown in the primary Review queue.
 
 Decision links are persisted as typed `knowledge_relations` rows, never as
 synthetic tags. When a Note is promoted, its outgoing relations move to the
 typed object in the same transaction; proposal undo restores both the source
 Note and its original relation endpoints.
 
-Promotion is structurally strict: a Decision needs at least two options, an
-Assumption needs an explicit confidence, and an Experiment needs both a method
-and one or more metrics. Capture classifiers and Inbox proposals must carry
-these fields through to the confirmed promotion; incomplete suggestions stay
-as Notes instead of creating hollow first-class objects.
+Promotion is structurally strict: a Decision needs at least two options.
+Capture classifiers and Inbox proposals must carry those options through to the
+confirmed promotion; incomplete suggestions stay as Notes instead of creating
+hollow first-class objects.
 
 ## Decision Lifecycle
 

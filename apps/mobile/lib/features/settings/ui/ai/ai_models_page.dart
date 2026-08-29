@@ -13,6 +13,7 @@ library;
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -45,8 +46,10 @@ class AiModelsPage extends ConsumerWidget {
       childPad: false,
       child: SettingsPageFrame(
         children: [
-          _RuntimeDiagnosticsCard(resolution: resolution),
-          const SizedBox(height: AppSpacing.s12),
+          if (kDebugMode) ...[
+            _RuntimeDiagnosticsCard(resolution: resolution),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           const _ActiveEmbedderCard(),
           const SizedBox(height: AppSpacing.s12),
           _SpeechRecognizerCard(bundles: bundles),

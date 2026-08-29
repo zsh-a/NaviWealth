@@ -14,6 +14,7 @@ import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_artifact_routes.dart';
 import '../core/ai/agents/agent_presentation.dart';
 import '../core/ai/agents/agent_registry.dart';
+import '../core/ai/composition/ai_context.dart';
 import '../core/ai/composition/ask_ai.dart';
 import '../core/ai/composition/batch_proposal_undo.dart';
 import '../core/ai/composition/composite_proposal_applier.dart';
@@ -120,9 +121,8 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     lifeActionStateReaderProvider.overrideWith((ref) {
       return (actionId) async {
         final repository = await ref.read(executionRepositoryProvider.future);
-        final owner = await (await ref.read(
-          mutationStamperProvider.future,
-        )).currentUserId();
+        final owner = await (await ref.read(mutationStamperProvider.future))
+            .currentUserId();
         final action = await repository.findAction(
           ownerUserId: owner,
           id: actionId,
@@ -151,6 +151,14 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     deviceToolsProvider.overrideWith(
       (ref) => domainDeviceTools(ref.watch(activeDomainPacksProvider)),
     ),
+    assistantDeviceToolsProvider.overrideWith((ref) {
+      final context = ref.watch(aiContextProvider);
+      return domainAssistantDeviceTools(
+        ref.watch(activeDomainPacksProvider),
+        currentPath: context.path,
+        currentDomain: context.domain,
+      );
+    }),
     toolDescriptorLookupProvider.overrideWith((ref) {
       final descriptors = domainToolDescriptors(
         ref.watch(activeDomainPacksProvider),
@@ -268,9 +276,8 @@ Future<LifeLinkedAction?> _readLinkedLifeAction(
   LifeActionSource source,
 ) async {
   final repository = await ref.read(executionRepositoryProvider.future);
-  final owner = await (await ref.read(
-    mutationStamperProvider.future,
-  )).currentUserId();
+  final owner = await (await ref.read(mutationStamperProvider.future))
+      .currentUserId();
   final action = await _findLinkedExecutionAction(
     repository: repository,
     ownerUserId: owner,
@@ -403,6 +410,24 @@ List<DeviceTool> domainDeviceTools(List<DomainPack> packs) {
     ...kShellDeviceToolsCore,
     for (final p in packs) ...p.deviceTools,
   ];
+}
+
+List<DeviceTool> domainAssistantDeviceTools(
+  List<DomainPack> packs, {
+  required String currentPath,
+  required DomainScope? currentDomain,
+}) {
+  final scopedPacks = currentDomain == null
+      ? packs
+      : packs.where((pack) => pack.scope == currentDomain);
+  final toolsByName = <String, DeviceTool>{
+    for (final tool in kShellDeviceToolsCore) tool.name: tool,
+    for (final pack in scopedPacks)
+      for (final tool
+          in pack.assistantToolsBuilder?.call(currentPath) ?? pack.deviceTools)
+        tool.name: tool,
+  };
+  return List<DeviceTool>.unmodifiable(toolsByName.values);
 }
 
 Map<String, ToolDescriptor> domainToolDescriptors(List<DomainPack> packs) {

@@ -297,10 +297,8 @@ void main() {
       'Health block',
     ]);
     expect(
-      domainProposalKinds(const [
-        _financePack,
-        _healthPack,
-      ]).map((meta) => meta.kind),
+      domainProposalKinds(const [_financePack, _healthPack])
+          .map((meta) => meta.kind),
       ['memory_change', 'fake_finance', 'fake_health'],
     );
     expect(
@@ -309,6 +307,54 @@ void main() {
         _healthPack,
       ], l10n).map((entry) => entry.id),
       ['finance', 'health'],
+    );
+  });
+
+  test('Assistant tools follow the current domain and advanced route', () {
+    Iterable<String> names(String path, DomainScope domain) =>
+        domainAssistantDeviceTools(
+          kAllDomainPacks,
+          currentPath: path,
+          currentDomain: domain,
+        ).map((tool) => tool.name);
+
+    final financeHome = names(FinanceRoutes.home, DomainScope.finance);
+    expect(financeHome, contains('get_finance_brief'));
+    expect(financeHome, isNot(contains('get_fire_state')));
+    expect(financeHome, isNot(contains('get_wheel_lifecycle')));
+
+    final fire = names(FinanceRoutes.planFire, DomainScope.finance);
+    expect(fire, containsAll(<String>['get_fire_state', 'simulate_fire_plan']));
+
+    final knowledge = names(KnowledgeRoutes.library, DomainScope.knowledge);
+    expect(knowledge, containsAll(<String>['search_notes', 'propose_capture']));
+    expect(knowledge, isNot(contains('queue_inbox_tags')));
+    expect(knowledge, isNot(contains('propose_routine')));
+
+    final execution = names(ExecutionRoutes.today, DomainScope.execution);
+    expect(execution, contains('propose_plan'));
+    expect(execution, isNot(contains('propose_project')));
+    expect(execution, isNot(contains('propose_commitment')));
+  });
+
+  test('command palette keeps advanced and Review routes contextual', () {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    final ids = domainCommandPaletteEntries(
+      kAllDomainPacks,
+      l10n,
+    ).map((entry) => entry.id).toSet();
+
+    expect(
+      ids.intersection(const <String>{
+        'nav.fire',
+        'nav.incomeStrategy',
+        'nav.optionsWorkspace',
+        'nav.wheelCycles',
+        'nav.optionsReview',
+        'nav.knowledge.review',
+        'nav.execution.review',
+      }),
+      isEmpty,
     );
   });
 
@@ -531,137 +577,134 @@ void main() {
     expect(backgroundBootstrapCount, 1);
   });
 
-  test(
-    'production four-domain packs derive active tools prompts shells and agents',
-    () async {
-      SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final c = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWith((_) async => db),
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          ...lifeOsDomainCompositionOverrides(),
-        ],
-      );
-      addTearDown(c.dispose);
+  test('production four-domain packs derive active tools prompts shells and agents', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final c = ProviderContainer(
+      overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        ...lifeOsDomainCompositionOverrides(),
+      ],
+    );
+    addTearDown(c.dispose);
 
-      await c.read(auth.domainOptInsProvider.future);
-      await c
-          .read(auth.domainOptInsProvider.notifier)
-          .setEnabled(DomainScope.health, true);
-      await c
-          .read(auth.domainOptInsProvider.notifier)
-          .setEnabled(DomainScope.knowledge, true);
-      await c
-          .read(auth.domainOptInsProvider.notifier)
-          .setEnabled(DomainScope.execution, true);
+    await c.read(auth.domainOptInsProvider.future);
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.health, true);
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.knowledge, true);
+    await c
+        .read(auth.domainOptInsProvider.notifier)
+        .setEnabled(DomainScope.execution, true);
 
-      expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
-      expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
-      expect(kHealthPack.backgroundBootstrapBuilder, isNotNull);
-      expect(kKnowledgePack.backgroundBootstrapBuilder, isNull);
-      expect(kExecutionPack.backgroundBootstrapBuilder, isNotNull);
-      expect(
-        kAllDomainPacks
-            .where((pack) => pack.settingsSpec != null)
-            .map((pack) => pack.settingsSpec!.label),
-        ['FinanceOS', 'HealthOS', 'KnowledgeOS', 'ExecutionOS'],
-      );
-      expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
-        DomainScope.finance,
-        DomainScope.health,
-        DomainScope.knowledge,
-        DomainScope.execution,
-      ]);
+    expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
+    expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
+    expect(kHealthPack.backgroundBootstrapBuilder, isNotNull);
+    expect(kKnowledgePack.backgroundBootstrapBuilder, isNull);
+    expect(kExecutionPack.backgroundBootstrapBuilder, isNotNull);
+    expect(
+      kAllDomainPacks
+          .where((pack) => pack.settingsSpec != null)
+          .map((pack) => pack.settingsSpec!.label),
+      ['FinanceOS', 'HealthOS', 'KnowledgeOS', 'ExecutionOS'],
+    );
+    expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
+      DomainScope.finance,
+      DomainScope.health,
+      DomainScope.knowledge,
+      DomainScope.execution,
+    ]);
 
+    expect(
+      c.read(deviceToolsProvider).map((tool) => tool.name),
+      containsAll(<String>['propose_action', 'summarize_execution_progress']),
+    );
+    expect(c.read(systemPromptBlocksProvider), [
+      kFinancePack.systemPromptBlock,
+      kHealthPack.systemPromptBlock,
+      kKnowledgePack.systemPromptBlock,
+      kExecutionPack.systemPromptBlock,
+    ]);
+    expect(c.read(activeDomainShellsProvider).map((shell) => shell.scope), [
+      DomainScope.finance,
+      DomainScope.health,
+      DomainScope.knowledge,
+      DomainScope.execution,
+    ]);
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(
+      kKnowledgePack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
+      <String>[AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
+    );
+    expect(
+      kExecutionPack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
+      <String>[AppRoutes.executionToday, AppRoutes.executionCommitments],
+    );
+    final executionCommandIds = kExecutionPack
+        .commandPaletteEntriesBuilder!(l10n)
+        .map((entry) => entry.id);
+    expect(executionCommandIds, contains('create.execution'));
+    for (final retiredId in const <String>[
+      'create.execution.action',
+      'create.execution.project',
+      'create.execution.commitment',
+    ]) {
+      expect(executionCommandIds, isNot(contains(retiredId)));
+    }
+    expect(
+      kKnowledgePack.commandPaletteEntriesBuilder!(l10n).map(
+        (entry) => entry.id,
+      ),
+      contains('create.knowledge.note'),
+    );
+    expect(
+      c.read(agentRegistryProvider).map((agent) => agent.id),
+      containsAll(<String>[
+        'weekly_wealth_review',
+        'daily_navigator',
+        'knowledge_review',
+        'execution_review',
+      ]),
+    );
+    expect(
+      c.read(agentPresentationSpecsProvider).keys,
+      containsAll(<String>[
+        'weekly_wealth_review',
+        'recovery_alert',
+        'knowledge_review',
+        'execution_review',
+      ]),
+    );
+    final catalog = c.read(intentCatalogProvider);
+    for (final intentName in const <String>[
+      kAgentExplainResultIntent,
+      kAgentShowEvidenceIntent,
+      kAgentCreatePlanFromResultIntent,
+    ]) {
+      expect(catalog.lookup(intentName), isNotNull);
       expect(
-        c.read(deviceToolsProvider).map((tool) => tool.name),
-        containsAll(<String>['propose_action', 'summarize_execution_progress']),
-      );
-      expect(c.read(systemPromptBlocksProvider), [
-        kFinancePack.systemPromptBlock,
-        kHealthPack.systemPromptBlock,
-        kKnowledgePack.systemPromptBlock,
-        kExecutionPack.systemPromptBlock,
-      ]);
-      expect(c.read(activeDomainShellsProvider).map((shell) => shell.scope), [
-        DomainScope.finance,
-        DomainScope.health,
-        DomainScope.knowledge,
-        DomainScope.execution,
-      ]);
-      final l10n = lookupAppLocalizations(const Locale('en'));
-      expect(
-        kKnowledgePack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
-        <String>[AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
-      );
-      expect(
-        kExecutionPack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
-        <String>[AppRoutes.executionToday, AppRoutes.executionCommitments],
-      );
-      final executionCommandIds = kExecutionPack
-          .commandPaletteEntriesBuilder!(l10n)
-          .map((entry) => entry.id);
-      expect(executionCommandIds, contains('create.execution'));
-      for (final retiredId in const <String>[
-        'create.execution.action',
-        'create.execution.project',
-        'create.execution.commitment',
-      ]) {
-        expect(executionCommandIds, isNot(contains(retiredId)));
-      }
-      expect(
-        kKnowledgePack.commandPaletteEntriesBuilder!(l10n).map(
-          (entry) => entry.id,
+        catalog.descriptors.where(
+          (descriptor) => descriptor.name == intentName,
         ),
-        contains('create.knowledge.note'),
+        hasLength(1),
       );
-      expect(
-        c.read(agentRegistryProvider).map((agent) => agent.id),
-        containsAll(<String>[
-          'weekly_wealth_review',
-          'daily_navigator',
-          'knowledge_review',
-          'execution_review',
-        ]),
-      );
-      expect(
-        c.read(agentPresentationSpecsProvider).keys,
-        containsAll(<String>[
-          'weekly_wealth_review',
-          'recovery_alert',
-          'knowledge_review',
-          'execution_review',
-        ]),
-      );
-      final catalog = c.read(intentCatalogProvider);
-      for (final intentName in const <String>[
+    }
+    expect(catalog.lookup(kFinanceReviewWealthIntent), isNotNull);
+    expect(catalog.lookup(kKnowledgeReviewDueItemsIntent), isNotNull);
+    expect(
+      kExecutionAgentIntentDescriptors.map((descriptor) => descriptor.name),
+      containsAll(<String>[
         kAgentExplainResultIntent,
         kAgentShowEvidenceIntent,
         kAgentCreatePlanFromResultIntent,
-      ]) {
-        expect(catalog.lookup(intentName), isNotNull);
-        expect(
-          catalog.descriptors.where(
-            (descriptor) => descriptor.name == intentName,
-          ),
-          hasLength(1),
-        );
-      }
-      expect(catalog.lookup(kFinanceReviewWealthIntent), isNotNull);
-      expect(catalog.lookup(kKnowledgeReviewDueItemsIntent), isNotNull);
-      expect(
-        kExecutionAgentIntentDescriptors.map((descriptor) => descriptor.name),
-        containsAll(<String>[
-          kAgentExplainResultIntent,
-          kAgentShowEvidenceIntent,
-          kAgentCreatePlanFromResultIntent,
-        ]),
-      );
-    },
-  );
+      ]),
+    );
+  });
 
   test(
     'production agent registry and presentation specs stay in parity',
@@ -732,8 +775,16 @@ void main() {
         );
       }
       expect(
-        specs.values.map((spec) => spec.placement),
+        specs.values
+            .where((spec) => spec.visibleInSettings)
+            .map((spec) => spec.placement),
         everyElement(isNot(AgentResultPlacement.settingsOnly)),
+      );
+      expect(
+        specs.values
+            .where((spec) => !spec.visibleInSettings)
+            .map((spec) => spec.userToggleable),
+        everyElement(isFalse),
       );
     },
   );

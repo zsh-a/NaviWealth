@@ -252,7 +252,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
   void _expandToChat() {
     final sid = _sessionId;
     if (sid == null) return;
-    popThenPushFromAiSurface(context, aiHistoryLocation(sid));
+    popThenPushFromAiSurface(context, assistantLocation(sid));
   }
 
   Widget _buildInvocation(BuildContext context) {
@@ -377,7 +377,7 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
               ? null
               : () => popThenPushFromAiSurface(
                   context,
-                  aiHistoryLocation(activeId),
+                  assistantLocation(activeId),
                 ),
         ),
         const FDivider(),

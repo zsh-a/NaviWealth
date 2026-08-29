@@ -38,9 +38,8 @@ abstract class InboxTriageClassifier {
   );
 }
 
-/// Deterministic pure-Dart classifier — the §7 MVP heuristic surface,
-/// preserved verbatim from the original agent. Stateless, so a single
-/// `const` instance can be shared everywhere.
+/// Deterministic pure-Dart classifier. It proposes only the product-level
+/// Note → Decision upgrade; ordinary notes stay Notes.
 class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
   const HeuristicInboxTriageClassifier();
 
@@ -96,20 +95,6 @@ class HeuristicInboxTriageClassifier implements InboxTriageClassifier {
           'confidence': 0.6,
           'reason': '正文较长且包含 "对比 / 选项 / 应该 / ?" 类语言',
           'decision_options': options,
-        },
-        status: InboxProposalStatus.pending,
-      );
-    }
-    // Single capitalised noun phrase / short body → Concept.
-    if (body.length < 120 && title.isNotEmpty && !hasQuestion) {
-      return InboxProposal(
-        kind: InboxProposalKind.classification,
-        summaryZh: '短小定义型笔记 — 建议提取为 Concept',
-        payload: <String, Object?>{
-          'note_id': note.id,
-          'kind': 'concept',
-          'confidence': 0.5,
-          'reason': '标题明确且正文短(< 120 字符),适合作 Concept primitive',
         },
         status: InboxProposalStatus.pending,
       );

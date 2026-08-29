@@ -5,13 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
 
 import '../../../core/ai/composition/ai_context_summary.dart';
+import '../../../core/ai/composition/assistant_route_paths.dart';
 import '../../../core/ai/session/interaction_state.dart';
 import '../../../core/ai/visual/visual.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/shell/auth_route_paths.dart';
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
-import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
@@ -141,7 +141,7 @@ class _AiChatPageState extends ConsumerState<AiChatPage> {
                   setState(() => _selectedSessionId = id);
                   replaceSelectedQuery(
                     context,
-                    path: SettingsRoutes.aiHistory,
+                    path: AssistantRoutes.home,
                     selected: id,
                   );
                 },

@@ -73,6 +73,13 @@ GoRouter _router({
             path: 'advanced',
             name: SettingsRouteNames.advanced,
             builder: (_, _) => const AdvancedSettingsPage(),
+            routes: [
+              GoRoute(
+                path: 'data-maintenance',
+                name: SettingsRouteNames.dataMaintenance,
+                builder: (_, _) => const DataManagementPage.maintenance(),
+              ),
+            ],
           ),
           for (final pack in resolvedPacks)
             if (pack.settingsSpec?.routeBuilder != null)
@@ -136,6 +143,25 @@ void main() {
       expect(find.text('KnowledgeOS'), findsOneWidget);
       expect(find.text('ExecutionOS'), findsOneWidget);
       expect(find.text('Disabled'), findsNWidgets(3));
+      expect(find.text('Automatic maintenance'), findsNothing);
+      expect(find.text('Compact database'), findsNothing);
+      expect(find.text('All OS data'), findsOneWidget);
+    });
+
+    _testWidgets('keeps storage internals in advanced maintenance', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settingsDataMaintenance),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Storage maintenance'), findsOneWidget);
+      expect(find.text('Automatic maintenance'), findsOneWidget);
+      expect(find.text('Compact database'), findsOneWidget);
+      expect(find.text('Clear local history'), findsNothing);
+      expect(find.text('All OS data'), findsNothing);
     });
   });
 
@@ -283,9 +309,9 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('app.back')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Advanced diagnostics'));
+      await tester.ensureVisible(find.text('Advanced'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Advanced diagnostics'));
+      await tester.tap(find.text('Advanced'));
       await tester.pumpAndSettle();
 
       expect(find.text('App Logs'), findsOneWidget);
@@ -310,7 +336,7 @@ void main() {
       expect(find.text('ExecutionOS'), findsOneWidget);
       expect(find.text('Turn on AI tools and Memory indexing'), findsOneWidget);
       expect(
-        find.text('Personal decisions and cognitive memory'),
+        find.text('A personal memory for notes and decisions'),
         findsOneWidget,
       );
       expect(

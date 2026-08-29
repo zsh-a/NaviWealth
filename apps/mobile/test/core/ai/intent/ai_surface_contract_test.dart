@@ -69,8 +69,8 @@ void main() {
       directAiChatPageConstructions.map(_filePathOnly).toSet(),
       <String>{'lib/app/routing/router_builder.dart'},
       reason:
-          'AiChatPage is allowed only as the read-only /settings/ai-history '
-          'route. Trigger surfaces should use the bottom-sheet invocation path.',
+          'AiChatPage is allowed only as the canonical /assistant workspace. '
+          'Trigger surfaces should use the bottom-sheet invocation path.',
     );
     expect(directAiChatPageConstructions, hasLength(1));
   });
@@ -101,16 +101,14 @@ void main() {
   });
 
   test('AI entry topology keeps global contextual ambient ingest layers', () {
-    final globalPalette = File(
-      'lib/core/command_palette/default_commands.dart',
-    ).readAsStringSync();
+    final globalPalette = File('lib/core/command_palette/default_commands.dart')
+        .readAsStringSync();
     expect(globalPalette, contains("id: 'action.askAi'"));
     expect(globalPalette, contains('onAskAi'));
     expect(globalPalette, contains('commandPaletteOpenAi'));
 
-    final contextualCapsule = File(
-      'lib/core/ai/visual/ai_object_capsule.dart',
-    ).readAsStringSync();
+    final contextualCapsule = File('lib/core/ai/visual/ai_object_capsule.dart')
+        .readAsStringSync();
     expect(contextualCapsule, contains('class AiObjectCapsule'));
     expect(contextualCapsule, contains('askAi('));
     expect(contextualCapsule, contains('intent: intent'));
@@ -136,9 +134,8 @@ void main() {
       contains("source: 'finance_agent_artifact_rail'"),
     );
 
-    final actionRail = File(
-      'lib/features/ai_chat/ui/ai_action_cards_rail.dart',
-    ).readAsStringSync();
+    final actionRail = File('lib/features/ai_chat/ui/ai_action_cards_rail.dart')
+        .readAsStringSync();
     expect(actionRail, contains('askAi('));
     expect(actionRail, contains('intent: intent'));
   });

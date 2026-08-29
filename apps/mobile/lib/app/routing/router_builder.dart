@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/ai/composition/assistant_route_paths.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/logging/providers.dart';
@@ -169,8 +170,8 @@ List<RouteBase> _aiSurfaceRoutes() {
           _aiSurfacePage(context, state, _backSafe(const AiSettingsHubPage())),
     ),
     GoRoute(
-      path: SettingsRoutes.aiHistory,
-      name: SettingsRouteNames.aiHistory,
+      path: AssistantRoutes.home,
+      name: AssistantRouteNames.home,
       pageBuilder: (context, state) => _aiSurfacePage(
         context,
         state,
@@ -337,21 +338,23 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         builder: (context, state) =>
             _backSafe(const NotificationSettingsPage()),
       ),
-      GoRoute(
-        path: 'logs',
-        name: SettingsRouteNames.logs,
-        builder: (context, state) => _backSafe(const LogViewerPage()),
-      ),
-      GoRoute(
-        path: 'performance',
-        name: SettingsRouteNames.performance,
-        builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
-      ),
-      GoRoute(
-        path: 'developer-issues',
-        name: SettingsRouteNames.developerIssues,
-        builder: (context, state) => _backSafe(const DeveloperIssuesPage()),
-      ),
+      if (kDebugMode) ...[
+        GoRoute(
+          path: 'logs',
+          name: SettingsRouteNames.logs,
+          builder: (context, state) => _backSafe(const LogViewerPage()),
+        ),
+        GoRoute(
+          path: 'performance',
+          name: SettingsRouteNames.performance,
+          builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
+        ),
+        GoRoute(
+          path: 'developer-issues',
+          name: SettingsRouteNames.developerIssues,
+          builder: (context, state) => _backSafe(const DeveloperIssuesPage()),
+        ),
+      ],
       GoRoute(
         path: 'sync',
         name: SettingsRouteNames.sync,
@@ -361,6 +364,12 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         path: 'advanced',
         name: SettingsRouteNames.advanced,
         builder: (context, state) => _backSafe(const AdvancedSettingsPage()),
+      ),
+      GoRoute(
+        path: 'advanced/data-maintenance',
+        name: SettingsRouteNames.dataMaintenance,
+        builder: (context, state) =>
+            _backSafe(const DataManagementPage.maintenance()),
       ),
       GoRoute(
         path: 'domains',

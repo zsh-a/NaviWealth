@@ -72,6 +72,11 @@ all connected sources through the shared coordinator, then reloads the active
 chart group; a partial source failure remains visible inline without adding a
 permanent status panel.
 
+Today source cards show connection, freshness, and failure state only. Manual
+connect, sync, retry, cancel, and disconnect controls live in Health Settings;
+this avoids a second action cluster beside pull-to-refresh while preserving the
+same operational state in both places.
+
 The last platform-sync attempt, last successful refresh, and its
 fetched/upserted/unchanged counts are persisted locally by
 `health_sync_status.dart`. Garmin persists its last attempt, last successful
@@ -149,7 +154,8 @@ Contributions:
 - Scope: `DomainScope.health`.
 - Shell: `features/health/composition/health_domain_shell.dart`.
 - Routes: `features/health/composition/health_routes.dart`.
-- Tabs: Today, Trends. The legacy `/health/plan` deep link redirects to Today;
+- Tabs: Today, Trends. Removed legacy `/health/plan` deep links now follow the
+  normal unknown-route fallback;
   recovery-plan content lives in the Today hero.
 - Tools: `features/health/health_ai_tools.dart`.
 - Agents: Recovery Alert, Weekly Summary.

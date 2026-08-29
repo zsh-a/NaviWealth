@@ -69,11 +69,11 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
     final streamBridge = ref.watch(agentRuntimeLlmStreamBridgeProvider);
     if (llmBridge == null || streamBridge == null) return null;
 
-    final toolHost = ref.watch(agentRuntimeToolHostProvider);
+    final toolHost = ref.watch(assistantRuntimeToolHostProvider);
     return FrbChatRunner.lazyTools(
       streamBridge: streamBridge,
       toolsReader: () => [
-        for (final tool in ref.read(agentRuntimeCatalogProvider).tools)
+        for (final tool in ref.read(assistantRuntimeToolsProvider))
           tool.toJson(),
       ],
       toolLineHandler: toolHost.handleLine,

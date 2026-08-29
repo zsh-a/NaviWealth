@@ -56,7 +56,7 @@ class FinanceAskAiResultPane extends StatefulWidget {
   final DateTime now;
 
   /// Tapping the "continue in chat" link pops the palette and routes to
-  /// `/settings/ai-history` with the query pre-filled. Optional so the
+  /// `/assistant` with the query pre-filled. Optional so the
   /// pane stays decoupled from go_router in tests.
   final void Function(String query)? onContinueInChat;
 

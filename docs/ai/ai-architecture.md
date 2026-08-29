@@ -119,8 +119,12 @@ typed confirmation 均持久化同一 response contract；旧 `DecisionSelection
 
 ### 3.1 工具聚合
 
-`apps/mobile/lib/app/domain_packs.dart` 是生产域清单。Active packs 的工具在 app
-composition root 聚合，再由 `AgentRuntimeToolHost` 形成实际 dispatch allow-list。
+`apps/mobile/lib/app/domain_packs.dart` 是生产域清单。Active packs 的完整工具目录在
+app composition root 聚合，供领域 Agent 和内部工作流使用。交互式 Assistant 另从
+`AiContext` 构建有界目录：始终包含 shell 工具，只包含当前 route 所属领域；全局
+`/assistant` 才包含所有已启用领域的用户可见工具。Finance FIRE 与收益策略工具只在
+对应 Plan 子页面加入。两种目录都由 `AgentRuntimeToolHost` 形成实际 dispatch
+allow-list。
 
 | 域 | 工具入口 |
 |---|---|
@@ -132,6 +136,8 @@ composition root 聚合，再由 `AgentRuntimeToolHost` 形成实际 dispatch al
 
 `ToolDescriptor` 的治理轴为 `name`、`access`、`risk`、
 `requires_confirmation`、`allowed_context_tier` 与 `side_effect`。
+Dispatcher 以 descriptor 的 `access` 和副作用字段授权，不从 `propose_*`、`record_*`
+或 `queue_*` 等名称前缀猜测权限。
 生产工具目录与 descriptor 的双向一致性由
 `device_degradation_test.dart` 直接守护。
 
@@ -187,8 +193,9 @@ token、model、stop reason、状态和可选 I/O。`ai_traces`、`ai_undo_stack
 
 ## 5. Interaction Grammar
 
-AI 以系统能力进入当前任务，不作为独立目的地。默认 surface 是 inline bottom
-sheet；viewport 小于 500px 时可升级为 fullscreen dialog。
+AI 以系统能力进入当前任务；上下文入口默认是 inline bottom sheet，viewport 小于
+500px 时可升级为 fullscreen dialog。`/assistant` 是保存和继续会话的全局工作区，
+不是第五个业务领域，也不替代对象内的上下文入口。
 
 ### 5.1 入口
 

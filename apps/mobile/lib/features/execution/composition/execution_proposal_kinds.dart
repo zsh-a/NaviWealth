@@ -23,14 +23,14 @@ const List<ProposalKindMeta> kExecutionProposalKinds = [
     kind: 'execution_project',
     icon: FLucideIcons.folder,
     label: _projectLabel,
-    toolName: 'propose_project',
+    toolName: 'propose_plan',
     previewRows: _projectRows,
   ),
   ProposalKindMeta(
     kind: 'execution_commitment',
     icon: FLucideIcons.target,
     label: _commitmentLabel,
-    toolName: 'propose_commitment',
+    toolName: 'propose_plan',
     previewRows: _commitmentRows,
   ),
   ProposalKindMeta(

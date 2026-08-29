@@ -17,7 +17,6 @@ List<CommandPaletteEntry> rebalanceCommandPaletteEntries(
       icon: FLucideIcons.scale,
       keywords: <String>[
         FinanceRoutes.planRebalance,
-        '/accounts/rebalance',
         'rebalance',
         'allocation',
         'portfolio drift',

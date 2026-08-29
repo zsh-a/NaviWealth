@@ -34,6 +34,29 @@ class DomainOptInRouteGuard implements RouteGuard {
   }
 }
 
+/// Keeps the cross-domain Life brief out of the way for Finance-only users.
+///
+/// Life becomes the default workspace once at least one optional domain is
+/// active. A fresh install has one domain and should land directly on the
+/// Finance Today workflow instead of showing a second summary of it.
+class LifeHomeRouteGuard implements RouteGuard {
+  LifeHomeRouteGuard(this._ref);
+
+  final Ref _ref;
+
+  @override
+  RedirectPath redirect(GoRouterState state) {
+    if (state.uri.path != AppRoutes.life) return null;
+    final optIns = _ref.read(domainOptInsProvider).value;
+    if (optIns == null || optIns.active.length > 1) return null;
+    return AppRoutes.home;
+  }
+}
+
 final domainOptInRouteGuardProvider = Provider<DomainOptInRouteGuard>(
   DomainOptInRouteGuard.new,
+);
+
+final lifeHomeRouteGuardProvider = Provider<LifeHomeRouteGuard>(
+  LifeHomeRouteGuard.new,
 );

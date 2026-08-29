@@ -18,6 +18,7 @@ import 'cashflow/ai_tools/get_cashflow_buckets_tool.dart';
 import 'cashflow/ai_tools/get_refund_links_tool.dart';
 import 'cashflow/ai_tools/get_transfer_links_tool.dart';
 import 'cashflow/ai_tools/propose_income_tool.dart';
+import 'composition/finance_route_paths.dart';
 import 'expense/ai_tools/get_anomaly_flags_tool.dart';
 import 'expense/ai_tools/get_recurring_patterns_tool.dart';
 import 'expense/ai_tools/get_subscription_changes_tool.dart';
@@ -77,21 +78,28 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
   _financeTool.propose(const ProposeExpenseTool()),
   _financeTool.read(const ReadCategoryWindowTool(), tier: BudgetTier.standard),
   // FIRE tools.
-  _financeTool.read(const GetFireStateTool(), tier: BudgetTier.standard),
-  _financeTool.read(const GetFirePlanTool()),
+  _financeTool.read(
+    const GetFireStateTool(),
+    tier: BudgetTier.standard,
+    visibleInAssistant: false,
+  ),
+  _financeTool.read(const GetFirePlanTool(), visibleInAssistant: false),
   _financeTool.read(
     const GetFireStressTestsTool(),
     risk: RiskLevel.suggest,
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
   _financeTool.read(
     const SimulateFirePlanTool(),
     risk: RiskLevel.suggest,
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
   _financeTool.propose(
     const ProposeFirePlanUpdateTool(),
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
   // Home / net worth
   _financeTool.read(const GetFinanceBriefTool(), tier: BudgetTier.standard),
@@ -124,31 +132,80 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
   _financeTool.read(
     const GetIncomeStrategyPortfolioTool(),
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
   _financeTool.read(
     const GetOptionsIncomeOpportunitiesTool(),
     risk: RiskLevel.suggest,
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
-  _financeTool.read(const GetOptionsStrategyProfileTool()),
+  _financeTool.read(
+    const GetOptionsStrategyProfileTool(),
+    visibleInAssistant: false,
+  ),
   _financeTool.propose(
     const ProposeOptionsProfileUpdateTool(),
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
   _financeTool.propose(
     const ProposeOptionsJournalEntryTool(),
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
   _financeTool.propose(
     const ProposeLeapsCallPositionTool(),
     tier: BudgetTier.standard,
+    visibleInAssistant: false,
   ),
-  _financeTool.read(const GetWheelLifecycleTool(), tier: BudgetTier.standard),
+  _financeTool.read(
+    const GetWheelLifecycleTool(),
+    tier: BudgetTier.standard,
+    visibleInAssistant: false,
+  ),
 ];
 
 final List<DeviceTool> kFinanceDeviceTools = registeredDeviceTools(
   kFinanceToolRegistrations,
 );
+
+final List<DeviceTool> _financeEverydayAssistantTools =
+    registeredAssistantDeviceTools(kFinanceToolRegistrations);
+
+const Set<String> _fireAssistantToolNames = <String>{
+  'get_fire_state',
+  'get_fire_plan',
+  'get_fire_stress_tests',
+  'simulate_fire_plan',
+  'propose_fire_plan_update',
+};
+
+const Set<String> _incomeAssistantToolNames = <String>{
+  'get_income_strategy_portfolio',
+  'get_options_income_opportunities',
+  'get_options_strategy_profile',
+  'propose_options_profile_update',
+  'propose_options_journal_entry',
+  'propose_leaps_call_position',
+  'get_wheel_lifecycle',
+};
+
+List<DeviceTool> financeAssistantToolsForPath(String currentPath) {
+  final includeFire = currentPath.startsWith(FinanceRoutes.planFire);
+  final includeIncome =
+      currentPath.startsWith(FinanceRoutes.planIncome) ||
+      currentPath.startsWith(FinanceRoutes.planWheel);
+  return List<DeviceTool>.unmodifiable(<DeviceTool>[
+    ..._financeEverydayAssistantTools,
+    for (final registration in kFinanceToolRegistrations)
+      if ((includeFire &&
+              _fireAssistantToolNames.contains(registration.tool.name)) ||
+          (includeIncome &&
+              _incomeAssistantToolNames.contains(registration.tool.name)))
+        registration.tool,
+  ]);
+}
 
 final Map<String, ToolDescriptor> kFinanceToolDescriptors =
     registeredToolDescriptors(kFinanceToolRegistrations);

@@ -36,6 +36,12 @@ import 'share_intent.dart';
 /// on runtime services like the LLM client or notification service).
 typedef DomainAgentBuilder = List<Agent> Function(Ref ref);
 
+/// Selects the bounded tool catalog exposed to the conversational Assistant
+/// for the current route. Internal agent tools remain in [DomainPack.deviceTools].
+typedef DomainAssistantToolsBuilder = List<DeviceTool> Function(
+  String currentPath,
+);
+
 /// Agent plus the domain that registered it. Runtime metadata exporters use
 /// this instead of guessing ownership from agent ids.
 class DomainAgentRegistration {
@@ -58,8 +64,9 @@ typedef DomainDeferredPreloader = Future<void> Function();
 /// Receives [AppLocalizations] so labels / keywords search in the user's
 /// language. The shell concatenates every active domain's entries the
 /// same way it merges device tools — see `defaultCommandPaletteEntries`.
-typedef DomainCommandPaletteBuilder =
-    List<CommandPaletteEntry> Function(AppLocalizations l10n);
+typedef DomainCommandPaletteBuilder = List<CommandPaletteEntry> Function(
+  AppLocalizations l10n,
+);
 
 /// Builds one domain's proposal applier route. Receives [Ref] so the
 /// domain can resolve its concrete applier provider lazily.
@@ -82,31 +89,40 @@ typedef DomainBootstrapBuilder = void Function(Ref ref);
 typedef DomainProviderOverridesBuilder = List<Override> Function();
 
 /// Builds the current bounded Life-hub signal slice for a domain.
-typedef DomainLifeSignalBuilder =
-    DomainLifeSignalSlice Function(Ref ref, DateTime now);
+typedef DomainLifeSignalBuilder = DomainLifeSignalSlice Function(
+  Ref ref,
+  DateTime now,
+);
 
 /// Resolves a source-preserving Execution reference owned by a domain.
-typedef DomainSourceRouteResolver =
-    String? Function(String rowFamily, String rowId);
+typedef DomainSourceRouteResolver = String? Function(
+  String rowFamily,
+  String rowId,
+);
 
 /// Builds diagnostic local row counts for one domain.
-typedef DomainLocalTableCountsBuilder =
-    Future<Map<String, int>> Function(Ref ref);
+typedef DomainLocalTableCountsBuilder = Future<Map<String, int>> Function(
+  Ref ref,
+);
 
 /// Localized subtitle for the Settings → Domains toggle.
-typedef DomainSettingsSubtitleBuilder =
-    String Function(AppLocalizations l10n, bool enabled);
+typedef DomainSettingsSubtitleBuilder = String Function(
+  AppLocalizations l10n,
+  bool enabled,
+);
 
 /// Wraps settings pages in router-level chrome such as `SystemBackScope`.
 typedef DomainSettingsRouteWrapper = Widget Function(Widget child);
 
 /// Builds top-level Settings child routes owned by a domain.
-typedef DomainSettingsRoutesBuilder =
-    List<RouteBase> Function(DomainSettingsRouteWrapper wrap);
+typedef DomainSettingsRoutesBuilder = List<RouteBase> Function(
+  DomainSettingsRouteWrapper wrap,
+);
 
 /// Builds one domain's Settings → Domains detail route.
-typedef DomainSettingsRouteBuilder =
-    RouteBase Function(DomainSettingsRouteWrapper wrap);
+typedef DomainSettingsRouteBuilder = RouteBase Function(
+  DomainSettingsRouteWrapper wrap,
+);
 
 /// Optional Settings → Domains contribution for an opt-in domain.
 class DomainSettingsSpec {
@@ -151,6 +167,7 @@ class DomainPack {
   const DomainPack({
     required this.scope,
     this.deviceTools = const <DeviceTool>[],
+    this.assistantToolsBuilder,
     this.toolDescriptors = const <String, ToolDescriptor>{},
     this.intentDescriptors = const <IntentDescriptor>[],
     this.proposalKinds = const <ProposalKindMeta>[],
@@ -184,6 +201,11 @@ class DomainPack {
 
   /// Device AI tools advertised when this domain is active.
   final List<DeviceTool> deviceTools;
+
+  /// User-facing Assistant tools for this domain. When omitted, the domain's
+  /// complete [deviceTools] list is used for compatibility with third-party or
+  /// test packs. Production packs should provide an explicit bounded catalog.
+  final DomainAssistantToolsBuilder? assistantToolsBuilder;
 
   /// Metadata for [deviceTools], advertised when this domain is active.
   final Map<String, ToolDescriptor> toolDescriptors;

@@ -105,13 +105,11 @@ void main() {
     expect(find.byType(AppSheet), findsOneWidget);
     expect(find.text('Knowledge type'), findsOneWidget);
     expect(find.text('Core'), findsOneWidget);
-    expect(find.text('Sources'), findsOneWidget);
-    expect(find.text('Thinking'), findsOneWidget);
-    expect(find.text('Action'), findsOneWidget);
-    expect(find.text('Concepts'), findsOneWidget);
-    expect(find.text('Experiments'), findsOneWidget);
-    expect(find.text('Routines'), findsOneWidget);
-    expect(find.text('Keep raw observations and sources'), findsOneWidget);
+    expect(find.text('Notes'), findsOneWidget);
+    expect(find.text('Decisions'), findsOneWidget);
+    expect(find.text('Sources'), findsNothing);
+    expect(find.text('Thinking'), findsNothing);
+    expect(find.text('Action'), findsNothing);
 
     await tester.tap(find.text('Notes'));
     await tester.pumpAndSettle();
@@ -145,7 +143,7 @@ void main() {
     expect(find.text('All · 0 items'), findsOneWidget);
   });
 
-  testWidgets('advanced types remain browsable without a primary create path', (
+  testWidgets('legacy object types stay out of the primary picker', (
     tester,
   ) async {
     await _pumpLibrary(tester, width: 390);
@@ -154,13 +152,11 @@ void main() {
       find.byKey(const ValueKey<String>('knowledge-library.type-picker')),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Concepts'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Concepts · 0 items'), findsOneWidget);
+    expect(find.text('Concepts'), findsNothing);
+    expect(find.text('Experiments'), findsNothing);
+    expect(find.text('Routines'), findsNothing);
+    expect(find.text('Assumptions'), findsNothing);
     expect(find.text('New Concept'), findsNothing);
-    expect(find.byIcon(FLucideIcons.plus), findsNothing);
-    expect(find.byIcon(FLucideIcons.clipboardCheck), findsOneWidget);
   });
 
   testWidgets('keeps the taxonomy behind one picker on wide layouts', (
@@ -314,9 +310,8 @@ Future<void> _pumpLibrary(
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: page,

@@ -19,7 +19,9 @@ import 'garmin_account_bind_sheet.dart';
 
 /// Garmin sync status card.
 class GarminSyncStatusCard extends ConsumerWidget {
-  const GarminSyncStatusCard({super.key});
+  const GarminSyncStatusCard({super.key, this.showActions = true});
+
+  final bool showActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,9 +35,12 @@ class GarminSyncStatusCard extends ConsumerWidget {
       level: SoftCardLevel.raised,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: switch (state) {
-        GarminInitial() => _Disconnected(latestDataAt: latestDataAt),
+        GarminInitial() => _Disconnected(
+          latestDataAt: latestDataAt,
+          showActions: showActions,
+        ),
         GarminRestoring() => const _Restoring(),
-        GarminPendingMfa() => const _MfaPending(),
+        GarminPendingMfa() => _MfaPending(showActions: showActions),
         GarminConnected(
           :final lastSyncAt,
           :final totalMetrics,
@@ -49,12 +54,14 @@ class GarminSyncStatusCard extends ConsumerWidget {
             latestDataAt: latestDataAt,
             lastAttemptAt: lastAttemptAt,
             lastErrorCode: lastErrorCode,
+            showActions: showActions,
           ),
-        GarminSyncing() => const _Syncing(),
+        GarminSyncing() => _Syncing(showActions: showActions),
         GarminError(:final issue) => _Error(
           ref: ref,
           issue: issue,
           latestDataAt: latestDataAt,
+          showActions: showActions,
         ),
       },
     );
@@ -88,8 +95,9 @@ Widget _buildHeader(
 // ---------------------------------------------------------------------------
 
 class _Disconnected extends StatelessWidget {
-  const _Disconnected({required this.latestDataAt});
+  const _Disconnected({required this.latestDataAt, required this.showActions});
   final DateTime? latestDataAt;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -114,15 +122,17 @@ class _Disconnected extends StatelessWidget {
             style: context.captionStyle,
           ),
         ],
-        const SizedBox(height: AppSpacing.s8),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => showGarminAccountBindSheet(context: context),
-            child: Text(l10n.healthGarminConnect),
+        if (showActions) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => showGarminAccountBindSheet(context: context),
+              child: Text(l10n.healthGarminConnect),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -160,7 +170,9 @@ class _Restoring extends StatelessWidget {
 }
 
 class _MfaPending extends StatelessWidget {
-  const _MfaPending();
+  const _MfaPending({required this.showActions});
+
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -178,15 +190,17 @@ class _MfaPending extends StatelessWidget {
             size: AppBadgeSize.compact,
           ),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => showGarminAccountBindSheet(context: context),
-            child: Text(l10n.healthGarminEnterCode),
+        if (showActions) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => showGarminAccountBindSheet(context: context),
+              child: Text(l10n.healthGarminEnterCode),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -200,6 +214,7 @@ class _Connected extends StatelessWidget {
     required this.latestDataAt,
     required this.lastAttemptAt,
     required this.lastErrorCode,
+    required this.showActions,
   });
   final WidgetRef ref;
   final DateTime? lastSyncAt;
@@ -207,6 +222,7 @@ class _Connected extends StatelessWidget {
   final DateTime? latestDataAt;
   final DateTime? lastAttemptAt;
   final String? lastErrorCode;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -285,24 +301,26 @@ class _Connected extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.s8),
-        Row(
-          children: [
-            Expanded(
-              child: FButton(
-                variant: FButtonVariant.outline,
-                onPress: () => _syncGarmin(context),
-                child: Text(l10n.healthGarminSync),
+        if (showActions) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => _syncGarmin(context),
+                  child: Text(l10n.healthGarminSync),
+                ),
               ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            AppQuietButton(
-              label: l10n.healthGarminDisconnect,
-              onPress: () => _showDisconnectDialog(context, ref),
-              tone: AppQuietButtonTone.danger,
-            ),
-          ],
-        ),
+              const SizedBox(width: AppSpacing.s8),
+              AppQuietButton(
+                label: l10n.healthGarminDisconnect,
+                onPress: () => _showDisconnectDialog(context, ref),
+                tone: AppQuietButtonTone.danger,
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -337,7 +355,9 @@ class _Connected extends StatelessWidget {
 }
 
 class _Syncing extends ConsumerWidget {
-  const _Syncing();
+  const _Syncing({required this.showActions});
+
+  final bool showActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -362,16 +382,18 @@ class _Syncing extends ConsumerWidget {
             size: AppBadgeSize.compact,
           ),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: AppQuietButton(
-            label: l10n.healthGarminCancelSync,
-            onPress: () => ref
-                .read(health_data.garminSyncControllerProvider.notifier)
-                .cancelSync(),
+        if (showActions) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: AppQuietButton(
+              label: l10n.healthGarminCancelSync,
+              onPress: () => ref
+                  .read(health_data.garminSyncControllerProvider.notifier)
+                  .cancelSync(),
+            ),
           ),
-        ),
+        ],
         if (hasProgress) ...[
           const SizedBox(height: AppSpacing.s6),
           ClipRRect(
@@ -418,10 +440,12 @@ class _Error extends StatelessWidget {
     required this.ref,
     required this.issue,
     required this.latestDataAt,
+    required this.showActions,
   });
   final WidgetRef ref;
   final GarminSyncIssue issue;
   final DateTime? latestDataAt;
+  final bool showActions;
 
   @override
   Widget build(BuildContext context) {
@@ -453,22 +477,24 @@ class _Error extends StatelessWidget {
             style: context.microCaptionStyle,
           ),
         ],
-        const SizedBox(height: AppSpacing.s8),
-        Align(
-          alignment: AlignmentDirectional.centerEnd,
-          child: AppQuietButton(
-            label: issue.requiresReconnect
-                ? l10n.healthGarminConnect
-                : l10n.healthGarminRetry,
-            onPress: () {
-              if (issue.requiresReconnect) {
-                showGarminAccountBindSheet(context: context);
-                return;
-              }
-              _retryGarmin(context);
-            },
+        if (showActions) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: AppQuietButton(
+              label: issue.requiresReconnect
+                  ? l10n.healthGarminConnect
+                  : l10n.healthGarminRetry,
+              onPress: () {
+                if (issue.requiresReconnect) {
+                  showGarminAccountBindSheet(context: context);
+                  return;
+                }
+                _retryGarmin(context);
+              },
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

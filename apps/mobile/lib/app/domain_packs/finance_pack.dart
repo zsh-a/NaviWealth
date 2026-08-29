@@ -34,6 +34,7 @@ import 'package:naviwealth/features/finance/finance_ai_tools.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_memory_indexer.dart';
 import 'package:naviwealth/features/finance/ui/settings/finance_domain_settings_section.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../routing/route_paths.dart';
 import 'finance_life_contribution.dart';
 import 'proposal_applier_route.dart';
@@ -41,6 +42,7 @@ import 'proposal_applier_route.dart';
 final DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
   deviceTools: kFinanceDeviceTools,
+  assistantToolsBuilder: financeAssistantToolsForPath,
   toolDescriptors: kFinanceToolDescriptors,
   intentDescriptors: [
     ...kFinanceIntentDescriptors,
@@ -84,7 +86,9 @@ final DomainPack kFinancePack = DomainPack(
       icon: FLucideIcons.triangleAlert,
       label: _cashflowAnomalyReviewLabel,
       description: _cashflowAnomalyReviewDescription,
-      placement: AgentResultPlacement.domainHome,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
     AgentPresentationSpec(
       agentId: kFirePlanDriftMonitorAgentId,
@@ -92,7 +96,9 @@ final DomainPack kFinancePack = DomainPack(
       icon: FLucideIcons.flame,
       label: _firePlanDriftMonitorLabel,
       description: _firePlanDriftMonitorDescription,
-      placement: AgentResultPlacement.domainHome,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
     AgentPresentationSpec(
       agentId: kOptionsIncomeRiskReviewAgentId,
@@ -100,7 +106,9 @@ final DomainPack kFinancePack = DomainPack(
       icon: FLucideIcons.shieldAlert,
       label: _optionsIncomeRiskReviewLabel,
       description: _optionsIncomeRiskReviewDescription,
-      placement: AgentResultPlacement.domainHome,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
   ],
   memorySourcePrefixes: const ['fin:', kTradeJournalSource],

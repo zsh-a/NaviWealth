@@ -95,11 +95,16 @@ events above are specific to the interactive chat client.
 
 ## Tool Catalog
 
-The active tool catalog is mobile-local. Runtime dispatch is assembled from
-active `DomainPack`s via `lifeOsDomainCompositionOverrides`; the full production
-diagnostic catalog lives in `apps/mobile/lib/app/production_ai_catalog.dart`.
-Each domain co-locates tool registrations and `ToolDescriptor` metadata with
-its own tool barrel.
+The active tool catalog is mobile-local. Internal agents receive the full
+catalog from active `DomainPack`s. Interactive Assistant dispatch receives a
+route-scoped catalog: shell tools plus the current domain, or all active
+user-visible domain tools in the global `/assistant` workspace. Advanced
+Finance tools are added only on their owning Plan routes. Composition is wired
+by `lifeOsDomainCompositionOverrides`; the full production diagnostic catalog
+lives in `apps/mobile/lib/app/production_ai_catalog.dart`. Each domain
+co-locates tool registrations, Assistant visibility, and `ToolDescriptor`
+metadata with its own tool barrel. Dispatch authorization follows descriptor
+access/side-effect metadata, never a tool-name prefix.
 
 Run from the repository root:
 

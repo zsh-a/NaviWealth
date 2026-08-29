@@ -202,11 +202,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                 ? _openCreateSheet(context, ref)
                 : _createForSegment(context, ref, _segment),
           ),
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.clipboardCheck,
-          label: l10n.knowledgeTabReview,
-          onPress: () => context.push(KnowledgeRoutes.review),
-        ),
       ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.library,
@@ -318,7 +313,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 bool _canCreateForSegment(_LibrarySegment segment) => switch (segment) {
   _LibrarySegment.all ||
   _LibrarySegment.decisions ||
-  _LibrarySegment.assumptions ||
   _LibrarySegment.notes => true,
   _ => false,
 };
@@ -447,11 +441,6 @@ Future<void> _openCreateSheet(
       icon: FLucideIcons.gitBranch,
       label: l10n.knowledgeNewDecision,
       onSelected: () => showNewDecisionSheet(context, ref),
-    ),
-    KnowledgeCreateOption(
-      icon: FLucideIcons.lightbulb,
-      label: l10n.knowledgeNewAssumption,
-      onSelected: () => showNewAssumptionSheet(context, ref),
     ),
   ];
   await showKnowledgeCreateSheet(

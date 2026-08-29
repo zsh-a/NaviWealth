@@ -25,6 +25,7 @@ import 'package:naviwealth/features/execution/data/execution_memory_indexer.dart
 import 'package:naviwealth/features/execution/data_management/execution_data_management.dart';
 import 'package:naviwealth/features/execution/execution_ai_tools.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../agent_runtime/overrides/agent_runtime_execution_overrides.dart';
 import '../routing/route_paths.dart';
 import 'execution_life_contribution.dart';
@@ -33,6 +34,7 @@ import 'proposal_applier_route.dart';
 final DomainPack kExecutionPack = DomainPack(
   scope: DomainScope.execution,
   deviceTools: kExecutionDeviceTools,
+  assistantToolsBuilder: (_) => kExecutionAssistantDeviceTools,
   toolDescriptors: kExecutionToolDescriptors,
   intentDescriptors: kExecutionAgentIntentDescriptors,
   proposalKinds: kExecutionProposalKinds,
@@ -56,7 +58,9 @@ final DomainPack kExecutionPack = DomainPack(
       icon: FLucideIcons.listChecks,
       label: _executionReviewLabel,
       description: _executionReviewDescription,
-      placement: AgentResultPlacement.domainReview,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
     AgentPresentationSpec(
       agentId: kExecutionDueActionAgentId,
@@ -64,7 +68,9 @@ final DomainPack kExecutionPack = DomainPack(
       icon: FLucideIcons.alarmClock,
       label: _executionDueLabel,
       description: _executionDueDescription,
-      placement: AgentResultPlacement.domainReview,
+      userToggleable: false,
+      visibleInSettings: false,
+      placement: AgentResultPlacement.settingsOnly,
     ),
   ],
   memorySourcePrefixes: const ['exec:', 'execution:'],

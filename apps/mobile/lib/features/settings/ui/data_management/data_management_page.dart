@@ -16,7 +16,11 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../../data_management/data_reset_coordinator.dart';
 
 class DataManagementPage extends ConsumerStatefulWidget {
-  const DataManagementPage({super.key});
+  const DataManagementPage({super.key}) : maintenance = false;
+
+  const DataManagementPage.maintenance({super.key}) : maintenance = true;
+
+  final bool maintenance;
 
   @override
   ConsumerState<DataManagementPage> createState() => _DataManagementPageState();
@@ -314,50 +318,62 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
     final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
     final cloudEnabled =
         ref.watch(auth_providers.authStateProvider) is AuthLoggedIn;
-    final automaticMaintenance = ref.watch(automaticMaintenanceEnabledProvider);
-    final latestMaintenance = ref.watch(latestDataMaintenanceRunProvider);
+    final automaticMaintenance = widget.maintenance
+        ? ref.watch(automaticMaintenanceEnabledProvider)
+        : null;
+    final latestMaintenance = widget.maintenance
+        ? ref.watch(latestDataMaintenanceRunProvider)
+        : null;
 
     return AppPageScaffold(
-      title: l10n.settingsDataManagementTitle,
+      title: widget.maintenance
+          ? l10n.dataManagementAdvancedTitle
+          : l10n.settingsDataManagementTitle,
       childPad: false,
       child: SettingsPageFrame(
         children: <Widget>[
-          SettingsHintText(l10n.settingsDataManagementSubtitle),
+          SettingsHintText(
+            widget.maintenance
+                ? l10n.dataManagementAdvancedSubtitle
+                : l10n.settingsDataManagementSubtitle,
+          ),
           const SizedBox(height: AppSpacing.s12),
           AppGroupedSurface(
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Column(
               children: <Widget>[
-                InlineLinkRow(
-                  icon: FLucideIcons.shieldCheck,
-                  label: l10n.dataManagementBackupTitle,
-                  subtitle: l10n.dataManagementBackupSubtitle,
-                  onTap: () => context.pushNamed(SettingsRouteNames.backup),
-                ),
-                const AppGroupedDivider(),
-                InlineSwitchRow(
-                  icon: FLucideIcons.calendarClock,
-                  label: l10n.dataManagementAutomaticTitle,
-                  subtitle: l10n.dataManagementAutomaticSubtitle,
-                  value: automaticMaintenance.value ?? true,
-                  onChanged: automaticMaintenance.isLoading
-                      ? (_) {}
-                      : _setAutomaticMaintenance,
-                ),
-                const AppGroupedDivider(),
-                InlineLinkRow(
-                  icon: FLucideIcons.sparkles,
-                  label: l10n.dataManagementRunMaintenanceTitle,
-                  subtitle: latestMaintenance.value == null
-                      ? l10n.dataManagementRunMaintenanceNever
-                      : l10n.dataManagementRunMaintenanceLast(
-                          latestMaintenance.value!.rowsAffected,
-                        ),
-                  trailingValue: _maintenanceRunning
-                      ? l10n.dataManagementMaintenanceRunning
-                      : null,
-                  onTap: _runMaintenance,
-                ),
+                if (!widget.maintenance)
+                  InlineLinkRow(
+                    icon: FLucideIcons.shieldCheck,
+                    label: l10n.dataManagementBackupTitle,
+                    subtitle: l10n.dataManagementBackupSubtitle,
+                    onTap: () => context.pushNamed(SettingsRouteNames.backup),
+                  )
+                else ...[
+                  InlineSwitchRow(
+                    icon: FLucideIcons.calendarClock,
+                    label: l10n.dataManagementAutomaticTitle,
+                    subtitle: l10n.dataManagementAutomaticSubtitle,
+                    value: automaticMaintenance?.value ?? true,
+                    onChanged: (automaticMaintenance?.isLoading ?? true)
+                        ? (_) {}
+                        : _setAutomaticMaintenance,
+                  ),
+                  const AppGroupedDivider(),
+                  InlineLinkRow(
+                    icon: FLucideIcons.sparkles,
+                    label: l10n.dataManagementRunMaintenanceTitle,
+                    subtitle: latestMaintenance?.value == null
+                        ? l10n.dataManagementRunMaintenanceNever
+                        : l10n.dataManagementRunMaintenanceLast(
+                            latestMaintenance!.value!.rowsAffected,
+                          ),
+                    trailingValue: _maintenanceRunning
+                        ? l10n.dataManagementMaintenanceRunning
+                        : null,
+                    onTap: _runMaintenance,
+                  ),
+                ],
               ],
             ),
           ),
@@ -385,6 +401,8 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
             ),
             data: (snapshot) => _SharedDataCard(
               snapshot: snapshot,
+              showMaintenanceDetails: widget.maintenance,
+              showDataActions: !widget.maintenance,
               clearing: _sharedClearing,
               compacting: _compacting,
               onClear: () => _clearSharedHistory(snapshot),
@@ -413,6 +431,8 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
                 for (var index = 0; index < items.length; index++) ...[
                   _DomainDataCard(
                     snapshot: items[index],
+                    showMaintenanceDetails: widget.maintenance,
+                    showDataActions: !widget.maintenance,
                     enabled:
                         optIns?.contains(items[index].scope) ??
                         items[index].scope == DomainScope.finance,
@@ -432,14 +452,16 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.s12),
-          _GlobalResetCard(
-            cloudEnabled: cloudEnabled,
-            resetting: _resettingAll,
-            actionsEnabled: _resetting.isEmpty,
-            onResetDevice: () => _resetAll(everywhere: false),
-            onResetEverywhere: () => _resetAll(everywhere: true),
-          ),
+          if (!widget.maintenance) ...[
+            const SizedBox(height: AppSpacing.s12),
+            _GlobalResetCard(
+              cloudEnabled: cloudEnabled,
+              resetting: _resettingAll,
+              actionsEnabled: _resetting.isEmpty,
+              onResetDevice: () => _resetAll(everywhere: false),
+              onResetEverywhere: () => _resetAll(everywhere: true),
+            ),
+          ],
         ],
       ),
     );
@@ -449,6 +471,8 @@ class _DataManagementPageState extends ConsumerState<DataManagementPage> {
 class _SharedDataCard extends StatelessWidget {
   const _SharedDataCard({
     required this.snapshot,
+    required this.showMaintenanceDetails,
+    required this.showDataActions,
     required this.clearing,
     required this.compacting,
     required this.onClear,
@@ -456,6 +480,8 @@ class _SharedDataCard extends StatelessWidget {
   });
 
   final SharedDataSnapshot snapshot;
+  final bool showMaintenanceDetails;
+  final bool showDataActions;
   final bool clearing;
   final bool compacting;
   final Future<void> Function() onClear;
@@ -490,46 +516,48 @@ class _SharedDataCard extends StatelessWidget {
             l10n.dataManagementSharedSubtitle,
             style: context.bodyCaptionStyle,
           ),
-          const SizedBox(height: AppSpacing.s12),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.chatRows,
-                  label: l10n.dataManagementChatRows,
+          if (showMaintenanceDetails) ...[
+            const SizedBox(height: AppSpacing.s12),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: _DataMetric(
+                    value: snapshot.chatRows,
+                    label: l10n.dataManagementChatRows,
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.aiRows,
-                  label: l10n.dataManagementAiRows,
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: _DataMetric(
+                    value: snapshot.aiRows,
+                    label: l10n.dataManagementAiRows,
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.memoryRows,
-                  label: l10n.dataManagementMemoryRows,
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: _DataMetric(
+                    value: snapshot.memoryRows,
+                    label: l10n.dataManagementMemoryRows,
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.agentRows,
-                  label: l10n.dataManagementAgentRows,
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: _DataMetric(
+                    value: snapshot.agentRows,
+                    label: l10n.dataManagementAgentRows,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          Text(
-            l10n.dataManagementStorageUsage(
-              _formatBytes(snapshot.databaseBytes),
-              _formatBytes(snapshot.reclaimableBytes),
+              ],
             ),
-            style: context.captionStyle,
-          ),
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              l10n.dataManagementStorageUsage(
+                _formatBytes(snapshot.databaseBytes),
+                _formatBytes(snapshot.reclaimableBytes),
+              ),
+              style: context.captionStyle,
+            ),
+          ],
           const SizedBox(height: AppSpacing.s12),
           const AppGradientDivider(),
           const SizedBox(height: AppSpacing.s12),
@@ -537,26 +565,28 @@ class _SharedDataCard extends StatelessWidget {
             spacing: AppSpacing.s8,
             runSpacing: AppSpacing.s8,
             children: <Widget>[
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: compacting ? null : () => onCompact(),
-                child: Text(
-                  compacting
-                      ? l10n.dataManagementCompacting
-                      : l10n.dataManagementCompactAction,
+              if (showMaintenanceDetails)
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: compacting ? null : () => onCompact(),
+                  child: Text(
+                    compacting
+                        ? l10n.dataManagementCompacting
+                        : l10n.dataManagementCompactAction,
+                  ),
                 ),
-              ),
-              FButton(
-                variant: FButtonVariant.destructive,
-                onPress: clearing || snapshot.historyRows == 0
-                    ? null
-                    : () => onClear(),
-                child: Text(
-                  clearing
-                      ? l10n.dataManagementClearing
-                      : l10n.dataManagementClearSharedAction,
+              if (showDataActions)
+                FButton(
+                  variant: FButtonVariant.destructive,
+                  onPress: clearing || snapshot.historyRows == 0
+                      ? null
+                      : () => onClear(),
+                  child: Text(
+                    clearing
+                        ? l10n.dataManagementClearing
+                        : l10n.dataManagementClearSharedAction,
+                  ),
                 ),
-              ),
             ],
           ),
         ],
@@ -632,6 +662,8 @@ class _GlobalResetCard extends StatelessWidget {
 class _DomainDataCard extends StatelessWidget {
   const _DomainDataCard({
     required this.snapshot,
+    required this.showMaintenanceDetails,
+    required this.showDataActions,
     required this.enabled,
     required this.clearing,
     required this.resetting,
@@ -643,6 +675,8 @@ class _DomainDataCard extends StatelessWidget {
   });
 
   final DomainDataSnapshot snapshot;
+  final bool showMaintenanceDetails;
+  final bool showDataActions;
   final bool enabled;
   final bool clearing;
   final bool resetting;
@@ -697,106 +731,110 @@ class _DomainDataCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.sourceRows,
-                  label: l10n.dataManagementSourceRows,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.deletedRows,
-                  label: l10n.dataManagementDeletedRows,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: _DataMetric(
-                  value: snapshot.cacheRows,
-                  label: l10n.dataManagementCacheRows,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          Text(
-            l10n.dataManagementTableSummary(
-              snapshot.sourceTableCount,
-              snapshot.cacheTableCount,
-            ),
-            style: context.captionStyle,
-          ),
-          if (snapshot.cacheTableCount > 0) ...[
-            const SizedBox(height: AppSpacing.s12),
-            const AppGradientDivider(),
+          if (showMaintenanceDetails) ...[
             const SizedBox(height: AppSpacing.s12),
             Row(
               children: <Widget>[
                 Expanded(
-                  child: Text(
-                    l10n.dataManagementCacheHelp,
-                    style: context.bodyCaptionStyle,
+                  child: _DataMetric(
+                    value: snapshot.sourceRows,
+                    label: l10n.dataManagementSourceRows,
                   ),
                 ),
-                const SizedBox(width: AppSpacing.s12),
-                FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: snapshot.cacheRows == 0 || clearing
-                      ? null
-                      : () => onClearCache(),
-                  child: Text(
-                    clearing
-                        ? l10n.dataManagementClearing
-                        : l10n.dataManagementClearCacheAction,
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: _DataMetric(
+                    value: snapshot.deletedRows,
+                    label: l10n.dataManagementDeletedRows,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: _DataMetric(
+                    value: snapshot.cacheRows,
+                    label: l10n.dataManagementCacheRows,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              l10n.dataManagementTableSummary(
+                snapshot.sourceTableCount,
+                snapshot.cacheTableCount,
+              ),
+              style: context.captionStyle,
+            ),
+            if (snapshot.cacheTableCount > 0) ...[
+              const SizedBox(height: AppSpacing.s12),
+              const AppGradientDivider(),
+              const SizedBox(height: AppSpacing.s12),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      l10n.dataManagementCacheHelp,
+                      style: context.bodyCaptionStyle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: snapshot.cacheRows == 0 || clearing
+                        ? null
+                        : () => onClearCache(),
+                    child: Text(
+                      clearing
+                          ? l10n.dataManagementClearing
+                          : l10n.dataManagementClearCacheAction,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-          const SizedBox(height: AppSpacing.s12),
-          const AppGradientDivider(),
-          const SizedBox(height: AppSpacing.s12),
-          Wrap(
-            spacing: AppSpacing.s8,
-            runSpacing: AppSpacing.s8,
-            children: <Widget>[
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: resetting || !actionsEnabled
-                    ? null
-                    : () => context.pushNamed(
-                        SettingsRouteNames.backup,
-                        queryParameters: <String, String>{
-                          'domain': snapshot.scope.wire,
-                        },
-                      ),
-                child: Text(l10n.dataManagementExportDomainAction),
-              ),
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: resetting || !actionsEnabled
-                    ? null
-                    : () => onResetDevice(),
-                child: Text(l10n.dataManagementResetDeviceAction),
-              ),
-              if (cloudEnabled)
+          if (showDataActions) ...[
+            const SizedBox(height: AppSpacing.s12),
+            const AppGradientDivider(),
+            const SizedBox(height: AppSpacing.s12),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: <Widget>[
                 FButton(
-                  variant: FButtonVariant.destructive,
+                  variant: FButtonVariant.outline,
                   onPress: resetting || !actionsEnabled
                       ? null
-                      : () => onResetEverywhere(),
-                  child: Text(
-                    resetting
-                        ? l10n.dataManagementResetting
-                        : l10n.dataManagementResetEverywhereAction,
-                  ),
+                      : () => context.pushNamed(
+                          SettingsRouteNames.backup,
+                          queryParameters: <String, String>{
+                            'domain': snapshot.scope.wire,
+                          },
+                        ),
+                  child: Text(l10n.dataManagementExportDomainAction),
                 ),
-            ],
-          ),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: resetting || !actionsEnabled
+                      ? null
+                      : () => onResetDevice(),
+                  child: Text(l10n.dataManagementResetDeviceAction),
+                ),
+                if (cloudEnabled)
+                  FButton(
+                    variant: FButtonVariant.destructive,
+                    onPress: resetting || !actionsEnabled
+                        ? null
+                        : () => onResetEverywhere(),
+                    child: Text(
+                      resetting
+                          ? l10n.dataManagementResetting
+                          : l10n.dataManagementResetEverywhereAction,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );

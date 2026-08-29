@@ -42,6 +42,9 @@ final List<DeviceTool> kHealthDeviceTools = registeredDeviceTools(
   kHealthToolRegistrations,
 );
 
+final List<DeviceTool> kHealthAssistantDeviceTools =
+    registeredAssistantDeviceTools(kHealthToolRegistrations);
+
 final Map<String, ToolDescriptor> kHealthToolDescriptors =
     registeredToolDescriptors(kHealthToolRegistrations);
 

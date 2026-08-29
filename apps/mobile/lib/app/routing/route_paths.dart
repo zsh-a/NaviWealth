@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ai/agents/agent_artifact_routes.dart';
+import '../../core/ai/composition/assistant_route_paths.dart';
 import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/shell/auth_route_paths.dart';
@@ -22,7 +23,7 @@ import '../../features/life/composition/life_route_paths.dart';
 /// Primary tabs:    Today / Activity / Wealth / Plan
 /// Global meta:     Settings (via Today top-right ⚙, not a tab)
 /// Global entry:    Search / command palette (bottom-nav center slot)
-/// AI:              never a tab — palette + inline capsules + /settings/ai-history
+/// Assistant:       one workspace — palette + inline sheets + /assistant
 ///
 /// ### Tab boundaries (the contract — apply BEFORE adding a new route)
 ///
@@ -52,6 +53,9 @@ abstract final class AppRoutes {
   // ── Life hub (cross-domain spatial layer) ───────────────────────────────
   static const life = LifeRoutes.home;
 
+  // ── Cross-domain Assistant ───────────────────────────────────────────────
+  static const assistant = AssistantRoutes.home;
+
   // ── Cross-domain Agent result detail ───────────────────────────────────
   static const agentArtifactDetail = AgentArtifactRoutes.detailPath;
   static String agentArtifact(String id) => AgentArtifactRoutes.detail(id);
@@ -63,8 +67,7 @@ abstract final class AppRoutes {
   static const plan = FinanceRoutes.plan;
 
   // ── HealthOS (Phase D-2.3) — gated by domain opt-in (Health OFF by
-  // default). Tabs: Today / Trend. `/health/plan` is a legacy deep-link that
-  // redirects to Today (see health_routes.dart).
+  // default). Tabs: Today / Trend.
   static const healthToday = HealthRoutes.today;
   static const healthTrend = HealthRoutes.trend;
 
@@ -136,8 +139,8 @@ abstract final class AppRoutes {
   static const settingsSync = SettingsRoutes.sync;
   static const settingsAi = SettingsRoutes.ai;
   static const settingsAdvanced = SettingsRoutes.advanced;
+  static const settingsDataMaintenance = SettingsRoutes.dataMaintenance;
   static const settingsAiTransparency = SettingsRoutes.aiTransparency;
-  static const settingsAiHistory = SettingsRoutes.aiHistory;
   static const settingsAiPrivacy = SettingsRoutes.aiPrivacy;
   static const settingsAiLlm = SettingsRoutes.aiLlm;
   static const settingsRiskThresholds = SettingsRoutes.riskThresholds;
@@ -185,6 +188,7 @@ abstract final class AppRouteNames {
   static const login = AuthRouteNames.login;
   static const onboarding = AuthRouteNames.onboarding;
   static const life = LifeRouteNames.home;
+  static const assistant = AssistantRouteNames.home;
   static const home = FinanceRouteNames.home;
   static const settings = SettingsRouteNames.root;
   static const devices = SettingsRouteNames.devices;
@@ -197,9 +201,9 @@ abstract final class AppRouteNames {
   static const sync = SettingsRouteNames.sync;
   static const ai = SettingsRouteNames.ai;
   static const advanced = SettingsRouteNames.advanced;
+  static const dataMaintenance = SettingsRouteNames.dataMaintenance;
   static const aiTransparency = SettingsRouteNames.aiTransparency;
   static const aiTransparencyDetail = SettingsRouteNames.aiTransparencyDetail;
-  static const aiHistory = SettingsRouteNames.aiHistory;
   static const aiPrivacy = SettingsRouteNames.aiPrivacy;
   static const aiLlm = SettingsRouteNames.aiLlm;
   static const aiModels = SettingsRouteNames.aiModels;

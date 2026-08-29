@@ -57,18 +57,5 @@ List<CommandPaletteEntry> executionCommandPaletteEntries(
       ],
       run: (BuildContext ctx) => ctx.go(ExecutionRoutes.commitments),
     ),
-    CommandPaletteEntry(
-      id: 'nav.execution.review',
-      label: l10n.executionCommandReview,
-      icon: FLucideIcons.clipboardCheck,
-      keywords: <String>[
-        ExecutionRoutes.review,
-        'execution',
-        'progress',
-        'review',
-        l10n.executionCommandReview,
-      ],
-      run: (BuildContext ctx) => ctx.go(ExecutionRoutes.review),
-    ),
   ];
 }

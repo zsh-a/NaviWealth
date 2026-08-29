@@ -7478,10 +7478,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get settingsAdvancedHubTitle => '高级诊断';
+  String get settingsAdvancedHubTitle => '高级设置';
 
   @override
-  String get settingsAdvancedHubSubtitle => '日志与性能工具';
+  String get settingsAdvancedHubSubtitle => '存储维护、Agent、透明度与诊断';
 
   @override
   String get settingsAboutDiagnosticsSection => '关于与诊断';
@@ -7497,6 +7497,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsDataManagementSubtitle => '集中查看、导出、清理和重置各个 OS 的数据';
+
+  @override
+  String get dataManagementAdvancedTitle => '存储维护';
+
+  @override
+  String get dataManagementAdvancedSubtitle => '缓存清理、保留策略与数据库压缩';
 
   @override
   String get dataManagementBackupTitle => '加密备份与恢复';
@@ -7678,7 +7684,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dataManagementResetAllDeviceConfirmBody =>
-      '本机的全部 OS 源数据、缓存、AI 历史、记忆和 Agent 结果都会被移除。云端数据可在下次同步时重新下载。';
+      '本机的全部 OS 源数据、缓存、Assistant 对话、记忆和 Agent 结果都会被移除。云端数据可在下次同步时重新下载。';
 
   @override
   String get dataManagementResetAllEverywhereConfirmTitle => '永久删除全部 OS？';
@@ -7971,7 +7977,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get agentSettingsTriggerCatchUp => '补跑';
 
   @override
-  String get settingsAdvancedSection => '诊断工具';
+  String get settingsAdvancedSection => '高级控制';
 
   @override
   String get settingsAiModelsTitle => 'AI 模型';
@@ -8506,16 +8512,16 @@ class AppLocalizationsZh extends AppLocalizations {
       '收件箱、资料库、复盘、AI 工具和本地记忆索引已启用';
 
   @override
-  String get settingsDomainsKnowledgeDisabledSubtitle => '个人决策与认知演化记忆库';
+  String get settingsDomainsKnowledgeDisabledSubtitle => '个人笔记与决策记忆库';
 
   @override
-  String get settingsDomainsKnowledgeInboxSubtitle => '捕获笔记、写决策、查看资料库与复盘';
+  String get settingsDomainsKnowledgeInboxSubtitle => '快速捕获笔记与待整理想法';
 
   @override
-  String get settingsDomainsKnowledgeLibrarySubtitle => '浏览决策、假设、例行事项、概念和笔记';
+  String get settingsDomainsKnowledgeLibrarySubtitle => '浏览笔记与已做出的决策';
 
   @override
-  String get settingsDomainsKnowledgeReviewSubtitle => '复盘到期决策、过期假设和到期例行事项';
+  String get settingsDomainsKnowledgeReviewSubtitle => '复盘到期决策与待确认建议';
 
   @override
   String get settingsDomainsKnowledgeMemoryTitle => 'KnowledgeOS 本地记忆';
@@ -15815,7 +15821,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventAskAi => '让助手解读';
 
   @override
-  String get lifeEventChooseScenario => '保存决策';
+  String get lifeEventChooseScenario => '保存方案';
 
   @override
   String get lifeEventOpenAction => '打开后续行动';
@@ -15824,18 +15830,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get lifeEventAdjustPlan => '调整预算';
 
   @override
-  String get lifeEventDecisionSaved => '已保存决策和假设';
+  String get lifeEventDecisionSaved => '已保存方案与关键假设';
 
   @override
   String lifeEventReviewActionTitle(String decision) {
-    return '复盘决策：$decision';
+    return '复盘方案：$decision';
   }
 
   @override
   String get lifeEventReviewActionBody => '将确定性预测与实际财务数据对比，不推断因果关系。';
 
   @override
-  String get lifeEventDecisionHistory => '待复盘决策';
+  String get lifeEventDecisionHistory => '待复盘方案';
 
   @override
   String get lifeEventPendingReview => '待复盘';

@@ -22,6 +22,7 @@ class AgentPresentationSpec {
     required this.label,
     required this.description,
     this.userToggleable = true,
+    this.visibleInSettings = true,
     this.placement = AgentResultPlacement.domainHome,
   });
 
@@ -31,6 +32,7 @@ class AgentPresentationSpec {
   final String Function(AppLocalizations l10n) label;
   final String Function(AppLocalizations l10n) description;
   final bool userToggleable;
+  final bool visibleInSettings;
   final AgentResultPlacement placement;
 }
 

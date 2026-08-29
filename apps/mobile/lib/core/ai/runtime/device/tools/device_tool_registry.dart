@@ -164,8 +164,13 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
     if (descriptor?.sideEffect == SideEffect.externalCall) {
       return _policyDenied(name, 'runtime_not_allowed', '该工具有外部副作用，端侧不自动执行。');
     }
+    // Proposal authority comes from the descriptor, never a naming
+    // convention. Some valid proposal-producing tools are verbs such as
+    // `record_*` or `queue_*`; they still return a confirmation envelope and
+    // must be dispatchable. Conversely, renaming an unsafe tool to
+    // `propose_*` must not grant it write authority.
     if (descriptor != null &&
-        !name.startsWith('propose_') &&
+        descriptor.access != Access.propose &&
         (descriptor.sideEffect == SideEffect.deviceLocalWrite ||
             descriptor.requiresConfirmation != Confirmation.none)) {
       return _policyDenied(

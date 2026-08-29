@@ -14,10 +14,8 @@ abstract final class SettingsRoutes {
   static const sync = '/settings/sync';
   static const ai = '/settings/ai';
   static const advanced = '/settings/advanced';
+  static const dataMaintenance = '/settings/advanced/data-maintenance';
   static const aiTransparency = '/settings/ai-transparency';
-  // AI conversations are no longer a primary tab. This route is the saved
-  // conversation library and may continue an existing or new conversation.
-  static const aiHistory = '/settings/ai-history';
   // §5.10.5 — user-facing privacy posture for provider-direct AI requests.
   static const aiPrivacy = '/settings/ai-privacy';
   // Bring-your-own LLM key for the on-device AI runtime.
@@ -53,9 +51,9 @@ abstract final class SettingsRouteNames {
   static const sync = 'sync';
   static const ai = 'ai';
   static const advanced = 'advanced';
+  static const dataMaintenance = 'data-maintenance';
   static const aiTransparency = 'ai-transparency';
   static const aiTransparencyDetail = 'ai-transparency-detail';
-  static const aiHistory = 'ai-history';
   static const aiPrivacy = 'ai-privacy';
   static const aiLlm = 'ai-llm';
   static const aiModels = 'ai-models';
