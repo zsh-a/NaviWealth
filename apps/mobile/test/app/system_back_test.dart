@@ -172,7 +172,6 @@ void main() {
       AppRoutes.plan: AppRoutes.home,
       AppRoutes.healthTrend: AppRoutes.healthToday,
       AppRoutes.knowledgeLibrary: AppRoutes.knowledgeInbox,
-      AppRoutes.knowledgeReview: AppRoutes.knowledgeInbox,
     };
 
     nonFirstRoots.forEach((root, firstTab) {

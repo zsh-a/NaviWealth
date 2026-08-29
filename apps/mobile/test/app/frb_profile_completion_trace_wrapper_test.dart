@@ -4,44 +4,6 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_profile_compl
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 
 void main() {
-  test('Knowledge FRB trace write failure does not mask success', () async {
-    final client = FrbKnowledgeLlmProfileClient(
-      llmBridge: _FakeLlmBridge(
-        response: const <String, Object?>{'content': 'ok'},
-      ),
-      recordTrace: _throwingTrace,
-    );
-
-    final response = await client.completeProfile(
-      messages: const <Map<String, Object?>>[
-        <String, Object?>{'role': 'user', 'content': 'classify'},
-      ],
-      metadata: const <String, Object?>{
-        'agent_id': 'knowledge_inbox_triage',
-        'surface': 'knowledge_inbox_triage',
-      },
-    );
-
-    expect(response['content'], 'ok');
-  });
-
-  test('Knowledge FRB trace write failure preserves provider error', () async {
-    final providerError = StateError('provider failed');
-    final client = FrbKnowledgeLlmProfileClient(
-      llmBridge: _FakeLlmBridge(error: providerError),
-      recordTrace: _throwingTrace,
-    );
-
-    await expectLater(
-      client.completeProfile(
-        messages: const <Map<String, Object?>>[
-          <String, Object?>{'role': 'user', 'content': 'classify'},
-        ],
-      ),
-      throwsA(same(providerError)),
-    );
-  });
-
   test('Ingest FRB completion trace keeps vision routing reason', () async {
     final records = <Map<String, Object?>>[];
     final client = FrbIngestLlmProfileClient(
@@ -89,25 +51,10 @@ void main() {
   });
 }
 
-Future<Object?> _throwingTrace({
-  required String agentId,
-  required Map<String, Object?>? llmResponse,
-  DateTime? startedAt,
-  DateTime? finishedAt,
-  String? requestId,
-  String domain = '',
-  String surface = '',
-  String routingReason = '',
-  Object? error,
-}) async {
-  throw StateError('trace failed');
-}
-
 class _FakeLlmBridge implements AgentRuntimeLlmBridge {
-  _FakeLlmBridge({this.response = const <String, Object?>{}, this.error});
+  _FakeLlmBridge({this.response = const <String, Object?>{}});
 
   final Map<String, Object?> response;
-  final Object? error;
 
   @override
   Map<String, Object?> buildRequest({
@@ -144,8 +91,6 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
     int? maxOutputTokens,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
-    final error = this.error;
-    if (error != null) throw error;
     return response;
   }
 

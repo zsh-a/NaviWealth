@@ -38,7 +38,7 @@ void main() {
     test('domainPrefixForTable routes Health and Knowledge explicitly', () {
       expect(domainPrefixForTable('health_metrics'), 'health:');
       expect(domainPrefixForTable('knowledge_notes'), 'know:');
-      expect(domainPrefixForTable('knowledge_routines'), 'know:');
+      expect(domainPrefixForTable('knowledge_decisions'), 'know:');
       expect(domainPrefixForTable('execution_plans'), 'exec:');
       expect(domainPrefixForTable('execution_actions'), 'exec:');
       expect(domainPrefixForTable('accounts'), 'fin:');

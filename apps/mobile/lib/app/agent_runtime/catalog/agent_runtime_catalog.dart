@@ -31,6 +31,7 @@ final agentRuntimeCatalogProvider = Provider<AgentRuntimeCatalog>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);
   return buildAgentRuntimeCatalog(
     packs: packs,
+    appAgents: ref.watch(appAgentRegistryProvider),
     agentRegistrations: ref.watch(agentRegistrationProvider),
     generatedAt: DateTime.now().toUtc(),
   );
@@ -48,6 +49,7 @@ final assistantRuntimeToolsProvider = Provider<List<AgentRuntimeToolSpec>>((
 
 AgentRuntimeCatalog buildAgentRuntimeCatalog({
   required List<DomainPack> packs,
+  List<Agent> appAgents = const <Agent>[],
   required List<DomainAgentRegistration> agentRegistrations,
   required DateTime generatedAt,
 }) {
@@ -60,6 +62,8 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
     activeDomains: activeDomains,
     agents: [
       kSettingsLlmRuntimeCheckAgent,
+      for (final agent in appAgents)
+        AgentRuntimeAgentSpec.fromAgent(agent, domain: 'life'),
       for (final registration in agentRegistrations)
         if (activeDomainSet.contains(registration.domain.wire))
           AgentRuntimeAgentSpec.fromAgent(

@@ -1,4 +1,18 @@
-part of 'knowledge_object_memory_indexers.dart';
+/// Knowledge note to Memory Runtime indexer.
+library;
+
+import 'dart:ui' show Locale, PlatformDispatcher;
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/ai/contracts/context_evidence.dart';
+import '../../../core/ai/contracts/memory_record.dart';
+import '../../../core/ai/local/memory/memory_runtime.dart';
+import '../../../design_system/preferences/theme_preferences.dart';
+import '../../../l10n/gen/app_localizations.dart';
+import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
+import 'knowledge_memory_indexer_support.dart';
 
 Future<void> _reindexNotes(
   MemoryRuntime runtime,
@@ -7,72 +21,63 @@ Future<void> _reindexNotes(
   required String untitled,
 }) async {
   final now = DateTime.now().toUtc();
-  await _forgetMissingSourceIds(
-    runtime,
+  await runtime.forgetSourceExcept(
     ownerUserId: ownerUserId,
     source: kKnowledgeNoteMemorySource,
-    liveSourceIds: {for (final n in notes) n.id},
+    keepSourceIds: {for (final note in notes) note.id},
   );
-  for (final n in notes) {
-    final id = '$kKnowledgeNoteMemorySource:episodic:${n.id}';
-    // Attachment references carry no semantic signal — index the compact
-    // marker form so `attachment://` ids never reach embeddings.
-    final bodyForIndex = knowledgeMarkdownWithoutAttachments(n.bodyMd);
-    final summary = n.bodyMd.isEmpty
-        ? n.title
-        : '${n.title.isEmpty ? "(untitled)" : n.title}: ${_truncate(bodyForIndex)}';
+  for (final note in notes) {
+    final body = note.bodyMd;
+    final title = note.title.isEmpty ? untitled : note.title;
+    final summary = body.isEmpty ? title : '$title: ${knowledgeExcerpt(body)}';
     await recordKnowledgeStateEvent(
       runtime,
       ownerUserId: ownerUserId,
       kind: 'knowledge_note_state',
       sourceFamily: kKnowledgeNoteEventSourceFamily,
-      rowId: n.id,
-      fingerprint: n.sync.hlc.toString(),
-      occurredAt: n.sync.updatedAt,
+      rowId: note.id,
+      fingerprint: note.sync.hlc.toString(),
+      occurredAt: note.sync.updatedAt,
       observedAt: now,
-      title: n.title.isEmpty ? untitled : n.title,
+      title: title,
       summary: summary,
       facts: <String, Object?>{
-        'tags': n.tags,
-        if (n.projectTag != null) 'project_tag': n.projectTag,
-        if (n.sourceUrl != null) 'source_url': n.sourceUrl,
-        'promoted': n.isPromoted,
+        'tags': note.tags,
+        if (note.sourceUrl != null) 'source_url': note.sourceUrl,
       },
       entities: <String>{
         'knowledge_note',
-        n.id,
-        ...n.tags.map((tag) => 'tag:$tag'),
+        note.id,
+        ...note.tags.map((tag) => 'tag:$tag'),
       },
       importance: 0.5,
-      confidence: 1,
     );
     await runtime.remember(
       MemoryRecord(
-        id: id,
+        id: '$kKnowledgeNoteMemorySource:episodic:${note.id}',
         kind: MemoryKind.episodic,
         role: MemoryRole.episode,
         authority: EvidenceAuthority.sourceFact,
         ownerUserId: ownerUserId,
         scope: '*',
         source: kKnowledgeNoteMemorySource,
-        sourceId: n.id,
-        title: n.title.isEmpty ? untitled : n.title,
+        sourceId: note.id,
+        title: title,
         summary: summary,
         payload: <String, Object?>{
-          'body_md': bodyForIndex,
-          'tags': n.tags,
-          if (n.projectTag != null) 'project_tag': n.projectTag,
-          if (n.sourceUrl != null) 'source_url': n.sourceUrl,
+          'body_md': body,
+          'tags': note.tags,
+          if (note.sourceUrl != null) 'source_url': note.sourceUrl,
         },
         entities: <String>{
           'knowledge_note',
-          n.id,
-          ...n.tags.map((t) => 'tag:$t'),
+          note.id,
+          ...note.tags.map((tag) => 'tag:$tag'),
         },
         importance: 0.5,
         confidence: 0.85,
-        validFrom: n.createdAt.toUtc(),
-        createdAt: n.createdAt.toUtc(),
+        validFrom: note.createdAt.toUtc(),
+        createdAt: note.createdAt.toUtc(),
         updatedAt: now,
       ),
     );
@@ -80,10 +85,11 @@ Future<void> _reindexNotes(
 }
 
 final knowledgeNoteMemoryIndexerProvider = Provider<void>((ref) {
-  final l10n = _knowledgeIndexerL10n(ref.watch(localeProvider));
+  final l10n = _l10n(ref.watch(localeProvider));
   subscribeKnowledgeIndexer<KnowledgeNote>(
     ref,
-    streamOf: (r, uid) => r.watchNotes(ownerUserId: uid, limit: 200),
+    streamOf: (repository, userId) =>
+        repository.watchNotes(ownerUserId: userId, limit: 200),
     reindex: (runtime, notes, {required ownerUserId}) => _reindexNotes(
       runtime,
       notes,
@@ -93,10 +99,9 @@ final knowledgeNoteMemoryIndexerProvider = Provider<void>((ref) {
   );
 });
 
-AppLocalizations _knowledgeIndexerL10n(Locale? preferred) {
+AppLocalizations _l10n(Locale? preferred) {
   final locale = preferred ?? PlatformDispatcher.instance.locale;
-  final supported = locale.languageCode == 'zh'
-      ? const Locale('zh')
-      : const Locale('en');
-  return lookupAppLocalizations(supported);
+  return lookupAppLocalizations(
+    locale.languageCode == 'zh' ? const Locale('zh') : const Locale('en'),
+  );
 }

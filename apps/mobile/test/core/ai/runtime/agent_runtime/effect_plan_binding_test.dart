@@ -6,15 +6,15 @@ void main() {
     test('records successful step runs and returns a trace id', () async {
       final recorded = <AgentRuntimeNativeStepRunResult>[];
       final binding = AgentRuntimeEffectPlanBinding(
-        agentId: 'knowledge_review',
-        domain: 'knowledge',
+        agentId: 'execution_review',
+        domain: 'execution',
         surface: 'agent_test',
         stepRunner: const _StaticStepRunner(
           AgentRuntimeNativeStepRunResult(
             terminalStep: <String, Object?>{
               'protocol_version': 'agent.v1',
               'run_id': 'run_42',
-              'agent_id': 'knowledge_review',
+              'agent_id': 'execution_review',
               'status': 'completed',
               'output': <String, Object?>{'ok': true},
             },
@@ -26,16 +26,16 @@ void main() {
 
       final stepRun = await binding.runEffectPlan(
         effectPlan: const <AgentRuntimeEffect>[
-          AgentRuntimeEffect.tool(name: 'knowledge.review_due'),
+          AgentRuntimeEffect.tool(name: 'execution.review_due'),
         ],
       );
 
       expect(recorded, hasLength(1));
       expect(recorded.single.traceId, isNull);
-      expect(stepRun.traceId, 'agent-runtime:knowledge_review:run_42');
+      expect(stepRun.traceId, 'agent-runtime:execution_review:run_42');
       expect(
         stepRun.toJson(),
-        containsPair('trace_id', 'agent-runtime:knowledge_review:run_42'),
+        containsPair('trace_id', 'agent-runtime:execution_review:run_42'),
       );
     });
 
@@ -44,8 +44,8 @@ void main() {
       () async {
         final recorded = <AgentRuntimeNativeStepRunResult>[];
         final binding = AgentRuntimeEffectPlanBinding(
-          agentId: 'knowledge_review',
-          domain: 'knowledge',
+          agentId: 'execution_review',
+          domain: 'execution',
           surface: 'agent_test',
           stepRunner: _ThrowingStepRunner(StateError('native unavailable')),
           catalogJson: const <String, Object?>{},
@@ -54,7 +54,7 @@ void main() {
 
         final value = await binding.readFromEffectPlan<String>(
           effectPlan: const <AgentRuntimeEffect>[
-            AgentRuntimeEffect.tool(name: 'knowledge.review_due'),
+            AgentRuntimeEffect.tool(name: 'execution.review_due'),
           ],
           fallback: () async => 'programmatic fallback',
           decode: (_) => 'native value',
@@ -64,7 +64,7 @@ void main() {
         expect(value, 'programmatic fallback');
         expect(recorded, hasLength(1));
         final fallbackRun = recorded.single;
-        expect(fallbackRun.terminalStep['agent_id'], 'knowledge_review');
+        expect(fallbackRun.terminalStep['agent_id'], 'execution_review');
         expect(fallbackRun.terminalStep['status'], 'failed');
         expect(
           fallbackRun.terminalStep['run_id'],

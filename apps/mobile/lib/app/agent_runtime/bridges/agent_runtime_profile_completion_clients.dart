@@ -5,7 +5,6 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.da
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
-import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
@@ -50,18 +49,17 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
   }
 }
 
-typedef FrbProfileCompletionTraceRecorder =
-    Future<Object?> Function({
-      required String agentId,
-      required Map<String, Object?>? llmResponse,
-      DateTime? startedAt,
-      DateTime? finishedAt,
-      String? requestId,
-      String domain,
-      String surface,
-      String routingReason,
-      Object? error,
-    });
+typedef FrbProfileCompletionTraceRecorder = Future<Object?> Function({
+  required String agentId,
+  required Map<String, Object?>? llmResponse,
+  DateTime? startedAt,
+  DateTime? finishedAt,
+  String? requestId,
+  String domain,
+  String surface,
+  String routingReason,
+  Object? error,
+});
 
 Future<void> _recordProfileCompletionBestEffort(
   FrbProfileCompletionTraceRecorder? recordTrace, {
@@ -155,37 +153,6 @@ class _TracedProfileCompleter {
       );
       rethrow;
     }
-  }
-}
-
-class FrbKnowledgeLlmProfileClient implements KnowledgeLlmProfileClient {
-  FrbKnowledgeLlmProfileClient({
-    required AgentRuntimeLlmBridge llmBridge,
-    FrbProfileCompletionTraceRecorder? recordTrace,
-  }) : _completer = _TracedProfileCompleter(
-         llmBridge: llmBridge,
-         recordTrace: recordTrace,
-         domain: 'knowledge',
-         defaultAgentId: 'knowledge_llm',
-       );
-
-  final _TracedProfileCompleter _completer;
-
-  @override
-  Future<Map<String, Object?>> completeProfile({
-    required List<Map<String, Object?>> messages,
-    List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
-    double? temperature,
-    int? maxOutputTokens,
-    Map<String, Object?> metadata = const <String, Object?>{},
-  }) async {
-    return _completer.completeProfile(
-      messages: messages,
-      tools: tools,
-      temperature: temperature,
-      maxOutputTokens: maxOutputTokens,
-      metadata: metadata,
-    );
   }
 }
 

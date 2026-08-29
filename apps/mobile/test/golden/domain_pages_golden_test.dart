@@ -67,7 +67,7 @@ void main() {
       variant: variant,
       child: const KnowledgeInboxPage(),
       overrides: [
-        knowledgeInboxNotesProvider.overrideWith(
+        knowledgeNotesProvider.overrideWith(
           (_) => Stream<List<KnowledgeNote>>.value(const <KnowledgeNote>[]),
         ),
       ],

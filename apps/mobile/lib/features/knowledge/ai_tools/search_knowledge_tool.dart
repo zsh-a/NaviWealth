@@ -14,7 +14,7 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
-import '../data/knowledge_object_memory_indexers.dart';
+import '../data/knowledge_memory_indexer_support.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '_tool_support.dart';
@@ -27,7 +27,7 @@ class SearchKnowledgeTool implements DeviceTool {
 
   @override
   String get description =>
-      '在整个 KnowledgeOS 知识库里跨类型语义检索（笔记 / 概念 / 决策 / 原则 / 假设 / 实验）。'
+      '在 KnowledgeOS 的笔记与决策中进行语义检索。'
       'query 必填。types 限定类型，省略 = 全部。'
       '返回 [{id, kind, title, excerpt, score}]，按混合分降序。'
       '用于「我之前在哪写过 X / 关于 Y 我都记了什么」这类浏览式检索；'
@@ -42,15 +42,7 @@ class SearchKnowledgeTool implements DeviceTool {
         'type': 'array',
         'items': <String, Object?>{
           'type': 'string',
-          'enum': <String>[
-            'note',
-            'concept',
-            'decision',
-            'principle',
-            'assumption',
-            'experiment',
-            'routine',
-          ],
+          'enum': <String>['note', 'decision'],
         },
       },
       'top_k': {'type': 'integer', 'minimum': 1, 'maximum': 20, 'default': 8},
@@ -112,11 +104,6 @@ class SearchKnowledgeTool implements DeviceTool {
   static String _tableForKind(String kind) => switch (kind) {
     'note' => 'knowledge_notes',
     'decision' => 'knowledge_decisions',
-    'principle' => 'knowledge_principles',
-    'assumption' => 'knowledge_assumptions',
-    'concept' => 'knowledge_concepts',
-    'experiment' => 'knowledge_experiments',
-    'routine' => 'knowledge_routines',
     _ => 'knowledge_notes',
   };
 

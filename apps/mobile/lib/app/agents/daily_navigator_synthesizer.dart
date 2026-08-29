@@ -72,8 +72,7 @@ int _signalRank(LifeEvent signal) => switch (signal.template) {
   LifeEventTemplate.executionBlocked => 1,
   LifeEventTemplate.financeBudgetPressure => 2,
   LifeEventTemplate.executionDue => 3,
-  LifeEventTemplate.knowledgeInbox => 4,
-  LifeEventTemplate.financeDaySummary => 5,
+  LifeEventTemplate.financeDaySummary => 4,
 };
 
 class DailyNavigatorOutput {

@@ -27,28 +27,26 @@ final _domainShowcaseSync = SyncMeta(
 
 final _knowledgeNotes = <KnowledgeNote>[
   KnowledgeNote(
-    id: 'knowledge:decision',
+    id: 'knowledge:focus-window',
     title: '将深度工作留给上午',
     bodyMd: '连续两周的复盘都显示，上午通常是最稳定的专注窗口。',
-    tags: const <String>['kind:principle_candidate', 'focus'],
-    projectTag: 'LifeOS',
+    tags: const <String>['focus', 'work'],
     createdAt: _domainShowcaseNow.subtract(const Duration(hours: 2)),
     sync: _domainShowcaseSync,
   ),
   KnowledgeNote(
-    id: 'knowledge:assumption',
+    id: 'knowledge:cash-buffer',
     title: '现金缓冲是否需要提高到 12 个月？',
     bodyMd: '结合 FIRE 状态与未来一年的家庭计划，在月度复盘中验证这一假设。',
-    tags: const <String>['kind:assumption_candidate', 'finance'],
-    projectTag: '年度规划',
+    tags: const <String>['finance', 'planning'],
     createdAt: _domainShowcaseNow.subtract(const Duration(days: 1)),
     sync: _domainShowcaseSync,
   ),
   KnowledgeNote(
-    id: 'knowledge:routine',
+    id: 'knowledge:weekly-review',
     title: '每周日连接健康、财富与行动复盘',
     bodyMd: '只保留需要决策的信号，并把结论转成下周行动。',
-    tags: const <String>['kind:routine_candidate', 'review'],
+    tags: const <String>['lifeos', 'review'],
     createdAt: _domainShowcaseNow.subtract(const Duration(days: 2)),
     sync: _domainShowcaseSync,
   ),
@@ -111,7 +109,7 @@ List<Override> readmeDomainShowcaseOverrides() => <Override>[
   health_agent_providers.latestWeeklySummaryRunProvider.overrideWith(
     (_) async => null as AgentRunRecord?,
   ),
-  knowledgeInboxNotesProvider.overrideWith(
+  knowledgeNotesProvider.overrideWith(
     (_) => Stream<List<KnowledgeNote>>.value(_knowledgeNotes),
   ),
   executionTodayActionsProvider.overrideWith(

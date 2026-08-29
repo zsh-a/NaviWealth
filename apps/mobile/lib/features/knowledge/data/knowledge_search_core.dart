@@ -83,42 +83,7 @@ Future<KnowledgeSearchDocument?> _documentForId(
           .then(
             (v) => v == null || v.sync.deletedAt != null
                 ? null
-                : KnowledgeSearchDocument.fromNote(
-                    v,
-                    untitled: service.displayCopy.untitled,
-                  ),
-          ),
-    'principle' =>
-      service._repository
-          .findPrinciple(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromPrinciple(v),
-          ),
-    'assumption' =>
-      service._repository
-          .findAssumption(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromAssumption(v),
-          ),
-    'concept' =>
-      service._repository
-          .findConcept(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromConcept(v),
-          ),
-    'experiment' =>
-      service._repository
-          .findExperiment(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromExperiment(v),
+                : KnowledgeSearchDocument.fromNote(v),
           ),
     'decision' =>
       service._repository
@@ -127,17 +92,6 @@ Future<KnowledgeSearchDocument?> _documentForId(
             (v) => v == null || v.sync.deletedAt != null
                 ? null
                 : KnowledgeSearchDocument.fromDecision(v),
-          ),
-    'routine' =>
-      service._repository
-          .findRoutine(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromRoutine(
-                    v,
-                    routineInterval: service.displayCopy.routineInterval,
-                  ),
           ),
     _ => Future<KnowledgeSearchDocument?>.value(),
   };
@@ -201,36 +155,11 @@ Future<List<KnowledgeSearchDocument>> _documentsForKind(
       limit: limit,
       offset: offset,
     )).map(KnowledgeSearchDocument.fromNote).toList(growable: false),
-    'principle' => (await service._repository.listPrinciples(
-      ownerUserId: ownerUserId,
-      limit: limit,
-      offset: offset,
-    )).map(KnowledgeSearchDocument.fromPrinciple).toList(growable: false),
-    'assumption' => (await service._repository.listAssumptions(
-      ownerUserId: ownerUserId,
-      limit: limit,
-      offset: offset,
-    )).map(KnowledgeSearchDocument.fromAssumption).toList(growable: false),
-    'concept' => (await service._repository.listConcepts(
-      ownerUserId: ownerUserId,
-      limit: limit,
-      offset: offset,
-    )).map(KnowledgeSearchDocument.fromConcept).toList(growable: false),
-    'experiment' => (await service._repository.listExperiments(
-      ownerUserId: ownerUserId,
-      limit: limit,
-      offset: offset,
-    )).map(KnowledgeSearchDocument.fromExperiment).toList(growable: false),
     'decision' => (await service._repository.listDecisions(
       ownerUserId: ownerUserId,
       limit: limit,
       offset: offset,
     )).map(KnowledgeSearchDocument.fromDecision).toList(growable: false),
-    'routine' => (await service._repository.listRoutines(
-      ownerUserId: ownerUserId,
-      limit: limit,
-      offset: offset,
-    )).map(KnowledgeSearchDocument.fromRoutine).toList(growable: false),
     _ => const <KnowledgeSearchDocument>[],
   };
 }

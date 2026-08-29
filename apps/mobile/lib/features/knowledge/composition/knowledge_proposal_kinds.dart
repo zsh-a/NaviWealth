@@ -16,11 +16,11 @@ import '../../../l10n/gen/app_localizations.dart';
 /// [proposalKindRegistryProvider] alongside the other active domains.
 const List<ProposalKindMeta> kKnowledgeProposalKinds = [
   ProposalKindMeta(
-    kind: 'capture_upgrade',
+    kind: 'knowledge_capture',
     icon: FLucideIcons.sparkles,
-    label: _captureUpgradeLabel,
+    label: _captureLabel,
     toolName: 'propose_capture',
-    previewRows: _captureUpgradeRows,
+    previewRows: _captureRows,
   ),
   ProposalKindMeta(
     kind: 'knowledge_merge',
@@ -29,20 +29,6 @@ const List<ProposalKindMeta> kKnowledgeProposalKinds = [
     toolName: 'propose_merge',
     previewRows: _mergeRows,
   ),
-  ProposalKindMeta(
-    kind: 'knowledge_routine',
-    icon: FLucideIcons.repeat,
-    label: _routineLabel,
-    toolName: 'propose_routine',
-    previewRows: _routineRows,
-  ),
-  ProposalKindMeta(
-    kind: 'knowledge_concept_link',
-    icon: FLucideIcons.link,
-    label: _conceptLinkLabel,
-    toolName: 'propose_concept_link',
-    previewRows: _conceptLinkRows,
-  ),
 ];
 
 /// Proposal kinds owned by KnowledgeOS. Derived from the same specs that
@@ -50,48 +36,21 @@ const List<ProposalKindMeta> kKnowledgeProposalKinds = [
 Set<String> get kKnowledgeProposalAppliedKinds =>
     kKnowledgeProposalKinds.map((m) => m.kind).toSet();
 
-String _captureUpgradeLabel(AppLocalizations l10n) =>
+String _captureLabel(AppLocalizations l10n) =>
     l10n.knowledgeProposalCaptureUpgrade;
 String _mergeLabel(AppLocalizations l10n) => l10n.knowledgeProposalMerge;
-String _routineLabel(AppLocalizations l10n) => l10n.knowledgeProposalRoutine;
-String _conceptLinkLabel(AppLocalizations l10n) =>
-    l10n.knowledgeProposalConceptLink;
 
-List<ProposalKindRow> _captureUpgradeRows(
+List<ProposalKindRow> _captureRows(
   AppLocalizations l10n,
   ReadyProposalPlan plan,
   Map<String, Object?>? overrides,
 ) {
-  final detected = plan.get('detected_kind');
-  final confidence = plan.num_('confidence');
-  final statement = plan.get('statement');
-  final scope = plan.get('scope');
+  final detected = plan.get('entity_type');
+  final title = plan.get('title');
   return <ProposalKindRow>[
     if (detected != null)
       ProposalKindRow(l10n.knowledgeProposalRowType, detected),
-    if (statement != null)
-      ProposalKindRow(l10n.knowledgeProposalRowContent, statement),
-    if (scope != null) ProposalKindRow(l10n.knowledgeProposalRowScope, scope),
-    if (confidence != null)
-      ProposalKindRow(
-        l10n.knowledgeProposalRowConfidence,
-        confidence.toStringAsFixed(2),
-      ),
-  ];
-}
-
-List<ProposalKindRow> _conceptLinkRows(
-  AppLocalizations l10n,
-  ReadyProposalPlan plan,
-  Map<String, Object?>? overrides,
-) {
-  final from = plan.get('from_concept_name') ?? plan.get('from_concept_id');
-  final to = plan.get('to_concept_name') ?? plan.get('to_concept_id');
-  return <ProposalKindRow>[
-    if (from != null && to != null)
-      ProposalKindRow(l10n.knowledgeProposalRowLink, '$from ↔ $to'),
-    if (plan.get('relation') != null)
-      ProposalKindRow(l10n.knowledgeProposalRowRelation, plan.get('relation')!),
+    if (title != null) ProposalKindRow(l10n.knowledgeProposalRowContent, title),
   ];
 }
 
@@ -120,26 +79,5 @@ List<ProposalKindRow> _mergeRows(
         l10n.knowledgeProposalRowMergedTags,
         tags.whereType<String>().join('、'),
       ),
-  ];
-}
-
-List<ProposalKindRow> _routineRows(
-  AppLocalizations l10n,
-  ReadyProposalPlan plan,
-  Map<String, Object?>? overrides,
-) {
-  final interval = plan.num_('interval_days')?.toInt();
-  return <ProposalKindRow>[
-    ProposalKindRow(
-      l10n.knowledgeProposalRowItem,
-      plan.get('statement') ?? '—',
-    ),
-    if (interval != null)
-      ProposalKindRow(
-        l10n.knowledgeProposalRowInterval,
-        l10n.knowledgeProposalIntervalDays(interval),
-      ),
-    if (plan.get('scope') != null)
-      ProposalKindRow(l10n.knowledgeProposalRowScope, plan.get('scope')!),
   ];
 }

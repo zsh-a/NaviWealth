@@ -1,324 +1,215 @@
-/// KnowledgeOS implementation of [ProposalApplier]
-/// (`docs/domains/knowledgeos-domain.md` §15.6).
-///
-/// Dispatches confirmed KnowledgeOS `propose_*` plans from the chat
-/// propose-card to the matching Knowledge application writer. The
-/// cross-domain composite routes KnowledgeOS kinds here through the
-/// `kKnowledgePack` proposal applier route.
-library;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/core/sync/mutation_context.dart';
-import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
-import '../application/knowledge_concept_proposal_applier.dart';
+import '../../../core/sync/mutation_context.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../application/knowledge_merge_proposal_applier.dart';
-import '../application/knowledge_promotion_service.dart';
-import '../application/knowledge_proposal_undo.dart';
-import '../application/knowledge_routine_proposal_applier.dart';
-import '../data/capture_kind.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '../domain/knowledge_text.dart';
 
 export 'knowledge_proposal_kinds.dart' show kKnowledgeProposalAppliedKinds;
 
-/// Drift table-name prefix for KnowledgeOS rows — used by the composite to
-/// route [ProposalApplier.undo] (which carries the table, not the kind).
 const String kKnowledgeTablePrefix = 'knowledge_';
 
 class KnowledgeProposalApplier implements ProposalApplier {
   KnowledgeProposalApplier({
-    required this.repo,
+    required this.repository,
     required this.ownerUserId,
     required this.stamp,
-    KnowledgeRoutineProposalApplier? routineApplier,
-    KnowledgeConceptProposalApplier? conceptApplier,
-    KnowledgeMergeProposalApplier? mergeApplier,
-    KnowledgeProposalUndoRunner? undoRunner,
-    DateTime Function()? now,
-  }) : _now = now ?? (() => DateTime.now().toUtc()),
-       routineApplier =
-           routineApplier ??
-           KnowledgeRoutineProposalApplier(
-             repo: repo,
-             stamp: stamp,
-             createId: kKnowledgeUuid.v4,
-             now: now,
-           ),
-       conceptApplier =
-           conceptApplier ??
-           KnowledgeConceptProposalApplier(
-             repo: repo,
-             ownerUserId: ownerUserId,
-             stamp: stamp,
-             now: now,
-           ),
-       mergeApplier =
-           mergeApplier ??
-           KnowledgeMergeProposalApplier(
-             repo: repo,
-             ownerUserId: ownerUserId,
-             stamp: stamp,
-             now: now,
-           ),
-       undoRunner =
-           undoRunner ?? KnowledgeProposalUndoRunner(repo: repo, stamp: stamp),
-       promotionService = KnowledgePromotionService(
-         repository: repo,
-         ownerUserId: ownerUserId,
-         stamp: stamp,
-       );
+  });
 
-  final KnowledgeRepository repo;
+  final KnowledgeRepository repository;
   final String ownerUserId;
-
-  /// Mints one fresh [SyncMeta] per touched row (own HLC). Production
-  /// wiring delegates to [MutationStamper.stamp]; tests inject a fake.
   final Future<SyncMeta> Function() stamp;
-  final KnowledgeRoutineProposalApplier routineApplier;
-  final KnowledgeConceptProposalApplier conceptApplier;
-  final KnowledgeMergeProposalApplier mergeApplier;
-  final KnowledgeProposalUndoRunner undoRunner;
-  final KnowledgePromotionService promotionService;
-  final DateTime Function() _now;
 
   @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
     try {
       return switch (plan.kind) {
-        'capture_upgrade' => await _applyCaptureUpgrade(plan),
-        'knowledge_merge' => await mergeApplier.applyMerge(plan),
-        'knowledge_routine' => await routineApplier.applyRoutine(plan),
-        'knowledge_concept_link' => await conceptApplier.applyConceptLink(plan),
+        'knowledge_capture' => await _applyCapture(plan),
+        'knowledge_merge' => await KnowledgeMergeProposalApplier(
+          repository: repository,
+          ownerUserId: ownerUserId,
+          stamp: stamp,
+        ).apply(plan),
         _ => throw ProposalApplyException(
           'unknown knowledge proposal kind: ${plan.kind}',
         ),
       };
     } on ProposalApplyException {
       rethrow;
-    } catch (e) {
-      throw ProposalApplyException(e.toString());
+    } catch (error) {
+      throw ProposalApplyException(error.toString());
     }
+  }
+
+  Future<ProposalApplyState> _applyCapture(ReadyProposalPlan plan) async {
+    final type = plan.get('entity_type');
+    final title = plan.get('title')?.trim() ?? '';
+    final body = plan.get('body')?.trim() ?? '';
+    if (title.isEmpty) throw ProposalApplyException('capture 缺少 title');
+    final sync = await stamp();
+    final id = kKnowledgeUuid.v4();
+    if (type == 'note') {
+      final tags = plan.payload['tags'] is List
+          ? (plan.payload['tags'] as List<Object?>).whereType<String>().toList(
+              growable: false,
+            )
+          : const <String>[];
+      await repository.upsertNote(
+        KnowledgeNote(
+          id: id,
+          title: title,
+          bodyMd: body,
+          sourceUrl: plan.get('source_url'),
+          tags: tags,
+          createdAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+      return _createdState(id, 'knowledge_notes', '已保存笔记：$title');
+    }
+    if (type == 'decision') {
+      final selected = plan.get('selected_label')?.trim() ?? '';
+      if (selected.isEmpty) {
+        throw ProposalApplyException('Decision 缺少 selected_label');
+      }
+      await repository.upsertDecision(
+        KnowledgeDecision(
+          id: id,
+          question: title,
+          options: <DecisionOption>[DecisionOption(label: selected)],
+          selectedLabel: selected,
+          rationaleMd: body,
+          status: DecisionStatus.active,
+          decidedAt: sync.updatedAt,
+          sync: sync,
+        ),
+      );
+      return _createdState(id, 'knowledge_decisions', '已记录决策：$title');
+    }
+    throw ProposalApplyException('capture 只支持 note / decision');
+  }
+
+  ProposalApplyState _createdState(String id, String table, String label) {
+    return ProposalApplyState(
+      status: ProposalApplyStatus.applied,
+      appliedEntityId: id,
+      appliedTable: table,
+      appliedAt: DateTime.now().toUtc(),
+      undoData: <String, Object?>{
+        'delete': <Object?>[
+          <String, Object?>{'table': table, 'id': id},
+        ],
+      },
+      shortLabel: label,
+    );
   }
 
   @override
   Future<void> undo(ProposalApplyState state) async {
     if (state.status != ProposalApplyStatus.applied) return;
-    final undoData = state.undoData;
-    if (undoData == null) {
-      throw ProposalApplyException('KnowledgeOS undo data missing');
+    final data = state.undoData;
+    if (data == null) throw ProposalApplyException('KnowledgeOS undo 缺失');
+    final restore = data['restore'];
+    if (restore is List) {
+      for (final raw in restore.whereType<Map<Object?, Object?>>()) {
+        await _restore(raw.map((key, value) => MapEntry('$key', value)));
+      }
     }
-    await undoRunner.run(undoData);
-  }
-
-  Future<ProposalApplyState> _applyCaptureUpgrade(
-    ReadyProposalPlan plan,
-  ) async {
-    final rawKind = plan.get('detected_kind');
-    if (rawKind == null) {
-      throw ProposalApplyException('capture_upgrade 缺少 detected_kind');
-    }
-    final detected = CaptureKind.parse(rawKind);
-    if (detected == CaptureKind.note && rawKind != CaptureKind.note.wire) {
-      throw ProposalApplyException(
-        'capture_upgrade detected_kind 不支持: $rawKind',
-      );
-    }
-
-    final noteId = plan.get('note_id');
-    final existing = noteId == null
-        ? null
-        : await repo.findNote(ownerUserId: ownerUserId, id: noteId);
-    if (noteId != null && existing == null) {
-      throw ProposalApplyException('note $noteId 不存在');
-    }
-    if (existing?.isPromoted ?? false) {
-      throw ProposalApplyException(
-        'note $noteId 已升级为 ${existing!.promotedToKind}',
-      );
-    }
-    final sourceRelations = existing == null
-        ? const <KnowledgeRelation>[]
-        : await repo.listRelationsFrom(
-            ownerUserId: ownerUserId,
-            fromKind: KnowledgeEntryKind.note.name,
-            fromId: existing.id,
-          );
-
-    if (detected == CaptureKind.routine) {
-      if (existing == null) return routineApplier.applyRoutine(plan);
-      final intervalDays = plan.num_('interval_days')?.toInt() ?? 0;
-      final statement = plan.get('statement');
-      if (statement == null || intervalDays <= 0) {
-        throw ProposalApplyException(
-          'capture_upgrade routine 缺少 statement / interval_days',
+    final delete = data['delete'];
+    if (delete is List) {
+      for (final raw in delete.whereType<Map<Object?, Object?>>()) {
+        final row = raw.map((key, value) => MapEntry('$key', value));
+        final kind = switch (row['table']) {
+          'knowledge_notes' => KnowledgeEntryKind.note,
+          'knowledge_decisions' => KnowledgeEntryKind.decision,
+          _ => null,
+        };
+        final id = row['id'];
+        if (kind == null || id is! String) continue;
+        final sync = await stamp();
+        await repository.deleteEntry(
+          kind: kind,
+          id: id,
+          sync: sync.copyWith(deletedAt: sync.updatedAt),
         );
       }
-      final promoted = await promotionService.promoteToRoutine(
-        existing,
-        intervalDays: intervalDays,
-        statement: statement,
-        scope: plan.get('scope') ?? '*',
-        nextDueAt: DateTime.tryParse(plan.get('next_due_at') ?? '')?.toUtc(),
-      );
-      return ProposalApplyState(
-        status: ProposalApplyStatus.applied,
-        appliedEntityId: promoted.id,
-        appliedTable: promoted.kind.tableName,
-        appliedAt: _now(),
-        undoData: knowledgeProposalUndoData(
-          delete: [
-            knowledgeProposalDeleteRow(promoted.kind.tableName, promoted.id),
-            ..._redirectedRelationDeletes(sourceRelations, promoted),
-          ],
-          restore: [
-            snapshotKnowledgeNote(existing),
-            ...sourceRelations.map(snapshotKnowledgeRelation),
-          ],
+    }
+  }
+
+  Future<void> _restore(Map<String, Object?> row) async {
+    final sync = await stamp();
+    if (row['entity_type'] == 'note') {
+      await repository.upsertNote(
+        KnowledgeNote(
+          id: row['id'] as String,
+          title: row['title'] as String? ?? '',
+          bodyMd: row['body'] as String? ?? '',
+          sourceUrl: row['source_url'] as String?,
+          tags: _strings(row['tags']),
+          createdAt: _date(row['created_at']) ?? sync.updatedAt,
+          mergedIntoId: row['merged_into_id'] as String?,
+          sync: sync,
         ),
-        shortLabel: '已升级为 routine：${_short(statement)}',
       );
+      return;
     }
-
-    final meta = await stamp();
-    final note = KnowledgeNote(
-      id: existing?.id ?? kKnowledgeUuid.v4(),
-      title: _captureTitle(plan, existing),
-      bodyMd: _captureBody(plan, existing),
-      sourceUrl: existing?.sourceUrl,
-      tags: existing?.tags ?? const <String>[],
-      projectTag: existing?.projectTag,
-      createdAt: existing?.createdAt ?? meta.updatedAt,
-      mergedIntoId: existing?.mergedIntoId,
-      sync: meta,
-    );
-    await repo.upsertNote(note);
-
-    if (detected != CaptureKind.note) {
-      final promoted = await promotionService.promoteCapture(
-        note: note,
-        kind: detected,
-        scope: plan.get('scope'),
-      );
-      return ProposalApplyState(
-        status: ProposalApplyStatus.applied,
-        appliedEntityId: promoted.id,
-        appliedTable: promoted.kind.tableName,
-        appliedAt: _now(),
-        undoData: knowledgeProposalUndoData(
-          delete: <Map<String, Object?>>[
-            knowledgeProposalDeleteRow(promoted.kind.tableName, promoted.id),
-            ..._redirectedRelationDeletes(sourceRelations, promoted),
-            if (existing == null)
-              knowledgeProposalDeleteRow('knowledge_notes', note.id),
-          ],
-          restore: existing == null
-              ? const <Map<String, Object?>>[]
-              : <Map<String, Object?>>[
-                  snapshotKnowledgeNote(existing),
-                  ...sourceRelations.map(snapshotKnowledgeRelation),
-                ],
+    if (row['entity_type'] == 'decision') {
+      await repository.upsertDecision(
+        KnowledgeDecision(
+          id: row['id'] as String,
+          question: row['question'] as String? ?? '',
+          options: _maps(row['options']).map(DecisionOption.fromJson).toList(),
+          selectedLabel: row['selected_label'] as String? ?? '',
+          rationaleMd: row['rationale'] as String? ?? '',
+          expectedOutcome: row['expected_outcome'] as String?,
+          reviewDate: _date(row['review_date']),
+          revisitConditions: _maps(row['revisit_conditions'])
+              .map(DecisionRevisitCondition.fromJson)
+              .toList(),
+          actualOutcomeMd: row['actual_outcome'] as String?,
+          status: DecisionStatus.parse(row['status'] as String? ?? 'active'),
+          supersededByDecisionId: row['superseded_by'] as String?,
+          decidedAt: _date(row['decided_at']) ?? sync.updatedAt,
+          mergedIntoId: row['merged_into_id'] as String?,
+          sync: sync,
         ),
-        shortLabel: '已升级为 ${detected.wire}：${_short(note.title)}',
       );
     }
-
-    return ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: note.id,
-      appliedTable: 'knowledge_notes',
-      appliedAt: _now(),
-      undoData: existing == null
-          ? knowledgeProposalUndoData(
-              delete: [knowledgeProposalDeleteRow('knowledge_notes', note.id)],
-            )
-          : knowledgeProposalUndoData(
-              restore: [snapshotKnowledgeNote(existing)],
-            ),
-      shortLabel:
-          '已更新 Note：${_short(note.title.isEmpty ? note.bodyMd : note.title)}',
-    );
   }
 }
 
-Iterable<Map<String, Object?>> _redirectedRelationDeletes(
-  List<KnowledgeRelation> relations,
-  KnowledgePromotionResult promoted,
-) sync* {
-  for (final relation in relations) {
-    if (relation.toKind == promoted.kind.name && relation.toId == promoted.id) {
-      continue;
-    }
-    yield knowledgeProposalDeleteRow(
-      'knowledge_relations',
-      knowledgeRelationId(
-        fromKind: promoted.kind.name,
-        fromId: promoted.id,
-        relation: relation.relation,
-        toKind: relation.toKind,
-        toId: relation.toId,
-      ),
-    );
-  }
-}
+List<String> _strings(Object? value) => value is List
+    ? value.whereType<String>().toList(growable: false)
+    : const <String>[];
 
-String _captureTitle(ReadyProposalPlan plan, KnowledgeNote? existing) {
-  final polished = plan.get('polished_title');
-  if (polished != null) return polished;
-  if (existing != null && existing.title.trim().isNotEmpty) {
-    return existing.title.trim();
-  }
-  final statement = plan.get('statement');
-  if (statement != null) {
-    return _short(statement, max: kKnowledgeHeadlineExcerptMaxChars);
-  }
-  final source = plan.get('source_text');
-  if (source != null) {
-    return _short(
-      source.split('\n').first.trim(),
-      max: kKnowledgeHeadlineExcerptMaxChars,
-    );
-  }
-  return '';
-}
+List<Map<String, Object?>> _maps(Object? value) => value is List
+    ? value
+          .whereType<Map<Object?, Object?>>()
+          .map((row) => row.map((key, value) => MapEntry('$key', value)))
+          .toList(growable: false)
+    : const <Map<String, Object?>>[];
 
-String _captureBody(ReadyProposalPlan plan, KnowledgeNote? existing) {
-  final polished = plan.get('polished_body');
-  if (polished != null) return polished;
-  if (existing != null && existing.bodyMd.trim().isNotEmpty) {
-    return existing.bodyMd;
-  }
-  return plan.get('source_text') ?? plan.get('statement') ?? '';
-}
+DateTime? _date(Object? value) =>
+    value is String ? DateTime.tryParse(value)?.toUtc() : null;
 
-String _short(String value, {int max = kKnowledgeInlineExcerptMaxChars}) {
-  final trimmed = value.trim();
-  return knowledgeExcerpt(trimmed, max: max);
-}
-
-/// KnowledgeOS applier wiring. Resolves the repo + a per-row [SyncMeta]
-/// factory from the stamper. `kKnowledgePack` uses this provider to build
-/// its cross-domain proposal route.
 final knowledgeProposalApplierProvider =
     FutureProvider<KnowledgeProposalApplier>((ref) async {
-      final repo = await ref.watch(knowledgeRepositoryProvider.future);
-      final ownerUserId = await ref.watch(currentUserIdProvider)();
       final stamper = await ref.watch(mutationStamperProvider.future);
       return KnowledgeProposalApplier(
-        repo: repo,
-        ownerUserId: ownerUserId,
+        repository: await ref.watch(knowledgeRepositoryProvider.future),
+        ownerUserId: await ref.watch(currentUserIdProvider)(),
         stamp: () async {
-          final s = await stamper.stamp();
+          final value = await stamper.stamp();
           return SyncMeta(
-            ownerUserId: s.ownerUserId,
-            updatedAt: s.now,
-            updatedByDevice: s.deviceId,
-            hlc: s.hlc,
+            ownerUserId: value.ownerUserId,
+            updatedAt: value.now,
+            updatedByDevice: value.deviceId,
+            hlc: value.hlc,
           );
         },
       );

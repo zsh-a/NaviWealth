@@ -6,7 +6,7 @@
 ///
 /// - cold start: indexer hasn't run yet, Memory has zero `know:notes` rows
 /// - empty query: hybrid recall needs `queryText`; without it we just list
-///   notes that match the tag / project filter
+///   notes that match the tag filter
 ///
 /// Result rows come from `KnowledgeRepository.findNote` — Memory is the
 /// index, Drift is source-of-truth (mirrors the trade journal pattern).
@@ -31,7 +31,7 @@ class SearchNotesTool implements DeviceTool {
       '在 KnowledgeOS knowledge_notes 表里做混合检索:'
       'query 非空时走 MemoryRuntime.recall(source="know:notes") 的语义 + entity + recency 加权;'
       'query 为空或 Memory 冷启动无命中时回落到子串扫。'
-      '可选 tags/project 做窄化。返回每条 note 的 id / title / excerpt / score。';
+      '可选 tags 做窄化。返回每条 note 的 id / title / excerpt / score。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
@@ -43,7 +43,6 @@ class SearchNotesTool implements DeviceTool {
         'items': <String, Object?>{'type': 'string'},
         'description': '全部 tag 都要命中(AND)。',
       },
-      'project': {'type': 'string'},
       'limit': {'type': 'integer', 'minimum': 1, 'maximum': 100, 'default': 20},
     },
     'required': <String>['query'],
@@ -59,7 +58,6 @@ class SearchNotesTool implements DeviceTool {
     final wantTags = tagsRaw is List
         ? tagsRaw.whereType<String>().toSet()
         : const <String>{};
-    final project = (input['project'] as String?)?.trim();
     final limit = (input['limit'] is num)
         ? (input['limit'] as num).toInt().clamp(1, 100)
         : 20;
@@ -70,7 +68,6 @@ class SearchNotesTool implements DeviceTool {
       ownerUserId: ownerUserId,
       query: query,
       tags: wantTags,
-      project: project,
       limit: limit,
     );
     return withEvidence(

@@ -10,7 +10,7 @@ import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
-import 'knowledge_object_memory_indexers.dart';
+import 'knowledge_memory_indexer_support.dart';
 import 'knowledge_repository.dart';
 
 part 'knowledge_search_core.dart';
@@ -25,13 +25,11 @@ class KnowledgeSearchService {
   KnowledgeSearchService({
     required KnowledgeRepository repository,
     required MemoryRuntime memoryRuntime,
-    this.displayCopy = const KnowledgeSearchDisplayCopy(),
   }) : _repository = repository,
        _memoryRuntime = memoryRuntime;
 
   final KnowledgeRepository _repository;
   final MemoryRuntime _memoryRuntime;
-  final KnowledgeSearchDisplayCopy displayCopy;
 
   Future<List<KnowledgeSearchHit>> searchKnowledge({
     required String ownerUserId,
@@ -50,14 +48,12 @@ class KnowledgeSearchService {
     required String ownerUserId,
     required String query,
     Set<String> tags = const <String>{},
-    String? project,
     int limit = 20,
   }) => _searchNotes(
     this,
     ownerUserId: ownerUserId,
     query: query,
     tags: tags,
-    project: project,
     limit: limit,
   );
 

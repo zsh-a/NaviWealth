@@ -19,7 +19,7 @@ enum AppIconButtonSurface {
   /// Circular soft primary fill + primary hairline ring (dock Ask AI).
   softPrimaryRing,
 
-  /// Squircle soft primary fill + ring (Knowledge review tools).
+  /// Squircle soft primary fill + ring (compact review tools).
   softPrimaryTile,
 
   /// Soft primary fill, square-ish radius — selected dock / rail items.

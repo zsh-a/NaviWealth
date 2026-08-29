@@ -146,15 +146,6 @@ const List<RegressionPrompt> regressionCorpus = <RegressionPrompt>[
     objectType: 'agent_artifact',
     objectId: 'weekly_wealth_review:2026-07-05',
   ),
-  RegressionPrompt(
-    id: 'knowledge.reviewDueItems.weekly_review',
-    intent: 'knowledge.reviewDueItems',
-    userPrompt: '解释这份 knowledge review 里哪些 decision 和 assumption 需要处理。',
-    expectedTools: <String>{'get_agent_artifacts'},
-    objectType: 'agent_artifact',
-    objectId: 'knowledge_review:2026-07-05',
-  ),
-
   // ── explain_change ─────────────────────────────────────────────
   RegressionPrompt(
     id: 'explain_change.expense_netflix',

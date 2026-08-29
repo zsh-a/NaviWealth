@@ -13,8 +13,6 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
-import 'package:naviwealth/features/knowledge/data/providers.dart';
-import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';
@@ -35,29 +33,6 @@ void main() {
         evidence: '2 expenses · 1 income',
         actionTitle: "View today's finance activity",
         outcome: 'Finance: signal still detected',
-      );
-    },
-    tags: 'flow',
-  );
-
-  testWidgets(
-    'Task: Knowledge evidence becomes an Execution action with a visible outcome',
-    (tester) async {
-      await _runLoop(
-        tester,
-        enabledDomains: const <DomainScope>[
-          DomainScope.knowledge,
-          DomainScope.execution,
-        ],
-        signalOverrides: <Override>[
-          knowledgeInboxNotesProvider.overrideWith(
-            (_) => Stream<List<KnowledgeNote>>.value(_knowledgeNotes()),
-          ),
-        ],
-        signalTitle: '4 notes in inbox',
-        evidence: 'Notes are waiting to be organized or reviewed',
-        actionTitle: 'Review the Knowledge inbox',
-        outcome: 'Knowledge: signal still detected',
       );
     },
     tags: 'flow',
@@ -150,18 +125,6 @@ JournalEntryWithPostings _entry(String id, DateTime date, String accountId) =>
         ),
       ],
     );
-
-List<KnowledgeNote> _knowledgeNotes() => List<KnowledgeNote>.generate(
-  4,
-  (index) => KnowledgeNote(
-    id: 'note-$index',
-    title: 'Inbox note $index',
-    bodyMd: 'Review evidence $index',
-    tags: const <String>[],
-    createdAt: DateTime.utc(2026, 7, 17),
-    sync: _sync,
-  ),
-);
 
 final _sync = SyncMeta(
   ownerUserId: 'flow-user',

@@ -19,9 +19,8 @@ void main() {
     });
 
     test('core corpus does not import feature modules', () {
-      final src = File(
-        'lib/core/ai/regression/agent_outcome_corpus.dart',
-      ).readAsStringSync();
+      final src = File('lib/core/ai/regression/agent_outcome_corpus.dart')
+          .readAsStringSync();
 
       expect(src, isNot(contains('features/')));
       expect(src, isNot(contains('package:naviwealth/features/')));
@@ -50,7 +49,7 @@ void main() {
 
       expect(
         readyDomains,
-        containsAll(<String>['finance', 'health', 'knowledge', 'execution']),
+        containsAll(<String>['finance', 'health', 'execution']),
       );
     });
 
@@ -77,12 +76,9 @@ void main() {
       const executableFixturePaths = <String, String>{
         'weekly_wealth_review':
             'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
-        'cashflow_anomaly_review':
-            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
-        'fire_plan_drift_monitor':
-            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
-        'options_income_risk_review':
-            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'cashflow_anomaly_review': 'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'fire_plan_drift_monitor': 'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'options_income_risk_review': 'test/features/finance/agents/options_income_risk_review_agent_test.dart',
       };
 
       for (final c in agentOutcomeRegressionCorpus.where(
@@ -100,24 +96,13 @@ void main() {
       const executableFixturePaths = <String, String>{
         'weekly_wealth_review':
             'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
-        'cashflow_anomaly_review':
-            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
-        'fire_plan_drift_monitor':
-            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
-        'options_income_risk_review':
-            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'cashflow_anomaly_review': 'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'fire_plan_drift_monitor': 'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'options_income_risk_review': 'test/features/finance/agents/options_income_risk_review_agent_test.dart',
         'recovery_alert':
             'test/features/health/agents/recovery_alert_agent_test.dart',
         'weekly_summary':
             'test/features/health/agents/weekly_summary_agent_test.dart',
-        'knowledge_inbox_triage':
-            'test/features/knowledge/agents/inbox_triage_agent_test.dart',
-        'knowledge_assumption':
-            'test/features/knowledge/agents/assumption_agent_test.dart',
-        'knowledge_contradiction':
-            'test/features/knowledge/agents/contradiction_agent_test.dart',
-        'knowledge_review':
-            'test/features/knowledge/agents/review_agent_test.dart',
         'execution_review':
             'test/features/execution/agents/review_agent_test.dart',
         'execution_due_actions':
@@ -135,24 +120,13 @@ void main() {
       const executableFixturePaths = <String, String>{
         'weekly_wealth_review':
             'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
-        'cashflow_anomaly_review':
-            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
-        'fire_plan_drift_monitor':
-            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
-        'options_income_risk_review':
-            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'cashflow_anomaly_review': 'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'fire_plan_drift_monitor': 'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'options_income_risk_review': 'test/features/finance/agents/options_income_risk_review_agent_test.dart',
         'recovery_alert':
             'test/features/health/agents/recovery_alert_agent_test.dart',
         'weekly_summary':
             'test/features/health/agents/weekly_summary_agent_test.dart',
-        'knowledge_inbox_triage':
-            'test/features/knowledge/agents/inbox_triage_agent_test.dart',
-        'knowledge_assumption':
-            'test/features/knowledge/agents/assumption_agent_test.dart',
-        'knowledge_contradiction':
-            'test/features/knowledge/agents/contradiction_agent_test.dart',
-        'knowledge_review':
-            'test/features/knowledge/agents/review_agent_test.dart',
         'execution_review':
             'test/features/execution/agents/review_agent_test.dart',
         'execution_due_actions':
@@ -237,7 +211,6 @@ void main() {
       for (final descriptor in const <IntentDescriptor>[
         ...kFinanceAgentIntentDescriptors,
         ...kHealthAgentIntentDescriptors,
-        ...kKnowledgeAgentIntentDescriptors,
         ...kExecutionAgentIntentDescriptors,
       ]) {
         descriptorsByName.putIfAbsent(descriptor.name, () => descriptor);
@@ -297,25 +270,18 @@ void main() {
       },
     );
 
-    test('status classes and proposal expectations stay represented', () {
+    test('status classes stay represented', () {
       final statuses = {
         for (final c in agentOutcomeRegressionCorpus) c.expectedStatus,
       };
       expect(statuses, containsAll(AgentOutcomeRegressionStatus.values));
-
-      final proposalCases = agentOutcomeRegressionCorpus.where(
-        (c) => c.expectedProposalKinds.isNotEmpty,
-      );
-      expect(proposalCases, isNotEmpty);
     });
 
     test('required eval tags remain covered', () {
       final tags = {for (final c in agentOutcomeRegressionCorpus) ...c.tags};
 
-      expect(tags, contains(kAgentOutcomeToolFailureTag));
       expect(tags, contains(kAgentOutcomeBudgetExhaustedTag));
       expect(tags, contains(kAgentOutcomeNoLlmProfileTag));
-      expect(tags, contains(kAgentOutcomePromptInjectionTag));
     });
 
     test('FinanceOS has executable no-LLM fallback coverage', () {
@@ -356,12 +322,9 @@ void main() {
       const fixturePathsByCaseId = <String, String>{
         'finance.weekly_wealth_review.no_llm_profile_fallback':
             'test/features/finance/agents/weekly_wealth_review_agent_test.dart',
-        'finance.cashflow_anomaly_review.no_llm_profile_fallback':
-            'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
-        'finance.fire_plan_drift_monitor.no_llm_profile_fallback':
-            'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
-        'finance.options_income_risk_review.no_llm_profile_fallback':
-            'test/features/finance/agents/options_income_risk_review_agent_test.dart',
+        'finance.cashflow_anomaly_review.no_llm_profile_fallback': 'test/features/finance/agents/cashflow_anomaly_review_agent_test.dart',
+        'finance.fire_plan_drift_monitor.no_llm_profile_fallback': 'test/features/finance/agents/fire_plan_drift_monitor_agent_test.dart',
+        'finance.options_income_risk_review.no_llm_profile_fallback': 'test/features/finance/agents/options_income_risk_review_agent_test.dart',
         'knowledge.inbox_triage.ready':
             'test/features/knowledge/agents/inbox_triage_agent_test.dart',
         'knowledge.contradiction.prompt_injection_guard':

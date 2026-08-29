@@ -1,61 +1,10 @@
-/// KnowledgeOS domain models (`docs/domains/knowledgeos-domain.md` §3).
-///
-/// Plain Dart records over Drift rows — no freezed yet, since the
-/// shape is still being shaken out by dogfood. Convert to freezed only
-/// when copyWith / pattern matching starts paying off.
+/// Canonical KnowledgeOS models: Notes, Decisions, and Relations.
 library;
 
 import 'dart:convert';
 
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
-const int kKnowledgeAssumptionStaleDays = 90;
-
-/// Shared enum parser: returns the member whose [Enum.name] matches [s],
-/// else [fallback]. Tolerates legacy / unknown wire values without
-/// throwing. Every KnowledgeOS status enum routes its `parse` through
-/// this so the lookup behaviour is identical across types; the
-/// per-enum [fallback] differs only because each enum's natural default
-/// differs (e.g. Experiment has no `active`).
-T parseEnumByName<T extends Enum>(List<T> values, String s, T fallback) {
-  for (final v in values) {
-    if (v.name == s) return v;
-  }
-  return fallback;
-}
-
-/// Status of a [KnowledgePrinciple]. Principles are *not* falsifiable;
-/// they can only be retired or paused when the user explicitly drops
-/// the worldview primitive.
-enum PrincipleStatus {
-  active,
-  paused,
-  retired;
-
-  String get wire => name;
-
-  static PrincipleStatus parse(String s) =>
-      parseEnumByName(values, s, PrincipleStatus.active);
-}
-
-/// Status of a [KnowledgeAssumption]. Assumptions *are* falsifiable —
-/// when an experiment / event invalidates them they transition to
-/// [weakened] (degraded confidence) or [falsified] (rejected).
-enum AssumptionStatus {
-  active,
-  weakened,
-  falsified,
-  retired;
-
-  String get wire => name;
-
-  static AssumptionStatus parse(String s) =>
-      parseEnumByName(values, s, AssumptionStatus.active);
-}
-
-/// 7-state lifecycle from §3. `superseded` is the key state — it carries
-/// the `supersededByDecisionId` link so a chain of decisions reads as
-/// cognitive evolution rather than overwrite.
 enum DecisionStatus {
   draft,
   active,
@@ -67,34 +16,12 @@ enum DecisionStatus {
 
   String get wire => name;
 
-  static DecisionStatus parse(String s) =>
-      parseEnumByName(values, s, DecisionStatus.active);
-}
-
-enum ExperimentStatus {
-  planned,
-  running,
-  done,
-  abandoned;
-
-  String get wire => name;
-
-  static ExperimentStatus parse(String s) =>
-      parseEnumByName(values, s, ExperimentStatus.planned);
-}
-
-/// Status of a [KnowledgeRoutine]. `paused` is a soft off-switch the
-/// user can flip from the tile; `archived` is "this routine is done
-/// forever" (kept for memory, no longer surfaced).
-enum RoutineStatus {
-  active,
-  paused,
-  archived;
-
-  String get wire => name;
-
-  static RoutineStatus parse(String s) =>
-      parseEnumByName(values, s, RoutineStatus.active);
+  static DecisionStatus parse(String value) {
+    for (final status in values) {
+      if (status.name == value) return status;
+    }
+    return DecisionStatus.active;
+  }
 }
 
 class KnowledgeNote {
@@ -103,12 +30,8 @@ class KnowledgeNote {
     required this.title,
     required this.bodyMd,
     this.sourceUrl,
-    required this.tags,
-    this.projectTag,
+    this.tags = const <String>[],
     required this.createdAt,
-    this.promotedToKind,
-    this.promotedToId,
-    this.promotedAt,
     this.mergedIntoId,
     required this.sync,
   });
@@ -118,82 +41,14 @@ class KnowledgeNote {
   final String bodyMd;
   final String? sourceUrl;
   final List<String> tags;
-  final String? projectTag;
   final DateTime createdAt;
-  final String? promotedToKind;
-  final String? promotedToId;
-  final DateTime? promotedAt;
-
-  bool get isPromoted => promotedToKind != null && promotedToId != null;
-
-  /// Non-null only on a note that was merged into another (`§15.3`).
-  /// Live notes are always null here. See [KnowledgeRepository.mergeNotes].
   final String? mergedIntoId;
   final SyncMeta sync;
 }
 
-class KnowledgePrinciple {
-  KnowledgePrinciple({
-    required this.id,
-    required this.statement,
-    required this.rationaleMd,
-    required this.scope,
-    required this.status,
-    required this.declaredAt,
-    this.mergedIntoId,
-    required this.sync,
-  });
-
-  final String id;
-  final String statement;
-  final String rationaleMd;
-  final String scope;
-  final PrincipleStatus status;
-  final DateTime declaredAt;
-
-  /// Non-null only on a principle merged into another (`§15.3`).
-  final String? mergedIntoId;
-  final SyncMeta sync;
-}
-
-class KnowledgeAssumption {
-  KnowledgeAssumption({
-    required this.id,
-    required this.statement,
-    required this.confidence,
-    required this.scope,
-    required this.evidenceIds,
-    required this.status,
-    required this.declaredAt,
-    this.lastVerifiedAt,
-    this.mergedIntoId,
-    required this.sync,
-  });
-
-  final String id;
-  final String statement;
-  final double confidence;
-  final String scope;
-  final List<String> evidenceIds;
-  final AssumptionStatus status;
-  final DateTime declaredAt;
-  final DateTime? lastVerifiedAt;
-
-  /// Non-null only on an assumption merged into another (`§15.3`).
-  final String? mergedIntoId;
-  final SyncMeta sync;
-
-  int daysSinceVerify(DateTime now) {
-    final ref = lastVerifiedAt ?? declaredAt;
-    return now.toUtc().difference(ref.toUtc()).inDays;
-  }
-}
-
-/// One option considered when making a [KnowledgeDecision]. Held inline
-/// in `options_json` rather than its own table — they don't outlive the
-/// decision they belong to.
 class DecisionOption {
   DecisionOption({required this.label, this.rationale});
+
   final String label;
   final String? rationale;
 
@@ -202,28 +57,30 @@ class DecisionOption {
     if (rationale != null) 'rationale': rationale,
   };
 
-  static DecisionOption fromJson(Map<String, Object?> j) => DecisionOption(
-    label: (j['label'] as String?) ?? '',
-    rationale: j['rationale'] as String?,
+  static DecisionOption fromJson(Map<String, Object?> json) => DecisionOption(
+    label: json['label'] as String? ?? '',
+    rationale: json['rationale'] as String?,
   );
 
-  static List<DecisionOption> decode(String jsonStr) {
-    if (jsonStr.isEmpty) return const <DecisionOption>[];
-    final v = jsonDecode(jsonStr);
-    if (v is! List) return const <DecisionOption>[];
-    return v
-        .whereType<Map<String, Object?>>()
-        .map(DecisionOption.fromJson)
+  static List<DecisionOption> decode(String value) {
+    if (value.isEmpty) return const <DecisionOption>[];
+    final decoded = jsonDecode(value);
+    if (decoded is! List) return const <DecisionOption>[];
+    return decoded
+        .whereType<Map<Object?, Object?>>()
+        .map(
+          (item) => DecisionOption.fromJson(
+            item.map((key, value) => MapEntry(key.toString(), value)),
+          ),
+        )
         .toList(growable: false);
   }
 
-  static String encode(List<DecisionOption> opts) =>
-      jsonEncode(opts.map((o) => o.toJson()).toList(growable: false));
+  static String encode(List<DecisionOption> options) => jsonEncode(
+    options.map((option) => option.toJson()).toList(growable: false),
+  );
 }
 
-/// A human-readable condition that should trigger a Decision review.
-///
-/// V1 intentionally stores source references without evaluating a metric DSL.
 class DecisionRevisitCondition {
   const DecisionRevisitCondition({
     required this.statement,
@@ -239,28 +96,33 @@ class DecisionRevisitCondition {
   };
 
   static DecisionRevisitCondition fromJson(Map<String, Object?> json) {
-    final refs = json['source_references'];
+    final references = json['source_references'];
     return DecisionRevisitCondition(
-      statement: (json['statement'] as String?) ?? '',
-      sourceReferences: refs is List
-          ? refs.whereType<String>().toList(growable: false)
+      statement: json['statement'] as String? ?? '',
+      sourceReferences: references is List
+          ? references.whereType<String>().toList(growable: false)
           : const <String>[],
     );
   }
 
-  static List<DecisionRevisitCondition> decode(String jsonString) {
-    if (jsonString.isEmpty) return const <DecisionRevisitCondition>[];
-    final value = jsonDecode(jsonString);
-    if (value is! List) return const <DecisionRevisitCondition>[];
-    return value
-        .whereType<Map<String, Object?>>()
-        .map(DecisionRevisitCondition.fromJson)
+  static List<DecisionRevisitCondition> decode(String value) {
+    if (value.isEmpty) return const <DecisionRevisitCondition>[];
+    final decoded = jsonDecode(value);
+    if (decoded is! List) return const <DecisionRevisitCondition>[];
+    return decoded
+        .whereType<Map<Object?, Object?>>()
+        .map(
+          (item) => DecisionRevisitCondition.fromJson(
+            item.map((key, value) => MapEntry(key.toString(), value)),
+          ),
+        )
         .where((condition) => condition.statement.trim().isNotEmpty)
         .toList(growable: false);
   }
 
-  static String encode(List<DecisionRevisitCondition> conditions) =>
-      jsonEncode(conditions.map((condition) => condition.toJson()).toList());
+  static String encode(List<DecisionRevisitCondition> conditions) => jsonEncode(
+    conditions.map((condition) => condition.toJson()).toList(growable: false),
+  );
 }
 
 class KnowledgeDecision {
@@ -270,15 +132,12 @@ class KnowledgeDecision {
     required this.options,
     required this.selectedLabel,
     required this.rationaleMd,
-    required this.principleIds,
-    required this.assumptionIds,
     this.expectedOutcome,
     this.reviewDate,
     this.revisitConditions = const <DecisionRevisitCondition>[],
     this.actualOutcomeMd,
     required this.status,
     this.supersededByDecisionId,
-    this.contextSnapshot,
     required this.decidedAt,
     this.mergedIntoId,
     required this.sync,
@@ -289,116 +148,21 @@ class KnowledgeDecision {
   final List<DecisionOption> options;
   final String selectedLabel;
   final String rationaleMd;
-  final List<String> principleIds;
-  final List<String> assumptionIds;
   final String? expectedOutcome;
   final DateTime? reviewDate;
   final List<DecisionRevisitCondition> revisitConditions;
   final String? actualOutcomeMd;
   final DecisionStatus status;
   final String? supersededByDecisionId;
-  final Map<String, Object?>? contextSnapshot;
   final DateTime decidedAt;
-
-  /// Non-null only on a decision merged into another (`§15.3`). Distinct
-  /// from [supersededByDecisionId] — merge = "same decision, deduped",
-  /// supersede = "a later decision replaced this one".
   final String? mergedIntoId;
   final SyncMeta sync;
 
   int? daysOverdue(DateTime now) {
-    if (reviewDate == null) return null;
-    return now.toUtc().difference(reviewDate!.toUtc()).inDays;
+    final date = reviewDate;
+    if (date == null) return null;
+    return now.toUtc().difference(date.toUtc()).inDays;
   }
-}
-
-class KnowledgeConcept {
-  KnowledgeConcept({
-    required this.id,
-    required this.name,
-    required this.aliases,
-    required this.summaryMd,
-    required this.relatedConceptIds,
-    required this.createdAt,
-    this.mergedIntoId,
-    required this.sync,
-  });
-
-  final String id;
-  final String name;
-  final List<String> aliases;
-  final String summaryMd;
-  final List<String> relatedConceptIds;
-  final DateTime createdAt;
-
-  /// Non-null only on a concept merged into another (`§15.3`).
-  final String? mergedIntoId;
-  final SyncMeta sync;
-}
-
-class KnowledgeExperiment {
-  KnowledgeExperiment({
-    required this.id,
-    required this.hypothesis,
-    required this.methodMd,
-    required this.metrics,
-    required this.status,
-    this.resultMd,
-    this.conclusionMd,
-    this.targetAssumptionId,
-    required this.startedAt,
-    this.endedAt,
-    this.mergedIntoId,
-    required this.sync,
-  });
-
-  final String id;
-  final String hypothesis;
-  final String methodMd;
-  final List<String> metrics;
-  final ExperimentStatus status;
-  final String? resultMd;
-  final String? conclusionMd;
-  final String? targetAssumptionId;
-  final DateTime startedAt;
-  final DateTime? endedAt;
-
-  /// Non-null only on an experiment merged into another (`§15.3`).
-  final String? mergedIntoId;
-  final SyncMeta sync;
-}
-
-/// Recurring user-defined reminder. `nextDueAt` is the single source of
-/// truth for "when does this surface again" — bumped to `now + intervalDays`
-/// on `markDone`. Knowledge Review reads `nextDueAt <= now + 7d` and
-/// emits a memory + local notification.
-class KnowledgeRoutine {
-  KnowledgeRoutine({
-    required this.id,
-    required this.statement,
-    required this.intervalDays,
-    required this.nextDueAt,
-    this.lastDoneAt,
-    required this.scope,
-    required this.status,
-    required this.createdAt,
-    required this.sync,
-  });
-
-  final String id;
-  final String statement;
-  final int intervalDays;
-  final DateTime? lastDoneAt;
-  final DateTime nextDueAt;
-  final String scope;
-  final RoutineStatus status;
-  final DateTime createdAt;
-  final SyncMeta sync;
-
-  int daysUntilDue(DateTime now) =>
-      nextDueAt.toUtc().difference(now.toUtc()).inDays;
-
-  bool isDue(DateTime now) => !nextDueAt.toUtc().isAfter(now.toUtc());
 }
 
 enum KnowledgeRelationType {
@@ -406,10 +170,8 @@ enum KnowledgeRelationType {
 
   String get wire => 'related_to';
 
-  static KnowledgeRelationType parse(String value) => switch (value) {
-    'related_to' => KnowledgeRelationType.relatedTo,
-    _ => KnowledgeRelationType.relatedTo,
-  };
+  static KnowledgeRelationType parse(String value) =>
+      KnowledgeRelationType.relatedTo;
 }
 
 class KnowledgeRelation {
@@ -434,22 +196,11 @@ class KnowledgeRelation {
   final SyncMeta sync;
 }
 
-/// JSON helpers — every list/map column in §9 is stored as JSON text.
-List<String> decodeStringList(String s) {
-  if (s.isEmpty) return const <String>[];
-  final v = jsonDecode(s);
-  if (v is! List) return const <String>[];
-  return v.whereType<String>().toList(growable: false);
+List<String> decodeStringList(String value) {
+  if (value.isEmpty) return const <String>[];
+  final decoded = jsonDecode(value);
+  if (decoded is! List) return const <String>[];
+  return decoded.whereType<String>().toList(growable: false);
 }
 
-String encodeStringList(List<String> xs) => jsonEncode(xs);
-
-Map<String, Object?>? decodeNullableJsonMap(String? s) {
-  if (s == null || s.isEmpty) return null;
-  final v = jsonDecode(s);
-  if (v is Map) return v.map((k, v) => MapEntry(k.toString(), v));
-  return null;
-}
-
-String? encodeNullableJsonMap(Map<String, Object?>? m) =>
-    m == null ? null : jsonEncode(m);
+String encodeStringList(List<String> values) => jsonEncode(values);

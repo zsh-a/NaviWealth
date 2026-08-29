@@ -14,12 +14,7 @@ import '../../../core/ai/contracts/memory_record.dart';
 import '../../../core/ai/local/memory/memory_runtime.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
-import 'knowledge_object_memory_indexers.dart'
-    show
-        kKnowledgeDecisionEventSourceFamily,
-        kKnowledgeDecisionMemorySource,
-        recordKnowledgeStateEvent,
-        subscribeKnowledgeIndexer;
+import 'knowledge_memory_indexer_support.dart';
 
 class KnowledgeDecisionMemoryIndexer {
   const KnowledgeDecisionMemoryIndexer();
@@ -55,17 +50,10 @@ class KnowledgeDecisionMemoryIndexer {
         facts: <String, Object?>{
           'selected_label': d.selectedLabel,
           'status': d.status.wire,
-          'principle_ids': d.principleIds,
-          'assumption_ids': d.assumptionIds,
           if (d.reviewDate != null)
             'review_date': d.reviewDate!.toUtc().toIso8601String(),
         },
-        entities: <String>{
-          'knowledge_decision',
-          d.id,
-          ...d.principleIds.map((id) => 'principle:$id'),
-          ...d.assumptionIds.map((id) => 'assumption:$id'),
-        },
+        entities: <String>{'knowledge_decision', d.id},
         importance: importance,
         confidence: 1,
       );
@@ -96,19 +84,12 @@ class KnowledgeDecisionMemoryIndexer {
             'actual': d.actualOutcomeMd,
             'status': d.status.wire,
           },
-          'principle_ids': d.principleIds,
-          'assumption_ids': d.assumptionIds,
           'review_date': d.reviewDate?.toUtc().toIso8601String(),
           'revisit_conditions': d.revisitConditions
               .map((condition) => condition.toJson())
               .toList(growable: false),
         },
-        entities: <String>{
-          'knowledge_decision',
-          d.id,
-          ...d.principleIds.map((id) => 'principle:$id'),
-          ...d.assumptionIds.map((id) => 'assumption:$id'),
-        },
+        entities: <String>{'knowledge_decision', d.id},
         // Active decisions outrank superseded ones for recall.
         importance: importance,
         confidence: 0.9,

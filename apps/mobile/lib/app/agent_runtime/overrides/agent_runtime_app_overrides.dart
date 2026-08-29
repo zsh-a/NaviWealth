@@ -31,7 +31,6 @@ import 'package:naviwealth/features/ai_chat/data/providers.dart'
     as ai_chat_providers;
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
-import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 
 List<Override> agentRuntimeAppProviderOverrides() => <Override>[
   dailyNavigatorAgentProvider.overrideWith((ref) {
@@ -121,17 +120,6 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
     return llmBridge == null
         ? null
         : FrbActivityEntryInsightClient(
-            llmBridge: llmBridge,
-            recordTrace: ref
-                .read(agentRuntimeTraceRecorderProvider)
-                .recordProfileCompletion,
-          );
-  }),
-  knowledgeLlmProfileClientProvider.overrideWith((ref) {
-    final llmBridge = ref.watch(agentRuntimeLlmBridgeProvider);
-    return llmBridge == null
-        ? null
-        : FrbKnowledgeLlmProfileClient(
             llmBridge: llmBridge,
             recordTrace: ref
                 .read(agentRuntimeTraceRecorderProvider)

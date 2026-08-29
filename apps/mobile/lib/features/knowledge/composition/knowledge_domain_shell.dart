@@ -2,10 +2,7 @@
 /// (`docs/architecture/lifeos-shell.md` §3 + `docs/domains/knowledgeos-domain.md` §5).
 ///
 /// Mirrors `features/health/composition/health_domain_shell.dart`.
-/// 2 visible tabs: Inbox / Library. Review is a routable-but-hidden branch
-/// (declared in `hiddenTabs`): available from contextual signals, the header,
-/// and the command palette instead of consuming permanent navigation space.
-/// chrome stays consistent with FinanceOS and HealthOS.
+/// Two focused tabs: quick capture and the durable library.
 library;
 
 import 'package:forui/forui.dart';
@@ -33,14 +30,6 @@ DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
         selectedIcon: FLucideIcons.bookOpen,
         label: l10n.knowledgeTabLibrary,
         routePath: KnowledgeRoutes.library,
-      ),
-    ],
-    hiddenTabs: <DomainShellTab>[
-      DomainShellTab(
-        icon: FLucideIcons.clipboardCheck,
-        selectedIcon: FLucideIcons.clipboardCheck,
-        label: l10n.knowledgeReviewTitle,
-        routePath: KnowledgeRoutes.review,
       ),
     ],
   );

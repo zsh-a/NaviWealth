@@ -5,7 +5,6 @@ Future<List<KnowledgeSearchHit>> _searchNotes(
   required String ownerUserId,
   required String query,
   Set<String> tags = const <String>{},
-  String? project,
   int limit = 20,
 }) async {
   final effectiveLimit = limit.clamp(1, 100).toInt();
@@ -21,7 +20,7 @@ Future<List<KnowledgeSearchHit>> _searchNotes(
         .where((hit) {
           final note = hit.document.note;
           if (note == null) return false;
-          if (!_matchesNoteFilters(note, tags: tags, project: project)) {
+          if (!_matchesNoteFilters(note, tags: tags)) {
             return false;
           }
           return true;
@@ -37,11 +36,8 @@ Future<List<KnowledgeSearchHit>> _searchNotes(
   );
   final hits = <KnowledgeSearchHit>[];
   for (final note in notes) {
-    if (!_matchesNoteFilters(note, tags: tags, project: project)) continue;
-    final doc = KnowledgeSearchDocument.fromNote(
-      note,
-      untitled: service.displayCopy.untitled,
-    );
+    if (!_matchesNoteFilters(note, tags: tags)) continue;
+    final doc = KnowledgeSearchDocument.fromNote(note);
     final lexical = q.isEmpty
         ? const KnowledgeLexicalMatch(score: 1, matchedFields: <String>['list'])
         : KnowledgeLexicalMatch.calculate(q, doc);
@@ -62,14 +58,7 @@ Future<List<KnowledgeSearchHit>> _searchNotes(
   return hits.take(effectiveLimit).toList(growable: false);
 }
 
-bool _matchesNoteFilters(
-  KnowledgeNote note, {
-  required Set<String> tags,
-  required String? project,
-}) {
+bool _matchesNoteFilters(KnowledgeNote note, {required Set<String> tags}) {
   if (tags.isNotEmpty && !tags.every(note.tags.contains)) return false;
-  if (project != null && project.isNotEmpty && note.projectTag != project) {
-    return false;
-  }
   return true;
 }

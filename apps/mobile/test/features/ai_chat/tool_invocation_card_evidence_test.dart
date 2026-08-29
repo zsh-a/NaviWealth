@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
@@ -65,6 +66,17 @@ Future<void> _pump(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en', 'US'),
+        builder: (context, child) => FAccessibilityScope(
+          data: const FAccessibility(
+            accessibleNavigation: false,
+            motion: FAccessibilityMotion.disabled,
+            focusHighlight: false,
+          ),
+          child: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: child!,
+          ),
+        ),
         routerConfig: router ?? _router(null),
       ),
     ),
@@ -120,20 +132,20 @@ void main() {
   ) async {
     final invocation = _withEvidence([
       <String, Object?>{
-        'entity_table': 'knowledge_assumptions',
-        'entity_id': 'assumption-1',
-        'label': 'Revenue growth remains durable',
+        'entity_table': 'knowledge_decisions',
+        'entity_id': 'decision-1',
+        'label': 'Keep the current allocation',
       },
       <String, Object?>{
         'entity_table': 'execution_actions',
         'entity_id': 'action-1',
-        'label': 'Review the assumption',
+        'label': 'Review the decision',
       },
     ]);
     await _pump(tester, invocation);
 
-    expect(find.text('Revenue growth remains durable'), findsOneWidget);
-    expect(find.text('Review the assumption'), findsOneWidget);
+    expect(find.text('Keep the current allocation'), findsOneWidget);
+    expect(find.text('Review the decision'), findsOneWidget);
   });
 
   testWidgets('falls back to legacy heuristic when no evidence array', (

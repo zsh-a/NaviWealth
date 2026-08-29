@@ -140,7 +140,6 @@ class LifePage extends ConsumerWidget {
     LifeEventTemplate.recoveryAlert => FLucideIcons.heartPulse,
     LifeEventTemplate.executionBlocked => FLucideIcons.octagonAlert,
     LifeEventTemplate.executionDue => FLucideIcons.calendarClock,
-    LifeEventTemplate.knowledgeInbox => FLucideIcons.inbox,
   };
 
   static Color _accentFor(BuildContext context, LifeEvent e) {

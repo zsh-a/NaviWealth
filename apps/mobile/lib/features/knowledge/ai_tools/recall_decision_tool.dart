@@ -102,8 +102,6 @@ class RecallDecisionTool implements DeviceTool {
       'question': d.question,
       'selected': d.selectedLabel,
       'rationale': d.rationaleMd,
-      'principle_ids': d.principleIds,
-      'assumption_ids': d.assumptionIds,
       'expected_outcome': d.expectedOutcome,
       'actual_outcome': d.actualOutcomeMd,
       'status': d.status.wire,

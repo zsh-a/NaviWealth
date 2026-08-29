@@ -36991,17 +36991,6 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     requiredDuringInsert: false,
     defaultValue: const Constant('[]'),
   );
-  static const VerificationMeta _projectTagMeta = const VerificationMeta(
-    'projectTag',
-  );
-  @override
-  late final GeneratedColumn<String> projectTag = GeneratedColumn<String>(
-    'project_tag',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -37012,39 +37001,6 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     false,
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
-  );
-  static const VerificationMeta _promotedToKindMeta = const VerificationMeta(
-    'promotedToKind',
-  );
-  @override
-  late final GeneratedColumn<String> promotedToKind = GeneratedColumn<String>(
-    'promoted_to_kind',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _promotedToIdMeta = const VerificationMeta(
-    'promotedToId',
-  );
-  @override
-  late final GeneratedColumn<String> promotedToId = GeneratedColumn<String>(
-    'promoted_to_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _promotedAtMeta = const VerificationMeta(
-    'promotedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> promotedAt = GeneratedColumn<DateTime>(
-    'promoted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
   );
   static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
     'mergedIntoId',
@@ -37069,11 +37025,7 @@ class $KnowledgeNotesTable extends KnowledgeNotes
     bodyMd,
     sourceUrl,
     tagsJson,
-    projectTag,
     createdAt,
-    promotedToKind,
-    promotedToId,
-    promotedAt,
     mergedIntoId,
   ];
   @override
@@ -37157,12 +37109,6 @@ class $KnowledgeNotesTable extends KnowledgeNotes
         tagsJson.isAcceptableOrUnknown(data['tags_json']!, _tagsJsonMeta),
       );
     }
-    if (data.containsKey('project_tag')) {
-      context.handle(
-        _projectTagMeta,
-        projectTag.isAcceptableOrUnknown(data['project_tag']!, _projectTagMeta),
-      );
-    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -37170,30 +37116,6 @@ class $KnowledgeNotesTable extends KnowledgeNotes
       );
     } else if (isInserting) {
       context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('promoted_to_kind')) {
-      context.handle(
-        _promotedToKindMeta,
-        promotedToKind.isAcceptableOrUnknown(
-          data['promoted_to_kind']!,
-          _promotedToKindMeta,
-        ),
-      );
-    }
-    if (data.containsKey('promoted_to_id')) {
-      context.handle(
-        _promotedToIdMeta,
-        promotedToId.isAcceptableOrUnknown(
-          data['promoted_to_id']!,
-          _promotedToIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('promoted_at')) {
-      context.handle(
-        _promotedAtMeta,
-        promotedAt.isAcceptableOrUnknown(data['promoted_at']!, _promotedAtMeta),
-      );
     }
     if (data.containsKey('merged_into_id')) {
       context.handle(
@@ -37255,26 +37177,10 @@ class $KnowledgeNotesTable extends KnowledgeNotes
         DriftSqlType.string,
         data['${effectivePrefix}tags_json'],
       )!,
-      projectTag: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}project_tag'],
-      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
-      promotedToKind: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}promoted_to_kind'],
-      ),
-      promotedToId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}promoted_to_id'],
-      ),
-      promotedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}promoted_at'],
-      ),
       mergedIntoId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}merged_into_id'],
@@ -37318,20 +37224,7 @@ class KnowledgeNoteRow extends DataClass
   final String bodyMd;
   final String? sourceUrl;
   final String tagsJson;
-  final String? projectTag;
   final DateTime createdAt;
-
-  /// A promoted Note remains the immutable source record for the typed object
-  /// created from it, but no longer appears in the regular Notes library.
-  final String? promotedToKind;
-  final String? promotedToId;
-  final DateTime? promotedAt;
-
-  /// Dedupe pointer (`docs/domains/knowledgeos-domain.md` §15.3). When this note
-  /// is merged into another note via `propose_merge`, it is soft-deleted
-  /// (`deletedAt` set) AND stamped with the surviving note's id here, so
-  /// a future un-merge / audit can find where the content went. NULL for
-  /// every live note.
   final String? mergedIntoId;
   const KnowledgeNoteRow({
     required this.ownerUserId,
@@ -37344,11 +37237,7 @@ class KnowledgeNoteRow extends DataClass
     required this.bodyMd,
     this.sourceUrl,
     required this.tagsJson,
-    this.projectTag,
     required this.createdAt,
-    this.promotedToKind,
-    this.promotedToId,
-    this.promotedAt,
     this.mergedIntoId,
   });
   @override
@@ -37372,19 +37261,7 @@ class KnowledgeNoteRow extends DataClass
       map['source_url'] = Variable<String>(sourceUrl);
     }
     map['tags_json'] = Variable<String>(tagsJson);
-    if (!nullToAbsent || projectTag != null) {
-      map['project_tag'] = Variable<String>(projectTag);
-    }
     map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || promotedToKind != null) {
-      map['promoted_to_kind'] = Variable<String>(promotedToKind);
-    }
-    if (!nullToAbsent || promotedToId != null) {
-      map['promoted_to_id'] = Variable<String>(promotedToId);
-    }
-    if (!nullToAbsent || promotedAt != null) {
-      map['promoted_at'] = Variable<DateTime>(promotedAt);
-    }
     if (!nullToAbsent || mergedIntoId != null) {
       map['merged_into_id'] = Variable<String>(mergedIntoId);
     }
@@ -37407,19 +37284,7 @@ class KnowledgeNoteRow extends DataClass
           ? const Value.absent()
           : Value(sourceUrl),
       tagsJson: Value(tagsJson),
-      projectTag: projectTag == null && nullToAbsent
-          ? const Value.absent()
-          : Value(projectTag),
       createdAt: Value(createdAt),
-      promotedToKind: promotedToKind == null && nullToAbsent
-          ? const Value.absent()
-          : Value(promotedToKind),
-      promotedToId: promotedToId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(promotedToId),
-      promotedAt: promotedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(promotedAt),
       mergedIntoId: mergedIntoId == null && nullToAbsent
           ? const Value.absent()
           : Value(mergedIntoId),
@@ -37442,11 +37307,7 @@ class KnowledgeNoteRow extends DataClass
       bodyMd: serializer.fromJson<String>(json['bodyMd']),
       sourceUrl: serializer.fromJson<String?>(json['sourceUrl']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
-      projectTag: serializer.fromJson<String?>(json['projectTag']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      promotedToKind: serializer.fromJson<String?>(json['promotedToKind']),
-      promotedToId: serializer.fromJson<String?>(json['promotedToId']),
-      promotedAt: serializer.fromJson<DateTime?>(json['promotedAt']),
       mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
     );
   }
@@ -37464,11 +37325,7 @@ class KnowledgeNoteRow extends DataClass
       'bodyMd': serializer.toJson<String>(bodyMd),
       'sourceUrl': serializer.toJson<String?>(sourceUrl),
       'tagsJson': serializer.toJson<String>(tagsJson),
-      'projectTag': serializer.toJson<String?>(projectTag),
       'createdAt': serializer.toJson<DateTime>(createdAt),
-      'promotedToKind': serializer.toJson<String?>(promotedToKind),
-      'promotedToId': serializer.toJson<String?>(promotedToId),
-      'promotedAt': serializer.toJson<DateTime?>(promotedAt),
       'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
   }
@@ -37484,11 +37341,7 @@ class KnowledgeNoteRow extends DataClass
     String? bodyMd,
     Value<String?> sourceUrl = const Value.absent(),
     String? tagsJson,
-    Value<String?> projectTag = const Value.absent(),
     DateTime? createdAt,
-    Value<String?> promotedToKind = const Value.absent(),
-    Value<String?> promotedToId = const Value.absent(),
-    Value<DateTime?> promotedAt = const Value.absent(),
     Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeNoteRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -37501,13 +37354,7 @@ class KnowledgeNoteRow extends DataClass
     bodyMd: bodyMd ?? this.bodyMd,
     sourceUrl: sourceUrl.present ? sourceUrl.value : this.sourceUrl,
     tagsJson: tagsJson ?? this.tagsJson,
-    projectTag: projectTag.present ? projectTag.value : this.projectTag,
     createdAt: createdAt ?? this.createdAt,
-    promotedToKind: promotedToKind.present
-        ? promotedToKind.value
-        : this.promotedToKind,
-    promotedToId: promotedToId.present ? promotedToId.value : this.promotedToId,
-    promotedAt: promotedAt.present ? promotedAt.value : this.promotedAt,
     mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
   KnowledgeNoteRow copyWithCompanion(KnowledgeNotesCompanion data) {
@@ -37526,19 +37373,7 @@ class KnowledgeNoteRow extends DataClass
       bodyMd: data.bodyMd.present ? data.bodyMd.value : this.bodyMd,
       sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
       tagsJson: data.tagsJson.present ? data.tagsJson.value : this.tagsJson,
-      projectTag: data.projectTag.present
-          ? data.projectTag.value
-          : this.projectTag,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      promotedToKind: data.promotedToKind.present
-          ? data.promotedToKind.value
-          : this.promotedToKind,
-      promotedToId: data.promotedToId.present
-          ? data.promotedToId.value
-          : this.promotedToId,
-      promotedAt: data.promotedAt.present
-          ? data.promotedAt.value
-          : this.promotedAt,
       mergedIntoId: data.mergedIntoId.present
           ? data.mergedIntoId.value
           : this.mergedIntoId,
@@ -37558,11 +37393,7 @@ class KnowledgeNoteRow extends DataClass
           ..write('bodyMd: $bodyMd, ')
           ..write('sourceUrl: $sourceUrl, ')
           ..write('tagsJson: $tagsJson, ')
-          ..write('projectTag: $projectTag, ')
           ..write('createdAt: $createdAt, ')
-          ..write('promotedToKind: $promotedToKind, ')
-          ..write('promotedToId: $promotedToId, ')
-          ..write('promotedAt: $promotedAt, ')
           ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
         .toString();
@@ -37580,11 +37411,7 @@ class KnowledgeNoteRow extends DataClass
     bodyMd,
     sourceUrl,
     tagsJson,
-    projectTag,
     createdAt,
-    promotedToKind,
-    promotedToId,
-    promotedAt,
     mergedIntoId,
   );
   @override
@@ -37601,11 +37428,7 @@ class KnowledgeNoteRow extends DataClass
           other.bodyMd == this.bodyMd &&
           other.sourceUrl == this.sourceUrl &&
           other.tagsJson == this.tagsJson &&
-          other.projectTag == this.projectTag &&
           other.createdAt == this.createdAt &&
-          other.promotedToKind == this.promotedToKind &&
-          other.promotedToId == this.promotedToId &&
-          other.promotedAt == this.promotedAt &&
           other.mergedIntoId == this.mergedIntoId);
 }
 
@@ -37620,11 +37443,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
   final Value<String> bodyMd;
   final Value<String?> sourceUrl;
   final Value<String> tagsJson;
-  final Value<String?> projectTag;
   final Value<DateTime> createdAt;
-  final Value<String?> promotedToKind;
-  final Value<String?> promotedToId;
-  final Value<DateTime?> promotedAt;
   final Value<String?> mergedIntoId;
   final Value<int> rowid;
   const KnowledgeNotesCompanion({
@@ -37638,11 +37457,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     this.bodyMd = const Value.absent(),
     this.sourceUrl = const Value.absent(),
     this.tagsJson = const Value.absent(),
-    this.projectTag = const Value.absent(),
     this.createdAt = const Value.absent(),
-    this.promotedToKind = const Value.absent(),
-    this.promotedToId = const Value.absent(),
-    this.promotedAt = const Value.absent(),
     this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -37657,11 +37472,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     required String bodyMd,
     this.sourceUrl = const Value.absent(),
     this.tagsJson = const Value.absent(),
-    this.projectTag = const Value.absent(),
     required DateTime createdAt,
-    this.promotedToKind = const Value.absent(),
-    this.promotedToId = const Value.absent(),
-    this.promotedAt = const Value.absent(),
     this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -37683,11 +37494,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     Expression<String>? bodyMd,
     Expression<String>? sourceUrl,
     Expression<String>? tagsJson,
-    Expression<String>? projectTag,
     Expression<DateTime>? createdAt,
-    Expression<String>? promotedToKind,
-    Expression<String>? promotedToId,
-    Expression<DateTime>? promotedAt,
     Expression<String>? mergedIntoId,
     Expression<int>? rowid,
   }) {
@@ -37702,11 +37509,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
       if (bodyMd != null) 'body_md': bodyMd,
       if (sourceUrl != null) 'source_url': sourceUrl,
       if (tagsJson != null) 'tags_json': tagsJson,
-      if (projectTag != null) 'project_tag': projectTag,
       if (createdAt != null) 'created_at': createdAt,
-      if (promotedToKind != null) 'promoted_to_kind': promotedToKind,
-      if (promotedToId != null) 'promoted_to_id': promotedToId,
-      if (promotedAt != null) 'promoted_at': promotedAt,
       if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
     });
@@ -37723,11 +37526,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     Value<String>? bodyMd,
     Value<String?>? sourceUrl,
     Value<String>? tagsJson,
-    Value<String?>? projectTag,
     Value<DateTime>? createdAt,
-    Value<String?>? promotedToKind,
-    Value<String?>? promotedToId,
-    Value<DateTime?>? promotedAt,
     Value<String?>? mergedIntoId,
     Value<int>? rowid,
   }) {
@@ -37742,11 +37541,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
       bodyMd: bodyMd ?? this.bodyMd,
       sourceUrl: sourceUrl ?? this.sourceUrl,
       tagsJson: tagsJson ?? this.tagsJson,
-      projectTag: projectTag ?? this.projectTag,
       createdAt: createdAt ?? this.createdAt,
-      promotedToKind: promotedToKind ?? this.promotedToKind,
-      promotedToId: promotedToId ?? this.promotedToId,
-      promotedAt: promotedAt ?? this.promotedAt,
       mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
     );
@@ -37787,20 +37582,8 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
     if (tagsJson.present) {
       map['tags_json'] = Variable<String>(tagsJson.value);
     }
-    if (projectTag.present) {
-      map['project_tag'] = Variable<String>(projectTag.value);
-    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (promotedToKind.present) {
-      map['promoted_to_kind'] = Variable<String>(promotedToKind.value);
-    }
-    if (promotedToId.present) {
-      map['promoted_to_id'] = Variable<String>(promotedToId.value);
-    }
-    if (promotedAt.present) {
-      map['promoted_at'] = Variable<DateTime>(promotedAt.value);
     }
     if (mergedIntoId.present) {
       map['merged_into_id'] = Variable<String>(mergedIntoId.value);
@@ -37824,1597 +37607,7 @@ class KnowledgeNotesCompanion extends UpdateCompanion<KnowledgeNoteRow> {
           ..write('bodyMd: $bodyMd, ')
           ..write('sourceUrl: $sourceUrl, ')
           ..write('tagsJson: $tagsJson, ')
-          ..write('projectTag: $projectTag, ')
           ..write('createdAt: $createdAt, ')
-          ..write('promotedToKind: $promotedToKind, ')
-          ..write('promotedToId: $promotedToId, ')
-          ..write('promotedAt: $promotedAt, ')
-          ..write('mergedIntoId: $mergedIntoId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KnowledgePrinciplesTable extends KnowledgePrinciples
-    with TableInfo<$KnowledgePrinciplesTable, KnowledgePrincipleRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KnowledgePrinciplesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($KnowledgePrinciplesTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _statementMeta = const VerificationMeta(
-    'statement',
-  );
-  @override
-  late final GeneratedColumn<String> statement = GeneratedColumn<String>(
-    'statement',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _rationaleMdMeta = const VerificationMeta(
-    'rationaleMd',
-  );
-  @override
-  late final GeneratedColumn<String> rationaleMd = GeneratedColumn<String>(
-    'rationale_md',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(''),
-  );
-  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
-  @override
-  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
-    'scope',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('*'),
-  );
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('active'),
-  );
-  static const VerificationMeta _declaredAtMeta = const VerificationMeta(
-    'declaredAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> declaredAt = GeneratedColumn<DateTime>(
-    'declared_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
-    'mergedIntoId',
-  );
-  @override
-  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
-    'merged_into_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    statement,
-    rationaleMd,
-    scope,
-    status,
-    declaredAt,
-    mergedIntoId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'knowledge_principles';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<KnowledgePrincipleRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('statement')) {
-      context.handle(
-        _statementMeta,
-        statement.isAcceptableOrUnknown(data['statement']!, _statementMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_statementMeta);
-    }
-    if (data.containsKey('rationale_md')) {
-      context.handle(
-        _rationaleMdMeta,
-        rationaleMd.isAcceptableOrUnknown(
-          data['rationale_md']!,
-          _rationaleMdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('scope')) {
-      context.handle(
-        _scopeMeta,
-        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
-      );
-    }
-    if (data.containsKey('status')) {
-      context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('declared_at')) {
-      context.handle(
-        _declaredAtMeta,
-        declaredAt.isAcceptableOrUnknown(data['declared_at']!, _declaredAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_declaredAtMeta);
-    }
-    if (data.containsKey('merged_into_id')) {
-      context.handle(
-        _mergedIntoIdMeta,
-        mergedIntoId.isAcceptableOrUnknown(
-          data['merged_into_id']!,
-          _mergedIntoIdMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KnowledgePrincipleRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KnowledgePrincipleRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $KnowledgePrinciplesTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      statement: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}statement'],
-      )!,
-      rationaleMd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}rationale_md'],
-      )!,
-      scope: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}scope'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      declaredAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}declared_at'],
-      )!,
-      mergedIntoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}merged_into_id'],
-      ),
-    );
-  }
-
-  @override
-  $KnowledgePrinciplesTable createAlias(String alias) {
-    return $KnowledgePrinciplesTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class KnowledgePrincipleRow extends DataClass
-    implements Insertable<KnowledgePrincipleRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String statement;
-  final String rationaleMd;
-  final String scope;
-  final String status;
-  final DateTime declaredAt;
-
-  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. A principle merged
-  /// into another is soft-deleted and stamped with the survivor's id; any
-  /// Decision referencing it is re-pointed to the survivor (§15.3 P1).
-  final String? mergedIntoId;
-  const KnowledgePrincipleRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.statement,
-    required this.rationaleMd,
-    required this.scope,
-    required this.status,
-    required this.declaredAt,
-    this.mergedIntoId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $KnowledgePrinciplesTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['statement'] = Variable<String>(statement);
-    map['rationale_md'] = Variable<String>(rationaleMd);
-    map['scope'] = Variable<String>(scope);
-    map['status'] = Variable<String>(status);
-    map['declared_at'] = Variable<DateTime>(declaredAt);
-    if (!nullToAbsent || mergedIntoId != null) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId);
-    }
-    return map;
-  }
-
-  KnowledgePrinciplesCompanion toCompanion(bool nullToAbsent) {
-    return KnowledgePrinciplesCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      statement: Value(statement),
-      rationaleMd: Value(rationaleMd),
-      scope: Value(scope),
-      status: Value(status),
-      declaredAt: Value(declaredAt),
-      mergedIntoId: mergedIntoId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(mergedIntoId),
-    );
-  }
-
-  factory KnowledgePrincipleRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KnowledgePrincipleRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      statement: serializer.fromJson<String>(json['statement']),
-      rationaleMd: serializer.fromJson<String>(json['rationaleMd']),
-      scope: serializer.fromJson<String>(json['scope']),
-      status: serializer.fromJson<String>(json['status']),
-      declaredAt: serializer.fromJson<DateTime>(json['declaredAt']),
-      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'statement': serializer.toJson<String>(statement),
-      'rationaleMd': serializer.toJson<String>(rationaleMd),
-      'scope': serializer.toJson<String>(scope),
-      'status': serializer.toJson<String>(status),
-      'declaredAt': serializer.toJson<DateTime>(declaredAt),
-      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
-    };
-  }
-
-  KnowledgePrincipleRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? statement,
-    String? rationaleMd,
-    String? scope,
-    String? status,
-    DateTime? declaredAt,
-    Value<String?> mergedIntoId = const Value.absent(),
-  }) => KnowledgePrincipleRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    statement: statement ?? this.statement,
-    rationaleMd: rationaleMd ?? this.rationaleMd,
-    scope: scope ?? this.scope,
-    status: status ?? this.status,
-    declaredAt: declaredAt ?? this.declaredAt,
-    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
-  );
-  KnowledgePrincipleRow copyWithCompanion(KnowledgePrinciplesCompanion data) {
-    return KnowledgePrincipleRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      statement: data.statement.present ? data.statement.value : this.statement,
-      rationaleMd: data.rationaleMd.present
-          ? data.rationaleMd.value
-          : this.rationaleMd,
-      scope: data.scope.present ? data.scope.value : this.scope,
-      status: data.status.present ? data.status.value : this.status,
-      declaredAt: data.declaredAt.present
-          ? data.declaredAt.value
-          : this.declaredAt,
-      mergedIntoId: data.mergedIntoId.present
-          ? data.mergedIntoId.value
-          : this.mergedIntoId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgePrincipleRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('statement: $statement, ')
-          ..write('rationaleMd: $rationaleMd, ')
-          ..write('scope: $scope, ')
-          ..write('status: $status, ')
-          ..write('declaredAt: $declaredAt, ')
-          ..write('mergedIntoId: $mergedIntoId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    statement,
-    rationaleMd,
-    scope,
-    status,
-    declaredAt,
-    mergedIntoId,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KnowledgePrincipleRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.statement == this.statement &&
-          other.rationaleMd == this.rationaleMd &&
-          other.scope == this.scope &&
-          other.status == this.status &&
-          other.declaredAt == this.declaredAt &&
-          other.mergedIntoId == this.mergedIntoId);
-}
-
-class KnowledgePrinciplesCompanion
-    extends UpdateCompanion<KnowledgePrincipleRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> statement;
-  final Value<String> rationaleMd;
-  final Value<String> scope;
-  final Value<String> status;
-  final Value<DateTime> declaredAt;
-  final Value<String?> mergedIntoId;
-  final Value<int> rowid;
-  const KnowledgePrinciplesCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.statement = const Value.absent(),
-    this.rationaleMd = const Value.absent(),
-    this.scope = const Value.absent(),
-    this.status = const Value.absent(),
-    this.declaredAt = const Value.absent(),
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  KnowledgePrinciplesCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String statement,
-    this.rationaleMd = const Value.absent(),
-    this.scope = const Value.absent(),
-    this.status = const Value.absent(),
-    required DateTime declaredAt,
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       statement = Value(statement),
-       declaredAt = Value(declaredAt);
-  static Insertable<KnowledgePrincipleRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? statement,
-    Expression<String>? rationaleMd,
-    Expression<String>? scope,
-    Expression<String>? status,
-    Expression<DateTime>? declaredAt,
-    Expression<String>? mergedIntoId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (statement != null) 'statement': statement,
-      if (rationaleMd != null) 'rationale_md': rationaleMd,
-      if (scope != null) 'scope': scope,
-      if (status != null) 'status': status,
-      if (declaredAt != null) 'declared_at': declaredAt,
-      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  KnowledgePrinciplesCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? statement,
-    Value<String>? rationaleMd,
-    Value<String>? scope,
-    Value<String>? status,
-    Value<DateTime>? declaredAt,
-    Value<String?>? mergedIntoId,
-    Value<int>? rowid,
-  }) {
-    return KnowledgePrinciplesCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      statement: statement ?? this.statement,
-      rationaleMd: rationaleMd ?? this.rationaleMd,
-      scope: scope ?? this.scope,
-      status: status ?? this.status,
-      declaredAt: declaredAt ?? this.declaredAt,
-      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $KnowledgePrinciplesTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (statement.present) {
-      map['statement'] = Variable<String>(statement.value);
-    }
-    if (rationaleMd.present) {
-      map['rationale_md'] = Variable<String>(rationaleMd.value);
-    }
-    if (scope.present) {
-      map['scope'] = Variable<String>(scope.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (declaredAt.present) {
-      map['declared_at'] = Variable<DateTime>(declaredAt.value);
-    }
-    if (mergedIntoId.present) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgePrinciplesCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('statement: $statement, ')
-          ..write('rationaleMd: $rationaleMd, ')
-          ..write('scope: $scope, ')
-          ..write('status: $status, ')
-          ..write('declaredAt: $declaredAt, ')
-          ..write('mergedIntoId: $mergedIntoId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KnowledgeAssumptionsTable extends KnowledgeAssumptions
-    with TableInfo<$KnowledgeAssumptionsTable, KnowledgeAssumptionRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KnowledgeAssumptionsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($KnowledgeAssumptionsTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _statementMeta = const VerificationMeta(
-    'statement',
-  );
-  @override
-  late final GeneratedColumn<String> statement = GeneratedColumn<String>(
-    'statement',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _confidenceMeta = const VerificationMeta(
-    'confidence',
-  );
-  @override
-  late final GeneratedColumn<double> confidence = GeneratedColumn<double>(
-    'confidence',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0.7),
-  );
-  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
-  @override
-  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
-    'scope',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('*'),
-  );
-  static const VerificationMeta _evidenceIdsJsonMeta = const VerificationMeta(
-    'evidenceIdsJson',
-  );
-  @override
-  late final GeneratedColumn<String> evidenceIdsJson = GeneratedColumn<String>(
-    'evidence_ids_json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('[]'),
-  );
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('active'),
-  );
-  static const VerificationMeta _lastVerifiedAtMeta = const VerificationMeta(
-    'lastVerifiedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lastVerifiedAt =
-      GeneratedColumn<DateTime>(
-        'last_verified_at',
-        aliasedName,
-        true,
-        type: DriftSqlType.dateTime,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _declaredAtMeta = const VerificationMeta(
-    'declaredAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> declaredAt = GeneratedColumn<DateTime>(
-    'declared_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
-    'mergedIntoId',
-  );
-  @override
-  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
-    'merged_into_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    statement,
-    confidence,
-    scope,
-    evidenceIdsJson,
-    status,
-    lastVerifiedAt,
-    declaredAt,
-    mergedIntoId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'knowledge_assumptions';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<KnowledgeAssumptionRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('statement')) {
-      context.handle(
-        _statementMeta,
-        statement.isAcceptableOrUnknown(data['statement']!, _statementMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_statementMeta);
-    }
-    if (data.containsKey('confidence')) {
-      context.handle(
-        _confidenceMeta,
-        confidence.isAcceptableOrUnknown(data['confidence']!, _confidenceMeta),
-      );
-    }
-    if (data.containsKey('scope')) {
-      context.handle(
-        _scopeMeta,
-        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
-      );
-    }
-    if (data.containsKey('evidence_ids_json')) {
-      context.handle(
-        _evidenceIdsJsonMeta,
-        evidenceIdsJson.isAcceptableOrUnknown(
-          data['evidence_ids_json']!,
-          _evidenceIdsJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('status')) {
-      context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('last_verified_at')) {
-      context.handle(
-        _lastVerifiedAtMeta,
-        lastVerifiedAt.isAcceptableOrUnknown(
-          data['last_verified_at']!,
-          _lastVerifiedAtMeta,
-        ),
-      );
-    }
-    if (data.containsKey('declared_at')) {
-      context.handle(
-        _declaredAtMeta,
-        declaredAt.isAcceptableOrUnknown(data['declared_at']!, _declaredAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_declaredAtMeta);
-    }
-    if (data.containsKey('merged_into_id')) {
-      context.handle(
-        _mergedIntoIdMeta,
-        mergedIntoId.isAcceptableOrUnknown(
-          data['merged_into_id']!,
-          _mergedIntoIdMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KnowledgeAssumptionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KnowledgeAssumptionRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $KnowledgeAssumptionsTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      statement: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}statement'],
-      )!,
-      confidence: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}confidence'],
-      )!,
-      scope: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}scope'],
-      )!,
-      evidenceIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}evidence_ids_json'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      lastVerifiedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_verified_at'],
-      ),
-      declaredAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}declared_at'],
-      )!,
-      mergedIntoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}merged_into_id'],
-      ),
-    );
-  }
-
-  @override
-  $KnowledgeAssumptionsTable createAlias(String alias) {
-    return $KnowledgeAssumptionsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class KnowledgeAssumptionRow extends DataClass
-    implements Insertable<KnowledgeAssumptionRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String statement;
-  final double confidence;
-  final String scope;
-  final String evidenceIdsJson;
-  final String status;
-  final DateTime? lastVerifiedAt;
-  final DateTime declaredAt;
-
-  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. An assumption merged
-  /// into another is soft-deleted and stamped with the survivor's id; any
-  /// Decision (`assumptionIds`) or Experiment (`targetAssumptionId`)
-  /// referencing it is re-pointed to the survivor (§15.3 P1).
-  final String? mergedIntoId;
-  const KnowledgeAssumptionRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.statement,
-    required this.confidence,
-    required this.scope,
-    required this.evidenceIdsJson,
-    required this.status,
-    this.lastVerifiedAt,
-    required this.declaredAt,
-    this.mergedIntoId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $KnowledgeAssumptionsTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['statement'] = Variable<String>(statement);
-    map['confidence'] = Variable<double>(confidence);
-    map['scope'] = Variable<String>(scope);
-    map['evidence_ids_json'] = Variable<String>(evidenceIdsJson);
-    map['status'] = Variable<String>(status);
-    if (!nullToAbsent || lastVerifiedAt != null) {
-      map['last_verified_at'] = Variable<DateTime>(lastVerifiedAt);
-    }
-    map['declared_at'] = Variable<DateTime>(declaredAt);
-    if (!nullToAbsent || mergedIntoId != null) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId);
-    }
-    return map;
-  }
-
-  KnowledgeAssumptionsCompanion toCompanion(bool nullToAbsent) {
-    return KnowledgeAssumptionsCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      statement: Value(statement),
-      confidence: Value(confidence),
-      scope: Value(scope),
-      evidenceIdsJson: Value(evidenceIdsJson),
-      status: Value(status),
-      lastVerifiedAt: lastVerifiedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastVerifiedAt),
-      declaredAt: Value(declaredAt),
-      mergedIntoId: mergedIntoId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(mergedIntoId),
-    );
-  }
-
-  factory KnowledgeAssumptionRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KnowledgeAssumptionRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      statement: serializer.fromJson<String>(json['statement']),
-      confidence: serializer.fromJson<double>(json['confidence']),
-      scope: serializer.fromJson<String>(json['scope']),
-      evidenceIdsJson: serializer.fromJson<String>(json['evidenceIdsJson']),
-      status: serializer.fromJson<String>(json['status']),
-      lastVerifiedAt: serializer.fromJson<DateTime?>(json['lastVerifiedAt']),
-      declaredAt: serializer.fromJson<DateTime>(json['declaredAt']),
-      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'statement': serializer.toJson<String>(statement),
-      'confidence': serializer.toJson<double>(confidence),
-      'scope': serializer.toJson<String>(scope),
-      'evidenceIdsJson': serializer.toJson<String>(evidenceIdsJson),
-      'status': serializer.toJson<String>(status),
-      'lastVerifiedAt': serializer.toJson<DateTime?>(lastVerifiedAt),
-      'declaredAt': serializer.toJson<DateTime>(declaredAt),
-      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
-    };
-  }
-
-  KnowledgeAssumptionRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? statement,
-    double? confidence,
-    String? scope,
-    String? evidenceIdsJson,
-    String? status,
-    Value<DateTime?> lastVerifiedAt = const Value.absent(),
-    DateTime? declaredAt,
-    Value<String?> mergedIntoId = const Value.absent(),
-  }) => KnowledgeAssumptionRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    statement: statement ?? this.statement,
-    confidence: confidence ?? this.confidence,
-    scope: scope ?? this.scope,
-    evidenceIdsJson: evidenceIdsJson ?? this.evidenceIdsJson,
-    status: status ?? this.status,
-    lastVerifiedAt: lastVerifiedAt.present
-        ? lastVerifiedAt.value
-        : this.lastVerifiedAt,
-    declaredAt: declaredAt ?? this.declaredAt,
-    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
-  );
-  KnowledgeAssumptionRow copyWithCompanion(KnowledgeAssumptionsCompanion data) {
-    return KnowledgeAssumptionRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      statement: data.statement.present ? data.statement.value : this.statement,
-      confidence: data.confidence.present
-          ? data.confidence.value
-          : this.confidence,
-      scope: data.scope.present ? data.scope.value : this.scope,
-      evidenceIdsJson: data.evidenceIdsJson.present
-          ? data.evidenceIdsJson.value
-          : this.evidenceIdsJson,
-      status: data.status.present ? data.status.value : this.status,
-      lastVerifiedAt: data.lastVerifiedAt.present
-          ? data.lastVerifiedAt.value
-          : this.lastVerifiedAt,
-      declaredAt: data.declaredAt.present
-          ? data.declaredAt.value
-          : this.declaredAt,
-      mergedIntoId: data.mergedIntoId.present
-          ? data.mergedIntoId.value
-          : this.mergedIntoId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeAssumptionRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('statement: $statement, ')
-          ..write('confidence: $confidence, ')
-          ..write('scope: $scope, ')
-          ..write('evidenceIdsJson: $evidenceIdsJson, ')
-          ..write('status: $status, ')
-          ..write('lastVerifiedAt: $lastVerifiedAt, ')
-          ..write('declaredAt: $declaredAt, ')
-          ..write('mergedIntoId: $mergedIntoId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    statement,
-    confidence,
-    scope,
-    evidenceIdsJson,
-    status,
-    lastVerifiedAt,
-    declaredAt,
-    mergedIntoId,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KnowledgeAssumptionRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.statement == this.statement &&
-          other.confidence == this.confidence &&
-          other.scope == this.scope &&
-          other.evidenceIdsJson == this.evidenceIdsJson &&
-          other.status == this.status &&
-          other.lastVerifiedAt == this.lastVerifiedAt &&
-          other.declaredAt == this.declaredAt &&
-          other.mergedIntoId == this.mergedIntoId);
-}
-
-class KnowledgeAssumptionsCompanion
-    extends UpdateCompanion<KnowledgeAssumptionRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> statement;
-  final Value<double> confidence;
-  final Value<String> scope;
-  final Value<String> evidenceIdsJson;
-  final Value<String> status;
-  final Value<DateTime?> lastVerifiedAt;
-  final Value<DateTime> declaredAt;
-  final Value<String?> mergedIntoId;
-  final Value<int> rowid;
-  const KnowledgeAssumptionsCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.statement = const Value.absent(),
-    this.confidence = const Value.absent(),
-    this.scope = const Value.absent(),
-    this.evidenceIdsJson = const Value.absent(),
-    this.status = const Value.absent(),
-    this.lastVerifiedAt = const Value.absent(),
-    this.declaredAt = const Value.absent(),
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  KnowledgeAssumptionsCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String statement,
-    this.confidence = const Value.absent(),
-    this.scope = const Value.absent(),
-    this.evidenceIdsJson = const Value.absent(),
-    this.status = const Value.absent(),
-    this.lastVerifiedAt = const Value.absent(),
-    required DateTime declaredAt,
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       statement = Value(statement),
-       declaredAt = Value(declaredAt);
-  static Insertable<KnowledgeAssumptionRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? statement,
-    Expression<double>? confidence,
-    Expression<String>? scope,
-    Expression<String>? evidenceIdsJson,
-    Expression<String>? status,
-    Expression<DateTime>? lastVerifiedAt,
-    Expression<DateTime>? declaredAt,
-    Expression<String>? mergedIntoId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (statement != null) 'statement': statement,
-      if (confidence != null) 'confidence': confidence,
-      if (scope != null) 'scope': scope,
-      if (evidenceIdsJson != null) 'evidence_ids_json': evidenceIdsJson,
-      if (status != null) 'status': status,
-      if (lastVerifiedAt != null) 'last_verified_at': lastVerifiedAt,
-      if (declaredAt != null) 'declared_at': declaredAt,
-      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  KnowledgeAssumptionsCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? statement,
-    Value<double>? confidence,
-    Value<String>? scope,
-    Value<String>? evidenceIdsJson,
-    Value<String>? status,
-    Value<DateTime?>? lastVerifiedAt,
-    Value<DateTime>? declaredAt,
-    Value<String?>? mergedIntoId,
-    Value<int>? rowid,
-  }) {
-    return KnowledgeAssumptionsCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      statement: statement ?? this.statement,
-      confidence: confidence ?? this.confidence,
-      scope: scope ?? this.scope,
-      evidenceIdsJson: evidenceIdsJson ?? this.evidenceIdsJson,
-      status: status ?? this.status,
-      lastVerifiedAt: lastVerifiedAt ?? this.lastVerifiedAt,
-      declaredAt: declaredAt ?? this.declaredAt,
-      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $KnowledgeAssumptionsTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (statement.present) {
-      map['statement'] = Variable<String>(statement.value);
-    }
-    if (confidence.present) {
-      map['confidence'] = Variable<double>(confidence.value);
-    }
-    if (scope.present) {
-      map['scope'] = Variable<String>(scope.value);
-    }
-    if (evidenceIdsJson.present) {
-      map['evidence_ids_json'] = Variable<String>(evidenceIdsJson.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (lastVerifiedAt.present) {
-      map['last_verified_at'] = Variable<DateTime>(lastVerifiedAt.value);
-    }
-    if (declaredAt.present) {
-      map['declared_at'] = Variable<DateTime>(declaredAt.value);
-    }
-    if (mergedIntoId.present) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeAssumptionsCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('statement: $statement, ')
-          ..write('confidence: $confidence, ')
-          ..write('scope: $scope, ')
-          ..write('evidenceIdsJson: $evidenceIdsJson, ')
-          ..write('status: $status, ')
-          ..write('lastVerifiedAt: $lastVerifiedAt, ')
-          ..write('declaredAt: $declaredAt, ')
           ..write('mergedIntoId: $mergedIntoId, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -39537,31 +37730,6 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     requiredDuringInsert: false,
     defaultValue: const Constant(''),
   );
-  static const VerificationMeta _principleIdsJsonMeta = const VerificationMeta(
-    'principleIdsJson',
-  );
-  @override
-  late final GeneratedColumn<String> principleIdsJson = GeneratedColumn<String>(
-    'principle_ids_json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('[]'),
-  );
-  static const VerificationMeta _assumptionIdsJsonMeta = const VerificationMeta(
-    'assumptionIdsJson',
-  );
-  @override
-  late final GeneratedColumn<String> assumptionIdsJson =
-      GeneratedColumn<String>(
-        'assumption_ids_json',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('[]'),
-      );
   static const VerificationMeta _expectedOutcomeMeta = const VerificationMeta(
     'expectedOutcome',
   );
@@ -39628,17 +37796,6 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         type: DriftSqlType.string,
         requiredDuringInsert: false,
       );
-  static const VerificationMeta _contextSnapshotJsonMeta =
-      const VerificationMeta('contextSnapshotJson');
-  @override
-  late final GeneratedColumn<String> contextSnapshotJson =
-      GeneratedColumn<String>(
-        'context_snapshot_json',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
   static const VerificationMeta _decidedAtMeta = const VerificationMeta(
     'decidedAt',
   );
@@ -39673,15 +37830,12 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
     optionsJson,
     selectedLabel,
     rationaleMd,
-    principleIdsJson,
-    assumptionIdsJson,
     expectedOutcome,
     reviewDate,
     revisitConditionsJson,
     actualOutcomeMd,
     status,
     supersededByDecisionId,
-    contextSnapshotJson,
     decidedAt,
     mergedIntoId,
   ];
@@ -39773,24 +37927,6 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         ),
       );
     }
-    if (data.containsKey('principle_ids_json')) {
-      context.handle(
-        _principleIdsJsonMeta,
-        principleIdsJson.isAcceptableOrUnknown(
-          data['principle_ids_json']!,
-          _principleIdsJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('assumption_ids_json')) {
-      context.handle(
-        _assumptionIdsJsonMeta,
-        assumptionIdsJson.isAcceptableOrUnknown(
-          data['assumption_ids_json']!,
-          _assumptionIdsJsonMeta,
-        ),
-      );
-    }
     if (data.containsKey('expected_outcome')) {
       context.handle(
         _expectedOutcomeMeta,
@@ -39836,15 +37972,6 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         supersededByDecisionId.isAcceptableOrUnknown(
           data['superseded_by_decision_id']!,
           _supersededByDecisionIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('context_snapshot_json')) {
-      context.handle(
-        _contextSnapshotJsonMeta,
-        contextSnapshotJson.isAcceptableOrUnknown(
-          data['context_snapshot_json']!,
-          _contextSnapshotJsonMeta,
         ),
       );
     }
@@ -39916,14 +38043,6 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
         DriftSqlType.string,
         data['${effectivePrefix}rationale_md'],
       )!,
-      principleIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}principle_ids_json'],
-      )!,
-      assumptionIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}assumption_ids_json'],
-      )!,
       expectedOutcome: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}expected_outcome'],
@@ -39947,10 +38066,6 @@ class $KnowledgeDecisionsTable extends KnowledgeDecisions
       supersededByDecisionId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}superseded_by_decision_id'],
-      ),
-      contextSnapshotJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}context_snapshot_json'],
       ),
       decidedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
@@ -39999,23 +38114,13 @@ class KnowledgeDecisionRow extends DataClass
   final String optionsJson;
   final String selectedLabel;
   final String rationaleMd;
-  final String principleIdsJson;
-  final String assumptionIdsJson;
   final String? expectedOutcome;
   final DateTime? reviewDate;
   final String revisitConditionsJson;
   final String? actualOutcomeMd;
   final String status;
   final String? supersededByDecisionId;
-  final String? contextSnapshotJson;
   final DateTime decidedAt;
-
-  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. A decision merged
-  /// into another is soft-deleted and stamped with the survivor's id; any
-  /// other decision whose `supersededByDecisionId` pointed at it is
-  /// re-pointed to the survivor (§15.3 P1). Distinct from `superseded`
-  /// status — merge is "these were the same decision", supersede is
-  /// "a later decision replaced this one".
   final String? mergedIntoId;
   const KnowledgeDecisionRow({
     required this.ownerUserId,
@@ -40028,15 +38133,12 @@ class KnowledgeDecisionRow extends DataClass
     required this.optionsJson,
     required this.selectedLabel,
     required this.rationaleMd,
-    required this.principleIdsJson,
-    required this.assumptionIdsJson,
     this.expectedOutcome,
     this.reviewDate,
     required this.revisitConditionsJson,
     this.actualOutcomeMd,
     required this.status,
     this.supersededByDecisionId,
-    this.contextSnapshotJson,
     required this.decidedAt,
     this.mergedIntoId,
   });
@@ -40059,8 +38161,6 @@ class KnowledgeDecisionRow extends DataClass
     map['options_json'] = Variable<String>(optionsJson);
     map['selected_label'] = Variable<String>(selectedLabel);
     map['rationale_md'] = Variable<String>(rationaleMd);
-    map['principle_ids_json'] = Variable<String>(principleIdsJson);
-    map['assumption_ids_json'] = Variable<String>(assumptionIdsJson);
     if (!nullToAbsent || expectedOutcome != null) {
       map['expected_outcome'] = Variable<String>(expectedOutcome);
     }
@@ -40076,9 +38176,6 @@ class KnowledgeDecisionRow extends DataClass
       map['superseded_by_decision_id'] = Variable<String>(
         supersededByDecisionId,
       );
-    }
-    if (!nullToAbsent || contextSnapshotJson != null) {
-      map['context_snapshot_json'] = Variable<String>(contextSnapshotJson);
     }
     map['decided_at'] = Variable<DateTime>(decidedAt);
     if (!nullToAbsent || mergedIntoId != null) {
@@ -40101,8 +38198,6 @@ class KnowledgeDecisionRow extends DataClass
       optionsJson: Value(optionsJson),
       selectedLabel: Value(selectedLabel),
       rationaleMd: Value(rationaleMd),
-      principleIdsJson: Value(principleIdsJson),
-      assumptionIdsJson: Value(assumptionIdsJson),
       expectedOutcome: expectedOutcome == null && nullToAbsent
           ? const Value.absent()
           : Value(expectedOutcome),
@@ -40117,9 +38212,6 @@ class KnowledgeDecisionRow extends DataClass
       supersededByDecisionId: supersededByDecisionId == null && nullToAbsent
           ? const Value.absent()
           : Value(supersededByDecisionId),
-      contextSnapshotJson: contextSnapshotJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(contextSnapshotJson),
       decidedAt: Value(decidedAt),
       mergedIntoId: mergedIntoId == null && nullToAbsent
           ? const Value.absent()
@@ -40143,8 +38235,6 @@ class KnowledgeDecisionRow extends DataClass
       optionsJson: serializer.fromJson<String>(json['optionsJson']),
       selectedLabel: serializer.fromJson<String>(json['selectedLabel']),
       rationaleMd: serializer.fromJson<String>(json['rationaleMd']),
-      principleIdsJson: serializer.fromJson<String>(json['principleIdsJson']),
-      assumptionIdsJson: serializer.fromJson<String>(json['assumptionIdsJson']),
       expectedOutcome: serializer.fromJson<String?>(json['expectedOutcome']),
       reviewDate: serializer.fromJson<DateTime?>(json['reviewDate']),
       revisitConditionsJson: serializer.fromJson<String>(
@@ -40154,9 +38244,6 @@ class KnowledgeDecisionRow extends DataClass
       status: serializer.fromJson<String>(json['status']),
       supersededByDecisionId: serializer.fromJson<String?>(
         json['supersededByDecisionId'],
-      ),
-      contextSnapshotJson: serializer.fromJson<String?>(
-        json['contextSnapshotJson'],
       ),
       decidedAt: serializer.fromJson<DateTime>(json['decidedAt']),
       mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
@@ -40176,8 +38263,6 @@ class KnowledgeDecisionRow extends DataClass
       'optionsJson': serializer.toJson<String>(optionsJson),
       'selectedLabel': serializer.toJson<String>(selectedLabel),
       'rationaleMd': serializer.toJson<String>(rationaleMd),
-      'principleIdsJson': serializer.toJson<String>(principleIdsJson),
-      'assumptionIdsJson': serializer.toJson<String>(assumptionIdsJson),
       'expectedOutcome': serializer.toJson<String?>(expectedOutcome),
       'reviewDate': serializer.toJson<DateTime?>(reviewDate),
       'revisitConditionsJson': serializer.toJson<String>(revisitConditionsJson),
@@ -40186,7 +38271,6 @@ class KnowledgeDecisionRow extends DataClass
       'supersededByDecisionId': serializer.toJson<String?>(
         supersededByDecisionId,
       ),
-      'contextSnapshotJson': serializer.toJson<String?>(contextSnapshotJson),
       'decidedAt': serializer.toJson<DateTime>(decidedAt),
       'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
     };
@@ -40203,15 +38287,12 @@ class KnowledgeDecisionRow extends DataClass
     String? optionsJson,
     String? selectedLabel,
     String? rationaleMd,
-    String? principleIdsJson,
-    String? assumptionIdsJson,
     Value<String?> expectedOutcome = const Value.absent(),
     Value<DateTime?> reviewDate = const Value.absent(),
     String? revisitConditionsJson,
     Value<String?> actualOutcomeMd = const Value.absent(),
     String? status,
     Value<String?> supersededByDecisionId = const Value.absent(),
-    Value<String?> contextSnapshotJson = const Value.absent(),
     DateTime? decidedAt,
     Value<String?> mergedIntoId = const Value.absent(),
   }) => KnowledgeDecisionRow(
@@ -40225,8 +38306,6 @@ class KnowledgeDecisionRow extends DataClass
     optionsJson: optionsJson ?? this.optionsJson,
     selectedLabel: selectedLabel ?? this.selectedLabel,
     rationaleMd: rationaleMd ?? this.rationaleMd,
-    principleIdsJson: principleIdsJson ?? this.principleIdsJson,
-    assumptionIdsJson: assumptionIdsJson ?? this.assumptionIdsJson,
     expectedOutcome: expectedOutcome.present
         ? expectedOutcome.value
         : this.expectedOutcome,
@@ -40239,9 +38318,6 @@ class KnowledgeDecisionRow extends DataClass
     supersededByDecisionId: supersededByDecisionId.present
         ? supersededByDecisionId.value
         : this.supersededByDecisionId,
-    contextSnapshotJson: contextSnapshotJson.present
-        ? contextSnapshotJson.value
-        : this.contextSnapshotJson,
     decidedAt: decidedAt ?? this.decidedAt,
     mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
   );
@@ -40267,12 +38343,6 @@ class KnowledgeDecisionRow extends DataClass
       rationaleMd: data.rationaleMd.present
           ? data.rationaleMd.value
           : this.rationaleMd,
-      principleIdsJson: data.principleIdsJson.present
-          ? data.principleIdsJson.value
-          : this.principleIdsJson,
-      assumptionIdsJson: data.assumptionIdsJson.present
-          ? data.assumptionIdsJson.value
-          : this.assumptionIdsJson,
       expectedOutcome: data.expectedOutcome.present
           ? data.expectedOutcome.value
           : this.expectedOutcome,
@@ -40289,9 +38359,6 @@ class KnowledgeDecisionRow extends DataClass
       supersededByDecisionId: data.supersededByDecisionId.present
           ? data.supersededByDecisionId.value
           : this.supersededByDecisionId,
-      contextSnapshotJson: data.contextSnapshotJson.present
-          ? data.contextSnapshotJson.value
-          : this.contextSnapshotJson,
       decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
       mergedIntoId: data.mergedIntoId.present
           ? data.mergedIntoId.value
@@ -40312,15 +38379,12 @@ class KnowledgeDecisionRow extends DataClass
           ..write('optionsJson: $optionsJson, ')
           ..write('selectedLabel: $selectedLabel, ')
           ..write('rationaleMd: $rationaleMd, ')
-          ..write('principleIdsJson: $principleIdsJson, ')
-          ..write('assumptionIdsJson: $assumptionIdsJson, ')
           ..write('expectedOutcome: $expectedOutcome, ')
           ..write('reviewDate: $reviewDate, ')
           ..write('revisitConditionsJson: $revisitConditionsJson, ')
           ..write('actualOutcomeMd: $actualOutcomeMd, ')
           ..write('status: $status, ')
           ..write('supersededByDecisionId: $supersededByDecisionId, ')
-          ..write('contextSnapshotJson: $contextSnapshotJson, ')
           ..write('decidedAt: $decidedAt, ')
           ..write('mergedIntoId: $mergedIntoId')
           ..write(')'))
@@ -40328,7 +38392,7 @@ class KnowledgeDecisionRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hashAll([
+  int get hashCode => Object.hash(
     ownerUserId,
     updatedAt,
     updatedByDevice,
@@ -40339,18 +38403,15 @@ class KnowledgeDecisionRow extends DataClass
     optionsJson,
     selectedLabel,
     rationaleMd,
-    principleIdsJson,
-    assumptionIdsJson,
     expectedOutcome,
     reviewDate,
     revisitConditionsJson,
     actualOutcomeMd,
     status,
     supersededByDecisionId,
-    contextSnapshotJson,
     decidedAt,
     mergedIntoId,
-  ]);
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -40365,15 +38426,12 @@ class KnowledgeDecisionRow extends DataClass
           other.optionsJson == this.optionsJson &&
           other.selectedLabel == this.selectedLabel &&
           other.rationaleMd == this.rationaleMd &&
-          other.principleIdsJson == this.principleIdsJson &&
-          other.assumptionIdsJson == this.assumptionIdsJson &&
           other.expectedOutcome == this.expectedOutcome &&
           other.reviewDate == this.reviewDate &&
           other.revisitConditionsJson == this.revisitConditionsJson &&
           other.actualOutcomeMd == this.actualOutcomeMd &&
           other.status == this.status &&
           other.supersededByDecisionId == this.supersededByDecisionId &&
-          other.contextSnapshotJson == this.contextSnapshotJson &&
           other.decidedAt == this.decidedAt &&
           other.mergedIntoId == this.mergedIntoId);
 }
@@ -40390,15 +38448,12 @@ class KnowledgeDecisionsCompanion
   final Value<String> optionsJson;
   final Value<String> selectedLabel;
   final Value<String> rationaleMd;
-  final Value<String> principleIdsJson;
-  final Value<String> assumptionIdsJson;
   final Value<String?> expectedOutcome;
   final Value<DateTime?> reviewDate;
   final Value<String> revisitConditionsJson;
   final Value<String?> actualOutcomeMd;
   final Value<String> status;
   final Value<String?> supersededByDecisionId;
-  final Value<String?> contextSnapshotJson;
   final Value<DateTime> decidedAt;
   final Value<String?> mergedIntoId;
   final Value<int> rowid;
@@ -40413,15 +38468,12 @@ class KnowledgeDecisionsCompanion
     this.optionsJson = const Value.absent(),
     this.selectedLabel = const Value.absent(),
     this.rationaleMd = const Value.absent(),
-    this.principleIdsJson = const Value.absent(),
-    this.assumptionIdsJson = const Value.absent(),
     this.expectedOutcome = const Value.absent(),
     this.reviewDate = const Value.absent(),
     this.revisitConditionsJson = const Value.absent(),
     this.actualOutcomeMd = const Value.absent(),
     this.status = const Value.absent(),
     this.supersededByDecisionId = const Value.absent(),
-    this.contextSnapshotJson = const Value.absent(),
     this.decidedAt = const Value.absent(),
     this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -40437,15 +38489,12 @@ class KnowledgeDecisionsCompanion
     this.optionsJson = const Value.absent(),
     this.selectedLabel = const Value.absent(),
     this.rationaleMd = const Value.absent(),
-    this.principleIdsJson = const Value.absent(),
-    this.assumptionIdsJson = const Value.absent(),
     this.expectedOutcome = const Value.absent(),
     this.reviewDate = const Value.absent(),
     this.revisitConditionsJson = const Value.absent(),
     this.actualOutcomeMd = const Value.absent(),
     this.status = const Value.absent(),
     this.supersededByDecisionId = const Value.absent(),
-    this.contextSnapshotJson = const Value.absent(),
     required DateTime decidedAt,
     this.mergedIntoId = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -40467,15 +38516,12 @@ class KnowledgeDecisionsCompanion
     Expression<String>? optionsJson,
     Expression<String>? selectedLabel,
     Expression<String>? rationaleMd,
-    Expression<String>? principleIdsJson,
-    Expression<String>? assumptionIdsJson,
     Expression<String>? expectedOutcome,
     Expression<DateTime>? reviewDate,
     Expression<String>? revisitConditionsJson,
     Expression<String>? actualOutcomeMd,
     Expression<String>? status,
     Expression<String>? supersededByDecisionId,
-    Expression<String>? contextSnapshotJson,
     Expression<DateTime>? decidedAt,
     Expression<String>? mergedIntoId,
     Expression<int>? rowid,
@@ -40491,8 +38537,6 @@ class KnowledgeDecisionsCompanion
       if (optionsJson != null) 'options_json': optionsJson,
       if (selectedLabel != null) 'selected_label': selectedLabel,
       if (rationaleMd != null) 'rationale_md': rationaleMd,
-      if (principleIdsJson != null) 'principle_ids_json': principleIdsJson,
-      if (assumptionIdsJson != null) 'assumption_ids_json': assumptionIdsJson,
       if (expectedOutcome != null) 'expected_outcome': expectedOutcome,
       if (reviewDate != null) 'review_date': reviewDate,
       if (revisitConditionsJson != null)
@@ -40501,8 +38545,6 @@ class KnowledgeDecisionsCompanion
       if (status != null) 'status': status,
       if (supersededByDecisionId != null)
         'superseded_by_decision_id': supersededByDecisionId,
-      if (contextSnapshotJson != null)
-        'context_snapshot_json': contextSnapshotJson,
       if (decidedAt != null) 'decided_at': decidedAt,
       if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
       if (rowid != null) 'rowid': rowid,
@@ -40520,15 +38562,12 @@ class KnowledgeDecisionsCompanion
     Value<String>? optionsJson,
     Value<String>? selectedLabel,
     Value<String>? rationaleMd,
-    Value<String>? principleIdsJson,
-    Value<String>? assumptionIdsJson,
     Value<String?>? expectedOutcome,
     Value<DateTime?>? reviewDate,
     Value<String>? revisitConditionsJson,
     Value<String?>? actualOutcomeMd,
     Value<String>? status,
     Value<String?>? supersededByDecisionId,
-    Value<String?>? contextSnapshotJson,
     Value<DateTime>? decidedAt,
     Value<String?>? mergedIntoId,
     Value<int>? rowid,
@@ -40544,8 +38583,6 @@ class KnowledgeDecisionsCompanion
       optionsJson: optionsJson ?? this.optionsJson,
       selectedLabel: selectedLabel ?? this.selectedLabel,
       rationaleMd: rationaleMd ?? this.rationaleMd,
-      principleIdsJson: principleIdsJson ?? this.principleIdsJson,
-      assumptionIdsJson: assumptionIdsJson ?? this.assumptionIdsJson,
       expectedOutcome: expectedOutcome ?? this.expectedOutcome,
       reviewDate: reviewDate ?? this.reviewDate,
       revisitConditionsJson:
@@ -40554,7 +38591,6 @@ class KnowledgeDecisionsCompanion
       status: status ?? this.status,
       supersededByDecisionId:
           supersededByDecisionId ?? this.supersededByDecisionId,
-      contextSnapshotJson: contextSnapshotJson ?? this.contextSnapshotJson,
       decidedAt: decidedAt ?? this.decidedAt,
       mergedIntoId: mergedIntoId ?? this.mergedIntoId,
       rowid: rowid ?? this.rowid,
@@ -40596,12 +38632,6 @@ class KnowledgeDecisionsCompanion
     if (rationaleMd.present) {
       map['rationale_md'] = Variable<String>(rationaleMd.value);
     }
-    if (principleIdsJson.present) {
-      map['principle_ids_json'] = Variable<String>(principleIdsJson.value);
-    }
-    if (assumptionIdsJson.present) {
-      map['assumption_ids_json'] = Variable<String>(assumptionIdsJson.value);
-    }
     if (expectedOutcome.present) {
       map['expected_outcome'] = Variable<String>(expectedOutcome.value);
     }
@@ -40622,11 +38652,6 @@ class KnowledgeDecisionsCompanion
     if (supersededByDecisionId.present) {
       map['superseded_by_decision_id'] = Variable<String>(
         supersededByDecisionId.value,
-      );
-    }
-    if (contextSnapshotJson.present) {
-      map['context_snapshot_json'] = Variable<String>(
-        contextSnapshotJson.value,
       );
     }
     if (decidedAt.present) {
@@ -40654,2503 +38679,14 @@ class KnowledgeDecisionsCompanion
           ..write('optionsJson: $optionsJson, ')
           ..write('selectedLabel: $selectedLabel, ')
           ..write('rationaleMd: $rationaleMd, ')
-          ..write('principleIdsJson: $principleIdsJson, ')
-          ..write('assumptionIdsJson: $assumptionIdsJson, ')
           ..write('expectedOutcome: $expectedOutcome, ')
           ..write('reviewDate: $reviewDate, ')
           ..write('revisitConditionsJson: $revisitConditionsJson, ')
           ..write('actualOutcomeMd: $actualOutcomeMd, ')
           ..write('status: $status, ')
           ..write('supersededByDecisionId: $supersededByDecisionId, ')
-          ..write('contextSnapshotJson: $contextSnapshotJson, ')
           ..write('decidedAt: $decidedAt, ')
           ..write('mergedIntoId: $mergedIntoId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KnowledgeConceptsTable extends KnowledgeConcepts
-    with TableInfo<$KnowledgeConceptsTable, KnowledgeConceptRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KnowledgeConceptsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($KnowledgeConceptsTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _aliasesJsonMeta = const VerificationMeta(
-    'aliasesJson',
-  );
-  @override
-  late final GeneratedColumn<String> aliasesJson = GeneratedColumn<String>(
-    'aliases_json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('[]'),
-  );
-  static const VerificationMeta _summaryMdMeta = const VerificationMeta(
-    'summaryMd',
-  );
-  @override
-  late final GeneratedColumn<String> summaryMd = GeneratedColumn<String>(
-    'summary_md',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(''),
-  );
-  static const VerificationMeta _relatedConceptIdsJsonMeta =
-      const VerificationMeta('relatedConceptIdsJson');
-  @override
-  late final GeneratedColumn<String> relatedConceptIdsJson =
-      GeneratedColumn<String>(
-        'related_concept_ids_json',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-        defaultValue: const Constant('[]'),
-      );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
-    'mergedIntoId',
-  );
-  @override
-  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
-    'merged_into_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    name,
-    aliasesJson,
-    summaryMd,
-    relatedConceptIdsJson,
-    createdAt,
-    mergedIntoId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'knowledge_concepts';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<KnowledgeConceptRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('aliases_json')) {
-      context.handle(
-        _aliasesJsonMeta,
-        aliasesJson.isAcceptableOrUnknown(
-          data['aliases_json']!,
-          _aliasesJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('summary_md')) {
-      context.handle(
-        _summaryMdMeta,
-        summaryMd.isAcceptableOrUnknown(data['summary_md']!, _summaryMdMeta),
-      );
-    }
-    if (data.containsKey('related_concept_ids_json')) {
-      context.handle(
-        _relatedConceptIdsJsonMeta,
-        relatedConceptIdsJson.isAcceptableOrUnknown(
-          data['related_concept_ids_json']!,
-          _relatedConceptIdsJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('merged_into_id')) {
-      context.handle(
-        _mergedIntoIdMeta,
-        mergedIntoId.isAcceptableOrUnknown(
-          data['merged_into_id']!,
-          _mergedIntoIdMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KnowledgeConceptRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KnowledgeConceptRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $KnowledgeConceptsTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      aliasesJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}aliases_json'],
-      )!,
-      summaryMd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}summary_md'],
-      )!,
-      relatedConceptIdsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}related_concept_ids_json'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      mergedIntoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}merged_into_id'],
-      ),
-    );
-  }
-
-  @override
-  $KnowledgeConceptsTable createAlias(String alias) {
-    return $KnowledgeConceptsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class KnowledgeConceptRow extends DataClass
-    implements Insertable<KnowledgeConceptRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String name;
-  final String aliasesJson;
-  final String summaryMd;
-  final String relatedConceptIdsJson;
-  final DateTime createdAt;
-
-  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. When this concept
-  /// is merged into another, it is soft-deleted and stamped with the
-  /// survivor's id; the survivor unions aliases + relatedConceptIds.
-  final String? mergedIntoId;
-  const KnowledgeConceptRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.name,
-    required this.aliasesJson,
-    required this.summaryMd,
-    required this.relatedConceptIdsJson,
-    required this.createdAt,
-    this.mergedIntoId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $KnowledgeConceptsTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['name'] = Variable<String>(name);
-    map['aliases_json'] = Variable<String>(aliasesJson);
-    map['summary_md'] = Variable<String>(summaryMd);
-    map['related_concept_ids_json'] = Variable<String>(relatedConceptIdsJson);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || mergedIntoId != null) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId);
-    }
-    return map;
-  }
-
-  KnowledgeConceptsCompanion toCompanion(bool nullToAbsent) {
-    return KnowledgeConceptsCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      name: Value(name),
-      aliasesJson: Value(aliasesJson),
-      summaryMd: Value(summaryMd),
-      relatedConceptIdsJson: Value(relatedConceptIdsJson),
-      createdAt: Value(createdAt),
-      mergedIntoId: mergedIntoId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(mergedIntoId),
-    );
-  }
-
-  factory KnowledgeConceptRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KnowledgeConceptRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      name: serializer.fromJson<String>(json['name']),
-      aliasesJson: serializer.fromJson<String>(json['aliasesJson']),
-      summaryMd: serializer.fromJson<String>(json['summaryMd']),
-      relatedConceptIdsJson: serializer.fromJson<String>(
-        json['relatedConceptIdsJson'],
-      ),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'name': serializer.toJson<String>(name),
-      'aliasesJson': serializer.toJson<String>(aliasesJson),
-      'summaryMd': serializer.toJson<String>(summaryMd),
-      'relatedConceptIdsJson': serializer.toJson<String>(relatedConceptIdsJson),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
-    };
-  }
-
-  KnowledgeConceptRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? name,
-    String? aliasesJson,
-    String? summaryMd,
-    String? relatedConceptIdsJson,
-    DateTime? createdAt,
-    Value<String?> mergedIntoId = const Value.absent(),
-  }) => KnowledgeConceptRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    name: name ?? this.name,
-    aliasesJson: aliasesJson ?? this.aliasesJson,
-    summaryMd: summaryMd ?? this.summaryMd,
-    relatedConceptIdsJson: relatedConceptIdsJson ?? this.relatedConceptIdsJson,
-    createdAt: createdAt ?? this.createdAt,
-    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
-  );
-  KnowledgeConceptRow copyWithCompanion(KnowledgeConceptsCompanion data) {
-    return KnowledgeConceptRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      name: data.name.present ? data.name.value : this.name,
-      aliasesJson: data.aliasesJson.present
-          ? data.aliasesJson.value
-          : this.aliasesJson,
-      summaryMd: data.summaryMd.present ? data.summaryMd.value : this.summaryMd,
-      relatedConceptIdsJson: data.relatedConceptIdsJson.present
-          ? data.relatedConceptIdsJson.value
-          : this.relatedConceptIdsJson,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      mergedIntoId: data.mergedIntoId.present
-          ? data.mergedIntoId.value
-          : this.mergedIntoId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeConceptRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('aliasesJson: $aliasesJson, ')
-          ..write('summaryMd: $summaryMd, ')
-          ..write('relatedConceptIdsJson: $relatedConceptIdsJson, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('mergedIntoId: $mergedIntoId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    name,
-    aliasesJson,
-    summaryMd,
-    relatedConceptIdsJson,
-    createdAt,
-    mergedIntoId,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KnowledgeConceptRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.name == this.name &&
-          other.aliasesJson == this.aliasesJson &&
-          other.summaryMd == this.summaryMd &&
-          other.relatedConceptIdsJson == this.relatedConceptIdsJson &&
-          other.createdAt == this.createdAt &&
-          other.mergedIntoId == this.mergedIntoId);
-}
-
-class KnowledgeConceptsCompanion extends UpdateCompanion<KnowledgeConceptRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> name;
-  final Value<String> aliasesJson;
-  final Value<String> summaryMd;
-  final Value<String> relatedConceptIdsJson;
-  final Value<DateTime> createdAt;
-  final Value<String?> mergedIntoId;
-  final Value<int> rowid;
-  const KnowledgeConceptsCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.name = const Value.absent(),
-    this.aliasesJson = const Value.absent(),
-    this.summaryMd = const Value.absent(),
-    this.relatedConceptIdsJson = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  KnowledgeConceptsCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String name,
-    this.aliasesJson = const Value.absent(),
-    this.summaryMd = const Value.absent(),
-    this.relatedConceptIdsJson = const Value.absent(),
-    required DateTime createdAt,
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       name = Value(name),
-       createdAt = Value(createdAt);
-  static Insertable<KnowledgeConceptRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? name,
-    Expression<String>? aliasesJson,
-    Expression<String>? summaryMd,
-    Expression<String>? relatedConceptIdsJson,
-    Expression<DateTime>? createdAt,
-    Expression<String>? mergedIntoId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (name != null) 'name': name,
-      if (aliasesJson != null) 'aliases_json': aliasesJson,
-      if (summaryMd != null) 'summary_md': summaryMd,
-      if (relatedConceptIdsJson != null)
-        'related_concept_ids_json': relatedConceptIdsJson,
-      if (createdAt != null) 'created_at': createdAt,
-      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  KnowledgeConceptsCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? name,
-    Value<String>? aliasesJson,
-    Value<String>? summaryMd,
-    Value<String>? relatedConceptIdsJson,
-    Value<DateTime>? createdAt,
-    Value<String?>? mergedIntoId,
-    Value<int>? rowid,
-  }) {
-    return KnowledgeConceptsCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      name: name ?? this.name,
-      aliasesJson: aliasesJson ?? this.aliasesJson,
-      summaryMd: summaryMd ?? this.summaryMd,
-      relatedConceptIdsJson:
-          relatedConceptIdsJson ?? this.relatedConceptIdsJson,
-      createdAt: createdAt ?? this.createdAt,
-      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $KnowledgeConceptsTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (aliasesJson.present) {
-      map['aliases_json'] = Variable<String>(aliasesJson.value);
-    }
-    if (summaryMd.present) {
-      map['summary_md'] = Variable<String>(summaryMd.value);
-    }
-    if (relatedConceptIdsJson.present) {
-      map['related_concept_ids_json'] = Variable<String>(
-        relatedConceptIdsJson.value,
-      );
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (mergedIntoId.present) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeConceptsCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('aliasesJson: $aliasesJson, ')
-          ..write('summaryMd: $summaryMd, ')
-          ..write('relatedConceptIdsJson: $relatedConceptIdsJson, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('mergedIntoId: $mergedIntoId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KnowledgeExperimentsTable extends KnowledgeExperiments
-    with TableInfo<$KnowledgeExperimentsTable, KnowledgeExperimentRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KnowledgeExperimentsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($KnowledgeExperimentsTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _hypothesisMeta = const VerificationMeta(
-    'hypothesis',
-  );
-  @override
-  late final GeneratedColumn<String> hypothesis = GeneratedColumn<String>(
-    'hypothesis',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _methodMdMeta = const VerificationMeta(
-    'methodMd',
-  );
-  @override
-  late final GeneratedColumn<String> methodMd = GeneratedColumn<String>(
-    'method_md',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(''),
-  );
-  static const VerificationMeta _metricsJsonMeta = const VerificationMeta(
-    'metricsJson',
-  );
-  @override
-  late final GeneratedColumn<String> metricsJson = GeneratedColumn<String>(
-    'metrics_json',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('[]'),
-  );
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('planned'),
-  );
-  static const VerificationMeta _resultMdMeta = const VerificationMeta(
-    'resultMd',
-  );
-  @override
-  late final GeneratedColumn<String> resultMd = GeneratedColumn<String>(
-    'result_md',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _conclusionMdMeta = const VerificationMeta(
-    'conclusionMd',
-  );
-  @override
-  late final GeneratedColumn<String> conclusionMd = GeneratedColumn<String>(
-    'conclusion_md',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _targetAssumptionIdMeta =
-      const VerificationMeta('targetAssumptionId');
-  @override
-  late final GeneratedColumn<String> targetAssumptionId =
-      GeneratedColumn<String>(
-        'target_assumption_id',
-        aliasedName,
-        true,
-        type: DriftSqlType.string,
-        requiredDuringInsert: false,
-      );
-  static const VerificationMeta _startedAtMeta = const VerificationMeta(
-    'startedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
-    'started_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _endedAtMeta = const VerificationMeta(
-    'endedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
-    'ended_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _mergedIntoIdMeta = const VerificationMeta(
-    'mergedIntoId',
-  );
-  @override
-  late final GeneratedColumn<String> mergedIntoId = GeneratedColumn<String>(
-    'merged_into_id',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    hypothesis,
-    methodMd,
-    metricsJson,
-    status,
-    resultMd,
-    conclusionMd,
-    targetAssumptionId,
-    startedAt,
-    endedAt,
-    mergedIntoId,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'knowledge_experiments';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<KnowledgeExperimentRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('hypothesis')) {
-      context.handle(
-        _hypothesisMeta,
-        hypothesis.isAcceptableOrUnknown(data['hypothesis']!, _hypothesisMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_hypothesisMeta);
-    }
-    if (data.containsKey('method_md')) {
-      context.handle(
-        _methodMdMeta,
-        methodMd.isAcceptableOrUnknown(data['method_md']!, _methodMdMeta),
-      );
-    }
-    if (data.containsKey('metrics_json')) {
-      context.handle(
-        _metricsJsonMeta,
-        metricsJson.isAcceptableOrUnknown(
-          data['metrics_json']!,
-          _metricsJsonMeta,
-        ),
-      );
-    }
-    if (data.containsKey('status')) {
-      context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('result_md')) {
-      context.handle(
-        _resultMdMeta,
-        resultMd.isAcceptableOrUnknown(data['result_md']!, _resultMdMeta),
-      );
-    }
-    if (data.containsKey('conclusion_md')) {
-      context.handle(
-        _conclusionMdMeta,
-        conclusionMd.isAcceptableOrUnknown(
-          data['conclusion_md']!,
-          _conclusionMdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('target_assumption_id')) {
-      context.handle(
-        _targetAssumptionIdMeta,
-        targetAssumptionId.isAcceptableOrUnknown(
-          data['target_assumption_id']!,
-          _targetAssumptionIdMeta,
-        ),
-      );
-    }
-    if (data.containsKey('started_at')) {
-      context.handle(
-        _startedAtMeta,
-        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_startedAtMeta);
-    }
-    if (data.containsKey('ended_at')) {
-      context.handle(
-        _endedAtMeta,
-        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
-      );
-    }
-    if (data.containsKey('merged_into_id')) {
-      context.handle(
-        _mergedIntoIdMeta,
-        mergedIntoId.isAcceptableOrUnknown(
-          data['merged_into_id']!,
-          _mergedIntoIdMeta,
-        ),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KnowledgeExperimentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KnowledgeExperimentRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $KnowledgeExperimentsTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      hypothesis: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}hypothesis'],
-      )!,
-      methodMd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}method_md'],
-      )!,
-      metricsJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}metrics_json'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      resultMd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}result_md'],
-      ),
-      conclusionMd: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}conclusion_md'],
-      ),
-      targetAssumptionId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}target_assumption_id'],
-      ),
-      startedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}started_at'],
-      )!,
-      endedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}ended_at'],
-      ),
-      mergedIntoId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}merged_into_id'],
-      ),
-    );
-  }
-
-  @override
-  $KnowledgeExperimentsTable createAlias(String alias) {
-    return $KnowledgeExperimentsTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class KnowledgeExperimentRow extends DataClass
-    implements Insertable<KnowledgeExperimentRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String hypothesis;
-  final String methodMd;
-  final String metricsJson;
-  final String status;
-  final String? resultMd;
-  final String? conclusionMd;
-  final String? targetAssumptionId;
-  final DateTime startedAt;
-  final DateTime? endedAt;
-
-  /// Dedupe pointer — see [KnowledgeNotes.mergedIntoId]. Experiments carry no
-  /// inbound id references, so a merge only unions metrics onto the survivor
-  /// and tombstones the duplicate (no re-pointing needed).
-  final String? mergedIntoId;
-  const KnowledgeExperimentRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.hypothesis,
-    required this.methodMd,
-    required this.metricsJson,
-    required this.status,
-    this.resultMd,
-    this.conclusionMd,
-    this.targetAssumptionId,
-    required this.startedAt,
-    this.endedAt,
-    this.mergedIntoId,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $KnowledgeExperimentsTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['hypothesis'] = Variable<String>(hypothesis);
-    map['method_md'] = Variable<String>(methodMd);
-    map['metrics_json'] = Variable<String>(metricsJson);
-    map['status'] = Variable<String>(status);
-    if (!nullToAbsent || resultMd != null) {
-      map['result_md'] = Variable<String>(resultMd);
-    }
-    if (!nullToAbsent || conclusionMd != null) {
-      map['conclusion_md'] = Variable<String>(conclusionMd);
-    }
-    if (!nullToAbsent || targetAssumptionId != null) {
-      map['target_assumption_id'] = Variable<String>(targetAssumptionId);
-    }
-    map['started_at'] = Variable<DateTime>(startedAt);
-    if (!nullToAbsent || endedAt != null) {
-      map['ended_at'] = Variable<DateTime>(endedAt);
-    }
-    if (!nullToAbsent || mergedIntoId != null) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId);
-    }
-    return map;
-  }
-
-  KnowledgeExperimentsCompanion toCompanion(bool nullToAbsent) {
-    return KnowledgeExperimentsCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      hypothesis: Value(hypothesis),
-      methodMd: Value(methodMd),
-      metricsJson: Value(metricsJson),
-      status: Value(status),
-      resultMd: resultMd == null && nullToAbsent
-          ? const Value.absent()
-          : Value(resultMd),
-      conclusionMd: conclusionMd == null && nullToAbsent
-          ? const Value.absent()
-          : Value(conclusionMd),
-      targetAssumptionId: targetAssumptionId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(targetAssumptionId),
-      startedAt: Value(startedAt),
-      endedAt: endedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(endedAt),
-      mergedIntoId: mergedIntoId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(mergedIntoId),
-    );
-  }
-
-  factory KnowledgeExperimentRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KnowledgeExperimentRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      hypothesis: serializer.fromJson<String>(json['hypothesis']),
-      methodMd: serializer.fromJson<String>(json['methodMd']),
-      metricsJson: serializer.fromJson<String>(json['metricsJson']),
-      status: serializer.fromJson<String>(json['status']),
-      resultMd: serializer.fromJson<String?>(json['resultMd']),
-      conclusionMd: serializer.fromJson<String?>(json['conclusionMd']),
-      targetAssumptionId: serializer.fromJson<String?>(
-        json['targetAssumptionId'],
-      ),
-      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
-      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
-      mergedIntoId: serializer.fromJson<String?>(json['mergedIntoId']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'hypothesis': serializer.toJson<String>(hypothesis),
-      'methodMd': serializer.toJson<String>(methodMd),
-      'metricsJson': serializer.toJson<String>(metricsJson),
-      'status': serializer.toJson<String>(status),
-      'resultMd': serializer.toJson<String?>(resultMd),
-      'conclusionMd': serializer.toJson<String?>(conclusionMd),
-      'targetAssumptionId': serializer.toJson<String?>(targetAssumptionId),
-      'startedAt': serializer.toJson<DateTime>(startedAt),
-      'endedAt': serializer.toJson<DateTime?>(endedAt),
-      'mergedIntoId': serializer.toJson<String?>(mergedIntoId),
-    };
-  }
-
-  KnowledgeExperimentRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? hypothesis,
-    String? methodMd,
-    String? metricsJson,
-    String? status,
-    Value<String?> resultMd = const Value.absent(),
-    Value<String?> conclusionMd = const Value.absent(),
-    Value<String?> targetAssumptionId = const Value.absent(),
-    DateTime? startedAt,
-    Value<DateTime?> endedAt = const Value.absent(),
-    Value<String?> mergedIntoId = const Value.absent(),
-  }) => KnowledgeExperimentRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    hypothesis: hypothesis ?? this.hypothesis,
-    methodMd: methodMd ?? this.methodMd,
-    metricsJson: metricsJson ?? this.metricsJson,
-    status: status ?? this.status,
-    resultMd: resultMd.present ? resultMd.value : this.resultMd,
-    conclusionMd: conclusionMd.present ? conclusionMd.value : this.conclusionMd,
-    targetAssumptionId: targetAssumptionId.present
-        ? targetAssumptionId.value
-        : this.targetAssumptionId,
-    startedAt: startedAt ?? this.startedAt,
-    endedAt: endedAt.present ? endedAt.value : this.endedAt,
-    mergedIntoId: mergedIntoId.present ? mergedIntoId.value : this.mergedIntoId,
-  );
-  KnowledgeExperimentRow copyWithCompanion(KnowledgeExperimentsCompanion data) {
-    return KnowledgeExperimentRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      hypothesis: data.hypothesis.present
-          ? data.hypothesis.value
-          : this.hypothesis,
-      methodMd: data.methodMd.present ? data.methodMd.value : this.methodMd,
-      metricsJson: data.metricsJson.present
-          ? data.metricsJson.value
-          : this.metricsJson,
-      status: data.status.present ? data.status.value : this.status,
-      resultMd: data.resultMd.present ? data.resultMd.value : this.resultMd,
-      conclusionMd: data.conclusionMd.present
-          ? data.conclusionMd.value
-          : this.conclusionMd,
-      targetAssumptionId: data.targetAssumptionId.present
-          ? data.targetAssumptionId.value
-          : this.targetAssumptionId,
-      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
-      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
-      mergedIntoId: data.mergedIntoId.present
-          ? data.mergedIntoId.value
-          : this.mergedIntoId,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeExperimentRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('hypothesis: $hypothesis, ')
-          ..write('methodMd: $methodMd, ')
-          ..write('metricsJson: $metricsJson, ')
-          ..write('status: $status, ')
-          ..write('resultMd: $resultMd, ')
-          ..write('conclusionMd: $conclusionMd, ')
-          ..write('targetAssumptionId: $targetAssumptionId, ')
-          ..write('startedAt: $startedAt, ')
-          ..write('endedAt: $endedAt, ')
-          ..write('mergedIntoId: $mergedIntoId')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    hypothesis,
-    methodMd,
-    metricsJson,
-    status,
-    resultMd,
-    conclusionMd,
-    targetAssumptionId,
-    startedAt,
-    endedAt,
-    mergedIntoId,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KnowledgeExperimentRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.hypothesis == this.hypothesis &&
-          other.methodMd == this.methodMd &&
-          other.metricsJson == this.metricsJson &&
-          other.status == this.status &&
-          other.resultMd == this.resultMd &&
-          other.conclusionMd == this.conclusionMd &&
-          other.targetAssumptionId == this.targetAssumptionId &&
-          other.startedAt == this.startedAt &&
-          other.endedAt == this.endedAt &&
-          other.mergedIntoId == this.mergedIntoId);
-}
-
-class KnowledgeExperimentsCompanion
-    extends UpdateCompanion<KnowledgeExperimentRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> hypothesis;
-  final Value<String> methodMd;
-  final Value<String> metricsJson;
-  final Value<String> status;
-  final Value<String?> resultMd;
-  final Value<String?> conclusionMd;
-  final Value<String?> targetAssumptionId;
-  final Value<DateTime> startedAt;
-  final Value<DateTime?> endedAt;
-  final Value<String?> mergedIntoId;
-  final Value<int> rowid;
-  const KnowledgeExperimentsCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.hypothesis = const Value.absent(),
-    this.methodMd = const Value.absent(),
-    this.metricsJson = const Value.absent(),
-    this.status = const Value.absent(),
-    this.resultMd = const Value.absent(),
-    this.conclusionMd = const Value.absent(),
-    this.targetAssumptionId = const Value.absent(),
-    this.startedAt = const Value.absent(),
-    this.endedAt = const Value.absent(),
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  KnowledgeExperimentsCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String hypothesis,
-    this.methodMd = const Value.absent(),
-    this.metricsJson = const Value.absent(),
-    this.status = const Value.absent(),
-    this.resultMd = const Value.absent(),
-    this.conclusionMd = const Value.absent(),
-    this.targetAssumptionId = const Value.absent(),
-    required DateTime startedAt,
-    this.endedAt = const Value.absent(),
-    this.mergedIntoId = const Value.absent(),
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       hypothesis = Value(hypothesis),
-       startedAt = Value(startedAt);
-  static Insertable<KnowledgeExperimentRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? hypothesis,
-    Expression<String>? methodMd,
-    Expression<String>? metricsJson,
-    Expression<String>? status,
-    Expression<String>? resultMd,
-    Expression<String>? conclusionMd,
-    Expression<String>? targetAssumptionId,
-    Expression<DateTime>? startedAt,
-    Expression<DateTime>? endedAt,
-    Expression<String>? mergedIntoId,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (hypothesis != null) 'hypothesis': hypothesis,
-      if (methodMd != null) 'method_md': methodMd,
-      if (metricsJson != null) 'metrics_json': metricsJson,
-      if (status != null) 'status': status,
-      if (resultMd != null) 'result_md': resultMd,
-      if (conclusionMd != null) 'conclusion_md': conclusionMd,
-      if (targetAssumptionId != null)
-        'target_assumption_id': targetAssumptionId,
-      if (startedAt != null) 'started_at': startedAt,
-      if (endedAt != null) 'ended_at': endedAt,
-      if (mergedIntoId != null) 'merged_into_id': mergedIntoId,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  KnowledgeExperimentsCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? hypothesis,
-    Value<String>? methodMd,
-    Value<String>? metricsJson,
-    Value<String>? status,
-    Value<String?>? resultMd,
-    Value<String?>? conclusionMd,
-    Value<String?>? targetAssumptionId,
-    Value<DateTime>? startedAt,
-    Value<DateTime?>? endedAt,
-    Value<String?>? mergedIntoId,
-    Value<int>? rowid,
-  }) {
-    return KnowledgeExperimentsCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      hypothesis: hypothesis ?? this.hypothesis,
-      methodMd: methodMd ?? this.methodMd,
-      metricsJson: metricsJson ?? this.metricsJson,
-      status: status ?? this.status,
-      resultMd: resultMd ?? this.resultMd,
-      conclusionMd: conclusionMd ?? this.conclusionMd,
-      targetAssumptionId: targetAssumptionId ?? this.targetAssumptionId,
-      startedAt: startedAt ?? this.startedAt,
-      endedAt: endedAt ?? this.endedAt,
-      mergedIntoId: mergedIntoId ?? this.mergedIntoId,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $KnowledgeExperimentsTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (hypothesis.present) {
-      map['hypothesis'] = Variable<String>(hypothesis.value);
-    }
-    if (methodMd.present) {
-      map['method_md'] = Variable<String>(methodMd.value);
-    }
-    if (metricsJson.present) {
-      map['metrics_json'] = Variable<String>(metricsJson.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (resultMd.present) {
-      map['result_md'] = Variable<String>(resultMd.value);
-    }
-    if (conclusionMd.present) {
-      map['conclusion_md'] = Variable<String>(conclusionMd.value);
-    }
-    if (targetAssumptionId.present) {
-      map['target_assumption_id'] = Variable<String>(targetAssumptionId.value);
-    }
-    if (startedAt.present) {
-      map['started_at'] = Variable<DateTime>(startedAt.value);
-    }
-    if (endedAt.present) {
-      map['ended_at'] = Variable<DateTime>(endedAt.value);
-    }
-    if (mergedIntoId.present) {
-      map['merged_into_id'] = Variable<String>(mergedIntoId.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeExperimentsCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('hypothesis: $hypothesis, ')
-          ..write('methodMd: $methodMd, ')
-          ..write('metricsJson: $metricsJson, ')
-          ..write('status: $status, ')
-          ..write('resultMd: $resultMd, ')
-          ..write('conclusionMd: $conclusionMd, ')
-          ..write('targetAssumptionId: $targetAssumptionId, ')
-          ..write('startedAt: $startedAt, ')
-          ..write('endedAt: $endedAt, ')
-          ..write('mergedIntoId: $mergedIntoId, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $KnowledgeRoutinesTable extends KnowledgeRoutines
-    with TableInfo<$KnowledgeRoutinesTable, KnowledgeRoutineRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $KnowledgeRoutinesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
-    'ownerUserId',
-  );
-  @override
-  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
-    'owner_user_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
-    'updatedByDevice',
-  );
-  @override
-  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
-    'updated_by_device',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  @override
-  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
-      GeneratedColumn<String>(
-        'hlc',
-        aliasedName,
-        false,
-        type: DriftSqlType.string,
-        requiredDuringInsert: true,
-      ).withConverter<Hlc>($KnowledgeRoutinesTable.$converterhlc);
-  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
-    'deletedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-    'deleted_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-    'id',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _statementMeta = const VerificationMeta(
-    'statement',
-  );
-  @override
-  late final GeneratedColumn<String> statement = GeneratedColumn<String>(
-    'statement',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _intervalDaysMeta = const VerificationMeta(
-    'intervalDays',
-  );
-  @override
-  late final GeneratedColumn<int> intervalDays = GeneratedColumn<int>(
-    'interval_days',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _lastDoneAtMeta = const VerificationMeta(
-    'lastDoneAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> lastDoneAt = GeneratedColumn<DateTime>(
-    'last_done_at',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _nextDueAtMeta = const VerificationMeta(
-    'nextDueAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> nextDueAt = GeneratedColumn<DateTime>(
-    'next_due_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _scopeMeta = const VerificationMeta('scope');
-  @override
-  late final GeneratedColumn<String> scope = GeneratedColumn<String>(
-    'scope',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('*'),
-  );
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-    'status',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('active'),
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    statement,
-    intervalDays,
-    lastDoneAt,
-    nextDueAt,
-    scope,
-    status,
-    createdAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'knowledge_routines';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<KnowledgeRoutineRow> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('owner_user_id')) {
-      context.handle(
-        _ownerUserIdMeta,
-        ownerUserId.isAcceptableOrUnknown(
-          data['owner_user_id']!,
-          _ownerUserIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_ownerUserIdMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    if (data.containsKey('updated_by_device')) {
-      context.handle(
-        _updatedByDeviceMeta,
-        updatedByDevice.isAcceptableOrUnknown(
-          data['updated_by_device']!,
-          _updatedByDeviceMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_updatedByDeviceMeta);
-    }
-    if (data.containsKey('deleted_at')) {
-      context.handle(
-        _deletedAtMeta,
-        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
-      );
-    }
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('statement')) {
-      context.handle(
-        _statementMeta,
-        statement.isAcceptableOrUnknown(data['statement']!, _statementMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_statementMeta);
-    }
-    if (data.containsKey('interval_days')) {
-      context.handle(
-        _intervalDaysMeta,
-        intervalDays.isAcceptableOrUnknown(
-          data['interval_days']!,
-          _intervalDaysMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_intervalDaysMeta);
-    }
-    if (data.containsKey('last_done_at')) {
-      context.handle(
-        _lastDoneAtMeta,
-        lastDoneAt.isAcceptableOrUnknown(
-          data['last_done_at']!,
-          _lastDoneAtMeta,
-        ),
-      );
-    }
-    if (data.containsKey('next_due_at')) {
-      context.handle(
-        _nextDueAtMeta,
-        nextDueAt.isAcceptableOrUnknown(data['next_due_at']!, _nextDueAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nextDueAtMeta);
-    }
-    if (data.containsKey('scope')) {
-      context.handle(
-        _scopeMeta,
-        scope.isAcceptableOrUnknown(data['scope']!, _scopeMeta),
-      );
-    }
-    if (data.containsKey('status')) {
-      context.handle(
-        _statusMeta,
-        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
-      );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  KnowledgeRoutineRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return KnowledgeRoutineRow(
-      ownerUserId: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}owner_user_id'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-      updatedByDevice: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}updated_by_device'],
-      )!,
-      hlc: $KnowledgeRoutinesTable.$converterhlc.fromSql(
-        attachedDatabase.typeMapping.read(
-          DriftSqlType.string,
-          data['${effectivePrefix}hlc'],
-        )!,
-      ),
-      deletedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}deleted_at'],
-      ),
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}id'],
-      )!,
-      statement: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}statement'],
-      )!,
-      intervalDays: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}interval_days'],
-      )!,
-      lastDoneAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}last_done_at'],
-      ),
-      nextDueAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}next_due_at'],
-      )!,
-      scope: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}scope'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-    );
-  }
-
-  @override
-  $KnowledgeRoutinesTable createAlias(String alias) {
-    return $KnowledgeRoutinesTable(attachedDatabase, alias);
-  }
-
-  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
-}
-
-class KnowledgeRoutineRow extends DataClass
-    implements Insertable<KnowledgeRoutineRow> {
-  /// Owner partition. Sync filters every read by the active user id, so
-  /// even multi-account installs never leak rows across boundaries.
-  final String ownerUserId;
-
-  /// Server-authoritative wall time. The client writes this locally on
-  /// creation; the server stomps it on push. It is the *displayable*
-  /// "last modified" — never used for conflict resolution.
-  final DateTime updatedAt;
-
-  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
-  /// also useful when debugging cross-device weirdness.
-  final String updatedByDevice;
-
-  /// Hybrid Logical Clock — the single source of truth for ordering and
-  /// conflict resolution. See `domain/hlc.dart`.
-  final Hlc hlc;
-
-  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
-  /// rows so peers learn about the delete; physical removal happens only
-  /// during a separate `vacuum` pass.
-  final DateTime? deletedAt;
-  final String id;
-  final String statement;
-  final int intervalDays;
-  final DateTime? lastDoneAt;
-  final DateTime nextDueAt;
-  final String scope;
-  final String status;
-  final DateTime createdAt;
-  const KnowledgeRoutineRow({
-    required this.ownerUserId,
-    required this.updatedAt,
-    required this.updatedByDevice,
-    required this.hlc,
-    this.deletedAt,
-    required this.id,
-    required this.statement,
-    required this.intervalDays,
-    this.lastDoneAt,
-    required this.nextDueAt,
-    required this.scope,
-    required this.status,
-    required this.createdAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['owner_user_id'] = Variable<String>(ownerUserId);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['updated_by_device'] = Variable<String>(updatedByDevice);
-    {
-      map['hlc'] = Variable<String>(
-        $KnowledgeRoutinesTable.$converterhlc.toSql(hlc),
-      );
-    }
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
-    map['id'] = Variable<String>(id);
-    map['statement'] = Variable<String>(statement);
-    map['interval_days'] = Variable<int>(intervalDays);
-    if (!nullToAbsent || lastDoneAt != null) {
-      map['last_done_at'] = Variable<DateTime>(lastDoneAt);
-    }
-    map['next_due_at'] = Variable<DateTime>(nextDueAt);
-    map['scope'] = Variable<String>(scope);
-    map['status'] = Variable<String>(status);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    return map;
-  }
-
-  KnowledgeRoutinesCompanion toCompanion(bool nullToAbsent) {
-    return KnowledgeRoutinesCompanion(
-      ownerUserId: Value(ownerUserId),
-      updatedAt: Value(updatedAt),
-      updatedByDevice: Value(updatedByDevice),
-      hlc: Value(hlc),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
-      id: Value(id),
-      statement: Value(statement),
-      intervalDays: Value(intervalDays),
-      lastDoneAt: lastDoneAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastDoneAt),
-      nextDueAt: Value(nextDueAt),
-      scope: Value(scope),
-      status: Value(status),
-      createdAt: Value(createdAt),
-    );
-  }
-
-  factory KnowledgeRoutineRow.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return KnowledgeRoutineRow(
-      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
-      hlc: serializer.fromJson<Hlc>(json['hlc']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
-      id: serializer.fromJson<String>(json['id']),
-      statement: serializer.fromJson<String>(json['statement']),
-      intervalDays: serializer.fromJson<int>(json['intervalDays']),
-      lastDoneAt: serializer.fromJson<DateTime?>(json['lastDoneAt']),
-      nextDueAt: serializer.fromJson<DateTime>(json['nextDueAt']),
-      scope: serializer.fromJson<String>(json['scope']),
-      status: serializer.fromJson<String>(json['status']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'ownerUserId': serializer.toJson<String>(ownerUserId),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
-      'hlc': serializer.toJson<Hlc>(hlc),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
-      'id': serializer.toJson<String>(id),
-      'statement': serializer.toJson<String>(statement),
-      'intervalDays': serializer.toJson<int>(intervalDays),
-      'lastDoneAt': serializer.toJson<DateTime?>(lastDoneAt),
-      'nextDueAt': serializer.toJson<DateTime>(nextDueAt),
-      'scope': serializer.toJson<String>(scope),
-      'status': serializer.toJson<String>(status),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-    };
-  }
-
-  KnowledgeRoutineRow copyWith({
-    String? ownerUserId,
-    DateTime? updatedAt,
-    String? updatedByDevice,
-    Hlc? hlc,
-    Value<DateTime?> deletedAt = const Value.absent(),
-    String? id,
-    String? statement,
-    int? intervalDays,
-    Value<DateTime?> lastDoneAt = const Value.absent(),
-    DateTime? nextDueAt,
-    String? scope,
-    String? status,
-    DateTime? createdAt,
-  }) => KnowledgeRoutineRow(
-    ownerUserId: ownerUserId ?? this.ownerUserId,
-    updatedAt: updatedAt ?? this.updatedAt,
-    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-    hlc: hlc ?? this.hlc,
-    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
-    id: id ?? this.id,
-    statement: statement ?? this.statement,
-    intervalDays: intervalDays ?? this.intervalDays,
-    lastDoneAt: lastDoneAt.present ? lastDoneAt.value : this.lastDoneAt,
-    nextDueAt: nextDueAt ?? this.nextDueAt,
-    scope: scope ?? this.scope,
-    status: status ?? this.status,
-    createdAt: createdAt ?? this.createdAt,
-  );
-  KnowledgeRoutineRow copyWithCompanion(KnowledgeRoutinesCompanion data) {
-    return KnowledgeRoutineRow(
-      ownerUserId: data.ownerUserId.present
-          ? data.ownerUserId.value
-          : this.ownerUserId,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      updatedByDevice: data.updatedByDevice.present
-          ? data.updatedByDevice.value
-          : this.updatedByDevice,
-      hlc: data.hlc.present ? data.hlc.value : this.hlc,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
-      id: data.id.present ? data.id.value : this.id,
-      statement: data.statement.present ? data.statement.value : this.statement,
-      intervalDays: data.intervalDays.present
-          ? data.intervalDays.value
-          : this.intervalDays,
-      lastDoneAt: data.lastDoneAt.present
-          ? data.lastDoneAt.value
-          : this.lastDoneAt,
-      nextDueAt: data.nextDueAt.present ? data.nextDueAt.value : this.nextDueAt,
-      scope: data.scope.present ? data.scope.value : this.scope,
-      status: data.status.present ? data.status.value : this.status,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeRoutineRow(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('statement: $statement, ')
-          ..write('intervalDays: $intervalDays, ')
-          ..write('lastDoneAt: $lastDoneAt, ')
-          ..write('nextDueAt: $nextDueAt, ')
-          ..write('scope: $scope, ')
-          ..write('status: $status, ')
-          ..write('createdAt: $createdAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-    ownerUserId,
-    updatedAt,
-    updatedByDevice,
-    hlc,
-    deletedAt,
-    id,
-    statement,
-    intervalDays,
-    lastDoneAt,
-    nextDueAt,
-    scope,
-    status,
-    createdAt,
-  );
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is KnowledgeRoutineRow &&
-          other.ownerUserId == this.ownerUserId &&
-          other.updatedAt == this.updatedAt &&
-          other.updatedByDevice == this.updatedByDevice &&
-          other.hlc == this.hlc &&
-          other.deletedAt == this.deletedAt &&
-          other.id == this.id &&
-          other.statement == this.statement &&
-          other.intervalDays == this.intervalDays &&
-          other.lastDoneAt == this.lastDoneAt &&
-          other.nextDueAt == this.nextDueAt &&
-          other.scope == this.scope &&
-          other.status == this.status &&
-          other.createdAt == this.createdAt);
-}
-
-class KnowledgeRoutinesCompanion extends UpdateCompanion<KnowledgeRoutineRow> {
-  final Value<String> ownerUserId;
-  final Value<DateTime> updatedAt;
-  final Value<String> updatedByDevice;
-  final Value<Hlc> hlc;
-  final Value<DateTime?> deletedAt;
-  final Value<String> id;
-  final Value<String> statement;
-  final Value<int> intervalDays;
-  final Value<DateTime?> lastDoneAt;
-  final Value<DateTime> nextDueAt;
-  final Value<String> scope;
-  final Value<String> status;
-  final Value<DateTime> createdAt;
-  final Value<int> rowid;
-  const KnowledgeRoutinesCompanion({
-    this.ownerUserId = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.updatedByDevice = const Value.absent(),
-    this.hlc = const Value.absent(),
-    this.deletedAt = const Value.absent(),
-    this.id = const Value.absent(),
-    this.statement = const Value.absent(),
-    this.intervalDays = const Value.absent(),
-    this.lastDoneAt = const Value.absent(),
-    this.nextDueAt = const Value.absent(),
-    this.scope = const Value.absent(),
-    this.status = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  KnowledgeRoutinesCompanion.insert({
-    required String ownerUserId,
-    required DateTime updatedAt,
-    required String updatedByDevice,
-    required Hlc hlc,
-    this.deletedAt = const Value.absent(),
-    required String id,
-    required String statement,
-    required int intervalDays,
-    this.lastDoneAt = const Value.absent(),
-    required DateTime nextDueAt,
-    this.scope = const Value.absent(),
-    this.status = const Value.absent(),
-    required DateTime createdAt,
-    this.rowid = const Value.absent(),
-  }) : ownerUserId = Value(ownerUserId),
-       updatedAt = Value(updatedAt),
-       updatedByDevice = Value(updatedByDevice),
-       hlc = Value(hlc),
-       id = Value(id),
-       statement = Value(statement),
-       intervalDays = Value(intervalDays),
-       nextDueAt = Value(nextDueAt),
-       createdAt = Value(createdAt);
-  static Insertable<KnowledgeRoutineRow> custom({
-    Expression<String>? ownerUserId,
-    Expression<DateTime>? updatedAt,
-    Expression<String>? updatedByDevice,
-    Expression<String>? hlc,
-    Expression<DateTime>? deletedAt,
-    Expression<String>? id,
-    Expression<String>? statement,
-    Expression<int>? intervalDays,
-    Expression<DateTime>? lastDoneAt,
-    Expression<DateTime>? nextDueAt,
-    Expression<String>? scope,
-    Expression<String>? status,
-    Expression<DateTime>? createdAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (ownerUserId != null) 'owner_user_id': ownerUserId,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
-      if (hlc != null) 'hlc': hlc,
-      if (deletedAt != null) 'deleted_at': deletedAt,
-      if (id != null) 'id': id,
-      if (statement != null) 'statement': statement,
-      if (intervalDays != null) 'interval_days': intervalDays,
-      if (lastDoneAt != null) 'last_done_at': lastDoneAt,
-      if (nextDueAt != null) 'next_due_at': nextDueAt,
-      if (scope != null) 'scope': scope,
-      if (status != null) 'status': status,
-      if (createdAt != null) 'created_at': createdAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  KnowledgeRoutinesCompanion copyWith({
-    Value<String>? ownerUserId,
-    Value<DateTime>? updatedAt,
-    Value<String>? updatedByDevice,
-    Value<Hlc>? hlc,
-    Value<DateTime?>? deletedAt,
-    Value<String>? id,
-    Value<String>? statement,
-    Value<int>? intervalDays,
-    Value<DateTime?>? lastDoneAt,
-    Value<DateTime>? nextDueAt,
-    Value<String>? scope,
-    Value<String>? status,
-    Value<DateTime>? createdAt,
-    Value<int>? rowid,
-  }) {
-    return KnowledgeRoutinesCompanion(
-      ownerUserId: ownerUserId ?? this.ownerUserId,
-      updatedAt: updatedAt ?? this.updatedAt,
-      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
-      hlc: hlc ?? this.hlc,
-      deletedAt: deletedAt ?? this.deletedAt,
-      id: id ?? this.id,
-      statement: statement ?? this.statement,
-      intervalDays: intervalDays ?? this.intervalDays,
-      lastDoneAt: lastDoneAt ?? this.lastDoneAt,
-      nextDueAt: nextDueAt ?? this.nextDueAt,
-      scope: scope ?? this.scope,
-      status: status ?? this.status,
-      createdAt: createdAt ?? this.createdAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (ownerUserId.present) {
-      map['owner_user_id'] = Variable<String>(ownerUserId.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (updatedByDevice.present) {
-      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
-    }
-    if (hlc.present) {
-      map['hlc'] = Variable<String>(
-        $KnowledgeRoutinesTable.$converterhlc.toSql(hlc.value),
-      );
-    }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (statement.present) {
-      map['statement'] = Variable<String>(statement.value);
-    }
-    if (intervalDays.present) {
-      map['interval_days'] = Variable<int>(intervalDays.value);
-    }
-    if (lastDoneAt.present) {
-      map['last_done_at'] = Variable<DateTime>(lastDoneAt.value);
-    }
-    if (nextDueAt.present) {
-      map['next_due_at'] = Variable<DateTime>(nextDueAt.value);
-    }
-    if (scope.present) {
-      map['scope'] = Variable<String>(scope.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('KnowledgeRoutinesCompanion(')
-          ..write('ownerUserId: $ownerUserId, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('updatedByDevice: $updatedByDevice, ')
-          ..write('hlc: $hlc, ')
-          ..write('deletedAt: $deletedAt, ')
-          ..write('id: $id, ')
-          ..write('statement: $statement, ')
-          ..write('intervalDays: $intervalDays, ')
-          ..write('lastDoneAt: $lastDoneAt, ')
-          ..write('nextDueAt: $nextDueAt, ')
-          ..write('scope: $scope, ')
-          ..write('status: $status, ')
-          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -46748,18 +42284,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $SecuritiesCatalogMetaTable(this);
   late final $HealthMetricsTable healthMetrics = $HealthMetricsTable(this);
   late final $KnowledgeNotesTable knowledgeNotes = $KnowledgeNotesTable(this);
-  late final $KnowledgePrinciplesTable knowledgePrinciples =
-      $KnowledgePrinciplesTable(this);
-  late final $KnowledgeAssumptionsTable knowledgeAssumptions =
-      $KnowledgeAssumptionsTable(this);
   late final $KnowledgeDecisionsTable knowledgeDecisions =
       $KnowledgeDecisionsTable(this);
-  late final $KnowledgeConceptsTable knowledgeConcepts =
-      $KnowledgeConceptsTable(this);
-  late final $KnowledgeExperimentsTable knowledgeExperiments =
-      $KnowledgeExperimentsTable(this);
-  late final $KnowledgeRoutinesTable knowledgeRoutines =
-      $KnowledgeRoutinesTable(this);
   late final $KnowledgeRelationsTable knowledgeRelations =
       $KnowledgeRelationsTable(this);
   late final $ExecutionPlansTable executionPlans = $ExecutionPlansTable(this);
@@ -46818,12 +42344,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     securitiesCatalogMeta,
     healthMetrics,
     knowledgeNotes,
-    knowledgePrinciples,
-    knowledgeAssumptions,
     knowledgeDecisions,
-    knowledgeConcepts,
-    knowledgeExperiments,
-    knowledgeRoutines,
     knowledgeRelations,
     executionPlans,
     executionActions,
@@ -63832,11 +59353,7 @@ typedef $$KnowledgeNotesTableCreateCompanionBuilder =
       required String bodyMd,
       Value<String?> sourceUrl,
       Value<String> tagsJson,
-      Value<String?> projectTag,
       required DateTime createdAt,
-      Value<String?> promotedToKind,
-      Value<String?> promotedToId,
-      Value<DateTime?> promotedAt,
       Value<String?> mergedIntoId,
       Value<int> rowid,
     });
@@ -63852,11 +59369,7 @@ typedef $$KnowledgeNotesTableUpdateCompanionBuilder =
       Value<String> bodyMd,
       Value<String?> sourceUrl,
       Value<String> tagsJson,
-      Value<String?> projectTag,
       Value<DateTime> createdAt,
-      Value<String?> promotedToKind,
-      Value<String?> promotedToId,
-      Value<DateTime?> promotedAt,
       Value<String?> mergedIntoId,
       Value<int> rowid,
     });
@@ -63921,28 +59434,8 @@ class $$KnowledgeNotesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get projectTag => $composableBuilder(
-    column: $table.projectTag,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get promotedToKind => $composableBuilder(
-    column: $table.promotedToKind,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get promotedToId => $composableBuilder(
-    column: $table.promotedToId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get promotedAt => $composableBuilder(
-    column: $table.promotedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -64011,28 +59504,8 @@ class $$KnowledgeNotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get projectTag => $composableBuilder(
-    column: $table.projectTag,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get promotedToKind => $composableBuilder(
-    column: $table.promotedToKind,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get promotedToId => $composableBuilder(
-    column: $table.promotedToId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get promotedAt => $composableBuilder(
-    column: $table.promotedAt,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -64085,28 +59558,8 @@ class $$KnowledgeNotesTableAnnotationComposer
   GeneratedColumn<String> get tagsJson =>
       $composableBuilder(column: $table.tagsJson, builder: (column) => column);
 
-  GeneratedColumn<String> get projectTag => $composableBuilder(
-    column: $table.projectTag,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<String> get promotedToKind => $composableBuilder(
-    column: $table.promotedToKind,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get promotedToId => $composableBuilder(
-    column: $table.promotedToId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get promotedAt => $composableBuilder(
-    column: $table.promotedAt,
-    builder: (column) => column,
-  );
 
   GeneratedColumn<String> get mergedIntoId => $composableBuilder(
     column: $table.mergedIntoId,
@@ -64161,11 +59614,7 @@ class $$KnowledgeNotesTableTableManager
                 Value<String> bodyMd = const Value.absent(),
                 Value<String?> sourceUrl = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
-                Value<String?> projectTag = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-                Value<String?> promotedToKind = const Value.absent(),
-                Value<String?> promotedToId = const Value.absent(),
-                Value<DateTime?> promotedAt = const Value.absent(),
                 Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeNotesCompanion(
@@ -64179,11 +59628,7 @@ class $$KnowledgeNotesTableTableManager
                 bodyMd: bodyMd,
                 sourceUrl: sourceUrl,
                 tagsJson: tagsJson,
-                projectTag: projectTag,
                 createdAt: createdAt,
-                promotedToKind: promotedToKind,
-                promotedToId: promotedToId,
-                promotedAt: promotedAt,
                 mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
@@ -64199,11 +59644,7 @@ class $$KnowledgeNotesTableTableManager
                 required String bodyMd,
                 Value<String?> sourceUrl = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
-                Value<String?> projectTag = const Value.absent(),
                 required DateTime createdAt,
-                Value<String?> promotedToKind = const Value.absent(),
-                Value<String?> promotedToId = const Value.absent(),
-                Value<DateTime?> promotedAt = const Value.absent(),
                 Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => KnowledgeNotesCompanion.insert(
@@ -64217,11 +59658,7 @@ class $$KnowledgeNotesTableTableManager
                 bodyMd: bodyMd,
                 sourceUrl: sourceUrl,
                 tagsJson: tagsJson,
-                projectTag: projectTag,
                 createdAt: createdAt,
-                promotedToKind: promotedToKind,
-                promotedToId: promotedToId,
-                promotedAt: promotedAt,
                 mergedIntoId: mergedIntoId,
                 rowid: rowid,
               ),
@@ -64250,768 +59687,6 @@ typedef $$KnowledgeNotesTableProcessedTableManager =
       KnowledgeNoteRow,
       PrefetchHooks Function()
     >;
-typedef $$KnowledgePrinciplesTableCreateCompanionBuilder =
-    KnowledgePrinciplesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String statement,
-      Value<String> rationaleMd,
-      Value<String> scope,
-      Value<String> status,
-      required DateTime declaredAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-typedef $$KnowledgePrinciplesTableUpdateCompanionBuilder =
-    KnowledgePrinciplesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> statement,
-      Value<String> rationaleMd,
-      Value<String> scope,
-      Value<String> status,
-      Value<DateTime> declaredAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-
-class $$KnowledgePrinciplesTableFilterComposer
-    extends Composer<_$AppDatabase, $KnowledgePrinciplesTable> {
-  $$KnowledgePrinciplesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get statement => $composableBuilder(
-    column: $table.statement,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get rationaleMd => $composableBuilder(
-    column: $table.rationaleMd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get scope => $composableBuilder(
-    column: $table.scope,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get declaredAt => $composableBuilder(
-    column: $table.declaredAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$KnowledgePrinciplesTableOrderingComposer
-    extends Composer<_$AppDatabase, $KnowledgePrinciplesTable> {
-  $$KnowledgePrinciplesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get statement => $composableBuilder(
-    column: $table.statement,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get rationaleMd => $composableBuilder(
-    column: $table.rationaleMd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get scope => $composableBuilder(
-    column: $table.scope,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get declaredAt => $composableBuilder(
-    column: $table.declaredAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$KnowledgePrinciplesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KnowledgePrinciplesTable> {
-  $$KnowledgePrinciplesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get statement =>
-      $composableBuilder(column: $table.statement, builder: (column) => column);
-
-  GeneratedColumn<String> get rationaleMd => $composableBuilder(
-    column: $table.rationaleMd,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get scope =>
-      $composableBuilder(column: $table.scope, builder: (column) => column);
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get declaredAt => $composableBuilder(
-    column: $table.declaredAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => column,
-  );
-}
-
-class $$KnowledgePrinciplesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $KnowledgePrinciplesTable,
-          KnowledgePrincipleRow,
-          $$KnowledgePrinciplesTableFilterComposer,
-          $$KnowledgePrinciplesTableOrderingComposer,
-          $$KnowledgePrinciplesTableAnnotationComposer,
-          $$KnowledgePrinciplesTableCreateCompanionBuilder,
-          $$KnowledgePrinciplesTableUpdateCompanionBuilder,
-          (
-            KnowledgePrincipleRow,
-            BaseReferences<
-              _$AppDatabase,
-              $KnowledgePrinciplesTable,
-              KnowledgePrincipleRow
-            >,
-          ),
-          KnowledgePrincipleRow,
-          PrefetchHooks Function()
-        > {
-  $$KnowledgePrinciplesTableTableManager(
-    _$AppDatabase db,
-    $KnowledgePrinciplesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KnowledgePrinciplesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KnowledgePrinciplesTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$KnowledgePrinciplesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> statement = const Value.absent(),
-                Value<String> rationaleMd = const Value.absent(),
-                Value<String> scope = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<DateTime> declaredAt = const Value.absent(),
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgePrinciplesCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                statement: statement,
-                rationaleMd: rationaleMd,
-                scope: scope,
-                status: status,
-                declaredAt: declaredAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String statement,
-                Value<String> rationaleMd = const Value.absent(),
-                Value<String> scope = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                required DateTime declaredAt,
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgePrinciplesCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                statement: statement,
-                rationaleMd: rationaleMd,
-                scope: scope,
-                status: status,
-                declaredAt: declaredAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$KnowledgePrinciplesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $KnowledgePrinciplesTable,
-      KnowledgePrincipleRow,
-      $$KnowledgePrinciplesTableFilterComposer,
-      $$KnowledgePrinciplesTableOrderingComposer,
-      $$KnowledgePrinciplesTableAnnotationComposer,
-      $$KnowledgePrinciplesTableCreateCompanionBuilder,
-      $$KnowledgePrinciplesTableUpdateCompanionBuilder,
-      (
-        KnowledgePrincipleRow,
-        BaseReferences<
-          _$AppDatabase,
-          $KnowledgePrinciplesTable,
-          KnowledgePrincipleRow
-        >,
-      ),
-      KnowledgePrincipleRow,
-      PrefetchHooks Function()
-    >;
-typedef $$KnowledgeAssumptionsTableCreateCompanionBuilder =
-    KnowledgeAssumptionsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String statement,
-      Value<double> confidence,
-      Value<String> scope,
-      Value<String> evidenceIdsJson,
-      Value<String> status,
-      Value<DateTime?> lastVerifiedAt,
-      required DateTime declaredAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-typedef $$KnowledgeAssumptionsTableUpdateCompanionBuilder =
-    KnowledgeAssumptionsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> statement,
-      Value<double> confidence,
-      Value<String> scope,
-      Value<String> evidenceIdsJson,
-      Value<String> status,
-      Value<DateTime?> lastVerifiedAt,
-      Value<DateTime> declaredAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-
-class $$KnowledgeAssumptionsTableFilterComposer
-    extends Composer<_$AppDatabase, $KnowledgeAssumptionsTable> {
-  $$KnowledgeAssumptionsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get statement => $composableBuilder(
-    column: $table.statement,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get confidence => $composableBuilder(
-    column: $table.confidence,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get scope => $composableBuilder(
-    column: $table.scope,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get evidenceIdsJson => $composableBuilder(
-    column: $table.evidenceIdsJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get lastVerifiedAt => $composableBuilder(
-    column: $table.lastVerifiedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get declaredAt => $composableBuilder(
-    column: $table.declaredAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$KnowledgeAssumptionsTableOrderingComposer
-    extends Composer<_$AppDatabase, $KnowledgeAssumptionsTable> {
-  $$KnowledgeAssumptionsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get statement => $composableBuilder(
-    column: $table.statement,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get confidence => $composableBuilder(
-    column: $table.confidence,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get scope => $composableBuilder(
-    column: $table.scope,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get evidenceIdsJson => $composableBuilder(
-    column: $table.evidenceIdsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get lastVerifiedAt => $composableBuilder(
-    column: $table.lastVerifiedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get declaredAt => $composableBuilder(
-    column: $table.declaredAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$KnowledgeAssumptionsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KnowledgeAssumptionsTable> {
-  $$KnowledgeAssumptionsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get statement =>
-      $composableBuilder(column: $table.statement, builder: (column) => column);
-
-  GeneratedColumn<double> get confidence => $composableBuilder(
-    column: $table.confidence,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get scope =>
-      $composableBuilder(column: $table.scope, builder: (column) => column);
-
-  GeneratedColumn<String> get evidenceIdsJson => $composableBuilder(
-    column: $table.evidenceIdsJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get lastVerifiedAt => $composableBuilder(
-    column: $table.lastVerifiedAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get declaredAt => $composableBuilder(
-    column: $table.declaredAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => column,
-  );
-}
-
-class $$KnowledgeAssumptionsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $KnowledgeAssumptionsTable,
-          KnowledgeAssumptionRow,
-          $$KnowledgeAssumptionsTableFilterComposer,
-          $$KnowledgeAssumptionsTableOrderingComposer,
-          $$KnowledgeAssumptionsTableAnnotationComposer,
-          $$KnowledgeAssumptionsTableCreateCompanionBuilder,
-          $$KnowledgeAssumptionsTableUpdateCompanionBuilder,
-          (
-            KnowledgeAssumptionRow,
-            BaseReferences<
-              _$AppDatabase,
-              $KnowledgeAssumptionsTable,
-              KnowledgeAssumptionRow
-            >,
-          ),
-          KnowledgeAssumptionRow,
-          PrefetchHooks Function()
-        > {
-  $$KnowledgeAssumptionsTableTableManager(
-    _$AppDatabase db,
-    $KnowledgeAssumptionsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KnowledgeAssumptionsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KnowledgeAssumptionsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$KnowledgeAssumptionsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> statement = const Value.absent(),
-                Value<double> confidence = const Value.absent(),
-                Value<String> scope = const Value.absent(),
-                Value<String> evidenceIdsJson = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<DateTime?> lastVerifiedAt = const Value.absent(),
-                Value<DateTime> declaredAt = const Value.absent(),
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeAssumptionsCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                statement: statement,
-                confidence: confidence,
-                scope: scope,
-                evidenceIdsJson: evidenceIdsJson,
-                status: status,
-                lastVerifiedAt: lastVerifiedAt,
-                declaredAt: declaredAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String statement,
-                Value<double> confidence = const Value.absent(),
-                Value<String> scope = const Value.absent(),
-                Value<String> evidenceIdsJson = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<DateTime?> lastVerifiedAt = const Value.absent(),
-                required DateTime declaredAt,
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeAssumptionsCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                statement: statement,
-                confidence: confidence,
-                scope: scope,
-                evidenceIdsJson: evidenceIdsJson,
-                status: status,
-                lastVerifiedAt: lastVerifiedAt,
-                declaredAt: declaredAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$KnowledgeAssumptionsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $KnowledgeAssumptionsTable,
-      KnowledgeAssumptionRow,
-      $$KnowledgeAssumptionsTableFilterComposer,
-      $$KnowledgeAssumptionsTableOrderingComposer,
-      $$KnowledgeAssumptionsTableAnnotationComposer,
-      $$KnowledgeAssumptionsTableCreateCompanionBuilder,
-      $$KnowledgeAssumptionsTableUpdateCompanionBuilder,
-      (
-        KnowledgeAssumptionRow,
-        BaseReferences<
-          _$AppDatabase,
-          $KnowledgeAssumptionsTable,
-          KnowledgeAssumptionRow
-        >,
-      ),
-      KnowledgeAssumptionRow,
-      PrefetchHooks Function()
-    >;
 typedef $$KnowledgeDecisionsTableCreateCompanionBuilder =
     KnowledgeDecisionsCompanion Function({
       required String ownerUserId,
@@ -65024,15 +59699,12 @@ typedef $$KnowledgeDecisionsTableCreateCompanionBuilder =
       Value<String> optionsJson,
       Value<String> selectedLabel,
       Value<String> rationaleMd,
-      Value<String> principleIdsJson,
-      Value<String> assumptionIdsJson,
       Value<String?> expectedOutcome,
       Value<DateTime?> reviewDate,
       Value<String> revisitConditionsJson,
       Value<String?> actualOutcomeMd,
       Value<String> status,
       Value<String?> supersededByDecisionId,
-      Value<String?> contextSnapshotJson,
       required DateTime decidedAt,
       Value<String?> mergedIntoId,
       Value<int> rowid,
@@ -65049,15 +59721,12 @@ typedef $$KnowledgeDecisionsTableUpdateCompanionBuilder =
       Value<String> optionsJson,
       Value<String> selectedLabel,
       Value<String> rationaleMd,
-      Value<String> principleIdsJson,
-      Value<String> assumptionIdsJson,
       Value<String?> expectedOutcome,
       Value<DateTime?> reviewDate,
       Value<String> revisitConditionsJson,
       Value<String?> actualOutcomeMd,
       Value<String> status,
       Value<String?> supersededByDecisionId,
-      Value<String?> contextSnapshotJson,
       Value<DateTime> decidedAt,
       Value<String?> mergedIntoId,
       Value<int> rowid,
@@ -65123,16 +59792,6 @@ class $$KnowledgeDecisionsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get principleIdsJson => $composableBuilder(
-    column: $table.principleIdsJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get assumptionIdsJson => $composableBuilder(
-    column: $table.assumptionIdsJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get expectedOutcome => $composableBuilder(
     column: $table.expectedOutcome,
     builder: (column) => ColumnFilters(column),
@@ -65160,11 +59819,6 @@ class $$KnowledgeDecisionsTableFilterComposer
 
   ColumnFilters<String> get supersededByDecisionId => $composableBuilder(
     column: $table.supersededByDecisionId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get contextSnapshotJson => $composableBuilder(
-    column: $table.contextSnapshotJson,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -65238,16 +59892,6 @@ class $$KnowledgeDecisionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get principleIdsJson => $composableBuilder(
-    column: $table.principleIdsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get assumptionIdsJson => $composableBuilder(
-    column: $table.assumptionIdsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get expectedOutcome => $composableBuilder(
     column: $table.expectedOutcome,
     builder: (column) => ColumnOrderings(column),
@@ -65275,11 +59919,6 @@ class $$KnowledgeDecisionsTableOrderingComposer
 
   ColumnOrderings<String> get supersededByDecisionId => $composableBuilder(
     column: $table.supersededByDecisionId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get contextSnapshotJson => $composableBuilder(
-    column: $table.contextSnapshotJson,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -65343,16 +59982,6 @@ class $$KnowledgeDecisionsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get principleIdsJson => $composableBuilder(
-    column: $table.principleIdsJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get assumptionIdsJson => $composableBuilder(
-    column: $table.assumptionIdsJson,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<String> get expectedOutcome => $composableBuilder(
     column: $table.expectedOutcome,
     builder: (column) => column,
@@ -65378,11 +60007,6 @@ class $$KnowledgeDecisionsTableAnnotationComposer
 
   GeneratedColumn<String> get supersededByDecisionId => $composableBuilder(
     column: $table.supersededByDecisionId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get contextSnapshotJson => $composableBuilder(
-    column: $table.contextSnapshotJson,
     builder: (column) => column,
   );
 
@@ -65445,15 +60069,12 @@ class $$KnowledgeDecisionsTableTableManager
                 Value<String> optionsJson = const Value.absent(),
                 Value<String> selectedLabel = const Value.absent(),
                 Value<String> rationaleMd = const Value.absent(),
-                Value<String> principleIdsJson = const Value.absent(),
-                Value<String> assumptionIdsJson = const Value.absent(),
                 Value<String?> expectedOutcome = const Value.absent(),
                 Value<DateTime?> reviewDate = const Value.absent(),
                 Value<String> revisitConditionsJson = const Value.absent(),
                 Value<String?> actualOutcomeMd = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> supersededByDecisionId = const Value.absent(),
-                Value<String?> contextSnapshotJson = const Value.absent(),
                 Value<DateTime> decidedAt = const Value.absent(),
                 Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -65468,15 +60089,12 @@ class $$KnowledgeDecisionsTableTableManager
                 optionsJson: optionsJson,
                 selectedLabel: selectedLabel,
                 rationaleMd: rationaleMd,
-                principleIdsJson: principleIdsJson,
-                assumptionIdsJson: assumptionIdsJson,
                 expectedOutcome: expectedOutcome,
                 reviewDate: reviewDate,
                 revisitConditionsJson: revisitConditionsJson,
                 actualOutcomeMd: actualOutcomeMd,
                 status: status,
                 supersededByDecisionId: supersededByDecisionId,
-                contextSnapshotJson: contextSnapshotJson,
                 decidedAt: decidedAt,
                 mergedIntoId: mergedIntoId,
                 rowid: rowid,
@@ -65493,15 +60111,12 @@ class $$KnowledgeDecisionsTableTableManager
                 Value<String> optionsJson = const Value.absent(),
                 Value<String> selectedLabel = const Value.absent(),
                 Value<String> rationaleMd = const Value.absent(),
-                Value<String> principleIdsJson = const Value.absent(),
-                Value<String> assumptionIdsJson = const Value.absent(),
                 Value<String?> expectedOutcome = const Value.absent(),
                 Value<DateTime?> reviewDate = const Value.absent(),
                 Value<String> revisitConditionsJson = const Value.absent(),
                 Value<String?> actualOutcomeMd = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String?> supersededByDecisionId = const Value.absent(),
-                Value<String?> contextSnapshotJson = const Value.absent(),
                 required DateTime decidedAt,
                 Value<String?> mergedIntoId = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -65516,15 +60131,12 @@ class $$KnowledgeDecisionsTableTableManager
                 optionsJson: optionsJson,
                 selectedLabel: selectedLabel,
                 rationaleMd: rationaleMd,
-                principleIdsJson: principleIdsJson,
-                assumptionIdsJson: assumptionIdsJson,
                 expectedOutcome: expectedOutcome,
                 reviewDate: reviewDate,
                 revisitConditionsJson: revisitConditionsJson,
                 actualOutcomeMd: actualOutcomeMd,
                 status: status,
                 supersededByDecisionId: supersededByDecisionId,
-                contextSnapshotJson: contextSnapshotJson,
                 decidedAt: decidedAt,
                 mergedIntoId: mergedIntoId,
                 rowid: rowid,
@@ -65556,1177 +60168,6 @@ typedef $$KnowledgeDecisionsTableProcessedTableManager =
         >,
       ),
       KnowledgeDecisionRow,
-      PrefetchHooks Function()
-    >;
-typedef $$KnowledgeConceptsTableCreateCompanionBuilder =
-    KnowledgeConceptsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String name,
-      Value<String> aliasesJson,
-      Value<String> summaryMd,
-      Value<String> relatedConceptIdsJson,
-      required DateTime createdAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-typedef $$KnowledgeConceptsTableUpdateCompanionBuilder =
-    KnowledgeConceptsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> name,
-      Value<String> aliasesJson,
-      Value<String> summaryMd,
-      Value<String> relatedConceptIdsJson,
-      Value<DateTime> createdAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-
-class $$KnowledgeConceptsTableFilterComposer
-    extends Composer<_$AppDatabase, $KnowledgeConceptsTable> {
-  $$KnowledgeConceptsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get aliasesJson => $composableBuilder(
-    column: $table.aliasesJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get summaryMd => $composableBuilder(
-    column: $table.summaryMd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get relatedConceptIdsJson => $composableBuilder(
-    column: $table.relatedConceptIdsJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$KnowledgeConceptsTableOrderingComposer
-    extends Composer<_$AppDatabase, $KnowledgeConceptsTable> {
-  $$KnowledgeConceptsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get aliasesJson => $composableBuilder(
-    column: $table.aliasesJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get summaryMd => $composableBuilder(
-    column: $table.summaryMd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get relatedConceptIdsJson => $composableBuilder(
-    column: $table.relatedConceptIdsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$KnowledgeConceptsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KnowledgeConceptsTable> {
-  $$KnowledgeConceptsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<String> get aliasesJson => $composableBuilder(
-    column: $table.aliasesJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get summaryMd =>
-      $composableBuilder(column: $table.summaryMd, builder: (column) => column);
-
-  GeneratedColumn<String> get relatedConceptIdsJson => $composableBuilder(
-    column: $table.relatedConceptIdsJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => column,
-  );
-}
-
-class $$KnowledgeConceptsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $KnowledgeConceptsTable,
-          KnowledgeConceptRow,
-          $$KnowledgeConceptsTableFilterComposer,
-          $$KnowledgeConceptsTableOrderingComposer,
-          $$KnowledgeConceptsTableAnnotationComposer,
-          $$KnowledgeConceptsTableCreateCompanionBuilder,
-          $$KnowledgeConceptsTableUpdateCompanionBuilder,
-          (
-            KnowledgeConceptRow,
-            BaseReferences<
-              _$AppDatabase,
-              $KnowledgeConceptsTable,
-              KnowledgeConceptRow
-            >,
-          ),
-          KnowledgeConceptRow,
-          PrefetchHooks Function()
-        > {
-  $$KnowledgeConceptsTableTableManager(
-    _$AppDatabase db,
-    $KnowledgeConceptsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KnowledgeConceptsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KnowledgeConceptsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$KnowledgeConceptsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<String> aliasesJson = const Value.absent(),
-                Value<String> summaryMd = const Value.absent(),
-                Value<String> relatedConceptIdsJson = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeConceptsCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                name: name,
-                aliasesJson: aliasesJson,
-                summaryMd: summaryMd,
-                relatedConceptIdsJson: relatedConceptIdsJson,
-                createdAt: createdAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String name,
-                Value<String> aliasesJson = const Value.absent(),
-                Value<String> summaryMd = const Value.absent(),
-                Value<String> relatedConceptIdsJson = const Value.absent(),
-                required DateTime createdAt,
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeConceptsCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                name: name,
-                aliasesJson: aliasesJson,
-                summaryMd: summaryMd,
-                relatedConceptIdsJson: relatedConceptIdsJson,
-                createdAt: createdAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$KnowledgeConceptsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $KnowledgeConceptsTable,
-      KnowledgeConceptRow,
-      $$KnowledgeConceptsTableFilterComposer,
-      $$KnowledgeConceptsTableOrderingComposer,
-      $$KnowledgeConceptsTableAnnotationComposer,
-      $$KnowledgeConceptsTableCreateCompanionBuilder,
-      $$KnowledgeConceptsTableUpdateCompanionBuilder,
-      (
-        KnowledgeConceptRow,
-        BaseReferences<
-          _$AppDatabase,
-          $KnowledgeConceptsTable,
-          KnowledgeConceptRow
-        >,
-      ),
-      KnowledgeConceptRow,
-      PrefetchHooks Function()
-    >;
-typedef $$KnowledgeExperimentsTableCreateCompanionBuilder =
-    KnowledgeExperimentsCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String hypothesis,
-      Value<String> methodMd,
-      Value<String> metricsJson,
-      Value<String> status,
-      Value<String?> resultMd,
-      Value<String?> conclusionMd,
-      Value<String?> targetAssumptionId,
-      required DateTime startedAt,
-      Value<DateTime?> endedAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-typedef $$KnowledgeExperimentsTableUpdateCompanionBuilder =
-    KnowledgeExperimentsCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> hypothesis,
-      Value<String> methodMd,
-      Value<String> metricsJson,
-      Value<String> status,
-      Value<String?> resultMd,
-      Value<String?> conclusionMd,
-      Value<String?> targetAssumptionId,
-      Value<DateTime> startedAt,
-      Value<DateTime?> endedAt,
-      Value<String?> mergedIntoId,
-      Value<int> rowid,
-    });
-
-class $$KnowledgeExperimentsTableFilterComposer
-    extends Composer<_$AppDatabase, $KnowledgeExperimentsTable> {
-  $$KnowledgeExperimentsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get hypothesis => $composableBuilder(
-    column: $table.hypothesis,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get methodMd => $composableBuilder(
-    column: $table.methodMd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get metricsJson => $composableBuilder(
-    column: $table.metricsJson,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get resultMd => $composableBuilder(
-    column: $table.resultMd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get conclusionMd => $composableBuilder(
-    column: $table.conclusionMd,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get targetAssumptionId => $composableBuilder(
-    column: $table.targetAssumptionId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get startedAt => $composableBuilder(
-    column: $table.startedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get endedAt => $composableBuilder(
-    column: $table.endedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$KnowledgeExperimentsTableOrderingComposer
-    extends Composer<_$AppDatabase, $KnowledgeExperimentsTable> {
-  $$KnowledgeExperimentsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hypothesis => $composableBuilder(
-    column: $table.hypothesis,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get methodMd => $composableBuilder(
-    column: $table.methodMd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get metricsJson => $composableBuilder(
-    column: $table.metricsJson,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get resultMd => $composableBuilder(
-    column: $table.resultMd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get conclusionMd => $composableBuilder(
-    column: $table.conclusionMd,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get targetAssumptionId => $composableBuilder(
-    column: $table.targetAssumptionId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
-    column: $table.startedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
-    column: $table.endedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$KnowledgeExperimentsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KnowledgeExperimentsTable> {
-  $$KnowledgeExperimentsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get hypothesis => $composableBuilder(
-    column: $table.hypothesis,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get methodMd =>
-      $composableBuilder(column: $table.methodMd, builder: (column) => column);
-
-  GeneratedColumn<String> get metricsJson => $composableBuilder(
-    column: $table.metricsJson,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<String> get resultMd =>
-      $composableBuilder(column: $table.resultMd, builder: (column) => column);
-
-  GeneratedColumn<String> get conclusionMd => $composableBuilder(
-    column: $table.conclusionMd,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<String> get targetAssumptionId => $composableBuilder(
-    column: $table.targetAssumptionId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get startedAt =>
-      $composableBuilder(column: $table.startedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get endedAt =>
-      $composableBuilder(column: $table.endedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get mergedIntoId => $composableBuilder(
-    column: $table.mergedIntoId,
-    builder: (column) => column,
-  );
-}
-
-class $$KnowledgeExperimentsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $KnowledgeExperimentsTable,
-          KnowledgeExperimentRow,
-          $$KnowledgeExperimentsTableFilterComposer,
-          $$KnowledgeExperimentsTableOrderingComposer,
-          $$KnowledgeExperimentsTableAnnotationComposer,
-          $$KnowledgeExperimentsTableCreateCompanionBuilder,
-          $$KnowledgeExperimentsTableUpdateCompanionBuilder,
-          (
-            KnowledgeExperimentRow,
-            BaseReferences<
-              _$AppDatabase,
-              $KnowledgeExperimentsTable,
-              KnowledgeExperimentRow
-            >,
-          ),
-          KnowledgeExperimentRow,
-          PrefetchHooks Function()
-        > {
-  $$KnowledgeExperimentsTableTableManager(
-    _$AppDatabase db,
-    $KnowledgeExperimentsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KnowledgeExperimentsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KnowledgeExperimentsTableOrderingComposer(
-                $db: db,
-                $table: table,
-              ),
-          createComputedFieldComposer: () =>
-              $$KnowledgeExperimentsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> hypothesis = const Value.absent(),
-                Value<String> methodMd = const Value.absent(),
-                Value<String> metricsJson = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<String?> resultMd = const Value.absent(),
-                Value<String?> conclusionMd = const Value.absent(),
-                Value<String?> targetAssumptionId = const Value.absent(),
-                Value<DateTime> startedAt = const Value.absent(),
-                Value<DateTime?> endedAt = const Value.absent(),
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeExperimentsCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                hypothesis: hypothesis,
-                methodMd: methodMd,
-                metricsJson: metricsJson,
-                status: status,
-                resultMd: resultMd,
-                conclusionMd: conclusionMd,
-                targetAssumptionId: targetAssumptionId,
-                startedAt: startedAt,
-                endedAt: endedAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String hypothesis,
-                Value<String> methodMd = const Value.absent(),
-                Value<String> metricsJson = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<String?> resultMd = const Value.absent(),
-                Value<String?> conclusionMd = const Value.absent(),
-                Value<String?> targetAssumptionId = const Value.absent(),
-                required DateTime startedAt,
-                Value<DateTime?> endedAt = const Value.absent(),
-                Value<String?> mergedIntoId = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeExperimentsCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                hypothesis: hypothesis,
-                methodMd: methodMd,
-                metricsJson: metricsJson,
-                status: status,
-                resultMd: resultMd,
-                conclusionMd: conclusionMd,
-                targetAssumptionId: targetAssumptionId,
-                startedAt: startedAt,
-                endedAt: endedAt,
-                mergedIntoId: mergedIntoId,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$KnowledgeExperimentsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $KnowledgeExperimentsTable,
-      KnowledgeExperimentRow,
-      $$KnowledgeExperimentsTableFilterComposer,
-      $$KnowledgeExperimentsTableOrderingComposer,
-      $$KnowledgeExperimentsTableAnnotationComposer,
-      $$KnowledgeExperimentsTableCreateCompanionBuilder,
-      $$KnowledgeExperimentsTableUpdateCompanionBuilder,
-      (
-        KnowledgeExperimentRow,
-        BaseReferences<
-          _$AppDatabase,
-          $KnowledgeExperimentsTable,
-          KnowledgeExperimentRow
-        >,
-      ),
-      KnowledgeExperimentRow,
-      PrefetchHooks Function()
-    >;
-typedef $$KnowledgeRoutinesTableCreateCompanionBuilder =
-    KnowledgeRoutinesCompanion Function({
-      required String ownerUserId,
-      required DateTime updatedAt,
-      required String updatedByDevice,
-      required Hlc hlc,
-      Value<DateTime?> deletedAt,
-      required String id,
-      required String statement,
-      required int intervalDays,
-      Value<DateTime?> lastDoneAt,
-      required DateTime nextDueAt,
-      Value<String> scope,
-      Value<String> status,
-      required DateTime createdAt,
-      Value<int> rowid,
-    });
-typedef $$KnowledgeRoutinesTableUpdateCompanionBuilder =
-    KnowledgeRoutinesCompanion Function({
-      Value<String> ownerUserId,
-      Value<DateTime> updatedAt,
-      Value<String> updatedByDevice,
-      Value<Hlc> hlc,
-      Value<DateTime?> deletedAt,
-      Value<String> id,
-      Value<String> statement,
-      Value<int> intervalDays,
-      Value<DateTime?> lastDoneAt,
-      Value<DateTime> nextDueAt,
-      Value<String> scope,
-      Value<String> status,
-      Value<DateTime> createdAt,
-      Value<int> rowid,
-    });
-
-class $$KnowledgeRoutinesTableFilterComposer
-    extends Composer<_$AppDatabase, $KnowledgeRoutinesTable> {
-  $$KnowledgeRoutinesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
-      $composableBuilder(
-        column: $table.hlc,
-        builder: (column) => ColumnWithTypeConverterFilters(column),
-      );
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get statement => $composableBuilder(
-    column: $table.statement,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<int> get intervalDays => $composableBuilder(
-    column: $table.intervalDays,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get lastDoneAt => $composableBuilder(
-    column: $table.lastDoneAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get nextDueAt => $composableBuilder(
-    column: $table.nextDueAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get scope => $composableBuilder(
-    column: $table.scope,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$KnowledgeRoutinesTableOrderingComposer
-    extends Composer<_$AppDatabase, $KnowledgeRoutinesTable> {
-  $$KnowledgeRoutinesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get hlc => $composableBuilder(
-    column: $table.hlc,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-    column: $table.deletedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get statement => $composableBuilder(
-    column: $table.statement,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<int> get intervalDays => $composableBuilder(
-    column: $table.intervalDays,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get lastDoneAt => $composableBuilder(
-    column: $table.lastDoneAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get nextDueAt => $composableBuilder(
-    column: $table.nextDueAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get scope => $composableBuilder(
-    column: $table.scope,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get status => $composableBuilder(
-    column: $table.status,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$KnowledgeRoutinesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $KnowledgeRoutinesTable> {
-  $$KnowledgeRoutinesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get ownerUserId => $composableBuilder(
-    column: $table.ownerUserId,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
-    column: $table.updatedByDevice,
-    builder: (column) => column,
-  );
-
-  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
-      $composableBuilder(column: $table.hlc, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
-
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get statement =>
-      $composableBuilder(column: $table.statement, builder: (column) => column);
-
-  GeneratedColumn<int> get intervalDays => $composableBuilder(
-    column: $table.intervalDays,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get lastDoneAt => $composableBuilder(
-    column: $table.lastDoneAt,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<DateTime> get nextDueAt =>
-      $composableBuilder(column: $table.nextDueAt, builder: (column) => column);
-
-  GeneratedColumn<String> get scope =>
-      $composableBuilder(column: $table.scope, builder: (column) => column);
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-}
-
-class $$KnowledgeRoutinesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $KnowledgeRoutinesTable,
-          KnowledgeRoutineRow,
-          $$KnowledgeRoutinesTableFilterComposer,
-          $$KnowledgeRoutinesTableOrderingComposer,
-          $$KnowledgeRoutinesTableAnnotationComposer,
-          $$KnowledgeRoutinesTableCreateCompanionBuilder,
-          $$KnowledgeRoutinesTableUpdateCompanionBuilder,
-          (
-            KnowledgeRoutineRow,
-            BaseReferences<
-              _$AppDatabase,
-              $KnowledgeRoutinesTable,
-              KnowledgeRoutineRow
-            >,
-          ),
-          KnowledgeRoutineRow,
-          PrefetchHooks Function()
-        > {
-  $$KnowledgeRoutinesTableTableManager(
-    _$AppDatabase db,
-    $KnowledgeRoutinesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$KnowledgeRoutinesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$KnowledgeRoutinesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$KnowledgeRoutinesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<String> ownerUserId = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-                Value<String> updatedByDevice = const Value.absent(),
-                Value<Hlc> hlc = const Value.absent(),
-                Value<DateTime?> deletedAt = const Value.absent(),
-                Value<String> id = const Value.absent(),
-                Value<String> statement = const Value.absent(),
-                Value<int> intervalDays = const Value.absent(),
-                Value<DateTime?> lastDoneAt = const Value.absent(),
-                Value<DateTime> nextDueAt = const Value.absent(),
-                Value<String> scope = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeRoutinesCompanion(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                statement: statement,
-                intervalDays: intervalDays,
-                lastDoneAt: lastDoneAt,
-                nextDueAt: nextDueAt,
-                scope: scope,
-                status: status,
-                createdAt: createdAt,
-                rowid: rowid,
-              ),
-          createCompanionCallback:
-              ({
-                required String ownerUserId,
-                required DateTime updatedAt,
-                required String updatedByDevice,
-                required Hlc hlc,
-                Value<DateTime?> deletedAt = const Value.absent(),
-                required String id,
-                required String statement,
-                required int intervalDays,
-                Value<DateTime?> lastDoneAt = const Value.absent(),
-                required DateTime nextDueAt,
-                Value<String> scope = const Value.absent(),
-                Value<String> status = const Value.absent(),
-                required DateTime createdAt,
-                Value<int> rowid = const Value.absent(),
-              }) => KnowledgeRoutinesCompanion.insert(
-                ownerUserId: ownerUserId,
-                updatedAt: updatedAt,
-                updatedByDevice: updatedByDevice,
-                hlc: hlc,
-                deletedAt: deletedAt,
-                id: id,
-                statement: statement,
-                intervalDays: intervalDays,
-                lastDoneAt: lastDoneAt,
-                nextDueAt: nextDueAt,
-                scope: scope,
-                status: status,
-                createdAt: createdAt,
-                rowid: rowid,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$KnowledgeRoutinesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $KnowledgeRoutinesTable,
-      KnowledgeRoutineRow,
-      $$KnowledgeRoutinesTableFilterComposer,
-      $$KnowledgeRoutinesTableOrderingComposer,
-      $$KnowledgeRoutinesTableAnnotationComposer,
-      $$KnowledgeRoutinesTableCreateCompanionBuilder,
-      $$KnowledgeRoutinesTableUpdateCompanionBuilder,
-      (
-        KnowledgeRoutineRow,
-        BaseReferences<
-          _$AppDatabase,
-          $KnowledgeRoutinesTable,
-          KnowledgeRoutineRow
-        >,
-      ),
-      KnowledgeRoutineRow,
       PrefetchHooks Function()
     >;
 typedef $$KnowledgeRelationsTableCreateCompanionBuilder =
@@ -68488,18 +61929,8 @@ class $AppDatabaseManager {
       $$HealthMetricsTableTableManager(_db, _db.healthMetrics);
   $$KnowledgeNotesTableTableManager get knowledgeNotes =>
       $$KnowledgeNotesTableTableManager(_db, _db.knowledgeNotes);
-  $$KnowledgePrinciplesTableTableManager get knowledgePrinciples =>
-      $$KnowledgePrinciplesTableTableManager(_db, _db.knowledgePrinciples);
-  $$KnowledgeAssumptionsTableTableManager get knowledgeAssumptions =>
-      $$KnowledgeAssumptionsTableTableManager(_db, _db.knowledgeAssumptions);
   $$KnowledgeDecisionsTableTableManager get knowledgeDecisions =>
       $$KnowledgeDecisionsTableTableManager(_db, _db.knowledgeDecisions);
-  $$KnowledgeConceptsTableTableManager get knowledgeConcepts =>
-      $$KnowledgeConceptsTableTableManager(_db, _db.knowledgeConcepts);
-  $$KnowledgeExperimentsTableTableManager get knowledgeExperiments =>
-      $$KnowledgeExperimentsTableTableManager(_db, _db.knowledgeExperiments);
-  $$KnowledgeRoutinesTableTableManager get knowledgeRoutines =>
-      $$KnowledgeRoutinesTableTableManager(_db, _db.knowledgeRoutines);
   $$KnowledgeRelationsTableTableManager get knowledgeRelations =>
       $$KnowledgeRelationsTableTableManager(_db, _db.knowledgeRelations);
   $$ExecutionPlansTableTableManager get executionPlans =>

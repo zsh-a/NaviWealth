@@ -1,16 +1,4 @@
-/// `propose_merge` — KnowledgeOS dedupe write tool
-/// (`docs/domains/knowledgeos-domain.md` §15.3).
-///
-/// **Write semantics**: returns a proposal envelope; the user confirms in
-/// the UI (one-tap, with the merge diff rendered in the card) before any
-/// row moves. Matches the cross-domain `propose_*` pattern.
-///
-/// MVP merges only Note↔Note and Concept↔Concept (the types with few /
-/// no inbound id references). On confirm the applier calls
-/// `KnowledgeRepository.mergeNotes` / `mergeConcepts`: the survivor unions
-/// tags (+ aliases / related ids for concepts), the duplicates are
-/// soft-deleted and stamped `mergedIntoId = primary`. Reversible — that
-/// is why one-tap (not a typed confirm) is the right friction level.
+/// `propose_merge` creates a user-confirmed Note or Decision merge.
 library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
@@ -26,43 +14,23 @@ class ProposeMergeTool implements DeviceTool {
   String get name => 'propose_merge';
 
   @override
-  String get description =>
-      '建议把若干条重复的 KnowledgeOS 条目合并为一条。**不会**直接写库,返回 proposal envelope,'
-      '前端显示合并 diff 让用户一键确认。'
-      'entity_type 支持 note / concept / principle / assumption / decision / experiment。'
-      'primary_id 为保留的那条;duplicate_ids 为被合并(合并后软删)的条目。'
-      '可选 merged_title / merged_body(note)或 merged_name / merged_summary(concept)覆盖保留条目的字段;'
-      '不传则沿用 primary 的字段、并并集 tags(concept 另并集 aliases / related,assumption 并集 evidence,experiment 并集 metrics)。'
-      'assumption / principle / decision 合并会自动重定向引用它们的 Decision / Experiment。'
-      '通常先用 find_similar_knowledge 找到候选,再调用本工具。';
+  String get description => '建议合并重复的 Note 或 Decision。只生成待确认方案，不直接写入。';
 
   @override
   Map<String, Object?> get inputSchema => <String, Object?>{
     'type': 'object',
-    'properties': {
-      'entity_type': {
+    'properties': <String, Object?>{
+      'entity_type': <String, Object?>{
         'type': 'string',
-        'enum': <String>[
-          'note',
-          'concept',
-          'principle',
-          'assumption',
-          'decision',
-          'experiment',
-        ],
+        'enum': <String>['note', 'decision'],
       },
-      'primary_id': {'type': 'string', 'description': '保留的条目 id。'},
-      'duplicate_ids': {
+      'primary_id': <String, Object?>{'type': 'string'},
+      'duplicate_ids': <String, Object?>{
         'type': 'array',
         'items': <String, Object?>{'type': 'string'},
         'minItems': 1,
-        'description': '要合并进 primary 的重复条目 id(至少一个)。',
       },
-      'merged_title': {'type': 'string', 'description': 'note: 覆盖保留条目标题。'},
-      'merged_body': {'type': 'string', 'description': 'note: 覆盖保留条目正文。'},
-      'merged_name': {'type': 'string', 'description': 'concept: 覆盖名称。'},
-      'merged_summary': {'type': 'string', 'description': 'concept: 覆盖摘要。'},
-      'reason': {'type': 'string', 'description': '一句中文说明为什么判定它们重复。会显示给用户。'},
+      'reason': <String, Object?>{'type': 'string'},
     },
     'required': <String>[
       'entity_type',
@@ -77,125 +45,63 @@ class ProposeMergeTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final entityType = (input['entity_type'] as String?)?.trim() ?? '';
+    final kind = (input['entity_type'] as String?)?.trim() ?? '';
     final primaryId = (input['primary_id'] as String?)?.trim() ?? '';
-    final dupRaw = input['duplicate_ids'];
-    final duplicateIds = dupRaw is List
-        ? dupRaw
+    final reason = (input['reason'] as String?)?.trim() ?? '';
+    final duplicates = input['duplicate_ids'] is List
+        ? (input['duplicate_ids'] as List<Object?>)
               .whereType<String>()
-              .map((s) => s.trim())
-              .where((s) => s.isNotEmpty && s != primaryId)
+              .map((value) => value.trim())
+              .where((value) => value.isNotEmpty && value != primaryId)
               .toSet()
               .toList(growable: false)
         : const <String>[];
-    final reason = (input['reason'] as String?)?.trim() ?? '';
-
-    const nouns = <String, String>{
-      'note': '笔记',
-      'concept': '概念',
-      'principle': '原则',
-      'assumption': '假设',
-      'decision': '决策',
-      'experiment': '实验',
-    };
-    if (!nouns.containsKey(entityType)) {
-      return badRequest('entity_type 只支持 ${nouns.keys.join(' / ')}。');
+    if (!const <String>{'note', 'decision'}.contains(kind)) {
+      return badRequest('entity_type 只支持 note / decision。');
     }
-    if (primaryId.isEmpty || reason.isEmpty || duplicateIds.isEmpty) {
-      return badRequest(
-        'primary_id / reason 必填,duplicate_ids 至少一个(且不等于 primary_id)。',
-      );
+    if (primaryId.isEmpty || duplicates.isEmpty || reason.isEmpty) {
+      return badRequest('primary_id、duplicate_ids、reason 均为必填。');
     }
 
-    final repo = await ctx.ref.read(knowledgeRepositoryProvider.future);
+    final repository = await ctx.ref.read(knowledgeRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-
-    // Resolve a row to its display label + the tokens a merge unions onto the
-    // survivor (tags / aliases / evidence / metrics — empty for types with
-    // none). Returns null label when the id no longer resolves.
-    Future<({String? label, Set<String> tokens})> resolve(String id) async {
-      switch (entityType) {
-        case 'note':
-          final r = await repo.findNote(ownerUserId: ownerUserId, id: id);
-          return (label: r?.title, tokens: <String>{...?r?.tags});
-        case 'concept':
-          final r = await repo.findConcept(ownerUserId: ownerUserId, id: id);
-          return (
-            label: r?.name,
-            tokens: <String>{...?r?.aliases, if (r != null) r.name},
-          );
-        case 'principle':
-          final r = await repo.findPrinciple(ownerUserId: ownerUserId, id: id);
-          return (label: r?.statement, tokens: const <String>{});
-        case 'assumption':
-          final r = await repo.findAssumption(ownerUserId: ownerUserId, id: id);
-          return (label: r?.statement, tokens: <String>{...?r?.evidenceIds});
-        case 'decision':
-          final r = await repo.findDecision(ownerUserId: ownerUserId, id: id);
-          return (label: r?.question, tokens: const <String>{});
-        case 'experiment':
-          final r = await repo.findExperiment(ownerUserId: ownerUserId, id: id);
-          return (label: r?.hypothesis, tokens: <String>{...?r?.metrics});
-        default:
-          return (label: null, tokens: const <String>{});
-      }
-    }
-
-    // Hydrate so the card can show a real diff and we fail fast on a dangling
-    // id rather than letting the apply path discover it.
+    Future<String?> label(String id) async => switch (kind) {
+      'note' => (await repository.findNote(
+        ownerUserId: ownerUserId,
+        id: id,
+      ))?.title,
+      'decision' => (await repository.findDecision(
+        ownerUserId: ownerUserId,
+        id: id,
+      ))?.question,
+      _ => null,
+    };
+    final kept = await label(primaryId);
+    final removed = <String>[];
     final missing = <String>[];
-    final removedLabels = <String>[];
-    final mergedTokens = <String>{};
-
-    final primary = await resolve(primaryId);
-    if (primary.label == null) {
-      missing.add(primaryId);
-    } else {
-      mergedTokens.addAll(primary.tokens);
-    }
-    for (final id in duplicateIds) {
-      final d = await resolve(id);
-      if (d.label == null) {
+    if (kept == null) missing.add(primaryId);
+    for (final id in duplicates) {
+      final value = await label(id);
+      if (value == null) {
         missing.add(id);
       } else {
-        removedLabels.add(d.label!);
-        mergedTokens.addAll(d.tokens);
+        removed.add(value);
       }
     }
-
     if (missing.isNotEmpty) {
-      return notFound('以下 id 不存在或已删除: ${missing.join(', ')}', missing);
+      return notFound('以下条目不存在：${missing.join(', ')}', missing);
     }
-
-    final kept = primary.label ?? primaryId;
-    final summary =
-        '建议合并 ${duplicateIds.length} 条${nouns[entityType]}'
-        '到「$kept」— $reason';
-
     return proposalEnvelope(
       kind: 'knowledge_merge',
-      summaryZh: summary,
+      summaryZh: '合并 ${duplicates.length} 条重复内容到「$kept」— $reason',
       payload: <String, Object?>{
-        'entity_type': entityType,
+        'entity_type': kind,
         'primary_id': primaryId,
-        'duplicate_ids': duplicateIds,
-        'merged_title': (input['merged_title'] as String?)?.trim(),
-        'merged_body': (input['merged_body'] as String?)?.trim(),
-        'merged_name': (input['merged_name'] as String?)?.trim(),
-        'merged_summary': (input['merged_summary'] as String?)?.trim(),
+        'duplicate_ids': duplicates,
         'reason': reason,
-        // Rendered in the one-tap card so the user sees what survives /
-        // disappears before confirming (§15.3 — diff is a render concern).
-        'diff': <String, Object?>{
-          'kept': kept,
-          'removed': removedLabels,
-          'merged_tags': mergedTokens.toList(growable: false),
-        },
+        'diff': <String, Object?>{'kept': kept, 'removed': removed},
       },
-      note:
-          '前端必须显示 summary_zh + diff 给用户确认；只有用户明确点确认后才走 '
-          'KnowledgeRepository.merge{Notes/Concepts/Principles/Assumptions/Decisions/Experiments}。'
-          '合并可逆(被合并条目软删并记 mergedIntoId);assumption/principle/decision 合并会重定向引用。',
+      note: '用户确认后执行软合并，可撤销。',
     );
   }
 }

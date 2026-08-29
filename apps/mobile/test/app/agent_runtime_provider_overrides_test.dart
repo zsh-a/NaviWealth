@@ -32,146 +32,98 @@ import 'package:naviwealth/features/finance/activity/data/activity_entry_insight
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
-import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart';
-import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart';
-import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart';
-import 'package:naviwealth/features/knowledge/agents/providers.dart'
-    as knowledge_agent_providers;
-import 'package:naviwealth/features/knowledge/agents/review_agent.dart';
-import 'package:naviwealth/features/knowledge/data/knowledge_llm_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'agent_runtime_effect_plan_test_harness.dart';
 
 void main() {
-  test(
-    'app runtime overrides and DomainPack provider overrides wire FRB integrations',
-    () async {
-      SharedPreferences.setMockInitialValues(<String, Object>{
-        SharedBoolPreferenceController.notificationsEnabledKey: false,
-      });
-      final prefs = await SharedPreferences.getInstance();
-      final native = FakeAgentRuntimeEffectPlanBridge();
-      final llmBridge = _llmBridge(native);
-      final toolHost = AgentRuntimeToolHost(
-        dispatcher: const _NoopDispatcher(),
-      );
-      final container = ProviderContainer(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
-          agentRuntimeCatalogProvider.overrideWithValue(_catalog()),
-          agentRuntimeNativeBridgeProvider.overrideWithValue(native),
-          agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
-          agentRuntimeLlmStreamBridgeProvider.overrideWithValue(
-            AgentRuntimeLlmStreamBridge(
-              llmBridge: llmBridge,
-              initRuntime: ({String? libraryPath}) async {},
-              streamChatTurnJson: ({required String requestJson}) =>
-                  const Stream<String>.empty(),
-            ),
+  test('app runtime overrides and DomainPack provider overrides wire FRB integrations', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      SharedBoolPreferenceController.notificationsEnabledKey: false,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final native = FakeAgentRuntimeEffectPlanBridge();
+    final llmBridge = _llmBridge(native);
+    final toolHost = AgentRuntimeToolHost(dispatcher: const _NoopDispatcher());
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        agentRuntimeCatalogProvider.overrideWithValue(_catalog()),
+        agentRuntimeNativeBridgeProvider.overrideWithValue(native),
+        agentRuntimeLlmBridgeProvider.overrideWithValue(llmBridge),
+        agentRuntimeLlmStreamBridgeProvider.overrideWithValue(
+          AgentRuntimeLlmStreamBridge(
+            llmBridge: llmBridge,
+            initRuntime: ({String? libraryPath}) async {},
+            streamChatTurnJson: ({required String requestJson}) =>
+                const Stream<String>.empty(),
           ),
-          agentRuntimeToolHostProvider.overrideWithValue(toolHost),
-          agentRuntimeNativeStepRunnerProvider.overrideWithValue(
-            AgentRuntimeNativeStepRunner(bridge: native, toolHost: toolHost),
-          ),
-          agentRuntimeTraceRecorderProvider.overrideWithValue(
-            AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
-          ),
-          ..._runtimeOverridesWithDomains([
-            kHealthPack,
-            kKnowledgePack,
-            kExecutionPack,
-          ]),
-        ],
-      );
-      addTearDown(container.dispose);
+        ),
+        agentRuntimeToolHostProvider.overrideWithValue(toolHost),
+        agentRuntimeNativeStepRunnerProvider.overrideWithValue(
+          AgentRuntimeNativeStepRunner(bridge: native, toolHost: toolHost),
+        ),
+        agentRuntimeTraceRecorderProvider.overrideWithValue(
+          AgentRuntimeTraceRecorder(appendTrace: (_) async {}),
+        ),
+        ..._runtimeOverridesWithDomains([
+          kHealthPack,
+          kKnowledgePack,
+          kExecutionPack,
+        ]),
+      ],
+    );
+    addTearDown(container.dispose);
 
-      expect(
-        container.read(ai_chat_providers.chatAgentProvider),
-        isA<FrbChatRunner>(),
-      );
-      expect(
-        container.read(activityEntryInsightClientProvider),
-        isA<FrbActivityEntryInsightClient>(),
-      );
-      expect(
-        container.read(knowledgeLlmProfileClientProvider),
-        isA<FrbKnowledgeLlmProfileClient>(),
-      );
-      expect(
-        container.read(ingestLlmProfileClientProvider),
-        isA<FrbIngestLlmProfileClient>(),
-      );
+    expect(
+      container.read(ai_chat_providers.chatAgentProvider),
+      isA<FrbChatRunner>(),
+    );
+    expect(
+      container.read(activityEntryInsightClientProvider),
+      isA<FrbActivityEntryInsightClient>(),
+    );
+    expect(
+      container.read(ingestLlmProfileClientProvider),
+      isA<FrbIngestLlmProfileClient>(),
+    );
 
-      expect(
-        container.read(dailyNavigatorAgentProvider),
-        isA<DailyNavigatorAgent>().having(
-          (agent) => agent.synthesizer,
-          'synthesizer',
-          isA<FrbDailyNavigatorSynthesizer>(),
-        ),
-      );
-      expect(
-        container.read(execution_agent_providers.executionReviewAgentProvider),
-        isA<ExecutionReviewAgent>().having(
-          (agent) => agent.reviewReader,
-          'reviewReader',
-          isA<FrbExecutionReviewReader>(),
-        ),
-      );
-      expect(
-        container.read(recoveryAlertAgentProvider),
-        isA<RecoveryAlertAgent>().having(
-          (agent) => agent.signalReader,
-          'signalReader',
-          isA<FrbRecoveryAlertSignalReader>(),
-        ),
-      );
-      expect(
-        container.read(weeklySummaryAgentProvider),
-        isA<WeeklySummaryAgent>().having(
-          (agent) => agent.summaryReader,
-          'summaryReader',
-          isA<FrbWeeklySummaryReader>(),
-        ),
-      );
-      expect(
-        container.read(knowledge_agent_providers.reviewAgentProvider),
-        isA<ReviewAgent>().having(
-          (agent) => agent.dueReader,
-          'dueReader',
-          isA<FrbReviewDueReader>(),
-        ),
-      );
-      expect(
-        container.read(knowledge_agent_providers.assumptionAgentProvider),
-        isA<AssumptionAgent>().having(
-          (agent) => agent.assumptionReader,
-          'assumptionReader',
-          isA<FrbAssumptionReviewReader>(),
-        ),
-      );
-      expect(
-        container.read(knowledge_agent_providers.inboxTriageAgentProvider),
-        isA<InboxTriageAgent>().having(
-          (agent) => agent.sourceReader,
-          'sourceReader',
-          isA<FrbInboxTriageSourceReader>(),
-        ),
-      );
-      expect(
-        container.read(knowledge_agent_providers.contradictionAgentProvider),
-        isA<ContradictionAgent>().having(
-          (agent) => agent.sourceReader,
-          'sourceReader',
-          isA<FrbContradictionSourceReader>(),
-        ),
-      );
-    },
-  );
+    expect(
+      container.read(dailyNavigatorAgentProvider),
+      isA<DailyNavigatorAgent>().having(
+        (agent) => agent.synthesizer,
+        'synthesizer',
+        isA<FrbDailyNavigatorSynthesizer>(),
+      ),
+    );
+    expect(
+      container.read(execution_agent_providers.executionReviewAgentProvider),
+      isA<ExecutionReviewAgent>().having(
+        (agent) => agent.reviewReader,
+        'reviewReader',
+        isA<FrbExecutionReviewReader>(),
+      ),
+    );
+    expect(
+      container.read(recoveryAlertAgentProvider),
+      isA<RecoveryAlertAgent>().having(
+        (agent) => agent.signalReader,
+        'signalReader',
+        isA<FrbRecoveryAlertSignalReader>(),
+      ),
+    );
+    expect(
+      container.read(weeklySummaryAgentProvider),
+      isA<WeeklySummaryAgent>().having(
+        (agent) => agent.summaryReader,
+        'summaryReader',
+        isA<FrbWeeklySummaryReader>(),
+      ),
+    );
+  });
 
   test(
-    'agent runtime catalog can compose FRB-backed Health and Knowledge agents',
+    'agent runtime catalog excludes domains without background agents',
     () async {
       SharedPreferences.setMockInitialValues(<String, Object>{
         SharedBoolPreferenceController.notificationsEnabledKey: false,
@@ -213,11 +165,7 @@ void main() {
       expect(catalog.activeDomains, ['health', 'knowledge']);
       expect(
         catalog.agents.map((agent) => agent.id),
-        containsAll(<String>[
-          'recovery_alert',
-          'knowledge_review',
-          'knowledge_inbox_triage',
-        ]),
+        containsAll(<String>['recovery_alert']),
       );
     },
   );
@@ -261,11 +209,7 @@ void main() {
       expect(catalog.activeDomains, ['health', 'knowledge', 'execution']);
       expect(
         catalog.agents.map((agent) => agent.id),
-        containsAll(<String>[
-          'recovery_alert',
-          'knowledge_review',
-          'execution_review',
-        ]),
+        containsAll(<String>['recovery_alert', 'execution_review']),
       );
     },
   );

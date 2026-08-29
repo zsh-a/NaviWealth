@@ -58,12 +58,12 @@ void main() {
     final packs = [
       _domainPack(DomainScope.finance, 'FinanceOS'),
       _domainPack(DomainScope.health, 'HealthOS'),
+      _domainPack(DomainScope.knowledge, 'KnowledgeOS'),
       _domainPack(
-        DomainScope.knowledge,
-        'KnowledgeOS',
-        reviewRoutePath: '/knowledge/review',
+        DomainScope.execution,
+        'ExecutionOS',
+        reviewRoutePath: '/execution/review',
       ),
-      _domainPack(DomainScope.execution, 'ExecutionOS'),
     ];
     final router = GoRouter(
       initialLocation: '/life',
@@ -134,17 +134,13 @@ void main() {
     expect(recentWideTop, greaterThan(priorityWideTop));
   });
 
-  testWidgets('opens domain reviews from one Life review entry', (
+  testWidgets('opens the active domain review from one Life review entry', (
     tester,
   ) async {
     final router = GoRouter(
       initialLocation: '/life',
       routes: [
         GoRoute(path: '/life', builder: (_, _) => const LifePage()),
-        GoRoute(
-          path: '/knowledge/review',
-          builder: (_, _) => const Scaffold(body: Text('Knowledge review')),
-        ),
         GoRoute(
           path: '/execution/review',
           builder: (_, _) => const Scaffold(body: Text('Execution review')),
@@ -168,11 +164,7 @@ void main() {
             ),
           ),
           lifeWorkbenchDomainsProvider.overrideWithValue([
-            _domainPack(
-              DomainScope.knowledge,
-              'KnowledgeOS',
-              reviewRoutePath: '/knowledge/review',
-            ),
+            _domainPack(DomainScope.knowledge, 'KnowledgeOS'),
             _domainPack(
               DomainScope.execution,
               'ExecutionOS',
@@ -200,13 +192,7 @@ void main() {
     await tester.tap(find.text('Close the loop'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Choose what you want to review.'), findsOneWidget);
-    expect(find.text('Knowledge'), findsOneWidget);
-    expect(find.text('Execution'), findsOneWidget);
-
-    await tester.tap(find.text('Knowledge'));
-    await tester.pumpAndSettle();
-    expect(find.text('Knowledge review'), findsOneWidget);
+    expect(find.text('Execution review'), findsOneWidget);
   });
 
   testWidgets(

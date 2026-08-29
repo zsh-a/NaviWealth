@@ -591,8 +591,6 @@ void main() {
             'idx_options_opp_owner_scanned',
             'recurring_pattern_observations',
             'idx_recurring_pattern_obs_series',
-            'knowledge_inbox_triage',
-            'idx_knowledge_inbox_triage_owner_triaged',
             'agent_runs',
             'idx_agent_runs_agent_started',
             'agent_runtime_checkpoints',
@@ -626,8 +624,6 @@ void main() {
         'idx_options_opp_owner_scanned',
         'recurring_pattern_observations',
         'idx_recurring_pattern_obs_series',
-        'knowledge_inbox_triage',
-        'idx_knowledge_inbox_triage_owner_triaged',
         'agent_runs',
         'idx_agent_runs_agent_started',
         'agent_runtime_checkpoints',
@@ -889,97 +885,6 @@ void main() {
         'vehicle': (type: 'asset', category: 'asset'),
       },
     );
-
-    final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), db.schemaVersion);
-  });
-
-  test('migrates v21 with pre-existing dedupe columns idempotently', () async {
-    final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
-    addTearDown(() async {
-      if (await dir.exists()) await dir.delete(recursive: true);
-    });
-    final file = File('${dir.path}/naviwealth.db');
-
-    final legacy = sqlite3.open(file.path);
-    try {
-      for (final table in ['knowledge_notes', 'knowledge_concepts']) {
-        legacy.execute('''
-          CREATE TABLE $table (
-            id TEXT PRIMARY KEY,
-            merged_into_id TEXT
-          )
-        ''');
-      }
-      for (final table in [
-        'knowledge_principles',
-        'knowledge_assumptions',
-        'knowledge_decisions',
-        'knowledge_experiments',
-      ]) {
-        legacy.execute('''
-          CREATE TABLE $table (
-            id TEXT PRIMARY KEY
-          )
-        ''');
-      }
-      legacy
-        ..execute('''
-          CREATE TABLE options_trade_journal (
-            id TEXT PRIMARY KEY
-          )
-        ''')
-        ..execute('''
-          CREATE TABLE chat_messages (
-            id TEXT PRIMARY KEY
-          )
-        ''')
-        ..execute('PRAGMA user_version = 21');
-    } finally {
-      legacy.close();
-    }
-
-    final db = AppDatabase(
-      DatabaseConnection(NativeDatabase(file, logStatements: false)),
-    );
-    addTearDown(db.close);
-
-    Future<Set<String>> columnNames(String table) async {
-      final rows = await db.customSelect('PRAGMA table_info($table)').get();
-      return rows.map((row) => row.read<String>('name')).toSet();
-    }
-
-    expect(
-      await columnNames('knowledge_notes'),
-      containsAll(['id', 'merged_into_id']),
-    );
-    expect(
-      await columnNames('knowledge_principles'),
-      containsAll(['id', 'merged_into_id']),
-    );
-    expect(
-      await columnNames('options_trade_journal'),
-      containsAll([
-        'id',
-        'brokerage_account_id',
-        'cash_account_id',
-        'underlying_market',
-        'strike_price',
-        'contract_size',
-        'expiration_at',
-        'fees',
-        'contract_quantity',
-      ]),
-    );
-    expect(await columnNames('chat_messages'), contains('progress_json'));
-
-    final observations = await db
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type='table' "
-          "AND name='recurring_pattern_observations'",
-        )
-        .get();
-    expect(observations, hasLength(1));
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
     expect(version.read<int>('user_version'), db.schemaVersion);
@@ -1876,24 +1781,20 @@ void main() {
     );
   });
 
-  test(
-    'migrates v37 ingest lifecycle rows without losing recovery data',
-    () async {
-      final dir = await Directory.systemTemp.createTemp(
-        'naviwealth_migration_',
-      );
-      addTearDown(() async {
-        if (await dir.exists()) await dir.delete(recursive: true);
-      });
-      final file = File('${dir.path}/naviwealth.db');
-      const recoveryJson =
-          '{"status":"applied","applied_entity_id":"entry-1",'
-          '"applied_table":"journal_entries"}';
+  test('migrates v37 ingest lifecycle rows without losing recovery data', () async {
+    final dir = await Directory.systemTemp.createTemp('naviwealth_migration_');
+    addTearDown(() async {
+      if (await dir.exists()) await dir.delete(recursive: true);
+    });
+    final file = File('${dir.path}/naviwealth.db');
+    const recoveryJson =
+        '{"status":"applied","applied_entity_id":"entry-1",'
+        '"applied_table":"journal_entries"}';
 
-      final legacy = sqlite3.open(file.path);
-      try {
-        legacy
-          ..execute('''
+    final legacy = sqlite3.open(file.path);
+    try {
+      legacy
+        ..execute('''
           CREATE TABLE ingest_drafts (
             draft_id TEXT PRIMARY KEY,
             owner_user_id TEXT NOT NULL,
@@ -1911,51 +1812,50 @@ void main() {
             expires_at_iso TEXT
           )
         ''')
-          ..execute(
-            'INSERT INTO ingest_drafts ('
-            'draft_id, owner_user_id, created_at_iso, source_kind, parsed_json, '
-            'confidence, dedup_verdict, status, recovery_kind, '
-            'recovery_apply_state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [
-              'draft-1',
-              'owner-1',
-              '2026-07-11T00:00:00.000Z',
-              'csv',
-              '{}',
-              0.9,
-              'newTxn',
-              'pending',
-              'finalize_applied',
-              recoveryJson,
-            ],
-          )
-          ..execute('PRAGMA user_version = 37');
-      } finally {
-        legacy.close();
-      }
+        ..execute(
+          'INSERT INTO ingest_drafts ('
+          'draft_id, owner_user_id, created_at_iso, source_kind, parsed_json, '
+          'confidence, dedup_verdict, status, recovery_kind, '
+          'recovery_apply_state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            'draft-1',
+            'owner-1',
+            '2026-07-11T00:00:00.000Z',
+            'csv',
+            '{}',
+            0.9,
+            'newTxn',
+            'pending',
+            'finalize_applied',
+            recoveryJson,
+          ],
+        )
+        ..execute('PRAGMA user_version = 37');
+    } finally {
+      legacy.close();
+    }
 
-      final db = AppDatabase(
-        DatabaseConnection(NativeDatabase(file, logStatements: false)),
-      );
-      addTearDown(db.close);
+    final db = AppDatabase(
+      DatabaseConnection(NativeDatabase(file, logStatements: false)),
+    );
+    addTearDown(db.close);
 
-      final row = await db
-          .customSelect(
-            'SELECT status, recovery_kind, recovery_apply_state_json, revision, '
-            'operation_token, invocation_started FROM ingest_drafts '
-            "WHERE draft_id = 'draft-1'",
-          )
-          .getSingle();
-      expect(row.read<String>('status'), 'pending');
-      expect(row.read<String>('recovery_kind'), 'finalize_applied');
-      expect(row.read<String>('recovery_apply_state_json'), recoveryJson);
-      expect(row.read<int>('revision'), 0);
-      expect(row.readNullable<String>('operation_token'), equals(null));
-      expect(row.read<int>('invocation_started'), 0);
-      final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), db.schemaVersion);
-    },
-  );
+    final row = await db
+        .customSelect(
+          'SELECT status, recovery_kind, recovery_apply_state_json, revision, '
+          'operation_token, invocation_started FROM ingest_drafts '
+          "WHERE draft_id = 'draft-1'",
+        )
+        .getSingle();
+    expect(row.read<String>('status'), 'pending');
+    expect(row.read<String>('recovery_kind'), 'finalize_applied');
+    expect(row.read<String>('recovery_apply_state_json'), recoveryJson);
+    expect(row.read<int>('revision'), 0);
+    expect(row.readNullable<String>('operation_token'), equals(null));
+    expect(row.read<int>('invocation_started'), 0);
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    expect(version.read<int>('user_version'), db.schemaVersion);
+  });
 
   test('v47 upgrade creates dividend forecasts and portfolio tables', () async {
     final dir = await Directory.systemTemp.createTemp(

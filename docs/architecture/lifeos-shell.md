@@ -75,7 +75,7 @@ features/<domain>/
 |---|---|---|---|---|
 | FinanceOS | `finance` | Today, Activity, Wealth, Plan | `kFinanceDeviceTools` | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review |
 | HealthOS | `health` | Today, Trends | `kHealthDeviceTools` | Recovery Alert, Weekly Summary |
-| KnowledgeOS | `knowledge` | Inbox, Library (+ hidden Review) | `kKnowledgeDeviceTools` | Review, Assumption, Contradiction, Inbox Triage |
+| KnowledgeOS | `knowledge` | Inbox, Library | `kKnowledgeDeviceTools` | — |
 | ExecutionOS | `execution` | Today, Plans (+ hidden Review) | `kExecutionDeviceTools` | Review, Due Action |
 
 Finance is always active. Health, Knowledge, and Execution are enabled through
@@ -356,12 +356,10 @@ Rule: proposal metadata and proposal applier routes belong in the owning domain'
 
 ## Cross-Domain Review
 
-KnowledgeOS and ExecutionOS contribute their contextual review destinations
-through `DomainPack.reviewRoutePath`. The Life hub renders one review entry and
-offers only active domains with a real destination. Review data and pages stay
+ExecutionOS contributes its contextual review destination through
+`DomainPack.reviewRoutePath`. The Life hub renders one review entry and offers
+only active domains with a real destination. Review data and pages stay
 domain-owned; generic Life signals are not presented as a review backlog.
-Domain Review agents may prepare that page, but they do not create a second
-named Review destination or a duplicate result card.
 
 ## Agent Runtime
 
@@ -376,7 +374,6 @@ Core framework:
 Current domain agents:
 
 - Health: Recovery Alert, Weekly Summary.
-- Knowledge: Review, Assumption, Contradiction, Inbox Triage.
 - Execution: Review, Due Action.
 
 Current app-owned Agent:
@@ -430,7 +427,7 @@ Indexers:
 
 - Options trade journal to trade events and episodic memories.
 - Health metrics to health events and selected sleep episodic memories.
-- Knowledge objects and decisions to `know:*` memories.
+- Knowledge notes and decisions to `know:*` memories.
 - Execution plans, actions, and progress to `execution:*`
   memories/events.
 

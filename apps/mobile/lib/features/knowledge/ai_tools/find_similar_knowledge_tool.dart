@@ -16,7 +16,7 @@ library;
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
-import '../data/knowledge_object_memory_indexers.dart';
+import '../data/knowledge_memory_indexer_support.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '_tool_support.dart';
@@ -34,7 +34,7 @@ class FindSimilarKnowledgeTool implements DeviceTool {
   String get description =>
       '在 KnowledgeOS 知识库里查找与给定文本语义相近的已有条目(查重 / 防重复)。'
       '相似度 = EmbeddingGemma 余弦,再用标题+摘要的 token 重叠复核以压低纯向量误判。'
-      'types 限定搜索的类型(note/concept/decision/principle/assumption/experiment);默认全部。'
+      'types 可限定 note / decision；默认两者都搜索。'
       'exclude_id 用于排除"自己"(对已存在条目查重时传它的 id)。'
       '返回 [{id, kind, title, similarity, token_overlap, source}],按 similarity 降序。'
       '高 similarity(≥ threshold)说明可能重复 —— 通常下一步调用 propose_merge。';
@@ -48,14 +48,7 @@ class FindSimilarKnowledgeTool implements DeviceTool {
         'type': 'array',
         'items': <String, Object?>{
           'type': 'string',
-          'enum': <String>[
-            'note',
-            'concept',
-            'decision',
-            'principle',
-            'assumption',
-            'experiment',
-          ],
+          'enum': <String>['note', 'decision'],
         },
         'description': '限定搜索类型;省略 = 全部。',
       },

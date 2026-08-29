@@ -162,27 +162,7 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kKnowledgeDomainPrefix,
   ),
   SyncTableRegistration(
-    'knowledge_principles',
-    domainPrefix: kKnowledgeDomainPrefix,
-  ),
-  SyncTableRegistration(
-    'knowledge_assumptions',
-    domainPrefix: kKnowledgeDomainPrefix,
-  ),
-  SyncTableRegistration(
     'knowledge_decisions',
-    domainPrefix: kKnowledgeDomainPrefix,
-  ),
-  SyncTableRegistration(
-    'knowledge_concepts',
-    domainPrefix: kKnowledgeDomainPrefix,
-  ),
-  SyncTableRegistration(
-    'knowledge_experiments',
-    domainPrefix: kKnowledgeDomainPrefix,
-  ),
-  SyncTableRegistration(
-    'knowledge_routines',
     domainPrefix: kKnowledgeDomainPrefix,
   ),
   SyncTableRegistration(

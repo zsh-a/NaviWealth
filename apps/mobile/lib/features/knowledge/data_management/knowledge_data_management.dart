@@ -7,7 +7,5 @@ final DomainDataManagementSpec knowledgeDataManagementSpec =
       scope: DomainScope.knowledge,
       label: 'KnowledgeOS',
       sourceTables: syncDataTablesForPrefix(kKnowledgeDomainPrefix),
-      cacheTables: const <DataTableSpec>[
-        DataTableSpec(table: 'knowledge_inbox_triage', ownerScoped: true),
-      ],
+      cacheTables: const <DataTableSpec>[],
     );

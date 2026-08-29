@@ -72,15 +72,12 @@ abstract final class AppRoutes {
   static const healthTrend = HealthRoutes.trend;
 
   // ── KnowledgeOS (`docs/domains/knowledgeos-domain.md` §5) — gated by domain
-  // opt-in. Primary tabs: Inbox / Library; Review is contextual.
+  // opt-in. Primary tabs: Inbox / Library.
   static const knowledgeInbox = KnowledgeRoutes.inbox;
   static const knowledgeLibrary = KnowledgeRoutes.library;
-  static const knowledgeReview = KnowledgeRoutes.review;
-  // Detail pages live under Library. Decision has its own editable page;
-  // the other typed objects (concept / experiment / principle / assumption)
-  // share one read-only object page keyed by `:kind`.
+  // Note and Decision detail pages live under Library.
+  static const knowledgeNoteDetail = KnowledgeRoutes.noteDetail;
   static const knowledgeDecisionDetail = KnowledgeRoutes.decisionDetail;
-  static const knowledgeObjectDetail = KnowledgeRoutes.objectDetail;
 
   // ── ExecutionOS — optional personal action / plan loop.
   static const executionToday = ExecutionRoutes.today;
@@ -232,12 +229,11 @@ abstract final class AppRouteNames {
   static const healthToday = HealthRouteNames.today;
   static const healthTrend = HealthRouteNames.trend;
 
-  // ── KnowledgeOS — gated by opt-in. Review is contextual, not a tab.
+  // ── KnowledgeOS — gated by opt-in.
   static const knowledgeInbox = KnowledgeRouteNames.inbox;
   static const knowledgeLibrary = KnowledgeRouteNames.library;
-  static const knowledgeReview = KnowledgeRouteNames.review;
+  static const knowledgeNoteDetail = KnowledgeRouteNames.noteDetail;
   static const knowledgeDecisionDetail = KnowledgeRouteNames.decisionDetail;
-  static const knowledgeObjectDetail = KnowledgeRouteNames.objectDetail;
 
   // ── ExecutionOS — gated by opt-in. ─────────────────────────────────────
   static const executionToday = ExecutionRouteNames.today;

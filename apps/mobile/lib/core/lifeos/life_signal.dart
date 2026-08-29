@@ -96,7 +96,6 @@ enum LifeActionTemplate {
   reviewFinanceActivity,
   reviewFinanceBudget,
   protectRecovery,
-  reviewKnowledgeInbox,
 }
 
 enum LifeSignalPriority { high, normal }
@@ -107,5 +106,4 @@ enum LifeEventTemplate {
   recoveryAlert,
   executionBlocked,
   executionDue,
-  knowledgeInbox,
 }

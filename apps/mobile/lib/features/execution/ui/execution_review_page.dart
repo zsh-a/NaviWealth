@@ -233,30 +233,30 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     }
 
     final cutoff = DateTime.now().subtract(const Duration(days: 7));
-    final entries = (progressAsync.value ?? const <ExecutionProgressEntry>[])
-        .where((entry) => !entry.createdAt.toLocal().isBefore(cutoff))
-        .toList(growable: false);
-    // A lifecycle transition writes a completion/dropped progress entry. The
-    // same action also appears in the closed-actions source, but Review is a
-    // digest rather than a raw event log: show that action once, through its
-    // progress entry, instead of repeating it in a second section.
-    final terminalProgressActionIds = entries
-        .where(
-          (entry) =>
-              entry.actionId != null &&
-              (entry.kind == ExecutionProgressKind.completion ||
-                  entry.kind == ExecutionProgressKind.dropped),
-        )
-        .map((entry) => entry.actionId!)
-        .toSet();
+    final recentEntries =
+        (progressAsync.value ?? const <ExecutionProgressEntry>[])
+            .where((entry) => !entry.createdAt.toLocal().isBefore(cutoff))
+            .toList(growable: false);
     final closedActions =
         (closedActionsAsync.value ?? const <ExecutionAction>[])
             .where((action) {
               final at = action.completedAt ?? action.createdAt;
-              return !at.toLocal().isBefore(cutoff) &&
-                  !terminalProgressActionIds.contains(action.id);
+              return !at.toLocal().isBefore(cutoff);
             })
             .toList(growable: false);
+    // Completing or dropping an Action also writes a terminal progress row.
+    // Prefer the closed Action card because it retains the source outcome and
+    // full lifecycle context; keep non-terminal progress as the compact log.
+    final closedActionIds = closedActions.map((action) => action.id).toSet();
+    final entries = recentEntries
+        .where(
+          (entry) =>
+              entry.actionId == null ||
+              !closedActionIds.contains(entry.actionId) ||
+              (entry.kind != ExecutionProgressKind.completion &&
+                  entry.kind != ExecutionProgressKind.dropped),
+        )
+        .toList(growable: false);
     final empty = entries.isEmpty && closedActions.isEmpty;
 
     final itemBuilders = <WidgetBuilder>[

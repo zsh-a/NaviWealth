@@ -6,7 +6,7 @@ import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/domain_packs/finance_life_contribution.dart';
 import 'package:naviwealth/app/domain_packs/health_life_contribution.dart';
-import 'package:naviwealth/app/domain_packs/knowledge_life_contribution.dart';
+import 'package:naviwealth/app/domain_packs/knowledge_source_routes.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
@@ -327,9 +327,17 @@ void main() {
     expect(fire, containsAll(<String>['get_fire_state', 'simulate_fire_plan']));
 
     final knowledge = names(KnowledgeRoutes.library, DomainScope.knowledge);
-    expect(knowledge, containsAll(<String>['search_notes', 'propose_capture']));
-    expect(knowledge, isNot(contains('queue_inbox_tags')));
-    expect(knowledge, isNot(contains('propose_routine')));
+    expect(
+      knowledge,
+      containsAll(<String>[
+        'recall_decision',
+        'list_due_reviews',
+        'search_notes',
+        'search_knowledge',
+        'find_similar_knowledge',
+        'propose_capture',
+      ]),
+    );
 
     final execution = names(ExecutionRoutes.today, DomainScope.execution);
     expect(execution, contains('propose_plan'));
@@ -385,11 +393,11 @@ void main() {
     expect(
       resolver(
         const EntityRouteRef(
-          entityTable: 'knowledge_assumptions',
-          entityId: 'assumption-1',
+          entityTable: 'knowledge_notes',
+          entityId: 'note-1',
         ),
       ),
-      KnowledgeRoutes.object('assumption', 'assumption-1'),
+      KnowledgeRoutes.note('note-1'),
     );
     expect(
       resolver(
@@ -440,12 +448,8 @@ void main() {
       FinanceRoutes.activityEntry('entry-1'),
     );
     expect(
-      knowledgeSourceRoute('know:knowledge_notes', 'inbox'),
-      KnowledgeRoutes.inbox,
-    );
-    expect(
       knowledgeSourceRoute('know:knowledge_notes', 'note-1'),
-      KnowledgeRoutes.object('note', 'note-1'),
+      KnowledgeRoutes.note('note-1'),
     );
     expect(
       healthSourceRoute('health:health_metrics', 'recovery:2026-07-31'),
@@ -661,7 +665,6 @@ void main() {
       containsAll(<String>[
         'weekly_wealth_review',
         'daily_navigator',
-        'knowledge_review',
         'execution_review',
       ]),
     );
@@ -670,7 +673,6 @@ void main() {
       containsAll(<String>[
         'weekly_wealth_review',
         'recovery_alert',
-        'knowledge_review',
         'execution_review',
       ]),
     );
@@ -689,7 +691,6 @@ void main() {
       );
     }
     expect(catalog.lookup(kFinanceReviewWealthIntent), isNotNull);
-    expect(catalog.lookup(kKnowledgeReviewDueItemsIntent), isNotNull);
     expect(
       kExecutionAgentIntentDescriptors.map((descriptor) => descriptor.name),
       containsAll(<String>[

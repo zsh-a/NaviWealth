@@ -1,47 +1,18 @@
-/// KnowledgeOS Library tab (`docs/domains/knowledgeos-domain.md` §5).
-///
-/// Library segments for the KnowledgeOS object families. Decisions surface a
-/// status badge per the 7-state lifecycle in §9. Forui-only — Forui + Flutter
-/// widgets so the page renders correctly inside any scope.
-library;
-
-import 'dart:async';
-
-import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/auth/current_user.dart';
-import '../../../core/shell/master_detail_layout.dart';
-import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
-import '../data/knowledge_llm_client.dart';
-import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '../domain/knowledge_search_suggestions.dart';
-import '_decision_writer.dart';
-import '_object_writers.dart';
-import '_routine_writer.dart';
-import '_widgets.dart';
 import 'knowledge_capture_sheet.dart';
-import 'knowledge_decision_detail_page.dart';
-import 'knowledge_item_actions.dart';
-import 'knowledge_object_detail_page.dart';
-import 'knowledge_status_labels.dart';
 
-part 'knowledge_library_actions.dart';
-part 'knowledge_library_controls.dart';
-part 'knowledge_library_list.dart';
-part 'knowledge_library_model.dart';
-part 'knowledge_library_segment_list.dart';
-part 'knowledge_library_tiles.dart';
+enum _LibraryView { notes, decisions }
 
 class KnowledgeLibraryPage extends ConsumerStatefulWidget {
   const KnowledgeLibraryPage({super.key});
@@ -52,400 +23,183 @@ class KnowledgeLibraryPage extends ConsumerStatefulWidget {
 }
 
 class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
-  _LibrarySegment _segment = _LibrarySegment.all;
-  final _searchCtrl = TextEditingController();
-  final _searchFocus = FocusNode();
-  final List<String> _searchHistory = <String>[];
-  late String _searchHistoryOwner;
-  Timer? _searchDebounce;
-  String _searchQuery = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _searchHistoryOwner = ref.read(activeUserIdProvider) ?? kLocalOnlyUserId;
-    _loadSearchHistory();
-    _searchCtrl.addListener(_onSearchChanged);
-    _searchFocus.addListener(_onSearchFocusChanged);
-  }
-
-  @override
-  void dispose() {
-    _searchDebounce?.cancel();
-    _searchCtrl
-      ..removeListener(_onSearchChanged)
-      ..dispose();
-    _searchFocus.removeListener(_onSearchFocusChanged);
-    _searchFocus.dispose();
-    super.dispose();
-  }
-
-  void _onSearchChanged() {
-    _searchDebounce?.cancel();
-    final next = _searchCtrl.text;
-    if (next.isEmpty) {
-      if (_searchQuery.isNotEmpty && mounted) {
-        setState(() => _searchQuery = '');
-      }
-      return;
-    }
-    _searchDebounce = Timer(const Duration(milliseconds: 150), () {
-      if (!mounted || next == _searchQuery) return;
-      setState(() => _searchQuery = next);
-    });
-  }
-
-  void _onSearchFocusChanged() {
-    if (mounted) setState(() {});
-  }
-
-  void _loadSearchHistory() {
-    final prefs = ref.read(sharedPreferencesProvider);
-    final stored =
-        prefs.getStringList(
-          _knowledgeLibrarySearchHistoryPrefsKey(_searchHistoryOwner),
-        ) ??
-        const <String>[];
-    _searchHistory
-      ..clear()
-      ..addAll(_normalizedSearchHistory(stored));
-  }
-
-  KeyEventResult _onSearchKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    final key = event.logicalKey;
-    if (key == LogicalKeyboardKey.escape && _searchCtrl.text.isNotEmpty) {
-      _searchDebounce?.cancel();
-      _searchCtrl.clear();
-      _searchFocus.requestFocus();
-      return KeyEventResult.handled;
-    }
-    if (key == LogicalKeyboardKey.enter ||
-        key == LogicalKeyboardKey.numpadEnter) {
-      _commitSearch();
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
-  void _commitSearch([String? raw]) {
-    final query = (raw ?? _searchCtrl.text).trim();
-    if (query.length < 2) return;
-    _searchDebounce?.cancel();
-    setState(() {
-      _searchQuery = query;
-      _searchHistory
-        ..clear()
-        ..addAll(_normalizedSearchHistory(<String>[query, ..._searchHistory]));
-    });
-    unawaited(_persistSearchHistory());
-  }
-
-  Future<void> _persistSearchHistory() async {
-    final prefs = ref.read(sharedPreferencesProvider);
-    await prefs.setStringList(
-      _knowledgeLibrarySearchHistoryPrefsKey(_searchHistoryOwner),
-      List<String>.unmodifiable(_searchHistory),
-    );
-  }
-
-  void _clearSearchHistory() {
-    if (_searchHistory.isEmpty) return;
-    setState(_searchHistory.clear);
-    unawaited(_persistSearchHistory());
-  }
-
-  void _removeSearchHistoryItem(String value) {
-    setState(() => _searchHistory.remove(value));
-    unawaited(_persistSearchHistory());
-  }
-
-  void _applySearch(String query) {
-    _searchCtrl.value = TextEditingValue(
-      text: query,
-      selection: TextSelection.collapsed(offset: query.length),
-    );
-    _commitSearch(query);
-    _searchFocus.requestFocus();
-  }
+  var _view = _LibraryView.notes;
 
   @override
   Widget build(BuildContext context) {
-    final owner = ref.watch(activeUserIdProvider) ?? kLocalOnlyUserId;
-    if (owner != _searchHistoryOwner) {
-      _searchHistoryOwner = owner;
-      _loadSearchHistory();
-    }
     final l10n = AppLocalizations.of(context);
-    final library = _KnowledgeMasterDetailScope(
-      enabled: false,
-      child: AppAtmosphere(
-        child: AdaptiveContentFrame(
-          maxWidth: Breakpoints.readingColumn,
-          expandSinglePrimary: true,
-          padding: shellTabContentPadding(context, top: AppSpacing.s8),
-          primary: _buildLibraryContent(l10n),
-        ),
-      ),
-    );
-    // Blueprint §8.2: creation lives in the page header; FAB retired.
     return ShellTabScaffold(
       title: l10n.knowledgeLibraryTitle,
-      actions: [
-        if (_canCreateForSegment(_segment))
-          ShellHeaderActionSpec(
-            icon: FLucideIcons.plus,
-            label: _segment == _LibrarySegment.all
-                ? l10n.knowledgeNewChooserTitle
-                : _createLabel(l10n, _segment),
-            onPress: () => _segment == _LibrarySegment.all
-                ? _openCreateSheet(context, ref)
-                : _createForSegment(context, ref, _segment),
-          ),
+      directActionBudget: 1,
+      actions: <ShellHeaderActionSpec>[
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.knowledgeCaptureAction,
+          onPress: () => showKnowledgeCaptureSheet(context),
+        ),
       ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.library,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (GoRouter.maybeOf(context) == null ||
-                !MasterDetailLayout.shouldUseMasterDetail(
-                  constraints.maxWidth,
-                )) {
-              return library;
-            }
-            return MasterDetailLayout(
-              master: _KnowledgeMasterDetailScope(
-                enabled: true,
-                child: AppAtmosphere(
-                  child: AdaptiveContentFrame(
-                    maxWidth: Breakpoints.readingColumn,
-                    expandSinglePrimary: true,
-                    padding: shellTabContentPadding(
-                      context,
-                      top: AppSpacing.s8,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                AppSpacing.s12,
+                AppSpacing.s16,
+                0,
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<_LibraryView>(
+                  segments: <ButtonSegment<_LibraryView>>[
+                    ButtonSegment<_LibraryView>(
+                      value: _LibraryView.notes,
+                      icon: const Icon(Icons.notes),
+                      label: Text(l10n.knowledgeSegmentNotes),
                     ),
-                    primary: _buildLibraryContent(l10n),
-                  ),
+                    ButtonSegment<_LibraryView>(
+                      value: _LibraryView.decisions,
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: Text(l10n.knowledgeSegmentDecisions),
+                    ),
+                  ],
+                  selected: <_LibraryView>{_view},
+                  onSelectionChanged: (value) =>
+                      setState(() => _view = value.single),
                 ),
               ),
-              detail: _knowledgeLibraryDetail(
-                context,
-                selectedQueryOf(context),
-              ),
-            );
-          },
+            ),
+            Expanded(
+              child: _view == _LibraryView.notes
+                  ? _LibraryNotes(ref.watch(knowledgeNotesProvider))
+                  : _LibraryDecisions(ref.watch(knowledgeDecisionsProvider)),
+            ),
+          ],
         ),
       ),
     );
   }
-
-  Widget _buildLibraryContent(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Focus(
-                onKeyEvent: _onSearchKey,
-                child: FTextField(
-                  control: FTextFieldControl.managed(controller: _searchCtrl),
-                  focusNode: _searchFocus,
-                  textInputAction: TextInputAction.search,
-                  prefixBuilder: (_, _, _) => const Padding(
-                    padding: EdgeInsetsDirectional.only(
-                      start: AppSpacing.s12,
-                      end: AppSpacing.s8,
-                    ),
-                    child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-                  ),
-                  hint: l10n.knowledgeLibrarySearchSegmentHint(
-                    _segmentLabel(l10n, _segment),
-                  ),
-                ),
-              ),
-            ),
-            if (_searchCtrl.text.isNotEmpty) ...[
-              const SizedBox(width: AppSpacing.s8),
-              AppIconButton(
-                icon: FLucideIcons.x,
-                tooltip: l10n.knowledgeLibrarySearchClear,
-                onPress: _searchCtrl.clear,
-                size: AppControlHeights.touchTarget,
-                iconSize: AppIconSizes.sm,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        _LibraryTabBar(
-          selected: _segment,
-          onChanged: (segment) => setState(() => _segment = segment),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        Expanded(
-          child: _LibraryList(
-            segment: _segment,
-            segmentLabel: _segmentLabel(l10n, _segment),
-            createLabel: _canCreateForSegment(_segment)
-                ? _createLabel(l10n, _segment)
-                : null,
-            onCreate: _canCreateForSegment(_segment)
-                ? () => _segment == _LibrarySegment.all
-                      ? _openCreateSheet(context, ref)
-                      : _createForSegment(context, ref, _segment)
-                : null,
-            onSegmentChanged: (segment) => setState(() => _segment = segment),
-            query: _searchQuery,
-            showSearchAssist: _searchFocus.hasFocus,
-            searchHistory: _searchHistory,
-            onSearchSelected: _applySearch,
-            onSearchHistoryClear: _clearSearchHistory,
-            onSearchHistoryItemDelete: _removeSearchHistoryItem,
-            onRefresh: () => _refreshKnowledgeRepository(ref),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-bool _canCreateForSegment(_LibrarySegment segment) => switch (segment) {
-  _LibrarySegment.all ||
-  _LibrarySegment.decisions ||
-  _LibrarySegment.notes => true,
-  _ => false,
-};
+class _LibraryNotes extends StatelessWidget {
+  const _LibraryNotes(this.value);
 
-class _KnowledgeMasterDetailScope extends InheritedWidget {
-  const _KnowledgeMasterDetailScope({
-    required this.enabled,
-    required super.child,
-  });
-
-  final bool enabled;
-
-  static bool of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<_KnowledgeMasterDetailScope>()
-          ?.enabled ??
-      false;
+  final AsyncValue<List<KnowledgeNote>> value;
 
   @override
-  bool updateShouldNotify(_KnowledgeMasterDetailScope oldWidget) =>
-      enabled != oldWidget.enabled;
-}
-
-Widget _knowledgeLibraryDetail(BuildContext context, String? selected) {
-  final separator = selected?.indexOf(':') ?? -1;
-  if (selected == null || separator <= 0 || separator == selected.length - 1) {
-    return MasterDetailEmpty(
-      message: AppLocalizations.of(context).knowledgeLibrarySelectItem,
-      icon: FLucideIcons.library,
-    );
-  }
-  final kind = selected.substring(0, separator);
-  final id = selected.substring(separator + 1);
-  return kind == 'decision'
-      ? KnowledgeDecisionDetailPage(
-          key: ValueKey<String>('decision:$id'),
-          decisionId: id,
-        )
-      : KnowledgeObjectDetailPage(
-          key: ValueKey<String>('$kind:$id'),
-          kind: kind,
-          id: id,
-        );
-}
-
-void _openKnowledgeLibraryDetail(
-  BuildContext context, {
-  required String kind,
-  required String id,
-}) {
-  if (_KnowledgeMasterDetailScope.of(context)) {
-    replaceSelectedQuery(
-      context,
-      path: KnowledgeRoutes.library,
-      selected: '$kind:$id',
-    );
-    return;
-  }
-  if (kind == 'decision') {
-    context.pushNamed(
-      KnowledgeRouteNames.decisionDetail,
-      pathParameters: {'id': id},
-    );
-    return;
-  }
-  context.pushNamed(
-    KnowledgeRouteNames.objectDetail,
-    pathParameters: {'kind': kind, 'id': id},
+  Widget build(BuildContext context) => value.when(
+    loading: () => const Center(child: CircularProgressIndicator()),
+    error: (_, _) =>
+        Center(child: Text(AppLocalizations.of(context).commonLoadFailed)),
+    data: (notes) => _LibraryList(
+      emptyLabel: AppLocalizations.of(context).knowledgeInboxEmptyTitle,
+      children: notes
+          .map(
+            (note) => _LibraryTile(
+              title: note.title.isEmpty
+                  ? AppLocalizations.of(context).knowledgeUntitled
+                  : note.title,
+              subtitle: note.bodyMd,
+              icon: FLucideIcons.fileText,
+              onPress: () => context.push(KnowledgeRoutes.note(note.id)),
+            ),
+          )
+          .toList(growable: false),
+    ),
   );
 }
 
-/// Header creation action for the primary, user-authored object families.
-void _createForSegment(
-  BuildContext context,
-  WidgetRef ref,
-  _LibrarySegment segment,
-) {
-  switch (segment) {
-    case _LibrarySegment.all:
-      _openCreateSheet(context, ref);
-    case _LibrarySegment.decisions:
-      showNewDecisionSheet(context, ref);
-    case _LibrarySegment.principles:
-      showNewPrincipleSheet(context, ref);
-    case _LibrarySegment.assumptions:
-      showNewAssumptionSheet(context, ref);
-    case _LibrarySegment.notes:
-      showKnowledgeCaptureSheet(context);
-    case _LibrarySegment.concepts:
-      showNewConceptSheet(context, ref);
-    case _LibrarySegment.experiments:
-      showNewExperimentSheet(context, ref);
-    case _LibrarySegment.routines:
-      showNewRoutineSheet(context, ref);
+class _LibraryDecisions extends StatelessWidget {
+  const _LibraryDecisions(this.value);
+
+  final AsyncValue<List<KnowledgeDecision>> value;
+
+  @override
+  Widget build(BuildContext context) => value.when(
+    loading: () => const Center(child: CircularProgressIndicator()),
+    error: (_, _) =>
+        Center(child: Text(AppLocalizations.of(context).commonLoadFailed)),
+    data: (decisions) => _LibraryList(
+      emptyLabel: AppLocalizations.of(context)
+          .knowledgeLibraryEmptyDecisionsTitle,
+      children: decisions
+          .map(
+            (decision) => _LibraryTile(
+              title: decision.question,
+              subtitle: decision.selectedLabel,
+              icon: FLucideIcons.circleCheck,
+              onPress: () =>
+                  context.push(KnowledgeRoutes.decision(decision.id)),
+            ),
+          )
+          .toList(growable: false),
+    ),
+  );
+}
+
+class _LibraryList extends StatelessWidget {
+  const _LibraryList({required this.emptyLabel, required this.children});
+
+  final String emptyLabel;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    if (children.isEmpty) return Center(child: Text(emptyLabel));
+    return ListView.separated(
+      padding: shellTabContentPadding(context),
+      itemCount: children.length,
+      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
+      itemBuilder: (_, index) => children[index],
+    );
   }
 }
 
-String _createLabel(AppLocalizations l10n, _LibrarySegment segment) =>
-    switch (segment) {
-      _LibrarySegment.all => l10n.knowledgeNewChooserTitle,
-      _LibrarySegment.decisions => l10n.knowledgeNewDecision,
-      _LibrarySegment.principles => l10n.knowledgeNewPrinciple,
-      _LibrarySegment.assumptions => l10n.knowledgeNewAssumption,
-      _LibrarySegment.notes => l10n.knowledgeNewNote,
-      _LibrarySegment.concepts => l10n.knowledgeNewConcept,
-      _LibrarySegment.experiments => l10n.knowledgeNewExperiment,
-      _LibrarySegment.routines => l10n.knowledgeNewRoutine,
-    };
+class _LibraryTile extends StatelessWidget {
+  const _LibraryTile({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onPress,
+  });
 
-Future<void> _openCreateSheet(
-  BuildContext context,
-  WidgetRef ref, {
-  _LibrarySegment activeSegment = _LibrarySegment.all,
-}) async {
-  final l10n = AppLocalizations.of(context);
-  final activeLabel = activeSegment == _LibrarySegment.all
-      ? null
-      : _segmentLabel(l10n, activeSegment);
-  final options = [
-    KnowledgeCreateOption(
-      icon: FLucideIcons.fileText,
-      label: l10n.knowledgeNewNote,
-      onSelected: () => showKnowledgeCaptureSheet(context),
-    ),
-    KnowledgeCreateOption(
-      icon: FLucideIcons.gitBranch,
-      label: l10n.knowledgeNewDecision,
-      onSelected: () => showNewDecisionSheet(context, ref),
-    ),
-  ];
-  await showKnowledgeCreateSheet(
-    context,
-    options: options,
-    activeLabel: activeLabel,
-  );
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    return SoftCard.flat(
+      onPress: onPress,
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      child: Row(
+        children: [
+          Icon(icon, color: context.theme.colors.primary),
+          const SizedBox(width: AppSpacing.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: context.theme.typography.body.md),
+                if (subtitle.trim().isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    subtitle.trim(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.theme.typography.body.sm.copyWith(
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right),
+        ],
+      ),
+    );
+  }
 }

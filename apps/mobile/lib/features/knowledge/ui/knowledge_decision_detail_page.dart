@@ -1,693 +1,221 @@
-/// KnowledgeOS Decision detail page
-/// (`docs/domains/knowledgeos-domain.md` §3 + §9 — Decision 7-state lifecycle
-/// and `supersededByDecisionId` chain).
-///
-/// Read view + a lifecycle editor (header ✎): status changes, actual-outcome
-/// capture and supersede wiring all run through [showDecisionLifecycleSheet]
-/// — the write path that lets a decision read as cognitive evolution rather
-/// than a frozen record.
-library;
-
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/sync/mutation_context.dart';
+import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../composition/knowledge_route_paths.dart';
-import '../data/knowledge_llm_client.dart';
+import '../application/knowledge_deletion_service.dart';
 import '../data/knowledge_repository.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
-import '_decision_lifecycle_sheet.dart';
-import '_decision_writer.dart';
-import '_widgets.dart';
-import 'knowledge_execution_action.dart';
-import 'knowledge_item_actions.dart';
-import 'knowledge_status_labels.dart';
+
+final _decisionProvider = FutureProvider.autoDispose
+    .family<KnowledgeDecision?, String>((ref, id) async {
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      return repository.findDecision(ownerUserId: owner, id: id);
+    });
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
   const KnowledgeDecisionDetailPage({super.key, required this.decisionId});
+
   final String decisionId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _Body(decisionId: decisionId);
+    final l10n = AppLocalizations.of(context);
+    final value = ref.watch(_decisionProvider(decisionId));
+    return ObjectDetailScaffold(
+      title: l10n.knowledgeSegmentDecisions,
+      child: value.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
+        data: (decision) => decision == null
+            ? Center(child: Text(l10n.knowledgeDecisionNotFound))
+            : _DecisionEditor(
+                key: ValueKey(decision.sync.hlc),
+                decision: decision,
+              ),
+      ),
+    );
   }
 }
 
-class _Body extends ConsumerStatefulWidget {
-  const _Body({required this.decisionId});
-  final String decisionId;
+class _DecisionEditor extends ConsumerStatefulWidget {
+  const _DecisionEditor({super.key, required this.decision});
+
+  final KnowledgeDecision decision;
+
   @override
-  ConsumerState<_Body> createState() => _BodyState();
+  ConsumerState<_DecisionEditor> createState() => _DecisionEditorState();
 }
 
-class _BodyState extends ConsumerState<_Body> {
-  KnowledgeDecision? _decision;
-  Object? _error;
-  List<KnowledgeDecision> _chain = const <KnowledgeDecision>[];
-  List<KnowledgePrinciple> _principles = const <KnowledgePrinciple>[];
-  List<KnowledgeAssumption> _assumptions = const <KnowledgeAssumption>[];
-  List<KnowledgeDecision> _linkedDecisions = const <KnowledgeDecision>[];
-  bool _loading = true;
-  int _loadGeneration = 0;
+class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
+  late final TextEditingController _question;
+  late final TextEditingController _selected;
+  late final TextEditingController _rationale;
+  late final TextEditingController _expected;
+  late final TextEditingController _actual;
+  late DecisionStatus _status;
+  var _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    final value = widget.decision;
+    _question = TextEditingController(text: value.question);
+    _selected = TextEditingController(text: value.selectedLabel);
+    _rationale = TextEditingController(text: value.rationaleMd);
+    _expected = TextEditingController(text: value.expectedOutcome);
+    _actual = TextEditingController(text: value.actualOutcomeMd);
+    _status = value.status;
   }
 
   @override
-  void didUpdateWidget(covariant _Body oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.decisionId != widget.decisionId) {
-      _decision = null;
-      _chain = const <KnowledgeDecision>[];
-      _principles = const <KnowledgePrinciple>[];
-      _assumptions = const <KnowledgeAssumption>[];
-      _linkedDecisions = const <KnowledgeDecision>[];
-      _load();
-    }
-  }
-
-  Future<void> _load() async {
-    final generation = ++_loadGeneration;
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final repo = await ref.read(knowledgeRepositoryProvider.future);
-      final ownerUserId = await ref.read(knowledgeOwnerUserIdProvider.future);
-      final d = await repo.findDecision(
-        ownerUserId: ownerUserId,
-        id: widget.decisionId,
-      );
-      if (d == null) {
-        if (mounted && generation == _loadGeneration) {
-          setState(() => _loading = false);
-        }
-        return;
-      }
-
-      // Walk supersededBy chain backwards (current → ancestor) until null.
-      final chain = <KnowledgeDecision>[d];
-      var cursor = d;
-      final visited = <String>{d.id};
-      while (cursor.supersededByDecisionId != null &&
-          !visited.contains(cursor.supersededByDecisionId)) {
-        final next = await repo.findDecision(
-          ownerUserId: ownerUserId,
-          id: cursor.supersededByDecisionId!,
-        );
-        if (next == null) break;
-        visited.add(next.id);
-        chain.add(next);
-        cursor = next;
-      }
-
-      // Resolve referenced principles / assumptions by id so a decision that
-      // cites a since-retired principle or falsified assumption still shows it
-      // (listActive/listOpen would silently drop those — exactly the rows a
-      // post-mortem cares about).
-      final principles = <KnowledgePrinciple>[];
-      final assumptions = <KnowledgeAssumption>[];
-      for (final id in d.principleIds) {
-        final p = await repo.findPrinciple(ownerUserId: ownerUserId, id: id);
-        if (p != null) principles.add(p);
-      }
-      for (final id in d.assumptionIds) {
-        final a = await repo.findAssumption(ownerUserId: ownerUserId, id: id);
-        if (a != null) assumptions.add(a);
-      }
-      final linkedDecisions = <KnowledgeDecision>[];
-      final relations = await repo.listRelationsFrom(
-        ownerUserId: ownerUserId,
-        fromKind: KnowledgeEntryKind.decision.name,
-        fromId: d.id,
-      );
-      for (final relation in relations) {
-        if (relation.toKind != KnowledgeEntryKind.decision.name ||
-            relation.toId == d.id) {
-          continue;
-        }
-        final linked = await repo.findDecision(
-          ownerUserId: ownerUserId,
-          id: relation.toId,
-        );
-        if (linked != null) linkedDecisions.add(linked);
-      }
-
-      if (mounted && generation == _loadGeneration) {
-        setState(() {
-          _decision = d;
-          _chain = chain;
-          _principles = principles;
-          _assumptions = assumptions;
-          _linkedDecisions = linkedDecisions;
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted && generation == _loadGeneration) {
-        setState(() {
-          _error = e;
-          _loading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _openEditor(KnowledgeDecision d) async {
-    final saved = await showEditDecisionSheet(context, ref, d);
-    if (saved == true) await _load();
-  }
-
-  Future<void> _openLifecycle(KnowledgeDecision d) async {
-    final saved = await showDecisionLifecycleSheet(context, ref, d);
-    if (saved == true) await _load();
+  void dispose() {
+    _question.dispose();
+    _selected.dispose();
+    _rationale.dispose();
+    _expected.dispose();
+    _actual.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final d = _decision;
-    final moreActions = d == null
-        ? const <AppAdaptiveAction>[]
-        : knowledgeItemActions(
-            context: context,
-            ref: ref,
-            item: d,
-            aiAvailable: ref.watch(knowledgeLlmProfileClientProvider) != null,
-            includeEditInMenu: false,
-          ).menuActions;
-    return ObjectDetailScaffold(
-      title: AppLocalizations.of(context).knowledgeDecisionDetailTitle,
-      actions: [
-        if (d != null)
-          AppHeaderAction(
-            semanticsLabel: AppLocalizations.of(context).knowledgeMarkdownEdit,
-            icon: const Icon(FLucideIcons.pencil),
-            onPress: () => _openEditor(d),
-          ),
-        if (d != null)
-          AppHeaderAction(
-            semanticsLabel: AppLocalizations.of(
-              context,
-            ).knowledgeDecisionLifecycleTitle,
-            icon: const Icon(FLucideIcons.gitBranch),
-            onPress: () => _openLifecycle(d),
-          ),
-        if (moreActions.isNotEmpty)
-          AppAdaptiveActionMenu(
-            title: AppLocalizations.of(context).knowledgeLibraryItemActions,
-            actions: [
-              for (final action in moreActions)
-                AppAdaptiveAction(
-                  icon: action.icon,
-                  title: action.title,
-                  subtitle: action.subtitle,
-                  destructive: action.destructive,
-                  onPress: () async {
-                    await action.onPress();
-                    if (mounted) await _load();
-                  },
-                ),
-            ],
-            triggerBuilder: (context, openMenu, focusNode) => AppHeaderAction(
-              semanticsLabel: AppLocalizations.of(
-                context,
-              ).knowledgeLibraryItemActions,
-              icon: const Icon(FLucideIcons.ellipsis),
-              focusNode: focusNode,
-              onPress: openMenu,
-            ),
-          ),
-      ],
-      child: _buildBody(context, d),
-    );
-  }
-
-  Widget _buildBody(BuildContext context, KnowledgeDecision? d) {
-    if (_loading) return const AppListPageSkeleton(itemCount: 5);
-    final error = _error;
-    if (error != null) {
-      return AppEmptyState.error(
-        title: userSafeErrorMessage(
-          context,
-          error,
-          operation: 'load knowledge decision',
-        ),
-        retryLabel: AppLocalizations.of(context).commonRetry,
-        onRetry: _load,
-      );
-    }
-    if (d == null) {
-      return AppEmptyState(
-        icon: FLucideIcons.fileQuestion,
-        title: AppLocalizations.of(context).knowledgeDecisionNotFound,
-      );
-    }
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
-    final decidedDate = knowledgeDate(context, d.decidedAt, long: true);
-    final reviewDate = d.reviewDate == null
-        ? null
-        : knowledgeDate(context, d.reviewDate!, long: true);
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s16),
       children: [
-        KnowledgeObjectHeader(
-          icon: FLucideIcons.gitBranch,
-          color: colors.primary,
-          typeLabel: l10n.knowledgeDecisionDetailTitle,
-          title: d.question,
-          status: decisionStatusLabelOf(l10n, d.status),
-          updatedAt: d.sync.updatedAt,
-        ),
-        KnowledgeExecutionAction(
-          draftTitle: l10n.knowledgeDecisionActionDraftTitle(d.question),
-          draftNote: l10n.knowledgeDecisionActionDraftNote(d.selectedLabel),
-          sourceRowFamily: 'know:knowledge_decisions',
-          sourceRowId: d.id,
-          prompt: l10n.knowledgeDecisionActionPrompt,
-          dueAt: d.reviewDate,
+        TextField(
+          controller: _question,
+          decoration: InputDecoration(
+            labelText: l10n.knowledgeDecisionQuestionLabel,
+          ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        KnowledgeSection.group(
-          title: l10n.knowledgeDetailMetadataTitle,
-          children: [
-            Text(
-              reviewDate == null
-                  ? l10n.knowledgeDecisionDecidedAt(decidedDate)
-                  : l10n.knowledgeDecisionDecidedAtWithReview(
-                      decidedDate,
-                      reviewDate,
-                    ),
-              style: context.bodyCaptionStyle,
-            ),
-          ],
+        TextField(
+          controller: _selected,
+          decoration: InputDecoration(
+            labelText: l10n.knowledgeDecisionOptionsLabel,
+          ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        KnowledgeSection.group(
-          title: AppLocalizations.of(context).knowledgeDetailOptionsTitle,
-          children: [
-            for (final opt in d.options)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      opt.label == d.selectedLabel
-                          ? FLucideIcons.checkCircle2
-                          : FLucideIcons.circle,
-                      size: AppIconSizes.xs,
-                      color: opt.label == d.selectedLabel
-                          ? colors.primary
-                          : colors.mutedForeground,
-                    ),
-                    const SizedBox(width: AppSpacing.s8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            opt.label,
-                            style: opt.label == d.selectedLabel
-                                ? context.labelStyle
-                                : typography.body.sm.copyWith(
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (opt.rationale != null &&
-                              opt.rationale!.isNotEmpty)
-                            Text(
-                              opt.rationale!,
-                              style: context.captionStyle,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+        TextField(
+          controller: _rationale,
+          minLines: 5,
+          maxLines: null,
+          decoration: InputDecoration(
+            labelText: l10n.knowledgeWriterRationaleMarkdownLabel,
+          ),
         ),
-        if (d.rationaleMd.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeDocumentSection(
-            title: AppLocalizations.of(context).knowledgeDetailRationaleTitle,
-            child: KnowledgeMarkdown(text: d.rationaleMd),
+        const SizedBox(height: AppSpacing.s12),
+        TextField(
+          controller: _expected,
+          decoration: InputDecoration(
+            labelText: l10n.knowledgeDecisionExpectedOutcomeLabel,
           ),
-        ],
-        if (d.expectedOutcome != null && d.expectedOutcome!.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeDocumentSection(
-            title: AppLocalizations.of(
-              context,
-            ).knowledgeDetailExpectedOutcomeTitle,
-            child: KnowledgeMarkdown(text: d.expectedOutcome!),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        TextField(
+          controller: _actual,
+          minLines: 2,
+          maxLines: null,
+          decoration: InputDecoration(
+            labelText: l10n.knowledgeDecisionActualOutcomeLabel,
           ),
-        ],
-        if (d.revisitConditions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
-            title: l10n.knowledgeDecisionRevisitConditionsTitle,
-            children: [
-              for (final condition in d.revisitConditions)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        FLucideIcons.rotateCcw,
-                        size: AppIconSizes.xs,
-                        color: colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Expanded(
-                        child: Text(
-                          condition.statement,
-                          style: context.theme.typography.body.sm,
-                        ),
-                      ),
-                    ],
-                  ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        DropdownButtonFormField<DecisionStatus>(
+          initialValue: _status,
+          decoration: InputDecoration(
+            labelText: l10n.knowledgeDecisionStatusLabel,
+          ),
+          items: DecisionStatus.values
+              .map(
+                (status) => DropdownMenuItem<DecisionStatus>(
+                  value: status,
+                  child: Text(status.name),
                 ),
-            ],
-          ),
-        ],
-        if (d.actualOutcomeMd != null && d.actualOutcomeMd!.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeDocumentSection(
-            title: AppLocalizations.of(
-              context,
-            ).knowledgeDetailActualOutcomeTitle,
-            child: KnowledgeMarkdown(text: d.actualOutcomeMd!),
-          ),
-        ],
-        if (_principles.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
-            title: AppLocalizations.of(context).knowledgeDetailPrinciplesTitle,
-            children: [
-              for (final p in _principles)
-                _RelatedKnowledgeLink(
-                  label: p.statement,
-                  status: principleStatusLabel(
-                    AppLocalizations.of(context),
-                    p.status,
-                  ),
-                  icon: FLucideIcons.badgeCheck,
-                  iconColor: context.appTheme.categorical.adapt(
-                    KnowledgeTypeColors.principle,
-                  ),
-                  onPress: () => context.pushNamed(
-                    KnowledgeRouteNames.objectDetail,
-                    pathParameters: {'kind': 'principle', 'id': p.id},
-                  ),
-                ),
-            ],
-          ),
-        ],
-        if (_assumptions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
-            title: AppLocalizations.of(context).knowledgeDetailAssumptionsTitle,
-            children: [
-              for (final a in _assumptions)
-                _RelatedKnowledgeLink(
-                  label: a.statement,
-                  status:
-                      '${assumptionStatusLabel(AppLocalizations.of(context), a.status)}'
-                      ' · ${a.confidence.toStringAsFixed(2)}',
-                  icon: FLucideIcons.lightbulb,
-                  iconColor: context.appTheme.categorical.adapt(
-                    KnowledgeTypeColors.assumption,
-                  ),
-                  onPress: () => context.pushNamed(
-                    KnowledgeRouteNames.objectDetail,
-                    pathParameters: {'kind': 'assumption', 'id': a.id},
-                  ),
-                ),
-            ],
-          ),
-        ],
-        if (_linkedDecisions.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSection.group(
-            title: l10n.knowledgeDetailDecisionsTitle,
-            children: [
-              for (final linked in _linkedDecisions)
-                _RelatedKnowledgeLink(
-                  label: linked.question,
-                  status: decisionStatusLabelOf(
-                    AppLocalizations.of(context),
-                    linked.status,
-                  ),
-                  icon: FLucideIcons.gitBranch,
-                  iconColor: colors.primary,
-                  onPress: () => context.pushNamed(
-                    KnowledgeRouteNames.decisionDetail,
-                    pathParameters: {'id': linked.id},
-                  ),
-                ),
-            ],
-          ),
-        ],
-        if (d.contextSnapshot != null) ...[
-          const SizedBox(height: AppSpacing.s12),
-          _ContextSnapshotSection(
-            snapshot: d.contextSnapshot!,
-            collapsible: true,
-          ),
-        ],
-        if (_chain.length > 1) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeWriterSection(
-            title: AppLocalizations.of(context).knowledgeDetailEvolutionTitle,
-            collapsible: true,
-            initiallyExpanded: false,
-            children: [
-              for (var i = 0; i < _chain.length; i++)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-                  child: Row(
-                    children: [
-                      Icon(
-                        i == 0
-                            ? FLucideIcons.arrowRightCircle
-                            : FLucideIcons.arrowUpCircle,
-                        size: AppIconSizes.xs,
-                        color: colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Expanded(
-                        child: Text(
-                          '${_chain[i].question}'
-                          '（${decisionStatusLabelOf(AppLocalizations.of(context), _chain[i].status)}）',
-                          style: typography.body.sm,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
+              )
+              .toList(growable: false),
+          onChanged: _saving
+              ? null
+              : (value) => setState(() => _status = value ?? _status),
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        FilledButton(
+          onPressed: _saving ? null : _save,
+          child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        TextButton(
+          onPressed: _saving ? null : _delete,
+          child: Text(l10n.commonDelete),
+        ),
       ],
     );
   }
-}
 
-class _RelatedKnowledgeLink extends StatelessWidget {
-  const _RelatedKnowledgeLink({
-    required this.label,
-    required this.status,
-    required this.onPress,
-    this.icon,
-    this.iconColor,
-  });
-
-  final String label;
-  final String status;
-  final VoidCallback onPress;
-  final IconData? icon;
-  final Color? iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final colors = context.theme.colors;
-    return AppTappable(
-      onPress: onPress,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (icon != null) ...[
-              Padding(
-                padding: const EdgeInsets.only(
-                  right: AppSpacing.s8,
-                  top: AppSpacing.s2,
-                ),
-                child: AppIconTile(
-                  icon: icon!,
-                  color: iconColor ?? colors.primary,
-                  size: AppIconSizes.lg,
-                  iconSize: 13,
-                  radius: AppRadius.sm,
-                  backgroundOpacity: AppOpacity.subtle,
-                  foregroundOpacity: 1,
-                ),
-              ),
-            ],
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: typography.body.sm,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(status, style: context.captionStyle),
-                ],
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Icon(
-              FLucideIcons.chevronRight,
-              size: AppIconSizes.xs,
-              color: colors.mutedForeground.withValues(alpha: AppOpacity.muted),
-            ),
+  Future<void> _save() async {
+    final question = _question.text.trim();
+    final selected = _selected.text.trim();
+    if (question.isEmpty || selected.isEmpty) return;
+    setState(() => _saving = true);
+    try {
+      final repository = await ref.read(knowledgeRepositoryProvider.future);
+      final stamper = await ref.read(mutationStamperProvider.future);
+      final value = await stamper.stamp();
+      final priorOptions = widget.decision.options
+          .where((option) => option.label != selected)
+          .toList(growable: true);
+      await repository.upsertDecision(
+        KnowledgeDecision(
+          id: widget.decision.id,
+          question: question,
+          options: <DecisionOption>[
+            DecisionOption(label: selected),
+            ...priorOptions,
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Renders `KnowledgeDecision.contextSnapshot` — what was happening
-/// across other domains when the decision was made. The snapshot
-/// shape is owned by `DecisionContextSnapper`; this widget is the
-/// only reader and tolerates missing keys silently.
-class _ContextSnapshotSection extends StatelessWidget {
-  const _ContextSnapshotSection({
-    required this.snapshot,
-    this.collapsible = false,
-  });
-  final Map<String, Object?> snapshot;
-  final bool collapsible;
-
-  @override
-  Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final finance = (snapshot['recent_finance_events'] as List?) ?? const [];
-    final health = (snapshot['recent_health_events'] as List?) ?? const [];
-    final capturedAt = snapshot['captured_at'] as String?;
-    final window = snapshot['window_days'];
-    final l10n = AppLocalizations.of(context);
-    final children = <Widget>[
-      if (capturedAt != null)
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-          child: Text(
-            l10n.knowledgeDetailContextSnapshotCaptured(
-              knowledgeDateFromIso(context, capturedAt),
-              '${window ?? "—"}',
-            ),
-            style: context.captionStyle,
+          selectedLabel: selected,
+          rationaleMd: _rationale.text.trim(),
+          expectedOutcome: _nullable(_expected.text),
+          reviewDate: widget.decision.reviewDate,
+          revisitConditions: widget.decision.revisitConditions,
+          actualOutcomeMd: _nullable(_actual.text),
+          status: _status,
+          supersededByDecisionId: widget.decision.supersededByDecisionId,
+          decidedAt: widget.decision.decidedAt,
+          mergedIntoId: widget.decision.mergedIntoId,
+          sync: SyncMeta(
+            ownerUserId: value.ownerUserId,
+            updatedAt: value.now,
+            updatedByDevice: value.deviceId,
+            hlc: value.hlc,
           ),
         ),
-      if (finance.isEmpty && health.isEmpty)
-        Text(
-          l10n.knowledgeDetailContextSnapshotEmpty,
-          style: context.bodyCaptionStyle,
-        ),
-      if (finance.isNotEmpty) ...[
-        Text(
-          l10n.knowledgeDetailContextSnapshotFinance,
-          style: typography.body.xs,
-        ),
-        for (final raw in finance.whereType<Map<Object?, Object?>>())
-          _SnapshotRow(map: raw.cast<String, Object?>()),
-        const SizedBox(height: AppSpacing.s4),
-      ],
-      if (health.isNotEmpty) ...[
-        Text(
-          l10n.knowledgeDetailContextSnapshotHealth,
-          style: typography.body.xs,
-        ),
-        for (final raw in health.whereType<Map<Object?, Object?>>())
-          _SnapshotRow(map: raw.cast<String, Object?>()),
-      ],
-    ];
-    if (collapsible) {
-      return KnowledgeWriterSection(
-        title: l10n.knowledgeDetailContextSnapshotTitle,
-        collapsible: true,
-        initiallyExpanded: false,
-        children: children,
       );
+      ref.invalidate(_decisionProvider(widget.decision.id));
+      ref.invalidate(knowledgeDecisionsProvider);
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    return KnowledgeSection.group(
-      title: l10n.knowledgeDetailContextSnapshotTitle,
-      children: children,
+  }
+
+  Future<void> _delete() async {
+    final service = await ref.read(knowledgeDeletionServiceProvider.future);
+    await service.delete(
+      kind: KnowledgeEntryKind.decision,
+      id: widget.decision.id,
     );
+    ref.invalidate(knowledgeDecisionsProvider);
+    if (mounted) context.pop();
   }
 }
 
-class _SnapshotRow extends StatelessWidget {
-  const _SnapshotRow({required this.map});
-  final Map<String, Object?> map;
-  @override
-  Widget build(BuildContext context) {
-    final typography = context.theme.typography;
-    final ts = (map['occurred_at'] as String?) ?? '';
-    final summary = (map['summary'] as String?) ?? '';
-    final title = (map['title'] as String?) ?? '';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (ts.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(
-                right: AppSpacing.s8,
-                top: AppSpacing.s2,
-              ),
-              child: Text(
-                knowledgeMonthDayFromIso(context, ts),
-                style: context.captionStyle,
-              ),
-            ),
-          Expanded(
-            child: Text(
-              title.isEmpty ? summary : '$title — $summary',
-              style: typography.body.sm,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+String? _nullable(String value) {
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }

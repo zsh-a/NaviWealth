@@ -265,6 +265,8 @@ void main() {
         for (final agent in registeredAgents) agent.id,
       };
       final registrationDomains = {
+        for (final agent in container.read(appAgentRegistryProvider))
+          agent.id: 'life',
         for (final registration in container.read(registrationsProvider))
           registration.agent.id: registration.domain.wire,
       };

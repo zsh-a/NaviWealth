@@ -84,7 +84,7 @@ NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
 |---|---|---|---|---|
 | FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 35 设备工具 | Weekly Wealth / Cashflow Anomaly / FIRE Drift / Options Risk |
 | HealthOS | 用户启用 | Today / Trend / Plan | 7 设备工具 | Recovery Alert / Weekly Summary |
-| KnowledgeOS | 用户启用 | Inbox / Library / Review | 16 设备工具 | Review / Assumption / Contradiction / Inbox Triage |
+| KnowledgeOS | 用户启用 | Inbox / Library | 7 设备工具 | — |
 | ExecutionOS | 用户启用 | Today / Plans / Review | 7 设备工具 | Due Action / Review |
 
 跨域判断由 app-level `DailyNavigatorAgent` 完成；领域 Agent 只生成可验证的

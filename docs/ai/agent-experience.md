@@ -44,17 +44,17 @@ The production `DomainPack` registry is authoritative. At this review:
 | LifeOS app composition | Daily Navigator | Life home |
 | FinanceOS | Weekly Wealth Review, Cashflow Anomaly Review, FIRE Plan Drift Monitor, Options Income Risk Review | Finance home |
 | HealthOS | Recovery Alert, Weekly Summary | Health home/review |
-| KnowledgeOS | Review, Assumption, Contradiction, Inbox Triage | Knowledge review |
+| KnowledgeOS | — | — |
 | ExecutionOS | Review, Due Action | Execution review |
 
 Do not copy this list into another roadmap. Composition contract tests must
 continue to enforce one presentation spec and one executable outcome fixture
 for every production agent.
 
-Knowledge and Execution Review agents are implementation collaborators for the
-single domain Review surface. They are hidden from Settings and do not render a
-second named result card. Specialized detector agents may also be hidden when
-their output is already owned by a primary product surface.
+The Execution Review agent is an implementation collaborator for the single
+domain Review surface. It is hidden from Settings and does not render a second
+named result card. Specialized detector agents may also be hidden when their
+output is already owned by a primary product surface.
 
 ## User-Visible States
 

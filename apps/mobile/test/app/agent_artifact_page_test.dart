@@ -55,9 +55,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          agentArtifactProvider(
-            artifactId,
-          ).overrideWith((ref) async => artifact),
+          agentArtifactProvider(artifactId)
+              .overrideWith((ref) async => artifact),
         ],
         child: MaterialApp.router(
           theme: AppTheme.light(),
@@ -83,22 +82,22 @@ void main() {
   testWidgets(
     'opens a related route already present below the artifact shell stack',
     (tester) async {
-      const artifactId = 'knowledge-artifact-1';
-      const reviewPath = '/knowledge-review';
+      const artifactId = 'execution-artifact-1';
+      const reviewPath = '/execution-review';
       final artifact = AgentArtifact(
         id: artifactId,
         ownerUserId: 'user-1',
-        agentId: 'knowledge_review',
-        domain: 'knowledge',
+        agentId: 'execution_review',
+        domain: 'execution',
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.attention,
-        title: 'Knowledge review conclusion',
-        summary: 'One assumption needs another look.',
+        title: 'Execution review conclusion',
+        summary: 'One action needs another look.',
         insights: const [
           AgentInsight(
-            id: 'stale-assumption',
-            title: 'Stale assumption',
-            body: 'Review the original assumption and its evidence.',
+            id: 'stale-action',
+            title: 'Stale action',
+            body: 'Review the original action and its evidence.',
             route: reviewPath,
           ),
         ],
@@ -124,7 +123,7 @@ void main() {
                       GoRoute(
                         path: reviewPath,
                         builder: (_, _) =>
-                            const Scaffold(body: Text('Knowledge review page')),
+                            const Scaffold(body: Text('Execution review page')),
                       ),
                     ],
                   ),
@@ -139,9 +138,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            agentArtifactProvider(
-              artifactId,
-            ).overrideWith((ref) async => artifact),
+            agentArtifactProvider(artifactId)
+                .overrideWith((ref) async => artifact),
           ],
           child: MaterialApp.router(
             theme: AppTheme.light(),
@@ -157,17 +155,17 @@ void main() {
 
       unawaited(router.push<void>(AgentArtifactRoutes.detail(artifactId)));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Stale assumption'));
+      await tester.tap(find.text('Stale action'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Open related page'));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Knowledge review page'), findsOneWidget);
+      expect(find.text('Execution review page'), findsOneWidget);
 
       router.pop();
       await tester.pumpAndSettle();
-      expect(find.text('Knowledge review page'), findsOneWidget);
+      expect(find.text('Execution review page'), findsOneWidget);
     },
   );
 }

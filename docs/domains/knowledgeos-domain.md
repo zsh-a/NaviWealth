@@ -1,349 +1,151 @@
 # KnowledgeOS Domain SSOT
 
-KnowledgeOS is the LifeOS personal cognitive infrastructure domain. It is a user-opt-in, AI-native decision memory system. It is not a Notion, Obsidian, wiki, publishing, or collaboration product.
+KnowledgeOS is NaviWealth's opt-in decision-memory domain. It keeps useful
+source material close to the decisions it informed without becoming a wiki,
+publishing system, or general-purpose object database.
 
 ## Document Contract
 
-Owns KnowledgeOS objects, review behavior, proposals, Memory indexing, tools,
-and Agents. It does not own shared Memory Runtime or AI wire semantics.
-`knowledge_pack.dart`, Knowledge repositories, and focused Knowledge tests are
-authoritative for the current implementation inventory.
+This document owns KnowledgeOS product vocabulary, persistence, routes, tools,
+proposal behavior, and Memory indexing. Shared Memory Runtime, Sync v3, and AI
+wire contracts remain owned by their architecture documents. The production
+inventory in `knowledge_pack.dart`, the Knowledge repository, and focused tests
+is executable authority.
 
-## Scope
+## Product Model
 
-Included:
+KnowledgeOS has exactly three domain entities:
 
-- Inbox capture for high-signal notes.
-- A primary Library model of Notes and Decisions.
-- Decision log with assumptions, principles, rationale, expected outcome, review date, and actual outcome.
-- Review workflow for due decisions, contradictions, inbox triage, and orphan Notes.
-- Cross-domain recall through Memory Runtime.
-- AI tools that read, search, and propose changes.
-- Agents that surface review work and contradictions.
-
-Excluded:
-
-- Rich block editor or WYSIWYG document authoring.
-- Collaboration, comments, sharing, publishing, or blog mode.
-- Automatic AI-generated knowledge as source of truth.
-- Low-signal diary capture.
-- Graph database or graph visualization.
-- Forced backlinks.
-- Notion, Obsidian, Logseq import in the MVP.
-- OCR, video transcription, crawlers, RSS, or read-later queues.
-
-Core rule: KnowledgeOS stores information that affects long-term decisions or cognitive evolution. Ordinary life events belong in Memory Runtime events, not in KnowledgeOS objects.
-
-## Shell Registration
-
-KnowledgeOS is registered through `kKnowledgePack` in `app/domain_packs.dart`.
-
-Contributions:
-
-- Scope: `DomainScope.knowledge`.
-- Shell: `features/knowledge/composition/knowledge_domain_shell.dart`.
-- Routes: `features/knowledge/composition/knowledge_routes.dart`.
-- Primary tabs: Inbox, Library. Review is a contextual destination reached from
-  the Inbox header, the Life review entry, and relevant signals or artifacts
-  rather than a permanent shell tab or command-palette duplicate.
-- Tools: `features/knowledge/knowledge_ai_tools.dart`.
-- Agents: `features/knowledge/agents/providers.dart`.
-- Command palette: `features/knowledge/composition/knowledge_command_palette.dart`.
-- Proposal kinds: `features/knowledge/composition/knowledge_proposal_kinds.dart`.
-- Proposal applier: `features/knowledge/composition/knowledge_proposal_applier.dart`.
-
-KnowledgeOS is active only when the user enables it in Settings.
-
-## Domain Objects
-
-Note and Decision are the product vocabulary. The other rows remain supported
-for storage, sync, search, import, and existing-user compatibility; they are not
-peer navigation or creation choices. Recurring work belongs in ExecutionOS.
-
-| Object | Purpose | Storage |
+| Entity | Purpose | Synced table |
 |---|---|---|
-| Note | Raw capture and source material | `knowledge_notes` |
-| Concept | Named concept with aliases and summary | `knowledge_concepts` |
-| Principle | Long-lived worldview or operating rule | `knowledge_principles` |
-| Assumption | Falsifiable belief used by decisions | `knowledge_assumptions` |
-| Decision | Chosen option, rationale, assumptions, outcome, revisit conditions, review lifecycle | `knowledge_decisions` |
-| Experiment | Hypothesis, method, metrics, result | `knowledge_experiments` |
-| Routine | Legacy recurring reminder retained for compatibility | `knowledge_routines` |
-| Relation | Typed, queryable edge between knowledge objects | `knowledge_relations` |
+| Note | Captured source material, observations, and working thoughts | `knowledge_notes` |
+| Decision | A chosen option, rationale, expected/actual outcome, and optional review conditions | `knowledge_decisions` |
+| Relation | An explicit Note ↔ Decision or same-kind association | `knowledge_relations` |
 
-Domain models:
+There is no typed-object taxonomy, promotion pipeline, or compatibility object
+layer. Principles, assumptions, concepts, experiments, and routines are not
+KnowledgeOS entities. Stable personal rules belong in Personal Profile;
+recurring or actionable work belongs in ExecutionOS.
 
-- `features/knowledge/domain/knowledge_models.dart`
+Core rule: store material that improves future recall or explains a decision.
+Ordinary life events remain Memory Runtime events rather than Knowledge rows.
 
-Repositories:
+## Shell And Routes
 
-- `features/knowledge/data/knowledge_repository.dart`
-- `features/knowledge/data/inbox_triage_repository.dart`
+`kKnowledgePack` registers the domain through the shared `DomainPack` seam.
 
-## Persistence
+| Surface | Route | Purpose |
+|---|---|---|
+| Inbox | `/knowledge` | Fast capture and recent Notes |
+| Library | `/knowledge/library` | Browse Notes and Decisions |
+| Note detail | `/knowledge/library/note/:id` | Direct editing and deletion |
+| Decision detail | `/knowledge/library/decision/:id` | Direct editing, outcome, and status |
 
-Tables:
-
-- `core/persistence/knowledge_tables.dart`
-- `core/persistence/local_only_tables.dart`
-
-Synced tables use `SyncableTable` and the `know:` row-family prefix:
-
-- `know:knowledge_notes`
-- `know:knowledge_principles`
-- `know:knowledge_assumptions`
-- `know:knowledge_decisions`
-- `know:knowledge_concepts`
-- `know:knowledge_experiments`
-- `know:knowledge_routines`
-- `know:knowledge_relations`
-
-Local-only:
-
-- `knowledge_inbox_triage`
-- `agent_findings` rows with `domain = knowledge`
-
-Local-only triage stores AI suggestions, the source-note fingerprint, and
-dismissal state. A material Note edit changes the fingerprint and makes the
-Note eligible for triage again; dismissed suggestions are preserved only while
-the source fingerprint is unchanged. It does not sync because it is derived
-workflow state.
-
-## UI
-
-| Tab | Purpose |
-|---|---|
-| Inbox | Fast capture with optional pre-save AI organization and an offline original-text path |
-| Library | Browse Notes and Decisions directly; search legacy objects through All |
-| Review (contextual) | Due decisions, contradictions, inbox AI suggestions, and orphan Notes |
+Inbox and Library are the only shell tabs. KnowledgeOS has no Review route,
+hidden tab, background Agent, triage queue, or separate lifecycle dashboard.
+Due decisions remain available through `list_due_reviews` and normal Library
+access.
 
 Key files:
 
+- `features/knowledge/composition/knowledge_routes.dart`
+- `features/knowledge/composition/knowledge_domain_shell.dart`
 - `features/knowledge/ui/knowledge_inbox_page.dart`
 - `features/knowledge/ui/knowledge_library_page.dart`
-- `features/knowledge/ui/knowledge_review_page.dart`
-- `features/knowledge/ui/knowledge_capture_sheet.dart`
+- `features/knowledge/ui/knowledge_note_detail_page.dart`
 - `features/knowledge/ui/knowledge_decision_detail_page.dart`
-- `features/knowledge/ui/knowledge_object_detail_page.dart`
 
-Capture rule: Inbox capture always creates a Note and never exposes the object
-taxonomy. With an active native LLM profile, the primary capture action may
-produce an ephemeral pre-save draft that organizes the title and complete
-Markdown body. The draft must preserve facts, numbers, links, code, and local
-attachment references; it opens in rendered preview, remains editable, and is
-not persisted until the user confirms it. The user can restore or save the
-original at any time. Web, missing-profile, failed, malformed, or unsafe AI
-output falls back to the fast offline original-text save path. Classification,
-tags, links, and merge suggestions remain asynchronous review work after save.
-Users create an explicitly structured object from Library only when they already
-know the intended type.
+Capture lets the user choose Note or Decision directly. It never saves an
+intermediate Note merely to classify or promote it later. A Decision requires a
+question and selected option; its richer review fields can be edited on the
+detail page.
 
-Library exposes All, Notes, and Decisions in its adaptive picker. All preserves
-search and detail access for legacy Concepts, Principles, Assumptions,
-Experiments, and Routines without asking users to understand the old taxonomy.
-Creation offers only Note and Decision. Tags, scope, and dates remain searchable
-content rather than separate filter configuration.
+## Persistence And Sync
 
-Decision detail exposes one source-preserving follow-up action when ExecutionOS
-is active. Creation uses the domain-neutral Life action dispatcher with
-`know:knowledge_decisions` plus the decision id, reuses an existing linked
-action, and opens that action on later visits instead of creating duplicates.
-Concept relationships render as accessible links, never as a graph
-visualization. Review is a signal-first work queue: suggestions, due decisions,
-contradictions, orphan Notes, and agent findings appear without a duplicate
-dashboard, named Agent result card, or manual agent-control surface.
+Drift declarations live in `core/persistence/knowledge_tables.dart`; business
+access goes through `features/knowledge/data/knowledge_repository.dart`.
 
-Repository writes debounce an event-triggered agent run. New or edited Notes
-schedule Inbox Triage and contradiction detection; changes to Decisions,
-Principles, and Assumptions schedule contradiction detection. Agent run records
-identify these runs with the `event` trigger.
+Synced row families:
+
+- `know:knowledge_notes`
+- `know:knowledge_decisions`
+- `know:knowledge_relations`
+
+All three use Sync v3 row-state semantics, owner scoping, soft deletion, HLC
+stamps, and the shared outbox.
+
+Schema version 81 destructively replaces the former Knowledge tables with the
+three canonical tables. There is no legacy decoder, dual write, compatibility
+query, or migration backfill for retired object types.
+
+## Search And Memory
+
+Knowledge source rows remain authoritative in Drift. Two domain indexers mirror
+them into Memory Runtime:
+
+- `knowledge_note_memory_indexer.dart` → `know:notes`
+- `knowledge_decision_memory_indexer.dart` → `know:decisions`
+
+Search iterates these concrete sources because Memory Runtime source filtering
+is exact-match. Lexical fallback hydrates only live Notes and Decisions from the
+repository. Decision memories use `role=decision` and `authority=source_fact`;
+Note memories use `role=episode`.
 
 ## AI Tools
 
-Tool barrel: `features/knowledge/knowledge_ai_tools.dart`.
-
-Assistant-visible tools:
+The bounded catalog in `knowledge_ai_tools.dart` contains:
 
 - `recall_decision`
 - `list_due_reviews`
 - `search_notes`
 - `search_knowledge`
 - `find_similar_knowledge`
-- `review_knowledge_health`
-- `summarize_topic_evolution`
 - `propose_capture`
-
-Internal compatibility and agent tools additionally include:
-
-- `list_open_assumptions`
-- `list_due_routines`
-- `propose_concept_link`
 - `propose_merge`
-- `queue_inbox_classification`
-- `queue_inbox_tags`
-- `queue_link_to_decision`
-- `propose_routine`
 
-Rules:
+`propose_capture` accepts an explicit `note` or `decision` target and returns a
+proposal envelope. It does not classify into hidden types. `propose_merge`
+supports only same-kind Note or Decision merges. Proposal application and undo
+are owned by `KnowledgeProposalApplier`; no AI tool writes synced tables before
+user confirmation.
 
-- `propose_*` tools return `ProposalEnvelope`; they do not directly mutate synced KnowledgeOS tables.
-- `queue_*` inbox triage tools persist derived envelopes to `knowledge_inbox_triage` for the Review tab; they are not chat proposal-card apply kinds.
-- `propose_capture` presents only Note or Decision. Legacy classification may
-  still normalize existing data internally but is not exposed as user-facing
-  ontology.
-- Before creating new knowledge, prefer search or similarity tools to avoid duplicates.
-- The model must not invent decisions, principles, assumptions, or outcomes. User confirmation is required.
-- Decision, Note, and active Experiment detail pages may create one explicit
-  Execution follow-up through the app composition seam. They preserve stable
-  source identity (`know:knowledge_decisions`, `know:knowledge_notes`, or
-  `know:knowledge_experiments` plus row id), reopen an existing linked Action,
-  and never auto-write. Concept, Principle, and Assumption pages do not expose
-  generic create-action controls.
-- `review_knowledge_health`, Review agents, and Review UI share a 7-day review
-  cadence. This is workflow semantics rather than a user-facing expert
-  setting. Orphan Notes must be older than 24 hours and have neither
-  tags, project membership, nor incoming/outgoing Knowledge relations.
-- Topic evolution expands the query through matched Concept aliases, paginates
-  Notes and Decisions, and reports truncation metadata instead of silently
-  treating a bounded page as the full history.
+The system prompt must describe only Note and Decision. It must not ask the
+user to select, review, or restore a retired object type.
 
-## Proposal Application
+## Relations, Merge, And Deletion
 
-KnowledgeOS owns the cross-domain proposal composite because Riverpod allows one override per provider.
+Relations use stable typed endpoints whose kinds are only `note` or `decision`.
+Deleting an entity also tombstones every live relation touching it.
 
-Key files:
+Same-kind merges keep one survivor, union Note tags where applicable, soft
+delete duplicates with `mergedIntoId`, and enqueue every changed row. Proposal
+undo restores captured row snapshots with fresh Sync metadata.
 
-- `app/domain_composition.dart`
-- `app/domain_packs.dart`
-- `features/knowledge/composition/knowledge_proposal_applier.dart`
-- `features/knowledge/composition/knowledge_proposal_kinds.dart`
-- `core/ai/composition/composite_proposal_applier.dart`
+## Boundaries
 
-Behavior:
+Included:
 
-- `CompositeProposalApplier` routes by explicit domain-owned proposal kinds and applied table prefixes.
-- Knowledge proposal kinds route to `KnowledgeProposalApplier`.
-- Finance proposal kinds route to the Finance applier.
-- Unknown proposal kinds or applied tables fail fast.
-- Proposal card metadata and apply routes are contributed through `DomainPack.proposalKinds` and `DomainPack.proposalApplierRouteBuilder`, then aggregated from active domain packs.
+- Fast local capture.
+- Direct Note and Decision editing.
+- Source links, tags, review dates, revisit conditions, and outcomes.
+- Search, semantic recall, deduplication, relations, and confirmed proposals.
+- Cross-domain recall through Memory Runtime.
 
-Do not override `proposalApplierProvider` from a domain bundle. Do not manually union proposal card metadata in bootstrap code; add proposal metadata and applier routes to the owning domain pack.
+Excluded:
 
-## Memory Integration
+- Rich block editor or WYSIWYG authoring.
+- Wiki, graph visualization, forced backlinks, publishing, or collaboration.
+- Automatic source rewriting or unconfirmed AI-generated knowledge.
+- Background classification, contradiction detection, or review Agents.
+- Recurring reminders and task execution.
+- Legacy object import or compatibility behavior.
 
-Indexers:
+## Verification
 
-- `features/knowledge/data/knowledge_decision_memory_indexer.dart`
-- `features/knowledge/data/knowledge_object_memory_indexers.dart`
+For KnowledgeOS changes, prefer:
 
-Memory sources:
-
-- `know:notes`
-- `know:principles`
-- `know:assumptions`
-- `know:concepts`
-- `know:experiments`
-- `know:decisions`
-- `know:routines`
-
-Rules:
-
-- Knowledge objects remain source-of-truth in Drift tables.
-- A Decision may carry user-editable `revisit_conditions`, each represented as
-  a statement plus optional source references. V1 does not evaluate a metric
-  DSL; Agents may recommend review but cannot automatically rewrite a Decision.
-- Memory mirrors make cross-domain recall work without a Knowledge-specific retrieval engine.
-- Decision mirrors use `authority=source_fact` and `role=decision`, and include
-  complete options, linked assumptions/principles, expected/actual outcome,
-  review date, status, revisit conditions, and source-row provenance. Other
-  Knowledge episodic rows do not enter the Decision context slot.
-- Search tools iterate concrete `know:*` sources because Memory Runtime source filtering is exact-match.
-- Memory Runtime stays in `core/ai/local/memory/` and does not import KnowledgeOS.
-
-## Agents
-
-Current agents:
-
-| Agent | Purpose |
-|---|---|
-| ReviewAgent | Prepares Review freshness and due-decision context; legacy assumption reads remain internal |
-| AssumptionAgent | Compatibility detector for existing assumptions; not a user-configurable surface |
-| ContradictionAgent | Detects structural and semantic conflicts against active principles, assumptions, Notes, and all active Decisions |
-| InboxTriageAgent | Produces async proposals for new or materially edited captured notes |
-
-Location:
-
-- `features/knowledge/agents/`
-
-Rules:
-
-- Agents write stable local findings, temporary artifacts, triage state, and
-  proposals. They do not promote their own explanations into Memory or send
-  notifications directly.
-- Agents must not modify user-authored source content without a proposal and confirmation.
-- Agents must skip cleanly when no LLM profile exists if the task requires LLM judgment.
-- Agents must not call other agents.
-- Durable findings use stable subject/reference identities and reconcile
-  `open -> resolved`; dismiss and snooze suppress unchanged evidence, while
-  materially changed evidence reopens the finding.
-
-## Inbox Triage Flow
-
-```text
-User saves Note
-  -> KnowledgeRepository.upsertNote
-  -> Memory/Event indexing
-  -> InboxTriageAgent later reads untriaged notes
-  -> propose classification, tags, and decision links
-  -> proposals stored in knowledge_inbox_triage
-  -> Review tab shows accept/dismiss cards
-  -> accepted Decision classification atomically creates the Decision
-     and records promoted_to_kind / promoted_to_id on the source Note
-  -> promoted source Notes remain provenance but leave normal Note queries
-```
-
-Classification is a Note → Decision transition, not a `kind:*` tag. Ordinary
-materials and definitions stay Notes. Deterministic promotion ids make repeated
-acceptance idempotent. Legacy classification envelopes remain decodable and
-applicable for compatibility, but non-Decision classifications are neither
-generated nor shown in the primary Review queue.
-
-Decision links are persisted as typed `knowledge_relations` rows, never as
-synthetic tags. When a Note is promoted, its outgoing relations move to the
-typed object in the same transaction; proposal undo restores both the source
-Note and its original relation endpoints.
-
-Promotion is structurally strict: a Decision needs at least two options.
-Capture classifiers and Inbox proposals must carry those options through to the
-confirmed promotion; incomplete suggestions stay as Notes instead of creating
-hollow first-class objects.
-
-## Decision Lifecycle
-
-Decision is the primary KnowledgeOS object. It should preserve:
-
-- Question.
-- Options.
-- Selected option.
-- Rationale.
-- Linked principles.
-- Linked assumptions.
-- Expected outcome.
-- Review date.
-- Actual outcome.
-- Status.
-- Optional context snapshot.
-
-Status changes and lifecycle editing live in the KnowledgeOS UI and repository. Agents can recommend review work but must not silently rewrite a decision.
-
-## Tests To Prefer
-
-When touching KnowledgeOS, add or run targeted tests for:
-
-- `KnowledgeRepository` CRUD, status filters, merges, due reviews, due routines.
-- Inbox triage repository persistence and dismissal behavior.
-- AI tool JSON outputs and proposal envelopes.
-- `KnowledgeProposalApplier`.
-- Memory indexers for each object type.
-- Agents and skip/fallback paths.
-- Route shell, opt-in, and command palette behavior.
+- `KnowledgeRepository` CRUD, relation cleanup, merge, and schema tests.
+- Search and Memory indexer tests for Note and Decision only.
+- Proposal apply/undo tests for capture and same-kind merge.
+- Domain composition, route ownership, sync registry, and schema verification.
+- The architecture lint gates listed in `lifeos-shell.md`.

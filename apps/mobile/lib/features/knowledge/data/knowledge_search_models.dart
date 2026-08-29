@@ -58,12 +58,7 @@ class KnowledgeSearchDocument {
     required this.searchText,
     required this.updatedAt,
     this.note,
-    this.principle,
-    this.assumption,
-    this.concept,
-    this.experiment,
     this.decision,
-    this.routine,
   });
 
   final String kind;
@@ -73,12 +68,7 @@ class KnowledgeSearchDocument {
   final String searchText;
   final DateTime updatedAt;
   final KnowledgeNote? note;
-  final KnowledgePrinciple? principle;
-  final KnowledgeAssumption? assumption;
-  final KnowledgeConcept? concept;
-  final KnowledgeExperiment? experiment;
   final KnowledgeDecision? decision;
-  final KnowledgeRoutine? routine;
 
   static KnowledgeSearchDocument fromNote(
     KnowledgeNote n, {
@@ -92,64 +82,9 @@ class KnowledgeSearchDocument {
       excerpt: _excerpt(n.bodyMd.isEmpty ? title : n.bodyMd),
       searchText:
           '$title ${n.bodyMd} ${n.tags.join(' ')} '
-          '${n.projectTag ?? ''} ${n.sourceUrl ?? ''}',
+          '${n.sourceUrl ?? ''}',
       updatedAt: n.sync.updatedAt,
       note: n,
-    );
-  }
-
-  static KnowledgeSearchDocument fromPrinciple(KnowledgePrinciple p) {
-    return KnowledgeSearchDocument(
-      kind: 'principle',
-      id: p.id,
-      title: p.statement,
-      excerpt: _excerpt(p.rationaleMd.isEmpty ? p.statement : p.rationaleMd),
-      searchText: '${p.statement} ${p.rationaleMd} ${p.scope} ${p.status.wire}',
-      updatedAt: p.sync.updatedAt,
-      principle: p,
-    );
-  }
-
-  static KnowledgeSearchDocument fromAssumption(KnowledgeAssumption a) {
-    return KnowledgeSearchDocument(
-      kind: 'assumption',
-      id: a.id,
-      title: a.statement,
-      excerpt: a.statement,
-      searchText:
-          '${a.statement} ${a.scope} ${a.status.wire} '
-          '${a.evidenceIds.join(' ')}',
-      updatedAt: a.sync.updatedAt,
-      assumption: a,
-    );
-  }
-
-  static KnowledgeSearchDocument fromConcept(KnowledgeConcept c) {
-    return KnowledgeSearchDocument(
-      kind: 'concept',
-      id: c.id,
-      title: c.name,
-      excerpt: _excerpt(c.summaryMd.isEmpty ? c.name : c.summaryMd),
-      searchText:
-          '${c.name} ${c.aliases.join(' ')} ${c.summaryMd} '
-          '${c.relatedConceptIds.join(' ')}',
-      updatedAt: c.sync.updatedAt,
-      concept: c,
-    );
-  }
-
-  static KnowledgeSearchDocument fromExperiment(KnowledgeExperiment e) {
-    return KnowledgeSearchDocument(
-      kind: 'experiment',
-      id: e.id,
-      title: e.hypothesis,
-      excerpt: _excerpt(e.methodMd.isEmpty ? e.hypothesis : e.methodMd),
-      searchText:
-          '${e.hypothesis} ${e.methodMd} ${e.metrics.join(' ')} '
-          '${e.resultMd ?? ''} ${e.conclusionMd ?? ''} '
-          '${e.targetAssumptionId ?? ''} ${e.status.wire}',
-      updatedAt: e.sync.updatedAt,
-      experiment: e,
     );
   }
 
@@ -164,43 +99,11 @@ class KnowledgeSearchDocument {
       searchText:
           '${d.question} ${d.selectedLabel} ${d.rationaleMd} '
           '${d.expectedOutcome ?? ''} ${d.actualOutcomeMd ?? ''} '
-          '${d.principleIds.join(' ')} ${d.assumptionIds.join(' ')} '
           '${d.status.wire}',
       updatedAt: d.sync.updatedAt,
       decision: d,
     );
   }
-
-  static KnowledgeSearchDocument fromRoutine(
-    KnowledgeRoutine r, {
-    String Function(String statement, int intervalDays)? routineInterval,
-  }) {
-    final excerpt = routineInterval == null
-        ? '${r.statement} · every ${r.intervalDays} days'
-        : routineInterval(r.statement, r.intervalDays);
-    return KnowledgeSearchDocument(
-      kind: 'routine',
-      id: r.id,
-      title: r.statement,
-      excerpt: excerpt,
-      searchText: '${r.statement} ${r.scope} ${r.status.wire}',
-      updatedAt: r.sync.updatedAt,
-      routine: r,
-    );
-  }
-}
-
-class KnowledgeSearchDisplayCopy {
-  const KnowledgeSearchDisplayCopy({
-    this.untitled = 'Untitled',
-    this.routineInterval = _defaultRoutineInterval,
-  });
-
-  final String untitled;
-  final String Function(String statement, int intervalDays) routineInterval;
-
-  static String _defaultRoutineInterval(String statement, int intervalDays) =>
-      '$statement · every $intervalDays days';
 }
 
 class KnowledgeLexicalMatch {

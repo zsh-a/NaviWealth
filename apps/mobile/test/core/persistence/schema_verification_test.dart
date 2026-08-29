@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 80', () {
-      expect(db.schemaVersion, 80);
+    test('is 81', () {
+      expect(db.schemaVersion, 81);
     });
   });
 
@@ -441,12 +441,7 @@ void main() {
   group('KnowledgeOS tables exist', () {
     for (final table in [
       'knowledge_notes',
-      'knowledge_principles',
-      'knowledge_assumptions',
       'knowledge_decisions',
-      'knowledge_concepts',
-      'knowledge_experiments',
-      'knowledge_routines',
       'knowledge_relations',
     ]) {
       test('$table has sync columns', () async {
@@ -460,19 +455,13 @@ void main() {
       });
     }
 
-    test('promoted notes retain typed-object provenance', () async {
+    test('notes keep a compact capture schema', () async {
       final result = await db
           .customSelect('PRAGMA table_info(knowledge_notes)')
           .get();
       final columns = result.map((r) => r.read<String>('name')).toSet();
-      expect(
-        columns,
-        containsAll(<String>[
-          'promoted_to_kind',
-          'promoted_to_id',
-          'promoted_at',
-        ]),
-      );
+      expect(columns, containsAll(<String>['title', 'body_md', 'tags_json']));
+      expect(columns, isNot(contains('promoted_to_kind')));
     });
 
     test('knowledge decisions persist review conditions', () async {

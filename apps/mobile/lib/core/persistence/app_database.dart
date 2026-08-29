@@ -111,15 +111,9 @@ final class AppDatabaseTransactionScope {
     SecuritiesCatalogMeta,
     // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
     HealthMetrics,
-    // KnowledgeOS (`docs/domains/knowledgeos-domain.md` §9): six typed tables —
-    // Memory itself reuses the cross-domain `memories` table per §3.
+    // KnowledgeOS: notes, decisions, and explicit relations.
     KnowledgeNotes,
-    KnowledgePrinciples,
-    KnowledgeAssumptions,
     KnowledgeDecisions,
-    KnowledgeConcepts,
-    KnowledgeExperiments,
-    KnowledgeRoutines,
     KnowledgeRelations,
     // ExecutionOS Action Kernel: plans, personal actions, and updates.
     ExecutionPlans,
@@ -152,7 +146,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 80;
+  int get schemaVersion => 81;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -175,8 +169,6 @@ class AppDatabase extends _$AppDatabase {
       await _createOptionsOpportunityCache(this);
       await _createRecurringPatternObservations(this);
       await _createMemoryRuntime(this);
-      await _createKnowledgeInboxTriage(this);
-      await _createKnowledgeAttachments(this);
       await _createAgentRuns(this);
       await _createAgentRuntimeCheckpoints(this);
       await _createAgentRuntimeChatSnapshots(this);
@@ -358,99 +350,6 @@ class AppDatabase extends _$AppDatabase {
         await customStatement(
           'CREATE INDEX IF NOT EXISTS idx_health_metrics_owner_hlc '
           'ON health_metrics(owner_user_id, hlc)',
-        );
-      }
-      // v18 → v19: KnowledgeOS domain skeleton
-      // (`docs/domains/knowledgeos-domain.md` §9). Six typed tables — Memory
-      // itself reuses the cross-domain `memories` table per §3, so no
-      // new Memory schema. Gated at runtime by the Knowledge opt-in;
-      // creating the tables unconditionally is fine because they stay
-      // empty until the first write.
-      if (from < 19) {
-        await m.createTable(knowledgeNotes);
-        await m.createTable(knowledgePrinciples);
-        await m.createTable(knowledgeAssumptions);
-        await m.createTable(knowledgeDecisions);
-        await m.createTable(knowledgeConcepts);
-        await m.createTable(knowledgeExperiments);
-        for (final stmt in knowledgeIndexStmts) {
-          if (stmt.contains('knowledge_routines') ||
-              stmt.contains('knowledge_relations')) {
-            continue;
-          }
-          await customStatement(stmt);
-        }
-      }
-      // v19 → v20: KnowledgeOS inbox triage side-table
-      // (`docs/domains/knowledgeos-domain.md` §7 + §5 异步 triage flow).
-      // Local-only, never-sync — InboxTriageAgent uses it to skip
-      // already-proposed notes and the Review tab reads pending
-      // envelopes from it.
-      if (from < 20) {
-        await _createKnowledgeInboxTriage(this);
-      }
-      // v20 → v21: KnowledgeOS routines (`docs/domains/knowledgeos-domain.md`
-      // §3 + §9). Recurring user-defined reminders ("港卡每 6 个月做一次
-      //活跃交易") — a typed row that records cadence + last-done state
-      // so Knowledge Review can advance `next_due_at` reliably.
-      if (from < 21) {
-        await m.createTable(knowledgeRoutines);
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_owner_hlc '
-          'ON knowledge_routines(owner_user_id, hlc)',
-        );
-        await customStatement(
-          'CREATE INDEX IF NOT EXISTS idx_knowledge_routines_due '
-          'ON knowledge_routines(owner_user_id, status, next_due_at) '
-          'WHERE deleted_at IS NULL',
-        );
-      }
-      // v21 → v22: KnowledgeOS dedupe pointer (`docs/domains/knowledgeos-domain.md`
-      // §15.3). `merged_into_id` on Notes + Concepts records where a
-      // soft-deleted duplicate's content went after `propose_merge`.
-      // Additive nullable columns — no rewrite of existing rows.
-      if (from < 22) {
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_notes',
-          column: 'merged_into_id',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_concepts',
-          column: 'merged_into_id',
-          definition: 'TEXT',
-        );
-      }
-      // v22 → v23: extend the dedupe pointer to the remaining merge-able
-      // KnowledgeOS types (§15.3 P1). Principle / Assumption / Decision merges
-      // also re-point inbound references; Experiment merges only tombstone.
-      // Additive nullable columns — no rewrite of existing rows.
-      if (from < 23) {
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_principles',
-          column: 'merged_into_id',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_assumptions',
-          column: 'merged_into_id',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_decisions',
-          column: 'merged_into_id',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_experiments',
-          column: 'merged_into_id',
-          definition: 'TEXT',
         );
       }
       // v23 -> v24: Income Planner journal rows can optionally carry the
@@ -763,34 +662,6 @@ class AppDatabase extends _$AppDatabase {
       if (from < 49) {
         // Portfolio architecture is created by the forward-only v66 reset.
       }
-      if (from < 50) {
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_notes',
-          column: 'promoted_to_kind',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_notes',
-          column: 'promoted_to_id',
-          definition: 'TEXT',
-        );
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_notes',
-          column: 'promoted_at',
-          definition: 'INTEGER',
-        );
-      }
-      if (from < 51) {
-        await m.createTable(knowledgeRelations);
-        for (final statement in knowledgeIndexStmts.where(
-          (statement) => statement.contains('knowledge_relations'),
-        )) {
-          await customStatement(statement);
-        }
-      }
       if (from < 52) {
         await m.createTable(dcaPlans);
         await _addColumnIfMissing(
@@ -833,13 +704,6 @@ class AppDatabase extends _$AppDatabase {
       // interaction envelope without retaining pending tool dispatches.
       if (from < 56) {
         await _upgradeAgentRuntimeChatSnapshotsForInteractions(this);
-      }
-      if (from < 57) {
-        // Triage suggestions are derived local state. Rebuild the table
-        // instead of preserving proposals produced from an unknown note
-        // revision.
-        await customStatement('DROP TABLE IF EXISTS knowledge_inbox_triage');
-        await _createKnowledgeInboxTriage(this);
       }
       if (from < 58) {
         await _createAgentFindings(this);
@@ -1040,12 +904,6 @@ class AppDatabase extends _$AppDatabase {
       if (from < 70) {
         await m.createTable(firePlans);
       }
-      // v70 -> v71: KnowledgeOS image attachments — local-only metadata
-      // side table; the bytes live on the device filesystem and never
-      // ride sync (row payloads cap at 64 KiB).
-      if (from < 71) {
-        await _createKnowledgeAttachments(this);
-      }
       // v71 -> v72: Memory records gain explicit evidence authority,
       // provenance, retrieval role, and supersede lineage.
       if (from < 72) {
@@ -1053,12 +911,6 @@ class AppDatabase extends _$AppDatabase {
         // table while carrying a later user_version. Materialize the current
         // base table before adding columns or indexes.
         await customStatement(createMemories);
-        await _addColumnIfMissing(
-          this,
-          table: 'knowledge_decisions',
-          column: 'revisit_conditions_json',
-          definition: "TEXT NOT NULL DEFAULT '[]'",
-        );
         await _addColumnIfMissing(
           this,
           table: 'memories',
@@ -1150,6 +1002,27 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(executionActions);
         await m.createTable(executionProgressEntries);
         await _createExecutionIndexes(this);
+      }
+      // v80 -> v81: reset KnowledgeOS to Notes, Decisions, and Relations.
+      // The removed taxonomy and triage projections are intentionally not
+      // migrated.
+      if (from < 81) {
+        await customStatement('DROP TABLE IF EXISTS knowledge_inbox_triage');
+        await customStatement('DROP TABLE IF EXISTS knowledge_attachments');
+        await customStatement('DROP TABLE IF EXISTS knowledge_relations');
+        await customStatement('DROP TABLE IF EXISTS knowledge_routines');
+        await customStatement('DROP TABLE IF EXISTS knowledge_experiments');
+        await customStatement('DROP TABLE IF EXISTS knowledge_concepts');
+        await customStatement('DROP TABLE IF EXISTS knowledge_decisions');
+        await customStatement('DROP TABLE IF EXISTS knowledge_assumptions');
+        await customStatement('DROP TABLE IF EXISTS knowledge_principles');
+        await customStatement('DROP TABLE IF EXISTS knowledge_notes');
+        await m.createTable(knowledgeNotes);
+        await m.createTable(knowledgeDecisions);
+        await m.createTable(knowledgeRelations);
+        for (final statement in knowledgeIndexStmts) {
+          await customStatement(statement);
+        }
       }
     },
     beforeOpen: (details) async {

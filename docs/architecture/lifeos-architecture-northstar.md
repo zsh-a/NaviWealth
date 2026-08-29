@@ -17,7 +17,7 @@ NaviWealth is a Personal LifeOS with multiple opt-in domains:
 |---|---|---|
 | FinanceOS | Seed domain: wealth, cashflow, portfolio, FIRE, options income | Always on |
 | HealthOS | Health signals, recovery, and trends | User opt-in |
-| KnowledgeOS | Decision memory, review, assumptions, routines | User opt-in |
+| KnowledgeOS | Notes and decision memory | User opt-in |
 | ExecutionOS | Plans, concrete actions, and progress review | User opt-in |
 
 Future domains such as TimeOS or LivingOS require a separate ADR before code or planning starts.
@@ -298,7 +298,7 @@ Domain indexers convert domain rows into events and memories:
 
 - Options trade journal indexer.
 - Health metric indexer.
-- Knowledge object and decision indexers.
+- Knowledge note and decision indexers.
 
 New indexers belong in the owning domain and are contributed through the owning `DomainPack.memoryBootstrapBuilder`; `app/domain_bootstrap.dart` only loops active packs. Do not make `core/ai/local/memory/` import a domain.
 

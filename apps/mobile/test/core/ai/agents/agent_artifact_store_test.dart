@@ -125,9 +125,9 @@ void main() {
         createdAt: DateTime.utc(2026, 7, 5),
       );
       await save(
-        id: 'knowledge',
-        agentId: 'knowledge_review',
-        domain: 'knowledge',
+        id: 'execution',
+        agentId: 'execution_review',
+        domain: 'execution',
         createdAt: DateTime.utc(2026, 7, 4),
       );
 
@@ -325,57 +325,54 @@ void main() {
     },
   );
 
-  test(
-    'SqliteAgentArtifactStore resets visibility state when artifact owner changes',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final store = SqliteAgentArtifactStore(db: db);
-      final now = DateTime.utc(2026, 7, 5, 12);
+  test('SqliteAgentArtifactStore resets visibility state when artifact owner changes', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = SqliteAgentArtifactStore(db: db);
+    final now = DateTime.utc(2026, 7, 5, 12);
 
-      AgentArtifact artifact({
-        required String ownerUserId,
-        required String summary,
-      }) {
-        return AgentArtifact(
-          id: 'stable-agent-artifact',
-          ownerUserId: ownerUserId,
-          agentId: 'weekly_summary',
-          domain: 'health',
-          kind: AgentArtifactKind.review,
-          severity: AgentArtifactSeverity.info,
-          title: 'Weekly summary',
-          summary: summary,
-          createdAt: now,
-        );
-      }
-
-      await store.save(
-        artifact(ownerUserId: 'user-1', summary: 'first user result'),
-      );
-      await store.dismiss(
-        ownerUserId: 'user-1',
+    AgentArtifact artifact({
+      required String ownerUserId,
+      required String summary,
+    }) {
+      return AgentArtifact(
         id: 'stable-agent-artifact',
-        dismissedAt: now.add(const Duration(minutes: 1)),
+        ownerUserId: ownerUserId,
+        agentId: 'weekly_summary',
+        domain: 'health',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Weekly summary',
+        summary: summary,
+        createdAt: now,
       );
+    }
 
-      await store.save(
-        artifact(ownerUserId: 'user-2', summary: 'second user result'),
-      );
+    await store.save(
+      artifact(ownerUserId: 'user-1', summary: 'first user result'),
+    );
+    await store.dismiss(
+      ownerUserId: 'user-1',
+      id: 'stable-agent-artifact',
+      dismissedAt: now.add(const Duration(minutes: 1)),
+    );
 
-      final saved = await store.read('stable-agent-artifact');
-      expect(saved?.ownerUserId, 'user-2');
-      expect(saved?.summary, 'second user result');
-      expect(saved?.dismissedAt, isNull);
-      expect(saved?.snoozedUntil, isNull);
-      expect(
-        (await store.latestForAgent(
-          ownerUserId: 'user-2',
-          agentId: 'weekly_summary',
-          visibleAt: now.add(const Duration(minutes: 2)),
-        )).map((artifact) => artifact.id),
-        ['stable-agent-artifact'],
-      );
-    },
-  );
+    await store.save(
+      artifact(ownerUserId: 'user-2', summary: 'second user result'),
+    );
+
+    final saved = await store.read('stable-agent-artifact');
+    expect(saved?.ownerUserId, 'user-2');
+    expect(saved?.summary, 'second user result');
+    expect(saved?.dismissedAt, isNull);
+    expect(saved?.snoozedUntil, isNull);
+    expect(
+      (await store.latestForAgent(
+        ownerUserId: 'user-2',
+        agentId: 'weekly_summary',
+        visibleAt: now.add(const Duration(minutes: 2)),
+      )).map((artifact) => artifact.id),
+      ['stable-agent-artifact'],
+    );
+  });
 }

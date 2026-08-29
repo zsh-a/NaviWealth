@@ -17,36 +17,6 @@ const int kKnowledgeInlineExcerptMaxChars =
 /// Shared intent note title excerpt budget.
 const int kKnowledgeSharedTitleMaxChars = 80;
 
-/// Markdown image scheme referencing a locally stored KnowledgeOS
-/// attachment: `![alt](attachment://<id>)`. Bytes live on the device
-/// filesystem (metadata in the local-only `knowledge_attachments` table) and
-/// never ride sync in phase A.
-const String kKnowledgeAttachmentScheme = 'attachment://';
-
-/// Extracts the attachment id from an image `src` when it points at a local
-/// KnowledgeOS attachment; null for remote URLs and every other source.
-String? knowledgeAttachmentIdFromSrc(String src) {
-  if (!src.startsWith(kKnowledgeAttachmentScheme)) return null;
-  final id = src.substring(kKnowledgeAttachmentScheme.length).trim();
-  return id.isEmpty ? null : id;
-}
-
-/// Replaces attachment image references with a compact `[image: alt]`
-/// marker before markdown is fed to embeddings, LLM prompts, or excerpts —
-/// the raw `attachment://` id carries no semantic signal for the model and
-/// would only pollute vectors and prompt budgets.
-String knowledgeMarkdownWithoutAttachments(String markdown) {
-  return markdown.replaceAllMapped(
-    RegExp(
-      '!\\[([^\\]]*)\\]\\(${RegExp.escape(kKnowledgeAttachmentScheme)}[^)]+\\)',
-    ),
-    (m) {
-      final alt = (m.group(1) ?? '').trim();
-      return alt.isEmpty ? '[image]' : '[image: $alt]';
-    },
-  );
-}
-
 /// Supporting-detail excerpt derived from the shared excerpt budget.
 const int kKnowledgeSupportingExcerptMaxChars =
     kKnowledgeExcerptMaxChars - kKnowledgeHeadlineExcerptMaxChars;

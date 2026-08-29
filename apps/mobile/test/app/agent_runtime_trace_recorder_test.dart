@@ -102,7 +102,7 @@ void main() {
   test('records effect-plan fallback reason in turn attributes', () async {
     final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
     final trace = await recorder.recordStepRun(
-      agentId: 'knowledge_review',
+      agentId: 'execution_review',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8),
       stepRun: const AgentRuntimeNativeStepRunResult(
@@ -328,7 +328,7 @@ void main() {
       final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
 
       final trace = await recorder.recordStepRun(
-        agentId: 'knowledge_review',
+        agentId: 'execution_review',
         startedAt: DateTime.utc(2026, 6, 29, 8),
         finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
         stepRun: const AgentRuntimeNativeStepRunResult(
@@ -345,7 +345,7 @@ void main() {
               'effect': <String, Object?>{
                 'kind': 'tool',
                 'effect_id': 'call_1',
-                'name': 'list_due_reviews',
+                'name': 'list_open_actions',
               },
             },
             <String, Object?>{
@@ -360,7 +360,7 @@ void main() {
               'effect': <String, Object?>{
                 'kind': 'tool',
                 'effect_id': 'call_2',
-                'name': 'list_open_assumptions',
+                'name': 'list_blocked_actions',
               },
             },
             <String, Object?>{
@@ -390,9 +390,9 @@ void main() {
     );
 
     final trace = await recorder.recordProfileCompletion(
-      agentId: 'knowledge_inbox_triage',
-      domain: kDomainKnowledge,
-      surface: 'knowledge_inbox_triage',
+      agentId: 'weekly_summary',
+      domain: kDomainHealth,
+      surface: 'health_weekly_summary',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
       requestId: 'profile_completion_1',
@@ -408,7 +408,7 @@ void main() {
     expect(trace.requestId, 'profile_completion_1');
     expect(trace.routingReason, kFrbAgentRuntimeProfileRoutingReason);
     expect(trace.intent.label, 'agent_runtime_profile_completion');
-    expect(trace.intent.domain, kDomainKnowledge);
+    expect(trace.intent.domain, kDomainHealth);
     expect(trace.terminalReason, TerminalReason.done);
     expect(trace.spans.map((span) => span.name), <String>[
       'turn',
@@ -419,7 +419,7 @@ void main() {
     expect(trace.llmSpans.single.tokens?.output, 7);
     expect(
       trace.spans.first.attributes,
-      containsPair('surface', 'knowledge_inbox_triage'),
+      containsPair('surface', 'health_weekly_summary'),
     );
     expect(
       trace.spans.first.attributes,
@@ -432,7 +432,7 @@ void main() {
 
     final trace = await recorder.recordProfileCompletion(
       agentId: 'knowledge_contradiction',
-      domain: kDomainKnowledge,
+      domain: kDomainHealth,
       surface: 'knowledge_contradiction',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),

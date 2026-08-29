@@ -104,11 +104,6 @@ _Jump? _jumpFromEvidence(AppLocalizations l10n, EvidenceAnchor anchor) {
     'health_metrics' ||
     'knowledge_notes' ||
     'knowledge_decisions' ||
-    'knowledge_principles' ||
-    'knowledge_assumptions' ||
-    'knowledge_concepts' ||
-    'knowledge_experiments' ||
-    'knowledge_routines' ||
     'execution_actions' ||
     'execution_plans' ||
     'execution_progress' => fallbackId,

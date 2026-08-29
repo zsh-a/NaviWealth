@@ -21,9 +21,6 @@ extension LifeEventL10n on LifeEvent {
       case LifeEventTemplate.executionDue:
         final n = params.isNotEmpty ? params.first : '0';
         return l10n.lifeSignalExecDueTitle(n);
-      case LifeEventTemplate.knowledgeInbox:
-        final n = params.isNotEmpty ? params.first : '0';
-        return l10n.lifeSignalKnowledgeTitle(n);
     }
   }
 
@@ -42,8 +39,6 @@ extension LifeEventL10n on LifeEvent {
         return l10n.lifeSignalExecBlockedSubtitle;
       case LifeEventTemplate.executionDue:
         return l10n.lifeSignalExecDueSubtitle;
-      case LifeEventTemplate.knowledgeInbox:
-        return l10n.lifeSignalKnowledgeSubtitle;
     }
   }
 
@@ -62,8 +57,6 @@ extension LifeEventL10n on LifeEvent {
         l10n.lifeSignalActionReviewBudget,
       LifeActionTemplate.protectRecovery =>
         l10n.lifeSignalActionProtectRecovery,
-      LifeActionTemplate.reviewKnowledgeInbox =>
-        l10n.lifeSignalActionReviewKnowledge,
       null => null,
     };
   }

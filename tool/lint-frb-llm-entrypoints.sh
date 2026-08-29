@@ -145,10 +145,6 @@ dailyNavigatorAgentProvider FrbDailyNavigatorSynthesizer
 executionReviewAgentProvider FrbExecutionReviewReader
 recoveryAlertAgentProvider FrbRecoveryAlertSignalReader
 weeklySummaryAgentProvider FrbWeeklySummaryReader
-reviewAgentProvider FrbReviewDueReader
-assumptionAgentProvider FrbAssumptionReviewReader
-inboxTriageAgentProvider FrbInboxTriageSourceReader
-contradictionAgentProvider FrbContradictionSourceReader
 '
 
 while read -r provider frb_type; do
@@ -175,11 +171,7 @@ for surface in \
   life_daily_navigator \
   execution_review \
   health_recovery_alert \
-  health_weekly_summary \
-  knowledge_review \
-  knowledge_assumption \
-  knowledge_inbox_triage \
-  knowledge_contradiction; do
+  health_weekly_summary; do
   if ! grep -qr "surface: '$surface'" "$RUNTIME_WIRING"; then
     echo "✖ production FRB scheduled agent is missing local trace capture:" >&2
     echo "  surface: $surface" >&2

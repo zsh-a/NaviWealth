@@ -57,7 +57,7 @@ void main() {
           'effect_result': <String, Object?>{'assumptions': <Object?>[]},
         },
       },
-      'list_open_assumptions',
+      'list_open_actions',
     );
 
     expect(result, isNull);

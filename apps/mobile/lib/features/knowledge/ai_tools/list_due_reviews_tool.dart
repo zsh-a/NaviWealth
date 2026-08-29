@@ -1,8 +1,8 @@
 /// `list_due_reviews` — KnowledgeOS device tool
 /// (`docs/domains/knowledgeos-domain.md` §4).
 ///
-/// Weekly Review 主面板。Returns decisions whose `review_date <= as_of`
-/// and status is still pending verification.
+/// Returns decisions whose `review_date <= as_of` and status still expects an
+/// outcome update.
 library;
 
 import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
@@ -21,7 +21,6 @@ class ListDueReviewsTool implements DeviceTool {
   String get description =>
       '列出所有 review_date 已到期(或在 as_of 之前)且 status 仍是 draft/active/paused 的 '
       'Decision。每条返回 id / question / status / review_date / days_overdue / age_days。'
-      '用途:Weekly Review / Review tab / ReviewAgent。'
       '可选 as_of (ISO8601),默认 now。';
 
   @override

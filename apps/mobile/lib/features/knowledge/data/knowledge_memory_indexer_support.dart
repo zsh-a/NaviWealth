@@ -1,20 +1,30 @@
-part of 'knowledge_object_memory_indexers.dart';
+/// Shared Memory Runtime plumbing for KnowledgeOS notes and decisions.
+library;
 
-String _truncate(String s, [int n = kKnowledgeExcerptMaxChars]) =>
-    knowledgeExcerpt(s, max: n);
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-Future<void> _forgetMissingSourceIds(
-  MemoryRuntime runtime, {
-  required String ownerUserId,
-  required String source,
-  required Set<String> liveSourceIds,
-}) {
-  return runtime.forgetSourceExcept(
-    ownerUserId: ownerUserId,
-    source: source,
-    keepSourceIds: liveSourceIds,
-  );
-}
+import '../../../core/ai/contracts/event_record.dart';
+import '../../../core/ai/contracts/source_identity.dart';
+import '../../../core/ai/local/memory/memory_runtime.dart';
+import '../../../core/ai/local/memory/providers.dart';
+import '../../../core/auth/current_user.dart';
+import '../../../core/auth/domain_scope.dart';
+import '../../../core/auth/providers.dart' as core_auth;
+import 'knowledge_repository.dart';
+import 'providers.dart';
+
+const String kKnowledgeNoteMemorySource = 'know:notes';
+const String kKnowledgeDecisionMemorySource = 'know:decisions';
+const String kKnowledgeNoteEventSourceFamily = 'know:knowledge_notes';
+const String kKnowledgeDecisionEventSourceFamily = 'know:knowledge_decisions';
+
+const Map<String, String> kKnowledgeMemorySources = <String, String>{
+  'note': kKnowledgeNoteMemorySource,
+  'decision': kKnowledgeDecisionMemorySource,
+};
+
+const Map<String, String> kKnowledgeDedupeMemorySources =
+    kKnowledgeMemorySources;
 
 Future<void> recordKnowledgeStateEvent(
   MemoryRuntime runtime, {
@@ -56,14 +66,6 @@ Future<void> recordKnowledgeStateEvent(
   );
 }
 
-/// Shared subscribe-then-reindex plumbing for every KnowledgeOS indexer
-/// provider, Decision included (`docs/domains/knowledgeos-domain.md` §3).
-///
-/// Each indexer used to repeat ~15 lines of identical Riverpod
-/// boilerplate: opt-in gate -> resolve repo/userId/runtime -> re-entrance
-/// guard -> subscribe -> reindex on emit -> dispose. The varying parts
-/// are only the stream factory and the reindex callback, so they're the
-/// only parameters; everything else is enforced here.
 void subscribeKnowledgeIndexer<T>(
   Ref ref, {
   required Stream<List<T>> Function(KnowledgeRepository repo, String userId)

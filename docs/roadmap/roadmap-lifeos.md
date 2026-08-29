@@ -32,7 +32,8 @@ Memory V1 are delivered; their current behavior is owned by the AI and
 architecture SSOTs.
 
 Recent releases simplified Finance planning and cashflow, Execution plans and
-review, Knowledge review, and Settings without changing domain boundaries.
+review, Knowledge notes and decisions, and Settings without changing domain
+boundaries.
 Mobile AI chat now supports hands-free voice turns through on-device ASR/TTS
 inside the existing interaction session, and Android builds self-update
 through GitHub releases. These are current capabilities owned by the domain

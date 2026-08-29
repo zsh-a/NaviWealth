@@ -214,9 +214,8 @@ void main() {
       context: context,
       synthesizer: synthesizer,
     );
-    final artifact = await SqliteAgentArtifactStore(
-      db: db,
-    ).read(result.artifactId!);
+    final artifact = await SqliteAgentArtifactStore(db: db)
+        .read(result.artifactId!);
 
     expect(result.status, AgentRunStatus.completed);
     expect(synthesizer.calls, 1);
@@ -279,13 +278,13 @@ void main() {
       activeDomains: const <DomainScope>{DomainScope.finance},
       states: <LifeContextDomainState>[
         _state(
-          domain: DomainScope.knowledge,
+          domain: DomainScope.execution,
           freshness: LifeContextFreshness.fresh,
           signals: <LifeEvent>[
             _signal(
               id: 'inactive-inbox',
-              domain: DomainScope.knowledge,
-              template: LifeEventTemplate.knowledgeInbox,
+              domain: DomainScope.execution,
+              template: LifeEventTemplate.executionDue,
             ),
           ],
         ),

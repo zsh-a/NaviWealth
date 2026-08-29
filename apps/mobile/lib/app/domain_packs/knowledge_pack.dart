@@ -1,21 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-
-import 'package:naviwealth/core/ai/agents/agent.dart';
-import 'package:naviwealth/core/ai/agents/agent_intents.dart';
-import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
-import 'package:naviwealth/features/knowledge/agents/assumption_agent.dart'
-    show kKnowledgeAssumptionAgentId;
-import 'package:naviwealth/features/knowledge/agents/contradiction_agent.dart'
-    show kKnowledgeContradictionAgentId;
-import 'package:naviwealth/features/knowledge/agents/inbox_triage_agent.dart'
-    show kKnowledgeInboxTriageAgentId;
-import 'package:naviwealth/features/knowledge/agents/providers.dart'
-    as knowledge_agent_providers;
-import 'package:naviwealth/features/knowledge/agents/review_agent.dart'
-    show kKnowledgeReviewAgentId;
 import 'package:naviwealth/features/knowledge/composition/knowledge_command_palette.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_domain_shell.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_applier.dart'
@@ -25,14 +11,13 @@ import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_kin
 import 'package:naviwealth/features/knowledge/composition/knowledge_routes.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_share_intent_handler.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_decision_memory_indexer.dart';
-import 'package:naviwealth/features/knowledge/data/knowledge_object_memory_indexers.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_note_memory_indexer.dart';
 import 'package:naviwealth/features/knowledge/data_management/knowledge_data_management.dart';
 import 'package:naviwealth/features/knowledge/knowledge_ai_tools.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import '../agent_runtime/overrides/agent_runtime_knowledge_overrides.dart';
 import '../routing/route_paths.dart';
-import 'knowledge_life_contribution.dart';
+import 'knowledge_source_routes.dart';
 import 'proposal_applier_route.dart';
 
 final DomainPack kKnowledgePack = DomainPack(
@@ -40,7 +25,6 @@ final DomainPack kKnowledgePack = DomainPack(
   deviceTools: kKnowledgeDeviceTools,
   assistantToolsBuilder: (_) => kKnowledgeAssistantDeviceTools,
   toolDescriptors: kKnowledgeToolDescriptors,
-  intentDescriptors: kKnowledgeAgentIntentDescriptors,
   proposalKinds: kKnowledgeProposalKinds,
   proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
     ref,
@@ -53,55 +37,9 @@ final DomainPack kKnowledgePack = DomainPack(
   shellSpecBuilder: knowledgeDomainShell,
   shellRouteBuilder: knowledgeShellRoute,
   tabPaths: [AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
-  reviewRoutePath: AppRoutes.knowledgeReview,
-  agentBuilder: _knowledgeAgents,
-  agentPresentationSpecs: const [
-    AgentPresentationSpec(
-      agentId: kKnowledgeReviewAgentId,
-      domain: DomainScope.knowledge,
-      icon: FLucideIcons.clipboardCheck,
-      label: _knowledgeReviewLabel,
-      description: _knowledgeReviewDescription,
-      userToggleable: false,
-      visibleInSettings: false,
-      placement: AgentResultPlacement.settingsOnly,
-    ),
-    AgentPresentationSpec(
-      agentId: kKnowledgeAssumptionAgentId,
-      domain: DomainScope.knowledge,
-      icon: FLucideIcons.brain,
-      label: _knowledgeAssumptionLabel,
-      description: _knowledgeAssumptionDescription,
-      userToggleable: false,
-      visibleInSettings: false,
-      placement: AgentResultPlacement.settingsOnly,
-    ),
-    AgentPresentationSpec(
-      agentId: kKnowledgeContradictionAgentId,
-      domain: DomainScope.knowledge,
-      icon: FLucideIcons.triangleAlert,
-      label: _knowledgeContradictionLabel,
-      description: _knowledgeContradictionDescription,
-      userToggleable: false,
-      visibleInSettings: false,
-      placement: AgentResultPlacement.settingsOnly,
-    ),
-    AgentPresentationSpec(
-      agentId: kKnowledgeInboxTriageAgentId,
-      domain: DomainScope.knowledge,
-      icon: FLucideIcons.fileText,
-      label: _knowledgeInboxTriageLabel,
-      description: _knowledgeInboxTriageDescription,
-      userToggleable: false,
-      visibleInSettings: false,
-      placement: AgentResultPlacement.settingsOnly,
-    ),
-  ],
   memorySourcePrefixes: const ['know:'],
   memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
   commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
-  providerOverridesBuilder: agentRuntimeKnowledgeProviderOverrides,
-  lifeSignalBuilder: knowledgeLifeSignals,
   sourceRouteResolver: knowledgeSourceRoute,
   shareIntentHandlers: const [KnowledgeShareIntentHandler()],
   dataManagementSpec: knowledgeDataManagementSpec,
@@ -112,44 +50,12 @@ final DomainPack kKnowledgePack = DomainPack(
   ),
 );
 
-List<Agent> _knowledgeAgents(Ref ref) =>
-    ref.watch(knowledge_agent_providers.knowledgeAgentsProvider);
-
 void _knowledgeMemoryBootstrap(Ref ref) {
   ref.watch(knowledgeDecisionMemoryIndexerProvider);
   ref.watch(knowledgeNoteMemoryIndexerProvider);
-  ref.watch(knowledgePrincipleMemoryIndexerProvider);
-  ref.watch(knowledgeAssumptionMemoryIndexerProvider);
-  ref.watch(knowledgeConceptMemoryIndexerProvider);
-  ref.watch(knowledgeExperimentMemoryIndexerProvider);
-  ref.watch(knowledgeRoutineMemoryIndexerProvider);
 }
 
 String _knowledgeSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
     enabled
     ? l10n.settingsDomainsKnowledgeEnabledSubtitle
     : l10n.settingsDomainsKnowledgeDisabledSubtitle;
-
-String _knowledgeReviewLabel(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeReviewLabel;
-
-String _knowledgeReviewDescription(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeReviewDescription;
-
-String _knowledgeAssumptionLabel(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeAssumptionLabel;
-
-String _knowledgeAssumptionDescription(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeAssumptionDescription;
-
-String _knowledgeContradictionLabel(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeContradictionLabel;
-
-String _knowledgeContradictionDescription(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeContradictionDescription;
-
-String _knowledgeInboxTriageLabel(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeInboxTriageLabel;
-
-String _knowledgeInboxTriageDescription(AppLocalizations l10n) =>
-    l10n.agentPresentationKnowledgeInboxTriageDescription;

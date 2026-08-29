@@ -644,10 +644,7 @@ class ExecutionReviewPageObject {
     tester.widget<AppTappable>(disclosure).onPress?.call();
     await settle(tester);
 
-    final closedActions = find.text('Recent closed actions');
-    await _scrollUntilMounted(closedActions);
-    expect(closedActions, findsWidgets);
-    final completedAction = find.text(title);
+    final completedAction = find.textContaining(title);
     await _scrollUntilMounted(completedAction);
     expect(completedAction, findsOneWidget);
   }
