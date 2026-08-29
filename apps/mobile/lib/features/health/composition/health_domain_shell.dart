@@ -12,7 +12,7 @@ import 'health_route_paths.dart';
 DomainShellSpec healthDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
     scope: DomainScope.health,
-    label: 'HealthOS',
+    label: l10n.lifeDomainHealth,
     icon: FLucideIcons.heart,
     selectedIcon: FLucideIcons.heart,
     tabs: <DomainShellTab>[

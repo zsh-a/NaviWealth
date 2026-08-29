@@ -57,7 +57,6 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../accounts/ui/account_detail_page.dart';
 import '../accounts/ui/account_form_page.dart';
 import '../accounts/ui/accounts_page.dart';
-import '../accounts/ui/journal_entry_list_page.dart';
 import '../accounts/ui/transfer_form_page.dart';
 import '../activity/ui/activity_entry_detail_page.dart';
 import '../activity/ui/activity_page.dart';
@@ -193,7 +192,9 @@ StatefulShellRoute financeShellRoute() {
               GoRoute(
                 path: 'journal',
                 name: FinanceRouteNames.journalEntries,
-                builder: (context, state) => const JournalEntryListPage(),
+                // Activity is the canonical ledger. Keep the old URL without
+                // maintaining a second list for the same journal entries.
+                redirect: (context, state) => FinanceRoutes.activity,
               ),
               // §5.10.10 / S5a — Layer 4 ingest review queue.
               GoRoute(

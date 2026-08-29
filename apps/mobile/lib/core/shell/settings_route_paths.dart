@@ -15,8 +15,8 @@ abstract final class SettingsRoutes {
   static const ai = '/settings/ai';
   static const advanced = '/settings/advanced';
   static const aiTransparency = '/settings/ai-transparency';
-  // §5.10.2 — AI chat is no longer a tab; sessions are read/replay-only
-  // under Settings as part of the AI audit surface.
+  // AI conversations are no longer a primary tab. This route is the saved
+  // conversation library and may continue an existing or new conversation.
   static const aiHistory = '/settings/ai-history';
   // §5.10.5 — user-facing privacy posture for provider-direct AI requests.
   static const aiPrivacy = '/settings/ai-privacy';

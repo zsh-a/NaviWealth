@@ -8,7 +8,7 @@ import 'execution_route_paths.dart';
 DomainShellSpec executionDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
     scope: DomainScope.execution,
-    label: 'ExecutionOS',
+    label: l10n.lifeDomainExecution,
     icon: FLucideIcons.listTodo,
     selectedIcon: FLucideIcons.listTodo,
     tabs: <DomainShellTab>[

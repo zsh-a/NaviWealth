@@ -278,7 +278,8 @@ void main() {
 
       expect(find.text('AI privacy'), findsOneWidget);
       expect(find.text('AI Models'), findsOneWidget);
-      expect(find.text('Agents'), findsOneWidget);
+      expect(find.text('Agents'), findsNothing);
+      expect(find.text('AI transparency'), findsNothing);
 
       await tester.tap(find.byKey(const ValueKey('app.back')));
       await tester.pumpAndSettle();
@@ -289,6 +290,8 @@ void main() {
 
       expect(find.text('App Logs'), findsOneWidget);
       expect(find.text('Performance'), findsOneWidget);
+      expect(find.text('Agents'), findsOneWidget);
+      expect(find.text('AI transparency'), findsOneWidget);
     });
   });
 
@@ -386,15 +389,18 @@ void main() {
       expect((aiY - dataY).abs(), lessThan(1));
     });
 
-    _testWidgets('exposes saved AI history from the AI hub', (tester) async {
+    _testWidgets('exposes conversations from the AI hub', (tester) async {
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
         await _wrap(prefs, initialLocation: AppRoutes.settingsAi),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('AI history'), findsOneWidget);
-      expect(find.text('Review saved AI conversations'), findsOneWidget);
+      expect(find.text('Conversations'), findsOneWidget);
+      expect(
+        find.text('Continue or review your AI conversations'),
+        findsOneWidget,
+      );
     });
 
     _testWidgets('does not overflow at large text scale', (tester) async {

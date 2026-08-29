@@ -6,17 +6,15 @@ import 'package:naviwealth/features/health/composition/health_domain_shell.dart'
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  // `lookupAppLocalizations` works for any const-supported locale —
-  // bootstrap uses 'en' so we mirror that here. The shell spec doesn't
-  // read l10n today (D-2.3 keeps strings as literals); the param is
-  // accepted for parity with `financeDomainShell(l10n)`.
+  // `lookupAppLocalizations` works for any const-supported locale — bootstrap
+  // uses 'en' so we mirror that here.
   final l10n = lookupAppLocalizations(const Locale('en'));
 
   group('healthDomainShell(l10n)', () {
-    test('scope and label identify HealthOS', () {
+    test('scope stays internal while the label is user-facing', () {
       final spec = healthDomainShell(l10n);
       expect(spec.scope, DomainScope.health);
-      expect(spec.label, 'HealthOS');
+      expect(spec.label, 'Health');
     });
 
     test('exposes Today / Trends tabs in IA order', () {

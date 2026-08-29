@@ -54,4 +54,18 @@ void main() {
       contains('nav.health.today'),
     );
   });
+
+  test('corporate actions use one command with dividend keywords', () {
+    final finance = kFinancePack.commandPaletteEntriesBuilder!(l10n);
+    final corporateActions = finance.where(
+      (entry) => entry.id == 'action.corporateAction',
+    );
+
+    expect(corporateActions, hasLength(1));
+    expect(
+      finance.map((entry) => entry.id),
+      isNot(contains('action.newDividend')),
+    );
+    expect(corporateActions.single.matches('dividend'), isTrue);
+  });
 }

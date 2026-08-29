@@ -58,9 +58,8 @@ Future<ProviderContainer> _pumpAt(
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);
-  await DomainOptInStore(
-    db,
-  ).write(DomainOptIns(<DomainScope>{for (final d in domains) d.scope}));
+  await DomainOptInStore(db)
+      .write(DomainOptIns(<DomainScope>{for (final d in domains) d.scope}));
   final container = ProviderContainer(
     overrides: [
       appDatabaseProvider.overrideWith((_) async => db),
@@ -339,12 +338,12 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       // Sheet exposes both domain labels.
-      expect(find.text('FinanceOS'), findsNWidgets(2));
-      expect(find.text('HealthOS'), findsOneWidget);
+      expect(find.text('Finance'), findsNWidgets(2));
+      expect(find.text('Health'), findsOneWidget);
 
-      // Tapping HealthOS closes the sheet first. Route construction must not
+      // Tapping Health closes the sheet first. Route construction must not
       // overlap the reverse sheet animation.
-      await tester.tap(find.text('HealthOS'));
+      await tester.tap(find.text('Health'));
       await tester.pump();
       expect(_currentPath(container), AppRoutes.activity);
 

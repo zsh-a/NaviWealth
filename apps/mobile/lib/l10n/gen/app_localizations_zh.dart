@@ -2459,6 +2459,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityActionsTitle => '记录活动';
 
   @override
+  String get activityActionImportHint => '导入账单，只需审核异常';
+
+  @override
   String get activityActionExpenseHint => '记一笔支出';
 
   @override
@@ -3662,7 +3665,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navAskAi => '助手';
 
   @override
-  String get commandPaletteAiHistory => 'AI 历史会话';
+  String get commandPaletteAiHistory => 'AI 对话';
 
   @override
   String get commandPaletteToggleTheme => '切换主题（亮色或暗色）';
@@ -7383,13 +7386,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiHubRuntimeSection => '运行环境';
 
   @override
-  String get settingsAiHubTrustSection => '隐私与透明度';
+  String get settingsAiHubTrustSection => '记忆与隐私';
 
   @override
-  String get settingsAiHistoryTitle => 'AI 历史会话';
+  String get settingsAiHistoryTitle => 'AI 对话';
 
   @override
-  String get settingsAiHistorySubtitle => '查看已保存的 AI 对话';
+  String get settingsAiHistorySubtitle => '继续或查看已保存的 AI 对话';
 
   @override
   String get personalMemoryTitle => '个人记忆';

@@ -4367,11 +4367,17 @@ abstract class AppLocalizations {
   /// **'Liabilities'**
   String get portfolioLiabilitiesTab;
 
-  /// Title of the Activity-page '+' action sheet — only flow entries (expense/trade/transfer/convert)
+  /// Title of the Activity-page '+' capture sheet
   ///
   /// In en, this message translates to:
   /// **'Record activity'**
   String get activityActionsTitle;
+
+  /// Affordance under Import statements in the Activity actions sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Import a statement and review only exceptions'**
+  String get activityActionImportHint;
 
   /// Affordance under Expense in the Activity actions sheet
   ///
@@ -6537,10 +6543,10 @@ abstract class AppLocalizations {
   /// **'Assistant'**
   String get navAskAi;
 
-  /// Command palette: open the read-only AI session history under Settings
+  /// Command palette: open saved AI conversations under Settings
   ///
   /// In en, this message translates to:
-  /// **'AI history'**
+  /// **'Conversations'**
   String get commandPaletteAiHistory;
 
   /// Command palette: cycle between light and dark theme
@@ -13108,19 +13114,19 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAiHubTrustSection.
   ///
   /// In en, this message translates to:
-  /// **'Privacy & transparency'**
+  /// **'Memory & privacy'**
   String get settingsAiHubTrustSection;
 
   /// Settings row that opens saved AI conversation history.
   ///
   /// In en, this message translates to:
-  /// **'AI history'**
+  /// **'Conversations'**
   String get settingsAiHistoryTitle;
 
   /// Settings row subtitle for saved AI conversation history.
   ///
   /// In en, this message translates to:
-  /// **'Review saved AI conversations'**
+  /// **'Continue or review your AI conversations'**
   String get settingsAiHistorySubtitle;
 
   /// No description provided for @personalMemoryTitle.

@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/activity/ui/activity_action_panel.da
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('activity quick add exposes income as a first-class flow', (
+  testWidgets('activity quick add leads with import and keeps manual flows', (
     tester,
   ) async {
     final l10n = await AppLocalizations.delegate.load(const Locale('en'));
@@ -41,7 +41,12 @@ void main() {
     await tester.tap(host);
     await tester.pumpAndSettle();
 
+    expect(find.text(l10n.homeQuickImport), findsOneWidget);
     expect(find.text(l10n.superFabIncome), findsOneWidget);
     expect(find.text(l10n.activityActionIncomeHint), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(l10n.homeQuickImport)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.superFabExpense)).dy),
+    );
   });
 }

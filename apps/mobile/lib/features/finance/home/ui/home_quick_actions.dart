@@ -33,6 +33,11 @@ class _ActiveQuickActions extends StatelessWidget {
     return _AdaptiveQuickActions(
       actions: [
         _HomeQuickActionData(
+          icon: FLucideIcons.upload,
+          label: l10n.homeQuickImport,
+          onPress: () => context.push(FinanceRoutes.activityIngest),
+        ),
+        _HomeQuickActionData(
           icon: FLucideIcons.receiptText,
           label: l10n.homeQuickRecordEntry,
           onPress: () => context.push(FinanceRoutes.expenseNew),
@@ -41,11 +46,6 @@ class _ActiveQuickActions extends StatelessWidget {
           icon: FLucideIcons.arrowLeftRight,
           label: l10n.superFabTransfer,
           onPress: () => context.push(FinanceRoutes.transfer),
-        ),
-        _HomeQuickActionData(
-          icon: FLucideIcons.listChecks,
-          label: l10n.monthlyCloseTitle,
-          onPress: () => context.push(FinanceRoutes.activityMonthlyClose),
         ),
       ],
     );

@@ -81,6 +81,10 @@ features/<domain>/
 Finance is always active. Health, Knowledge, and Execution are enabled through
 `domainOptInsProvider`.
 
+The registry and settings retain the stable `*OS` product-pack names. Primary
+shell chrome uses the shorter localized labels Finance, Health, Knowledge, and
+Execution so users navigate by task area rather than architecture terminology.
+
 Hidden tabs are declared through `DomainShellSpec.hiddenTabs`: routable branches
 that own a real shell index but are not rendered in the tab bar, switcher, or
 sidebar (Review is reached via header actions, the command palette, and

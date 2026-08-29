@@ -6,7 +6,7 @@ import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
-  testWidgets('active home keeps a compact capture and transfer strip', (
+  testWidgets('active home keeps an import-first capture strip', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(240, 420);
@@ -31,16 +31,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Import statements'), findsOneWidget);
     expect(find.text('Record entry'), findsOneWidget);
     expect(find.text('Transfer'), findsOneWidget);
-    expect(find.text('Monthly close'), findsOneWidget);
+    expect(find.text('Monthly close'), findsNothing);
     expect(find.text('Add account'), findsNothing);
-    expect(find.text('Import statements'), findsNothing);
     expect(find.byIcon(FLucideIcons.chevronRight), findsNWidgets(3));
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('active home keeps the two-column strip on regular widths', (
+  testWidgets('active home keeps the horizontal strip on regular widths', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(420, 420);
@@ -65,9 +65,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Import statements'), findsOneWidget);
     expect(find.text('Record entry'), findsOneWidget);
     expect(find.text('Transfer'), findsOneWidget);
-    expect(find.text('Monthly close'), findsOneWidget);
+    expect(find.text('Monthly close'), findsNothing);
     expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
     expect(tester.takeException(), isNull);
   });

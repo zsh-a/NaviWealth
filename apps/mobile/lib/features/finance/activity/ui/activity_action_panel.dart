@@ -9,12 +9,9 @@ import '../../../../l10n/gen/app_localizations.dart';
 
 /// Activity-scoped quick-add panel.
 ///
-/// Surfaced from the Activity page's "+" header action. Lists only the
-/// **flow** entries — things that record what happened (expense, trade,
-/// transfer, currency convert). Structural creation (new account, new
-/// asset, new liability) lives on the Accounts hub instead, so the
-/// action menu stays mentally bucketed: Activity = "log a fact",
-/// Accounts = "set up the container".
+/// Surfaced from the Activity page's "+" header action. Import is the primary
+/// capture path; the explicit flow forms remain available as fast fallbacks.
+/// Structural creation (new account, asset, or liability) stays in Wealth.
 Future<void> showActivityActionPanel(BuildContext context) {
   final l10n = AppLocalizations.of(context);
   return showAppSheet<void>(
@@ -22,6 +19,16 @@ Future<void> showActivityActionPanel(BuildContext context) {
     title: l10n.activityActionsTitle,
     builder: (sheetContext) => AppActionSheetList(
       children: [
+        AppActionSheetTile(
+          icon: FLucideIcons.upload,
+          title: l10n.homeQuickImport,
+          subtitle: l10n.activityActionImportHint,
+          onPress: () => _closeAndPush(
+            sheetContext,
+            context,
+            FinanceRoutes.activityIngest,
+          ),
+        ),
         AppActionSheetTile(
           icon: FLucideIcons.creditCard,
           title: l10n.superFabExpense,

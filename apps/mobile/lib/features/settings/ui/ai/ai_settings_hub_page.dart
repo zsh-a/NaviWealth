@@ -39,13 +39,6 @@ class AiSettingsHubPage extends StatelessWidget {
                 subtitle: l10n.settingsAiModelsSubtitle,
                 onTap: () => context.pushNamed(SettingsRouteNames.aiModels),
               ),
-              const AppGroupedDivider(),
-              InlineLinkRow(
-                icon: FLucideIcons.bot,
-                label: l10n.agentSettingsTitle,
-                subtitle: l10n.agentSettingsSubtitle,
-                onTap: () => context.pushNamed(SettingsRouteNames.agents),
-              ),
             ],
           ),
           const SizedBox(height: AppSpacing.s20),
@@ -72,14 +65,6 @@ class AiSettingsHubPage extends StatelessWidget {
                 label: l10n.settingsAiHistoryTitle,
                 subtitle: l10n.settingsAiHistorySubtitle,
                 onTap: () => context.pushNamed(SettingsRouteNames.aiHistory),
-              ),
-              const AppGroupedDivider(),
-              InlineLinkRow(
-                icon: FLucideIcons.eye,
-                label: l10n.settingsAiTransparencyTitle,
-                subtitle: l10n.settingsAiTransparencySubtitle,
-                onTap: () =>
-                    context.pushNamed(SettingsRouteNames.aiTransparency),
               ),
             ],
           ),

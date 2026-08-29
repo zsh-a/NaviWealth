@@ -24,7 +24,7 @@ enum FinanceShellTab { today, activity, wealth, plan }
 DomainShellSpec financeDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
     scope: DomainScope.finance,
-    label: 'FinanceOS',
+    label: l10n.lifeDomainFinance,
     icon: FLucideIcons.wallet,
     selectedIcon: FLucideIcons.wallet,
     tabs: <DomainShellTab>[

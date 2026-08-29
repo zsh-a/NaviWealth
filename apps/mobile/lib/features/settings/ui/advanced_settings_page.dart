@@ -43,6 +43,21 @@ class AdvancedSettingsPage extends ConsumerWidget {
             title: l10n.settingsAdvancedSection,
             children: [
               InlineLinkRow(
+                icon: FLucideIcons.bot,
+                label: l10n.agentSettingsTitle,
+                subtitle: l10n.agentSettingsSubtitle,
+                onTap: () => context.pushNamed(SettingsRouteNames.agents),
+              ),
+              const AppGroupedDivider(),
+              InlineLinkRow(
+                icon: FLucideIcons.eye,
+                label: l10n.settingsAiTransparencyTitle,
+                subtitle: l10n.settingsAiTransparencySubtitle,
+                onTap: () =>
+                    context.pushNamed(SettingsRouteNames.aiTransparency),
+              ),
+              const AppGroupedDivider(),
+              InlineLinkRow(
                 icon: FLucideIcons.bug,
                 label: l10n.settingsLogsTitle,
                 subtitle: l10n.settingsLogsSubtitle,

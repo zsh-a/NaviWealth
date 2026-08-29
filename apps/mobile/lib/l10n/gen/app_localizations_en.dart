@@ -2564,6 +2564,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityActionsTitle => 'Record activity';
 
   @override
+  String get activityActionImportHint =>
+      'Import a statement and review only exceptions';
+
+  @override
   String get activityActionExpenseHint => 'Cash out for goods or services';
 
   @override
@@ -3816,7 +3820,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAskAi => 'Assistant';
 
   @override
-  String get commandPaletteAiHistory => 'AI history';
+  String get commandPaletteAiHistory => 'Conversations';
 
   @override
   String get commandPaletteToggleTheme => 'Toggle theme (light / dark)';
@@ -7795,13 +7799,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiHubRuntimeSection => 'Runtime';
 
   @override
-  String get settingsAiHubTrustSection => 'Privacy & transparency';
+  String get settingsAiHubTrustSection => 'Memory & privacy';
 
   @override
-  String get settingsAiHistoryTitle => 'AI history';
+  String get settingsAiHistoryTitle => 'Conversations';
 
   @override
-  String get settingsAiHistorySubtitle => 'Review saved AI conversations';
+  String get settingsAiHistorySubtitle =>
+      'Continue or review your AI conversations';
 
   @override
   String get personalMemoryTitle => 'Personal memory';

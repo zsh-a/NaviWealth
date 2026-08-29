@@ -18,7 +18,7 @@ import 'knowledge_route_paths.dart';
 DomainShellSpec knowledgeDomainShell(AppLocalizations l10n) {
   return DomainShellSpec(
     scope: DomainScope.knowledge,
-    label: 'KnowledgeOS',
+    label: l10n.lifeDomainKnowledge,
     icon: FLucideIcons.brain,
     selectedIcon: FLucideIcons.brain,
     tabs: <DomainShellTab>[
