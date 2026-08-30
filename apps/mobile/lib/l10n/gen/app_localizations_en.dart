@@ -12699,6 +12699,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeInboxEmptyTitle => 'Inbox is empty';
 
   @override
+  String get knowledgeInboxEmptyBody =>
+      'No decisions need review. Recent notes will appear here.';
+
+  @override
+  String get knowledgeInboxDueReviewsTitle => 'Due for review';
+
+  @override
+  String get knowledgeInboxRecentNotesTitle => 'Recent notes';
+
+  @override
+  String get knowledgeReviewDueToday => 'Due today';
+
+  @override
+  String knowledgeReviewOverdueDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days overdue',
+      one: '1 day overdue',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get knowledgeCaptureAction => 'New capture';
 
   @override
@@ -12714,13 +12738,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeLibraryTitle => 'Library';
 
   @override
+  String get knowledgeLibrarySearchHint => 'Search notes and decisions';
+
+  @override
+  String get knowledgeLibraryFilterTitle => 'Content type';
+
+  @override
+  String get knowledgeLibraryEmptyTitle => 'Your library is empty';
+
+  @override
+  String get knowledgeLibraryEmptyNotesTitle => 'No Notes yet';
+
+  @override
   String get knowledgeLibraryEmptyDecisionsTitle => 'No Decisions yet';
+
+  @override
+  String get knowledgeLibraryNoResultsTitle => 'No matching knowledge';
+
+  @override
+  String get knowledgeLibraryNoResultsBody =>
+      'Try a different phrase or content type.';
+
+  @override
+  String get knowledgeSegmentAll => 'All';
 
   @override
   String get knowledgeSegmentDecisions => 'Decisions';
 
   @override
   String get knowledgeSegmentNotes => 'Notes';
+
+  @override
+  String get knowledgeKindNote => 'Note';
+
+  @override
+  String get knowledgeKindDecision => 'Decision';
 
   @override
   String get knowledgeDecisionExpectedOutcomeLabel =>

@@ -36,15 +36,16 @@ Ordinary life events remain Memory Runtime events rather than Knowledge rows.
 
 | Surface | Route | Purpose |
 |---|---|---|
-| Inbox | `/knowledge` | Fast capture and recent Notes |
-| Library | `/knowledge/library` | Browse Notes and Decisions |
+| Inbox | `/knowledge` | Fast capture, due Decision reviews, and recent Notes |
+| Library | `/knowledge/library` | Search and browse Notes and Decisions |
 | Note detail | `/knowledge/library/note/:id` | Direct editing and deletion |
 | Decision detail | `/knowledge/library/decision/:id` | Direct editing, outcome, and status |
 
 Inbox and Library are the only shell tabs. KnowledgeOS has no Review route,
 hidden tab, background Agent, triage queue, or separate lifecycle dashboard.
-Due decisions remain available through `list_due_reviews` and normal Library
-access.
+Due decisions surface as a compact Inbox section and remain available through
+`list_due_reviews` and normal Library access. Inbox limits its Note list to
+recent captures; the full collection belongs to Library.
 
 Key files:
 
@@ -90,6 +91,11 @@ Search iterates these concrete sources because Memory Runtime source filtering
 is exact-match. Lexical fallback hydrates only live Notes and Decisions from the
 repository. Decision memories use `role=decision` and `authority=source_fact`;
 Note memories use `role=episode`.
+
+Library exposes the same unified search seam with All, Notes, and Decisions
+scopes. Empty-query browsing is a single update-ordered collection; active
+queries use semantic recall and fall back to deterministic lexical matching
+when the semantic index has no hydrated results.
 
 ## AI Tools
 
@@ -183,6 +189,7 @@ Excluded:
 For KnowledgeOS changes, prefer:
 
 - `KnowledgeRepository` CRUD, relation cleanup, merge, and schema tests.
+- Inbox focus and Library search widget tests.
 - Search and Memory indexer tests for Note and Decision only.
 - Proposal apply/undo tests for capture and same-kind merge.
 - Domain composition, route ownership, sync registry, and schema verification.

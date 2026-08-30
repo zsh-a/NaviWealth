@@ -21386,6 +21386,36 @@ abstract class AppLocalizations {
   /// **'Inbox is empty'**
   String get knowledgeInboxEmptyTitle;
 
+  /// No description provided for @knowledgeInboxEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No decisions need review. Recent notes will appear here.'**
+  String get knowledgeInboxEmptyBody;
+
+  /// No description provided for @knowledgeInboxDueReviewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Due for review'**
+  String get knowledgeInboxDueReviewsTitle;
+
+  /// No description provided for @knowledgeInboxRecentNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent notes'**
+  String get knowledgeInboxRecentNotesTitle;
+
+  /// No description provided for @knowledgeReviewDueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get knowledgeReviewDueToday;
+
+  /// Number of days a Knowledge decision review is overdue
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day overdue} other{{days} days overdue}}'**
+  String knowledgeReviewOverdueDays(int days);
+
   /// Button label for creating a knowledge capture
   ///
   /// In en, this message translates to:
@@ -21416,11 +21446,53 @@ abstract class AppLocalizations {
   /// **'Library'**
   String get knowledgeLibraryTitle;
 
+  /// No description provided for @knowledgeLibrarySearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search notes and decisions'**
+  String get knowledgeLibrarySearchHint;
+
+  /// No description provided for @knowledgeLibraryFilterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Content type'**
+  String get knowledgeLibraryFilterTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your library is empty'**
+  String get knowledgeLibraryEmptyTitle;
+
+  /// No description provided for @knowledgeLibraryEmptyNotesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notes yet'**
+  String get knowledgeLibraryEmptyNotesTitle;
+
   /// No description provided for @knowledgeLibraryEmptyDecisionsTitle.
   ///
   /// In en, this message translates to:
   /// **'No Decisions yet'**
   String get knowledgeLibraryEmptyDecisionsTitle;
+
+  /// No description provided for @knowledgeLibraryNoResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching knowledge'**
+  String get knowledgeLibraryNoResultsTitle;
+
+  /// No description provided for @knowledgeLibraryNoResultsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different phrase or content type.'**
+  String get knowledgeLibraryNoResultsBody;
+
+  /// No description provided for @knowledgeSegmentAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get knowledgeSegmentAll;
 
   /// No description provided for @knowledgeSegmentDecisions.
   ///
@@ -21433,6 +21505,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notes'**
   String get knowledgeSegmentNotes;
+
+  /// No description provided for @knowledgeKindNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get knowledgeKindNote;
+
+  /// No description provided for @knowledgeKindDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision'**
+  String get knowledgeKindDecision;
 
   /// No description provided for @knowledgeDecisionExpectedOutcomeLabel.
   ///

@@ -12033,6 +12033,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeInboxEmptyTitle => '收件箱空空如也';
 
   @override
+  String get knowledgeInboxEmptyBody => '当前没有待回顾决策，最近笔记会显示在这里。';
+
+  @override
+  String get knowledgeInboxDueReviewsTitle => '待回顾';
+
+  @override
+  String get knowledgeInboxRecentNotesTitle => '最近笔记';
+
+  @override
+  String get knowledgeReviewDueToday => '今天回顾';
+
+  @override
+  String knowledgeReviewOverdueDays(int days) {
+    return '已逾期 $days 天';
+  }
+
+  @override
   String get knowledgeCaptureAction => '新建捕获';
 
   @override
@@ -12048,13 +12065,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeLibraryTitle => '资料库';
 
   @override
+  String get knowledgeLibrarySearchHint => '搜索笔记和决策';
+
+  @override
+  String get knowledgeLibraryFilterTitle => '内容类型';
+
+  @override
+  String get knowledgeLibraryEmptyTitle => '资料库还是空的';
+
+  @override
+  String get knowledgeLibraryEmptyNotesTitle => '还没有笔记';
+
+  @override
   String get knowledgeLibraryEmptyDecisionsTitle => '还没有 Decision';
+
+  @override
+  String get knowledgeLibraryNoResultsTitle => '没有匹配内容';
+
+  @override
+  String get knowledgeLibraryNoResultsBody => '换个关键词或内容类型试试。';
+
+  @override
+  String get knowledgeSegmentAll => '全部';
 
   @override
   String get knowledgeSegmentDecisions => '决策';
 
   @override
   String get knowledgeSegmentNotes => '笔记';
+
+  @override
+  String get knowledgeKindNote => '笔记';
+
+  @override
+  String get knowledgeKindDecision => '决策';
 
   @override
   String get knowledgeDecisionExpectedOutcomeLabel => '预期结果（可选）';

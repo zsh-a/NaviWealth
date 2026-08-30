@@ -11,6 +11,7 @@ import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import 'knowledge_capture_sheet.dart';
+import 'widgets/knowledge_entry_tile.dart';
 
 class KnowledgeInboxPage extends ConsumerWidget {
   const KnowledgeInboxPage({super.key});
@@ -30,102 +31,129 @@ class KnowledgeInboxPage extends ConsumerWidget {
       ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.inbox,
-        child: _NotesList(notes: ref.watch(knowledgeNotesProvider)),
+        child: _InboxContent(
+          recentNotes: ref.watch(knowledgeRecentNotesProvider),
+          dueReviews: ref.watch(knowledgeDueReviewsProvider),
+        ),
       ),
     );
   }
 }
 
-class _NotesList extends StatelessWidget {
-  const _NotesList({required this.notes});
+class _InboxContent extends StatelessWidget {
+  const _InboxContent({required this.recentNotes, required this.dueReviews});
 
-  final AsyncValue<List<KnowledgeNote>> notes;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return notes.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(child: Text(l10n.commonLoadFailed)),
-      data: (items) {
-        if (items.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    FLucideIcons.notebookPen,
-                    size: AppIconSizes.xl,
-                    color: context.theme.colors.mutedForeground,
-                  ),
-                  const SizedBox(height: AppSpacing.s12),
-                  Text(l10n.knowledgeInboxEmptyTitle),
-                  const SizedBox(height: AppSpacing.s12),
-                  FButton(
-                    onPress: () => showKnowledgeCaptureSheet(context),
-                    child: Text(l10n.knowledgeCaptureAction),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        return ListView.separated(
-          padding: shellTabContentPadding(context),
-          itemCount: items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
-          itemBuilder: (context, index) => _NoteTile(note: items[index]),
-        );
-      },
-    );
-  }
-}
-
-class _NoteTile extends StatelessWidget {
-  const _NoteTile({required this.note});
-
-  final KnowledgeNote note;
+  final AsyncValue<List<KnowledgeNote>> recentNotes;
+  final AsyncValue<List<KnowledgeDecision>> dueReviews;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SoftCard.flat(
-      onPress: () => context.push(KnowledgeRoutes.note(note.id)),
-      padding: const EdgeInsets.all(AppSpacing.s14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-            style: context.theme.typography.body.md,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+    if (recentNotes.isLoading || dueReviews.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (recentNotes.hasError || dueReviews.hasError) {
+      return AppEmptyState.error(title: l10n.commonLoadFailed, compact: true);
+    }
+
+    final notes = recentNotes.asData?.value ?? const <KnowledgeNote>[];
+    final decisions = dueReviews.asData?.value ?? const <KnowledgeDecision>[];
+    if (notes.isEmpty && decisions.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.notebookPen,
+        title: l10n.knowledgeInboxEmptyTitle,
+        message: l10n.knowledgeInboxEmptyBody,
+        action: AppActionButton(
+          onPress: () => showKnowledgeCaptureSheet(context),
+          child: Text(l10n.knowledgeCaptureAction),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: shellTabContentPadding(context),
+      children: [
+        if (decisions.isNotEmpty) ...[
+          _SectionHeader(
+            title: l10n.knowledgeInboxDueReviewsTitle,
+            count: decisions.length,
           ),
-          if (note.bodyMd.trim().isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s6),
-            Text(
-              note.bodyMd.trim(),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: context.theme.typography.body.sm.copyWith(
-                color: context.theme.colors.mutedForeground,
-              ),
-            ),
+          const SizedBox(height: AppSpacing.s10),
+          for (var index = 0; index < decisions.length; index++) ...[
+            if (index > 0) const SizedBox(height: AppSpacing.s10),
+            _DueDecisionTile(decision: decisions[index]),
           ],
-          if (note.tags.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s10),
-            Wrap(
-              spacing: AppSpacing.s6,
-              children: note.tags
-                  .take(5)
-                  .map((tag) => FBadge(child: Text(tag)))
-                  .toList(growable: false),
+        ],
+        if (decisions.isNotEmpty && notes.isNotEmpty)
+          const SizedBox(height: AppSpacing.s24),
+        if (notes.isNotEmpty) ...[
+          _SectionHeader(
+            title: l10n.knowledgeInboxRecentNotesTitle,
+            count: notes.length,
+          ),
+          const SizedBox(height: AppSpacing.s10),
+          for (var index = 0; index < notes.length; index++) ...[
+            if (index > 0) const SizedBox(height: AppSpacing.s10),
+            KnowledgeEntryTile(
+              key: ValueKey<String>('knowledge-inbox-note-${notes[index].id}'),
+              title: notes[index].title.isEmpty
+                  ? l10n.knowledgeUntitled
+                  : notes[index].title,
+              subtitle: notes[index].bodyMd,
+              meta: notes[index].tags.take(3).join(' · '),
+              kindLabel: l10n.knowledgeKindNote,
+              icon: FLucideIcons.fileText,
+              onPress: () =>
+                  context.push(KnowledgeRoutes.note(notes[index].id)),
             ),
           ],
         ],
-      ),
+      ],
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.count});
+
+  final String title;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(child: Text(title, style: context.rowTitleStyle)),
+        FBadge(child: Text('$count')),
+      ],
+    );
+  }
+}
+
+class _DueDecisionTile extends StatelessWidget {
+  const _DueDecisionTile({required this.decision});
+
+  final KnowledgeDecision decision;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final reviewDate = decision.reviewDate!;
+    final days = decision.daysOverdue(DateTime.now().toUtc()) ?? 0;
+    final dueLabel = days <= 0
+        ? l10n.knowledgeReviewDueToday
+        : l10n.knowledgeReviewOverdueDays(days);
+    final formattedDate = MaterialLocalizations.of(context)
+        .formatMediumDate(reviewDate.toLocal());
+    return KnowledgeEntryTile(
+      key: ValueKey<String>('knowledge-inbox-review-${decision.id}'),
+      title: decision.question,
+      subtitle: decision.selectedLabel,
+      meta: '$dueLabel · $formattedDate',
+      kindLabel: l10n.knowledgeKindDecision,
+      icon: FLucideIcons.history,
+      accented: true,
+      onPress: () => context.push(KnowledgeRoutes.decision(decision.id)),
     );
   }
 }
