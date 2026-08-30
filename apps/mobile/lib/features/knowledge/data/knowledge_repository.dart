@@ -56,6 +56,69 @@ class KnowledgeRepository
   Future<T> transaction<T>(Future<T> Function() action) =>
       _db.transaction(action);
 
+  /// Atomically creates a Decision and its directed source relation.
+  ///
+  /// The Note must still be live and owned by the Decision owner. Keeping both
+  /// inserts and outbox rows in one transaction prevents a Decision from being
+  /// created without the provenance link that motivated this workflow.
+  Future<KnowledgeRelation> createDecisionFromNote({
+    required String noteId,
+    required KnowledgeDecision decision,
+  }) async {
+    final relation = KnowledgeRelation(
+      id: knowledgeRelationId(
+        fromKind: KnowledgeEntryKind.note.name,
+        fromId: noteId,
+        relation: KnowledgeRelationType.informs,
+        toKind: KnowledgeEntryKind.decision.name,
+        toId: decision.id,
+      ),
+      fromKind: KnowledgeEntryKind.note.name,
+      fromId: noteId,
+      relation: KnowledgeRelationType.informs,
+      toKind: KnowledgeEntryKind.decision.name,
+      toId: decision.id,
+      createdAt: decision.decidedAt,
+      sync: decision.sync,
+    );
+    await _db.transaction(() async {
+      final note =
+          await (_db.select(_db.knowledgeNotes)..where(
+                (table) =>
+                    table.id.equals(noteId) &
+                    table.ownerUserId.equals(decision.sync.ownerUserId) &
+                    table.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (note == null) {
+        throw StateError('Cannot create a Decision from a missing Note.');
+      }
+      await _db
+          .into(_db.knowledgeDecisions)
+          .insert(
+            knowledgeDecisionCompanion(decision),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _db
+          .into(_db.knowledgeRelations)
+          .insert(
+            knowledgeRelationCompanion(relation),
+            mode: InsertMode.insertOrReplace,
+          );
+      await _outbox.enqueue(
+        table: _knowledgeDecisionsTable,
+        rowId: decision.id,
+      );
+      await _outbox.enqueue(
+        table: _knowledgeRelationsTable,
+        rowId: relation.id,
+      );
+    });
+    _onRowChanged?.call(_knowledgeDecisionsTable, decision.id);
+    _onRowChanged?.call(_knowledgeRelationsTable, relation.id);
+    return relation;
+  }
+
   @override
   Future<void> _upsertAndEnqueue<R>(
     TableInfo<Table, R> table,

@@ -15,6 +15,7 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_markdown_editor.dart';
+import 'widgets/knowledge_relations_section.dart';
 
 final _decisionProvider = FutureProvider.autoDispose
     .family<KnowledgeDecision?, String>((ref, id) async {
@@ -160,7 +161,12 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
           onPressed: _saving ? null : _save,
           child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
         ),
-        const SizedBox(height: AppSpacing.s8),
+        const SizedBox(height: AppSpacing.s20),
+        KnowledgeRelationsSection(
+          subjectKind: KnowledgeEntryKind.decision,
+          subjectId: widget.decision.id,
+        ),
+        const SizedBox(height: AppSpacing.s16),
         TextButton(
           onPressed: _saving ? null : _delete,
           child: Text(l10n.commonDelete),

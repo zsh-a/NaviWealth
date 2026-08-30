@@ -166,12 +166,17 @@ class KnowledgeDecision {
 }
 
 enum KnowledgeRelationType {
-  relatedTo;
+  relatedTo('related_to'),
+  informs('informs');
 
-  String get wire => 'related_to';
+  const KnowledgeRelationType(this.wire);
 
-  static KnowledgeRelationType parse(String value) =>
-      KnowledgeRelationType.relatedTo;
+  final String wire;
+
+  static KnowledgeRelationType parse(String value) => switch (value) {
+    'informs' => KnowledgeRelationType.informs,
+    _ => KnowledgeRelationType.relatedTo,
+  };
 }
 
 class KnowledgeRelation {

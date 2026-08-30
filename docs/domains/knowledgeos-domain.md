@@ -142,6 +142,16 @@ Key files:
 ## Relations, Merge, And Deletion
 
 Relations use stable typed endpoints whose kinds are only `note` or `decision`.
+Note and Decision detail pages expose the same related-content section: users
+can search live Knowledge rows, add a generic `related_to` link, remove a link,
+and navigate to the related row. Both endpoints render the relation regardless
+of which side originally created it.
+
+The explicit “create Decision from this Note” action writes the new Decision
+and a directed `informs` relation from the source Note in one local transaction,
+including both Sync outbox rows. It never infers a Decision automatically: the
+user must provide the question and selected option before creation.
+
 Deleting an entity also tombstones every live relation touching it.
 
 Same-kind merges keep one survivor, union Note tags where applicable, soft

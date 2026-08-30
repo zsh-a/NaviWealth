@@ -12069,6 +12069,57 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionSelectionRequirement => '请选择最终决定采用的选项。';
 
   @override
+  String get knowledgeRelationsTitle => '相关内容';
+
+  @override
+  String get knowledgeRelationsSubtitle => '关联彼此有关的笔记与决策。';
+
+  @override
+  String get knowledgeRelationsEmpty => '暂时没有相关内容。';
+
+  @override
+  String get knowledgeRelationAddAction => '关联内容';
+
+  @override
+  String get knowledgeRelationRemoveAction => '解除关联';
+
+  @override
+  String get knowledgeRelationPickerTitle => '关联内容';
+
+  @override
+  String get knowledgeRelationPickerSearchHint => '搜索笔记和决策';
+
+  @override
+  String get knowledgeRelationPickerEmpty => '没有其他可关联的内容。';
+
+  @override
+  String get knowledgeRelationPickerNoResults => '没有匹配的笔记或决策。';
+
+  @override
+  String get knowledgeRelationSourceNote => '来源笔记';
+
+  @override
+  String get knowledgeRelationInformedDecision => '促成的决策';
+
+  @override
+  String get knowledgeRelationRelatedNote => '相关笔记';
+
+  @override
+  String get knowledgeRelationRelatedDecision => '相关决策';
+
+  @override
+  String get knowledgeCreateDecisionFromNoteAction => '基于此笔记创建决策';
+
+  @override
+  String get knowledgeCreateDecisionFromNoteTitle => '从笔记创建决策';
+
+  @override
+  String get knowledgeCreateDecisionAction => '创建决策';
+
+  @override
+  String get knowledgeDecisionSourceNote => '来源笔记';
+
+  @override
   String get knowledgeDecisionActualOutcomeLabel => '实际结果（Markdown，可选）';
 
   @override

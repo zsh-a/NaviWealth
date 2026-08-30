@@ -3,11 +3,13 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/knowledge/application/knowledge_decision_from_note_service.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
+import '../../finance/data/repositories/_stub_stamper.dart';
 
 const _owner = 'knowledge-user';
 const _device = 'knowledge-device';
@@ -140,6 +142,65 @@ void main() {
         ownerUserId: _owner,
         kind: 'decision',
         id: 'd1',
+      ),
+      isEmpty,
+    );
+  });
+
+  test('creates a Decision and directed source relation atomically', () async {
+    await repository.upsertNote(_note('n-source', 1));
+    final service = KnowledgeDecisionFromNoteService(
+      repository: repository,
+      stamper: makeStubStamper(userId: _owner),
+    );
+
+    final decision = await service.create(
+      noteId: 'n-source',
+      question: 'Should we adopt the proposal?',
+      selectedLabel: 'Adopt it',
+      rationaleMd: 'The source note contains the supporting evidence.',
+    );
+
+    final relations = await repository.listRelationsForObject(
+      ownerUserId: _owner,
+      kind: KnowledgeEntryKind.decision.name,
+      id: decision.id,
+    );
+    expect(relations, hasLength(1));
+    expect(relations.single.fromKind, KnowledgeEntryKind.note.name);
+    expect(relations.single.fromId, 'n-source');
+    expect(relations.single.relation, KnowledgeRelationType.informs);
+    expect(relations.single.toKind, KnowledgeEntryKind.decision.name);
+    expect(relations.single.toId, decision.id);
+    expect(
+      outbox.queued,
+      containsAll(<({String table, String rowId})>[
+        (table: 'knowledge_decisions', rowId: decision.id),
+        (table: 'knowledge_relations', rowId: relations.single.id),
+      ]),
+    );
+  });
+
+  test('does not create a Decision when its source Note is missing', () async {
+    final decision = _decision('d-orphan', 5);
+
+    await expectLater(
+      repository.createDecisionFromNote(
+        noteId: 'missing-note',
+        decision: decision,
+      ),
+      throwsStateError,
+    );
+
+    expect(
+      await repository.findDecision(ownerUserId: _owner, id: decision.id),
+      isNull,
+    );
+    expect(
+      await repository.listRelationsForObject(
+        ownerUserId: _owner,
+        kind: KnowledgeEntryKind.decision.name,
+        id: decision.id,
       ),
       isEmpty,
     );

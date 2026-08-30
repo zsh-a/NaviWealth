@@ -42,6 +42,22 @@ final knowledgeDecisionsProvider =
       yield* repository.watchDecisions(ownerUserId: ownerUserId, limit: 200);
     });
 
+typedef KnowledgeRelationSubject = ({String kind, String id});
+
+final knowledgeRelationsForObjectProvider = StreamProvider.autoDispose
+    .family<List<KnowledgeRelation>, KnowledgeRelationSubject>((
+      ref,
+      subject,
+    ) async* {
+      final ownerUserId = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchRelationsForObject(
+        ownerUserId: ownerUserId,
+        kind: subject.kind,
+        id: subject.id,
+      );
+    });
+
 final knowledgeSearchServiceProvider = FutureProvider<KnowledgeSearchService>((
   ref,
 ) async {

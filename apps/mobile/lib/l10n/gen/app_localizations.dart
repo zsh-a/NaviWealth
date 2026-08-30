@@ -21458,6 +21458,108 @@ abstract class AppLocalizations {
   /// **'Choose the option you decided to take.'**
   String get knowledgeDecisionSelectionRequirement;
 
+  /// No description provided for @knowledgeRelationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Related knowledge'**
+  String get knowledgeRelationsTitle;
+
+  /// No description provided for @knowledgeRelationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect the notes and decisions that belong together.'**
+  String get knowledgeRelationsSubtitle;
+
+  /// No description provided for @knowledgeRelationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No related items yet.'**
+  String get knowledgeRelationsEmpty;
+
+  /// No description provided for @knowledgeRelationAddAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Link knowledge'**
+  String get knowledgeRelationAddAction;
+
+  /// No description provided for @knowledgeRelationRemoveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove link'**
+  String get knowledgeRelationRemoveAction;
+
+  /// No description provided for @knowledgeRelationPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link knowledge'**
+  String get knowledgeRelationPickerTitle;
+
+  /// No description provided for @knowledgeRelationPickerSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search notes and decisions'**
+  String get knowledgeRelationPickerSearchHint;
+
+  /// No description provided for @knowledgeRelationPickerEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nothing else to link.'**
+  String get knowledgeRelationPickerEmpty;
+
+  /// No description provided for @knowledgeRelationPickerNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching notes or decisions.'**
+  String get knowledgeRelationPickerNoResults;
+
+  /// No description provided for @knowledgeRelationSourceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Source note'**
+  String get knowledgeRelationSourceNote;
+
+  /// No description provided for @knowledgeRelationInformedDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Informed decision'**
+  String get knowledgeRelationInformedDecision;
+
+  /// No description provided for @knowledgeRelationRelatedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Related note'**
+  String get knowledgeRelationRelatedNote;
+
+  /// No description provided for @knowledgeRelationRelatedDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'Related decision'**
+  String get knowledgeRelationRelatedDecision;
+
+  /// No description provided for @knowledgeCreateDecisionFromNoteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create decision from this note'**
+  String get knowledgeCreateDecisionFromNoteAction;
+
+  /// No description provided for @knowledgeCreateDecisionFromNoteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create decision from note'**
+  String get knowledgeCreateDecisionFromNoteTitle;
+
+  /// No description provided for @knowledgeCreateDecisionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create decision'**
+  String get knowledgeCreateDecisionAction;
+
+  /// No description provided for @knowledgeDecisionSourceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Source note'**
+  String get knowledgeDecisionSourceNote;
+
   /// No description provided for @knowledgeDecisionActualOutcomeLabel.
   ///
   /// In en, this message translates to:

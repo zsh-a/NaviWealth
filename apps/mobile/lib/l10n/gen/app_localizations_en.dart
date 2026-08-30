@@ -12737,6 +12737,61 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose the option you decided to take.';
 
   @override
+  String get knowledgeRelationsTitle => 'Related knowledge';
+
+  @override
+  String get knowledgeRelationsSubtitle =>
+      'Connect the notes and decisions that belong together.';
+
+  @override
+  String get knowledgeRelationsEmpty => 'No related items yet.';
+
+  @override
+  String get knowledgeRelationAddAction => 'Link knowledge';
+
+  @override
+  String get knowledgeRelationRemoveAction => 'Remove link';
+
+  @override
+  String get knowledgeRelationPickerTitle => 'Link knowledge';
+
+  @override
+  String get knowledgeRelationPickerSearchHint => 'Search notes and decisions';
+
+  @override
+  String get knowledgeRelationPickerEmpty => 'There is nothing else to link.';
+
+  @override
+  String get knowledgeRelationPickerNoResults =>
+      'No matching notes or decisions.';
+
+  @override
+  String get knowledgeRelationSourceNote => 'Source note';
+
+  @override
+  String get knowledgeRelationInformedDecision => 'Informed decision';
+
+  @override
+  String get knowledgeRelationRelatedNote => 'Related note';
+
+  @override
+  String get knowledgeRelationRelatedDecision => 'Related decision';
+
+  @override
+  String get knowledgeCreateDecisionFromNoteAction =>
+      'Create decision from this note';
+
+  @override
+  String get knowledgeCreateDecisionFromNoteTitle =>
+      'Create decision from note';
+
+  @override
+  String get knowledgeCreateDecisionAction => 'Create decision';
+
+  @override
+  String get knowledgeDecisionSourceNote => 'Source note';
+
+  @override
   String get knowledgeDecisionActualOutcomeLabel =>
       'Actual outcome (Markdown, optional)';
 

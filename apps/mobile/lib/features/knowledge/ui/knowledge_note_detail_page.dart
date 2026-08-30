@@ -9,12 +9,15 @@ import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/knowledge_rewrite_client.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import 'knowledge_decision_from_note_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_markdown_editor.dart';
+import 'widgets/knowledge_relations_section.dart';
 
 final _noteProvider = FutureProvider.autoDispose.family<KnowledgeNote?, String>(
   (ref, id) async {
@@ -125,7 +128,13 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
           onPressed: _saving ? null : _save,
           child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
         ),
-        const SizedBox(height: AppSpacing.s8),
+        const SizedBox(height: AppSpacing.s20),
+        KnowledgeRelationsSection(
+          subjectKind: KnowledgeEntryKind.note,
+          subjectId: widget.note.id,
+          onCreateDecision: _createDecision,
+        ),
+        const SizedBox(height: AppSpacing.s16),
         TextButton(
           onPressed: _saving ? null : _delete,
           child: Text(l10n.commonDelete),
@@ -183,6 +192,16 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
       _title.text = draft.heading;
       _body.text = draft.content;
     });
+  }
+
+  Future<void> _createDecision() async {
+    FocusScope.of(context).unfocus();
+    final decisionId = await showKnowledgeDecisionFromNoteSheet(
+      context: context,
+      note: widget.note,
+    );
+    if (!mounted || decisionId == null) return;
+    await context.push<void>(KnowledgeRoutes.decision(decisionId));
   }
 
   Future<void> _delete() async {
