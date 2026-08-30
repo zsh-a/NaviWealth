@@ -21746,6 +21746,12 @@ abstract class AppLocalizations {
   /// **'Link knowledge'**
   String get knowledgeRelationAddAction;
 
+  /// No description provided for @knowledgeRelationDiscoverAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover related knowledge'**
+  String get knowledgeRelationDiscoverAction;
+
   /// No description provided for @knowledgeRelationRemoveAction.
   ///
   /// In en, this message translates to:
@@ -21775,6 +21781,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No matching notes or decisions.'**
   String get knowledgeRelationPickerNoResults;
+
+  /// No description provided for @knowledgeRelationSuggestionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Related suggestions'**
+  String get knowledgeRelationSuggestionsTitle;
+
+  /// No description provided for @knowledgeRelationSuggestionsDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions come from the local semantic index on this device. Nothing is linked until you choose it.'**
+  String get knowledgeRelationSuggestionsDisclosure;
+
+  /// No description provided for @knowledgeRelationSuggestionsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggestions are unavailable'**
+  String get knowledgeRelationSuggestionsUnavailable;
+
+  /// No description provided for @knowledgeRelationSuggestionsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No strong matches yet'**
+  String get knowledgeRelationSuggestionsEmpty;
+
+  /// No description provided for @knowledgeRelationSuggestionsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The local index may still be warming up, or this content may be distinct.'**
+  String get knowledgeRelationSuggestionsEmptyBody;
+
+  /// No description provided for @knowledgeRelationSuggestionsComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'All suggestions are linked'**
+  String get knowledgeRelationSuggestionsComplete;
+
+  /// No description provided for @knowledgeRelationSuggestionLinkAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get knowledgeRelationSuggestionLinkAction;
+
+  /// No description provided for @knowledgeRelationSuggestionLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Knowledge linked'**
+  String get knowledgeRelationSuggestionLinked;
+
+  /// Rounded semantic similarity for a related Knowledge suggestion
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% match'**
+  String knowledgeRelationSuggestionMatch(int percent);
 
   /// No description provided for @knowledgeRelationSourceNote.
   ///

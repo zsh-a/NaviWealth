@@ -12223,6 +12223,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeRelationAddAction => '关联内容';
 
   @override
+  String get knowledgeRelationDiscoverAction => '发现相关内容';
+
+  @override
   String get knowledgeRelationRemoveAction => '解除关联';
 
   @override
@@ -12236,6 +12239,37 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeRelationPickerNoResults => '没有匹配的笔记或决策。';
+
+  @override
+  String get knowledgeRelationSuggestionsTitle => '相关内容建议';
+
+  @override
+  String get knowledgeRelationSuggestionsDisclosure =>
+      '建议来自本设备的本地语义索引；只有你主动选择后才会建立关联。';
+
+  @override
+  String get knowledgeRelationSuggestionsUnavailable => '暂时无法生成建议';
+
+  @override
+  String get knowledgeRelationSuggestionsEmpty => '暂时没有高度相关的内容';
+
+  @override
+  String get knowledgeRelationSuggestionsEmptyBody =>
+      '本地索引可能仍在准备，或者这条内容确实比较独立。';
+
+  @override
+  String get knowledgeRelationSuggestionsComplete => '建议内容均已关联';
+
+  @override
+  String get knowledgeRelationSuggestionLinkAction => '关联';
+
+  @override
+  String get knowledgeRelationSuggestionLinked => '已关联内容';
+
+  @override
+  String knowledgeRelationSuggestionMatch(int percent) {
+    return '$percent% 相似';
+  }
 
   @override
   String get knowledgeRelationSourceNote => '来源笔记';

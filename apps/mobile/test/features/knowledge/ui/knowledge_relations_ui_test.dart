@@ -8,6 +8,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_search_service.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_decision_from_note_sheet.dart';
@@ -174,6 +175,106 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(Duration.zero);
   });
+
+  testWidgets('discovers and explicitly links similar knowledge', (
+    tester,
+  ) async {
+    final database = makeTestDatabase();
+    addTearDown(database.close);
+    final repository = KnowledgeRepository(
+      db: database,
+      outbox: InMemoryOutboxStore(),
+    );
+    final source = _note('source', 'Source evidence', 1);
+    final candidate = _note('candidate', 'Similar evidence', 2);
+    final existing = _note('existing', 'Already linked', 3);
+    await repository.upsertNote(source);
+    await repository.upsertNote(candidate);
+    await repository.upsertNote(existing);
+    await repository.upsertRelation(
+      KnowledgeRelation(
+        id: knowledgeRelationId(
+          fromKind: KnowledgeEntryKind.note.name,
+          fromId: source.id,
+          relation: KnowledgeRelationType.relatedTo,
+          toKind: KnowledgeEntryKind.note.name,
+          toId: existing.id,
+        ),
+        fromKind: KnowledgeEntryKind.note.name,
+        fromId: source.id,
+        relation: KnowledgeRelationType.relatedTo,
+        toKind: KnowledgeEntryKind.note.name,
+        toId: existing.id,
+        createdAt: _sync(4).updatedAt,
+        sync: _sync(4),
+      ),
+    );
+    final suggestions = <KnowledgeSimilarityHit>[
+      KnowledgeSimilarityHit(
+        document: KnowledgeSearchDocument.fromNote(existing),
+        similarity: 0.94,
+        tokenOverlap: 0.5,
+        source: 'know:notes',
+      ),
+      KnowledgeSimilarityHit(
+        document: KnowledgeSearchDocument.fromNote(candidate),
+        similarity: 0.91,
+        tokenOverlap: 0.4,
+        source: 'know:notes',
+      ),
+    ];
+
+    await tester.pumpWidget(
+      _wrap(
+        KnowledgeRelationsSection(
+          subjectKind: KnowledgeEntryKind.note,
+          subjectId: source.id,
+        ),
+        repository,
+        suggestions: suggestions,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('knowledge-relations-discover')));
+    await _settleSheet(tester);
+    expect(
+      find.byKey(
+        const ValueKey('knowledge-relation-suggestion-link-note:candidate'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey('knowledge-relation-suggestion-link-note:existing'),
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey('knowledge-relation-suggestion-link-note:candidate'),
+      ),
+    );
+    await _settleSheet(tester);
+
+    final relationId = knowledgeRelationId(
+      fromKind: KnowledgeEntryKind.note.name,
+      fromId: source.id,
+      relation: KnowledgeRelationType.relatedTo,
+      toKind: KnowledgeEntryKind.note.name,
+      toId: candidate.id,
+    );
+    final linked = await repository.findRelation(
+      ownerUserId: _owner,
+      id: relationId,
+    );
+    expect(linked, isNotNull);
+    expect(linked?.sync.deletedAt, isNull);
+    expect(find.text('All suggestions are linked'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
+  });
 }
 
 Future<void> _settleSheet(WidgetTester tester) async {
@@ -193,11 +294,18 @@ Future<void> _enterTextWithoutSemantics(
   await tester.pump(const Duration(milliseconds: 100), EnginePhase.paint);
 }
 
-Widget _wrap(Widget child, KnowledgeRepository repository) {
+Widget _wrap(
+  Widget child,
+  KnowledgeRepository repository, {
+  List<KnowledgeSimilarityHit> suggestions = const <KnowledgeSimilarityHit>[],
+}) {
   return ProviderScope(
     overrides: [
       knowledgeRepositoryProvider.overrideWith((_) async => repository),
       knowledgeOwnerUserIdProvider.overrideWith((_) async => _owner),
+      knowledgeRelationSuggestionsProvider.overrideWith(
+        (_, _) async => suggestions,
+      ),
       mutationStamperProvider.overrideWith(
         (_) async => makeStubStamper(userId: _owner),
       ),

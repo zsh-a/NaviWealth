@@ -126,3 +126,21 @@ final knowledgeLibrarySearchProvider = FutureProvider.autoDispose
         topK: 50,
       );
     });
+
+typedef KnowledgeRelationSuggestionsRequest = ({String subjectId, String text});
+
+final knowledgeRelationSuggestionsProvider = FutureProvider.autoDispose
+    .family<List<KnowledgeSimilarityHit>, KnowledgeRelationSuggestionsRequest>((
+      ref,
+      request,
+    ) async {
+      final ownerUserId = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final service = await ref.watch(knowledgeSearchServiceProvider.future);
+      return service.findSimilarKnowledge(
+        ownerUserId: ownerUserId,
+        text: request.text,
+        excludeId: request.subjectId,
+        threshold: 0.72,
+        topK: 12,
+      );
+    });

@@ -9,21 +9,25 @@ import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/knowledge_route_paths.dart';
 import '../../data/knowledge_repository.dart';
+import '../../data/knowledge_search_service.dart';
 import '../../data/providers.dart';
 import '../../domain/knowledge_models.dart';
 import '../../domain/knowledge_text.dart';
 import '../knowledge_relation_picker_sheet.dart';
+import '../knowledge_relation_suggestions_sheet.dart';
 
 class KnowledgeRelationsSection extends ConsumerWidget {
   const KnowledgeRelationsSection({
     super.key,
     required this.subjectKind,
     required this.subjectId,
+    this.subjectText,
     this.onCreateDecision,
   });
 
   final KnowledgeEntryKind subjectKind;
   final String subjectId;
+  final String? subjectText;
   final VoidCallback? onCreateDecision;
 
   KnowledgeRelationSubject get _subject =>
@@ -44,26 +48,51 @@ class KnowledgeRelationsSection extends ConsumerWidget {
         (notesAsync.isLoading && !notesAsync.hasValue) ||
         (decisionsAsync.isLoading && !decisionsAsync.hasValue);
     final relations = relationsAsync.value ?? const <KnowledgeRelation>[];
+    final notes = notesAsync.value ?? const <KnowledgeNote>[];
+    final decisions = decisionsAsync.value ?? const <KnowledgeDecision>[];
     final items = _resolveItems(
       relations: relations,
-      notes: notesAsync.value ?? const <KnowledgeNote>[],
-      decisions: decisionsAsync.value ?? const <KnowledgeDecision>[],
+      notes: notes,
+      decisions: decisions,
     );
+    final suggestionText =
+        subjectText ?? _subjectText(notes: notes, decisions: decisions);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeader.module(
           title: l10n.knowledgeRelationsTitle,
           subtitle: l10n.knowledgeRelationsSubtitle,
-          trailing: AppIconButton(
-            key: const Key('knowledge-relations-add'),
-            icon: FLucideIcons.link2,
-            tooltip: l10n.knowledgeRelationAddAction,
-            onPress: loading || error != null
-                ? null
-                : () => _addRelation(context, ref, relations),
-            size: AppSpacing.s32,
-            iconSize: AppIconSizes.xs,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppIconButton(
+                key: const Key('knowledge-relations-discover'),
+                icon: FLucideIcons.sparkles,
+                tooltip: l10n.knowledgeRelationDiscoverAction,
+                onPress:
+                    loading || error != null || suggestionText.trim().isEmpty
+                    ? null
+                    : () => _discoverRelations(
+                        context,
+                        relations,
+                        suggestionText,
+                      ),
+                size: AppSpacing.s32,
+                iconSize: AppIconSizes.xs,
+              ),
+              const SizedBox(width: AppSpacing.s4),
+              AppIconButton(
+                key: const Key('knowledge-relations-add'),
+                icon: FLucideIcons.link2,
+                tooltip: l10n.knowledgeRelationAddAction,
+                onPress: loading || error != null
+                    ? null
+                    : () => _addRelation(context, ref, relations),
+                size: AppSpacing.s32,
+                iconSize: AppIconSizes.xs,
+              ),
+            ],
           ),
         ),
         if (onCreateDecision case final action?) ...[
@@ -129,19 +158,11 @@ class KnowledgeRelationsSection extends ConsumerWidget {
     WidgetRef ref,
     List<KnowledgeRelation> relations,
   ) async {
-    final excluded = <String>{
-      for (final relation in relations)
-        if (relation.fromKind == subjectKind.name &&
-            relation.fromId == subjectId)
-          '${relation.toKind}:${relation.toId}'
-        else
-          '${relation.fromKind}:${relation.fromId}',
-    };
     final target = await showKnowledgeRelationPickerSheet(
       context: context,
       subjectKind: subjectKind.name,
       subjectId: subjectId,
-      excludedTargetKeys: excluded,
+      excludedTargetKeys: _excludedTargetKeys(relations),
     );
     if (target == null) return;
     final repository = await ref.read(knowledgeRepositoryProvider.future);
@@ -169,6 +190,48 @@ class KnowledgeRelationsSection extends ConsumerWidget {
       ),
     );
     await repository.upsertRelation(relation);
+  }
+
+  Future<void> _discoverRelations(
+    BuildContext context,
+    List<KnowledgeRelation> relations,
+    String subjectText,
+  ) {
+    return showKnowledgeRelationSuggestionsSheet(
+      context: context,
+      subjectKind: subjectKind.name,
+      subjectId: subjectId,
+      subjectText: subjectText,
+      excludedTargetKeys: _excludedTargetKeys(relations),
+    );
+  }
+
+  Set<String> _excludedTargetKeys(List<KnowledgeRelation> relations) => {
+    for (final relation in relations)
+      if (relation.fromKind == subjectKind.name && relation.fromId == subjectId)
+        '${relation.toKind}:${relation.toId}'
+      else
+        '${relation.fromKind}:${relation.fromId}',
+  };
+
+  String _subjectText({
+    required List<KnowledgeNote> notes,
+    required List<KnowledgeDecision> decisions,
+  }) {
+    if (subjectKind == KnowledgeEntryKind.note) {
+      for (final note in notes) {
+        if (note.id == subjectId) {
+          return KnowledgeSearchDocument.fromNote(note).searchText;
+        }
+      }
+      return '';
+    }
+    for (final decision in decisions) {
+      if (decision.id == subjectId) {
+        return KnowledgeSearchDocument.fromDecision(decision).searchText;
+      }
+    }
+    return '';
   }
 
   Future<void> _removeRelation(

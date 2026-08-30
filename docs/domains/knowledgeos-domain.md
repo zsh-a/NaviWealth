@@ -158,6 +158,13 @@ can search live Knowledge rows, add a generic `related_to` link, remove a link,
 and navigate to the related row. Both endpoints render the relation regardless
 of which side originally created it.
 
+The same section offers an explicit “discover related” action backed by the
+local Memory semantic index. It excludes the current row and every already
+linked endpoint, shows only hydrated live Note/Decision candidates, and writes
+`related_to` only after the user links an individual suggestion. This is local
+retrieval rather than an LLM request, so it does not create an AI transparency
+trace.
+
 The explicit “create Decision from this Note” action writes the new Decision
 and a directed `informs` relation from the source Note in one local transaction,
 including both Sync outbox rows. It never infers a Decision automatically: the

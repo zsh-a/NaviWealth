@@ -12,6 +12,7 @@ import '../application/knowledge_deletion_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/knowledge_rewrite_client.dart';
+import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import 'knowledge_decision_from_note_sheet.dart';
@@ -132,6 +133,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
         KnowledgeRelationsSection(
           subjectKind: KnowledgeEntryKind.note,
           subjectId: widget.note.id,
+          subjectText: KnowledgeSearchDocument.fromNote(widget.note).searchText,
           onCreateDecision: _createDecision,
         ),
         const SizedBox(height: AppSpacing.s16),

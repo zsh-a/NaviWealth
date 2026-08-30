@@ -12911,6 +12911,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeRelationAddAction => 'Link knowledge';
 
   @override
+  String get knowledgeRelationDiscoverAction => 'Discover related knowledge';
+
+  @override
   String get knowledgeRelationRemoveAction => 'Remove link';
 
   @override
@@ -12925,6 +12928,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeRelationPickerNoResults =>
       'No matching notes or decisions.';
+
+  @override
+  String get knowledgeRelationSuggestionsTitle => 'Related suggestions';
+
+  @override
+  String get knowledgeRelationSuggestionsDisclosure =>
+      'Suggestions come from the local semantic index on this device. Nothing is linked until you choose it.';
+
+  @override
+  String get knowledgeRelationSuggestionsUnavailable =>
+      'Suggestions are unavailable';
+
+  @override
+  String get knowledgeRelationSuggestionsEmpty => 'No strong matches yet';
+
+  @override
+  String get knowledgeRelationSuggestionsEmptyBody =>
+      'The local index may still be warming up, or this content may be distinct.';
+
+  @override
+  String get knowledgeRelationSuggestionsComplete =>
+      'All suggestions are linked';
+
+  @override
+  String get knowledgeRelationSuggestionLinkAction => 'Link';
+
+  @override
+  String get knowledgeRelationSuggestionLinked => 'Knowledge linked';
+
+  @override
+  String knowledgeRelationSuggestionMatch(int percent) {
+    return '$percent% match';
+  }
 
   @override
   String get knowledgeRelationSourceNote => 'Source note';
