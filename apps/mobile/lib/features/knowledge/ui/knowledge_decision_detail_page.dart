@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/forms/form_dirty_guard.dart';
@@ -43,11 +42,16 @@ class KnowledgeDecisionDetailPage extends ConsumerWidget {
     return value.when(
       loading: () => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentDecisions,
-        child: const Center(child: CircularProgressIndicator()),
+        child: kDefaultLoading,
       ),
-      error: (_, _) => ObjectDetailScaffold(
+      error: (error, stackTrace) => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentDecisions,
-        child: Center(child: Text(l10n.commonLoadFailed)),
+        child: kDefaultError(
+          context,
+          error,
+          stackTrace,
+          onRetry: () => ref.invalidate(_decisionProvider(decisionId)),
+        ),
       ),
       data: (decision) => decision == null
           ? ObjectDetailScaffold(
@@ -366,7 +370,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       dirty.markPristine();
       if (mounted) {
         AppMessenger.show(context, ToastKind.success, l10n.commonDeleted);
-        context.pop();
+        popOrGo(context, fallback: KnowledgeRoutes.library);
       }
     } on Object catch (error, stackTrace) {
       if (!mounted) return;

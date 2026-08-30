@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/charts/charts.dart';
+
 import '../domain/fire_projection.dart';
 
 /// Multi-scenario projection chart: each scenario gets its own coloured

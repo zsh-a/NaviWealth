@@ -24,10 +24,7 @@ class KnowledgeDecisionActionSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final availability = ref.watch(lifeOpenActionCountProvider);
     if (availability.isLoading) {
-      return _section(
-        context,
-        children: const [Center(child: CircularProgressIndicator())],
-      );
+      return _section(context, children: const [kDefaultLoading]);
     }
     if (availability.hasError) return const SizedBox.shrink();
     if (availability.asData?.value == null) {
@@ -54,10 +51,7 @@ class KnowledgeDecisionActionSection extends ConsumerWidget {
 
     final linked = ref.watch(lifeLinkedActionProvider(_source));
     return linked.when(
-      loading: () => _section(
-        context,
-        children: const [Center(child: CircularProgressIndicator())],
-      ),
+      loading: () => _section(context, children: const [kDefaultLoading]),
       error: (_, _) => const SizedBox.shrink(),
       data: (action) =>
           _ActionContent(decision: decision, action: action, source: _source),

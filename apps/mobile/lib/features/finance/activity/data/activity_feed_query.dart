@@ -63,9 +63,10 @@ class ActivityFeedQuery {
   static ActivityFeedQuery fromUri(Uri uri) {
     final params = uri.queryParameters;
     final accounts = _csv(params['accounts']).toSet();
-    final kinds = _csv(
-      params['kinds'],
-    ).map(activityKindFromWire).whereType<ActivityKind>().toSet();
+    final kinds = _csv(params['kinds'])
+        .map(activityKindFromWire)
+        .whereType<ActivityKind>()
+        .toSet();
     final from = _parseDate(params['from']);
     final to = _parseDate(params['to']);
     final dateRange = from == null && to == null

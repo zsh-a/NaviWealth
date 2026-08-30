@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:naviwealth/core/persistence/providers.dart';
+
 import 'securities_catalog_loader.dart';
 import 'securities_search_service.dart';
 

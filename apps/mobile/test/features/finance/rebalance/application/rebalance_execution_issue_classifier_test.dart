@@ -126,21 +126,20 @@ void main() {
           RebalanceExecutionIssueCode.ownerChanged,
         );
         expect(
-          classify(
-            TradeSubmissionContractErrorCode.accountInvalid,
-          ).recoveryAction,
+          classify(TradeSubmissionContractErrorCode.accountInvalid)
+              .recoveryAction,
           RebalanceRecoveryAction.editReview,
         );
         expect(
-          classify(
-            TradeSubmissionContractErrorCode.insufficientFreshHoldings,
-          ).issue.code,
+          classify(TradeSubmissionContractErrorCode.insufficientFreshHoldings)
+              .issue
+              .code,
           RebalanceExecutionIssueCode.holdingsChanged,
         );
         expect(
-          classify(
-            TradeSubmissionContractErrorCode.databaseMismatch,
-          ).issue.code,
+          classify(TradeSubmissionContractErrorCode.databaseMismatch)
+              .issue
+              .code,
           RebalanceExecutionIssueCode.internal,
         );
         expect(

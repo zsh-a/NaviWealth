@@ -135,9 +135,8 @@ String? discoverBundledOrtDylib({
     return null;
   }
 
-  final execDir = File(
-    resolvedExecutable ?? Platform.resolvedExecutable,
-  ).parent;
+  final execDir = File(resolvedExecutable ?? Platform.resolvedExecutable)
+      .parent;
   final dylibNames = platform == EmbedderHostPlatform.macos
       ? const ['libonnxruntime.1.27.0.dylib', 'libonnxruntime.dylib']
       : const ['libonnxruntime.so'];

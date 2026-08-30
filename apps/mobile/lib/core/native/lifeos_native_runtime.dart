@@ -5,8 +5,9 @@ library;
 import 'lifeos_native_runtime_io.dart'
     if (dart.library.js_interop) 'lifeos_native_runtime_web.dart';
 
-typedef LifeosNativeRuntimeInitializer =
-    Future<void> Function({String? libraryPath});
+typedef LifeosNativeRuntimeInitializer = Future<void> Function({
+  String? libraryPath,
+});
 
 /// Owns one idempotent native-runtime initialization attempt.
 ///

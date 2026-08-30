@@ -7,8 +7,10 @@ import 'app_form_scaffold_body.dart';
 import 'app_page_scaffold.dart';
 
 typedef AppTaskSliversBuilder = List<Widget> Function(BuildContext context);
-typedef AppTaskActionsBuilder =
-    List<Widget> Function(BuildContext context, bool wide);
+typedef AppTaskActionsBuilder = List<Widget> Function(
+  BuildContext context,
+  bool wide,
+);
 
 /// Responsive shell for queue-oriented task pages.
 ///

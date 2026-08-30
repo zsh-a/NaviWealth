@@ -93,41 +93,36 @@ void main() {
       expect(upload.payload['merchant_key'], 'netflix');
     });
 
-    test(
-      'id format is "merchantKey|currency" so multi-currency same merchant becomes two rows',
-      () {
-        // Two parallel patterns: NETFLIX in USD and NETFLIX in CNY.
-        final usdTxns = <TransactionInput>[
-          for (var m = 1; m <= 3; m++)
-            TransactionInput(
-              id: 'u$m',
-              description: 'NETFLIX',
-              amountMinor: '-999',
-              currency: 'USD',
-              occurredAt: DateTime.utc(2026, m, 5),
-            ),
-        ];
-        final cnyTxns = <TransactionInput>[
-          for (var m = 1; m <= 3; m++)
-            TransactionInput(
-              id: 'c$m',
-              description: 'NETFLIX',
-              amountMinor: '-7900',
-              currency: 'CNY',
-              occurredAt: DateTime.utc(2026, m, 5),
-            ),
-        ];
-        final patterns = detectRecurring(<TransactionInput>[
-          ...usdTxns,
-          ...cnyTxns,
-        ]);
-        expect(patterns, hasLength(2));
-        final ids = patterns
-            .map((p) => '${p.merchantKey}|${p.currency}')
-            .toSet();
-        expect(ids, <String>{'netflix|USD', 'netflix|CNY'});
-      },
-    );
+    test('id format is "merchantKey|currency" so multi-currency same merchant becomes two rows', () {
+      // Two parallel patterns: NETFLIX in USD and NETFLIX in CNY.
+      final usdTxns = <TransactionInput>[
+        for (var m = 1; m <= 3; m++)
+          TransactionInput(
+            id: 'u$m',
+            description: 'NETFLIX',
+            amountMinor: '-999',
+            currency: 'USD',
+            occurredAt: DateTime.utc(2026, m, 5),
+          ),
+      ];
+      final cnyTxns = <TransactionInput>[
+        for (var m = 1; m <= 3; m++)
+          TransactionInput(
+            id: 'c$m',
+            description: 'NETFLIX',
+            amountMinor: '-7900',
+            currency: 'CNY',
+            occurredAt: DateTime.utc(2026, m, 5),
+          ),
+      ];
+      final patterns = detectRecurring(<TransactionInput>[
+        ...usdTxns,
+        ...cnyTxns,
+      ]);
+      expect(patterns, hasLength(2));
+      final ids = patterns.map((p) => '${p.merchantKey}|${p.currency}').toSet();
+      expect(ids, <String>{'netflix|USD', 'netflix|CNY'});
+    });
 
     test('no patterns → no recurring uploads (mirrors guard in providers)', () {
       final txns = <TransactionInput>[

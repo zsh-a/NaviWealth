@@ -8,6 +8,7 @@ class _ExpandedView extends ConsumerWidget {
     required this.onConfirm,
     required this.onCancel,
     required this.onEdit,
+    this.confirmEnabled = true,
   });
 
   final ReadyProposalPlan plan;
@@ -16,6 +17,11 @@ class _ExpandedView extends ConsumerWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
   final VoidCallback onEdit;
+
+  /// Gates the confirm button visually. `_TypedConfirmView` sets this to
+  /// false until the typed token matches so the button reads as disabled
+  /// instead of tapping into a no-op.
+  final bool confirmEnabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -87,7 +93,7 @@ class _ExpandedView extends ConsumerWidget {
                 Expanded(
                   child: FButton(
                     variant: FButtonVariant.primary,
-                    onPress: isApplying ? null : onConfirm,
+                    onPress: (isApplying || !confirmEnabled) ? null : onConfirm,
                     prefix: isApplying
                         ? null
                         : const Icon(FLucideIcons.check, size: AppIconSizes.xs),
@@ -215,9 +221,8 @@ class _OneTapView extends ConsumerWidget {
               const SizedBox(height: AppSpacing.s6),
               Text(
                 applyState.errorMessage!,
-                style: AiType.meta(
-                  context,
-                ).copyWith(color: AiTone.error(context)),
+                style: AiType.meta(context)
+                    .copyWith(color: AiTone.error(context)),
               ),
             ],
             const SizedBox(height: AppSpacing.s4),
@@ -249,10 +254,11 @@ class _OneTapView extends ConsumerWidget {
 // ───────────────────────────────────────────────────────────────────────────
 // InteractionMode.typed surface.
 //
-// User must type a literal "确认" (or the proposal amount in future
-// revisions) before Apply is enabled. Reserved for broker_order /
-// bulk_delete-class proposals that no current backend tool generates —
-// the view exists so the framework is ready when those tools ship.
+// User must type a literal confirmation token (the localized default, or
+// a tool-provided `required_text`) before Confirm is enabled. Reserved
+// for broker_order / bulk_delete-class proposals that no current backend
+// tool generates — the view exists so the framework is ready when those
+// tools ship.
 // ───────────────────────────────────────────────────────────────────────────
 class _TypedConfirmView extends StatefulWidget {
   const _TypedConfirmView({
@@ -278,9 +284,6 @@ class _TypedConfirmView extends StatefulWidget {
 class _TypedConfirmViewState extends State<_TypedConfirmView> {
   final _controller = TextEditingController();
 
-  String get _confirmToken =>
-      widget.plan.interaction?.confirmation?.requiredText ?? '确认';
-
   @override
   void initState() {
     super.initState();
@@ -296,26 +299,28 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
 
   void _onTextChanged() => setState(() {});
 
-  bool get _matches => _controller.text.trim() == _confirmToken;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Tool-provided `required_text` wins; otherwise fall back to the
+    // localized default token.
+    final confirmToken =
+        widget.plan.interaction?.confirmation?.requiredText ??
+        l10n.aiChatProposalConfirmToken;
+    final matches = _controller.text.trim() == confirmToken;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Reuse the expanded view's diff body, but disable its
-        // Confirm button by swapping in a typed-confirm callback that
-        // refuses unless the token matches.
+        // Reuse the expanded view's diff body, but keep its Confirm
+        // button disabled until the typed token matches.
         _ExpandedView(
           plan: widget.plan,
           applyState: widget.applyState,
           overrides: widget.overrides,
-          onConfirm: () {
-            if (_matches) widget.onConfirm();
-          },
+          onConfirm: widget.onConfirm,
           onCancel: widget.onCancel,
           onEdit: widget.onEdit,
+          confirmEnabled: matches,
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -328,21 +333,20 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                l10n.aiChatProposalConfirmTokenWarning(_confirmToken),
-                style: AiType.meta(
-                  context,
-                ).copyWith(color: AiTone.error(context)),
+                l10n.aiChatProposalConfirmTokenWarning(confirmToken),
+                style: AiType.meta(context)
+                    .copyWith(color: AiTone.error(context)),
               ),
               const SizedBox(height: AppSpacing.s6),
               FTextField(
                 control: FTextFieldControl.managed(controller: _controller),
-                hint: _confirmToken,
+                hint: confirmToken,
               ),
-              if (!_matches)
+              if (!matches)
                 Padding(
                   padding: const EdgeInsets.only(top: AppSpacing.s4),
                   child: Text(
-                    l10n.aiChatProposalConfirmTokenPending(_confirmToken),
+                    l10n.aiChatProposalConfirmTokenPending(confirmToken),
                     style: AiType.meta(context),
                   ),
                 )
@@ -351,9 +355,8 @@ class _TypedConfirmViewState extends State<_TypedConfirmView> {
                   padding: const EdgeInsets.only(top: AppSpacing.s4),
                   child: Text(
                     l10n.aiChatProposalConfirm,
-                    style: AiType.meta(
-                      context,
-                    ).copyWith(color: AiTone.active(context)),
+                    style: AiType.meta(context)
+                        .copyWith(color: AiTone.active(context)),
                   ),
                 ),
             ],

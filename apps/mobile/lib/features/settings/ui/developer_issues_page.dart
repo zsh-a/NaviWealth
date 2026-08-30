@@ -50,9 +50,9 @@ class _DeveloperIssuesPageState extends ConsumerState<DeveloperIssuesPage> {
     final description = _descriptionController.text.trim();
     if (description.isEmpty) {
       setState(
-        () => _fieldError = AppLocalizations.of(
-          context,
-        ).developerIssuesDescriptionRequired,
+        () =>
+            _fieldError = AppLocalizations.of(context)
+                .developerIssuesDescriptionRequired,
       );
       return;
     }
@@ -255,9 +255,9 @@ class _DeveloperIssueTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).toLanguageTag();
-    final timestamp = DateFormat.yMd(
-      locale,
-    ).add_Hm().format(issue.createdAt.toLocal());
+    final timestamp = DateFormat.yMd(locale)
+        .add_Hm()
+        .format(issue.createdAt.toLocal());
     final tags = <String>[
       issue.exportedAt == null
           ? l10n.developerIssuesLocalLabel

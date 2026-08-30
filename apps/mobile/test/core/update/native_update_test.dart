@@ -54,8 +54,7 @@ void main() {
         'channel': 'github',
         'versionName': '0.8.50',
         'versionCode': 125,
-        'apkUrl':
-            'https://github.com/zsh-a/NaviWealth/releases/download/v0.8.50/app.apk',
+        'apkUrl': 'https://github.com/zsh-a/NaviWealth/releases/download/v0.8.50/app.apk',
         'sha256': sha,
         'size': 1234,
         'releaseNotes': <String>['Fix voice startup'],
@@ -81,8 +80,7 @@ void main() {
         NativeUpdateManifest.tryParse(<String, Object?>{
           'versionName': '0.8.50',
           'versionCode': 125,
-          'apkUrl':
-              'https://github.com/zsh-a/NaviWealth/releases/download/v0.8.50/app.apk',
+          'apkUrl': 'https://github.com/zsh-a/NaviWealth/releases/download/v0.8.50/app.apk',
           'sha256': 'not-a-sha256',
         }),
         isNull,

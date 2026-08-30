@@ -1018,30 +1018,25 @@ void main() {
         );
         expect(
           ((await runTool(const ProposeAccountCreateTool(), const {
-                'name': '  ',
-                'type': 'bank',
-              }))
-              as Map)['error'],
+            'name': '  ',
+            'type': 'bank',
+          })) as Map)['error'],
           contains('must not be blank'),
         );
-        final amb =
-            await runTool(const ProposeAccountCreateTool(), const {
-                  'name': 'My Card',
-                  'type': 'not-a-type',
-                })
-                as Map;
+        final amb = await runTool(const ProposeAccountCreateTool(), const {
+          'name': 'My Card',
+          'type': 'not-a-type',
+        }) as Map;
         expect(amb['status'], 'needs_clarification');
         expect(amb['ambiguous_field'], 'type');
         expect(
           (amb['candidates'] as List).map((e) => (e as Map)['id']),
           kProposalAccountTypes,
         );
-        final ok =
-            await runTool(const ProposeAccountCreateTool(), const {
-                  'name': '招行储蓄',
-                  'type': 'bank',
-                })
-                as Map;
+        final ok = await runTool(const ProposeAccountCreateTool(), const {
+          'name': '招行储蓄',
+          'type': 'bank',
+        }) as Map;
         expect(ok['status'], 'ready');
         expect(ok['kind'], 'account_create');
         final p = ok['payload'] as Map;
@@ -1062,9 +1057,8 @@ void main() {
       );
       expect(
         ((await runTool(const ProposeAssetValuationTool(), const {
-              'new_value': -1,
-            }))
-            as Map)['error'],
+          'new_value': -1,
+        })) as Map)['error'],
         contains('must be ≥ 0'),
       );
     });
@@ -1315,22 +1309,20 @@ void main() {
       expect(((await run(const {})) as Map)['error'], 'asset_id required');
       expect(
         ((await run(const {
-              'asset_id': 'AAPL',
-              'from': '2026-01-01',
-              'to': '2026-03-01',
-              'purpose': 'other',
-            }))
-            as Map)['error'],
+          'asset_id': 'AAPL',
+          'from': '2026-01-01',
+          'to': '2026-03-01',
+          'purpose': 'other',
+        })) as Map)['error'],
         contains('range exceeds'),
       );
       expect(
         ((await run(const {
-              'asset_id': 'AAPL',
-              'from': '2026-01-01',
-              'to': '2026-01-10',
-              'purpose': 'nope',
-            }))
-            as Map)['error'],
+          'asset_id': 'AAPL',
+          'from': '2026-01-01',
+          'to': '2026-01-10',
+          'purpose': 'nope',
+        })) as Map)['error'],
         contains('DisclosurePurpose'),
       );
     });
@@ -1353,22 +1345,20 @@ void main() {
       expect(((await run(const {})) as Map)['error'], 'category required');
       expect(
         ((await run(const {
-              'category': 'dining',
-              'from': '2026-01-01',
-              'to': '2026-03-01', // 59d
-              'purpose': 'other',
-            }))
-            as Map)['error'],
+          'category': 'dining',
+          'from': '2026-01-01',
+          'to': '2026-03-01', // 59d
+          'purpose': 'other',
+        })) as Map)['error'],
         contains('range exceeds'),
       );
       expect(
         ((await run(const {
-              'category': 'dining',
-              'from': '2026-01-01',
-              'to': '2026-01-10',
-              'purpose': 'nope',
-            }))
-            as Map)['error'],
+          'category': 'dining',
+          'from': '2026-01-01',
+          'to': '2026-01-10',
+          'purpose': 'nope',
+        })) as Map)['error'],
         contains('DisclosurePurpose'),
       );
     });
@@ -1706,9 +1696,9 @@ void main() {
           _cashflowPost('a', 'USD', '300'),
         ]),
       ]);
-      final keys = series(
-        m,
-      ).map((r) => '${r['year_month']}|${r['currency']}').toList();
+      final keys = series(m)
+          .map((r) => '${r['year_month']}|${r['currency']}')
+          .toList();
       expect(keys, ['2026-04|USD', '2026-05|CNY', '2026-05|USD']);
     });
 

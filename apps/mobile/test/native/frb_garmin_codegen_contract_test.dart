@@ -4,22 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('FRB generated bindings expose the Garmin health bridge', () {
-    final agentRuntimeFacade = File(
-      'lib/src/rust/api/agent_runtime.dart',
-    ).readAsStringSync();
+    final agentRuntimeFacade = File('lib/src/rust/api/agent_runtime.dart')
+        .readAsStringSync();
     final dartFacade = File('lib/src/rust/api/health.dart').readAsStringSync();
-    final dartBindings = File(
-      'lib/src/rust/frb_generated.dart',
-    ).readAsStringSync();
-    final dartIoBindings = File(
-      'lib/src/rust/frb_generated.io.dart',
-    ).readAsStringSync();
-    final dartWebBindings = File(
-      'lib/src/rust/frb_generated.web.dart',
-    ).readAsStringSync();
-    final rustBindings = File(
-      'native/lifeos_native/src/frb_generated.rs',
-    ).readAsStringSync();
+    final dartBindings = File('lib/src/rust/frb_generated.dart')
+        .readAsStringSync();
+    final dartIoBindings = File('lib/src/rust/frb_generated.io.dart')
+        .readAsStringSync();
+    final dartWebBindings = File('lib/src/rust/frb_generated.web.dart')
+        .readAsStringSync();
+    final rustBindings = File('native/lifeos_native/src/frb_generated.rs')
+        .readAsStringSync();
 
     for (final symbol in _agentRuntimeFacadeSymbols) {
       expect(

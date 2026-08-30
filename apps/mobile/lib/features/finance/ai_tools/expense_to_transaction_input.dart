@@ -14,6 +14,7 @@ library;
 import 'package:decimal/decimal.dart';
 
 import 'package:naviwealth/features/finance/domain/models/expense.dart';
+
 import 'local_skills/transaction_input.dart';
 
 TransactionInput expenseToTransactionInput(Expense e) {

@@ -9,9 +9,12 @@
 import 'api/agent_runtime.dart';
 import 'api/embedder.dart';
 import 'api/health.dart';
+
 import 'dart:async';
 import 'dart:convert';
+
 import 'frb_generated.dart';
+
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {

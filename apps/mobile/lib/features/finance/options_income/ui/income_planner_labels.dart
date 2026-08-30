@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart' show IconData;
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../domain/leaps_call_position.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';

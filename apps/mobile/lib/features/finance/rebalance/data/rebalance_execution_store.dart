@@ -9,16 +9,14 @@ import '../domain/rebalance_models.dart';
 import 'rebalance_execution_codecs.dart';
 
 typedef RebalanceExecutionClock = DateTime Function();
-typedef RebalanceApplyMutation =
-    Future<TradeMutationReceipt> Function(
-      AppDatabaseTransactionScope scope,
-      RebalanceExecutionItem claimed,
-    );
-typedef RebalanceUndoMutation =
-    Future<void> Function(
-      AppDatabaseTransactionScope scope,
-      RebalanceExecutionItem claimed,
-    );
+typedef RebalanceApplyMutation = Future<TradeMutationReceipt> Function(
+  AppDatabaseTransactionScope scope,
+  RebalanceExecutionItem claimed,
+);
+typedef RebalanceUndoMutation = Future<void> Function(
+  AppDatabaseTransactionScope scope,
+  RebalanceExecutionItem claimed,
+);
 
 /// Owner-scoped local coordinator for resumable rebalance execution.
 final class RebalanceExecutionStore {

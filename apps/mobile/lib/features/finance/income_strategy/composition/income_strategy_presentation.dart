@@ -5,10 +5,13 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../domain/income_strategy.dart';
 import '../domain/income_strategy_plan.dart';
 
-typedef IncomeStrategyLabelBuilder =
-    String Function(AppLocalizations localizations);
-typedef IncomeStrategyStatusLabelBuilder =
-    String Function(AppLocalizations localizations, String status);
+typedef IncomeStrategyLabelBuilder = String Function(
+  AppLocalizations localizations,
+);
+typedef IncomeStrategyStatusLabelBuilder = String Function(
+  AppLocalizations localizations,
+  String status,
+);
 
 enum IncomeStrategySettingControl { toggle, decimal }
 

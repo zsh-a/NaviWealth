@@ -199,37 +199,18 @@ class _PickerSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fieldStyle = context.theme.textFieldStyles.resolve({
-      FTextFieldSizeVariant.md,
-      context.platformVariant,
-    });
-    final variants = <FTextFieldVariant>{
-      context.platformVariant as FTextFieldVariant,
-    };
-    final border = fieldStyle.border.resolve(variants);
-    return Material(
-      color: Colors.transparent,
-      child: TextField(
-        controller: controller,
-        textInputAction: TextInputAction.search,
-        style: fieldStyle.contentTextStyle.resolve(variants),
-        cursorColor: fieldStyle.cursorColor,
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: hint,
-          hintStyle: fieldStyle.hintTextStyle.resolve(variants),
-          filled: true,
-          fillColor: fieldStyle.color.resolve(variants),
-          contentPadding: fieldStyle.contentPadding,
-          border: border,
-          enabledBorder: border,
-          focusedBorder: fieldStyle.border.resolve({
-            ...variants,
-            FTextFieldVariant.focused,
-          }),
-          prefixIcon: const Icon(FLucideIcons.search),
+    return FTextField(
+      control: FTextFieldControl.managed(controller: controller),
+      textInputAction: TextInputAction.search,
+      maxLines: 1,
+      prefixBuilder: (_, _, _) => const Padding(
+        padding: EdgeInsetsDirectional.only(
+          start: AppSpacing.s12,
+          end: AppSpacing.s8,
         ),
+        child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
       ),
+      hint: hint,
     );
   }
 }

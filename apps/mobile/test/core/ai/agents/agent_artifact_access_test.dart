@@ -43,9 +43,8 @@ void main() {
     () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      await DomainOptInStore(
-        db,
-      ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+      await DomainOptInStore(db)
+          .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
       final store = SqliteAgentArtifactStore(db: db);
       await store.save(_artifact(ownerUserId: _owner));
       final container = _container(db, agents: const <Agent>[_HealthAgent()]);
@@ -68,9 +67,8 @@ void main() {
     () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      await DomainOptInStore(
-        db,
-      ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+      await DomainOptInStore(db)
+          .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
       final store = SqliteAgentArtifactStore(db: db);
       await store.save(_artifact(ownerUserId: 'other-user'));
       final container = _container(db, agents: const <Agent>[_HealthAgent()]);
@@ -104,9 +102,8 @@ void main() {
     () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      await DomainOptInStore(
-        db,
-      ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+      await DomainOptInStore(db)
+          .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
       final store = SqliteAgentArtifactStore(db: db);
       await store.save(_artifact(ownerUserId: _owner));
       final container = _container(db);
@@ -123,9 +120,8 @@ void main() {
   test('readActiveAgentArtifact rejects expected domain mismatches', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    await DomainOptInStore(
-      db,
-    ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+    await DomainOptInStore(db)
+        .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
     final store = SqliteAgentArtifactStore(db: db);
     await store.save(_artifact(ownerUserId: _owner));
     final container = _container(db, agents: const <Agent>[_HealthAgent()]);
@@ -145,9 +141,8 @@ void main() {
   test('readActiveAgentArtifact rejects hidden artifacts', () async {
     final db = makeTestDatabase();
     addTearDown(db.close);
-    await DomainOptInStore(
-      db,
-    ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+    await DomainOptInStore(db)
+        .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
     final store = SqliteAgentArtifactStore(db: db);
     final now = DateTime.utc(2026, 7, 5, 12);
     await store.save(_artifact(id: 'dismissed', ownerUserId: _owner));

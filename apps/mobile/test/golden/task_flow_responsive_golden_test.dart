@@ -180,9 +180,8 @@ void main() {
       profile: profile,
       overrides: <Override>[
         ...commonOverrides(),
-        rebalanceExecutionSessionProvider(
-          session.id,
-        ).overrideWith((_) async => session),
+        rebalanceExecutionSessionProvider(session.id)
+            .overrideWith((_) async => session),
       ],
       child: RebalanceExecutionWorkspacePage(sessionId: session.id),
     );

@@ -361,12 +361,15 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
           label: RequiredLabel(effectiveLabel),
           hint: effectiveHint,
           prefixBuilder: (ctx, style, variants) => const Padding(
-            padding: EdgeInsetsDirectional.only(start: 12, end: 8),
+            padding: EdgeInsetsDirectional.only(
+              start: AppSpacing.s12,
+              end: AppSpacing.s8,
+            ),
             child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
           ),
           suffixBuilder: _selected != null
               ? (ctx, style, variants) => Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 4),
+                  padding: const EdgeInsetsDirectional.only(end: AppSpacing.s4),
                   child: FButton.icon(
                     variant: FButtonVariant.ghost,
                     onPress: _clear,

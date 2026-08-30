@@ -659,6 +659,10 @@ class ExecutionTodayPageObject {
     // Today is a headerless cockpit: the Review entry is an AppIconButton in
     // the greeting header, exposed through its tooltip semantics label.
     final review = find.bySemanticsLabel('Review').hitTestable();
+    // Completing an action raises a top-center undo toast (6s) that can
+    // transiently cover the greeting header; wait for it to clear instead of
+    // assuming the button is hittable on the very next frame.
+    await settleUntil(tester, review, maxPumps: 200);
     expect(review, findsOneWidget, reason: 'execution review action missing');
     await tester.tap(review);
     await settle(tester);

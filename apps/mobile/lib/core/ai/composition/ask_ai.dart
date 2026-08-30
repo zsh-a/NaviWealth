@@ -27,13 +27,12 @@ import '../../auth/domain_scope.dart';
 import '../intent/ai_intent_invocation.dart';
 import 'ai_context.dart';
 
-typedef AskAiSurface =
-    Future<void> Function(
-      BuildContext context, {
-      AiIntentInvocation? invocation,
-      String? objectLabel,
-      String? prefill,
-    });
+typedef AskAiSurface = Future<void> Function(
+  BuildContext context, {
+  AiIntentInvocation? invocation,
+  String? objectLabel,
+  String? prefill,
+});
 
 Future<void> _noopAskAiSurface(
   BuildContext context, {

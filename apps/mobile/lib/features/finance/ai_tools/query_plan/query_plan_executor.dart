@@ -136,9 +136,8 @@ class InMemoryQueryPlanExecutor implements QueryPlanExecutor {
     for (final t in _filterByRange(transactions, plan.range)) {
       if (plan.currency != null && t.currency != plan.currency) continue;
       if (plan.merchantSubstring != null &&
-          !merchantKey(
-            t.description,
-          ).contains(plan.merchantSubstring!.toLowerCase())) {
+          !merchantKey(t.description)
+              .contains(plan.merchantSubstring!.toLowerCase())) {
         continue;
       }
       final amt = parseAmountMinor(t.amountMinor);

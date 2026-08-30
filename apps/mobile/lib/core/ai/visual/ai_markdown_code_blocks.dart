@@ -51,9 +51,8 @@ class _MdCode extends _MdBlock {
                   Expanded(
                     child: Text(
                       lang.isEmpty ? '' : lang,
-                      style: AiType.meta(
-                        context,
-                      ).copyWith(color: AiTone.muted(context)),
+                      style: AiType.meta(context)
+                          .copyWith(color: AiTone.muted(context)),
                     ),
                   ),
                   if (closed)
@@ -119,9 +118,8 @@ class _MdTable extends _MdBlock {
     final cols = header.length;
     final outline = AiTone.outline(context);
     final headerStyle = AiType.tableHeader(context, base);
-    final headerBg = AiTone.surfaceTint(
-      context,
-    ).withValues(alpha: AppOpacity.disabled);
+    final headerBg = AiTone.surfaceTint(context)
+        .withValues(alpha: AppOpacity.disabled);
 
     final normalizedRows = <List<String>>[];
     for (final row in rows) {

@@ -10,7 +10,7 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
-    home: child,
+    home: FTheme(data: FTheme.neutral.light.desktop, child: child),
   );
 }
 

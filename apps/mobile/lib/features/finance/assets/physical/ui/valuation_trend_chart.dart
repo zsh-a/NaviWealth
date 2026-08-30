@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'package:naviwealth/design_system/charts/charts.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../data/physical_asset.dart';
 
 /// Line chart of valuation history.

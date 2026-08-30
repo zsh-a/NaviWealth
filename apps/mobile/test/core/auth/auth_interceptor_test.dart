@@ -102,35 +102,32 @@ void main() {
       expect(adapter.calls.single.headers['Authorization'], isNull);
     });
 
-    test(
-      '401 → onUnauthorized rotates token → original request retried with new bearer',
-      () async {
-        // First call returns 401 (with stale token); second call returns 200
-        // (must carry the rotated token).
-        final adapter = _ScriptedAdapter([
-          _R(401, '{"code":"unauthorized"}'),
-          _R(200),
-        ]);
-        var token = 'old';
-        var refreshes = 0;
-        final dio = _buildDio(
-          adapter: adapter,
-          reader: () => _session(token),
-          onUnauthorized: () async {
-            refreshes += 1;
-            token = 'new';
-            return true;
-          },
-        );
+    test('401 → onUnauthorized rotates token → original request retried with new bearer', () async {
+      // First call returns 401 (with stale token); second call returns 200
+      // (must carry the rotated token).
+      final adapter = _ScriptedAdapter([
+        _R(401, '{"code":"unauthorized"}'),
+        _R(200),
+      ]);
+      var token = 'old';
+      var refreshes = 0;
+      final dio = _buildDio(
+        adapter: adapter,
+        reader: () => _session(token),
+        onUnauthorized: () async {
+          refreshes += 1;
+          token = 'new';
+          return true;
+        },
+      );
 
-        final res = await dio.get<dynamic>('/sync');
-        expect(res.statusCode, 200);
-        expect(refreshes, 1);
-        expect(adapter.calls, hasLength(2));
-        expect(adapter.calls[0].headers['Authorization'], 'Bearer old');
-        expect(adapter.calls[1].headers['Authorization'], 'Bearer new');
-      },
-    );
+      final res = await dio.get<dynamic>('/sync');
+      expect(res.statusCode, 200);
+      expect(refreshes, 1);
+      expect(adapter.calls, hasLength(2));
+      expect(adapter.calls[0].headers['Authorization'], 'Bearer old');
+      expect(adapter.calls[1].headers['Authorization'], 'Bearer new');
+    });
 
     test('refresh failing → 401 propagates without retrying', () async {
       final adapter = _ScriptedAdapter([_R(401, '{"code":"unauthorized"}')]);

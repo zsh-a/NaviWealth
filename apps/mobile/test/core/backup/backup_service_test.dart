@@ -383,9 +383,8 @@ void main() {
 
         final targetDb = makeTestDatabase();
         addTearDown(targetDb.close);
-        await makeService(
-          targetDb,
-        ).restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
+        await makeService(targetDb)
+            .restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
         final restored = await targetDb
             .customSelect(
               'SELECT principal, interest_rate, currency, monthly_payment '
@@ -597,9 +596,8 @@ void main() {
       final targetDb = makeTestDatabase();
       addTearDown(targetDb.close);
 
-      await makeService(
-        targetDb,
-      ).restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
+      await makeService(targetDb)
+          .restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
 
       expect(await countRows(targetDb, 'personal_profile_facts'), 1);
       expect(await countRows(targetDb, 'op_outbox'), 0);
@@ -703,9 +701,8 @@ void main() {
       addTearDown(targetDb.close);
       await insertTestAccount(targetDb, id: 'preserved');
       await expectLater(
-        makeService(
-          targetDb,
-        ).restoreBackup(passphrase: testPassphrase, fileBytes: incomplete),
+        makeService(targetDb)
+            .restoreBackup(passphrase: testPassphrase, fileBytes: incomplete),
         throwsA(isA<BackupValidationException>()),
       );
       final rows = await targetDb.customSelect('SELECT id FROM accounts').get();
@@ -783,9 +780,8 @@ void main() {
         final targetDb = makeTestDatabase();
         addTearDown(targetDb.close);
         final stopwatch = Stopwatch()..start();
-        final result = await makeService(
-          targetDb,
-        ).restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
+        final result = await makeService(targetDb)
+            .restoreBackup(passphrase: testPassphrase, fileBytes: bytes);
         stopwatch.stop();
 
         expect(result.tableCounts['accounts'], 1000);

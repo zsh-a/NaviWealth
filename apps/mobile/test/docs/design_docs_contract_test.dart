@@ -3,34 +3,36 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('project docs describe the current IA without historical issue tags', () {
-    final root = _repoRoot();
-    final markdownFiles = <File>[
-      File('${root.path}/README.md'),
-      File('${root.path}/docs/ai/ai-architecture.md'),
-      File('${root.path}/docs/architecture/lifeos-architecture-northstar.md'),
-      File('${root.path}/docs/architecture/lifeos-shell.md'),
-      File('${root.path}/docs/development/web-compat-matrix.md'),
-      File('${root.path}/docs/development/web-routing.md'),
-    ];
+  test(
+    'project docs describe the current IA without historical issue tags',
+    () {
+      final root = _repoRoot();
+      final markdownFiles = <File>[
+        File('${root.path}/README.md'),
+        File('${root.path}/docs/ai/ai-architecture.md'),
+        File('${root.path}/docs/architecture/lifeos-architecture-northstar.md'),
+        File('${root.path}/docs/architecture/lifeos-shell.md'),
+        File('${root.path}/docs/development/web-compat-matrix.md'),
+        File('${root.path}/docs/development/web-routing.md'),
+      ];
 
-    final legacyTopLevelRoute = RegExp(
-      r'''(^|[\s`'"(\[{>])/(assets|accounts|expenses|analytics|fire|rebalance|me|more|transactions)(?=$|/|[\s`'"),\].<])''',
-      multiLine: true,
-    );
+      final legacyTopLevelRoute = RegExp(
+        r'''(^|[\s`'"(\[{>])/(assets|accounts|expenses|analytics|fire|rebalance|me|more|transactions)(?=$|/|[\s`'"),\].<])''',
+        multiLine: true,
+      );
 
-    for (final file in markdownFiles) {
-      final text = file.readAsStringSync();
-      expect(text, isNot(contains('FIR-')), reason: file.path);
-      expect(text, isNot(legacyTopLevelRoute), reason: file.path);
-    }
-  });
+      for (final file in markdownFiles) {
+        final text = file.readAsStringSync();
+        expect(text, isNot(contains('FIR-')), reason: file.path);
+        expect(text, isNot(legacyTopLevelRoute), reason: file.path);
+      }
+    },
+  );
 
   test('current rust runtime doc tracks snapshot execution contracts', () {
     final root = _repoRoot();
-    final text = File(
-      '${root.path}/docs/architecture/agent-runtime-current.md',
-    ).readAsStringSync();
+    final text = File('${root.path}/docs/architecture/agent-runtime-current.md')
+        .readAsStringSync();
 
     for (final marker in <String>[
       'agent_runtime_tool_host.dart',

@@ -42,8 +42,9 @@ final class InteractionTurnRequest {
   final String? resumeTurnId;
 }
 
-typedef InteractionTurnHandler =
-    Future<void> Function(InteractionTurnRequest request);
+typedef InteractionTurnHandler = Future<void> Function(
+  InteractionTurnRequest request,
+);
 
 typedef SpeechStatusHandler = void Function(SpeechRecognizerStatus status);
 

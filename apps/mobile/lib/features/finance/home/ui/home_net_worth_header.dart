@@ -22,9 +22,9 @@ class _NetWorthHeader extends ConsumerWidget {
     return AppCollapsingStage(
       child: SoftCard.hero(
         // SoftCard owns select haptics; keep navigation as plain side-effect.
-        onPress: () => StatefulNavigationShell.of(
-          context,
-        ).goBranch(FinanceShellTab.wealth.index, initialLocation: true),
+        onPress: () =>
+            StatefulNavigationShell.of(context)
+                .goBranch(FinanceShellTab.wealth.index, initialLocation: true),
         padding: AppPageRhythm.heroPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,7 +107,9 @@ class _TodayDeltaMetric extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return dailyChange.when(
       loading: () => const SkeletonBox(width: 96, height: 14, radius: 4),
-      error: (_, _) => const SizedBox.shrink(),
+      // Keep a visible em-dash on failure (the `_ValueDash` precedent)
+      // instead of silently dropping the hero metric.
+      error: (_, _) => Text('—', style: context.captionStyle),
       data: (daily) => daily.change == null
           ? const SizedBox.shrink()
           : Row(

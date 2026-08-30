@@ -41,17 +41,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Search by title or note'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'polish');
-    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(FTextField), 'polish');
+    // Paint-phase pumps: forui text fields wrap their input in
+    // MergeSemantics, which trips a Flutter test-framework semantics
+    // assertion when the filtered list rebuilds under full pumps.
+    await _settlePaint(tester);
 
     expect(find.text('Execution polish'), findsOneWidget);
     expect(find.text('Plan 1'), findsNothing);
 
     await tester.tap(find.text('Execution polish'));
-    await tester.pumpAndSettle();
+    await _settlePaint(tester);
 
     expect(picked, 'plan-6');
   });
+}
+
+Future<void> _settlePaint(WidgetTester tester) async {
+  for (var index = 0; index < 12; index++) {
+    await tester.pump(const Duration(milliseconds: 75), EnginePhase.paint);
+  }
 }
 
 Widget _wrap(Widget child) {

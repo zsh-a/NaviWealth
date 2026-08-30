@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/data/market/http/market_http_client.
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/market/services/corporate_actions_service.dart';
+
 import '../domain/reporting/event_timeline.dart';
 
 /// Underlying corporate-actions fetcher. One instance per app — the

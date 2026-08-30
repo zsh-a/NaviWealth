@@ -38,9 +38,8 @@ void main() {
       name: 'asset_fx_pnl_card',
       variant: variant,
       overrides: [
-        assetHoldingReportProvider(
-          'us:AAPL',
-        ).overrideWith((_) async => _assetReport),
+        assetHoldingReportProvider('us:AAPL')
+            .overrideWith((_) async => _assetReport),
       ],
       child: const Scaffold(
         body: SafeArea(

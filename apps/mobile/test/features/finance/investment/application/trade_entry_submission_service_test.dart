@@ -364,44 +364,39 @@ void main() {
     },
   );
 
-  test(
-    'Undo tombstones new journal and price rows but preserves security metadata',
-    () async {
-      final receipt = await service.submit(_buyRequest());
-      final assetBeforeUndo = await (db.select(
+  test('Undo tombstones new journal and price rows but preserves security metadata', () async {
+    final receipt = await service.submit(_buyRequest());
+    final assetBeforeUndo = await (db.select(
+      db.assets,
+    )..where((row) => row.id.equals(receipt.assetId))).getSingle();
+
+    await service.undoMutation(receipt);
+
+    final entry = await (db.select(
+      db.journalEntries,
+    )..where((row) => row.id.equals(receipt.transactionId))).getSingle();
+    expect(entry.deletedAt, isNotNull);
+    final postings = await (db.select(
+      db.postings,
+    )..where((row) => row.journalEntryId.equals(receipt.transactionId))).get();
+    expect(postings.every((posting) => posting.deletedAt != null), isTrue);
+    final price = (await priceRepo.findById(receipt.transactionId))!;
+    expect(price.sync.deletedAt, isNotNull);
+    expect(
+      await priceRepo.latestAt(
+        unit: receipt.assetId,
+        quoteCurrency: 'USD',
+        asOf: DateTime.utc(2026, 5, 2),
+      ),
+      isNull,
+    );
+    expect(
+      await (db.select(
         db.assets,
-      )..where((row) => row.id.equals(receipt.assetId))).getSingle();
-
-      await service.undoMutation(receipt);
-
-      final entry = await (db.select(
-        db.journalEntries,
-      )..where((row) => row.id.equals(receipt.transactionId))).getSingle();
-      expect(entry.deletedAt, isNotNull);
-      final postings =
-          await (db.select(db.postings)..where(
-                (row) => row.journalEntryId.equals(receipt.transactionId),
-              ))
-              .get();
-      expect(postings.every((posting) => posting.deletedAt != null), isTrue);
-      final price = (await priceRepo.findById(receipt.transactionId))!;
-      expect(price.sync.deletedAt, isNotNull);
-      expect(
-        await priceRepo.latestAt(
-          unit: receipt.assetId,
-          quoteCurrency: 'USD',
-          asOf: DateTime.utc(2026, 5, 2),
-        ),
-        isNull,
-      );
-      expect(
-        await (db.select(
-          db.assets,
-        )..where((row) => row.id.equals(receipt.assetId))).getSingle(),
-        assetBeforeUndo,
-      );
-    },
-  );
+      )..where((row) => row.id.equals(receipt.assetId))).getSingle(),
+      assetBeforeUndo,
+    );
+  });
 
   test('later journal mutation makes Undo refuse atomically', () async {
     final receipt = await service.submit(_buyRequest());

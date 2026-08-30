@@ -72,10 +72,7 @@ Future<void> _pump(
             motion: FAccessibilityMotion.disabled,
             focusHighlight: false,
           ),
-          child: FTheme(
-            data: FTheme.neutral.light.desktop,
-            child: child!,
-          ),
+          child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
         ),
         routerConfig: router ?? _router(null),
       ),

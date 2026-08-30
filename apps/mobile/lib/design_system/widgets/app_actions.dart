@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
+import 'app_interaction.dart';
+
 /// Keyboard activation shared by app-owned button primitives.
 ///
 /// The trailing no-op bindings consume repeat events that would otherwise
@@ -34,6 +36,10 @@ class _DisabledActivateAction extends Action<ActivateIntent> {
 /// [FButton] 0.23 declares shortcut/action fields but does not forward them
 /// from `build`; this component uses a controlled private subclass until the
 /// upstream implementation does so.
+///
+/// Every press fires [AppInteractionIntent.commit] feedback (FButton itself
+/// ships without haptics); pass `hapticIntent: null` to opt out, or another
+/// intent to override.
 class AppActionButton extends StatelessWidget {
   const AppActionButton({
     super.key,
@@ -45,6 +51,7 @@ class AppActionButton extends StatelessWidget {
     this.autofocus = false,
     this.focusNode,
     this.onFocusChange,
+    this.hapticIntent = AppInteractionIntent.commit,
   });
 
   final VoidCallback? onPress;
@@ -56,13 +63,20 @@ class AppActionButton extends StatelessWidget {
   final FocusNode? focusNode;
   final ValueChanged<bool>? onFocusChange;
 
+  /// Haptic fired when the button is pressed; null disables it.
+  final AppInteractionIntent? hapticIntent;
+
   @override
   Widget build(BuildContext context) {
+    final effectiveOnPress = switch (hapticIntent) {
+      final intent? => AppInteraction.wrap(onPress, intent: intent),
+      null => onPress,
+    };
     return _ManagedActionFocus(
       enabled: onPress != null,
       focusNode: focusNode,
       builder: (focusNode) => _AppActionFButton(
-        onPress: onPress,
+        onPress: effectiveOnPress,
         variant: variant,
         prefix: prefix,
         mainAxisSize: mainAxisSize,

@@ -156,9 +156,10 @@ void main() {
         ))?.status,
         MemoryCandidateStatus.rejected,
       );
-      final persisted = (await history.listMessages(
-        'session-1',
-      )).single.toolCalls.single;
+      final persisted = (await history.listMessages('session-1'))
+          .single
+          .toolCalls
+          .single;
       expect(persisted.applyState?.status, ProposalApplyStatus.cancelled);
       expect(persisted.interactionResponse?.action, AiInteractionAction.reject);
     },

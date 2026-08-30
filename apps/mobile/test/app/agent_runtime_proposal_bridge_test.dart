@@ -100,35 +100,32 @@ void main() {
     expect(result['apply_state'], containsPair('error_message', 'blocked'));
   });
 
-  test(
-    'AgentRuntimeConfirmedProposalRunner runs terminal step and applies proposal',
-    () async {
-      final applier = _RecordingApplier(
-        state: const ProposalApplyState(
-          status: ProposalApplyStatus.applied,
-          appliedEntityId: 'action_1',
-          appliedTable: 'execution_actions',
-        ),
-      );
-      final runner = AgentRuntimeConfirmedProposalRunner(
-        stepRunner: AgentRuntimeNativeStepRunner(
-          bridge: _TerminalBridge(step: _terminalProposalStep()),
-          toolHost: AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
-        ),
-        proposalBridge: AgentRuntimeProposalBridge(applier: applier),
-      );
+  test('AgentRuntimeConfirmedProposalRunner runs terminal step and applies proposal', () async {
+    final applier = _RecordingApplier(
+      state: const ProposalApplyState(
+        status: ProposalApplyStatus.applied,
+        appliedEntityId: 'action_1',
+        appliedTable: 'execution_actions',
+      ),
+    );
+    final runner = AgentRuntimeConfirmedProposalRunner(
+      stepRunner: AgentRuntimeNativeStepRunner(
+        bridge: _TerminalBridge(step: _terminalProposalStep()),
+        toolHost: AgentRuntimeToolHost(dispatcher: const _NoopDispatcher()),
+      ),
+      proposalBridge: AgentRuntimeProposalBridge(applier: applier),
+    );
 
-      final result = await runner.runAndApplyConfirmedProposal(
-        catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
-        request: const <String, Object?>{'input': <String, Object?>{}},
-        agentId: 'execution_review',
-      );
+    final result = await runner.runAndApplyConfirmedProposal(
+      catalog: const <String, Object?>{'protocol_version': 'agent.v1'},
+      request: const <String, Object?>{'input': <String, Object?>{}},
+      agentId: 'execution_review',
+    );
 
-      expect(result['step'], containsPair('status', 'completed'));
-      expect(result['proposal_apply'], containsPair('status', 'applied'));
-      expect(applier.plans.single.proposalId, 'proposal_1');
-    },
-  );
+    expect(result['step'], containsPair('status', 'completed'));
+    expect(result['proposal_apply'], containsPair('status', 'applied'));
+    expect(applier.plans.single.proposalId, 'proposal_1');
+  });
 
   test(
     'AgentRuntimeConfirmedProposalRunner preserves skipped apply result',

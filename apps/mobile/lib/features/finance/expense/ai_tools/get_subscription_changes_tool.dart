@@ -140,9 +140,8 @@ class GetSubscriptionChangesTool implements DeviceTool {
   ) async {
     try {
       final db = await ctx.ref.read(appDatabaseProvider.future);
-      return await RecurringPatternHistoryStore(
-        db,
-      ).detectHistoricalChanges(ownerUserId: ownerUserId);
+      return await RecurringPatternHistoryStore(db)
+          .detectHistoricalChanges(ownerUserId: ownerUserId);
     } on Object {
       return const <SubscriptionChange>[];
     }

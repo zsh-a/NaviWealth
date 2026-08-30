@@ -11545,6 +11545,12 @@ abstract class AppLocalizations {
   /// **'Confirm is disabled until you type \"{token}\".'**
   String aiChatProposalConfirmTokenPending(String token);
 
+  /// Default token the user must type to enable Confirm for typed-confirm proposals when the tool did not specify a required_text.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM'**
+  String get aiChatProposalConfirmToken;
+
   /// No description provided for @aiChatFieldQuantity.
   ///
   /// In en, this message translates to:

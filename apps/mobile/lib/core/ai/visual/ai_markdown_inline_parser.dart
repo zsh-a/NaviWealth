@@ -109,9 +109,8 @@ class _InlineParser {
             final linkStyle = base.copyWith(
               color: AiTone.active(context),
               decoration: TextDecoration.underline,
-              decorationColor: AiTone.active(
-                context,
-              ).withValues(alpha: AppOpacity.disabled),
+              decorationColor: AiTone.active(context)
+                  .withValues(alpha: AppOpacity.disabled),
             );
             // The label is rendered inside a tappable WidgetSpan so we
             // don't need to wire a TapGestureRecognizer (which would
@@ -249,9 +248,8 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
             vertical: AppSpacing.s6,
           ),
           decoration: BoxDecoration(
-            color: AiTone.surfaceTint(
-              context,
-            ).withValues(alpha: AppOpacity.scrim),
+            color: AiTone.surfaceTint(context)
+                .withValues(alpha: AppOpacity.scrim),
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(color: AiTone.outline(context)),
           ),
@@ -447,9 +445,8 @@ InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {
         vertical: 1,
       ),
       decoration: BoxDecoration(
-        color: AiTone.surfaceTint(
-          context,
-        ).withValues(alpha: AppOpacity.prominent),
+        color: AiTone.surfaceTint(context)
+            .withValues(alpha: AppOpacity.prominent),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Text(

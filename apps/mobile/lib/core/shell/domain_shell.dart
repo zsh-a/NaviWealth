@@ -117,8 +117,9 @@ DomainOptIns currentOptIns(Ref ref) =>
 
 /// Localised builder hook — domains expose a function that takes
 /// [AppLocalizations] so labels stay i18n-clean.
-typedef DomainShellSpecBuilder =
-    DomainShellSpec Function(AppLocalizations l10n);
+typedef DomainShellSpecBuilder = DomainShellSpec Function(
+  AppLocalizations l10n,
+);
 
 // ─── Path → domain spec helpers ───
 //

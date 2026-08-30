@@ -19,8 +19,8 @@
 ///   - `> ` blockquotes (multiline)
 ///   - `---` / `***` / `___` horizontal rule
 ///   - GFM tables with `:---`/`:---:`/`---:` alignment
-///   - `[label](url)` links (styled, non-clickable — url_launcher isn't
-///     a dependency; SelectableText lets the user copy)
+///   - `[label](url)` links (tappable; confirmed links open externally
+///     via url_launcher)
 ///   - ``` ```flow ``` ``` fenced flow diagrams (vertical card-based flowchart)
 ///
 /// Trailing inline span (e.g. the streaming caret) is appended to the

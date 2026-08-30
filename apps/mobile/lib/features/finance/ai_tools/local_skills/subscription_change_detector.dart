@@ -17,6 +17,7 @@ library;
 
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
+
 import 'recurring_detector.dart';
 import 'transaction_input.dart';
 

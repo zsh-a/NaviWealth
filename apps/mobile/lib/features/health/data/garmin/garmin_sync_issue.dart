@@ -137,9 +137,9 @@ extension GarminSyncIssueListX on Iterable<GarminSyncIssue> {
   List<GarminSyncIssue> get fatal =>
       where((issue) => issue.isFatal).toList(growable: false);
 
-  List<GarminSyncIssue> get warnings => where(
-    (issue) => issue.severity == GarminSyncIssueSeverity.warning,
-  ).toList(growable: false);
+  List<GarminSyncIssue> get warnings =>
+      where((issue) => issue.severity == GarminSyncIssueSeverity.warning)
+          .toList(growable: false);
 
   bool get requiresReconnect => any((issue) => issue.requiresReconnect);
 

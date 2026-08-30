@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../data/event_timeline_providers.dart';
 import '../domain/reporting/event_timeline.dart';
 

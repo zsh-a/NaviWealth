@@ -245,9 +245,8 @@ class _WaterfallRow extends StatelessWidget {
                       Container(
                         height: 14,
                         decoration: BoxDecoration(
-                          color: AiTone.outline(
-                            context,
-                          ).withValues(alpha: AppOpacity.medium),
+                          color: AiTone.outline(context)
+                              .withValues(alpha: AppOpacity.medium),
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                       ),
@@ -276,9 +275,8 @@ class _WaterfallRow extends StatelessWidget {
               width: AppControlWidths.traceDuration,
               child: Text(
                 '${span.durationMs}ms',
-                style: AiType.meta(
-                  context,
-                ).copyWith(color: AiTone.muted(context)),
+                style: AiType.meta(context)
+                    .copyWith(color: AiTone.muted(context)),
                 textAlign: TextAlign.right,
               ),
             ),
@@ -376,9 +374,8 @@ class _SpanDetail extends StatelessWidget {
             const SizedBox(height: AppSpacing.s10),
             Text(
               l10n.aiTraceNoPayloadCaptured,
-              style: AiType.meta(
-                context,
-              ).copyWith(color: AiTone.muted(context)),
+              style: AiType.meta(context)
+                  .copyWith(color: AiTone.muted(context)),
             ),
           ],
         ],
@@ -396,17 +393,15 @@ class _SpanDetail extends StatelessWidget {
             width: AppControlWidths.traceDetailKey,
             child: Text(
               k,
-              style: AiType.meta(
-                context,
-              ).copyWith(color: AiTone.muted(context)),
+              style: AiType.meta(context)
+                  .copyWith(color: AiTone.muted(context)),
             ),
           ),
           Expanded(
             child: Text(
               v,
-              style: AiType.meta(
-                context,
-              ).copyWith(fontFamily: 'monospace', color: tone),
+              style: AiType.meta(context)
+                  .copyWith(fontFamily: 'monospace', color: tone),
             ),
           ),
         ],

@@ -147,8 +147,8 @@ class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
                 onPress: () => setState(() => _fullMode = !_fullMode),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 6,
+                    horizontal: AppSpacing.s4,
+                    vertical: AppSpacing.s6,
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -165,9 +165,8 @@ class _ProposalEditSheetState extends ConsumerState<ProposalEditSheet> {
                         _fullMode
                             ? l10n.aiChatProposalEditStandardFields
                             : l10n.aiChatProposalEditMoreFields,
-                        style: AiType.meta(
-                          context,
-                        ).copyWith(color: AiTone.active(context)),
+                        style: AiType.meta(context)
+                            .copyWith(color: AiTone.active(context)),
                       ),
                     ],
                   ),

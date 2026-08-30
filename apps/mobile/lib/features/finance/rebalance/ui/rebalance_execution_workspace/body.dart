@@ -251,7 +251,7 @@ class _WorkspaceBody extends StatelessWidget {
                   title: l10n.rebalanceExecutionEmptyQueue,
                   action: FButton(
                     variant: FButtonVariant.outline,
-                    onPress: () => Navigator.of(context).maybePop(),
+                    onPress: () => smartPop(context),
                     child: Text(l10n.commonClose),
                   ),
                 ),

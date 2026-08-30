@@ -119,23 +119,25 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistrationProvider
-              .overrideWithValue(const <DomainAgentRegistration>[
-                DomainAgentRegistration(
-                  agent: _FakeAgent(),
-                  domain: DomainScope.finance,
-                ),
-              ]),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: _FakeAgent(),
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -200,23 +202,25 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistrationProvider
-              .overrideWithValue(const <DomainAgentRegistration>[
-                DomainAgentRegistration(
-                  agent: _FakeAgent(),
-                  domain: DomainScope.finance,
-                ),
-              ]),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: _FakeAgent(),
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -308,34 +312,36 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistrationProvider
-              .overrideWithValue(const <DomainAgentRegistration>[
-                DomainAgentRegistration(
-                  agent: readyAgent,
-                  domain: DomainScope.finance,
-                ),
-                DomainAgentRegistration(
-                  agent: failedAgent,
-                  domain: DomainScope.finance,
-                ),
-              ]),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-                'failed_agent': AgentPresentationSpec(
-                  agentId: 'failed_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.triangleAlert,
-                  label: _failedAgentLabel,
-                  description: _failedAgentDescription,
-                ),
-              }),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: readyAgent,
+                domain: DomainScope.finance,
+              ),
+              DomainAgentRegistration(
+                agent: failedAgent,
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+              'failed_agent': AgentPresentationSpec(
+                agentId: 'failed_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.triangleAlert,
+                label: _failedAgentLabel,
+                description: _failedAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -421,23 +427,25 @@ void main() {
         overrides: [
           appDatabaseProvider.overrideWith((_) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistrationProvider
-              .overrideWithValue(const <DomainAgentRegistration>[
-                DomainAgentRegistration(
-                  agent: _FakeAgent(),
-                  domain: DomainScope.finance,
-                ),
-              ]),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentRegistrationProvider.overrideWithValue(
+            const <DomainAgentRegistration>[
+              DomainAgentRegistration(
+                agent: _FakeAgent(),
+                domain: DomainScope.finance,
+              ),
+            ],
+          ),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -499,16 +507,17 @@ void main() {
               ),
             ],
           ),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -583,16 +592,17 @@ void main() {
               ),
             ],
           ),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -660,16 +670,17 @@ void main() {
               ),
             ],
           ),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -799,16 +810,17 @@ void main() {
               ),
             ],
           ),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -905,16 +917,17 @@ void main() {
               ),
             ],
           ),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),
@@ -1002,16 +1015,17 @@ void main() {
               ),
             ],
           ),
-          agentPresentationSpecsProvider
-              .overrideWithValue(const <String, AgentPresentationSpec>{
-                'fake_agent': AgentPresentationSpec(
-                  agentId: 'fake_agent',
-                  domain: DomainScope.finance,
-                  icon: FLucideIcons.walletCards,
-                  label: _fakeAgentLabel,
-                  description: _fakeAgentDescription,
-                ),
-              }),
+          agentPresentationSpecsProvider.overrideWithValue(
+            const <String, AgentPresentationSpec>{
+              'fake_agent': AgentPresentationSpec(
+                agentId: 'fake_agent',
+                domain: DomainScope.finance,
+                icon: FLucideIcons.walletCards,
+                label: _fakeAgentLabel,
+                description: _fakeAgentDescription,
+              ),
+            },
+          ),
           agent_providers.agentPreferenceStoreProvider.overrideWith(
             (ref) async => preferenceStore,
           ),

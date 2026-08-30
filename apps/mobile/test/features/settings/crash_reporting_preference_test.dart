@@ -68,29 +68,26 @@ void main() {
   group('crashReporterProvider opt-in wiring', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    test(
-      'reporter drops events while preference is disabled, forwards once enabled',
-      () async {
-        final prefs = await SharedPreferences.getInstance();
-        final spy = _SpyReporter();
-        final c = _container(prefs, spy);
-        addTearDown(c.dispose);
+    test('reporter drops events while preference is disabled, forwards once enabled', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final spy = _SpyReporter();
+      final c = _container(prefs, spy);
+      addTearDown(c.dispose);
 
-        // Default = off. captureError must not reach the delegate.
-        c.read(crashReporterProvider).captureError(StateError('first'));
-        expect(spy.captured, isEmpty);
+      // Default = off. captureError must not reach the delegate.
+      c.read(crashReporterProvider).captureError(StateError('first'));
+      expect(spy.captured, isEmpty);
 
-        // Flip the toggle on; provider re-emits so the next read sees the
-        // enabled wrapper.
-        await c.read(crashReportingEnabledProvider.notifier).setEnabled(true);
-        c.read(crashReporterProvider).captureError(StateError('second'));
-        expect(spy.captured, hasLength(1));
-        expect(
-          (spy.captured.single as StateError).message,
-          'second',
-          reason: 'only events after opt-in reach the delegate',
-        );
-      },
-    );
+      // Flip the toggle on; provider re-emits so the next read sees the
+      // enabled wrapper.
+      await c.read(crashReportingEnabledProvider.notifier).setEnabled(true);
+      c.read(crashReporterProvider).captureError(StateError('second'));
+      expect(spy.captured, hasLength(1));
+      expect(
+        (spy.captured.single as StateError).message,
+        'second',
+        reason: 'only events after opt-in reach the delegate',
+      );
+    });
   });
 }

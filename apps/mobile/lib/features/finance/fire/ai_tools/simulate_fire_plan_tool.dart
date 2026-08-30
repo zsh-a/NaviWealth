@@ -115,8 +115,7 @@ class SimulateFirePlanTool implements DeviceTool {
     );
     return <String, Object?>{
       'simulation': simulated.toJson(),
-      'note':
-          'Simulation only — no plan changes were persisted. Use propose_fire_plan_update to apply.',
+      'note': 'Simulation only — no plan changes were persisted. Use propose_fire_plan_update to apply.',
     };
   }
 }

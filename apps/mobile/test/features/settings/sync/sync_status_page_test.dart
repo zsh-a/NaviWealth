@@ -226,9 +226,9 @@ void main() {
     expect(clipboardCall?.method, 'Clipboard.setData');
     final clipboardArguments =
         clipboardCall?.arguments as Map<Object?, Object?>;
-    final evidence =
-        jsonDecode(clipboardArguments['text']! as String)
-            as Map<String, Object?>;
+    final evidence = jsonDecode(
+      clipboardArguments['text']! as String,
+    ) as Map<String, Object?>;
     expect(evidence['gate_status'], 'passing');
     expect(evidence, isNot(contains('row_ids')));
     expect(evidence, isNot(contains('payloads')));

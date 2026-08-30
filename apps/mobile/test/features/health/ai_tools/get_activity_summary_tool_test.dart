@@ -182,8 +182,7 @@ void main() {
             kind: HealthMetricKind.workoutSession,
             value: 30 * 60,
             unit: 's',
-            payloadJson:
-                '{"activity_type":"running","total_distance_meters":5000,"total_energy_kcal":250}',
+            payloadJson: '{"activity_type":"running","total_distance_meters":5000,"total_energy_kcal":250}',
             sync: SyncMeta(
               ownerUserId: 'u',
               updatedAt: d1,

@@ -34,9 +34,9 @@ void main() {
 
   test('localization copy does not expose implementation placeholders', () {
     for (final path in const ['lib/l10n/app_en.arb', 'lib/l10n/app_zh.arb']) {
-      final visibleValues = _visibleMessages(
-        _readArb(path),
-      ).values.join('\n').toLowerCase();
+      final visibleValues = _visibleMessages(_readArb(path)).values
+          .join('\n')
+          .toLowerCase();
 
       expect(visibleValues, isNot(contains('fir-')), reason: path);
       expect(visibleValues, isNot(contains('coming soon')), reason: path);

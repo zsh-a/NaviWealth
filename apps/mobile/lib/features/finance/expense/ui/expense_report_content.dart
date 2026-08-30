@@ -184,9 +184,9 @@ class _ExpenseReportRangeSheetState extends State<_ExpenseReportRangeSheet> {
                 child: FButton(
                   onPress: selected == null
                       ? null
-                      : () => Navigator.of(
-                          context,
-                        ).pop((from: selected.$1, to: selected.$2)),
+                      : () =>
+                            Navigator.of(context)
+                                .pop((from: selected.$1, to: selected.$2)),
                   child: Text(l10n.commonConfirm),
                 ),
               ),

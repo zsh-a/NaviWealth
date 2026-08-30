@@ -421,9 +421,8 @@ class _CashFormPageState extends ConsumerState<CashFormPage>
         AppMessenger.show(
           context,
           ToastKind.error,
-          AppLocalizations.of(
-            context,
-          ).cashFormLoadError(userSafeErrorMessage(context, error)),
+          AppLocalizations.of(context)
+              .cashFormLoadError(userSafeErrorMessage(context, error)),
         );
       }
     });

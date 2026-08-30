@@ -266,9 +266,8 @@ class _WarningCallout extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border(
           left: BorderSide(
-            color: AiTone.active(
-              context,
-            ).withValues(alpha: AppOpacity.prominent),
+            color: AiTone.active(context)
+                .withValues(alpha: AppOpacity.prominent),
             width: AppStroke.branch,
           ),
         ),

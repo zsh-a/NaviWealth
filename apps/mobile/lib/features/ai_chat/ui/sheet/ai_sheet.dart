@@ -7,9 +7,9 @@
 ///
 ///  - **conversation** (`invocation == null`): resumes the user's
 ///    default thread via [defaultChatSessionProvider] and shows the
-///    composer, optionally [prefill]ed. Mobile → 70 vh bottom sheet;
-///    tablet / desktop → a 480×600 draggable floating card whose
-///    position persists across opens.
+///    composer, optionally [prefill]ed. Mobile → near-full-height
+///    (0.95 height factor) bottom sheet; tablet / desktop → a 480×600
+///    draggable floating card whose position persists across opens.
 ///  - **invocation** (`invocation != null`): the object-semantic
 ///    surface. Spins up a fresh thread titled from the intent, fires
 ///    the rendered prompt immediately, offers structured `ask_user`
@@ -387,8 +387,8 @@ class _AiSheetShellState extends ConsumerState<AiSheetShell> {
               : ChatConversationView(
                   sessionId: activeId,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: AppSpacing.s12,
+                    vertical: AppSpacing.s8,
                   ),
                   onDecisionSelect: (selection) {
                     final routeCtx = ref.read(aiContextProvider);

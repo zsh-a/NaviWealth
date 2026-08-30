@@ -6,8 +6,11 @@ import 'cash_flow_event.dart';
 import 'cash_flow_kind.dart';
 import 'cash_flow_ledger_entry.dart';
 
-typedef CashFlowBaseAmountConverter =
-    Decimal? Function(Decimal amount, String currency, DateTime date);
+typedef CashFlowBaseAmountConverter = Decimal? Function(
+  Decimal amount,
+  String currency,
+  DateTime date,
+);
 
 CashFlowEvent? classifyCashFlowEvent(
   CashFlowLedgerEntry entry, {

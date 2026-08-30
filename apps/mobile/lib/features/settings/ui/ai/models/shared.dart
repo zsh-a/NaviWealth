@@ -28,9 +28,8 @@ class _StatusChip extends StatelessWidget {
           if (progress != null) ...[
             const SizedBox(width: AppSpacing.s6),
             Text(
-              AppFormatters(
-                locale: Localizations.localeOf(context),
-              ).percent(progress!, decimalDigits: 0),
+              AppFormatters(locale: Localizations.localeOf(context))
+                  .percent(progress!, decimalDigits: 0),
               style: context.theme.typography.body.xs2.copyWith(color: color),
             ),
           ],

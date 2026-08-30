@@ -79,12 +79,10 @@ void main() {
 
   test('native iOS task registration mirrors Dart task identifiers', () {
     final appRoot = _appRoot();
-    final infoPlist = File(
-      '${appRoot.path}/ios/Runner/Info.plist',
-    ).readAsStringSync();
-    final appDelegate = File(
-      '${appRoot.path}/ios/Runner/AppDelegate.swift',
-    ).readAsStringSync();
+    final infoPlist = File('${appRoot.path}/ios/Runner/Info.plist')
+        .readAsStringSync();
+    final appDelegate = File('${appRoot.path}/ios/Runner/AppDelegate.swift')
+        .readAsStringSync();
     final callback = File(
       '${appRoot.path}/lib/core/background/background_callback.dart',
     ).readAsStringSync();

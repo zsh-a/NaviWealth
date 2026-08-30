@@ -845,9 +845,10 @@ List<ExpenseCategory> _selectableExpenseCategories(
 List<ExpenseCategory> _availableBudgetCategories(
   List<ExpenseCategory> categories,
   Set<String> existingCategoryIds,
-) => _selectableExpenseCategories(
-  categories,
-).where((category) => !existingCategoryIds.contains(category.id)).toList();
+) =>
+    _selectableExpenseCategories(categories)
+        .where((category) => !existingCategoryIds.contains(category.id))
+        .toList();
 
 Map<String, Decimal> _totalsByCurrency(List<BudgetRow> rows) {
   final totalsByCurrency = <String, Decimal>{};

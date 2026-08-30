@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:decimal/decimal.dart';
 
 import 'package:naviwealth/core/format/formatters.dart';
+
 import 'fire_goal.dart';
 import 'fire_projection.dart';
 

@@ -29,8 +29,9 @@ final backupServiceProvider = FutureProvider<BackupService?>((ref) async {
   );
 });
 
-typedef BackupExportRunner =
-    Future<Uint8List> Function({required String passphrase});
+typedef BackupExportRunner = Future<Uint8List> Function({
+  required String passphrase,
+});
 
 final backupExportRunnerProvider = FutureProvider<BackupExportRunner?>((
   ref,
@@ -42,11 +43,10 @@ final backupExportRunnerProvider = FutureProvider<BackupExportRunner?>((
   };
 });
 
-typedef DomainBackupExportRunner =
-    Future<Uint8List> Function({
-      required String passphrase,
-      required DomainScope domain,
-    });
+typedef DomainBackupExportRunner = Future<Uint8List> Function({
+  required String passphrase,
+  required DomainScope domain,
+});
 
 final domainBackupExportRunnerProvider =
     FutureProvider<DomainBackupExportRunner?>((ref) async {
@@ -57,11 +57,10 @@ final domainBackupExportRunnerProvider =
       };
     });
 
-typedef BackupRestoreRunner =
-    Future<RestoreResult> Function({
-      required String passphrase,
-      required Uint8List fileBytes,
-    });
+typedef BackupRestoreRunner = Future<RestoreResult> Function({
+  required String passphrase,
+  required Uint8List fileBytes,
+});
 
 final backupRestoreRunnerProvider = FutureProvider<BackupRestoreRunner?>((
   ref,
@@ -79,12 +78,11 @@ final backupRestoreRunnerProvider = FutureProvider<BackupRestoreRunner?>((
   };
 });
 
-typedef DomainBackupRestoreRunner =
-    Future<RestoreResult> Function({
-      required String passphrase,
-      required Uint8List fileBytes,
-      required DomainScope domain,
-    });
+typedef DomainBackupRestoreRunner = Future<RestoreResult> Function({
+  required String passphrase,
+  required Uint8List fileBytes,
+  required DomainScope domain,
+});
 
 final domainBackupRestoreRunnerProvider =
     FutureProvider<DomainBackupRestoreRunner?>((ref) async {

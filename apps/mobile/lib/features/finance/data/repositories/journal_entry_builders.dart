@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
+
 import 'journal_entry_repository.dart';
 
 part 'journal_entry_builders_balances.dart';

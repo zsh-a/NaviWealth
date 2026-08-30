@@ -267,9 +267,9 @@ class _FakeOptionsChainProvider implements OptionsChainProvider {
   }
 }
 
-OptionsStrategyProfile _profile() => defaultProfileForMode(
-  OptionsStrategyMode.balanced,
-).copyWith(riskDisclosureAckAt: DateTime.utc(2026, 5, 21));
+OptionsStrategyProfile _profile() =>
+    defaultProfileForMode(OptionsStrategyMode.balanced)
+        .copyWith(riskDisclosureAckAt: DateTime.utc(2026, 5, 21));
 
 ApprovedUnderlying _approved({
   required String symbol,

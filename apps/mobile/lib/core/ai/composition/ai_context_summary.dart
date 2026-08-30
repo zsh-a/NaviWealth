@@ -74,8 +74,9 @@ enum AiContextTone { positive, neutral, attention }
 
 /// Builds the summary at render time so domain producers can capture
 /// raw upstream data without committing to a locale.
-typedef AiContextSummaryBuilder =
-    AiContextSummary Function(AppLocalizations l10n);
+typedef AiContextSummaryBuilder = AiContextSummary Function(
+  AppLocalizations l10n,
+);
 
 /// Active builder for the current build. Default returns
 /// [AiContextSummary.empty] for every locale, so a domain-less build

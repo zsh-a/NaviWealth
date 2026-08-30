@@ -86,8 +86,10 @@ abstract interface class AgentRuntimeEffectStepRunner {
   });
 }
 
-typedef AgentRuntimeTraceRecordErrorHandler =
-    void Function(Object error, StackTrace stackTrace);
+typedef AgentRuntimeTraceRecordErrorHandler = void Function(
+  Object error,
+  StackTrace stackTrace,
+);
 
 class AgentRuntimeEffectPlanBinding {
   AgentRuntimeEffectPlanBinding({

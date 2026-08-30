@@ -77,15 +77,13 @@ class _AssistantBody extends StatelessWidget {
               // decode `get_holdings`, and we drop the monospace face so
               // mixed CJK/ASCII renders consistently.
               l10n.aiChatRunningTool(friendlyToolName(l10n, pendingToolName!)),
-              style: AiType.meta(
-                context,
-              ).copyWith(color: AiTone.active(context)),
+              style: AiType.meta(context)
+                  .copyWith(color: AiTone.active(context)),
             ),
             const SizedBox(width: AppSpacing.s2),
             _TypingDots(
-              color: AiTone.active(
-                context,
-              ).withValues(alpha: AppOpacity.strong),
+              color: AiTone.active(context)
+                  .withValues(alpha: AppOpacity.strong),
             ),
           ],
         );

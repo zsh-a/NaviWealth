@@ -7,6 +7,7 @@ import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../domain/options_opportunity.dart';
 import 'leaps_call_position_sheet.dart';
 import 'trade_journal_sheet.dart';
@@ -59,9 +60,8 @@ class _DetailBody extends ConsumerWidget {
     final metrics = opportunity.metrics;
     final colors = context.theme.colors;
     final contract = opportunity.contract;
-    final expiry = MaterialLocalizations.of(
-      context,
-    ).formatShortDate(contract.expiration.toLocal());
+    final expiry = MaterialLocalizations.of(context)
+        .formatShortDate(contract.expiration.toLocal());
     String pct(Decimal value) =>
         formatters.percent(value.toDouble(), decimalDigits: 1);
     String money(Money value) =>

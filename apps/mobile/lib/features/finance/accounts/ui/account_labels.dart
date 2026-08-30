@@ -1,4 +1,5 @@
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+
 import '../../../../l10n/gen/app_localizations.dart';
 
 /// Localised label for the wealth-container [AccountCategory] the user

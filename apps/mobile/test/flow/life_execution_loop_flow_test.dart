@@ -59,9 +59,8 @@ void main() {
       final outcomeContext = tester.element(
         find.text('Health: signal still detected'),
       );
-      ProviderScope.containerOf(
-        outcomeContext,
-      ).invalidate(recoverySignalProvider);
+      ProviderScope.containerOf(outcomeContext)
+          .invalidate(recoverySignalProvider);
       await tester.pumpAndSettle();
       review.expectOutcome('Health: signal no longer detected');
       await closeApp(tester);

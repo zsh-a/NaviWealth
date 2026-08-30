@@ -8,6 +8,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../data/recurring_transaction_providers.dart';
 import '../data/recurring_transaction_repository.dart';
 import '../domain/recurrence_engine.dart';

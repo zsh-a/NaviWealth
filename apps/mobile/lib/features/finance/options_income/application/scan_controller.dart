@@ -4,6 +4,7 @@ import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
+
 import '../data/providers.dart';
 import 'leaps_scan_targets.dart';
 import 'scan_inputs_bridge.dart';

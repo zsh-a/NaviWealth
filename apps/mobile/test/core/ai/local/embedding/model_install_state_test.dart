@@ -93,9 +93,8 @@ class _FallbackDownloader extends ModelDownloader {
     await Directory(destDir).create(recursive: true);
     onProgress?.call(100, 100);
     for (final file in bundle.files) {
-      await File(
-        p.join(destDir, file.localName),
-      ).writeAsBytes(List<int>.filled(file.sizeBytes!, 1));
+      await File(p.join(destDir, file.localName))
+          .writeAsBytes(List<int>.filled(file.sizeBytes!, 1));
     }
   }
 }

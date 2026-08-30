@@ -74,7 +74,7 @@ class AssetDetailPage extends ConsumerWidget {
                 title: l10n.assetDetailNotFound,
                 action: FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(context).maybePop(),
+                  onPress: () => smartPop(context),
                   child: Text(l10n.commonClose),
                 ),
               ),
@@ -100,7 +100,7 @@ class AssetDetailPage extends ConsumerWidget {
                 title: l10n.assetDetailUnsupportedType,
                 action: FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(context).maybePop(),
+                  onPress: () => smartPop(context),
                   child: Text(l10n.commonClose),
                 ),
               ),

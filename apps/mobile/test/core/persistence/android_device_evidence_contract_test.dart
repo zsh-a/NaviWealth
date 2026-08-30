@@ -5,9 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('Android CI fails closed when database evidence is incomplete', () {
     final runner = File('tool/run-android-integration.sh').readAsStringSync();
-    final workflow = File(
-      '../../.github/workflows/integration-device.yml',
-    ).readAsStringSync();
+    final workflow = File('../../.github/workflows/integration-device.yml')
+        .readAsStringSync();
     final databaseTest = File(
       'integration_test/database_boot_integration_test.dart',
     ).readAsStringSync();

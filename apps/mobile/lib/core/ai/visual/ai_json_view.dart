@@ -38,9 +38,8 @@ class AiJsonView extends StatelessWidget {
               Expanded(
                 child: Text(
                   label!,
-                  style: AiType.meta(
-                    context,
-                  ).copyWith(color: AiTone.muted(context)),
+                  style: AiType.meta(context)
+                      .copyWith(color: AiTone.muted(context)),
                 ),
               )
             else
@@ -64,9 +63,8 @@ class AiJsonView extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(AppSpacing.s10),
           decoration: BoxDecoration(
-            color: AiTone.surfaceTint(
-              context,
-            ).withValues(alpha: AppOpacity.disabled),
+            color: AiTone.surfaceTint(context)
+                .withValues(alpha: AppOpacity.disabled),
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           child: _JsonNode(value: value, depth: 0, propertyKey: null),
@@ -185,21 +183,18 @@ class _JsonNodeState extends State<_JsonNode> {
                     if (keyPrefix != null)
                       TextSpan(
                         text: '$keyPrefix: ',
-                        style: _mono(
-                          context,
-                        ).copyWith(color: AiTone.muted(context)),
+                        style: _mono(context)
+                            .copyWith(color: AiTone.muted(context)),
                       ),
                     TextSpan(
                       text: _expanded ? open : '$open … $close',
-                      style: _mono(
-                        context,
-                      ).copyWith(color: AiTone.muted(context)),
+                      style: _mono(context)
+                          .copyWith(color: AiTone.muted(context)),
                     ),
                     TextSpan(
                       text: '  $count',
-                      style: AiType.meta(
-                        context,
-                      ).copyWith(color: AiTone.muted(context)),
+                      style: AiType.meta(context)
+                          .copyWith(color: AiTone.muted(context)),
                     ),
                   ],
                 ),
@@ -228,9 +223,8 @@ class _JsonNodeState extends State<_JsonNode> {
                       ...children,
                       Text(
                         close,
-                        style: _mono(
-                          context,
-                        ).copyWith(color: AiTone.muted(context)),
+                        style: _mono(context)
+                            .copyWith(color: AiTone.muted(context)),
                       ),
                     ],
                   ),

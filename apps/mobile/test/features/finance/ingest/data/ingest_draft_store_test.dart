@@ -131,9 +131,9 @@ void main() {
       ),
     ]);
 
-    final parsed = (await store.listByStatus(
-      DraftStatus.pending,
-    )).single.parsed;
+    final parsed = (await store.listByStatus(DraftStatus.pending))
+        .single
+        .parsed;
     expect(parsed.kind, IngestTransactionKind.trade);
     expect(parsed.instrumentSymbol, 'AAPL');
     expect(parsed.quantity, '10');

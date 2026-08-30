@@ -12,9 +12,9 @@ AiTrace _seed() => const AiTrace(
   totalDurationMs: 0,
 );
 
-DateTime _at(int msAfterStart) => DateTime.parse(
-  '2026-05-17T10:00:00.000Z',
-).add(Duration(milliseconds: msAfterStart));
+DateTime _at(int msAfterStart) =>
+    DateTime.parse('2026-05-17T10:00:00.000Z')
+        .add(Duration(milliseconds: msAfterStart));
 
 void main() {
   group('AiTraceBuilder spans', () {

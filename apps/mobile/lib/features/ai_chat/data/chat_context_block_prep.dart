@@ -23,7 +23,6 @@ class ChatContextPrepRequest {
   final String? systemContext;
 }
 
-typedef ChatContextBlockPrep =
-    Future<List<AgentRuntimeContextBlock>> Function(
-      ChatContextPrepRequest request,
-    );
+typedef ChatContextBlockPrep = Future<List<AgentRuntimeContextBlock>> Function(
+  ChatContextPrepRequest request,
+);

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+
 import 'fire_action.dart';
 
 /// Snake-case wire name for a [FireStressScenario]. AI tools and review

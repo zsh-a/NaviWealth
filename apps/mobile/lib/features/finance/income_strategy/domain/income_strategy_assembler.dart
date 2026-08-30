@@ -1,4 +1,5 @@
 import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
+
 import 'income_strategy.dart';
 import 'income_strategy_plan.dart';
 import 'income_strategy_rule.dart';

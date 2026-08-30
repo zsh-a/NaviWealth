@@ -1,10 +1,9 @@
 import '../../core/ai/contracts/interaction.dart';
 
-typedef VoiceInteractionResponseDecoder =
-    AiInteractionResponse? Function(
-      AiInteractionEnvelope interaction,
-      String transcript,
-    );
+typedef VoiceInteractionResponseDecoder = AiInteractionResponse? Function(
+  AiInteractionEnvelope interaction,
+  String transcript,
+);
 
 /// Converts only unambiguous, non-typed voice responses into the existing HITL
 /// contract. Typed confirmation deliberately returns null so the host keeps

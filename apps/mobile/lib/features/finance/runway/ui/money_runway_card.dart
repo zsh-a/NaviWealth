@@ -23,7 +23,27 @@ class MoneyRunwayCard extends ConsumerWidget {
         padding: EdgeInsets.all(AppSpacing.s16),
         child: SkeletonBox(height: 112, radius: AppRadius.md),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      // Keep the card with an em-dash value (the `_ValueDash` precedent)
+      // instead of silently dropping the hero metric.
+      error: (_, _) => SoftCard.raised(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppMetricHeader(
+              icon: FLucideIcons.calendarRange,
+              title: l10n.moneyRunwayTitle,
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            Text(
+              '—',
+              style: TypographyTokens.numericTitleStrong.copyWith(
+                color: context.theme.colors.mutedForeground,
+              ),
+            ),
+          ],
+        ),
+      ),
       data: (snapshot) {
         if (!snapshot.hasData) return const SizedBox.shrink();
         final formatter = context.formatters(ref);

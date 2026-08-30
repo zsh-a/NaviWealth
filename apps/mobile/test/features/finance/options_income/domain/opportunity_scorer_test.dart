@@ -284,9 +284,9 @@ void main() {
   });
 }
 
-OptionsStrategyProfile _profileBalanced() => defaultProfileForMode(
-  OptionsStrategyMode.balanced,
-).copyWith(riskDisclosureAckAt: DateTime.utc(2026, 5, 21));
+OptionsStrategyProfile _profileBalanced() =>
+    defaultProfileForMode(OptionsStrategyMode.balanced)
+        .copyWith(riskDisclosureAckAt: DateTime.utc(2026, 5, 21));
 
 ApprovedUnderlying _approved({
   required String symbol,

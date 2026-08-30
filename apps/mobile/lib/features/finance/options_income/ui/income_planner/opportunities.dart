@@ -255,9 +255,8 @@ class _OpportunityCard extends ConsumerWidget {
     final colors = context.theme.colors;
     final contract = opportunity.contract;
     final metrics = opportunity.metrics;
-    final expiry = MaterialLocalizations.of(
-      context,
-    ).formatShortDate(contract.expiration.toLocal());
+    final expiry = MaterialLocalizations.of(context)
+        .formatShortDate(contract.expiration.toLocal());
     return SoftCard.flat(
       onPress: () => showOpportunityDetailSheet(context, opportunity),
       borderRadius: AppRadius.lg,

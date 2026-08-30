@@ -256,49 +256,46 @@ void main() {
     },
   );
 
-  test(
-    'waits for the previous interaction session before restarting for a new owner',
-    () async {
-      var activeOwner = ownerUserId;
-      final repo = _FakeChatRepository();
-      final input = _GatedSpeechInput();
-      final container = ProviderContainer(
-        overrides: [
-          activeUserIdProvider.overrideWith((_) => activeOwner),
-          chatRepositoryProvider.overrideWith((_) async => repo),
-          sharedPreferencesProvider.overrideWithValue(preferences),
-          speechInputProvider.overrideWithValue(input),
-        ],
-      );
-      addTearDown(container.dispose);
-      final provider = chatControllerProvider(sessionId);
-      final sub = container.listen(
-        provider,
-        (previous, next) {},
-        fireImmediately: true,
-      );
-      addTearDown(sub.close);
+  test('waits for the previous interaction session before restarting for a new owner', () async {
+    var activeOwner = ownerUserId;
+    final repo = _FakeChatRepository();
+    final input = _GatedSpeechInput();
+    final container = ProviderContainer(
+      overrides: [
+        activeUserIdProvider.overrideWith((_) => activeOwner),
+        chatRepositoryProvider.overrideWith((_) async => repo),
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        speechInputProvider.overrideWithValue(input),
+      ],
+    );
+    addTearDown(container.dispose);
+    final provider = chatControllerProvider(sessionId);
+    final sub = container.listen(
+      provider,
+      (previous, next) {},
+      fireImmediately: true,
+    );
+    addTearDown(sub.close);
 
-      final controller = container.read(provider.notifier);
-      await controller.startVoice();
-      input.sessions.single.emitEnded();
-      await _flush();
-      expect(container.read(provider).voiceListening, isFalse);
+    final controller = container.read(provider.notifier);
+    await controller.startVoice();
+    input.sessions.single.emitEnded();
+    await _flush();
+    expect(container.read(provider).voiceListening, isFalse);
 
-      activeOwner = 'owner-2';
-      container.invalidate(activeUserIdProvider);
-      final restarting = controller.startVoice();
-      await input.firstCancelStarted.future;
-      expect(input.sessions, hasLength(1));
+    activeOwner = 'owner-2';
+    container.invalidate(activeUserIdProvider);
+    final restarting = controller.startVoice();
+    await input.firstCancelStarted.future;
+    expect(input.sessions, hasLength(1));
 
-      input.allowFirstClose.complete();
-      await restarting;
+    input.allowFirstClose.complete();
+    await restarting;
 
-      expect(input.sessions, hasLength(2));
-      expect(container.read(provider).voiceActive, isTrue);
-      await controller.cancelVoice();
-    },
-  );
+    expect(input.sessions, hasLength(2));
+    expect(container.read(provider).voiceActive, isTrue);
+    await controller.cancelVoice();
+  });
 
   test('surfaces asynchronous speech errors with a stable code', () async {
     final repo = _FakeChatRepository();

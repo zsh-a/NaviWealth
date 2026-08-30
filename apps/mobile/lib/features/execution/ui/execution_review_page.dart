@@ -173,7 +173,10 @@ class ExecutionReviewPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return ShellTabScaffold(
+    // Always pushed from the Today greeting header (never a tab root), so
+    // render as an object-detail page: the standard back arrow comes from
+    // appSubPageHeader via ObjectDetailScaffold.
+    return ObjectDetailScaffold(
       title: l10n.executionReviewTitle,
       child: ShellTabPause(
         routePath: ExecutionRoutes.review,

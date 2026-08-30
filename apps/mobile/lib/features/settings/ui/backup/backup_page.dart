@@ -14,8 +14,10 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/data/backup/file_saver.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-typedef BackupFileSaver =
-    Future<bool> Function(Uint8List bytes, String fileName);
+typedef BackupFileSaver = Future<bool> Function(
+  Uint8List bytes,
+  String fileName,
+);
 
 final backupFileSaverProvider = Provider<BackupFileSaver>(
   (ref) => saveBackupFile,

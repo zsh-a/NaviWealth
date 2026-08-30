@@ -65,7 +65,9 @@ class _DecisionCardState extends State<DecisionCard> {
       _submitting = true;
       _localSelectedId = option.id;
     });
-    AppInteraction.signal(AppInteractionIntent.select);
+    // Haptics come from the tappable layer: option tiles use AppTappable
+    // (select) and the custom submit button signals commit, so both entry
+    // points into this handler are already covered.
     widget.onSelect(option, reply);
   }
 
@@ -189,7 +191,9 @@ class _DecisionCardState extends State<DecisionCard> {
                     final canSend = _customCtrl.text.trim().isNotEmpty;
                     return FButton.icon(
                       variant: FButtonVariant.primary,
-                      onPress: canSend ? _submitCustom : null,
+                      onPress: AppInteraction.wrap(
+                        canSend ? _submitCustom : null,
+                      ),
                       child: const Icon(FLucideIcons.arrowUp),
                     );
                   },
@@ -274,9 +278,8 @@ class _OptionTile extends StatelessWidget {
                   ),
                   if (option.recommended)
                     AppBadge(
-                      label: AppLocalizations.of(
-                        context,
-                      ).aiChatRecommendedBadge,
+                      label: AppLocalizations.of(context)
+                          .aiChatRecommendedBadge,
                       tone: AppBadgeTone.accent,
                       size: AppBadgeSize.compact,
                     ),

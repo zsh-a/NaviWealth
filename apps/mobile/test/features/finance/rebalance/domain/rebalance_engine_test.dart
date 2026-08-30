@@ -120,9 +120,8 @@ void main() {
       },
     );
 
-    final plan = const RebalanceEngine(
-      warningThreshold: 0.01,
-    ).compute(snapshot: snapshot, target: target);
+    final plan = const RebalanceEngine(warningThreshold: 0.01)
+        .compute(snapshot: snapshot, target: target);
     final etfResidual = plan.drifts.singleWhere(
       (d) => d.category == AssetCategory.etf && !d.isAssetTarget,
     );
@@ -189,9 +188,8 @@ void main() {
       },
     );
 
-    final plan = const RebalanceEngine(
-      warningThreshold: 0.05,
-    ).compute(snapshot: snapshot, target: target);
+    final plan = const RebalanceEngine(warningThreshold: 0.05)
+        .compute(snapshot: snapshot, target: target);
 
     expect(plan.isBalanced, isTrue);
     expect(plan.drifts.where((d) => d.severity != DriftSeverity.ok), isEmpty);

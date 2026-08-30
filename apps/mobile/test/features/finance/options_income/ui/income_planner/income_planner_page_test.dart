@@ -26,9 +26,8 @@ SyncMeta _meta() => SyncMeta(
 );
 
 OptionsStrategyProfile _profile() {
-  return defaultProfileForMode(
-    OptionsStrategyMode.balanced,
-  ).copyWith(riskDisclosureAckAt: DateTime.utc(2026, 6, 20), sync: _meta());
+  return defaultProfileForMode(OptionsStrategyMode.balanced)
+      .copyWith(riskDisclosureAckAt: DateTime.utc(2026, 6, 20), sync: _meta());
 }
 
 ApprovedUnderlying _approvedUnderlying() {

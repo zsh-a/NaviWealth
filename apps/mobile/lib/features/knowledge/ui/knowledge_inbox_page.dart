@@ -40,20 +40,28 @@ class KnowledgeInboxPage extends ConsumerWidget {
   }
 }
 
-class _InboxContent extends StatelessWidget {
+class _InboxContent extends ConsumerWidget {
   const _InboxContent({required this.recentNotes, required this.dueReviews});
 
   final AsyncValue<List<KnowledgeNote>> recentNotes;
   final AsyncValue<List<KnowledgeDecision>> dueReviews;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     if (recentNotes.isLoading || dueReviews.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return kDefaultLoading;
     }
     if (recentNotes.hasError || dueReviews.hasError) {
-      return AppEmptyState.error(title: l10n.commonLoadFailed, compact: true);
+      return AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        retryLabel: l10n.commonRetry,
+        onRetry: () {
+          ref.invalidate(knowledgeNotesProvider);
+          ref.invalidate(knowledgeDecisionsProvider);
+        },
+        compact: true,
+      );
     }
 
     final notes = recentNotes.asData?.value ?? const <KnowledgeNote>[];

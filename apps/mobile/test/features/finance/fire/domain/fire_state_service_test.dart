@@ -160,27 +160,24 @@ void main() {
       },
     );
 
-    test(
-      'cash bucket between 50% and 100% → topUpCashBucket warning, not critical',
-      () {
-        // Liquid 30_000 → 7.5 months / 12 target → 62.5% → warning.
-        final state = computeFireState(
-          plan: plan(),
-          netWorth: Money(Decimal.parse('2000000'), 'CNY'),
-          investableAssets: Money(Decimal.parse('2000000'), 'CNY'),
-          liquidAssets: Money(Decimal.parse('30000'), 'CNY'),
-          trailingAnnualSpend: null,
-          fireEtaMonths: null,
-          currencyMismatchCount: 0,
-          computedAt: fixedNow,
-        );
-        expect(state.safetyLevel, FireSafetyLevel.cautious);
-        final topUp = state.suggestedActions.firstWhere(
-          (a) => a.kind == FireActionKind.topUpCashBucket,
-        );
-        expect(topUp.severity, FireActionSeverity.warning);
-      },
-    );
+    test('cash bucket between 50% and 100% → topUpCashBucket warning, not critical', () {
+      // Liquid 30_000 → 7.5 months / 12 target → 62.5% → warning.
+      final state = computeFireState(
+        plan: plan(),
+        netWorth: Money(Decimal.parse('2000000'), 'CNY'),
+        investableAssets: Money(Decimal.parse('2000000'), 'CNY'),
+        liquidAssets: Money(Decimal.parse('30000'), 'CNY'),
+        trailingAnnualSpend: null,
+        fireEtaMonths: null,
+        currencyMismatchCount: 0,
+        computedAt: fixedNow,
+      );
+      expect(state.safetyLevel, FireSafetyLevel.cautious);
+      final topUp = state.suggestedActions.firstWhere(
+        (a) => a.kind == FireActionKind.topUpCashBucket,
+      );
+      expect(topUp.severity, FireActionSeverity.warning);
+    });
 
     test('trailing-12m annual spend supersedes plan input', () {
       final state = computeFireState(

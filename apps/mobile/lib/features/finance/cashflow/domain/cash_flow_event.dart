@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+
 import 'cash_flow_kind.dart';
 
 part 'cash_flow_event.freezed.dart';

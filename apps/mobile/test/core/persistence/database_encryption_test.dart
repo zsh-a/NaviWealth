@@ -65,9 +65,8 @@ void main() {
       });
 
       await expectLater(
-        DatabaseEncryptionKeyManager(
-          store,
-        ).loadOrCreate(encryptedDatabaseExists: false),
+        DatabaseEncryptionKeyManager(store)
+            .loadOrCreate(encryptedDatabaseExists: false),
         throwsA(
           isA<DatabaseEncryptionException>().having(
             (error) => error.code,
@@ -209,9 +208,8 @@ void main() {
         await plaintext.close();
 
         original.renameSync('${original.path}.plaintext-backup');
-        File(
-          '${original.path}.encrypting',
-        ).writeAsBytesSync(List<int>.filled(4096, 0x5a));
+        File('${original.path}.encrypting')
+            .writeAsBytesSync(List<int>.filled(4096, 0x5a));
 
         prepareEncryptedDatabaseFile(original.path, _key);
 

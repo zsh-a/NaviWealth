@@ -25,9 +25,8 @@ class _TraceWaterfallBody extends StatelessWidget {
             child: Text(
               AppLocalizations.of(context).aiTransparencyNoSpans,
               textAlign: TextAlign.center,
-              style: AiType.body(
-                context,
-              ).copyWith(color: AiTone.muted(context)),
+              style: AiType.body(context)
+                  .copyWith(color: AiTone.muted(context)),
             ),
           ),
       ],

@@ -111,9 +111,9 @@ void main() {
             variables: [Variable.withString(session.items.first.id)],
           )
           .getSingle();
-      final suggestion =
-          jsonDecode(row.read<String>('suggestion_json'))
-              as Map<String, Object?>;
+      final suggestion = jsonDecode(
+        row.read<String>('suggestion_json'),
+      ) as Map<String, Object?>;
       (suggestion['payload']! as Map<String, Object?>)['future'] = true;
       await db.customUpdate(
         'UPDATE rebalance_execution_items SET suggestion_json = ? WHERE id = ?',
@@ -735,57 +735,54 @@ void main() {
     },
   );
 
-  test(
-    'finalize CAS rejects request changed after pre-read and rolls back callback',
-    () async {
-      final db = _RecoveryRaceDatabase();
-      addTearDown(db.close);
-      final store = RebalanceExecutionStore(db, clock: () => testNow);
-      await db.customStatement(
-        'CREATE TABLE rebalance_tx_probe (id TEXT PRIMARY KEY)',
-      );
-      final ready = await _readyFirst(store);
-      final claim = (await store.claimApply(
+  test('finalize CAS rejects request changed after pre-read and rolls back callback', () async {
+    final db = _RecoveryRaceDatabase();
+    addTearDown(db.close);
+    final store = RebalanceExecutionStore(db, clock: () => testNow);
+    await db.customStatement(
+      'CREATE TABLE rebalance_tx_probe (id TEXT PRIMARY KEY)',
+    );
+    final ready = await _readyFirst(store);
+    final claim = (await store.claimApply(
+      ownerUserId: 'owner-a',
+      itemId: ready.id,
+      leaseDuration: const Duration(minutes: 5),
+    ))!;
+    final replacement = RebalanceExecutionRequestCodec.encode(
+      testRequest(ready.id, owner: 'owner-b'),
+    );
+    db.beforeFinalizeCas = (database) => database
+        .customUpdate(
+          'UPDATE rebalance_execution_items SET request_json = ? WHERE id = ?',
+          variables: [
+            Variable.withString(replacement),
+            Variable.withString(ready.id),
+          ],
+        )
+        .then((_) {});
+
+    await expectLater(
+      store.runApplyTransaction(
         ownerUserId: 'owner-a',
         itemId: ready.id,
-        leaseDuration: const Duration(minutes: 5),
-      ))!;
-      final replacement = RebalanceExecutionRequestCodec.encode(
-        testRequest(ready.id, owner: 'owner-b'),
-      );
-      db.beforeFinalizeCas = (database) => database
-          .customUpdate(
-            'UPDATE rebalance_execution_items SET request_json = ? WHERE id = ?',
-            variables: [
-              Variable.withString(replacement),
-              Variable.withString(ready.id),
-            ],
-          )
-          .then((_) {});
+        attemptToken: claim.token,
+        mutate: (_, _) async {
+          await db.customInsert(
+            "INSERT INTO rebalance_tx_probe VALUES ('request-cas')",
+          );
+          return testReceipt(ready.id);
+        },
+      ),
+      throwsA(isA<RebalanceStaleAttempt>()),
+    );
 
-      await expectLater(
-        store.runApplyTransaction(
-          ownerUserId: 'owner-a',
-          itemId: ready.id,
-          attemptToken: claim.token,
-          mutate: (_, _) async {
-            await db.customInsert(
-              "INSERT INTO rebalance_tx_probe VALUES ('request-cas')",
-            );
-            return testReceipt(ready.id);
-          },
-        ),
-        throwsA(isA<RebalanceStaleAttempt>()),
-      );
-
-      final row = await _rawItem(db, ready.id);
-      expect(await _probeRows(db), isEmpty);
-      expect(row.read<String>('state'), 'applying');
-      expect(row.read<String>('attempt_token'), claim.token);
-      expect(row.read<String>('request_json'), ready.rawRequestJson);
-      expect(row.read<String?>('receipt_json'), isNull);
-    },
-  );
+    final row = await _rawItem(db, ready.id);
+    expect(await _probeRows(db), isEmpty);
+    expect(row.read<String>('state'), 'applying');
+    expect(row.read<String>('attempt_token'), claim.token);
+    expect(row.read<String>('request_json'), ready.rawRequestJson);
+    expect(row.read<String?>('receipt_json'), isNull);
+  });
 
   test(
     'expired lease can be reclaimed and old token cannot renew or finalize',

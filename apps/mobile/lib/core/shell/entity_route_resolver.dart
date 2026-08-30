@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 typedef EntityRouteResolver = String? Function(EntityRouteRef ref);
-typedef SourceRouteResolver =
-    String? Function(String sourceRowFamily, String sourceRowId);
+typedef SourceRouteResolver = String? Function(
+  String sourceRowFamily,
+  String sourceRowId,
+);
 
 /// Domain-neutral reference to a persisted entity that may have an app route.
 ///

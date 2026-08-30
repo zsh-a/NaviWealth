@@ -64,9 +64,15 @@ class _DeferredLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const FScaffold(
+    return FScaffold(
+      // A slow first visit (web chunk fetch) is still a pushed sub-page:
+      // wire the standard back header so it never renders as a dead end.
+      header: appSubPageHeader(
+        context: context,
+        title: const SizedBox.shrink(),
+      ),
       childPad: false,
-      child: Center(child: FCircularProgress()),
+      child: const Center(child: FCircularProgress()),
     );
   }
 }
@@ -81,6 +87,10 @@ class _DeferredError extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return FScaffold(
+      header: appSubPageHeader(
+        context: context,
+        title: Text(l10n.deferredLoadFailedTitle),
+      ),
       childPad: false,
       child: Center(
         child: Padding(
@@ -94,12 +104,6 @@ class _DeferredError extends StatelessWidget {
                 color: context.theme.colors.destructive,
               ),
               const SizedBox(height: AppSpacing.s12),
-              Text(
-                l10n.deferredLoadFailedTitle,
-                style: context.theme.typography.body.md,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.s4),
               Text(
                 '$error',
                 style: context.captionStyle,

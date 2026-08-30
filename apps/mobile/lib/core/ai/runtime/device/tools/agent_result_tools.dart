@@ -77,8 +77,7 @@ class GetAgentArtifactsTool implements DeviceTool {
       if (!activeAgentIds.contains(agentId)) {
         return <String, Object?>{
           'artifacts': const <Map<String, Object?>>[],
-          'guidance':
-              '该 agent 当前未注册或所属 domain 未启用。不要读取或解释未注册 agent 的 artifact；请先确认对应 domain 和 agent 仍可用。',
+          'guidance': '该 agent 当前未注册或所属 domain 未启用。不要读取或解释未注册 agent 的 artifact；请先确认对应 domain 和 agent 仍可用。',
         };
       }
       final rows = await store.latestForAgent(
@@ -96,8 +95,7 @@ class GetAgentArtifactsTool implements DeviceTool {
       if (!_domainIsActive(domain, domainOptIns)) {
         return <String, Object?>{
           'artifacts': const <Map<String, Object?>>[],
-          'guidance':
-              '该 domain 当前未启用。不要读取或解释未启用 domain 的 agent artifact；请让用户先在 Domains 设置中启用对应 domain。',
+          'guidance': '该 domain 当前未启用。不要读取或解释未启用 domain 的 agent artifact；请让用户先在 Domains 设置中启用对应 domain。',
         };
       }
       artifacts.addAll(
@@ -119,9 +117,7 @@ class GetAgentArtifactsTool implements DeviceTool {
 
     return <String, Object?>{
       'artifacts': artifacts.map(_artifactToWire).toList(growable: false),
-      if (artifacts.isEmpty)
-        'guidance':
-            '没有找到匹配的 agent artifact。不要假设该 agent 从未运行；可再调用 get_agent_runs 查看运行状态。',
+      if (artifacts.isEmpty) 'guidance': '没有找到匹配的 agent artifact。不要假设该 agent 从未运行；可再调用 get_agent_runs 查看运行状态。',
     };
   }
 }
@@ -170,8 +166,7 @@ class GetAgentRunsTool implements DeviceTool {
     if (!activeAgentIds.contains(agentId)) {
       return <String, Object?>{
         'runs': const <Map<String, Object?>>[],
-        'guidance':
-            '该 agent 当前未注册或所属 domain 未启用。不要读取或解释未启用 domain 的 agent run；请让用户先在 Domains 设置中启用对应 domain。',
+        'guidance': '该 agent 当前未注册或所属 domain 未启用。不要读取或解释未启用 domain 的 agent run；请让用户先在 Domains 设置中启用对应 domain。',
       };
     }
     final run = await store.latestForAgent(

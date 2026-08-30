@@ -37,9 +37,8 @@ int? parseMinorUnitAmount(String input) {
 
 int? _parseMinorUnitAmount(String input, {required bool allowNegative}) {
   final value = input.trim();
-  final match = RegExp(
-    r'^(-?)(?:(\d+)(?:\.(\d{0,2}))?|\.(\d{1,2}))$',
-  ).firstMatch(value);
+  final match = RegExp(r'^(-?)(?:(\d+)(?:\.(\d{0,2}))?|\.(\d{1,2}))$')
+      .firstMatch(value);
   if (match == null) return null;
   final negative = match.group(1) == '-';
   if (negative && !allowNegative) return null;

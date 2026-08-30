@@ -76,17 +76,13 @@ void main() {
     addTearDown(container.dispose);
     late Map<String, Object?> output;
     final probe = FutureProvider<void>((ref) async {
-      output =
-          await const GetIncomeStrategyPortfolioTool().invoke(
-                DeviceToolContext(
-                  ref: ref,
-                  session: DeviceSession(
-                    messages: const <AnthropicChatMessage>[],
-                  ),
-                ),
-                const <String, Object?>{'asset_id': 'nasdaq:AAPL'},
-              )
-              as Map<String, Object?>;
+      output = await const GetIncomeStrategyPortfolioTool().invoke(
+        DeviceToolContext(
+          ref: ref,
+          session: DeviceSession(messages: const <AnthropicChatMessage>[]),
+        ),
+        const <String, Object?>{'asset_id': 'nasdaq:AAPL'},
+      ) as Map<String, Object?>;
     });
     container.listen(probe, (_, _) {});
     await container.read(probe.future);

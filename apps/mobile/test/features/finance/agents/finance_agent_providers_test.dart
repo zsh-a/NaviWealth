@@ -17,90 +17,87 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 
 void main() {
-  test(
-    'latestFinanceAgentArtifactsProvider returns one newest artifact per finance agent',
-    () async {
-      final now = DateTime.utc(2026, 7, 5, 12);
-      final artifactStore = _FakeArtifactStore([
-        _artifact(
-          id: 'weekly-old',
-          agentId: kWeeklyWealthReviewAgentId,
-          domain: 'finance',
-          createdAt: now.add(const Duration(minutes: 1)),
-        ),
-        _artifact(
-          id: 'cashflow-latest',
-          agentId: kCashflowAnomalyReviewAgentId,
-          domain: 'finance',
-          createdAt: now.add(const Duration(minutes: 2)),
-        ),
-        _artifact(
-          id: 'weekly-latest',
-          agentId: kWeeklyWealthReviewAgentId,
-          domain: 'finance',
-          createdAt: now.add(const Duration(minutes: 3)),
-        ),
-        _artifact(
-          id: 'options-latest',
-          agentId: kOptionsIncomeRiskReviewAgentId,
-          domain: 'finance',
-          createdAt: now.add(const Duration(minutes: 4)),
-        ),
-        _artifact(
-          id: 'fire-latest',
-          agentId: kFirePlanDriftMonitorAgentId,
-          domain: 'finance',
-          createdAt: now.add(const Duration(minutes: 5)),
-        ),
-        _artifact(
-          id: 'health-newer',
-          agentId: 'weekly_summary',
-          domain: 'health',
-          createdAt: now.add(const Duration(hours: 1)),
-        ),
-      ]);
+  test('latestFinanceAgentArtifactsProvider returns one newest artifact per finance agent', () async {
+    final now = DateTime.utc(2026, 7, 5, 12);
+    final artifactStore = _FakeArtifactStore([
+      _artifact(
+        id: 'weekly-old',
+        agentId: kWeeklyWealthReviewAgentId,
+        domain: 'finance',
+        createdAt: now.add(const Duration(minutes: 1)),
+      ),
+      _artifact(
+        id: 'cashflow-latest',
+        agentId: kCashflowAnomalyReviewAgentId,
+        domain: 'finance',
+        createdAt: now.add(const Duration(minutes: 2)),
+      ),
+      _artifact(
+        id: 'weekly-latest',
+        agentId: kWeeklyWealthReviewAgentId,
+        domain: 'finance',
+        createdAt: now.add(const Duration(minutes: 3)),
+      ),
+      _artifact(
+        id: 'options-latest',
+        agentId: kOptionsIncomeRiskReviewAgentId,
+        domain: 'finance',
+        createdAt: now.add(const Duration(minutes: 4)),
+      ),
+      _artifact(
+        id: 'fire-latest',
+        agentId: kFirePlanDriftMonitorAgentId,
+        domain: 'finance',
+        createdAt: now.add(const Duration(minutes: 5)),
+      ),
+      _artifact(
+        id: 'health-newer',
+        agentId: 'weekly_summary',
+        domain: 'health',
+        createdAt: now.add(const Duration(hours: 1)),
+      ),
+    ]);
 
-      final container = ProviderContainer(
-        overrides: [
-          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
-          agentRegistrationProvider.overrideWith((ref) {
-            return domainAgentRegistrations(ref, [kFinancePack]);
-          }),
-          agentPresentationSpecsProvider.overrideWithValue(
-            domainAgentPresentationSpecs([kFinancePack]),
-          ),
-          agent_providers.agentRunStoreProvider.overrideWith(
-            (ref) async => InMemoryAgentRunStore(),
-          ),
-          agent_providers.agentArtifactStoreProvider.overrideWith(
-            (ref) async => artifactStore,
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final artifacts = await container.read(
-        finance_agent_providers.latestFinanceAgentArtifactsProvider.future,
-      );
-
-      expect(artifacts.map((artifact) => artifact.id), [
-        'fire-latest',
-        'options-latest',
-        'weekly-latest',
-        'cashflow-latest',
-      ]);
-      expect(artifacts.map((artifact) => artifact.domain).toSet(), {'finance'});
-      expect(
-        artifacts.map((artifact) => artifact.agentId).toSet(),
-        containsAll(<String>{
-          kWeeklyWealthReviewAgentId,
-          kCashflowAnomalyReviewAgentId,
-          kFirePlanDriftMonitorAgentId,
-          kOptionsIncomeRiskReviewAgentId,
+    final container = ProviderContainer(
+      overrides: [
+        currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+        agentRegistrationProvider.overrideWith((ref) {
+          return domainAgentRegistrations(ref, [kFinancePack]);
         }),
-      );
-    },
-  );
+        agentPresentationSpecsProvider.overrideWithValue(
+          domainAgentPresentationSpecs([kFinancePack]),
+        ),
+        agent_providers.agentRunStoreProvider.overrideWith(
+          (ref) async => InMemoryAgentRunStore(),
+        ),
+        agent_providers.agentArtifactStoreProvider.overrideWith(
+          (ref) async => artifactStore,
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final artifacts = await container.read(
+      finance_agent_providers.latestFinanceAgentArtifactsProvider.future,
+    );
+
+    expect(artifacts.map((artifact) => artifact.id), [
+      'fire-latest',
+      'options-latest',
+      'weekly-latest',
+      'cashflow-latest',
+    ]);
+    expect(artifacts.map((artifact) => artifact.domain).toSet(), {'finance'});
+    expect(
+      artifacts.map((artifact) => artifact.agentId).toSet(),
+      containsAll(<String>{
+        kWeeklyWealthReviewAgentId,
+        kCashflowAnomalyReviewAgentId,
+        kFirePlanDriftMonitorAgentId,
+        kOptionsIncomeRiskReviewAgentId,
+      }),
+    );
+  });
 }
 
 class _FakeArtifactStore implements AgentArtifactStore {

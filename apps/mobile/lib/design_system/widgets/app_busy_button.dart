@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import 'app_interaction.dart';
 
 /// App-standard button for async actions.
 ///
@@ -25,6 +26,7 @@ class AppBusyButton extends StatelessWidget {
     this.prefix,
     this.busyPrefix,
     this.busyLabel,
+    this.hapticIntent = AppInteractionIntent.commit,
   });
 
   final Key? buttonKey;
@@ -48,6 +50,11 @@ class AppBusyButton extends StatelessWidget {
 
   /// Label shown when busy.  Falls back to [label] when null.
   final String? busyLabel;
+
+  /// Haptic fired when the button is pressed.  Defaults to
+  /// [AppInteractionIntent.commit] because this is the app's async-action
+  /// button; set to null to opt out (e.g. the action itself signals).
+  final AppInteractionIntent? hapticIntent;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +95,12 @@ class AppBusyButton extends StatelessWidget {
       variant: variant,
       size: size ?? FButtonSizeVariant.md,
       prefix: busy ? busyPrefix : prefix,
-      onPress: busy ? null : onPress,
+      onPress: busy
+          ? null
+          : switch (hapticIntent) {
+              final intent? => AppInteraction.wrap(onPress, intent: intent),
+              null => onPress,
+            },
       child: child,
     );
   }

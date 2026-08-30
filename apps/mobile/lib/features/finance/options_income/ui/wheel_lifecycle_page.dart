@@ -12,6 +12,7 @@ import 'package:naviwealth/features/finance/income_strategy/composition/income_s
 import 'package:naviwealth/features/finance/income_strategy/data/providers.dart';
 import 'package:naviwealth/features/finance/income_strategy/domain/income_strategy.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../domain/leaps_call_position.dart';
 import '../domain/trade_journal_entry.dart';
 import 'income_planner_labels.dart';
@@ -407,9 +408,8 @@ class _LeapsPositionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final expiration = MaterialLocalizations.of(
-      context,
-    ).formatShortDate(position.expirationAt.toLocal());
+    final expiration = MaterialLocalizations.of(context)
+        .formatShortDate(position.expirationAt.toLocal());
     return SoftCard.flat(
       tinted: false,
       onPress: onPress,
@@ -462,9 +462,8 @@ class _OpenPositionTile extends StatelessWidget {
         ? l10n.incomePlannerWheelExpirationMissing
         : _dueOrExpired(
             l10n,
-            MaterialLocalizations.of(
-              context,
-            ).formatShortDate(expiration.toLocal()),
+            MaterialLocalizations.of(context)
+                .formatShortDate(expiration.toLocal()),
             expiration,
           );
     return SoftCard.flat(

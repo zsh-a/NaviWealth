@@ -917,16 +917,15 @@ Future<void> _pumpWorkspace(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-        rebalanceExecutionSessionProvider(resolvedSession.id).overrideWith((
-          ref,
-        ) async {
-          final listenable = sessionListenable;
-          if (listenable == null) return resolvedSession;
-          void invalidate() => ref.invalidateSelf();
-          listenable.addListener(invalidate);
-          ref.onDispose(() => listenable.removeListener(invalidate));
-          return listenable.value;
-        }),
+        rebalanceExecutionSessionProvider(resolvedSession.id)
+            .overrideWith((ref) async {
+              final listenable = sessionListenable;
+              if (listenable == null) return resolvedSession;
+              void invalidate() => ref.invalidateSelf();
+              listenable.addListener(invalidate);
+              ref.onDispose(() => listenable.removeListener(invalidate));
+              return listenable.value;
+            }),
         if (gateway != null)
           rebalanceExecutionWorkspaceGatewayProvider.overrideWith(
             (_) async => gateway,

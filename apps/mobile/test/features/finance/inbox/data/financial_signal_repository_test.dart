@@ -135,9 +135,8 @@ void main() {
       actionId: 'action-1',
       now: DateTime.utc(2026, 7, 2),
     );
-    final linked = (await repository.listVisible(
-      now: DateTime.utc(2026, 7, 2),
-    )).single;
+    final linked = (await repository.listVisible(now: DateTime.utc(2026, 7, 2)))
+        .single;
 
     expect(linked.actionId, 'action-1');
     expect(linked.count, 2);
@@ -175,9 +174,9 @@ void main() {
     expect(inconclusive.actionCompleted, 1);
     expect(inconclusive.inconclusive, 1);
     expect(
-      (await repository.listVisible(
-        now: DateTime.utc(2026, 7, 3),
-      )).single.revalidationStatus,
+      (await repository.listVisible(now: DateTime.utc(2026, 7, 3)))
+          .single
+          .revalidationStatus,
       FinancialSignalRevalidationStatus.inconclusive,
     );
     final repeated = await repository.revalidateClosedActions(
@@ -241,9 +240,9 @@ void main() {
 
     expect(report.actionDropped, 1);
     expect(
-      (await repository.listVisible(
-        now: DateTime.utc(2026, 7, 3),
-      )).single.revalidationStatus,
+      (await repository.listVisible(now: DateTime.utc(2026, 7, 3)))
+          .single
+          .revalidationStatus,
       FinancialSignalRevalidationStatus.actionDropped,
     );
   });

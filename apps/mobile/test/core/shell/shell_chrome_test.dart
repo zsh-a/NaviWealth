@@ -291,7 +291,9 @@ List<File> _domainTabRootFiles() {
     'lib/features/knowledge/ui/knowledge_library_page.dart',
     'lib/features/execution/ui/execution_today_page.dart',
     'lib/features/execution/ui/execution_plans_page.dart',
-    'lib/features/execution/ui/execution_review_page.dart',
+    // execution_review_page.dart is intentionally absent: the review page
+    // is always pushed from the Today header (never a tab root), so it
+    // renders as an ObjectDetailScaffold sub-page with a back arrow.
   ].map((path) => File('${root.path}/$path')).toList(growable: false);
 }
 

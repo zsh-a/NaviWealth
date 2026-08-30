@@ -81,7 +81,10 @@ HealthMetricSource legacyHealthMetricSource({
 }
 
 HealthMetricSource sourceForHealthMetric(HealthMetric metric) =>
-    legacyHealthMetricSource(rowId: metric.id, sourceDevice: metric.sourceDevice);
+    legacyHealthMetricSource(
+      rowId: metric.id,
+      sourceDevice: metric.sourceDevice,
+    );
 
 /// Resolves the source of a persisted metric row: the `source_id`
 /// column wins, and legacy rows fall back to the prefix / device-name

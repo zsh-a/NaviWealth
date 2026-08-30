@@ -382,8 +382,7 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                     'assumptions': assumptions.toJson(),
                     'deterministic_outcome': groundedOutcome.toJson(),
                     'fire_delay_months': exactFireDelay,
-                    'instruction':
-                        'Explain only from these deterministic results and ask about missing assumptions.',
+                    'instruction': 'Explain only from these deterministic results and ask about missing assumptions.',
                   },
                 ),
               ),
@@ -591,9 +590,9 @@ Future<DateTime?> _chooseReviewDate(BuildContext context, DateTime now) {
             variant: option.$1 == 90
                 ? FButtonVariant.primary
                 : FButtonVariant.outline,
-            onPress: () => Navigator.of(
-              sheetContext,
-            ).pop(now.add(Duration(days: option.$1))),
+            onPress: () =>
+                Navigator.of(sheetContext)
+                    .pop(now.add(Duration(days: option.$1))),
             child: Text(option.$2),
           ),
           const SizedBox(height: AppSpacing.s8),

@@ -193,6 +193,8 @@ Project lint gates:
 - Keep domain shells dense and task-oriented. Do not add marketing pages or explanatory hero screens inside the app.
 - Use existing domain routes and `DomainTabsShell`; do not invent a second navigation model.
 - Cards are for repeated items, modals, and framed tools. Do not nest cards or turn every section into a card.
+- Form boundary: complex multi-section record forms use a full page (`AppFormPageScaffold` with `confirmLeave` dirty guard); lightweight single-entity capture uses a bottom sheet (`showAppFormSheet`/`showGuardedFormSheet` with `dirtyGuard`). Do not introduce a third entry pattern.
+- Primary buttons get haptics through the shared wrappers (`AppBusyButton`/`AppActionButton`, `hapticIntent` defaults to commit); do not hand-signal haptics at call sites that already go through a wrapper.
 - Use generated/localized strings where the surrounding UI does. Keep English and Chinese ARB files in sync.
 - After frontend changes, run a targeted widget test or inspect in the browser when a local web target is relevant.
 

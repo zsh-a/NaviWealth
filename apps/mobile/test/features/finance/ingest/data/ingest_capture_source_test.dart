@@ -49,8 +49,7 @@ void main() {
         ),
         _FakeCaptureFile(
           name: 'shared-statement',
-          mimeType:
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           lengths: [1, 1],
           chunks: [_oneByte],
         ),

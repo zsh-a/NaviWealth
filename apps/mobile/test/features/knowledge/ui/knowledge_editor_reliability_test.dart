@@ -39,18 +39,14 @@ void main() {
     await _settle(tester);
 
     expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
-          .onPressed,
+      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
       isNull,
     );
     final titleField = find.byKey(const Key('knowledge-note-title'));
     await tester.enterText(titleField, 'Updated evidence');
     await _settle(tester);
     expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
-          .onPressed,
+      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
       isNotNull,
     );
 
@@ -61,14 +57,12 @@ void main() {
     await _settle(tester);
     expect(find.text('Updated evidence'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
     await _settle(tester);
     final saved = await repository.findNote(ownerUserId: _owner, id: note.id);
     expect(saved?.title, 'Updated evidence');
     expect(
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
-          .onPressed,
+      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
       isNull,
     );
 

@@ -8,6 +8,7 @@ import '../theme/app_theme_scope.dart';
 import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_interaction.dart';
 import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
 import 'app_status_banner.dart';
@@ -72,7 +73,12 @@ Future<bool?> showConfirmDialog({
             variant: destructive
                 ? FButtonVariant.destructive
                 : FButtonVariant.primary,
-            onPress: () => Navigator.of(ctx).pop(true),
+            onPress: AppInteraction.wrap(
+              () => Navigator.of(ctx).pop(true),
+              intent: destructive
+                  ? AppInteractionIntent.destroy
+                  : AppInteractionIntent.commit,
+            ),
             child: _DialogButtonLabel(confirmLabel),
           ),
         ],

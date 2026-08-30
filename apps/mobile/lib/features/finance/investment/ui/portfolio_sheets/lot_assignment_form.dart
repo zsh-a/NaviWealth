@@ -415,9 +415,8 @@ class _PortfolioLotAssignmentFormState
                     );
                     return;
                   }
-                  Navigator.of(
-                    sheetContext,
-                  ).pop((groupId: groupId, quantity: quantity));
+                  Navigator.of(sheetContext)
+                      .pop((groupId: groupId, quantity: quantity));
                 },
                 child: Text(AppLocalizations.of(context).commonSave),
               ),

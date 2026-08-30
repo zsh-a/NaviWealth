@@ -103,8 +103,7 @@ class ProposeLiabilityPaymentTool implements DeviceTool {
         return needsClarification(
           kind: 'liability_payment',
           field: 'from_account',
-          reason:
-              'Multiple repayment accounts matched. Ask the user to choose one.',
+          reason: 'Multiple repayment accounts matched. Ask the user to choose one.',
           candidates: candidates,
         );
       case ResolvedNone():

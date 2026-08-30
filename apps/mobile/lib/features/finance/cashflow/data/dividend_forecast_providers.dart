@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/cash_dividend.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
+
 import '../domain/dividend_cash_projection.dart';
 import '../domain/dividend_center.dart';
 import '../domain/dividend_resilience.dart';
@@ -89,9 +90,8 @@ final dividendCashProjection90dProvider =
     FutureProvider.autoDispose<List<DividendCashProjection>>((ref) async {
       final now = ref.watch(dividendCenterNowProvider).toUtc();
       final center = await ref.watch(dividendCenterSnapshotProvider.future);
-      final holdings = (await ref.watch(
-        scopedPortfolioHoldingsProvider.future,
-      )).snapshots;
+      final holdings = (await ref.watch(scopedPortfolioHoldingsProvider.future))
+          .snapshots;
       final forecast = await ref.watch(dividendForecast12mProvider.future);
       final converter = ref.watch(cashFlowCurrencyConverterProvider);
       final normalized = normalizeDeclaredDividendActions(

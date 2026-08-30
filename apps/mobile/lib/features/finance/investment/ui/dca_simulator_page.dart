@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -255,12 +257,21 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
       ),
     );
     for (final prefill in prefills) {
-      final recorded = await Navigator.of(context).push<bool>(
-        buildAppPageRoute<bool>(
-          context: context,
-          pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: prefill),
-        ),
-      );
+      // Prefer the go_router stack so the form participates in route state
+      // (deep-link parent, system back); fall back to an imperative push
+      // only when no router is mounted (tests, embedded surfaces).
+      final router = GoRouter.maybeOf(context);
+      final recorded = router != null
+          ? await context.pushNamed<bool>(
+              FinanceRouteNames.tradeEntry,
+              extra: prefill,
+            )
+          : await Navigator.of(context).push<bool>(
+              buildAppPageRoute<bool>(
+                context: context,
+                pageBuilder: (_, _, _) => TradeEntryFormPage(prefill: prefill),
+              ),
+            );
       if (!mounted || recorded != true) return false;
     }
     return true;
@@ -329,9 +340,8 @@ class _DcaPlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final symbols = plan.allocations.map((item) => item.symbol).join(' · ');
-    final due = MaterialLocalizations.of(
-      context,
-    ).formatShortDate(plan.nextDueAt.toLocal());
+    final due = MaterialLocalizations.of(context)
+        .formatShortDate(plan.nextDueAt.toLocal());
     return SoftCard.raised(
       padding: AppPageRhythm.cardPadding,
       child: Column(

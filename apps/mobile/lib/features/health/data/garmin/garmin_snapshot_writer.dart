@@ -76,8 +76,7 @@ class GarminSnapshotWriter {
   String _formatCounts(Map<HealthMetricKind, int> counts) {
     final entries = counts.entries.toList()
       ..sort((a, b) => a.key.wire.compareTo(b.key.wire));
-    return {
-      for (final entry in entries) entry.key.wire: entry.value,
-    }.toString();
+    return {for (final entry in entries) entry.key.wire: entry.value}
+        .toString();
   }
 }

@@ -25,11 +25,12 @@ class ExecutionGreetingHeader extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s20,
-        AppSpacing.s8,
-        AppSpacing.s20,
-        AppSpacing.s16,
+      // No horizontal inset: `BriefLazyListScaffold` already applies the
+      // page padding, so an inner one would push the greeting past the
+      // cards' left edge.
+      padding: const EdgeInsets.only(
+        top: AppSpacing.s8,
+        bottom: AppSpacing.s16,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

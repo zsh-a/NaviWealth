@@ -3490,6 +3490,10 @@
     "description": "Helper text shown below the typed-confirm field while the user's input does not yet match the token.",
     "placeholders": { "token": { "type": "String" } }
   },
+  "aiChatProposalConfirmToken": "CONFIRM",
+  "@aiChatProposalConfirmToken": {
+    "description": "Default token the user must type to enable Confirm for typed-confirm proposals when the tool did not specify a required_text."
+  },
 
   "aiChatFieldQuantity": "Quantity",
   "aiChatFieldPrice": "Price (leave blank to backfill from market)",

@@ -28,11 +28,12 @@ class HealthGreetingHeader extends ConsumerWidget {
     final dataReady = ref.watch(healthHasAnyDataProvider).value == true;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s20,
-        AppSpacing.s8,
-        AppSpacing.s20,
-        AppSpacing.s16,
+      // No horizontal inset: `BriefScaffold` already applies the page
+      // padding, so an inner one would push the greeting past the cards'
+      // left edge.
+      padding: const EdgeInsets.only(
+        top: AppSpacing.s8,
+        bottom: AppSpacing.s16,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

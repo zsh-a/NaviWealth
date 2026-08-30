@@ -20,6 +20,11 @@ const String kProposalConfirmNote =
 String proposalNewId() => _kUuid.v4();
 
 /// `status = ready` proposal envelope.
+///
+/// [confirmationText] is the literal token the user must type for
+/// `typed`-mode envelopes. Leave it null to let the UI fall back to its
+/// localized default token — core has no locale access, so this helper
+/// must not hardcode one.
 Map<String, Object?> readyPlan({
   required String kind,
   required String summaryZh,
@@ -29,6 +34,7 @@ Map<String, Object?> readyPlan({
   List<String> warnings = const [],
   List<String> missing = const [],
   String note = kProposalConfirmNote,
+  String? confirmationText,
 }) {
   final resolvedProposalId = proposalId ?? _kUuid.v4();
   final interactionMode = switch (envelopeKind) {
@@ -44,9 +50,10 @@ Map<String, Object?> readyPlan({
     status: AiInteractionStatus.pending,
     title: summaryZh,
     prompt: note,
-    confirmation: interactionMode == AiInteractionMode.typed
-        ? const AiInteractionConfirmation(
-            requiredText: '确认',
+    confirmation:
+        interactionMode == AiInteractionMode.typed && confirmationText != null
+        ? AiInteractionConfirmation(
+            requiredText: confirmationText,
             caseSensitive: true,
           )
         : null,
@@ -87,8 +94,7 @@ Map<String, Object?> needsClarification({
   required String field,
   required String reason,
   required List<Map<String, Object?>> candidates,
-  String note =
-      'Ask the user one concrete clarification question for this field; do not choose on their behalf.',
+  String note = 'Ask the user one concrete clarification question for this field; do not choose on their behalf.',
 }) => <String, Object?>{
   'proposal_id': _kUuid.v4(),
   'kind': kind,

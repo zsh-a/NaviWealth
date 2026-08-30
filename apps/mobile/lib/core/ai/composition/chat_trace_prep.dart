@@ -31,11 +31,10 @@ typedef ChatTracePrepResult = ({
 /// Domain composition provides it as a Riverpod provider so it can
 /// close over `Ref` without forcing repository constructors to depend
 /// on Riverpod directly.
-typedef ChatTracePrep =
-    Future<ChatTracePrepResult> Function({
-      required String requestId,
-      required String userMessage,
-    });
+typedef ChatTracePrep = Future<ChatTracePrepResult> Function({
+  required String requestId,
+  required String userMessage,
+});
 
 /// Active trace-prep closure for the current build. Default is `null`
 /// (no preparer registered); `ChatRepository` falls back to its

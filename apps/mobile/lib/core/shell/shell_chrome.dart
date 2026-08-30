@@ -20,21 +20,26 @@ const double _desktopChromeBreakpoint = Breakpoints.shellDesktop;
 bool _showInlineChrome(BuildContext context) =>
     MediaQuery.sizeOf(context).width < _desktopChromeBreakpoint;
 
-typedef ShellChromeLeadingBuilder =
-    Widget? Function(BuildContext context, WidgetRef ref);
+typedef ShellChromeLeadingBuilder = Widget? Function(
+  BuildContext context,
+  WidgetRef ref,
+);
 
-typedef ShellChromeHeaderActionsBuilder =
-    List<ShellHeaderActionSpec> Function(BuildContext context, WidgetRef ref);
+typedef ShellChromeHeaderActionsBuilder = List<ShellHeaderActionSpec> Function(
+  BuildContext context,
+  WidgetRef ref,
+);
 
-typedef ShellChromeActionRowBuilder =
-    Widget? Function(BuildContext context, WidgetRef ref);
+typedef ShellChromeActionRowBuilder = Widget? Function(
+  BuildContext context,
+  WidgetRef ref,
+);
 
-typedef ShellChromeOpenAiAction =
-    Future<void> Function(
-      BuildContext context,
-      WidgetRef ref, {
-      String? prefill,
-    });
+typedef ShellChromeOpenAiAction = Future<void> Function(
+  BuildContext context,
+  WidgetRef ref, {
+  String? prefill,
+});
 
 /// App-provided chrome builders for top-level domain tab pages.
 ///

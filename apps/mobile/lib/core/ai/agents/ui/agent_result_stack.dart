@@ -1,7 +1,8 @@
 part of 'agent_result_card.dart';
 
-typedef _AgentResultEntryBuilder =
-    Widget Function(agent_providers.AgentResultEntry entry);
+typedef _AgentResultEntryBuilder = Widget Function(
+  agent_providers.AgentResultEntry entry,
+);
 
 class _SwipeableAgentResultStack extends StatefulWidget {
   const _SwipeableAgentResultStack({
@@ -137,6 +138,9 @@ class _SwipeableAgentResultStackState extends State<_SwipeableAgentResultStack>
 
     final nextIndex = (_activeIndex + step) % widget.entries.length;
     final incomingOffset = -exitDirection * AppSpacing.s48;
+    // Light tick marking the page change — the same selection feedback used
+    // by AppDismissible / AppRefreshIndicator commit gestures.
+    AppInteraction.signal(AppInteractionIntent.select);
     setState(() {
       _activeAgentId = widget.entries[nextIndex].agentId;
       _dragOffset = incomingOffset;

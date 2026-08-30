@@ -387,9 +387,8 @@ class _RebalanceExecutionWorkspacePageState
           AppMessenger.show(
             context,
             ToastKind.warning,
-            AppLocalizations.of(
-              context,
-            ).rebalanceExecutionPartialToast(succeeded.length, failed),
+            AppLocalizations.of(context)
+                .rebalanceExecutionPartialToast(succeeded.length, failed),
           );
         }
         _refresh();

@@ -137,26 +137,29 @@ void main() {
       expect(plan.isBalanced, isTrue);
     });
 
-    test('returns empty when only category targets exist (no asset targets)', () {
-      final plan = const RebalanceEngine().compute(
-        snapshot: _driftedSnapshot(),
-        target: const TargetAllocation(
-          weights: {
-            AssetCategory.stock: 0.30,
-            AssetCategory.etf: 0.40,
-            AssetCategory.bondsAndFunds: 0.0,
-            AssetCategory.cash: 0.30,
-            AssetCategory.crypto: 0.0,
-            AssetCategory.realEstate: 0.0,
-            AssetCategory.vehicle: 0.0,
-          },
-        ),
-      );
+    test(
+      'returns empty when only category targets exist (no asset targets)',
+      () {
+        final plan = const RebalanceEngine().compute(
+          snapshot: _driftedSnapshot(),
+          target: const TargetAllocation(
+            weights: {
+              AssetCategory.stock: 0.30,
+              AssetCategory.etf: 0.40,
+              AssetCategory.bondsAndFunds: 0.0,
+              AssetCategory.cash: 0.30,
+              AssetCategory.crypto: 0.0,
+              AssetCategory.realEstate: 0.0,
+              AssetCategory.vehicle: 0.0,
+            },
+          ),
+        );
 
-      // Category-only targets may show drift, but guardrail requires asset targets.
-      expect(plan.drifts.any((d) => d.severity != DriftSeverity.ok), isTrue);
-      expect(mapper.fromRebalancePlan(plan), isEmpty);
-    });
+        // Category-only targets may show drift, but guardrail requires asset targets.
+        expect(plan.drifts.any((d) => d.severity != DriftSeverity.ok), isTrue);
+        expect(mapper.fromRebalancePlan(plan), isEmpty);
+      },
+    );
 
     test('returns empty for null plan', () {
       expect(mapper.fromRebalancePlan(null), isEmpty);

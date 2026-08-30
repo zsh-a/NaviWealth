@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/master_detail_layout.dart';
+import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -14,6 +16,8 @@ import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import 'knowledge_capture_sheet.dart';
+import 'knowledge_decision_detail_page.dart';
+import 'knowledge_note_detail_page.dart';
 import 'widgets/knowledge_entry_tile.dart';
 
 enum _LibraryScope {
@@ -63,6 +67,38 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    return ShellTabScaffold(
+      title: l10n.knowledgeLibraryTitle,
+      directActionBudget: 1,
+      actions: <ShellHeaderActionSpec>[
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.knowledgeCaptureAction,
+          onPress: () => showKnowledgeCaptureSheet(context),
+        ),
+      ],
+      child: ShellTabPause(
+        routePath: KnowledgeRoutes.library,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            if (GoRouter.maybeOf(context) == null ||
+                !MasterDetailLayout.shouldUseMasterDetail(
+                  constraints.maxWidth,
+                )) {
+              return _buildBody(context, inMasterDetail: false);
+            }
+            return MasterDetailLayout(
+              master: _buildBody(context, inMasterDetail: true),
+              detail: _libraryDetail(context, selectedQueryOf(context)),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, {required bool inMasterDetail}) {
+    final l10n = AppLocalizations.of(context);
     final notes = ref.watch(knowledgeNotesProvider);
     final decisions = ref.watch(knowledgeDecisionsProvider);
     final tagFacets = _tagFacets(
@@ -78,103 +114,100 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
               tag: _selectedTag,
             )),
           );
-    return ShellTabScaffold(
-      title: l10n.knowledgeLibraryTitle,
-      directActionBudget: 1,
-      actions: <ShellHeaderActionSpec>[
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.knowledgeCaptureAction,
-          onPress: () => showKnowledgeCaptureSheet(context),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s16,
+            AppSpacing.s12,
+            AppSpacing.s16,
+            AppSpacing.s4,
+          ),
+          child: Column(
+            children: [
+              FTextField(
+                key: const Key('knowledge-library-search'),
+                control: FTextFieldControl.managed(
+                  controller: _searchController,
+                  onChange: _scheduleSearch,
+                ),
+                focusNode: _searchFocus,
+                textInputAction: TextInputAction.search,
+                maxLines: 1,
+                prefixBuilder: (_, _, _) => const Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    start: AppSpacing.s12,
+                    end: AppSpacing.s8,
+                  ),
+                  child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
+                ),
+                hint: l10n.knowledgeLibrarySearchHint,
+              ),
+              const SizedBox(height: AppSpacing.s10),
+              AppAdaptiveChoice<_LibraryScope>(
+                title: l10n.knowledgeLibraryFilterTitle,
+                options: _LibraryScope.values,
+                value: _scope,
+                labelOf: (scope) => switch (scope) {
+                  _LibraryScope.all => l10n.knowledgeSegmentAll,
+                  _LibraryScope.notes => l10n.knowledgeSegmentNotes,
+                  _LibraryScope.decisions => l10n.knowledgeSegmentDecisions,
+                },
+                iconOf: (scope) => switch (scope) {
+                  _LibraryScope.all => FLucideIcons.library,
+                  _LibraryScope.notes => FLucideIcons.fileText,
+                  _LibraryScope.decisions => FLucideIcons.circleCheck,
+                },
+                onChanged: (scope) {
+                  setState(() {
+                    _scope = scope;
+                    if (scope == _LibraryScope.decisions) {
+                      _selectedTag = null;
+                    }
+                  });
+                },
+              ),
+              if (tagFacets.isNotEmpty &&
+                  _scope != _LibraryScope.decisions) ...[
+                const SizedBox(height: AppSpacing.s10),
+                _LibraryTagFilter(
+                  tags: tagFacets,
+                  selectedTag: _selectedTag,
+                  allLabel: l10n.knowledgeLibraryAllTags,
+                  semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
+                  onChanged: (tag) {
+                    setState(() {
+                      _selectedTag = tag;
+                      if (tag != null) _scope = _LibraryScope.notes;
+                    });
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+        Expanded(
+          child: searchResults == null
+              ? _LibraryBrowse(
+                  scope: _scope,
+                  selectedTag: _selectedTag,
+                  notes: notes,
+                  decisions: decisions,
+                  inMasterDetail: inMasterDetail,
+                )
+              : _LibrarySearchResults(
+                  value: searchResults,
+                  inMasterDetail: inMasterDetail,
+                  onRetry: () => ref.invalidate(
+                    knowledgeLibrarySearchProvider((
+                      query: _query,
+                      kind: _scope.kind,
+                      tag: _selectedTag,
+                    )),
+                  ),
+                ),
         ),
       ],
-      child: ShellTabPause(
-        routePath: KnowledgeRoutes.library,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                AppSpacing.s12,
-                AppSpacing.s16,
-                AppSpacing.s4,
-              ),
-              child: Column(
-                children: [
-                  FTextField(
-                    key: const Key('knowledge-library-search'),
-                    control: FTextFieldControl.managed(
-                      controller: _searchController,
-                      onChange: _scheduleSearch,
-                    ),
-                    focusNode: _searchFocus,
-                    textInputAction: TextInputAction.search,
-                    maxLines: 1,
-                    prefixBuilder: (_, _, _) => const Padding(
-                      padding: EdgeInsetsDirectional.only(
-                        start: AppSpacing.s12,
-                        end: AppSpacing.s8,
-                      ),
-                      child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-                    ),
-                    hint: l10n.knowledgeLibrarySearchHint,
-                  ),
-                  const SizedBox(height: AppSpacing.s10),
-                  AppAdaptiveChoice<_LibraryScope>(
-                    title: l10n.knowledgeLibraryFilterTitle,
-                    options: _LibraryScope.values,
-                    value: _scope,
-                    labelOf: (scope) => switch (scope) {
-                      _LibraryScope.all => l10n.knowledgeSegmentAll,
-                      _LibraryScope.notes => l10n.knowledgeSegmentNotes,
-                      _LibraryScope.decisions => l10n.knowledgeSegmentDecisions,
-                    },
-                    iconOf: (scope) => switch (scope) {
-                      _LibraryScope.all => FLucideIcons.library,
-                      _LibraryScope.notes => FLucideIcons.fileText,
-                      _LibraryScope.decisions => FLucideIcons.circleCheck,
-                    },
-                    onChanged: (scope) {
-                      setState(() {
-                        _scope = scope;
-                        if (scope == _LibraryScope.decisions) {
-                          _selectedTag = null;
-                        }
-                      });
-                    },
-                  ),
-                  if (tagFacets.isNotEmpty &&
-                      _scope != _LibraryScope.decisions) ...[
-                    const SizedBox(height: AppSpacing.s10),
-                    _LibraryTagFilter(
-                      tags: tagFacets,
-                      selectedTag: _selectedTag,
-                      allLabel: l10n.knowledgeLibraryAllTags,
-                      semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
-                      onChanged: (tag) {
-                        setState(() {
-                          _selectedTag = tag;
-                          if (tag != null) _scope = _LibraryScope.notes;
-                        });
-                      },
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Expanded(
-              child: searchResults == null
-                  ? _LibraryBrowse(
-                      scope: _scope,
-                      selectedTag: _selectedTag,
-                      notes: notes,
-                      decisions: decisions,
-                    )
-                  : _LibrarySearchResults(value: searchResults),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -250,25 +283,29 @@ class _LibraryTagFilter extends StatelessWidget {
   }
 }
 
-class _LibraryBrowse extends StatelessWidget {
+class _LibraryBrowse extends ConsumerWidget {
   const _LibraryBrowse({
     required this.scope,
     required this.selectedTag,
     required this.notes,
     required this.decisions,
+    required this.inMasterDetail,
   });
 
   final _LibraryScope scope;
   final String? selectedTag;
   final AsyncValue<List<KnowledgeNote>> notes;
   final AsyncValue<List<KnowledgeDecision>> decisions;
+  final bool inMasterDetail;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (scope == _LibraryScope.notes) {
       return notes.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _LibraryError(),
+        loading: () => kDefaultLoading,
+        error: (_, _) => _LibraryError(
+          onRetry: () => ref.invalidate(knowledgeNotesProvider),
+        ),
         data: (items) => _LibraryList(
           entries: items
               .where(
@@ -279,28 +316,37 @@ class _LibraryBrowse extends StatelessWidget {
               .toList(growable: false),
           emptyTitle: AppLocalizations.of(context)
               .knowledgeLibraryEmptyNotesTitle,
+          inMasterDetail: inMasterDetail,
         ),
       );
     }
     if (scope == _LibraryScope.decisions) {
       return decisions.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _LibraryError(),
+        loading: () => kDefaultLoading,
+        error: (_, _) => _LibraryError(
+          onRetry: () => ref.invalidate(knowledgeDecisionsProvider),
+        ),
         data: (items) => _LibraryList(
           entries: items
               .map(_LibraryEntry.fromDecision)
               .toList(growable: false),
           emptyTitle: AppLocalizations.of(context)
               .knowledgeLibraryEmptyDecisionsTitle,
+          inMasterDetail: inMasterDetail,
         ),
       );
     }
+    void retryAll() {
+      ref.invalidate(knowledgeNotesProvider);
+      ref.invalidate(knowledgeDecisionsProvider);
+    }
+
     return notes.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => _LibraryError(),
+      loading: () => kDefaultLoading,
+      error: (_, _) => _LibraryError(onRetry: retryAll),
       data: (noteItems) => decisions.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => _LibraryError(),
+        loading: () => kDefaultLoading,
+        error: (_, _) => _LibraryError(onRetry: retryAll),
         data: (decisionItems) {
           final entries = <_LibraryEntry>[
             ...noteItems.map(_LibraryEntry.fromNote),
@@ -309,6 +355,7 @@ class _LibraryBrowse extends StatelessWidget {
           return _LibraryList(
             entries: entries,
             emptyTitle: AppLocalizations.of(context).knowledgeLibraryEmptyTitle,
+            inMasterDetail: inMasterDetail,
           );
         },
       ),
@@ -317,15 +364,21 @@ class _LibraryBrowse extends StatelessWidget {
 }
 
 class _LibrarySearchResults extends StatelessWidget {
-  const _LibrarySearchResults({required this.value});
+  const _LibrarySearchResults({
+    required this.value,
+    required this.inMasterDetail,
+    required this.onRetry,
+  });
 
   final AsyncValue<List<KnowledgeSearchHit>> value;
+  final bool inMasterDetail;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
     return value.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => _LibraryError(),
+      loading: () => kDefaultLoading,
+      error: (_, _) => _LibraryError(onRetry: onRetry),
       data: (hits) => _LibraryList(
         entries: hits
             .map((hit) => _LibraryEntry.fromSearchHit(hit))
@@ -334,6 +387,7 @@ class _LibrarySearchResults extends StatelessWidget {
         emptyMessage: AppLocalizations.of(context)
             .knowledgeLibraryNoResultsBody,
         emptyIcon: FLucideIcons.searchX,
+        inMasterDetail: inMasterDetail,
       ),
     );
   }
@@ -343,6 +397,7 @@ class _LibraryList extends StatelessWidget {
   const _LibraryList({
     required this.entries,
     required this.emptyTitle,
+    required this.inMasterDetail,
     this.emptyMessage,
     this.emptyIcon = FLucideIcons.library,
   });
@@ -351,6 +406,7 @@ class _LibraryList extends StatelessWidget {
   final String emptyTitle;
   final String? emptyMessage;
   final IconData emptyIcon;
+  final bool inMasterDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -381,11 +437,8 @@ class _LibraryList extends StatelessWidget {
           icon: entry.kind == 'note'
               ? FLucideIcons.fileText
               : FLucideIcons.circleCheck,
-          onPress: () => context.push(
-            entry.kind == 'note'
-                ? KnowledgeRoutes.note(entry.id)
-                : KnowledgeRoutes.decision(entry.id),
-          ),
+          onPress: () =>
+              _openEntry(context, entry: entry, inMasterDetail: inMasterDetail),
         );
       },
     );
@@ -393,10 +446,61 @@ class _LibraryList extends StatelessWidget {
 }
 
 class _LibraryError extends StatelessWidget {
+  const _LibraryError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
   @override
-  Widget build(BuildContext context) => AppEmptyState.error(
-    title: AppLocalizations.of(context).commonLoadFailed,
-    compact: true,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppEmptyState.error(
+      title: l10n.commonLoadFailed,
+      retryLabel: l10n.commonRetry,
+      onRetry: onRetry,
+      compact: true,
+    );
+  }
+}
+
+/// Builds the right-hand detail pane for the desktop master-detail layout.
+///
+/// The `?selected=` value carries the entry kind as a prefix
+/// (`note:<id>` / `decision:<id>`) because the library mixes both kinds in
+/// one list — unlike the single-kind master-detail surfaces elsewhere.
+Widget _libraryDetail(BuildContext context, String? selected) {
+  final l10n = AppLocalizations.of(context);
+  Widget empty() => MasterDetailEmpty(
+    message: l10n.activitySelectEntry,
+    icon: FLucideIcons.library,
+  );
+  if (selected == null || selected.isEmpty) return empty();
+  final separator = selected.indexOf(':');
+  if (separator <= 0 || separator == selected.length - 1) return empty();
+  final id = selected.substring(separator + 1);
+  return switch (selected.substring(0, separator)) {
+    'note' => KnowledgeNoteDetailPage(noteId: id),
+    'decision' => KnowledgeDecisionDetailPage(decisionId: id),
+    _ => empty(),
+  };
+}
+
+void _openEntry(
+  BuildContext context, {
+  required _LibraryEntry entry,
+  required bool inMasterDetail,
+}) {
+  if (inMasterDetail) {
+    replaceSelectedQuery(
+      context,
+      path: KnowledgeRoutes.library,
+      selected: '${entry.kind}:${entry.id}',
+    );
+    return;
+  }
+  context.push(
+    entry.kind == 'note'
+        ? KnowledgeRoutes.note(entry.id)
+        : KnowledgeRoutes.decision(entry.id),
   );
 }
 

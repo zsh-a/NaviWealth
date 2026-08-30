@@ -8,6 +8,7 @@ library;
 
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
+
 import 'transaction_input.dart';
 
 class TransferMatch {

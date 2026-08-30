@@ -15,8 +15,9 @@ typedef AgentRuntimeProfileTurnBindingKey = ({
   String surface,
 });
 
-typedef AgentRuntimeProfileTurnTraceRecorder =
-    Future<AiTrace?> Function(AgentRuntimeProfileTurnResult result);
+typedef AgentRuntimeProfileTurnTraceRecorder = Future<AiTrace?> Function(
+  AgentRuntimeProfileTurnResult result,
+);
 
 typedef AgentRuntimeProfileTurnTraceRecorderFactory =
     AgentRuntimeProfileTurnTraceRecorder Function({
@@ -25,8 +26,10 @@ typedef AgentRuntimeProfileTurnTraceRecorderFactory =
       required String surface,
     });
 
-typedef AgentRuntimeProfileTurnTraceRecordErrorHandler =
-    void Function(Object error, StackTrace stackTrace);
+typedef AgentRuntimeProfileTurnTraceRecordErrorHandler = void Function(
+  Object error,
+  StackTrace stackTrace,
+);
 
 abstract interface class AgentRuntimeProfileTurnRunner {
   Future<AgentRuntimeProfileTurnResult> run({

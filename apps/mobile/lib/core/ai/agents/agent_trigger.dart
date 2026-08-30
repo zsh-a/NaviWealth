@@ -179,12 +179,11 @@ bool _crossedThreshold(AgentTriggerSpec spec, AgentTriggerSignal signal) {
   };
 }
 
-typedef AgentTriggerDispatch =
-    Future<AgentRunResult> Function(
-      String agentId,
-      AgentRunTrigger trigger,
-      AgentTriggerSignal signal,
-    );
+typedef AgentTriggerDispatch = Future<AgentRunResult> Function(
+  String agentId,
+  AgentRunTrigger trigger,
+  AgentTriggerSignal signal,
+);
 
 /// Debounces and de-duplicates trigger signals before invoking an Agent.
 ///

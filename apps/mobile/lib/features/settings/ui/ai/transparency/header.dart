@@ -35,9 +35,8 @@ class _CaptureToggle extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     l10n.aiTransparencyVerboseSubtitle,
-                    style: AiType.meta(
-                      context,
-                    ).copyWith(color: AiTone.muted(context)),
+                    style: AiType.meta(context)
+                        .copyWith(color: AiTone.muted(context)),
                   ),
                 ],
               ),

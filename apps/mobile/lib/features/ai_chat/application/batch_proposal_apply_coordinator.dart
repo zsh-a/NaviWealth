@@ -10,13 +10,13 @@ import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 
-typedef BatchProposalStateWriter =
-    Future<void> Function(ProposalApplyState state);
-typedef BatchProposalFinalizer =
-    Future<ProposalApplyState> Function(
-      List<ProposalApplyState> children,
-      DateTime appliedAt,
-    );
+typedef BatchProposalStateWriter = Future<void> Function(
+  ProposalApplyState state,
+);
+typedef BatchProposalFinalizer = Future<ProposalApplyState> Function(
+  List<ProposalApplyState> children,
+  DateTime appliedAt,
+);
 
 final class BatchProposalProgress {
   const BatchProposalProgress({

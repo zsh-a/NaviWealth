@@ -6541,6 +6541,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get aiChatProposalConfirmToken => '确认';
+
+  @override
   String get aiChatFieldQuantity => '数量';
 
   @override

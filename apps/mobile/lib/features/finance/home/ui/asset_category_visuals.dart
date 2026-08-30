@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../domain/dashboard_models.dart';
 
 /// Display helpers for [AssetCategory]: localized label + signature icon

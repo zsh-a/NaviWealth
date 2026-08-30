@@ -39,9 +39,11 @@ Future<void> showDomainSwitcherSheet(
   String? homePath,
 ) async {
   if (specs.length < 2 && homePath == null) return;
-  final activePath = GoRouter.of(
-    context,
-  ).routeInformationProvider.value.uri.path;
+  final activePath = GoRouter.of(context)
+      .routeInformationProvider
+      .value
+      .uri
+      .path;
   final active = activeSpecForPath(specs, activePath);
   final onHome =
       homePath != null &&

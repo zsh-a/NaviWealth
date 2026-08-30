@@ -6928,6 +6928,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get aiChatProposalConfirmToken => 'CONFIRM';
+
+  @override
   String get aiChatFieldQuantity => 'Quantity';
 
   @override

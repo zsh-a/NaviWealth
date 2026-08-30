@@ -749,13 +749,11 @@ int _compareDrifts(Drift left, Drift right) {
   if (value != 0) return value;
   value = (left.assetLabel ?? '').compareTo(right.assetLabel ?? '');
   if (value != 0) return value;
-  value = _doubleToString(
-    left.actualWeight,
-  ).compareTo(_doubleToString(right.actualWeight));
+  value = _doubleToString(left.actualWeight)
+      .compareTo(_doubleToString(right.actualWeight));
   if (value != 0) return value;
-  value = _doubleToString(
-    left.targetWeight,
-  ).compareTo(_doubleToString(right.targetWeight));
+  value = _doubleToString(left.targetWeight)
+      .compareTo(_doubleToString(right.targetWeight));
   if (value != 0) return value;
   return left.severity.index.compareTo(right.severity.index);
 }

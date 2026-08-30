@@ -9,8 +9,10 @@ import 'app_page_route.dart';
 /// Builds the closed state of an [AppContainerTransform]; [open] performs
 /// the container-transform push. Matches `OpenContainer.closedBuilder`'s
 /// signature so it can be forwarded verbatim.
-typedef AppContainerTransformClosedBuilder =
-    Widget Function(BuildContext context, VoidCallback open);
+typedef AppContainerTransformClosedBuilder = Widget Function(
+  BuildContext context,
+  VoidCallback open,
+);
 
 /// App-gated container transform (M3 "container transform") for
 /// list-row/card → pushed-detail navigation.

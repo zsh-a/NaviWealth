@@ -16,8 +16,9 @@ import 'package:naviwealth/core/config/providers.dart';
 import 'package:naviwealth/core/native/lifeos_native_runtime.dart';
 import 'package:naviwealth/src/rust/api/agent_runtime.dart' as rust;
 
-typedef AgentRuntimeChatTurnJsonStream =
-    Stream<String> Function({required String requestJson});
+typedef AgentRuntimeChatTurnJsonStream = Stream<String> Function({
+  required String requestJson,
+});
 
 final agentRuntimeLlmStreamBridgeProvider =
     Provider<AgentRuntimeLlmStreamBridge?>((ref) {

@@ -1,12 +1,11 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-typedef LocalQueryResultPaneBuilder =
-    Widget Function({
-      required String query,
-      required DateTime now,
-      void Function(String query)? onContinueInChat,
-    });
+typedef LocalQueryResultPaneBuilder = Widget Function({
+  required String query,
+  required DateTime now,
+  void Function(String query)? onContinueInChat,
+});
 
 /// Optional local structured-answer pane for command-palette queries.
 ///

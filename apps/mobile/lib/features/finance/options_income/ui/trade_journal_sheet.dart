@@ -344,7 +344,12 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       ),
       child: accountsAsync.whenOrLoading(
         context: context,
-        error: (_, _) => _buildForm(l10n, const <Account>[]),
+        error: (e, _) => AppEmptyState.error(
+          title: l10n.commonLoadFailed,
+          message: userSafeErrorMessage(context, e),
+          retryLabel: l10n.commonRetry,
+          onRetry: () => ref.invalidate(accountsStreamProvider),
+        ),
         data: (accounts) => _buildForm(l10n, accounts),
       ),
     );

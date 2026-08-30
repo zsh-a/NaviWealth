@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
+
 import 'fire_action.dart';
 import 'fire_plan.dart';
 import 'fire_stress_test.dart';

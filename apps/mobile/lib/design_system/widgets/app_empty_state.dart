@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_actions.dart';
+import 'app_interaction.dart';
 
 /// Tone of an [AppEmptyState] — drives the icon tint.
 ///
@@ -102,7 +103,7 @@ class AppEmptyState extends StatelessWidget {
           : FButton(
               variant: FButtonVariant.ghost,
               prefix: const Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs),
-              onPress: onRetry,
+              onPress: AppInteraction.wrap(onRetry),
               child: Text(retryLabel!),
             ),
       tone: tone,

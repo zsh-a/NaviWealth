@@ -858,9 +858,8 @@ class _ProfileCaption extends ConsumerWidget {
                 const SizedBox(width: AppSpacing.s4),
                 Text(
                   active.displayName,
-                  style: AiType.meta(
-                    context,
-                  ).copyWith(color: AiTone.muted(context)),
+                  style: AiType.meta(context)
+                      .copyWith(color: AiTone.muted(context)),
                 ),
               ],
             ),
@@ -907,7 +906,7 @@ class _TrailingButton extends StatelessWidget {
         tipBuilder: (_, _) => Text(l10n.aiChatComposerSendTooltip),
         child: FButton.icon(
           variant: FButtonVariant.primary,
-          onPress: canSend ? onSend : null,
+          onPress: AppInteraction.wrap(canSend ? onSend : null),
           child: const Icon(FLucideIcons.arrowUp),
         ),
       );

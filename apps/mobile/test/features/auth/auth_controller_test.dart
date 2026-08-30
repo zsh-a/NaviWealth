@@ -156,25 +156,21 @@ void main() {
       );
     });
 
-    test(
-      'emits AuthLoggedOut(sessionExpired) and clears storage when token expired',
-      () async {
-        final keyStore = InMemoryKeyStore({
-          TokenStore.storageKey: _session(
-            expiresAt: DateTime.utc(2020, 1, 1),
-          ).encode(),
-        });
-        final container = ProviderContainer(
-          overrides: [secureKeyStoreProvider.overrideWithValue(keyStore)],
-        );
-        addTearDown(container.dispose);
+    test('emits AuthLoggedOut(sessionExpired) and clears storage when token expired', () async {
+      final keyStore = InMemoryKeyStore({
+        TokenStore.storageKey: _session(expiresAt: DateTime.utc(2020, 1, 1))
+            .encode(),
+      });
+      final container = ProviderContainer(
+        overrides: [secureKeyStoreProvider.overrideWithValue(keyStore)],
+      );
+      addTearDown(container.dispose);
 
-        final state = await container.read(authControllerProvider.future);
-        expect(state, isA<AuthLoggedOut>());
-        expect((state as AuthLoggedOut).reason, LoggedOutReason.sessionExpired);
-        expect(await keyStore.read(TokenStore.storageKey), isNull);
-      },
-    );
+      final state = await container.read(authControllerProvider.future);
+      expect(state, isA<AuthLoggedOut>());
+      expect((state as AuthLoggedOut).reason, LoggedOutReason.sessionExpired);
+      expect(await keyStore.read(TokenStore.storageKey), isNull);
+    });
   });
 
   group('AuthController.login', () {

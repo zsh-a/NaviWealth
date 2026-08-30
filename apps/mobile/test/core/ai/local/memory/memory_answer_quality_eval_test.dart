@@ -79,143 +79,145 @@ const _corpus = <MemoryAnswerQualityCase>[
 ];
 
 void main() {
-  test('fixed questions pass on required facts and expected evidence', () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final runtime = MemoryRuntime(
-      embedder: StubEmbedder(),
-      memoryStore: SqliteMemoryStore(db: db),
-      eventStore: SqliteEventStore(db: db),
-      clock: () => _now,
-    );
-    final builder = ContextBuilder(runtime: runtime);
+  test(
+    'fixed questions pass on required facts and expected evidence',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final runtime = MemoryRuntime(
+        embedder: StubEmbedder(),
+        memoryStore: SqliteMemoryStore(db: db),
+        eventStore: SqliteEventStore(db: db),
+        clock: () => _now,
+      );
+      final builder = ContextBuilder(runtime: runtime);
 
-    await runtime.remember(
-      _memory(
-        id: 'options-rule',
-        kind: MemoryKind.procedural,
-        scope: 'options_trading',
-        summary: 'Close before earnings and cap loss at 20%.',
-        entities: const {'NVDA'},
-      ),
-    );
-    await runtime.remember(
-      _memory(
-        id: 'options-decision',
-        kind: MemoryKind.episodic,
-        scope: 'options_trading',
-        summary: 'The prior NVDA put was reduced after risk increased.',
-        entities: const {'NVDA'},
-      ),
-    );
-    await runtime.remember(
-      _memory(
-        id: 'options-stale',
-        kind: MemoryKind.episodic,
-        scope: 'options_trading',
-        summary: 'Old guidance said to hold through earnings.',
-        entities: const {'NVDA'},
-        validUntil: DateTime.utc(2026, 5, 1),
-      ),
-    );
-    await runtime.recordEvent(
-      EventRecord(
-        id: 'event-nvda-reduced',
-        domain: DomainScope.finance,
-        kind: EventKind.domain(DomainScope.finance, 'position_reduced'),
-        occurredAt: DateTime.utc(2026, 6, 28),
-        observedAt: DateTime.utc(2026, 6, 28),
-        sourceIdentity: const SourceIdentity(
-          domain: DomainScope.finance,
-          rowFamily: 'fin:options_trade_journal',
-          rowId: 'nvda-reduced',
-          fingerprint: 'fixture-nvda-reduced',
+      await runtime.remember(
+        _memory(
+          id: 'options-rule',
+          kind: MemoryKind.procedural,
+          scope: 'options_trading',
+          summary: 'Close before earnings and cap loss at 20%.',
+          entities: const {'NVDA'},
         ),
-        ownerUserId: _owner,
-        summary: 'NVDA put was reduced.',
-        facts: const <String, Object?>{},
-        entities: const {'NVDA'},
-      ),
-    );
-    await runtime.remember(
-      _memory(
-        id: 'fire-preference',
-        kind: MemoryKind.semantic,
-        scope: 'fire',
-        summary: 'Keep a 12-month emergency reserve.',
-        entities: const {'FIRE'},
-      ),
-    );
-    await runtime.remember(
-      _memory(
-        id: 'fire-rule',
-        kind: MemoryKind.procedural,
-        scope: 'fire',
-        summary: 'Protect planned surplus before discretionary spending.',
-        entities: const {'FIRE'},
-      ),
-    );
-    await runtime.remember(
-      _memory(
-        id: 'unrelated-options',
-        kind: MemoryKind.semantic,
-        scope: 'options_trading',
-        summary: 'Unrelated options preference.',
-        entities: const {'NVDA'},
-      ),
-    );
+      );
+      await runtime.remember(
+        _memory(
+          id: 'options-decision',
+          kind: MemoryKind.episodic,
+          scope: 'options_trading',
+          summary: 'The prior NVDA put was reduced after risk increased.',
+          entities: const {'NVDA'},
+        ),
+      );
+      await runtime.remember(
+        _memory(
+          id: 'options-stale',
+          kind: MemoryKind.episodic,
+          scope: 'options_trading',
+          summary: 'Old guidance said to hold through earnings.',
+          entities: const {'NVDA'},
+          validUntil: DateTime.utc(2026, 5, 1),
+        ),
+      );
+      await runtime.recordEvent(
+        EventRecord(
+          id: 'event-nvda-reduced',
+          domain: DomainScope.finance,
+          kind: EventKind.domain(DomainScope.finance, 'position_reduced'),
+          occurredAt: DateTime.utc(2026, 6, 28),
+          observedAt: DateTime.utc(2026, 6, 28),
+          sourceIdentity: const SourceIdentity(
+            domain: DomainScope.finance,
+            rowFamily: 'fin:options_trade_journal',
+            rowId: 'nvda-reduced',
+            fingerprint: 'fixture-nvda-reduced',
+          ),
+          ownerUserId: _owner,
+          summary: 'NVDA put was reduced.',
+          facts: const <String, Object?>{},
+          entities: const {'NVDA'},
+        ),
+      );
+      await runtime.remember(
+        _memory(
+          id: 'fire-preference',
+          kind: MemoryKind.semantic,
+          scope: 'fire',
+          summary: 'Keep a 12-month emergency reserve.',
+          entities: const {'FIRE'},
+        ),
+      );
+      await runtime.remember(
+        _memory(
+          id: 'fire-rule',
+          kind: MemoryKind.procedural,
+          scope: 'fire',
+          summary: 'Protect planned surplus before discretionary spending.',
+          entities: const {'FIRE'},
+        ),
+      );
+      await runtime.remember(
+        _memory(
+          id: 'unrelated-options',
+          kind: MemoryKind.semantic,
+          scope: 'options_trading',
+          summary: 'Unrelated options preference.',
+          entities: const {'NVDA'},
+        ),
+      );
 
-    final answers = <String, String>{
-      'options-before-earnings':
-          'Close before earnings. Cap loss at 20%. The prior NVDA put was reduced.',
-      'fire-surplus':
-          'Keep the 12-month emergency reserve and protect planned surplus.',
-    };
-    final results = <String, MemoryAnswerQualityResult>{};
-    for (final evalCase in _corpus) {
-      final context = await builder.build(
-        ownerUserId: _owner,
-        intent: evalCase.intent,
-      );
-      final result = scoreMemoryAnswerQuality(
-        evalCase: evalCase,
-        answer: answers[evalCase.id]!,
-        context: context,
-      );
-      results[evalCase.id] = result;
+      final answers = <String, String>{
+        'options-before-earnings': 'Close before earnings. Cap loss at 20%. The prior NVDA put was reduced.',
+        'fire-surplus':
+            'Keep the 12-month emergency reserve and protect planned surplus.',
+      };
+      final results = <String, MemoryAnswerQualityResult>{};
+      for (final evalCase in _corpus) {
+        final context = await builder.build(
+          ownerUserId: _owner,
+          intent: evalCase.intent,
+        );
+        final result = scoreMemoryAnswerQuality(
+          evalCase: evalCase,
+          answer: answers[evalCase.id]!,
+          context: context,
+        );
+        results[evalCase.id] = result;
+        expect(
+          result.passed,
+          isTrue,
+          reason:
+              '${evalCase.id}: score=${result.score}, '
+              'missingFacts=${result.missingFacts}, '
+              'missingEvidence=${result.missingEvidenceIds}, '
+              'forbiddenEvidence=${result.forbiddenEvidenceIdsFound}',
+        );
+      }
+      final report = MemoryAnswerQualityReport.fromResults(results);
+      // CI JSON reporters retain this privacy-safe aggregate without answers,
+      // questions, facts, evidence ids, or retrieved user content.
+      // ignore: avoid_print
+      print('[memory-answer-quality] ${jsonEncode(report.toJson())}');
+      expect(report.passed, isTrue);
+      expect(report.forbiddenClaimFailures, 0);
+      expect(report.forbiddenEvidenceFailures, 0);
       expect(
-        result.passed,
-        isTrue,
-        reason:
-            '${evalCase.id}: score=${result.score}, '
-            'missingFacts=${result.missingFacts}, '
-            'missingEvidence=${result.missingEvidenceIds}, '
-            'forbiddenEvidence=${result.forbiddenEvidenceIdsFound}',
+        report.toJson().keys,
+        unorderedEquals(<String>{
+          'case_count',
+          'passed_case_count',
+          'pass_rate',
+          'forbidden_claim_failures',
+          'forbidden_evidence_failures',
+          'missing_fact_failures',
+          'missing_evidence_failures',
+          'failed_case_ids',
+          'passed',
+        }),
       );
-    }
-    final report = MemoryAnswerQualityReport.fromResults(results);
-    // CI JSON reporters retain this privacy-safe aggregate without answers,
-    // questions, facts, evidence ids, or retrieved user content.
-    // ignore: avoid_print
-    print('[memory-answer-quality] ${jsonEncode(report.toJson())}');
-    expect(report.passed, isTrue);
-    expect(report.forbiddenClaimFailures, 0);
-    expect(report.forbiddenEvidenceFailures, 0);
-    expect(
-      report.toJson().keys,
-      unorderedEquals(<String>{
-        'case_count',
-        'passed_case_count',
-        'pass_rate',
-        'forbidden_claim_failures',
-        'forbidden_evidence_failures',
-        'missing_fact_failures',
-        'missing_evidence_failures',
-        'failed_case_ids',
-        'passed',
-      }),
-    );
-  });
+    },
+  );
 
   test('stale claim and missing evidence fail with deterministic reasons', () {
     final evalCase = _corpus.first;

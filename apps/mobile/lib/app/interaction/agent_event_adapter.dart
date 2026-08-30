@@ -7,8 +7,10 @@ import '../../core/ai/session/output_text_segmenter.dart';
 import 'interaction_session_coordinator.dart';
 
 typedef OutputSegmentSink = void Function(OutputSegment segment);
-typedef OutputFinishedSink =
-    void Function(ResponseEpoch epoch, {required bool interrupted});
+typedef OutputFinishedSink = void Function(
+  ResponseEpoch epoch, {
+  required bool interrupted,
+});
 
 /// Maps the existing provider-neutral Chat event vocabulary into the
 /// InteractionSession lanes.

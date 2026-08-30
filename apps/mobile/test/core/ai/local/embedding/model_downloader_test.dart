@@ -263,17 +263,17 @@ void main() {
       ],
     );
 
-    await ModelDownloader(
-      dio: _dioWith(_DownloadReply(archiveBytes)),
-    ).downloadArchiveFallback(bundle: bundle, destDir: tmp.path);
+    await ModelDownloader(dio: _dioWith(_DownloadReply(archiveBytes)))
+        .downloadArchiveFallback(bundle: bundle, destDir: tmp.path);
 
     expect(await File(p.join(tmp.path, 'one.bin')).readAsBytes(), first);
     expect(await File(p.join(tmp.path, 'two.bin')).readAsBytes(), second);
     expect(File(p.join(tmp.path, 'ignored.txt')).existsSync(), isFalse);
     expect(
-      Directory(
-        tmp.path,
-      ).listSync().whereType<File>().map((file) => p.basename(file.path)),
+      Directory(tmp.path)
+          .listSync()
+          .whereType<File>()
+          .map((file) => p.basename(file.path)),
       unorderedEquals(<String>['one.bin', 'two.bin']),
     );
   });
@@ -285,14 +285,14 @@ void main() {
         ..httpClientAdapter = _FileDownloadAdapter(_realArchivePath);
       final bundle = streamingZipformerLargeCtcZhBundle();
 
-      await ModelDownloader(
-        dio: dio,
-      ).downloadArchiveFallback(bundle: bundle, destDir: tmp.path);
+      await ModelDownloader(dio: dio)
+          .downloadArchiveFallback(bundle: bundle, destDir: tmp.path);
 
       expect(
-        Directory(
-          tmp.path,
-        ).listSync().whereType<File>().map((file) => p.basename(file.path)),
+        Directory(tmp.path)
+            .listSync()
+            .whereType<File>()
+            .map((file) => p.basename(file.path)),
         unorderedEquals(bundle.files.map((file) => file.localName)),
       );
     },

@@ -64,9 +64,8 @@ void main() {
     addTearDown(subscription.cancel);
 
     await Future<void>.delayed(Duration.zero);
-    final plan = FirePlan.unset(
-      baseCurrency: 'CNY',
-    ).copyWith(targetNetWorth: Decimal.fromInt(800000));
+    final plan = FirePlan.unset(baseCurrency: 'CNY')
+        .copyWith(targetNetWorth: Decimal.fromInt(800000));
     await repo.upsert(plan);
     await Future<void>.delayed(Duration.zero);
 

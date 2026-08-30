@@ -625,9 +625,9 @@ void main() {
       // The very last span in the last block is the caret WidgetSpan.
       // We can detect this by looking for the body's text + no caret
       // text in earlier blocks.
-      final firstSpanText = _flatten(
-        selectables.first.textSpan!,
-      ).map((e) => e.$1).join();
+      final firstSpanText = _flatten(selectables.first.textSpan!)
+          .map((e) => e.$1)
+          .join();
       expect(firstSpanText, isNot(contains('SizedBox')));
       // Caret span has no `text`, so check by looking at children
       // count in the last block: the last block should contain at

@@ -376,9 +376,8 @@ class _CapitalAllocationPlanEditorState
     final parsed = double.tryParse(value.trim());
     setState(() {
       if (parsed == null || parsed < 0 || parsed > 100) {
-        _errors['band:${draft.id}'] = AppLocalizations.of(
-          context,
-        ).targetAllocationEditorRangeError;
+        _errors['band:${draft.id}'] = AppLocalizations.of(context)
+            .targetAllocationEditorRangeError;
       } else {
         _errors.remove('band:${draft.id}');
         _drafts[index] = draft.copyWith(driftBandBps: (parsed * 100).round());

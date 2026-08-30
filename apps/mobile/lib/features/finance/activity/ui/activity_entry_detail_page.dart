@@ -85,8 +85,9 @@ class _ActivityEntryDetailPageState
             icon: const Icon(FLucideIcons.pencil),
             onPress: _deleting
                 ? null
-                : () =>
-                      context.go(FinanceRoutes.expense(widget.entry.entry.id)),
+                : () => context.push(
+                    FinanceRoutes.expense(widget.entry.entry.id),
+                  ),
           ),
         AppHeaderAction(
           semanticsLabel: l10n.commonDelete,

@@ -48,9 +48,8 @@ DateTime? parseIngestDate(String? value, {bool allowChineseDate = true}) {
   if (iso != null) return DateTime.utc(iso.year, iso.month, iso.day);
 
   if (allowChineseDate) {
-    final chinese = RegExp(
-      r'^(\d{4})年(\d{1,2})月(\d{1,2})日?',
-    ).firstMatch(cleaned);
+    final chinese = RegExp(r'^(\d{4})年(\d{1,2})月(\d{1,2})日?')
+        .firstMatch(cleaned);
     if (chinese != null) {
       final year = int.parse(chinese.group(1)!);
       final month = int.parse(chinese.group(2)!);
@@ -60,9 +59,8 @@ DateTime? parseIngestDate(String? value, {bool allowChineseDate = true}) {
     }
   }
 
-  final match = RegExp(
-    r'^(\d{1,4})[-/.](\d{1,2})[-/.](\d{1,4})',
-  ).firstMatch(cleaned);
+  final match = RegExp(r'^(\d{1,4})[-/.](\d{1,2})[-/.](\d{1,4})')
+      .firstMatch(cleaned);
   if (match == null) return null;
   final a = int.parse(match.group(1)!);
   final b = int.parse(match.group(2)!);

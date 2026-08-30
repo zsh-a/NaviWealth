@@ -1,4 +1,5 @@
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
+
 import '../../../../l10n/gen/app_localizations.dart';
 
 String entryKindLabel(AppLocalizations l10n, EntryKind kind) {

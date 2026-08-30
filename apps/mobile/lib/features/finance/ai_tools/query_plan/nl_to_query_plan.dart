@@ -110,9 +110,8 @@ DateRange? _extractDateRange(String q, DateTime now) {
     return _currentWeek(now);
   }
   // 'last N days' / '近 N 天' / '过去 N 天'
-  final m = RegExp(
-    r'近\s*(\d+)\s*天|过去\s*(\d+)\s*天|last\s*(\d+)\s*days?',
-  ).firstMatch(q);
+  final m = RegExp(r'近\s*(\d+)\s*天|过去\s*(\d+)\s*天|last\s*(\d+)\s*days?')
+      .firstMatch(q);
   if (m != null) {
     final n = int.tryParse(m.group(1) ?? m.group(2) ?? m.group(3) ?? '0') ?? 0;
     if (n > 0) return _lastNDays(now, n);

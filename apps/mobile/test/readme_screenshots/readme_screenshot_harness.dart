@@ -83,9 +83,8 @@ Future<void> pumpReadmeScreenshot(
         data: GoldenTheme.dark.appThemeData,
         child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
-          theme: AppTheme.dark(
-            compact: profile.compact,
-          ).copyWith(platform: profile.platform),
+          theme: AppTheme.dark(compact: profile.compact)
+              .copyWith(platform: profile.platform),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: locale,

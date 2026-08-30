@@ -14,8 +14,10 @@ const double _kMobileDockHorizontalPadding = AppSpacing.s16;
 const double _kMobileDockTopPadding = AppSpacing.s4;
 const double _kMobileDockBottomPadding = AppSpacing.s10;
 
-typedef DomainTabsAssistantAction =
-    void Function(BuildContext context, WidgetRef ref);
+typedef DomainTabsAssistantAction = void Function(
+  BuildContext context,
+  WidgetRef ref,
+);
 
 final domainTabsAssistantActionProvider = Provider<DomainTabsAssistantAction?>(
   (ref) => null,
@@ -198,9 +200,8 @@ class _MobileLayout extends ConsumerWidget {
         final content = Positioned.fill(
           child: MediaQuery(
             data: MediaQuery.of(context).copyWith(
-              padding: MediaQuery.of(
-                context,
-              ).padding.copyWith(bottom: bottomInset),
+              padding: MediaQuery.of(context).padding
+                  .copyWith(bottom: bottomInset),
             ),
             child: child,
           ),

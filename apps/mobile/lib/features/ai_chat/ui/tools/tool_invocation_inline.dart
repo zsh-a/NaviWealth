@@ -90,9 +90,8 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                 Flexible(
                   child: Text(
                     label,
-                    style: AiType.meta(
-                      context,
-                    ).copyWith(color: AiTone.muted(context)),
+                    style: AiType.meta(context)
+                        .copyWith(color: AiTone.muted(context)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -46,9 +46,8 @@ void main() {
     test('isComplete: false when one file missing', () async {
       final dir = paths.dirForBundle(_bundle);
       await dir.create(recursive: true);
-      await File(
-        p.join(dir.path, 'one.bin'),
-      ).writeAsBytes(List.filled(1024, 0));
+      await File(p.join(dir.path, 'one.bin'))
+          .writeAsBytes(List.filled(1024, 0));
       expect(await paths.isComplete(_bundle), isFalse);
     });
 
@@ -57,12 +56,10 @@ void main() {
       () async {
         final dir = paths.dirForBundle(_bundle);
         await dir.create(recursive: true);
-        await File(
-          p.join(dir.path, 'one.bin'),
-        ).writeAsBytes(List.filled(1024, 0));
-        await File(
-          p.join(dir.path, 'two.bin'),
-        ).writeAsBytes(List.filled(2048, 0));
+        await File(p.join(dir.path, 'one.bin'))
+            .writeAsBytes(List.filled(1024, 0));
+        await File(p.join(dir.path, 'two.bin'))
+            .writeAsBytes(List.filled(2048, 0));
         expect(await paths.isComplete(_bundle), isTrue);
       },
     );
@@ -73,12 +70,10 @@ void main() {
         final dir = paths.dirForBundle(_bundle);
         await dir.create(recursive: true);
         // 1024 ±5% = [972, 1075]
-        await File(
-          p.join(dir.path, 'one.bin'),
-        ).writeAsBytes(List.filled(1000, 0));
-        await File(
-          p.join(dir.path, 'two.bin'),
-        ).writeAsBytes(List.filled(2000, 0));
+        await File(p.join(dir.path, 'one.bin'))
+            .writeAsBytes(List.filled(1000, 0));
+        await File(p.join(dir.path, 'two.bin'))
+            .writeAsBytes(List.filled(2000, 0));
         expect(await paths.isComplete(_bundle), isTrue);
       },
     );
@@ -87,9 +82,8 @@ void main() {
       final dir = paths.dirForBundle(_bundle);
       await dir.create(recursive: true);
       await File(p.join(dir.path, 'one.bin')).writeAsBytes(List.filled(100, 0));
-      await File(
-        p.join(dir.path, 'two.bin'),
-      ).writeAsBytes(List.filled(2048, 0));
+      await File(p.join(dir.path, 'two.bin'))
+          .writeAsBytes(List.filled(2048, 0));
       expect(await paths.isComplete(_bundle), isFalse);
     });
   });

@@ -102,6 +102,9 @@ class _ProposeCardState extends ConsumerState<ProposeCard> {
         // Two visual tiers only:
         //  - light: oneTap
         //  - heavy: confirmDiff / swipe / typed (typed adds a token gate)
+        // `swipe` currently has no producer — no tool pre-applies a write
+        // before this card renders — so it falls through to the expanded
+        // view. See the gap note on `InteractionMode.swipe`.
         final mode = deriveInteractionModeForPlan(plan);
         return switch (mode) {
           InteractionMode.oneTap => _OneTapView(

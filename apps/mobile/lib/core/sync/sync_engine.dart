@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:naviwealth/core/sync/hlc.dart';
+
 import '../logging/app_logger.dart';
 import 'clock.dart';
 import 'cursor_store.dart';

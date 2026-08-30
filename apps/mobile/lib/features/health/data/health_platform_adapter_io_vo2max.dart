@@ -19,11 +19,13 @@ Future<List<RawDailyValue>> _fetchIosVo2Max({
 }) async {
   if (!Platform.isIOS) return const <RawDailyValue>[];
   try {
-    final rows = await _healthKitChannel
-        .invokeListMethod<Object?>('readVo2Max', <String, Object?>{
-          'from': from.toUtc().millisecondsSinceEpoch,
-          'to': to.toUtc().millisecondsSinceEpoch,
-        });
+    final rows = await _healthKitChannel.invokeListMethod<Object?>(
+      'readVo2Max',
+      <String, Object?>{
+        'from': from.toUtc().millisecondsSinceEpoch,
+        'to': to.toUtc().millisecondsSinceEpoch,
+      },
+    );
     if (rows == null || rows.isEmpty) return const <RawDailyValue>[];
     return _dailyAverageVo2Max(rows);
   } on MissingPluginException {

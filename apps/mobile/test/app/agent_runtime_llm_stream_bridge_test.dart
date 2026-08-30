@@ -10,123 +10,126 @@ import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'agent_runtime_native_bridge_test_harness.dart';
 
 void main() {
-  test('streams profile-backed FRB chat-turn events from request JSON', () async {
-    final native = FakeAgentRuntimeNativeBridge();
-    final bridge = AgentRuntimeLlmBridge(
-      bridge: native,
-      profile: const LlmProfile(
-        id: 'profile_1',
-        name: 'Work gateway',
-        provider: LlmProvider.openai,
-        apiKey: 'sk-test',
-        baseUrl: 'https://llm.example.test/v1',
-        model: 'gpt-test',
-      ),
-    );
-    final initCalls = <String?>[];
-    final requestJsons = <String>[];
-    final streamBridge = AgentRuntimeLlmStreamBridge(
-      llmBridge: bridge,
-      libraryPath: '/tmp/liblifeos_native.dylib',
-      initRuntime: ({String? libraryPath}) async {
-        initCalls.add(libraryPath);
-      },
-      streamChatTurnJson: ({required String requestJson}) {
-        requestJsons.add(requestJson);
-        return Stream<String>.fromIterable(const <String>[
-          '{"kind":"started","metadata":{"provider":"openai"}}',
-          '{"kind":"delta","content":"Hello"}',
-          '{"kind":"finished","response":{"content":"Hello","finish_reason":"stop"}}',
-        ]);
-      },
-    );
+  test(
+    'streams profile-backed FRB chat-turn events from request JSON',
+    () async {
+      final native = FakeAgentRuntimeNativeBridge();
+      final bridge = AgentRuntimeLlmBridge(
+        bridge: native,
+        profile: const LlmProfile(
+          id: 'profile_1',
+          name: 'Work gateway',
+          provider: LlmProvider.openai,
+          apiKey: 'sk-test',
+          baseUrl: 'https://llm.example.test/v1',
+          model: 'gpt-test',
+        ),
+      );
+      final initCalls = <String?>[];
+      final requestJsons = <String>[];
+      final streamBridge = AgentRuntimeLlmStreamBridge(
+        llmBridge: bridge,
+        libraryPath: '/tmp/liblifeos_native.dylib',
+        initRuntime: ({String? libraryPath}) async {
+          initCalls.add(libraryPath);
+        },
+        streamChatTurnJson: ({required String requestJson}) {
+          requestJsons.add(requestJson);
+          return Stream<String>.fromIterable(const <String>[
+            '{"kind":"started","metadata":{"provider":"openai"}}',
+            '{"kind":"delta","content":"Hello"}',
+            '{"kind":"finished","response":{"content":"Hello","finish_reason":"stop"}}',
+          ]);
+        },
+      );
 
-    final events = await streamBridge
-        .streamChatTurn(
-          messages: const <Map<String, Object?>>[
-            <String, Object?>{'role': 'user', 'content': 'Hello'},
-          ],
-          tools: const <Map<String, Object?>>[
-            <String, Object?>{
-              'name': 'read_task',
-              'description': 'Read a task',
-              'input_schema': <String, Object?>{'type': 'object'},
-            },
-          ],
-          contextBlocks: const <Map<String, Object?>>[
-            <String, Object?>{
-              'block_id': 'memory_1',
-              'kind': 'memory',
-              'source': 'test.memory',
-              'priority': 80,
-              'token_estimate': 0,
-              'content_hash': 'host:test',
-              'content': <String, Object?>{
-                'statement': 'User prefers concise answers',
+      final events = await streamBridge
+          .streamChatTurn(
+            messages: const <Map<String, Object?>>[
+              <String, Object?>{'role': 'user', 'content': 'Hello'},
+            ],
+            tools: const <Map<String, Object?>>[
+              <String, Object?>{
+                'name': 'read_task',
+                'description': 'Read a task',
+                'input_schema': <String, Object?>{'type': 'object'},
               },
-              'metadata': <String, Object?>{'trusted_as_instruction': false},
+            ],
+            contextBlocks: const <Map<String, Object?>>[
+              <String, Object?>{
+                'block_id': 'memory_1',
+                'kind': 'memory',
+                'source': 'test.memory',
+                'priority': 80,
+                'token_estimate': 0,
+                'content_hash': 'host:test',
+                'content': <String, Object?>{
+                  'statement': 'User prefers concise answers',
+                },
+                'metadata': <String, Object?>{'trusted_as_instruction': false},
+              },
+            ],
+            contextPolicy: const <String, Object?>{
+              'max_input_tokens': 32000,
+              'reserve_output_tokens': 2048,
+              'preserve_recent_messages': 8,
+              'compact_when_over_budget': true,
             },
-          ],
-          contextPolicy: const <String, Object?>{
-            'max_input_tokens': 32000,
-            'reserve_output_tokens': 2048,
-            'preserve_recent_messages': 8,
-            'compact_when_over_budget': true,
-          },
-          temperature: 0,
-          maxOutputTokens: 64,
-          metadata: const <String, Object?>{
-            'surface': 'ai_chat',
-            'session_id': 'session_1',
-            'thread_id': 'thread_1',
-          },
-          sessionId: 'session_1',
-          threadId: 'thread_1',
-          surface: 'ai_chat',
-          mode: 'chat',
-        )
-        .toList();
+            temperature: 0,
+            maxOutputTokens: 64,
+            metadata: const <String, Object?>{
+              'surface': 'ai_chat',
+              'session_id': 'session_1',
+              'thread_id': 'thread_1',
+            },
+            sessionId: 'session_1',
+            threadId: 'thread_1',
+            surface: 'ai_chat',
+            mode: 'chat',
+          )
+          .toList();
 
-    expect(initCalls, <String?>['/tmp/liblifeos_native.dylib']);
-    expect(events.map((event) => event['kind']), <String>[
-      'started',
-      'delta',
-      'finished',
-    ]);
-    expect(events[1]['content'], 'Hello');
+      expect(initCalls, <String?>['/tmp/liblifeos_native.dylib']);
+      expect(events.map((event) => event['kind']), <String>[
+        'started',
+        'delta',
+        'finished',
+      ]);
+      expect(events[1]['content'], 'Hello');
 
-    final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
-    expect(request['protocol_version'], 'agent.v1');
-    expect(request['surface'], 'ai_chat');
-    expect(request['session_id'], 'session_1');
-    expect(request['thread_id'], 'thread_1');
-    expect(request['mode'], 'chat');
-    expect(request['provider'], 'openai');
-    expect(request['model'], 'gpt-test');
-    expect(request['temperature'], 0);
-    expect(request['max_output_tokens'], 64);
-    expect(request['messages'], <Object?>[
-      <String, Object?>{'role': 'user', 'content': 'Hello'},
-    ]);
-    expect(request['tools'], hasLength(1));
-    expect(request['context_blocks'], hasLength(1));
-    final contextBlocks = request['context_blocks'] as List<Object?>;
-    final memoryBlock = contextBlocks.single as Map<String, Object?>;
-    expect(memoryBlock['kind'], 'memory');
-    expect(memoryBlock['source'], 'test.memory');
-    expect(request['context_policy'], <String, Object?>{
-      'max_input_tokens': 32000,
-      'reserve_output_tokens': 2048,
-      'preserve_recent_messages': 8,
-      'compact_when_over_budget': true,
-    });
-    final metadata = request['metadata'] as Map<String, Object?>;
-    expect(metadata['surface'], 'ai_chat');
-    expect(metadata['profile_id'], 'profile_1');
-    expect(metadata['profile_name'], 'Work gateway');
-    expect(metadata['base_url'], 'https://llm.example.test/v1');
-    expect(metadata['api_key'], 'sk-test');
-  });
+      final request = jsonDecode(requestJsons.single) as Map<String, Object?>;
+      expect(request['protocol_version'], 'agent.v1');
+      expect(request['surface'], 'ai_chat');
+      expect(request['session_id'], 'session_1');
+      expect(request['thread_id'], 'thread_1');
+      expect(request['mode'], 'chat');
+      expect(request['provider'], 'openai');
+      expect(request['model'], 'gpt-test');
+      expect(request['temperature'], 0);
+      expect(request['max_output_tokens'], 64);
+      expect(request['messages'], <Object?>[
+        <String, Object?>{'role': 'user', 'content': 'Hello'},
+      ]);
+      expect(request['tools'], hasLength(1));
+      expect(request['context_blocks'], hasLength(1));
+      final contextBlocks = request['context_blocks'] as List<Object?>;
+      final memoryBlock = contextBlocks.single as Map<String, Object?>;
+      expect(memoryBlock['kind'], 'memory');
+      expect(memoryBlock['source'], 'test.memory');
+      expect(request['context_policy'], <String, Object?>{
+        'max_input_tokens': 32000,
+        'reserve_output_tokens': 2048,
+        'preserve_recent_messages': 8,
+        'compact_when_over_budget': true,
+      });
+      final metadata = request['metadata'] as Map<String, Object?>;
+      expect(metadata['surface'], 'ai_chat');
+      expect(metadata['profile_id'], 'profile_1');
+      expect(metadata['profile_name'], 'Work gateway');
+      expect(metadata['base_url'], 'https://llm.example.test/v1');
+      expect(metadata['api_key'], 'sk-test');
+    },
+  );
 
   test('streams multimodal chat turns from request JSON', () async {
     final bridge = AgentRuntimeLlmBridge(

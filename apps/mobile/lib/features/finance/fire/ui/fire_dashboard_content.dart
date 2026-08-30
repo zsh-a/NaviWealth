@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../../../../core/format/formatters.dart';
 import '../domain/fire_projection.dart';
 import 'fire_goal_form.dart';

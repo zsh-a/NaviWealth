@@ -112,9 +112,8 @@ void main() {
       'one-off shock removes the configured outlay from liquid + invest',
       () {
         final state = _state(oneOff: 20000);
-        final shock = runStressTests(
-          state,
-        ).firstWhere((r) => r.scenario == FireStressScenario.oneOffShock);
+        final shock = runStressTests(state)
+            .firstWhere((r) => r.scenario == FireStressScenario.oneOffShock);
         expect(shock.netWorthAfter.amount, Decimal.parse('1980000'));
         expect(shock.investableAssetsAfter.amount, Decimal.parse('1980000'));
         // Liquid 48_000 - 20_000 = 28_000 → cash months = 28000 / 4000 = 7.
@@ -125,9 +124,8 @@ void main() {
 
     test('fx shock with currency mismatches nudges safe → cautious', () {
       final state = _state(currencyMismatch: 2, fx: 0.05);
-      final fx = runStressTests(
-        state,
-      ).firstWhere((r) => r.scenario == FireStressScenario.fxShock);
+      final fx = runStressTests(state)
+          .firstWhere((r) => r.scenario == FireStressScenario.fxShock);
       expect(fx.verdict, FireStressVerdict.cautious);
       expect(fx.note, contains('fx_gaps_present'));
     });
@@ -136,9 +134,8 @@ void main() {
       final state = _state(liquid: '120000', cashMonths: 6);
       // Horizon: targetCashBucketMonths = 6, monthly = 4_000 → depletes
       // by 24_000 → liquid after 96_000 → cash months 24.
-      final depl = runStressTests(
-        state,
-      ).firstWhere((r) => r.scenario == FireStressScenario.cashDepletion);
+      final depl = runStressTests(state)
+          .firstWhere((r) => r.scenario == FireStressScenario.cashDepletion);
       expect(depl.cashBucketMonthsAfter, closeTo(24.0, 1e-9));
       expect(depl.verdict, FireStressVerdict.safe);
     });
@@ -165,9 +162,8 @@ void main() {
 
     test('toJson omits infinity withdrawal rate, includes all params', () {
       final state = _state(investable: '0', annualSpend: '60000');
-      final r = runStressTests(
-        state,
-      ).firstWhere((r) => r.scenario == FireStressScenario.marketDrawdown);
+      final r = runStressTests(state)
+          .firstWhere((r) => r.scenario == FireStressScenario.marketDrawdown);
       final json = r.toJson();
       expect(json['scenario'], 'market_drawdown');
       expect(json['withdrawal_rate_after'], isNull);

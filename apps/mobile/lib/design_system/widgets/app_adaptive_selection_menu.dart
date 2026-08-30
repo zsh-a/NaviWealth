@@ -10,12 +10,11 @@ import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
 import 'app_tappable.dart';
 
-typedef AppAdaptiveSelectionTriggerBuilder =
-    Widget Function(
-      BuildContext context,
-      VoidCallback openMenu,
-      FocusNode focusNode,
-    );
+typedef AppAdaptiveSelectionTriggerBuilder = Widget Function(
+  BuildContext context,
+  VoidCallback openMenu,
+  FocusNode focusNode,
+);
 
 /// One value shown by [AppAdaptiveSelectionMenu].
 class AppAdaptiveSelection<T> {

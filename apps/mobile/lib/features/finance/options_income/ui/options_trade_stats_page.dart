@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
 import '../data/providers.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/options_trade_stats.dart';
@@ -48,7 +49,7 @@ class OptionsTradeStatsPage extends ConsumerWidget {
                 message: l10n.incomePlannerStatsEmptyBody,
                 action: FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(context).maybePop(),
+                  onPress: () => smartPop(context),
                   child: Text(l10n.commonClose),
                 ),
               ),

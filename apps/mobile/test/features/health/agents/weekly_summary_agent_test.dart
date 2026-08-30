@@ -417,17 +417,18 @@ List<Override> _weeklySummaryRegistrationOverrides() {
         domain: DomainScope.health,
       ),
     ]),
-    agentPresentationSpecsProvider
-        .overrideWithValue(const <String, AgentPresentationSpec>{
-          kWeeklySummaryAgentId: AgentPresentationSpec(
-            agentId: kWeeklySummaryAgentId,
-            domain: DomainScope.health,
-            icon: Icons.check,
-            label: _agentLabel,
-            description: _agentDescription,
-            placement: AgentResultPlacement.domainReview,
-          ),
-        }),
+    agentPresentationSpecsProvider.overrideWithValue(
+      const <String, AgentPresentationSpec>{
+        kWeeklySummaryAgentId: AgentPresentationSpec(
+          agentId: kWeeklySummaryAgentId,
+          domain: DomainScope.health,
+          icon: Icons.check,
+          label: _agentLabel,
+          description: _agentDescription,
+          placement: AgentResultPlacement.domainReview,
+        ),
+      },
+    ),
   ];
 }
 

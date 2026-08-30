@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 
 import 'package:naviwealth/core/sync/sync_meta.dart';
+
 import 'options_strategy_profile.dart';
 
 const Object _unsetTradeJournalField = Object();

@@ -10,8 +10,9 @@ import 'chat_rail_content.dart';
 /// reading it inside the provider) keeps the provider free of
 /// `BuildContext` while still letting domain implementations format
 /// numbers / dates with the user's locale.
-typedef ChatRailContentSelector =
-    List<ChatRailContent> Function(AppLocalizations l10n);
+typedef ChatRailContentSelector = List<ChatRailContent> Function(
+  AppLocalizations l10n,
+);
 
 /// Cross-domain rail content the AI chat surface renders
 /// (`docs/architecture/lifeos-shell.md` §4).

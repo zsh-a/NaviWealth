@@ -229,9 +229,8 @@ void main() {
         name: 'Preserved Account',
         deviceId: deviceId,
       );
-      await DriftOutboxStore(
-        targetDb,
-      ).enqueue(table: 'accounts', rowId: 'preserved-acct');
+      await DriftOutboxStore(targetDb)
+          .enqueue(table: 'accounts', rowId: 'preserved-acct');
 
       await expectLater(
         BackupService(

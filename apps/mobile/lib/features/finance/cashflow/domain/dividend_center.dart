@@ -7,8 +7,11 @@ import 'package:naviwealth/features/finance/investment/domain/models/holding_sna
 import 'cash_flow_event.dart';
 import 'cash_flow_ledger_entry.dart';
 
-typedef DividendAmountConverter =
-    Decimal? Function(Decimal amount, String currency, DateTime date);
+typedef DividendAmountConverter = Decimal? Function(
+  Decimal amount,
+  String currency,
+  DateTime date,
+);
 
 @immutable
 class DividendCenterEvent {

@@ -91,9 +91,8 @@ void main() {
       id: 'preserved-acct',
       name: 'Preserved Across Force Stop',
     );
-    await DriftOutboxStore(
-      targetDb,
-    ).enqueue(table: 'accounts', rowId: 'preserved-acct');
+    await DriftOutboxStore(targetDb)
+        .enqueue(table: 'accounts', rowId: 'preserved-acct');
 
     await BackupService(
       db: targetDb,

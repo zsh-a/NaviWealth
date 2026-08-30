@@ -25,6 +25,13 @@ enum InteractionMode {
 
   /// Already applied locally, user dismisses or undoes via the
   /// persistent undo banner. UI: shows the applied state inline.
+  ///
+  /// Gap: no current producer emits this mode. Every `propose_*` tool
+  /// goes through `readyPlan` with the default `local_proposal` envelope
+  /// (→ `confirmDiff`), and nothing pre-applies a write before the chat
+  /// card renders, so `ProposeCard` renders `swipe` like `confirmDiff`
+  /// (an expanded card demanding confirmation). Revisit that rendering
+  /// only when a real `local_immediate` producer ships.
   swipe,
 
   /// User must see the full payload (diff / before-after) and tap

@@ -43,9 +43,8 @@ Widget _wrap({required ProviderContainer container, double textScale = 1}) {
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
         child: AppMessenger.init(
           child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
         ),

@@ -64,6 +64,7 @@ import '../cashflow/ui/income_form_page.dart';
 import '../inbox/ui/financial_inbox_page.dart';
 import '../ingest/domain/ingest_models.dart';
 import '../ingest/ui/ingest_review_page.dart';
+import '../investment/domain/trade_entry/trade_entry_prefill.dart';
 import '../monthly_close/ui/monthly_close_page.dart';
 import '../rebalance/ui/rebalance_execution_workspace_page.dart'
     deferred as rebalance_execution_lib;
@@ -161,10 +162,15 @@ StatefulShellRoute financeShellRoute() {
                     assetId: params['assetId'],
                     accountId: params['accountId'],
                     ingestDraft: extra is IngestDraft ? extra : null,
-                    prefill: tradeEntryPrefillFromQuery(
-                      params,
-                      initialType: initialType,
-                    ),
+                    // Upstream workflows (DCA batch, rebalance) hand off a
+                    // fully-built prefill via extra; the ingest queue uses
+                    // query params instead (§5.10.10 / S5a).
+                    prefill: extra is TradeEntryPrefill
+                        ? extra
+                        : tradeEntryPrefillFromQuery(
+                            params,
+                            initialType: initialType,
+                          ),
                     initialType: initialType,
                   );
                 },

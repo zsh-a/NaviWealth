@@ -241,67 +241,55 @@ mixin _HealthMetricTrendMemoryBuilder on _HealthMetricMemoryFormatting {
     return switch (trend.kind) {
       HealthMetricKind.sleepSession when _isAdverseTrend(trend) => _TrendAdvice(
         title: 'Health rule: protect sleep before load',
-        rule:
-            'When recent sleep is short or falling, bias HealthOS plans toward recovery before high-intensity work.',
+        rule: 'When recent sleep is short or falling, bias HealthOS plans toward recovery before high-intensity work.',
         conditions:
             '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Recommend lighter training, earlier wind-down, and avoid stacking intense workouts until sleep normalizes.',
+        action: 'Recommend lighter training, earlier wind-down, and avoid stacking intense workouts until sleep normalizes.',
       ),
       HealthMetricKind.hrvDaily when _isAdverseTrend(trend) => _TrendAdvice(
         title: 'Health rule: treat falling HRV as recovery risk',
-        rule:
-            'When HRV trends down, reduce planned intensity unless the user explicitly overrides.',
+        rule: 'When HRV trends down, reduce planned intensity unless the user explicitly overrides.',
         conditions:
             '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Prefer mobility, zone-2, or rest recommendations and explain the HRV context.',
+        action: 'Prefer mobility, zone-2, or rest recommendations and explain the HRV context.',
       ),
       HealthMetricKind.rhrDaily when _isAdverseTrend(trend) => _TrendAdvice(
         title: 'Health rule: treat rising RHR as recovery risk',
-        rule:
-            'When resting heart rate trends up, avoid aggressive workload recommendations.',
+        rule: 'When resting heart rate trends up, avoid aggressive workload recommendations.',
         conditions:
             '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Suggest conservative recovery actions and mention RHR as a caution signal.',
+        action: 'Suggest conservative recovery actions and mention RHR as a caution signal.',
       ),
       HealthMetricKind.stressDaily when _isAdverseTrend(trend) => _TrendAdvice(
         title: 'Health rule: de-load on elevated stress',
-        rule:
-            'When stress is elevated or rising, prioritize recovery blocks in the plan.',
+        rule: 'When stress is elevated or rising, prioritize recovery blocks in the plan.',
         conditions:
             '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Recommend rest, breathing, or easy movement before strenuous sessions.',
+        action: 'Recommend rest, breathing, or easy movement before strenuous sessions.',
       ),
-      HealthMetricKind.bodyBatteryDaily when _isAdverseTrend(trend) => _TrendAdvice(
-        title: 'Health rule: low Body Battery limits workload',
-        rule:
-            'When Body Battery is low or falling, cap workout ambition for the next plan.',
-        conditions:
-            '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Prefer low-intensity activity or full rest and revisit after recovery improves.',
-      ),
+      HealthMetricKind.bodyBatteryDaily when _isAdverseTrend(trend) =>
+        _TrendAdvice(
+          title: 'Health rule: low Body Battery limits workload',
+          rule: 'When Body Battery is low or falling, cap workout ambition for the next plan.',
+          conditions:
+              '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
+          action: 'Prefer low-intensity activity or full rest and revisit after recovery improves.',
+        ),
       HealthMetricKind.spo2Daily when _isAdverseTrend(trend) => _TrendAdvice(
         title: 'Health rule: low SpO2 needs caution',
-        rule:
-            'When SpO2 trends down or falls below normal, avoid hard training recommendations.',
+        rule: 'When SpO2 trends down or falls below normal, avoid hard training recommendations.',
         conditions:
             '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Suggest rest and advise the user to treat persistent low readings as a medical follow-up signal.',
+        action: 'Suggest rest and advise the user to treat persistent low readings as a medical follow-up signal.',
       ),
-      HealthMetricKind.trainingLoadDaily when _isAdverseTrend(trend) => _TrendAdvice(
-        title: 'Health rule: rising load needs recovery budget',
-        rule:
-            'When training load is already high and rising, leave recovery budget before adding work.',
-        conditions:
-            '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
-        action:
-            'Avoid compounding load; recommend deload or easy sessions unless recovery metrics are strong.',
-      ),
+      HealthMetricKind.trainingLoadDaily when _isAdverseTrend(trend) =>
+        _TrendAdvice(
+          title: 'Health rule: rising load needs recovery budget',
+          rule: 'When training load is already high and rising, leave recovery budget before adding work.',
+          conditions:
+              '$label ${trend.direction.wire}, latest $latest, recent average ${_formatTrendValue(trend.recentAverage, unit)}.',
+          action: 'Avoid compounding load; recommend deload or easy sessions unless recovery metrics are strong.',
+        ),
       _ => null,
     };
   }

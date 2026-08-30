@@ -389,10 +389,8 @@ void main() {
           width: 220,
           child: AgentResultPanelStateCard(
             icon: Icons.auto_awesome,
-            title:
-                'Extremely long agent status title that should not overflow the row',
-            message:
-                'A very long status message should stay inside the available width and use ellipsis when the panel is compact.',
+            title: 'Extremely long agent status title that should not overflow the row',
+            message: 'A very long status message should stay inside the available width and use ellipsis when the panel is compact.',
           ),
         ),
       ),

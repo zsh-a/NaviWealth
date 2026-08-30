@@ -33,9 +33,8 @@ Future<void> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        corporateActionEventsProvider(
-          symbol,
-        ).overrideWith((ref) async => events),
+        corporateActionEventsProvider(symbol)
+            .overrideWith((ref) async => events),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),

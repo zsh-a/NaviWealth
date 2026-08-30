@@ -7,6 +7,7 @@ import '../../core/haptics/haptics.dart';
 import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_interaction.dart';
 import 'app_success_celebration.dart';
 
 /// Toast severity levels.
@@ -216,7 +217,7 @@ class _AppToastSurface extends StatelessWidget {
                             variant: FButtonVariant.ghost,
                             size: FButtonSizeVariant.sm,
                             mainAxisSize: MainAxisSize.min,
-                            onPress: onAction,
+                            onPress: AppInteraction.wrap(onAction),
                             child: Text(
                               actionLabel!,
                               overflow: TextOverflow.ellipsis,

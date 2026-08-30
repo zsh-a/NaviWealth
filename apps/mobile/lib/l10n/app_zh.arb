@@ -2090,6 +2090,7 @@
 
   "aiChatProposalConfirmTokenWarning": "此操作高风险。请输入「{token}」启用确认。",
   "aiChatProposalConfirmTokenPending": "输入「{token}」后即可点击确认。",
+  "aiChatProposalConfirmToken": "确认",
 
   "aiChatFieldQuantity": "数量",
   "aiChatFieldPrice": "价格 (留空则市场回填)",

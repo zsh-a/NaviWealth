@@ -31,9 +31,8 @@ Future<String?> resolveDatabaseEncryptionKeyImpl({
 }) async {
   final file = await _databaseFile(dbFileName);
   final encryptedDatabaseExists = await _hasEncryptedDatabaseArtifact(file);
-  return DatabaseEncryptionKeyManager(
-    store,
-  ).loadOrCreate(encryptedDatabaseExists: encryptedDatabaseExists);
+  return DatabaseEncryptionKeyManager(store)
+      .loadOrCreate(encryptedDatabaseExists: encryptedDatabaseExists);
 }
 
 Future<void> resetEncryptedDatabaseImpl({

@@ -11,12 +11,11 @@ import 'app_sheet.dart';
 
 typedef AppAdaptiveActionCallback = FutureOr<void> Function();
 
-typedef AppAdaptiveActionTriggerBuilder =
-    Widget Function(
-      BuildContext context,
-      VoidCallback openMenu,
-      FocusNode focusNode,
-    );
+typedef AppAdaptiveActionTriggerBuilder = Widget Function(
+  BuildContext context,
+  VoidCallback openMenu,
+  FocusNode focusNode,
+);
 
 /// One command shown by [AppAdaptiveActionMenu].
 class AppAdaptiveAction {

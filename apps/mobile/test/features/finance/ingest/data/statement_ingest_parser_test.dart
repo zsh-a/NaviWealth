@@ -122,22 +122,25 @@ void main() {
       expect(rows.single.categoryHint, 'transport');
     });
 
-    test('broker exports preserve income and withholding as separate drafts', () {
-      final rows = parseStatementLedger(
-        'ClientAccountID,Asset Category,Currency,Symbol,Date/Time,Description,Amount\n'
-        'U123,Stocks,USD,AAPL,2026-05-10,Dividend,12.34\n'
-        'U123,Stocks,USD,AAPL,2026-05-10,Withholding Tax,-3.70\n',
-      );
+    test(
+      'broker exports preserve income and withholding as separate drafts',
+      () {
+        final rows = parseStatementLedger(
+          'ClientAccountID,Asset Category,Currency,Symbol,Date/Time,Description,Amount\n'
+          'U123,Stocks,USD,AAPL,2026-05-10,Dividend,12.34\n'
+          'U123,Stocks,USD,AAPL,2026-05-10,Withholding Tax,-3.70\n',
+        );
 
-      expect(rows, hasLength(2));
-      expect(rows.first.kind, IngestTransactionKind.income);
-      expect(rows.first.description, contains('dividend'));
-      expect(rows.first.amountMinor, 1234);
-      expect(rows.first.categoryHint, 'dividend');
-      expect(rows.last.description, contains('withholding tax'));
-      expect(rows.last.amountMinor, -370);
-      expect(rows.last.categoryHint, 'tax:withholding');
-    });
+        expect(rows, hasLength(2));
+        expect(rows.first.kind, IngestTransactionKind.income);
+        expect(rows.first.description, contains('dividend'));
+        expect(rows.first.amountMinor, 1234);
+        expect(rows.first.categoryHint, 'dividend');
+        expect(rows.last.description, contains('withholding tax'));
+        expect(rows.last.amountMinor, -370);
+        expect(rows.last.categoryHint, 'tax:withholding');
+      },
+    );
 
     test('trade principal and transfers use typed review destinations', () {
       final brokerRows = parseStatementLedger(

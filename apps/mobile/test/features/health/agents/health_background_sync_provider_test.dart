@@ -82,9 +82,8 @@ void main() {
       final prefs = await SharedPreferences.getInstance();
       final db = makeTestDatabase();
       addTearDown(db.close);
-      await DomainOptInStore(
-        db,
-      ).write(DomainOptIns(const <DomainScope>{DomainScope.health}));
+      await DomainOptInStore(db)
+          .write(DomainOptIns(const <DomainScope>{DomainScope.health}));
 
       final outbox = InMemoryOutboxStore();
       final adapter = _FakeHealthPlatformAdapter(

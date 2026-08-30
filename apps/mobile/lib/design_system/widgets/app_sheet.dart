@@ -12,6 +12,7 @@ import '../tokens/text_style_presets.dart';
 import 'app_busy_button.dart';
 import 'app_glass.dart';
 import 'app_gradient_divider.dart';
+import 'app_interaction.dart';
 import 'form_dirty_controller.dart';
 
 final ValueNotifier<int> appSheetOverlayDepthListenable = ValueNotifier<int>(0);
@@ -498,6 +499,9 @@ class AppSheetFooter extends StatelessWidget {
       onPress: enabled ? onSubmit : null,
       busy: busy,
       label: submitLabel,
+      hapticIntent: destructive
+          ? AppInteractionIntent.destroy
+          : AppInteractionIntent.commit,
     );
 
     return LayoutBuilder(

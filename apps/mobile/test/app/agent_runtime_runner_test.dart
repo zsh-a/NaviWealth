@@ -58,72 +58,66 @@ void main() {
     },
   );
 
-  test(
-    'AgentRuntimeProfileTurnRunner dispatches native tool call from LLM metadata',
-    () async {
-      final native = _FakeNativeBridge(
-        llmResponse: const <String, Object?>{
-          'protocol_version': 'agent.v1',
-          'provider': 'openai',
-          'model': 'gpt-test',
-          'content': 'Use local tool',
-          'finish_reason': 'stop',
-          'metadata': <String, Object?>{
-            'effects': <Object?>[
-              <String, Object?>{
-                'kind': 'tool',
-                'effect_id': 'call_1',
-                'name': 'read_task',
-                'input': <String, Object?>{'id': 'task_1'},
-              },
-            ],
-          },
+  test('AgentRuntimeProfileTurnRunner dispatches native tool call from LLM metadata', () async {
+    final native = _FakeNativeBridge(
+      llmResponse: const <String, Object?>{
+        'protocol_version': 'agent.v1',
+        'provider': 'openai',
+        'model': 'gpt-test',
+        'content': 'Use local tool',
+        'finish_reason': 'stop',
+        'metadata': <String, Object?>{
+          'effects': <Object?>[
+            <String, Object?>{
+              'kind': 'tool',
+              'effect_id': 'call_1',
+              'name': 'read_task',
+              'input': <String, Object?>{'id': 'task_1'},
+            },
+          ],
         },
-      );
-      final dispatcher = _RecordingDispatcher();
-      final runner = _runner(native: native, dispatcher: dispatcher);
+      },
+    );
+    final dispatcher = _RecordingDispatcher();
+    final runner = _runner(native: native, dispatcher: dispatcher);
 
-      final result = await runner.run(
-        agentId: 'execution_review',
-        messages: const <Map<String, Object?>>[
-          <String, Object?>{'role': 'user', 'content': 'Check task'},
-        ],
-        maxEffectSteps: 1,
-      );
+    final result = await runner.run(
+      agentId: 'execution_review',
+      messages: const <Map<String, Object?>>[
+        <String, Object?>{'role': 'user', 'content': 'Check task'},
+      ],
+      maxEffectSteps: 1,
+    );
 
-      expect(result.step['status'], 'completed');
-      expect(result.stepRun.dispatchedEffectCount, 1);
-      expect(
-        result.stepRun.effectResponses.single,
-        containsPair('id', 'call_1'),
-      );
-      expect(result.toJson()['step_run'], isA<Map<String, Object?>>());
-      expect(
-        result.step['output'],
-        containsPair('effect_result', <String, Object?>{
-          'tool': 'read_task',
-          'input': <String, Object?>{'id': 'task_1'},
-        }),
-      );
-      expect(dispatcher.calls.single.name, 'read_task');
-      expect(dispatcher.calls.single.input, <String, Object?>{'id': 'task_1'});
-      expect(
-        native.continuations.single.effectResponse,
-        containsPair('id', 'call_1'),
-      );
-      final input = native.turnRequests.single.initialStep['effect'];
-      expect(input as Map<String, Object?>, containsPair('name', 'read_task'));
-      expect(
-        native.turnRequests.single.initialStep,
-        containsPair('effect', const <String, Object?>{
-          'kind': 'tool',
-          'effect_id': 'call_1',
-          'name': 'read_task',
-          'input': <String, Object?>{'id': 'task_1'},
-        }),
-      );
-    },
-  );
+    expect(result.step['status'], 'completed');
+    expect(result.stepRun.dispatchedEffectCount, 1);
+    expect(result.stepRun.effectResponses.single, containsPair('id', 'call_1'));
+    expect(result.toJson()['step_run'], isA<Map<String, Object?>>());
+    expect(
+      result.step['output'],
+      containsPair('effect_result', <String, Object?>{
+        'tool': 'read_task',
+        'input': <String, Object?>{'id': 'task_1'},
+      }),
+    );
+    expect(dispatcher.calls.single.name, 'read_task');
+    expect(dispatcher.calls.single.input, <String, Object?>{'id': 'task_1'});
+    expect(
+      native.continuations.single.effectResponse,
+      containsPair('id', 'call_1'),
+    );
+    final input = native.turnRequests.single.initialStep['effect'];
+    expect(input as Map<String, Object?>, containsPair('name', 'read_task'));
+    expect(
+      native.turnRequests.single.initialStep,
+      containsPair('effect', const <String, Object?>{
+        'kind': 'tool',
+        'effect_id': 'call_1',
+        'name': 'read_task',
+        'input': <String, Object?>{'id': 'task_1'},
+      }),
+    );
+  });
 
   test('AgentRuntimeProfileTurnRunner prefers Rust-owned snapshots', () async {
     final native = _FakeProfileSnapshotBridge();
