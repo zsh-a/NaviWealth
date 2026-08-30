@@ -21,12 +21,20 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
 
   final byKey = <String, KnowledgeSearchHit>{};
   for (final entry in sources.entries) {
-    final hits = await service._memoryRuntime.recall(
-      ownerUserId: ownerUserId,
-      queryText: q,
-      source: entry.value,
-      topK: (limit * 4).clamp(limit, 80).toInt(),
-    );
+    final List<MemoryHit> hits;
+    try {
+      hits = await service._memoryRuntime.recall(
+        ownerUserId: ownerUserId,
+        queryText: q,
+        source: entry.value,
+        topK: (limit * 4).clamp(limit, 80).toInt(),
+      );
+    } on Object {
+      // The semantic index is derived and optional. A missing native embedder,
+      // cold index, or unavailable Web runtime must not make canonical
+      // KnowledgeOS data unsearchable.
+      continue;
+    }
     for (final hit in hits) {
       final id = hit.record.sourceId;
       if (id == null) continue;
@@ -56,14 +64,18 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
     }
   }
 
-  if (byKey.isEmpty) {
-    return _lexicalFallback(
-      service,
-      ownerUserId: ownerUserId,
-      query: q,
-      types: wantTypes,
-      limit: limit,
-    );
+  // Always merge lexical matches. A partially populated semantic index can
+  // otherwise return an unrelated indexed row and hide an exact canonical
+  // match that has not been indexed yet.
+  final lexicalHits = await _lexicalFallback(
+    service,
+    ownerUserId: ownerUserId,
+    query: q,
+    types: wantTypes,
+    limit: limit,
+  );
+  for (final hit in lexicalHits) {
+    byKey.putIfAbsent('${hit.kind}:${hit.id}', () => hit);
   }
 
   final out = byKey.values.toList(growable: false)..sort(_compareHits);

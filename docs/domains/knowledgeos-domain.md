@@ -99,8 +99,9 @@ Note memories use `role=episode`.
 
 Library exposes the same unified search seam with All, Notes, and Decisions
 scopes. Empty-query browsing is a single update-ordered collection; active
-queries use semantic recall and fall back to deterministic lexical matching
-when the semantic index has no hydrated results.
+queries merge semantic recall with deterministic lexical matches from canonical
+Notes and Decisions. The lexical path remains available when the derived index
+is cold, partially populated, or unavailable on Web/native devices.
 
 ## AI Tools
 
