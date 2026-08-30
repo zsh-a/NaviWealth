@@ -10,7 +10,9 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'knowledge_capture_sheet.dart';
+import 'knowledge_greeting_header.dart';
 import 'widgets/knowledge_entry_tile.dart';
 
 class KnowledgeInboxPage extends ConsumerWidget {
@@ -18,17 +20,13 @@ class KnowledgeInboxPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return ShellTabScaffold(
-      title: l10n.knowledgeInboxTitle,
-      directActionBudget: 1,
-      actions: <ShellHeaderActionSpec>[
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.knowledgeCaptureAction,
-          onPress: () => showKnowledgeCaptureSheet(context),
-        ),
-      ],
+    // Headerless cockpit root, same as the other domains' Today briefs: the
+    // editorial greeting ([KnowledgeGreetingHeader]) replaces the static
+    // page title and hosts the injected shell chrome via [ShellActionRow]
+    // plus the capture action that used to live in the tab header. Global
+    // chrome (sync strip, undo banner) is injected by DomainTabsShell.
+    return ShellCanvasScaffold(
+      childPad: false,
       child: ShellTabPause(
         routePath: KnowledgeRoutes.inbox,
         child: _InboxContent(
@@ -46,11 +44,31 @@ class _InboxContent extends ConsumerWidget {
   final AsyncValue<List<KnowledgeNote>> recentNotes;
   final AsyncValue<List<KnowledgeDecision>> dueReviews;
 
+  Future<void> _refresh(WidgetRef ref) async {
+    ref.invalidate(knowledgeNotesProvider);
+    ref.invalidate(knowledgeDecisionsProvider);
+    await ref.read(knowledgeNotesProvider.future);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // Scope above the loading/data branches: the entrance watermark survives
+    // pull-to-refresh, so recycled rows never replay the entrance when they
+    // scroll back into view.
+    return AppEntranceScope(child: _buildBody(context, ref, l10n));
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
     if (recentNotes.isLoading || dueReviews.isLoading) {
-      return kDefaultLoading;
+      return AppListPageSkeleton(
+        padding: shellTabContentPadding(context),
+        showControls: false,
+      );
     }
     if (recentNotes.hasError || dueReviews.hasError) {
       return AppEmptyState.error(
@@ -66,74 +84,80 @@ class _InboxContent extends ConsumerWidget {
 
     final notes = recentNotes.asData?.value ?? const <KnowledgeNote>[];
     final decisions = dueReviews.asData?.value ?? const <KnowledgeDecision>[];
-    if (notes.isEmpty && decisions.isEmpty) {
-      return AppEmptyState(
-        icon: FLucideIcons.notebookPen,
-        title: l10n.knowledgeInboxEmptyTitle,
-        message: l10n.knowledgeInboxEmptyBody,
-        action: AppActionButton(
-          onPress: () => showKnowledgeCaptureSheet(context),
-          child: Text(l10n.knowledgeCaptureAction),
-        ),
-      );
-    }
-
-    return ListView(
-      padding: shellTabContentPadding(context),
-      children: [
-        if (decisions.isNotEmpty) ...[
-          _SectionHeader(
-            title: l10n.knowledgeInboxDueReviewsTitle,
-            count: decisions.length,
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          for (var index = 0; index < decisions.length; index++) ...[
-            if (index > 0) const SizedBox(height: AppSpacing.s10),
-            _DueDecisionTile(decision: decisions[index]),
-          ],
-        ],
-        if (decisions.isNotEmpty && notes.isNotEmpty)
-          const SizedBox(height: AppSpacing.s24),
-        if (notes.isNotEmpty) ...[
-          _SectionHeader(
-            title: l10n.knowledgeInboxRecentNotesTitle,
-            count: notes.length,
-          ),
-          const SizedBox(height: AppSpacing.s10),
-          for (var index = 0; index < notes.length; index++) ...[
-            if (index > 0) const SizedBox(height: AppSpacing.s10),
-            KnowledgeEntryTile(
-              key: ValueKey<String>('knowledge-inbox-note-${notes[index].id}'),
-              title: notes[index].title.isEmpty
-                  ? l10n.knowledgeUntitled
-                  : notes[index].title,
-              subtitle: notes[index].bodyMd,
-              tags: notes[index].tags,
-              kindLabel: l10n.knowledgeKindNote,
-              icon: FLucideIcons.fileText,
-              onPress: () =>
-                  context.push(KnowledgeRoutes.note(notes[index].id)),
-            ),
-          ],
-        ],
-      ],
+    final now = DateTime.now().toUtc();
+    final hasOverdue = decisions.any(
+      (decision) => (decision.daysOverdue(now) ?? 0) > 0,
     );
-  }
-}
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, required this.count});
-
-  final String title;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(title, style: context.rowTitleStyle)),
-        FBadge(child: Text('$count')),
+    return BriefLazyListScaffold(
+      padding: shellTabContentPadding(context),
+      onRefresh: () => _refresh(ref),
+      greeting: const KnowledgeGreetingHeader(),
+      // The due-review section is the inbox's reason to exist, so it takes
+      // the stage slot directly under the greeting.
+      stage: decisions.isEmpty
+          ? const SizedBox.shrink()
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SectionHeader.module(
+                  title: l10n.knowledgeInboxDueReviewsTitle,
+                  titleColor: hasOverdue
+                      ? context.appTheme.status.warning.fg
+                      : null,
+                  trailing: AppBadge(
+                    label: '${decisions.length}',
+                    size: AppBadgeSize.compact,
+                    tone: hasOverdue ? AppBadgeTone.warning : AppBadgeTone.info,
+                  ),
+                ),
+                for (var index = 0; index < decisions.length; index++) ...[
+                  if (index > 0) const SizedBox(height: AppSpacing.s10),
+                  AppOnceEntrance(
+                    index: index,
+                    child: _DueDecisionTile(decision: decisions[index]),
+                  ),
+                ],
+              ],
+            ),
+      modules: [
+        if (decisions.isEmpty && notes.isEmpty)
+          AppEmptyState(
+            icon: FLucideIcons.notebookPen,
+            title: l10n.knowledgeInboxEmptyTitle,
+            message: l10n.knowledgeInboxEmptyBody,
+            action: AppActionButton(
+              onPress: () => showKnowledgeCaptureSheet(context),
+              child: Text(l10n.knowledgeCaptureAction),
+            ),
+          ),
       ],
+      listHeader: notes.isEmpty
+          ? null
+          : SectionHeader.module(
+              title: l10n.knowledgeInboxRecentNotesTitle,
+              trailing: AppBadge(
+                label: '${notes.length}',
+                size: AppBadgeSize.compact,
+              ),
+            ),
+      itemCount: notes.length,
+      itemBuilder: (context, index) {
+        final note = notes[index];
+        return AppOnceEntrance(
+          // Offset past the due-review rows: both lists share one tracker.
+          index: decisions.length + index,
+          child: KnowledgeEntryTile(
+            key: ValueKey<String>('knowledge-inbox-note-${note.id}'),
+            title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+            subtitle: knowledgeExcerpt(note.bodyMd),
+            tags: note.tags,
+            kindLabel: l10n.knowledgeKindNote,
+            icon: FLucideIcons.fileText,
+            onPress: () => context.push(KnowledgeRoutes.note(note.id)),
+          ),
+        );
+      },
     );
   }
 }

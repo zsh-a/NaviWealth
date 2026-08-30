@@ -13066,6 +13066,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeNoteTagsLabel => 'Tags (comma separated)';
 
   @override
+  String get knowledgeTagsLabel => 'Tags';
+
+  @override
+  String get knowledgeEditAction => 'Edit';
+
+  @override
+  String get knowledgeViewAction => 'Done editing';
+
+  @override
+  String get knowledgeCreatedLabel => 'Created';
+
+  @override
+  String get knowledgeUpdatedLabel => 'Updated';
+
+  @override
+  String get knowledgeDecidedLabel => 'Decided';
+
+  @override
+  String get knowledgeNoteEmptyBody => 'No content yet.';
+
+  @override
+  String get knowledgeRationaleLabel => 'Rationale';
+
+  @override
+  String get knowledgeExpectedOutcomeLabel => 'Expected outcome';
+
+  @override
   String get knowledgeLibraryAllTags => 'All tags';
 
   @override

@@ -155,6 +155,10 @@ void main() {
     );
     await _settlePaint(tester);
 
+    // The detail page opens in read mode; switch to the edit form first.
+    await tester.tap(find.byKey(const Key('knowledge-decision-edit-toggle')));
+    await _settlePaint(tester);
+
     await tester.tap(
       find.byKey(const ValueKey<String>('knowledge-decision-detail-add')),
     );

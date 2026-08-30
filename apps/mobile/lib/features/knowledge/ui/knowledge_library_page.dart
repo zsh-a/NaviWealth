@@ -5,16 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../application/knowledge_deletion_service.dart';
 import '../composition/knowledge_route_paths.dart';
+import '../data/knowledge_repository.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_text.dart';
 import 'knowledge_capture_sheet.dart';
 import 'knowledge_decision_detail_page.dart';
 import 'knowledge_note_detail_page.dart';
@@ -300,9 +304,13 @@ class _LibraryBrowse extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    Widget skeleton() => AppListPageSkeleton(
+      showControls: false,
+      padding: shellTabContentPadding(context),
+    );
     if (scope == _LibraryScope.notes) {
       return notes.when(
-        loading: () => kDefaultLoading,
+        loading: skeleton,
         error: (_, _) => _LibraryError(
           onRetry: () => ref.invalidate(knowledgeNotesProvider),
         ),
@@ -322,7 +330,7 @@ class _LibraryBrowse extends ConsumerWidget {
     }
     if (scope == _LibraryScope.decisions) {
       return decisions.when(
-        loading: () => kDefaultLoading,
+        loading: skeleton,
         error: (_, _) => _LibraryError(
           onRetry: () => ref.invalidate(knowledgeDecisionsProvider),
         ),
@@ -342,10 +350,10 @@ class _LibraryBrowse extends ConsumerWidget {
     }
 
     return notes.when(
-      loading: () => kDefaultLoading,
+      loading: skeleton,
       error: (_, _) => _LibraryError(onRetry: retryAll),
       data: (noteItems) => decisions.when(
-        loading: () => kDefaultLoading,
+        loading: skeleton,
         error: (_, _) => _LibraryError(onRetry: retryAll),
         data: (decisionItems) {
           final entries = <_LibraryEntry>[
@@ -355,6 +363,7 @@ class _LibraryBrowse extends ConsumerWidget {
           return _LibraryList(
             entries: entries,
             emptyTitle: AppLocalizations.of(context).knowledgeLibraryEmptyTitle,
+            groupByDate: selectedTag == null,
             inMasterDetail: inMasterDetail,
           );
         },
@@ -377,7 +386,10 @@ class _LibrarySearchResults extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return value.when(
-      loading: () => kDefaultLoading,
+      loading: () => AppListPageSkeleton(
+        showControls: false,
+        padding: shellTabContentPadding(context),
+      ),
       error: (_, _) => _LibraryError(onRetry: onRetry),
       data: (hits) => _LibraryList(
         entries: hits
@@ -393,13 +405,14 @@ class _LibrarySearchResults extends StatelessWidget {
   }
 }
 
-class _LibraryList extends StatelessWidget {
+class _LibraryList extends ConsumerWidget {
   const _LibraryList({
     required this.entries,
     required this.emptyTitle,
     required this.inMasterDetail,
     this.emptyMessage,
     this.emptyIcon = FLucideIcons.library,
+    this.groupByDate = false,
   });
 
   final List<_LibraryEntry> entries;
@@ -408,8 +421,12 @@ class _LibraryList extends StatelessWidget {
   final IconData emptyIcon;
   final bool inMasterDetail;
 
+  /// Groups rows into 今天/昨天/本周/更早 sections (the activity-feed date
+  /// labels) — used by the default merged browse view only.
+  final bool groupByDate;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (entries.isEmpty) {
       return AppEmptyState(
         icon: emptyIcon,
@@ -419,30 +436,184 @@ class _LibraryList extends StatelessWidget {
       );
     }
     final l10n = AppLocalizations.of(context);
+    if (groupByDate) {
+      return _buildGrouped(context, ref, l10n);
+    }
     return ListView.separated(
       padding: shellTabContentPadding(context),
       itemCount: entries.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return KnowledgeEntryTile(
-          key: ValueKey<String>('knowledge-library-${entry.kind}-${entry.id}'),
-          title: entry.title.isEmpty ? l10n.knowledgeUntitled : entry.title,
-          subtitle: entry.subtitle,
-          meta: entry.meta,
-          tags: entry.tags,
-          kindLabel: entry.kind == 'note'
-              ? l10n.knowledgeKindNote
-              : l10n.knowledgeKindDecision,
-          icon: entry.kind == 'note'
-              ? FLucideIcons.fileText
-              : FLucideIcons.circleCheck,
-          onPress: () =>
-              _openEntry(context, entry: entry, inMasterDetail: inMasterDetail),
-        );
-      },
+      itemBuilder: (context, index) =>
+          _buildEntryTile(context, ref, l10n, entries[index]),
     );
   }
+
+  Widget _buildGrouped(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) {
+    final sections = _groupByUpdatedBucket(entries, l10n);
+    return ListView(
+      padding: shellTabContentPadding(context),
+      children: [
+        for (final (label, sectionEntries) in sections) ...[
+          SectionHeader(
+            title: label,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s4,
+              AppSpacing.s8,
+              AppSpacing.s4,
+              AppSpacing.s8,
+            ),
+          ),
+          for (var index = 0; index < sectionEntries.length; index++) ...[
+            _buildEntryTile(context, ref, l10n, sectionEntries[index]),
+            if (index != sectionEntries.length - 1)
+              const SizedBox(height: AppSpacing.s10),
+          ],
+          const SizedBox(height: AppSpacing.s10),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEntryTile(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    _LibraryEntry entry,
+  ) {
+    final colors = context.theme.colors;
+    return KnowledgeEntryTile(
+      key: ValueKey<String>('knowledge-library-${entry.kind}-${entry.id}'),
+      title: entry.title.isEmpty ? l10n.knowledgeUntitled : entry.title,
+      subtitle: entry.subtitle,
+      meta: _relativeMeta(l10n, entry.updatedAt),
+      tags: entry.tags,
+      kindLabel: entry.kind == 'note'
+          ? l10n.knowledgeKindNote
+          : l10n.knowledgeKindDecision,
+      icon: entry.kind == 'note'
+          ? FLucideIcons.fileText
+          : FLucideIcons.circleCheck,
+      iconColor: entry.kind == 'note'
+          ? colors.primary
+          : context.appTheme.status.info.fg,
+      decisionStatus: entry.decisionStatus,
+      menuActions: [
+        AppAdaptiveAction(
+          icon: FLucideIcons.trash2,
+          title: l10n.commonDelete,
+          destructive: true,
+          onPress: () => _deleteEntry(context, ref, entry),
+        ),
+      ],
+      onPress: () =>
+          _openEntry(context, entry: entry, inMasterDetail: inMasterDetail),
+    );
+  }
+
+  Future<void> _deleteEntry(
+    BuildContext context,
+    WidgetRef ref,
+    _LibraryEntry entry,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final isNote = entry.kind == 'note';
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(
+        isNote
+            ? l10n.knowledgeNoteDeleteConfirmTitle
+            : l10n.knowledgeDecisionDeleteConfirmTitle,
+      ),
+      body: Text(l10n.knowledgeDeleteConfirmBody),
+      confirmLabel: l10n.commonDelete,
+      cancelLabel: l10n.commonCancel,
+      destructive: true,
+      icon: FLucideIcons.trash2,
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      final service = await ref.read(knowledgeDeletionServiceProvider.future);
+      await service.delete(
+        kind: isNote ? KnowledgeEntryKind.note : KnowledgeEntryKind.decision,
+        id: entry.id,
+      );
+      ref.invalidate(knowledgeNotesProvider);
+      ref.invalidate(knowledgeDecisionsProvider);
+      if (!context.mounted) return;
+      // Clear the side pane if the deleted entry was open there.
+      if (inMasterDetail &&
+          selectedQueryOf(context) == '${entry.kind}:${entry.id}') {
+        replaceSelectedQuery(
+          context,
+          path: KnowledgeRoutes.library,
+          selected: null,
+        );
+      }
+      AppMessenger.show(context, ToastKind.success, l10n.commonDeleted);
+    } on Object catch (error, stackTrace) {
+      if (!context.mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'delete knowledge entry',
+        ),
+      );
+    }
+  }
+}
+
+/// Relative "n minutes/hours/days ago" row meta, with a short locale date
+/// fallback — the same convention the health/chat surfaces use via
+/// [AppFormatters.relativeTime].
+String _relativeMeta(AppLocalizations l10n, DateTime updatedAt) {
+  return AppFormatters.relativeTime(
+    updatedAt,
+    justNow: l10n.aiChatRelativeJustNow,
+    minutesAgo: l10n.aiChatRelativeMinutesAgo,
+    hoursAgo: l10n.aiChatRelativeHoursAgo,
+    daysAgo: l10n.aiChatRelativeDaysAgo,
+    dateFallback: (day) {
+      final local = day.toLocal();
+      final mm = local.month.toString().padLeft(2, '0');
+      final dd = local.day.toString().padLeft(2, '0');
+      return '$mm-$dd';
+    },
+  );
+}
+
+/// Buckets entries (already sorted newest-first) into the activity-feed
+/// date sections: today / yesterday / this week / earlier.
+List<(String, List<_LibraryEntry>)> _groupByUpdatedBucket(
+  List<_LibraryEntry> entries,
+  AppLocalizations l10n,
+) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+  final weekStart = today.subtract(const Duration(days: 6));
+  String labelFor(DateTime at) {
+    final day = DateTime(at.year, at.month, at.day);
+    if (day == today) return l10n.activityFeedToday;
+    if (day == yesterday) return l10n.activityFeedYesterday;
+    if (!day.isBefore(weekStart)) return l10n.activityFeedThisWeek;
+    return l10n.activityFeedEarlier;
+  }
+
+  final sections = <String, List<_LibraryEntry>>{};
+  for (final entry in entries) {
+    sections
+        .putIfAbsent(labelFor(entry.updatedAt.toLocal()), () => [])
+        .add(entry);
+  }
+  return sections.entries.map((e) => (e.key, e.value)).toList(growable: false);
 }
 
 class _LibraryError extends StatelessWidget {
@@ -510,25 +681,24 @@ class _LibraryEntry {
     required this.id,
     required this.title,
     required this.subtitle,
-    required this.meta,
     required this.tags,
     required this.updatedAt,
+    this.decisionStatus,
   });
 
   final String kind;
   final String id;
   final String title;
   final String subtitle;
-  final String meta;
   final List<String> tags;
   final DateTime updatedAt;
+  final DecisionStatus? decisionStatus;
 
   factory _LibraryEntry.fromNote(KnowledgeNote note) => _LibraryEntry(
     kind: 'note',
     id: note.id,
     title: note.title,
-    subtitle: note.bodyMd,
-    meta: '',
+    subtitle: knowledgeExcerpt(note.bodyMd),
     tags: note.tags,
     updatedAt: note.sync.updatedAt,
   );
@@ -539,9 +709,9 @@ class _LibraryEntry {
         id: decision.id,
         title: decision.question,
         subtitle: decision.selectedLabel,
-        meta: '',
         tags: const <String>[],
         updatedAt: decision.sync.updatedAt,
+        decisionStatus: decision.status,
       );
 
   factory _LibraryEntry.fromSearchHit(KnowledgeSearchHit hit) => _LibraryEntry(
@@ -549,8 +719,8 @@ class _LibraryEntry {
     id: hit.id,
     title: hit.title,
     subtitle: hit.excerpt,
-    meta: '',
     tags: hit.document.note?.tags ?? const <String>[],
     updatedAt: hit.document.updatedAt,
+    decisionStatus: hit.document.decision?.status,
   );
 }

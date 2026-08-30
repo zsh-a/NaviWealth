@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:intl/intl.dart';
 
+import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/product/product_metrics.dart';
@@ -20,6 +22,7 @@ import 'knowledge_decision_review_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_decision_action_section.dart';
 import 'widgets/knowledge_decision_options_editor.dart';
+import 'widgets/knowledge_decision_status_badge.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_relations_section.dart';
 
@@ -84,11 +87,14 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
   late final TextEditingController _rationale;
   late final TextEditingController _expected;
   late final TextEditingController _actual;
-  late final KnowledgeDecisionOptionsController _options;
+  late KnowledgeDecisionOptionsController _options;
   late DecisionStatus _status;
   late DateTime? _reviewDate;
   late List<DecisionRevisitCondition> _revisitConditions;
   var _saving = false;
+
+  /// Detail pages open in read mode; the form stays behind this toggle.
+  var _editing = false;
 
   @override
   void initState() {
@@ -132,86 +138,205 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       child: ObjectDetailScaffold(
         title: l10n.knowledgeSegmentDecisions,
         confirmLeave: handleBackIntent,
+        actions: [
+          AppHeaderAction(
+            key: const Key('knowledge-decision-edit-toggle'),
+            semanticsLabel: _editing
+                ? l10n.knowledgeViewAction
+                : l10n.knowledgeEditAction,
+            icon: Icon(_editing ? FLucideIcons.eye : FLucideIcons.pencil),
+            onPress: _saving ? null : _toggleMode,
+          ),
+        ],
         child: AnimatedBuilder(
           animation: dirty,
-          builder: (context, _) => ListView(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            children: [
-              FTextField(
-                control: FTextFieldControl.managed(controller: _question),
-                enabled: !_saving,
-                label: Text(l10n.knowledgeDecisionQuestionLabel),
-                maxLines: 2,
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              KnowledgeDecisionOptionsEditor(
-                controller: _options,
-                keyPrefix: 'knowledge-decision-detail',
-                enabled: !_saving,
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              KnowledgeMarkdownEditor(
-                controller: _rationale,
-                label: l10n.knowledgeWriterRationaleMarkdownLabel,
-                minLines: 5,
-                enabled: !_saving,
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: AiPill(
-                  leading: const Icon(
-                    FLucideIcons.pencil,
-                    size: AppIconSizes.xs,
-                  ),
-                  label: l10n.knowledgeRewriteAction,
-                  onTap: _saving ? null : _rewrite,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              FTextField(
-                control: FTextFieldControl.managed(controller: _expected),
-                enabled: !_saving,
-                label: Text(l10n.knowledgeDecisionExpectedOutcomeLabel),
-                maxLines: 3,
-              ),
-              const SizedBox(height: AppSpacing.s20),
-              SizedBox(
-                width: double.infinity,
-                child: AppActionButton(
-                  onPress: _saving || !dirty.isDirty ? null : _save,
-                  child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s20),
-              _DecisionReviewSection(
-                reviewDate: _reviewDate,
-                revisitConditions: _revisitConditions,
-                actualOutcomeMd: _nullable(_actual.text),
-                status: _status,
-                onReview: _saving ? null : _review,
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              KnowledgeDecisionActionSection(decision: widget.decision),
-              const SizedBox(height: AppSpacing.s16),
-              KnowledgeRelationsSection(
-                subjectKind: KnowledgeEntryKind.decision,
-                subjectId: widget.decision.id,
-                subjectText: KnowledgeSearchDocument.fromDecision(
-                  widget.decision,
-                ).searchText,
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              FButton(
-                variant: FButtonVariant.destructive,
-                onPress: _saving ? null : _delete,
-                child: Text(l10n.commonDelete),
-              ),
-            ],
-          ),
+          builder: (context, _) =>
+              _editing ? _buildEditForm(context) : _buildReadView(context),
         ),
       ),
     );
+  }
+
+  Widget _buildReadView(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final decision = widget.decision;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final decided = DateFormat.yMMMd(locale)
+        .format(decision.decidedAt.toLocal());
+    final updated = DateFormat.yMMMd(locale)
+        .format(decision.sync.updatedAt.toLocal());
+    final expected = decision.expectedOutcome?.trim();
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                decision.question,
+                style: context.strongHeadlineStyle,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            KnowledgeDecisionStatusBadge(status: decision.status),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        _DecisionOptionsReadView(
+          options: decision.options,
+          selectedLabel: decision.selectedLabel,
+        ),
+        if (decision.rationaleMd.trim().isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s16),
+          Text(l10n.knowledgeRationaleLabel, style: context.captionLabelStyle),
+          const SizedBox(height: AppSpacing.s8),
+          AiMarkdown(text: decision.rationaleMd),
+        ],
+        if (expected != null && expected.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s16),
+          Text(
+            l10n.knowledgeExpectedOutcomeLabel,
+            style: context.captionLabelStyle,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Text(expected, style: context.bodyCaptionStrongStyle),
+        ],
+        const SizedBox(height: AppSpacing.s20),
+        AppMetadataStrip(
+          children: [
+            AppMetadataItem(label: l10n.knowledgeDecidedLabel, value: decided),
+            AppMetadataItem(label: l10n.knowledgeUpdatedLabel, value: updated),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        _DecisionReviewSection(
+          reviewDate: _reviewDate,
+          revisitConditions: _revisitConditions,
+          actualOutcomeMd: _nullable(_actual.text),
+          status: _status,
+          onReview: _saving ? null : _review,
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        KnowledgeDecisionActionSection(decision: widget.decision),
+        const SizedBox(height: AppSpacing.s16),
+        KnowledgeRelationsSection(
+          subjectKind: KnowledgeEntryKind.decision,
+          subjectId: widget.decision.id,
+          subjectText: KnowledgeSearchDocument.fromDecision(widget.decision)
+              .searchText,
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        FButton(
+          variant: FButtonVariant.destructive,
+          onPress: _saving ? null : _delete,
+          child: Text(l10n.commonDelete),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditForm(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      children: [
+        FTextField(
+          control: FTextFieldControl.managed(controller: _question),
+          enabled: !_saving,
+          label: Text(l10n.knowledgeDecisionQuestionLabel),
+          maxLines: 2,
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        KnowledgeDecisionOptionsEditor(
+          controller: _options,
+          keyPrefix: 'knowledge-decision-detail',
+          enabled: !_saving,
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        KnowledgeMarkdownEditor(
+          controller: _rationale,
+          label: l10n.knowledgeWriterRationaleMarkdownLabel,
+          minLines: 5,
+          enabled: !_saving,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: AiPill(
+            leading: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
+            label: l10n.knowledgeRewriteAction,
+            onTap: _saving ? null : _rewrite,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        FTextField(
+          control: FTextFieldControl.managed(controller: _expected),
+          enabled: !_saving,
+          label: Text(l10n.knowledgeDecisionExpectedOutcomeLabel),
+          maxLines: 3,
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        SizedBox(
+          width: double.infinity,
+          child: AppActionButton(
+            onPress: _saving || !dirty.isDirty ? null : _save,
+            child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        _DecisionReviewSection(
+          reviewDate: _reviewDate,
+          revisitConditions: _revisitConditions,
+          actualOutcomeMd: _nullable(_actual.text),
+          status: _status,
+          onReview: _saving ? null : _review,
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        KnowledgeDecisionActionSection(decision: widget.decision),
+        const SizedBox(height: AppSpacing.s16),
+        KnowledgeRelationsSection(
+          subjectKind: KnowledgeEntryKind.decision,
+          subjectId: widget.decision.id,
+          subjectText: KnowledgeSearchDocument.fromDecision(widget.decision)
+              .searchText,
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        FButton(
+          variant: FButtonVariant.destructive,
+          onPress: _saving ? null : _delete,
+          child: Text(l10n.commonDelete),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _toggleMode() async {
+    if (_editing) {
+      final discard = await confirmDiscardIfDirty(context, dirty);
+      if (!discard || !mounted) return;
+      _resetFields();
+    }
+    setState(() => _editing = !_editing);
+  }
+
+  void _resetFields() {
+    final value = widget.decision;
+    _question.text = value.question;
+    _rationale.text = value.rationaleMd;
+    _expected.text = value.expectedOutcome ?? '';
+    _actual.text = value.actualOutcomeMd ?? '';
+    _options
+      ..removeListener(_onOptionsChanged)
+      ..dispose();
+    _options = KnowledgeDecisionOptionsController(
+      options: value.options,
+      selectedLabel: value.selectedLabel,
+    )..addListener(_onOptionsChanged);
+    _status = value.status;
+    _reviewDate = value.reviewDate;
+    _revisitConditions = value.revisitConditions;
+    dirty.markPristine();
   }
 
   Future<bool> _save() async {
@@ -433,7 +558,10 @@ class _DecisionReviewSection extends StatelessWidget {
     final outcome = actualOutcomeMd?.trim();
     return AppSection.item(
       title: l10n.knowledgeDecisionReviewTitle,
-      trailing: FBadge(child: Text(knowledgeDecisionStatusLabel(l10n, status))),
+      trailing: KnowledgeDecisionStatusBadge(
+        status: status,
+        size: AppBadgeSize.compact,
+      ),
       children: [
         Row(
           children: [
@@ -499,4 +627,92 @@ class _DecisionReviewSection extends StatelessWidget {
 String? _nullable(String value) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? null : trimmed;
+}
+
+/// Static presentation of the decision's options — same card language as
+/// [KnowledgeDecisionOptionsEditor], minus the editing controls.
+class _DecisionOptionsReadView extends StatelessWidget {
+  const _DecisionOptionsReadView({
+    required this.options,
+    required this.selectedLabel,
+  });
+
+  final List<DecisionOption> options;
+  final String selectedLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSection.item(
+      title: l10n.knowledgeDecisionOptionsLabel,
+      children: [
+        for (var index = 0; index < options.length; index++) ...[
+          if (index > 0) const SizedBox(height: AppSpacing.s10),
+          _DecisionOptionReadCard(
+            key: ValueKey<String>('knowledge-decision-read-option-$index'),
+            option: options[index],
+            selected: options[index].label == selectedLabel,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _DecisionOptionReadCard extends StatelessWidget {
+  const _DecisionOptionReadCard({
+    super.key,
+    required this.option,
+    required this.selected,
+  });
+
+  final DecisionOption option;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = context.theme.colors;
+    final rationale = option.rationale?.trim();
+    return SoftCard.flat(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                selected ? FLucideIcons.circleCheck : FLucideIcons.circle,
+                size: AppIconSizes.sm,
+                color: selected ? colors.primary : colors.mutedForeground,
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  option.label,
+                  style: selected
+                      ? context.mediumLabelStyle.copyWith(
+                          color: colors.foreground,
+                        )
+                      : context.bodyCaptionStrongStyle,
+                ),
+              ),
+              if (selected) ...[
+                const SizedBox(width: AppSpacing.s8),
+                AppBadge(
+                  label: l10n.knowledgeDecisionOptionSelected,
+                  tone: AppBadgeTone.accent,
+                  size: AppBadgeSize.compact,
+                ),
+              ],
+            ],
+          ),
+          if (rationale != null && rationale.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Text(rationale, style: context.bodyCaptionStyle),
+          ],
+        ],
+      ),
+    );
+  }
 }

@@ -58,6 +58,31 @@ void main() {
     expect(find.text('8'), findsOneWidget);
   });
 
+  testWidgets('Inbox renders note subtitles as plain-text excerpts', (
+    tester,
+  ) async {
+    final note = KnowledgeNote(
+      id: 'markdown-note',
+      title: 'Markdown note',
+      bodyMd: '**Bold claim** with `code` inline',
+      tags: const <String>['work'],
+      createdAt: _sync(1).updatedAt,
+      sync: _sync(1),
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeInboxPage(),
+        notes: <KnowledgeNote>[note],
+        decisions: const <KnowledgeDecision>[],
+      ),
+    );
+    await _settlePaint(tester);
+
+    expect(find.text('Bold claim with code inline'), findsOneWidget);
+    expect(find.textContaining('**'), findsNothing);
+  });
+
   testWidgets('Library searches across Notes and Decisions with a type scope', (
     tester,
   ) async {

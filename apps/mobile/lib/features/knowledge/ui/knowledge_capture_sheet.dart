@@ -16,6 +16,7 @@ import '../domain/knowledge_models.dart';
 import '../domain/knowledge_source_url.dart';
 import 'widgets/knowledge_decision_options_editor.dart';
 import 'widgets/knowledge_markdown_editor.dart';
+import 'widgets/knowledge_tag_chips.dart';
 
 enum _CaptureType { note, decision }
 
@@ -65,6 +66,7 @@ class _KnowledgeCaptureSheetState
     _options = KnowledgeDecisionOptionsController();
     _title.addListener(_onTextChanged);
     _body.addListener(_onTextChanged);
+    _tags.addListener(_onTextChanged);
     _source.addListener(_onSourceChanged);
     _options.addListener(_onOptionsChanged);
     widget.dirty.bindTextControllers(<TextEditingController>[
@@ -80,6 +82,7 @@ class _KnowledgeCaptureSheetState
     _sourceCheckDebounce?.cancel();
     _title.removeListener(_onTextChanged);
     _body.removeListener(_onTextChanged);
+    _tags.removeListener(_onTextChanged);
     _source.removeListener(_onSourceChanged);
     _options
       ..removeListener(_onOptionsChanged)
@@ -195,6 +198,14 @@ class _KnowledgeCaptureSheetState
               label: Text(l10n.knowledgeNoteTagsLabel),
               hint: l10n.knowledgeNoteTagsHint,
             ),
+            if (parseKnowledgeTags(_tags.text) case final tagPreview
+                when tagPreview.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s8),
+              KnowledgeTagChips(
+                tags: tagPreview,
+                keyPrefix: 'knowledge-capture-tag',
+              ),
+            ],
           ],
           if (_error case final message?) ...[
             const SizedBox(height: AppSpacing.s10),

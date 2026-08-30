@@ -22016,6 +22016,60 @@ abstract class AppLocalizations {
   /// **'Tags (comma separated)'**
   String get knowledgeNoteTagsLabel;
 
+  /// No description provided for @knowledgeTagsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get knowledgeTagsLabel;
+
+  /// No description provided for @knowledgeEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get knowledgeEditAction;
+
+  /// No description provided for @knowledgeViewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Done editing'**
+  String get knowledgeViewAction;
+
+  /// No description provided for @knowledgeCreatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created'**
+  String get knowledgeCreatedLabel;
+
+  /// No description provided for @knowledgeUpdatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get knowledgeUpdatedLabel;
+
+  /// No description provided for @knowledgeDecidedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Decided'**
+  String get knowledgeDecidedLabel;
+
+  /// No description provided for @knowledgeNoteEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No content yet.'**
+  String get knowledgeNoteEmptyBody;
+
+  /// No description provided for @knowledgeRationaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rationale'**
+  String get knowledgeRationaleLabel;
+
+  /// No description provided for @knowledgeExpectedOutcomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected outcome'**
+  String get knowledgeExpectedOutcomeLabel;
+
   /// No description provided for @knowledgeLibraryAllTags.
   ///
   /// In en, this message translates to:

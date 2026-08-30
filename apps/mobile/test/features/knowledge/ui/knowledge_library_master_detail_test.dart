@@ -36,7 +36,11 @@ final _note = KnowledgeNote(
   ),
 );
 
-Widget _wrap({required double contentWidth}) {
+Widget _wrap({
+  required double contentWidth,
+  List<KnowledgeNote>? notes,
+  List<KnowledgeDecision>? decisions,
+}) {
   final router = GoRouter(
     initialLocation: '/knowledge/library',
     routes: [
@@ -67,9 +71,11 @@ Widget _wrap({required double contentWidth}) {
       knowledgeOwnerUserIdProvider.overrideWith(
         (_) async => _note.sync.ownerUserId,
       ),
-      knowledgeNotesProvider.overrideWith((_) => Stream.value([_note])),
+      knowledgeNotesProvider.overrideWith(
+        (_) => Stream.value(notes ?? [_note]),
+      ),
       knowledgeDecisionsProvider.overrideWith(
-        (_) => Stream.value(const <KnowledgeDecision>[]),
+        (_) => Stream.value(decisions ?? const <KnowledgeDecision>[]),
       ),
     ],
     child: MaterialApp.router(
@@ -140,6 +146,65 @@ void main() {
 
     expect(find.byType(KnowledgeNoteDetailPage), findsNothing);
     expect(find.text('pushed-note-detail'), findsOneWidget);
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('rows render plain excerpts, meta, badges, and date sections', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    SyncMeta meta(DateTime at) => SyncMeta(
+      ownerUserId: 'knowledge-md-user',
+      updatedAt: at,
+      updatedByDevice: 'knowledge-md-device',
+      hlc: Hlc.zero('knowledge-md-device'),
+    );
+    KnowledgeNote note(String id, String title, String bodyMd, DateTime at) =>
+        KnowledgeNote(
+          id: id,
+          title: title,
+          bodyMd: bodyMd,
+          createdAt: at,
+          sync: meta(at),
+        );
+    final notes = [
+      note('note-recent', 'Markdown note', '**Bold** intro\n- [ ] task', now),
+      note(
+        'note-older',
+        'Older note',
+        'older body',
+        now.subtract(const Duration(days: 10)),
+      ),
+    ];
+    final decisions = [
+      KnowledgeDecision(
+        id: 'decision-1',
+        question: 'Ship the redesign?',
+        options: const <DecisionOption>[],
+        selectedLabel: 'Ship it',
+        rationaleMd: '',
+        status: DecisionStatus.active,
+        decidedAt: now,
+        sync: meta(now),
+      ),
+    ];
+
+    await _setSurface(tester, 800);
+    await tester.pumpWidget(
+      _wrap(contentWidth: 700, notes: notes, decisions: decisions),
+    );
+    await _settlePaint(tester);
+
+    // Markdown markers are stripped from row subtitles.
+    expect(find.textContaining('Bold intro'), findsOneWidget);
+    expect(find.textContaining('**'), findsNothing);
+    // Relative meta and activity-feed date section headers.
+    expect(find.text('just now'), findsWidgets);
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Earlier'), findsOneWidget);
+    // Decision rows carry a status badge, and every row has an overflow menu.
+    expect(find.text('Active'), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.ellipsis), findsNWidgets(3));
     await _disposeWidget(tester);
   });
 }

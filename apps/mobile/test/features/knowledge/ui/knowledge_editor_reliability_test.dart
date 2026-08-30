@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/visual/ai_markdown.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -38,6 +39,18 @@ void main() {
     await tester.tap(find.text('Open note'));
     await _settle(tester);
 
+    // Read mode is the default: rendered title, markdown body, tag chips.
+    expect(find.text('Original evidence'), findsOneWidget);
+    expect(find.byType(AiMarkdown), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('knowledge-note-tag-work')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('knowledge-note-title')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settle(tester);
+
     expect(
       tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
       isNull,
@@ -61,6 +74,11 @@ void main() {
     await _settle(tester);
     final saved = await repository.findNote(ownerUserId: _owner, id: note.id);
     expect(saved?.title, 'Updated evidence');
+    // Saving returns to read mode; re-enter edit mode to confirm the form
+    // is pristine again.
+    expect(find.text('Updated evidence'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settle(tester);
     expect(
       tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
       isNull,

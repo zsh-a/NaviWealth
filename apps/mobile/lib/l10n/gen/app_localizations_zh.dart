@@ -12368,6 +12368,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNoteTagsLabel => '标签（用逗号分隔）';
 
   @override
+  String get knowledgeTagsLabel => '标签';
+
+  @override
+  String get knowledgeEditAction => '编辑';
+
+  @override
+  String get knowledgeViewAction => '完成编辑';
+
+  @override
+  String get knowledgeCreatedLabel => '创建时间';
+
+  @override
+  String get knowledgeUpdatedLabel => '更新时间';
+
+  @override
+  String get knowledgeDecidedLabel => '决定时间';
+
+  @override
+  String get knowledgeNoteEmptyBody => '暂无内容。';
+
+  @override
+  String get knowledgeRationaleLabel => '理由';
+
+  @override
+  String get knowledgeExpectedOutcomeLabel => '预期结果';
+
+  @override
   String get knowledgeLibraryAllTags => '全部标签';
 
   @override
