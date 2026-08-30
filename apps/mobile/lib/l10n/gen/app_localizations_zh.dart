@@ -12127,6 +12127,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionOptionsLabel => '选项';
 
   @override
+  String get knowledgeDecisionOptionsDescription => '比较最多三个方案，并选择最终决定采用的一个。';
+
+  @override
+  String knowledgeDecisionOptionLabel(int number) {
+    return '方案 $number';
+  }
+
+  @override
+  String get knowledgeDecisionOptionRationaleLabel => '选择或放弃此方案的理由（可选）';
+
+  @override
+  String knowledgeDecisionSelectOption(int number) {
+    return '选择方案 $number';
+  }
+
+  @override
+  String get knowledgeDecisionOptionSelected => '已选方案';
+
+  @override
+  String get knowledgeDecisionAddOption => '添加方案';
+
+  @override
+  String get knowledgeDecisionRemoveOption => '移除方案';
+
+  @override
+  String get knowledgeDecisionOptionsInvalid => '请填写互不重复的方案名称，并选择其中一个。';
+
+  @override
   String get knowledgeDecisionSelectedOptionLabel => '已选方案';
 
   @override
@@ -12134,6 +12162,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeDecisionSaveRequirement => '请先填写问题和已选方案。';
+
+  @override
+  String get knowledgeNoteSaveRequirement => '请先填写标题。';
+
+  @override
+  String get knowledgeNoteDeleteConfirmTitle => '删除这条笔记？';
+
+  @override
+  String get knowledgeDecisionDeleteConfirmTitle => '删除这项决策？';
+
+  @override
+  String get knowledgeDeleteConfirmBody => '相关的知识关联也会被移除，且无法撤销。';
 
   @override
   String get knowledgeDecisionReviewTitle => '决策回顾';

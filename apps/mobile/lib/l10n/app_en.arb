@@ -6809,9 +6809,27 @@
   "knowledgeDecisionExpectedOutcomeLabel": "Expected outcome (optional)",
   "knowledgeDecisionQuestionLabel": "Question",
   "knowledgeDecisionOptionsLabel": "Options",
+  "knowledgeDecisionOptionsDescription": "Compare up to three options and select the one you decided to take.",
+  "knowledgeDecisionOptionLabel": "Option {number}",
+  "@knowledgeDecisionOptionLabel": {
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "knowledgeDecisionOptionRationaleLabel": "Why this option? (optional)",
+  "knowledgeDecisionSelectOption": "Select option {number}",
+  "@knowledgeDecisionSelectOption": {
+    "placeholders": { "number": { "type": "int" } }
+  },
+  "knowledgeDecisionOptionSelected": "Selected option",
+  "knowledgeDecisionAddOption": "Add option",
+  "knowledgeDecisionRemoveOption": "Remove option",
+  "knowledgeDecisionOptionsInvalid": "Use unique, non-empty option names and select one option.",
   "knowledgeDecisionSelectedOptionLabel": "Selected option",
   "knowledgeDecisionSelectionRequirement": "Choose the option you decided to take.",
   "knowledgeDecisionSaveRequirement": "Add a question and selected option before saving.",
+  "knowledgeNoteSaveRequirement": "Add a title before saving.",
+  "knowledgeNoteDeleteConfirmTitle": "Delete this note?",
+  "knowledgeDecisionDeleteConfirmTitle": "Delete this decision?",
+  "knowledgeDeleteConfirmBody": "This also removes its Knowledge links. This action cannot be undone.",
   "knowledgeDecisionReviewTitle": "Decision review",
   "knowledgeDecisionReviewSaveAction": "Save review",
   "knowledgeDecisionReviewDateLabel": "Review date",

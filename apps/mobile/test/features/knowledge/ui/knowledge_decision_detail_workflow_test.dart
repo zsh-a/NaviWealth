@@ -131,6 +131,73 @@ void main() {
     expect(find.text('Open action'), findsOneWidget);
     await _disposeWidget(tester);
   });
+
+  testWidgets('edits alternatives and persists an explicit selection', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final database = makeTestDatabase();
+    addTearDown(database.close);
+    final repository = KnowledgeRepository(
+      db: database,
+      outbox: InMemoryOutboxStore(),
+    );
+    final decision = _decision();
+    await repository.upsertDecision(decision);
+
+    await tester.pumpWidget(
+      _wrap(
+        decisionId: decision.id,
+        repository: repository,
+        executionAvailable: false,
+      ),
+    );
+    await _settlePaint(tester);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('knowledge-decision-detail-add')),
+    );
+    await _settlePaint(tester);
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('knowledge-decision-detail-label-1'),
+        ),
+        matching: find.byType(EditableText),
+      ),
+      'Keep it manual',
+    );
+    await tester.enterText(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey<String>('knowledge-decision-detail-rationale-1'),
+        ),
+        matching: find.byType(EditableText),
+      ),
+      'Lower setup cost but more recurring effort.',
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('knowledge-decision-detail-select-1')),
+    );
+    await tester.tap(find.text('Save').hitTestable());
+    await _settlePaint(tester);
+
+    final saved = await repository.findDecision(
+      ownerUserId: _owner,
+      id: decision.id,
+    );
+    expect(saved?.selectedLabel, 'Keep it manual');
+    expect(saved?.options.map((option) => option.label), <String>[
+      'Proceed',
+      'Keep it manual',
+    ]);
+    expect(
+      saved?.options.last.rationale,
+      'Lower setup cost but more recurring effort.',
+    );
+    await _disposeWidget(tester);
+  });
 }
 
 Widget _wrap({

@@ -34,19 +34,25 @@ class KnowledgeDecisionFromNoteService {
   Future<KnowledgeDecision> create({
     required String noteId,
     required String question,
+    required List<DecisionOption> options,
     required String selectedLabel,
     String rationaleMd = '',
   }) async {
     final normalizedQuestion = question.trim();
+    final normalizedOptions = canonicalizeDecisionOptions(options);
     final normalizedSelection = selectedLabel.trim();
     if (normalizedQuestion.isEmpty) {
       throw ArgumentError.value(question, 'question', 'must not be empty');
     }
-    if (normalizedSelection.isEmpty) {
+    if (!hasValidDecisionOptions(
+      normalizedOptions,
+      selectedLabel: normalizedSelection,
+      maxOptions: 3,
+    )) {
       throw ArgumentError.value(
-        selectedLabel,
-        'selectedLabel',
-        'must not be empty',
+        options,
+        'options',
+        'must contain unique labels and the selected option',
       );
     }
     final stamp = await _stamper.stamp();
@@ -59,7 +65,7 @@ class KnowledgeDecisionFromNoteService {
     final decision = KnowledgeDecision(
       id: _uuid.v4(),
       question: normalizedQuestion,
-      options: <DecisionOption>[DecisionOption(label: normalizedSelection)],
+      options: normalizedOptions,
       selectedLabel: normalizedSelection,
       rationaleMd: rationaleMd.trim(),
       status: DecisionStatus.active,

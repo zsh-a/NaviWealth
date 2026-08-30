@@ -55,14 +55,24 @@ void main() {
       ProductFunnelEvent.importReviewCorrected,
       quantity: 2,
     );
+    await controller.record(
+      ProductFunnelEvent.knowledgeDecisionCreated,
+      success: true,
+      quantity: 2,
+    );
+    await controller.record(
+      ProductFunnelEvent.knowledgeDecisionActionCreated,
+      success: true,
+    );
+    await controller.record(
+      ProductFunnelEvent.knowledgeDecisionReviewed,
+      duration: const Duration(days: 7),
+      success: true,
+    );
 
-    final stored =
-        jsonDecode(
-              preferences.getString(
-                'naviwealth.product_metrics.aggregates.v5',
-              )!,
-            )
-            as Map<String, Object?>;
+    final stored = jsonDecode(
+      preferences.getString('naviwealth.product_metrics.aggregates.v5')!,
+    ) as Map<String, Object?>;
     expect(stored['schema_version'], 5);
     expect(
       (stored['totals']! as Map<String, Object?>)['importReviewCompleted'],
@@ -100,6 +110,11 @@ void main() {
       'completed_third_import_cycle': true,
       'inbox_clear_day_count': 0,
       'monthly_close_day_count': 1,
+      'knowledge_decision_created_count': 2,
+      'knowledge_decision_action_created_count': 1,
+      'knowledge_decision_reviewed_count': 1,
+      'knowledge_decision_created_day_count': 1,
+      'knowledge_decision_reviewed_day_count': 1,
     });
   });
 }

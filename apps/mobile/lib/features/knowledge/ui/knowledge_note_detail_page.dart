@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/visual/ai_pill.dart';
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -39,15 +40,21 @@ class KnowledgeNoteDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(_noteProvider(noteId));
-    return ObjectDetailScaffold(
-      title: l10n.knowledgeSegmentNotes,
-      child: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
-        data: (note) => note == null
-            ? Center(child: Text(l10n.knowledgeObjectNotFound))
-            : _NoteEditor(key: ValueKey(note.sync.hlc), note: note),
+    return value.when(
+      loading: () => ObjectDetailScaffold(
+        title: l10n.knowledgeSegmentNotes,
+        child: const Center(child: CircularProgressIndicator()),
       ),
+      error: (_, _) => ObjectDetailScaffold(
+        title: l10n.knowledgeSegmentNotes,
+        child: Center(child: Text(l10n.commonLoadFailed)),
+      ),
+      data: (note) => note == null
+          ? ObjectDetailScaffold(
+              title: l10n.knowledgeSegmentNotes,
+              child: Center(child: Text(l10n.knowledgeObjectNotFound)),
+            )
+          : _NoteEditor(key: ValueKey(note.sync.hlc), note: note),
     );
   }
 }
@@ -61,7 +68,11 @@ class _NoteEditor extends ConsumerStatefulWidget {
   ConsumerState<_NoteEditor> createState() => _NoteEditorState();
 }
 
-class _NoteEditorState extends ConsumerState<_NoteEditor> {
+class _NoteEditorState extends ConsumerState<_NoteEditor>
+    with FormDirtyGuard<_NoteEditor> {
+  @override
+  String get leaveFallback => KnowledgeRoutes.library;
+
   late final TextEditingController _title;
   late final TextEditingController _body;
   late final TextEditingController _source;
@@ -75,6 +86,12 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
     _body = TextEditingController(text: widget.note.bodyMd);
     _source = TextEditingController(text: widget.note.sourceUrl);
     _tags = TextEditingController(text: widget.note.tags.join(', '));
+    dirty.bindTextControllers(<TextEditingController>[
+      _title,
+      _body,
+      _source,
+      _tags,
+    ]);
   }
 
   @override
@@ -89,93 +106,129 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      children: [
-        TextField(
-          controller: _title,
-          decoration: InputDecoration(
-            labelText: l10n.knowledgeCaptureTitleField,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        KnowledgeMarkdownEditor(
-          controller: _body,
-          label: l10n.knowledgeCaptureBodyField,
-          minLines: 8,
-          enabled: !_saving,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: AiPill(
-            leading: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
-            label: l10n.knowledgeRewriteAction,
-            onTap: _saving ? null : _rewrite,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        TextField(
-          controller: _tags,
-          decoration: InputDecoration(labelText: l10n.knowledgeNoteTagsLabel),
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _source,
-          builder: (context, value, _) {
-            final sourceUrl = normalizeKnowledgeSourceUrl(value.text);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (sourceUrl != null) ...[
-                  KnowledgeSourceLink(sourceUrl: sourceUrl),
-                  const SizedBox(height: AppSpacing.s8),
-                ],
-                TextField(
-                  controller: _source,
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    labelText: l10n.knowledgeNoteSourceUrlLabel,
-                  ),
+    return guardedScope(
+      child: ObjectDetailScaffold(
+        title: l10n.knowledgeSegmentNotes,
+        confirmLeave: handleBackIntent,
+        child: AnimatedBuilder(
+          animation: dirty,
+          builder: (context, _) => ListView(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            children: [
+              TextField(
+                key: const Key('knowledge-note-title'),
+                controller: _title,
+                enabled: !_saving,
+                decoration: InputDecoration(
+                  labelText: l10n.knowledgeCaptureTitleField,
                 ),
-                if (value.text.trim().isNotEmpty && sourceUrl == null) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  AppStatusBanner(
-                    kind: AppStatusKind.error,
-                    compact: true,
-                    message: l10n.knowledgeSourceInvalid,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              KnowledgeMarkdownEditor(
+                controller: _body,
+                label: l10n.knowledgeCaptureBodyField,
+                minLines: 8,
+                enabled: !_saving,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: AiPill(
+                  leading: const Icon(
+                    FLucideIcons.pencil,
+                    size: AppIconSizes.xs,
                   ),
-                ],
-              ],
-            );
-          },
+                  label: l10n.knowledgeRewriteAction,
+                  onTap: _saving ? null : _rewrite,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              TextField(
+                controller: _tags,
+                enabled: !_saving,
+                decoration: InputDecoration(
+                  labelText: l10n.knowledgeNoteTagsLabel,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _source,
+                builder: (context, value, _) {
+                  final sourceUrl = normalizeKnowledgeSourceUrl(value.text);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (sourceUrl != null) ...[
+                        KnowledgeSourceLink(sourceUrl: sourceUrl),
+                        const SizedBox(height: AppSpacing.s8),
+                      ],
+                      TextField(
+                        controller: _source,
+                        enabled: !_saving,
+                        keyboardType: TextInputType.url,
+                        decoration: InputDecoration(
+                          labelText: l10n.knowledgeNoteSourceUrlLabel,
+                        ),
+                      ),
+                      if (value.text.trim().isNotEmpty &&
+                          sourceUrl == null) ...[
+                        const SizedBox(height: AppSpacing.s8),
+                        AppStatusBanner(
+                          kind: AppStatusKind.error,
+                          compact: true,
+                          message: l10n.knowledgeSourceInvalid,
+                        ),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: AppSpacing.s20),
+              FilledButton(
+                onPressed: _saving || !dirty.isDirty ? null : _save,
+                child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
+              ),
+              const SizedBox(height: AppSpacing.s20),
+              KnowledgeRelationsSection(
+                subjectKind: KnowledgeEntryKind.note,
+                subjectId: widget.note.id,
+                subjectText: KnowledgeSearchDocument.fromNote(widget.note)
+                    .searchText,
+                onCreateDecision: _createDecision,
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              TextButton(
+                onPressed: _saving ? null : _delete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.s20),
-        FilledButton(
-          onPressed: _saving ? null : _save,
-          child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        KnowledgeRelationsSection(
-          subjectKind: KnowledgeEntryKind.note,
-          subjectId: widget.note.id,
-          subjectText: KnowledgeSearchDocument.fromNote(widget.note).searchText,
-          onCreateDecision: _createDecision,
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        TextButton(
-          onPressed: _saving ? null : _delete,
-          child: Text(l10n.commonDelete),
-        ),
-      ],
+      ),
     );
   }
 
   Future<void> _save() async {
-    if (_title.text.trim().isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    if (_title.text.trim().isEmpty) {
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        l10n.knowledgeNoteSaveRequirement,
+      );
+      return;
+    }
     final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
-    if (_source.text.trim().isNotEmpty && sourceUrl == null) return;
+    if (_source.text.trim().isNotEmpty && sourceUrl == null) {
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        l10n.knowledgeSourceInvalid,
+      );
+      return;
+    }
     setState(() => _saving = true);
+    dirty.busy = true;
     try {
       final repository = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -203,7 +256,24 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
       );
       ref.invalidate(_noteProvider(widget.note.id));
       ref.invalidate(knowledgeNotesProvider);
+      dirty.markPristine();
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.commonSaved);
+      }
+    } on Object catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'save knowledge note',
+        ),
+      );
     } finally {
+      dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -235,9 +305,43 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
   }
 
   Future<void> _delete() async {
-    final service = await ref.read(knowledgeDeletionServiceProvider.future);
-    await service.delete(kind: KnowledgeEntryKind.note, id: widget.note.id);
-    ref.invalidate(knowledgeNotesProvider);
-    if (mounted) context.pop();
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.knowledgeNoteDeleteConfirmTitle),
+      body: Text(l10n.knowledgeDeleteConfirmBody),
+      confirmLabel: l10n.commonDelete,
+      cancelLabel: l10n.commonCancel,
+      destructive: true,
+      icon: FLucideIcons.trash2,
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _saving = true);
+    dirty.busy = true;
+    try {
+      final service = await ref.read(knowledgeDeletionServiceProvider.future);
+      await service.delete(kind: KnowledgeEntryKind.note, id: widget.note.id);
+      ref.invalidate(knowledgeNotesProvider);
+      dirty.markPristine();
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.commonDeleted);
+        context.pop();
+      }
+    } on Object catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'delete knowledge note',
+        ),
+      );
+    } finally {
+      dirty.busy = false;
+      if (mounted) setState(() => _saving = false);
+    }
   }
 }

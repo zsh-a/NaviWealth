@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/lifeos/action_dispatcher.dart';
+import '../../../../core/product/product_metrics.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -173,6 +174,12 @@ class _ActionContentState extends ConsumerState<_ActionContent> {
         ),
       );
       if (!mounted || id == null) return;
+      await recordProductMetric(
+        () => ref.read(productMetricsProvider.notifier),
+        ProductFunnelEvent.knowledgeDecisionActionCreated,
+        success: true,
+      );
+      if (!mounted) return;
       ref.invalidate(lifeLinkedActionProvider(widget.source));
       AppMessenger.show(
         context,

@@ -150,9 +150,38 @@ void main() {
     );
     await _enterTextWithoutSemantics(
       tester,
-      find.byKey(const Key('knowledge-decision-from-note-selection')),
+      find.byKey(
+        const ValueKey<String>('knowledge-decision-from-note-label-0'),
+      ),
+      'Keep the current approach',
+    );
+    final addOption = find.byKey(
+      const ValueKey<String>('knowledge-decision-from-note-add'),
+    );
+    await tester.ensureVisible(addOption);
+    await tester.pump(const Duration(milliseconds: 100), EnginePhase.paint);
+    await tester.tap(addOption);
+    await _settleSheet(tester);
+    await _enterTextWithoutSemantics(
+      tester,
+      find.byKey(
+        const ValueKey<String>('knowledge-decision-from-note-label-1'),
+      ),
       'Proceed',
     );
+    await _enterTextWithoutSemantics(
+      tester,
+      find.byKey(
+        const ValueKey<String>('knowledge-decision-from-note-rationale-1'),
+      ),
+      'The evidence supports a reversible trial.',
+    );
+    final selectSecond = find.byKey(
+      const ValueKey<String>('knowledge-decision-from-note-select-1'),
+    );
+    await tester.ensureVisible(selectSecond);
+    await tester.pump(const Duration(milliseconds: 100), EnginePhase.paint);
+    await tester.tap(selectSecond);
     await tester.tap(
       find.byKey(const Key('knowledge-decision-from-note-submit')),
     );
@@ -170,6 +199,14 @@ void main() {
     );
     expect(created?.question, 'Should we proceed?');
     expect(created?.selectedLabel, 'Proceed');
+    expect(created?.options.map((option) => option.label), <String>[
+      'Keep the current approach',
+      'Proceed',
+    ]);
+    expect(
+      created?.options.last.rationale,
+      'The evidence supports a reversible trial.',
+    );
     expect(relations.single.relation, KnowledgeRelationType.informs);
     expect(relations.single.fromId, source.id);
     await tester.pumpWidget(const SizedBox.shrink());

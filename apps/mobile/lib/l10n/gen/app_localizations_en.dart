@@ -12802,6 +12802,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeDecisionOptionsLabel => 'Options';
 
   @override
+  String get knowledgeDecisionOptionsDescription =>
+      'Compare up to three options and select the one you decided to take.';
+
+  @override
+  String knowledgeDecisionOptionLabel(int number) {
+    return 'Option $number';
+  }
+
+  @override
+  String get knowledgeDecisionOptionRationaleLabel =>
+      'Why this option? (optional)';
+
+  @override
+  String knowledgeDecisionSelectOption(int number) {
+    return 'Select option $number';
+  }
+
+  @override
+  String get knowledgeDecisionOptionSelected => 'Selected option';
+
+  @override
+  String get knowledgeDecisionAddOption => 'Add option';
+
+  @override
+  String get knowledgeDecisionRemoveOption => 'Remove option';
+
+  @override
+  String get knowledgeDecisionOptionsInvalid =>
+      'Use unique, non-empty option names and select one option.';
+
+  @override
   String get knowledgeDecisionSelectedOptionLabel => 'Selected option';
 
   @override
@@ -12811,6 +12842,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get knowledgeDecisionSaveRequirement =>
       'Add a question and selected option before saving.';
+
+  @override
+  String get knowledgeNoteSaveRequirement => 'Add a title before saving.';
+
+  @override
+  String get knowledgeNoteDeleteConfirmTitle => 'Delete this note?';
+
+  @override
+  String get knowledgeDecisionDeleteConfirmTitle => 'Delete this decision?';
+
+  @override
+  String get knowledgeDeleteConfirmBody =>
+      'This also removes its Knowledge links. This action cannot be undone.';
 
   @override
   String get knowledgeDecisionReviewTitle => 'Decision review';

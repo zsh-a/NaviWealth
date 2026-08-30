@@ -4,11 +4,14 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ai/visual/ai_pill.dart';
+import '../../../core/forms/form_dirty_guard.dart';
+import '../../../core/product/product_metrics.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
+import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/knowledge_rewrite_client.dart';
 import '../data/knowledge_search_service.dart';
@@ -17,6 +20,7 @@ import '../domain/knowledge_models.dart';
 import 'knowledge_decision_review_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_decision_action_section.dart';
+import 'widgets/knowledge_decision_options_editor.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_relations_section.dart';
 
@@ -36,18 +40,24 @@ class KnowledgeDecisionDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(_decisionProvider(decisionId));
-    return ObjectDetailScaffold(
-      title: l10n.knowledgeSegmentDecisions,
-      child: value.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, _) => Center(child: Text(l10n.commonLoadFailed)),
-        data: (decision) => decision == null
-            ? Center(child: Text(l10n.knowledgeDecisionNotFound))
-            : _DecisionEditor(
-                key: ValueKey(decision.sync.hlc),
-                decision: decision,
-              ),
+    return value.when(
+      loading: () => ObjectDetailScaffold(
+        title: l10n.knowledgeSegmentDecisions,
+        child: const Center(child: CircularProgressIndicator()),
       ),
+      error: (_, _) => ObjectDetailScaffold(
+        title: l10n.knowledgeSegmentDecisions,
+        child: Center(child: Text(l10n.commonLoadFailed)),
+      ),
+      data: (decision) => decision == null
+          ? ObjectDetailScaffold(
+              title: l10n.knowledgeSegmentDecisions,
+              child: Center(child: Text(l10n.knowledgeDecisionNotFound)),
+            )
+          : _DecisionEditor(
+              key: ValueKey(decision.sync.hlc),
+              decision: decision,
+            ),
     );
   }
 }
@@ -61,12 +71,16 @@ class _DecisionEditor extends ConsumerStatefulWidget {
   ConsumerState<_DecisionEditor> createState() => _DecisionEditorState();
 }
 
-class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
+class _DecisionEditorState extends ConsumerState<_DecisionEditor>
+    with FormDirtyGuard<_DecisionEditor> {
+  @override
+  String get leaveFallback => KnowledgeRoutes.library;
+
   late final TextEditingController _question;
-  late final TextEditingController _selected;
   late final TextEditingController _rationale;
   late final TextEditingController _expected;
   late final TextEditingController _actual;
+  late final KnowledgeDecisionOptionsController _options;
   late DecisionStatus _status;
   late DateTime? _reviewDate;
   late List<DecisionRevisitCondition> _revisitConditions;
@@ -77,128 +91,156 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
     super.initState();
     final value = widget.decision;
     _question = TextEditingController(text: value.question);
-    _selected = TextEditingController(text: value.selectedLabel);
     _rationale = TextEditingController(text: value.rationaleMd);
     _expected = TextEditingController(text: value.expectedOutcome);
     _actual = TextEditingController(text: value.actualOutcomeMd);
+    _options = KnowledgeDecisionOptionsController(
+      options: value.options,
+      selectedLabel: value.selectedLabel,
+    )..addListener(_onOptionsChanged);
     _status = value.status;
     _reviewDate = value.reviewDate;
     _revisitConditions = value.revisitConditions;
+    dirty.bindTextControllers(<TextEditingController>[
+      _question,
+      _rationale,
+      _expected,
+      _actual,
+    ]);
   }
 
   @override
   void dispose() {
     _question.dispose();
-    _selected.dispose();
     _rationale.dispose();
     _expected.dispose();
     _actual.dispose();
+    _options
+      ..removeListener(_onOptionsChanged)
+      ..dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      children: [
-        FTextField(
-          control: FTextFieldControl.managed(controller: _question),
-          label: Text(l10n.knowledgeDecisionQuestionLabel),
-          maxLines: 2,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _selected),
-          label: Text(l10n.knowledgeDecisionSelectedOptionLabel),
-          maxLines: 1,
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        KnowledgeMarkdownEditor(
-          controller: _rationale,
-          label: l10n.knowledgeWriterRationaleMarkdownLabel,
-          minLines: 5,
-          enabled: !_saving,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: AiPill(
-            leading: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
-            label: l10n.knowledgeRewriteAction,
-            onTap: _saving ? null : _rewrite,
+    return guardedScope(
+      child: ObjectDetailScaffold(
+        title: l10n.knowledgeSegmentDecisions,
+        confirmLeave: handleBackIntent,
+        child: AnimatedBuilder(
+          animation: dirty,
+          builder: (context, _) => ListView(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            children: [
+              FTextField(
+                control: FTextFieldControl.managed(controller: _question),
+                enabled: !_saving,
+                label: Text(l10n.knowledgeDecisionQuestionLabel),
+                maxLines: 2,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              KnowledgeDecisionOptionsEditor(
+                controller: _options,
+                keyPrefix: 'knowledge-decision-detail',
+                enabled: !_saving,
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              KnowledgeMarkdownEditor(
+                controller: _rationale,
+                label: l10n.knowledgeWriterRationaleMarkdownLabel,
+                minLines: 5,
+                enabled: !_saving,
+              ),
+              const SizedBox(height: AppSpacing.s8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: AiPill(
+                  leading: const Icon(
+                    FLucideIcons.pencil,
+                    size: AppIconSizes.xs,
+                  ),
+                  label: l10n.knowledgeRewriteAction,
+                  onTap: _saving ? null : _rewrite,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              FTextField(
+                control: FTextFieldControl.managed(controller: _expected),
+                enabled: !_saving,
+                label: Text(l10n.knowledgeDecisionExpectedOutcomeLabel),
+                maxLines: 3,
+              ),
+              const SizedBox(height: AppSpacing.s20),
+              SizedBox(
+                width: double.infinity,
+                child: AppActionButton(
+                  onPress: _saving || !dirty.isDirty ? null : _save,
+                  child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.s20),
+              _DecisionReviewSection(
+                reviewDate: _reviewDate,
+                revisitConditions: _revisitConditions,
+                actualOutcomeMd: _nullable(_actual.text),
+                status: _status,
+                onReview: _saving ? null : _review,
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              KnowledgeDecisionActionSection(decision: widget.decision),
+              const SizedBox(height: AppSpacing.s16),
+              KnowledgeRelationsSection(
+                subjectKind: KnowledgeEntryKind.decision,
+                subjectId: widget.decision.id,
+                subjectText: KnowledgeSearchDocument.fromDecision(
+                  widget.decision,
+                ).searchText,
+              ),
+              const SizedBox(height: AppSpacing.s16),
+              FButton(
+                variant: FButtonVariant.destructive,
+                onPress: _saving ? null : _delete,
+                child: Text(l10n.commonDelete),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: AppSpacing.s12),
-        FTextField(
-          control: FTextFieldControl.managed(controller: _expected),
-          label: Text(l10n.knowledgeDecisionExpectedOutcomeLabel),
-          maxLines: 3,
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        SizedBox(
-          width: double.infinity,
-          child: AppActionButton(
-            onPress: _saving ? null : _save,
-            child: Text(_saving ? l10n.commonSaving : l10n.commonSave),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _DecisionReviewSection(
-          reviewDate: _reviewDate,
-          revisitConditions: _revisitConditions,
-          actualOutcomeMd: _nullable(_actual.text),
-          status: _status,
-          onReview: _saving ? null : _review,
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        KnowledgeDecisionActionSection(decision: widget.decision),
-        const SizedBox(height: AppSpacing.s16),
-        KnowledgeRelationsSection(
-          subjectKind: KnowledgeEntryKind.decision,
-          subjectId: widget.decision.id,
-          subjectText: KnowledgeSearchDocument.fromDecision(widget.decision)
-              .searchText,
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        FButton(
-          variant: FButtonVariant.destructive,
-          onPress: _saving ? null : _delete,
-          child: Text(l10n.commonDelete),
-        ),
-      ],
+      ),
     );
   }
 
-  Future<void> _save() async {
+  Future<bool> _save() async {
     final question = _question.text.trim();
-    final selected = _selected.text.trim();
     final l10n = AppLocalizations.of(context);
-    if (question.isEmpty || selected.isEmpty) {
+    if (question.isEmpty) {
       AppMessenger.show(
         context,
         ToastKind.warning,
         l10n.knowledgeDecisionSaveRequirement,
       );
-      return;
+      return false;
+    }
+    if (!_options.isValid) {
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        l10n.knowledgeDecisionOptionsInvalid,
+      );
+      return false;
     }
     setState(() => _saving = true);
+    dirty.busy = true;
     try {
       final repository = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
       final value = await stamper.stamp();
-      final priorOptions = widget.decision.options
-          .where((option) => option.label != selected)
-          .toList(growable: true);
       await repository.upsertDecision(
         KnowledgeDecision(
           id: widget.decision.id,
           question: question,
-          options: <DecisionOption>[
-            DecisionOption(label: selected),
-            ...priorOptions,
-          ],
-          selectedLabel: selected,
+          options: _options.options,
+          selectedLabel: _options.selectedLabel,
           rationaleMd: _rationale.text.trim(),
           expectedOutcome: _nullable(_expected.text),
           reviewDate: _reviewDate,
@@ -218,11 +260,13 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
       );
       ref.invalidate(_decisionProvider(widget.decision.id));
       ref.invalidate(knowledgeDecisionsProvider);
+      dirty.markPristine();
       if (mounted) {
         AppMessenger.show(context, ToastKind.success, l10n.commonSaved);
       }
+      return true;
     } on Object catch (error, stackTrace) {
-      if (!mounted) return;
+      if (!mounted) return false;
       AppMessenger.show(
         context,
         ToastKind.error,
@@ -233,7 +277,9 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
           operation: 'save knowledge decision',
         ),
       );
+      return false;
     } finally {
+      dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -244,8 +290,8 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
       decision: KnowledgeDecision(
         id: widget.decision.id,
         question: _question.text.trim(),
-        options: widget.decision.options,
-        selectedLabel: _selected.text.trim(),
+        options: _options.options,
+        selectedLabel: _options.selectedLabel,
         rationaleMd: _rationale.text.trim(),
         expectedOutcome: _nullable(_expected.text),
         reviewDate: _reviewDate,
@@ -265,7 +311,19 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
       _actual.text = draft.actualOutcomeMd ?? '';
       _status = draft.status;
     });
-    await _save();
+    dirty.markDirty();
+    final saved = await _save();
+    if (saved) {
+      final elapsed = DateTime.now().toUtc().difference(
+        widget.decision.decidedAt.toUtc(),
+      );
+      await recordProductMetric(
+        () => ref.read(productMetricsProvider.notifier),
+        ProductFunnelEvent.knowledgeDecisionReviewed,
+        success: true,
+        duration: elapsed.isNegative ? Duration.zero : elapsed,
+      );
+    }
   }
 
   Future<void> _rewrite() async {
@@ -285,14 +343,50 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
   }
 
   Future<void> _delete() async {
-    final service = await ref.read(knowledgeDeletionServiceProvider.future);
-    await service.delete(
-      kind: KnowledgeEntryKind.decision,
-      id: widget.decision.id,
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(l10n.knowledgeDecisionDeleteConfirmTitle),
+      body: Text(l10n.knowledgeDeleteConfirmBody),
+      confirmLabel: l10n.commonDelete,
+      cancelLabel: l10n.commonCancel,
+      destructive: true,
+      icon: FLucideIcons.trash2,
     );
-    ref.invalidate(knowledgeDecisionsProvider);
-    if (mounted) context.pop();
+    if (confirmed != true || !mounted) return;
+    setState(() => _saving = true);
+    dirty.busy = true;
+    try {
+      final service = await ref.read(knowledgeDeletionServiceProvider.future);
+      await service.delete(
+        kind: KnowledgeEntryKind.decision,
+        id: widget.decision.id,
+      );
+      ref.invalidate(knowledgeDecisionsProvider);
+      dirty.markPristine();
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.success, l10n.commonDeleted);
+        context.pop();
+      }
+    } on Object catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'delete knowledge decision',
+        ),
+      );
+    } finally {
+      dirty.busy = false;
+      if (mounted) setState(() => _saving = false);
+    }
   }
+
+  void _onOptionsChanged() => dirty.markDirty();
 }
 
 class _DecisionReviewSection extends StatelessWidget {

@@ -26,6 +26,9 @@ enum ProductFunnelEvent {
   lifeEventCompared,
   financialDecisionSaved,
   financialDecisionReviewed,
+  knowledgeDecisionCreated,
+  knowledgeDecisionActionCreated,
+  knowledgeDecisionReviewed,
   monthlyCloseCompleted,
 }
 
@@ -33,6 +36,28 @@ final productMetricsProvider =
     StateNotifierProvider<ProductMetricsController, bool>((ref) {
       return ProductMetricsController(ref.watch(sharedPreferencesProvider));
     });
+
+/// Records optional local product evidence without putting the user action at
+/// risk. An unavailable preference store or failed aggregate write must never
+/// fail the domain mutation that produced the evidence.
+Future<void> recordProductMetric(
+  ProductMetricsController Function() readController,
+  ProductFunnelEvent event, {
+  Duration? duration,
+  bool? success,
+  int quantity = 1,
+}) async {
+  try {
+    await readController().record(
+      event,
+      duration: duration,
+      success: success,
+      quantity: quantity,
+    );
+  } on Object {
+    // Product evidence is optional and privacy-safe, never transactional.
+  }
+}
 
 /// Opt-in, device-only aggregates. The report contains stable event names,
 /// counters, duration totals, success states, and UTC day buckets only.
@@ -170,6 +195,26 @@ class ProductMetricsController extends StateNotifier<bool> {
         'monthly_close_day_count': _daysWith(
           days,
           ProductFunnelEvent.monthlyCloseCompleted,
+        ),
+        'knowledge_decision_created_count': _eventCount(
+          totals,
+          ProductFunnelEvent.knowledgeDecisionCreated,
+        ),
+        'knowledge_decision_action_created_count': _eventCount(
+          totals,
+          ProductFunnelEvent.knowledgeDecisionActionCreated,
+        ),
+        'knowledge_decision_reviewed_count': _eventCount(
+          totals,
+          ProductFunnelEvent.knowledgeDecisionReviewed,
+        ),
+        'knowledge_decision_created_day_count': _daysWith(
+          days,
+          ProductFunnelEvent.knowledgeDecisionCreated,
+        ),
+        'knowledge_decision_reviewed_day_count': _daysWith(
+          days,
+          ProductFunnelEvent.knowledgeDecisionReviewed,
         ),
       },
     };

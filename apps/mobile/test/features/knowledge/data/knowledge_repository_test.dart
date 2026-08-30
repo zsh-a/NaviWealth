@@ -185,6 +185,10 @@ void main() {
     final decision = await service.create(
       noteId: 'n-source',
       question: 'Should we adopt the proposal?',
+      options: <DecisionOption>[
+        DecisionOption(label: 'Adopt it'),
+        DecisionOption(label: 'Keep the current approach'),
+      ],
       selectedLabel: 'Adopt it',
       rationaleMd: 'The source note contains the supporting evidence.',
     );

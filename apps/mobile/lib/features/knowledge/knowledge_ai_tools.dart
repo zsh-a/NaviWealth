@@ -46,7 +46,8 @@ final Map<String, ToolDescriptor> kKnowledgeToolDescriptors =
 
 const String kKnowledgeSystemPromptBlock =
     '[KnowledgeOS 域]\n'
-    '- Note 保存材料、观察和想法；Decision 保存已做出的选择、理由和复盘日期。\n'
+    '- Note 保存材料、观察和想法；Decision 保存候选方案、明确选择、理由和复盘日期。\n'
+    '- 提议 Decision 时给出不超过三个互不重复的 options，并让 selected_label 对应其中一个。\n'
     '- 录入使用 propose_capture，只有用户确认后才写入。\n'
     '- 搜索用 search_notes / search_knowledge，查重用 find_similar_knowledge。\n'
     '- 询问过去的判断时优先调用 recall_decision，不要凭记忆补全。';

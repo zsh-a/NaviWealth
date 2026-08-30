@@ -21566,6 +21566,54 @@ abstract class AppLocalizations {
   /// **'Options'**
   String get knowledgeDecisionOptionsLabel;
 
+  /// No description provided for @knowledgeDecisionOptionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare up to three options and select the one you decided to take.'**
+  String get knowledgeDecisionOptionsDescription;
+
+  /// No description provided for @knowledgeDecisionOptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Option {number}'**
+  String knowledgeDecisionOptionLabel(int number);
+
+  /// No description provided for @knowledgeDecisionOptionRationaleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Why this option? (optional)'**
+  String get knowledgeDecisionOptionRationaleLabel;
+
+  /// No description provided for @knowledgeDecisionSelectOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Select option {number}'**
+  String knowledgeDecisionSelectOption(int number);
+
+  /// No description provided for @knowledgeDecisionOptionSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected option'**
+  String get knowledgeDecisionOptionSelected;
+
+  /// No description provided for @knowledgeDecisionAddOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Add option'**
+  String get knowledgeDecisionAddOption;
+
+  /// No description provided for @knowledgeDecisionRemoveOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove option'**
+  String get knowledgeDecisionRemoveOption;
+
+  /// No description provided for @knowledgeDecisionOptionsInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use unique, non-empty option names and select one option.'**
+  String get knowledgeDecisionOptionsInvalid;
+
   /// No description provided for @knowledgeDecisionSelectedOptionLabel.
   ///
   /// In en, this message translates to:
@@ -21583,6 +21631,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a question and selected option before saving.'**
   String get knowledgeDecisionSaveRequirement;
+
+  /// No description provided for @knowledgeNoteSaveRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a title before saving.'**
+  String get knowledgeNoteSaveRequirement;
+
+  /// No description provided for @knowledgeNoteDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this note?'**
+  String get knowledgeNoteDeleteConfirmTitle;
+
+  /// No description provided for @knowledgeDecisionDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this decision?'**
+  String get knowledgeDecisionDeleteConfirmTitle;
+
+  /// No description provided for @knowledgeDeleteConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This also removes its Knowledge links. This action cannot be undone.'**
+  String get knowledgeDeleteConfirmBody;
 
   /// No description provided for @knowledgeDecisionReviewTitle.
   ///

@@ -81,6 +81,38 @@ class DecisionOption {
   );
 }
 
+List<DecisionOption> canonicalizeDecisionOptions(
+  Iterable<DecisionOption> options,
+) => options
+    .map((option) {
+      final rationale = option.rationale?.trim();
+      return DecisionOption(
+        label: option.label.trim(),
+        rationale: rationale == null || rationale.isEmpty ? null : rationale,
+      );
+    })
+    .toList(growable: false);
+
+bool hasValidDecisionOptions(
+  Iterable<DecisionOption> options, {
+  required String selectedLabel,
+  int? maxOptions,
+}) {
+  final canonical = canonicalizeDecisionOptions(options);
+  if (canonical.isEmpty ||
+      (maxOptions != null && canonical.length > maxOptions) ||
+      canonical.any((option) => option.label.isEmpty)) {
+    return false;
+  }
+  final normalizedLabels = canonical
+      .map((option) => option.label.toLowerCase())
+      .toSet();
+  if (normalizedLabels.length != canonical.length) return false;
+  final selected = selectedLabel.trim();
+  return selected.isNotEmpty &&
+      canonical.any((option) => option.label == selected);
+}
+
 class DecisionRevisitCondition {
   const DecisionRevisitCondition({
     required this.statement,

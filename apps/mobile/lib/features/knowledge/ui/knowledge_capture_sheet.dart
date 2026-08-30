@@ -5,6 +5,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/form_dirty_guard.dart';
+import '../../../core/product/product_metrics.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -12,19 +14,22 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_source_url.dart';
+import 'widgets/knowledge_decision_options_editor.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 
 enum _CaptureType { note, decision }
 
 Future<void> showKnowledgeCaptureSheet(BuildContext context) {
-  return showAppFormSheet<void>(
+  return showGuardedFormSheet<void>(
     context: context,
-    builder: (_) => const _KnowledgeCaptureSheet(),
+    builder: (_, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
   );
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
-  const _KnowledgeCaptureSheet();
+  const _KnowledgeCaptureSheet({required this.dirty});
+
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_KnowledgeCaptureSheet> createState() =>
@@ -35,28 +40,52 @@ class _KnowledgeCaptureSheetState
     extends ConsumerState<_KnowledgeCaptureSheet> {
   final _title = TextEditingController();
   final _body = TextEditingController();
-  final _selected = TextEditingController();
   final _source = TextEditingController();
   final _tags = TextEditingController();
+  late final KnowledgeDecisionOptionsController _options;
   Timer? _sourceCheckDebounce;
   KnowledgeNote? _duplicateSource;
   var _sourceCheckSerial = 0;
   var _type = _CaptureType.note;
   var _saving = false;
+  String? _error;
+
+  bool get _canSave {
+    final title = _title.text.trim();
+    final body = _body.text.trim();
+    return switch (_type) {
+      _CaptureType.note => title.isNotEmpty || body.isNotEmpty,
+      _CaptureType.decision => title.isNotEmpty && _options.isValid,
+    };
+  }
 
   @override
   void initState() {
     super.initState();
+    _options = KnowledgeDecisionOptionsController();
+    _title.addListener(_onTextChanged);
+    _body.addListener(_onTextChanged);
     _source.addListener(_onSourceChanged);
+    _options.addListener(_onOptionsChanged);
+    widget.dirty.bindTextControllers(<TextEditingController>[
+      _title,
+      _body,
+      _source,
+      _tags,
+    ]);
   }
 
   @override
   void dispose() {
     _sourceCheckDebounce?.cancel();
+    _title.removeListener(_onTextChanged);
+    _body.removeListener(_onTextChanged);
     _source.removeListener(_onSourceChanged);
+    _options
+      ..removeListener(_onOptionsChanged)
+      ..dispose();
     _title.dispose();
     _body.dispose();
-    _selected.dispose();
     _source.dispose();
     _tags.dispose();
     super.dispose();
@@ -71,6 +100,7 @@ class _KnowledgeCaptureSheetState
         submitLabel: l10n.commonSave,
         cancelLabel: l10n.commonCancel,
         onSubmit: _save,
+        enabled: _canSave,
         busy: _saving,
       ),
       child: Column(
@@ -86,11 +116,18 @@ class _KnowledgeCaptureSheetState
             },
             onChanged: _saving
                 ? (_) {}
-                : (value) => setState(() => _type = value),
+                : (value) {
+                    widget.dirty.markDirty();
+                    setState(() {
+                      _type = value;
+                      _error = null;
+                    });
+                  },
           ),
           const SizedBox(height: AppSpacing.s16),
           FTextField(
             control: FTextFieldControl.managed(controller: _title),
+            enabled: !_saving,
             autofocus: true,
             textInputAction: TextInputAction.next,
             label: Text(
@@ -101,11 +138,10 @@ class _KnowledgeCaptureSheetState
           ),
           const SizedBox(height: AppSpacing.s12),
           if (_type == _CaptureType.decision) ...[
-            FTextField(
-              control: FTextFieldControl.managed(controller: _selected),
-              label: Text(l10n.knowledgeDecisionOptionsLabel),
-              hint: l10n.knowledgeDecisionSelectionRequirement,
-              textInputAction: TextInputAction.next,
+            KnowledgeDecisionOptionsEditor(
+              controller: _options,
+              keyPrefix: 'knowledge-capture-option',
+              enabled: !_saving,
             ),
             const SizedBox(height: AppSpacing.s12),
           ],
@@ -123,6 +159,7 @@ class _KnowledgeCaptureSheetState
             FTextField(
               key: const ValueKey('knowledge-capture-source-url'),
               control: FTextFieldControl.managed(controller: _source),
+              enabled: !_saving,
               keyboardType: TextInputType.url,
               textInputAction: TextInputAction.next,
               label: Text(l10n.knowledgeNoteSourceUrlLabel),
@@ -154,8 +191,17 @@ class _KnowledgeCaptureSheetState
             FTextField(
               key: const ValueKey('knowledge-capture-tags'),
               control: FTextFieldControl.managed(controller: _tags),
+              enabled: !_saving,
               label: Text(l10n.knowledgeNoteTagsLabel),
               hint: l10n.knowledgeNoteTagsHint,
+            ),
+          ],
+          if (_error case final message?) ...[
+            const SizedBox(height: AppSpacing.s10),
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              compact: true,
+              message: message,
             ),
           ],
         ],
@@ -166,11 +212,13 @@ class _KnowledgeCaptureSheetState
   Future<void> _save() async {
     final title = _title.text.trim();
     final body = _body.text.trim();
-    final selected = _selected.text.trim();
     final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
-    if ((_type == _CaptureType.note && title.isEmpty && body.isEmpty) ||
-        (_type == _CaptureType.decision &&
-            (title.isEmpty || selected.isEmpty))) {
+    if (!_canSave) {
+      setState(() {
+        _error = _type == _CaptureType.decision
+            ? AppLocalizations.of(context).knowledgeDecisionOptionsInvalid
+            : AppLocalizations.of(context).knowledgeNoteSaveRequirement;
+      });
       return;
     }
     if (_type == _CaptureType.note &&
@@ -178,7 +226,11 @@ class _KnowledgeCaptureSheetState
         sourceUrl == null) {
       return;
     }
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    widget.dirty.busy = true;
     try {
       final repository = await ref.read(knowledgeRepositoryProvider.future);
       final stamper = await ref.read(mutationStamperProvider.future);
@@ -211,21 +263,47 @@ class _KnowledgeCaptureSheetState
           KnowledgeDecision(
             id: kKnowledgeUuid.v4(),
             question: title,
-            options: <DecisionOption>[DecisionOption(label: selected)],
-            selectedLabel: selected,
+            options: _options.options,
+            selectedLabel: _options.selectedLabel,
             rationaleMd: body,
             status: DecisionStatus.active,
             decidedAt: value.now,
             sync: sync,
           ),
         );
+        await recordProductMetric(
+          () => ref.read(productMetricsProvider.notifier),
+          ProductFunnelEvent.knowledgeDecisionCreated,
+          success: true,
+        );
       }
       ref.invalidate(knowledgeNotesProvider);
       ref.invalidate(knowledgeDecisionsProvider);
+      widget.dirty.markPristine();
       if (mounted) Navigator.pop(context);
+    } on Object catch (error, stackTrace) {
+      if (!mounted) return;
+      setState(() {
+        _error = userSafeErrorMessage(
+          context,
+          error,
+          stackTrace: stackTrace,
+          operation: 'capture knowledge',
+        );
+      });
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  void _onOptionsChanged() {
+    widget.dirty.markDirty();
+    if (mounted) setState(() => _error = null);
+  }
+
+  void _onTextChanged() {
+    if (mounted) setState(() => _error = null);
   }
 
   void _onSourceChanged() {

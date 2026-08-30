@@ -3,6 +3,8 @@ library;
 
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 
+import '../domain/knowledge_models.dart';
+import '../domain/knowledge_source_url.dart';
 import '_tool_support.dart';
 
 class ProposeCaptureTool implements DeviceTool {
@@ -26,6 +28,19 @@ class ProposeCaptureTool implements DeviceTool {
       },
       'title': <String, Object?>{'type': 'string'},
       'body': <String, Object?>{'type': 'string'},
+      'options': <String, Object?>{
+        'type': 'array',
+        'minItems': 1,
+        'maxItems': 3,
+        'items': <String, Object?>{
+          'type': 'object',
+          'properties': <String, Object?>{
+            'label': <String, Object?>{'type': 'string'},
+            'rationale': <String, Object?>{'type': 'string'},
+          },
+          'required': <String>['label'],
+        },
+      },
       'selected_label': <String, Object?>{'type': 'string'},
       'tags': <String, Object?>{
         'type': 'array',
@@ -34,6 +49,18 @@ class ProposeCaptureTool implements DeviceTool {
       'source_url': <String, Object?>{'type': 'string'},
     },
     'required': <String>['kind', 'title'],
+    'allOf': <Object?>[
+      <String, Object?>{
+        'if': <String, Object?>{
+          'properties': <String, Object?>{
+            'kind': <String, Object?>{'const': 'decision'},
+          },
+        },
+        'then': <String, Object?>{
+          'required': <String>['options', 'selected_label'],
+        },
+      },
+    ],
   };
 
   @override
@@ -49,8 +76,35 @@ class ProposeCaptureTool implements DeviceTool {
       return badRequest('kind 只支持 note / decision。');
     }
     if (title.isEmpty) return badRequest('title 必填。');
-    if (kind == 'decision' && selected.isEmpty) {
-      return badRequest('Decision 需要 selected_label。');
+    final rawOptions = input['options'];
+    if (rawOptions != null &&
+        (rawOptions is! List<Object?> ||
+            rawOptions.any((raw) {
+              if (raw is! Map<Object?, Object?>) return true;
+              return raw['label'] is! String ||
+                  (raw['rationale'] != null && raw['rationale'] is! String);
+            }))) {
+      return badRequest('options 必须是包含 label 和可选 rationale 的对象列表。');
+    }
+    final options = canonicalizeDecisionOptions(
+      rawOptions is List<Object?>
+          ? rawOptions.whereType<Map<Object?, Object?>>().map(
+              (raw) => DecisionOption(
+                label: raw['label']! as String,
+                rationale: raw['rationale'] as String?,
+              ),
+            )
+          : const <DecisionOption>[],
+    );
+    if (kind == 'decision' &&
+        !hasValidDecisionOptions(
+          options,
+          selectedLabel: selected,
+          maxOptions: 3,
+        )) {
+      return badRequest(
+        'Decision 需要互不重复的 options，且 selected_label 必须对应其中一个选项。',
+      );
     }
     final tags = input['tags'] is List
         ? (input['tags'] as List<Object?>)
@@ -60,6 +114,13 @@ class ProposeCaptureTool implements DeviceTool {
               .toSet()
               .toList(growable: false)
         : const <String>[];
+    final sourceInput = (input['source_url'] as String?)?.trim() ?? '';
+    final sourceUrl = sourceInput.isEmpty
+        ? null
+        : normalizeKnowledgeSourceUrl(sourceInput);
+    if (kind == 'note' && sourceInput.isNotEmpty && sourceUrl == null) {
+      return badRequest('source_url 只支持安全的 HTTP(S) 链接。');
+    }
     return proposalEnvelope(
       kind: 'knowledge_capture',
       summaryZh: kind == 'decision' ? '记录决策：$title' : '保存笔记：$title',
@@ -68,9 +129,10 @@ class ProposeCaptureTool implements DeviceTool {
         'title': title,
         'body': body,
         if (selected.isNotEmpty) 'selected_label': selected,
+        if (options.isNotEmpty)
+          'options': options.map((option) => option.toJson()).toList(),
         'tags': tags,
-        if ((input['source_url'] as String?)?.trim().isNotEmpty ?? false)
-          'source_url': (input['source_url'] as String).trim(),
+        'source_url': ?sourceUrl,
       },
       note: '用户确认后写入；取消不会产生任何数据。',
     );

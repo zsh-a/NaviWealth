@@ -57,13 +57,21 @@ Key files:
 - `features/knowledge/ui/knowledge_decision_detail_page.dart`
 
 Capture lets the user choose Note or Decision directly. It never saves an
-intermediate Note merely to classify or promote it later. A Decision requires a
-question and selected option; its richer review fields can be edited on the
-detail page. Note capture writes optional source URL and tags in the same
-canonical row, matching the provenance retained by system-share capture. Source
-URLs are normalized to HTTP(S) document identity, render as an external-link
-card on Note detail, and receive a non-blocking inline warning when quick
-capture finds an existing live Note with the same source.
+intermediate Note merely to classify or promote it later. A new Decision
+requires a question, one to three unique candidate options, and an explicit
+selection from those options. Each option may keep a short rationale; existing
+rows with more options remain editable without adding further options. The
+richer review fields can be edited on the detail page. Note capture writes
+optional source URL and tags in the same canonical row, matching the provenance
+retained by system-share capture. Source URLs are normalized to HTTP(S)
+document identity, render as an external-link card on Note detail, and receive
+a non-blocking inline warning when quick capture finds an existing live Note
+with the same source.
+
+Note and Decision editors share one reliability contract: unchanged forms do
+not submit, dirty forms guard system/back-button dismissal, in-flight saves
+cannot be dismissed, invalid fields stay visible, and deletion always requires
+explicit confirmation.
 
 Decision detail keeps review work out of the general text editor. A focused
 review sheet owns review date, revisit conditions, actual outcome, and status;
@@ -120,10 +128,11 @@ The bounded catalog in `knowledge_ai_tools.dart` contains:
 - `propose_merge`
 
 `propose_capture` accepts an explicit `note` or `decision` target and returns a
-proposal envelope. It does not classify into hidden types. `propose_merge`
-supports only same-kind Note or Decision merges. Proposal application and undo
-are owned by `KnowledgeProposalApplier`; no AI tool writes synced tables before
-user confirmation.
+proposal envelope. Decision proposals carry the same one-to-three option set
+and selected-label invariant as manual capture. It does not classify into
+hidden types. `propose_merge` supports only same-kind Note or Decision merges.
+Proposal application and undo are owned by `KnowledgeProposalApplier`; no AI
+tool writes synced tables before user confirmation.
 
 The system prompt must describe only Note and Decision. It must not ask the
 user to select, review, or restore a retired object type.
@@ -173,7 +182,8 @@ trace.
 The explicit “create Decision from this Note” action writes the new Decision
 and a directed `informs` relation from the source Note in one local transaction,
 including both Sync outbox rows. It never infers a Decision automatically: the
-user must provide the question and selected option before creation.
+user must provide the question, candidate options, and selection before
+creation.
 
 When ExecutionOS is active, Decision detail can explicitly create or open one
 source-linked Action through the domain-neutral Life action dispatcher. The
@@ -186,6 +196,14 @@ Deleting an entity also tombstones every live relation touching it.
 Same-kind merges keep one survivor, union Note tags where applicable, soft
 delete duplicates with `mergedIntoId`, and enqueue every changed row. Proposal
 undo restores captured row snapshots with fresh Sync metadata.
+
+## Product Evidence
+
+Opt-in device-only aggregates record Decision creation, source-linked Action
+creation, and review completion. Review evidence may include elapsed duration,
+but never stores Note/Decision text, row ids, option labels, source URLs, or
+relation endpoints. Metric failure is best-effort and cannot roll back or fail
+the domain mutation that produced it.
 
 ## Boundaries
 
