@@ -3911,6 +3911,8 @@
   "knowledgeDecisionStatusLabel": "状态",
   "knowledgeWriterRationaleMarkdownLabel": "理由（Markdown）",
   "knowledgeNoteTagsLabel": "标签（用逗号分隔）",
+  "knowledgeLibraryAllTags": "全部标签",
+  "knowledgeLibraryTagFilterLabel": "按标签筛选笔记",
   "knowledgeRewriteAction": "AI 改写",
   "knowledgeRewriteTitle": "改写内容",
   "knowledgeRewriteSubtitle": "优化表达，但不改变原意。",

@@ -37,11 +37,12 @@ KnowledgeNote _note({
   required String title,
   required String body,
   required int tick,
+  List<String> tags = const <String>[],
 }) => KnowledgeNote(
   id: id,
   title: title,
   bodyMd: body,
-  tags: const <String>[],
+  tags: tags,
   createdAt: _sync(tick).updatedAt,
   sync: _sync(tick),
 );
@@ -154,5 +155,38 @@ void main() {
     expect(hits.first.id, 'unindexed-exact');
     expect(hits.first.semanticScore, isNull);
     expect(hits.first.lexicalScore, 1);
+  });
+
+  test('note search composes an exact tag with lexical results', () async {
+    await repository.upsertNote(
+      _note(
+        id: 'work-roadmap',
+        title: 'Product roadmap',
+        body: 'Quarterly planning notes.',
+        tick: 1,
+        tags: const <String>['work'],
+      ),
+    );
+    await repository.upsertNote(
+      _note(
+        id: 'personal-roadmap',
+        title: 'Travel roadmap',
+        body: 'Places to visit next year.',
+        tick: 2,
+        tags: const <String>['personal'],
+      ),
+    );
+    final service = KnowledgeSearchService(
+      repository: repository,
+      memoryRuntime: _runtime(database, _UnavailableEmbedder()),
+    );
+
+    final hits = await service.searchNotes(
+      ownerUserId: _owner,
+      query: 'roadmap',
+      tags: const <String>{'work'},
+    );
+
+    expect(hits.map((hit) => hit.id), <String>['work-roadmap']);
   });
 }

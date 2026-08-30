@@ -6887,6 +6887,8 @@
   "knowledgeDecisionStatusLabel": "Status",
   "knowledgeWriterRationaleMarkdownLabel": "Rationale (Markdown)",
   "knowledgeNoteTagsLabel": "Tags (comma separated)",
+  "knowledgeLibraryAllTags": "All tags",
+  "knowledgeLibraryTagFilterLabel": "Filter notes by tag",
   "knowledgeRewriteAction": "Rewrite with AI",
   "knowledgeRewriteTitle": "Rewrite Knowledge",
   "knowledgeRewriteSubtitle": "Improve the text without changing what it means.",

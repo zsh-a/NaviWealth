@@ -13,6 +13,7 @@ class KnowledgeEntryTile extends StatelessWidget {
     required this.onPress,
     this.subtitle,
     this.meta,
+    this.tags = const <String>[],
     this.accented = false,
   });
 
@@ -22,6 +23,7 @@ class KnowledgeEntryTile extends StatelessWidget {
   final VoidCallback onPress;
   final String? subtitle;
   final String? meta;
+  final List<String> tags;
   final bool accented;
 
   @override
@@ -29,6 +31,11 @@ class KnowledgeEntryTile extends StatelessWidget {
     final colors = context.theme.colors;
     final secondary = subtitle?.trim();
     final metadata = meta?.trim();
+    final visibleTags = tags
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
     return SoftCard.flat(
       onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s14),
@@ -82,6 +89,26 @@ class KnowledgeEntryTile extends StatelessWidget {
                 if (metadata != null && metadata.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.s6),
                   Text(metadata, style: context.captionMediumStyle),
+                ],
+                if (visibleTags.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  Wrap(
+                    spacing: AppSpacing.s4,
+                    runSpacing: AppSpacing.s4,
+                    children: [
+                      for (final tag in visibleTags.take(3))
+                        AppBadge(
+                          label: tag,
+                          size: AppBadgeSize.compact,
+                          outlined: true,
+                        ),
+                      if (visibleTags.length > 3)
+                        AppBadge(
+                          label: '+${visibleTags.length - 3}',
+                          size: AppBadgeSize.compact,
+                        ),
+                    ],
+                  ),
                 ],
               ],
             ),

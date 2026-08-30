@@ -35,12 +35,14 @@ class KnowledgeLibraryPage extends ConsumerStatefulWidget {
 
 class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   static const _searchDebounce = Duration(milliseconds: 250);
+  static const _tagFacetLimit = 12;
 
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
   Timer? _debounce;
   var _scope = _LibraryScope.all;
   var _query = '';
+  String? _selectedTag;
 
   @override
   void dispose() {
@@ -61,10 +63,20 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final notes = ref.watch(knowledgeNotesProvider);
+    final decisions = ref.watch(knowledgeDecisionsProvider);
+    final tagFacets = _tagFacets(
+      notes.asData?.value ?? const <KnowledgeNote>[],
+      selectedTag: _selectedTag,
+    );
     final searchResults = _query.isEmpty
         ? null
         : ref.watch(
-            knowledgeLibrarySearchProvider((query: _query, kind: _scope.kind)),
+            knowledgeLibrarySearchProvider((
+              query: _query,
+              kind: _scope.kind,
+              tag: _selectedTag,
+            )),
           );
     return ShellTabScaffold(
       title: l10n.knowledgeLibraryTitle,
@@ -122,8 +134,31 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                       _LibraryScope.notes => FLucideIcons.fileText,
                       _LibraryScope.decisions => FLucideIcons.circleCheck,
                     },
-                    onChanged: (scope) => setState(() => _scope = scope),
+                    onChanged: (scope) {
+                      setState(() {
+                        _scope = scope;
+                        if (scope == _LibraryScope.decisions) {
+                          _selectedTag = null;
+                        }
+                      });
+                    },
                   ),
+                  if (tagFacets.isNotEmpty &&
+                      _scope != _LibraryScope.decisions) ...[
+                    const SizedBox(height: AppSpacing.s10),
+                    _LibraryTagFilter(
+                      tags: tagFacets,
+                      selectedTag: _selectedTag,
+                      allLabel: l10n.knowledgeLibraryAllTags,
+                      semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
+                      onChanged: (tag) {
+                        setState(() {
+                          _selectedTag = tag;
+                          if (tag != null) _scope = _LibraryScope.notes;
+                        });
+                      },
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -131,12 +166,84 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
               child: searchResults == null
                   ? _LibraryBrowse(
                       scope: _scope,
-                      notes: ref.watch(knowledgeNotesProvider),
-                      decisions: ref.watch(knowledgeDecisionsProvider),
+                      selectedTag: _selectedTag,
+                      notes: notes,
+                      decisions: decisions,
                     )
                   : _LibrarySearchResults(value: searchResults),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  List<String> _tagFacets(
+    List<KnowledgeNote> notes, {
+    required String? selectedTag,
+  }) {
+    final counts = <String, int>{};
+    for (final note in notes) {
+      for (final tag in note.tags.toSet()) {
+        if (tag.trim().isEmpty) continue;
+        counts.update(tag, (count) => count + 1, ifAbsent: () => 1);
+      }
+    }
+    final tags = counts.keys.toList(growable: false)
+      ..sort((a, b) {
+        final byCount = counts[b]!.compareTo(counts[a]!);
+        if (byCount != 0) return byCount;
+        final byLabel = a.toLowerCase().compareTo(b.toLowerCase());
+        return byLabel != 0 ? byLabel : a.compareTo(b);
+      });
+    final visible = tags.take(_tagFacetLimit).toList();
+    if (selectedTag != null && !visible.contains(selectedTag)) {
+      visible.insert(0, selectedTag);
+    }
+    return visible;
+  }
+}
+
+class _LibraryTagFilter extends StatelessWidget {
+  const _LibraryTagFilter({
+    required this.tags,
+    required this.selectedTag,
+    required this.allLabel,
+    required this.semanticLabel,
+    required this.onChanged,
+  });
+
+  final List<String> tags;
+  final String? selectedTag;
+  final String allLabel;
+  final String semanticLabel;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label: semanticLabel,
+      child: SizedBox(
+        height: AppControlHeights.touchTarget,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: tags.length + 1,
+          separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
+          itemBuilder: (context, index) {
+            final tag = index == 0 ? null : tags[index - 1];
+            return AppFilterChip(
+              key: ValueKey<String>(
+                tag == null
+                    ? 'knowledge-library-all-tags'
+                    : 'knowledge-library-tag-$tag',
+              ),
+              label: tag ?? allLabel,
+              active: selectedTag == tag,
+              icon: tag == null ? FLucideIcons.tags : FLucideIcons.tag,
+              onPress: () => onChanged(tag),
+            );
+          },
         ),
       ),
     );
@@ -146,11 +253,13 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 class _LibraryBrowse extends StatelessWidget {
   const _LibraryBrowse({
     required this.scope,
+    required this.selectedTag,
     required this.notes,
     required this.decisions,
   });
 
   final _LibraryScope scope;
+  final String? selectedTag;
   final AsyncValue<List<KnowledgeNote>> notes;
   final AsyncValue<List<KnowledgeDecision>> decisions;
 
@@ -161,7 +270,13 @@ class _LibraryBrowse extends StatelessWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => _LibraryError(),
         data: (items) => _LibraryList(
-          entries: items.map(_LibraryEntry.fromNote).toList(growable: false),
+          entries: items
+              .where(
+                (note) =>
+                    selectedTag == null || note.tags.contains(selectedTag),
+              )
+              .map(_LibraryEntry.fromNote)
+              .toList(growable: false),
           emptyTitle: AppLocalizations.of(context)
               .knowledgeLibraryEmptyNotesTitle,
         ),
@@ -259,6 +374,7 @@ class _LibraryList extends StatelessWidget {
           title: entry.title.isEmpty ? l10n.knowledgeUntitled : entry.title,
           subtitle: entry.subtitle,
           meta: entry.meta,
+          tags: entry.tags,
           kindLabel: entry.kind == 'note'
               ? l10n.knowledgeKindNote
               : l10n.knowledgeKindDecision,
@@ -291,6 +407,7 @@ class _LibraryEntry {
     required this.title,
     required this.subtitle,
     required this.meta,
+    required this.tags,
     required this.updatedAt,
   });
 
@@ -299,6 +416,7 @@ class _LibraryEntry {
   final String title;
   final String subtitle;
   final String meta;
+  final List<String> tags;
   final DateTime updatedAt;
 
   factory _LibraryEntry.fromNote(KnowledgeNote note) => _LibraryEntry(
@@ -306,7 +424,8 @@ class _LibraryEntry {
     id: note.id,
     title: note.title,
     subtitle: note.bodyMd,
-    meta: note.tags.take(3).join(' · '),
+    meta: '',
+    tags: note.tags,
     updatedAt: note.sync.updatedAt,
   );
 
@@ -317,6 +436,7 @@ class _LibraryEntry {
         title: decision.question,
         subtitle: decision.selectedLabel,
         meta: '',
+        tags: const <String>[],
         updatedAt: decision.sync.updatedAt,
       );
 
@@ -325,7 +445,8 @@ class _LibraryEntry {
     id: hit.id,
     title: hit.title,
     subtitle: hit.excerpt,
-    meta: hit.document.note?.tags.take(3).join(' · ') ?? '',
+    meta: '',
+    tags: hit.document.note?.tags ?? const <String>[],
     updatedAt: hit.document.updatedAt,
   );
 }

@@ -103,6 +103,7 @@ void main() {
 
     expect(lastRequest?.query, 'decision');
     expect(lastRequest?.kind, isNull);
+    expect(lastRequest?.tag, isNull);
     expect(find.text('Local note'), findsNothing);
     expect(find.text('Local decision'), findsOneWidget);
 
@@ -110,6 +111,78 @@ void main() {
     await _settlePaint(tester);
 
     expect(lastRequest?.kind, 'decision');
+    expect(lastRequest?.tag, isNull);
+  });
+
+  testWidgets('Library tag facets filter browse and compose with search', (
+    tester,
+  ) async {
+    final workNote = _note(
+      'work-note',
+      'Quarterly plan',
+      1,
+      tags: const <String>['work', 'planning'],
+    );
+    final personalNote = _note(
+      'personal-note',
+      'Weekend ideas',
+      2,
+      tags: const <String>['personal'],
+    );
+    final decision = _decision(
+      id: 'decision',
+      question: 'Choose next project',
+      status: DecisionStatus.active,
+      tick: 3,
+    );
+    KnowledgeLibrarySearchRequest? lastRequest;
+    final result = KnowledgeSearchHit(
+      document: KnowledgeSearchDocument.fromNote(workNote),
+      score: 1,
+      semanticScore: null,
+      semanticSim: null,
+      lexicalScore: 1,
+      matchedFields: const <String>['title'],
+    );
+
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeLibraryPage(),
+        notes: <KnowledgeNote>[workNote, personalNote],
+        decisions: <KnowledgeDecision>[decision],
+        search: (request) {
+          lastRequest = request;
+          return <KnowledgeSearchHit>[result];
+        },
+      ),
+    );
+    await _settlePaint(tester);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('knowledge-library-tag-work')),
+    );
+    await _settlePaint(tester);
+
+    expect(find.text('Quarterly plan'), findsOneWidget);
+    expect(find.text('Weekend ideas'), findsNothing);
+    expect(find.text('Choose next project'), findsNothing);
+
+    await tester.enterText(
+      find.byKey(const Key('knowledge-library-search')),
+      'plan',
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    await _settlePaint(tester);
+
+    expect(lastRequest?.query, 'plan');
+    expect(lastRequest?.kind, 'note');
+    expect(lastRequest?.tag, 'work');
+
+    await tester.tap(find.text('Decisions'));
+    await _settlePaint(tester);
+
+    expect(lastRequest?.kind, 'decision');
+    expect(lastRequest?.tag, isNull);
   });
 }
 
@@ -148,11 +221,16 @@ Widget _wrap(
   );
 }
 
-KnowledgeNote _note(String id, String title, int tick) => KnowledgeNote(
+KnowledgeNote _note(
+  String id,
+  String title,
+  int tick, {
+  List<String> tags = const <String>['work'],
+}) => KnowledgeNote(
   id: id,
   title: title,
   bodyMd: 'Body for $title',
-  tags: const <String>['work'],
+  tags: tags,
   createdAt: _sync(tick).updatedAt,
   sync: _sync(tick),
 );

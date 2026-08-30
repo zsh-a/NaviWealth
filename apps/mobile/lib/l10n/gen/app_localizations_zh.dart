@@ -12325,6 +12325,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNoteTagsLabel => '标签（用逗号分隔）';
 
   @override
+  String get knowledgeLibraryAllTags => '全部标签';
+
+  @override
+  String get knowledgeLibraryTagFilterLabel => '按标签筛选笔记';
+
+  @override
   String get knowledgeRewriteAction => 'AI 改写';
 
   @override

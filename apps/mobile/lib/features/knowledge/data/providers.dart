@@ -104,7 +104,11 @@ final knowledgeSearchServiceProvider = FutureProvider<KnowledgeSearchService>((
   );
 });
 
-typedef KnowledgeLibrarySearchRequest = ({String query, String? kind});
+typedef KnowledgeLibrarySearchRequest = ({
+  String query,
+  String? kind,
+  String? tag,
+});
 
 final knowledgeLibrarySearchProvider = FutureProvider.autoDispose
     .family<List<KnowledgeSearchHit>, KnowledgeLibrarySearchRequest>((
@@ -118,6 +122,15 @@ final knowledgeLibrarySearchProvider = FutureProvider.autoDispose
         ..watch(knowledgeDecisionsProvider);
       final ownerUserId = await ref.watch(knowledgeOwnerUserIdProvider.future);
       final service = await ref.watch(knowledgeSearchServiceProvider.future);
+      final tag = request.tag;
+      if (tag != null) {
+        return service.searchNotes(
+          ownerUserId: ownerUserId,
+          query: request.query,
+          tags: <String>{tag},
+          limit: 50,
+        );
+      }
       final kind = request.kind;
       return service.searchKnowledge(
         ownerUserId: ownerUserId,

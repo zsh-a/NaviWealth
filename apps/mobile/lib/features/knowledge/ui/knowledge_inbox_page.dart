@@ -100,7 +100,7 @@ class _InboxContent extends StatelessWidget {
                   ? l10n.knowledgeUntitled
                   : notes[index].title,
               subtitle: notes[index].bodyMd,
-              meta: notes[index].tags.take(3).join(' · '),
+              tags: notes[index].tags,
               kindLabel: l10n.knowledgeKindNote,
               icon: FLucideIcons.fileText,
               onPress: () =>

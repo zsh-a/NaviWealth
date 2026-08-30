@@ -21938,6 +21938,18 @@ abstract class AppLocalizations {
   /// **'Tags (comma separated)'**
   String get knowledgeNoteTagsLabel;
 
+  /// No description provided for @knowledgeLibraryAllTags.
+  ///
+  /// In en, this message translates to:
+  /// **'All tags'**
+  String get knowledgeLibraryAllTags;
+
+  /// No description provided for @knowledgeLibraryTagFilterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter notes by tag'**
+  String get knowledgeLibraryTagFilterLabel;
+
   /// No description provided for @knowledgeRewriteAction.
   ///
   /// In en, this message translates to:

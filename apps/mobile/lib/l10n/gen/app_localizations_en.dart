@@ -13019,6 +13019,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeNoteTagsLabel => 'Tags (comma separated)';
 
   @override
+  String get knowledgeLibraryAllTags => 'All tags';
+
+  @override
+  String get knowledgeLibraryTagFilterLabel => 'Filter notes by tag';
+
+  @override
   String get knowledgeRewriteAction => 'Rewrite with AI';
 
   @override
