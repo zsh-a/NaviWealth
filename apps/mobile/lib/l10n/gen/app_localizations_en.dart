@@ -12708,7 +12708,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeCaptureTitleField => 'Title (optional)';
 
   @override
-  String get knowledgeCaptureBodyField => 'Content';
+  String get knowledgeCaptureBodyField => 'Content (Markdown)';
 
   @override
   String get knowledgeLibraryTitle => 'Library';
@@ -12748,6 +12748,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeNoteTagsLabel => 'Tags (comma separated)';
+
+  @override
+  String get knowledgeRewriteAction => 'Rewrite with AI';
+
+  @override
+  String get knowledgeRewriteTitle => 'Rewrite Knowledge';
+
+  @override
+  String get knowledgeRewriteSubtitle =>
+      'Improve the text without changing what it means.';
+
+  @override
+  String get knowledgeRewriteDisclosure =>
+      'Sent directly from this device to your active model provider; the NaviWealth backend is not used. Applying the draft only updates the editor; you still choose when to save.';
+
+  @override
+  String get knowledgeRewriteUnavailable =>
+      'Configure and activate an AI model provider in Settings to rewrite this item.';
+
+  @override
+  String get knowledgeRewriteStyleLabel => 'Rewrite style';
+
+  @override
+  String get knowledgeRewriteStyleClear => 'Clearer';
+
+  @override
+  String get knowledgeRewriteStyleConcise => 'Concise';
+
+  @override
+  String get knowledgeRewriteStyleStructured => 'Structured';
+
+  @override
+  String get knowledgeRewriteOriginalTitle => 'Original';
+
+  @override
+  String get knowledgeRewritePreviewTitle => 'Proposed rewrite';
+
+  @override
+  String get knowledgeMarkdownEditAction => 'Edit Markdown';
+
+  @override
+  String get knowledgeMarkdownPreviewAction => 'Preview';
+
+  @override
+  String get knowledgeMarkdownEmptyPreview => 'Nothing to preview.';
+
+  @override
+  String get knowledgeRewriteGenerate => 'Generate rewrite';
+
+  @override
+  String get knowledgeRewriteUseDraft => 'Use this rewrite';
+
+  @override
+  String get knowledgeRewriteEmpty =>
+      'Add some text before requesting a rewrite.';
+
+  @override
+  String get knowledgeRewriteEmptyResponse =>
+      'The model returned no rewrite. Try again or choose a different model.';
+
+  @override
+  String get knowledgeRewriteInvalidResponse =>
+      'The model returned an invalid rewrite. Try again.';
+
+  @override
+  String knowledgeRewriteFailed(String error) {
+    return 'Rewrite failed: $error';
+  }
 
   @override
   String get amountHidden => 'Amount hidden';

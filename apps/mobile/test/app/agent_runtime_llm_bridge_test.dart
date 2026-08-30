@@ -29,6 +29,7 @@ void main() {
       ],
       temperature: 0,
       maxOutputTokens: 128,
+      responseFormat: const <String, Object?>{'type': 'json_object'},
       metadata: const <String, Object?>{'trace_id': 'trace_1'},
     );
 
@@ -37,6 +38,9 @@ void main() {
     expect(request['model'], 'custom-model');
     expect(request['temperature'], 0);
     expect(request['max_output_tokens'], 128);
+    expect(request['response_format'], const <String, Object?>{
+      'type': 'json_object',
+    });
     final metadata = request['metadata'] as Map<String, Object?>;
     expect(metadata['profile_id'], 'profile_1');
     expect(metadata['profile_name'], 'Work gateway');

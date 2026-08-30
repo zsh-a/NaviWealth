@@ -1649,6 +1649,7 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     return <String, Object?>{
@@ -1656,6 +1657,7 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
       'temperature': ?temperature,
       'max_output_tokens': ?maxOutputTokens,
       'tools': tools,
+      'response_format': ?responseFormat,
       'metadata': metadata,
     };
   }
@@ -1667,6 +1669,7 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     throw UnimplementedError();
@@ -1678,6 +1681,7 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) async {
     this.messages = messages;
@@ -1691,6 +1695,7 @@ class _FakeLlmBridge implements AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     throw UnimplementedError();

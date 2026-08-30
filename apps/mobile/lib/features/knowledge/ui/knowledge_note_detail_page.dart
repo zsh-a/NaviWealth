@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
 import '../data/knowledge_repository.dart';
+import '../data/knowledge_rewrite_client.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import 'knowledge_rewrite_sheet.dart';
+import 'widgets/knowledge_markdown_editor.dart';
 
 final _noteProvider = FutureProvider.autoDispose.family<KnowledgeNote?, String>(
   (ref, id) async {
@@ -88,12 +93,19 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        TextField(
+        KnowledgeMarkdownEditor(
           controller: _body,
+          label: l10n.knowledgeCaptureBodyField,
           minLines: 8,
-          maxLines: null,
-          decoration: InputDecoration(
-            labelText: l10n.knowledgeCaptureBodyField,
+          enabled: !_saving,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: AiPill(
+            leading: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
+            label: l10n.knowledgeRewriteAction,
+            onTap: _saving ? null : _rewrite,
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
@@ -155,6 +167,22 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _rewrite() async {
+    FocusScope.of(context).unfocus();
+    final draft = await showKnowledgeRewriteSheet(
+      context: context,
+      kind: KnowledgeRewriteKind.note,
+      objectId: widget.note.id,
+      heading: _title.text,
+      content: _body.text,
+    );
+    if (!mounted || draft == null) return;
+    setState(() {
+      _title.text = draft.heading;
+      _body.text = draft.content;
+    });
   }
 
   Future<void> _delete() async {

@@ -407,7 +407,7 @@ void main() {
     expect(traces.single, same(trace));
     expect(trace.requestId, 'profile_completion_1');
     expect(trace.routingReason, kFrbAgentRuntimeProfileRoutingReason);
-    expect(trace.intent.label, 'agent_runtime_profile_completion');
+    expect(trace.intent.label, 'health_weekly_summary');
     expect(trace.intent.domain, kDomainHealth);
     expect(trace.terminalReason, TerminalReason.done);
     expect(trace.spans.map((span) => span.name), <String>[
@@ -449,6 +449,41 @@ void main() {
       containsPair('terminal_status', 'failed'),
     );
   });
+
+  test(
+    'distinguishes local post-processing failures from LLM errors',
+    () async {
+      final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
+
+      final trace = await recorder.recordProfileCompletion(
+        agentId: 'knowledge_rewrite',
+        domain: kDomainKnowledge,
+        surface: 'knowledge_rewrite',
+        startedAt: DateTime.utc(2026, 6, 29, 8),
+        finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
+        llmResponse: const <String, Object?>{
+          'provider': 'openai',
+          'model': 'gpt-test',
+          'finish_reason': 'stop',
+        },
+        error: const FormatException('invalid rewrite'),
+      );
+
+      expect(trace.intent.label, 'knowledge_rewrite');
+      expect(trace.terminalReason, TerminalReason.streamError);
+      expect(trace.spans.first.status, AiSpanStatus.error);
+      expect(trace.llmSpans.single.status, AiSpanStatus.ok);
+      expect(trace.llmSpans.single.errorCode, isNull);
+      expect(
+        trace.spans.first.attributes,
+        containsPair('failure_stage', 'post_processing'),
+      );
+      expect(
+        trace.spans.first.attributes,
+        containsPair('error_type', 'FormatException'),
+      );
+    },
+  );
 
   test(
     'records vision profile completions with ingest routing reason',

@@ -12042,7 +12042,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeCaptureTitleField => '标题（可选）';
 
   @override
-  String get knowledgeCaptureBodyField => '内容';
+  String get knowledgeCaptureBodyField => '内容（Markdown）';
 
   @override
   String get knowledgeLibraryTitle => '资料库';
@@ -12079,6 +12079,69 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeNoteTagsLabel => '标签（用逗号分隔）';
+
+  @override
+  String get knowledgeRewriteAction => 'AI 改写';
+
+  @override
+  String get knowledgeRewriteTitle => '改写内容';
+
+  @override
+  String get knowledgeRewriteSubtitle => '优化表达，但不改变原意。';
+
+  @override
+  String get knowledgeRewriteDisclosure =>
+      '内容由本设备直接发送给当前模型服务商，不经过 NaviWealth 后端。采用草稿只会更新编辑器，是否保存仍由你决定。';
+
+  @override
+  String get knowledgeRewriteUnavailable => '请先在设置中配置并启用模型服务商，然后再改写此内容。';
+
+  @override
+  String get knowledgeRewriteStyleLabel => '改写方式';
+
+  @override
+  String get knowledgeRewriteStyleClear => '更清晰';
+
+  @override
+  String get knowledgeRewriteStyleConcise => '更精简';
+
+  @override
+  String get knowledgeRewriteStyleStructured => '结构化';
+
+  @override
+  String get knowledgeRewriteOriginalTitle => '原文';
+
+  @override
+  String get knowledgeRewritePreviewTitle => '改写草稿';
+
+  @override
+  String get knowledgeMarkdownEditAction => '编辑 Markdown';
+
+  @override
+  String get knowledgeMarkdownPreviewAction => '预览';
+
+  @override
+  String get knowledgeMarkdownEmptyPreview => '暂无可预览内容。';
+
+  @override
+  String get knowledgeRewriteGenerate => '生成改写';
+
+  @override
+  String get knowledgeRewriteUseDraft => '采用此改写';
+
+  @override
+  String get knowledgeRewriteEmpty => '请先输入一些内容，再请求改写。';
+
+  @override
+  String get knowledgeRewriteEmptyResponse => '模型没有返回改写内容，请重试或更换模型。';
+
+  @override
+  String get knowledgeRewriteInvalidResponse => '模型返回的改写格式无效，请重试。';
+
+  @override
+  String knowledgeRewriteFailed(String error) {
+    return '改写失败：$error';
+  }
 
   @override
   String get amountHidden => '金额已隐藏';

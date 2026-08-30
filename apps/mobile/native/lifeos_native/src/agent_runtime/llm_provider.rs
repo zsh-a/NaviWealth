@@ -40,7 +40,8 @@ pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmPr
 }
 
 pub(super) fn llm_error_to_anyhow(error: agent_llm::LlmError) -> anyhow::Error {
-    anyhow::anyhow!(error.record.message.clone())
+    let record = error.record;
+    anyhow::anyhow!("{}: {}", record.code, record.message)
 }
 
 pub(super) fn llm_error_record_metadata(error: agent_llm::LlmError) -> Value {
@@ -100,6 +101,24 @@ fn normalize_anthropic_base_url(base_url: String) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn preserves_provider_error_code_for_dart_classification() {
+        let error = agent_llm::LlmError {
+            record: Box::new(agent_llm::LlmErrorRecord {
+                kind: agent_llm::LlmErrorKind::ProviderError,
+                code: "structured_output_parse_failed".to_owned(),
+                message: "model returned empty output".to_owned(),
+                retryable: false,
+                details: json!({}),
+            }),
+        };
+
+        assert_eq!(
+            llm_error_to_anyhow(error).to_string(),
+            "structured_output_parse_failed: model returned empty output"
+        );
+    }
 
     #[test]
     fn normalizes_anthropic_base_url_to_v1_base() {

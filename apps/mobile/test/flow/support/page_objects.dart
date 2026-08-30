@@ -538,7 +538,10 @@ class KnowledgeInboxPageObject {
     await tester.tap(add.first);
     await _settleKnowledgeCapture(tester);
 
-    await tester.enterText(find.widgetWithText(FTextField, 'Content'), body);
+    await tester.enterText(
+      find.widgetWithText(FTextField, 'Content (Markdown)'),
+      body,
+    );
     final save = find.text('Save').hitTestable();
     expect(save, findsOneWidget, reason: 'knowledge save action missing');
     await tester.tap(save);

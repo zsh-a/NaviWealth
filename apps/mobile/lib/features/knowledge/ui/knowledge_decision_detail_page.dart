@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
 import '../data/knowledge_repository.dart';
+import '../data/knowledge_rewrite_client.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import 'knowledge_rewrite_sheet.dart';
+import 'widgets/knowledge_markdown_editor.dart';
 
 final _decisionProvider = FutureProvider.autoDispose
     .family<KnowledgeDecision?, String>((ref, id) async {
@@ -103,12 +108,19 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        TextField(
+        KnowledgeMarkdownEditor(
           controller: _rationale,
+          label: l10n.knowledgeWriterRationaleMarkdownLabel,
           minLines: 5,
-          maxLines: null,
-          decoration: InputDecoration(
-            labelText: l10n.knowledgeWriterRationaleMarkdownLabel,
+          enabled: !_saving,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: AiPill(
+            leading: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
+            label: l10n.knowledgeRewriteAction,
+            onTap: _saving ? null : _rewrite,
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
@@ -119,13 +131,11 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        TextField(
+        KnowledgeMarkdownEditor(
           controller: _actual,
+          label: l10n.knowledgeDecisionActualOutcomeLabel,
           minLines: 2,
-          maxLines: null,
-          decoration: InputDecoration(
-            labelText: l10n.knowledgeDecisionActualOutcomeLabel,
-          ),
+          enabled: !_saving,
         ),
         const SizedBox(height: AppSpacing.s12),
         DropdownButtonFormField<DecisionStatus>(
@@ -202,6 +212,22 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Future<void> _rewrite() async {
+    FocusScope.of(context).unfocus();
+    final draft = await showKnowledgeRewriteSheet(
+      context: context,
+      kind: KnowledgeRewriteKind.decision,
+      objectId: widget.decision.id,
+      heading: _question.text,
+      content: _rationale.text,
+    );
+    if (!mounted || draft == null) return;
+    setState(() {
+      _question.text = draft.heading;
+      _rationale.text = draft.content;
+    });
   }
 
   Future<void> _delete() async {

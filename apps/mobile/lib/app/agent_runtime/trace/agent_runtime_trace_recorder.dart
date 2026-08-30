@@ -22,8 +22,9 @@ final agentRuntimeTraceRecorderProvider = Provider<AgentRuntimeTraceRecorder>((
   );
 });
 
-typedef AgentRuntimeStepTraceRecorder =
-    Future<void> Function(AgentRuntimeNativeStepRunResult stepRun);
+typedef AgentRuntimeStepTraceRecorder = Future<void> Function(
+  AgentRuntimeNativeStepRunResult stepRun,
+);
 
 class AgentRuntimeTraceRecorder {
   const AgentRuntimeTraceRecorder({
@@ -297,13 +298,14 @@ class AgentRuntimeTraceRecorder {
     Object? error,
   }) {
     final hasError = error != null;
+    final failedAfterCompletion = hasError && llmResponse != null;
     final seed = AiTrace(
       requestId: requestId,
       startedAtIso: startedAt.toIso8601String(),
       intent: IntentHint(
         capability: Capability.analyze,
         risk: RiskLevel.info,
-        label: 'agent_runtime_profile_completion',
+        label: surface,
         domain: domain,
       ),
       backend: Backend.device,
@@ -317,6 +319,12 @@ class AgentRuntimeTraceRecorder {
         'surface': surface,
         'agent_id': agentId,
         'terminal_status': hasError ? 'failed' : 'completed',
+        if (hasError)
+          'failure_stage': failedAfterCompletion
+              ? 'post_processing'
+              : 'llm_completion',
+        if (hasError) 'error_type': error.runtimeType.toString(),
+        if (hasError) 'error_message': error.toString(),
       });
     builder.addSpan(
       id: 'llm:profile',
@@ -325,9 +333,15 @@ class AgentRuntimeTraceRecorder {
       name: 'llm:profile',
       startedAt: startedAt,
       endedAt: finishedAt,
-      status: hasError ? AiSpanStatus.error : AiSpanStatus.ok,
-      errorCode: hasError ? error.runtimeType.toString() : null,
-      errorMessage: hasError ? error.toString() : null,
+      status: hasError && !failedAfterCompletion
+          ? AiSpanStatus.error
+          : AiSpanStatus.ok,
+      errorCode: hasError && !failedAfterCompletion
+          ? error.runtimeType.toString()
+          : null,
+      errorMessage: hasError && !failedAfterCompletion
+          ? error.toString()
+          : null,
       model: _string(llmResponse?['model']),
       stopReason: _string(llmResponse?['finish_reason']),
       tokens: _tokens(llmResponse?['usage']),

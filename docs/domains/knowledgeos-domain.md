@@ -112,6 +112,33 @@ user confirmation.
 The system prompt must describe only Note and Decision. It must not ask the
 user to select, review, or restore a retired object type.
 
+### Explicit AI Rewrite
+
+Note and Decision detail pages offer a user-triggered rewrite surface backed by
+the active device-configured LLM profile through the native FRB runtime. Note
+rewrites cover title and body; Decision rewrites cover question and rationale.
+The user chooses clear, concise, or structured style, then reviews and may edit
+the generated draft before adopting it into the editor. The normal Save action
+is still required to persist or sync any change.
+
+Knowledge Markdown fields use a shared source/preview editor in capture, Note
+body, Decision rationale and actual outcome, and AI Rewrite. They support the
+app's Markdown subset: headings, emphasis, inline and fenced code, lists and
+task lists, blockquotes, rules, tables, and links. The rewrite sheet defaults
+to rendered preview after generation and lets the user switch back to Markdown
+source editing. Titles and questions remain plain text.
+
+Rewrite source text is treated as untrusted data. The response must match the
+kind-specific JSON contract, preserve empty fields, URLs, Markdown link
+destinations, fenced code blocks, and numeric factual anchors, and is never
+applied in the background. Web and devices without an active provider show the
+feature as unavailable rather than using a backend or cloud fallback.
+
+Key files:
+
+- `features/knowledge/data/knowledge_rewrite_client.dart`
+- `features/knowledge/ui/knowledge_rewrite_sheet.dart`
+
 ## Relations, Merge, And Deletion
 
 Relations use stable typed endpoints whose kinds are only `note` or `decision`.
@@ -129,13 +156,14 @@ Included:
 - Direct Note and Decision editing.
 - Source links, tags, review dates, revisit conditions, and outcomes.
 - Search, semantic recall, deduplication, relations, and confirmed proposals.
+- Explicit, previewed AI rewriting that still requires the normal Save action.
 - Cross-domain recall through Memory Runtime.
 
 Excluded:
 
 - Rich block editor or WYSIWYG authoring.
 - Wiki, graph visualization, forced backlinks, publishing, or collaboration.
-- Automatic source rewriting or unconfirmed AI-generated knowledge.
+- Automatic source rewriting or persistence of unconfirmed AI-generated knowledge.
 - Background classification, contradiction detection, or review Agents.
 - Recurring reminders and task execution.
 - Legacy object import or compatibility behavior.

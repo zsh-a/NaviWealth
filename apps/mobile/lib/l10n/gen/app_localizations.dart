@@ -21407,7 +21407,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeCaptureBodyField.
   ///
   /// In en, this message translates to:
-  /// **'Content'**
+  /// **'Content (Markdown)'**
   String get knowledgeCaptureBodyField;
 
   /// KnowledgeOS Library tab title
@@ -21481,6 +21481,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tags (comma separated)'**
   String get knowledgeNoteTagsLabel;
+
+  /// No description provided for @knowledgeRewriteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite with AI'**
+  String get knowledgeRewriteAction;
+
+  /// No description provided for @knowledgeRewriteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite Knowledge'**
+  String get knowledgeRewriteTitle;
+
+  /// No description provided for @knowledgeRewriteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve the text without changing what it means.'**
+  String get knowledgeRewriteSubtitle;
+
+  /// No description provided for @knowledgeRewriteDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent directly from this device to your active model provider; the NaviWealth backend is not used. Applying the draft only updates the editor; you still choose when to save.'**
+  String get knowledgeRewriteDisclosure;
+
+  /// No description provided for @knowledgeRewriteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure and activate an AI model provider in Settings to rewrite this item.'**
+  String get knowledgeRewriteUnavailable;
+
+  /// No description provided for @knowledgeRewriteStyleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite style'**
+  String get knowledgeRewriteStyleLabel;
+
+  /// No description provided for @knowledgeRewriteStyleClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clearer'**
+  String get knowledgeRewriteStyleClear;
+
+  /// No description provided for @knowledgeRewriteStyleConcise.
+  ///
+  /// In en, this message translates to:
+  /// **'Concise'**
+  String get knowledgeRewriteStyleConcise;
+
+  /// No description provided for @knowledgeRewriteStyleStructured.
+  ///
+  /// In en, this message translates to:
+  /// **'Structured'**
+  String get knowledgeRewriteStyleStructured;
+
+  /// No description provided for @knowledgeRewriteOriginalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Original'**
+  String get knowledgeRewriteOriginalTitle;
+
+  /// No description provided for @knowledgeRewritePreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Proposed rewrite'**
+  String get knowledgeRewritePreviewTitle;
+
+  /// No description provided for @knowledgeMarkdownEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Markdown'**
+  String get knowledgeMarkdownEditAction;
+
+  /// No description provided for @knowledgeMarkdownPreviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get knowledgeMarkdownPreviewAction;
+
+  /// No description provided for @knowledgeMarkdownEmptyPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to preview.'**
+  String get knowledgeMarkdownEmptyPreview;
+
+  /// No description provided for @knowledgeRewriteGenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate rewrite'**
+  String get knowledgeRewriteGenerate;
+
+  /// No description provided for @knowledgeRewriteUseDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this rewrite'**
+  String get knowledgeRewriteUseDraft;
+
+  /// No description provided for @knowledgeRewriteEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Add some text before requesting a rewrite.'**
+  String get knowledgeRewriteEmpty;
+
+  /// No description provided for @knowledgeRewriteEmptyResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The model returned no rewrite. Try again or choose a different model.'**
+  String get knowledgeRewriteEmptyResponse;
+
+  /// No description provided for @knowledgeRewriteInvalidResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'The model returned an invalid rewrite. Try again.'**
+  String get knowledgeRewriteInvalidResponse;
+
+  /// Error shown when the Knowledge AI rewrite request fails
+  ///
+  /// In en, this message translates to:
+  /// **'Rewrite failed: {error}'**
+  String knowledgeRewriteFailed(String error);
 
   /// Screen reader label when monetary amount is hidden by privacy mode
   ///

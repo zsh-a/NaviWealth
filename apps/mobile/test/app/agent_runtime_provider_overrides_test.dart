@@ -32,6 +32,7 @@ import 'package:naviwealth/features/finance/activity/data/activity_entry_insight
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_rewrite_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'agent_runtime_effect_plan_test_harness.dart';
@@ -86,6 +87,10 @@ void main() {
     expect(
       container.read(ingestLlmProfileClientProvider),
       isA<FrbIngestLlmProfileClient>(),
+    );
+    expect(
+      container.read(knowledgeRewriteClientProvider),
+      isA<FrbKnowledgeRewriteClient>(),
     );
 
     expect(

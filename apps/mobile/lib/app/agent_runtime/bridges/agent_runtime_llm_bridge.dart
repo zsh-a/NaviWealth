@@ -38,6 +38,7 @@ class AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final outputTokenLimit = maxOutputTokens ?? kDefaultLlmMaxOutputTokens;
@@ -58,6 +59,7 @@ class AgentRuntimeLlmBridge {
       'temperature': ?temperature,
       'max_output_tokens': outputTokenLimit,
       'tools': tools,
+      'response_format': ?responseFormat,
       'metadata': <String, Object?>{
         ...metadata,
         'profile_id': _profile.id,
@@ -73,6 +75,7 @@ class AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     return _bridge.validateLlmRequest(
@@ -81,6 +84,7 @@ class AgentRuntimeLlmBridge {
         tools: tools,
         temperature: temperature,
         maxOutputTokens: maxOutputTokens,
+        responseFormat: responseFormat,
         metadata: metadata,
       ),
     );
@@ -92,6 +96,7 @@ class AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final request = buildRequest(
@@ -99,6 +104,7 @@ class AgentRuntimeLlmBridge {
       tools: tools,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
+      responseFormat: responseFormat,
       metadata: metadata,
     );
     return _bridge.completeMockLlm(
@@ -112,6 +118,7 @@ class AgentRuntimeLlmBridge {
     List<Map<String, Object?>> tools = const <Map<String, Object?>>[],
     double? temperature,
     int? maxOutputTokens,
+    Map<String, Object?>? responseFormat,
     Map<String, Object?> metadata = const <String, Object?>{},
   }) {
     final request = buildRequest(
@@ -119,6 +126,7 @@ class AgentRuntimeLlmBridge {
       tools: tools,
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
+      responseFormat: responseFormat,
       metadata: metadata,
     );
     return _bridge.completeProfileLlm(request: request);

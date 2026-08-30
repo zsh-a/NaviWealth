@@ -9,6 +9,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import 'widgets/knowledge_markdown_editor.dart';
 
 enum _CaptureType { note, decision }
 
@@ -92,15 +93,14 @@ class _KnowledgeCaptureSheetState
             ),
             const SizedBox(height: AppSpacing.s12),
           ],
-          FTextField(
-            control: FTextFieldControl.managed(controller: _body),
+          KnowledgeMarkdownEditor(
+            controller: _body,
             minLines: 4,
             maxLines: 10,
-            label: Text(
-              _type == _CaptureType.note
-                  ? l10n.knowledgeCaptureBodyField
-                  : l10n.knowledgeWriterRationaleMarkdownLabel,
-            ),
+            enabled: !_saving,
+            label: _type == _CaptureType.note
+                ? l10n.knowledgeCaptureBodyField
+                : l10n.knowledgeWriterRationaleMarkdownLabel,
           ),
           if (_type == _CaptureType.note) ...[
             const SizedBox(height: AppSpacing.s12),
