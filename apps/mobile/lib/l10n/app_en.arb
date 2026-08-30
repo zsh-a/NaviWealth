@@ -4735,6 +4735,16 @@
   "knowledgeUntitled": "Untitled",
   "knowledgeDecisionNotFound": "Decision does not exist or was deleted",
   "knowledgeNoteSourceUrlLabel": "Source URL",
+  "knowledgeSourceOpenAction": "Open source",
+  "knowledgeSourceOpenFailed": "Could not open this source.",
+  "knowledgeSourceInvalid": "Enter a valid HTTP or HTTPS source.",
+  "knowledgeSourceDuplicateTitle": "Source already captured",
+  "knowledgeSourceDuplicateBody": "Already saved as “{title}”. You can still save another Note.",
+  "@knowledgeSourceDuplicateBody": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
   "knowledgeNoteTagsHint": "\"investing\", \"fire\", \"banking\"",
   "knowledgeObjectNotFound": "Item does not exist or was deleted",
   "backupExportTitle": "Export Backup",

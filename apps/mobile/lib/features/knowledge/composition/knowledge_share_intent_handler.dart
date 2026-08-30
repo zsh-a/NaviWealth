@@ -9,6 +9,7 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_source_url.dart';
 import '../domain/knowledge_text.dart';
 import 'knowledge_route_paths.dart';
 
@@ -27,23 +28,21 @@ class KnowledgeShareIntentHandler extends DomainShareIntentHandler {
     final repo = await ref.read(knowledgeRepositoryProvider.future);
     final stamper = await ref.read(mutationStamperProvider.future);
     final stamp = await stamper.stamp();
-    final isUrl =
-        payload.kind == SharedIntentKind.url ||
-        raw.startsWith('http://') ||
-        raw.startsWith('https://');
+    final sourceUrl = normalizeKnowledgeSourceUrl(raw);
+    final isUrl = sourceUrl != null;
     final firstLine = raw.split('\n').first.trim();
     final title = knowledgeExcerpt(
       firstLine,
       max: kKnowledgeSharedTitleMaxChars,
     );
-    final displayTitle = isUrl ? knowledgeSharedUrlTitle(raw) : title;
+    final displayTitle = isUrl ? knowledgeSharedUrlTitle(sourceUrl) : title;
 
     await repo.upsertNote(
       KnowledgeNote(
         id: kKnowledgeUuid.v4(),
         title: displayTitle.isEmpty ? '(shared)' : displayTitle,
         bodyMd: raw,
-        sourceUrl: isUrl ? raw : null,
+        sourceUrl: sourceUrl,
         tags: const <String>['source:share'],
         createdAt: stamp.now,
         sync: SyncMeta(

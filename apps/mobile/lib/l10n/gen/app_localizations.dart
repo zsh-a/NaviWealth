@@ -15387,6 +15387,36 @@ abstract class AppLocalizations {
   /// **'Source URL'**
   String get knowledgeNoteSourceUrlLabel;
 
+  /// No description provided for @knowledgeSourceOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source'**
+  String get knowledgeSourceOpenAction;
+
+  /// No description provided for @knowledgeSourceOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this source.'**
+  String get knowledgeSourceOpenFailed;
+
+  /// No description provided for @knowledgeSourceInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid HTTP or HTTPS source.'**
+  String get knowledgeSourceInvalid;
+
+  /// No description provided for @knowledgeSourceDuplicateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Source already captured'**
+  String get knowledgeSourceDuplicateTitle;
+
+  /// No description provided for @knowledgeSourceDuplicateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Already saved as “{title}”. You can still save another Note.'**
+  String knowledgeSourceDuplicateBody(String title);
+
   /// No description provided for @knowledgeNoteTagsHint.
   ///
   /// In en, this message translates to:

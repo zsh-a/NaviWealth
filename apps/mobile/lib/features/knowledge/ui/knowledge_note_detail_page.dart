@@ -15,10 +15,12 @@ import '../data/knowledge_rewrite_client.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_source_url.dart';
 import 'knowledge_decision_from_note_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_relations_section.dart';
+import 'widgets/knowledge_source_link.dart';
 
 final _noteProvider = FutureProvider.autoDispose.family<KnowledgeNote?, String>(
   (ref, id) async {
@@ -118,11 +120,35 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
           decoration: InputDecoration(labelText: l10n.knowledgeNoteTagsLabel),
         ),
         const SizedBox(height: AppSpacing.s12),
-        TextField(
-          controller: _source,
-          decoration: InputDecoration(
-            labelText: l10n.knowledgeNoteSourceUrlLabel,
-          ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _source,
+          builder: (context, value, _) {
+            final sourceUrl = normalizeKnowledgeSourceUrl(value.text);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (sourceUrl != null) ...[
+                  KnowledgeSourceLink(sourceUrl: sourceUrl),
+                  const SizedBox(height: AppSpacing.s8),
+                ],
+                TextField(
+                  controller: _source,
+                  keyboardType: TextInputType.url,
+                  decoration: InputDecoration(
+                    labelText: l10n.knowledgeNoteSourceUrlLabel,
+                  ),
+                ),
+                if (value.text.trim().isNotEmpty && sourceUrl == null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppStatusBanner(
+                    kind: AppStatusKind.error,
+                    compact: true,
+                    message: l10n.knowledgeSourceInvalid,
+                  ),
+                ],
+              ],
+            );
+          },
         ),
         const SizedBox(height: AppSpacing.s20),
         FilledButton(
@@ -147,6 +173,8 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
 
   Future<void> _save() async {
     if (_title.text.trim().isEmpty) return;
+    final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
+    if (_source.text.trim().isNotEmpty && sourceUrl == null) return;
     setState(() => _saving = true);
     try {
       final repository = await ref.read(knowledgeRepositoryProvider.future);
@@ -157,7 +185,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor> {
           id: widget.note.id,
           title: _title.text.trim(),
           bodyMd: _body.text.trim(),
-          sourceUrl: _source.text.trim().isEmpty ? null : _source.text.trim(),
+          sourceUrl: sourceUrl,
           tags: _tags.text
               .split(RegExp(r'[,，\s]+'))
               .where((value) => value.isNotEmpty)

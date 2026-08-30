@@ -9162,6 +9162,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeNoteSourceUrlLabel => 'Source URL';
 
   @override
+  String get knowledgeSourceOpenAction => 'Open source';
+
+  @override
+  String get knowledgeSourceOpenFailed => 'Could not open this source.';
+
+  @override
+  String get knowledgeSourceInvalid => 'Enter a valid HTTP or HTTPS source.';
+
+  @override
+  String get knowledgeSourceDuplicateTitle => 'Source already captured';
+
+  @override
+  String knowledgeSourceDuplicateBody(String title) {
+    return 'Already saved as “$title”. You can still save another Note.';
+  }
+
+  @override
   String get knowledgeNoteTagsHint => '\"investing\", \"fire\", \"banking\"';
 
   @override

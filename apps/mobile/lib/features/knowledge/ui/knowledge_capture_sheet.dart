@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart' show TextInputAction, TextInputType;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +11,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_source_url.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 
 enum _CaptureType { note, decision }
@@ -35,11 +38,22 @@ class _KnowledgeCaptureSheetState
   final _selected = TextEditingController();
   final _source = TextEditingController();
   final _tags = TextEditingController();
+  Timer? _sourceCheckDebounce;
+  KnowledgeNote? _duplicateSource;
+  var _sourceCheckSerial = 0;
   var _type = _CaptureType.note;
   var _saving = false;
 
   @override
+  void initState() {
+    super.initState();
+    _source.addListener(_onSourceChanged);
+  }
+
+  @override
   void dispose() {
+    _sourceCheckDebounce?.cancel();
+    _source.removeListener(_onSourceChanged);
     _title.dispose();
     _body.dispose();
     _selected.dispose();
@@ -113,6 +127,29 @@ class _KnowledgeCaptureSheetState
               textInputAction: TextInputAction.next,
               label: Text(l10n.knowledgeNoteSourceUrlLabel),
             ),
+            if (_source.text.trim().isNotEmpty &&
+                normalizeKnowledgeSourceUrl(_source.text) == null) ...[
+              const SizedBox(height: AppSpacing.s8),
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                compact: true,
+                message: l10n.knowledgeSourceInvalid,
+              ),
+            ],
+            if (_duplicateSource != null) ...[
+              const SizedBox(height: AppSpacing.s8),
+              AppStatusBanner(
+                key: const Key('knowledge-duplicate-source-warning'),
+                kind: AppStatusKind.warning,
+                compact: true,
+                message: l10n.knowledgeSourceDuplicateTitle,
+                details: l10n.knowledgeSourceDuplicateBody(
+                  _duplicateSource!.title.isEmpty
+                      ? l10n.knowledgeUntitled
+                      : _duplicateSource!.title,
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.s12),
             FTextField(
               key: const ValueKey('knowledge-capture-tags'),
@@ -130,9 +167,15 @@ class _KnowledgeCaptureSheetState
     final title = _title.text.trim();
     final body = _body.text.trim();
     final selected = _selected.text.trim();
+    final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
     if ((_type == _CaptureType.note && title.isEmpty && body.isEmpty) ||
         (_type == _CaptureType.decision &&
             (title.isEmpty || selected.isEmpty))) {
+      return;
+    }
+    if (_type == _CaptureType.note &&
+        _source.text.trim().isNotEmpty &&
+        sourceUrl == null) {
       return;
     }
     setState(() => _saving = true);
@@ -152,7 +195,7 @@ class _KnowledgeCaptureSheetState
             id: kKnowledgeUuid.v4(),
             title: title,
             bodyMd: body,
-            sourceUrl: _source.text.trim().isEmpty ? null : _source.text.trim(),
+            sourceUrl: sourceUrl,
             tags: _tags.text
                 .split(RegExp(r'[,，\s]+'))
                 .map((value) => value.trim())
@@ -183,5 +226,39 @@ class _KnowledgeCaptureSheetState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  void _onSourceChanged() {
+    _sourceCheckDebounce?.cancel();
+    final serial = ++_sourceCheckSerial;
+    if (mounted) {
+      setState(() => _duplicateSource = null);
+    }
+    final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
+    if (sourceUrl == null) return;
+    _sourceCheckDebounce = Timer(
+      const Duration(milliseconds: 350),
+      () => unawaited(_checkDuplicateSource(sourceUrl, serial)),
+    );
+  }
+
+  Future<void> _checkDuplicateSource(String sourceUrl, int serial) async {
+    KnowledgeNote? duplicate;
+    try {
+      final repository = await ref.read(knowledgeRepositoryProvider.future);
+      final ownerUserId = await ref.read(knowledgeOwnerUserIdProvider.future);
+      duplicate = await repository.findNoteBySourceUrl(
+        ownerUserId: ownerUserId,
+        sourceUrl: sourceUrl,
+      );
+    } on Object {
+      duplicate = null;
+    }
+    if (!mounted ||
+        serial != _sourceCheckSerial ||
+        normalizeKnowledgeSourceUrl(_source.text) != sourceUrl) {
+      return;
+    }
+    setState(() => _duplicateSource = duplicate);
   }
 }

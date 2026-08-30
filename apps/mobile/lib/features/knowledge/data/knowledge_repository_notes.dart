@@ -52,6 +52,33 @@ mixin KnowledgeNotesRepositoryMixin {
     return row == null ? null : knowledgeNoteFromRow(row);
   }
 
+  Future<KnowledgeNote?> findNoteBySourceUrl({
+    required String ownerUserId,
+    required String sourceUrl,
+    String? excludeId,
+  }) async {
+    final normalized = normalizeKnowledgeSourceUrl(sourceUrl);
+    if (normalized == null) return null;
+    final query = _db.select(_db.knowledgeNotes)
+      ..where(
+        (table) =>
+            table.ownerUserId.equals(ownerUserId) &
+            table.deletedAt.isNull() &
+            table.sourceUrl.equals(normalized),
+      );
+    if (excludeId != null) {
+      query.where((table) => table.id.equals(excludeId).not());
+    }
+    query
+      ..orderBy([
+        (table) =>
+            OrderingTerm(expression: table.createdAt, mode: OrderingMode.desc),
+      ])
+      ..limit(1);
+    final row = await query.getSingleOrNull();
+    return row == null ? null : knowledgeNoteFromRow(row);
+  }
+
   Future<void> upsertNote(KnowledgeNote note) async {
     await _upsertAndEnqueue(
       _db.knowledgeNotes,

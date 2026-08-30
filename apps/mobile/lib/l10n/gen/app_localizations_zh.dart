@@ -8673,6 +8673,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeNoteSourceUrlLabel => '来源链接';
 
   @override
+  String get knowledgeSourceOpenAction => '打开来源';
+
+  @override
+  String get knowledgeSourceOpenFailed => '无法打开此来源。';
+
+  @override
+  String get knowledgeSourceInvalid => '请输入有效的 HTTP 或 HTTPS 来源。';
+
+  @override
+  String get knowledgeSourceDuplicateTitle => '此来源已捕获';
+
+  @override
+  String knowledgeSourceDuplicateBody(String title) {
+    return '已保存为“$title”，你仍可继续保存另一条 Note。';
+  }
+
+  @override
   String get knowledgeNoteTagsHint => '\"投资\", \"fire\", \"银行卡\"';
 
   @override

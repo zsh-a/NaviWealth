@@ -534,6 +534,7 @@ class KnowledgeInboxPageObject {
     String body, {
     String? sourceUrl,
     String? tags,
+    String? duplicateSourceTitle,
   }) async {
     // An empty inbox exposes two capture entry points by design: the header
     // action and the empty-state CTA. Either one opens the capture sheet.
@@ -562,6 +563,20 @@ class KnowledgeInboxPageObject {
           matching: find.byType(EditableText),
         ),
         tags,
+      );
+    }
+    if (duplicateSourceTitle != null) {
+      await _settleKnowledgeCapture(tester);
+      final warning = find.byKey(
+        const Key('knowledge-duplicate-source-warning'),
+      );
+      expect(warning, findsOneWidget);
+      expect(
+        find.descendant(
+          of: warning,
+          matching: find.textContaining(duplicateSourceTitle),
+        ),
+        findsOneWidget,
       );
     }
     final save = find.text('Save').hitTestable();

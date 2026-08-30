@@ -2767,6 +2767,16 @@
   "knowledgeUntitled": "无标题",
   "knowledgeDecisionNotFound": "Decision 不存在或已删除",
   "knowledgeNoteSourceUrlLabel": "来源链接",
+  "knowledgeSourceOpenAction": "打开来源",
+  "knowledgeSourceOpenFailed": "无法打开此来源。",
+  "knowledgeSourceInvalid": "请输入有效的 HTTP 或 HTTPS 来源。",
+  "knowledgeSourceDuplicateTitle": "此来源已捕获",
+  "knowledgeSourceDuplicateBody": "已保存为“{title}”，你仍可继续保存另一条 Note。",
+  "@knowledgeSourceDuplicateBody": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
   "knowledgeNoteTagsHint": "\"投资\", \"fire\", \"银行卡\"",
   "knowledgeObjectNotFound": "条目不存在或已删除",
   "backupExportTitle": "导出备份",

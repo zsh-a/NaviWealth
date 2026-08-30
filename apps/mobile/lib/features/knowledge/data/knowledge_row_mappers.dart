@@ -3,13 +3,14 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/domain/knowledge_source_url.dart';
 
 KnowledgeNotesCompanion knowledgeNoteCompanion(KnowledgeNote note) =>
     KnowledgeNotesCompanion.insert(
       id: note.id,
       title: note.title,
       bodyMd: note.bodyMd,
-      sourceUrl: Value(note.sourceUrl),
+      sourceUrl: Value(normalizeKnowledgeSourceUrl(note.sourceUrl)),
       tagsJson: Value(encodeStringList(note.tags)),
       createdAt: note.createdAt,
       mergedIntoId: Value(note.mergedIntoId),

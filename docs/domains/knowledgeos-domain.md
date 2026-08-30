@@ -60,7 +60,10 @@ Capture lets the user choose Note or Decision directly. It never saves an
 intermediate Note merely to classify or promote it later. A Decision requires a
 question and selected option; its richer review fields can be edited on the
 detail page. Note capture writes optional source URL and tags in the same
-canonical row, matching the provenance retained by system-share capture.
+canonical row, matching the provenance retained by system-share capture. Source
+URLs are normalized to HTTP(S) document identity, render as an external-link
+card on Note detail, and receive a non-blocking inline warning when quick
+capture finds an existing live Note with the same source.
 
 Decision detail keeps review work out of the general text editor. A focused
 review sheet owns review date, revisit conditions, actual outcome, and status;

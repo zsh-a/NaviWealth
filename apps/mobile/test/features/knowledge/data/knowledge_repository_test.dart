@@ -29,14 +29,16 @@ SyncMeta _sync(int tick, {DateTime? deletedAt}) {
   );
 }
 
-KnowledgeNote _note(String id, int tick, {String? title}) => KnowledgeNote(
-  id: id,
-  title: title ?? id,
-  bodyMd: 'body $id',
-  tags: <String>['tag-$id'],
-  createdAt: _sync(tick).updatedAt,
-  sync: _sync(tick),
-);
+KnowledgeNote _note(String id, int tick, {String? title, String? sourceUrl}) =>
+    KnowledgeNote(
+      id: id,
+      title: title ?? id,
+      bodyMd: 'body $id',
+      sourceUrl: sourceUrl,
+      tags: <String>['tag-$id'],
+      createdAt: _sync(tick).updatedAt,
+      sync: _sync(tick),
+    );
 
 KnowledgeDecision _decision(String id, int tick) => KnowledgeDecision(
   id: id,
@@ -111,6 +113,32 @@ void main() {
         (table: 'knowledge_notes', rowId: 'n1'),
         (table: 'knowledge_decisions', rowId: 'd1'),
       ]),
+    );
+  });
+
+  test('normalizes and finds a live Note by exact source URL', () async {
+    await repository.upsertNote(
+      _note(
+        'source-note',
+        1,
+        sourceUrl: 'HTTPS://WWW.Example.COM:443/article#section',
+      ),
+    );
+
+    final found = await repository.findNoteBySourceUrl(
+      ownerUserId: _owner,
+      sourceUrl: 'https://www.example.com/article#other',
+    );
+
+    expect(found?.id, 'source-note');
+    expect(found?.sourceUrl, 'https://www.example.com/article');
+    expect(
+      await repository.findNoteBySourceUrl(
+        ownerUserId: _owner,
+        sourceUrl: 'https://www.example.com/article',
+        excludeId: 'source-note',
+      ),
+      isNull,
     );
   });
 

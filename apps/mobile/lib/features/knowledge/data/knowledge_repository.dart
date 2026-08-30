@@ -7,6 +7,7 @@ import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 
 import '../domain/knowledge_models.dart';
+import '../domain/knowledge_source_url.dart';
 import 'knowledge_row_mappers.dart';
 
 part 'knowledge_repository_decisions.dart';
