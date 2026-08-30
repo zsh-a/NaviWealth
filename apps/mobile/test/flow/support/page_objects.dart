@@ -530,7 +530,11 @@ class KnowledgeInboxPageObject {
 
   void expectLanded() => expect(find.text('Inbox'), findsWidgets);
 
-  Future<void> captureNote(String body) async {
+  Future<void> captureNote(
+    String body, {
+    String? sourceUrl,
+    String? tags,
+  }) async {
     // An empty inbox exposes two capture entry points by design: the header
     // action and the empty-state CTA. Either one opens the capture sheet.
     final add = find.bySemanticsLabel('New capture');
@@ -542,6 +546,24 @@ class KnowledgeInboxPageObject {
       find.widgetWithText(FTextField, 'Content (Markdown)'),
       body,
     );
+    if (sourceUrl != null) {
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('knowledge-capture-source-url')),
+          matching: find.byType(EditableText),
+        ),
+        sourceUrl,
+      );
+    }
+    if (tags != null) {
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const ValueKey('knowledge-capture-tags')),
+          matching: find.byType(EditableText),
+        ),
+        tags,
+      );
+    }
     final save = find.text('Save').hitTestable();
     expect(save, findsOneWidget, reason: 'knowledge save action missing');
     await tester.tap(save);

@@ -1,4 +1,4 @@
-import 'package:flutter/services.dart' show TextInputAction;
+import 'package:flutter/services.dart' show TextInputAction, TextInputType;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -33,6 +33,7 @@ class _KnowledgeCaptureSheetState
   final _title = TextEditingController();
   final _body = TextEditingController();
   final _selected = TextEditingController();
+  final _source = TextEditingController();
   final _tags = TextEditingController();
   var _type = _CaptureType.note;
   var _saving = false;
@@ -42,6 +43,7 @@ class _KnowledgeCaptureSheetState
     _title.dispose();
     _body.dispose();
     _selected.dispose();
+    _source.dispose();
     _tags.dispose();
     super.dispose();
   }
@@ -105,6 +107,15 @@ class _KnowledgeCaptureSheetState
           if (_type == _CaptureType.note) ...[
             const SizedBox(height: AppSpacing.s12),
             FTextField(
+              key: const ValueKey('knowledge-capture-source-url'),
+              control: FTextFieldControl.managed(controller: _source),
+              keyboardType: TextInputType.url,
+              textInputAction: TextInputAction.next,
+              label: Text(l10n.knowledgeNoteSourceUrlLabel),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+            FTextField(
+              key: const ValueKey('knowledge-capture-tags'),
               control: FTextFieldControl.managed(controller: _tags),
               label: Text(l10n.knowledgeNoteTagsLabel),
               hint: l10n.knowledgeNoteTagsHint,
@@ -141,6 +152,7 @@ class _KnowledgeCaptureSheetState
             id: kKnowledgeUuid.v4(),
             title: title,
             bodyMd: body,
+            sourceUrl: _source.text.trim().isEmpty ? null : _source.text.trim(),
             tags: _tags.text
                 .split(RegExp(r'[,，\s]+'))
                 .map((value) => value.trim())

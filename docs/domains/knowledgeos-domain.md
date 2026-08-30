@@ -59,7 +59,8 @@ Key files:
 Capture lets the user choose Note or Decision directly. It never saves an
 intermediate Note merely to classify or promote it later. A Decision requires a
 question and selected option; its richer review fields can be edited on the
-detail page.
+detail page. Note capture writes optional source URL and tags in the same
+canonical row, matching the provenance retained by system-share capture.
 
 Decision detail keeps review work out of the general text editor. A focused
 review sheet owns review date, revisit conditions, actual outcome, and status;
