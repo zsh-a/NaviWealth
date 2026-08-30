@@ -134,9 +134,10 @@ void main() {
     await tester.tap(find.text('Recent activity · 1'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ExecutionProgressCard), findsOneWidget);
-    expect(find.byType(ExecutionActionCardController), findsNothing);
-    expect(find.text('Release note published.'), findsOneWidget);
+    expect(find.byType(ExecutionProgressCard), findsNothing);
+    expect(find.byType(ExecutionActionCardController), findsOneWidget);
+    expect(find.text('Publish the release note'), findsOneWidget);
+    expect(find.text('Release note published.'), findsNothing);
   });
 
   testWidgets('review creates only selected missing next actions', (

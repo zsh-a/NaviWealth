@@ -7,6 +7,7 @@ final class LifeActionDraft {
     required this.sourceDomain,
     required this.sourceRowFamily,
     required this.sourceRowId,
+    this.sourceLabelSnapshot,
     this.dueAt,
     this.priority = 'normal',
   });
@@ -16,6 +17,7 @@ final class LifeActionDraft {
   final String sourceDomain;
   final String sourceRowFamily;
   final String sourceRowId;
+  final String? sourceLabelSnapshot;
   final DateTime? dueAt;
   final String priority;
 }
@@ -24,8 +26,9 @@ typedef LifeActionDispatcher = Future<String?> Function(LifeActionDraft draft);
 
 enum LifeActionState { todo, doing, blocked, done, dropped }
 
-typedef LifeActionStateReader =
-    Future<LifeActionState?> Function(String actionId);
+typedef LifeActionStateReader = Future<LifeActionState?> Function(
+  String actionId,
+);
 
 typedef LifeActionSource = ({String rowFamily, String rowId});
 
@@ -36,8 +39,9 @@ final class LifeLinkedAction {
   final LifeActionState state;
 }
 
-typedef LifeSourceActionReader =
-    Future<LifeLinkedAction?> Function(LifeActionSource source);
+typedef LifeSourceActionReader = Future<LifeLinkedAction?> Function(
+  LifeActionSource source,
+);
 
 /// App-composition seam for creating an Execution action without making a
 /// source domain import ExecutionOS.

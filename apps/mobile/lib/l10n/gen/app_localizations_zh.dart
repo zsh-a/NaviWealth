@@ -12110,7 +12110,105 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeDecisionOptionsLabel => '选项';
 
   @override
+  String get knowledgeDecisionSelectedOptionLabel => '已选方案';
+
+  @override
   String get knowledgeDecisionSelectionRequirement => '请选择最终决定采用的选项。';
+
+  @override
+  String get knowledgeDecisionSaveRequirement => '请先填写问题和已选方案。';
+
+  @override
+  String get knowledgeDecisionReviewTitle => '决策回顾';
+
+  @override
+  String get knowledgeDecisionReviewSaveAction => '保存回顾';
+
+  @override
+  String get knowledgeDecisionReviewDateLabel => '回顾日期';
+
+  @override
+  String get knowledgeDecisionReviewNotScheduled => '尚未安排回顾';
+
+  @override
+  String get knowledgeDecisionReviewNowAction => '立即回顾';
+
+  @override
+  String get knowledgeDecisionReviewScheduleAction => '安排回顾';
+
+  @override
+  String get knowledgeDecisionReviewEditAction => '编辑回顾';
+
+  @override
+  String knowledgeDecisionReviewDue(String date) {
+    return '待回顾 · $date';
+  }
+
+  @override
+  String get knowledgeDecisionRevisitConditionsLabel => '重新评估条件';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsDescription => '每行填写一个条件。';
+
+  @override
+  String knowledgeDecisionRevisitConditionsCount(int count) {
+    return '$count 个重新评估条件';
+  }
+
+  @override
+  String get knowledgeDecisionStatusDraft => '草稿';
+
+  @override
+  String get knowledgeDecisionStatusActive => '进行中';
+
+  @override
+  String get knowledgeDecisionStatusPaused => '已暂停';
+
+  @override
+  String get knowledgeDecisionStatusExpired => '已过期';
+
+  @override
+  String get knowledgeDecisionStatusVerified => '已验证';
+
+  @override
+  String get knowledgeDecisionStatusFalsified => '已证伪';
+
+  @override
+  String get knowledgeDecisionStatusSuperseded => '已替代';
+
+  @override
+  String get knowledgeDecisionActionTitle => '下一步行动';
+
+  @override
+  String get knowledgeDecisionActionDescription =>
+      '将已选方案转为可跟踪的 ExecutionOS 行动。';
+
+  @override
+  String get knowledgeDecisionActionUnavailable =>
+      '启用 ExecutionOS 后，可将此决策转为可跟踪的行动。';
+
+  @override
+  String get knowledgeDecisionActionLinked => '此决策已有保留来源的关联行动。';
+
+  @override
+  String get knowledgeDecisionCreateAction => '创建行动';
+
+  @override
+  String get knowledgeDecisionOpenAction => '打开行动';
+
+  @override
+  String get knowledgeDecisionActionConfirmTitle => '基于此决策创建行动？';
+
+  @override
+  String get knowledgeDecisionActionConfirmBody => '已选方案会作为行动标题，并保留此决策作为来源。';
+
+  @override
+  String knowledgeDecisionActionExpectedOutcome(String outcome) {
+    return '预期结果：$outcome';
+  }
+
+  @override
+  String get knowledgeDecisionActionCreated => '行动已创建';
 
   @override
   String get knowledgeRelationsTitle => '相关内容';

@@ -12785,8 +12785,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeDecisionOptionsLabel => 'Options';
 
   @override
+  String get knowledgeDecisionSelectedOptionLabel => 'Selected option';
+
+  @override
   String get knowledgeDecisionSelectionRequirement =>
       'Choose the option you decided to take.';
+
+  @override
+  String get knowledgeDecisionSaveRequirement =>
+      'Add a question and selected option before saving.';
+
+  @override
+  String get knowledgeDecisionReviewTitle => 'Decision review';
+
+  @override
+  String get knowledgeDecisionReviewSaveAction => 'Save review';
+
+  @override
+  String get knowledgeDecisionReviewDateLabel => 'Review date';
+
+  @override
+  String get knowledgeDecisionReviewNotScheduled => 'No review scheduled';
+
+  @override
+  String get knowledgeDecisionReviewNowAction => 'Review now';
+
+  @override
+  String get knowledgeDecisionReviewScheduleAction => 'Schedule review';
+
+  @override
+  String get knowledgeDecisionReviewEditAction => 'Edit review';
+
+  @override
+  String knowledgeDecisionReviewDue(String date) {
+    return 'Due · $date';
+  }
+
+  @override
+  String get knowledgeDecisionRevisitConditionsLabel => 'Revisit when';
+
+  @override
+  String get knowledgeDecisionRevisitConditionsDescription =>
+      'Add one condition per line.';
+
+  @override
+  String knowledgeDecisionRevisitConditionsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count revisit conditions',
+      one: '1 revisit condition',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get knowledgeDecisionStatusDraft => 'Draft';
+
+  @override
+  String get knowledgeDecisionStatusActive => 'Active';
+
+  @override
+  String get knowledgeDecisionStatusPaused => 'Paused';
+
+  @override
+  String get knowledgeDecisionStatusExpired => 'Expired';
+
+  @override
+  String get knowledgeDecisionStatusVerified => 'Verified';
+
+  @override
+  String get knowledgeDecisionStatusFalsified => 'Falsified';
+
+  @override
+  String get knowledgeDecisionStatusSuperseded => 'Superseded';
+
+  @override
+  String get knowledgeDecisionActionTitle => 'Next action';
+
+  @override
+  String get knowledgeDecisionActionDescription =>
+      'Turn the selected option into a tracked ExecutionOS action.';
+
+  @override
+  String get knowledgeDecisionActionUnavailable =>
+      'Enable ExecutionOS to turn this decision into a tracked action.';
+
+  @override
+  String get knowledgeDecisionActionLinked =>
+      'This decision already has a source-linked action.';
+
+  @override
+  String get knowledgeDecisionCreateAction => 'Create action';
+
+  @override
+  String get knowledgeDecisionOpenAction => 'Open action';
+
+  @override
+  String get knowledgeDecisionActionConfirmTitle =>
+      'Create an action from this decision?';
+
+  @override
+  String get knowledgeDecisionActionConfirmBody =>
+      'The selected option becomes the action title and keeps this decision as its source.';
+
+  @override
+  String knowledgeDecisionActionExpectedOutcome(String outcome) {
+    return 'Expected outcome: $outcome';
+  }
+
+  @override
+  String get knowledgeDecisionActionCreated => 'Action created';
 
   @override
   String get knowledgeRelationsTitle => 'Related knowledge';

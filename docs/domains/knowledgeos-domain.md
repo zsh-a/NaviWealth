@@ -61,6 +61,11 @@ intermediate Note merely to classify or promote it later. A Decision requires a
 question and selected option; its richer review fields can be edited on the
 detail page.
 
+Decision detail keeps review work out of the general text editor. A focused
+review sheet owns review date, revisit conditions, actual outcome, and status;
+completing it persists the same Decision row and removes terminal Decisions
+from the Inbox due section.
+
 ## Persistence And Sync
 
 Drift declarations live in `core/persistence/knowledge_tables.dart`; business
@@ -158,6 +163,12 @@ and a directed `informs` relation from the source Note in one local transaction,
 including both Sync outbox rows. It never infers a Decision automatically: the
 user must provide the question and selected option before creation.
 
+When ExecutionOS is active, Decision detail can explicitly create or open one
+source-linked Action through the domain-neutral Life action dispatcher. The
+Action stores `knowledge` / `know:knowledge_decisions` / Decision id as its
+source identity; app composition de-duplicates repeated creation and replaces
+only a previously dropped Action. KnowledgeOS does not import ExecutionOS.
+
 Deleting an entity also tombstones every live relation touching it.
 
 Same-kind merges keep one survivor, union Note tags where applicable, soft
@@ -190,6 +201,7 @@ For KnowledgeOS changes, prefer:
 
 - `KnowledgeRepository` CRUD, relation cleanup, merge, and schema tests.
 - Inbox focus and Library search widget tests.
+- Decision review and source-linked Action workflow tests.
 - Search and Memory indexer tests for Note and Decision only.
 - Proposal apply/undo tests for capture and same-kind merge.
 - Domain composition, route ownership, sync registry, and schema verification.

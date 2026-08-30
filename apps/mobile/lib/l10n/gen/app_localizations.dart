@@ -21536,11 +21536,191 @@ abstract class AppLocalizations {
   /// **'Options'**
   String get knowledgeDecisionOptionsLabel;
 
+  /// No description provided for @knowledgeDecisionSelectedOptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected option'**
+  String get knowledgeDecisionSelectedOptionLabel;
+
   /// No description provided for @knowledgeDecisionSelectionRequirement.
   ///
   /// In en, this message translates to:
   /// **'Choose the option you decided to take.'**
   String get knowledgeDecisionSelectionRequirement;
+
+  /// No description provided for @knowledgeDecisionSaveRequirement.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a question and selected option before saving.'**
+  String get knowledgeDecisionSaveRequirement;
+
+  /// No description provided for @knowledgeDecisionReviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Decision review'**
+  String get knowledgeDecisionReviewTitle;
+
+  /// No description provided for @knowledgeDecisionReviewSaveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Save review'**
+  String get knowledgeDecisionReviewSaveAction;
+
+  /// No description provided for @knowledgeDecisionReviewDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Review date'**
+  String get knowledgeDecisionReviewDateLabel;
+
+  /// No description provided for @knowledgeDecisionReviewNotScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'No review scheduled'**
+  String get knowledgeDecisionReviewNotScheduled;
+
+  /// No description provided for @knowledgeDecisionReviewNowAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review now'**
+  String get knowledgeDecisionReviewNowAction;
+
+  /// No description provided for @knowledgeDecisionReviewScheduleAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule review'**
+  String get knowledgeDecisionReviewScheduleAction;
+
+  /// No description provided for @knowledgeDecisionReviewEditAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit review'**
+  String get knowledgeDecisionReviewEditAction;
+
+  /// Due review label with formatted date
+  ///
+  /// In en, this message translates to:
+  /// **'Due · {date}'**
+  String knowledgeDecisionReviewDue(String date);
+
+  /// No description provided for @knowledgeDecisionRevisitConditionsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Revisit when'**
+  String get knowledgeDecisionRevisitConditionsLabel;
+
+  /// No description provided for @knowledgeDecisionRevisitConditionsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Add one condition per line.'**
+  String get knowledgeDecisionRevisitConditionsDescription;
+
+  /// Number of revisit conditions on a decision
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 revisit condition} other{{count} revisit conditions}}'**
+  String knowledgeDecisionRevisitConditionsCount(int count);
+
+  /// No description provided for @knowledgeDecisionStatusDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft'**
+  String get knowledgeDecisionStatusDraft;
+
+  /// No description provided for @knowledgeDecisionStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get knowledgeDecisionStatusActive;
+
+  /// No description provided for @knowledgeDecisionStatusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get knowledgeDecisionStatusPaused;
+
+  /// No description provided for @knowledgeDecisionStatusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get knowledgeDecisionStatusExpired;
+
+  /// No description provided for @knowledgeDecisionStatusVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get knowledgeDecisionStatusVerified;
+
+  /// No description provided for @knowledgeDecisionStatusFalsified.
+  ///
+  /// In en, this message translates to:
+  /// **'Falsified'**
+  String get knowledgeDecisionStatusFalsified;
+
+  /// No description provided for @knowledgeDecisionStatusSuperseded.
+  ///
+  /// In en, this message translates to:
+  /// **'Superseded'**
+  String get knowledgeDecisionStatusSuperseded;
+
+  /// No description provided for @knowledgeDecisionActionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next action'**
+  String get knowledgeDecisionActionTitle;
+
+  /// No description provided for @knowledgeDecisionActionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn the selected option into a tracked ExecutionOS action.'**
+  String get knowledgeDecisionActionDescription;
+
+  /// No description provided for @knowledgeDecisionActionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable ExecutionOS to turn this decision into a tracked action.'**
+  String get knowledgeDecisionActionUnavailable;
+
+  /// No description provided for @knowledgeDecisionActionLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'This decision already has a source-linked action.'**
+  String get knowledgeDecisionActionLinked;
+
+  /// No description provided for @knowledgeDecisionCreateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Create action'**
+  String get knowledgeDecisionCreateAction;
+
+  /// No description provided for @knowledgeDecisionOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Open action'**
+  String get knowledgeDecisionOpenAction;
+
+  /// No description provided for @knowledgeDecisionActionConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an action from this decision?'**
+  String get knowledgeDecisionActionConfirmTitle;
+
+  /// No description provided for @knowledgeDecisionActionConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected option becomes the action title and keeps this decision as its source.'**
+  String get knowledgeDecisionActionConfirmBody;
+
+  /// Expected outcome copied into a linked Execution action note
+  ///
+  /// In en, this message translates to:
+  /// **'Expected outcome: {outcome}'**
+  String knowledgeDecisionActionExpectedOutcome(String outcome);
+
+  /// No description provided for @knowledgeDecisionActionCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Action created'**
+  String get knowledgeDecisionActionCreated;
 
   /// No description provided for @knowledgeRelationsTitle.
   ///

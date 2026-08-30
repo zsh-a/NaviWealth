@@ -129,6 +129,12 @@ The domain must not import sibling business entities. App composition
 de-duplicates source-linked Actions so a source decision has one current
 follow-up; a dropped Action may be explicitly replaced.
 
+KnowledgeOS Decision detail uses this seam as an explicit user action. The
+selected Decision option becomes the default Action title and the Action keeps
+the exact `know:knowledge_decisions` source identity plus a Decision-question
+label snapshot, so repeated taps open or reuse the existing follow-up instead
+of creating duplicates.
+
 Completed-action outcome badges are observational comparisons, not causal
 claims. They appear only after a successful, current evaluation of the exact
 source identity.

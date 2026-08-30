@@ -257,7 +257,7 @@ Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
         domain: draft.sourceDomain,
         rowFamily: draft.sourceRowFamily,
         rowId: draft.sourceRowId,
-        labelSnapshot: draft.title,
+        labelSnapshot: draft.sourceLabelSnapshot ?? draft.title,
       ),
       createdAt: stamp.now,
       sync: SyncMeta(

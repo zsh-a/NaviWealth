@@ -233,6 +233,7 @@ void main() {
         sourceDomain: 'knowledge',
         sourceRowFamily: 'know:knowledge_decisions',
         sourceRowId: 'decision-1',
+        sourceLabelSnapshot: 'Should we follow up?',
       );
       final dispatcher = c.read(lifeActionDispatcherProvider);
       final firstId = await dispatcher(draft);
@@ -241,10 +242,9 @@ void main() {
       expect(firstId, isNotNull);
       expect(secondId, firstId);
       final repository = await c.read(executionRepositoryProvider.future);
-      expect(
-        await repository.listOpenActions(ownerUserId: 'user-1'),
-        hasLength(1),
-      );
+      final actions = await repository.listOpenActions(ownerUserId: 'user-1');
+      expect(actions, hasLength(1));
+      expect(actions.single.source.labelSnapshot, 'Should we follow up?');
       final linked = await c.read(
         lifeLinkedActionProvider((
           rowFamily: draft.sourceRowFamily,
