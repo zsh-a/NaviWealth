@@ -16,6 +16,10 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../ingest/data/ingest_confirm_service.dart';
+import '../../ingest/data/ingest_external_confirmation_coordinator.dart';
+import '../../ingest/data/providers.dart';
+import '../../ingest/domain/ingest_models.dart';
 import '../../shared/ui/account_tree_picker.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../../shared/ui/postings_preview.dart';
@@ -27,7 +31,10 @@ import '../../shared/ui/postings_preview.dart';
 /// editable) and the builder attaches a price annotation pinning the
 /// user's chosen rate so the JE invariant is satisfied.
 class TransferFormPage extends ConsumerStatefulWidget {
-  const TransferFormPage({super.key});
+  const TransferFormPage({super.key, this.ingestDraft});
+
+  /// Present only when a staged import delegates its typed write to this form.
+  final IngestDraft? ingestDraft;
 
   @override
   ConsumerState<TransferFormPage> createState() => _TransferFormPageState();
@@ -42,6 +49,18 @@ final SyncMeta _previewSync = SyncMeta(
   updatedByDevice: 'preview',
   hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'preview'),
 );
+
+JournalEntryDraft _withJournalEntryId(JournalEntryDraft draft, String id) {
+  return JournalEntryDraft(
+    id: id,
+    date: draft.date,
+    settledOn: draft.settledOn,
+    narration: draft.narration,
+    payee: draft.payee,
+    tagIds: draft.tagIds,
+    flag: draft.flag,
+  );
+}
 
 class _TransferFormPageState extends ConsumerState<TransferFormPage>
     with FormSubmission<TransferFormPage>, FormDirtyGuard<TransferFormPage> {
@@ -108,9 +127,11 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
-    final queryParameters = GoRouter.of(
-      context,
-    ).routeInformationProvider.value.uri.queryParameters;
+    final queryParameters = GoRouter.of(context)
+        .routeInformationProvider
+        .value
+        .uri
+        .queryParameters;
     _hydrateRoutePrefill(queryParameters);
     // Accounts are single-currency ledger containers. Convert mode therefore
     // guides the user toward two accounts with different currencies rather
@@ -651,6 +672,67 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
       narration: note.isEmpty ? null : note,
     );
     late JournalEntryRepository repository;
+    final ingestDraft = widget.ingestDraft;
+    if (ingestDraft != null) {
+      final coordinator = ref.read(
+        ingestExternalConfirmationCoordinatorProvider,
+      );
+      if (coordinator == null) {
+        AppMessenger.show(
+          context,
+          ToastKind.warning,
+          l10n.ingestServiceNotReady,
+        );
+        return;
+      }
+      ConfirmedIngestItem? confirmed;
+      await submitForm<IngestExternalCommit<JournalMutationReceipt>>(
+        dirty: dirty,
+        onBusyChanged: _setBusy,
+        leave: () => _leaveIngest(confirmed),
+        commit: () async {
+          repository = await ref.read(journalEntryRepositoryProvider.future);
+          return coordinator.confirm<JournalMutationReceipt>(
+            ingestDraft,
+            kind: IngestExternalKind.transfer,
+            apply: (operationToken) => repository.createWithReceipt(
+              entry: _withJournalEntryId(build.entry, operationToken),
+              postings: build.postings,
+            ),
+            entityId: (receipt) => receipt.after.entry.id,
+          );
+        },
+        onCommitted: (result) => confirmed = result.item,
+        failureMessage: (e) => switch (e) {
+          JournalEntryUnbalancedException(:final message) =>
+            l10n.transferRejectedError(message),
+          _ => l10n.transferFailedError(
+            userSafeErrorMessage(
+              context,
+              e,
+              operation: 'transfer import submission',
+              logError: false,
+            ),
+          ),
+        },
+        successMessage: l10n.ingestTransferRecorded,
+        undo:
+            FormUndoPresentation<IngestExternalCommit<JournalMutationReceipt>>(
+              buildAction: (result) => FormUndoAction(
+                () => coordinator.undo<JournalMutationReceipt>(
+                  result,
+                  undoMutation: repository.undoMutation,
+                ),
+              ),
+              actionLabel: l10n.commonUndo,
+              successMessage: l10n.commonUndoSucceeded,
+              failureMessage: (_) => l10n.commonUndoFailed,
+              retryLabel: l10n.commonRetry,
+            ),
+        tag: 'transfer-ingest-form',
+      );
+      return;
+    }
     await submitFormAndLeave<JournalMutationReceipt>(
       dirty: dirty,
       onBusyChanged: _setBusy,
@@ -690,6 +772,15 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
 
   void _setBusy(bool value) {
     if (mounted && _busy != value) setState(() => _busy = value);
+  }
+
+  void _leaveIngest(ConfirmedIngestItem? confirmed) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop(confirmed);
+      return;
+    }
+    context.go(leaveFallback);
   }
 
   void _swapAccounts(Map<String, Account> byId) {

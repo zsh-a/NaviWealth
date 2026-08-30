@@ -30,6 +30,7 @@ import '../domain/minor_unit_amount.dart';
 import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';
 import 'ingest_draft_store.dart';
+import 'ingest_external_confirmation_coordinator.dart';
 import 'ingest_llm_client.dart';
 import 'ingest_pipeline.dart';
 import 'ingest_planning_executor.dart';
@@ -110,6 +111,14 @@ final ingestConfirmServiceProvider = FutureProvider<IngestConfirmService?>((
   final applier = await ref.watch(proposalApplierProvider.future);
   return IngestConfirmService(applier: applier, store: store);
 });
+
+/// Atomic bridge used only by typed ingest destinations (transfer / trade).
+final ingestExternalConfirmationCoordinatorProvider =
+    Provider<IngestExternalConfirmationCoordinator?>((ref) {
+      final store = ref.watch(ingestDraftStoreProvider);
+      if (store == null) return null;
+      return IngestExternalConfirmationCoordinator(store: store);
+    });
 
 /// Orchestrates ②–⑥: snapshot the ledger, run the pipeline, persist the
 /// pending drafts. Pure planning stays in [IngestPipeline]; this is the

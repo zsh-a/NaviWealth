@@ -39,52 +39,31 @@ extension _IngestReviewActions on _IngestReviewPageState {
     if (_isBusy) return;
     final parsed = draft.parsed;
     final route = buildIngestTransferRoute(parsed);
-    final recorded = await context.push<bool>(route);
-    if (recorded != true || !mounted) return;
-    await _settleExternalDraft(
-      draft,
-      AppLocalizations.of(context).ingestTransferRecorded,
+    final confirmed = await context.push<ConfirmedIngestItem>(
+      route,
+      extra: draft,
     );
+    if (confirmed == null || !mounted) return;
+    await _recordExternalImportCompletion();
   }
 
   Future<void> _recordTrade(IngestDraft draft) async {
     if (_isBusy) return;
     final parsed = draft.parsed;
     final route = buildIngestTradeRoute(parsed);
-    final recorded = await context.push<bool>(route);
-    if (recorded != true || !mounted) return;
-    await _settleExternalDraft(
-      draft,
-      AppLocalizations.of(context).ingestTradeRecorded,
+    final confirmed = await context.push<ConfirmedIngestItem>(
+      route,
+      extra: draft,
     );
+    if (confirmed == null || !mounted) return;
+    await _recordExternalImportCompletion();
   }
 
-  Future<void> _settleExternalDraft(
-    IngestDraft draft,
-    String successMessage,
-  ) async {
-    final store = ref.read(ingestDraftStoreProvider);
-    if (store == null) return;
-    final result = await store.transition(
-      IngestLifecycleTransition(
-        ownerUserId: draft.ownerUserId,
-        draftId: draft.draftId,
-        expectedStatus: DraftStatus.pending,
-        expectedRevision: draft.revision,
-        nextStatus: DraftStatus.confirmed,
-      ),
-    );
-    if (!mounted) return;
-    final l10n = AppLocalizations.of(context);
-    AppMessenger.show(
-      context,
-      result.outcome == IngestLifecycleMutationOutcome.applied
-          ? ToastKind.success
-          : ToastKind.warning,
-      result.outcome == IngestLifecycleMutationOutcome.applied
-          ? successMessage
-          : l10n.ingestEditConflict,
-    );
+  Future<void> _recordExternalImportCompletion() async {
+    await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
+    await ref
+        .read(productMetricsProvider.notifier)
+        .record(ProductFunnelEvent.importReviewCompleted, success: true);
   }
 
   Future<void> _confirmSelected(

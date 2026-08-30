@@ -62,6 +62,7 @@ import '../activity/ui/activity_entry_detail_page.dart';
 import '../activity/ui/activity_page.dart';
 import '../cashflow/ui/income_form_page.dart';
 import '../inbox/ui/financial_inbox_page.dart';
+import '../ingest/domain/ingest_models.dart';
 import '../ingest/ui/ingest_review_page.dart';
 import '../monthly_close/ui/monthly_close_page.dart';
 import '../rebalance/ui/rebalance_execution_workspace_page.dart'
@@ -154,10 +155,12 @@ StatefulShellRoute financeShellRoute() {
                 name: FinanceRouteNames.tradeEntry,
                 builder: (context, state) {
                   final params = state.uri.queryParameters;
+                  final extra = state.extra;
                   final initialType = tradeTypeFromSideQuery(params);
                   return TradeEntryFormPage(
                     assetId: params['assetId'],
                     accountId: params['accountId'],
+                    ingestDraft: extra is IngestDraft ? extra : null,
                     prefill: tradeEntryPrefillFromQuery(
                       params,
                       initialType: initialType,
@@ -169,7 +172,12 @@ StatefulShellRoute financeShellRoute() {
               GoRoute(
                 path: 'transfer',
                 name: FinanceRouteNames.transfer,
-                builder: (context, state) => const TransferFormPage(),
+                builder: (context, state) {
+                  final extra = state.extra;
+                  return TransferFormPage(
+                    ingestDraft: extra is IngestDraft ? extra : null,
+                  );
+                },
               ),
               GoRoute(
                 path: 'entry/:entryId',

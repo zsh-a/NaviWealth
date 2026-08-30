@@ -19,6 +19,10 @@ import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../ingest/data/ingest_confirm_service.dart';
+import '../../ingest/data/ingest_external_confirmation_coordinator.dart';
+import '../../ingest/data/providers.dart';
+import '../../ingest/domain/ingest_models.dart';
 import '../application/trade_entry_submission_service.dart';
 import '../data/providers.dart';
 import '../domain/trade_entry/trade_draft.dart' show TradeType;
@@ -39,6 +43,7 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
     this.accountId,
     this.prefill,
     this.initialType,
+    this.ingestDraft,
   });
 
   /// Pre-selected asset id. When null the user picks via [SymbolField].
@@ -52,6 +57,9 @@ class TradeEntryFormPage extends ConsumerStatefulWidget {
 
   /// Optional side supplied by a contextual Buy/Sell action.
   final TradeType? initialType;
+
+  /// Present only when a staged import delegates its typed write to this form.
+  final IngestDraft? ingestDraft;
 
   @override
   ConsumerState<TradeEntryFormPage> createState() => _TradeEntryFormPageState();
@@ -396,6 +404,91 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       dirty.busy = false;
       _setBusy(false);
     }
+    if (!mounted) return;
+
+    TradeEntrySubmissionRequest requestFor(String transactionId) {
+      return TradeEntrySubmissionRequest(
+        transactionId: transactionId,
+        symbol: selected.symbol,
+        market: selected.market,
+        assetType: selected.type,
+        assetCurrency: selected.currency,
+        assetName: selected.name,
+        isin: selected.isin,
+        type: type,
+        accountId: accountId,
+        cashAccountId: _cashAccountId,
+        quantity: quantity,
+        price: price,
+        currency: currency,
+        tradeDate: tradeDate,
+        fee: fee,
+        tax: tax,
+        note: note,
+        defaultNarration: (asset) =>
+            _tradeNarration(type, quantity, asset, l10n),
+      );
+    }
+
+    final ingestDraft = widget.ingestDraft;
+    if (ingestDraft != null) {
+      final coordinator = ref.read(
+        ingestExternalConfirmationCoordinatorProvider,
+      );
+      if (coordinator == null) {
+        AppMessenger.show(
+          context,
+          ToastKind.warning,
+          l10n.ingestServiceNotReady,
+        );
+        operation.cancel(stage: 'ingest_coordinator');
+        return;
+      }
+      ConfirmedIngestItem? confirmed;
+      await submitForm<IngestExternalCommit<TradeMutationReceipt>>(
+        dirty: dirty,
+        onBusyChanged: _setBusy,
+        leave: () => _leaveIngest(confirmed),
+        tag: 'trade-ingest-entry',
+        diagnosticOperation: operation,
+        failureMessage: failureMessage,
+        successMessage: l10n.ingestTradeRecorded,
+        onCommitted: (result) => confirmed = result.item,
+        undo: FormUndoPresentation<IngestExternalCommit<TradeMutationReceipt>>(
+          buildAction: (result) => FormUndoAction(
+            () => coordinator.undo<TradeMutationReceipt>(
+              result,
+              undoMutation: submissionService.undoMutation,
+            ),
+          ),
+          actionLabel: l10n.commonUndo,
+          successMessage: l10n.commonUndoSucceeded,
+          failureMessage: (_) => l10n.commonUndoFailed,
+          retryLabel: l10n.commonRetry,
+        ),
+        commit: () async {
+          // Freeze price / lot planning before the outer persistence
+          // transaction. Only the already-prepared database commit belongs in
+          // the ingest lifecycle transaction.
+          final prepared = await operation.step(
+            'prepare',
+            () => submissionService.prepare(requestFor(_transactionId)),
+            slowThreshold: const Duration(seconds: 1),
+          );
+          return coordinator.confirm<TradeMutationReceipt>(
+            ingestDraft,
+            kind: IngestExternalKind.trade,
+            operationToken: _transactionId,
+            apply: (_) => submissionService.commit(
+              prepared,
+              diagnosticOperation: operation,
+            ),
+            entityId: (receipt) => receipt.journal.after.entry.id,
+          );
+        },
+      );
+      return;
+    }
 
     await submitForm<TradeMutationReceipt>(
       dirty: dirty,
@@ -421,27 +514,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         retryLabel: l10n.commonRetry,
       ),
       commit: () => submissionService.submit(
-        TradeEntrySubmissionRequest(
-          transactionId: _transactionId,
-          symbol: selected.symbol,
-          market: selected.market,
-          assetType: selected.type,
-          assetCurrency: selected.currency,
-          assetName: selected.name,
-          isin: selected.isin,
-          type: type,
-          accountId: accountId,
-          cashAccountId: _cashAccountId,
-          quantity: quantity,
-          price: price,
-          currency: currency,
-          tradeDate: tradeDate,
-          fee: fee,
-          tax: tax,
-          note: note,
-          defaultNarration: (asset) =>
-              _tradeNarration(type, quantity, asset, l10n),
-        ),
+        requestFor(_transactionId),
         diagnosticOperation: operation,
       ),
     );
@@ -449,6 +522,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   void _setBusy(bool value) {
     if (mounted && _busy != value) setState(() => _busy = value);
+  }
+
+  void _leaveIngest(ConfirmedIngestItem? confirmed) {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop(confirmed);
+      return;
+    }
+    context.go(FinanceRoutes.activity);
   }
 
   @override
