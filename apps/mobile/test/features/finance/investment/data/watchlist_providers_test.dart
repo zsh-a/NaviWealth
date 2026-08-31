@@ -120,6 +120,51 @@ void main() {
     expect(summary.advancingCount, 1);
     expect(summary.decliningCount, 1);
   });
+
+  test('sorts snapshots by change or symbol with unavailable quotes last', () {
+    final advancing = _item('us_stock:AAPL', 'AAPL');
+    final declining = _item('us_stock:MSFT', 'MSFT');
+    final unchanged = _item('us_stock:GOOG', 'GOOG');
+    final unavailable = _item('us_stock:NVDA', 'NVDA');
+    final items = [unavailable, declining, advancing, unchanged];
+    final snapshots = [
+      _snapshot(advancing, price: '201', previousClose: '200'),
+      _snapshot(declining, price: '199', previousClose: '200'),
+      _snapshot(unchanged, price: '200', previousClose: '200'),
+      WatchlistQuoteSnapshot(item: unavailable, error: StateError('offline')),
+    ];
+
+    List<String> symbols(WatchlistSortOrder order) => sortWatchlistItems(
+      items: items,
+      snapshots: snapshots,
+      order: order,
+    ).map((item) => item.symbol).toList();
+
+    expect(symbols(WatchlistSortOrder.defaultOrder), [
+      'NVDA',
+      'MSFT',
+      'AAPL',
+      'GOOG',
+    ]);
+    expect(symbols(WatchlistSortOrder.gainers), [
+      'AAPL',
+      'GOOG',
+      'MSFT',
+      'NVDA',
+    ]);
+    expect(symbols(WatchlistSortOrder.decliners), [
+      'MSFT',
+      'GOOG',
+      'AAPL',
+      'NVDA',
+    ]);
+    expect(symbols(WatchlistSortOrder.symbol), [
+      'AAPL',
+      'GOOG',
+      'MSFT',
+      'NVDA',
+    ]);
+  });
 }
 
 WatchlistItem _item(String id, String symbol) => WatchlistItem(

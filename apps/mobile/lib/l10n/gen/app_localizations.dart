@@ -18428,6 +18428,36 @@ abstract class AppLocalizations {
   /// **'New collection'**
   String get watchlistCreateCollectionAction;
 
+  /// Open the watchlist sorting menu
+  ///
+  /// In en, this message translates to:
+  /// **'Sort symbols'**
+  String get watchlistSortAction;
+
+  /// Keep the watchlist repository order
+  ///
+  /// In en, this message translates to:
+  /// **'Default order'**
+  String get watchlistSortDefault;
+
+  /// Sort watchlist symbols by daily percentage change descending
+  ///
+  /// In en, this message translates to:
+  /// **'Gainers first'**
+  String get watchlistSortGainers;
+
+  /// Sort watchlist symbols by daily percentage change ascending
+  ///
+  /// In en, this message translates to:
+  /// **'Decliners first'**
+  String get watchlistSortDecliners;
+
+  /// Sort watchlist symbols alphabetically
+  ///
+  /// In en, this message translates to:
+  /// **'Symbol A–Z'**
+  String get watchlistSortSymbol;
+
   /// Rename or delete the selected watchlist collection
   ///
   /// In en, this message translates to:

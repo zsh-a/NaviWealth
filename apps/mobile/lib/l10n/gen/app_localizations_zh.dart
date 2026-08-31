@@ -10355,6 +10355,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistCreateCollectionAction => '新建组合';
 
   @override
+  String get watchlistSortAction => '标的排序';
+
+  @override
+  String get watchlistSortDefault => '默认顺序';
+
+  @override
+  String get watchlistSortGainers => '涨幅优先';
+
+  @override
+  String get watchlistSortDecliners => '跌幅优先';
+
+  @override
+  String get watchlistSortSymbol => '代码 A–Z';
+
+  @override
   String get watchlistEditCollectionAction => '编辑组合';
 
   @override

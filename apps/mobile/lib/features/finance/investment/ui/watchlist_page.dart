@@ -25,6 +25,10 @@ import '../data/watchlist_repository.dart';
 const _pollInterval = Duration(minutes: 5);
 const _collectionQueryKey = 'collection';
 const _ungroupedQueryValue = 'ungrouped';
+const _sortQueryKey = 'sort';
+const _gainersSortQueryValue = 'change-desc';
+const _declinersSortQueryValue = 'change-asc';
+const _symbolSortQueryValue = 'symbol';
 
 class WatchlistPage extends ConsumerStatefulWidget {
   const WatchlistPage({super.key});
@@ -62,6 +66,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
     final membersAsync = ref.watch(watchlistCollectionMembersProvider);
     final collections = collectionsAsync.value ?? const <WatchlistCollection>[];
     final requestedScope = _watchlistScopeOf(context);
+    final sortOrder = _watchlistSortOrderOf(context);
     final selectedCollection = requestedScope.collectionId == null
         ? null
         : collections
@@ -122,9 +127,11 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
           items: items,
           collections: collections,
           scope: scope,
+          sortOrder: sortOrder,
           snapshots: quotes.value ?? const [],
           loadingQuotes: quotes.isLoading,
           onScopeSelected: (next) => _replaceWatchlistScope(context, next),
+          onSortSelected: (next) => _replaceWatchlistSortOrder(context, next),
           onCreateCollection: _createCollection,
           onAdd: () => showWatchlistItemSheet(
             context: context,
@@ -294,9 +301,11 @@ class _WatchlistBody extends StatelessWidget {
     required this.items,
     required this.collections,
     required this.scope,
+    required this.sortOrder,
     required this.snapshots,
     required this.loadingQuotes,
     required this.onScopeSelected,
+    required this.onSortSelected,
     required this.onCreateCollection,
     required this.onAdd,
     required this.onEdit,
@@ -308,9 +317,11 @@ class _WatchlistBody extends StatelessWidget {
   final List<WatchlistItem> items;
   final List<WatchlistCollection> collections;
   final WatchlistScope scope;
+  final WatchlistSortOrder sortOrder;
   final List<WatchlistQuoteSnapshot> snapshots;
   final bool loadingQuotes;
   final ValueChanged<WatchlistScope> onScopeSelected;
+  final ValueChanged<WatchlistSortOrder> onSortSelected;
   final VoidCallback onCreateCollection;
   final VoidCallback onAdd;
   final ValueChanged<WatchlistItem> onEdit;
@@ -324,6 +335,11 @@ class _WatchlistBody extends StatelessWidget {
     final summary = WatchlistQuoteSummary.fromSnapshots(
       symbolCount: items.length,
       snapshots: snapshots,
+    );
+    final sortedItems = sortWatchlistItems(
+      items: items,
+      snapshots: snapshots,
+      order: sortOrder,
     );
     Widget list({ValueChanged<String>? onSelect}) => AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.narrow,
@@ -341,7 +357,9 @@ class _WatchlistBody extends StatelessWidget {
           _WatchlistCollectionBar(
             collections: collections,
             scope: scope,
+            sortOrder: sortOrder,
             onSelected: onScopeSelected,
+            onSortSelected: onSortSelected,
             onCreate: onCreateCollection,
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -360,22 +378,24 @@ class _WatchlistBody extends StatelessWidget {
               padding: EdgeInsets.zero,
               child: Column(
                 children: [
-                  for (var i = 0; i < items.length; i++) ...[
+                  for (var i = 0; i < sortedItems.length; i++) ...[
                     _WatchlistRow(
-                      item: items[i],
-                      snapshot: byId[items[i].id],
-                      loadingQuote: loadingQuotes && byId[items[i].id] == null,
-                      onEdit: () => onEdit(items[i]),
-                      onManageCollections: () => onManageCollections(items[i]),
+                      item: sortedItems[i],
+                      snapshot: byId[sortedItems[i].id],
+                      loadingQuote:
+                          loadingQuotes && byId[sortedItems[i].id] == null,
+                      onEdit: () => onEdit(sortedItems[i]),
+                      onManageCollections: () =>
+                          onManageCollections(sortedItems[i]),
                       onRemoveFromCollection: onRemoveFromCollection == null
                           ? null
-                          : () => onRemoveFromCollection!(items[i]),
-                      onRemove: () => onRemove(items[i]),
+                          : () => onRemoveFromCollection!(sortedItems[i]),
+                      onRemove: () => onRemove(sortedItems[i]),
                       onSelect: onSelect == null
                           ? null
-                          : () => onSelect(items[i].id),
+                          : () => onSelect(sortedItems[i].id),
                     ),
-                    if (i != items.length - 1)
+                    if (i != sortedItems.length - 1)
                       const AppGroupedDivider(
                         indent: AppSpacing.s12,
                         endIndent: AppSpacing.s12,
@@ -392,11 +412,11 @@ class _WatchlistBody extends StatelessWidget {
       builder: (context, constraints) {
         if (GoRouter.maybeOf(context) == null ||
             !MasterDetailLayout.shouldUseMasterDetail(constraints.maxWidth) ||
-            items.isEmpty) {
+            sortedItems.isEmpty) {
           return list();
         }
         final selectedId = selectedQueryOf(context);
-        final selectedItem = items
+        final selectedItem = sortedItems
             .where((item) => item.id == selectedId)
             .firstOrNull;
         return MasterDetailLayout(
@@ -475,13 +495,17 @@ class _WatchlistCollectionBar extends StatelessWidget {
   const _WatchlistCollectionBar({
     required this.collections,
     required this.scope,
+    required this.sortOrder,
     required this.onSelected,
+    required this.onSortSelected,
     required this.onCreate,
   });
 
   final List<WatchlistCollection> collections;
   final WatchlistScope scope;
+  final WatchlistSortOrder sortOrder;
   final ValueChanged<WatchlistScope> onSelected;
+  final ValueChanged<WatchlistSortOrder> onSortSelected;
   final VoidCallback onCreate;
 
   @override
@@ -526,7 +550,60 @@ class _WatchlistCollectionBar extends StatelessWidget {
             iconSize: AppIconSizes.sm,
             surface: AppIconButtonSurface.softMuted,
           ),
+          const SizedBox(width: AppSpacing.s8),
+          _WatchlistSortMenu(value: sortOrder, onChanged: onSortSelected),
         ],
+      ),
+    );
+  }
+}
+
+class _WatchlistSortMenu extends StatelessWidget {
+  const _WatchlistSortMenu({required this.value, required this.onChanged});
+
+  final WatchlistSortOrder value;
+  final ValueChanged<WatchlistSortOrder> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppAdaptiveSelectionMenu<WatchlistSortOrder>(
+      title: l10n.watchlistSortAction,
+      value: value,
+      onChanged: onChanged,
+      options: [
+        AppAdaptiveSelection<WatchlistSortOrder>(
+          value: WatchlistSortOrder.defaultOrder,
+          title: l10n.watchlistSortDefault,
+          icon: FLucideIcons.clock3,
+        ),
+        AppAdaptiveSelection<WatchlistSortOrder>(
+          value: WatchlistSortOrder.gainers,
+          title: l10n.watchlistSortGainers,
+          icon: FLucideIcons.trendingUp,
+        ),
+        AppAdaptiveSelection<WatchlistSortOrder>(
+          value: WatchlistSortOrder.decliners,
+          title: l10n.watchlistSortDecliners,
+          icon: FLucideIcons.trendingDown,
+        ),
+        AppAdaptiveSelection<WatchlistSortOrder>(
+          value: WatchlistSortOrder.symbol,
+          title: l10n.watchlistSortSymbol,
+          icon: FLucideIcons.arrowDownAZ,
+        ),
+      ],
+      triggerBuilder: (context, openMenu, focusNode) => Focus(
+        focusNode: focusNode,
+        child: AppIconButton(
+          key: const ValueKey<String>('watchlist-sort-trigger'),
+          icon: FLucideIcons.arrowUpDown,
+          tooltip: l10n.watchlistSortAction,
+          onPress: openMenu,
+          size: appActionTargetSize(context),
+          iconSize: AppIconSizes.sm,
+          surface: AppIconButtonSurface.softMuted,
+        ),
       ),
     );
   }
@@ -1333,6 +1410,18 @@ WatchlistScope _watchlistScopeOf(BuildContext context) {
   return WatchlistScope.collection(raw);
 }
 
+WatchlistSortOrder _watchlistSortOrderOf(BuildContext context) {
+  if (GoRouter.maybeOf(context) == null) {
+    return WatchlistSortOrder.defaultOrder;
+  }
+  return switch (GoRouterState.of(context).uri.queryParameters[_sortQueryKey]) {
+    _gainersSortQueryValue => WatchlistSortOrder.gainers,
+    _declinersSortQueryValue => WatchlistSortOrder.decliners,
+    _symbolSortQueryValue => WatchlistSortOrder.symbol,
+    _ => WatchlistSortOrder.defaultOrder,
+  };
+}
+
 void _replaceWatchlistScope(BuildContext context, WatchlistScope scope) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return;
@@ -1345,6 +1434,33 @@ void _replaceWatchlistScope(BuildContext context, WatchlistScope scope) {
     query[_collectionQueryKey] = scope.ungrouped
         ? _ungroupedQueryValue
         : scope.collectionId!;
+  }
+  router.go(
+    Uri(
+      path: FinanceRoutes.wealthWatchlist,
+      queryParameters: query.isEmpty ? null : query,
+    ).toString(),
+  );
+}
+
+void _replaceWatchlistSortOrder(
+  BuildContext context,
+  WatchlistSortOrder order,
+) {
+  final router = GoRouter.maybeOf(context);
+  if (router == null) return;
+  final current = router.routeInformationProvider.value.uri;
+  final query = <String, String>{...current.queryParameters};
+  final queryValue = switch (order) {
+    WatchlistSortOrder.defaultOrder => null,
+    WatchlistSortOrder.gainers => _gainersSortQueryValue,
+    WatchlistSortOrder.decliners => _declinersSortQueryValue,
+    WatchlistSortOrder.symbol => _symbolSortQueryValue,
+  };
+  if (queryValue == null) {
+    query.remove(_sortQueryKey);
+  } else {
+    query[_sortQueryKey] = queryValue;
   }
   router.go(
     Uri(

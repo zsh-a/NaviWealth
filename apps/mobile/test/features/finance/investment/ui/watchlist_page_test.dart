@@ -72,6 +72,22 @@ final _advancingSnapshot = WatchlistQuoteSnapshot(
   ),
 );
 
+final _decliningSnapshot = WatchlistQuoteSnapshot(
+  item: _otherItem,
+  response: MarketResponse(
+    data: Quote(
+      symbol: _otherItem.symbol,
+      currency: 'USD',
+      price: Decimal.parse('190'),
+      previousClose: Decimal.parse('200'),
+      asOf: DateTime.utc(2026, 7, 20, 2),
+    ),
+    freshness: DataFreshness.cachedFresh,
+    source: 'test-cache',
+    fetchedAt: DateTime.utc(2026, 7, 20, 2),
+  ),
+);
+
 Widget _wrap(
   TargetPlatform platform, {
   List<WatchlistQuoteSnapshot> snapshots = const [],
@@ -243,6 +259,72 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('sorts the current scope through the URL', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final router = GoRouter(
+      initialLocation: '${FinanceRoutes.wealthWatchlist}?sort=change-asc',
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([_item, _otherItem]),
+          ),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
+          watchlistQuoteSnapshotsProvider.overrideWith(
+            (_) async => [_advancingSnapshot, _decliningSnapshot],
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopLeft(find.text('MSFT')).dy,
+      lessThan(tester.getTopLeft(find.text('AAPL')).dy),
+    );
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('watchlist-sort-trigger')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AppSheet), findsOneWidget);
+    await tester.tap(find.text('Gainers first'));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopLeft(find.text('AAPL')).dy,
+      lessThan(tester.getTopLeft(find.text('MSFT')).dy),
+    );
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'sort': 'change-desc',
+    });
   });
 
   testWidgets('filters collection and ungrouped scopes through the URL', (

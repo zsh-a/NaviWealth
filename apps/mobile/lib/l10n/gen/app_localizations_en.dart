@@ -10936,6 +10936,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistCreateCollectionAction => 'New collection';
 
   @override
+  String get watchlistSortAction => 'Sort symbols';
+
+  @override
+  String get watchlistSortDefault => 'Default order';
+
+  @override
+  String get watchlistSortGainers => 'Gainers first';
+
+  @override
+  String get watchlistSortDecliners => 'Decliners first';
+
+  @override
+  String get watchlistSortSymbol => 'Symbol A–Z';
+
+  @override
   String get watchlistEditCollectionAction => 'Edit collection';
 
   @override

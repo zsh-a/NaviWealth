@@ -152,6 +152,53 @@ class WatchlistQuoteSummary {
   final int decliningCount;
 }
 
+enum WatchlistSortOrder { defaultOrder, gainers, decliners, symbol }
+
+List<WatchlistItem> sortWatchlistItems({
+  required List<WatchlistItem> items,
+  required Iterable<WatchlistQuoteSnapshot> snapshots,
+  required WatchlistSortOrder order,
+}) {
+  final sorted = List<WatchlistItem>.of(items);
+  if (order == WatchlistSortOrder.defaultOrder || sorted.length < 2) {
+    return sorted;
+  }
+  final originalIndex = <String, int>{
+    for (var index = 0; index < items.length; index++) items[index].id: index,
+  };
+  if (order == WatchlistSortOrder.symbol) {
+    sorted.sort((left, right) {
+      final symbolComparison = left.displaySymbol.compareTo(
+        right.displaySymbol,
+      );
+      if (symbolComparison != 0) return symbolComparison;
+      return originalIndex[left.id]!.compareTo(originalIndex[right.id]!);
+    });
+    return sorted;
+  }
+
+  final changesByItemId = <String, Decimal?>{
+    for (final snapshot in snapshots)
+      snapshot.item.id: snapshot.quote?.changePercent,
+  };
+  sorted.sort((left, right) {
+    final leftChange = changesByItemId[left.id];
+    final rightChange = changesByItemId[right.id];
+    if (leftChange == null && rightChange != null) return 1;
+    if (leftChange != null && rightChange == null) return -1;
+    if (leftChange != null && rightChange != null) {
+      final changeComparison = leftChange.compareTo(rightChange);
+      if (changeComparison != 0) {
+        return order == WatchlistSortOrder.gainers
+            ? -changeComparison
+            : changeComparison;
+      }
+    }
+    return originalIndex[left.id]!.compareTo(originalIndex[right.id]!);
+  });
+  return sorted;
+}
+
 Future<List<WatchlistQuoteSnapshot>> _loadQuoteSnapshots(
   Ref ref,
   List<WatchlistItem> items,
