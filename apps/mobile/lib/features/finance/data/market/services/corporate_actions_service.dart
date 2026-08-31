@@ -1,178 +1,206 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
-import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
-import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_actions.dart';
-import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
-/// Fetch + cache for per-symbol corporate-action events
-/// for the Finance investment event timeline.
+/// Provider-neutral fetch, routing, single-flight, and TTL cache for public
+/// corporate-action reference data.
 ///
-/// Wraps the yfinance chart endpoint (already used for historical bars)
-/// with `events=div,splits` and the [parseYahooCorporateActions] parser.
-/// The cache is in-memory only — corporate actions are derived public
-/// data, so losing the cache on restart costs at most one extra fetch
-/// per watched symbol. No Drift table, no sync.
-///
-/// **Failure mode**: network errors are swallowed and surface as an
-/// empty event list. The error is cached for [_errorTtl] so a fan-out
-/// fetch (e.g. user opens the watchlist) doesn't immediately retry
-/// every symbol after a transient outage. Live errors still flow into
-/// the app logger.
+/// This service never writes FinanceOS business rows. Consumers decide whether
+/// actions are timeline-only, paper-simulation candidates, or user-confirmed
+/// real corporate actions.
 class CorporateActionsService {
   CorporateActionsService({
-    required MarketHttpClient http,
+    required List<CorporateActionProvider> providers,
     required AppLogger logger,
     Duration successTtl = const Duration(hours: 12),
     Duration errorTtl = const Duration(minutes: 15),
     DateTime Function()? now,
-  }) : _http = http,
+  }) : _providers = List<CorporateActionProvider>.unmodifiable(providers),
        _logger = logger,
        _successTtl = successTtl,
        _errorTtl = errorTtl,
        _now = now ?? (() => DateTime.now().toUtc());
 
-  final MarketHttpClient _http;
+  final List<CorporateActionProvider> _providers;
   final AppLogger _logger;
   final Duration _successTtl;
   final Duration _errorTtl;
   final DateTime Function() _now;
 
-  static const String _chartBase =
-      'https://query1.finance.yahoo.com/v8/finance/chart';
-  static const String _userAgent =
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
-      '(KHTML, like Gecko) Chrome/120.0 Safari/537.36';
-
   final Map<String, _CacheEntry> _cache = <String, _CacheEntry>{};
-  final Map<String, Future<List<CorporateActionEvent>>> _inflight =
-      <String, Future<List<CorporateActionEvent>>>{};
+  final Map<String, Future<CorporateActionFetchResult>> _inflight =
+      <String, Future<CorporateActionFetchResult>>{};
 
-  /// Return events for [symbol]. Hits the cache when available + fresh,
-  /// dedupes concurrent calls for the same symbol, fetches from the
-  /// provider when the cache is cold or stale.
-  Future<List<CorporateActionEvent>> getForSymbol(String symbol) {
-    final key = symbol.trim().toUpperCase();
-    if (key.isEmpty) return Future.value(const <CorporateActionEvent>[]);
+  Future<List<MarketCorporateAction>> getForSymbol(
+    String symbol, {
+    AssetMarket? market,
+  }) async {
+    final result = await fetchForSymbol(symbol, market: market);
+    return switch (result.disposition) {
+      CorporateActionFetchDisposition.success ||
+      CorporateActionFetchDisposition.authoritativeEmpty ||
+      CorporateActionFetchDisposition.partial => result.actions,
+      CorporateActionFetchDisposition.unsupported => const [],
+      CorporateActionFetchDisposition.failure =>
+        throw result.error ??
+            NoMarketDataAvailableException(
+              'Corporate actions unavailable for $symbol',
+            ),
+    };
+  }
 
+  Future<CorporateActionFetchResult> fetchForSymbol(
+    String symbol, {
+    AssetMarket? market,
+  }) {
+    final normalizedSymbol = symbol.trim().toUpperCase();
+    final resolvedMarket = market ?? inferAssetMarket(normalizedSymbol);
+    if (normalizedSymbol.isEmpty) {
+      return Future.value(
+        CorporateActionFetchResult(
+          provider: 'none',
+          disposition: CorporateActionFetchDisposition.authoritativeEmpty,
+          actions: const [],
+          fetchedAt: _now(),
+        ),
+      );
+    }
+
+    final key = '${resolvedMarket.wire}:$normalizedSymbol';
     final cached = _cache[key];
     if (cached != null && !cached.expired(_now())) {
-      return Future.value(cached.events);
+      return Future.value(cached.result);
     }
-    final inflight = _inflight[key];
-    if (inflight != null) return inflight;
+    final running = _inflight[key];
+    if (running != null) return running;
 
-    final fut = _fetchAndStore(key);
-    _inflight[key] = fut;
-    fut.whenComplete(() => _inflight.remove(key));
-    return fut;
+    final future = _fetch(normalizedSymbol, resolvedMarket);
+    _inflight[key] = future;
+    future.whenComplete(() => _inflight.remove(key));
+    return future;
   }
 
-  /// Drop the cached entry (and any in-flight fetch) for [symbol]. A
-  /// subsequent [getForSymbol] will hit the network. Useful when the
-  /// UI surfaces an explicit "Refresh events" action.
-  void invalidate(String symbol) {
-    _cache.remove(symbol.trim().toUpperCase());
+  void invalidate(String symbol, {AssetMarket? market}) {
+    final normalizedSymbol = symbol.trim().toUpperCase();
+    final resolvedMarket = market ?? inferAssetMarket(normalizedSymbol);
+    _cache.remove('${resolvedMarket.wire}:$normalizedSymbol');
   }
 
-  Future<List<CorporateActionEvent>> _fetchAndStore(String symbol) async {
-    try {
-      final events = await _fetch(symbol);
-      _cache[symbol] = _CacheEntry(
-        events: events,
+  Future<CorporateActionFetchResult> _fetch(
+    String symbol,
+    AssetMarket market,
+  ) async {
+    final providers = _providers
+        .where(
+          (provider) => provider.capabilities.supportedMarkets.contains(market),
+        )
+        .toList(growable: false);
+    if (providers.isEmpty) {
+      final result = CorporateActionFetchResult(
+        provider: 'none',
+        disposition: CorporateActionFetchDisposition.unsupported,
+        actions: const [],
         fetchedAt: _now(),
-        ttl: _successTtl,
+        warning: 'No corporate-action provider supports ${market.wire}.',
       );
-      return events;
-    } catch (err, st) {
-      _logger.w(
-        'corporate_actions_service: $symbol fetch failed',
-        error: err,
-        stackTrace: st,
-      );
-      _cache[symbol] = _CacheEntry(
-        events: const <CorporateActionEvent>[],
-        fetchedAt: _now(),
-        ttl: _errorTtl,
-      );
-      return const <CorporateActionEvent>[];
+      _store(symbol, market, result);
+      return result;
     }
-  }
 
-  Future<List<CorporateActionEvent>> _fetch(String symbol) async {
-    // Pull a window straddling now so we catch upcoming events (Yahoo
-    // surfaces announced dividends/splits with future ex-dates) plus
-    // any very recently passed ones the UI may want to display under
-    // a "last announced" affordance.
     final now = _now();
-    final from = now.subtract(const Duration(days: 30));
-    final to = now.add(const Duration(days: 365));
-
-    final response = await _http.send<Map<String, dynamic>>(
-      RequestOptions(
-        path: '$_chartBase/${Uri.encodeComponent(symbol)}',
-        method: 'GET',
-        responseType: ResponseType.json,
-        queryParameters: <String, Object?>{
-          'interval': '1d',
-          'period1': (from.millisecondsSinceEpoch ~/ 1000).toString(),
-          'period2': (to.millisecondsSinceEpoch ~/ 1000).toString(),
-          'events': 'div,splits',
-        },
-        headers: const <String, Object?>{'User-Agent': _userAgent},
-      ),
-      endpoint: 'corporateActions',
-    );
-    final body = response.data;
-    if (body is! Map<String, dynamic>) {
-      throw const ProviderResponseException(
-        'chart response not an object',
-        provider: 'yfinance',
-      );
-    }
-    final currency = _currencyOf(body) ?? _defaultCurrencyFor(symbol);
-    return parseYahooCorporateActions(
-      responseBody: body,
+    final request = CorporateActionFetchRequest(
       symbol: symbol,
-      currency: currency,
+      market: market,
+      from: now.subtract(const Duration(days: 30)),
+      to: now.add(const Duration(days: 365)),
     );
+    final failures = <Object>[];
+    var unsupportedCount = 0;
+    for (final provider in providers) {
+      try {
+        final result = await provider.fetch(request);
+        if (result.hasUsableData) {
+          _store(symbol, market, result);
+          return result;
+        }
+        if (result.disposition == CorporateActionFetchDisposition.unsupported) {
+          unsupportedCount++;
+          continue;
+        }
+        if (result.disposition == CorporateActionFetchDisposition.failure) {
+          failures.add(
+            result.error ??
+                ProviderUnavailableException(
+                  '${provider.name} returned a failed result',
+                  provider: provider.name,
+                ),
+          );
+        }
+      } catch (error, stackTrace) {
+        failures.add(error);
+        _logger.w(
+          'corporate_actions_service: ${provider.name} $symbol fetch failed',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+
+    if (unsupportedCount == providers.length) {
+      final result = CorporateActionFetchResult(
+        provider: providers.map((provider) => provider.name).join(','),
+        disposition: CorporateActionFetchDisposition.unsupported,
+        actions: const [],
+        fetchedAt: _now(),
+        warning: 'Corporate actions are unavailable on this platform.',
+      );
+      _store(symbol, market, result);
+      return result;
+    }
+
+    final error = NoMarketDataAvailableException(
+      'Every corporate-action provider failed for $symbol',
+      cause: failures,
+    );
+    final result = CorporateActionFetchResult(
+      provider: providers.map((provider) => provider.name).join(','),
+      disposition: CorporateActionFetchDisposition.failure,
+      actions: const [],
+      fetchedAt: _now(),
+      error: error,
+    );
+    _store(symbol, market, result);
+    return result;
   }
 
-  /// Best-effort extraction of `chart.result[0].meta.currency`. Returns
-  /// `null` on any schema drift — the caller falls back.
-  String? _currencyOf(Map<String, dynamic> body) {
-    final chart = body['chart'];
-    if (chart is! Map) return null;
-    final results = chart['result'];
-    if (results is! List || results.isEmpty) return null;
-    final first = results.first;
-    if (first is! Map) return null;
-    final meta = first['meta'];
-    if (meta is! Map) return null;
-    final currency = meta['currency'];
-    return currency is String ? currency.toUpperCase() : null;
-  }
-
-  /// Coarse fallback when yfinance omits the currency tag. We pick USD
-  /// for US tickers and HKD for `.HK` suffixed ones; everything else
-  /// defaults to USD which Money treats as a documentable
-  /// "needs FX" rather than silently mixing currencies.
-  String _defaultCurrencyFor(String symbol) {
-    if (symbol.toUpperCase().endsWith('.HK')) return 'HKD';
-    return 'USD';
+  void _store(
+    String symbol,
+    AssetMarket market,
+    CorporateActionFetchResult result,
+  ) {
+    final ttl = result.disposition == CorporateActionFetchDisposition.failure
+        ? _errorTtl
+        : _successTtl;
+    _cache['${market.wire}:$symbol'] = _CacheEntry(
+      result: result,
+      fetchedAt: _now(),
+      ttl: ttl,
+    );
   }
 }
 
 class _CacheEntry {
-  _CacheEntry({
-    required this.events,
+  const _CacheEntry({
+    required this.result,
     required this.fetchedAt,
     required this.ttl,
   });
 
-  final List<CorporateActionEvent> events;
+  final CorporateActionFetchResult result;
   final DateTime fetchedAt;
   final Duration ttl;
 

@@ -1,6 +1,6 @@
 # Market data providers — scope and licensing
 
-NaviWealth talks to three external providers (Yahoo Finance, CoinGecko, Sina) on **two code paths with different trust levels**. This note pins which call belongs to which path and what we may do with the response.
+NaviWealth's quote/search layer talks to Yahoo Finance, CoinGecko, and Sina on **two code paths with different trust levels**. Corporate-action reference data adds a separate provider-neutral path backed by Yahoo and, on native platforms, Eastmoney. This note pins which call belongs to which path and what we may do with the response.
 
 ## 1. Valuation main path — `getQuote` / `getHistorical`
 
@@ -24,6 +24,30 @@ Constraints:
 - A failure (offline, upstream outage, no result) collapses to a non-blocking message — the form must still save.
 - Imported metadata fills **only empty fields** on the existing asset row (`SecuritiesAssetRepository.enrichMetadata`); user-edited fields are never overwritten.
 - Trade-entry does **not** call `searchSymbol`; it reads from the local FTS catalog and writes via `upsertSecurity`. A fresh install is fully usable offline.
+
+## 3. Corporate-action reference path
+
+`CorporateActionsService` routes provider-neutral requests through
+`CorporateActionProvider` implementations:
+
+- Yahoo supplies dividend/split timeline events for US and Hong Kong symbols.
+- Eastmoney `RPT_SHAREBONUS_DET` supplies A-share distribution plans on native
+  platforms. Its per-ten-share cash and stock ratios are normalized to
+  per-share `Decimal` values at the provider boundary.
+- Web treats the Eastmoney adapter as unsupported because the upstream endpoint
+  does not provide a dependable browser CORS contract. It must not silently
+  route an A-share request to an unrelated provider.
+
+External corporate actions are public reference candidates, not user financial
+facts. The service may feed read-only timelines, paper-simulation candidates,
+or a user-confirmed entry flow, but it must never write directly to real
+accounts, lots, journal entries, or postings. Provider failures, unsupported
+markets, authoritative empty responses, and partial/malformed payloads remain
+distinct result states.
+
+The cache and single-flight layer sits above provider adapters. Provider source
+identity and normalized revision hashes must survive projection so later
+consumers can deduplicate revisions deterministically.
 
 ## Why the split exists
 

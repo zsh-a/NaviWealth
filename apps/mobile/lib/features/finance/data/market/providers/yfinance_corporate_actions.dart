@@ -1,33 +1,27 @@
-/// Parse [CorporateActionEvent]s out of a yfinance `chart` API response.
+/// Parse provider-neutral corporate actions out of a Yahoo Finance `chart`
+/// response.
 ///
-/// Pure function — no I/O, no logging. The provider layer (or any caller
-/// with sample JSON) decodes the wire body and hands the decoded map in;
-/// this module converts it into the domain shape that
-/// `features/finance/investment/domain/reporting/event_timeline.dart` consumes.
-///
-/// The yfinance chart endpoint returns events under
-/// `chart.result[0].events.dividends` and `.events.splits`, each keyed by
-/// the ex-date / effective-date timestamp (seconds since epoch). Parsing
-/// is defensive: a missing or malformed event is **skipped**, not thrown,
-/// because Yahoo schema drift is documented (`yfinance_provider.dart`
-/// header) and we don't want one stale row to wipe the whole batch.
+/// Pure function — no I/O or logging. The compatibility
+/// [parseYahooCorporateActions] projection remains for the existing investment
+/// timeline while new consumers use [parseYahooMarketCorporateActions].
 library;
 
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:decimal/decimal.dart';
-
 import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
-/// Parse all dividend + split corporate actions out of [responseBody]
-/// for [symbol]. Returns an empty list when the response has no events,
-/// is malformed, or carries data for a different symbol.
-///
-/// [currency] supplies the cash leg's currency. Yahoo doesn't include
-/// currency on per-event records, so the caller pulls it out of
-/// `chart.result[0].meta.currency` and passes it through.
-List<CorporateActionEvent> parseYahooCorporateActions({
+const _source = 'yfinance';
+const _dataset = 'yahoo_chart';
+
+List<MarketCorporateAction> parseYahooMarketCorporateActions({
   required Map<String, Object?> responseBody,
   required String symbol,
   required String currency,
+  required AssetMarket market,
 }) {
   final result = _firstResult(responseBody);
   if (result == null) return const [];
@@ -36,25 +30,72 @@ List<CorporateActionEvent> parseYahooCorporateActions({
   if (events is! Map) return const [];
 
   final upperSymbol = symbol.toUpperCase();
-  final out = <CorporateActionEvent>[];
+  final upperCurrency = currency.toUpperCase();
+  final out = <MarketCorporateAction>[];
 
   final dividends = events['dividends'];
   if (dividends is Map) {
     for (final entry in dividends.entries) {
-      final ev = _parseDividend(entry.value, upperSymbol, currency);
-      if (ev != null) out.add(ev);
+      final event = _parseDividend(
+        entry.value,
+        upperSymbol,
+        upperCurrency,
+        market,
+      );
+      if (event != null) out.add(event);
     }
   }
 
   final splits = events['splits'];
   if (splits is Map) {
     for (final entry in splits.entries) {
-      final ev = _parseSplit(entry.value, upperSymbol, currency);
-      if (ev != null) out.add(ev);
+      final event = _parseSplit(entry.value, upperSymbol, market);
+      if (event != null) out.add(event);
     }
   }
 
   return out;
+}
+
+/// Compatibility projection for the existing investment event timeline.
+List<CorporateActionEvent> parseYahooCorporateActions({
+  required Map<String, Object?> responseBody,
+  required String symbol,
+  required String currency,
+}) {
+  final market = inferAssetMarket(symbol.toUpperCase());
+  final actions = parseYahooMarketCorporateActions(
+    responseBody: responseBody,
+    symbol: symbol,
+    currency: currency,
+    market: market,
+  );
+  return [
+    for (final action in actions)
+      if (action.kind == MarketCorporateActionKind.distribution &&
+          action.hasCashDistribution &&
+          action.timelineDate != null)
+        CorporateActionEvent(
+          id: 'div_${action.symbol}_${_day(action.timelineDate!)}',
+          symbol: action.symbol,
+          kind: CorporateActionKind.cashDividend,
+          scheduledFor: action.timelineDate!,
+          cashAmount: action.cashPerShare!,
+          currency: action.currency ?? currency.toUpperCase(),
+        )
+      else if (action.kind == MarketCorporateActionKind.split &&
+          action.hasSplit &&
+          action.timelineDate != null)
+        CorporateActionEvent(
+          id: 'split_${action.symbol}_${_day(action.timelineDate!)}',
+          symbol: action.symbol,
+          kind: CorporateActionKind.split,
+          scheduledFor: action.timelineDate!,
+          cashAmount: Decimal.zero,
+          currency: currency.toUpperCase(),
+          ratio: SplitRatio(action.splitNumerator!, action.splitDenominator!),
+        ),
+  ];
 }
 
 Map<String, Object?>? _firstResult(Map<String, Object?> body) {
@@ -67,26 +108,40 @@ Map<String, Object?>? _firstResult(Map<String, Object?> body) {
   return first.cast<String, Object?>();
 }
 
-CorporateActionEvent? _parseDividend(
+MarketCorporateAction? _parseDividend(
   Object? raw,
   String symbol,
   String currency,
+  AssetMarket market,
 ) {
   if (raw is! Map) return null;
   final date = _epochSecondsAsUtc(raw['date']);
   final amount = _decimal(raw['amount']);
-  if (date == null || amount == null) return null;
-  return CorporateActionEvent(
-    id: 'div_${symbol}_${date.toIso8601String().substring(0, 10)}',
+  if (date == null || amount == null || amount < Decimal.zero) return null;
+  final day = _day(date);
+  final sourceKey = 'div:$symbol:$day';
+  return MarketCorporateAction(
+    id: '$_source:$_dataset:$sourceKey',
+    source: _source,
+    dataset: _dataset,
+    sourceKey: sourceKey,
+    revisionHash: _hash('$sourceKey|$currency|$amount'),
+    identityStrength: MarketCorporateActionIdentityStrength.strong,
     symbol: symbol,
-    kind: CorporateActionKind.cashDividend,
-    scheduledFor: date,
-    cashAmount: amount,
+    market: market,
+    kind: MarketCorporateActionKind.distribution,
+    status: MarketCorporateActionStatus.unknown,
+    exDate: date,
     currency: currency,
+    cashPerShare: amount,
   );
 }
 
-CorporateActionEvent? _parseSplit(Object? raw, String symbol, String currency) {
+MarketCorporateAction? _parseSplit(
+  Object? raw,
+  String symbol,
+  AssetMarket market,
+) {
   if (raw is! Map) return null;
   final date = _epochSecondsAsUtc(raw['date']);
   if (date == null) return null;
@@ -98,28 +153,34 @@ CorporateActionEvent? _parseSplit(Object? raw, String symbol, String currency) {
       denominator <= 0) {
     return null;
   }
-  return CorporateActionEvent(
-    id: 'split_${symbol}_${date.toIso8601String().substring(0, 10)}',
+  final day = _day(date);
+  final sourceKey = 'split:$symbol:$day';
+  return MarketCorporateAction(
+    id: '$_source:$_dataset:$sourceKey',
+    source: _source,
+    dataset: _dataset,
+    sourceKey: sourceKey,
+    revisionHash: _hash('$sourceKey|$numerator|$denominator'),
+    identityStrength: MarketCorporateActionIdentityStrength.strong,
     symbol: symbol,
-    kind: CorporateActionKind.split,
-    scheduledFor: date,
-    cashAmount: Decimal.zero,
-    currency: currency,
-    ratio: SplitRatio(numerator, denominator),
+    market: market,
+    kind: MarketCorporateActionKind.split,
+    status: MarketCorporateActionStatus.unknown,
+    exDate: date,
+    splitNumerator: numerator,
+    splitDenominator: denominator,
   );
 }
 
 DateTime? _epochSecondsAsUtc(Object? raw) {
-  final n = _intOrNull(raw);
-  if (n == null || n <= 0) return null;
-  final utc = DateTime.fromMillisecondsSinceEpoch(n * 1000, isUtc: true);
-  // The event timeline keys events by calendar day — drop the wall-clock
-  // component so 23:59 UTC and 00:00 UTC of the same day collide.
+  final value = _intOrNull(raw);
+  if (value == null || value <= 0) return null;
+  final utc = DateTime.fromMillisecondsSinceEpoch(value * 1000, isUtc: true);
   return DateTime.utc(utc.year, utc.month, utc.day);
 }
 
 Decimal? _decimal(Object? raw) {
-  if (raw is num) return Decimal.parse(raw.toString());
+  if (raw is num) return Decimal.tryParse(raw.toString());
   if (raw is String) return Decimal.tryParse(raw);
   return null;
 }
@@ -130,3 +191,7 @@ int? _intOrNull(Object? raw) {
   if (raw is String) return int.tryParse(raw);
   return null;
 }
+
+String _day(DateTime value) => value.toUtc().toIso8601String().substring(0, 10);
+
+String _hash(String value) => sha256.convert(utf8.encode(value)).toString();

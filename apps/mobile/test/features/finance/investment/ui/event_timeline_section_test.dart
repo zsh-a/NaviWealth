@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/investment/data/event_timeline_providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
@@ -41,6 +42,7 @@ Future<void> _pump(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en', 'US'),
+        builder: _foruiTestBuilder,
         home: Scaffold(body: EventTimelineSection(symbol: symbol)),
       ),
     ),
@@ -62,12 +64,24 @@ Future<void> _pumpError(WidgetTester tester, String symbol) async {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en', 'US'),
+        builder: _foruiTestBuilder,
         home: Scaffold(body: EventTimelineSection(symbol: symbol)),
       ),
     ),
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 50));
+}
+
+Widget _foruiTestBuilder(BuildContext context, Widget? child) {
+  return FAccessibilityScope(
+    data: const FAccessibility(
+      accessibleNavigation: false,
+      motion: FAccessibilityMotion.disabled,
+      focusHighlight: false,
+    ),
+    child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
+  );
 }
 
 void main() {

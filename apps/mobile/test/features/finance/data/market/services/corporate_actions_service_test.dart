@@ -7,8 +7,10 @@ import 'package:naviwealth/features/finance/data/market/http/clock.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/http/retry_policy.dart';
+import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_action_provider.dart';
 import 'package:naviwealth/features/finance/data/market/services/corporate_actions_service.dart';
-import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
 import '../canned_adapter.dart';
 
@@ -55,7 +57,7 @@ Map<String, Object?> _chartBody({
     clock: const SystemClock(),
   );
   final service = CorporateActionsService(
-    http: http,
+    providers: [YFinanceCorporateActionProvider(http: http)],
     logger: AppLogger(
       environment: AppEnvironment.dev,
       crashReporter: const NoopCrashReporter(),
@@ -90,11 +92,11 @@ void main() {
       final out = await harness.service.getForSymbol('aapl');
       expect(out, hasLength(2));
       expect(
-        out.where((e) => e.kind == CorporateActionKind.cashDividend),
+        out.where((e) => e.kind == MarketCorporateActionKind.distribution),
         hasLength(1),
       );
       expect(
-        out.where((e) => e.kind == CorporateActionKind.split),
+        out.where((e) => e.kind == MarketCorporateActionKind.split),
         hasLength(1),
       );
       expect(out.first.symbol, 'AAPL', reason: 'symbol is uppercased');
@@ -135,7 +137,7 @@ void main() {
 
         final future1 = harness.service.getForSymbol('AAPL');
         final future2 = harness.service.getForSymbol('AAPL');
-        await Future.wait<List<CorporateActionEvent>>([future1, future2]);
+        await Future.wait<List<MarketCorporateAction>>([future1, future2]);
 
         expect(harness.adapter.calls, hasLength(1));
       },
@@ -170,7 +172,7 @@ void main() {
     });
 
     test(
-      'HTTP failure returns empty list and caches the error briefly',
+      'HTTP failure remains distinguishable and is cached briefly',
       () async {
         final harness = _build();
         harness.adapter.enqueueRaw(
@@ -178,14 +180,16 @@ void main() {
           CannedResponse('server error', status: 500),
         );
 
-        final out = await harness.service.getForSymbol('AAPL');
-        expect(out, isEmpty);
+        await expectLater(
+          harness.service.getForSymbol('AAPL'),
+          throwsA(isA<Exception>()),
+        );
 
-        // Second read within the error TTL should not re-fetch — the
-        // service caches the failure so it doesn't hammer Yahoo on
-        // transient outages.
-        final again = await harness.service.getForSymbol('AAPL');
-        expect(again, isEmpty);
+        // The cached failure remains an error without hammering Yahoo.
+        await expectLater(
+          harness.service.getForSymbol('AAPL'),
+          throwsA(isA<Exception>()),
+        );
         expect(harness.adapter.calls, hasLength(1));
       },
     );
@@ -215,8 +219,8 @@ void main() {
       final second = await harness.service.getForSymbol('AAPL');
 
       expect(harness.adapter.calls, hasLength(2));
-      expect(first.first.cashAmount.toString(), '0.24');
-      expect(second.first.cashAmount.toString(), '0.3');
+      expect(first.first.cashPerShare.toString(), '0.24');
+      expect(second.first.cashPerShare.toString(), '0.3');
     });
 
     test(
@@ -228,6 +232,14 @@ void main() {
         expect(harness.adapter.calls, isEmpty);
       },
     );
+
+    test('unsupported market does not call an unrelated provider', () async {
+      final harness = _build();
+      final result = await harness.service.fetchForSymbol('600519');
+      expect(result.disposition, CorporateActionFetchDisposition.unsupported);
+      expect(result.actions, isEmpty);
+      expect(harness.adapter.calls, isEmpty);
+    });
 
     test('currency falls back when yfinance omits the meta tag', () async {
       final harness = _build();

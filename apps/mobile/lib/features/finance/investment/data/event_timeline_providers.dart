@@ -1,64 +1,70 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart'
     as market_clock;
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/market/providers/eastmoney_corporate_action_provider.dart';
+import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_action_provider.dart';
 import 'package:naviwealth/features/finance/data/market/services/corporate_actions_service.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
 import '../domain/reporting/event_timeline.dart';
 
-/// Underlying corporate-actions fetcher. One instance per app — the
-/// service owns an in-memory TTL cache, so a singleton avoids fan-out
-/// fetches when multiple watchers ask for the same symbol.
-///
-/// Tests override [corporateActionEventsProvider] directly (single seam)
-/// so they don't need a fake service.
+/// Unified public corporate-action fetcher. Market routing remains inside the
+/// service so timelines, paper simulations, and future confirmation flows can
+/// reuse the same provider contract.
 final corporateActionsServiceProvider = Provider<CorporateActionsService>((
   ref,
 ) {
-  final dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
-  final http = MarketHttpClient(
-    providerName: 'yfinance',
-    rateLimiter: RateLimiter(
-      maxRequests: 60,
-      window: const Duration(minutes: 1),
+  MarketHttpClient http(String providerName, {required int requestsPerMinute}) {
+    return MarketHttpClient(
+      providerName: providerName,
+      rateLimiter: RateLimiter(
+        maxRequests: requestsPerMinute,
+        window: const Duration(minutes: 1),
+        clock: const market_clock.SystemClock(),
+      ),
+      dio: Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 10),
+          sendTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+        ),
+      ),
       clock: const market_clock.SystemClock(),
-    ),
-    dio: dio,
-    clock: const market_clock.SystemClock(),
-    metrics: ref.watch(marketMetricsProvider),
+      metrics: ref.watch(marketMetricsProvider),
+    );
+  }
+
+  return CorporateActionsService(
+    providers: [
+      EastmoneyCorporateActionProvider(
+        http: http('eastmoney', requestsPerMinute: 20),
+        available: !kIsWeb,
+      ),
+      YFinanceCorporateActionProvider(
+        http: http('yfinance', requestsPerMinute: 60),
+      ),
+    ],
+    logger: ref.watch(loggerProvider),
   );
-  return CorporateActionsService(http: http, logger: ref.watch(loggerProvider));
 });
 
-/// Per-symbol corporate-action events for the Finance investment timeline.
-/// UI surfaces (holding detail "事件" tab) subscribe to this; the
-/// [CorporateActionsService] supplies events via the yfinance chart
-/// endpoint with a 12-hour TTL cache.
-///
-/// Returns `[]` while loading and on any network error — the service
-/// caches errors briefly to avoid hammering Yahoo on transient outages.
-///
-/// Tests override this provider directly to inject canned events.
+/// Per-symbol timeline projection of provider-neutral corporate actions.
+/// Provider failures remain errors; unsupported markets degrade to an empty
+/// timeline without attempting an unrelated provider.
 final corporateActionEventsProvider = FutureProvider.autoDispose
-    .family<List<CorporateActionEvent>, String>((ref, symbol) {
+    .family<List<CorporateActionEvent>, String>((ref, symbol) async {
       final service = ref.watch(corporateActionsServiceProvider);
-      return service.getForSymbol(symbol);
+      final actions = await service.getForSymbol(symbol);
+      return _timelineEvents(actions);
     });
 
-/// Filtered timeline projection for [symbol] over the next 90 days.
-/// Centralises the `buildEventTimeline` call so callers don't thread
-/// the symbol set / window themselves.
-///
-/// Returns an [AsyncValue]: the upstream fetcher is async, so this
-/// provider mirrors the same lifecycle (loading → data → error). The
-/// widget consumer renders loading, empty, and retryable error states
-/// separately so "nothing scheduled" is never confused with a failed
-/// corporate-action fetch.
 final upcomingEventsForSymbolProvider = Provider.autoDispose
     .family<AsyncValue<List<CorporateActionEvent>>, String>((ref, symbol) {
       final eventsAsync = ref.watch(corporateActionEventsProvider(symbol));
@@ -67,3 +73,44 @@ final upcomingEventsForSymbolProvider = Provider.autoDispose
             buildEventTimeline(events: raw, watchedSymbols: <String>{symbol}),
       );
     });
+
+List<CorporateActionEvent> _timelineEvents(
+  Iterable<MarketCorporateAction> actions,
+) {
+  final events = <CorporateActionEvent>[];
+  for (final action in actions) {
+    if (action.status == MarketCorporateActionStatus.cancelled) continue;
+    final date = action.timelineDate;
+    if (date == null) continue;
+    if (action.kind == MarketCorporateActionKind.distribution &&
+        action.hasCashDistribution &&
+        action.currency != null) {
+      events.add(
+        CorporateActionEvent(
+          id: '${action.id}:cash',
+          symbol: action.symbol,
+          kind: CorporateActionKind.cashDividend,
+          scheduledFor: date,
+          cashAmount: action.cashPerShare!,
+          currency: action.currency!,
+          note: action.note,
+        ),
+      );
+    }
+    if (action.kind == MarketCorporateActionKind.split && action.hasSplit) {
+      events.add(
+        CorporateActionEvent(
+          id: '${action.id}:split',
+          symbol: action.symbol,
+          kind: CorporateActionKind.split,
+          scheduledFor: date,
+          cashAmount: Decimal.zero,
+          currency: action.currency ?? '',
+          ratio: SplitRatio(action.splitNumerator!, action.splitDenominator!),
+          note: action.note,
+        ),
+      );
+    }
+  }
+  return List<CorporateActionEvent>.unmodifiable(events);
+}
