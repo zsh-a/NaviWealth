@@ -10927,6 +10927,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistAddAction => 'Add symbol';
 
   @override
+  String get watchlistAllCollection => 'All';
+
+  @override
+  String get watchlistUngroupedCollection => 'Ungrouped';
+
+  @override
+  String get watchlistCreateCollectionAction => 'New collection';
+
+  @override
+  String get watchlistEditCollectionAction => 'Edit collection';
+
+  @override
+  String get watchlistCollectionNameField => 'Collection name';
+
+  @override
+  String get watchlistCollectionNameRequired => 'Enter a collection name';
+
+  @override
+  String get watchlistDeleteCollectionAction => 'Delete collection';
+
+  @override
+  String watchlistDeleteCollectionTitle(String name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get watchlistDeleteCollectionBody =>
+      'Symbols and alert rules will remain in All.';
+
+  @override
+  String get watchlistManageCollectionsAction => 'Collections';
+
+  @override
+  String watchlistManageCollectionsTitle(String symbol) {
+    return 'Collections for $symbol';
+  }
+
+  @override
+  String get watchlistNoCollectionsBody =>
+      'Create a collection first, then organize this symbol.';
+
+  @override
+  String get watchlistSaveCollectionsAction => 'Save collections';
+
+  @override
+  String get watchlistRemoveFromCollectionAction => 'Remove from collection';
+
+  @override
+  String get watchlistRemovedFromCollection => 'Removed from collection';
+
+  @override
   String watchlistRowActionsTitle(String symbol) {
     return 'Actions for $symbol';
   }

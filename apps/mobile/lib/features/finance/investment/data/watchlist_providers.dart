@@ -25,16 +25,78 @@ final watchlistItemsProvider = StreamProvider.autoDispose<List<WatchlistItem>>((
   yield* repo.watchActive(ownerUserId);
 });
 
+final watchlistCollectionsProvider =
+    StreamProvider.autoDispose<List<WatchlistCollection>>((ref) async* {
+      final repo = await ref.watch(watchlistRepositoryProvider.future);
+      final ownerUserId = await ref.watch(currentUserIdProvider)();
+      yield* repo.watchCollections(ownerUserId);
+    });
+
+final watchlistCollectionMembersProvider =
+    StreamProvider.autoDispose<List<WatchlistCollectionMember>>((ref) async* {
+      final repo = await ref.watch(watchlistRepositoryProvider.future);
+      final ownerUserId = await ref.watch(currentUserIdProvider)();
+      yield* repo.watchCollectionMembers(ownerUserId);
+    });
+
+class WatchlistScope {
+  const WatchlistScope.all() : collectionId = null, ungrouped = false;
+
+  const WatchlistScope.ungrouped() : collectionId = null, ungrouped = true;
+
+  const WatchlistScope.collection(this.collectionId) : ungrouped = false;
+
+  final String? collectionId;
+  final bool ungrouped;
+
+  bool get isAll => collectionId == null && !ungrouped;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WatchlistScope &&
+      other.collectionId == collectionId &&
+      other.ungrouped == ungrouped;
+
+  @override
+  int get hashCode => Object.hash(collectionId, ungrouped);
+}
+
+final watchlistItemsForScopeProvider = FutureProvider.autoDispose
+    .family<List<WatchlistItem>, WatchlistScope>((ref, scope) async {
+      final items = await ref.watch(watchlistItemsProvider.future);
+      if (scope.isAll) return items;
+      final members = await ref.watch(
+        watchlistCollectionMembersProvider.future,
+      );
+      if (scope.ungrouped) {
+        final allGroupedIds = members
+            .map((member) => member.watchlistItemId)
+            .toSet();
+        return items
+            .where((item) => !allGroupedIds.contains(item.id))
+            .toList(growable: false);
+      }
+      final memberItemIds = <String>{
+        for (final member in members)
+          if (member.collectionId == scope.collectionId) member.watchlistItemId,
+      };
+      return items
+          .where((item) => memberItemIds.contains(item.id))
+          .toList(growable: false);
+    });
+
 final watchlistQuoteSnapshotsProvider =
     FutureProvider.autoDispose<List<WatchlistQuoteSnapshot>>((ref) async {
       final items = await ref.watch(watchlistItemsProvider.future);
-      if (items.isEmpty) return const [];
-      final service = await ref.watch(marketDataServiceProvider.future);
-      final snapshots = <WatchlistQuoteSnapshot>[];
-      for (final item in items) {
-        snapshots.add(await _fetchSnapshot(service, item));
-      }
-      return snapshots;
+      return _loadQuoteSnapshots(ref, items);
+    });
+
+final watchlistQuoteSnapshotsForScopeProvider = FutureProvider.autoDispose
+    .family<List<WatchlistQuoteSnapshot>, WatchlistScope>((ref, scope) async {
+      final items = await ref.watch(
+        watchlistItemsForScopeProvider(scope).future,
+      );
+      return _loadQuoteSnapshots(ref, items);
     });
 
 class WatchlistQuoteSnapshot {
@@ -46,6 +108,21 @@ class WatchlistQuoteSnapshot {
 
   Quote? get quote => response?.data;
   bool get hasError => error != null;
+}
+
+Future<List<WatchlistQuoteSnapshot>> _loadQuoteSnapshots(
+  Ref ref,
+  List<WatchlistItem> items,
+) async {
+  if (items.isEmpty) return const [];
+  final service = await ref.watch(marketDataServiceProvider.future);
+  final snapshots = <WatchlistQuoteSnapshot>[];
+  // Keep requests sequential: some configured providers have strict
+  // per-minute limits and MarketDataService already handles cache fallback.
+  for (final item in items) {
+    snapshots.add(await _fetchSnapshot(service, item));
+  }
+  return snapshots;
 }
 
 Future<WatchlistQuoteSnapshot> _fetchSnapshot(

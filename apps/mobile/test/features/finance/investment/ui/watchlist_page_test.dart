@@ -29,11 +29,39 @@ final _item = WatchlistItem(
   ),
 );
 
+final _otherItem = WatchlistItem(
+  id: 'us_stock:MSFT',
+  symbol: 'MSFT',
+  market: AssetMarket.usStock,
+  addedAt: DateTime.utc(2026, 7, 20),
+  alertRules: const PriceAlertRules(),
+  sync: _item.sync,
+);
+
+final _collection = WatchlistCollection(
+  id: 'collection-growth',
+  name: 'Growth',
+  createdAt: DateTime.utc(2026, 7, 19),
+  sync: _item.sync,
+);
+
+final _membership = WatchlistCollectionMember(
+  id: 'membership-aapl-growth',
+  collectionId: _collection.id,
+  watchlistItemId: _item.id,
+  addedAt: DateTime.utc(2026, 7, 19),
+  sync: _item.sync,
+);
+
 Widget _wrap(TargetPlatform platform) {
   final touch = platform == TargetPlatform.android;
   return ProviderScope(
     overrides: [
       watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
+      watchlistCollectionsProvider.overrideWith((_) => Stream.value(const [])),
+      watchlistCollectionMembersProvider.overrideWith(
+        (_) => Stream.value(const []),
+      ),
       watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
     ],
     child: MaterialApp(
@@ -60,7 +88,10 @@ void main() {
     expect(find.text('Alerts'), findsNothing);
     expect(find.text('Remove'), findsNothing);
     expect(find.semantics.byLabel('Actions for AAPL'), findsOneWidget);
-    final action = find.byType(AppIconButton);
+    final action = find.widgetWithIcon(
+      AppIconButton,
+      FLucideIcons.ellipsisVertical,
+    );
     expect(tester.getSize(action), const Size.square(48));
 
     await tester.tap(action);
@@ -85,7 +116,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.semantics.byLabel('Actions for AAPL'), findsOneWidget);
-    final action = find.byType(AppIconButton);
+    final action = find.widgetWithIcon(
+      AppIconButton,
+      FLucideIcons.ellipsisVertical,
+    );
     expect(tester.getSize(action), const Size.square(44));
     await tester.tap(action);
     await tester.pumpAndSettle();
@@ -127,6 +161,12 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(preferences),
           watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
           watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
         ],
         child: MaterialApp.router(
@@ -147,5 +187,67 @@ void main() {
 
     expect(find.text('AAPL'), findsNWidgets(2));
     expect(find.text('Alerts'), findsOneWidget);
+  });
+
+  testWidgets('filters collection and ungrouped scopes through the URL', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final router = GoRouter(
+      initialLocation:
+          '${FinanceRoutes.wealthWatchlist}?collection=${_collection.id}',
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([_item, _otherItem]),
+          ),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value([_collection]),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value([_membership]),
+          ),
+          watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
+          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
+            (_, _) async => const [],
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Growth'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsNothing);
+
+    await tester.tap(find.text('Ungrouped'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(find.text('AAPL'), findsNothing);
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'collection': 'ungrouped',
+    });
   });
 }

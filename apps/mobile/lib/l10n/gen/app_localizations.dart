@@ -18410,6 +18410,96 @@ abstract class AppLocalizations {
   /// **'Add symbol'**
   String get watchlistAddAction;
 
+  /// Virtual collection containing every watchlist item
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get watchlistAllCollection;
+
+  /// Virtual collection containing items without a collection
+  ///
+  /// In en, this message translates to:
+  /// **'Ungrouped'**
+  String get watchlistUngroupedCollection;
+
+  /// Create a watchlist collection
+  ///
+  /// In en, this message translates to:
+  /// **'New collection'**
+  String get watchlistCreateCollectionAction;
+
+  /// Rename or delete the selected watchlist collection
+  ///
+  /// In en, this message translates to:
+  /// **'Edit collection'**
+  String get watchlistEditCollectionAction;
+
+  /// Watchlist collection name input label
+  ///
+  /// In en, this message translates to:
+  /// **'Collection name'**
+  String get watchlistCollectionNameField;
+
+  /// Watchlist collection name required validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a collection name'**
+  String get watchlistCollectionNameRequired;
+
+  /// Delete a watchlist collection without deleting its symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Delete collection'**
+  String get watchlistDeleteCollectionAction;
+
+  /// Watchlist collection deletion confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}?'**
+  String watchlistDeleteCollectionTitle(String name);
+
+  /// Watchlist collection deletion confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols and alert rules will remain in All.'**
+  String get watchlistDeleteCollectionBody;
+
+  /// Manage collection membership for one symbol
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get watchlistManageCollectionsAction;
+
+  /// Manage collection membership sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Collections for {symbol}'**
+  String watchlistManageCollectionsTitle(String symbol);
+
+  /// Empty collection membership sheet body
+  ///
+  /// In en, this message translates to:
+  /// **'Create a collection first, then organize this symbol.'**
+  String get watchlistNoCollectionsBody;
+
+  /// Save collection membership for a watchlist item
+  ///
+  /// In en, this message translates to:
+  /// **'Save collections'**
+  String get watchlistSaveCollectionsAction;
+
+  /// Remove a symbol from only the selected collection
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from collection'**
+  String get watchlistRemoveFromCollectionAction;
+
+  /// Success message after removing a symbol from one collection
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from collection'**
+  String get watchlistRemovedFromCollection;
+
   /// Title and accessible label for one watchlist row's action menu
   ///
   /// In en, this message translates to:

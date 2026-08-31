@@ -48,7 +48,72 @@ void main() {
     expect(snapshots.single.response?.freshness, DataFreshness.cachedFresh);
     expect(snapshots.single.quote?.price, Decimal.parse('201.25'));
   });
+
+  test('filters all, ungrouped, and collection scopes', () async {
+    final grouped = _item('us_stock:AAPL', 'AAPL');
+    final ungrouped = _item('us_stock:MSFT', 'MSFT');
+    final member = WatchlistCollectionMember(
+      id: 'member-1',
+      collectionId: 'collection-1',
+      watchlistItemId: grouped.id,
+      addedAt: DateTime.utc(2026, 5, 18),
+      sync: grouped.sync,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        watchlistItemsProvider.overrideWith(
+          (_) => Stream.value([grouped, ungrouped]),
+        ),
+        watchlistCollectionMembersProvider.overrideWith(
+          (_) => Stream.value([member]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final itemsSub = container.listen(watchlistItemsProvider, (_, _) {});
+    final membersSub = container.listen(
+      watchlistCollectionMembersProvider,
+      (_, _) {},
+    );
+    addTearDown(itemsSub.close);
+    addTearDown(membersSub.close);
+
+    expect(
+      await container.read(
+        watchlistItemsForScopeProvider(const WatchlistScope.all()).future,
+      ),
+      [grouped, ungrouped],
+    );
+    expect(
+      await container.read(
+        watchlistItemsForScopeProvider(const WatchlistScope.ungrouped()).future,
+      ),
+      [ungrouped],
+    );
+    expect(
+      await container.read(
+        watchlistItemsForScopeProvider(
+          const WatchlistScope.collection('collection-1'),
+        ).future,
+      ),
+      [grouped],
+    );
+  });
 }
+
+WatchlistItem _item(String id, String symbol) => WatchlistItem(
+  id: id,
+  symbol: symbol,
+  market: AssetMarket.usStock,
+  addedAt: DateTime.utc(2026, 5, 18),
+  alertRules: const PriceAlertRules(),
+  sync: SyncMeta(
+    ownerUserId: 'u-test',
+    updatedAt: DateTime.utc(2026, 5, 18),
+    updatedByDevice: 'dev-test',
+    hlc: Hlc.zero('dev-test'),
+  ),
+);
 
 class _FakeMarketDataService implements MarketDataService {
   @override

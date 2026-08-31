@@ -140,6 +140,14 @@ kSyncTableRegistrations = <SyncTableRegistration>[
   ),
   SyncTableRegistration('watchlist_items', domainPrefix: kFinanceDomainPrefix),
   SyncTableRegistration(
+    'watchlist_collections',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
+  SyncTableRegistration(
+    'watchlist_collection_members',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
+  SyncTableRegistration(
     'options_strategy_profile',
     domainPrefix: kFinanceDomainPrefix,
     primaryKey: 'user_id',

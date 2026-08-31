@@ -437,6 +437,19 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_items_owner_added '
       'ON watchlist_items(owner_user_id, added_at) '
       'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collections_owner_hlc '
+      'ON watchlist_collections(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collections_owner_created '
+      'ON watchlist_collections(owner_user_id, created_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_owner_hlc '
+      'ON watchlist_collection_members(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_collection '
+      'ON watchlist_collection_members(owner_user_id, collection_id, added_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_item '
+      'ON watchlist_collection_members(owner_user_id, watchlist_item_id) '
+      'WHERE deleted_at IS NULL',
 ];
 
 const List<String> _corporateActionIndexStmts = [
@@ -470,6 +483,17 @@ Future<void> _createExecutionIndexes(AppDatabase db) async {
 
 Future<void> _createWatchlistIndexes(AppDatabase db) async {
   for (final stmt in _watchlistIndexStmts) {
+    final tableMatch = RegExp(
+      r'\bON\s+([a-z_][a-z0-9_]*)',
+      caseSensitive: false,
+    ).firstMatch(stmt);
+    final table = tableMatch?.group(1);
+    if (table != null &&
+        (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
+      // v10 creates only the canonical item table; collection tables arrive
+      // in v82. Focused migration fixtures may omit either side entirely.
+      continue;
+    }
     await db.customStatement(stmt);
   }
 }

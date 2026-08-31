@@ -36,6 +36,39 @@ class WatchlistItems extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// A user-authored organizational view over watchlist items.
+///
+/// Collections deliberately do not carry portfolio weights or capital
+/// semantics. Those belong to the investment portfolio aggregate.
+@DataClassName('WatchlistCollectionRow')
+class WatchlistCollections extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Many-to-many membership between a collection and the canonical watchlist
+/// item. The deterministic row id makes repeated adds idempotent across
+/// devices; the unique constraint also protects local writes.
+@DataClassName('WatchlistCollectionMemberRow')
+class WatchlistCollectionMembers extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get collectionId => text()();
+  TextColumn get watchlistItemId => text()();
+  DateTimeColumn get addedAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, collection_id, watchlist_item_id)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('LiabilityRow')
 class Liabilities extends Table with SyncableTable {
   TextColumn get id => text()();

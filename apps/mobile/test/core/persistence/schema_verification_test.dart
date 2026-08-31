@@ -20,8 +20,32 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 81', () {
-      expect(db.schemaVersion, 81);
+    test('is 82', () {
+      expect(db.schemaVersion, 82);
+    });
+  });
+
+  group('Watchlist collections', () {
+    for (final table in const [
+      'watchlist_collections',
+      'watchlist_collection_members',
+    ]) {
+      test('$table has sync columns', () async {
+        final result = await db.customSelect('PRAGMA table_info($table)').get();
+        final columns = result.map((row) => row.read<String>('name')).toSet();
+        expect(
+          columns,
+          containsAll(['id', 'owner_user_id', 'hlc', 'deleted_at']),
+        );
+      });
+    }
+
+    test('members preserve both sides of the relationship', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(watchlist_collection_members)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(columns, containsAll(['collection_id', 'watchlist_item_id']));
     });
   });
 

@@ -10346,6 +10346,55 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistAddAction => '添加标的';
 
   @override
+  String get watchlistAllCollection => '全部';
+
+  @override
+  String get watchlistUngroupedCollection => '未分组';
+
+  @override
+  String get watchlistCreateCollectionAction => '新建组合';
+
+  @override
+  String get watchlistEditCollectionAction => '编辑组合';
+
+  @override
+  String get watchlistCollectionNameField => '组合名称';
+
+  @override
+  String get watchlistCollectionNameRequired => '请输入组合名称';
+
+  @override
+  String get watchlistDeleteCollectionAction => '删除组合';
+
+  @override
+  String watchlistDeleteCollectionTitle(String name) {
+    return '删除“$name”？';
+  }
+
+  @override
+  String get watchlistDeleteCollectionBody => '标的和告警规则仍会保留在“全部”中。';
+
+  @override
+  String get watchlistManageCollectionsAction => '所属组合';
+
+  @override
+  String watchlistManageCollectionsTitle(String symbol) {
+    return '$symbol 所属组合';
+  }
+
+  @override
+  String get watchlistNoCollectionsBody => '请先新建组合，再整理这个标的。';
+
+  @override
+  String get watchlistSaveCollectionsAction => '保存组合';
+
+  @override
+  String get watchlistRemoveFromCollectionAction => '移出当前组合';
+
+  @override
+  String get watchlistRemovedFromCollection => '已移出当前组合';
+
+  @override
   String watchlistRowActionsTitle(String symbol) {
     return '$symbol 操作';
   }

@@ -77,6 +77,12 @@ void main() {
       variant: variant,
       overrides: [
         watchlistItemsProvider.overrideWith((_) => Stream.value(_items)),
+        watchlistCollectionsProvider.overrideWith(
+          (_) => Stream.value(const []),
+        ),
+        watchlistCollectionMembersProvider.overrideWith(
+          (_) => Stream.value(const []),
+        ),
         watchlistQuoteSnapshotsProvider.overrideWith((_) async => _snapshots),
       ],
       child: const WatchlistPage(),

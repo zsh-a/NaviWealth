@@ -119,6 +119,8 @@ final class AppDatabaseTransactionScope {
     ExecutionPlans,
     ExecutionActions,
     ExecutionProgressEntries,
+    WatchlistCollections,
+    WatchlistCollectionMembers,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -146,7 +148,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 81;
+  int get schemaVersion => 82;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1023,6 +1025,14 @@ class AppDatabase extends _$AppDatabase {
         for (final statement in knowledgeIndexStmts) {
           await customStatement(statement);
         }
+      }
+      // v81 -> v82: synced organizational collections for the canonical
+      // watchlist. Existing items require no backfill and appear in the
+      // virtual All / Ungrouped views until the user assigns them.
+      if (from < 82) {
+        await m.createTable(watchlistCollections);
+        await m.createTable(watchlistCollectionMembers);
+        await _createWatchlistIndexes(this);
       }
     },
     beforeOpen: (details) async {

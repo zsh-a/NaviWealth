@@ -73,4 +73,68 @@ void main() {
       );
     },
   );
+
+  test(
+    'syncs collections and preserves memberships across item undo',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repo = WatchlistRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+
+      final growth = await repo.createCollection('Growth');
+      final income = await repo.createCollection('Income');
+      final item = await repo.add(
+        symbol: 'aapl',
+        market: AssetMarket.usStock,
+        collectionIds: [growth.id, income.id],
+      );
+
+      expect(await repo.watchCollections('u-test').first, hasLength(2));
+      var members = await repo.watchCollectionMembers('u-test').first;
+      expect(members.map((entry) => entry.collectionId).toSet(), {
+        growth.id,
+        income.id,
+      });
+      expect(members.map((entry) => entry.id).toSet(), hasLength(2));
+      expect(
+        outbox.queued.map((entry) => entry.table),
+        containsAll(<String>[
+          'watchlist_collections',
+          'watchlist_items',
+          'watchlist_collection_members',
+        ]),
+      );
+
+      await repo.setCollectionsForItem(item: item, collectionIds: {growth.id});
+      members = await repo.watchCollectionMembers('u-test').first;
+      expect(members.single.collectionId, growth.id);
+
+      final removedCollectionIds = await repo.remove(item);
+      expect(removedCollectionIds, [growth.id]);
+      expect(await repo.watchCollectionMembers('u-test').first, isEmpty);
+
+      await repo.add(
+        symbol: item.symbol,
+        market: item.market,
+        collectionIds: removedCollectionIds,
+      );
+      members = await repo.watchCollectionMembers('u-test').first;
+      expect(members.single.collectionId, growth.id);
+
+      await repo.deleteCollection(growth);
+      expect(await repo.watchCollectionMembers('u-test').first, isEmpty);
+      expect(
+        (await repo.watchCollections('u-test').first).map(
+          (entry) => entry.name,
+        ),
+        ['Income'],
+      );
+      expect(await repo.listActive('u-test'), hasLength(1));
+    },
+  );
 }
