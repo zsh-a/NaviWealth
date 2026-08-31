@@ -457,6 +457,20 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_item '
       'ON watchlist_collection_members(owner_user_id, watchlist_item_id) '
       'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulations_owner_hlc '
+      'ON watchlist_simulations(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulations_collection '
+      'ON watchlist_simulations(owner_user_id, collection_id, created_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_owner_hlc '
+      'ON watchlist_simulation_positions(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_simulation '
+      'ON watchlist_simulation_positions('
+      'owner_user_id, simulation_id, created_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_item '
+      'ON watchlist_simulation_positions(owner_user_id, watchlist_item_id) '
+      'WHERE deleted_at IS NULL',
 ];
 
 const List<String> _corporateActionIndexStmts = [
@@ -497,8 +511,8 @@ Future<void> _createWatchlistIndexes(AppDatabase db) async {
     final table = tableMatch?.group(1);
     if (table != null &&
         (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
-      // v10 creates only the canonical item table; collection tables arrive
-      // in v82. Focused migration fixtures may omit either side entirely.
+      // Watchlist tables arrived in v10/v82/v84. Focused migration fixtures
+      // may omit tables from earlier phases entirely.
       continue;
     }
     await db.customStatement(stmt);

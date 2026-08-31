@@ -67,6 +67,22 @@ minor units and must route decimal parsing and formatting through
 `features/finance/ingest/domain/minor_unit_amount.dart` without floating-point
 rounding.
 
+### Watchlist Paper Simulations
+
+Watchlist simulations are a separate paper-only aggregate backed by
+`watchlist_simulations` and `watchlist_simulation_positions`. They may reference
+a watchlist collection and canonical watchlist-item ids, but must never reuse
+or write `InvestmentPortfolio`, accounts, lots, journal entries, postings, or
+trade execution state. Virtual capital and target weights use `Decimal`; both
+tables sync under `fin:` and participate in encrypted backup.
+
+The current projection applies available point-in-time daily percentage moves
+to virtual target weights. Missing quotes reduce priced coverage. It does not
+claim a historical NAV or actual return and does not infer FX history, split or
+dividend adjustments. A future historical simulation must first define one
+authoritative FX series, missing-bar policy, and corporate-action adjustment
+policy before exposing a performance curve.
+
 ## Topic Routing
 
 | Concern | Authoritative document |

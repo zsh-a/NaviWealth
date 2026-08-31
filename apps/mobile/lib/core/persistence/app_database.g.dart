@@ -43451,6 +43451,1477 @@ class WatchlistCollectionMembersCompanion
   }
 }
 
+class $WatchlistSimulationsTable extends WatchlistSimulations
+    with TableInfo<$WatchlistSimulationsTable, WatchlistSimulationRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($WatchlistSimulationsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _collectionIdMeta = const VerificationMeta(
+    'collectionId',
+  );
+  @override
+  late final GeneratedColumn<String> collectionId = GeneratedColumn<String>(
+    'collection_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _baseCurrencyMeta = const VerificationMeta(
+    'baseCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> baseCurrency = GeneratedColumn<String>(
+    'base_currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> startingCapital =
+      GeneratedColumn<String>(
+        'starting_capital',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationsTable.$converterstartingCapital,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> cashWeight =
+      GeneratedColumn<String>(
+        'cash_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('0'),
+      ).withConverter<Decimal>($WatchlistSimulationsTable.$convertercashWeight);
+  static const VerificationMeta _baselineAtMeta = const VerificationMeta(
+    'baselineAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> baselineAt = GeneratedColumn<DateTime>(
+    'baseline_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    collectionId,
+    name,
+    baseCurrency,
+    startingCapital,
+    cashWeight,
+    baselineAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('collection_id')) {
+      context.handle(
+        _collectionIdMeta,
+        collectionId.isAcceptableOrUnknown(
+          data['collection_id']!,
+          _collectionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_collectionIdMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('base_currency')) {
+      context.handle(
+        _baseCurrencyMeta,
+        baseCurrency.isAcceptableOrUnknown(
+          data['base_currency']!,
+          _baseCurrencyMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_baseCurrencyMeta);
+    }
+    if (data.containsKey('baseline_at')) {
+      context.handle(
+        _baselineAtMeta,
+        baselineAt.isAcceptableOrUnknown(data['baseline_at']!, _baselineAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_baselineAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistSimulationsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      collectionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}collection_id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      baseCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}base_currency'],
+      )!,
+      startingCapital: $WatchlistSimulationsTable.$converterstartingCapital
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}starting_capital'],
+            )!,
+          ),
+      cashWeight: $WatchlistSimulationsTable.$convertercashWeight.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}cash_weight'],
+        )!,
+      ),
+      baselineAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}baseline_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationsTable createAlias(String alias) {
+    return $WatchlistSimulationsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $converterstartingCapital =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertercashWeight =
+      const DecimalConverter();
+}
+
+class WatchlistSimulationRow extends DataClass
+    implements Insertable<WatchlistSimulationRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String collectionId;
+  final String name;
+  final String baseCurrency;
+  final Decimal startingCapital;
+  final Decimal cashWeight;
+  final DateTime baselineAt;
+  final DateTime createdAt;
+  const WatchlistSimulationRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.collectionId,
+    required this.name,
+    required this.baseCurrency,
+    required this.startingCapital,
+    required this.cashWeight,
+    required this.baselineAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['collection_id'] = Variable<String>(collectionId);
+    map['name'] = Variable<String>(name);
+    map['base_currency'] = Variable<String>(baseCurrency);
+    {
+      map['starting_capital'] = Variable<String>(
+        $WatchlistSimulationsTable.$converterstartingCapital.toSql(
+          startingCapital,
+        ),
+      );
+    }
+    {
+      map['cash_weight'] = Variable<String>(
+        $WatchlistSimulationsTable.$convertercashWeight.toSql(cashWeight),
+      );
+    }
+    map['baseline_at'] = Variable<DateTime>(baselineAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WatchlistSimulationsCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistSimulationsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      collectionId: Value(collectionId),
+      name: Value(name),
+      baseCurrency: Value(baseCurrency),
+      startingCapital: Value(startingCapital),
+      cashWeight: Value(cashWeight),
+      baselineAt: Value(baselineAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WatchlistSimulationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      collectionId: serializer.fromJson<String>(json['collectionId']),
+      name: serializer.fromJson<String>(json['name']),
+      baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
+      startingCapital: serializer.fromJson<Decimal>(json['startingCapital']),
+      cashWeight: serializer.fromJson<Decimal>(json['cashWeight']),
+      baselineAt: serializer.fromJson<DateTime>(json['baselineAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'collectionId': serializer.toJson<String>(collectionId),
+      'name': serializer.toJson<String>(name),
+      'baseCurrency': serializer.toJson<String>(baseCurrency),
+      'startingCapital': serializer.toJson<Decimal>(startingCapital),
+      'cashWeight': serializer.toJson<Decimal>(cashWeight),
+      'baselineAt': serializer.toJson<DateTime>(baselineAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WatchlistSimulationRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? collectionId,
+    String? name,
+    String? baseCurrency,
+    Decimal? startingCapital,
+    Decimal? cashWeight,
+    DateTime? baselineAt,
+    DateTime? createdAt,
+  }) => WatchlistSimulationRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    collectionId: collectionId ?? this.collectionId,
+    name: name ?? this.name,
+    baseCurrency: baseCurrency ?? this.baseCurrency,
+    startingCapital: startingCapital ?? this.startingCapital,
+    cashWeight: cashWeight ?? this.cashWeight,
+    baselineAt: baselineAt ?? this.baselineAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  WatchlistSimulationRow copyWithCompanion(WatchlistSimulationsCompanion data) {
+    return WatchlistSimulationRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      collectionId: data.collectionId.present
+          ? data.collectionId.value
+          : this.collectionId,
+      name: data.name.present ? data.name.value : this.name,
+      baseCurrency: data.baseCurrency.present
+          ? data.baseCurrency.value
+          : this.baseCurrency,
+      startingCapital: data.startingCapital.present
+          ? data.startingCapital.value
+          : this.startingCapital,
+      cashWeight: data.cashWeight.present
+          ? data.cashWeight.value
+          : this.cashWeight,
+      baselineAt: data.baselineAt.present
+          ? data.baselineAt.value
+          : this.baselineAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('collectionId: $collectionId, ')
+          ..write('name: $name, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('startingCapital: $startingCapital, ')
+          ..write('cashWeight: $cashWeight, ')
+          ..write('baselineAt: $baselineAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    collectionId,
+    name,
+    baseCurrency,
+    startingCapital,
+    cashWeight,
+    baselineAt,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.collectionId == this.collectionId &&
+          other.name == this.name &&
+          other.baseCurrency == this.baseCurrency &&
+          other.startingCapital == this.startingCapital &&
+          other.cashWeight == this.cashWeight &&
+          other.baselineAt == this.baselineAt &&
+          other.createdAt == this.createdAt);
+}
+
+class WatchlistSimulationsCompanion
+    extends UpdateCompanion<WatchlistSimulationRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> collectionId;
+  final Value<String> name;
+  final Value<String> baseCurrency;
+  final Value<Decimal> startingCapital;
+  final Value<Decimal> cashWeight;
+  final Value<DateTime> baselineAt;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const WatchlistSimulationsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.collectionId = const Value.absent(),
+    this.name = const Value.absent(),
+    this.baseCurrency = const Value.absent(),
+    this.startingCapital = const Value.absent(),
+    this.cashWeight = const Value.absent(),
+    this.baselineAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String collectionId,
+    required String name,
+    required String baseCurrency,
+    required Decimal startingCapital,
+    this.cashWeight = const Value.absent(),
+    required DateTime baselineAt,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       collectionId = Value(collectionId),
+       name = Value(name),
+       baseCurrency = Value(baseCurrency),
+       startingCapital = Value(startingCapital),
+       baselineAt = Value(baselineAt),
+       createdAt = Value(createdAt);
+  static Insertable<WatchlistSimulationRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? collectionId,
+    Expression<String>? name,
+    Expression<String>? baseCurrency,
+    Expression<String>? startingCapital,
+    Expression<String>? cashWeight,
+    Expression<DateTime>? baselineAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (collectionId != null) 'collection_id': collectionId,
+      if (name != null) 'name': name,
+      if (baseCurrency != null) 'base_currency': baseCurrency,
+      if (startingCapital != null) 'starting_capital': startingCapital,
+      if (cashWeight != null) 'cash_weight': cashWeight,
+      if (baselineAt != null) 'baseline_at': baselineAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? collectionId,
+    Value<String>? name,
+    Value<String>? baseCurrency,
+    Value<Decimal>? startingCapital,
+    Value<Decimal>? cashWeight,
+    Value<DateTime>? baselineAt,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      collectionId: collectionId ?? this.collectionId,
+      name: name ?? this.name,
+      baseCurrency: baseCurrency ?? this.baseCurrency,
+      startingCapital: startingCapital ?? this.startingCapital,
+      cashWeight: cashWeight ?? this.cashWeight,
+      baselineAt: baselineAt ?? this.baselineAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (collectionId.present) {
+      map['collection_id'] = Variable<String>(collectionId.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (baseCurrency.present) {
+      map['base_currency'] = Variable<String>(baseCurrency.value);
+    }
+    if (startingCapital.present) {
+      map['starting_capital'] = Variable<String>(
+        $WatchlistSimulationsTable.$converterstartingCapital.toSql(
+          startingCapital.value,
+        ),
+      );
+    }
+    if (cashWeight.present) {
+      map['cash_weight'] = Variable<String>(
+        $WatchlistSimulationsTable.$convertercashWeight.toSql(cashWeight.value),
+      );
+    }
+    if (baselineAt.present) {
+      map['baseline_at'] = Variable<DateTime>(baselineAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('collectionId: $collectionId, ')
+          ..write('name: $name, ')
+          ..write('baseCurrency: $baseCurrency, ')
+          ..write('startingCapital: $startingCapital, ')
+          ..write('cashWeight: $cashWeight, ')
+          ..write('baselineAt: $baselineAt, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WatchlistSimulationPositionsTable extends WatchlistSimulationPositions
+    with
+        TableInfo<
+          $WatchlistSimulationPositionsTable,
+          WatchlistSimulationPositionRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationPositionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>($WatchlistSimulationPositionsTable.$converterhlc);
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _simulationIdMeta = const VerificationMeta(
+    'simulationId',
+  );
+  @override
+  late final GeneratedColumn<String> simulationId = GeneratedColumn<String>(
+    'simulation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _watchlistItemIdMeta = const VerificationMeta(
+    'watchlistItemId',
+  );
+  @override
+  late final GeneratedColumn<String> watchlistItemId = GeneratedColumn<String>(
+    'watchlist_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> targetWeight =
+      GeneratedColumn<String>(
+        'target_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationPositionsTable.$convertertargetWeight,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    watchlistItemId,
+    targetWeight,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulation_positions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationPositionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('simulation_id')) {
+      context.handle(
+        _simulationIdMeta,
+        simulationId.isAcceptableOrUnknown(
+          data['simulation_id']!,
+          _simulationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_simulationIdMeta);
+    }
+    if (data.containsKey('watchlist_item_id')) {
+      context.handle(
+        _watchlistItemIdMeta,
+        watchlistItemId.isAcceptableOrUnknown(
+          data['watchlist_item_id']!,
+          _watchlistItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_watchlistItemIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationPositionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationPositionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistSimulationPositionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      simulationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simulation_id'],
+      )!,
+      watchlistItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}watchlist_item_id'],
+      )!,
+      targetWeight: $WatchlistSimulationPositionsTable.$convertertargetWeight
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}target_weight'],
+            )!,
+          ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationPositionsTable createAlias(String alias) {
+    return $WatchlistSimulationPositionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $convertertargetWeight =
+      const DecimalConverter();
+}
+
+class WatchlistSimulationPositionRow extends DataClass
+    implements Insertable<WatchlistSimulationPositionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String simulationId;
+  final String watchlistItemId;
+  final Decimal targetWeight;
+  final DateTime createdAt;
+  const WatchlistSimulationPositionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.simulationId,
+    required this.watchlistItemId,
+    required this.targetWeight,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationPositionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['simulation_id'] = Variable<String>(simulationId);
+    map['watchlist_item_id'] = Variable<String>(watchlistItemId);
+    {
+      map['target_weight'] = Variable<String>(
+        $WatchlistSimulationPositionsTable.$convertertargetWeight.toSql(
+          targetWeight,
+        ),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WatchlistSimulationPositionsCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistSimulationPositionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      simulationId: Value(simulationId),
+      watchlistItemId: Value(watchlistItemId),
+      targetWeight: Value(targetWeight),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WatchlistSimulationPositionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationPositionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      simulationId: serializer.fromJson<String>(json['simulationId']),
+      watchlistItemId: serializer.fromJson<String>(json['watchlistItemId']),
+      targetWeight: serializer.fromJson<Decimal>(json['targetWeight']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'simulationId': serializer.toJson<String>(simulationId),
+      'watchlistItemId': serializer.toJson<String>(watchlistItemId),
+      'targetWeight': serializer.toJson<Decimal>(targetWeight),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WatchlistSimulationPositionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? simulationId,
+    String? watchlistItemId,
+    Decimal? targetWeight,
+    DateTime? createdAt,
+  }) => WatchlistSimulationPositionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    simulationId: simulationId ?? this.simulationId,
+    watchlistItemId: watchlistItemId ?? this.watchlistItemId,
+    targetWeight: targetWeight ?? this.targetWeight,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  WatchlistSimulationPositionRow copyWithCompanion(
+    WatchlistSimulationPositionsCompanion data,
+  ) {
+    return WatchlistSimulationPositionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      simulationId: data.simulationId.present
+          ? data.simulationId.value
+          : this.simulationId,
+      watchlistItemId: data.watchlistItemId.present
+          ? data.watchlistItemId.value
+          : this.watchlistItemId,
+      targetWeight: data.targetWeight.present
+          ? data.targetWeight.value
+          : this.targetWeight,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationPositionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('watchlistItemId: $watchlistItemId, ')
+          ..write('targetWeight: $targetWeight, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    watchlistItemId,
+    targetWeight,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationPositionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.simulationId == this.simulationId &&
+          other.watchlistItemId == this.watchlistItemId &&
+          other.targetWeight == this.targetWeight &&
+          other.createdAt == this.createdAt);
+}
+
+class WatchlistSimulationPositionsCompanion
+    extends UpdateCompanion<WatchlistSimulationPositionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> simulationId;
+  final Value<String> watchlistItemId;
+  final Value<Decimal> targetWeight;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const WatchlistSimulationPositionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.simulationId = const Value.absent(),
+    this.watchlistItemId = const Value.absent(),
+    this.targetWeight = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationPositionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String simulationId,
+    required String watchlistItemId,
+    required Decimal targetWeight,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       simulationId = Value(simulationId),
+       watchlistItemId = Value(watchlistItemId),
+       targetWeight = Value(targetWeight),
+       createdAt = Value(createdAt);
+  static Insertable<WatchlistSimulationPositionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? simulationId,
+    Expression<String>? watchlistItemId,
+    Expression<String>? targetWeight,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (simulationId != null) 'simulation_id': simulationId,
+      if (watchlistItemId != null) 'watchlist_item_id': watchlistItemId,
+      if (targetWeight != null) 'target_weight': targetWeight,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationPositionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? simulationId,
+    Value<String>? watchlistItemId,
+    Value<Decimal>? targetWeight,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationPositionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      simulationId: simulationId ?? this.simulationId,
+      watchlistItemId: watchlistItemId ?? this.watchlistItemId,
+      targetWeight: targetWeight ?? this.targetWeight,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationPositionsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (simulationId.present) {
+      map['simulation_id'] = Variable<String>(simulationId.value);
+    }
+    if (watchlistItemId.present) {
+      map['watchlist_item_id'] = Variable<String>(watchlistItemId.value);
+    }
+    if (targetWeight.present) {
+      map['target_weight'] = Variable<String>(
+        $WatchlistSimulationPositionsTable.$convertertargetWeight.toSql(
+          targetWeight.value,
+        ),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationPositionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('watchlistItemId: $watchlistItemId, ')
+          ..write('targetWeight: $targetWeight, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -43537,6 +45008,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WatchlistCollectionsTable(this);
   late final $WatchlistCollectionMembersTable watchlistCollectionMembers =
       $WatchlistCollectionMembersTable(this);
+  late final $WatchlistSimulationsTable watchlistSimulations =
+      $WatchlistSimulationsTable(this);
+  late final $WatchlistSimulationPositionsTable watchlistSimulationPositions =
+      $WatchlistSimulationPositionsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -43594,6 +45069,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     executionProgressEntries,
     watchlistCollections,
     watchlistCollectionMembers,
+    watchlistSimulations,
+    watchlistSimulationPositions,
   ];
 }
 
@@ -63670,6 +65147,720 @@ typedef $$WatchlistCollectionMembersTableProcessedTableManager =
       WatchlistCollectionMemberRow,
       PrefetchHooks Function()
     >;
+typedef $$WatchlistSimulationsTableCreateCompanionBuilder =
+    WatchlistSimulationsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String collectionId,
+      required String name,
+      required String baseCurrency,
+      required Decimal startingCapital,
+      Value<Decimal> cashWeight,
+      required DateTime baselineAt,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationsTableUpdateCompanionBuilder =
+    WatchlistSimulationsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> collectionId,
+      Value<String> name,
+      Value<String> baseCurrency,
+      Value<Decimal> startingCapital,
+      Value<Decimal> cashWeight,
+      Value<DateTime> baselineAt,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationsTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationsTable> {
+  $$WatchlistSimulationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get collectionId => $composableBuilder(
+    column: $table.collectionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get startingCapital => $composableBuilder(
+    column: $table.startingCapital,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get cashWeight =>
+      $composableBuilder(
+        column: $table.cashWeight,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get baselineAt => $composableBuilder(
+    column: $table.baselineAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationsTable> {
+  $$WatchlistSimulationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get collectionId => $composableBuilder(
+    column: $table.collectionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get startingCapital => $composableBuilder(
+    column: $table.startingCapital,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cashWeight => $composableBuilder(
+    column: $table.cashWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get baselineAt => $composableBuilder(
+    column: $table.baselineAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationsTable> {
+  $$WatchlistSimulationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get collectionId => $composableBuilder(
+    column: $table.collectionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get baseCurrency => $composableBuilder(
+    column: $table.baseCurrency,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get startingCapital =>
+      $composableBuilder(
+        column: $table.startingCapital,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get cashWeight =>
+      $composableBuilder(
+        column: $table.cashWeight,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get baselineAt => $composableBuilder(
+    column: $table.baselineAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationsTable,
+          WatchlistSimulationRow,
+          $$WatchlistSimulationsTableFilterComposer,
+          $$WatchlistSimulationsTableOrderingComposer,
+          $$WatchlistSimulationsTableAnnotationComposer,
+          $$WatchlistSimulationsTableCreateCompanionBuilder,
+          $$WatchlistSimulationsTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationsTable,
+              WatchlistSimulationRow
+            >,
+          ),
+          WatchlistSimulationRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> collectionId = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> baseCurrency = const Value.absent(),
+                Value<Decimal> startingCapital = const Value.absent(),
+                Value<Decimal> cashWeight = const Value.absent(),
+                Value<DateTime> baselineAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                collectionId: collectionId,
+                name: name,
+                baseCurrency: baseCurrency,
+                startingCapital: startingCapital,
+                cashWeight: cashWeight,
+                baselineAt: baselineAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String collectionId,
+                required String name,
+                required String baseCurrency,
+                required Decimal startingCapital,
+                Value<Decimal> cashWeight = const Value.absent(),
+                required DateTime baselineAt,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                collectionId: collectionId,
+                name: name,
+                baseCurrency: baseCurrency,
+                startingCapital: startingCapital,
+                cashWeight: cashWeight,
+                baselineAt: baselineAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationsTable,
+      WatchlistSimulationRow,
+      $$WatchlistSimulationsTableFilterComposer,
+      $$WatchlistSimulationsTableOrderingComposer,
+      $$WatchlistSimulationsTableAnnotationComposer,
+      $$WatchlistSimulationsTableCreateCompanionBuilder,
+      $$WatchlistSimulationsTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationsTable,
+          WatchlistSimulationRow
+        >,
+      ),
+      WatchlistSimulationRow,
+      PrefetchHooks Function()
+    >;
+typedef $$WatchlistSimulationPositionsTableCreateCompanionBuilder =
+    WatchlistSimulationPositionsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String simulationId,
+      required String watchlistItemId,
+      required Decimal targetWeight,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationPositionsTableUpdateCompanionBuilder =
+    WatchlistSimulationPositionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> simulationId,
+      Value<String> watchlistItemId,
+      Value<Decimal> targetWeight,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationPositionsTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationPositionsTable> {
+  $$WatchlistSimulationPositionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get targetWeight =>
+      $composableBuilder(
+        column: $table.targetWeight,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationPositionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationPositionsTable> {
+  $$WatchlistSimulationPositionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetWeight => $composableBuilder(
+    column: $table.targetWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationPositionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationPositionsTable> {
+  $$WatchlistSimulationPositionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get targetWeight =>
+      $composableBuilder(
+        column: $table.targetWeight,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationPositionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationPositionsTable,
+          WatchlistSimulationPositionRow,
+          $$WatchlistSimulationPositionsTableFilterComposer,
+          $$WatchlistSimulationPositionsTableOrderingComposer,
+          $$WatchlistSimulationPositionsTableAnnotationComposer,
+          $$WatchlistSimulationPositionsTableCreateCompanionBuilder,
+          $$WatchlistSimulationPositionsTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationPositionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationPositionsTable,
+              WatchlistSimulationPositionRow
+            >,
+          ),
+          WatchlistSimulationPositionRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationPositionsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationPositionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationPositionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationPositionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationPositionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> simulationId = const Value.absent(),
+                Value<String> watchlistItemId = const Value.absent(),
+                Value<Decimal> targetWeight = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationPositionsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                watchlistItemId: watchlistItemId,
+                targetWeight: targetWeight,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String simulationId,
+                required String watchlistItemId,
+                required Decimal targetWeight,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationPositionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                watchlistItemId: watchlistItemId,
+                targetWeight: targetWeight,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationPositionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationPositionsTable,
+      WatchlistSimulationPositionRow,
+      $$WatchlistSimulationPositionsTableFilterComposer,
+      $$WatchlistSimulationPositionsTableOrderingComposer,
+      $$WatchlistSimulationPositionsTableAnnotationComposer,
+      $$WatchlistSimulationPositionsTableCreateCompanionBuilder,
+      $$WatchlistSimulationPositionsTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationPositionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationPositionsTable,
+          WatchlistSimulationPositionRow
+        >,
+      ),
+      WatchlistSimulationPositionRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -63814,5 +66005,13 @@ class $AppDatabaseManager {
       $$WatchlistCollectionMembersTableTableManager(
         _db,
         _db.watchlistCollectionMembers,
+      );
+  $$WatchlistSimulationsTableTableManager get watchlistSimulations =>
+      $$WatchlistSimulationsTableTableManager(_db, _db.watchlistSimulations);
+  $$WatchlistSimulationPositionsTableTableManager
+  get watchlistSimulationPositions =>
+      $$WatchlistSimulationPositionsTableTableManager(
+        _db,
+        _db.watchlistSimulationPositions,
       );
 }

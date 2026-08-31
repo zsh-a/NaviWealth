@@ -155,6 +155,65 @@ void main() {
     expect(row.hlc.wallMillis, 2_000);
   });
 
+  test('materialises paper simulation rows in the finance namespace', () async {
+    final version = _hlc(1_500);
+    final written = await applier.applyAll([
+      RowChange(
+        table: prefixFinanceTable('watchlist_simulations'),
+        id: 'simulation-1',
+        payload: <String, Object?>{
+          'id': 'simulation-1',
+          'collection_id': 'collection-growth',
+          'name': 'Growth paper mix',
+          'base_currency': 'USD',
+          'starting_capital': '100000',
+          'cash_weight': '0.2',
+          'baseline_at': 1_700_000_000,
+          'created_at': 1_700_000_000,
+          'owner_user_id': _user,
+          'updated_at': 1_700_000_000,
+          'updated_by_device': _devA,
+          'hlc': version,
+          'deleted_at': null,
+        },
+        version: version,
+        deleted: false,
+        deviceId: _devA,
+      ),
+      RowChange(
+        table: prefixFinanceTable('watchlist_simulation_positions'),
+        id: 'position-1',
+        payload: <String, Object?>{
+          'id': 'position-1',
+          'simulation_id': 'simulation-1',
+          'watchlist_item_id': 'us_stock:AAPL',
+          'target_weight': '0.8',
+          'created_at': 1_700_000_000,
+          'owner_user_id': _user,
+          'updated_at': 1_700_000_000,
+          'updated_by_device': _devA,
+          'hlc': version,
+          'deleted_at': null,
+        },
+        version: version,
+        deleted: false,
+        deviceId: _devA,
+      ),
+    ]);
+
+    expect(written, 2);
+    final simulation = await (db.select(
+      db.watchlistSimulations,
+    )..where((t) => t.id.equals('simulation-1'))).getSingle();
+    final position = await (db.select(
+      db.watchlistSimulationPositions,
+    )..where((t) => t.id.equals('position-1'))).getSingle();
+    expect(simulation.collectionId, 'collection-growth');
+    expect(simulation.startingCapital.toString(), '100000');
+    expect(position.watchlistItemId, 'us_stock:AAPL');
+    expect(position.targetWeight.toString(), '0.8');
+  });
+
   test('skips rows that are not syncable tables', () async {
     final report = await applier.applyWithReport([
       RowChange(

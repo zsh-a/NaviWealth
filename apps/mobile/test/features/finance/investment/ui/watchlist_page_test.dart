@@ -11,6 +11,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_view_preferences.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
@@ -504,6 +505,9 @@ void main() {
           watchlistCollectionMembersProvider.overrideWith(
             (_) => Stream.value([_membership]),
           ),
+          watchlistSimulationsProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
           watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
           watchlistQuoteSnapshotsForScopeProvider.overrideWith(
             (_, _) async => const [],
@@ -571,6 +575,9 @@ void main() {
           ),
           watchlistCollectionMembersProvider.overrideWith(
             (_) => Stream.value([_membership]),
+          ),
+          watchlistSimulationsProvider.overrideWith(
+            (_) => Stream.value(const []),
           ),
           watchlistQuoteSnapshotsForScopeProvider.overrideWith(
             (_, _) async => const [],
@@ -744,6 +751,9 @@ void main() {
           ),
           watchlistCollectionMembersProvider.overrideWith(
             (_) => Stream.value([_membership, _otherMembership]),
+          ),
+          watchlistSimulationsProvider.overrideWith(
+            (_) => Stream.value(const []),
           ),
           watchlistQuoteSnapshotsForScopeProvider.overrideWith(
             (_, _) async => const [],

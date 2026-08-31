@@ -18729,6 +18729,180 @@ abstract class AppLocalizations {
     int unknown,
   );
 
+  /// Title for watchlist paper simulations
+  ///
+  /// In en, this message translates to:
+  /// **'Paper simulations'**
+  String get watchlistSimulationSectionTitle;
+
+  /// Create a paper watchlist simulation
+  ///
+  /// In en, this message translates to:
+  /// **'New simulation'**
+  String get watchlistSimulationCreateAction;
+
+  /// Empty simulation state when a collection has no symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Add symbols to this collection before creating a simulation.'**
+  String get watchlistSimulationNeedsSymbols;
+
+  /// Empty paper simulation state
+  ///
+  /// In en, this message translates to:
+  /// **'Test a virtual target allocation for this collection without committing real capital.'**
+  String get watchlistSimulationEmptyBody;
+
+  /// Paper simulation isolation disclosure
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation only — never changes real portfolios, accounts, lots, ledger entries, or trades.'**
+  String get watchlistSimulationIsolationNote;
+
+  /// Paper simulation badge
+  ///
+  /// In en, this message translates to:
+  /// **'Paper allocation · not actual performance'**
+  String get watchlistSimulationPaperBadge;
+
+  /// Edit watchlist simulation target weights
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust paper allocation'**
+  String get watchlistSimulationAdjustAction;
+
+  /// Delete a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'Delete simulation'**
+  String get watchlistSimulationDeleteAction;
+
+  /// Starting capital in a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual capital'**
+  String get watchlistSimulationVirtualCapital;
+
+  /// Weighted point-in-time daily move for a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'Weighted daily move'**
+  String get watchlistSimulationDailyMove;
+
+  /// Simulation weight with usable quote changes
+  ///
+  /// In en, this message translates to:
+  /// **'Priced allocation'**
+  String get watchlistSimulationPricedWeight;
+
+  /// Virtual cash weight in a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual cash'**
+  String get watchlistSimulationCashWeight;
+
+  /// Virtual amount implied by the weighted daily move
+  ///
+  /// In en, this message translates to:
+  /// **'Scenario move amount: {amount}'**
+  String watchlistSimulationDailyMoveAmount(String amount);
+
+  /// Paper simulation calculation scope and limitations
+  ///
+  /// In en, this message translates to:
+  /// **'Uses each available symbol\'s current daily percentage move. Missing quotes are excluded; no historical NAV, FX series, or corporate-action adjustment is inferred.'**
+  String get watchlistSimulationMethodNote;
+
+  /// Paper simulation creation sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Create paper simulation'**
+  String get watchlistSimulationCreateTitle;
+
+  /// Paper simulation name field
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation name'**
+  String get watchlistSimulationNameField;
+
+  /// Validation for paper simulation name
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a simulation name'**
+  String get watchlistSimulationNameRequired;
+
+  /// Virtual starting capital field
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual capital ({currency})'**
+  String watchlistSimulationCapitalField(String currency);
+
+  /// Initial equal-weight simulation disclosure
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Starts with one target weight.} other{Starts with equal target weights across {count} symbols.}} You can adjust them after creation.'**
+  String watchlistSimulationEqualWeightNote(int count);
+
+  /// Default paper simulation name
+  ///
+  /// In en, this message translates to:
+  /// **'{collection} simulation'**
+  String watchlistSimulationDefaultName(String collection);
+
+  /// Paper allocation edit sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust paper allocation'**
+  String get watchlistSimulationAdjustTitle;
+
+  /// Paper allocation edit guidance
+  ///
+  /// In en, this message translates to:
+  /// **'Set target percentages for symbols and virtual cash. The total must equal 100%.'**
+  String get watchlistSimulationAllocationNote;
+
+  /// Target weight field for one simulated symbol
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} target (%)'**
+  String watchlistSimulationWeightField(String symbol);
+
+  /// Virtual cash target weight field
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual cash (%)'**
+  String get watchlistSimulationCashField;
+
+  /// Paper target weight validation
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a percentage from 0 to 100'**
+  String get watchlistSimulationInvalidWeight;
+
+  /// Paper target weights total validation
+  ///
+  /// In en, this message translates to:
+  /// **'Target weights currently total {total}%. They must total 100%.'**
+  String watchlistSimulationWeightTotalError(String total);
+
+  /// Paper simulation delete confirmation title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete “{name}”?'**
+  String watchlistSimulationDeleteTitle(String name);
+
+  /// Paper simulation delete confirmation body
+  ///
+  /// In en, this message translates to:
+  /// **'Only this paper scenario and its virtual weights will be removed.'**
+  String get watchlistSimulationDeleteBody;
+
+  /// Paper simulation save failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the simulation'**
+  String get watchlistSimulationSaveFailed;
+
   /// Remove a symbol from only the selected collection
   ///
   /// In en, this message translates to:

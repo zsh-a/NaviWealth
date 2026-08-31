@@ -1,0 +1,194 @@
+import 'package:decimal/decimal.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_simulation_section.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+final _sync = SyncMeta(
+  ownerUserId: 'u-test',
+  updatedAt: DateTime.utc(2026, 8, 31),
+  updatedByDevice: 'dev-test',
+  hlc: Hlc.zero('dev-test'),
+);
+
+final _collection = WatchlistCollection(
+  id: 'collection-growth',
+  name: 'Growth',
+  createdAt: DateTime.utc(2026, 8, 31),
+  sync: _sync,
+);
+
+final _item = WatchlistItem(
+  id: 'us_stock:AAPL',
+  symbol: 'AAPL',
+  market: AssetMarket.usStock,
+  addedAt: DateTime.utc(2026, 8, 31),
+  alertRules: const PriceAlertRules(),
+  sync: _sync,
+);
+
+final _simulation = WatchlistSimulation(
+  id: 'simulation-growth',
+  collectionId: _collection.id,
+  name: 'Growth paper mix',
+  baseCurrency: 'USD',
+  startingCapital: Decimal.parse('100000'),
+  cashWeight: Decimal.parse('0.1'),
+  baselineAt: DateTime.utc(2026, 8, 31),
+  createdAt: DateTime.utc(2026, 8, 31),
+  sync: _sync,
+);
+
+final _position = WatchlistSimulationPosition(
+  id: 'position-aapl',
+  simulationId: _simulation.id,
+  watchlistItemId: _item.id,
+  targetWeight: Decimal.parse('0.9'),
+  createdAt: DateTime.utc(2026, 8, 31),
+  sync: _sync,
+);
+
+final _snapshot = WatchlistQuoteSnapshot(
+  item: _item,
+  response: MarketResponse(
+    data: Quote(
+      symbol: 'AAPL',
+      currency: 'USD',
+      price: Decimal.parse('101'),
+      previousClose: Decimal.parse('100'),
+      asOf: DateTime.utc(2026, 8, 31, 2),
+    ),
+    freshness: DataFreshness.cachedFresh,
+    source: 'test',
+    fetchedAt: DateTime.utc(2026, 8, 31, 2),
+  ),
+);
+
+void main() {
+  late SharedPreferences preferences;
+
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    preferences = await SharedPreferences.getInstance();
+  });
+
+  testWidgets('offers simulations only from a concrete collection', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: const [],
+        positions: const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Paper simulations'), findsOneWidget);
+    expect(
+      find.textContaining('never changes real portfolios'),
+      findsOneWidget,
+    );
+    expect(find.text('New simulation'), findsOneWidget);
+  });
+
+  testWidgets('shows paper projection and allocation controls', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final card = find.byKey(
+      const ValueKey<String>('watchlist-simulation-simulation-growth'),
+    );
+    expect(card, findsOneWidget);
+    expect(
+      find.descendant(
+        of: card,
+        matching: find.text('Paper allocation · not actual performance'),
+      ),
+      findsOneWidget,
+    );
+    final metrics = tester
+        .widgetList<AppMetricCluster>(
+          find.descendant(of: card, matching: find.byType(AppMetricCluster)),
+        )
+        .expand((cluster) => cluster.items)
+        .map((item) => '${item.label}:${item.value}');
+    expect(metrics, [
+      'Virtual capital:\$100K',
+      'Weighted daily move:+0.90%',
+      'Priced allocation:90%',
+      'Virtual cash:10%',
+    ]);
+    expect(
+      find.descendant(of: card, matching: find.text('AAPL')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: card,
+        matching: find.textContaining('no historical NAV'),
+      ),
+      findsOneWidget,
+    );
+
+    expect(find.byIcon(FLucideIcons.slidersHorizontal), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.trash2), findsOneWidget);
+  });
+}
+
+Widget _wrap({
+  required SharedPreferences preferences,
+  required List<WatchlistSimulation> simulations,
+  required List<WatchlistSimulationPosition> positions,
+}) {
+  return ProviderScope(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(preferences),
+      watchlistSimulationsProvider.overrideWith(
+        (_) => Stream.value(simulations),
+      ),
+      watchlistSimulationPositionsProvider.overrideWith(
+        (_, _) => Stream.value(positions),
+      ),
+    ],
+    child: MaterialApp(
+      theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en', 'US'),
+      home: FTheme(
+        data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+        child: Scaffold(
+          body: ListView(
+            children: [
+              WatchlistSimulationSection(
+                collection: _collection,
+                items: [_item],
+                snapshots: [_snapshot],
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}

@@ -121,6 +121,8 @@ final class AppDatabaseTransactionScope {
     ExecutionProgressEntries,
     WatchlistCollections,
     WatchlistCollectionMembers,
+    WatchlistSimulations,
+    WatchlistSimulationPositions,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -148,7 +150,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 83;
+  int get schemaVersion => 84;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1050,6 +1052,13 @@ class AppDatabase extends _$AppDatabase {
           column: 'sort_rank',
           definition: 'INTEGER NOT NULL DEFAULT 0',
         );
+        await _createWatchlistIndexes(this);
+      }
+      // v83 -> v84: paper-only watchlist simulations. These tables have no
+      // foreign keys or write paths into real portfolio/ledger aggregates.
+      if (from < 84) {
+        await m.createTable(watchlistSimulations);
+        await m.createTable(watchlistSimulationPositions);
         await _createWatchlistIndexes(this);
       }
     },

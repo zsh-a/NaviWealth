@@ -10533,6 +10533,110 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get watchlistSimulationSectionTitle => '模拟组合';
+
+  @override
+  String get watchlistSimulationCreateAction => '新建模拟';
+
+  @override
+  String get watchlistSimulationNeedsSymbols => '请先向当前组合添加标的，再创建模拟组合。';
+
+  @override
+  String get watchlistSimulationEmptyBody => '为当前组合测试虚拟目标配置，不投入真实资金。';
+
+  @override
+  String get watchlistSimulationIsolationNote =>
+      '仅用于模拟——不会修改真实投资组合、账户、批次、账本记录或交易。';
+
+  @override
+  String get watchlistSimulationPaperBadge => '模拟配置 · 非真实业绩';
+
+  @override
+  String get watchlistSimulationAdjustAction => '调整模拟配置';
+
+  @override
+  String get watchlistSimulationDeleteAction => '删除模拟';
+
+  @override
+  String get watchlistSimulationVirtualCapital => '虚拟本金';
+
+  @override
+  String get watchlistSimulationDailyMove => '加权当日涨跌';
+
+  @override
+  String get watchlistSimulationPricedWeight => '有行情权重';
+
+  @override
+  String get watchlistSimulationCashWeight => '虚拟现金';
+
+  @override
+  String watchlistSimulationDailyMoveAmount(String amount) {
+    return '情景变动金额：$amount';
+  }
+
+  @override
+  String get watchlistSimulationMethodNote =>
+      '仅使用各标的当前可用的当日涨跌幅；缺失行情不参与计算，且不会推断历史净值、汇率序列或公司行动调整。';
+
+  @override
+  String get watchlistSimulationCreateTitle => '创建模拟组合';
+
+  @override
+  String get watchlistSimulationNameField => '模拟名称';
+
+  @override
+  String get watchlistSimulationNameRequired => '请输入模拟名称';
+
+  @override
+  String watchlistSimulationCapitalField(String currency) {
+    return '虚拟本金（$currency）';
+  }
+
+  @override
+  String watchlistSimulationEqualWeightNote(int count) {
+    return '初始为 $count 个标的等权配置，创建后可继续调整。';
+  }
+
+  @override
+  String watchlistSimulationDefaultName(String collection) {
+    return '$collection模拟';
+  }
+
+  @override
+  String get watchlistSimulationAdjustTitle => '调整模拟配置';
+
+  @override
+  String get watchlistSimulationAllocationNote =>
+      '设置各标的与虚拟现金的目标百分比，合计必须为 100%。';
+
+  @override
+  String watchlistSimulationWeightField(String symbol) {
+    return '$symbol 目标权重（%）';
+  }
+
+  @override
+  String get watchlistSimulationCashField => '虚拟现金（%）';
+
+  @override
+  String get watchlistSimulationInvalidWeight => '请输入 0 到 100 之间的百分比';
+
+  @override
+  String watchlistSimulationWeightTotalError(String total) {
+    return '当前目标权重合计为 $total%，必须合计为 100%。';
+  }
+
+  @override
+  String watchlistSimulationDeleteTitle(String name) {
+    return '删除“$name”？';
+  }
+
+  @override
+  String get watchlistSimulationDeleteBody => '仅会移除此模拟情景及其虚拟权重。';
+
+  @override
+  String get watchlistSimulationSaveFailed => '无法保存模拟组合';
+
+  @override
   String get watchlistRemoveFromCollectionAction => '移出当前组合';
 
   @override

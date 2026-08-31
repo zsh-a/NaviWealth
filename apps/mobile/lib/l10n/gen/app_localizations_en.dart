@@ -11117,6 +11117,121 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get watchlistSimulationSectionTitle => 'Paper simulations';
+
+  @override
+  String get watchlistSimulationCreateAction => 'New simulation';
+
+  @override
+  String get watchlistSimulationNeedsSymbols =>
+      'Add symbols to this collection before creating a simulation.';
+
+  @override
+  String get watchlistSimulationEmptyBody =>
+      'Test a virtual target allocation for this collection without committing real capital.';
+
+  @override
+  String get watchlistSimulationIsolationNote =>
+      'Simulation only — never changes real portfolios, accounts, lots, ledger entries, or trades.';
+
+  @override
+  String get watchlistSimulationPaperBadge =>
+      'Paper allocation · not actual performance';
+
+  @override
+  String get watchlistSimulationAdjustAction => 'Adjust paper allocation';
+
+  @override
+  String get watchlistSimulationDeleteAction => 'Delete simulation';
+
+  @override
+  String get watchlistSimulationVirtualCapital => 'Virtual capital';
+
+  @override
+  String get watchlistSimulationDailyMove => 'Weighted daily move';
+
+  @override
+  String get watchlistSimulationPricedWeight => 'Priced allocation';
+
+  @override
+  String get watchlistSimulationCashWeight => 'Virtual cash';
+
+  @override
+  String watchlistSimulationDailyMoveAmount(String amount) {
+    return 'Scenario move amount: $amount';
+  }
+
+  @override
+  String get watchlistSimulationMethodNote =>
+      'Uses each available symbol\'s current daily percentage move. Missing quotes are excluded; no historical NAV, FX series, or corporate-action adjustment is inferred.';
+
+  @override
+  String get watchlistSimulationCreateTitle => 'Create paper simulation';
+
+  @override
+  String get watchlistSimulationNameField => 'Simulation name';
+
+  @override
+  String get watchlistSimulationNameRequired => 'Enter a simulation name';
+
+  @override
+  String watchlistSimulationCapitalField(String currency) {
+    return 'Virtual capital ($currency)';
+  }
+
+  @override
+  String watchlistSimulationEqualWeightNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Starts with equal target weights across $count symbols.',
+      one: 'Starts with one target weight.',
+    );
+    return '$_temp0 You can adjust them after creation.';
+  }
+
+  @override
+  String watchlistSimulationDefaultName(String collection) {
+    return '$collection simulation';
+  }
+
+  @override
+  String get watchlistSimulationAdjustTitle => 'Adjust paper allocation';
+
+  @override
+  String get watchlistSimulationAllocationNote =>
+      'Set target percentages for symbols and virtual cash. The total must equal 100%.';
+
+  @override
+  String watchlistSimulationWeightField(String symbol) {
+    return '$symbol target (%)';
+  }
+
+  @override
+  String get watchlistSimulationCashField => 'Virtual cash (%)';
+
+  @override
+  String get watchlistSimulationInvalidWeight =>
+      'Enter a percentage from 0 to 100';
+
+  @override
+  String watchlistSimulationWeightTotalError(String total) {
+    return 'Target weights currently total $total%. They must total 100%.';
+  }
+
+  @override
+  String watchlistSimulationDeleteTitle(String name) {
+    return 'Delete “$name”?';
+  }
+
+  @override
+  String get watchlistSimulationDeleteBody =>
+      'Only this paper scenario and its virtual weights will be removed.';
+
+  @override
+  String get watchlistSimulationSaveFailed => 'Could not save the simulation';
+
+  @override
   String get watchlistRemoveFromCollectionAction => 'Remove from collection';
 
   @override

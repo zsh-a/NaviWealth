@@ -6075,6 +6075,85 @@
       "unknown": { "type": "int" }
     }
   },
+  "watchlistSimulationSectionTitle": "Paper simulations",
+  "@watchlistSimulationSectionTitle": { "description": "Title for watchlist paper simulations" },
+  "watchlistSimulationCreateAction": "New simulation",
+  "@watchlistSimulationCreateAction": { "description": "Create a paper watchlist simulation" },
+  "watchlistSimulationNeedsSymbols": "Add symbols to this collection before creating a simulation.",
+  "@watchlistSimulationNeedsSymbols": { "description": "Empty simulation state when a collection has no symbols" },
+  "watchlistSimulationEmptyBody": "Test a virtual target allocation for this collection without committing real capital.",
+  "@watchlistSimulationEmptyBody": { "description": "Empty paper simulation state" },
+  "watchlistSimulationIsolationNote": "Simulation only — never changes real portfolios, accounts, lots, ledger entries, or trades.",
+  "@watchlistSimulationIsolationNote": { "description": "Paper simulation isolation disclosure" },
+  "watchlistSimulationPaperBadge": "Paper allocation · not actual performance",
+  "@watchlistSimulationPaperBadge": { "description": "Paper simulation badge" },
+  "watchlistSimulationAdjustAction": "Adjust paper allocation",
+  "@watchlistSimulationAdjustAction": { "description": "Edit watchlist simulation target weights" },
+  "watchlistSimulationDeleteAction": "Delete simulation",
+  "@watchlistSimulationDeleteAction": { "description": "Delete a paper simulation" },
+  "watchlistSimulationVirtualCapital": "Virtual capital",
+  "@watchlistSimulationVirtualCapital": { "description": "Starting capital in a paper simulation" },
+  "watchlistSimulationDailyMove": "Weighted daily move",
+  "@watchlistSimulationDailyMove": { "description": "Weighted point-in-time daily move for a paper simulation" },
+  "watchlistSimulationPricedWeight": "Priced allocation",
+  "@watchlistSimulationPricedWeight": { "description": "Simulation weight with usable quote changes" },
+  "watchlistSimulationCashWeight": "Virtual cash",
+  "@watchlistSimulationCashWeight": { "description": "Virtual cash weight in a paper simulation" },
+  "watchlistSimulationDailyMoveAmount": "Scenario move amount: {amount}",
+  "@watchlistSimulationDailyMoveAmount": {
+    "description": "Virtual amount implied by the weighted daily move",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "watchlistSimulationMethodNote": "Uses each available symbol's current daily percentage move. Missing quotes are excluded; no historical NAV, FX series, or corporate-action adjustment is inferred.",
+  "@watchlistSimulationMethodNote": { "description": "Paper simulation calculation scope and limitations" },
+  "watchlistSimulationCreateTitle": "Create paper simulation",
+  "@watchlistSimulationCreateTitle": { "description": "Paper simulation creation sheet title" },
+  "watchlistSimulationNameField": "Simulation name",
+  "@watchlistSimulationNameField": { "description": "Paper simulation name field" },
+  "watchlistSimulationNameRequired": "Enter a simulation name",
+  "@watchlistSimulationNameRequired": { "description": "Validation for paper simulation name" },
+  "watchlistSimulationCapitalField": "Virtual capital ({currency})",
+  "@watchlistSimulationCapitalField": {
+    "description": "Virtual starting capital field",
+    "placeholders": { "currency": { "type": "String" } }
+  },
+  "watchlistSimulationEqualWeightNote": "{count, plural, =1{Starts with one target weight.} other{Starts with equal target weights across {count} symbols.}} You can adjust them after creation.",
+  "@watchlistSimulationEqualWeightNote": {
+    "description": "Initial equal-weight simulation disclosure",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "watchlistSimulationDefaultName": "{collection} simulation",
+  "@watchlistSimulationDefaultName": {
+    "description": "Default paper simulation name",
+    "placeholders": { "collection": { "type": "String" } }
+  },
+  "watchlistSimulationAdjustTitle": "Adjust paper allocation",
+  "@watchlistSimulationAdjustTitle": { "description": "Paper allocation edit sheet title" },
+  "watchlistSimulationAllocationNote": "Set target percentages for symbols and virtual cash. The total must equal 100%.",
+  "@watchlistSimulationAllocationNote": { "description": "Paper allocation edit guidance" },
+  "watchlistSimulationWeightField": "{symbol} target (%)",
+  "@watchlistSimulationWeightField": {
+    "description": "Target weight field for one simulated symbol",
+    "placeholders": { "symbol": { "type": "String" } }
+  },
+  "watchlistSimulationCashField": "Virtual cash (%)",
+  "@watchlistSimulationCashField": { "description": "Virtual cash target weight field" },
+  "watchlistSimulationInvalidWeight": "Enter a percentage from 0 to 100",
+  "@watchlistSimulationInvalidWeight": { "description": "Paper target weight validation" },
+  "watchlistSimulationWeightTotalError": "Target weights currently total {total}%. They must total 100%.",
+  "@watchlistSimulationWeightTotalError": {
+    "description": "Paper target weights total validation",
+    "placeholders": { "total": { "type": "String" } }
+  },
+  "watchlistSimulationDeleteTitle": "Delete “{name}”?",
+  "@watchlistSimulationDeleteTitle": {
+    "description": "Paper simulation delete confirmation title",
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "watchlistSimulationDeleteBody": "Only this paper scenario and its virtual weights will be removed.",
+  "@watchlistSimulationDeleteBody": { "description": "Paper simulation delete confirmation body" },
+  "watchlistSimulationSaveFailed": "Could not save the simulation",
+  "@watchlistSimulationSaveFailed": { "description": "Paper simulation save failure" },
   "watchlistRemoveFromCollectionAction": "Remove from collection",
   "@watchlistRemoveFromCollectionAction": { "description": "Remove a symbol from only the selected collection" },
   "watchlistRemovedFromCollection": "Removed from collection",

@@ -71,6 +71,45 @@ class WatchlistCollectionMembers extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// A paper-only allocation attached to a watchlist collection.
+///
+/// This aggregate is deliberately separate from [InvestmentPortfolios] and
+/// never owns accounts, lots, postings, or executable trades. Starting capital
+/// and weights are virtual scenario inputs only.
+@DataClassName('WatchlistSimulationRow')
+class WatchlistSimulations extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get collectionId => text()();
+  TextColumn get name => text()();
+  TextColumn get baseCurrency => text().withLength(min: 3, max: 8)();
+  TextColumn get startingCapital => text().map(const DecimalConverter())();
+  TextColumn get cashWeight =>
+      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  DateTimeColumn get baselineAt => dateTime()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Target weights for a paper-only watchlist simulation.
+@DataClassName('WatchlistSimulationPositionRow')
+class WatchlistSimulationPositions extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get simulationId => text()();
+  TextColumn get watchlistItemId => text()();
+  TextColumn get targetWeight => text().map(const DecimalConverter())();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, simulation_id, watchlist_item_id)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('LiabilityRow')
 class Liabilities extends Table with SyncableTable {
   TextColumn get id => text()();

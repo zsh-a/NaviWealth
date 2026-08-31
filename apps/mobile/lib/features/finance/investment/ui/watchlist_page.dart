@@ -24,6 +24,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
 import '../data/watchlist_view_preferences.dart';
+import 'watchlist_simulation_section.dart';
 
 const _pollInterval = Duration(minutes: 5);
 const _collectionQueryKey = 'collection';
@@ -148,6 +149,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         data: (items) => _WatchlistBody(
           items: items,
           collections: collections,
+          selectedCollection: selectedCollection,
           collectionCounts: collectionCounts,
           scope: scope,
           sortOrder: sortOrder,
@@ -401,6 +403,7 @@ class _WatchlistBody extends StatelessWidget {
   const _WatchlistBody({
     required this.items,
     required this.collections,
+    required this.selectedCollection,
     required this.collectionCounts,
     required this.scope,
     required this.sortOrder,
@@ -424,6 +427,7 @@ class _WatchlistBody extends StatelessWidget {
 
   final List<WatchlistItem> items;
   final List<WatchlistCollection> collections;
+  final WatchlistCollection? selectedCollection;
   final WatchlistCollectionCounts collectionCounts;
   final WatchlistScope scope;
   final WatchlistSortOrder sortOrder;
@@ -548,6 +552,17 @@ class _WatchlistBody extends StatelessWidget {
                 ],
               ),
             ),
+            if (selectedCollection != null) ...[
+              const SizedBox(height: AppSpacing.s8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+                child: WatchlistSimulationSection(
+                  collection: selectedCollection!,
+                  items: items,
+                  snapshots: snapshots,
+                ),
+              ),
+            ],
           ],
         ],
       ),

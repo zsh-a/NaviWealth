@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 83', () {
-      expect(db.schemaVersion, 83);
+    test('is 84', () {
+      expect(db.schemaVersion, 84);
     });
   });
 
@@ -52,6 +52,57 @@ void main() {
           .get();
       final columns = result.map((row) => row.read<String>('name')).toSet();
       expect(columns, containsAll(['collection_id', 'watchlist_item_id']));
+    });
+  });
+
+  group('Watchlist simulations', () {
+    for (final table in const [
+      'watchlist_simulations',
+      'watchlist_simulation_positions',
+    ]) {
+      test('$table has sync columns', () async {
+        final result = await db.customSelect('PRAGMA table_info($table)').get();
+        final columns = result.map((row) => row.read<String>('name')).toSet();
+        expect(
+          columns,
+          containsAll(['id', 'owner_user_id', 'hlc', 'deleted_at']),
+        );
+      });
+    }
+
+    test('simulation inputs stay paper-only and decimal-backed', () async {
+      final simulationColumns = await db
+          .customSelect('PRAGMA table_info(watchlist_simulations)')
+          .get();
+      final simulationNames = simulationColumns
+          .map((row) => row.read<String>('name'))
+          .toSet();
+      expect(
+        simulationNames,
+        containsAll([
+          'collection_id',
+          'base_currency',
+          'starting_capital',
+          'cash_weight',
+          'baseline_at',
+        ]),
+      );
+      expect(
+        simulationNames.intersection({
+          'portfolio_id',
+          'account_id',
+          'journal_entry_id',
+        }),
+        isEmpty,
+      );
+
+      final positionColumns = await db
+          .customSelect('PRAGMA table_info(watchlist_simulation_positions)')
+          .get();
+      expect(
+        positionColumns.map((row) => row.read<String>('name')),
+        containsAll(['simulation_id', 'watchlist_item_id', 'target_weight']),
+      );
     });
   });
 
