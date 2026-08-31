@@ -35,6 +35,7 @@ enum CorporateActionFetchDisposition {
   success,
   authoritativeEmpty,
   partial,
+  stale,
   unsupported,
   failure,
 }
@@ -59,7 +60,8 @@ class CorporateActionFetchResult {
   bool get hasUsableData =>
       disposition == CorporateActionFetchDisposition.success ||
       disposition == CorporateActionFetchDisposition.authoritativeEmpty ||
-      disposition == CorporateActionFetchDisposition.partial;
+      disposition == CorporateActionFetchDisposition.partial ||
+      disposition == CorporateActionFetchDisposition.stale;
 }
 
 abstract interface class CorporateActionProvider {

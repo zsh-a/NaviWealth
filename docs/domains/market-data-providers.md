@@ -45,9 +45,15 @@ accounts, lots, journal entries, or postings. Provider failures, unsupported
 markets, authoritative empty responses, and partial/malformed payloads remain
 distinct result states.
 
-The cache and single-flight layer sits above provider adapters. Provider source
-identity and normalized revision hashes must survive projection so later
-consumers can deduplicate revisions deterministically.
+The cache and single-flight layer sits above provider adapters. Normalized
+candidates and fetch-state metadata persist in the device-local
+`market_corporate_action_candidates` and
+`market_corporate_action_fetch_states` tables. They are rebuildable cache rows,
+remain outside Sync v3 and encrypted backups, and are cleared with FinanceOS
+cache cleanup. An expired successful cache may be returned only as an explicit
+`stale` result after refresh failure; it must never masquerade as fresh data.
+Provider source identity and normalized revision hashes survive persistence so
+later consumers can deduplicate revisions deterministically.
 
 ## Why the split exists
 

@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/config/app_config.dart';
@@ -9,6 +10,8 @@ import 'package:naviwealth/features/finance/data/market/http/rate_limiter.dart';
 import 'package:naviwealth/features/finance/data/market/http/retry_policy.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_action_provider.dart';
 import 'package:naviwealth/features/finance/data/market/services/corporate_actions_service.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/corporate_action_cache.dart';
 import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
@@ -39,6 +42,7 @@ Map<String, Object?> _chartBody({
 
 ({CorporateActionsService service, CannedAdapter adapter}) _build({
   DateTime? now,
+  CorporateActionCache? cache,
 }) {
   final adapter = CannedAdapter();
   final dio = Dio()..httpClientAdapter = adapter;
@@ -63,10 +67,54 @@ Map<String, Object?> _chartBody({
       crashReporter: const NoopCrashReporter(),
     ),
     successTtl: const Duration(hours: 12),
+    cache: cache,
     errorTtl: const Duration(minutes: 15),
     now: now == null ? null : () => now,
   );
   return (service: service, adapter: adapter);
+}
+
+MarketCorporateAction _cachedDividend() => MarketCorporateAction(
+  id: 'yfinance:chart:AAPL:dividend:cached',
+  source: 'yfinance',
+  dataset: 'chart',
+  sourceKey: 'AAPL:dividend:cached',
+  revisionHash: 'cached-revision',
+  identityStrength: MarketCorporateActionIdentityStrength.weak,
+  symbol: 'AAPL',
+  market: AssetMarket.usStock,
+  kind: MarketCorporateActionKind.distribution,
+  status: MarketCorporateActionStatus.unknown,
+  exDate: DateTime.utc(2026, 6, 15),
+  currency: 'USD',
+  cashPerShare: Decimal.parse('0.25'),
+);
+
+class _MemoryCache implements CorporateActionCache {
+  _MemoryCache(this.result);
+
+  CorporateActionFetchResult? result;
+
+  @override
+  Future<void> invalidate({
+    required String symbol,
+    required AssetMarket market,
+  }) async {
+    result = null;
+  }
+
+  @override
+  Future<CorporateActionFetchResult?> read({
+    required String symbol,
+    required AssetMarket market,
+  }) async => result;
+
+  @override
+  Future<void> write({
+    required String symbol,
+    required AssetMarket market,
+    required CorporateActionFetchResult result,
+  }) async {}
 }
 
 void main() {
@@ -215,7 +263,7 @@ void main() {
         );
 
       final first = await harness.service.getForSymbol('AAPL');
-      harness.service.invalidate('AAPL');
+      await harness.service.invalidate('AAPL');
       final second = await harness.service.getForSymbol('AAPL');
 
       expect(harness.adapter.calls, hasLength(2));
@@ -232,6 +280,52 @@ void main() {
         expect(harness.adapter.calls, isEmpty);
       },
     );
+
+    test('fresh persistent cache avoids an HTTP request', () async {
+      final now = DateTime.utc(2026, 6, 1, 12);
+      final cache = _MemoryCache(
+        CorporateActionFetchResult(
+          provider: 'yfinance',
+          disposition: CorporateActionFetchDisposition.success,
+          actions: [_cachedDividend()],
+          fetchedAt: now.subtract(const Duration(hours: 1)),
+        ),
+      );
+      final harness = _build(now: now, cache: cache);
+
+      final result = await harness.service.fetchForSymbol('AAPL');
+
+      expect(result.disposition, CorporateActionFetchDisposition.success);
+      expect(result.actions.single.cashPerShare.toString(), '0.25');
+      expect(harness.adapter.calls, isEmpty);
+    });
+
+    test('expired cache becomes explicit stale fallback on failure', () async {
+      final now = DateTime.utc(2026, 6, 1, 12);
+      final cache = _MemoryCache(
+        CorporateActionFetchResult(
+          provider: 'yfinance',
+          disposition: CorporateActionFetchDisposition.success,
+          actions: [_cachedDividend()],
+          fetchedAt: now.subtract(const Duration(days: 1)),
+        ),
+      );
+      final harness = _build(now: now, cache: cache);
+      harness.adapter.enqueueRaw(
+        '/chart/AAPL',
+        CannedResponse('server error', status: 500),
+      );
+
+      final result = await harness.service.fetchForSymbol('AAPL');
+      final second = await harness.service.fetchForSymbol('AAPL');
+
+      expect(result.disposition, CorporateActionFetchDisposition.stale);
+      expect(result.actions, hasLength(1));
+      expect(result.error, isNotNull);
+      expect(result.warning, contains('cached'));
+      expect(second.disposition, CorporateActionFetchDisposition.stale);
+      expect(harness.adapter.calls, hasLength(1));
+    });
 
     test('unsupported market does not call an unrelated provider', () async {
       final harness = _build();

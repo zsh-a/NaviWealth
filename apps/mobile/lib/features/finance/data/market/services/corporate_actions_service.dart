@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/corporate_action_cache.dart';
 import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
@@ -16,17 +17,20 @@ class CorporateActionsService {
   CorporateActionsService({
     required List<CorporateActionProvider> providers,
     required AppLogger logger,
+    CorporateActionCache? cache,
     Duration successTtl = const Duration(hours: 12),
     Duration errorTtl = const Duration(minutes: 15),
     DateTime Function()? now,
   }) : _providers = List<CorporateActionProvider>.unmodifiable(providers),
        _logger = logger,
+       _persistentCache = cache,
        _successTtl = successTtl,
        _errorTtl = errorTtl,
        _now = now ?? (() => DateTime.now().toUtc());
 
   final List<CorporateActionProvider> _providers;
   final AppLogger _logger;
+  final CorporateActionCache? _persistentCache;
   final Duration _successTtl;
   final Duration _errorTtl;
   final DateTime Function() _now;
@@ -43,7 +47,8 @@ class CorporateActionsService {
     return switch (result.disposition) {
       CorporateActionFetchDisposition.success ||
       CorporateActionFetchDisposition.authoritativeEmpty ||
-      CorporateActionFetchDisposition.partial => result.actions,
+      CorporateActionFetchDisposition.partial ||
+      CorporateActionFetchDisposition.stale => result.actions,
       CorporateActionFetchDisposition.unsupported => const [],
       CorporateActionFetchDisposition.failure =>
         throw result.error ??
@@ -78,22 +83,56 @@ class CorporateActionsService {
     final running = _inflight[key];
     if (running != null) return running;
 
-    final future = _fetch(normalizedSymbol, resolvedMarket);
+    final future = _readThroughAndFetch(normalizedSymbol, resolvedMarket);
     _inflight[key] = future;
     future.whenComplete(() => _inflight.remove(key));
     return future;
   }
 
-  void invalidate(String symbol, {AssetMarket? market}) {
+  Future<void> invalidate(String symbol, {AssetMarket? market}) async {
     final normalizedSymbol = symbol.trim().toUpperCase();
     final resolvedMarket = market ?? inferAssetMarket(normalizedSymbol);
     _cache.remove('${resolvedMarket.wire}:$normalizedSymbol');
+    try {
+      await _persistentCache?.invalidate(
+        symbol: normalizedSymbol,
+        market: resolvedMarket,
+      );
+    } catch (error, stackTrace) {
+      _logger.w(
+        'corporate_actions_service: cache invalidate failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  Future<CorporateActionFetchResult> _readThroughAndFetch(
+    String symbol,
+    AssetMarket market,
+  ) async {
+    CorporateActionFetchResult? persisted;
+    try {
+      persisted = await _persistentCache?.read(symbol: symbol, market: market);
+    } catch (error, stackTrace) {
+      _logger.w(
+        'corporate_actions_service: cache read failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+    if (persisted != null && !_expired(persisted)) {
+      _storeMemory(symbol, market, persisted, cachedAt: persisted.fetchedAt);
+      return persisted;
+    }
+    return _fetch(symbol, market, stale: persisted);
   }
 
   Future<CorporateActionFetchResult> _fetch(
     String symbol,
-    AssetMarket market,
-  ) async {
+    AssetMarket market, {
+    CorporateActionFetchResult? stale,
+  }) async {
     final providers = _providers
         .where(
           (provider) => provider.capabilities.supportedMarkets.contains(market),
@@ -107,7 +146,7 @@ class CorporateActionsService {
         fetchedAt: _now(),
         warning: 'No corporate-action provider supports ${market.wire}.',
       );
-      _store(symbol, market, result);
+      await _store(symbol, market, result);
       return result;
     }
 
@@ -124,7 +163,7 @@ class CorporateActionsService {
       try {
         final result = await provider.fetch(request);
         if (result.hasUsableData) {
-          _store(symbol, market, result);
+          await _store(symbol, market, result);
           return result;
         }
         if (result.disposition == CorporateActionFetchDisposition.unsupported) {
@@ -158,7 +197,7 @@ class CorporateActionsService {
         fetchedAt: _now(),
         warning: 'Corporate actions are unavailable on this platform.',
       );
-      _store(symbol, market, result);
+      await _store(symbol, market, result);
       return result;
     }
 
@@ -166,6 +205,18 @@ class CorporateActionsService {
       'Every corporate-action provider failed for $symbol',
       cause: failures,
     );
+    if (stale != null && stale.hasUsableData) {
+      final result = CorporateActionFetchResult(
+        provider: stale.provider,
+        disposition: CorporateActionFetchDisposition.stale,
+        actions: stale.actions,
+        fetchedAt: stale.fetchedAt,
+        error: error,
+        warning: 'Showing cached corporate actions because refresh failed.',
+      );
+      await _store(symbol, market, result);
+      return result;
+    }
     final result = CorporateActionFetchResult(
       provider: providers.map((provider) => provider.name).join(','),
       disposition: CorporateActionFetchDisposition.failure,
@@ -173,21 +224,54 @@ class CorporateActionsService {
       fetchedAt: _now(),
       error: error,
     );
-    _store(symbol, market, result);
+    await _store(symbol, market, result);
     return result;
   }
 
-  void _store(
+  bool _expired(CorporateActionFetchResult result) {
+    final ttl =
+        result.disposition == CorporateActionFetchDisposition.failure ||
+            result.disposition == CorporateActionFetchDisposition.stale
+        ? _errorTtl
+        : _successTtl;
+    return _now().difference(result.fetchedAt) >= ttl;
+  }
+
+  Future<void> _store(
     String symbol,
     AssetMarket market,
     CorporateActionFetchResult result,
-  ) {
-    final ttl = result.disposition == CorporateActionFetchDisposition.failure
+  ) async {
+    _storeMemory(symbol, market, result);
+    try {
+      await _persistentCache?.write(
+        symbol: symbol,
+        market: market,
+        result: result,
+      );
+    } catch (error, stackTrace) {
+      _logger.w(
+        'corporate_actions_service: cache write failed',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+  }
+
+  void _storeMemory(
+    String symbol,
+    AssetMarket market,
+    CorporateActionFetchResult result, {
+    DateTime? cachedAt,
+  }) {
+    final ttl =
+        result.disposition == CorporateActionFetchDisposition.failure ||
+            result.disposition == CorporateActionFetchDisposition.stale
         ? _errorTtl
         : _successTtl;
     _cache['${market.wire}:$symbol'] = _CacheEntry(
       result: result,
-      fetchedAt: _now(),
+      fetchedAt: cachedAt ?? _now(),
       ttl: ttl,
     );
   }

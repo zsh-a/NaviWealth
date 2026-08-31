@@ -35071,6 +35071,1828 @@ class MarketSymbolSearchesCompanion
   }
 }
 
+class $MarketCorporateActionCandidatesTable
+    extends MarketCorporateActionCandidates
+    with
+        TableInfo<
+          $MarketCorporateActionCandidatesTable,
+          MarketCorporateActionCandidateRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MarketCorporateActionCandidatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _datasetMeta = const VerificationMeta(
+    'dataset',
+  );
+  @override
+  late final GeneratedColumn<String> dataset = GeneratedColumn<String>(
+    'dataset',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _revisionHashMeta = const VerificationMeta(
+    'revisionHash',
+  );
+  @override
+  late final GeneratedColumn<String> revisionHash = GeneratedColumn<String>(
+    'revision_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _identityStrengthMeta = const VerificationMeta(
+    'identityStrength',
+  );
+  @override
+  late final GeneratedColumn<String> identityStrength = GeneratedColumn<String>(
+    'identity_strength',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reportDateMeta = const VerificationMeta(
+    'reportDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> reportDate = GeneratedColumn<DateTime>(
+    'report_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _announcementDateMeta = const VerificationMeta(
+    'announcementDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> announcementDate =
+      GeneratedColumn<DateTime>(
+        'announcement_date',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _recordDateMeta = const VerificationMeta(
+    'recordDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordDate = GeneratedColumn<DateTime>(
+    'record_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exDateMeta = const VerificationMeta('exDate');
+  @override
+  late final GeneratedColumn<DateTime> exDate = GeneratedColumn<DateTime>(
+    'ex_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payDateMeta = const VerificationMeta(
+    'payDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> payDate = GeneratedColumn<DateTime>(
+    'pay_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> cashPerShare =
+      GeneratedColumn<String>(
+        'cash_per_share',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $MarketCorporateActionCandidatesTable.$convertercashPerSharen,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> bonusRatio =
+      GeneratedColumn<String>(
+        'bonus_ratio',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $MarketCorporateActionCandidatesTable.$converterbonusRation,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  capitalizationRatio =
+      GeneratedColumn<String>(
+        'capitalization_ratio',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $MarketCorporateActionCandidatesTable.$convertercapitalizationRation,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  totalStockDistributionRatio =
+      GeneratedColumn<String>(
+        'total_stock_distribution_ratio',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $MarketCorporateActionCandidatesTable
+            .$convertertotalStockDistributionRation,
+      );
+  static const VerificationMeta _splitNumeratorMeta = const VerificationMeta(
+    'splitNumerator',
+  );
+  @override
+  late final GeneratedColumn<int> splitNumerator = GeneratedColumn<int>(
+    'split_numerator',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _splitDenominatorMeta = const VerificationMeta(
+    'splitDenominator',
+  );
+  @override
+  late final GeneratedColumn<int> splitDenominator = GeneratedColumn<int>(
+    'split_denominator',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    source,
+    dataset,
+    sourceKey,
+    revisionHash,
+    identityStrength,
+    symbol,
+    market,
+    kind,
+    status,
+    reportDate,
+    announcementDate,
+    recordDate,
+    exDate,
+    payDate,
+    currency,
+    cashPerShare,
+    bonusRatio,
+    capitalizationRatio,
+    totalStockDistributionRatio,
+    splitNumerator,
+    splitDenominator,
+    note,
+    fetchedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'market_corporate_action_candidates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MarketCorporateActionCandidateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('dataset')) {
+      context.handle(
+        _datasetMeta,
+        dataset.isAcceptableOrUnknown(data['dataset']!, _datasetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_datasetMeta);
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('revision_hash')) {
+      context.handle(
+        _revisionHashMeta,
+        revisionHash.isAcceptableOrUnknown(
+          data['revision_hash']!,
+          _revisionHashMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_revisionHashMeta);
+    }
+    if (data.containsKey('identity_strength')) {
+      context.handle(
+        _identityStrengthMeta,
+        identityStrength.isAcceptableOrUnknown(
+          data['identity_strength']!,
+          _identityStrengthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_identityStrengthMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('report_date')) {
+      context.handle(
+        _reportDateMeta,
+        reportDate.isAcceptableOrUnknown(data['report_date']!, _reportDateMeta),
+      );
+    }
+    if (data.containsKey('announcement_date')) {
+      context.handle(
+        _announcementDateMeta,
+        announcementDate.isAcceptableOrUnknown(
+          data['announcement_date']!,
+          _announcementDateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('record_date')) {
+      context.handle(
+        _recordDateMeta,
+        recordDate.isAcceptableOrUnknown(data['record_date']!, _recordDateMeta),
+      );
+    }
+    if (data.containsKey('ex_date')) {
+      context.handle(
+        _exDateMeta,
+        exDate.isAcceptableOrUnknown(data['ex_date']!, _exDateMeta),
+      );
+    }
+    if (data.containsKey('pay_date')) {
+      context.handle(
+        _payDateMeta,
+        payDate.isAcceptableOrUnknown(data['pay_date']!, _payDateMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    }
+    if (data.containsKey('split_numerator')) {
+      context.handle(
+        _splitNumeratorMeta,
+        splitNumerator.isAcceptableOrUnknown(
+          data['split_numerator']!,
+          _splitNumeratorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('split_denominator')) {
+      context.handle(
+        _splitDenominatorMeta,
+        splitDenominator.isAcceptableOrUnknown(
+          data['split_denominator']!,
+          _splitDenominatorMeta,
+        ),
+      );
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  MarketCorporateActionCandidateRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MarketCorporateActionCandidateRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      dataset: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dataset'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      revisionHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}revision_hash'],
+      )!,
+      identityStrength: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}identity_strength'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      reportDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}report_date'],
+      ),
+      announcementDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}announcement_date'],
+      ),
+      recordDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}record_date'],
+      ),
+      exDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ex_date'],
+      ),
+      payDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}pay_date'],
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      ),
+      cashPerShare: $MarketCorporateActionCandidatesTable
+          .$convertercashPerSharen
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}cash_per_share'],
+            ),
+          ),
+      bonusRatio: $MarketCorporateActionCandidatesTable.$converterbonusRation
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}bonus_ratio'],
+            ),
+          ),
+      capitalizationRatio: $MarketCorporateActionCandidatesTable
+          .$convertercapitalizationRation
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}capitalization_ratio'],
+            ),
+          ),
+      totalStockDistributionRatio: $MarketCorporateActionCandidatesTable
+          .$convertertotalStockDistributionRation
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}total_stock_distribution_ratio'],
+            ),
+          ),
+      splitNumerator: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}split_numerator'],
+      ),
+      splitDenominator: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}split_denominator'],
+      ),
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      ),
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MarketCorporateActionCandidatesTable createAlias(String alias) {
+    return $MarketCorporateActionCandidatesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $convertercashPerShare =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertercashPerSharen =
+      NullAwareTypeConverter.wrap($convertercashPerShare);
+  static TypeConverter<Decimal, String> $converterbonusRatio =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterbonusRation =
+      NullAwareTypeConverter.wrap($converterbonusRatio);
+  static TypeConverter<Decimal, String> $convertercapitalizationRatio =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertercapitalizationRation =
+      NullAwareTypeConverter.wrap($convertercapitalizationRatio);
+  static TypeConverter<Decimal, String> $convertertotalStockDistributionRatio =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?>
+  $convertertotalStockDistributionRation = NullAwareTypeConverter.wrap(
+    $convertertotalStockDistributionRatio,
+  );
+}
+
+class MarketCorporateActionCandidateRow extends DataClass
+    implements Insertable<MarketCorporateActionCandidateRow> {
+  final String id;
+  final String source;
+  final String dataset;
+  final String sourceKey;
+  final String revisionHash;
+  final String identityStrength;
+  final String symbol;
+  final String market;
+  final String kind;
+  final String status;
+  final DateTime? reportDate;
+  final DateTime? announcementDate;
+  final DateTime? recordDate;
+  final DateTime? exDate;
+  final DateTime? payDate;
+  final String? currency;
+  final Decimal? cashPerShare;
+  final Decimal? bonusRatio;
+  final Decimal? capitalizationRatio;
+  final Decimal? totalStockDistributionRatio;
+  final int? splitNumerator;
+  final int? splitDenominator;
+  final String? note;
+  final DateTime fetchedAt;
+  const MarketCorporateActionCandidateRow({
+    required this.id,
+    required this.source,
+    required this.dataset,
+    required this.sourceKey,
+    required this.revisionHash,
+    required this.identityStrength,
+    required this.symbol,
+    required this.market,
+    required this.kind,
+    required this.status,
+    this.reportDate,
+    this.announcementDate,
+    this.recordDate,
+    this.exDate,
+    this.payDate,
+    this.currency,
+    this.cashPerShare,
+    this.bonusRatio,
+    this.capitalizationRatio,
+    this.totalStockDistributionRatio,
+    this.splitNumerator,
+    this.splitDenominator,
+    this.note,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['source'] = Variable<String>(source);
+    map['dataset'] = Variable<String>(dataset);
+    map['source_key'] = Variable<String>(sourceKey);
+    map['revision_hash'] = Variable<String>(revisionHash);
+    map['identity_strength'] = Variable<String>(identityStrength);
+    map['symbol'] = Variable<String>(symbol);
+    map['market'] = Variable<String>(market);
+    map['kind'] = Variable<String>(kind);
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || reportDate != null) {
+      map['report_date'] = Variable<DateTime>(reportDate);
+    }
+    if (!nullToAbsent || announcementDate != null) {
+      map['announcement_date'] = Variable<DateTime>(announcementDate);
+    }
+    if (!nullToAbsent || recordDate != null) {
+      map['record_date'] = Variable<DateTime>(recordDate);
+    }
+    if (!nullToAbsent || exDate != null) {
+      map['ex_date'] = Variable<DateTime>(exDate);
+    }
+    if (!nullToAbsent || payDate != null) {
+      map['pay_date'] = Variable<DateTime>(payDate);
+    }
+    if (!nullToAbsent || currency != null) {
+      map['currency'] = Variable<String>(currency);
+    }
+    if (!nullToAbsent || cashPerShare != null) {
+      map['cash_per_share'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable.$convertercashPerSharen.toSql(
+          cashPerShare,
+        ),
+      );
+    }
+    if (!nullToAbsent || bonusRatio != null) {
+      map['bonus_ratio'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable.$converterbonusRation.toSql(
+          bonusRatio,
+        ),
+      );
+    }
+    if (!nullToAbsent || capitalizationRatio != null) {
+      map['capitalization_ratio'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable.$convertercapitalizationRation
+            .toSql(capitalizationRatio),
+      );
+    }
+    if (!nullToAbsent || totalStockDistributionRatio != null) {
+      map['total_stock_distribution_ratio'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable
+            .$convertertotalStockDistributionRation
+            .toSql(totalStockDistributionRatio),
+      );
+    }
+    if (!nullToAbsent || splitNumerator != null) {
+      map['split_numerator'] = Variable<int>(splitNumerator);
+    }
+    if (!nullToAbsent || splitDenominator != null) {
+      map['split_denominator'] = Variable<int>(splitDenominator);
+    }
+    if (!nullToAbsent || note != null) {
+      map['note'] = Variable<String>(note);
+    }
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  MarketCorporateActionCandidatesCompanion toCompanion(bool nullToAbsent) {
+    return MarketCorporateActionCandidatesCompanion(
+      id: Value(id),
+      source: Value(source),
+      dataset: Value(dataset),
+      sourceKey: Value(sourceKey),
+      revisionHash: Value(revisionHash),
+      identityStrength: Value(identityStrength),
+      symbol: Value(symbol),
+      market: Value(market),
+      kind: Value(kind),
+      status: Value(status),
+      reportDate: reportDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reportDate),
+      announcementDate: announcementDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(announcementDate),
+      recordDate: recordDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recordDate),
+      exDate: exDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exDate),
+      payDate: payDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payDate),
+      currency: currency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(currency),
+      cashPerShare: cashPerShare == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cashPerShare),
+      bonusRatio: bonusRatio == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bonusRatio),
+      capitalizationRatio: capitalizationRatio == null && nullToAbsent
+          ? const Value.absent()
+          : Value(capitalizationRatio),
+      totalStockDistributionRatio:
+          totalStockDistributionRatio == null && nullToAbsent
+          ? const Value.absent()
+          : Value(totalStockDistributionRatio),
+      splitNumerator: splitNumerator == null && nullToAbsent
+          ? const Value.absent()
+          : Value(splitNumerator),
+      splitDenominator: splitDenominator == null && nullToAbsent
+          ? const Value.absent()
+          : Value(splitDenominator),
+      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory MarketCorporateActionCandidateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MarketCorporateActionCandidateRow(
+      id: serializer.fromJson<String>(json['id']),
+      source: serializer.fromJson<String>(json['source']),
+      dataset: serializer.fromJson<String>(json['dataset']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      revisionHash: serializer.fromJson<String>(json['revisionHash']),
+      identityStrength: serializer.fromJson<String>(json['identityStrength']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      market: serializer.fromJson<String>(json['market']),
+      kind: serializer.fromJson<String>(json['kind']),
+      status: serializer.fromJson<String>(json['status']),
+      reportDate: serializer.fromJson<DateTime?>(json['reportDate']),
+      announcementDate: serializer.fromJson<DateTime?>(
+        json['announcementDate'],
+      ),
+      recordDate: serializer.fromJson<DateTime?>(json['recordDate']),
+      exDate: serializer.fromJson<DateTime?>(json['exDate']),
+      payDate: serializer.fromJson<DateTime?>(json['payDate']),
+      currency: serializer.fromJson<String?>(json['currency']),
+      cashPerShare: serializer.fromJson<Decimal?>(json['cashPerShare']),
+      bonusRatio: serializer.fromJson<Decimal?>(json['bonusRatio']),
+      capitalizationRatio: serializer.fromJson<Decimal?>(
+        json['capitalizationRatio'],
+      ),
+      totalStockDistributionRatio: serializer.fromJson<Decimal?>(
+        json['totalStockDistributionRatio'],
+      ),
+      splitNumerator: serializer.fromJson<int?>(json['splitNumerator']),
+      splitDenominator: serializer.fromJson<int?>(json['splitDenominator']),
+      note: serializer.fromJson<String?>(json['note']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'source': serializer.toJson<String>(source),
+      'dataset': serializer.toJson<String>(dataset),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'revisionHash': serializer.toJson<String>(revisionHash),
+      'identityStrength': serializer.toJson<String>(identityStrength),
+      'symbol': serializer.toJson<String>(symbol),
+      'market': serializer.toJson<String>(market),
+      'kind': serializer.toJson<String>(kind),
+      'status': serializer.toJson<String>(status),
+      'reportDate': serializer.toJson<DateTime?>(reportDate),
+      'announcementDate': serializer.toJson<DateTime?>(announcementDate),
+      'recordDate': serializer.toJson<DateTime?>(recordDate),
+      'exDate': serializer.toJson<DateTime?>(exDate),
+      'payDate': serializer.toJson<DateTime?>(payDate),
+      'currency': serializer.toJson<String?>(currency),
+      'cashPerShare': serializer.toJson<Decimal?>(cashPerShare),
+      'bonusRatio': serializer.toJson<Decimal?>(bonusRatio),
+      'capitalizationRatio': serializer.toJson<Decimal?>(capitalizationRatio),
+      'totalStockDistributionRatio': serializer.toJson<Decimal?>(
+        totalStockDistributionRatio,
+      ),
+      'splitNumerator': serializer.toJson<int?>(splitNumerator),
+      'splitDenominator': serializer.toJson<int?>(splitDenominator),
+      'note': serializer.toJson<String?>(note),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  MarketCorporateActionCandidateRow copyWith({
+    String? id,
+    String? source,
+    String? dataset,
+    String? sourceKey,
+    String? revisionHash,
+    String? identityStrength,
+    String? symbol,
+    String? market,
+    String? kind,
+    String? status,
+    Value<DateTime?> reportDate = const Value.absent(),
+    Value<DateTime?> announcementDate = const Value.absent(),
+    Value<DateTime?> recordDate = const Value.absent(),
+    Value<DateTime?> exDate = const Value.absent(),
+    Value<DateTime?> payDate = const Value.absent(),
+    Value<String?> currency = const Value.absent(),
+    Value<Decimal?> cashPerShare = const Value.absent(),
+    Value<Decimal?> bonusRatio = const Value.absent(),
+    Value<Decimal?> capitalizationRatio = const Value.absent(),
+    Value<Decimal?> totalStockDistributionRatio = const Value.absent(),
+    Value<int?> splitNumerator = const Value.absent(),
+    Value<int?> splitDenominator = const Value.absent(),
+    Value<String?> note = const Value.absent(),
+    DateTime? fetchedAt,
+  }) => MarketCorporateActionCandidateRow(
+    id: id ?? this.id,
+    source: source ?? this.source,
+    dataset: dataset ?? this.dataset,
+    sourceKey: sourceKey ?? this.sourceKey,
+    revisionHash: revisionHash ?? this.revisionHash,
+    identityStrength: identityStrength ?? this.identityStrength,
+    symbol: symbol ?? this.symbol,
+    market: market ?? this.market,
+    kind: kind ?? this.kind,
+    status: status ?? this.status,
+    reportDate: reportDate.present ? reportDate.value : this.reportDate,
+    announcementDate: announcementDate.present
+        ? announcementDate.value
+        : this.announcementDate,
+    recordDate: recordDate.present ? recordDate.value : this.recordDate,
+    exDate: exDate.present ? exDate.value : this.exDate,
+    payDate: payDate.present ? payDate.value : this.payDate,
+    currency: currency.present ? currency.value : this.currency,
+    cashPerShare: cashPerShare.present ? cashPerShare.value : this.cashPerShare,
+    bonusRatio: bonusRatio.present ? bonusRatio.value : this.bonusRatio,
+    capitalizationRatio: capitalizationRatio.present
+        ? capitalizationRatio.value
+        : this.capitalizationRatio,
+    totalStockDistributionRatio: totalStockDistributionRatio.present
+        ? totalStockDistributionRatio.value
+        : this.totalStockDistributionRatio,
+    splitNumerator: splitNumerator.present
+        ? splitNumerator.value
+        : this.splitNumerator,
+    splitDenominator: splitDenominator.present
+        ? splitDenominator.value
+        : this.splitDenominator,
+    note: note.present ? note.value : this.note,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  MarketCorporateActionCandidateRow copyWithCompanion(
+    MarketCorporateActionCandidatesCompanion data,
+  ) {
+    return MarketCorporateActionCandidateRow(
+      id: data.id.present ? data.id.value : this.id,
+      source: data.source.present ? data.source.value : this.source,
+      dataset: data.dataset.present ? data.dataset.value : this.dataset,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      revisionHash: data.revisionHash.present
+          ? data.revisionHash.value
+          : this.revisionHash,
+      identityStrength: data.identityStrength.present
+          ? data.identityStrength.value
+          : this.identityStrength,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      market: data.market.present ? data.market.value : this.market,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      status: data.status.present ? data.status.value : this.status,
+      reportDate: data.reportDate.present
+          ? data.reportDate.value
+          : this.reportDate,
+      announcementDate: data.announcementDate.present
+          ? data.announcementDate.value
+          : this.announcementDate,
+      recordDate: data.recordDate.present
+          ? data.recordDate.value
+          : this.recordDate,
+      exDate: data.exDate.present ? data.exDate.value : this.exDate,
+      payDate: data.payDate.present ? data.payDate.value : this.payDate,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      cashPerShare: data.cashPerShare.present
+          ? data.cashPerShare.value
+          : this.cashPerShare,
+      bonusRatio: data.bonusRatio.present
+          ? data.bonusRatio.value
+          : this.bonusRatio,
+      capitalizationRatio: data.capitalizationRatio.present
+          ? data.capitalizationRatio.value
+          : this.capitalizationRatio,
+      totalStockDistributionRatio: data.totalStockDistributionRatio.present
+          ? data.totalStockDistributionRatio.value
+          : this.totalStockDistributionRatio,
+      splitNumerator: data.splitNumerator.present
+          ? data.splitNumerator.value
+          : this.splitNumerator,
+      splitDenominator: data.splitDenominator.present
+          ? data.splitDenominator.value
+          : this.splitDenominator,
+      note: data.note.present ? data.note.value : this.note,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketCorporateActionCandidateRow(')
+          ..write('id: $id, ')
+          ..write('source: $source, ')
+          ..write('dataset: $dataset, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('revisionHash: $revisionHash, ')
+          ..write('identityStrength: $identityStrength, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('kind: $kind, ')
+          ..write('status: $status, ')
+          ..write('reportDate: $reportDate, ')
+          ..write('announcementDate: $announcementDate, ')
+          ..write('recordDate: $recordDate, ')
+          ..write('exDate: $exDate, ')
+          ..write('payDate: $payDate, ')
+          ..write('currency: $currency, ')
+          ..write('cashPerShare: $cashPerShare, ')
+          ..write('bonusRatio: $bonusRatio, ')
+          ..write('capitalizationRatio: $capitalizationRatio, ')
+          ..write('totalStockDistributionRatio: $totalStockDistributionRatio, ')
+          ..write('splitNumerator: $splitNumerator, ')
+          ..write('splitDenominator: $splitDenominator, ')
+          ..write('note: $note, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    source,
+    dataset,
+    sourceKey,
+    revisionHash,
+    identityStrength,
+    symbol,
+    market,
+    kind,
+    status,
+    reportDate,
+    announcementDate,
+    recordDate,
+    exDate,
+    payDate,
+    currency,
+    cashPerShare,
+    bonusRatio,
+    capitalizationRatio,
+    totalStockDistributionRatio,
+    splitNumerator,
+    splitDenominator,
+    note,
+    fetchedAt,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MarketCorporateActionCandidateRow &&
+          other.id == this.id &&
+          other.source == this.source &&
+          other.dataset == this.dataset &&
+          other.sourceKey == this.sourceKey &&
+          other.revisionHash == this.revisionHash &&
+          other.identityStrength == this.identityStrength &&
+          other.symbol == this.symbol &&
+          other.market == this.market &&
+          other.kind == this.kind &&
+          other.status == this.status &&
+          other.reportDate == this.reportDate &&
+          other.announcementDate == this.announcementDate &&
+          other.recordDate == this.recordDate &&
+          other.exDate == this.exDate &&
+          other.payDate == this.payDate &&
+          other.currency == this.currency &&
+          other.cashPerShare == this.cashPerShare &&
+          other.bonusRatio == this.bonusRatio &&
+          other.capitalizationRatio == this.capitalizationRatio &&
+          other.totalStockDistributionRatio ==
+              this.totalStockDistributionRatio &&
+          other.splitNumerator == this.splitNumerator &&
+          other.splitDenominator == this.splitDenominator &&
+          other.note == this.note &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class MarketCorporateActionCandidatesCompanion
+    extends UpdateCompanion<MarketCorporateActionCandidateRow> {
+  final Value<String> id;
+  final Value<String> source;
+  final Value<String> dataset;
+  final Value<String> sourceKey;
+  final Value<String> revisionHash;
+  final Value<String> identityStrength;
+  final Value<String> symbol;
+  final Value<String> market;
+  final Value<String> kind;
+  final Value<String> status;
+  final Value<DateTime?> reportDate;
+  final Value<DateTime?> announcementDate;
+  final Value<DateTime?> recordDate;
+  final Value<DateTime?> exDate;
+  final Value<DateTime?> payDate;
+  final Value<String?> currency;
+  final Value<Decimal?> cashPerShare;
+  final Value<Decimal?> bonusRatio;
+  final Value<Decimal?> capitalizationRatio;
+  final Value<Decimal?> totalStockDistributionRatio;
+  final Value<int?> splitNumerator;
+  final Value<int?> splitDenominator;
+  final Value<String?> note;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const MarketCorporateActionCandidatesCompanion({
+    this.id = const Value.absent(),
+    this.source = const Value.absent(),
+    this.dataset = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.revisionHash = const Value.absent(),
+    this.identityStrength = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.market = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.status = const Value.absent(),
+    this.reportDate = const Value.absent(),
+    this.announcementDate = const Value.absent(),
+    this.recordDate = const Value.absent(),
+    this.exDate = const Value.absent(),
+    this.payDate = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.cashPerShare = const Value.absent(),
+    this.bonusRatio = const Value.absent(),
+    this.capitalizationRatio = const Value.absent(),
+    this.totalStockDistributionRatio = const Value.absent(),
+    this.splitNumerator = const Value.absent(),
+    this.splitDenominator = const Value.absent(),
+    this.note = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MarketCorporateActionCandidatesCompanion.insert({
+    required String id,
+    required String source,
+    required String dataset,
+    required String sourceKey,
+    required String revisionHash,
+    required String identityStrength,
+    required String symbol,
+    required String market,
+    required String kind,
+    required String status,
+    this.reportDate = const Value.absent(),
+    this.announcementDate = const Value.absent(),
+    this.recordDate = const Value.absent(),
+    this.exDate = const Value.absent(),
+    this.payDate = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.cashPerShare = const Value.absent(),
+    this.bonusRatio = const Value.absent(),
+    this.capitalizationRatio = const Value.absent(),
+    this.totalStockDistributionRatio = const Value.absent(),
+    this.splitNumerator = const Value.absent(),
+    this.splitDenominator = const Value.absent(),
+    this.note = const Value.absent(),
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       source = Value(source),
+       dataset = Value(dataset),
+       sourceKey = Value(sourceKey),
+       revisionHash = Value(revisionHash),
+       identityStrength = Value(identityStrength),
+       symbol = Value(symbol),
+       market = Value(market),
+       kind = Value(kind),
+       status = Value(status),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<MarketCorporateActionCandidateRow> custom({
+    Expression<String>? id,
+    Expression<String>? source,
+    Expression<String>? dataset,
+    Expression<String>? sourceKey,
+    Expression<String>? revisionHash,
+    Expression<String>? identityStrength,
+    Expression<String>? symbol,
+    Expression<String>? market,
+    Expression<String>? kind,
+    Expression<String>? status,
+    Expression<DateTime>? reportDate,
+    Expression<DateTime>? announcementDate,
+    Expression<DateTime>? recordDate,
+    Expression<DateTime>? exDate,
+    Expression<DateTime>? payDate,
+    Expression<String>? currency,
+    Expression<String>? cashPerShare,
+    Expression<String>? bonusRatio,
+    Expression<String>? capitalizationRatio,
+    Expression<String>? totalStockDistributionRatio,
+    Expression<int>? splitNumerator,
+    Expression<int>? splitDenominator,
+    Expression<String>? note,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (source != null) 'source': source,
+      if (dataset != null) 'dataset': dataset,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (revisionHash != null) 'revision_hash': revisionHash,
+      if (identityStrength != null) 'identity_strength': identityStrength,
+      if (symbol != null) 'symbol': symbol,
+      if (market != null) 'market': market,
+      if (kind != null) 'kind': kind,
+      if (status != null) 'status': status,
+      if (reportDate != null) 'report_date': reportDate,
+      if (announcementDate != null) 'announcement_date': announcementDate,
+      if (recordDate != null) 'record_date': recordDate,
+      if (exDate != null) 'ex_date': exDate,
+      if (payDate != null) 'pay_date': payDate,
+      if (currency != null) 'currency': currency,
+      if (cashPerShare != null) 'cash_per_share': cashPerShare,
+      if (bonusRatio != null) 'bonus_ratio': bonusRatio,
+      if (capitalizationRatio != null)
+        'capitalization_ratio': capitalizationRatio,
+      if (totalStockDistributionRatio != null)
+        'total_stock_distribution_ratio': totalStockDistributionRatio,
+      if (splitNumerator != null) 'split_numerator': splitNumerator,
+      if (splitDenominator != null) 'split_denominator': splitDenominator,
+      if (note != null) 'note': note,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MarketCorporateActionCandidatesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? source,
+    Value<String>? dataset,
+    Value<String>? sourceKey,
+    Value<String>? revisionHash,
+    Value<String>? identityStrength,
+    Value<String>? symbol,
+    Value<String>? market,
+    Value<String>? kind,
+    Value<String>? status,
+    Value<DateTime?>? reportDate,
+    Value<DateTime?>? announcementDate,
+    Value<DateTime?>? recordDate,
+    Value<DateTime?>? exDate,
+    Value<DateTime?>? payDate,
+    Value<String?>? currency,
+    Value<Decimal?>? cashPerShare,
+    Value<Decimal?>? bonusRatio,
+    Value<Decimal?>? capitalizationRatio,
+    Value<Decimal?>? totalStockDistributionRatio,
+    Value<int?>? splitNumerator,
+    Value<int?>? splitDenominator,
+    Value<String?>? note,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return MarketCorporateActionCandidatesCompanion(
+      id: id ?? this.id,
+      source: source ?? this.source,
+      dataset: dataset ?? this.dataset,
+      sourceKey: sourceKey ?? this.sourceKey,
+      revisionHash: revisionHash ?? this.revisionHash,
+      identityStrength: identityStrength ?? this.identityStrength,
+      symbol: symbol ?? this.symbol,
+      market: market ?? this.market,
+      kind: kind ?? this.kind,
+      status: status ?? this.status,
+      reportDate: reportDate ?? this.reportDate,
+      announcementDate: announcementDate ?? this.announcementDate,
+      recordDate: recordDate ?? this.recordDate,
+      exDate: exDate ?? this.exDate,
+      payDate: payDate ?? this.payDate,
+      currency: currency ?? this.currency,
+      cashPerShare: cashPerShare ?? this.cashPerShare,
+      bonusRatio: bonusRatio ?? this.bonusRatio,
+      capitalizationRatio: capitalizationRatio ?? this.capitalizationRatio,
+      totalStockDistributionRatio:
+          totalStockDistributionRatio ?? this.totalStockDistributionRatio,
+      splitNumerator: splitNumerator ?? this.splitNumerator,
+      splitDenominator: splitDenominator ?? this.splitDenominator,
+      note: note ?? this.note,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (dataset.present) {
+      map['dataset'] = Variable<String>(dataset.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (revisionHash.present) {
+      map['revision_hash'] = Variable<String>(revisionHash.value);
+    }
+    if (identityStrength.present) {
+      map['identity_strength'] = Variable<String>(identityStrength.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (reportDate.present) {
+      map['report_date'] = Variable<DateTime>(reportDate.value);
+    }
+    if (announcementDate.present) {
+      map['announcement_date'] = Variable<DateTime>(announcementDate.value);
+    }
+    if (recordDate.present) {
+      map['record_date'] = Variable<DateTime>(recordDate.value);
+    }
+    if (exDate.present) {
+      map['ex_date'] = Variable<DateTime>(exDate.value);
+    }
+    if (payDate.present) {
+      map['pay_date'] = Variable<DateTime>(payDate.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (cashPerShare.present) {
+      map['cash_per_share'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable.$convertercashPerSharen.toSql(
+          cashPerShare.value,
+        ),
+      );
+    }
+    if (bonusRatio.present) {
+      map['bonus_ratio'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable.$converterbonusRation.toSql(
+          bonusRatio.value,
+        ),
+      );
+    }
+    if (capitalizationRatio.present) {
+      map['capitalization_ratio'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable.$convertercapitalizationRation
+            .toSql(capitalizationRatio.value),
+      );
+    }
+    if (totalStockDistributionRatio.present) {
+      map['total_stock_distribution_ratio'] = Variable<String>(
+        $MarketCorporateActionCandidatesTable
+            .$convertertotalStockDistributionRation
+            .toSql(totalStockDistributionRatio.value),
+      );
+    }
+    if (splitNumerator.present) {
+      map['split_numerator'] = Variable<int>(splitNumerator.value);
+    }
+    if (splitDenominator.present) {
+      map['split_denominator'] = Variable<int>(splitDenominator.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketCorporateActionCandidatesCompanion(')
+          ..write('id: $id, ')
+          ..write('source: $source, ')
+          ..write('dataset: $dataset, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('revisionHash: $revisionHash, ')
+          ..write('identityStrength: $identityStrength, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('kind: $kind, ')
+          ..write('status: $status, ')
+          ..write('reportDate: $reportDate, ')
+          ..write('announcementDate: $announcementDate, ')
+          ..write('recordDate: $recordDate, ')
+          ..write('exDate: $exDate, ')
+          ..write('payDate: $payDate, ')
+          ..write('currency: $currency, ')
+          ..write('cashPerShare: $cashPerShare, ')
+          ..write('bonusRatio: $bonusRatio, ')
+          ..write('capitalizationRatio: $capitalizationRatio, ')
+          ..write('totalStockDistributionRatio: $totalStockDistributionRatio, ')
+          ..write('splitNumerator: $splitNumerator, ')
+          ..write('splitDenominator: $splitDenominator, ')
+          ..write('note: $note, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MarketCorporateActionFetchStatesTable
+    extends MarketCorporateActionFetchStates
+    with
+        TableInfo<
+          $MarketCorporateActionFetchStatesTable,
+          MarketCorporateActionFetchStateRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MarketCorporateActionFetchStatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _providerMeta = const VerificationMeta(
+    'provider',
+  );
+  @override
+  late final GeneratedColumn<String> provider = GeneratedColumn<String>(
+    'provider',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dispositionMeta = const VerificationMeta(
+    'disposition',
+  );
+  @override
+  late final GeneratedColumn<String> disposition = GeneratedColumn<String>(
+    'disposition',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _warningMeta = const VerificationMeta(
+    'warning',
+  );
+  @override
+  late final GeneratedColumn<String> warning = GeneratedColumn<String>(
+    'warning',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    market,
+    symbol,
+    provider,
+    disposition,
+    fetchedAt,
+    warning,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'market_corporate_action_fetch_states';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MarketCorporateActionFetchStateRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('provider')) {
+      context.handle(
+        _providerMeta,
+        provider.isAcceptableOrUnknown(data['provider']!, _providerMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_providerMeta);
+    }
+    if (data.containsKey('disposition')) {
+      context.handle(
+        _dispositionMeta,
+        disposition.isAcceptableOrUnknown(
+          data['disposition']!,
+          _dispositionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dispositionMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    if (data.containsKey('warning')) {
+      context.handle(
+        _warningMeta,
+        warning.isAcceptableOrUnknown(data['warning']!, _warningMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {market, symbol};
+  @override
+  MarketCorporateActionFetchStateRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MarketCorporateActionFetchStateRow(
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      provider: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}provider'],
+      )!,
+      disposition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}disposition'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+      warning: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}warning'],
+      ),
+    );
+  }
+
+  @override
+  $MarketCorporateActionFetchStatesTable createAlias(String alias) {
+    return $MarketCorporateActionFetchStatesTable(attachedDatabase, alias);
+  }
+}
+
+class MarketCorporateActionFetchStateRow extends DataClass
+    implements Insertable<MarketCorporateActionFetchStateRow> {
+  final String market;
+  final String symbol;
+  final String provider;
+  final String disposition;
+  final DateTime fetchedAt;
+  final String? warning;
+  const MarketCorporateActionFetchStateRow({
+    required this.market,
+    required this.symbol,
+    required this.provider,
+    required this.disposition,
+    required this.fetchedAt,
+    this.warning,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['market'] = Variable<String>(market);
+    map['symbol'] = Variable<String>(symbol);
+    map['provider'] = Variable<String>(provider);
+    map['disposition'] = Variable<String>(disposition);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    if (!nullToAbsent || warning != null) {
+      map['warning'] = Variable<String>(warning);
+    }
+    return map;
+  }
+
+  MarketCorporateActionFetchStatesCompanion toCompanion(bool nullToAbsent) {
+    return MarketCorporateActionFetchStatesCompanion(
+      market: Value(market),
+      symbol: Value(symbol),
+      provider: Value(provider),
+      disposition: Value(disposition),
+      fetchedAt: Value(fetchedAt),
+      warning: warning == null && nullToAbsent
+          ? const Value.absent()
+          : Value(warning),
+    );
+  }
+
+  factory MarketCorporateActionFetchStateRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MarketCorporateActionFetchStateRow(
+      market: serializer.fromJson<String>(json['market']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      provider: serializer.fromJson<String>(json['provider']),
+      disposition: serializer.fromJson<String>(json['disposition']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+      warning: serializer.fromJson<String?>(json['warning']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'market': serializer.toJson<String>(market),
+      'symbol': serializer.toJson<String>(symbol),
+      'provider': serializer.toJson<String>(provider),
+      'disposition': serializer.toJson<String>(disposition),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+      'warning': serializer.toJson<String?>(warning),
+    };
+  }
+
+  MarketCorporateActionFetchStateRow copyWith({
+    String? market,
+    String? symbol,
+    String? provider,
+    String? disposition,
+    DateTime? fetchedAt,
+    Value<String?> warning = const Value.absent(),
+  }) => MarketCorporateActionFetchStateRow(
+    market: market ?? this.market,
+    symbol: symbol ?? this.symbol,
+    provider: provider ?? this.provider,
+    disposition: disposition ?? this.disposition,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+    warning: warning.present ? warning.value : this.warning,
+  );
+  MarketCorporateActionFetchStateRow copyWithCompanion(
+    MarketCorporateActionFetchStatesCompanion data,
+  ) {
+    return MarketCorporateActionFetchStateRow(
+      market: data.market.present ? data.market.value : this.market,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      provider: data.provider.present ? data.provider.value : this.provider,
+      disposition: data.disposition.present
+          ? data.disposition.value
+          : this.disposition,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+      warning: data.warning.present ? data.warning.value : this.warning,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketCorporateActionFetchStateRow(')
+          ..write('market: $market, ')
+          ..write('symbol: $symbol, ')
+          ..write('provider: $provider, ')
+          ..write('disposition: $disposition, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('warning: $warning')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(market, symbol, provider, disposition, fetchedAt, warning);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MarketCorporateActionFetchStateRow &&
+          other.market == this.market &&
+          other.symbol == this.symbol &&
+          other.provider == this.provider &&
+          other.disposition == this.disposition &&
+          other.fetchedAt == this.fetchedAt &&
+          other.warning == this.warning);
+}
+
+class MarketCorporateActionFetchStatesCompanion
+    extends UpdateCompanion<MarketCorporateActionFetchStateRow> {
+  final Value<String> market;
+  final Value<String> symbol;
+  final Value<String> provider;
+  final Value<String> disposition;
+  final Value<DateTime> fetchedAt;
+  final Value<String?> warning;
+  final Value<int> rowid;
+  const MarketCorporateActionFetchStatesCompanion({
+    this.market = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.provider = const Value.absent(),
+    this.disposition = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.warning = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MarketCorporateActionFetchStatesCompanion.insert({
+    required String market,
+    required String symbol,
+    required String provider,
+    required String disposition,
+    required DateTime fetchedAt,
+    this.warning = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : market = Value(market),
+       symbol = Value(symbol),
+       provider = Value(provider),
+       disposition = Value(disposition),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<MarketCorporateActionFetchStateRow> custom({
+    Expression<String>? market,
+    Expression<String>? symbol,
+    Expression<String>? provider,
+    Expression<String>? disposition,
+    Expression<DateTime>? fetchedAt,
+    Expression<String>? warning,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (market != null) 'market': market,
+      if (symbol != null) 'symbol': symbol,
+      if (provider != null) 'provider': provider,
+      if (disposition != null) 'disposition': disposition,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (warning != null) 'warning': warning,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MarketCorporateActionFetchStatesCompanion copyWith({
+    Value<String>? market,
+    Value<String>? symbol,
+    Value<String>? provider,
+    Value<String>? disposition,
+    Value<DateTime>? fetchedAt,
+    Value<String?>? warning,
+    Value<int>? rowid,
+  }) {
+    return MarketCorporateActionFetchStatesCompanion(
+      market: market ?? this.market,
+      symbol: symbol ?? this.symbol,
+      provider: provider ?? this.provider,
+      disposition: disposition ?? this.disposition,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      warning: warning ?? this.warning,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (provider.present) {
+      map['provider'] = Variable<String>(provider.value);
+    }
+    if (disposition.present) {
+      map['disposition'] = Variable<String>(disposition.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (warning.present) {
+      map['warning'] = Variable<String>(warning.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketCorporateActionFetchStatesCompanion(')
+          ..write('market: $market, ')
+          ..write('symbol: $symbol, ')
+          ..write('provider: $provider, ')
+          ..write('disposition: $disposition, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('warning: $warning, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SecuritiesCatalogTable extends SecuritiesCatalog
     with TableInfo<$SecuritiesCatalogTable, SecuritiesCatalogRow> {
   @override
@@ -45717,6 +47539,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $MarketHistoryBarsTable(this);
   late final $MarketSymbolSearchesTable marketSymbolSearches =
       $MarketSymbolSearchesTable(this);
+  late final $MarketCorporateActionCandidatesTable
+  marketCorporateActionCandidates = $MarketCorporateActionCandidatesTable(this);
+  late final $MarketCorporateActionFetchStatesTable
+  marketCorporateActionFetchStates = $MarketCorporateActionFetchStatesTable(
+    this,
+  );
   late final $SecuritiesCatalogTable securitiesCatalog =
       $SecuritiesCatalogTable(this);
   late final $SecuritiesCatalogMetaTable securitiesCatalogMeta =
@@ -45789,6 +47617,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     marketQuotes,
     marketHistoryBars,
     marketSymbolSearches,
+    marketCorporateActionCandidates,
+    marketCorporateActionFetchStates,
     securitiesCatalog,
     securitiesCatalogMeta,
     healthMetrics,
@@ -61908,6 +63738,858 @@ typedef $$MarketSymbolSearchesTableProcessedTableManager =
       MarketSymbolSearchRow,
       PrefetchHooks Function()
     >;
+typedef $$MarketCorporateActionCandidatesTableCreateCompanionBuilder =
+    MarketCorporateActionCandidatesCompanion Function({
+      required String id,
+      required String source,
+      required String dataset,
+      required String sourceKey,
+      required String revisionHash,
+      required String identityStrength,
+      required String symbol,
+      required String market,
+      required String kind,
+      required String status,
+      Value<DateTime?> reportDate,
+      Value<DateTime?> announcementDate,
+      Value<DateTime?> recordDate,
+      Value<DateTime?> exDate,
+      Value<DateTime?> payDate,
+      Value<String?> currency,
+      Value<Decimal?> cashPerShare,
+      Value<Decimal?> bonusRatio,
+      Value<Decimal?> capitalizationRatio,
+      Value<Decimal?> totalStockDistributionRatio,
+      Value<int?> splitNumerator,
+      Value<int?> splitDenominator,
+      Value<String?> note,
+      required DateTime fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$MarketCorporateActionCandidatesTableUpdateCompanionBuilder =
+    MarketCorporateActionCandidatesCompanion Function({
+      Value<String> id,
+      Value<String> source,
+      Value<String> dataset,
+      Value<String> sourceKey,
+      Value<String> revisionHash,
+      Value<String> identityStrength,
+      Value<String> symbol,
+      Value<String> market,
+      Value<String> kind,
+      Value<String> status,
+      Value<DateTime?> reportDate,
+      Value<DateTime?> announcementDate,
+      Value<DateTime?> recordDate,
+      Value<DateTime?> exDate,
+      Value<DateTime?> payDate,
+      Value<String?> currency,
+      Value<Decimal?> cashPerShare,
+      Value<Decimal?> bonusRatio,
+      Value<Decimal?> capitalizationRatio,
+      Value<Decimal?> totalStockDistributionRatio,
+      Value<int?> splitNumerator,
+      Value<int?> splitDenominator,
+      Value<String?> note,
+      Value<DateTime> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$MarketCorporateActionCandidatesTableFilterComposer
+    extends Composer<_$AppDatabase, $MarketCorporateActionCandidatesTable> {
+  $$MarketCorporateActionCandidatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dataset => $composableBuilder(
+    column: $table.dataset,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get revisionHash => $composableBuilder(
+    column: $table.revisionHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get identityStrength => $composableBuilder(
+    column: $table.identityStrength,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get reportDate => $composableBuilder(
+    column: $table.reportDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get announcementDate => $composableBuilder(
+    column: $table.announcementDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordDate => $composableBuilder(
+    column: $table.recordDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get exDate => $composableBuilder(
+    column: $table.exDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get payDate => $composableBuilder(
+    column: $table.payDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get cashPerShare =>
+      $composableBuilder(
+        column: $table.cashPerShare,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get bonusRatio =>
+      $composableBuilder(
+        column: $table.bonusRatio,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get capitalizationRatio => $composableBuilder(
+    column: $table.capitalizationRatio,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get totalStockDistributionRatio => $composableBuilder(
+    column: $table.totalStockDistributionRatio,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<int> get splitNumerator => $composableBuilder(
+    column: $table.splitNumerator,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get splitDenominator => $composableBuilder(
+    column: $table.splitDenominator,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MarketCorporateActionCandidatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MarketCorporateActionCandidatesTable> {
+  $$MarketCorporateActionCandidatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dataset => $composableBuilder(
+    column: $table.dataset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get revisionHash => $composableBuilder(
+    column: $table.revisionHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get identityStrength => $composableBuilder(
+    column: $table.identityStrength,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get reportDate => $composableBuilder(
+    column: $table.reportDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get announcementDate => $composableBuilder(
+    column: $table.announcementDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordDate => $composableBuilder(
+    column: $table.recordDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get exDate => $composableBuilder(
+    column: $table.exDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get payDate => $composableBuilder(
+    column: $table.payDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cashPerShare => $composableBuilder(
+    column: $table.cashPerShare,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bonusRatio => $composableBuilder(
+    column: $table.bonusRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get capitalizationRatio => $composableBuilder(
+    column: $table.capitalizationRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get totalStockDistributionRatio => $composableBuilder(
+    column: $table.totalStockDistributionRatio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get splitNumerator => $composableBuilder(
+    column: $table.splitNumerator,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get splitDenominator => $composableBuilder(
+    column: $table.splitDenominator,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MarketCorporateActionCandidatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MarketCorporateActionCandidatesTable> {
+  $$MarketCorporateActionCandidatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get dataset =>
+      $composableBuilder(column: $table.dataset, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get revisionHash => $composableBuilder(
+    column: $table.revisionHash,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get identityStrength => $composableBuilder(
+    column: $table.identityStrength,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get reportDate => $composableBuilder(
+    column: $table.reportDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get announcementDate => $composableBuilder(
+    column: $table.announcementDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get recordDate => $composableBuilder(
+    column: $table.recordDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get exDate =>
+      $composableBuilder(column: $table.exDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get payDate =>
+      $composableBuilder(column: $table.payDate, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get cashPerShare =>
+      $composableBuilder(
+        column: $table.cashPerShare,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get bonusRatio =>
+      $composableBuilder(
+        column: $table.bonusRatio,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get capitalizationRatio =>
+      $composableBuilder(
+        column: $table.capitalizationRatio,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String>
+  get totalStockDistributionRatio => $composableBuilder(
+    column: $table.totalStockDistributionRatio,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get splitNumerator => $composableBuilder(
+    column: $table.splitNumerator,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get splitDenominator => $composableBuilder(
+    column: $table.splitDenominator,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$MarketCorporateActionCandidatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MarketCorporateActionCandidatesTable,
+          MarketCorporateActionCandidateRow,
+          $$MarketCorporateActionCandidatesTableFilterComposer,
+          $$MarketCorporateActionCandidatesTableOrderingComposer,
+          $$MarketCorporateActionCandidatesTableAnnotationComposer,
+          $$MarketCorporateActionCandidatesTableCreateCompanionBuilder,
+          $$MarketCorporateActionCandidatesTableUpdateCompanionBuilder,
+          (
+            MarketCorporateActionCandidateRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MarketCorporateActionCandidatesTable,
+              MarketCorporateActionCandidateRow
+            >,
+          ),
+          MarketCorporateActionCandidateRow,
+          PrefetchHooks Function()
+        > {
+  $$MarketCorporateActionCandidatesTableTableManager(
+    _$AppDatabase db,
+    $MarketCorporateActionCandidatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MarketCorporateActionCandidatesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$MarketCorporateActionCandidatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MarketCorporateActionCandidatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> dataset = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> revisionHash = const Value.absent(),
+                Value<String> identityStrength = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<DateTime?> reportDate = const Value.absent(),
+                Value<DateTime?> announcementDate = const Value.absent(),
+                Value<DateTime?> recordDate = const Value.absent(),
+                Value<DateTime?> exDate = const Value.absent(),
+                Value<DateTime?> payDate = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<Decimal?> cashPerShare = const Value.absent(),
+                Value<Decimal?> bonusRatio = const Value.absent(),
+                Value<Decimal?> capitalizationRatio = const Value.absent(),
+                Value<Decimal?> totalStockDistributionRatio =
+                    const Value.absent(),
+                Value<int?> splitNumerator = const Value.absent(),
+                Value<int?> splitDenominator = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketCorporateActionCandidatesCompanion(
+                id: id,
+                source: source,
+                dataset: dataset,
+                sourceKey: sourceKey,
+                revisionHash: revisionHash,
+                identityStrength: identityStrength,
+                symbol: symbol,
+                market: market,
+                kind: kind,
+                status: status,
+                reportDate: reportDate,
+                announcementDate: announcementDate,
+                recordDate: recordDate,
+                exDate: exDate,
+                payDate: payDate,
+                currency: currency,
+                cashPerShare: cashPerShare,
+                bonusRatio: bonusRatio,
+                capitalizationRatio: capitalizationRatio,
+                totalStockDistributionRatio: totalStockDistributionRatio,
+                splitNumerator: splitNumerator,
+                splitDenominator: splitDenominator,
+                note: note,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String source,
+                required String dataset,
+                required String sourceKey,
+                required String revisionHash,
+                required String identityStrength,
+                required String symbol,
+                required String market,
+                required String kind,
+                required String status,
+                Value<DateTime?> reportDate = const Value.absent(),
+                Value<DateTime?> announcementDate = const Value.absent(),
+                Value<DateTime?> recordDate = const Value.absent(),
+                Value<DateTime?> exDate = const Value.absent(),
+                Value<DateTime?> payDate = const Value.absent(),
+                Value<String?> currency = const Value.absent(),
+                Value<Decimal?> cashPerShare = const Value.absent(),
+                Value<Decimal?> bonusRatio = const Value.absent(),
+                Value<Decimal?> capitalizationRatio = const Value.absent(),
+                Value<Decimal?> totalStockDistributionRatio =
+                    const Value.absent(),
+                Value<int?> splitNumerator = const Value.absent(),
+                Value<int?> splitDenominator = const Value.absent(),
+                Value<String?> note = const Value.absent(),
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MarketCorporateActionCandidatesCompanion.insert(
+                id: id,
+                source: source,
+                dataset: dataset,
+                sourceKey: sourceKey,
+                revisionHash: revisionHash,
+                identityStrength: identityStrength,
+                symbol: symbol,
+                market: market,
+                kind: kind,
+                status: status,
+                reportDate: reportDate,
+                announcementDate: announcementDate,
+                recordDate: recordDate,
+                exDate: exDate,
+                payDate: payDate,
+                currency: currency,
+                cashPerShare: cashPerShare,
+                bonusRatio: bonusRatio,
+                capitalizationRatio: capitalizationRatio,
+                totalStockDistributionRatio: totalStockDistributionRatio,
+                splitNumerator: splitNumerator,
+                splitDenominator: splitDenominator,
+                note: note,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MarketCorporateActionCandidatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MarketCorporateActionCandidatesTable,
+      MarketCorporateActionCandidateRow,
+      $$MarketCorporateActionCandidatesTableFilterComposer,
+      $$MarketCorporateActionCandidatesTableOrderingComposer,
+      $$MarketCorporateActionCandidatesTableAnnotationComposer,
+      $$MarketCorporateActionCandidatesTableCreateCompanionBuilder,
+      $$MarketCorporateActionCandidatesTableUpdateCompanionBuilder,
+      (
+        MarketCorporateActionCandidateRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MarketCorporateActionCandidatesTable,
+          MarketCorporateActionCandidateRow
+        >,
+      ),
+      MarketCorporateActionCandidateRow,
+      PrefetchHooks Function()
+    >;
+typedef $$MarketCorporateActionFetchStatesTableCreateCompanionBuilder =
+    MarketCorporateActionFetchStatesCompanion Function({
+      required String market,
+      required String symbol,
+      required String provider,
+      required String disposition,
+      required DateTime fetchedAt,
+      Value<String?> warning,
+      Value<int> rowid,
+    });
+typedef $$MarketCorporateActionFetchStatesTableUpdateCompanionBuilder =
+    MarketCorporateActionFetchStatesCompanion Function({
+      Value<String> market,
+      Value<String> symbol,
+      Value<String> provider,
+      Value<String> disposition,
+      Value<DateTime> fetchedAt,
+      Value<String?> warning,
+      Value<int> rowid,
+    });
+
+class $$MarketCorporateActionFetchStatesTableFilterComposer
+    extends Composer<_$AppDatabase, $MarketCorporateActionFetchStatesTable> {
+  $$MarketCorporateActionFetchStatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get disposition => $composableBuilder(
+    column: $table.disposition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get warning => $composableBuilder(
+    column: $table.warning,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MarketCorporateActionFetchStatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $MarketCorporateActionFetchStatesTable> {
+  $$MarketCorporateActionFetchStatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get provider => $composableBuilder(
+    column: $table.provider,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get disposition => $composableBuilder(
+    column: $table.disposition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get warning => $composableBuilder(
+    column: $table.warning,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MarketCorporateActionFetchStatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MarketCorporateActionFetchStatesTable> {
+  $$MarketCorporateActionFetchStatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get provider =>
+      $composableBuilder(column: $table.provider, builder: (column) => column);
+
+  GeneratedColumn<String> get disposition => $composableBuilder(
+    column: $table.disposition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get warning =>
+      $composableBuilder(column: $table.warning, builder: (column) => column);
+}
+
+class $$MarketCorporateActionFetchStatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MarketCorporateActionFetchStatesTable,
+          MarketCorporateActionFetchStateRow,
+          $$MarketCorporateActionFetchStatesTableFilterComposer,
+          $$MarketCorporateActionFetchStatesTableOrderingComposer,
+          $$MarketCorporateActionFetchStatesTableAnnotationComposer,
+          $$MarketCorporateActionFetchStatesTableCreateCompanionBuilder,
+          $$MarketCorporateActionFetchStatesTableUpdateCompanionBuilder,
+          (
+            MarketCorporateActionFetchStateRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MarketCorporateActionFetchStatesTable,
+              MarketCorporateActionFetchStateRow
+            >,
+          ),
+          MarketCorporateActionFetchStateRow,
+          PrefetchHooks Function()
+        > {
+  $$MarketCorporateActionFetchStatesTableTableManager(
+    _$AppDatabase db,
+    $MarketCorporateActionFetchStatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MarketCorporateActionFetchStatesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$MarketCorporateActionFetchStatesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MarketCorporateActionFetchStatesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> market = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> provider = const Value.absent(),
+                Value<String> disposition = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<String?> warning = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketCorporateActionFetchStatesCompanion(
+                market: market,
+                symbol: symbol,
+                provider: provider,
+                disposition: disposition,
+                fetchedAt: fetchedAt,
+                warning: warning,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String market,
+                required String symbol,
+                required String provider,
+                required String disposition,
+                required DateTime fetchedAt,
+                Value<String?> warning = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketCorporateActionFetchStatesCompanion.insert(
+                market: market,
+                symbol: symbol,
+                provider: provider,
+                disposition: disposition,
+                fetchedAt: fetchedAt,
+                warning: warning,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MarketCorporateActionFetchStatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MarketCorporateActionFetchStatesTable,
+      MarketCorporateActionFetchStateRow,
+      $$MarketCorporateActionFetchStatesTableFilterComposer,
+      $$MarketCorporateActionFetchStatesTableOrderingComposer,
+      $$MarketCorporateActionFetchStatesTableAnnotationComposer,
+      $$MarketCorporateActionFetchStatesTableCreateCompanionBuilder,
+      $$MarketCorporateActionFetchStatesTableUpdateCompanionBuilder,
+      (
+        MarketCorporateActionFetchStateRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MarketCorporateActionFetchStatesTable,
+          MarketCorporateActionFetchStateRow
+        >,
+      ),
+      MarketCorporateActionFetchStateRow,
+      PrefetchHooks Function()
+    >;
 typedef $$SecuritiesCatalogTableCreateCompanionBuilder =
     SecuritiesCatalogCompanion Function({
       required String id,
@@ -67066,6 +69748,18 @@ class $AppDatabaseManager {
       $$MarketHistoryBarsTableTableManager(_db, _db.marketHistoryBars);
   $$MarketSymbolSearchesTableTableManager get marketSymbolSearches =>
       $$MarketSymbolSearchesTableTableManager(_db, _db.marketSymbolSearches);
+  $$MarketCorporateActionCandidatesTableTableManager
+  get marketCorporateActionCandidates =>
+      $$MarketCorporateActionCandidatesTableTableManager(
+        _db,
+        _db.marketCorporateActionCandidates,
+      );
+  $$MarketCorporateActionFetchStatesTableTableManager
+  get marketCorporateActionFetchStates =>
+      $$MarketCorporateActionFetchStatesTableTableManager(
+        _db,
+        _db.marketCorporateActionFetchStates,
+      );
   $$SecuritiesCatalogTableTableManager get securitiesCatalog =>
       $$SecuritiesCatalogTableTableManager(_db, _db.securitiesCatalog);
   $$SecuritiesCatalogMetaTableTableManager get securitiesCatalogMeta =>

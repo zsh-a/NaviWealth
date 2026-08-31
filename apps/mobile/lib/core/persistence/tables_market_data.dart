@@ -105,6 +105,64 @@ class MarketSymbolSearches extends Table {
   Set<Column<Object>> get primaryKey => {market, query, source};
 }
 
+/// Normalized public corporate-action candidates fetched from market providers.
+///
+/// This is a rebuildable local cache, not a user-confirmed FinanceOS fact. It
+/// deliberately omits [SyncableTable] and must never be treated as a real
+/// portfolio, lot, journal, or posting event.
+@DataClassName('MarketCorporateActionCandidateRow')
+class MarketCorporateActionCandidates extends Table {
+  TextColumn get id => text()();
+  TextColumn get source => text()();
+  TextColumn get dataset => text()();
+  TextColumn get sourceKey => text()();
+  TextColumn get revisionHash => text()();
+  TextColumn get identityStrength => text()();
+  TextColumn get symbol => text()();
+  TextColumn get market => text()();
+  TextColumn get kind => text()();
+  TextColumn get status => text()();
+  DateTimeColumn get reportDate => dateTime().nullable()();
+  DateTimeColumn get announcementDate => dateTime().nullable()();
+  DateTimeColumn get recordDate => dateTime().nullable()();
+  DateTimeColumn get exDate => dateTime().nullable()();
+  DateTimeColumn get payDate => dateTime().nullable()();
+  TextColumn get currency => text().nullable()();
+  TextColumn get cashPerShare =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get bonusRatio =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get capitalizationRatio =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get totalStockDistributionRatio =>
+      text().map(const DecimalConverter()).nullable()();
+  IntColumn get splitNumerator => integer().nullable()();
+  IntColumn get splitDenominator => integer().nullable()();
+  TextColumn get note => text().nullable()();
+  DateTimeColumn get fetchedAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => ['UNIQUE(source, dataset, source_key)'];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Fetch metadata kept separately so an authoritative empty response remains
+/// distinguishable from a symbol that has never been fetched.
+@DataClassName('MarketCorporateActionFetchStateRow')
+class MarketCorporateActionFetchStates extends Table {
+  TextColumn get market => text()();
+  TextColumn get symbol => text()();
+  TextColumn get provider => text()();
+  TextColumn get disposition => text()();
+  DateTimeColumn get fetchedAt => dateTime()();
+  TextColumn get warning => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {market, symbol};
+}
+
 /// Read-only seed catalog of major securities (A-shares full set,
 /// HK / US majors, popular ETFs). The trade-entry search hits this table
 /// first so a fresh install with zero recorded trades still finds

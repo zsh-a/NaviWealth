@@ -107,6 +107,8 @@ final class AppDatabaseTransactionScope {
     MarketQuotes,
     MarketHistoryBars,
     MarketSymbolSearches,
+    MarketCorporateActionCandidates,
+    MarketCorporateActionFetchStates,
     SecuritiesCatalog,
     SecuritiesCatalogMeta,
     // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
@@ -151,13 +153,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 85;
+  int get schemaVersion => 86;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _createIndexes(this);
+      await _createMarketCorporateActionIndexes(this);
       await _createPortfolioIndexes(this);
       await _createSyncTables(this);
       await _createChatTables(this);
@@ -1067,6 +1070,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 85) {
         await m.createTable(watchlistSimulationObservations);
         await _createWatchlistIndexes(this);
+      }
+      // v85 -> v86: normalized, local-only corporate-action candidate cache.
+      // Public provider rows remain rebuildable reference data and never join
+      // FinanceOS sync or real investment ledger tables.
+      if (from < 86) {
+        await m.createTable(marketCorporateActionCandidates);
+        await m.createTable(marketCorporateActionFetchStates);
+        await _createMarketCorporateActionIndexes(this);
       }
     },
     beforeOpen: (details) async {

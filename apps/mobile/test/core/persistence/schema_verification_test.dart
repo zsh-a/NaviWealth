@@ -20,8 +20,60 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 85', () {
-      expect(db.schemaVersion, 85);
+    test('is 86', () {
+      expect(db.schemaVersion, 86);
+    });
+  });
+
+  group('Corporate-action candidate cache', () {
+    test('keeps normalized candidates local-only', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(market_corporate_action_candidates)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'id',
+          'source_key',
+          'revision_hash',
+          'identity_strength',
+          'market',
+          'symbol',
+          'record_date',
+          'ex_date',
+          'pay_date',
+          'cash_per_share',
+          'fetched_at',
+        ]),
+      );
+      expect(
+        columns.intersection({
+          'owner_user_id',
+          'hlc',
+          'updated_by_device',
+          'deleted_at',
+        }),
+        isEmpty,
+      );
+    });
+
+    test('preserves authoritative-empty fetch metadata', () async {
+      final result = await db
+          .customSelect(
+            'PRAGMA table_info(market_corporate_action_fetch_states)',
+          )
+          .get();
+      expect(
+        result.map((row) => row.read<String>('name')),
+        containsAll([
+          'market',
+          'symbol',
+          'provider',
+          'disposition',
+          'fetched_at',
+        ]),
+      );
     });
   });
 

@@ -26,6 +26,8 @@ final DomainDataManagementSpec financeDataManagementSpec =
         DataTableSpec(table: 'market_quotes'),
         DataTableSpec(table: 'market_history_bars'),
         DataTableSpec(table: 'market_symbol_searches'),
+        DataTableSpec(table: 'market_corporate_action_candidates'),
+        DataTableSpec(table: 'market_corporate_action_fetch_states'),
         DataTableSpec(table: 'options_opportunity_cache', ownerScoped: true),
         DataTableSpec(
           table: 'recurring_pattern_observations',

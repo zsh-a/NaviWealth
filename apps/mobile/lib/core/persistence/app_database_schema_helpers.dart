@@ -505,6 +505,13 @@ Future<void> _createExecutionIndexes(AppDatabase db) async {
   }
 }
 
+Future<void> _createMarketCorporateActionIndexes(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_market_corporate_actions_symbol '
+    'ON market_corporate_action_candidates(market, symbol, fetched_at)',
+  );
+}
+
 Future<void> _createWatchlistIndexes(AppDatabase db) async {
   for (final stmt in _watchlistIndexStmts) {
     final tableMatch = RegExp(

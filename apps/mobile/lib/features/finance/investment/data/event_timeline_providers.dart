@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/logging/providers.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/features/finance/data/market/cache/corporate_action_candidate_cache.dart';
 import 'package:naviwealth/features/finance/data/market/http/clock.dart'
     as market_clock;
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
@@ -18,49 +20,54 @@ import '../domain/reporting/event_timeline.dart';
 /// Unified public corporate-action fetcher. Market routing remains inside the
 /// service so timelines, paper simulations, and future confirmation flows can
 /// reuse the same provider contract.
-final corporateActionsServiceProvider = Provider<CorporateActionsService>((
-  ref,
-) {
-  MarketHttpClient http(String providerName, {required int requestsPerMinute}) {
-    return MarketHttpClient(
-      providerName: providerName,
-      rateLimiter: RateLimiter(
-        maxRequests: requestsPerMinute,
-        window: const Duration(minutes: 1),
-        clock: const market_clock.SystemClock(),
-      ),
-      dio: Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+final corporateActionsServiceProvider = FutureProvider<CorporateActionsService>(
+  (ref) async {
+    MarketHttpClient http(
+      String providerName, {
+      required int requestsPerMinute,
+    }) {
+      return MarketHttpClient(
+        providerName: providerName,
+        rateLimiter: RateLimiter(
+          maxRequests: requestsPerMinute,
+          window: const Duration(minutes: 1),
+          clock: const market_clock.SystemClock(),
         ),
-      ),
-      clock: const market_clock.SystemClock(),
-      metrics: ref.watch(marketMetricsProvider),
-    );
-  }
+        dio: Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 10),
+            sendTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+          ),
+        ),
+        clock: const market_clock.SystemClock(),
+        metrics: ref.watch(marketMetricsProvider),
+      );
+    }
 
-  return CorporateActionsService(
-    providers: [
-      EastmoneyCorporateActionProvider(
-        http: http('eastmoney', requestsPerMinute: 20),
-        available: !kIsWeb,
-      ),
-      YFinanceCorporateActionProvider(
-        http: http('yfinance', requestsPerMinute: 60),
-      ),
-    ],
-    logger: ref.watch(loggerProvider),
-  );
-});
+    final db = await ref.watch(appDatabaseProvider.future);
+    return CorporateActionsService(
+      providers: [
+        EastmoneyCorporateActionProvider(
+          http: http('eastmoney', requestsPerMinute: 20),
+          available: !kIsWeb,
+        ),
+        YFinanceCorporateActionProvider(
+          http: http('yfinance', requestsPerMinute: 60),
+        ),
+      ],
+      logger: ref.watch(loggerProvider),
+      cache: CorporateActionCandidateCache(db: db),
+    );
+  },
+);
 
 /// Per-symbol timeline projection of provider-neutral corporate actions.
 /// Provider failures remain errors; unsupported markets degrade to an empty
 /// timeline without attempting an unrelated provider.
 final corporateActionEventsProvider = FutureProvider.autoDispose
     .family<List<CorporateActionEvent>, String>((ref, symbol) async {
-      final service = ref.watch(corporateActionsServiceProvider);
+      final service = await ref.watch(corporateActionsServiceProvider.future);
       final actions = await service.getForSymbol(symbol);
       return _timelineEvents(actions);
     });
