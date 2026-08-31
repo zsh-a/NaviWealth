@@ -6014,6 +6014,67 @@
   "@watchlistFilterEmptyTitle": { "description": "Title when watchlist filters have no matches" },
   "watchlistFilterEmptyBody": "Adjust or clear the filters to see more symbols.",
   "@watchlistFilterEmptyBody": { "description": "Body when watchlist filters have no matches" },
+  "watchlistAnalysisTitle": "Watchlist analysis",
+  "@watchlistAnalysisTitle": { "description": "Title for point-in-time watchlist analysis" },
+  "watchlistAnalysisMarketTimingNote": "Point-in-time moves are split by market because trading sessions may differ.",
+  "@watchlistAnalysisMarketTimingNote": { "description": "Caveat for comparing watchlist price changes across markets" },
+  "watchlistAnalysisCoverage": "Quote coverage",
+  "@watchlistAnalysisCoverage": { "description": "Available quote coverage metric" },
+  "watchlistAnalysisMedianChange": "Median move",
+  "@watchlistAnalysisMedianChange": { "description": "Median point-in-time price change metric" },
+  "watchlistAnalysisAlertCoverage": "Alert coverage",
+  "@watchlistAnalysisAlertCoverage": { "description": "Configured alert coverage metric" },
+  "watchlistAnalysisTriggeredAlerts": "Triggered",
+  "@watchlistAnalysisTriggeredAlerts": { "description": "Number of currently triggered watchlist alerts" },
+  "watchlistAnalysisCoverageValue": "{configured} / {total}",
+  "@watchlistAnalysisCoverageValue": {
+    "description": "Configured alerts out of total symbols",
+    "placeholders": {
+      "configured": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "watchlistAnalysisFreshnessSummary": "Live {live} · Cached {cached} · Stale {stale} · No price {unavailable}",
+  "@watchlistAnalysisFreshnessSummary": {
+    "description": "Watchlist quote freshness distribution",
+    "placeholders": {
+      "live": { "type": "int" },
+      "cached": { "type": "int" },
+      "stale": { "type": "int" },
+      "unavailable": { "type": "int" }
+    }
+  },
+  "watchlistAnalysisTopGainer": "Largest gain: {symbol} {change}",
+  "@watchlistAnalysisTopGainer": {
+    "description": "Largest positive watchlist move",
+    "placeholders": {
+      "symbol": { "type": "String" },
+      "change": { "type": "String" }
+    }
+  },
+  "watchlistAnalysisTopDecliner": "Largest decline: {symbol} {change}",
+  "@watchlistAnalysisTopDecliner": {
+    "description": "Largest negative watchlist move",
+    "placeholders": {
+      "symbol": { "type": "String" },
+      "change": { "type": "String" }
+    }
+  },
+  "watchlistAnalysisMarketsTitle": "By market",
+  "@watchlistAnalysisMarketsTitle": { "description": "Heading for watchlist analysis grouped by market" },
+  "watchlistAnalysisMarketSummary": "{market}: {quotes}/{total} quotes · {advancing} up · {declining} down · {unchanged} flat · {unknown} no prior close",
+  "@watchlistAnalysisMarketSummary": {
+    "description": "Point-in-time watchlist analysis for one market",
+    "placeholders": {
+      "market": { "type": "String" },
+      "quotes": { "type": "int" },
+      "total": { "type": "int" },
+      "advancing": { "type": "int" },
+      "declining": { "type": "int" },
+      "unchanged": { "type": "int" },
+      "unknown": { "type": "int" }
+    }
+  },
   "watchlistRemoveFromCollectionAction": "Remove from collection",
   "@watchlistRemoveFromCollectionAction": { "description": "Remove a symbol from only the selected collection" },
   "watchlistRemovedFromCollection": "Removed from collection",

@@ -11057,6 +11057,66 @@ class AppLocalizationsEn extends AppLocalizations {
       'Adjust or clear the filters to see more symbols.';
 
   @override
+  String get watchlistAnalysisTitle => 'Watchlist analysis';
+
+  @override
+  String get watchlistAnalysisMarketTimingNote =>
+      'Point-in-time moves are split by market because trading sessions may differ.';
+
+  @override
+  String get watchlistAnalysisCoverage => 'Quote coverage';
+
+  @override
+  String get watchlistAnalysisMedianChange => 'Median move';
+
+  @override
+  String get watchlistAnalysisAlertCoverage => 'Alert coverage';
+
+  @override
+  String get watchlistAnalysisTriggeredAlerts => 'Triggered';
+
+  @override
+  String watchlistAnalysisCoverageValue(int configured, int total) {
+    return '$configured / $total';
+  }
+
+  @override
+  String watchlistAnalysisFreshnessSummary(
+    int live,
+    int cached,
+    int stale,
+    int unavailable,
+  ) {
+    return 'Live $live · Cached $cached · Stale $stale · No price $unavailable';
+  }
+
+  @override
+  String watchlistAnalysisTopGainer(String symbol, String change) {
+    return 'Largest gain: $symbol $change';
+  }
+
+  @override
+  String watchlistAnalysisTopDecliner(String symbol, String change) {
+    return 'Largest decline: $symbol $change';
+  }
+
+  @override
+  String get watchlistAnalysisMarketsTitle => 'By market';
+
+  @override
+  String watchlistAnalysisMarketSummary(
+    String market,
+    int quotes,
+    int total,
+    int advancing,
+    int declining,
+    int unchanged,
+    int unknown,
+  ) {
+    return '$market: $quotes/$total quotes · $advancing up · $declining down · $unchanged flat · $unknown no prior close';
+  }
+
+  @override
   String get watchlistRemoveFromCollectionAction => 'Remove from collection';
 
   @override

@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
 
+import '../domain/watchlist_collection_analysis.dart';
 import 'watchlist_repository.dart';
 
 final watchlistRepositoryProvider = FutureProvider<WatchlistRepository>((
@@ -265,6 +266,38 @@ List<WatchlistItem> filterWatchlistItems({
         return matchesFreshness;
       })
       .toList(growable: false);
+}
+
+WatchlistCollectionAnalysis analyzeWatchlistItems({
+  required Iterable<WatchlistItem> items,
+  required Iterable<WatchlistQuoteSnapshot> snapshots,
+}) {
+  final snapshotsByItemId = <String, WatchlistQuoteSnapshot>{
+    for (final snapshot in snapshots) snapshot.item.id: snapshot,
+  };
+  return WatchlistCollectionAnalysis.fromEntries(
+    items.map((item) {
+      final snapshot = snapshotsByItemId[item.id];
+      final quote = snapshot?.quote;
+      final rules = item.alertRules;
+      final alertConfigured = rules.enabled && rules.hasRule;
+      final alertTriggered =
+          alertConfigured &&
+          quote != null &&
+          ((rules.above != null && quote.price >= rules.above!) ||
+              (rules.below != null && quote.price <= rules.below!));
+      return WatchlistAnalysisEntry(
+        id: item.id,
+        symbol: item.displaySymbol,
+        market: item.market,
+        price: quote?.price,
+        previousClose: quote?.previousClose,
+        freshness: quote == null ? null : snapshot?.response?.freshness,
+        alertConfigured: alertConfigured,
+        alertTriggered: alertTriggered,
+      );
+    }),
+  );
 }
 
 List<WatchlistItem> sortWatchlistItems({

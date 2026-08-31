@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/core/forms/form_submission.dart';
 import 'package:naviwealth/core/logging/providers.dart';
@@ -14,6 +15,7 @@ import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/investment/domain/watchlist_collection_analysis.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/symbol_field.dart';
@@ -458,6 +460,10 @@ class _WatchlistBody extends StatelessWidget {
       symbolCount: filteredItems.length,
       snapshots: filteredSnapshots,
     );
+    final analysis = analyzeWatchlistItems(
+      items: filteredItems,
+      snapshots: filteredSnapshots,
+    );
     final sortedItems = sortWatchlistItems(
       items: filteredItems,
       snapshots: filteredSnapshots,
@@ -500,6 +506,14 @@ class _WatchlistBody extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
               child: _WatchlistSummary(
                 summary: summary,
+                loadingQuotes: loadingQuotes,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+              child: _WatchlistAnalysisCard(
+                analysis: analysis,
                 loadingQuotes: loadingQuotes,
               ),
             ),
@@ -615,6 +629,147 @@ class _WatchlistSummary extends StatelessWidget {
             label: l10n.watchlistSummaryDeclining,
             value: pendingValue ?? '${summary.decliningCount}',
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WatchlistAnalysisCard extends StatelessWidget {
+  const _WatchlistAnalysisCard({
+    required this.analysis,
+    required this.loadingQuotes,
+  });
+
+  final WatchlistCollectionAnalysis analysis;
+  final bool loadingQuotes;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final overall = analysis.overall;
+    final pending = loadingQuotes && overall.availableQuoteCount == 0;
+    final median = overall.medianChangePercent;
+    return AppGroupedSurface(
+      key: const ValueKey<String>('watchlist-collection-analysis'),
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.watchlistAnalysisTitle, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.watchlistAnalysisMarketTimingNote,
+            style: context.captionStyle,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          AppMetricCluster(
+            dense: true,
+            items: [
+              AppMetricItem(
+                label: l10n.watchlistAnalysisCoverage,
+                value: pending
+                    ? '…'
+                    : formatters.percent(
+                        overall.quoteCoverageRatio,
+                        decimalDigits: 0,
+                      ),
+              ),
+              AppMetricItem(
+                label: l10n.watchlistAnalysisMedianChange,
+                value: pending
+                    ? '…'
+                    : median == null
+                    ? '—'
+                    : formatters.signedPercent(
+                        median.toDouble(),
+                        decimalDigits: 2,
+                      ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s10),
+          AppMetricCluster(
+            dense: true,
+            items: [
+              AppMetricItem(
+                label: l10n.watchlistAnalysisAlertCoverage,
+                value: l10n.watchlistAnalysisCoverageValue(
+                  overall.alertConfiguredCount,
+                  overall.symbolCount,
+                ),
+              ),
+              AppMetricItem(
+                label: l10n.watchlistAnalysisTriggeredAlerts,
+                value: pending ? '…' : '${overall.triggeredAlertCount}',
+              ),
+            ],
+          ),
+          if (!pending) ...[
+            const SizedBox(height: AppSpacing.s12),
+            const AppDivider(horizontalPadding: 0),
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              l10n.watchlistAnalysisFreshnessSummary(
+                overall.liveQuoteCount,
+                overall.cachedQuoteCount,
+                overall.staleQuoteCount,
+                overall.unavailableQuoteCount,
+              ),
+              style: context.captionStyle,
+            ),
+            if (overall.topGainer case final mover?) ...[
+              const SizedBox(height: AppSpacing.s6),
+              Text(
+                l10n.watchlistAnalysisTopGainer(
+                  mover.symbol,
+                  formatters.signedPercent(
+                    mover.changePercent.toDouble(),
+                    decimalDigits: 2,
+                  ),
+                ),
+                style: context.captionStyle,
+              ),
+            ],
+            if (overall.topDecliner case final mover?) ...[
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                l10n.watchlistAnalysisTopDecliner(
+                  mover.symbol,
+                  formatters.signedPercent(
+                    mover.changePercent.toDouble(),
+                    decimalDigits: 2,
+                  ),
+                ),
+                style: context.captionStyle,
+              ),
+            ],
+            if (analysis.byMarket.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s12),
+              Text(
+                l10n.watchlistAnalysisMarketsTitle,
+                style: context.labelStyle,
+              ),
+              const SizedBox(height: AppSpacing.s6),
+              for (final market in analysis.byMarket) ...[
+                Text(
+                  l10n.watchlistAnalysisMarketSummary(
+                    _marketLabel(l10n, market.market!),
+                    market.availableQuoteCount,
+                    market.symbolCount,
+                    market.advancingCount,
+                    market.decliningCount,
+                    market.unchangedCount,
+                    market.unknownPreviousCloseCount,
+                  ),
+                  style: context.captionStyle,
+                ),
+                if (market != analysis.byMarket.last)
+                  const SizedBox(height: AppSpacing.s4),
+              ],
+            ],
+          ],
         ],
       ),
     );

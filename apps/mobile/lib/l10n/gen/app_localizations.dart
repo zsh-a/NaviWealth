@@ -18644,6 +18644,91 @@ abstract class AppLocalizations {
   /// **'Adjust or clear the filters to see more symbols.'**
   String get watchlistFilterEmptyBody;
 
+  /// Title for point-in-time watchlist analysis
+  ///
+  /// In en, this message translates to:
+  /// **'Watchlist analysis'**
+  String get watchlistAnalysisTitle;
+
+  /// Caveat for comparing watchlist price changes across markets
+  ///
+  /// In en, this message translates to:
+  /// **'Point-in-time moves are split by market because trading sessions may differ.'**
+  String get watchlistAnalysisMarketTimingNote;
+
+  /// Available quote coverage metric
+  ///
+  /// In en, this message translates to:
+  /// **'Quote coverage'**
+  String get watchlistAnalysisCoverage;
+
+  /// Median point-in-time price change metric
+  ///
+  /// In en, this message translates to:
+  /// **'Median move'**
+  String get watchlistAnalysisMedianChange;
+
+  /// Configured alert coverage metric
+  ///
+  /// In en, this message translates to:
+  /// **'Alert coverage'**
+  String get watchlistAnalysisAlertCoverage;
+
+  /// Number of currently triggered watchlist alerts
+  ///
+  /// In en, this message translates to:
+  /// **'Triggered'**
+  String get watchlistAnalysisTriggeredAlerts;
+
+  /// Configured alerts out of total symbols
+  ///
+  /// In en, this message translates to:
+  /// **'{configured} / {total}'**
+  String watchlistAnalysisCoverageValue(int configured, int total);
+
+  /// Watchlist quote freshness distribution
+  ///
+  /// In en, this message translates to:
+  /// **'Live {live} · Cached {cached} · Stale {stale} · No price {unavailable}'**
+  String watchlistAnalysisFreshnessSummary(
+    int live,
+    int cached,
+    int stale,
+    int unavailable,
+  );
+
+  /// Largest positive watchlist move
+  ///
+  /// In en, this message translates to:
+  /// **'Largest gain: {symbol} {change}'**
+  String watchlistAnalysisTopGainer(String symbol, String change);
+
+  /// Largest negative watchlist move
+  ///
+  /// In en, this message translates to:
+  /// **'Largest decline: {symbol} {change}'**
+  String watchlistAnalysisTopDecliner(String symbol, String change);
+
+  /// Heading for watchlist analysis grouped by market
+  ///
+  /// In en, this message translates to:
+  /// **'By market'**
+  String get watchlistAnalysisMarketsTitle;
+
+  /// Point-in-time watchlist analysis for one market
+  ///
+  /// In en, this message translates to:
+  /// **'{market}: {quotes}/{total} quotes · {advancing} up · {declining} down · {unchanged} flat · {unknown} no prior close'**
+  String watchlistAnalysisMarketSummary(
+    String market,
+    int quotes,
+    int total,
+    int advancing,
+    int declining,
+    int unchanged,
+    int unknown,
+  );
+
   /// Remove a symbol from only the selected collection
   ///
   /// In en, this message translates to:

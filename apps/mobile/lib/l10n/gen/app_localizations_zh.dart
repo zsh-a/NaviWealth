@@ -10473,6 +10473,66 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistFilterEmptyBody => '调整或清除筛选条件以查看更多标的。';
 
   @override
+  String get watchlistAnalysisTitle => '自选分析';
+
+  @override
+  String get watchlistAnalysisMarketTimingNote =>
+      '涨跌为当前时点快照；不同市场交易时段可能不同，因此按市场拆分。';
+
+  @override
+  String get watchlistAnalysisCoverage => '行情覆盖';
+
+  @override
+  String get watchlistAnalysisMedianChange => '涨跌中位数';
+
+  @override
+  String get watchlistAnalysisAlertCoverage => '告警覆盖';
+
+  @override
+  String get watchlistAnalysisTriggeredAlerts => '已触发';
+
+  @override
+  String watchlistAnalysisCoverageValue(int configured, int total) {
+    return '$configured / $total';
+  }
+
+  @override
+  String watchlistAnalysisFreshnessSummary(
+    int live,
+    int cached,
+    int stale,
+    int unavailable,
+  ) {
+    return '实时 $live · 缓存 $cached · 过期 $stale · 无行情 $unavailable';
+  }
+
+  @override
+  String watchlistAnalysisTopGainer(String symbol, String change) {
+    return '最大上涨：$symbol $change';
+  }
+
+  @override
+  String watchlistAnalysisTopDecliner(String symbol, String change) {
+    return '最大下跌：$symbol $change';
+  }
+
+  @override
+  String get watchlistAnalysisMarketsTitle => '按市场';
+
+  @override
+  String watchlistAnalysisMarketSummary(
+    String market,
+    int quotes,
+    int total,
+    int advancing,
+    int declining,
+    int unchanged,
+    int unknown,
+  ) {
+    return '$market：$quotes/$total 个有行情 · 上涨 $advancing · 下跌 $declining · 平盘 $unchanged · 无昨收 $unknown';
+  }
+
+  @override
   String get watchlistRemoveFromCollectionAction => '移出当前组合';
 
   @override

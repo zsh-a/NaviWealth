@@ -245,6 +245,39 @@ void main() {
     );
     expect(rowChange.format, DeltaFormat.percent);
     expect(rowChange.value, closeTo(0.625, 0.000001));
+
+    final analysis = find.byKey(
+      const ValueKey<String>('watchlist-collection-analysis'),
+    );
+    expect(analysis, findsOneWidget);
+    final analysisMetrics = tester.widgetList<AppMetricCluster>(
+      find.descendant(of: analysis, matching: find.byType(AppMetricCluster)),
+    );
+    expect(
+      analysisMetrics
+          .expand((cluster) => cluster.items)
+          .map((item) => '${item.label}:${item.value}'),
+      [
+        'Quote coverage:100%',
+        'Median move:+0.63%',
+        'Alert coverage:0 / 1',
+        'Triggered:0',
+      ],
+    );
+    expect(
+      find.descendant(
+        of: analysis,
+        matching: find.text('Live 0 · Cached 1 · Stale 0 · No price 0'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: analysis,
+        matching: find.text('Largest gain: AAPL +0.63%'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('uses a bottom action sheet for row actions on Android', (

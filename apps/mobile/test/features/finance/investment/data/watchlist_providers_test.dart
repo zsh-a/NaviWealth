@@ -287,6 +287,30 @@ void main() {
       ['MSFT'],
     );
   });
+
+  test('adapts quote snapshots and active thresholds into analysis', () {
+    final triggered = _item(
+      'us_stock:AAPL',
+      'AAPL',
+      rules: PriceAlertRules(above: Decimal.parse('200')),
+    );
+    final disabled = _item(
+      'us_stock:MSFT',
+      'MSFT',
+      rules: PriceAlertRules(below: Decimal.parse('180'), enabled: false),
+    );
+
+    final analysis = analyzeWatchlistItems(
+      items: [triggered, disabled],
+      snapshots: [_snapshot(triggered, price: '201', previousClose: '200')],
+    );
+
+    expect(analysis.overall.symbolCount, 2);
+    expect(analysis.overall.availableQuoteCount, 1);
+    expect(analysis.overall.alertConfiguredCount, 1);
+    expect(analysis.overall.triggeredAlertCount, 1);
+    expect(analysis.overall.topGainer?.symbol, 'AAPL');
+  });
 }
 
 WatchlistItem _item(
