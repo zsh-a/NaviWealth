@@ -40,6 +40,17 @@ final _item = WatchlistItem(
   sync: _sync,
 );
 
+final _namedItem = WatchlistItem(
+  id: _item.id,
+  symbol: _item.symbol,
+  market: _item.market,
+  addedAt: _item.addedAt,
+  alertRules: _item.alertRules,
+  sync: _item.sync,
+  nameEn: 'Apple Inc.',
+  nameCn: '苹果公司',
+);
+
 final _simulation = WatchlistSimulation(
   id: 'simulation-growth',
   collectionId: _collection.id,
@@ -76,6 +87,29 @@ final _snapshot = WatchlistQuoteSnapshot(
     fetchedAt: DateTime.utc(2026, 8, 31, 2),
   ),
 );
+
+final _observations = [
+  WatchlistSimulationObservation(
+    id: 'observation-baseline',
+    simulationId: _simulation.id,
+    observationDay: '2026-08-31',
+    observedAt: DateTime.utc(2026, 8, 31),
+    projectedValue: Decimal.parse('100000'),
+    weightedDailyChange: Decimal.zero,
+    pricedWeight: Decimal.zero,
+    missingQuoteWeight: Decimal.parse('0.9'),
+  ),
+  WatchlistSimulationObservation(
+    id: 'observation-next-day',
+    simulationId: _simulation.id,
+    observationDay: '2026-09-01',
+    observedAt: DateTime.utc(2026, 9),
+    projectedValue: Decimal.parse('100900'),
+    weightedDailyChange: Decimal.parse('0.009'),
+    pricedWeight: Decimal.parse('0.9'),
+    missingQuoteWeight: Decimal.zero,
+  ),
+];
 
 void main() {
   late SharedPreferences preferences;
@@ -143,6 +177,15 @@ void main() {
       findsOneWidget,
     );
     expect(
+      find.byKey(
+        const ValueKey<String>(
+          'watchlist-simulation-history-chart-simulation-growth',
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Latest observed value'), findsOneWidget);
+    expect(
       find.descendant(
         of: card,
         matching: find.textContaining('no historical NAV'),
@@ -153,12 +196,29 @@ void main() {
     expect(find.byIcon(FLucideIcons.slidersHorizontal), findsOneWidget);
     expect(find.byIcon(FLucideIcons.trash2), findsOneWidget);
   });
+
+  testWidgets('shows localized stock names beside simulation symbols', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        item: _namedItem,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Apple Inc. (AAPL)'), findsOneWidget);
+  });
 }
 
 Widget _wrap({
   required SharedPreferences preferences,
   required List<WatchlistSimulation> simulations,
   required List<WatchlistSimulationPosition> positions,
+  WatchlistItem? item,
 }) {
   return ProviderScope(
     overrides: [
@@ -168,6 +228,12 @@ Widget _wrap({
       ),
       watchlistSimulationPositionsProvider.overrideWith(
         (_, _) => Stream.value(positions),
+      ),
+      watchlistSimulationObservationsProvider.overrideWith(
+        (_, _) => Stream.value(_observations),
+      ),
+      watchlistSimulationObservationRecorderProvider.overrideWithValue(
+        (_) async {},
       ),
     ],
     child: MaterialApp(
@@ -182,7 +248,7 @@ Widget _wrap({
             children: [
               WatchlistSimulationSection(
                 collection: _collection,
-                items: [_item],
+                items: [item ?? _item],
                 snapshots: [_snapshot],
               ),
             ],

@@ -44922,6 +44922,735 @@ class WatchlistSimulationPositionsCompanion
   }
 }
 
+class $WatchlistSimulationObservationsTable
+    extends WatchlistSimulationObservations
+    with
+        TableInfo<
+          $WatchlistSimulationObservationsTable,
+          WatchlistSimulationObservationRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationObservationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _simulationIdMeta = const VerificationMeta(
+    'simulationId',
+  );
+  @override
+  late final GeneratedColumn<String> simulationId = GeneratedColumn<String>(
+    'simulation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _observationDayMeta = const VerificationMeta(
+    'observationDay',
+  );
+  @override
+  late final GeneratedColumn<String> observationDay = GeneratedColumn<String>(
+    'observation_day',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _observedAtMeta = const VerificationMeta(
+    'observedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> observedAt = GeneratedColumn<DateTime>(
+    'observed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> projectedValue =
+      GeneratedColumn<String>(
+        'projected_value',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationObservationsTable.$converterprojectedValue,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  weightedDailyChange =
+      GeneratedColumn<String>(
+        'weighted_daily_change',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationObservationsTable.$converterweightedDailyChange,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> pricedWeight =
+      GeneratedColumn<String>(
+        'priced_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationObservationsTable.$converterpricedWeight,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String>
+  missingQuoteWeight =
+      GeneratedColumn<String>(
+        'missing_quote_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationObservationsTable.$convertermissingQuoteWeight,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    ownerUserId,
+    simulationId,
+    observationDay,
+    observedAt,
+    projectedValue,
+    weightedDailyChange,
+    pricedWeight,
+    missingQuoteWeight,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulation_observations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationObservationRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('simulation_id')) {
+      context.handle(
+        _simulationIdMeta,
+        simulationId.isAcceptableOrUnknown(
+          data['simulation_id']!,
+          _simulationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_simulationIdMeta);
+    }
+    if (data.containsKey('observation_day')) {
+      context.handle(
+        _observationDayMeta,
+        observationDay.isAcceptableOrUnknown(
+          data['observation_day']!,
+          _observationDayMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_observationDayMeta);
+    }
+    if (data.containsKey('observed_at')) {
+      context.handle(
+        _observedAtMeta,
+        observedAt.isAcceptableOrUnknown(data['observed_at']!, _observedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_observedAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationObservationRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationObservationRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      simulationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simulation_id'],
+      )!,
+      observationDay: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}observation_day'],
+      )!,
+      observedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}observed_at'],
+      )!,
+      projectedValue: $WatchlistSimulationObservationsTable
+          .$converterprojectedValue
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}projected_value'],
+            )!,
+          ),
+      weightedDailyChange: $WatchlistSimulationObservationsTable
+          .$converterweightedDailyChange
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}weighted_daily_change'],
+            )!,
+          ),
+      pricedWeight: $WatchlistSimulationObservationsTable.$converterpricedWeight
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}priced_weight'],
+            )!,
+          ),
+      missingQuoteWeight: $WatchlistSimulationObservationsTable
+          .$convertermissingQuoteWeight
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}missing_quote_weight'],
+            )!,
+          ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationObservationsTable createAlias(String alias) {
+    return $WatchlistSimulationObservationsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Decimal, String> $converterprojectedValue =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterweightedDailyChange =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterpricedWeight =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertermissingQuoteWeight =
+      const DecimalConverter();
+}
+
+class WatchlistSimulationObservationRow extends DataClass
+    implements Insertable<WatchlistSimulationObservationRow> {
+  final String id;
+  final String ownerUserId;
+  final String simulationId;
+  final String observationDay;
+  final DateTime observedAt;
+  final Decimal projectedValue;
+  final Decimal weightedDailyChange;
+  final Decimal pricedWeight;
+  final Decimal missingQuoteWeight;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const WatchlistSimulationObservationRow({
+    required this.id,
+    required this.ownerUserId,
+    required this.simulationId,
+    required this.observationDay,
+    required this.observedAt,
+    required this.projectedValue,
+    required this.weightedDailyChange,
+    required this.pricedWeight,
+    required this.missingQuoteWeight,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['simulation_id'] = Variable<String>(simulationId);
+    map['observation_day'] = Variable<String>(observationDay);
+    map['observed_at'] = Variable<DateTime>(observedAt);
+    {
+      map['projected_value'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$converterprojectedValue.toSql(
+          projectedValue,
+        ),
+      );
+    }
+    {
+      map['weighted_daily_change'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$converterweightedDailyChange
+            .toSql(weightedDailyChange),
+      );
+    }
+    {
+      map['priced_weight'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$converterpricedWeight.toSql(
+          pricedWeight,
+        ),
+      );
+    }
+    {
+      map['missing_quote_weight'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$convertermissingQuoteWeight
+            .toSql(missingQuoteWeight),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  WatchlistSimulationObservationsCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistSimulationObservationsCompanion(
+      id: Value(id),
+      ownerUserId: Value(ownerUserId),
+      simulationId: Value(simulationId),
+      observationDay: Value(observationDay),
+      observedAt: Value(observedAt),
+      projectedValue: Value(projectedValue),
+      weightedDailyChange: Value(weightedDailyChange),
+      pricedWeight: Value(pricedWeight),
+      missingQuoteWeight: Value(missingQuoteWeight),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory WatchlistSimulationObservationRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationObservationRow(
+      id: serializer.fromJson<String>(json['id']),
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      simulationId: serializer.fromJson<String>(json['simulationId']),
+      observationDay: serializer.fromJson<String>(json['observationDay']),
+      observedAt: serializer.fromJson<DateTime>(json['observedAt']),
+      projectedValue: serializer.fromJson<Decimal>(json['projectedValue']),
+      weightedDailyChange: serializer.fromJson<Decimal>(
+        json['weightedDailyChange'],
+      ),
+      pricedWeight: serializer.fromJson<Decimal>(json['pricedWeight']),
+      missingQuoteWeight: serializer.fromJson<Decimal>(
+        json['missingQuoteWeight'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'simulationId': serializer.toJson<String>(simulationId),
+      'observationDay': serializer.toJson<String>(observationDay),
+      'observedAt': serializer.toJson<DateTime>(observedAt),
+      'projectedValue': serializer.toJson<Decimal>(projectedValue),
+      'weightedDailyChange': serializer.toJson<Decimal>(weightedDailyChange),
+      'pricedWeight': serializer.toJson<Decimal>(pricedWeight),
+      'missingQuoteWeight': serializer.toJson<Decimal>(missingQuoteWeight),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  WatchlistSimulationObservationRow copyWith({
+    String? id,
+    String? ownerUserId,
+    String? simulationId,
+    String? observationDay,
+    DateTime? observedAt,
+    Decimal? projectedValue,
+    Decimal? weightedDailyChange,
+    Decimal? pricedWeight,
+    Decimal? missingQuoteWeight,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => WatchlistSimulationObservationRow(
+    id: id ?? this.id,
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    simulationId: simulationId ?? this.simulationId,
+    observationDay: observationDay ?? this.observationDay,
+    observedAt: observedAt ?? this.observedAt,
+    projectedValue: projectedValue ?? this.projectedValue,
+    weightedDailyChange: weightedDailyChange ?? this.weightedDailyChange,
+    pricedWeight: pricedWeight ?? this.pricedWeight,
+    missingQuoteWeight: missingQuoteWeight ?? this.missingQuoteWeight,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  WatchlistSimulationObservationRow copyWithCompanion(
+    WatchlistSimulationObservationsCompanion data,
+  ) {
+    return WatchlistSimulationObservationRow(
+      id: data.id.present ? data.id.value : this.id,
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      simulationId: data.simulationId.present
+          ? data.simulationId.value
+          : this.simulationId,
+      observationDay: data.observationDay.present
+          ? data.observationDay.value
+          : this.observationDay,
+      observedAt: data.observedAt.present
+          ? data.observedAt.value
+          : this.observedAt,
+      projectedValue: data.projectedValue.present
+          ? data.projectedValue.value
+          : this.projectedValue,
+      weightedDailyChange: data.weightedDailyChange.present
+          ? data.weightedDailyChange.value
+          : this.weightedDailyChange,
+      pricedWeight: data.pricedWeight.present
+          ? data.pricedWeight.value
+          : this.pricedWeight,
+      missingQuoteWeight: data.missingQuoteWeight.present
+          ? data.missingQuoteWeight.value
+          : this.missingQuoteWeight,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationObservationRow(')
+          ..write('id: $id, ')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('observationDay: $observationDay, ')
+          ..write('observedAt: $observedAt, ')
+          ..write('projectedValue: $projectedValue, ')
+          ..write('weightedDailyChange: $weightedDailyChange, ')
+          ..write('pricedWeight: $pricedWeight, ')
+          ..write('missingQuoteWeight: $missingQuoteWeight, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    ownerUserId,
+    simulationId,
+    observationDay,
+    observedAt,
+    projectedValue,
+    weightedDailyChange,
+    pricedWeight,
+    missingQuoteWeight,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationObservationRow &&
+          other.id == this.id &&
+          other.ownerUserId == this.ownerUserId &&
+          other.simulationId == this.simulationId &&
+          other.observationDay == this.observationDay &&
+          other.observedAt == this.observedAt &&
+          other.projectedValue == this.projectedValue &&
+          other.weightedDailyChange == this.weightedDailyChange &&
+          other.pricedWeight == this.pricedWeight &&
+          other.missingQuoteWeight == this.missingQuoteWeight &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class WatchlistSimulationObservationsCompanion
+    extends UpdateCompanion<WatchlistSimulationObservationRow> {
+  final Value<String> id;
+  final Value<String> ownerUserId;
+  final Value<String> simulationId;
+  final Value<String> observationDay;
+  final Value<DateTime> observedAt;
+  final Value<Decimal> projectedValue;
+  final Value<Decimal> weightedDailyChange;
+  final Value<Decimal> pricedWeight;
+  final Value<Decimal> missingQuoteWeight;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const WatchlistSimulationObservationsCompanion({
+    this.id = const Value.absent(),
+    this.ownerUserId = const Value.absent(),
+    this.simulationId = const Value.absent(),
+    this.observationDay = const Value.absent(),
+    this.observedAt = const Value.absent(),
+    this.projectedValue = const Value.absent(),
+    this.weightedDailyChange = const Value.absent(),
+    this.pricedWeight = const Value.absent(),
+    this.missingQuoteWeight = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationObservationsCompanion.insert({
+    required String id,
+    required String ownerUserId,
+    required String simulationId,
+    required String observationDay,
+    required DateTime observedAt,
+    required Decimal projectedValue,
+    required Decimal weightedDailyChange,
+    required Decimal pricedWeight,
+    required Decimal missingQuoteWeight,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       ownerUserId = Value(ownerUserId),
+       simulationId = Value(simulationId),
+       observationDay = Value(observationDay),
+       observedAt = Value(observedAt),
+       projectedValue = Value(projectedValue),
+       weightedDailyChange = Value(weightedDailyChange),
+       pricedWeight = Value(pricedWeight),
+       missingQuoteWeight = Value(missingQuoteWeight),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<WatchlistSimulationObservationRow> custom({
+    Expression<String>? id,
+    Expression<String>? ownerUserId,
+    Expression<String>? simulationId,
+    Expression<String>? observationDay,
+    Expression<DateTime>? observedAt,
+    Expression<String>? projectedValue,
+    Expression<String>? weightedDailyChange,
+    Expression<String>? pricedWeight,
+    Expression<String>? missingQuoteWeight,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (simulationId != null) 'simulation_id': simulationId,
+      if (observationDay != null) 'observation_day': observationDay,
+      if (observedAt != null) 'observed_at': observedAt,
+      if (projectedValue != null) 'projected_value': projectedValue,
+      if (weightedDailyChange != null)
+        'weighted_daily_change': weightedDailyChange,
+      if (pricedWeight != null) 'priced_weight': pricedWeight,
+      if (missingQuoteWeight != null)
+        'missing_quote_weight': missingQuoteWeight,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationObservationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? ownerUserId,
+    Value<String>? simulationId,
+    Value<String>? observationDay,
+    Value<DateTime>? observedAt,
+    Value<Decimal>? projectedValue,
+    Value<Decimal>? weightedDailyChange,
+    Value<Decimal>? pricedWeight,
+    Value<Decimal>? missingQuoteWeight,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationObservationsCompanion(
+      id: id ?? this.id,
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      simulationId: simulationId ?? this.simulationId,
+      observationDay: observationDay ?? this.observationDay,
+      observedAt: observedAt ?? this.observedAt,
+      projectedValue: projectedValue ?? this.projectedValue,
+      weightedDailyChange: weightedDailyChange ?? this.weightedDailyChange,
+      pricedWeight: pricedWeight ?? this.pricedWeight,
+      missingQuoteWeight: missingQuoteWeight ?? this.missingQuoteWeight,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (simulationId.present) {
+      map['simulation_id'] = Variable<String>(simulationId.value);
+    }
+    if (observationDay.present) {
+      map['observation_day'] = Variable<String>(observationDay.value);
+    }
+    if (observedAt.present) {
+      map['observed_at'] = Variable<DateTime>(observedAt.value);
+    }
+    if (projectedValue.present) {
+      map['projected_value'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$converterprojectedValue.toSql(
+          projectedValue.value,
+        ),
+      );
+    }
+    if (weightedDailyChange.present) {
+      map['weighted_daily_change'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$converterweightedDailyChange
+            .toSql(weightedDailyChange.value),
+      );
+    }
+    if (pricedWeight.present) {
+      map['priced_weight'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$converterpricedWeight.toSql(
+          pricedWeight.value,
+        ),
+      );
+    }
+    if (missingQuoteWeight.present) {
+      map['missing_quote_weight'] = Variable<String>(
+        $WatchlistSimulationObservationsTable.$convertermissingQuoteWeight
+            .toSql(missingQuoteWeight.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationObservationsCompanion(')
+          ..write('id: $id, ')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('observationDay: $observationDay, ')
+          ..write('observedAt: $observedAt, ')
+          ..write('projectedValue: $projectedValue, ')
+          ..write('weightedDailyChange: $weightedDailyChange, ')
+          ..write('pricedWeight: $pricedWeight, ')
+          ..write('missingQuoteWeight: $missingQuoteWeight, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -45012,6 +45741,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WatchlistSimulationsTable(this);
   late final $WatchlistSimulationPositionsTable watchlistSimulationPositions =
       $WatchlistSimulationPositionsTable(this);
+  late final $WatchlistSimulationObservationsTable
+  watchlistSimulationObservations = $WatchlistSimulationObservationsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -45071,6 +45802,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     watchlistCollectionMembers,
     watchlistSimulations,
     watchlistSimulationPositions,
+    watchlistSimulationObservations,
   ];
 }
 
@@ -65861,6 +66593,363 @@ typedef $$WatchlistSimulationPositionsTableProcessedTableManager =
       WatchlistSimulationPositionRow,
       PrefetchHooks Function()
     >;
+typedef $$WatchlistSimulationObservationsTableCreateCompanionBuilder =
+    WatchlistSimulationObservationsCompanion Function({
+      required String id,
+      required String ownerUserId,
+      required String simulationId,
+      required String observationDay,
+      required DateTime observedAt,
+      required Decimal projectedValue,
+      required Decimal weightedDailyChange,
+      required Decimal pricedWeight,
+      required Decimal missingQuoteWeight,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationObservationsTableUpdateCompanionBuilder =
+    WatchlistSimulationObservationsCompanion Function({
+      Value<String> id,
+      Value<String> ownerUserId,
+      Value<String> simulationId,
+      Value<String> observationDay,
+      Value<DateTime> observedAt,
+      Value<Decimal> projectedValue,
+      Value<Decimal> weightedDailyChange,
+      Value<Decimal> pricedWeight,
+      Value<Decimal> missingQuoteWeight,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationObservationsTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationObservationsTable> {
+  $$WatchlistSimulationObservationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get observationDay => $composableBuilder(
+    column: $table.observationDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get observedAt => $composableBuilder(
+    column: $table.observedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get projectedValue =>
+      $composableBuilder(
+        column: $table.projectedValue,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get weightedDailyChange => $composableBuilder(
+    column: $table.weightedDailyChange,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get pricedWeight =>
+      $composableBuilder(
+        column: $table.pricedWeight,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String>
+  get missingQuoteWeight => $composableBuilder(
+    column: $table.missingQuoteWeight,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationObservationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationObservationsTable> {
+  $$WatchlistSimulationObservationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get observationDay => $composableBuilder(
+    column: $table.observationDay,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get observedAt => $composableBuilder(
+    column: $table.observedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get projectedValue => $composableBuilder(
+    column: $table.projectedValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weightedDailyChange => $composableBuilder(
+    column: $table.weightedDailyChange,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pricedWeight => $composableBuilder(
+    column: $table.pricedWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get missingQuoteWeight => $composableBuilder(
+    column: $table.missingQuoteWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationObservationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationObservationsTable> {
+  $$WatchlistSimulationObservationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get observationDay => $composableBuilder(
+    column: $table.observationDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get observedAt => $composableBuilder(
+    column: $table.observedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get projectedValue =>
+      $composableBuilder(
+        column: $table.projectedValue,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get weightedDailyChange =>
+      $composableBuilder(
+        column: $table.weightedDailyChange,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get pricedWeight =>
+      $composableBuilder(
+        column: $table.pricedWeight,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get missingQuoteWeight =>
+      $composableBuilder(
+        column: $table.missingQuoteWeight,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationObservationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationObservationsTable,
+          WatchlistSimulationObservationRow,
+          $$WatchlistSimulationObservationsTableFilterComposer,
+          $$WatchlistSimulationObservationsTableOrderingComposer,
+          $$WatchlistSimulationObservationsTableAnnotationComposer,
+          $$WatchlistSimulationObservationsTableCreateCompanionBuilder,
+          $$WatchlistSimulationObservationsTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationObservationRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationObservationsTable,
+              WatchlistSimulationObservationRow
+            >,
+          ),
+          WatchlistSimulationObservationRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationObservationsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationObservationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationObservationsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationObservationsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationObservationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> ownerUserId = const Value.absent(),
+                Value<String> simulationId = const Value.absent(),
+                Value<String> observationDay = const Value.absent(),
+                Value<DateTime> observedAt = const Value.absent(),
+                Value<Decimal> projectedValue = const Value.absent(),
+                Value<Decimal> weightedDailyChange = const Value.absent(),
+                Value<Decimal> pricedWeight = const Value.absent(),
+                Value<Decimal> missingQuoteWeight = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationObservationsCompanion(
+                id: id,
+                ownerUserId: ownerUserId,
+                simulationId: simulationId,
+                observationDay: observationDay,
+                observedAt: observedAt,
+                projectedValue: projectedValue,
+                weightedDailyChange: weightedDailyChange,
+                pricedWeight: pricedWeight,
+                missingQuoteWeight: missingQuoteWeight,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String ownerUserId,
+                required String simulationId,
+                required String observationDay,
+                required DateTime observedAt,
+                required Decimal projectedValue,
+                required Decimal weightedDailyChange,
+                required Decimal pricedWeight,
+                required Decimal missingQuoteWeight,
+                required DateTime createdAt,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationObservationsCompanion.insert(
+                id: id,
+                ownerUserId: ownerUserId,
+                simulationId: simulationId,
+                observationDay: observationDay,
+                observedAt: observedAt,
+                projectedValue: projectedValue,
+                weightedDailyChange: weightedDailyChange,
+                pricedWeight: pricedWeight,
+                missingQuoteWeight: missingQuoteWeight,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationObservationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationObservationsTable,
+      WatchlistSimulationObservationRow,
+      $$WatchlistSimulationObservationsTableFilterComposer,
+      $$WatchlistSimulationObservationsTableOrderingComposer,
+      $$WatchlistSimulationObservationsTableAnnotationComposer,
+      $$WatchlistSimulationObservationsTableCreateCompanionBuilder,
+      $$WatchlistSimulationObservationsTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationObservationRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationObservationsTable,
+          WatchlistSimulationObservationRow
+        >,
+      ),
+      WatchlistSimulationObservationRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -66013,5 +67102,11 @@ class $AppDatabaseManager {
       $$WatchlistSimulationPositionsTableTableManager(
         _db,
         _db.watchlistSimulationPositions,
+      );
+  $$WatchlistSimulationObservationsTableTableManager
+  get watchlistSimulationObservations =>
+      $$WatchlistSimulationObservationsTableTableManager(
+        _db,
+        _db.watchlistSimulationObservations,
       );
 }

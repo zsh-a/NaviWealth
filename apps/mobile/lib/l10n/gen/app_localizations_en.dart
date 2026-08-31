@@ -11163,7 +11163,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSimulationMethodNote =>
-      'Uses each available symbol\'s current daily percentage move. Missing quotes are excluded; no historical NAV, FX series, or corporate-action adjustment is inferred.';
+      'Uses each available symbol\'s current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.';
+
+  @override
+  String get watchlistSimulationHistoryTitle => 'Observed simulation history';
+
+  @override
+  String get watchlistSimulationObservedValue => 'Latest observed value';
+
+  @override
+  String get watchlistSimulationHistorySeries => 'Observed value';
+
+  @override
+  String get watchlistSimulationHistoryChartLabel =>
+      'Observed paper simulation value over time';
+
+  @override
+  String get watchlistSimulationHistoryEmpty =>
+      'Observation history starts when this simulation receives a usable quote.';
+
+  @override
+  String get watchlistSimulationHistoryBaselineOnly =>
+      'Baseline recorded. The curve will change after a usable quote is observed on a later UTC day.';
+
+  @override
+  String get watchlistSimulationHistoryDisclaimer =>
+      'Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.';
 
   @override
   String get watchlistSimulationCreateTitle => 'Create paper simulation';

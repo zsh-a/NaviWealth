@@ -110,6 +110,36 @@ class WatchlistSimulationPositions extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Daily, device-local observations for a paper watchlist simulation.
+///
+/// Unlike the simulation definition and target weights, these rows are a
+/// derived read model. They deliberately omit [SyncableTable]: quote
+/// availability is device-local and the observation can be rebuilt as new
+/// daily quotes arrive. Values are not historical NAV and never write into
+/// real portfolio or ledger aggregates.
+@DataClassName('WatchlistSimulationObservationRow')
+class WatchlistSimulationObservations extends Table {
+  TextColumn get id => text()();
+  TextColumn get ownerUserId => text()();
+  TextColumn get simulationId => text()();
+  TextColumn get observationDay => text()();
+  DateTimeColumn get observedAt => dateTime()();
+  TextColumn get projectedValue => text().map(const DecimalConverter())();
+  TextColumn get weightedDailyChange => text().map(const DecimalConverter())();
+  TextColumn get pricedWeight => text().map(const DecimalConverter())();
+  TextColumn get missingQuoteWeight => text().map(const DecimalConverter())();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, simulation_id, observation_day)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('LiabilityRow')
 class Liabilities extends Table with SyncableTable {
   TextColumn get id => text()();

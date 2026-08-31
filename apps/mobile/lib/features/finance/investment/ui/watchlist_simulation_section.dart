@@ -223,6 +223,21 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
     final dailyMoveAmount = projection.dailyMoveAmount(
       simulation.startingCapital,
     );
+    final positionItemIds = positions
+        .map((position) => position.watchlistItemId)
+        .toSet();
+    DateTime? latestQuoteAt;
+    for (final snapshot in snapshots) {
+      final quote = snapshot.quote;
+      if (!positionItemIds.contains(snapshot.item.id) ||
+          quote == null ||
+          quote.changePercent == null) {
+        continue;
+      }
+      if (latestQuoteAt == null || quote.asOf.isAfter(latestQuoteAt)) {
+        latestQuoteAt = quote.asOf;
+      }
+    }
     return AppGroupedSurface(
       key: ValueKey<String>('watchlist-simulation-${simulation.id}'),
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -314,6 +329,12 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
             style: context.captionStyle,
           ),
           const SizedBox(height: AppSpacing.s10),
+          _WatchlistSimulationHistory(
+            simulation: simulation,
+            projection: projection,
+            observedAt: latestQuoteAt,
+          ),
+          const SizedBox(height: AppSpacing.s10),
           const AppDivider(horizontalPadding: 0),
           const SizedBox(height: AppSpacing.s10),
           for (var index = 0; index < positions.length; index++) ...[
@@ -321,8 +342,11 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    itemById[positions[index].watchlistItemId]?.displaySymbol ??
-                        _symbolFromId(positions[index].watchlistItemId),
+                    _simulationItemLabel(
+                      context,
+                      itemById[positions[index].watchlistItemId],
+                      fallbackId: positions[index].watchlistItemId,
+                    ),
                     style: context.captionStyle,
                   ),
                 ),
@@ -347,6 +371,192 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _WatchlistSimulationHistory extends ConsumerStatefulWidget {
+  const _WatchlistSimulationHistory({
+    required this.simulation,
+    required this.projection,
+    required this.observedAt,
+  });
+
+  final WatchlistSimulation simulation;
+  final WatchlistSimulationProjection projection;
+  final DateTime? observedAt;
+
+  @override
+  ConsumerState<_WatchlistSimulationHistory> createState() =>
+      _WatchlistSimulationHistoryState();
+}
+
+class _WatchlistSimulationHistoryState
+    extends ConsumerState<_WatchlistSimulationHistory> {
+  String? _scheduledSignature;
+
+  @override
+  Widget build(BuildContext context) {
+    _scheduleObservation();
+    final history = ref.watch(
+      watchlistSimulationObservationsProvider(widget.simulation.id),
+    );
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      key: ValueKey<String>(
+        'watchlist-simulation-history-${widget.simulation.id}',
+      ),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.watchlistSimulationHistoryTitle, style: context.labelStyle),
+        const SizedBox(height: AppSpacing.s8),
+        history.whenOrLoading(
+          context: context,
+          loading: () => const SizedBox(
+            height: 120,
+            child: Center(child: FCircularProgress()),
+          ),
+          error: (_, _) => Align(
+            alignment: Alignment.centerLeft,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => ref.invalidate(
+                watchlistSimulationObservationsProvider(widget.simulation.id),
+              ),
+              child: Text(l10n.commonRetry),
+            ),
+          ),
+          data: (observations) => _WatchlistSimulationHistoryChart(
+            simulation: widget.simulation,
+            observations: observations,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _scheduleObservation() {
+    final observedAt = widget.observedAt;
+    final projection = widget.projection;
+    if (observedAt == null || projection.pricedWeight <= Decimal.zero) return;
+    final signature = <Object>[
+      observedAt.toUtc().toIso8601String(),
+      projection.weightedDailyChange,
+      projection.pricedWeight,
+      projection.missingQuoteWeight,
+      widget.simulation.sync.hlc,
+    ].join('|');
+    if (_scheduledSignature == signature) return;
+    _scheduledSignature = signature;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || _scheduledSignature != signature) return;
+      try {
+        await ref.read(watchlistSimulationObservationRecorderProvider)(
+          WatchlistSimulationObservationRequest(
+            simulation: widget.simulation,
+            observedAt: observedAt,
+            weightedDailyChange: projection.weightedDailyChange,
+            pricedWeight: projection.pricedWeight,
+            missingQuoteWeight: projection.missingQuoteWeight,
+          ),
+        );
+      } catch (_) {
+        if (mounted && _scheduledSignature == signature) {
+          _scheduledSignature = null;
+        }
+      }
+    });
+  }
+}
+
+class _WatchlistSimulationHistoryChart extends StatelessWidget {
+  const _WatchlistSimulationHistoryChart({
+    required this.simulation,
+    required this.observations,
+  });
+
+  final WatchlistSimulation simulation;
+  final List<WatchlistSimulationObservation> observations;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    if (observations.isEmpty) {
+      return Text(
+        l10n.watchlistSimulationHistoryEmpty,
+        style: context.captionStyle,
+      );
+    }
+    final latest = observations.last;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.watchlistSimulationObservedValue,
+                style: context.captionStyle,
+              ),
+            ),
+            Text(
+              formatters.currency(
+                latest.projectedValue,
+                code: simulation.baseCurrency,
+                decimalDigits: 2,
+              ),
+              style: context.labelStyle,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        SizedBox(
+          height: 150,
+          child: NwLineChart(
+            key: ValueKey<String>(
+              'watchlist-simulation-history-chart-${simulation.id}',
+            ),
+            series: [
+              ChartSeries(
+                name: l10n.watchlistSimulationHistorySeries,
+                points: [
+                  for (final observation in observations)
+                    ChartPoint(
+                      x: observation.observedAt.millisecondsSinceEpoch
+                          .toDouble(),
+                      y: observation.projectedValue.toDouble(),
+                      meta: observation,
+                    ),
+                ],
+              ),
+            ],
+            xAxis: TimeAxis(
+              format: AxisDateFormat.dayMonth,
+              locale: locale,
+              maxLabels: 4,
+            ),
+            yAxis: ValueAxis.currency(
+              currencyCode: simulation.baseCurrency,
+              locale: locale,
+              maxLabels: 4,
+            ),
+            semanticLabel: l10n.watchlistSimulationHistoryChartLabel,
+            interpolation: ChartInterpolation.linear,
+            filled: true,
+            showDots: true,
+            showTouchXAxisLabel: true,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s6),
+        Text(
+          observations.length == 1
+              ? l10n.watchlistSimulationHistoryBaselineOnly
+              : l10n.watchlistSimulationHistoryDisclaimer,
+          style: context.captionStyle,
+        ),
+      ],
     );
   }
 }
@@ -622,8 +832,11 @@ class _WatchlistSimulationAllocationSheetState
               control: FTextFieldControl.managed(controller: entry.value),
               label: Text(
                 l10n.watchlistSimulationWeightField(
-                  itemById[entry.key]?.displaySymbol ??
-                      _symbolFromId(entry.key),
+                  _simulationItemLabel(
+                    context,
+                    itemById[entry.key],
+                    fallbackId: entry.key,
+                  ),
                 ),
               ),
               keyboardType: const TextInputType.numberWithOptions(
@@ -766,4 +979,14 @@ Future<void> _deleteSimulation(
 String _symbolFromId(String id) {
   final separator = id.indexOf(':');
   return separator < 0 ? id : id.substring(separator + 1);
+}
+
+String _simulationItemLabel(
+  BuildContext context,
+  WatchlistItem? item, {
+  required String fallbackId,
+}) {
+  if (item == null) return _symbolFromId(fallbackId);
+  final name = item.localizedName(Localizations.localeOf(context).languageCode);
+  return name == null ? item.displaySymbol : '$name (${item.displaySymbol})';
 }

@@ -18810,8 +18810,50 @@ abstract class AppLocalizations {
   /// Paper simulation calculation scope and limitations
   ///
   /// In en, this message translates to:
-  /// **'Uses each available symbol\'s current daily percentage move. Missing quotes are excluded; no historical NAV, FX series, or corporate-action adjustment is inferred.'**
+  /// **'Uses each available symbol\'s current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.'**
   String get watchlistSimulationMethodNote;
+
+  /// Title for the locally observed paper simulation curve
+  ///
+  /// In en, this message translates to:
+  /// **'Observed simulation history'**
+  String get watchlistSimulationHistoryTitle;
+
+  /// Latest locally observed paper simulation value
+  ///
+  /// In en, this message translates to:
+  /// **'Latest observed value'**
+  String get watchlistSimulationObservedValue;
+
+  /// Series name for the paper simulation observation chart
+  ///
+  /// In en, this message translates to:
+  /// **'Observed value'**
+  String get watchlistSimulationHistorySeries;
+
+  /// Accessibility label for the paper simulation observation chart
+  ///
+  /// In en, this message translates to:
+  /// **'Observed paper simulation value over time'**
+  String get watchlistSimulationHistoryChartLabel;
+
+  /// Empty state for paper simulation observations
+  ///
+  /// In en, this message translates to:
+  /// **'Observation history starts when this simulation receives a usable quote.'**
+  String get watchlistSimulationHistoryEmpty;
+
+  /// Explanation shown while only the simulation baseline exists
+  ///
+  /// In en, this message translates to:
+  /// **'Baseline recorded. The curve will change after a usable quote is observed on a later UTC day.'**
+  String get watchlistSimulationHistoryBaselineOnly;
+
+  /// Scope disclosure below the paper simulation observation chart
+  ///
+  /// In en, this message translates to:
+  /// **'Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.'**
+  String get watchlistSimulationHistoryDisclaimer;
 
   /// Paper simulation creation sheet title
   ///

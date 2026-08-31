@@ -43,6 +43,17 @@ final _otherItem = WatchlistItem(
   sync: _item.sync,
 );
 
+final _namedItem = WatchlistItem(
+  id: _item.id,
+  symbol: _item.symbol,
+  market: _item.market,
+  addedAt: _item.addedAt,
+  alertRules: _item.alertRules,
+  sync: _item.sync,
+  nameEn: 'Apple Inc.',
+  nameCn: '苹果公司',
+);
+
 final _collection = WatchlistCollection(
   id: 'collection-growth',
   name: 'Growth',
@@ -110,6 +121,7 @@ late SharedPreferences _preferences;
 
 Widget _wrap(
   TargetPlatform platform, {
+  List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistCollection> collections = const [],
   List<WatchlistCollectionMember> members = const [],
@@ -118,7 +130,9 @@ Widget _wrap(
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(_preferences),
-      watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
+      watchlistItemsProvider.overrideWith(
+        (_) => Stream.value(items ?? [_item]),
+      ),
       watchlistCollectionsProvider.overrideWith(
         (_) => Stream.value(collections),
       ),
@@ -189,6 +203,14 @@ void main() {
           .value,
       isTrue,
     );
+  });
+
+  testWidgets('shows the localized stock name with its symbol', (tester) async {
+    await tester.pumpWidget(_wrap(TargetPlatform.android, items: [_namedItem]));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Apple Inc.'), findsOneWidget);
+    expect(find.textContaining('AAPL ·'), findsOneWidget);
   });
 
   testWidgets('opens bulk add and collection target selection', (tester) async {
@@ -470,6 +492,81 @@ void main() {
       'sort': 'change-desc',
     });
     expect(_preferences.getString(kWatchlistSortPreferenceKey), 'gainers');
+  });
+
+  testWidgets('query changes preserve the route pushed below watchlist', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final router = GoRouter(
+      initialLocation: FinanceRoutes.wealth,
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealth,
+          builder: (_, _) => const Scaffold(body: _WatchlistPushHost()),
+        ),
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(_preferences),
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([_item, _otherItem]),
+          ),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value([_collection]),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value([_membership]),
+          ),
+          watchlistSimulationsProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
+          watchlistQuoteSnapshotsProvider.overrideWith(
+            (_) async => [_advancingSnapshot, _decliningSnapshot],
+          ),
+          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
+            (_, _) async => [_advancingSnapshot],
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open watchlist'));
+    await tester.pumpAndSettle();
+    expect(find.byType(WatchlistPage), findsOneWidget);
+
+    final collectionChip = find.text('Growth (1)');
+    await tester.ensureVisible(collectionChip);
+    await tester.pumpAndSettle();
+    await tester.tap(collectionChip);
+    await tester.pumpAndSettle();
+
+    expect(router.canPop(), isTrue);
+    expect(find.byType(WatchlistPage), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsNothing);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Portfolio hub'), findsOneWidget);
   });
 
   testWidgets('filters collection and ungrouped scopes through the URL', (
@@ -789,4 +886,21 @@ void main() {
       findsOneWidget,
     );
   });
+}
+
+class _WatchlistPushHost extends StatelessWidget {
+  const _WatchlistPushHost();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text('Portfolio hub'),
+        TextButton(
+          onPressed: () => context.push(FinanceRoutes.wealthWatchlist),
+          child: const Text('Open watchlist'),
+        ),
+      ],
+    );
+  }
 }

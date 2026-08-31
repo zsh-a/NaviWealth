@@ -77,11 +77,18 @@ trade execution state. Virtual capital and target weights use `Decimal`; both
 tables sync under `fin:` and participate in encrypted backup.
 
 The current projection applies available point-in-time daily percentage moves
-to virtual target weights. Missing quotes reduce priced coverage. It does not
-claim a historical NAV or actual return and does not infer FX history, split or
-dividend adjustments. A future historical simulation must first define one
-authoritative FX series, missing-bar policy, and corporate-action adjustment
-policy before exposing a performance curve.
+to virtual target weights. Missing quotes reduce priced coverage. A local-only
+`watchlist_simulation_observations` read model records the creation baseline
+and at most one observation per UTC day. Same-day refreshes replace that day's
+projection from the prior observation, while allocation changes affect only
+future observations. These derived rows do not sync and are deleted with their
+simulation.
+
+The observation curve is not historical NAV or actual return: it begins only
+when the simulation exists, treats missing quotes as flat, and does not infer FX
+history, split, or dividend adjustments. A future backfilled performance
+simulation must first define one authoritative FX series, missing-bar policy,
+and corporate-action adjustment policy.
 
 ## Topic Routing
 

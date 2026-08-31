@@ -52,6 +52,9 @@ class WatchlistItem {
     required this.addedAt,
     required this.alertRules,
     required this.sync,
+    this.assetName,
+    this.nameEn,
+    this.nameCn,
   });
 
   final String id;
@@ -60,8 +63,22 @@ class WatchlistItem {
   final DateTime addedAt;
   final PriceAlertRules alertRules;
   final SyncMeta sync;
+  final String? assetName;
+  final String? nameEn;
+  final String? nameCn;
 
   String get displaySymbol => symbol.toUpperCase();
+
+  String? localizedName(String languageCode) {
+    final catalogNames = languageCode.toLowerCase().startsWith('zh')
+        ? <String?>[nameCn, nameEn]
+        : <String?>[nameEn, nameCn];
+    for (final candidate in <String?>[assetName, ...catalogNames]) {
+      final normalized = candidate?.trim();
+      if (normalized != null && normalized.isNotEmpty) return normalized;
+    }
+    return null;
+  }
 }
 
 class WatchlistCollection {
@@ -117,22 +134,46 @@ class WatchlistRepository {
   static const int _sortRankStep = 1024;
 
   Stream<List<WatchlistItem>> watchActive(String ownerUserId) {
-    final query = _db.select(_db.watchlistItems)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([(t) => OrderingTerm.asc(t.addedAt)]);
+    final query = _activeItemsQuery(ownerUserId);
     return query.watch().map(
-      (rows) => rows.map(_rowToDomain).toList(growable: false),
+      (rows) => rows.map(_itemFromResult).toList(growable: false),
     );
   }
 
   Future<List<WatchlistItem>> listActive(String ownerUserId) async {
-    final query = _db.select(_db.watchlistItems)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([(t) => OrderingTerm.asc(t.addedAt)]);
+    final query = _activeItemsQuery(ownerUserId);
     final rows = await query.get();
-    return rows.map(_rowToDomain).toList(growable: false);
+    return rows.map(_itemFromResult).toList(growable: false);
+  }
+
+  JoinedSelectStatement<HasResultSet, dynamic> _activeItemsQuery(
+    String ownerUserId,
+  ) {
+    return (_db.select(_db.watchlistItems).join([
+        leftOuterJoin(
+          _db.assets,
+          _db.assets.id.equalsExp(_db.watchlistItems.id) &
+              _db.assets.ownerUserId.equalsExp(_db.watchlistItems.ownerUserId) &
+              _db.assets.deletedAt.isNull(),
+        ),
+        leftOuterJoin(
+          _db.securitiesCatalog,
+          _db.securitiesCatalog.id.equalsExp(_db.watchlistItems.id),
+        ),
+      ])
+      ..where(_db.watchlistItems.ownerUserId.equals(ownerUserId))
+      ..where(_db.watchlistItems.deletedAt.isNull())
+      ..orderBy([OrderingTerm.asc(_db.watchlistItems.addedAt)]));
+  }
+
+  WatchlistItem _itemFromResult(TypedResult result) {
+    final catalog = result.readTableOrNull(_db.securitiesCatalog);
+    return _rowToDomain(
+      result.readTable(_db.watchlistItems),
+      assetName: result.readTableOrNull(_db.assets)?.name,
+      nameEn: catalog?.nameEn,
+      nameCn: catalog?.nameCn,
+    );
   }
 
   Stream<List<WatchlistCollection>> watchCollections(String ownerUserId) {
@@ -692,7 +733,12 @@ WatchlistCollectionMembersCompanion _memberTombstone(MutationStamp stamp) =>
       hlc: Value(stamp.hlc),
     );
 
-WatchlistItem _rowToDomain(WatchlistItemRow row) {
+WatchlistItem _rowToDomain(
+  WatchlistItemRow row, {
+  String? assetName,
+  String? nameEn,
+  String? nameCn,
+}) {
   final market = assetMarketFromWire(row.market) ?? AssetMarket.unknown;
   return WatchlistItem(
     id: row.id,
@@ -700,6 +746,9 @@ WatchlistItem _rowToDomain(WatchlistItemRow row) {
     market: market,
     addedAt: row.addedAt,
     alertRules: PriceAlertRules.fromJson(row.alertRulesJson),
+    assetName: assetName,
+    nameEn: nameEn,
+    nameCn: nameCn,
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
       updatedAt: row.updatedAt,

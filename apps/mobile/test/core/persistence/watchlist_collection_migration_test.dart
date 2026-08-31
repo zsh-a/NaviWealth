@@ -74,7 +74,7 @@ void main() {
       }
 
       final version = await db.customSelect('PRAGMA user_version').getSingle();
-      expect(version.read<int>('user_version'), 84);
+      expect(version.read<int>('user_version'), 85);
     },
   );
 
@@ -146,6 +146,6 @@ void main() {
       expect(row.read<int>('sort_rank'), 0, reason: table);
     }
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 84);
+    expect(version.read<int>('user_version'), 85);
   });
 }

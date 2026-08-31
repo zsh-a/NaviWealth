@@ -471,6 +471,9 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_item '
       'ON watchlist_simulation_positions(owner_user_id, watchlist_item_id) '
       'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_observations_history '
+      'ON watchlist_simulation_observations('
+      'owner_user_id, simulation_id, observation_day)',
 ];
 
 const List<String> _corporateActionIndexStmts = [
@@ -511,7 +514,7 @@ Future<void> _createWatchlistIndexes(AppDatabase db) async {
     final table = tableMatch?.group(1);
     if (table != null &&
         (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
-      // Watchlist tables arrived in v10/v82/v84. Focused migration fixtures
+      // Watchlist tables arrived in v10/v82/v84/v85. Focused migration fixtures
       // may omit tables from earlier phases entirely.
       continue;
     }

@@ -349,7 +349,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
       title: AppLocalizations.of(context).watchlistReorderSymbolsAction,
       entries: items,
       idOf: (entry) => entry.id,
-      labelOf: (entry) => entry.displaySymbol,
+      labelOf: (entry) => _watchlistItemLabel(context, entry),
       onSave: (ordered) async {
         final repo = await ref.read(watchlistRepositoryProvider.future);
         await repo.reorderItemsInCollection(
@@ -1042,6 +1042,9 @@ class _WatchlistRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = context.theme.colors;
     final quote = snapshot?.quote;
+    final itemName = item.localizedName(
+      Localizations.localeOf(context).languageCode,
+    );
     final actionsTitle = l10n.watchlistRowActionsTitle(item.displaySymbol);
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -1077,9 +1080,15 @@ class _WatchlistRow extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(item.displaySymbol, style: context.labelStyle),
                         Text(
-                          _marketLabel(l10n, item.market),
+                          itemName ?? item.displaySymbol,
+                          style: context.labelStyle,
+                        ),
+                        Text(
+                          itemName == null
+                              ? _marketLabel(l10n, item.market)
+                              : '${item.displaySymbol} · '
+                                    '${_marketLabel(l10n, item.market)}',
                           style: context.captionStyle,
                         ),
                       ],
@@ -1210,12 +1219,23 @@ class _WatchlistDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final quote = snapshot?.quote;
+    final itemName = item.localizedName(
+      Localizations.localeOf(context).languageCode,
+    );
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.s24),
       children: [
-        Text(item.displaySymbol, style: context.theme.typography.body.xl),
+        Text(
+          itemName ?? item.displaySymbol,
+          style: context.theme.typography.body.xl,
+        ),
         const SizedBox(height: AppSpacing.s4),
-        Text(_marketLabel(l10n, item.market), style: context.captionStyle),
+        Text(
+          itemName == null
+              ? _marketLabel(l10n, item.market)
+              : '${item.displaySymbol} · ${_marketLabel(l10n, item.market)}',
+          style: context.captionStyle,
+        ),
         const SizedBox(height: AppSpacing.s24),
         if (loadingQuote)
           const Align(
@@ -2038,7 +2058,7 @@ class _WatchlistBulkMembershipSheetState
                   key: ValueKey<String>(
                     'watchlist-bulk-item-${widget.items[index].id}',
                   ),
-                  title: widget.items[index].displaySymbol,
+                  title: _watchlistItemLabel(context, widget.items[index]),
                   subtitle: _marketLabel(l10n, widget.items[index].market),
                   selected: _selectedItemIds.contains(widget.items[index].id),
                   enabled: !_saving,
@@ -2447,7 +2467,7 @@ WatchlistFilter _watchlistFilterOf(BuildContext context) {
 void _replaceWatchlistScope(BuildContext context, WatchlistScope scope) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return;
-  final current = router.routeInformationProvider.value.uri;
+  final current = GoRouterState.of(context).uri;
   final query = <String, String>{...current.queryParameters}
     ..remove(kSelectedQueryKey);
   if (scope.isAll) {
@@ -2457,7 +2477,7 @@ void _replaceWatchlistScope(BuildContext context, WatchlistScope scope) {
         ? _ungroupedQueryValue
         : scope.collectionId!;
   }
-  router.go(
+  router.pushReplacement<void>(
     Uri(
       path: FinanceRoutes.wealthWatchlist,
       queryParameters: query.isEmpty ? null : query,
@@ -2471,7 +2491,7 @@ void _replaceWatchlistSortOrder(
 ) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return;
-  final current = router.routeInformationProvider.value.uri;
+  final current = GoRouterState.of(context).uri;
   final query = <String, String>{...current.queryParameters};
   final queryValue = switch (order) {
     WatchlistSortOrder.defaultOrder => null,
@@ -2484,7 +2504,7 @@ void _replaceWatchlistSortOrder(
   } else {
     query[_sortQueryKey] = queryValue;
   }
-  router.go(
+  router.pushReplacement<void>(
     Uri(
       path: FinanceRoutes.wealthWatchlist,
       queryParameters: query.isEmpty ? null : query,
@@ -2495,7 +2515,7 @@ void _replaceWatchlistSortOrder(
 void _replaceWatchlistFilter(BuildContext context, WatchlistFilter filter) {
   final router = GoRouter.maybeOf(context);
   if (router == null) return;
-  final current = router.routeInformationProvider.value.uri;
+  final current = GoRouterState.of(context).uri;
   final query = <String, String>{...current.queryParameters};
   if (filter.market == null) {
     query.remove(_marketFilterQueryKey);
@@ -2522,7 +2542,7 @@ void _replaceWatchlistFilter(BuildContext context, WatchlistFilter filter) {
     case WatchlistFreshnessFilter.unavailable:
       query[_freshnessFilterQueryKey] = 'unavailable';
   }
-  router.go(
+  router.pushReplacement<void>(
     Uri(
       path: FinanceRoutes.wealthWatchlist,
       queryParameters: query.isEmpty ? null : query,
@@ -2547,6 +2567,11 @@ String _marketLabel(AppLocalizations l10n, AssetMarket market) {
     AssetMarket.fx => l10n.watchlistMarketFx,
     AssetMarket.unknown => l10n.watchlistMarketUnknown,
   };
+}
+
+String _watchlistItemLabel(BuildContext context, WatchlistItem item) {
+  final name = item.localizedName(Localizations.localeOf(context).languageCode);
+  return name == null ? item.displaySymbol : '$name (${item.displaySymbol})';
 }
 
 IconData _marketIcon(AssetMarket market) {

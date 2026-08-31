@@ -7,7 +7,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 void main() {
-  test('v83 adds paper-only watchlist simulation tables', () async {
+  test('v83 adds paper simulation inputs and local observations', () async {
     final dir = await Directory.systemTemp.createTemp(
       'naviwealth-watchlist-simulation-v84-',
     );
@@ -54,8 +54,24 @@ void main() {
         'hlc',
       ]),
     );
+    final observations = await db
+        .customSelect('PRAGMA table_info(watchlist_simulation_observations)')
+        .get();
+    expect(
+      observations.map((row) => row.read<String>('name')),
+      containsAll([
+        'owner_user_id',
+        'simulation_id',
+        'observation_day',
+        'projected_value',
+      ]),
+    );
+    expect(
+      observations.map((row) => row.read<String>('name')),
+      isNot(contains('hlc')),
+    );
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 84);
+    expect(version.read<int>('user_version'), 85);
   });
 }

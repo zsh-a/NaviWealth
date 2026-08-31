@@ -29,6 +29,8 @@ final _items = [
     addedAt: DateTime.utc(2026, 5, 18),
     alertRules: PriceAlertRules(above: _d('210'), below: _d('180')),
     sync: _meta(),
+    nameEn: 'Apple Inc.',
+    nameCn: '苹果公司',
   ),
   WatchlistItem(
     id: 'hk_stock:2800.HK',
@@ -37,6 +39,8 @@ final _items = [
     addedAt: DateTime.utc(2026, 5, 18, 1),
     alertRules: PriceAlertRules(below: _d('18')),
     sync: _meta(),
+    nameEn: 'Tracker Fund of Hong Kong',
+    nameCn: '盈富基金',
   ),
 ];
 

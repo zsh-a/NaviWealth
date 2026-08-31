@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -39,4 +40,55 @@ final watchlistSimulationPositionsProvider = StreamProvider.autoDispose
         ownerUserId: ownerUserId,
         simulationId: simulationId,
       );
+    });
+
+final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
+    .family<List<WatchlistSimulationObservation>, String>((
+      ref,
+      simulationId,
+    ) async* {
+      final repository = await ref.watch(
+        watchlistSimulationRepositoryProvider.future,
+      );
+      final ownerUserId = await ref.watch(currentUserIdProvider)();
+      yield* repository.watchObservations(
+        ownerUserId: ownerUserId,
+        simulationId: simulationId,
+      );
+    });
+
+class WatchlistSimulationObservationRequest {
+  const WatchlistSimulationObservationRequest({
+    required this.simulation,
+    required this.observedAt,
+    required this.weightedDailyChange,
+    required this.pricedWeight,
+    required this.missingQuoteWeight,
+  });
+
+  final WatchlistSimulation simulation;
+  final DateTime observedAt;
+  final Decimal weightedDailyChange;
+  final Decimal pricedWeight;
+  final Decimal missingQuoteWeight;
+}
+
+typedef WatchlistSimulationObservationRecorder = Future<void> Function(
+  WatchlistSimulationObservationRequest request,
+);
+
+final watchlistSimulationObservationRecorderProvider =
+    Provider<WatchlistSimulationObservationRecorder>((ref) {
+      return (request) async {
+        final repository = await ref.read(
+          watchlistSimulationRepositoryProvider.future,
+        );
+        await repository.recordObservation(
+          simulation: request.simulation,
+          observedAt: request.observedAt,
+          weightedDailyChange: request.weightedDailyChange,
+          pricedWeight: request.pricedWeight,
+          missingQuoteWeight: request.missingQuoteWeight,
+        );
+      };
     });

@@ -34,7 +34,7 @@ void replaceSelectedQuery(
   required String path,
   required String? selected,
 }) {
-  final current = GoRouter.of(context).routeInformationProvider.value.uri;
+  final current = GoRouterState.of(context).uri;
   final next = <String, String>{...current.queryParameters};
   if (selected == null || selected.isEmpty) {
     next.remove(kSelectedQueryKey);
@@ -42,5 +42,5 @@ void replaceSelectedQuery(
     next[kSelectedQueryKey] = selected;
   }
   final uri = Uri(path: path, queryParameters: next.isEmpty ? null : next);
-  GoRouter.of(context).go(uri.toString());
+  GoRouter.of(context).pushReplacement<void>(uri.toString());
 }

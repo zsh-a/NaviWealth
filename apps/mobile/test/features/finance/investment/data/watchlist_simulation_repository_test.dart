@@ -38,6 +38,17 @@ void main() {
         (await repository.watchActive('u-test').first).single.id,
         simulation.id,
       );
+      expect(
+        (await repository
+                .watchObservations(
+                  ownerUserId: 'u-test',
+                  simulationId: simulation.id,
+                )
+                .first)
+            .single
+            .projectedValue,
+        simulation.startingCapital,
+      );
       final createdPositions = await repository
           .watchPositions(ownerUserId: 'u-test', simulationId: simulation.id)
           .first;
@@ -79,6 +90,15 @@ void main() {
             .first,
         isEmpty,
       );
+      expect(
+        await repository
+            .watchObservations(
+              ownerUserId: 'u-test',
+              simulationId: simulation.id,
+            )
+            .first,
+        isEmpty,
+      );
 
       for (final table in const [
         'investment_portfolios',
@@ -90,6 +110,63 @@ void main() {
             .getSingle();
         expect(count.read<int>('count'), 0, reason: table);
       }
+    },
+  );
+
+  test(
+    'compounds once per observed day and replaces same-day refreshes',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-growth',
+        name: 'Observed mix',
+        baseCurrency: 'USD',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'us_stock:AAPL': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+      final baselineDay = simulation.baselineAt;
+      final secondDay = baselineDay.add(const Duration(days: 1));
+      final thirdDay = baselineDay.add(const Duration(days: 2));
+      final queuedBeforeObservations = outbox.queued.length;
+
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: secondDay,
+        weightedDailyChange: Decimal.parse('0.1'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+      );
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: secondDay.add(const Duration(hours: 1)),
+        weightedDailyChange: Decimal.parse('0.2'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+      );
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: thirdDay,
+        weightedDailyChange: Decimal.parse('-0.1'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+      );
+
+      final observations = await repository
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first;
+      expect(observations, hasLength(3));
+      expect(observations[0].projectedValue, Decimal.parse('1000'));
+      expect(observations[1].projectedValue, Decimal.parse('1200.0'));
+      expect(observations[2].projectedValue, Decimal.parse('1080.00'));
+      expect(outbox.queued, hasLength(queuedBeforeObservations));
     },
   );
 

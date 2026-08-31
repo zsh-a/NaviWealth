@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 84', () {
-      expect(db.schemaVersion, 84);
+    test('is 85', () {
+      expect(db.schemaVersion, 85);
     });
   });
 
@@ -102,6 +102,29 @@ void main() {
       expect(
         positionColumns.map((row) => row.read<String>('name')),
         containsAll(['simulation_id', 'watchlist_item_id', 'target_weight']),
+      );
+    });
+
+    test('observation history is a local-only derived table', () async {
+      final result = await db
+          .customSelect('PRAGMA table_info(watchlist_simulation_observations)')
+          .get();
+      final columns = result.map((row) => row.read<String>('name')).toSet();
+      expect(
+        columns,
+        containsAll([
+          'simulation_id',
+          'observation_day',
+          'observed_at',
+          'projected_value',
+          'weighted_daily_change',
+          'priced_weight',
+          'missing_quote_weight',
+        ]),
+      );
+      expect(
+        columns.intersection({'hlc', 'updated_by_device', 'deleted_at'}),
+        isEmpty,
       );
     });
   });

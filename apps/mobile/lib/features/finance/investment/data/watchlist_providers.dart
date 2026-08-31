@@ -4,6 +4,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/data/securities_catalog/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
@@ -23,6 +24,7 @@ final watchlistRepositoryProvider = FutureProvider<WatchlistRepository>((
 final watchlistItemsProvider = StreamProvider.autoDispose<List<WatchlistItem>>((
   ref,
 ) async* {
+  await ref.watch(securitiesCatalogReadyProvider.future);
   final repo = await ref.watch(watchlistRepositoryProvider.future);
   final ownerUserId = await ref.watch(currentUserIdProvider)();
   yield* repo.watchActive(ownerUserId);

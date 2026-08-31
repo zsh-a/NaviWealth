@@ -37,6 +37,8 @@ final _items = [
     addedAt: DateTime.utc(2026, 8, 31),
     alertRules: const PriceAlertRules(),
     sync: _sync,
+    nameEn: 'Apple Inc.',
+    nameCn: '苹果公司',
   ),
   WatchlistItem(
     id: 'us_stock:MSFT',
@@ -45,6 +47,8 @@ final _items = [
     addedAt: DateTime.utc(2026, 8, 31),
     alertRules: const PriceAlertRules(),
     sync: _sync,
+    nameEn: 'Microsoft',
+    nameCn: '微软',
   ),
 ];
 
@@ -97,6 +101,29 @@ final _snapshots = [
   ),
 ];
 
+final _observations = [
+  WatchlistSimulationObservation(
+    id: 'observation-baseline',
+    simulationId: _simulation.id,
+    observationDay: '2026-08-31',
+    observedAt: DateTime.utc(2026, 8, 31),
+    projectedValue: Decimal.parse('100000'),
+    weightedDailyChange: Decimal.zero,
+    pricedWeight: Decimal.zero,
+    missingQuoteWeight: Decimal.parse('0.9'),
+  ),
+  WatchlistSimulationObservation(
+    id: 'observation-next-day',
+    simulationId: _simulation.id,
+    observationDay: '2026-09-01',
+    observedAt: DateTime.utc(2026, 9),
+    projectedValue: Decimal.parse('100300'),
+    weightedDailyChange: Decimal.parse('0.003'),
+    pricedWeight: Decimal.parse('0.6'),
+    missingQuoteWeight: Decimal.parse('0.3'),
+  ),
+];
+
 void main() {
   runAllVariants('watchlist_simulation_section', (tester, variant) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -112,6 +139,12 @@ void main() {
         ),
         watchlistSimulationPositionsProvider.overrideWith(
           (_, _) => Stream.value(_positions),
+        ),
+        watchlistSimulationObservationsProvider.overrideWith(
+          (_, _) => Stream.value(_observations),
+        ),
+        watchlistSimulationObservationRecorderProvider.overrideWithValue(
+          (_) async {},
         ),
       ],
       child: Scaffold(

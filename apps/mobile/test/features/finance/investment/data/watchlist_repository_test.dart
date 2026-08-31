@@ -1,10 +1,13 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
@@ -70,6 +73,45 @@ void main() {
       expect(
         ops.every((o) => o.table == 'watchlist_items' && o.rowId == item.id),
         isTrue,
+      );
+    },
+  );
+
+  test(
+    'reads localized stock names without copying them into sync rows',
+    () async {
+      final db = makeTestDatabase();
+      final repo = WatchlistRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      await db
+          .into(db.securitiesCatalog)
+          .insert(
+            SecuritiesCatalogCompanion.insert(
+              id: 'us_stock:AAPL',
+              symbol: 'AAPL',
+              market: 'us_stock',
+              type: AssetType.stock,
+              currency: 'USD',
+              nameEn: const Value('Apple Inc.'),
+              nameCn: const Value('苹果公司'),
+            ),
+          );
+      await repo.add(symbol: 'AAPL', market: AssetMarket.usStock);
+
+      final item = (await repo.listActive('u-test')).single;
+      expect(item.localizedName('en'), 'Apple Inc.');
+      expect(item.localizedName('zh-Hans'), '苹果公司');
+
+      final columns = await db
+          .customSelect('PRAGMA table_info(watchlist_items)')
+          .get();
+      expect(
+        columns.map((row) => row.read<String>('name')),
+        isNot(contains('name')),
       );
     },
   );

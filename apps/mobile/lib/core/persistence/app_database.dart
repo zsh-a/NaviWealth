@@ -123,6 +123,7 @@ final class AppDatabaseTransactionScope {
     WatchlistCollectionMembers,
     WatchlistSimulations,
     WatchlistSimulationPositions,
+    WatchlistSimulationObservations,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -150,7 +151,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 84;
+  int get schemaVersion => 85;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1059,6 +1060,12 @@ class AppDatabase extends _$AppDatabase {
       if (from < 84) {
         await m.createTable(watchlistSimulations);
         await m.createTable(watchlistSimulationPositions);
+        await _createWatchlistIndexes(this);
+      }
+      // v84 -> v85: device-local daily observations for paper simulations.
+      // The simulation inputs continue to sync; this derived curve does not.
+      if (from < 85) {
+        await m.createTable(watchlistSimulationObservations);
         await _createWatchlistIndexes(this);
       }
     },

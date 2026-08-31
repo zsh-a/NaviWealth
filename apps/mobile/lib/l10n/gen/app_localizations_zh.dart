@@ -10576,7 +10576,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistSimulationMethodNote =>
-      '仅使用各标的当前可用的当日涨跌幅；缺失行情不参与计算，且不会推断历史净值、汇率序列或公司行动调整。';
+      '仅使用各标的当前可用的当日涨跌幅；缺失行情按不变处理，且不会推断历史净值、汇率序列或公司行动调整。';
+
+  @override
+  String get watchlistSimulationHistoryTitle => '模拟观察历史';
+
+  @override
+  String get watchlistSimulationObservedValue => '最新观察值';
+
+  @override
+  String get watchlistSimulationHistorySeries => '观察值';
+
+  @override
+  String get watchlistSimulationHistoryChartLabel => '模拟组合观察值历史曲线';
+
+  @override
+  String get watchlistSimulationHistoryEmpty => '收到可用行情后开始记录模拟观察历史。';
+
+  @override
+  String get watchlistSimulationHistoryBaselineOnly =>
+      '已记录创建基线；在后续 UTC 日期收到可用行情后，曲线才会产生变动。';
+
+  @override
+  String get watchlistSimulationHistoryDisclaimer =>
+      '仅为每日观察曲线，不是历史净值或真实收益。同日刷新会覆盖当日记录，调仓仅影响后续观察值。';
 
   @override
   String get watchlistSimulationCreateTitle => '创建模拟组合';

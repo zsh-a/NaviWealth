@@ -53,11 +53,34 @@ class WatchlistSimulationPosition {
   final SyncMeta sync;
 }
 
+class WatchlistSimulationObservation {
+  const WatchlistSimulationObservation({
+    required this.id,
+    required this.simulationId,
+    required this.observationDay,
+    required this.observedAt,
+    required this.projectedValue,
+    required this.weightedDailyChange,
+    required this.pricedWeight,
+    required this.missingQuoteWeight,
+  });
+
+  final String id;
+  final String simulationId;
+  final String observationDay;
+  final DateTime observedAt;
+  final Decimal projectedValue;
+  final Decimal weightedDailyChange;
+  final Decimal pricedWeight;
+  final Decimal missingQuoteWeight;
+}
+
 /// Paper-only repository for watchlist allocation scenarios.
 ///
 /// This repository intentionally has no dependency on the real investment
 /// portfolio, lots, accounts, journal entries, or postings. Every mutation is
-/// confined to the two `watchlist_simulation*` row families.
+/// confined to the `watchlist_simulation*` row families; observations remain
+/// derived and local-only while simulation inputs use the sync outbox.
 class WatchlistSimulationRepository {
   WatchlistSimulationRepository({
     required AppDatabase db,
@@ -95,6 +118,19 @@ class WatchlistSimulationRepository {
       ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]);
     return query.watch().map(
       (rows) => rows.map(_positionFromRow).toList(growable: false),
+    );
+  }
+
+  Stream<List<WatchlistSimulationObservation>> watchObservations({
+    required String ownerUserId,
+    required String simulationId,
+  }) {
+    final query = _db.select(_db.watchlistSimulationObservations)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.simulationId.equals(simulationId))
+      ..orderBy([(t) => OrderingTerm.asc(t.observationDay)]);
+    return query.watch().map(
+      (rows) => rows.map(_observationFromRow).toList(growable: false),
     );
   }
 
@@ -147,6 +183,26 @@ class WatchlistSimulationRepository {
               hlc: stamp.hlc,
             ),
           );
+      await _db
+          .into(_db.watchlistSimulationObservations)
+          .insert(
+            WatchlistSimulationObservationsCompanion.insert(
+              id: _observationId(
+                simulationId: simulation.id,
+                observationDay: _observationDay(simulation.baselineAt),
+              ),
+              ownerUserId: stamp.ownerUserId,
+              simulationId: simulation.id,
+              observationDay: _observationDay(simulation.baselineAt),
+              observedAt: simulation.baselineAt,
+              projectedValue: simulation.startingCapital,
+              weightedDailyChange: Decimal.zero,
+              pricedWeight: Decimal.zero,
+              missingQuoteWeight: Decimal.one - simulation.cashWeight,
+              createdAt: stamp.now,
+              updatedAt: stamp.now,
+            ),
+          );
       await _outbox.enqueue(table: simulationsTable, rowId: simulation.id);
       for (final entry in targetWeights.entries) {
         await _writePosition(
@@ -159,6 +215,108 @@ class WatchlistSimulationRepository {
       }
     });
     return simulation;
+  }
+
+  /// Records one derived observation per UTC calendar day.
+  ///
+  /// Repeated quotes for the same day replace that day's projection using
+  /// the prior day's value, so refreshes never compound twice. The creation
+  /// day remains the starting-capital baseline because the simulation does
+  /// not know prices from the instant it was created.
+  Future<WatchlistSimulationObservation?> recordObservation({
+    required WatchlistSimulation simulation,
+    required DateTime observedAt,
+    required Decimal weightedDailyChange,
+    required Decimal pricedWeight,
+    required Decimal missingQuoteWeight,
+  }) async {
+    if (observedAt.isBefore(simulation.baselineAt) ||
+        pricedWeight <= Decimal.zero) {
+      return null;
+    }
+    if (weightedDailyChange < -Decimal.one ||
+        pricedWeight < Decimal.zero ||
+        pricedWeight > Decimal.one ||
+        missingQuoteWeight < Decimal.zero ||
+        missingQuoteWeight > Decimal.one) {
+      throw ArgumentError('Invalid paper simulation observation.');
+    }
+    final ownerUserId = simulation.sync.ownerUserId;
+    final day = _observationDay(observedAt);
+    final now = DateTime.now().toUtc();
+    WatchlistSimulationObservation? result;
+    await _db.transaction(() async {
+      final activeSimulation =
+          await (_db.select(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (activeSimulation == null) return;
+
+      final latestQuery = _db.select(_db.watchlistSimulationObservations)
+        ..where((t) => t.ownerUserId.equals(ownerUserId))
+        ..where((t) => t.simulationId.equals(simulation.id))
+        ..orderBy([(t) => OrderingTerm.desc(t.observationDay)])
+        ..limit(1);
+      final latest = await latestQuery.getSingleOrNull();
+      if (latest != null && latest.observationDay.compareTo(day) > 0) return;
+
+      final currentQuery = _db.select(_db.watchlistSimulationObservations)
+        ..where((t) => t.ownerUserId.equals(ownerUserId))
+        ..where((t) => t.simulationId.equals(simulation.id))
+        ..where((t) => t.observationDay.equals(day));
+      final current = await currentQuery.getSingleOrNull();
+      if (current != null && observedAt.isBefore(current.observedAt)) {
+        result = _observationFromRow(current);
+        return;
+      }
+
+      final previousQuery = _db.select(_db.watchlistSimulationObservations)
+        ..where((t) => t.ownerUserId.equals(ownerUserId))
+        ..where((t) => t.simulationId.equals(simulation.id))
+        ..where((t) => t.observationDay.isSmallerThanValue(day))
+        ..orderBy([(t) => OrderingTerm.desc(t.observationDay)])
+        ..limit(1);
+      final previous = await previousQuery.getSingleOrNull();
+      final projectedValue = previous == null
+          ? simulation.startingCapital
+          : (previous.projectedValue * (Decimal.one + weightedDailyChange))
+                .round(scale: 8);
+      final id = _observationId(
+        simulationId: simulation.id,
+        observationDay: day,
+      );
+      final row = WatchlistSimulationObservationsCompanion.insert(
+        id: id,
+        ownerUserId: ownerUserId,
+        simulationId: simulation.id,
+        observationDay: day,
+        observedAt: observedAt,
+        projectedValue: projectedValue,
+        weightedDailyChange: weightedDailyChange,
+        pricedWeight: pricedWeight,
+        missingQuoteWeight: missingQuoteWeight,
+        createdAt: current?.createdAt ?? now,
+        updatedAt: now,
+      );
+      await _db
+          .into(_db.watchlistSimulationObservations)
+          .insertOnConflictUpdate(row);
+      result = WatchlistSimulationObservation(
+        id: id,
+        simulationId: simulation.id,
+        observationDay: day,
+        observedAt: observedAt,
+        projectedValue: projectedValue,
+        weightedDailyChange: weightedDailyChange,
+        pricedWeight: pricedWeight,
+        missingQuoteWeight: missingQuoteWeight,
+      );
+    });
+    return result;
   }
 
   Future<void> replaceAllocation({
@@ -274,6 +432,12 @@ class WatchlistSimulationRepository {
         );
         await _outbox.enqueue(table: positionsTable, rowId: row.id);
       }
+      await (_db.delete(_db.watchlistSimulationObservations)..where(
+            (t) =>
+                t.ownerUserId.equals(stamp.ownerUserId) &
+                t.simulationId.equals(simulation.id),
+          ))
+          .go();
     });
   }
 
@@ -353,6 +517,17 @@ class WatchlistSimulationRepository {
     );
     return 'watchlist-simulation-position:$digest';
   }
+
+  static String _observationId({
+    required String simulationId,
+    required String observationDay,
+  }) => 'watchlist-simulation-observation:$simulationId:$observationDay';
+}
+
+String _observationDay(DateTime value) {
+  final utc = value.toUtc();
+  String twoDigits(int part) => part.toString().padLeft(2, '0');
+  return '${utc.year}-${twoDigits(utc.month)}-${twoDigits(utc.day)}';
 }
 
 WatchlistSimulation _simulationFromRow(WatchlistSimulationRow row) {
@@ -393,6 +568,19 @@ WatchlistSimulationPosition _positionFromRow(
     ),
   );
 }
+
+WatchlistSimulationObservation _observationFromRow(
+  WatchlistSimulationObservationRow row,
+) => WatchlistSimulationObservation(
+  id: row.id,
+  simulationId: row.simulationId,
+  observationDay: row.observationDay,
+  observedAt: row.observedAt,
+  projectedValue: row.projectedValue,
+  weightedDailyChange: row.weightedDailyChange,
+  pricedWeight: row.pricedWeight,
+  missingQuoteWeight: row.missingQuoteWeight,
+);
 
 SyncMeta _syncFromStamp(MutationStamp stamp) => SyncMeta(
   ownerUserId: stamp.ownerUserId,
