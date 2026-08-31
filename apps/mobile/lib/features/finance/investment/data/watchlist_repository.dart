@@ -344,6 +344,87 @@ class WatchlistRepository {
     });
   }
 
+  Future<void> addItemsToCollection({
+    required Iterable<WatchlistItem> items,
+    required String collectionId,
+  }) => _setItemsForCollection(
+    items: items,
+    collectionId: collectionId,
+    present: true,
+  );
+
+  Future<void> removeItemsFromCollection({
+    required Iterable<WatchlistItem> items,
+    required String collectionId,
+  }) => _setItemsForCollection(
+    items: items,
+    collectionId: collectionId,
+    present: false,
+  );
+
+  Future<void> _setItemsForCollection({
+    required Iterable<WatchlistItem> items,
+    required String collectionId,
+    required bool present,
+  }) async {
+    final itemIds = items.map((item) => item.id).toSet();
+    if (itemIds.isEmpty) return;
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final collection =
+          await (_db.select(_db.watchlistCollections)..where(
+                (t) =>
+                    t.id.equals(collectionId) &
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (collection == null) {
+        throw StateError('The watchlist collection is inactive.');
+      }
+      final activeItemIds =
+          (await (_db.select(_db.watchlistItems)..where(
+                    (t) =>
+                        t.ownerUserId.equals(stamp.ownerUserId) &
+                        t.id.isIn(itemIds) &
+                        t.deletedAt.isNull(),
+                  ))
+                  .get())
+              .map((row) => row.id)
+              .toSet();
+      if (!activeItemIds.containsAll(itemIds)) {
+        throw StateError('One or more watchlist items are inactive.');
+      }
+
+      if (present) {
+        for (final itemId in itemIds) {
+          await _upsertMembership(
+            collectionId: collectionId,
+            watchlistItemId: itemId,
+            stamp: stamp,
+          );
+        }
+        return;
+      }
+
+      final memberships =
+          await (_db.select(_db.watchlistCollectionMembers)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.collectionId.equals(collectionId) &
+                    t.watchlistItemId.isIn(itemIds) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final membership in memberships) {
+        await (_db.update(_db.watchlistCollectionMembers)
+              ..where((t) => t.id.equals(membership.id)))
+            .write(_memberTombstone(stamp));
+        await _outbox.enqueue(table: _membersTableName, rowId: membership.id);
+      }
+    });
+  }
+
   Future<void> updateAlertRules({
     required WatchlistItem item,
     required PriceAlertRules rules,

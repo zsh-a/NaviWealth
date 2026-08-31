@@ -137,4 +137,42 @@ void main() {
       expect(await repo.listActive('u-test'), hasLength(1));
     },
   );
+
+  test('adds and removes multiple collection memberships atomically', () async {
+    final db = makeTestDatabase();
+    final outbox = InMemoryOutboxStore();
+    final repo = WatchlistRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+
+    final collection = await repo.createCollection('Batch');
+    final aapl = await repo.add(symbol: 'AAPL', market: AssetMarket.usStock);
+    final msft = await repo.add(symbol: 'MSFT', market: AssetMarket.usStock);
+
+    await repo.addItemsToCollection(
+      items: [aapl, msft],
+      collectionId: collection.id,
+    );
+    var members = await repo.watchCollectionMembers('u-test').first;
+    expect(members.map((member) => member.watchlistItemId).toSet(), {
+      aapl.id,
+      msft.id,
+    });
+
+    await repo.removeItemsFromCollection(
+      items: [aapl, msft],
+      collectionId: collection.id,
+    );
+    members = await repo.watchCollectionMembers('u-test').first;
+    expect(members, isEmpty);
+    expect(
+      outbox.queued.where(
+        (entry) => entry.table == 'watchlist_collection_members',
+      ),
+      hasLength(4),
+    );
+  });
 }

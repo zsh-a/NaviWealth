@@ -100,6 +100,36 @@ void main() {
     );
   });
 
+  test('counts all, ungrouped, and unique collection members', () {
+    final grouped = _item('us_stock:AAPL', 'AAPL');
+    final ungrouped = _item('us_stock:MSFT', 'MSFT');
+    final sync = grouped.sync;
+    final counts = WatchlistCollectionCounts.from(
+      items: [grouped, ungrouped],
+      members: [
+        WatchlistCollectionMember(
+          id: 'member-1',
+          collectionId: 'collection-1',
+          watchlistItemId: grouped.id,
+          addedAt: DateTime.utc(2026, 5, 18),
+          sync: sync,
+        ),
+        WatchlistCollectionMember(
+          id: 'member-duplicate',
+          collectionId: 'collection-1',
+          watchlistItemId: grouped.id,
+          addedAt: DateTime.utc(2026, 5, 18),
+          sync: sync,
+        ),
+      ],
+    );
+
+    expect(counts.all, 2);
+    expect(counts.ungrouped, 1);
+    expect(counts.forCollection('collection-1'), 1);
+    expect(counts.forCollection('missing'), 0);
+  });
+
   test('summarizes available and directional quote snapshots', () {
     final advancing = _item('us_stock:AAPL', 'AAPL');
     final declining = _item('us_stock:MSFT', 'MSFT');

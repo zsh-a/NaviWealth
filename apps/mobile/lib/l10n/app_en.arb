@@ -5925,6 +5925,11 @@
   "@watchlistAllCollection": { "description": "Virtual collection containing every watchlist item" },
   "watchlistUngroupedCollection": "Ungrouped",
   "@watchlistUngroupedCollection": { "description": "Virtual collection containing items without a collection" },
+  "watchlistCollectionCountLabel": "{name} ({count})",
+  "@watchlistCollectionCountLabel": {
+    "description": "Watchlist collection filter label with its symbol count",
+    "placeholders": { "name": { "type": "String" }, "count": { "type": "int" } }
+  },
   "watchlistCreateCollectionAction": "New collection",
   "@watchlistCreateCollectionAction": { "description": "Create a watchlist collection" },
   "watchlistSortAction": "Sort symbols",
@@ -5963,6 +5968,26 @@
   "@watchlistNoCollectionsBody": { "description": "Empty collection membership sheet body" },
   "watchlistSaveCollectionsAction": "Save collections",
   "@watchlistSaveCollectionsAction": { "description": "Save collection membership for a watchlist item" },
+  "watchlistBulkManageAction": "Organize symbols",
+  "@watchlistBulkManageAction": { "description": "Open bulk watchlist collection membership management" },
+  "watchlistBulkSelectAll": "Select all",
+  "@watchlistBulkSelectAll": { "description": "Select every symbol in the current watchlist scope" },
+  "watchlistBulkSelectedCount": "{count} selected",
+  "@watchlistBulkSelectedCount": {
+    "description": "Number of watchlist symbols selected for a bulk action",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "watchlistBulkAddAction": "Add to collection",
+  "@watchlistBulkAddAction": { "description": "Add selected watchlist symbols to one collection" },
+  "watchlistBulkRemoveAction": "Remove from this collection",
+  "@watchlistBulkRemoveAction": { "description": "Remove selected symbols from the currently selected collection" },
+  "watchlistBulkChooseCollectionTitle": "Choose collection",
+  "@watchlistBulkChooseCollectionTitle": { "description": "Choose the target collection for a bulk add" },
+  "watchlistBulkUpdated": "Updated {count} symbols",
+  "@watchlistBulkUpdated": {
+    "description": "Success message after a bulk collection membership update",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "watchlistRemoveFromCollectionAction": "Remove from collection",
   "@watchlistRemoveFromCollectionAction": { "description": "Remove a symbol from only the selected collection" },
   "watchlistRemovedFromCollection": "Removed from collection",
@@ -5974,6 +5999,8 @@
   },
   "watchlistAddTitle": "Add to watchlist",
   "@watchlistAddTitle": { "description": "Watchlist add sheet title" },
+  "watchlistAddToCollectionsField": "Add to collections",
+  "@watchlistAddToCollectionsField": { "description": "Optional multi-collection selection section in the add-symbol sheet" },
   "watchlistEditAlertTitle": "Alerts for {symbol}",
   "@watchlistEditAlertTitle": {
     "description": "Watchlist alert edit sheet title",

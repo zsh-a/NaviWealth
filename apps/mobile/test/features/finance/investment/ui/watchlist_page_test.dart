@@ -91,14 +91,18 @@ final _decliningSnapshot = WatchlistQuoteSnapshot(
 Widget _wrap(
   TargetPlatform platform, {
   List<WatchlistQuoteSnapshot> snapshots = const [],
+  List<WatchlistCollection> collections = const [],
+  List<WatchlistCollectionMember> members = const [],
 }) {
   final touch = platform == TargetPlatform.android;
   return ProviderScope(
     overrides: [
       watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
-      watchlistCollectionsProvider.overrideWith((_) => Stream.value(const [])),
+      watchlistCollectionsProvider.overrideWith(
+        (_) => Stream.value(collections),
+      ),
       watchlistCollectionMembersProvider.overrideWith(
-        (_) => Stream.value(const []),
+        (_) => Stream.value(members),
       ),
       watchlistQuoteSnapshotsProvider.overrideWith((_) async => snapshots),
     ],
@@ -116,6 +120,82 @@ Widget _wrap(
 }
 
 void main() {
+  testWidgets('selects multiple collections while adding a symbol', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(TargetPlatform.android, collections: [_collection]),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(FLucideIcons.plus));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.text('Add to watchlist'), findsOneWidget);
+    expect(find.text('Add to collections'), findsOneWidget);
+    final collectionRow = find.byKey(
+      const ValueKey<String>('watchlist-add-collection-collection-growth'),
+    );
+    expect(collectionRow, findsOneWidget);
+    expect(
+      tester
+          .widget<FCheckbox>(
+            find.descendant(
+              of: collectionRow,
+              matching: find.byType(FCheckbox),
+            ),
+          )
+          .value,
+      isFalse,
+    );
+
+    await tester.tap(collectionRow);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      tester
+          .widget<FCheckbox>(
+            find.descendant(
+              of: collectionRow,
+              matching: find.byType(FCheckbox),
+            ),
+          )
+          .value,
+      isTrue,
+    );
+  });
+
+  testWidgets('opens bulk add and collection target selection', (tester) async {
+    await tester.pumpWidget(
+      _wrap(TargetPlatform.android, collections: [_collection]),
+    );
+    await tester.pumpAndSettle();
+
+    final trigger = find.byKey(
+      const ValueKey<String>('watchlist-bulk-manage-trigger'),
+    );
+    await tester.ensureVisible(trigger);
+    await tester.pumpAndSettle();
+    await tester.tap(trigger);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Organize symbols'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('watchlist-bulk-item-us_stock:AAPL')),
+    );
+    await tester.pump();
+    await tester.tap(find.text('Add to collection'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose collection'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('watchlist-bulk-target-collection-growth'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('shows a summary of the loaded quote snapshots', (tester) async {
     await tester.pumpWidget(
       _wrap(TargetPlatform.android, snapshots: [_advancingSnapshot]),
@@ -310,9 +390,12 @@ void main() {
       lessThan(tester.getTopLeft(find.text('AAPL')).dy),
     );
 
-    await tester.tap(
-      find.byKey(const ValueKey<String>('watchlist-sort-trigger')),
+    final sortTrigger = find.byKey(
+      const ValueKey<String>('watchlist-sort-trigger'),
     );
+    await tester.ensureVisible(sortTrigger);
+    await tester.pumpAndSettle();
+    await tester.tap(sortTrigger);
     await tester.pumpAndSettle();
     expect(find.byType(AppSheet), findsOneWidget);
     await tester.tap(find.text('Gainers first'));
@@ -375,11 +458,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Growth'), findsOneWidget);
+    expect(find.text('Growth (1)'), findsOneWidget);
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.text('MSFT'), findsNothing);
 
-    await tester.tap(find.text('Ungrouped'));
+    await tester.tap(find.text('Ungrouped (1)'));
     await tester.pumpAndSettle();
 
     expect(find.text('MSFT'), findsOneWidget);

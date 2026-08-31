@@ -18422,6 +18422,12 @@ abstract class AppLocalizations {
   /// **'Ungrouped'**
   String get watchlistUngroupedCollection;
 
+  /// Watchlist collection filter label with its symbol count
+  ///
+  /// In en, this message translates to:
+  /// **'{name} ({count})'**
+  String watchlistCollectionCountLabel(String name, int count);
+
   /// Create a watchlist collection
   ///
   /// In en, this message translates to:
@@ -18518,6 +18524,48 @@ abstract class AppLocalizations {
   /// **'Save collections'**
   String get watchlistSaveCollectionsAction;
 
+  /// Open bulk watchlist collection membership management
+  ///
+  /// In en, this message translates to:
+  /// **'Organize symbols'**
+  String get watchlistBulkManageAction;
+
+  /// Select every symbol in the current watchlist scope
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get watchlistBulkSelectAll;
+
+  /// Number of watchlist symbols selected for a bulk action
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String watchlistBulkSelectedCount(int count);
+
+  /// Add selected watchlist symbols to one collection
+  ///
+  /// In en, this message translates to:
+  /// **'Add to collection'**
+  String get watchlistBulkAddAction;
+
+  /// Remove selected symbols from the currently selected collection
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from this collection'**
+  String get watchlistBulkRemoveAction;
+
+  /// Choose the target collection for a bulk add
+  ///
+  /// In en, this message translates to:
+  /// **'Choose collection'**
+  String get watchlistBulkChooseCollectionTitle;
+
+  /// Success message after a bulk collection membership update
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {count} symbols'**
+  String watchlistBulkUpdated(int count);
+
   /// Remove a symbol from only the selected collection
   ///
   /// In en, this message translates to:
@@ -18541,6 +18589,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add to watchlist'**
   String get watchlistAddTitle;
+
+  /// Optional multi-collection selection section in the add-symbol sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Add to collections'**
+  String get watchlistAddToCollectionsField;
 
   /// Watchlist alert edit sheet title
   ///

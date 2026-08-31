@@ -10933,6 +10933,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistUngroupedCollection => 'Ungrouped';
 
   @override
+  String watchlistCollectionCountLabel(String name, int count) {
+    return '$name ($count)';
+  }
+
+  @override
   String get watchlistCreateCollectionAction => 'New collection';
 
   @override
@@ -10987,6 +10992,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSaveCollectionsAction => 'Save collections';
 
   @override
+  String get watchlistBulkManageAction => 'Organize symbols';
+
+  @override
+  String get watchlistBulkSelectAll => 'Select all';
+
+  @override
+  String watchlistBulkSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get watchlistBulkAddAction => 'Add to collection';
+
+  @override
+  String get watchlistBulkRemoveAction => 'Remove from this collection';
+
+  @override
+  String get watchlistBulkChooseCollectionTitle => 'Choose collection';
+
+  @override
+  String watchlistBulkUpdated(int count) {
+    return 'Updated $count symbols';
+  }
+
+  @override
   String get watchlistRemoveFromCollectionAction => 'Remove from collection';
 
   @override
@@ -10999,6 +11029,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistAddTitle => 'Add to watchlist';
+
+  @override
+  String get watchlistAddToCollectionsField => 'Add to collections';
 
   @override
   String watchlistEditAlertTitle(String symbol) {

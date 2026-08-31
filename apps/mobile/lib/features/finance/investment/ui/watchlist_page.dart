@@ -84,6 +84,10 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
     final quotes = scope.isAll
         ? ref.watch(watchlistQuoteSnapshotsProvider)
         : ref.watch(watchlistQuoteSnapshotsForScopeProvider(scope));
+    final collectionCounts = WatchlistCollectionCounts.from(
+      items: allItems.value ?? const <WatchlistItem>[],
+      members: membersAsync.value ?? const <WatchlistCollectionMember>[],
+    );
 
     ref.listen(
       scope.isAll
@@ -126,6 +130,7 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
         data: (items) => _WatchlistBody(
           items: items,
           collections: collections,
+          collectionCounts: collectionCounts,
           scope: scope,
           sortOrder: sortOrder,
           snapshots: quotes.value ?? const [],
@@ -133,6 +138,14 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
           onScopeSelected: (next) => _replaceWatchlistScope(context, next),
           onSortSelected: (next) => _replaceWatchlistSortOrder(context, next),
           onCreateCollection: _createCollection,
+          onBulkManage: items.isEmpty || collections.isEmpty
+              ? null
+              : () => showWatchlistBulkMembershipSheet(
+                  context: context,
+                  items: items,
+                  collections: collections,
+                  removalCollectionId: scope.collectionId,
+                ),
           onAdd: () => showWatchlistItemSheet(
             context: context,
             initialCollectionId: scope.collectionId,
@@ -300,6 +313,7 @@ class _WatchlistBody extends StatelessWidget {
   const _WatchlistBody({
     required this.items,
     required this.collections,
+    required this.collectionCounts,
     required this.scope,
     required this.sortOrder,
     required this.snapshots,
@@ -307,6 +321,7 @@ class _WatchlistBody extends StatelessWidget {
     required this.onScopeSelected,
     required this.onSortSelected,
     required this.onCreateCollection,
+    required this.onBulkManage,
     required this.onAdd,
     required this.onEdit,
     required this.onManageCollections,
@@ -316,6 +331,7 @@ class _WatchlistBody extends StatelessWidget {
 
   final List<WatchlistItem> items;
   final List<WatchlistCollection> collections;
+  final WatchlistCollectionCounts collectionCounts;
   final WatchlistScope scope;
   final WatchlistSortOrder sortOrder;
   final List<WatchlistQuoteSnapshot> snapshots;
@@ -323,6 +339,7 @@ class _WatchlistBody extends StatelessWidget {
   final ValueChanged<WatchlistScope> onScopeSelected;
   final ValueChanged<WatchlistSortOrder> onSortSelected;
   final VoidCallback onCreateCollection;
+  final VoidCallback? onBulkManage;
   final VoidCallback onAdd;
   final ValueChanged<WatchlistItem> onEdit;
   final ValueChanged<WatchlistItem> onManageCollections;
@@ -356,11 +373,13 @@ class _WatchlistBody extends StatelessWidget {
         children: [
           _WatchlistCollectionBar(
             collections: collections,
+            counts: collectionCounts,
             scope: scope,
             sortOrder: sortOrder,
             onSelected: onScopeSelected,
             onSortSelected: onSortSelected,
             onCreate: onCreateCollection,
+            onBulkManage: onBulkManage,
           ),
           const SizedBox(height: AppSpacing.s8),
           if (items.isEmpty)
@@ -494,19 +513,23 @@ class _WatchlistSummary extends StatelessWidget {
 class _WatchlistCollectionBar extends StatelessWidget {
   const _WatchlistCollectionBar({
     required this.collections,
+    required this.counts,
     required this.scope,
     required this.sortOrder,
     required this.onSelected,
     required this.onSortSelected,
     required this.onCreate,
+    required this.onBulkManage,
   });
 
   final List<WatchlistCollection> collections;
+  final WatchlistCollectionCounts counts;
   final WatchlistScope scope;
   final WatchlistSortOrder sortOrder;
   final ValueChanged<WatchlistScope> onSelected;
   final ValueChanged<WatchlistSortOrder> onSortSelected;
   final VoidCallback onCreate;
+  final VoidCallback? onBulkManage;
 
   @override
   Widget build(BuildContext context) {
@@ -522,20 +545,29 @@ class _WatchlistCollectionBar extends StatelessWidget {
       child: Row(
         children: [
           AppFilterChip(
-            label: l10n.watchlistAllCollection,
+            label: l10n.watchlistCollectionCountLabel(
+              l10n.watchlistAllCollection,
+              counts.all,
+            ),
             active: scope.isAll,
             onPress: () => onSelected(const WatchlistScope.all()),
           ),
           const SizedBox(width: AppSpacing.s8),
           AppFilterChip(
-            label: l10n.watchlistUngroupedCollection,
+            label: l10n.watchlistCollectionCountLabel(
+              l10n.watchlistUngroupedCollection,
+              counts.ungrouped,
+            ),
             active: scope.ungrouped,
             onPress: () => onSelected(const WatchlistScope.ungrouped()),
           ),
           for (final collection in collections) ...[
             const SizedBox(width: AppSpacing.s8),
             AppFilterChip(
-              label: collection.name,
+              label: l10n.watchlistCollectionCountLabel(
+                collection.name,
+                counts.forCollection(collection.id),
+              ),
               active: scope.collectionId == collection.id,
               onPress: () =>
                   onSelected(WatchlistScope.collection(collection.id)),
@@ -552,6 +584,18 @@ class _WatchlistCollectionBar extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           _WatchlistSortMenu(value: sortOrder, onChanged: onSortSelected),
+          if (onBulkManage != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppIconButton(
+              key: const ValueKey<String>('watchlist-bulk-manage-trigger'),
+              icon: FLucideIcons.listChecks,
+              tooltip: l10n.watchlistBulkManageAction,
+              onPress: onBulkManage,
+              size: appActionTargetSize(context),
+              iconSize: AppIconSizes.sm,
+              surface: AppIconButtonSurface.softMuted,
+            ),
+          ],
         ],
       ),
     );
@@ -992,6 +1036,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _above;
   late final TextEditingController _below;
+  late final Set<String> _selectedCollectionIds;
   LocalSecurityChoice? _choice;
   bool _saving = false;
 
@@ -1001,6 +1046,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
     final item = widget.item;
     _above = TextEditingController(text: item?.alertRules.above?.toString());
     _below = TextEditingController(text: item?.alertRules.below?.toString());
+    _selectedCollectionIds = <String>{?widget.initialCollectionId};
     widget.dirty.bindTextControllers([_above, _below]);
     widget.dirty.snapshotBaseline();
   }
@@ -1015,6 +1061,9 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final collections = widget.item == null
+        ? ref.watch(watchlistCollectionsProvider)
+        : null;
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -1029,6 +1078,52 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                 widget.dirty.markDirty();
               },
             ),
+            const SizedBox(height: AppSpacing.s12),
+            AppSheetSectionLabel(l10n.watchlistAddToCollectionsField),
+            if (collections!.isLoading)
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: FCircularProgress(),
+              )
+            else if (collections.hasError)
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: () => ref.invalidate(watchlistCollectionsProvider),
+                child: Text(l10n.commonRetry),
+              )
+            else if ((collections.value ?? const <WatchlistCollection>[])
+                .isEmpty)
+              Text(l10n.watchlistNoCollectionsBody, style: context.captionStyle)
+            else
+              AppGroupedSurface(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (
+                      var index = 0;
+                      index < collections.value!.length;
+                      index++
+                    ) ...[
+                      _WatchlistCollectionCheckboxRow(
+                        key: ValueKey<String>(
+                          'watchlist-add-collection-${collections.value![index].id}',
+                        ),
+                        collection: collections.value![index],
+                        selected: _selectedCollectionIds.contains(
+                          collections.value![index].id,
+                        ),
+                        onToggle: () =>
+                            _toggleCollection(collections.value![index].id),
+                      ),
+                      if (index != collections.value!.length - 1)
+                        const AppGroupedDivider(
+                          indent: AppSpacing.s12,
+                          endIndent: AppSpacing.s12,
+                        ),
+                    ],
+                  ],
+                ),
+              ),
             const SizedBox(height: AppSpacing.s12),
           ],
           FTextFormField(
@@ -1074,6 +1169,15 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
     return null;
   }
 
+  void _toggleCollection(String collectionId) {
+    setState(() {
+      if (!_selectedCollectionIds.add(collectionId)) {
+        _selectedCollectionIds.remove(collectionId);
+      }
+      widget.dirty.markDirty();
+    });
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final item = widget.item;
@@ -1092,7 +1196,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
           symbol: choice!.symbol,
           market: choice.market,
           rules: rules,
-          collectionIds: <String>[?widget.initialCollectionId],
+          collectionIds: _selectedCollectionIds,
         );
       } else {
         await repo.updateAlertRules(item: item, rules: rules);
@@ -1248,6 +1352,250 @@ class _WatchlistCollectionSheetState
   }
 }
 
+Future<void> showWatchlistBulkMembershipSheet({
+  required BuildContext context,
+  required List<WatchlistItem> items,
+  required List<WatchlistCollection> collections,
+  String? removalCollectionId,
+}) => showAppSheet<void>(
+  context: context,
+  title: AppLocalizations.of(context).watchlistBulkManageAction,
+  maxHeightFactor: 0.9,
+  builder: (_) => _WatchlistBulkMembershipSheet(
+    items: items,
+    collections: collections,
+    removalCollectionId: removalCollectionId,
+  ),
+);
+
+class _WatchlistBulkMembershipSheet extends ConsumerStatefulWidget {
+  const _WatchlistBulkMembershipSheet({
+    required this.items,
+    required this.collections,
+    required this.removalCollectionId,
+  });
+
+  final List<WatchlistItem> items;
+  final List<WatchlistCollection> collections;
+  final String? removalCollectionId;
+
+  @override
+  ConsumerState<_WatchlistBulkMembershipSheet> createState() =>
+      _WatchlistBulkMembershipSheetState();
+}
+
+class _WatchlistBulkMembershipSheetState
+    extends ConsumerState<_WatchlistBulkMembershipSheet> {
+  final Set<String> _selectedItemIds = <String>{};
+  bool _saving = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final allSelected = _selectedItemIds.length == widget.items.length;
+    final removing = widget.removalCollectionId != null;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.watchlistBulkSelectedCount(_selectedItemIds.length),
+          style: context.captionStyle,
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _WatchlistBulkSelectRow(
+                key: const ValueKey<String>('watchlist-bulk-select-all'),
+                title: l10n.watchlistBulkSelectAll,
+                selected: allSelected,
+                enabled: !_saving,
+                onToggle: _toggleAll,
+              ),
+              const AppGroupedDivider(
+                indent: AppSpacing.s12,
+                endIndent: AppSpacing.s12,
+              ),
+              for (var index = 0; index < widget.items.length; index++) ...[
+                _WatchlistBulkSelectRow(
+                  key: ValueKey<String>(
+                    'watchlist-bulk-item-${widget.items[index].id}',
+                  ),
+                  title: widget.items[index].displaySymbol,
+                  subtitle: _marketLabel(l10n, widget.items[index].market),
+                  selected: _selectedItemIds.contains(widget.items[index].id),
+                  enabled: !_saving,
+                  onToggle: () => _toggleItem(widget.items[index].id),
+                ),
+                if (index != widget.items.length - 1)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s12,
+                    endIndent: AppSpacing.s12,
+                  ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        AppSheetFooter(
+          cancelLabel: l10n.commonCancel,
+          submitLabel: removing
+              ? l10n.watchlistBulkRemoveAction
+              : l10n.watchlistBulkAddAction,
+          enabled: _selectedItemIds.isNotEmpty,
+          busy: _saving,
+          onSubmit: _apply,
+        ),
+      ],
+    );
+  }
+
+  void _toggleAll() {
+    setState(() {
+      if (_selectedItemIds.length == widget.items.length) {
+        _selectedItemIds.clear();
+      } else {
+        _selectedItemIds
+          ..clear()
+          ..addAll(widget.items.map((item) => item.id));
+      }
+    });
+  }
+
+  void _toggleItem(String itemId) {
+    setState(() {
+      if (!_selectedItemIds.add(itemId)) _selectedItemIds.remove(itemId);
+    });
+  }
+
+  Future<void> _apply() async {
+    final removalCollectionId = widget.removalCollectionId;
+    final targetCollectionId = removalCollectionId ?? await _chooseCollection();
+    if (targetCollectionId == null || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final selectedItems = widget.items
+          .where((item) => _selectedItemIds.contains(item.id))
+          .toList(growable: false);
+      final repo = await ref.read(watchlistRepositoryProvider.future);
+      if (removalCollectionId == null) {
+        await repo.addItemsToCollection(
+          items: selectedItems,
+          collectionId: targetCollectionId,
+        );
+      } else {
+        await repo.removeItemsFromCollection(
+          items: selectedItems,
+          collectionId: targetCollectionId,
+        );
+      }
+      ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        AppLocalizations.of(context).watchlistBulkUpdated(selectedItems.length),
+      );
+      Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<String?> _chooseCollection() => showAppSheet<String>(
+    context: context,
+    title: AppLocalizations.of(context).watchlistBulkChooseCollectionTitle,
+    builder: (sheetContext) => AppGroupedSurface(
+      padding: EdgeInsets.zero,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < widget.collections.length; index++) ...[
+            AppTappable(
+              key: ValueKey<String>(
+                'watchlist-bulk-target-${widget.collections[index].id}',
+              ),
+              onPress: () =>
+                  Navigator.of(sheetContext).pop(widget.collections[index].id),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.s12),
+                child: Row(
+                  children: [
+                    const Icon(FLucideIcons.layers, size: AppIconSizes.sm),
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: Text(
+                        widget.collections[index].name,
+                        style: context.labelStyle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (index != widget.collections.length - 1)
+              const AppGroupedDivider(
+                indent: AppSpacing.s12,
+                endIndent: AppSpacing.s12,
+              ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+class _WatchlistBulkSelectRow extends StatelessWidget {
+  const _WatchlistBulkSelectRow({
+    super.key,
+    required this.title,
+    required this.selected,
+    required this.enabled,
+    required this.onToggle,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTappable(
+      onPress: enabled ? onToggle : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s10,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(title, style: context.labelStyle),
+                  if (subtitle case final subtitle?)
+                    Text(subtitle, style: context.captionStyle),
+                ],
+              ),
+            ),
+            FCheckbox(
+              value: selected,
+              onChange: enabled ? (_) => onToggle() : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 Future<void> showWatchlistMembershipSheet({
   required BuildContext context,
   required WatchlistItem item,
@@ -1264,6 +1612,43 @@ Future<void> showWatchlistMembershipSheet({
     );
   } finally {
     dirty.dispose();
+  }
+}
+
+class _WatchlistCollectionCheckboxRow extends StatelessWidget {
+  const _WatchlistCollectionCheckboxRow({
+    super.key,
+    required this.collection,
+    required this.selected,
+    required this.onToggle,
+    this.enabled = true,
+  });
+
+  final WatchlistCollection collection;
+  final bool selected;
+  final VoidCallback onToggle;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppTappable(
+      onPress: enabled ? onToggle : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s4,
+          vertical: AppSpacing.s8,
+        ),
+        child: Row(
+          children: [
+            Expanded(child: Text(collection.name, style: context.labelStyle)),
+            FCheckbox(
+              value: selected,
+              onChange: enabled ? (_) => onToggle() : null,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -1323,25 +1708,11 @@ class _WatchlistMembershipSheetState
           )
         else
           for (final collection in available)
-            AppTappable(
-              onPress: _saving ? null : () => _toggle(collection.id),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s4,
-                  vertical: AppSpacing.s8,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(collection.name, style: context.labelStyle),
-                    ),
-                    FCheckbox(
-                      value: selected.contains(collection.id),
-                      onChange: _saving ? null : (_) => _toggle(collection.id),
-                    ),
-                  ],
-                ),
-              ),
+            _WatchlistCollectionCheckboxRow(
+              collection: collection,
+              selected: selected.contains(collection.id),
+              enabled: !_saving,
+              onToggle: () => _toggle(collection.id),
             ),
         const SizedBox(height: AppSpacing.s20),
         AppSheetFooter(

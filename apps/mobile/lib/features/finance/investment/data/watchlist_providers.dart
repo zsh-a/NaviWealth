@@ -62,6 +62,44 @@ class WatchlistScope {
   int get hashCode => Object.hash(collectionId, ungrouped);
 }
 
+class WatchlistCollectionCounts {
+  const WatchlistCollectionCounts({
+    required this.all,
+    required this.ungrouped,
+    required this.byCollectionId,
+  });
+
+  factory WatchlistCollectionCounts.from({
+    required Iterable<WatchlistItem> items,
+    required Iterable<WatchlistCollectionMember> members,
+  }) {
+    final itemIds = items.map((item) => item.id).toSet();
+    final groupedItemIds = <String>{};
+    final itemsByCollectionId = <String, Set<String>>{};
+    for (final member in members) {
+      if (!itemIds.contains(member.watchlistItemId)) continue;
+      groupedItemIds.add(member.watchlistItemId);
+      (itemsByCollectionId[member.collectionId] ??= <String>{}).add(
+        member.watchlistItemId,
+      );
+    }
+    return WatchlistCollectionCounts(
+      all: itemIds.length,
+      ungrouped: itemIds.difference(groupedItemIds).length,
+      byCollectionId: Map<String, int>.unmodifiable({
+        for (final entry in itemsByCollectionId.entries)
+          entry.key: entry.value.length,
+      }),
+    );
+  }
+
+  final int all;
+  final int ungrouped;
+  final Map<String, int> byCollectionId;
+
+  int forCollection(String collectionId) => byCollectionId[collectionId] ?? 0;
+}
+
 final watchlistItemsForScopeProvider = FutureProvider.autoDispose
     .family<List<WatchlistItem>, WatchlistScope>((ref, scope) async {
       final items = await ref.watch(watchlistItemsProvider.future);

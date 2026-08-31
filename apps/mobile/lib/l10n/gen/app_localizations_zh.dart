@@ -10352,6 +10352,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistUngroupedCollection => '未分组';
 
   @override
+  String watchlistCollectionCountLabel(String name, int count) {
+    return '$name（$count）';
+  }
+
+  @override
   String get watchlistCreateCollectionAction => '新建组合';
 
   @override
@@ -10404,6 +10409,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSaveCollectionsAction => '保存组合';
 
   @override
+  String get watchlistBulkManageAction => '批量整理';
+
+  @override
+  String get watchlistBulkSelectAll => '全选';
+
+  @override
+  String watchlistBulkSelectedCount(int count) {
+    return '已选择 $count 个标的';
+  }
+
+  @override
+  String get watchlistBulkAddAction => '加入组合';
+
+  @override
+  String get watchlistBulkRemoveAction => '移出当前组合';
+
+  @override
+  String get watchlistBulkChooseCollectionTitle => '选择目标组合';
+
+  @override
+  String watchlistBulkUpdated(int count) {
+    return '已更新 $count 个标的';
+  }
+
+  @override
   String get watchlistRemoveFromCollectionAction => '移出当前组合';
 
   @override
@@ -10416,6 +10446,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistAddTitle => '添加到自选';
+
+  @override
+  String get watchlistAddToCollectionsField => '加入组合';
 
   @override
   String watchlistEditAlertTitle(String symbol) {
