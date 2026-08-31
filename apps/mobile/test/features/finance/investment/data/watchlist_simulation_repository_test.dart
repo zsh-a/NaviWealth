@@ -32,6 +32,22 @@ MarketCorporateAction _dividend({
   cashPerShare: Decimal.parse(cashPerShare),
 );
 
+MarketCorporateAction _split() => MarketCorporateAction(
+  id: 'yfinance:chart:600519:split:2024-01-10',
+  source: 'yfinance',
+  dataset: 'chart',
+  sourceKey: '600519:split:2024-01-10',
+  revisionHash: 'split-revision',
+  identityStrength: MarketCorporateActionIdentityStrength.strong,
+  symbol: '600519',
+  market: AssetMarket.cnA,
+  kind: MarketCorporateActionKind.split,
+  status: MarketCorporateActionStatus.unknown,
+  exDate: DateTime.utc(2024, 1, 10),
+  splitNumerator: 2,
+  splitDenominator: 1,
+);
+
 void main() {
   test(
     'creates, reallocates, and deletes only paper simulation rows',
@@ -335,6 +351,7 @@ void main() {
             _dividend(revisionHash: 'revision-v2', cashPerShare: '2.5'),
           ],
         },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
       );
       final record =
           (await repository
@@ -353,8 +370,77 @@ void main() {
       expect(record.withholdingTaxAmount, isNull);
       expect(record.netAmount, isNull);
       expect(record.baseCurrencyAmount, isNull);
+
+      final partialRevision = await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'partial-revision', cashPerShare: '3'),
+          ],
+        },
+      );
+      expect(partialRevision, isEmpty);
+      final preserved =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(preserved.revisionHash, 'revision-v2');
+      expect(preserved.grossAmount, Decimal.parse('12.5'));
     },
   );
+
+  test('trusted split history adjusts record-date virtual quantity', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-cn',
+      name: 'Split-adjusted holdings',
+      baseCurrency: 'CNY',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'cn_a:600519': Decimal.one},
+      cashWeight: Decimal.zero,
+      holdingInputs: {
+        'cn_a:600519': WatchlistSimulationHoldingInput(
+          symbol: '600519',
+          market: AssetMarket.cnA,
+          rawPrice: Decimal.parse('200'),
+          priceCurrency: 'CNY',
+          priceAsOf: DateTime.utc(2023, 11, 14),
+          priceSource: 'fixture',
+        ),
+      },
+    );
+
+    await repository.materializeDividendReferences(
+      simulation: simulation,
+      actionsByWatchlistItemId: {
+        'cn_a:600519': [
+          _split(),
+          _dividend(revisionHash: 'post-split', cashPerShare: '2.5'),
+        ],
+      },
+      trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+    );
+    final record =
+        (await repository
+                .watchActionEntries(
+                  ownerUserId: 'u-test',
+                  simulationId: simulation.id,
+                )
+                .first)
+            .single;
+    expect(record.eligibleQuantity, Decimal.parse('10'));
+    expect(record.grossAmount, Decimal.parse('25.0'));
+  });
 
   test('holdings V2 never treats missing FX as one', () async {
     final db = makeTestDatabase();
@@ -400,6 +486,7 @@ void main() {
           _dividend(revisionHash: 'revision-fx', cashPerShare: '2.5'),
         ],
       },
+      trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
     );
     final record =
         (await repository

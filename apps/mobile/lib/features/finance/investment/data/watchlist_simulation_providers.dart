@@ -105,22 +105,35 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
         corporateActionsServiceProvider.future,
       );
       final actionsByItemId = <String, Iterable<MarketCorporateAction>>{};
+      final trustedAdjustmentCoverageItemIds = <String>{};
+      final rangeEnd = DateTime.now().toUtc().add(const Duration(days: 365));
       var failedSymbolCount = 0;
       var unsupportedSymbolCount = 0;
       for (final position in positions) {
         final item = itemById[position.watchlistItemId];
         if (item == null) continue;
-        final result = await corporateActions.fetchForSymbol(
-          item.symbol,
-          market: item.market,
+        final result = await corporateActions.fetchRange(
+          CorporateActionFetchRequest(
+            symbol: item.symbol,
+            market: item.market,
+            from: simulation.baselineAt.subtract(const Duration(days: 1)),
+            to: rangeEnd,
+          ),
         );
-        if (result.hasUsableData) {
-          actionsByItemId[item.id] = result.actions;
-        } else if (result.disposition ==
-            CorporateActionFetchDisposition.unsupported) {
-          unsupportedSymbolCount++;
-        } else {
-          failedSymbolCount++;
+        switch (result.disposition) {
+          case CorporateActionFetchDisposition.success:
+            actionsByItemId[item.id] = result.actions;
+            trustedAdjustmentCoverageItemIds.add(item.id);
+          case CorporateActionFetchDisposition.authoritativeEmpty:
+            trustedAdjustmentCoverageItemIds.add(item.id);
+          case CorporateActionFetchDisposition.partial:
+            actionsByItemId[item.id] = result.actions;
+          case CorporateActionFetchDisposition.stale:
+            break;
+          case CorporateActionFetchDisposition.unsupported:
+            unsupportedSymbolCount++;
+          case CorporateActionFetchDisposition.failure:
+            failedSymbolCount++;
         }
       }
       final repository = await ref.watch(
@@ -129,6 +142,7 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
       final materialized = await repository.materializeDividendReferences(
         simulation: simulation,
         actionsByWatchlistItemId: actionsByItemId,
+        trustedAdjustmentCoverageItemIds: trustedAdjustmentCoverageItemIds,
       );
       return WatchlistSimulationActionReconciliation(
         materializedCount: materialized.length,

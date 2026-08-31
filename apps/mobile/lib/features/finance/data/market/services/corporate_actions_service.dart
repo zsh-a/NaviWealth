@@ -89,6 +89,46 @@ class CorporateActionsService {
     return future;
   }
 
+  /// Fetches an explicit range without consulting or replacing the default
+  /// symbol cache. Simulations use this for complete baseline coverage without
+  /// widening every timeline query globally.
+  Future<CorporateActionFetchResult> fetchRange(
+    CorporateActionFetchRequest request,
+  ) {
+    final symbol = request.symbol.trim().toUpperCase();
+    if (symbol.isEmpty) {
+      return Future.value(
+        CorporateActionFetchResult(
+          provider: 'none',
+          disposition: CorporateActionFetchDisposition.authoritativeEmpty,
+          actions: const [],
+          fetchedAt: _now(),
+        ),
+      );
+    }
+    final normalized = CorporateActionFetchRequest(
+      symbol: symbol,
+      market: request.market,
+      from: request.from.toUtc(),
+      to: request.to.toUtc(),
+    );
+    final key =
+        'range:${request.market.wire}:$symbol:'
+        '${normalized.from.toIso8601String()}:'
+        '${normalized.to.toIso8601String()}';
+    final running = _inflight[key];
+    if (running != null) return running;
+    final future = _fetch(
+      symbol,
+      request.market,
+      request: normalized,
+      persist: false,
+    );
+    _inflight[key] = future;
+    future.whenComplete(() => _inflight.remove(key));
+    return future;
+  }
+
   Future<void> invalidate(String symbol, {AssetMarket? market}) async {
     final normalizedSymbol = symbol.trim().toUpperCase();
     final resolvedMarket = market ?? inferAssetMarket(normalizedSymbol);
@@ -132,6 +172,8 @@ class CorporateActionsService {
     String symbol,
     AssetMarket market, {
     CorporateActionFetchResult? stale,
+    CorporateActionFetchRequest? request,
+    bool persist = true,
   }) async {
     final providers = _providers
         .where(
@@ -146,24 +188,26 @@ class CorporateActionsService {
         fetchedAt: _now(),
         warning: 'No corporate-action provider supports ${market.wire}.',
       );
-      await _store(symbol, market, result);
+      await _store(symbol, market, result, persist: persist);
       return result;
     }
 
     final now = _now();
-    final request = CorporateActionFetchRequest(
-      symbol: symbol,
-      market: market,
-      from: now.subtract(const Duration(days: 30)),
-      to: now.add(const Duration(days: 365)),
-    );
+    final effectiveRequest =
+        request ??
+        CorporateActionFetchRequest(
+          symbol: symbol,
+          market: market,
+          from: now.subtract(const Duration(days: 30)),
+          to: now.add(const Duration(days: 365)),
+        );
     final failures = <Object>[];
     var unsupportedCount = 0;
     for (final provider in providers) {
       try {
-        final result = await provider.fetch(request);
+        final result = await provider.fetch(effectiveRequest);
         if (result.hasUsableData) {
-          await _store(symbol, market, result);
+          await _store(symbol, market, result, persist: persist);
           return result;
         }
         if (result.disposition == CorporateActionFetchDisposition.unsupported) {
@@ -197,7 +241,7 @@ class CorporateActionsService {
         fetchedAt: _now(),
         warning: 'Corporate actions are unavailable on this platform.',
       );
-      await _store(symbol, market, result);
+      await _store(symbol, market, result, persist: persist);
       return result;
     }
 
@@ -214,7 +258,7 @@ class CorporateActionsService {
         error: error,
         warning: 'Showing cached corporate actions because refresh failed.',
       );
-      await _store(symbol, market, result);
+      await _store(symbol, market, result, persist: persist);
       return result;
     }
     final result = CorporateActionFetchResult(
@@ -224,7 +268,7 @@ class CorporateActionsService {
       fetchedAt: _now(),
       error: error,
     );
-    await _store(symbol, market, result);
+    await _store(symbol, market, result, persist: persist);
     return result;
   }
 
@@ -240,8 +284,10 @@ class CorporateActionsService {
   Future<void> _store(
     String symbol,
     AssetMarket market,
-    CorporateActionFetchResult result,
-  ) async {
+    CorporateActionFetchResult result, {
+    required bool persist,
+  }) async {
+    if (!persist) return;
     _storeMemory(symbol, market, result);
     try {
       await _persistentCache?.write(

@@ -88,14 +88,20 @@ version but leave quantity unknown until a trustworthy capital base is
 available, rather than deriving holdings from the legacy projection curve.
 
 Implemented provider dividends materialize automatically as deterministic
-synced `watchlist_simulation_action_entries`. Provider source key, revision
+synced `watchlist_simulation_action_entries`. Reconciliation requests an
+uncached provider range from the simulation baseline so record-date quantity
+can apply trusted intervening split and implemented stock-distribution ratios.
+Only a complete successful range may create or revise a quantity-based
+entitlement; partial/stale refreshes may add reference terms but cannot
+downgrade a previously trusted entitlement. Provider source key, revision
 hash, dates, currency, and per-share terms always survive. Holdings V2 resolves
 the latest virtual holding at the record date and may record eligible quantity
 and gross paper entitlement. Unknown withholding tax, net cash,
 base-currency value, and NAV application remain null. Legacy or incomplete
-holdings stay `referenceOnly`. Provider cancellation or revision updates the
-same paper row; disappearance from a feed does not delete history. No
-materialization path may write real investment or ledger tables.
+holdings stay `referenceOnly`. Provider cancellation updates the same paper
+row even when coverage is incomplete; disappearance from a feed does not
+delete history. No materialization path may write real investment or ledger
+tables.
 
 The current projection applies available point-in-time daily percentage moves
 to virtual target weights. Missing quotes reduce priced coverage. A local-only

@@ -94,6 +94,8 @@ class _MemoryCache implements CorporateActionCache {
   _MemoryCache(this.result);
 
   CorporateActionFetchResult? result;
+  int readCount = 0;
+  int writeCount = 0;
 
   @override
   Future<void> invalidate({
@@ -107,14 +109,51 @@ class _MemoryCache implements CorporateActionCache {
   Future<CorporateActionFetchResult?> read({
     required String symbol,
     required AssetMarket market,
-  }) async => result;
+  }) async {
+    readCount++;
+    return result;
+  }
 
   @override
   Future<void> write({
     required String symbol,
     required AssetMarket market,
     required CorporateActionFetchResult result,
-  }) async {}
+  }) async {
+    writeCount++;
+  }
+}
+
+class _RecordingProvider implements CorporateActionProvider {
+  CorporateActionFetchRequest? request;
+  int fetchCount = 0;
+
+  @override
+  CorporateActionProviderCapabilities get capabilities =>
+      const CorporateActionProviderCapabilities(
+        supportedMarkets: {AssetMarket.usStock},
+        supportsRecordDate: true,
+        supportsPayDate: true,
+        supportsRevisions: true,
+        availableOnWeb: true,
+      );
+
+  @override
+  String get name => 'recording';
+
+  @override
+  Future<CorporateActionFetchResult> fetch(
+    CorporateActionFetchRequest request,
+  ) async {
+    this.request = request;
+    fetchCount++;
+    return CorporateActionFetchResult(
+      provider: name,
+      disposition: CorporateActionFetchDisposition.authoritativeEmpty,
+      actions: const [],
+      fetchedAt: DateTime.utc(2026, 6, 1),
+    );
+  }
 }
 
 void main() {
@@ -280,6 +319,41 @@ void main() {
         expect(harness.adapter.calls, isEmpty);
       },
     );
+
+    test('explicit range bypasses the default persistent cache', () async {
+      final provider = _RecordingProvider();
+      final cache = _MemoryCache(null);
+      final service = CorporateActionsService(
+        providers: [provider],
+        logger: AppLogger(
+          environment: AppEnvironment.dev,
+          crashReporter: const NoopCrashReporter(),
+        ),
+        cache: cache,
+      );
+      final from = DateTime.utc(2024, 1, 1);
+      final to = DateTime.utc(2026, 12, 31);
+
+      final result = await service.fetchRange(
+        CorporateActionFetchRequest(
+          symbol: 'aapl',
+          market: AssetMarket.usStock,
+          from: from,
+          to: to,
+        ),
+      );
+
+      expect(
+        result.disposition,
+        CorporateActionFetchDisposition.authoritativeEmpty,
+      );
+      expect(provider.fetchCount, 1);
+      expect(provider.request?.symbol, 'AAPL');
+      expect(provider.request?.from, from);
+      expect(provider.request?.to, to);
+      expect(cache.readCount, 0);
+      expect(cache.writeCount, 0);
+    });
 
     test('fresh persistent cache avoids an HTTP request', () async {
       final now = DateTime.utc(2026, 6, 1, 12);

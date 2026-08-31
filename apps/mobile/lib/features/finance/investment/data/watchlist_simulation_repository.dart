@@ -468,6 +468,7 @@ class WatchlistSimulationRepository {
     required WatchlistSimulation simulation,
     required Map<String, Iterable<MarketCorporateAction>>
     actionsByWatchlistItemId,
+    Set<String> trustedAdjustmentCoverageItemIds = const <String>{},
   }) async {
     if (actionsByWatchlistItemId.isEmpty) return const [];
     final stamp = await _stamper.stamp();
@@ -498,7 +499,10 @@ class WatchlistSimulationRepository {
 
       for (final entry in actionsByWatchlistItemId.entries) {
         if (!activeItemIds.contains(entry.key)) continue;
-        for (final action in entry.value) {
+        final itemActions = entry.value.toList(growable: false);
+        final hasTrustedAdjustmentCoverage = trustedAdjustmentCoverageItemIds
+            .contains(entry.key);
+        for (final action in itemActions) {
           final expectedItemId =
               '${action.market.wire}:${action.symbol.toUpperCase()}';
           if (entry.key != expectedItemId ||
@@ -532,7 +536,16 @@ class WatchlistSimulationRepository {
           Decimal? grossAmount;
           if (action.status == MarketCorporateActionStatus.cancelled) {
             paperState = WatchlistSimulationPaperActionState.cancelled;
-          } else if (activeSimulation.calculationMode ==
+          } else if (!hasTrustedAdjustmentCoverage &&
+              existing?.paperState ==
+                  WatchlistSimulationPaperActionState
+                      .entitlementRecorded
+                      .name) {
+            // A partial/stale fetch must not downgrade or revise a previously
+            // trusted entitlement with an incomplete adjustment history.
+            continue;
+          } else if (hasTrustedAdjustmentCoverage &&
+              activeSimulation.calculationMode ==
                   WatchlistSimulationCalculationMode
                       .holdingsTotalReturnV2
                       .name &&
@@ -552,8 +565,20 @@ class WatchlistSimulationRepository {
                   ..limit(1);
             final holding = await holdingQuery.getSingleOrNull();
             eligibleQuantity = holding?.quantity;
-            if (eligibleQuantity != null) {
-              grossAmount = (eligibleQuantity * action.cashPerShare!).round(
+            if (eligibleQuantity != null && holding != null) {
+              for (final adjustment in itemActions) {
+                final multiplier = _quantityAdjustmentMultiplier(
+                  adjustment,
+                  after: holding.effectiveAt.toUtc(),
+                  before: action.recordDate!.toUtc(),
+                );
+                if (multiplier != null) {
+                  eligibleQuantity = (eligibleQuantity! * multiplier).round(
+                    scale: 12,
+                  );
+                }
+              }
+              grossAmount = (eligibleQuantity! * action.cashPerShare!).round(
                 scale: 12,
               );
               paperState =
@@ -1120,6 +1145,41 @@ WatchlistSimulationPosition _positionFromRow(
       deletedAt: row.deletedAt,
     ),
   );
+}
+
+Decimal? _quantityAdjustmentMultiplier(
+  MarketCorporateAction action, {
+  required DateTime after,
+  required DateTime before,
+}) {
+  if (action.status == MarketCorporateActionStatus.cancelled ||
+      action.status == MarketCorporateActionStatus.proposed ||
+      action.status == MarketCorporateActionStatus.approved) {
+    return null;
+  }
+  final effectiveDate = action.exDate ?? action.timelineDate;
+  if (effectiveDate == null ||
+      !effectiveDate.toUtc().isAfter(after) ||
+      !effectiveDate.toUtc().isBefore(before)) {
+    return null;
+  }
+  if (action.kind == MarketCorporateActionKind.split && action.hasSplit) {
+    return (Decimal.fromInt(action.splitNumerator!) /
+            Decimal.fromInt(action.splitDenominator!))
+        .toDecimal(scaleOnInfinitePrecision: 12);
+  }
+  if (action.kind != MarketCorporateActionKind.distribution ||
+      action.status != MarketCorporateActionStatus.implemented ||
+      !action.hasStockDistribution) {
+    return null;
+  }
+  var addedRatio =
+      (action.bonusRatio ?? Decimal.zero) +
+      (action.capitalizationRatio ?? Decimal.zero);
+  if (addedRatio == Decimal.zero) {
+    addedRatio = action.totalStockDistributionRatio ?? Decimal.zero;
+  }
+  return addedRatio > Decimal.zero ? Decimal.one + addedRatio : null;
 }
 
 bool _actionEntryMatches(
