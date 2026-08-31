@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/write/persistent_undo_banner.dart';
+import '../lifeos/domain_pack.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
 import 'sync_activity_strip.dart';
@@ -69,6 +70,15 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
     // extra compositing work.
     final shellChild = widget.shell;
 
+    // Selected tab chrome tints with the domain accent when the pack
+    // declares one; an empty registry (isolated tests) falls back to the
+    // global primary inside the nav widgets.
+    final accentColor = resolveDomainAccent(
+      ref.watch(domainPackRegistryProvider),
+      widget.spec.scope,
+      context.appTheme.brightness,
+    );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Navigation chrome is a window-level decision. At large widths the
@@ -83,6 +93,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
             _TabletLayout(
               tabs: tabs,
               selectedIndex: index,
+              accentColor: accentColor,
               onDestinationSelected: _onSelected,
               child: shellChild,
             ),
@@ -94,6 +105,7 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
           _MobileLayout(
             tabs: tabs,
             selectedIndex: index,
+            accentColor: accentColor,
             onDestinationSelected: _onSelected,
             child: shellChild,
           ),
@@ -136,12 +148,16 @@ class _MobileLayout extends ConsumerWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.child,
+    this.accentColor,
   });
 
   final List<DomainShellTab> tabs;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
+
+  /// Domain accent tint for the selected tab; null keeps the global primary.
+  final Color? accentColor;
 
   /// Total visual height reserved for the floating dock:
   /// nav bar + top/bottom spacing + device safe-area inset.
@@ -257,6 +273,7 @@ class _MobileLayout extends ConsumerWidget {
                                   items: navTabs,
                                   selectedIndex: selectedIndex,
                                   onIndexChanged: onDestinationSelected,
+                                  accentColor: accentColor,
                                   onAssistantAction: assistantAction == null
                                       ? null
                                       : () => assistantAction(context, ref),
@@ -346,12 +363,16 @@ class _TabletLayout extends ConsumerWidget {
     required this.selectedIndex,
     required this.onDestinationSelected,
     required this.child,
+    this.accentColor,
   });
 
   final List<DomainShellTab> tabs;
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
   final Widget child;
+
+  /// Domain accent tint for the selected tab; null keeps the global primary.
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -373,6 +394,7 @@ class _TabletLayout extends ConsumerWidget {
               _TabletRailItem(
                 tab: tabs[i],
                 selected: i == selectedIndex,
+                accentColor: accentColor,
                 onTap: () => onDestinationSelected(i),
               ),
             if (assistantAction != null) ...[
@@ -440,16 +462,22 @@ class _TabletRailItem extends StatelessWidget {
     required this.tab,
     required this.selected,
     required this.onTap,
+    this.accentColor,
   });
 
   final DomainShellTab tab;
   final bool selected;
   final VoidCallback onTap;
 
+  /// Domain accent tint for the selected state; null keeps the global
+  /// primary.
+  final Color? accentColor;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
+    final selectedColor = accentColor ?? colors.primary;
+    final iconColor = selected ? selectedColor : colors.mutedForeground;
     return Semantics(
       button: true,
       selected: selected,
@@ -471,6 +499,7 @@ class _TabletRailItem extends StatelessWidget {
                   selected: selected,
                   axis: Axis.vertical,
                   length: AppSpacing.s24,
+                  color: accentColor,
                 ),
               ),
               Padding(
@@ -492,7 +521,7 @@ class _TabletRailItem extends StatelessWidget {
                                   : context.captionMediumStyle)
                               .copyWith(
                                 color: selected
-                                    ? colors.primary
+                                    ? selectedColor
                                     : colors.mutedForeground,
                               ),
                       textAlign: TextAlign.center,

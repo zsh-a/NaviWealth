@@ -12,6 +12,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/ai/composition/ask_ai.dart';
+import '../../core/lifeos/domain_pack.dart';
 import '../../core/shell/domain_shell.dart';
 import '../../core/shell/domain_switcher.dart';
 import '../../core/shell/settings_route_paths.dart';
@@ -103,6 +104,21 @@ class DomainSwitcherChip extends ConsumerWidget {
     }
     final active = activeSpecForPath(specs, path);
     final colors = context.theme.colors;
+    // The chip icon carries the shown domain's accent hue when its pack
+    // declares one; unregistered scopes (tests, reduced builds) and the
+    // neutral Life workspace icon keep the global primary.
+    final shownScope = isSingleHomeLink
+        ? single!.scope
+        : isLifeHub
+        ? null
+        : active.scope;
+    final chipAccent = shownScope == null
+        ? null
+        : resolveDomainAccent(
+            ref.watch(domainPackRegistryProvider),
+            shownScope,
+            context.appTheme.brightness,
+          );
     final l10n = AppLocalizations.of(context);
     final semanticsLabel = isSingleHomeLink
         ? single!.label
@@ -136,7 +152,7 @@ class DomainSwitcherChip extends ConsumerWidget {
                     ? FLucideIcons.layers
                     : active.selectedIcon,
                 size: AppIconSizes.sm,
-                color: colors.primary,
+                color: chipAccent ?? colors.primary,
               ),
               if (!isLifeHub || isSingleHomeLink) ...[
                 const SizedBox(width: AppSpacing.s6),

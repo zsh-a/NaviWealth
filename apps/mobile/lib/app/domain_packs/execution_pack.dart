@@ -8,6 +8,7 @@ import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/execution/agents/due_action_agent.dart'
     show kExecutionDueActionAgentId;
 import 'package:naviwealth/features/execution/agents/providers.dart'
@@ -33,6 +34,7 @@ import 'proposal_applier_route.dart';
 
 final DomainPack kExecutionPack = DomainPack(
   scope: DomainScope.execution,
+  accent: DomainAccents.execution,
   deviceTools: kExecutionDeviceTools,
   assistantToolsBuilder: (_) => kExecutionAssistantDeviceTools,
   toolDescriptors: kExecutionToolDescriptors,

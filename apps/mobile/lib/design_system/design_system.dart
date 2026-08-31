@@ -20,6 +20,7 @@ export 'theme/app_theme_data.dart';
 export 'theme/app_theme_scope.dart';
 export 'theme/app_type_scale.dart';
 export 'theme/component_specs.dart';
+export 'theme/domain_accent.dart';
 export 'theme/market_color_mode.dart';
 export 'theme/market_colors.dart';
 export 'theme/semantic_colors.dart';

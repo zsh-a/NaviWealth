@@ -484,7 +484,11 @@ class _LibraryList extends ConsumerWidget {
     AppLocalizations l10n,
     _LibraryEntry entry,
   ) {
-    final colors = context.theme.colors;
+    // Notes carry the KnowledgeOS domain accent; decisions keep the info
+    // hue so the two kinds stay distinguishable at a glance.
+    final noteAccent = DomainAccents.knowledge.resolve(
+      context.appTheme.brightness,
+    );
     return KnowledgeEntryTile(
       key: ValueKey<String>('knowledge-library-${entry.kind}-${entry.id}'),
       title: entry.title.isEmpty ? l10n.knowledgeUntitled : entry.title,
@@ -498,7 +502,7 @@ class _LibraryList extends ConsumerWidget {
           ? FLucideIcons.fileText
           : FLucideIcons.circleCheck,
       iconColor: entry.kind == 'note'
-          ? colors.primary
+          ? noteAccent
           : context.appTheme.status.info.fg,
       decisionStatus: entry.decisionStatus,
       menuActions: [

@@ -34,6 +34,7 @@ class FloatingGlassNavBar extends StatelessWidget {
     this.assistantIcon = FLucideIcons.sparkles,
     this.assistantLabel,
     this.assistantSemanticLabel,
+    this.accentColor,
   });
 
   /// Navigation destinations.
@@ -57,6 +58,10 @@ class FloatingGlassNavBar extends StatelessWidget {
 
   /// Full localized accessibility label for the assistant action.
   final String? assistantSemanticLabel;
+
+  /// Optional selected-tab tint (e.g. a domain accent). Null keeps the
+  /// global primary.
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +89,7 @@ class FloatingGlassNavBar extends StatelessWidget {
                     child: _NavTabButton(
                       tab: items[i],
                       selected: i == selectedIndex,
+                      accentColor: accentColor,
                       onTap: () => onIndexChanged(i),
                     ),
                   ),
@@ -127,17 +133,20 @@ class _NavTabButton extends StatelessWidget {
     required this.tab,
     required this.selected,
     required this.onTap,
+    this.accentColor,
   });
 
   final FloatingNavTab tab;
   final bool selected;
   final VoidCallback onTap;
+  final Color? accentColor;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
-    final labelColor = selected ? colors.primary : colors.mutedForeground;
+    final selectedColor = accentColor ?? colors.primary;
+    final iconColor = selected ? selectedColor : colors.mutedForeground;
+    final labelColor = selected ? selectedColor : colors.mutedForeground;
     return Semantics(
       button: true,
       selected: selected,
@@ -189,6 +198,7 @@ class _NavTabButton extends StatelessWidget {
                   selected: selected,
                   length: AppSpacing.s16,
                   thickness: AppSpacing.s2,
+                  color: accentColor,
                 ),
               ],
             ),

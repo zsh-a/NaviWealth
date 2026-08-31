@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_command_palette.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_domain_shell.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_applier.dart'
@@ -22,6 +23,7 @@ import 'proposal_applier_route.dart';
 
 final DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
+  accent: DomainAccents.knowledge,
   deviceTools: kKnowledgeDeviceTools,
   assistantToolsBuilder: (_) => kKnowledgeAssistantDeviceTools,
   toolDescriptors: kKnowledgeToolDescriptors,

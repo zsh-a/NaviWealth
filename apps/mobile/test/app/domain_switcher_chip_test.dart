@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/shell/shell_chrome.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/core/shell/domain_switcher.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -127,5 +128,59 @@ void main() {
     expect(find.bySemanticsLabel(l10n.shellSwitchDomainTitle), findsOneWidget);
     expect(find.text('FinanceOS'), findsNothing);
     expect(find.byIcon(FLucideIcons.layers), findsOneWidget);
+  });
+
+  testWidgets('chip icon tints with the active domain accent', (tester) async {
+    const accent = DomainAccent(
+      light: Color(0xFF123456),
+      dark: Color(0xFFABCDEF),
+    );
+    final router = GoRouter(
+      initialLocation: '/health',
+      routes: [
+        GoRoute(
+          path: '/health',
+          builder: (_, _) => const Scaffold(body: DomainSwitcherChip()),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          activeDomainShellsProvider.overrideWithValue([
+            _domain(
+              scope: DomainScope.finance,
+              label: 'FinanceOS',
+              path: '/today',
+            ),
+            _domain(
+              scope: DomainScope.health,
+              label: 'HealthOS',
+              path: '/health',
+            ),
+          ]),
+          domainPackRegistryProvider.overrideWithValue([
+            const DomainPack(scope: DomainScope.finance),
+            const DomainPack(scope: DomainScope.health, accent: accent),
+          ]),
+          domainSwitcherHomePathProvider.overrideWithValue('/life'),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          locale: const Locale('en', 'US'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+          builder: (context, child) =>
+              FTheme(data: FTheme.neutral.light.desktop, child: child!),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final icon = tester.widget<Icon>(find.byIcon(FLucideIcons.layers).first);
+    expect(icon.color, const Color(0xFF123456));
   });
 }

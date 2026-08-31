@@ -251,6 +251,16 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
     );
     final workspaceLabel = onLife ? l10n.lifeNavLabel : activeSpec.label;
     final workspaceIcon = onLife ? FLucideIcons.house : activeSpec.selectedIcon;
+    // The active domain's accent tints the workspace tile and the selected
+    // destination row. On the Life hub no domain owns the route, so the
+    // chrome keeps the global primary.
+    final accentColor = onLife
+        ? null
+        : resolveDomainAccent(
+            ref.watch(domainPackRegistryProvider),
+            activeSpec.scope,
+            context.appTheme.brightness,
+          );
     final destinations = <DesktopSidebarDestination>[
       DesktopSidebarDestination(
         icon: FLucideIcons.house,
@@ -269,9 +279,11 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
       workspace: DesktopSidebarWorkspace(
         icon: workspaceIcon,
         label: workspaceLabel,
+        accentColor: accentColor,
         onPress: () => showDomainSwitcherSheet(context, specs, homePath),
       ),
       destinations: destinations,
+      accentColor: accentColor,
       selectedIndex: onLife
           ? 0
           : selectedTab < 0

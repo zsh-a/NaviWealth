@@ -33,7 +33,8 @@ class KnowledgeEntryTile extends StatelessWidget {
   final bool accented;
 
   /// Optional tonal override for the leading [AppIconTile]. When null the
-  /// tile keeps the legacy muted (or primary when [accented]) treatment.
+  /// tile keeps the muted treatment, or the KnowledgeOS domain accent when
+  /// [accented].
   final Color? iconColor;
 
   /// When set, renders a compact status badge next to the kind badge so
@@ -55,8 +56,14 @@ class KnowledgeEntryTile extends StatelessWidget {
         .where((tag) => tag.isNotEmpty)
         .toSet()
         .toList(growable: false);
+    // `accented` rows tint with the KnowledgeOS domain accent (indigo)
+    // instead of the global primary; per-tile [iconColor] still wins so
+    // notes and decisions can keep distinct treatments.
+    final knowledgeAccent = DomainAccents.knowledge.resolve(
+      context.appTheme.brightness,
+    );
     final tileColor =
-        iconColor ?? (accented ? colors.primary : colors.mutedForeground);
+        iconColor ?? (accented ? knowledgeAccent : colors.mutedForeground);
     return SoftCard.flat(
       onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s14),

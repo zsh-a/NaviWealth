@@ -32,6 +32,7 @@ class DesktopSidebar extends ConsumerWidget {
     this.workspace,
     this.footerActions = const <DesktopSidebarAction>[],
     this.forceCollapsed = false,
+    this.accentColor,
   });
 
   final List<DesktopSidebarDestination> destinations;
@@ -39,6 +40,10 @@ class DesktopSidebar extends ConsumerWidget {
   final ValueChanged<int> onDestinationSelected;
   final DesktopSidebarWorkspace? workspace;
   final List<DesktopSidebarAction> footerActions;
+
+  /// Optional selected-destination tint (e.g. the active domain accent).
+  /// Null keeps the global primary. Footer actions stay on the primary.
+  final Color? accentColor;
 
   /// Temporarily renders the icon-only rail without changing the persisted
   /// user preference. Used by constrained desktop windows where the expanded
@@ -83,6 +88,7 @@ class DesktopSidebar extends ConsumerWidget {
                           onPress: workspace.onPress,
                           collapsed: metrics.collapsed,
                           labelOpacity: metrics.labelOpacity,
+                          accentColor: workspace.accentColor,
                           // The workspace slot is the brand position: give its
                           // icon a tinted tile so it never reads as a
                           // duplicate of the Today destination below.
@@ -111,6 +117,7 @@ class DesktopSidebar extends ConsumerWidget {
                           selected: i == selectedIndex,
                           collapsed: metrics.collapsed,
                           labelOpacity: metrics.labelOpacity,
+                          accentColor: accentColor,
                           onPress: () => onDestinationSelected(i),
                         ),
                       ),
@@ -224,11 +231,16 @@ class DesktopSidebarWorkspace {
     required this.icon,
     required this.label,
     required this.onPress,
+    this.accentColor,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPress;
+
+  /// Optional tint for the workspace icon tile (e.g. the active domain
+  /// accent). Null keeps the global primary.
+  final Color? accentColor;
 }
 
 /// A pinned shell action rendered between navigation and Settings.
@@ -264,6 +276,7 @@ class _SidebarRow extends StatefulWidget {
     this.labelOpacity = 1,
     this.iconTile = false,
     this.trailing,
+    this.accentColor,
   });
 
   final IconData icon;
@@ -283,6 +296,10 @@ class _SidebarRow extends StatefulWidget {
   /// Only rendered in the expanded layout.
   final Widget? trailing;
 
+  /// Optional tint replacing the global primary for the selected / icon-tile
+  /// treatment (e.g. the active domain accent).
+  final Color? accentColor;
+
   @override
   State<_SidebarRow> createState() => _SidebarRowState();
 }
@@ -293,8 +310,9 @@ class _SidebarRowState extends State<_SidebarRow> {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final accent = widget.accentColor ?? colors.primary;
     final foreground = widget.selected
-        ? colors.primary
+        ? accent
         : widget.emphasized
         ? colors.primary
         : colors.mutedForeground;
@@ -303,7 +321,7 @@ class _SidebarRowState extends State<_SidebarRow> {
         : Colors.transparent;
 
     final Widget icon = widget.iconTile
-        ? AppIconTile(icon: widget.icon, color: colors.primary)
+        ? AppIconTile(icon: widget.icon, color: accent)
         : Icon(widget.icon, color: foreground, size: AppIconSizes.md);
 
     final row = MouseRegion(
@@ -335,6 +353,7 @@ class _SidebarRowState extends State<_SidebarRow> {
                     selected: widget.selected,
                     axis: Axis.vertical,
                     length: AppSpacing.s20,
+                    color: widget.accentColor,
                   ),
                 ),
               Padding(
@@ -354,6 +373,7 @@ class _SidebarRowState extends State<_SidebarRow> {
                         selected: widget.selected,
                         axis: Axis.vertical,
                         length: AppSpacing.s20,
+                        color: widget.accentColor,
                       ),
                       const SizedBox(width: AppSpacing.s6),
                       SizedBox(
@@ -374,8 +394,9 @@ class _SidebarRowState extends State<_SidebarRow> {
                                           ? context.labelStyle
                                           : context.mediumLabelStyle)
                                       .copyWith(
-                                        color:
-                                            widget.selected || widget.emphasized
+                                        color: widget.selected
+                                            ? accent
+                                            : widget.emphasized
                                             ? colors.primary
                                             : colors.foreground,
                                       ),

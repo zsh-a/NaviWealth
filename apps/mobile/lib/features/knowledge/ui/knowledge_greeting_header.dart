@@ -47,6 +47,11 @@ class KnowledgeGreetingHeader extends StatelessWidget {
               AppIconButton(
                 icon: FLucideIcons.plus,
                 tooltip: l10n.knowledgeCaptureAction,
+                // Domain identity accent (KnowledgeOS indigo) on the inbox's
+                // one primary action.
+                iconColor: DomainAccents.knowledge.resolve(
+                  context.appTheme.brightness,
+                ),
                 onPress: () => showKnowledgeCaptureSheet(context),
               ),
               // Headerless inbox root: the greeting row is where the

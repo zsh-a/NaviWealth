@@ -130,6 +130,11 @@ Rules:
 - Settings, login, onboarding, the `/assistant` conversation workspace, and
   global configuration routes stay outside the domain dock shell.
 - A domain owns its tab paths through `DomainPack.tabPaths`.
+- A domain may declare a chrome identity hue through `DomainPack.accent`
+  (a light/dark `DomainAccent` pair from `design_system/theme/domain_accent.dart`).
+  It tints only shell chrome — the switcher chip/sheet, the dock/rail/sidebar
+  selected-tab treatment, and the desktop workspace tile. Null falls back to
+  the global primary; status and market colors always stay semantic.
 - Additional route prefixes that belong to a domain but are not tabs use `DomainPack.additionalPathPrefixes`.
 - Desktop uses one visual sidebar at the large window class (1200dp+). Its
   workspace row switches between Life and active domains; its destinations

@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../design_system/theme/domain_accent.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/agents/agent.dart';
 import '../ai/agents/agent_presentation.dart';
@@ -194,10 +195,17 @@ class DomainPack {
     this.settingsRoutesBuilder,
     this.settingsSpec,
     this.shareIntentHandlers = const <DomainShareIntentHandler>[],
+    this.accent,
   });
 
   /// Opt-in scope this pack registers under.
   final DomainScope scope;
+
+  /// Optional chrome identity hue (switcher chip, switcher sheet rows, dock
+  /// tab tint). Null falls back to the global primary — zero behavior change
+  /// for packs that do not opt in. Status and market colors stay semantic;
+  /// see `design_system/theme/domain_accent.dart`.
+  final DomainAccent? accent;
 
   /// Device AI tools advertised when this domain is active.
   final List<DeviceTool> deviceTools;
@@ -353,6 +361,20 @@ final activeDomainPacksProvider = Provider<List<DomainPack>>((ref) {
       if (optIns.contains(p.scope)) p,
   ];
 });
+
+/// Resolves the accent color [scope] declares in [packs] for [brightness].
+/// Null when the domain is unregistered or declares no accent — callers
+/// fall back to `colors.primary`.
+Color? resolveDomainAccent(
+  List<DomainPack> packs,
+  DomainScope scope,
+  Brightness brightness,
+) {
+  for (final pack in packs) {
+    if (pack.scope == scope) return pack.accent?.resolve(brightness);
+  }
+  return null;
+}
 
 List<DomainShareIntentHandler> domainShareIntentHandlers(
   List<DomainPack> packs,

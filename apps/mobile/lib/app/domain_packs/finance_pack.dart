@@ -7,6 +7,7 @@ import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart'
     show kCashflowAnomalyReviewAgentId;
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart'
@@ -41,6 +42,7 @@ import 'proposal_applier_route.dart';
 
 final DomainPack kFinancePack = DomainPack(
   scope: DomainScope.finance,
+  accent: DomainAccents.finance,
   deviceTools: kFinanceDeviceTools,
   assistantToolsBuilder: financeAssistantToolsForPath,
   toolDescriptors: kFinanceToolDescriptors,

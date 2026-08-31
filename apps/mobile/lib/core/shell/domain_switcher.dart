@@ -20,6 +20,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../lifeos/domain_pack.dart';
 import 'domain_shell.dart';
 
 /// App-composed route for the cross-domain home surface.
@@ -137,7 +138,7 @@ class _LifeRow extends StatelessWidget {
   }
 }
 
-class _DomainRow extends StatelessWidget {
+class _DomainRow extends ConsumerWidget {
   const _DomainRow({
     required this.spec,
     required this.selected,
@@ -149,9 +150,18 @@ class _DomainRow extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.theme.colors;
-    final iconColor = selected ? colors.primary : colors.foreground;
+    // Selected rows tint with the domain accent when the pack declares one;
+    // the registry defaults to empty in isolated shell tests, which keeps
+    // the legacy global-primary treatment.
+    final accent = resolveDomainAccent(
+      ref.watch(domainPackRegistryProvider),
+      spec.scope,
+      context.appTheme.brightness,
+    );
+    final selectedColor = accent ?? colors.primary;
+    final iconColor = selected ? selectedColor : colors.foreground;
     return AppTappable(
       onPress: onTap,
       child: Padding(
@@ -183,7 +193,7 @@ class _DomainRow extends StatelessWidget {
               Icon(
                 FLucideIcons.check,
                 size: AppIconSizes.h18,
-                color: colors.primary,
+                color: selectedColor,
               ),
           ],
         ),
