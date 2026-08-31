@@ -45397,6 +45397,18 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
         requiredDuringInsert: false,
         defaultValue: const Constant('0'),
       ).withConverter<Decimal>($WatchlistSimulationsTable.$convertercashWeight);
+  static const VerificationMeta _calculationModeMeta = const VerificationMeta(
+    'calculationMode',
+  );
+  @override
+  late final GeneratedColumn<String> calculationMode = GeneratedColumn<String>(
+    'calculation_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('weightedDailyChangeV1'),
+  );
   static const VerificationMeta _baselineAtMeta = const VerificationMeta(
     'baselineAt',
   );
@@ -45432,6 +45444,7 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
     baseCurrency,
     startingCapital,
     cashWeight,
+    calculationMode,
     baselineAt,
     createdAt,
   ];
@@ -45518,6 +45531,15 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
     } else if (isInserting) {
       context.missing(_baseCurrencyMeta);
     }
+    if (data.containsKey('calculation_mode')) {
+      context.handle(
+        _calculationModeMeta,
+        calculationMode.isAcceptableOrUnknown(
+          data['calculation_mode']!,
+          _calculationModeMeta,
+        ),
+      );
+    }
     if (data.containsKey('baseline_at')) {
       context.handle(
         _baselineAtMeta,
@@ -45594,6 +45616,10 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
           data['${effectivePrefix}cash_weight'],
         )!,
       ),
+      calculationMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}calculation_mode'],
+      )!,
       baselineAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}baseline_at'],
@@ -45646,6 +45672,7 @@ class WatchlistSimulationRow extends DataClass
   final String baseCurrency;
   final Decimal startingCapital;
   final Decimal cashWeight;
+  final String calculationMode;
   final DateTime baselineAt;
   final DateTime createdAt;
   const WatchlistSimulationRow({
@@ -45660,6 +45687,7 @@ class WatchlistSimulationRow extends DataClass
     required this.baseCurrency,
     required this.startingCapital,
     required this.cashWeight,
+    required this.calculationMode,
     required this.baselineAt,
     required this.createdAt,
   });
@@ -45693,6 +45721,7 @@ class WatchlistSimulationRow extends DataClass
         $WatchlistSimulationsTable.$convertercashWeight.toSql(cashWeight),
       );
     }
+    map['calculation_mode'] = Variable<String>(calculationMode);
     map['baseline_at'] = Variable<DateTime>(baselineAt);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -45713,6 +45742,7 @@ class WatchlistSimulationRow extends DataClass
       baseCurrency: Value(baseCurrency),
       startingCapital: Value(startingCapital),
       cashWeight: Value(cashWeight),
+      calculationMode: Value(calculationMode),
       baselineAt: Value(baselineAt),
       createdAt: Value(createdAt),
     );
@@ -45735,6 +45765,7 @@ class WatchlistSimulationRow extends DataClass
       baseCurrency: serializer.fromJson<String>(json['baseCurrency']),
       startingCapital: serializer.fromJson<Decimal>(json['startingCapital']),
       cashWeight: serializer.fromJson<Decimal>(json['cashWeight']),
+      calculationMode: serializer.fromJson<String>(json['calculationMode']),
       baselineAt: serializer.fromJson<DateTime>(json['baselineAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -45754,6 +45785,7 @@ class WatchlistSimulationRow extends DataClass
       'baseCurrency': serializer.toJson<String>(baseCurrency),
       'startingCapital': serializer.toJson<Decimal>(startingCapital),
       'cashWeight': serializer.toJson<Decimal>(cashWeight),
+      'calculationMode': serializer.toJson<String>(calculationMode),
       'baselineAt': serializer.toJson<DateTime>(baselineAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -45771,6 +45803,7 @@ class WatchlistSimulationRow extends DataClass
     String? baseCurrency,
     Decimal? startingCapital,
     Decimal? cashWeight,
+    String? calculationMode,
     DateTime? baselineAt,
     DateTime? createdAt,
   }) => WatchlistSimulationRow(
@@ -45785,6 +45818,7 @@ class WatchlistSimulationRow extends DataClass
     baseCurrency: baseCurrency ?? this.baseCurrency,
     startingCapital: startingCapital ?? this.startingCapital,
     cashWeight: cashWeight ?? this.cashWeight,
+    calculationMode: calculationMode ?? this.calculationMode,
     baselineAt: baselineAt ?? this.baselineAt,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -45813,6 +45847,9 @@ class WatchlistSimulationRow extends DataClass
       cashWeight: data.cashWeight.present
           ? data.cashWeight.value
           : this.cashWeight,
+      calculationMode: data.calculationMode.present
+          ? data.calculationMode.value
+          : this.calculationMode,
       baselineAt: data.baselineAt.present
           ? data.baselineAt.value
           : this.baselineAt,
@@ -45834,6 +45871,7 @@ class WatchlistSimulationRow extends DataClass
           ..write('baseCurrency: $baseCurrency, ')
           ..write('startingCapital: $startingCapital, ')
           ..write('cashWeight: $cashWeight, ')
+          ..write('calculationMode: $calculationMode, ')
           ..write('baselineAt: $baselineAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -45853,6 +45891,7 @@ class WatchlistSimulationRow extends DataClass
     baseCurrency,
     startingCapital,
     cashWeight,
+    calculationMode,
     baselineAt,
     createdAt,
   );
@@ -45871,6 +45910,7 @@ class WatchlistSimulationRow extends DataClass
           other.baseCurrency == this.baseCurrency &&
           other.startingCapital == this.startingCapital &&
           other.cashWeight == this.cashWeight &&
+          other.calculationMode == this.calculationMode &&
           other.baselineAt == this.baselineAt &&
           other.createdAt == this.createdAt);
 }
@@ -45888,6 +45928,7 @@ class WatchlistSimulationsCompanion
   final Value<String> baseCurrency;
   final Value<Decimal> startingCapital;
   final Value<Decimal> cashWeight;
+  final Value<String> calculationMode;
   final Value<DateTime> baselineAt;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -45903,6 +45944,7 @@ class WatchlistSimulationsCompanion
     this.baseCurrency = const Value.absent(),
     this.startingCapital = const Value.absent(),
     this.cashWeight = const Value.absent(),
+    this.calculationMode = const Value.absent(),
     this.baselineAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -45919,6 +45961,7 @@ class WatchlistSimulationsCompanion
     required String baseCurrency,
     required Decimal startingCapital,
     this.cashWeight = const Value.absent(),
+    this.calculationMode = const Value.absent(),
     required DateTime baselineAt,
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -45945,6 +45988,7 @@ class WatchlistSimulationsCompanion
     Expression<String>? baseCurrency,
     Expression<String>? startingCapital,
     Expression<String>? cashWeight,
+    Expression<String>? calculationMode,
     Expression<DateTime>? baselineAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -45961,6 +46005,7 @@ class WatchlistSimulationsCompanion
       if (baseCurrency != null) 'base_currency': baseCurrency,
       if (startingCapital != null) 'starting_capital': startingCapital,
       if (cashWeight != null) 'cash_weight': cashWeight,
+      if (calculationMode != null) 'calculation_mode': calculationMode,
       if (baselineAt != null) 'baseline_at': baselineAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -45979,6 +46024,7 @@ class WatchlistSimulationsCompanion
     Value<String>? baseCurrency,
     Value<Decimal>? startingCapital,
     Value<Decimal>? cashWeight,
+    Value<String>? calculationMode,
     Value<DateTime>? baselineAt,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -45995,6 +46041,7 @@ class WatchlistSimulationsCompanion
       baseCurrency: baseCurrency ?? this.baseCurrency,
       startingCapital: startingCapital ?? this.startingCapital,
       cashWeight: cashWeight ?? this.cashWeight,
+      calculationMode: calculationMode ?? this.calculationMode,
       baselineAt: baselineAt ?? this.baselineAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -46045,6 +46092,9 @@ class WatchlistSimulationsCompanion
         $WatchlistSimulationsTable.$convertercashWeight.toSql(cashWeight.value),
       );
     }
+    if (calculationMode.present) {
+      map['calculation_mode'] = Variable<String>(calculationMode.value);
+    }
     if (baselineAt.present) {
       map['baseline_at'] = Variable<DateTime>(baselineAt.value);
     }
@@ -46071,6 +46121,7 @@ class WatchlistSimulationsCompanion
           ..write('baseCurrency: $baseCurrency, ')
           ..write('startingCapital: $startingCapital, ')
           ..write('cashWeight: $cashWeight, ')
+          ..write('calculationMode: $calculationMode, ')
           ..write('baselineAt: $baselineAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -46737,6 +46788,1987 @@ class WatchlistSimulationPositionsCompanion
           ..write('simulationId: $simulationId, ')
           ..write('watchlistItemId: $watchlistItemId, ')
           ..write('targetWeight: $targetWeight, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WatchlistSimulationAllocationVersionsTable
+    extends WatchlistSimulationAllocationVersions
+    with
+        TableInfo<
+          $WatchlistSimulationAllocationVersionsTable,
+          WatchlistSimulationAllocationVersionRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationAllocationVersionsTable(
+    this.attachedDatabase, [
+    this._alias,
+  ]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>(
+        $WatchlistSimulationAllocationVersionsTable.$converterhlc,
+      );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _simulationIdMeta = const VerificationMeta(
+    'simulationId',
+  );
+  @override
+  late final GeneratedColumn<String> simulationId = GeneratedColumn<String>(
+    'simulation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _effectiveAtMeta = const VerificationMeta(
+    'effectiveAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> effectiveAt = GeneratedColumn<DateTime>(
+    'effective_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _reasonMeta = const VerificationMeta('reason');
+  @override
+  late final GeneratedColumn<String> reason = GeneratedColumn<String>(
+    'reason',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> cashWeight =
+      GeneratedColumn<String>(
+        'cash_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationAllocationVersionsTable.$convertercashWeight,
+      );
+  static const VerificationMeta _isCompleteMeta = const VerificationMeta(
+    'isComplete',
+  );
+  @override
+  late final GeneratedColumn<bool> isComplete = GeneratedColumn<bool>(
+    'is_complete',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_complete" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    effectiveAt,
+    reason,
+    cashWeight,
+    isComplete,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulation_allocation_versions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationAllocationVersionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('simulation_id')) {
+      context.handle(
+        _simulationIdMeta,
+        simulationId.isAcceptableOrUnknown(
+          data['simulation_id']!,
+          _simulationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_simulationIdMeta);
+    }
+    if (data.containsKey('effective_at')) {
+      context.handle(
+        _effectiveAtMeta,
+        effectiveAt.isAcceptableOrUnknown(
+          data['effective_at']!,
+          _effectiveAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_effectiveAtMeta);
+    }
+    if (data.containsKey('reason')) {
+      context.handle(
+        _reasonMeta,
+        reason.isAcceptableOrUnknown(data['reason']!, _reasonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_reasonMeta);
+    }
+    if (data.containsKey('is_complete')) {
+      context.handle(
+        _isCompleteMeta,
+        isComplete.isAcceptableOrUnknown(data['is_complete']!, _isCompleteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationAllocationVersionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationAllocationVersionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistSimulationAllocationVersionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      simulationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simulation_id'],
+      )!,
+      effectiveAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}effective_at'],
+      )!,
+      reason: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reason'],
+      )!,
+      cashWeight: $WatchlistSimulationAllocationVersionsTable
+          .$convertercashWeight
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}cash_weight'],
+            )!,
+          ),
+      isComplete: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_complete'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationAllocationVersionsTable createAlias(String alias) {
+    return $WatchlistSimulationAllocationVersionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $convertercashWeight =
+      const DecimalConverter();
+}
+
+class WatchlistSimulationAllocationVersionRow extends DataClass
+    implements Insertable<WatchlistSimulationAllocationVersionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String simulationId;
+  final DateTime effectiveAt;
+  final String reason;
+  final Decimal cashWeight;
+  final bool isComplete;
+  final DateTime createdAt;
+  const WatchlistSimulationAllocationVersionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.simulationId,
+    required this.effectiveAt,
+    required this.reason,
+    required this.cashWeight,
+    required this.isComplete,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationAllocationVersionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['simulation_id'] = Variable<String>(simulationId);
+    map['effective_at'] = Variable<DateTime>(effectiveAt);
+    map['reason'] = Variable<String>(reason);
+    {
+      map['cash_weight'] = Variable<String>(
+        $WatchlistSimulationAllocationVersionsTable.$convertercashWeight.toSql(
+          cashWeight,
+        ),
+      );
+    }
+    map['is_complete'] = Variable<bool>(isComplete);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WatchlistSimulationAllocationVersionsCompanion toCompanion(
+    bool nullToAbsent,
+  ) {
+    return WatchlistSimulationAllocationVersionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      simulationId: Value(simulationId),
+      effectiveAt: Value(effectiveAt),
+      reason: Value(reason),
+      cashWeight: Value(cashWeight),
+      isComplete: Value(isComplete),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WatchlistSimulationAllocationVersionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationAllocationVersionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      simulationId: serializer.fromJson<String>(json['simulationId']),
+      effectiveAt: serializer.fromJson<DateTime>(json['effectiveAt']),
+      reason: serializer.fromJson<String>(json['reason']),
+      cashWeight: serializer.fromJson<Decimal>(json['cashWeight']),
+      isComplete: serializer.fromJson<bool>(json['isComplete']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'simulationId': serializer.toJson<String>(simulationId),
+      'effectiveAt': serializer.toJson<DateTime>(effectiveAt),
+      'reason': serializer.toJson<String>(reason),
+      'cashWeight': serializer.toJson<Decimal>(cashWeight),
+      'isComplete': serializer.toJson<bool>(isComplete),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WatchlistSimulationAllocationVersionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? simulationId,
+    DateTime? effectiveAt,
+    String? reason,
+    Decimal? cashWeight,
+    bool? isComplete,
+    DateTime? createdAt,
+  }) => WatchlistSimulationAllocationVersionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    simulationId: simulationId ?? this.simulationId,
+    effectiveAt: effectiveAt ?? this.effectiveAt,
+    reason: reason ?? this.reason,
+    cashWeight: cashWeight ?? this.cashWeight,
+    isComplete: isComplete ?? this.isComplete,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  WatchlistSimulationAllocationVersionRow copyWithCompanion(
+    WatchlistSimulationAllocationVersionsCompanion data,
+  ) {
+    return WatchlistSimulationAllocationVersionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      simulationId: data.simulationId.present
+          ? data.simulationId.value
+          : this.simulationId,
+      effectiveAt: data.effectiveAt.present
+          ? data.effectiveAt.value
+          : this.effectiveAt,
+      reason: data.reason.present ? data.reason.value : this.reason,
+      cashWeight: data.cashWeight.present
+          ? data.cashWeight.value
+          : this.cashWeight,
+      isComplete: data.isComplete.present
+          ? data.isComplete.value
+          : this.isComplete,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationAllocationVersionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('effectiveAt: $effectiveAt, ')
+          ..write('reason: $reason, ')
+          ..write('cashWeight: $cashWeight, ')
+          ..write('isComplete: $isComplete, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    effectiveAt,
+    reason,
+    cashWeight,
+    isComplete,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationAllocationVersionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.simulationId == this.simulationId &&
+          other.effectiveAt == this.effectiveAt &&
+          other.reason == this.reason &&
+          other.cashWeight == this.cashWeight &&
+          other.isComplete == this.isComplete &&
+          other.createdAt == this.createdAt);
+}
+
+class WatchlistSimulationAllocationVersionsCompanion
+    extends UpdateCompanion<WatchlistSimulationAllocationVersionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> simulationId;
+  final Value<DateTime> effectiveAt;
+  final Value<String> reason;
+  final Value<Decimal> cashWeight;
+  final Value<bool> isComplete;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const WatchlistSimulationAllocationVersionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.simulationId = const Value.absent(),
+    this.effectiveAt = const Value.absent(),
+    this.reason = const Value.absent(),
+    this.cashWeight = const Value.absent(),
+    this.isComplete = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationAllocationVersionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String simulationId,
+    required DateTime effectiveAt,
+    required String reason,
+    required Decimal cashWeight,
+    this.isComplete = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       simulationId = Value(simulationId),
+       effectiveAt = Value(effectiveAt),
+       reason = Value(reason),
+       cashWeight = Value(cashWeight),
+       createdAt = Value(createdAt);
+  static Insertable<WatchlistSimulationAllocationVersionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? simulationId,
+    Expression<DateTime>? effectiveAt,
+    Expression<String>? reason,
+    Expression<String>? cashWeight,
+    Expression<bool>? isComplete,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (simulationId != null) 'simulation_id': simulationId,
+      if (effectiveAt != null) 'effective_at': effectiveAt,
+      if (reason != null) 'reason': reason,
+      if (cashWeight != null) 'cash_weight': cashWeight,
+      if (isComplete != null) 'is_complete': isComplete,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationAllocationVersionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? simulationId,
+    Value<DateTime>? effectiveAt,
+    Value<String>? reason,
+    Value<Decimal>? cashWeight,
+    Value<bool>? isComplete,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationAllocationVersionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      simulationId: simulationId ?? this.simulationId,
+      effectiveAt: effectiveAt ?? this.effectiveAt,
+      reason: reason ?? this.reason,
+      cashWeight: cashWeight ?? this.cashWeight,
+      isComplete: isComplete ?? this.isComplete,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationAllocationVersionsTable.$converterhlc.toSql(
+          hlc.value,
+        ),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (simulationId.present) {
+      map['simulation_id'] = Variable<String>(simulationId.value);
+    }
+    if (effectiveAt.present) {
+      map['effective_at'] = Variable<DateTime>(effectiveAt.value);
+    }
+    if (reason.present) {
+      map['reason'] = Variable<String>(reason.value);
+    }
+    if (cashWeight.present) {
+      map['cash_weight'] = Variable<String>(
+        $WatchlistSimulationAllocationVersionsTable.$convertercashWeight.toSql(
+          cashWeight.value,
+        ),
+      );
+    }
+    if (isComplete.present) {
+      map['is_complete'] = Variable<bool>(isComplete.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationAllocationVersionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('effectiveAt: $effectiveAt, ')
+          ..write('reason: $reason, ')
+          ..write('cashWeight: $cashWeight, ')
+          ..write('isComplete: $isComplete, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WatchlistSimulationHoldingVersionsTable
+    extends WatchlistSimulationHoldingVersions
+    with
+        TableInfo<
+          $WatchlistSimulationHoldingVersionsTable,
+          WatchlistSimulationHoldingVersionRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationHoldingVersionsTable(
+    this.attachedDatabase, [
+    this._alias,
+  ]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>(
+        $WatchlistSimulationHoldingVersionsTable.$converterhlc,
+      );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _allocationVersionIdMeta =
+      const VerificationMeta('allocationVersionId');
+  @override
+  late final GeneratedColumn<String> allocationVersionId =
+      GeneratedColumn<String>(
+        'allocation_version_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _simulationIdMeta = const VerificationMeta(
+    'simulationId',
+  );
+  @override
+  late final GeneratedColumn<String> simulationId = GeneratedColumn<String>(
+    'simulation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _watchlistItemIdMeta = const VerificationMeta(
+    'watchlistItemId',
+  );
+  @override
+  late final GeneratedColumn<String> watchlistItemId = GeneratedColumn<String>(
+    'watchlist_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> targetWeight =
+      GeneratedColumn<String>(
+        'target_weight',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationHoldingVersionsTable.$convertertargetWeight,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> quantity =
+      GeneratedColumn<String>(
+        'quantity',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationHoldingVersionsTable.$converterquantityn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> rawPrice =
+      GeneratedColumn<String>(
+        'raw_price',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationHoldingVersionsTable.$converterrawPricen,
+      );
+  static const VerificationMeta _priceCurrencyMeta = const VerificationMeta(
+    'priceCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> priceCurrency = GeneratedColumn<String>(
+    'price_currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _priceAsOfMeta = const VerificationMeta(
+    'priceAsOf',
+  );
+  @override
+  late final GeneratedColumn<DateTime> priceAsOf = GeneratedColumn<DateTime>(
+    'price_as_of',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _priceSourceMeta = const VerificationMeta(
+    'priceSource',
+  );
+  @override
+  late final GeneratedColumn<String> priceSource = GeneratedColumn<String>(
+    'price_source',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> fxToBase =
+      GeneratedColumn<String>(
+        'fx_to_base',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationHoldingVersionsTable.$converterfxToBasen,
+      );
+  static const VerificationMeta _effectiveAtMeta = const VerificationMeta(
+    'effectiveAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> effectiveAt = GeneratedColumn<DateTime>(
+    'effective_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    allocationVersionId,
+    simulationId,
+    watchlistItemId,
+    symbol,
+    market,
+    targetWeight,
+    quantity,
+    rawPrice,
+    priceCurrency,
+    priceAsOf,
+    priceSource,
+    fxToBase,
+    effectiveAt,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulation_holding_versions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationHoldingVersionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('allocation_version_id')) {
+      context.handle(
+        _allocationVersionIdMeta,
+        allocationVersionId.isAcceptableOrUnknown(
+          data['allocation_version_id']!,
+          _allocationVersionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_allocationVersionIdMeta);
+    }
+    if (data.containsKey('simulation_id')) {
+      context.handle(
+        _simulationIdMeta,
+        simulationId.isAcceptableOrUnknown(
+          data['simulation_id']!,
+          _simulationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_simulationIdMeta);
+    }
+    if (data.containsKey('watchlist_item_id')) {
+      context.handle(
+        _watchlistItemIdMeta,
+        watchlistItemId.isAcceptableOrUnknown(
+          data['watchlist_item_id']!,
+          _watchlistItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_watchlistItemIdMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('price_currency')) {
+      context.handle(
+        _priceCurrencyMeta,
+        priceCurrency.isAcceptableOrUnknown(
+          data['price_currency']!,
+          _priceCurrencyMeta,
+        ),
+      );
+    }
+    if (data.containsKey('price_as_of')) {
+      context.handle(
+        _priceAsOfMeta,
+        priceAsOf.isAcceptableOrUnknown(data['price_as_of']!, _priceAsOfMeta),
+      );
+    }
+    if (data.containsKey('price_source')) {
+      context.handle(
+        _priceSourceMeta,
+        priceSource.isAcceptableOrUnknown(
+          data['price_source']!,
+          _priceSourceMeta,
+        ),
+      );
+    }
+    if (data.containsKey('effective_at')) {
+      context.handle(
+        _effectiveAtMeta,
+        effectiveAt.isAcceptableOrUnknown(
+          data['effective_at']!,
+          _effectiveAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_effectiveAtMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationHoldingVersionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationHoldingVersionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistSimulationHoldingVersionsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      allocationVersionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allocation_version_id'],
+      )!,
+      simulationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simulation_id'],
+      )!,
+      watchlistItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}watchlist_item_id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      targetWeight: $WatchlistSimulationHoldingVersionsTable
+          .$convertertargetWeight
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}target_weight'],
+            )!,
+          ),
+      quantity: $WatchlistSimulationHoldingVersionsTable.$converterquantityn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}quantity'],
+            ),
+          ),
+      rawPrice: $WatchlistSimulationHoldingVersionsTable.$converterrawPricen
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}raw_price'],
+            ),
+          ),
+      priceCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}price_currency'],
+      ),
+      priceAsOf: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}price_as_of'],
+      ),
+      priceSource: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}price_source'],
+      ),
+      fxToBase: $WatchlistSimulationHoldingVersionsTable.$converterfxToBasen
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}fx_to_base'],
+            ),
+          ),
+      effectiveAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}effective_at'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationHoldingVersionsTable createAlias(String alias) {
+    return $WatchlistSimulationHoldingVersionsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $convertertargetWeight =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $converterquantity =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterquantityn =
+      NullAwareTypeConverter.wrap($converterquantity);
+  static TypeConverter<Decimal, String> $converterrawPrice =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterrawPricen =
+      NullAwareTypeConverter.wrap($converterrawPrice);
+  static TypeConverter<Decimal, String> $converterfxToBase =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterfxToBasen =
+      NullAwareTypeConverter.wrap($converterfxToBase);
+}
+
+class WatchlistSimulationHoldingVersionRow extends DataClass
+    implements Insertable<WatchlistSimulationHoldingVersionRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String allocationVersionId;
+  final String simulationId;
+  final String watchlistItemId;
+  final String symbol;
+  final String market;
+  final Decimal targetWeight;
+  final Decimal? quantity;
+  final Decimal? rawPrice;
+  final String? priceCurrency;
+  final DateTime? priceAsOf;
+  final String? priceSource;
+  final Decimal? fxToBase;
+  final DateTime effectiveAt;
+  final DateTime createdAt;
+  const WatchlistSimulationHoldingVersionRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.allocationVersionId,
+    required this.simulationId,
+    required this.watchlistItemId,
+    required this.symbol,
+    required this.market,
+    required this.targetWeight,
+    this.quantity,
+    this.rawPrice,
+    this.priceCurrency,
+    this.priceAsOf,
+    this.priceSource,
+    this.fxToBase,
+    required this.effectiveAt,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['allocation_version_id'] = Variable<String>(allocationVersionId);
+    map['simulation_id'] = Variable<String>(simulationId);
+    map['watchlist_item_id'] = Variable<String>(watchlistItemId);
+    map['symbol'] = Variable<String>(symbol);
+    map['market'] = Variable<String>(market);
+    {
+      map['target_weight'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$convertertargetWeight.toSql(
+          targetWeight,
+        ),
+      );
+    }
+    if (!nullToAbsent || quantity != null) {
+      map['quantity'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterquantityn.toSql(
+          quantity,
+        ),
+      );
+    }
+    if (!nullToAbsent || rawPrice != null) {
+      map['raw_price'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterrawPricen.toSql(
+          rawPrice,
+        ),
+      );
+    }
+    if (!nullToAbsent || priceCurrency != null) {
+      map['price_currency'] = Variable<String>(priceCurrency);
+    }
+    if (!nullToAbsent || priceAsOf != null) {
+      map['price_as_of'] = Variable<DateTime>(priceAsOf);
+    }
+    if (!nullToAbsent || priceSource != null) {
+      map['price_source'] = Variable<String>(priceSource);
+    }
+    if (!nullToAbsent || fxToBase != null) {
+      map['fx_to_base'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterfxToBasen.toSql(
+          fxToBase,
+        ),
+      );
+    }
+    map['effective_at'] = Variable<DateTime>(effectiveAt);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WatchlistSimulationHoldingVersionsCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistSimulationHoldingVersionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      allocationVersionId: Value(allocationVersionId),
+      simulationId: Value(simulationId),
+      watchlistItemId: Value(watchlistItemId),
+      symbol: Value(symbol),
+      market: Value(market),
+      targetWeight: Value(targetWeight),
+      quantity: quantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(quantity),
+      rawPrice: rawPrice == null && nullToAbsent
+          ? const Value.absent()
+          : Value(rawPrice),
+      priceCurrency: priceCurrency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceCurrency),
+      priceAsOf: priceAsOf == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceAsOf),
+      priceSource: priceSource == null && nullToAbsent
+          ? const Value.absent()
+          : Value(priceSource),
+      fxToBase: fxToBase == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fxToBase),
+      effectiveAt: Value(effectiveAt),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WatchlistSimulationHoldingVersionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationHoldingVersionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      allocationVersionId: serializer.fromJson<String>(
+        json['allocationVersionId'],
+      ),
+      simulationId: serializer.fromJson<String>(json['simulationId']),
+      watchlistItemId: serializer.fromJson<String>(json['watchlistItemId']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      market: serializer.fromJson<String>(json['market']),
+      targetWeight: serializer.fromJson<Decimal>(json['targetWeight']),
+      quantity: serializer.fromJson<Decimal?>(json['quantity']),
+      rawPrice: serializer.fromJson<Decimal?>(json['rawPrice']),
+      priceCurrency: serializer.fromJson<String?>(json['priceCurrency']),
+      priceAsOf: serializer.fromJson<DateTime?>(json['priceAsOf']),
+      priceSource: serializer.fromJson<String?>(json['priceSource']),
+      fxToBase: serializer.fromJson<Decimal?>(json['fxToBase']),
+      effectiveAt: serializer.fromJson<DateTime>(json['effectiveAt']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'allocationVersionId': serializer.toJson<String>(allocationVersionId),
+      'simulationId': serializer.toJson<String>(simulationId),
+      'watchlistItemId': serializer.toJson<String>(watchlistItemId),
+      'symbol': serializer.toJson<String>(symbol),
+      'market': serializer.toJson<String>(market),
+      'targetWeight': serializer.toJson<Decimal>(targetWeight),
+      'quantity': serializer.toJson<Decimal?>(quantity),
+      'rawPrice': serializer.toJson<Decimal?>(rawPrice),
+      'priceCurrency': serializer.toJson<String?>(priceCurrency),
+      'priceAsOf': serializer.toJson<DateTime?>(priceAsOf),
+      'priceSource': serializer.toJson<String?>(priceSource),
+      'fxToBase': serializer.toJson<Decimal?>(fxToBase),
+      'effectiveAt': serializer.toJson<DateTime>(effectiveAt),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WatchlistSimulationHoldingVersionRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? allocationVersionId,
+    String? simulationId,
+    String? watchlistItemId,
+    String? symbol,
+    String? market,
+    Decimal? targetWeight,
+    Value<Decimal?> quantity = const Value.absent(),
+    Value<Decimal?> rawPrice = const Value.absent(),
+    Value<String?> priceCurrency = const Value.absent(),
+    Value<DateTime?> priceAsOf = const Value.absent(),
+    Value<String?> priceSource = const Value.absent(),
+    Value<Decimal?> fxToBase = const Value.absent(),
+    DateTime? effectiveAt,
+    DateTime? createdAt,
+  }) => WatchlistSimulationHoldingVersionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    allocationVersionId: allocationVersionId ?? this.allocationVersionId,
+    simulationId: simulationId ?? this.simulationId,
+    watchlistItemId: watchlistItemId ?? this.watchlistItemId,
+    symbol: symbol ?? this.symbol,
+    market: market ?? this.market,
+    targetWeight: targetWeight ?? this.targetWeight,
+    quantity: quantity.present ? quantity.value : this.quantity,
+    rawPrice: rawPrice.present ? rawPrice.value : this.rawPrice,
+    priceCurrency: priceCurrency.present
+        ? priceCurrency.value
+        : this.priceCurrency,
+    priceAsOf: priceAsOf.present ? priceAsOf.value : this.priceAsOf,
+    priceSource: priceSource.present ? priceSource.value : this.priceSource,
+    fxToBase: fxToBase.present ? fxToBase.value : this.fxToBase,
+    effectiveAt: effectiveAt ?? this.effectiveAt,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  WatchlistSimulationHoldingVersionRow copyWithCompanion(
+    WatchlistSimulationHoldingVersionsCompanion data,
+  ) {
+    return WatchlistSimulationHoldingVersionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      allocationVersionId: data.allocationVersionId.present
+          ? data.allocationVersionId.value
+          : this.allocationVersionId,
+      simulationId: data.simulationId.present
+          ? data.simulationId.value
+          : this.simulationId,
+      watchlistItemId: data.watchlistItemId.present
+          ? data.watchlistItemId.value
+          : this.watchlistItemId,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      market: data.market.present ? data.market.value : this.market,
+      targetWeight: data.targetWeight.present
+          ? data.targetWeight.value
+          : this.targetWeight,
+      quantity: data.quantity.present ? data.quantity.value : this.quantity,
+      rawPrice: data.rawPrice.present ? data.rawPrice.value : this.rawPrice,
+      priceCurrency: data.priceCurrency.present
+          ? data.priceCurrency.value
+          : this.priceCurrency,
+      priceAsOf: data.priceAsOf.present ? data.priceAsOf.value : this.priceAsOf,
+      priceSource: data.priceSource.present
+          ? data.priceSource.value
+          : this.priceSource,
+      fxToBase: data.fxToBase.present ? data.fxToBase.value : this.fxToBase,
+      effectiveAt: data.effectiveAt.present
+          ? data.effectiveAt.value
+          : this.effectiveAt,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationHoldingVersionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('allocationVersionId: $allocationVersionId, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('watchlistItemId: $watchlistItemId, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('targetWeight: $targetWeight, ')
+          ..write('quantity: $quantity, ')
+          ..write('rawPrice: $rawPrice, ')
+          ..write('priceCurrency: $priceCurrency, ')
+          ..write('priceAsOf: $priceAsOf, ')
+          ..write('priceSource: $priceSource, ')
+          ..write('fxToBase: $fxToBase, ')
+          ..write('effectiveAt: $effectiveAt, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    allocationVersionId,
+    simulationId,
+    watchlistItemId,
+    symbol,
+    market,
+    targetWeight,
+    quantity,
+    rawPrice,
+    priceCurrency,
+    priceAsOf,
+    priceSource,
+    fxToBase,
+    effectiveAt,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationHoldingVersionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.allocationVersionId == this.allocationVersionId &&
+          other.simulationId == this.simulationId &&
+          other.watchlistItemId == this.watchlistItemId &&
+          other.symbol == this.symbol &&
+          other.market == this.market &&
+          other.targetWeight == this.targetWeight &&
+          other.quantity == this.quantity &&
+          other.rawPrice == this.rawPrice &&
+          other.priceCurrency == this.priceCurrency &&
+          other.priceAsOf == this.priceAsOf &&
+          other.priceSource == this.priceSource &&
+          other.fxToBase == this.fxToBase &&
+          other.effectiveAt == this.effectiveAt &&
+          other.createdAt == this.createdAt);
+}
+
+class WatchlistSimulationHoldingVersionsCompanion
+    extends UpdateCompanion<WatchlistSimulationHoldingVersionRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> allocationVersionId;
+  final Value<String> simulationId;
+  final Value<String> watchlistItemId;
+  final Value<String> symbol;
+  final Value<String> market;
+  final Value<Decimal> targetWeight;
+  final Value<Decimal?> quantity;
+  final Value<Decimal?> rawPrice;
+  final Value<String?> priceCurrency;
+  final Value<DateTime?> priceAsOf;
+  final Value<String?> priceSource;
+  final Value<Decimal?> fxToBase;
+  final Value<DateTime> effectiveAt;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const WatchlistSimulationHoldingVersionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.allocationVersionId = const Value.absent(),
+    this.simulationId = const Value.absent(),
+    this.watchlistItemId = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.market = const Value.absent(),
+    this.targetWeight = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.rawPrice = const Value.absent(),
+    this.priceCurrency = const Value.absent(),
+    this.priceAsOf = const Value.absent(),
+    this.priceSource = const Value.absent(),
+    this.fxToBase = const Value.absent(),
+    this.effectiveAt = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationHoldingVersionsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String allocationVersionId,
+    required String simulationId,
+    required String watchlistItemId,
+    required String symbol,
+    required String market,
+    required Decimal targetWeight,
+    this.quantity = const Value.absent(),
+    this.rawPrice = const Value.absent(),
+    this.priceCurrency = const Value.absent(),
+    this.priceAsOf = const Value.absent(),
+    this.priceSource = const Value.absent(),
+    this.fxToBase = const Value.absent(),
+    required DateTime effectiveAt,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       allocationVersionId = Value(allocationVersionId),
+       simulationId = Value(simulationId),
+       watchlistItemId = Value(watchlistItemId),
+       symbol = Value(symbol),
+       market = Value(market),
+       targetWeight = Value(targetWeight),
+       effectiveAt = Value(effectiveAt),
+       createdAt = Value(createdAt);
+  static Insertable<WatchlistSimulationHoldingVersionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? allocationVersionId,
+    Expression<String>? simulationId,
+    Expression<String>? watchlistItemId,
+    Expression<String>? symbol,
+    Expression<String>? market,
+    Expression<String>? targetWeight,
+    Expression<String>? quantity,
+    Expression<String>? rawPrice,
+    Expression<String>? priceCurrency,
+    Expression<DateTime>? priceAsOf,
+    Expression<String>? priceSource,
+    Expression<String>? fxToBase,
+    Expression<DateTime>? effectiveAt,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (allocationVersionId != null)
+        'allocation_version_id': allocationVersionId,
+      if (simulationId != null) 'simulation_id': simulationId,
+      if (watchlistItemId != null) 'watchlist_item_id': watchlistItemId,
+      if (symbol != null) 'symbol': symbol,
+      if (market != null) 'market': market,
+      if (targetWeight != null) 'target_weight': targetWeight,
+      if (quantity != null) 'quantity': quantity,
+      if (rawPrice != null) 'raw_price': rawPrice,
+      if (priceCurrency != null) 'price_currency': priceCurrency,
+      if (priceAsOf != null) 'price_as_of': priceAsOf,
+      if (priceSource != null) 'price_source': priceSource,
+      if (fxToBase != null) 'fx_to_base': fxToBase,
+      if (effectiveAt != null) 'effective_at': effectiveAt,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationHoldingVersionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? allocationVersionId,
+    Value<String>? simulationId,
+    Value<String>? watchlistItemId,
+    Value<String>? symbol,
+    Value<String>? market,
+    Value<Decimal>? targetWeight,
+    Value<Decimal?>? quantity,
+    Value<Decimal?>? rawPrice,
+    Value<String?>? priceCurrency,
+    Value<DateTime?>? priceAsOf,
+    Value<String?>? priceSource,
+    Value<Decimal?>? fxToBase,
+    Value<DateTime>? effectiveAt,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationHoldingVersionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      allocationVersionId: allocationVersionId ?? this.allocationVersionId,
+      simulationId: simulationId ?? this.simulationId,
+      watchlistItemId: watchlistItemId ?? this.watchlistItemId,
+      symbol: symbol ?? this.symbol,
+      market: market ?? this.market,
+      targetWeight: targetWeight ?? this.targetWeight,
+      quantity: quantity ?? this.quantity,
+      rawPrice: rawPrice ?? this.rawPrice,
+      priceCurrency: priceCurrency ?? this.priceCurrency,
+      priceAsOf: priceAsOf ?? this.priceAsOf,
+      priceSource: priceSource ?? this.priceSource,
+      fxToBase: fxToBase ?? this.fxToBase,
+      effectiveAt: effectiveAt ?? this.effectiveAt,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (allocationVersionId.present) {
+      map['allocation_version_id'] = Variable<String>(
+        allocationVersionId.value,
+      );
+    }
+    if (simulationId.present) {
+      map['simulation_id'] = Variable<String>(simulationId.value);
+    }
+    if (watchlistItemId.present) {
+      map['watchlist_item_id'] = Variable<String>(watchlistItemId.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (targetWeight.present) {
+      map['target_weight'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$convertertargetWeight.toSql(
+          targetWeight.value,
+        ),
+      );
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterquantityn.toSql(
+          quantity.value,
+        ),
+      );
+    }
+    if (rawPrice.present) {
+      map['raw_price'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterrawPricen.toSql(
+          rawPrice.value,
+        ),
+      );
+    }
+    if (priceCurrency.present) {
+      map['price_currency'] = Variable<String>(priceCurrency.value);
+    }
+    if (priceAsOf.present) {
+      map['price_as_of'] = Variable<DateTime>(priceAsOf.value);
+    }
+    if (priceSource.present) {
+      map['price_source'] = Variable<String>(priceSource.value);
+    }
+    if (fxToBase.present) {
+      map['fx_to_base'] = Variable<String>(
+        $WatchlistSimulationHoldingVersionsTable.$converterfxToBasen.toSql(
+          fxToBase.value,
+        ),
+      );
+    }
+    if (effectiveAt.present) {
+      map['effective_at'] = Variable<DateTime>(effectiveAt.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationHoldingVersionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('allocationVersionId: $allocationVersionId, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('watchlistItemId: $watchlistItemId, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('targetWeight: $targetWeight, ')
+          ..write('quantity: $quantity, ')
+          ..write('rawPrice: $rawPrice, ')
+          ..write('priceCurrency: $priceCurrency, ')
+          ..write('priceAsOf: $priceAsOf, ')
+          ..write('priceSource: $priceSource, ')
+          ..write('fxToBase: $fxToBase, ')
+          ..write('effectiveAt: $effectiveAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -49174,6 +51206,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WatchlistSimulationsTable(this);
   late final $WatchlistSimulationPositionsTable watchlistSimulationPositions =
       $WatchlistSimulationPositionsTable(this);
+  late final $WatchlistSimulationAllocationVersionsTable
+  watchlistSimulationAllocationVersions =
+      $WatchlistSimulationAllocationVersionsTable(this);
+  late final $WatchlistSimulationHoldingVersionsTable
+  watchlistSimulationHoldingVersions = $WatchlistSimulationHoldingVersionsTable(
+    this,
+  );
   late final $WatchlistSimulationActionEntriesTable
   watchlistSimulationActionEntries = $WatchlistSimulationActionEntriesTable(
     this,
@@ -49241,6 +51280,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     watchlistCollectionMembers,
     watchlistSimulations,
     watchlistSimulationPositions,
+    watchlistSimulationAllocationVersions,
+    watchlistSimulationHoldingVersions,
     watchlistSimulationActionEntries,
     watchlistSimulationObservations,
   ];
@@ -70184,6 +72225,7 @@ typedef $$WatchlistSimulationsTableCreateCompanionBuilder =
       required String baseCurrency,
       required Decimal startingCapital,
       Value<Decimal> cashWeight,
+      Value<String> calculationMode,
       required DateTime baselineAt,
       required DateTime createdAt,
       Value<int> rowid,
@@ -70201,6 +72243,7 @@ typedef $$WatchlistSimulationsTableUpdateCompanionBuilder =
       Value<String> baseCurrency,
       Value<Decimal> startingCapital,
       Value<Decimal> cashWeight,
+      Value<String> calculationMode,
       Value<DateTime> baselineAt,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -70272,6 +72315,11 @@ class $$WatchlistSimulationsTableFilterComposer
         column: $table.cashWeight,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnFilters<String> get calculationMode => $composableBuilder(
+    column: $table.calculationMode,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get baselineAt => $composableBuilder(
     column: $table.baselineAt,
@@ -70348,6 +72396,11 @@ class $$WatchlistSimulationsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get calculationMode => $composableBuilder(
+    column: $table.calculationMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get baselineAt => $composableBuilder(
     column: $table.baselineAt,
     builder: (column) => ColumnOrderings(column),
@@ -70415,6 +72468,11 @@ class $$WatchlistSimulationsTableAnnotationComposer
         builder: (column) => column,
       );
 
+  GeneratedColumn<String> get calculationMode => $composableBuilder(
+    column: $table.calculationMode,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get baselineAt => $composableBuilder(
     column: $table.baselineAt,
     builder: (column) => column,
@@ -70478,6 +72536,7 @@ class $$WatchlistSimulationsTableTableManager
                 Value<String> baseCurrency = const Value.absent(),
                 Value<Decimal> startingCapital = const Value.absent(),
                 Value<Decimal> cashWeight = const Value.absent(),
+                Value<String> calculationMode = const Value.absent(),
                 Value<DateTime> baselineAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -70493,6 +72552,7 @@ class $$WatchlistSimulationsTableTableManager
                 baseCurrency: baseCurrency,
                 startingCapital: startingCapital,
                 cashWeight: cashWeight,
+                calculationMode: calculationMode,
                 baselineAt: baselineAt,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -70510,6 +72570,7 @@ class $$WatchlistSimulationsTableTableManager
                 required String baseCurrency,
                 required Decimal startingCapital,
                 Value<Decimal> cashWeight = const Value.absent(),
+                Value<String> calculationMode = const Value.absent(),
                 required DateTime baselineAt,
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -70525,6 +72586,7 @@ class $$WatchlistSimulationsTableTableManager
                 baseCurrency: baseCurrency,
                 startingCapital: startingCapital,
                 cashWeight: cashWeight,
+                calculationMode: calculationMode,
                 baselineAt: baselineAt,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -70883,6 +72945,904 @@ typedef $$WatchlistSimulationPositionsTableProcessedTableManager =
         >,
       ),
       WatchlistSimulationPositionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$WatchlistSimulationAllocationVersionsTableCreateCompanionBuilder =
+    WatchlistSimulationAllocationVersionsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String simulationId,
+      required DateTime effectiveAt,
+      required String reason,
+      required Decimal cashWeight,
+      Value<bool> isComplete,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationAllocationVersionsTableUpdateCompanionBuilder =
+    WatchlistSimulationAllocationVersionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> simulationId,
+      Value<DateTime> effectiveAt,
+      Value<String> reason,
+      Value<Decimal> cashWeight,
+      Value<bool> isComplete,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationAllocationVersionsTableFilterComposer
+    extends
+        Composer<_$AppDatabase, $WatchlistSimulationAllocationVersionsTable> {
+  $$WatchlistSimulationAllocationVersionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get effectiveAt => $composableBuilder(
+    column: $table.effectiveAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get cashWeight =>
+      $composableBuilder(
+        column: $table.cashWeight,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<bool> get isComplete => $composableBuilder(
+    column: $table.isComplete,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationAllocationVersionsTableOrderingComposer
+    extends
+        Composer<_$AppDatabase, $WatchlistSimulationAllocationVersionsTable> {
+  $$WatchlistSimulationAllocationVersionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get effectiveAt => $composableBuilder(
+    column: $table.effectiveAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get reason => $composableBuilder(
+    column: $table.reason,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cashWeight => $composableBuilder(
+    column: $table.cashWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isComplete => $composableBuilder(
+    column: $table.isComplete,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationAllocationVersionsTableAnnotationComposer
+    extends
+        Composer<_$AppDatabase, $WatchlistSimulationAllocationVersionsTable> {
+  $$WatchlistSimulationAllocationVersionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get effectiveAt => $composableBuilder(
+    column: $table.effectiveAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get reason =>
+      $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get cashWeight =>
+      $composableBuilder(
+        column: $table.cashWeight,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<bool> get isComplete => $composableBuilder(
+    column: $table.isComplete,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationAllocationVersionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationAllocationVersionsTable,
+          WatchlistSimulationAllocationVersionRow,
+          $$WatchlistSimulationAllocationVersionsTableFilterComposer,
+          $$WatchlistSimulationAllocationVersionsTableOrderingComposer,
+          $$WatchlistSimulationAllocationVersionsTableAnnotationComposer,
+          $$WatchlistSimulationAllocationVersionsTableCreateCompanionBuilder,
+          $$WatchlistSimulationAllocationVersionsTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationAllocationVersionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationAllocationVersionsTable,
+              WatchlistSimulationAllocationVersionRow
+            >,
+          ),
+          WatchlistSimulationAllocationVersionRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationAllocationVersionsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationAllocationVersionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationAllocationVersionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationAllocationVersionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationAllocationVersionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> simulationId = const Value.absent(),
+                Value<DateTime> effectiveAt = const Value.absent(),
+                Value<String> reason = const Value.absent(),
+                Value<Decimal> cashWeight = const Value.absent(),
+                Value<bool> isComplete = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationAllocationVersionsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                effectiveAt: effectiveAt,
+                reason: reason,
+                cashWeight: cashWeight,
+                isComplete: isComplete,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String simulationId,
+                required DateTime effectiveAt,
+                required String reason,
+                required Decimal cashWeight,
+                Value<bool> isComplete = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationAllocationVersionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                effectiveAt: effectiveAt,
+                reason: reason,
+                cashWeight: cashWeight,
+                isComplete: isComplete,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationAllocationVersionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationAllocationVersionsTable,
+      WatchlistSimulationAllocationVersionRow,
+      $$WatchlistSimulationAllocationVersionsTableFilterComposer,
+      $$WatchlistSimulationAllocationVersionsTableOrderingComposer,
+      $$WatchlistSimulationAllocationVersionsTableAnnotationComposer,
+      $$WatchlistSimulationAllocationVersionsTableCreateCompanionBuilder,
+      $$WatchlistSimulationAllocationVersionsTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationAllocationVersionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationAllocationVersionsTable,
+          WatchlistSimulationAllocationVersionRow
+        >,
+      ),
+      WatchlistSimulationAllocationVersionRow,
+      PrefetchHooks Function()
+    >;
+typedef $$WatchlistSimulationHoldingVersionsTableCreateCompanionBuilder =
+    WatchlistSimulationHoldingVersionsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String allocationVersionId,
+      required String simulationId,
+      required String watchlistItemId,
+      required String symbol,
+      required String market,
+      required Decimal targetWeight,
+      Value<Decimal?> quantity,
+      Value<Decimal?> rawPrice,
+      Value<String?> priceCurrency,
+      Value<DateTime?> priceAsOf,
+      Value<String?> priceSource,
+      Value<Decimal?> fxToBase,
+      required DateTime effectiveAt,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationHoldingVersionsTableUpdateCompanionBuilder =
+    WatchlistSimulationHoldingVersionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> allocationVersionId,
+      Value<String> simulationId,
+      Value<String> watchlistItemId,
+      Value<String> symbol,
+      Value<String> market,
+      Value<Decimal> targetWeight,
+      Value<Decimal?> quantity,
+      Value<Decimal?> rawPrice,
+      Value<String?> priceCurrency,
+      Value<DateTime?> priceAsOf,
+      Value<String?> priceSource,
+      Value<Decimal?> fxToBase,
+      Value<DateTime> effectiveAt,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationHoldingVersionsTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationHoldingVersionsTable> {
+  $$WatchlistSimulationHoldingVersionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allocationVersionId => $composableBuilder(
+    column: $table.allocationVersionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get targetWeight =>
+      $composableBuilder(
+        column: $table.targetWeight,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get quantity =>
+      $composableBuilder(
+        column: $table.quantity,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get rawPrice =>
+      $composableBuilder(
+        column: $table.rawPrice,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get priceCurrency => $composableBuilder(
+    column: $table.priceCurrency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get priceAsOf => $composableBuilder(
+    column: $table.priceAsOf,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get priceSource => $composableBuilder(
+    column: $table.priceSource,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get fxToBase =>
+      $composableBuilder(
+        column: $table.fxToBase,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get effectiveAt => $composableBuilder(
+    column: $table.effectiveAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationHoldingVersionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationHoldingVersionsTable> {
+  $$WatchlistSimulationHoldingVersionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allocationVersionId => $composableBuilder(
+    column: $table.allocationVersionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get targetWeight => $composableBuilder(
+    column: $table.targetWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get quantity => $composableBuilder(
+    column: $table.quantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rawPrice => $composableBuilder(
+    column: $table.rawPrice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get priceCurrency => $composableBuilder(
+    column: $table.priceCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get priceAsOf => $composableBuilder(
+    column: $table.priceAsOf,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get priceSource => $composableBuilder(
+    column: $table.priceSource,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fxToBase => $composableBuilder(
+    column: $table.fxToBase,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get effectiveAt => $composableBuilder(
+    column: $table.effectiveAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationHoldingVersionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationHoldingVersionsTable> {
+  $$WatchlistSimulationHoldingVersionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get allocationVersionId => $composableBuilder(
+    column: $table.allocationVersionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get targetWeight =>
+      $composableBuilder(
+        column: $table.targetWeight,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get quantity =>
+      $composableBuilder(column: $table.quantity, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get rawPrice =>
+      $composableBuilder(column: $table.rawPrice, builder: (column) => column);
+
+  GeneratedColumn<String> get priceCurrency => $composableBuilder(
+    column: $table.priceCurrency,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get priceAsOf =>
+      $composableBuilder(column: $table.priceAsOf, builder: (column) => column);
+
+  GeneratedColumn<String> get priceSource => $composableBuilder(
+    column: $table.priceSource,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get fxToBase =>
+      $composableBuilder(column: $table.fxToBase, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get effectiveAt => $composableBuilder(
+    column: $table.effectiveAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationHoldingVersionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationHoldingVersionsTable,
+          WatchlistSimulationHoldingVersionRow,
+          $$WatchlistSimulationHoldingVersionsTableFilterComposer,
+          $$WatchlistSimulationHoldingVersionsTableOrderingComposer,
+          $$WatchlistSimulationHoldingVersionsTableAnnotationComposer,
+          $$WatchlistSimulationHoldingVersionsTableCreateCompanionBuilder,
+          $$WatchlistSimulationHoldingVersionsTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationHoldingVersionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationHoldingVersionsTable,
+              WatchlistSimulationHoldingVersionRow
+            >,
+          ),
+          WatchlistSimulationHoldingVersionRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationHoldingVersionsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationHoldingVersionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationHoldingVersionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationHoldingVersionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationHoldingVersionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> allocationVersionId = const Value.absent(),
+                Value<String> simulationId = const Value.absent(),
+                Value<String> watchlistItemId = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<Decimal> targetWeight = const Value.absent(),
+                Value<Decimal?> quantity = const Value.absent(),
+                Value<Decimal?> rawPrice = const Value.absent(),
+                Value<String?> priceCurrency = const Value.absent(),
+                Value<DateTime?> priceAsOf = const Value.absent(),
+                Value<String?> priceSource = const Value.absent(),
+                Value<Decimal?> fxToBase = const Value.absent(),
+                Value<DateTime> effectiveAt = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationHoldingVersionsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                allocationVersionId: allocationVersionId,
+                simulationId: simulationId,
+                watchlistItemId: watchlistItemId,
+                symbol: symbol,
+                market: market,
+                targetWeight: targetWeight,
+                quantity: quantity,
+                rawPrice: rawPrice,
+                priceCurrency: priceCurrency,
+                priceAsOf: priceAsOf,
+                priceSource: priceSource,
+                fxToBase: fxToBase,
+                effectiveAt: effectiveAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String allocationVersionId,
+                required String simulationId,
+                required String watchlistItemId,
+                required String symbol,
+                required String market,
+                required Decimal targetWeight,
+                Value<Decimal?> quantity = const Value.absent(),
+                Value<Decimal?> rawPrice = const Value.absent(),
+                Value<String?> priceCurrency = const Value.absent(),
+                Value<DateTime?> priceAsOf = const Value.absent(),
+                Value<String?> priceSource = const Value.absent(),
+                Value<Decimal?> fxToBase = const Value.absent(),
+                required DateTime effectiveAt,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationHoldingVersionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                allocationVersionId: allocationVersionId,
+                simulationId: simulationId,
+                watchlistItemId: watchlistItemId,
+                symbol: symbol,
+                market: market,
+                targetWeight: targetWeight,
+                quantity: quantity,
+                rawPrice: rawPrice,
+                priceCurrency: priceCurrency,
+                priceAsOf: priceAsOf,
+                priceSource: priceSource,
+                fxToBase: fxToBase,
+                effectiveAt: effectiveAt,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationHoldingVersionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationHoldingVersionsTable,
+      WatchlistSimulationHoldingVersionRow,
+      $$WatchlistSimulationHoldingVersionsTableFilterComposer,
+      $$WatchlistSimulationHoldingVersionsTableOrderingComposer,
+      $$WatchlistSimulationHoldingVersionsTableAnnotationComposer,
+      $$WatchlistSimulationHoldingVersionsTableCreateCompanionBuilder,
+      $$WatchlistSimulationHoldingVersionsTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationHoldingVersionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationHoldingVersionsTable,
+          WatchlistSimulationHoldingVersionRow
+        >,
+      ),
+      WatchlistSimulationHoldingVersionRow,
       PrefetchHooks Function()
     >;
 typedef $$WatchlistSimulationActionEntriesTableCreateCompanionBuilder =
@@ -72098,6 +75058,18 @@ class $AppDatabaseManager {
       $$WatchlistSimulationPositionsTableTableManager(
         _db,
         _db.watchlistSimulationPositions,
+      );
+  $$WatchlistSimulationAllocationVersionsTableTableManager
+  get watchlistSimulationAllocationVersions =>
+      $$WatchlistSimulationAllocationVersionsTableTableManager(
+        _db,
+        _db.watchlistSimulationAllocationVersions,
+      );
+  $$WatchlistSimulationHoldingVersionsTableTableManager
+  get watchlistSimulationHoldingVersions =>
+      $$WatchlistSimulationHoldingVersionsTableTableManager(
+        _db,
+        _db.watchlistSimulationHoldingVersions,
       );
   $$WatchlistSimulationActionEntriesTableTableManager
   get watchlistSimulationActionEntries =>

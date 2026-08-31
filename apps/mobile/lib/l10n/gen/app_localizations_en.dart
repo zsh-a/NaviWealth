@@ -11202,6 +11202,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSimulationDividendCancelled => 'Cancelled';
 
   @override
+  String watchlistSimulationDividendGross(String amount, String quantity) {
+    return '$amount gross · $quantity virtual shares';
+  }
+
+  @override
+  String get watchlistSimulationDividendEntitlementNote =>
+      'Gross paper entitlement uses captured record-date virtual quantity; tax, net cash and NAV remain unapplied.';
+
+  @override
   String get watchlistSimulationDividendReferenceNote =>
       'Reference only — quantity, tax, cash and NAV are not inferred from target weights.';
 

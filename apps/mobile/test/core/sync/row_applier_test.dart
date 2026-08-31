@@ -200,6 +200,56 @@ void main() {
         deviceId: _devA,
       ),
       RowChange(
+        table: prefixFinanceTable('watchlist_simulation_allocation_versions'),
+        id: 'allocation-1',
+        payload: <String, Object?>{
+          'id': 'allocation-1',
+          'simulation_id': 'simulation-1',
+          'effective_at': 1_700_000_000,
+          'reason': 'creation',
+          'cash_weight': '0.2',
+          'is_complete': true,
+          'created_at': 1_700_000_000,
+          'owner_user_id': _user,
+          'updated_at': 1_700_000_000,
+          'updated_by_device': _devA,
+          'hlc': version,
+          'deleted_at': null,
+        },
+        version: version,
+        deleted: false,
+        deviceId: _devA,
+      ),
+      RowChange(
+        table: prefixFinanceTable('watchlist_simulation_holding_versions'),
+        id: 'holding-1',
+        payload: <String, Object?>{
+          'id': 'holding-1',
+          'allocation_version_id': 'allocation-1',
+          'simulation_id': 'simulation-1',
+          'watchlist_item_id': 'us_stock:AAPL',
+          'symbol': 'AAPL',
+          'market': 'us_stock',
+          'target_weight': '0.8',
+          'quantity': '400',
+          'raw_price': '200',
+          'price_currency': 'USD',
+          'price_as_of': 1_700_000_000,
+          'price_source': 'fixture',
+          'fx_to_base': '1',
+          'effective_at': 1_700_000_000,
+          'created_at': 1_700_000_000,
+          'owner_user_id': _user,
+          'updated_at': 1_700_000_000,
+          'updated_by_device': _devA,
+          'hlc': version,
+          'deleted_at': null,
+        },
+        version: version,
+        deleted: false,
+        deviceId: _devA,
+      ),
+      RowChange(
         table: prefixFinanceTable('watchlist_simulation_action_entries'),
         id: 'action-1',
         payload: <String, Object?>{
@@ -233,7 +283,7 @@ void main() {
       ),
     ]);
 
-    expect(written, 3);
+    expect(written, 5);
     final simulation = await (db.select(
       db.watchlistSimulations,
     )..where((t) => t.id.equals('simulation-1'))).getSingle();
@@ -242,11 +292,20 @@ void main() {
     )..where((t) => t.id.equals('position-1'))).getSingle();
     expect(simulation.collectionId, 'collection-growth');
     expect(simulation.startingCapital.toString(), '100000');
+    final allocation = await (db.select(
+      db.watchlistSimulationAllocationVersions,
+    )..where((t) => t.id.equals('allocation-1'))).getSingle();
+    final holding = await (db.select(
+      db.watchlistSimulationHoldingVersions,
+    )..where((t) => t.id.equals('holding-1'))).getSingle();
     final action = await (db.select(
       db.watchlistSimulationActionEntries,
     )..where((t) => t.id.equals('action-1'))).getSingle();
     expect(position.watchlistItemId, 'us_stock:AAPL');
     expect(position.targetWeight.toString(), '0.8');
+    expect(allocation.isComplete, isTrue);
+    expect(holding.quantity.toString(), '400');
+    expect(holding.fxToBase.toString(), '1');
     expect(action.revisionHash, 'revision-1');
     expect(action.cashPerShare.toString(), '0.25');
     expect(action.eligibleQuantity, isNull);

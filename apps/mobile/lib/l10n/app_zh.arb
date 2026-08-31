@@ -3380,6 +3380,8 @@
   "watchlistSimulationDividendRecordsTitle": "已记录股息",
   "watchlistSimulationDividendPerShare": "每股 {amount}",
   "watchlistSimulationDividendCancelled": "已取消",
+  "watchlistSimulationDividendGross": "税前 {amount} · 虚拟持股 {quantity}",
+  "watchlistSimulationDividendEntitlementNote": "税前模拟权益使用登记日已捕获的虚拟持股计算；税费、净现金和净值仍未落账。",
   "watchlistSimulationDividendReferenceNote": "仅作参考——不会根据目标权重推断持仓数量、税费、现金或净值。",
   "watchlistSimulationCreateTitle": "创建模拟组合",
   "watchlistSimulationNameField": "模拟名称",

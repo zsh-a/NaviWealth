@@ -125,6 +125,8 @@ final class AppDatabaseTransactionScope {
     WatchlistCollectionMembers,
     WatchlistSimulations,
     WatchlistSimulationPositions,
+    WatchlistSimulationAllocationVersions,
+    WatchlistSimulationHoldingVersions,
     WatchlistSimulationActionEntries,
     WatchlistSimulationObservations,
   ],
@@ -154,7 +156,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 87;
+  int get schemaVersion => 88;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1085,6 +1087,20 @@ class AppDatabase extends _$AppDatabase {
       // can establish eligible quantity; they never write the real ledger.
       if (from < 87) {
         await m.createTable(watchlistSimulationActionEntries);
+        await _createWatchlistIndexes(this);
+      }
+      // v87 -> v88: explicit holdings-based entitlement mode. Existing paper
+      // simulations remain weightedDailyChangeV1; only new simulations with a
+      // captured allocation version opt into holdingsTotalReturnV2.
+      if (from < 88) {
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulations',
+          column: 'calculation_mode',
+          definition: "TEXT NOT NULL DEFAULT 'weightedDailyChangeV1'",
+        );
+        await m.createTable(watchlistSimulationAllocationVersions);
+        await m.createTable(watchlistSimulationHoldingVersions);
         await _createWatchlistIndexes(this);
       }
     },

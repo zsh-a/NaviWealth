@@ -13,6 +13,36 @@ import 'package:uuid/uuid.dart';
 
 const _uuid = Uuid();
 
+enum WatchlistSimulationCalculationMode {
+  weightedDailyChangeV1,
+  holdingsTotalReturnV2,
+}
+
+enum WatchlistSimulationAllocationReason { creation, reallocation }
+
+class WatchlistSimulationHoldingInput {
+  const WatchlistSimulationHoldingInput({
+    required this.symbol,
+    required this.market,
+    this.rawPrice,
+    this.priceCurrency,
+    this.priceAsOf,
+    this.priceSource,
+    this.quantityEligible = true,
+  });
+
+  final String symbol;
+  final AssetMarket market;
+  final Decimal? rawPrice;
+  final String? priceCurrency;
+  final DateTime? priceAsOf;
+  final String? priceSource;
+
+  /// False when quote evidence is stale or otherwise unsuitable for creating
+  /// a baseline quantity. Price provenance is still persisted for review.
+  final bool quantityEligible;
+}
+
 class WatchlistSimulation {
   const WatchlistSimulation({
     required this.id,
@@ -21,6 +51,8 @@ class WatchlistSimulation {
     required this.baseCurrency,
     required this.startingCapital,
     required this.cashWeight,
+    this.calculationMode =
+        WatchlistSimulationCalculationMode.weightedDailyChangeV1,
     required this.baselineAt,
     required this.createdAt,
     required this.sync,
@@ -32,6 +64,7 @@ class WatchlistSimulation {
   final String baseCurrency;
   final Decimal startingCapital;
   final Decimal cashWeight;
+  final WatchlistSimulationCalculationMode calculationMode;
   final DateTime baselineAt;
   final DateTime createdAt;
   final SyncMeta sync;
@@ -55,7 +88,11 @@ class WatchlistSimulationPosition {
   final SyncMeta sync;
 }
 
-enum WatchlistSimulationPaperActionState { referenceOnly }
+enum WatchlistSimulationPaperActionState {
+  referenceOnly,
+  entitlementRecorded,
+  cancelled,
+}
 
 class WatchlistSimulationActionEntry {
   const WatchlistSimulationActionEntry({
@@ -159,6 +196,9 @@ class WatchlistSimulationRepository {
 
   static const simulationsTable = 'watchlist_simulations';
   static const positionsTable = 'watchlist_simulation_positions';
+  static const allocationVersionsTable =
+      'watchlist_simulation_allocation_versions';
+  static const holdingVersionsTable = 'watchlist_simulation_holding_versions';
   static const actionEntriesTable = 'watchlist_simulation_action_entries';
 
   final AppDatabase _db;
@@ -223,6 +263,7 @@ class WatchlistSimulationRepository {
     required Decimal startingCapital,
     required Map<String, Decimal> targetWeights,
     required Decimal cashWeight,
+    Map<String, WatchlistSimulationHoldingInput>? holdingInputs,
   }) async {
     final normalizedName = _requireName(name);
     final normalizedCurrency = _requireCurrency(baseCurrency);
@@ -242,6 +283,9 @@ class WatchlistSimulationRepository {
       baseCurrency: normalizedCurrency,
       startingCapital: startingCapital,
       cashWeight: cashWeight,
+      calculationMode: holdingInputs == null
+          ? WatchlistSimulationCalculationMode.weightedDailyChangeV1
+          : WatchlistSimulationCalculationMode.holdingsTotalReturnV2,
       baselineAt: stamp.now,
       createdAt: stamp.now,
       sync: _syncFromStamp(stamp),
@@ -257,6 +301,7 @@ class WatchlistSimulationRepository {
               baseCurrency: simulation.baseCurrency,
               startingCapital: simulation.startingCapital,
               cashWeight: Value(simulation.cashWeight),
+              calculationMode: Value(simulation.calculationMode.name),
               baselineAt: simulation.baselineAt,
               createdAt: simulation.createdAt,
               ownerUserId: stamp.ownerUserId,
@@ -292,6 +337,17 @@ class WatchlistSimulationRepository {
           watchlistItemId: entry.key,
           targetWeight: entry.value,
           createdAt: stamp.now,
+          stamp: stamp,
+        );
+      }
+      if (holdingInputs != null) {
+        await _writeAllocationVersion(
+          simulation: simulation,
+          targetWeights: targetWeights,
+          cashWeight: cashWeight,
+          holdingInputs: holdingInputs,
+          reason: WatchlistSimulationAllocationReason.creation,
+          capitalBase: startingCapital,
           stamp: stamp,
         );
       }
@@ -405,8 +461,9 @@ class WatchlistSimulationRepository {
   ///
   /// New rows require an implemented action whose best entitlement date is on
   /// or after the simulation baseline. Existing deterministic rows may be
-  /// revised or cancelled. All money totals remain null because the legacy
-  /// weight-only simulation cannot establish record-date quantity.
+  /// revised or cancelled. Holdings V2 may attach record-date virtual quantity
+  /// and gross paper entitlement; tax, net cash, base value, and NAV remain
+  /// unapplied. Legacy weight-only simulations stay reference-only.
   Future<List<WatchlistSimulationActionEntry>> materializeDividendReferences({
     required WatchlistSimulation simulation,
     required Map<String, Iterable<MarketCorporateAction>>
@@ -469,12 +526,50 @@ class WatchlistSimulationRepository {
                 entitlementDate.isBefore(activeSimulation.baselineAt)) {
               continue;
             }
-          } else {
-            if (existing.paperState !=
-                WatchlistSimulationPaperActionState.referenceOnly.name) {
-              continue;
+          }
+          var paperState = WatchlistSimulationPaperActionState.referenceOnly;
+          Decimal? eligibleQuantity;
+          Decimal? grossAmount;
+          if (action.status == MarketCorporateActionStatus.cancelled) {
+            paperState = WatchlistSimulationPaperActionState.cancelled;
+          } else if (activeSimulation.calculationMode ==
+                  WatchlistSimulationCalculationMode
+                      .holdingsTotalReturnV2
+                      .name &&
+              action.recordDate != null) {
+            final holdingQuery =
+                _db.select(_db.watchlistSimulationHoldingVersions)
+                  ..where((t) => t.ownerUserId.equals(stamp.ownerUserId))
+                  ..where((t) => t.simulationId.equals(simulation.id))
+                  ..where((t) => t.watchlistItemId.equals(entry.key))
+                  ..where(
+                    (t) => t.effectiveAt.isSmallerOrEqualValue(
+                      action.recordDate!.toUtc(),
+                    ),
+                  )
+                  ..where((t) => t.deletedAt.isNull())
+                  ..orderBy([(t) => OrderingTerm.desc(t.effectiveAt)])
+                  ..limit(1);
+            final holding = await holdingQuery.getSingleOrNull();
+            eligibleQuantity = holding?.quantity;
+            if (eligibleQuantity != null) {
+              grossAmount = (eligibleQuantity * action.cashPerShare!).round(
+                scale: 12,
+              );
+              paperState =
+                  WatchlistSimulationPaperActionState.entitlementRecorded;
             }
-            if (_actionEntryMatches(existing, entry.key, action)) continue;
+          }
+          if (existing != null &&
+              _actionEntryMatches(
+                existing,
+                entry.key,
+                action,
+                paperState: paperState,
+                eligibleQuantity: eligibleQuantity,
+                grossAmount: grossAmount,
+              )) {
+            continue;
           }
           final createdAt = existing?.createdAt ?? stamp.now;
           await _db
@@ -492,16 +587,14 @@ class WatchlistSimulationRepository {
                   revisionHash: action.revisionHash,
                   kind: action.kind.name,
                   status: action.status.name,
-                  paperState: Value(
-                    WatchlistSimulationPaperActionState.referenceOnly.name,
-                  ),
+                  paperState: Value(paperState.name),
                   recordDate: Value(action.recordDate?.toUtc()),
                   exDate: Value(action.exDate?.toUtc()),
                   payDate: Value(action.payDate?.toUtc()),
                   currency: action.currency!,
                   cashPerShare: action.cashPerShare!,
-                  eligibleQuantity: const Value(null),
-                  grossAmount: const Value(null),
+                  eligibleQuantity: Value(eligibleQuantity),
+                  grossAmount: Value(grossAmount),
                   withholdingTaxAmount: const Value(null),
                   netAmount: const Value(null),
                   baseCurrencyAmount: const Value(null),
@@ -527,14 +620,14 @@ class WatchlistSimulationRepository {
               revisionHash: action.revisionHash,
               kind: action.kind,
               status: action.status,
-              paperState: WatchlistSimulationPaperActionState.referenceOnly,
+              paperState: paperState,
               recordDate: action.recordDate?.toUtc(),
               exDate: action.exDate?.toUtc(),
               payDate: action.payDate?.toUtc(),
               currency: action.currency!,
               cashPerShare: action.cashPerShare!,
-              eligibleQuantity: null,
-              grossAmount: null,
+              eligibleQuantity: eligibleQuantity,
+              grossAmount: grossAmount,
               withholdingTaxAmount: null,
               netAmount: null,
               baseCurrencyAmount: null,
@@ -552,6 +645,7 @@ class WatchlistSimulationRepository {
     required WatchlistSimulation simulation,
     required Map<String, Decimal> targetWeights,
     required Decimal cashWeight,
+    Map<String, WatchlistSimulationHoldingInput>? holdingInputs,
   }) async {
     _validateAllocation(targetWeights, cashWeight);
     final stamp = await _stamper.stamp();
@@ -618,6 +712,18 @@ class WatchlistSimulationRepository {
           stamp: stamp,
         );
       }
+      if (activeSimulation.calculationMode ==
+          WatchlistSimulationCalculationMode.holdingsTotalReturnV2.name) {
+        await _writeAllocationVersion(
+          simulation: simulation,
+          targetWeights: targetWeights,
+          cashWeight: cashWeight,
+          holdingInputs: holdingInputs ?? const {},
+          reason: WatchlistSimulationAllocationReason.reallocation,
+          capitalBase: null,
+          stamp: stamp,
+        );
+      }
     });
   }
 
@@ -661,6 +767,48 @@ class WatchlistSimulationRepository {
         );
         await _outbox.enqueue(table: positionsTable, rowId: row.id);
       }
+      final activeAllocationVersions =
+          await (_db.select(_db.watchlistSimulationAllocationVersions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final row in activeAllocationVersions) {
+        await (_db.update(
+          _db.watchlistSimulationAllocationVersions,
+        )..where((t) => t.id.equals(row.id))).write(
+          WatchlistSimulationAllocationVersionsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(stamp.now),
+          ),
+        );
+        await _outbox.enqueue(table: allocationVersionsTable, rowId: row.id);
+      }
+      final activeHoldingVersions =
+          await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final row in activeHoldingVersions) {
+        await (_db.update(
+          _db.watchlistSimulationHoldingVersions,
+        )..where((t) => t.id.equals(row.id))).write(
+          WatchlistSimulationHoldingVersionsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(stamp.now),
+          ),
+        );
+        await _outbox.enqueue(table: holdingVersionsTable, rowId: row.id);
+      }
       final activeActionEntries =
           await (_db.select(_db.watchlistSimulationActionEntries)..where(
                 (t) =>
@@ -689,6 +837,110 @@ class WatchlistSimulationRepository {
           ))
           .go();
     });
+  }
+
+  Future<void> _writeAllocationVersion({
+    required WatchlistSimulation simulation,
+    required Map<String, Decimal> targetWeights,
+    required Decimal cashWeight,
+    required Map<String, WatchlistSimulationHoldingInput> holdingInputs,
+    required WatchlistSimulationAllocationReason reason,
+    required Decimal? capitalBase,
+    required MutationStamp stamp,
+  }) async {
+    final versionId = _uuid.v4();
+    final resolved = <String, _ResolvedHoldingVersion>{};
+    for (final entry in targetWeights.entries) {
+      final input = holdingInputs[entry.key];
+      final price = input?.rawPrice;
+      final priceCurrency = input?.priceCurrency?.trim().toUpperCase();
+      final sameCurrency =
+          priceCurrency != null && priceCurrency == simulation.baseCurrency;
+      Decimal? quantity;
+      if (capitalBase != null &&
+          (input?.quantityEligible ?? false) &&
+          price != null &&
+          price > Decimal.zero &&
+          sameCurrency) {
+        quantity = ((capitalBase * entry.value) / price).toDecimal(
+          scaleOnInfinitePrecision: 12,
+        );
+      }
+      final separator = entry.key.indexOf(':');
+      resolved[entry.key] = _ResolvedHoldingVersion(
+        symbol:
+            input?.symbol.toUpperCase() ??
+            (separator < 0
+                ? entry.key.toUpperCase()
+                : entry.key.substring(separator + 1).toUpperCase()),
+        market:
+            input?.market.wire ??
+            (separator < 0
+                ? AssetMarket.unknown.wire
+                : entry.key.substring(0, separator)),
+        targetWeight: entry.value,
+        quantity: quantity,
+        rawPrice: price,
+        priceCurrency: priceCurrency,
+        priceAsOf: input?.priceAsOf?.toUtc(),
+        priceSource: input?.priceSource,
+        fxToBase: price != null && sameCurrency ? Decimal.one : null,
+      );
+    }
+    final isComplete =
+        resolved.length == targetWeights.length &&
+        resolved.values.every((holding) => holding.quantity != null);
+    await _db
+        .into(_db.watchlistSimulationAllocationVersions)
+        .insert(
+          WatchlistSimulationAllocationVersionsCompanion.insert(
+            id: versionId,
+            simulationId: simulation.id,
+            effectiveAt: stamp.now,
+            reason: reason.name,
+            cashWeight: cashWeight,
+            isComplete: Value(isComplete),
+            createdAt: stamp.now,
+            ownerUserId: stamp.ownerUserId,
+            updatedAt: stamp.now,
+            updatedByDevice: stamp.deviceId,
+            hlc: stamp.hlc,
+          ),
+        );
+    await _outbox.enqueue(table: allocationVersionsTable, rowId: versionId);
+    for (final entry in resolved.entries) {
+      final id = _holdingVersionId(
+        allocationVersionId: versionId,
+        watchlistItemId: entry.key,
+      );
+      final holding = entry.value;
+      await _db
+          .into(_db.watchlistSimulationHoldingVersions)
+          .insert(
+            WatchlistSimulationHoldingVersionsCompanion.insert(
+              id: id,
+              allocationVersionId: versionId,
+              simulationId: simulation.id,
+              watchlistItemId: entry.key,
+              symbol: holding.symbol,
+              market: holding.market,
+              targetWeight: holding.targetWeight,
+              quantity: Value(holding.quantity),
+              rawPrice: Value(holding.rawPrice),
+              priceCurrency: Value(holding.priceCurrency),
+              priceAsOf: Value(holding.priceAsOf),
+              priceSource: Value(holding.priceSource),
+              fxToBase: Value(holding.fxToBase),
+              effectiveAt: stamp.now,
+              createdAt: stamp.now,
+              ownerUserId: stamp.ownerUserId,
+              updatedAt: stamp.now,
+              updatedByDevice: stamp.deviceId,
+              hlc: stamp.hlc,
+            ),
+          );
+      await _outbox.enqueue(table: holdingVersionsTable, rowId: id);
+    }
   }
 
   Future<void> _writePosition({
@@ -768,6 +1020,16 @@ class WatchlistSimulationRepository {
     return 'watchlist-simulation-position:$digest';
   }
 
+  static String _holdingVersionId({
+    required String allocationVersionId,
+    required String watchlistItemId,
+  }) {
+    final digest = sha256.convert(
+      utf8.encode('$allocationVersionId\u0000$watchlistItemId'),
+    );
+    return 'watchlist-simulation-holding:$digest';
+  }
+
   static String _actionEntryId({
     required String simulationId,
     required MarketCorporateAction action,
@@ -787,6 +1049,30 @@ class WatchlistSimulationRepository {
   }) => 'watchlist-simulation-observation:$simulationId:$observationDay';
 }
 
+class _ResolvedHoldingVersion {
+  const _ResolvedHoldingVersion({
+    required this.symbol,
+    required this.market,
+    required this.targetWeight,
+    required this.quantity,
+    required this.rawPrice,
+    required this.priceCurrency,
+    required this.priceAsOf,
+    required this.priceSource,
+    required this.fxToBase,
+  });
+
+  final String symbol;
+  final String market;
+  final Decimal targetWeight;
+  final Decimal? quantity;
+  final Decimal? rawPrice;
+  final String? priceCurrency;
+  final DateTime? priceAsOf;
+  final String? priceSource;
+  final Decimal? fxToBase;
+}
+
 String _observationDay(DateTime value) {
   final utc = value.toUtc();
   String twoDigits(int part) => part.toString().padLeft(2, '0');
@@ -801,6 +1087,10 @@ WatchlistSimulation _simulationFromRow(WatchlistSimulationRow row) {
     baseCurrency: row.baseCurrency,
     startingCapital: row.startingCapital,
     cashWeight: row.cashWeight,
+    calculationMode: _enumByName(
+      WatchlistSimulationCalculationMode.values,
+      row.calculationMode,
+    ),
     baselineAt: row.baselineAt,
     createdAt: row.createdAt,
     sync: SyncMeta(
@@ -835,8 +1125,11 @@ WatchlistSimulationPosition _positionFromRow(
 bool _actionEntryMatches(
   WatchlistSimulationActionEntryRow row,
   String watchlistItemId,
-  MarketCorporateAction action,
-) {
+  MarketCorporateAction action, {
+  required WatchlistSimulationPaperActionState paperState,
+  required Decimal? eligibleQuantity,
+  required Decimal? grossAmount,
+}) {
   return row.deletedAt == null &&
       row.watchlistItemId == watchlistItemId &&
       row.symbol == action.symbol &&
@@ -847,15 +1140,14 @@ bool _actionEntryMatches(
       row.revisionHash == action.revisionHash &&
       row.kind == action.kind.name &&
       row.status == action.status.name &&
-      row.paperState ==
-          WatchlistSimulationPaperActionState.referenceOnly.name &&
+      row.paperState == paperState.name &&
       _sameInstant(row.recordDate, action.recordDate) &&
       _sameInstant(row.exDate, action.exDate) &&
       _sameInstant(row.payDate, action.payDate) &&
       row.currency == action.currency &&
       row.cashPerShare == action.cashPerShare &&
-      row.eligibleQuantity == null &&
-      row.grossAmount == null &&
+      row.eligibleQuantity == eligibleQuantity &&
+      row.grossAmount == grossAmount &&
       row.withholdingTaxAmount == null &&
       row.netAmount == null &&
       row.baseCurrencyAmount == null;

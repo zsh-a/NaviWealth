@@ -10613,6 +10613,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSimulationDividendCancelled => '已取消';
 
   @override
+  String watchlistSimulationDividendGross(String amount, String quantity) {
+    return '税前 $amount · 虚拟持股 $quantity';
+  }
+
+  @override
+  String get watchlistSimulationDividendEntitlementNote =>
+      '税前模拟权益使用登记日已捕获的虚拟持股计算；税费、净现金和净值仍未落账。';
+
+  @override
   String get watchlistSimulationDividendReferenceNote =>
       '仅作参考——不会根据目标权重推断持仓数量、税费、现金或净值。';
 

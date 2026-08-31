@@ -36,6 +36,7 @@ void main() {
         'collection_id',
         'starting_capital',
         'cash_weight',
+        'calculation_mode',
         'baseline_at',
         'owner_user_id',
         'hlc',
@@ -54,6 +55,17 @@ void main() {
         'hlc',
       ]),
     );
+    for (final table in const [
+      'watchlist_simulation_allocation_versions',
+      'watchlist_simulation_holding_versions',
+    ]) {
+      final rows = await db.customSelect('PRAGMA table_info($table)').get();
+      expect(
+        rows.map((row) => row.read<String>('name')),
+        containsAll(['simulation_id', 'owner_user_id', 'hlc']),
+        reason: table,
+      );
+    }
     final actionEntries = await db
         .customSelect('PRAGMA table_info(watchlist_simulation_action_entries)')
         .get();
@@ -87,6 +99,6 @@ void main() {
     );
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 87);
+    expect(version.read<int>('user_version'), 88);
   });
 }

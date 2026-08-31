@@ -85,6 +85,8 @@ class WatchlistSimulations extends Table with SyncableTable {
   TextColumn get startingCapital => text().map(const DecimalConverter())();
   TextColumn get cashWeight =>
       text().map(const DecimalConverter()).withDefault(const Constant('0'))();
+  TextColumn get calculationMode =>
+      text().withDefault(const Constant('weightedDailyChangeV1'))();
   DateTimeColumn get baselineAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
 
@@ -104,6 +106,57 @@ class WatchlistSimulationPositions extends Table with SyncableTable {
   @override
   List<String> get customConstraints => [
     'UNIQUE(owner_user_id, simulation_id, watchlist_item_id)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Effective-dated allocation header for holdings-based paper entitlement.
+@DataClassName('WatchlistSimulationAllocationVersionRow')
+class WatchlistSimulationAllocationVersions extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get simulationId => text()();
+  DateTimeColumn get effectiveAt => dateTime()();
+  TextColumn get reason => text()();
+  TextColumn get cashWeight => text().map(const DecimalConverter())();
+  BoolColumn get isComplete => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, simulation_id, effective_at)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Per-symbol virtual holding captured under one allocation version.
+///
+/// Quantity remains null when a raw quote or same-currency valuation is not
+/// available. Missing FX is never treated as 1.
+@DataClassName('WatchlistSimulationHoldingVersionRow')
+class WatchlistSimulationHoldingVersions extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get allocationVersionId => text()();
+  TextColumn get simulationId => text()();
+  TextColumn get watchlistItemId => text()();
+  TextColumn get symbol => text()();
+  TextColumn get market => text()();
+  TextColumn get targetWeight => text().map(const DecimalConverter())();
+  TextColumn get quantity => text().map(const DecimalConverter()).nullable()();
+  TextColumn get rawPrice => text().map(const DecimalConverter()).nullable()();
+  TextColumn get priceCurrency => text().nullable()();
+  DateTimeColumn get priceAsOf => dateTime().nullable()();
+  TextColumn get priceSource => text().nullable()();
+  TextColumn get fxToBase => text().map(const DecimalConverter()).nullable()();
+  DateTimeColumn get effectiveAt => dateTime()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, allocation_version_id, watchlist_item_id)',
   ];
 
   @override

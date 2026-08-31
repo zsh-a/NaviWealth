@@ -280,6 +280,144 @@ void main() {
   );
 
   test(
+    'holdings V2 captures baseline quantity and gross record-date entitlement',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'Holdings V2',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:600519': WatchlistSimulationHoldingInput(
+            symbol: '600519',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('200'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+        },
+      );
+
+      expect(
+        simulation.calculationMode,
+        WatchlistSimulationCalculationMode.holdingsTotalReturnV2,
+      );
+      final allocation = await db
+          .select(db.watchlistSimulationAllocationVersions)
+          .getSingle();
+      final holding = await db
+          .select(db.watchlistSimulationHoldingVersions)
+          .getSingle();
+      expect(allocation.isComplete, isTrue);
+      expect(
+        allocation.reason,
+        WatchlistSimulationAllocationReason.creation.name,
+      );
+      expect(holding.quantity, Decimal.parse('5'));
+      expect(holding.rawPrice, Decimal.parse('200'));
+      expect(holding.fxToBase, Decimal.one);
+
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'revision-v2', cashPerShare: '2.5'),
+          ],
+        },
+      );
+      final record =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(
+        record.paperState,
+        WatchlistSimulationPaperActionState.entitlementRecorded,
+      );
+      expect(record.eligibleQuantity, Decimal.parse('5'));
+      expect(record.grossAmount, Decimal.parse('12.5'));
+      expect(record.withholdingTaxAmount, isNull);
+      expect(record.netAmount, isNull);
+      expect(record.baseCurrencyAmount, isNull);
+    },
+  );
+
+  test('holdings V2 never treats missing FX as one', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-cn',
+      name: 'Cross-currency holdings',
+      baseCurrency: 'USD',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'cn_a:600519': Decimal.one},
+      cashWeight: Decimal.zero,
+      holdingInputs: {
+        'cn_a:600519': WatchlistSimulationHoldingInput(
+          symbol: '600519',
+          market: AssetMarket.cnA,
+          rawPrice: Decimal.parse('200'),
+          priceCurrency: 'CNY',
+          priceAsOf: DateTime.utc(2023, 11, 14),
+          priceSource: 'fixture',
+        ),
+      },
+    );
+
+    final allocation = await db
+        .select(db.watchlistSimulationAllocationVersions)
+        .getSingle();
+    final holding = await db
+        .select(db.watchlistSimulationHoldingVersions)
+        .getSingle();
+    expect(allocation.isComplete, isFalse);
+    expect(holding.quantity, isNull);
+    expect(holding.fxToBase, isNull);
+
+    await repository.materializeDividendReferences(
+      simulation: simulation,
+      actionsByWatchlistItemId: {
+        'cn_a:600519': [
+          _dividend(revisionHash: 'revision-fx', cashPerShare: '2.5'),
+        ],
+      },
+    );
+    final record =
+        (await repository
+                .watchActionEntries(
+                  ownerUserId: 'u-test',
+                  simulationId: simulation.id,
+                )
+                .first)
+            .single;
+    expect(
+      record.paperState,
+      WatchlistSimulationPaperActionState.referenceOnly,
+    );
+    expect(record.eligibleQuantity, isNull);
+    expect(record.grossAmount, isNull);
+  });
+
+  test(
     'records cancellation revisions but ignores new unimplemented plans',
     () async {
       final db = makeTestDatabase();

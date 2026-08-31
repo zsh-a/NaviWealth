@@ -18873,6 +18873,18 @@ abstract class AppLocalizations {
   /// **'Cancelled'**
   String get watchlistSimulationDividendCancelled;
 
+  /// Gross paper dividend based on captured record-date virtual quantity
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} gross · {quantity} virtual shares'**
+  String watchlistSimulationDividendGross(String amount, String quantity);
+
+  /// Disclosure for a holdings-based paper dividend entitlement
+  ///
+  /// In en, this message translates to:
+  /// **'Gross paper entitlement uses captured record-date virtual quantity; tax, net cash and NAV remain unapplied.'**
+  String get watchlistSimulationDividendEntitlementNote;
+
   /// Disclosure for paper dividend references without holdings entitlement
   ///
   /// In en, this message translates to:

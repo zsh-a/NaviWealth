@@ -6129,6 +6129,16 @@
   },
   "watchlistSimulationDividendCancelled": "Cancelled",
   "@watchlistSimulationDividendCancelled": { "description": "Status for a cancelled paper dividend reference" },
+  "watchlistSimulationDividendGross": "{amount} gross · {quantity} virtual shares",
+  "@watchlistSimulationDividendGross": {
+    "description": "Gross paper dividend based on captured record-date virtual quantity",
+    "placeholders": {
+      "amount": { "type": "String" },
+      "quantity": { "type": "String" }
+    }
+  },
+  "watchlistSimulationDividendEntitlementNote": "Gross paper entitlement uses captured record-date virtual quantity; tax, net cash and NAV remain unapplied.",
+  "@watchlistSimulationDividendEntitlementNote": { "description": "Disclosure for a holdings-based paper dividend entitlement" },
   "watchlistSimulationDividendReferenceNote": "Reference only — quantity, tax, cash and NAV are not inferred from target weights.",
   "@watchlistSimulationDividendReferenceNote": { "description": "Disclosure for paper dividend references without holdings entitlement" },
   "watchlistSimulationCreateTitle": "Create paper simulation",

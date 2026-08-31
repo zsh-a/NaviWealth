@@ -15,6 +15,7 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_simulation
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
 import 'package:naviwealth/features/finance/investment/domain/watchlist_simulation_projection.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class WatchlistSimulationSection extends ConsumerWidget {
@@ -54,6 +55,7 @@ class WatchlistSimulationSection extends ConsumerWidget {
                         context: context,
                         collection: collection,
                         items: items,
+                        snapshots: snapshots,
                       ),
                     ),
               child: Text(l10n.watchlistSimulationCreateAction),
@@ -177,6 +179,7 @@ class _WatchlistSimulationCard extends ConsumerWidget {
             simulation: simulation,
             positions: positions,
             items: items,
+            snapshots: snapshots,
           ),
         ),
         onDelete: () => unawaited(_deleteSimulation(context, ref, simulation)),
@@ -463,14 +466,31 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.s8),
-                  Text(
-                    l10n.watchlistSimulationDividendPerShare(
-                      formatters.currency(
-                        sorted[index].cashPerShare,
-                        code: sorted[index].currency,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        l10n.watchlistSimulationDividendPerShare(
+                          formatters.currency(
+                            sorted[index].cashPerShare,
+                            code: sorted[index].currency,
+                          ),
+                        ),
+                        style: context.captionStyle,
                       ),
-                    ),
-                    style: context.captionStyle,
+                      if (sorted[index].grossAmount != null &&
+                          sorted[index].eligibleQuantity != null)
+                        Text(
+                          l10n.watchlistSimulationDividendGross(
+                            formatters.currency(
+                              sorted[index].grossAmount!,
+                              code: sorted[index].currency,
+                            ),
+                            sorted[index].eligibleQuantity!.toString(),
+                          ),
+                          style: context.captionStyle,
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -479,7 +499,13 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
             ],
             const SizedBox(height: AppSpacing.s6),
             Text(
-              l10n.watchlistSimulationDividendReferenceNote,
+              sorted.any(
+                    (record) =>
+                        record.paperState ==
+                        WatchlistSimulationPaperActionState.entitlementRecorded,
+                  )
+                  ? l10n.watchlistSimulationDividendEntitlementNote
+                  : l10n.watchlistSimulationDividendReferenceNote,
               style: context.captionStyle,
             ),
           ],
@@ -693,6 +719,7 @@ Future<void> showWatchlistSimulationCreateSheet({
   required BuildContext context,
   required WatchlistCollection collection,
   required List<WatchlistItem> items,
+  required List<WatchlistQuoteSnapshot> snapshots,
 }) async {
   final dirty = FormDirtyController();
   try {
@@ -705,6 +732,7 @@ Future<void> showWatchlistSimulationCreateSheet({
       builder: (_) => _WatchlistSimulationCreateSheet(
         collection: collection,
         items: items,
+        snapshots: snapshots,
         dirty: dirty,
       ),
     );
@@ -717,11 +745,13 @@ class _WatchlistSimulationCreateSheet extends ConsumerStatefulWidget {
   const _WatchlistSimulationCreateSheet({
     required this.collection,
     required this.items,
+    required this.snapshots,
     required this.dirty,
   });
 
   final WatchlistCollection collection;
   final List<WatchlistItem> items;
+  final List<WatchlistQuoteSnapshot> snapshots;
   final FormDirtyController dirty;
 
   @override
@@ -834,6 +864,7 @@ class _WatchlistSimulationCreateSheetState
           widget.items.map((item) => item.id),
         ),
         cashWeight: Decimal.zero,
+        holdingInputs: _simulationHoldingInputs(widget.items, widget.snapshots),
       );
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
@@ -857,6 +888,7 @@ Future<void> showWatchlistSimulationAllocationSheet({
   required WatchlistSimulation simulation,
   required List<WatchlistSimulationPosition> positions,
   required List<WatchlistItem> items,
+  required List<WatchlistQuoteSnapshot> snapshots,
 }) async {
   final dirty = FormDirtyController();
   try {
@@ -870,6 +902,7 @@ Future<void> showWatchlistSimulationAllocationSheet({
         simulation: simulation,
         positions: positions,
         items: items,
+        snapshots: snapshots,
         dirty: dirty,
       ),
     );
@@ -883,12 +916,14 @@ class _WatchlistSimulationAllocationSheet extends ConsumerStatefulWidget {
     required this.simulation,
     required this.positions,
     required this.items,
+    required this.snapshots,
     required this.dirty,
   });
 
   final WatchlistSimulation simulation;
   final List<WatchlistSimulationPosition> positions;
   final List<WatchlistItem> items;
+  final List<WatchlistQuoteSnapshot> snapshots;
   final FormDirtyController dirty;
 
   @override
@@ -1054,6 +1089,7 @@ class _WatchlistSimulationAllocationSheetState
         cashWeight: (Decimal.parse(_cash.text.trim()) / hundred).toDecimal(
           scaleOnInfinitePrecision: 8,
         ),
+        holdingInputs: _simulationHoldingInputs(widget.items, widget.snapshots),
       );
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
@@ -1102,6 +1138,29 @@ Future<void> _deleteSimulation(
       );
     }
   }
+}
+
+Map<String, WatchlistSimulationHoldingInput> _simulationHoldingInputs(
+  Iterable<WatchlistItem> items,
+  Iterable<WatchlistQuoteSnapshot> snapshots,
+) {
+  final snapshotByItemId = {
+    for (final snapshot in snapshots) snapshot.item.id: snapshot,
+  };
+  return <String, WatchlistSimulationHoldingInput>{
+    for (final item in items)
+      item.id: WatchlistSimulationHoldingInput(
+        symbol: item.symbol,
+        market: item.market,
+        rawPrice: snapshotByItemId[item.id]?.quote?.price,
+        priceCurrency: snapshotByItemId[item.id]?.quote?.currency,
+        priceAsOf: snapshotByItemId[item.id]?.quote?.asOf,
+        priceSource: snapshotByItemId[item.id]?.response?.source,
+        quantityEligible:
+            snapshotByItemId[item.id]?.response?.freshness !=
+            DataFreshness.stale,
+      ),
+  };
 }
 
 String _symbolFromId(String id) {

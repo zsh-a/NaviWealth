@@ -116,6 +116,33 @@ final _dividendReference = WatchlistSimulationActionEntry(
   sync: _sync,
 );
 
+final _dividendEntitlement = WatchlistSimulationActionEntry(
+  id: 'action-entitlement',
+  simulationId: _simulation.id,
+  watchlistItemId: _item.id,
+  symbol: 'AAPL',
+  market: AssetMarket.usStock.wire,
+  source: 'test',
+  dataset: 'fixture',
+  sourceKey: 'AAPL:dividend:2',
+  revisionHash: 'revision-2',
+  kind: MarketCorporateActionKind.distribution,
+  status: MarketCorporateActionStatus.implemented,
+  paperState: WatchlistSimulationPaperActionState.entitlementRecorded,
+  recordDate: DateTime.utc(2026, 9, 10),
+  exDate: DateTime.utc(2026, 9, 11),
+  payDate: DateTime.utc(2026, 9, 12),
+  currency: 'USD',
+  cashPerShare: Decimal.parse('0.25'),
+  eligibleQuantity: Decimal.parse('100'),
+  grossAmount: Decimal.parse('25'),
+  withholdingTaxAmount: null,
+  netAmount: null,
+  baseCurrencyAmount: null,
+  createdAt: DateTime.utc(2026, 9, 1),
+  sync: _sync,
+);
+
 final _observations = [
   WatchlistSimulationObservation(
     id: 'observation-baseline',
@@ -242,6 +269,26 @@ void main() {
     expect(find.text(r'$0.25 per share'), findsOneWidget);
     expect(
       find.textContaining('quantity, tax, cash and NAV are not inferred'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows holdings-based gross dividend entitlement', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        actionEntries: [_dividendEntitlement],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(r'$25.00 gross · 100 virtual shares'), findsOneWidget);
+    expect(
+      find.textContaining('tax, net cash and NAV remain unapplied'),
       findsOneWidget,
     );
   });

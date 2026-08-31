@@ -70,21 +70,32 @@ rounding.
 ### Watchlist Paper Simulations
 
 Watchlist simulations are a separate paper-only aggregate backed by
-`watchlist_simulations` and `watchlist_simulation_positions`. They may reference
-a watchlist collection and canonical watchlist-item ids, but must never reuse
-or write `InvestmentPortfolio`, accounts, lots, journal entries, postings, or
-trade execution state. Virtual capital and target weights use `Decimal`; both
-tables sync under `fin:` and participate in encrypted backup.
+`watchlist_simulations`, positions, effective-dated allocation versions,
+virtual holding versions, and action entries. They may reference a watchlist
+collection and canonical watchlist-item ids, but must never reuse or write
+`InvestmentPortfolio`, accounts, lots, journal entries, postings, or trade
+execution state. All paper source rows sync under `fin:` and participate in
+encrypted backup; local observations remain derived.
 
-Implemented provider dividends may also materialize automatically as synced
-`watchlist_simulation_action_entries`. These rows preserve the provider source
-key, revision hash, dates, currency, and per-share `Decimal` terms. They remain
-paper-only and `referenceOnly`: eligible quantity, gross/net cash, withholding
-tax, base-currency value, and NAV application stay null until a holdings-based
-simulation can establish record-date entitlement. Provider cancellation or
-revision updates the same deterministic paper row; disappearance from a feed
-does not delete history. No materialization path may write real investment or
-ledger tables.
+Existing simulations retain `weightedDailyChangeV1`. New simulations created
+with quote evidence use `holdingsTotalReturnV2`: creation captures raw price,
+price currency/date/source, target weight, and a virtual `Decimal` quantity
+only when the quote is non-stale and its currency equals the simulation base
+currency. Missing, stale, or cross-currency quotes keep quantity and
+`fx_to_base` null; the system never
+assumes missing FX equals one. Reallocations create a new effective-dated
+version but leave quantity unknown until a trustworthy capital base is
+available, rather than deriving holdings from the legacy projection curve.
+
+Implemented provider dividends materialize automatically as deterministic
+synced `watchlist_simulation_action_entries`. Provider source key, revision
+hash, dates, currency, and per-share terms always survive. Holdings V2 resolves
+the latest virtual holding at the record date and may record eligible quantity
+and gross paper entitlement. Unknown withholding tax, net cash,
+base-currency value, and NAV application remain null. Legacy or incomplete
+holdings stay `referenceOnly`. Provider cancellation or revision updates the
+same paper row; disappearance from a feed does not delete history. No
+materialization path may write real investment or ledger tables.
 
 The current projection applies available point-in-time daily percentage moves
 to virtual target weights. Missing quotes reduce priced coverage. A local-only

@@ -36,6 +36,16 @@ void main() {
         startingCapital: Decimal.parse('100000'),
         targetWeights: {'cn_a:600519': Decimal.one},
         cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:600519': WatchlistSimulationHoldingInput(
+            symbol: '600519',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('200'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+        },
       );
       final position =
           (await repository
@@ -101,7 +111,12 @@ void main() {
       expect(records, hasLength(1));
       expect(records.single.symbol, '600519');
       expect(records.single.cashPerShare, Decimal.parse('2.5'));
-      expect(records.single.isReferenceOnly, isTrue);
+      expect(records.single.eligibleQuantity, Decimal.parse('500'));
+      expect(records.single.grossAmount, Decimal.parse('1250.0'));
+      expect(
+        records.single.paperState,
+        WatchlistSimulationPaperActionState.entitlementRecorded,
+      );
     },
   );
 }

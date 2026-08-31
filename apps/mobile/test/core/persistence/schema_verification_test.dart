@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 87', () {
-      expect(db.schemaVersion, 87);
+    test('is 88', () {
+      expect(db.schemaVersion, 88);
     });
   });
 
@@ -111,6 +111,8 @@ void main() {
     for (final table in const [
       'watchlist_simulations',
       'watchlist_simulation_positions',
+      'watchlist_simulation_allocation_versions',
+      'watchlist_simulation_holding_versions',
       'watchlist_simulation_action_entries',
     ]) {
       test('$table has sync columns', () async {
@@ -137,6 +139,7 @@ void main() {
           'base_currency',
           'starting_capital',
           'cash_weight',
+          'calculation_mode',
           'baseline_at',
         ]),
       );
@@ -156,6 +159,43 @@ void main() {
         positionColumns.map((row) => row.read<String>('name')),
         containsAll(['simulation_id', 'watchlist_item_id', 'target_weight']),
       );
+    });
+
+    test('holding versions preserve quote and missing-FX evidence', () async {
+      final result = await db
+          .customSelect(
+            'PRAGMA table_info(watchlist_simulation_holding_versions)',
+          )
+          .get();
+      final columns = {
+        for (final row in result)
+          row.read<String>('name'): row.read<int>('notnull'),
+      };
+      expect(
+        columns.keys,
+        containsAll([
+          'allocation_version_id',
+          'watchlist_item_id',
+          'target_weight',
+          'quantity',
+          'raw_price',
+          'price_currency',
+          'price_as_of',
+          'price_source',
+          'fx_to_base',
+          'effective_at',
+        ]),
+      );
+      for (final field in const [
+        'quantity',
+        'raw_price',
+        'price_currency',
+        'price_as_of',
+        'price_source',
+        'fx_to_base',
+      ]) {
+        expect(columns[field], 0, reason: field);
+      }
     });
 
     test(
