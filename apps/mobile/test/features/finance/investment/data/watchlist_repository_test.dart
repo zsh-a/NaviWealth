@@ -175,4 +175,59 @@ void main() {
       hasLength(4),
     );
   });
+
+  test('persists complete collection and member orderings', () async {
+    final db = makeTestDatabase();
+    final outbox = InMemoryOutboxStore();
+    final repo = WatchlistRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+
+    final growth = await repo.createCollection('Growth');
+    final income = await repo.createCollection('Income');
+    final aapl = await repo.add(
+      symbol: 'AAPL',
+      market: AssetMarket.usStock,
+      collectionIds: [growth.id],
+    );
+    final msft = await repo.add(
+      symbol: 'MSFT',
+      market: AssetMarket.usStock,
+      collectionIds: [growth.id],
+    );
+
+    await expectLater(repo.reorderCollections([growth]), throwsStateError);
+    await expectLater(repo.reorderCollections(const []), throwsStateError);
+
+    await repo.reorderCollections([income, growth]);
+    final collections = await repo.watchCollections('u-test').first;
+    expect(collections.map((entry) => entry.name), ['Income', 'Growth']);
+    expect(collections.map((entry) => entry.sortRank), [0, 1024]);
+
+    await expectLater(
+      repo.reorderItemsInCollection(
+        collectionId: growth.id,
+        orderedItems: [aapl],
+      ),
+      throwsStateError,
+    );
+    await expectLater(
+      repo.reorderItemsInCollection(
+        collectionId: growth.id,
+        orderedItems: const [],
+      ),
+      throwsStateError,
+    );
+
+    await repo.reorderItemsInCollection(
+      collectionId: growth.id,
+      orderedItems: [msft, aapl],
+    );
+    final members = await repo.watchCollectionMembers('u-test').first;
+    expect(members.map((entry) => entry.watchlistItemId), [msft.id, aapl.id]);
+    expect(members.map((entry) => entry.sortRank), [0, 1024]);
+  });
 }

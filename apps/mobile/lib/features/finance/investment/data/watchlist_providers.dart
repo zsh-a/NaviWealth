@@ -4,6 +4,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
 
@@ -119,9 +120,22 @@ final watchlistItemsForScopeProvider = FutureProvider.autoDispose
         for (final member in members)
           if (member.collectionId == scope.collectionId) member.watchlistItemId,
       };
-      return items
+      final memberPositionByItemId = <String, int>{};
+      for (final member in members) {
+        if (member.collectionId != scope.collectionId) continue;
+        memberPositionByItemId[member.watchlistItemId] = member.sortRank;
+      }
+      final scopedItems = items
           .where((item) => memberItemIds.contains(item.id))
-          .toList(growable: false);
+          .toList();
+      scopedItems.sort((left, right) {
+        final rankComparison = memberPositionByItemId[left.id]!.compareTo(
+          memberPositionByItemId[right.id]!,
+        );
+        if (rankComparison != 0) return rankComparison;
+        return left.addedAt.compareTo(right.addedAt);
+      });
+      return List<WatchlistItem>.unmodifiable(scopedItems);
     });
 
 final watchlistQuoteSnapshotsProvider =
@@ -191,6 +205,67 @@ class WatchlistQuoteSummary {
 }
 
 enum WatchlistSortOrder { defaultOrder, gainers, decliners, symbol }
+
+enum WatchlistAlertFilter { all, configured, none }
+
+enum WatchlistFreshnessFilter { all, live, cached, stale, unavailable }
+
+class WatchlistFilter {
+  const WatchlistFilter({
+    this.market,
+    this.alerts = WatchlistAlertFilter.all,
+    this.freshness = WatchlistFreshnessFilter.all,
+  });
+
+  final AssetMarket? market;
+  final WatchlistAlertFilter alerts;
+  final WatchlistFreshnessFilter freshness;
+
+  bool get isDefault =>
+      market == null &&
+      alerts == WatchlistAlertFilter.all &&
+      freshness == WatchlistFreshnessFilter.all;
+}
+
+List<WatchlistItem> filterWatchlistItems({
+  required List<WatchlistItem> items,
+  required Iterable<WatchlistQuoteSnapshot> snapshots,
+  required WatchlistFilter filter,
+}) {
+  if (filter.isDefault) return List<WatchlistItem>.of(items);
+  final snapshotsByItemId = <String, WatchlistQuoteSnapshot>{
+    for (final snapshot in snapshots) snapshot.item.id: snapshot,
+  };
+  return items
+      .where((item) {
+        if (filter.market != null && item.market != filter.market) return false;
+        final hasConfiguredAlert =
+            item.alertRules.enabled && item.alertRules.hasRule;
+        if (filter.alerts == WatchlistAlertFilter.configured &&
+            !hasConfiguredAlert) {
+          return false;
+        }
+        if (filter.alerts == WatchlistAlertFilter.none && hasConfiguredAlert) {
+          return false;
+        }
+        final snapshot = snapshotsByItemId[item.id];
+        final matchesFreshness = switch (filter.freshness) {
+          WatchlistFreshnessFilter.all => true,
+          WatchlistFreshnessFilter.live =>
+            snapshot?.quote != null &&
+                snapshot?.response?.freshness == DataFreshness.live,
+          WatchlistFreshnessFilter.cached =>
+            snapshot?.quote != null &&
+                snapshot?.response?.freshness == DataFreshness.cachedFresh,
+          WatchlistFreshnessFilter.stale =>
+            snapshot?.quote != null &&
+                snapshot?.response?.freshness == DataFreshness.stale,
+          WatchlistFreshnessFilter.unavailable => snapshot?.quote == null,
+        };
+        return matchesFreshness;
+      })
+      .toList(growable: false);
+}
 
 List<WatchlistItem> sortWatchlistItems({
   required List<WatchlistItem> items,

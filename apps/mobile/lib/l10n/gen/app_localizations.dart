@@ -18566,6 +18566,84 @@ abstract class AppLocalizations {
   /// **'Updated {count} symbols'**
   String watchlistBulkUpdated(int count);
 
+  /// Manually reorder watchlist collections
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder collections'**
+  String get watchlistReorderCollectionsAction;
+
+  /// Manually reorder symbols in the selected collection
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder symbols'**
+  String get watchlistReorderSymbolsAction;
+
+  /// Filter watchlist symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Filter symbols'**
+  String get watchlistFilterAction;
+
+  /// Market section in the watchlist filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Market'**
+  String get watchlistFilterMarketSection;
+
+  /// Alert section in the watchlist filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Alerts'**
+  String get watchlistFilterAlertsSection;
+
+  /// Price freshness section in the watchlist filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Price freshness'**
+  String get watchlistFilterFreshnessSection;
+
+  /// Show all values for one watchlist filter
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get watchlistFilterAllOption;
+
+  /// Watchlist symbols with configured alerts
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get watchlistFilterAlertsConfigured;
+
+  /// Watchlist symbols without configured alerts
+  ///
+  /// In en, this message translates to:
+  /// **'No alert'**
+  String get watchlistFilterAlertsNone;
+
+  /// Clear all watchlist filters
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get watchlistFilterClearAction;
+
+  /// Apply selected watchlist filters
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get watchlistFilterApplyAction;
+
+  /// Title when watchlist filters have no matches
+  ///
+  /// In en, this message translates to:
+  /// **'No matching symbols'**
+  String get watchlistFilterEmptyTitle;
+
+  /// Body when watchlist filters have no matches
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust or clear the filters to see more symbols.'**
+  String get watchlistFilterEmptyBody;
+
   /// Remove a symbol from only the selected collection
   ///
   /// In en, this message translates to:

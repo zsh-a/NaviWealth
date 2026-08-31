@@ -11,6 +11,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_view_preferences.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
@@ -48,12 +49,28 @@ final _collection = WatchlistCollection(
   sync: _item.sync,
 );
 
+final _otherCollection = WatchlistCollection(
+  id: 'collection-income',
+  name: 'Income',
+  createdAt: DateTime.utc(2026, 7, 20),
+  sync: _item.sync,
+);
+
 final _membership = WatchlistCollectionMember(
   id: 'membership-aapl-growth',
   collectionId: _collection.id,
   watchlistItemId: _item.id,
   addedAt: DateTime.utc(2026, 7, 19),
   sync: _item.sync,
+);
+
+final _otherMembership = WatchlistCollectionMember(
+  id: 'membership-msft-growth',
+  collectionId: _collection.id,
+  watchlistItemId: _otherItem.id,
+  addedAt: DateTime.utc(2026, 7, 20),
+  sync: _item.sync,
+  sortRank: 1024,
 );
 
 final _advancingSnapshot = WatchlistQuoteSnapshot(
@@ -88,6 +105,8 @@ final _decliningSnapshot = WatchlistQuoteSnapshot(
   ),
 );
 
+late SharedPreferences _preferences;
+
 Widget _wrap(
   TargetPlatform platform, {
   List<WatchlistQuoteSnapshot> snapshots = const [],
@@ -97,6 +116,7 @@ Widget _wrap(
   final touch = platform == TargetPlatform.android;
   return ProviderScope(
     overrides: [
+      sharedPreferencesProvider.overrideWithValue(_preferences),
       watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
       watchlistCollectionsProvider.overrideWith(
         (_) => Stream.value(collections),
@@ -120,6 +140,11 @@ Widget _wrap(
 }
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    _preferences = await SharedPreferences.getInstance();
+  });
+
   testWidgets('selects multiple collections while adding a symbol', (
     tester,
   ) async {
@@ -344,6 +369,7 @@ void main() {
   testWidgets('sorts the current scope through the URL', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _preferences.setString(kWatchlistSortPreferenceKey, 'gainers');
     final router = GoRouter(
       initialLocation: '${FinanceRoutes.wealthWatchlist}?sort=change-asc',
       routes: [
@@ -361,6 +387,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_preferences),
           watchlistItemsProvider.overrideWith(
             (_) => Stream.value([_item, _otherItem]),
           ),
@@ -408,6 +435,7 @@ void main() {
     expect(router.routeInformationProvider.value.uri.queryParameters, {
       'sort': 'change-desc',
     });
+    expect(_preferences.getString(kWatchlistSortPreferenceKey), 'gainers');
   });
 
   testWidgets('filters collection and ungrouped scopes through the URL', (
@@ -433,6 +461,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          sharedPreferencesProvider.overrideWithValue(_preferences),
           watchlistItemsProvider.overrideWith(
             (_) => Stream.value([_item, _otherItem]),
           ),
@@ -470,5 +499,251 @@ void main() {
     expect(router.routeInformationProvider.value.uri.queryParameters, {
       'collection': 'ungrouped',
     });
+    expect(
+      _preferences.getString(kWatchlistCollectionPreferenceKey),
+      'ungrouped',
+    );
+  });
+
+  testWidgets('restores the last valid collection without URL state', (
+    tester,
+  ) async {
+    await _preferences.setString(
+      kWatchlistCollectionPreferenceKey,
+      'collection:${_collection.id}',
+    );
+    final router = GoRouter(
+      initialLocation: FinanceRoutes.wealthWatchlist,
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(_preferences),
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([_item, _otherItem]),
+          ),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value([_collection]),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value([_membership]),
+          ),
+          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
+            (_, _) async => const [],
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Growth (1)'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsNothing);
+    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
+  });
+
+  testWidgets('applies and clears quote freshness filters through the URL', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final router = GoRouter(
+      initialLocation: FinanceRoutes.wealthWatchlist,
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(_preferences),
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([_item, _otherItem]),
+          ),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value(const []),
+          ),
+          watchlistQuoteSnapshotsProvider.overrideWith(
+            (_) async => [_advancingSnapshot],
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final filterTrigger = find.byKey(
+      const ValueKey<String>('watchlist-filter-trigger'),
+    );
+    await tester.ensureVisible(filterTrigger);
+    await tester.tap(filterTrigger);
+    await tester.pumpAndSettle();
+    var sheet = find.byType(AppSheet);
+    var noPrice = find.descendant(of: sheet, matching: find.text('No price'));
+    var applyFilters = find.descendant(
+      of: sheet,
+      matching: find.text('Apply filters'),
+    );
+    await tester.ensureVisible(noPrice);
+    await tester.tap(noPrice);
+    await tester.ensureVisible(applyFilters);
+    await tester.tap(applyFilters);
+    await tester.pumpAndSettle();
+
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(find.text('AAPL'), findsNothing);
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'freshness': 'unavailable',
+    });
+
+    await tester.ensureVisible(filterTrigger);
+    await tester.tap(filterTrigger);
+    await tester.pumpAndSettle();
+    sheet = find.byType(AppSheet);
+    final clearFilters = find.descendant(
+      of: sheet,
+      matching: find.text('Clear filters'),
+    );
+    applyFilters = find.descendant(
+      of: sheet,
+      matching: find.text('Apply filters'),
+    );
+    await tester.ensureVisible(clearFilters);
+    await tester.tap(clearFilters);
+    await tester.ensureVisible(applyFilters);
+    await tester.tap(applyFilters);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
+  });
+
+  testWidgets('opens collection ordering from the watchlist toolbar', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        collections: [_collection, _otherCollection],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final trigger = find.byKey(
+      const ValueKey<String>('watchlist-reorder-collections'),
+    );
+    await tester.ensureVisible(trigger);
+    await tester.tap(trigger);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reorder collections'), findsOneWidget);
+    expect(find.byType(ReorderableListView), findsOneWidget);
+    expect(find.text('Growth'), findsOneWidget);
+    expect(find.text('Income'), findsOneWidget);
+  });
+
+  testWidgets('opens symbol ordering for a selected collection', (
+    tester,
+  ) async {
+    await _preferences.setString(
+      kWatchlistCollectionPreferenceKey,
+      'collection:${_collection.id}',
+    );
+    final router = GoRouter(
+      initialLocation: FinanceRoutes.wealthWatchlist,
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.wealthWatchlist,
+          builder: (_, _) => FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: const WatchlistPage(),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(_preferences),
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([_item, _otherItem]),
+          ),
+          watchlistCollectionsProvider.overrideWith(
+            (_) => Stream.value([_collection]),
+          ),
+          watchlistCollectionMembersProvider.overrideWith(
+            (_) => Stream.value([_membership, _otherMembership]),
+          ),
+          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
+            (_, _) async => const [],
+          ),
+        ],
+        child: MaterialApp.router(
+          routerConfig: router,
+          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en', 'US'),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final trigger = find.byKey(
+      const ValueKey<String>('watchlist-reorder-symbols'),
+    );
+    await tester.ensureVisible(trigger);
+    await tester.tap(trigger);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reorder symbols'), findsOneWidget);
+    expect(find.byType(ReorderableListView), findsOneWidget);
+    final sheet = find.byType(AppSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('AAPL')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('MSFT')),
+      findsOneWidget,
+    );
   });
 }

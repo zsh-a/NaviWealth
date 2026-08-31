@@ -70,12 +70,14 @@ class WatchlistCollection {
     required this.name,
     required this.createdAt,
     required this.sync,
+    this.sortRank = 0,
   });
 
   final String id;
   final String name;
   final DateTime createdAt;
   final SyncMeta sync;
+  final int sortRank;
 }
 
 class WatchlistCollectionMember {
@@ -85,6 +87,7 @@ class WatchlistCollectionMember {
     required this.watchlistItemId,
     required this.addedAt,
     required this.sync,
+    this.sortRank = 0,
   });
 
   final String id;
@@ -92,6 +95,7 @@ class WatchlistCollectionMember {
   final String watchlistItemId;
   final DateTime addedAt;
   final SyncMeta sync;
+  final int sortRank;
 }
 
 class WatchlistRepository {
@@ -110,6 +114,7 @@ class WatchlistRepository {
   static const String _tableName = 'watchlist_items';
   static const String _collectionsTableName = 'watchlist_collections';
   static const String _membersTableName = 'watchlist_collection_members';
+  static const int _sortRankStep = 1024;
 
   Stream<List<WatchlistItem>> watchActive(String ownerUserId) {
     final query = _db.select(_db.watchlistItems)
@@ -134,7 +139,10 @@ class WatchlistRepository {
     final query = _db.select(_db.watchlistCollections)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
-      ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]);
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.sortRank),
+        (t) => OrderingTerm.asc(t.createdAt),
+      ]);
     return query.watch().map(
       (rows) => rows.map(_collectionRowToDomain).toList(growable: false),
     );
@@ -146,7 +154,10 @@ class WatchlistRepository {
     final query = _db.select(_db.watchlistCollectionMembers)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
-      ..orderBy([(t) => OrderingTerm.asc(t.addedAt)]);
+      ..orderBy([
+        (t) => OrderingTerm.asc(t.sortRank),
+        (t) => OrderingTerm.asc(t.addedAt),
+      ]);
     return query.watch().map(
       (rows) => rows.map(_memberRowToDomain).toList(growable: false),
     );
@@ -216,13 +227,16 @@ class WatchlistRepository {
   Future<WatchlistCollection> createCollection(String name) async {
     final normalizedName = _requireCollectionName(name);
     final stamp = await _stamper.stamp();
-    final collection = WatchlistCollection(
-      id: _uuid.v4(),
-      name: normalizedName,
-      createdAt: stamp.now,
-      sync: _syncFromStamp(stamp),
-    );
+    late final WatchlistCollection collection;
     await _db.transaction(() async {
+      final sortRank = await _nextCollectionSortRank(stamp.ownerUserId);
+      collection = WatchlistCollection(
+        id: _uuid.v4(),
+        name: normalizedName,
+        createdAt: stamp.now,
+        sync: _syncFromStamp(stamp),
+        sortRank: sortRank,
+      );
       await _db
           .into(_db.watchlistCollections)
           .insert(
@@ -230,6 +244,7 @@ class WatchlistRepository {
               id: collection.id,
               name: collection.name,
               createdAt: collection.createdAt,
+              sortRank: Value(collection.sortRank),
               ownerUserId: stamp.ownerUserId,
               updatedAt: stamp.now,
               updatedByDevice: stamp.deviceId,
@@ -240,6 +255,95 @@ class WatchlistRepository {
       await _outbox.enqueue(table: _collectionsTableName, rowId: collection.id);
     });
     return collection;
+  }
+
+  Future<void> reorderCollections(
+    List<WatchlistCollection> orderedCollections,
+  ) async {
+    final orderedIds = orderedCollections.map((entry) => entry.id).toList();
+    if (orderedIds.toSet().length != orderedIds.length) {
+      throw ArgumentError('Collection order contains duplicate ids.');
+    }
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final activeRows =
+          await (_db.select(_db.watchlistCollections)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      if (activeRows
+              .map((row) => row.id)
+              .toSet()
+              .difference(orderedIds.toSet())
+              .isNotEmpty ||
+          orderedIds
+              .toSet()
+              .difference(activeRows.map((row) => row.id).toSet())
+              .isNotEmpty) {
+        throw StateError('Collection reorder must include every active row.');
+      }
+      for (var index = 0; index < orderedIds.length; index++) {
+        final id = orderedIds[index];
+        await (_db.update(_db.watchlistCollections)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(stamp.ownerUserId),
+            ))
+            .write(
+              WatchlistCollectionsCompanion(
+                sortRank: Value(index * _sortRankStep),
+                updatedAt: Value(stamp.now),
+                updatedByDevice: Value(stamp.deviceId),
+                hlc: Value(stamp.hlc),
+              ),
+            );
+        await _outbox.enqueue(table: _collectionsTableName, rowId: id);
+      }
+    });
+  }
+
+  Future<void> reorderItemsInCollection({
+    required String collectionId,
+    required List<WatchlistItem> orderedItems,
+  }) async {
+    final orderedIds = orderedItems.map((entry) => entry.id).toList();
+    if (orderedIds.toSet().length != orderedIds.length) {
+      throw ArgumentError('Watchlist item order contains duplicate ids.');
+    }
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final rows =
+          await (_db.select(_db.watchlistCollectionMembers)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.collectionId.equals(collectionId) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      final rowByItemId = <String, WatchlistCollectionMemberRow>{
+        for (final row in rows) row.watchlistItemId: row,
+      };
+      if (rowByItemId.keys.toSet().difference(orderedIds.toSet()).isNotEmpty ||
+          orderedIds.toSet().difference(rowByItemId.keys.toSet()).isNotEmpty) {
+        throw StateError(
+          'Item reorder must include every active collection member.',
+        );
+      }
+      for (var index = 0; index < orderedIds.length; index++) {
+        final row = rowByItemId[orderedIds[index]]!;
+        await (_db.update(
+          _db.watchlistCollectionMembers,
+        )..where((t) => t.id.equals(row.id))).write(
+          WatchlistCollectionMembersCompanion(
+            sortRank: Value(index * _sortRankStep),
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+          ),
+        );
+        await _outbox.enqueue(table: _membersTableName, rowId: row.id);
+      }
+    });
   }
 
   Future<void> renameCollection({
@@ -489,6 +593,17 @@ class WatchlistRepository {
       collectionId: collectionId,
       watchlistItemId: watchlistItemId,
     );
+    final existing =
+        await (_db.select(_db.watchlistCollectionMembers)..where(
+              (t) => t.id.equals(id) & t.ownerUserId.equals(stamp.ownerUserId),
+            ))
+            .getSingleOrNull();
+    final sortRank =
+        existing?.sortRank ??
+        await _nextMemberSortRank(
+          ownerUserId: stamp.ownerUserId,
+          collectionId: collectionId,
+        );
     await _db
         .into(_db.watchlistCollectionMembers)
         .insertOnConflictUpdate(
@@ -497,6 +612,7 @@ class WatchlistRepository {
             collectionId: collectionId,
             watchlistItemId: watchlistItemId,
             addedAt: stamp.now,
+            sortRank: Value(sortRank),
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,
             updatedByDevice: stamp.deviceId,
@@ -505,6 +621,30 @@ class WatchlistRepository {
           ),
         );
     await _outbox.enqueue(table: _membersTableName, rowId: id);
+  }
+
+  Future<int> _nextCollectionSortRank(String ownerUserId) async {
+    final query = _db.select(_db.watchlistCollections)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.sortRank)])
+      ..limit(1);
+    final last = await query.getSingleOrNull();
+    return last == null ? 0 : last.sortRank + _sortRankStep;
+  }
+
+  Future<int> _nextMemberSortRank({
+    required String ownerUserId,
+    required String collectionId,
+  }) async {
+    final query = _db.select(_db.watchlistCollectionMembers)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.collectionId.equals(collectionId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.sortRank)])
+      ..limit(1);
+    final last = await query.getSingleOrNull();
+    return last == null ? 0 : last.sortRank + _sortRankStep;
   }
 
   static String idFor({required AssetMarket market, required String symbol}) =>
@@ -574,6 +714,7 @@ WatchlistCollection _collectionRowToDomain(WatchlistCollectionRow row) =>
       id: row.id,
       name: row.name,
       createdAt: row.createdAt,
+      sortRank: row.sortRank,
       sync: SyncMeta(
         ownerUserId: row.ownerUserId,
         updatedAt: row.updatedAt,
@@ -589,6 +730,7 @@ WatchlistCollectionMember _memberRowToDomain(
   collectionId: row.collectionId,
   watchlistItemId: row.watchlistItemId,
   addedAt: row.addedAt,
+  sortRank: row.sortRank,
   sync: SyncMeta(
     ownerUserId: row.ownerUserId,
     updatedAt: row.updatedAt,

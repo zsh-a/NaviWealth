@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 82', () {
-      expect(db.schemaVersion, 82);
+    test('is 83', () {
+      expect(db.schemaVersion, 83);
     });
   });
 
@@ -35,7 +35,13 @@ void main() {
         final columns = result.map((row) => row.read<String>('name')).toSet();
         expect(
           columns,
-          containsAll(['id', 'owner_user_id', 'hlc', 'deleted_at']),
+          containsAll([
+            'id',
+            'owner_user_id',
+            'hlc',
+            'deleted_at',
+            'sort_rank',
+          ]),
         );
       });
     }

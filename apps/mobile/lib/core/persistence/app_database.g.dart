@@ -42300,6 +42300,18 @@ class $WatchlistCollectionsTable extends WatchlistCollections
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sortRankMeta = const VerificationMeta(
+    'sortRank',
+  );
+  @override
+  late final GeneratedColumn<int> sortRank = GeneratedColumn<int>(
+    'sort_rank',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -42310,6 +42322,7 @@ class $WatchlistCollectionsTable extends WatchlistCollections
     id,
     name,
     createdAt,
+    sortRank,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -42380,6 +42393,12 @@ class $WatchlistCollectionsTable extends WatchlistCollections
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('sort_rank')) {
+      context.handle(
+        _sortRankMeta,
+        sortRank.isAcceptableOrUnknown(data['sort_rank']!, _sortRankMeta),
+      );
+    }
     return context;
   }
 
@@ -42423,6 +42442,10 @@ class $WatchlistCollectionsTable extends WatchlistCollections
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
+      sortRank: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_rank'],
+      )!,
     );
   }
 
@@ -42460,6 +42483,7 @@ class WatchlistCollectionRow extends DataClass
   final String id;
   final String name;
   final DateTime createdAt;
+  final int sortRank;
   const WatchlistCollectionRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -42469,6 +42493,7 @@ class WatchlistCollectionRow extends DataClass
     required this.id,
     required this.name,
     required this.createdAt,
+    required this.sortRank,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -42487,6 +42512,7 @@ class WatchlistCollectionRow extends DataClass
     map['id'] = Variable<String>(id);
     map['name'] = Variable<String>(name);
     map['created_at'] = Variable<DateTime>(createdAt);
+    map['sort_rank'] = Variable<int>(sortRank);
     return map;
   }
 
@@ -42502,6 +42528,7 @@ class WatchlistCollectionRow extends DataClass
       id: Value(id),
       name: Value(name),
       createdAt: Value(createdAt),
+      sortRank: Value(sortRank),
     );
   }
 
@@ -42519,6 +42546,7 @@ class WatchlistCollectionRow extends DataClass
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      sortRank: serializer.fromJson<int>(json['sortRank']),
     );
   }
   @override
@@ -42533,6 +42561,7 @@ class WatchlistCollectionRow extends DataClass
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'sortRank': serializer.toJson<int>(sortRank),
     };
   }
 
@@ -42545,6 +42574,7 @@ class WatchlistCollectionRow extends DataClass
     String? id,
     String? name,
     DateTime? createdAt,
+    int? sortRank,
   }) => WatchlistCollectionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -42554,6 +42584,7 @@ class WatchlistCollectionRow extends DataClass
     id: id ?? this.id,
     name: name ?? this.name,
     createdAt: createdAt ?? this.createdAt,
+    sortRank: sortRank ?? this.sortRank,
   );
   WatchlistCollectionRow copyWithCompanion(WatchlistCollectionsCompanion data) {
     return WatchlistCollectionRow(
@@ -42569,6 +42600,7 @@ class WatchlistCollectionRow extends DataClass
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      sortRank: data.sortRank.present ? data.sortRank.value : this.sortRank,
     );
   }
 
@@ -42582,7 +42614,8 @@ class WatchlistCollectionRow extends DataClass
           ..write('deletedAt: $deletedAt, ')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('sortRank: $sortRank')
           ..write(')'))
         .toString();
   }
@@ -42597,6 +42630,7 @@ class WatchlistCollectionRow extends DataClass
     id,
     name,
     createdAt,
+    sortRank,
   );
   @override
   bool operator ==(Object other) =>
@@ -42609,7 +42643,8 @@ class WatchlistCollectionRow extends DataClass
           other.deletedAt == this.deletedAt &&
           other.id == this.id &&
           other.name == this.name &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.sortRank == this.sortRank);
 }
 
 class WatchlistCollectionsCompanion
@@ -42622,6 +42657,7 @@ class WatchlistCollectionsCompanion
   final Value<String> id;
   final Value<String> name;
   final Value<DateTime> createdAt;
+  final Value<int> sortRank;
   final Value<int> rowid;
   const WatchlistCollectionsCompanion({
     this.ownerUserId = const Value.absent(),
@@ -42632,6 +42668,7 @@ class WatchlistCollectionsCompanion
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.sortRank = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   WatchlistCollectionsCompanion.insert({
@@ -42643,6 +42680,7 @@ class WatchlistCollectionsCompanion
     required String id,
     required String name,
     required DateTime createdAt,
+    this.sortRank = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -42660,6 +42698,7 @@ class WatchlistCollectionsCompanion
     Expression<String>? id,
     Expression<String>? name,
     Expression<DateTime>? createdAt,
+    Expression<int>? sortRank,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -42671,6 +42710,7 @@ class WatchlistCollectionsCompanion
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (createdAt != null) 'created_at': createdAt,
+      if (sortRank != null) 'sort_rank': sortRank,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -42684,6 +42724,7 @@ class WatchlistCollectionsCompanion
     Value<String>? id,
     Value<String>? name,
     Value<DateTime>? createdAt,
+    Value<int>? sortRank,
     Value<int>? rowid,
   }) {
     return WatchlistCollectionsCompanion(
@@ -42695,6 +42736,7 @@ class WatchlistCollectionsCompanion
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
+      sortRank: sortRank ?? this.sortRank,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -42728,6 +42770,9 @@ class WatchlistCollectionsCompanion
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (sortRank.present) {
+      map['sort_rank'] = Variable<int>(sortRank.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -42745,6 +42790,7 @@ class WatchlistCollectionsCompanion
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('createdAt: $createdAt, ')
+          ..write('sortRank: $sortRank, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -42856,6 +42902,18 @@ class $WatchlistCollectionMembersTable extends WatchlistCollectionMembers
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _sortRankMeta = const VerificationMeta(
+    'sortRank',
+  );
+  @override
+  late final GeneratedColumn<int> sortRank = GeneratedColumn<int>(
+    'sort_rank',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     ownerUserId,
@@ -42867,6 +42925,7 @@ class $WatchlistCollectionMembersTable extends WatchlistCollectionMembers
     collectionId,
     watchlistItemId,
     addedAt,
+    sortRank,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -42951,6 +43010,12 @@ class $WatchlistCollectionMembersTable extends WatchlistCollectionMembers
     } else if (isInserting) {
       context.missing(_addedAtMeta);
     }
+    if (data.containsKey('sort_rank')) {
+      context.handle(
+        _sortRankMeta,
+        sortRank.isAcceptableOrUnknown(data['sort_rank']!, _sortRankMeta),
+      );
+    }
     return context;
   }
 
@@ -43001,6 +43066,10 @@ class $WatchlistCollectionMembersTable extends WatchlistCollectionMembers
         DriftSqlType.dateTime,
         data['${effectivePrefix}added_at'],
       )!,
+      sortRank: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_rank'],
+      )!,
     );
   }
 
@@ -43039,6 +43108,7 @@ class WatchlistCollectionMemberRow extends DataClass
   final String collectionId;
   final String watchlistItemId;
   final DateTime addedAt;
+  final int sortRank;
   const WatchlistCollectionMemberRow({
     required this.ownerUserId,
     required this.updatedAt,
@@ -43049,6 +43119,7 @@ class WatchlistCollectionMemberRow extends DataClass
     required this.collectionId,
     required this.watchlistItemId,
     required this.addedAt,
+    required this.sortRank,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -43068,6 +43139,7 @@ class WatchlistCollectionMemberRow extends DataClass
     map['collection_id'] = Variable<String>(collectionId);
     map['watchlist_item_id'] = Variable<String>(watchlistItemId);
     map['added_at'] = Variable<DateTime>(addedAt);
+    map['sort_rank'] = Variable<int>(sortRank);
     return map;
   }
 
@@ -43084,6 +43156,7 @@ class WatchlistCollectionMemberRow extends DataClass
       collectionId: Value(collectionId),
       watchlistItemId: Value(watchlistItemId),
       addedAt: Value(addedAt),
+      sortRank: Value(sortRank),
     );
   }
 
@@ -43102,6 +43175,7 @@ class WatchlistCollectionMemberRow extends DataClass
       collectionId: serializer.fromJson<String>(json['collectionId']),
       watchlistItemId: serializer.fromJson<String>(json['watchlistItemId']),
       addedAt: serializer.fromJson<DateTime>(json['addedAt']),
+      sortRank: serializer.fromJson<int>(json['sortRank']),
     );
   }
   @override
@@ -43117,6 +43191,7 @@ class WatchlistCollectionMemberRow extends DataClass
       'collectionId': serializer.toJson<String>(collectionId),
       'watchlistItemId': serializer.toJson<String>(watchlistItemId),
       'addedAt': serializer.toJson<DateTime>(addedAt),
+      'sortRank': serializer.toJson<int>(sortRank),
     };
   }
 
@@ -43130,6 +43205,7 @@ class WatchlistCollectionMemberRow extends DataClass
     String? collectionId,
     String? watchlistItemId,
     DateTime? addedAt,
+    int? sortRank,
   }) => WatchlistCollectionMemberRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -43140,6 +43216,7 @@ class WatchlistCollectionMemberRow extends DataClass
     collectionId: collectionId ?? this.collectionId,
     watchlistItemId: watchlistItemId ?? this.watchlistItemId,
     addedAt: addedAt ?? this.addedAt,
+    sortRank: sortRank ?? this.sortRank,
   );
   WatchlistCollectionMemberRow copyWithCompanion(
     WatchlistCollectionMembersCompanion data,
@@ -43162,6 +43239,7 @@ class WatchlistCollectionMemberRow extends DataClass
           ? data.watchlistItemId.value
           : this.watchlistItemId,
       addedAt: data.addedAt.present ? data.addedAt.value : this.addedAt,
+      sortRank: data.sortRank.present ? data.sortRank.value : this.sortRank,
     );
   }
 
@@ -43176,7 +43254,8 @@ class WatchlistCollectionMemberRow extends DataClass
           ..write('id: $id, ')
           ..write('collectionId: $collectionId, ')
           ..write('watchlistItemId: $watchlistItemId, ')
-          ..write('addedAt: $addedAt')
+          ..write('addedAt: $addedAt, ')
+          ..write('sortRank: $sortRank')
           ..write(')'))
         .toString();
   }
@@ -43192,6 +43271,7 @@ class WatchlistCollectionMemberRow extends DataClass
     collectionId,
     watchlistItemId,
     addedAt,
+    sortRank,
   );
   @override
   bool operator ==(Object other) =>
@@ -43205,7 +43285,8 @@ class WatchlistCollectionMemberRow extends DataClass
           other.id == this.id &&
           other.collectionId == this.collectionId &&
           other.watchlistItemId == this.watchlistItemId &&
-          other.addedAt == this.addedAt);
+          other.addedAt == this.addedAt &&
+          other.sortRank == this.sortRank);
 }
 
 class WatchlistCollectionMembersCompanion
@@ -43219,6 +43300,7 @@ class WatchlistCollectionMembersCompanion
   final Value<String> collectionId;
   final Value<String> watchlistItemId;
   final Value<DateTime> addedAt;
+  final Value<int> sortRank;
   final Value<int> rowid;
   const WatchlistCollectionMembersCompanion({
     this.ownerUserId = const Value.absent(),
@@ -43230,6 +43312,7 @@ class WatchlistCollectionMembersCompanion
     this.collectionId = const Value.absent(),
     this.watchlistItemId = const Value.absent(),
     this.addedAt = const Value.absent(),
+    this.sortRank = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   WatchlistCollectionMembersCompanion.insert({
@@ -43242,6 +43325,7 @@ class WatchlistCollectionMembersCompanion
     required String collectionId,
     required String watchlistItemId,
     required DateTime addedAt,
+    this.sortRank = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
        updatedAt = Value(updatedAt),
@@ -43261,6 +43345,7 @@ class WatchlistCollectionMembersCompanion
     Expression<String>? collectionId,
     Expression<String>? watchlistItemId,
     Expression<DateTime>? addedAt,
+    Expression<int>? sortRank,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -43273,6 +43358,7 @@ class WatchlistCollectionMembersCompanion
       if (collectionId != null) 'collection_id': collectionId,
       if (watchlistItemId != null) 'watchlist_item_id': watchlistItemId,
       if (addedAt != null) 'added_at': addedAt,
+      if (sortRank != null) 'sort_rank': sortRank,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -43287,6 +43373,7 @@ class WatchlistCollectionMembersCompanion
     Value<String>? collectionId,
     Value<String>? watchlistItemId,
     Value<DateTime>? addedAt,
+    Value<int>? sortRank,
     Value<int>? rowid,
   }) {
     return WatchlistCollectionMembersCompanion(
@@ -43299,6 +43386,7 @@ class WatchlistCollectionMembersCompanion
       collectionId: collectionId ?? this.collectionId,
       watchlistItemId: watchlistItemId ?? this.watchlistItemId,
       addedAt: addedAt ?? this.addedAt,
+      sortRank: sortRank ?? this.sortRank,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -43335,6 +43423,9 @@ class WatchlistCollectionMembersCompanion
     if (addedAt.present) {
       map['added_at'] = Variable<DateTime>(addedAt.value);
     }
+    if (sortRank.present) {
+      map['sort_rank'] = Variable<int>(sortRank.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -43353,6 +43444,7 @@ class WatchlistCollectionMembersCompanion
           ..write('collectionId: $collectionId, ')
           ..write('watchlistItemId: $watchlistItemId, ')
           ..write('addedAt: $addedAt, ')
+          ..write('sortRank: $sortRank, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -62968,6 +63060,7 @@ typedef $$WatchlistCollectionsTableCreateCompanionBuilder =
       required String id,
       required String name,
       required DateTime createdAt,
+      Value<int> sortRank,
       Value<int> rowid,
     });
 typedef $$WatchlistCollectionsTableUpdateCompanionBuilder =
@@ -62980,6 +63073,7 @@ typedef $$WatchlistCollectionsTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<DateTime> createdAt,
+      Value<int> sortRank,
       Value<int> rowid,
     });
 
@@ -63032,6 +63126,11 @@ class $$WatchlistCollectionsTableFilterComposer
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<int> get sortRank => $composableBuilder(
+    column: $table.sortRank,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$WatchlistCollectionsTableOrderingComposer
@@ -63082,6 +63181,11 @@ class $$WatchlistCollectionsTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get sortRank => $composableBuilder(
+    column: $table.sortRank,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WatchlistCollectionsTableAnnotationComposer
@@ -63120,6 +63224,9 @@ class $$WatchlistCollectionsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sortRank =>
+      $composableBuilder(column: $table.sortRank, builder: (column) => column);
 }
 
 class $$WatchlistCollectionsTableTableManager
@@ -63173,6 +63280,7 @@ class $$WatchlistCollectionsTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
+                Value<int> sortRank = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistCollectionsCompanion(
                 ownerUserId: ownerUserId,
@@ -63183,6 +63291,7 @@ class $$WatchlistCollectionsTableTableManager
                 id: id,
                 name: name,
                 createdAt: createdAt,
+                sortRank: sortRank,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -63195,6 +63304,7 @@ class $$WatchlistCollectionsTableTableManager
                 required String id,
                 required String name,
                 required DateTime createdAt,
+                Value<int> sortRank = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistCollectionsCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -63205,6 +63315,7 @@ class $$WatchlistCollectionsTableTableManager
                 id: id,
                 name: name,
                 createdAt: createdAt,
+                sortRank: sortRank,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -63247,6 +63358,7 @@ typedef $$WatchlistCollectionMembersTableCreateCompanionBuilder =
       required String collectionId,
       required String watchlistItemId,
       required DateTime addedAt,
+      Value<int> sortRank,
       Value<int> rowid,
     });
 typedef $$WatchlistCollectionMembersTableUpdateCompanionBuilder =
@@ -63260,6 +63372,7 @@ typedef $$WatchlistCollectionMembersTableUpdateCompanionBuilder =
       Value<String> collectionId,
       Value<String> watchlistItemId,
       Value<DateTime> addedAt,
+      Value<int> sortRank,
       Value<int> rowid,
     });
 
@@ -63317,6 +63430,11 @@ class $$WatchlistCollectionMembersTableFilterComposer
     column: $table.addedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnFilters<int> get sortRank => $composableBuilder(
+    column: $table.sortRank,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$WatchlistCollectionMembersTableOrderingComposer
@@ -63372,6 +63490,11 @@ class $$WatchlistCollectionMembersTableOrderingComposer
     column: $table.addedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get sortRank => $composableBuilder(
+    column: $table.sortRank,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WatchlistCollectionMembersTableAnnotationComposer
@@ -63417,6 +63540,9 @@ class $$WatchlistCollectionMembersTableAnnotationComposer
 
   GeneratedColumn<DateTime> get addedAt =>
       $composableBuilder(column: $table.addedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sortRank =>
+      $composableBuilder(column: $table.sortRank, builder: (column) => column);
 }
 
 class $$WatchlistCollectionMembersTableTableManager
@@ -63474,6 +63600,7 @@ class $$WatchlistCollectionMembersTableTableManager
                 Value<String> collectionId = const Value.absent(),
                 Value<String> watchlistItemId = const Value.absent(),
                 Value<DateTime> addedAt = const Value.absent(),
+                Value<int> sortRank = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistCollectionMembersCompanion(
                 ownerUserId: ownerUserId,
@@ -63485,6 +63612,7 @@ class $$WatchlistCollectionMembersTableTableManager
                 collectionId: collectionId,
                 watchlistItemId: watchlistItemId,
                 addedAt: addedAt,
+                sortRank: sortRank,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -63498,6 +63626,7 @@ class $$WatchlistCollectionMembersTableTableManager
                 required String collectionId,
                 required String watchlistItemId,
                 required DateTime addedAt,
+                Value<int> sortRank = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistCollectionMembersCompanion.insert(
                 ownerUserId: ownerUserId,
@@ -63509,6 +63638,7 @@ class $$WatchlistCollectionMembersTableTableManager
                 collectionId: collectionId,
                 watchlistItemId: watchlistItemId,
                 addedAt: addedAt,
+                sortRank: sortRank,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

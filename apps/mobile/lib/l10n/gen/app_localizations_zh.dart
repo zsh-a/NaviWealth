@@ -10434,6 +10434,45 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get watchlistReorderCollectionsAction => '调整组合顺序';
+
+  @override
+  String get watchlistReorderSymbolsAction => '调整标的顺序';
+
+  @override
+  String get watchlistFilterAction => '筛选标的';
+
+  @override
+  String get watchlistFilterMarketSection => '市场';
+
+  @override
+  String get watchlistFilterAlertsSection => '告警';
+
+  @override
+  String get watchlistFilterFreshnessSection => '行情新鲜度';
+
+  @override
+  String get watchlistFilterAllOption => '全部';
+
+  @override
+  String get watchlistFilterAlertsConfigured => '已配置';
+
+  @override
+  String get watchlistFilterAlertsNone => '未配置';
+
+  @override
+  String get watchlistFilterClearAction => '清除筛选';
+
+  @override
+  String get watchlistFilterApplyAction => '应用筛选';
+
+  @override
+  String get watchlistFilterEmptyTitle => '没有匹配的标的';
+
+  @override
+  String get watchlistFilterEmptyBody => '调整或清除筛选条件以查看更多标的。';
+
+  @override
   String get watchlistRemoveFromCollectionAction => '移出当前组合';
 
   @override

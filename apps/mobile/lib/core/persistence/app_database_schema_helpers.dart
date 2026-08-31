@@ -442,10 +442,17 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_collections_owner_created '
       'ON watchlist_collections(owner_user_id, created_at) '
       'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collections_owner_sort '
+      'ON watchlist_collections(owner_user_id, sort_rank, created_at) '
+      'WHERE deleted_at IS NULL',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_owner_hlc '
       'ON watchlist_collection_members(owner_user_id, hlc)',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_collection '
       'ON watchlist_collection_members(owner_user_id, collection_id, added_at) '
+      'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_collection_sort '
+      'ON watchlist_collection_members('
+      'owner_user_id, collection_id, sort_rank, added_at) '
       'WHERE deleted_at IS NULL',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_collection_members_item '
       'ON watchlist_collection_members(owner_user_id, watchlist_item_id) '

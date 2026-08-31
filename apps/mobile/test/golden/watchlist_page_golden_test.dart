@@ -1,12 +1,14 @@
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';
 
@@ -73,11 +75,14 @@ final _snapshots = [
 
 void main() {
   runAllVariants('watchlist_page', (tester, variant) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
     await pumpAndSnapshotMobile(
       tester,
       name: 'watchlist_page',
       variant: variant,
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
         watchlistItemsProvider.overrideWith((_) => Stream.value(_items)),
         watchlistCollectionsProvider.overrideWith(
           (_) => Stream.value(const []),

@@ -21,6 +21,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
+import '../data/watchlist_view_preferences.dart';
 
 const _pollInterval = Duration(minutes: 5);
 const _collectionQueryKey = 'collection';
@@ -29,6 +30,9 @@ const _sortQueryKey = 'sort';
 const _gainersSortQueryValue = 'change-desc';
 const _declinersSortQueryValue = 'change-asc';
 const _symbolSortQueryValue = 'symbol';
+const _marketFilterQueryKey = 'market';
+const _alertFilterQueryKey = 'alerts';
+const _freshnessFilterQueryKey = 'freshness';
 
 class WatchlistPage extends ConsumerStatefulWidget {
   const WatchlistPage({super.key});
@@ -65,8 +69,14 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
     final collectionsAsync = ref.watch(watchlistCollectionsProvider);
     final membersAsync = ref.watch(watchlistCollectionMembersProvider);
     final collections = collectionsAsync.value ?? const <WatchlistCollection>[];
-    final requestedScope = _watchlistScopeOf(context);
-    final sortOrder = _watchlistSortOrderOf(context);
+    final viewPreferences = ref.watch(watchlistViewPreferencesProvider);
+    final preferredScope = viewPreferences.scope;
+    final requestedScope = _watchlistScopeOf(context, fallback: preferredScope);
+    final sortOrder = _watchlistSortOrderOf(
+      context,
+      fallback: viewPreferences.sortOrder,
+    );
+    final filter = _watchlistFilterOf(context);
     final selectedCollection = requestedScope.collectionId == null
         ? null
         : collections
@@ -78,6 +88,12 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
             selectedCollection == null
         ? const WatchlistScope.all()
         : requestedScope;
+    if (scope.isAll &&
+        requestedScope.collectionId != null &&
+        !_hasExplicitCollectionQuery(context) &&
+        preferredScope.collectionId != null) {
+      unawaited(viewPreferences.setScope(const WatchlistScope.all()));
+    }
     final items = scope.isAll
         ? allItems
         : ref.watch(watchlistItemsForScopeProvider(scope));
@@ -133,10 +149,14 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
           collectionCounts: collectionCounts,
           scope: scope,
           sortOrder: sortOrder,
+          filter: filter,
           snapshots: quotes.value ?? const [],
           loadingQuotes: quotes.isLoading,
-          onScopeSelected: (next) => _replaceWatchlistScope(context, next),
-          onSortSelected: (next) => _replaceWatchlistSortOrder(context, next),
+          onScopeSelected: (next) => unawaited(_selectScope(next)),
+          onSortSelected: (next) => unawaited(_selectSortOrder(next)),
+          onFilter: () => _showFilter(filter),
+          onClearFilter: () =>
+              _replaceWatchlistFilter(context, const WatchlistFilter()),
           onCreateCollection: _createCollection,
           onBulkManage: items.isEmpty || collections.isEmpty
               ? null
@@ -146,6 +166,15 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
                   collections: collections,
                   removalCollectionId: scope.collectionId,
                 ),
+          onReorderCollections: collections.length < 2
+              ? null
+              : () => _reorderCollections(collections),
+          onReorderItems:
+              scope.collectionId == null ||
+                  items.length < 2 ||
+                  sortOrder != WatchlistSortOrder.defaultOrder
+              ? null
+              : () => _reorderItems(scope.collectionId!, items),
           onAdd: () => showWatchlistItemSheet(
             context: context,
             initialCollectionId: scope.collectionId,
@@ -270,6 +299,63 @@ class _WatchlistPageState extends ConsumerState<WatchlistPage> {
     }
   }
 
+  Future<void> _reorderCollections(
+    List<WatchlistCollection> collections,
+  ) async {
+    await showWatchlistOrderSheet<WatchlistCollection>(
+      context: context,
+      title: AppLocalizations.of(context).watchlistReorderCollectionsAction,
+      entries: collections,
+      idOf: (entry) => entry.id,
+      labelOf: (entry) => entry.name,
+      onSave: (ordered) async {
+        final repo = await ref.read(watchlistRepositoryProvider.future);
+        await repo.reorderCollections(ordered);
+      },
+    );
+  }
+
+  Future<void> _selectScope(WatchlistScope scope) async {
+    await ref.read(watchlistViewPreferencesProvider).setScope(scope);
+    if (!mounted) return;
+    _replaceWatchlistScope(context, scope);
+  }
+
+  Future<void> _selectSortOrder(WatchlistSortOrder order) async {
+    await ref.read(watchlistViewPreferencesProvider).setSortOrder(order);
+    if (!mounted) return;
+    _replaceWatchlistSortOrder(context, order);
+  }
+
+  Future<void> _showFilter(WatchlistFilter current) async {
+    final next = await showWatchlistFilterSheet(
+      context: context,
+      initial: current,
+    );
+    if (next == null || !mounted) return;
+    _replaceWatchlistFilter(context, next);
+  }
+
+  Future<void> _reorderItems(
+    String collectionId,
+    List<WatchlistItem> items,
+  ) async {
+    await showWatchlistOrderSheet<WatchlistItem>(
+      context: context,
+      title: AppLocalizations.of(context).watchlistReorderSymbolsAction,
+      entries: items,
+      idOf: (entry) => entry.id,
+      labelOf: (entry) => entry.displaySymbol,
+      onSave: (ordered) async {
+        final repo = await ref.read(watchlistRepositoryProvider.future);
+        await repo.reorderItemsInCollection(
+          collectionId: collectionId,
+          orderedItems: ordered,
+        );
+      },
+    );
+  }
+
   Future<void> _removeFromCollection(
     WatchlistItem item,
     String collectionId,
@@ -316,12 +402,17 @@ class _WatchlistBody extends StatelessWidget {
     required this.collectionCounts,
     required this.scope,
     required this.sortOrder,
+    required this.filter,
     required this.snapshots,
     required this.loadingQuotes,
     required this.onScopeSelected,
     required this.onSortSelected,
+    required this.onFilter,
+    required this.onClearFilter,
     required this.onCreateCollection,
     required this.onBulkManage,
+    required this.onReorderCollections,
+    required this.onReorderItems,
     required this.onAdd,
     required this.onEdit,
     required this.onManageCollections,
@@ -334,12 +425,17 @@ class _WatchlistBody extends StatelessWidget {
   final WatchlistCollectionCounts collectionCounts;
   final WatchlistScope scope;
   final WatchlistSortOrder sortOrder;
+  final WatchlistFilter filter;
   final List<WatchlistQuoteSnapshot> snapshots;
   final bool loadingQuotes;
   final ValueChanged<WatchlistScope> onScopeSelected;
   final ValueChanged<WatchlistSortOrder> onSortSelected;
+  final VoidCallback onFilter;
+  final VoidCallback onClearFilter;
   final VoidCallback onCreateCollection;
   final VoidCallback? onBulkManage;
+  final VoidCallback? onReorderCollections;
+  final VoidCallback? onReorderItems;
   final VoidCallback onAdd;
   final ValueChanged<WatchlistItem> onEdit;
   final ValueChanged<WatchlistItem> onManageCollections;
@@ -349,13 +445,22 @@ class _WatchlistBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
-    final summary = WatchlistQuoteSummary.fromSnapshots(
-      symbolCount: items.length,
-      snapshots: snapshots,
-    );
-    final sortedItems = sortWatchlistItems(
+    final filteredItems = filterWatchlistItems(
       items: items,
       snapshots: snapshots,
+      filter: filter,
+    );
+    final filteredItemIds = filteredItems.map((item) => item.id).toSet();
+    final filteredSnapshots = snapshots
+        .where((snapshot) => filteredItemIds.contains(snapshot.item.id))
+        .toList(growable: false);
+    final summary = WatchlistQuoteSummary.fromSnapshots(
+      symbolCount: filteredItems.length,
+      snapshots: filteredSnapshots,
+    );
+    final sortedItems = sortWatchlistItems(
+      items: filteredItems,
+      snapshots: filteredSnapshots,
       order: sortOrder,
     );
     Widget list({ValueChanged<String>? onSelect}) => AdaptiveContentFrame(
@@ -376,14 +481,20 @@ class _WatchlistBody extends StatelessWidget {
             counts: collectionCounts,
             scope: scope,
             sortOrder: sortOrder,
+            filter: filter,
             onSelected: onScopeSelected,
             onSortSelected: onSortSelected,
+            onFilter: onFilter,
             onCreate: onCreateCollection,
             onBulkManage: onBulkManage,
+            onReorderCollections: onReorderCollections,
+            onReorderItems: onReorderItems,
           ),
           const SizedBox(height: AppSpacing.s8),
           if (items.isEmpty)
             _WatchlistEmpty(onAdd: onAdd)
+          else if (filteredItems.isEmpty)
+            _WatchlistFilteredEmpty(onClear: onClearFilter)
           else ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
@@ -516,20 +627,28 @@ class _WatchlistCollectionBar extends StatelessWidget {
     required this.counts,
     required this.scope,
     required this.sortOrder,
+    required this.filter,
     required this.onSelected,
     required this.onSortSelected,
+    required this.onFilter,
     required this.onCreate,
     required this.onBulkManage,
+    required this.onReorderCollections,
+    required this.onReorderItems,
   });
 
   final List<WatchlistCollection> collections;
   final WatchlistCollectionCounts counts;
   final WatchlistScope scope;
   final WatchlistSortOrder sortOrder;
+  final WatchlistFilter filter;
   final ValueChanged<WatchlistScope> onSelected;
   final ValueChanged<WatchlistSortOrder> onSortSelected;
+  final VoidCallback onFilter;
   final VoidCallback onCreate;
   final VoidCallback? onBulkManage;
+  final VoidCallback? onReorderCollections;
+  final VoidCallback? onReorderItems;
 
   @override
   Widget build(BuildContext context) {
@@ -584,6 +703,18 @@ class _WatchlistCollectionBar extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.s8),
           _WatchlistSortMenu(value: sortOrder, onChanged: onSortSelected),
+          const SizedBox(width: AppSpacing.s8),
+          AppIconButton(
+            key: const ValueKey<String>('watchlist-filter-trigger'),
+            icon: filter.isDefault
+                ? FLucideIcons.listFilter
+                : FLucideIcons.listFilterPlus,
+            tooltip: l10n.watchlistFilterAction,
+            onPress: onFilter,
+            size: appActionTargetSize(context),
+            iconSize: AppIconSizes.sm,
+            surface: AppIconButtonSurface.softMuted,
+          ),
           if (onBulkManage != null) ...[
             const SizedBox(width: AppSpacing.s8),
             AppIconButton(
@@ -591,6 +722,30 @@ class _WatchlistCollectionBar extends StatelessWidget {
               icon: FLucideIcons.listChecks,
               tooltip: l10n.watchlistBulkManageAction,
               onPress: onBulkManage,
+              size: appActionTargetSize(context),
+              iconSize: AppIconSizes.sm,
+              surface: AppIconButtonSurface.softMuted,
+            ),
+          ],
+          if (onReorderCollections != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppIconButton(
+              key: const ValueKey<String>('watchlist-reorder-collections'),
+              icon: FLucideIcons.listRestart,
+              tooltip: l10n.watchlistReorderCollectionsAction,
+              onPress: onReorderCollections,
+              size: appActionTargetSize(context),
+              iconSize: AppIconSizes.sm,
+              surface: AppIconButtonSurface.softMuted,
+            ),
+          ],
+          if (onReorderItems != null) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppIconButton(
+              key: const ValueKey<String>('watchlist-reorder-symbols'),
+              icon: FLucideIcons.gripVertical,
+              tooltip: l10n.watchlistReorderSymbolsAction,
+              onPress: onReorderItems,
               size: appActionTargetSize(context),
               iconSize: AppIconSizes.sm,
               surface: AppIconButtonSurface.softMuted,
@@ -666,6 +821,27 @@ class _WatchlistEmpty extends StatelessWidget {
       title: l10n.watchlistEmptyTitle,
       message: l10n.watchlistEmptyBody,
       action: FButton(onPress: onAdd, child: Text(l10n.watchlistAddAction)),
+    );
+  }
+}
+
+class _WatchlistFilteredEmpty extends StatelessWidget {
+  const _WatchlistFilteredEmpty({required this.onClear});
+
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppEmptyState(
+      icon: FLucideIcons.funnelX,
+      title: l10n.watchlistFilterEmptyTitle,
+      message: l10n.watchlistFilterEmptyBody,
+      action: FButton(
+        variant: FButtonVariant.outline,
+        onPress: onClear,
+        child: Text(l10n.watchlistFilterClearAction),
+      ),
     );
   }
 }
@@ -1352,6 +1528,275 @@ class _WatchlistCollectionSheetState
   }
 }
 
+Future<WatchlistFilter?> showWatchlistFilterSheet({
+  required BuildContext context,
+  required WatchlistFilter initial,
+}) => showAppSheet<WatchlistFilter>(
+  context: context,
+  title: AppLocalizations.of(context).watchlistFilterAction,
+  builder: (_) => _WatchlistFilterSheet(initial: initial),
+);
+
+class _WatchlistFilterSheet extends StatefulWidget {
+  const _WatchlistFilterSheet({required this.initial});
+
+  final WatchlistFilter initial;
+
+  @override
+  State<_WatchlistFilterSheet> createState() => _WatchlistFilterSheetState();
+}
+
+class _WatchlistFilterSheetState extends State<_WatchlistFilterSheet> {
+  late AssetMarket? _market;
+  late WatchlistAlertFilter _alerts;
+  late WatchlistFreshnessFilter _freshness;
+
+  @override
+  void initState() {
+    super.initState();
+    _market = widget.initial.market;
+    _alerts = widget.initial.alerts;
+    _freshness = widget.initial.freshness;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppSheetSectionLabel(l10n.watchlistFilterMarketSection),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            AppFilterChip(
+              label: l10n.watchlistFilterAllOption,
+              active: _market == null,
+              onPress: () => setState(() => _market = null),
+            ),
+            for (final market in _editableMarkets)
+              AppFilterChip(
+                label: _marketLabel(l10n, market),
+                active: _market == market,
+                onPress: () => setState(() => _market = market),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        AppSheetSectionLabel(l10n.watchlistFilterAlertsSection),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            for (final option in WatchlistAlertFilter.values)
+              AppFilterChip(
+                label: switch (option) {
+                  WatchlistAlertFilter.all => l10n.watchlistFilterAllOption,
+                  WatchlistAlertFilter.configured =>
+                    l10n.watchlistFilterAlertsConfigured,
+                  WatchlistAlertFilter.none => l10n.watchlistFilterAlertsNone,
+                },
+                active: _alerts == option,
+                onPress: () => setState(() => _alerts = option),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        AppSheetSectionLabel(l10n.watchlistFilterFreshnessSection),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            for (final option in WatchlistFreshnessFilter.values)
+              AppFilterChip(
+                label: switch (option) {
+                  WatchlistFreshnessFilter.all => l10n.watchlistFilterAllOption,
+                  WatchlistFreshnessFilter.live => l10n.watchlistFreshnessLive,
+                  WatchlistFreshnessFilter.cached =>
+                    l10n.watchlistFreshnessCache,
+                  WatchlistFreshnessFilter.stale =>
+                    l10n.watchlistFreshnessStale,
+                  WatchlistFreshnessFilter.unavailable =>
+                    l10n.watchlistPriceUnavailable,
+                },
+                active: _freshness == option,
+                onPress: () => setState(() => _freshness = option),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s16),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: _reset,
+          child: Text(l10n.watchlistFilterClearAction),
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        AppSheetFooter(
+          cancelLabel: l10n.commonCancel,
+          submitLabel: l10n.watchlistFilterApplyAction,
+          onSubmit: () => Navigator.of(context).pop(
+            WatchlistFilter(
+              market: _market,
+              alerts: _alerts,
+              freshness: _freshness,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _reset() {
+    setState(() {
+      _market = null;
+      _alerts = WatchlistAlertFilter.all;
+      _freshness = WatchlistFreshnessFilter.all;
+    });
+  }
+}
+
+Future<void> showWatchlistOrderSheet<T>({
+  required BuildContext context,
+  required String title,
+  required List<T> entries,
+  required String Function(T entry) idOf,
+  required String Function(T entry) labelOf,
+  required Future<void> Function(List<T> ordered) onSave,
+}) async {
+  final dirty = FormDirtyController();
+  try {
+    await showAppSheet<void>(
+      context: context,
+      title: title,
+      maxHeightFactor: 0.9,
+      dirtyGuard: dirty,
+      confirmDismiss: () => confirmDiscardIfDirty(context, dirty),
+      builder: (_) => _WatchlistOrderSheet<T>(
+        entries: entries,
+        idOf: idOf,
+        labelOf: labelOf,
+        onSave: onSave,
+        dirty: dirty,
+      ),
+    );
+  } finally {
+    dirty.dispose();
+  }
+}
+
+class _WatchlistOrderSheet<T> extends StatefulWidget {
+  const _WatchlistOrderSheet({
+    required this.entries,
+    required this.idOf,
+    required this.labelOf,
+    required this.onSave,
+    required this.dirty,
+  });
+
+  final List<T> entries;
+  final String Function(T entry) idOf;
+  final String Function(T entry) labelOf;
+  final Future<void> Function(List<T> ordered) onSave;
+  final FormDirtyController dirty;
+
+  @override
+  State<_WatchlistOrderSheet<T>> createState() =>
+      _WatchlistOrderSheetState<T>();
+}
+
+class _WatchlistOrderSheetState<T> extends State<_WatchlistOrderSheet<T>> {
+  late final List<T> _entries;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _entries = List<T>.of(widget.entries);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReorderableListView.builder(
+          shrinkWrap: true,
+          buildDefaultDragHandles: false,
+          itemCount: _entries.length,
+          onReorderItem: _reorder,
+          itemBuilder: (context, index) {
+            final entry = _entries[index];
+            return Padding(
+              key: ValueKey<String>(widget.idOf(entry)),
+              padding: EdgeInsets.only(
+                bottom: index == _entries.length - 1 ? 0 : AppSpacing.s8,
+              ),
+              child: AppGroupedSurface(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.labelOf(entry),
+                          style: context.labelStyle,
+                        ),
+                      ),
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: const Padding(
+                          padding: EdgeInsets.all(AppSpacing.s8),
+                          child: Icon(
+                            FLucideIcons.gripVertical,
+                            size: AppIconSizes.sm,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: AppSpacing.s20),
+        AppSheetFooter(
+          cancelLabel: l10n.commonCancel,
+          submitLabel: l10n.commonSave,
+          busy: _saving,
+          enabled: widget.dirty.isDirty,
+          onSubmit: _save,
+        ),
+      ],
+    );
+  }
+
+  void _reorder(int oldIndex, int newIndex) {
+    setState(() {
+      final entry = _entries.removeAt(oldIndex);
+      _entries.insert(newIndex, entry);
+      widget.dirty.markDirty();
+    });
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    widget.dirty.busy = true;
+    try {
+      await widget.onSave(List<T>.unmodifiable(_entries));
+      widget.dirty.markPristine();
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      if (mounted) setState(() => _saving = false);
+      widget.dirty.busy = false;
+    }
+  }
+}
+
 Future<void> showWatchlistBulkMembershipSheet({
   required BuildContext context,
   required List<WatchlistItem> items,
@@ -1771,26 +2216,62 @@ class _WatchlistMembershipSheetState
   }
 }
 
-WatchlistScope _watchlistScopeOf(BuildContext context) {
-  if (GoRouter.maybeOf(context) == null) return const WatchlistScope.all();
+WatchlistScope _watchlistScopeOf(
+  BuildContext context, {
+  required WatchlistScope fallback,
+}) {
+  if (GoRouter.maybeOf(context) == null) return fallback;
   final raw = GoRouterState.of(context)
       .uri
       .queryParameters[_collectionQueryKey];
-  if (raw == null || raw.isEmpty) return const WatchlistScope.all();
+  if (raw == null) return fallback;
+  if (raw.isEmpty) return const WatchlistScope.all();
   if (raw == _ungroupedQueryValue) return const WatchlistScope.ungrouped();
   return WatchlistScope.collection(raw);
 }
 
-WatchlistSortOrder _watchlistSortOrderOf(BuildContext context) {
-  if (GoRouter.maybeOf(context) == null) {
-    return WatchlistSortOrder.defaultOrder;
-  }
-  return switch (GoRouterState.of(context).uri.queryParameters[_sortQueryKey]) {
+bool _hasExplicitCollectionQuery(BuildContext context) {
+  if (GoRouter.maybeOf(context) == null) return false;
+  return GoRouterState.of(context).uri.queryParameters
+      .containsKey(_collectionQueryKey);
+}
+
+WatchlistSortOrder _watchlistSortOrderOf(
+  BuildContext context, {
+  required WatchlistSortOrder fallback,
+}) {
+  if (GoRouter.maybeOf(context) == null) return fallback;
+  final query = GoRouterState.of(context).uri.queryParameters;
+  if (!query.containsKey(_sortQueryKey)) return fallback;
+  return switch (query[_sortQueryKey]) {
     _gainersSortQueryValue => WatchlistSortOrder.gainers,
     _declinersSortQueryValue => WatchlistSortOrder.decliners,
     _symbolSortQueryValue => WatchlistSortOrder.symbol,
     _ => WatchlistSortOrder.defaultOrder,
   };
+}
+
+WatchlistFilter _watchlistFilterOf(BuildContext context) {
+  if (GoRouter.maybeOf(context) == null) return const WatchlistFilter();
+  final query = GoRouterState.of(context).uri.queryParameters;
+  final market = assetMarketFromWire(query[_marketFilterQueryKey] ?? '');
+  final alerts = switch (query[_alertFilterQueryKey]) {
+    'configured' => WatchlistAlertFilter.configured,
+    'none' => WatchlistAlertFilter.none,
+    _ => WatchlistAlertFilter.all,
+  };
+  final freshness = switch (query[_freshnessFilterQueryKey]) {
+    'live' => WatchlistFreshnessFilter.live,
+    'cached' => WatchlistFreshnessFilter.cached,
+    'stale' => WatchlistFreshnessFilter.stale,
+    'unavailable' => WatchlistFreshnessFilter.unavailable,
+    _ => WatchlistFreshnessFilter.all,
+  };
+  return WatchlistFilter(
+    market: market == AssetMarket.unknown ? null : market,
+    alerts: alerts,
+    freshness: freshness,
+  );
 }
 
 void _replaceWatchlistScope(BuildContext context, WatchlistScope scope) {
@@ -1832,6 +2313,44 @@ void _replaceWatchlistSortOrder(
     query.remove(_sortQueryKey);
   } else {
     query[_sortQueryKey] = queryValue;
+  }
+  router.go(
+    Uri(
+      path: FinanceRoutes.wealthWatchlist,
+      queryParameters: query.isEmpty ? null : query,
+    ).toString(),
+  );
+}
+
+void _replaceWatchlistFilter(BuildContext context, WatchlistFilter filter) {
+  final router = GoRouter.maybeOf(context);
+  if (router == null) return;
+  final current = router.routeInformationProvider.value.uri;
+  final query = <String, String>{...current.queryParameters};
+  if (filter.market == null) {
+    query.remove(_marketFilterQueryKey);
+  } else {
+    query[_marketFilterQueryKey] = filter.market!.wire;
+  }
+  switch (filter.alerts) {
+    case WatchlistAlertFilter.all:
+      query.remove(_alertFilterQueryKey);
+    case WatchlistAlertFilter.configured:
+      query[_alertFilterQueryKey] = 'configured';
+    case WatchlistAlertFilter.none:
+      query[_alertFilterQueryKey] = 'none';
+  }
+  switch (filter.freshness) {
+    case WatchlistFreshnessFilter.all:
+      query.remove(_freshnessFilterQueryKey);
+    case WatchlistFreshnessFilter.live:
+      query[_freshnessFilterQueryKey] = 'live';
+    case WatchlistFreshnessFilter.cached:
+      query[_freshnessFilterQueryKey] = 'cached';
+    case WatchlistFreshnessFilter.stale:
+      query[_freshnessFilterQueryKey] = 'stale';
+    case WatchlistFreshnessFilter.unavailable:
+      query[_freshnessFilterQueryKey] = 'unavailable';
   }
   router.go(
     Uri(

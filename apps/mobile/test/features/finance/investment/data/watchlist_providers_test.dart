@@ -58,6 +58,7 @@ void main() {
       watchlistItemId: grouped.id,
       addedAt: DateTime.utc(2026, 5, 18),
       sync: grouped.sync,
+      sortRank: 1024,
     );
     final container = ProviderContainer(
       overrides: [
@@ -130,6 +131,53 @@ void main() {
     expect(counts.forCollection('missing'), 0);
   });
 
+  test('orders a collection by membership rank', () async {
+    final first = _item('us_stock:AAPL', 'AAPL');
+    final second = _item('us_stock:MSFT', 'MSFT');
+    final container = ProviderContainer(
+      overrides: [
+        watchlistItemsProvider.overrideWith(
+          (_) => Stream.value([first, second]),
+        ),
+        watchlistCollectionMembersProvider.overrideWith(
+          (_) => Stream.value([
+            WatchlistCollectionMember(
+              id: 'member-aapl',
+              collectionId: 'collection-1',
+              watchlistItemId: first.id,
+              addedAt: first.addedAt,
+              sync: first.sync,
+              sortRank: 1024,
+            ),
+            WatchlistCollectionMember(
+              id: 'member-msft',
+              collectionId: 'collection-1',
+              watchlistItemId: second.id,
+              addedAt: second.addedAt,
+              sync: second.sync,
+              sortRank: 0,
+            ),
+          ]),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final itemsSub = container.listen(watchlistItemsProvider, (_, _) {});
+    final membersSub = container.listen(
+      watchlistCollectionMembersProvider,
+      (_, _) {},
+    );
+    addTearDown(itemsSub.close);
+    addTearDown(membersSub.close);
+
+    final items = await container.read(
+      watchlistItemsForScopeProvider(
+        const WatchlistScope.collection('collection-1'),
+      ).future,
+    );
+    expect(items.map((item) => item.symbol), ['MSFT', 'AAPL']);
+  });
+
   test('summarizes available and directional quote snapshots', () {
     final advancing = _item('us_stock:AAPL', 'AAPL');
     final declining = _item('us_stock:MSFT', 'MSFT');
@@ -195,14 +243,63 @@ void main() {
       'NVDA',
     ]);
   });
+
+  test('filters by market, configured alerts, and quote freshness', () {
+    final alerted = _item(
+      'us_stock:AAPL',
+      'AAPL',
+      rules: PriceAlertRules(above: Decimal.parse('210')),
+    );
+    final unavailable = _item('us_stock:MSFT', 'MSFT');
+    final hongKong = _item(
+      'hk_stock:2800.HK',
+      '2800.HK',
+      market: AssetMarket.hkStock,
+    );
+    final items = [alerted, unavailable, hongKong];
+    final snapshots = [
+      _snapshot(alerted, price: '201', previousClose: '200'),
+      _snapshot(
+        hongKong,
+        price: '18',
+        previousClose: '17',
+        freshness: DataFreshness.live,
+      ),
+    ];
+
+    List<String> symbols(WatchlistFilter filter) => filterWatchlistItems(
+      items: items,
+      snapshots: snapshots,
+      filter: filter,
+    ).map((item) => item.symbol).toList();
+
+    expect(symbols(const WatchlistFilter(market: AssetMarket.hkStock)), [
+      '2800.HK',
+    ]);
+    expect(
+      symbols(const WatchlistFilter(alerts: WatchlistAlertFilter.configured)),
+      ['AAPL'],
+    );
+    expect(
+      symbols(
+        const WatchlistFilter(freshness: WatchlistFreshnessFilter.unavailable),
+      ),
+      ['MSFT'],
+    );
+  });
 }
 
-WatchlistItem _item(String id, String symbol) => WatchlistItem(
+WatchlistItem _item(
+  String id,
+  String symbol, {
+  AssetMarket market = AssetMarket.usStock,
+  PriceAlertRules rules = const PriceAlertRules(),
+}) => WatchlistItem(
   id: id,
   symbol: symbol,
-  market: AssetMarket.usStock,
+  market: market,
   addedAt: DateTime.utc(2026, 5, 18),
-  alertRules: const PriceAlertRules(),
+  alertRules: rules,
   sync: SyncMeta(
     ownerUserId: 'u-test',
     updatedAt: DateTime.utc(2026, 5, 18),
@@ -215,6 +312,7 @@ WatchlistQuoteSnapshot _snapshot(
   WatchlistItem item, {
   required String price,
   required String previousClose,
+  DataFreshness freshness = DataFreshness.cachedFresh,
 }) => WatchlistQuoteSnapshot(
   item: item,
   response: MarketResponse(
@@ -225,7 +323,7 @@ WatchlistQuoteSnapshot _snapshot(
       previousClose: Decimal.parse(previousClose),
       asOf: DateTime.utc(2026, 5, 18, 2),
     ),
-    freshness: DataFreshness.cachedFresh,
+    freshness: freshness,
     source: 'test-cache',
     fetchedAt: DateTime.utc(2026, 5, 18, 2),
   ),

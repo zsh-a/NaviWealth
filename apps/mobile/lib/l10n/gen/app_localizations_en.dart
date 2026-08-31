@@ -11017,6 +11017,46 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get watchlistReorderCollectionsAction => 'Reorder collections';
+
+  @override
+  String get watchlistReorderSymbolsAction => 'Reorder symbols';
+
+  @override
+  String get watchlistFilterAction => 'Filter symbols';
+
+  @override
+  String get watchlistFilterMarketSection => 'Market';
+
+  @override
+  String get watchlistFilterAlertsSection => 'Alerts';
+
+  @override
+  String get watchlistFilterFreshnessSection => 'Price freshness';
+
+  @override
+  String get watchlistFilterAllOption => 'All';
+
+  @override
+  String get watchlistFilterAlertsConfigured => 'Configured';
+
+  @override
+  String get watchlistFilterAlertsNone => 'No alert';
+
+  @override
+  String get watchlistFilterClearAction => 'Clear filters';
+
+  @override
+  String get watchlistFilterApplyAction => 'Apply filters';
+
+  @override
+  String get watchlistFilterEmptyTitle => 'No matching symbols';
+
+  @override
+  String get watchlistFilterEmptyBody =>
+      'Adjust or clear the filters to see more symbols.';
+
+  @override
   String get watchlistRemoveFromCollectionAction => 'Remove from collection';
 
   @override

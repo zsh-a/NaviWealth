@@ -45,6 +45,7 @@ class WatchlistCollections extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get name => text()();
   DateTimeColumn get createdAt => dateTime()();
+  IntColumn get sortRank => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -59,6 +60,7 @@ class WatchlistCollectionMembers extends Table with SyncableTable {
   TextColumn get collectionId => text()();
   TextColumn get watchlistItemId => text()();
   DateTimeColumn get addedAt => dateTime()();
+  IntColumn get sortRank => integer().withDefault(const Constant(0))();
 
   @override
   List<String> get customConstraints => [

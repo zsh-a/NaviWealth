@@ -148,7 +148,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 82;
+  int get schemaVersion => 83;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1032,6 +1032,24 @@ class AppDatabase extends _$AppDatabase {
       if (from < 82) {
         await m.createTable(watchlistCollections);
         await m.createTable(watchlistCollectionMembers);
+        await _createWatchlistIndexes(this);
+      }
+      // v82 -> v83: synchronized manual ordering for collections and for
+      // members inside each collection. Zero preserves the legacy timestamp
+      // order until the user explicitly reorders a complete sibling set.
+      if (from < 83) {
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_collections',
+          column: 'sort_rank',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_collection_members',
+          column: 'sort_rank',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
         await _createWatchlistIndexes(this);
       }
     },
