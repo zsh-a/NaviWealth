@@ -55,13 +55,13 @@ class WatchlistSimulationSection extends ConsumerWidget {
                         items: items,
                       ),
                     ),
-              prefix: const Icon(FLucideIcons.flaskConical),
               child: Text(l10n.watchlistSimulationCreateAction),
             ),
           ],
         ),
         const SizedBox(height: AppSpacing.s8),
-        simulationsAsync.when(
+        simulationsAsync.whenOrLoading(
+          context: context,
           loading: () => const AppGroupedSurface(
             child: Center(child: FCircularProgress()),
           ),
@@ -152,7 +152,8 @@ class _WatchlistSimulationCard extends ConsumerWidget {
     final positionsAsync = ref.watch(
       watchlistSimulationPositionsProvider(simulation.id),
     );
-    return positionsAsync.when(
+    return positionsAsync.whenOrLoading(
+      context: context,
       loading: () =>
           const AppGroupedSurface(child: Center(child: FCircularProgress())),
       error: (_, _) => AppGroupedSurface(
