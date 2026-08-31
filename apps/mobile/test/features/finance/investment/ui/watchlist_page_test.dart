@@ -56,6 +56,22 @@ final _membership = WatchlistCollectionMember(
   sync: _item.sync,
 );
 
+final _advancingSnapshot = WatchlistQuoteSnapshot(
+  item: _item,
+  response: MarketResponse(
+    data: Quote(
+      symbol: _item.symbol,
+      currency: 'USD',
+      price: Decimal.parse('201.25'),
+      previousClose: Decimal.parse('200'),
+      asOf: DateTime.utc(2026, 7, 19, 2),
+    ),
+    freshness: DataFreshness.cachedFresh,
+    source: 'test-cache',
+    fetchedAt: DateTime.utc(2026, 7, 19, 2),
+  ),
+);
+
 Widget _wrap(
   TargetPlatform platform, {
   List<WatchlistQuoteSnapshot> snapshots = const [],
@@ -85,24 +101,8 @@ Widget _wrap(
 
 void main() {
   testWidgets('shows a summary of the loaded quote snapshots', (tester) async {
-    final snapshot = WatchlistQuoteSnapshot(
-      item: _item,
-      response: MarketResponse(
-        data: Quote(
-          symbol: _item.symbol,
-          currency: 'USD',
-          price: Decimal.parse('201.25'),
-          previousClose: Decimal.parse('200'),
-          asOf: DateTime.utc(2026, 7, 19, 2),
-        ),
-        freshness: DataFreshness.cachedFresh,
-        source: 'test-cache',
-        fetchedAt: DateTime.utc(2026, 7, 19, 2),
-      ),
-    );
-
     await tester.pumpWidget(
-      _wrap(TargetPlatform.android, snapshots: [snapshot]),
+      _wrap(TargetPlatform.android, snapshots: [_advancingSnapshot]),
     );
     await tester.pumpAndSettle();
 
@@ -119,6 +119,11 @@ void main() {
       'Advancing:1',
       'Declining:0',
     ]);
+    final rowChange = tester.widget<DeltaText>(
+      find.byKey(const ValueKey<String>('watchlist-row-change-us_stock:AAPL')),
+    );
+    expect(rowChange.format, DeltaFormat.percent);
+    expect(rowChange.value, closeTo(0.625, 0.000001));
   });
 
   testWidgets('uses a bottom action sheet for row actions on Android', (
@@ -210,7 +215,9 @@ void main() {
           watchlistCollectionMembersProvider.overrideWith(
             (_) => Stream.value(const []),
           ),
-          watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
+          watchlistQuoteSnapshotsProvider.overrideWith(
+            (_) async => [_advancingSnapshot],
+          ),
         ],
         child: MaterialApp.router(
           routerConfig: router,
@@ -230,6 +237,12 @@ void main() {
 
     expect(find.text('AAPL'), findsNWidgets(2));
     expect(find.text('Alerts'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('watchlist-detail-change-us_stock:AAPL'),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('filters collection and ungrouped scopes through the URL', (

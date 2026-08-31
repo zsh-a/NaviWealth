@@ -632,10 +632,26 @@ class _WatchlistRow extends StatelessWidget {
                   style: context.theme.typography.body.lg,
                 )
               else
-                MoneyText(
-                  amount: quote.price.toDouble(),
-                  currencyCode: quote.currency,
-                  style: context.theme.typography.body.lg,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MoneyText(
+                      amount: quote.price.toDouble(),
+                      currencyCode: quote.currency,
+                      style: context.theme.typography.body.lg,
+                    ),
+                    if (quote.changePercent case final changePercent?) ...[
+                      const SizedBox(height: AppSpacing.s2),
+                      DeltaText.percentFromRatio(
+                        key: ValueKey<String>(
+                          'watchlist-row-change-${item.id}',
+                        ),
+                        ratio: changePercent.toDouble(),
+                        style: TypographyTokens.numericCaptionStrong,
+                      ),
+                    ],
+                  ],
                 ),
               const SizedBox(width: AppSpacing.s4),
               AppAdaptiveActionMenu(
@@ -745,10 +761,23 @@ class _WatchlistDetail extends StatelessWidget {
             style: context.theme.typography.body.md,
           )
         else
-          MoneyText(
-            amount: quote.price.toDouble(),
-            currencyCode: quote.currency,
-            style: context.theme.typography.body.xl,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              MoneyText(
+                amount: quote.price.toDouble(),
+                currencyCode: quote.currency,
+                style: context.theme.typography.body.xl,
+              ),
+              if (quote.changePercent case final changePercent?) ...[
+                const SizedBox(width: AppSpacing.s12),
+                DeltaChip(
+                  key: ValueKey<String>('watchlist-detail-change-${item.id}'),
+                  value: changePercent.toDouble() * 100,
+                  fractionDigits: 2,
+                ),
+              ],
+            ],
           ),
         const SizedBox(height: AppSpacing.s16),
         Wrap(
