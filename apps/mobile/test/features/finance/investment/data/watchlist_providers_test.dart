@@ -99,6 +99,27 @@ void main() {
       [grouped],
     );
   });
+
+  test('summarizes available and directional quote snapshots', () {
+    final advancing = _item('us_stock:AAPL', 'AAPL');
+    final declining = _item('us_stock:MSFT', 'MSFT');
+    final unchanged = _item('us_stock:GOOG', 'GOOG');
+    final unavailable = _item('us_stock:NVDA', 'NVDA');
+    final summary = WatchlistQuoteSummary.fromSnapshots(
+      symbolCount: 4,
+      snapshots: [
+        _snapshot(advancing, price: '201', previousClose: '200'),
+        _snapshot(declining, price: '199', previousClose: '200'),
+        _snapshot(unchanged, price: '200', previousClose: '200'),
+        WatchlistQuoteSnapshot(item: unavailable, error: StateError('offline')),
+      ],
+    );
+
+    expect(summary.symbolCount, 4);
+    expect(summary.availableQuoteCount, 3);
+    expect(summary.advancingCount, 1);
+    expect(summary.decliningCount, 1);
+  });
 }
 
 WatchlistItem _item(String id, String symbol) => WatchlistItem(
@@ -112,6 +133,26 @@ WatchlistItem _item(String id, String symbol) => WatchlistItem(
     updatedAt: DateTime.utc(2026, 5, 18),
     updatedByDevice: 'dev-test',
     hlc: Hlc.zero('dev-test'),
+  ),
+);
+
+WatchlistQuoteSnapshot _snapshot(
+  WatchlistItem item, {
+  required String price,
+  required String previousClose,
+}) => WatchlistQuoteSnapshot(
+  item: item,
+  response: MarketResponse(
+    data: Quote(
+      symbol: item.symbol,
+      currency: 'USD',
+      price: Decimal.parse(price),
+      previousClose: Decimal.parse(previousClose),
+      asOf: DateTime.utc(2026, 5, 18, 2),
+    ),
+    freshness: DataFreshness.cachedFresh,
+    source: 'test-cache',
+    fetchedAt: DateTime.utc(2026, 5, 18, 2),
   ),
 );
 

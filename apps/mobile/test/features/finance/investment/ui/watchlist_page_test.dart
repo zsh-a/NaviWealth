@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,8 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_providers.
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -53,7 +56,10 @@ final _membership = WatchlistCollectionMember(
   sync: _item.sync,
 );
 
-Widget _wrap(TargetPlatform platform) {
+Widget _wrap(
+  TargetPlatform platform, {
+  List<WatchlistQuoteSnapshot> snapshots = const [],
+}) {
   final touch = platform == TargetPlatform.android;
   return ProviderScope(
     overrides: [
@@ -62,7 +68,7 @@ Widget _wrap(TargetPlatform platform) {
       watchlistCollectionMembersProvider.overrideWith(
         (_) => Stream.value(const []),
       ),
-      watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
+      watchlistQuoteSnapshotsProvider.overrideWith((_) async => snapshots),
     ],
     child: MaterialApp(
       theme: AppTheme.light().copyWith(platform: platform),
@@ -78,6 +84,43 @@ Widget _wrap(TargetPlatform platform) {
 }
 
 void main() {
+  testWidgets('shows a summary of the loaded quote snapshots', (tester) async {
+    final snapshot = WatchlistQuoteSnapshot(
+      item: _item,
+      response: MarketResponse(
+        data: Quote(
+          symbol: _item.symbol,
+          currency: 'USD',
+          price: Decimal.parse('201.25'),
+          previousClose: Decimal.parse('200'),
+          asOf: DateTime.utc(2026, 7, 19, 2),
+        ),
+        freshness: DataFreshness.cachedFresh,
+        source: 'test-cache',
+        fetchedAt: DateTime.utc(2026, 7, 19, 2),
+      ),
+    );
+
+    await tester.pumpWidget(
+      _wrap(TargetPlatform.android, snapshots: [snapshot]),
+    );
+    await tester.pumpAndSettle();
+
+    final summary = find.byKey(
+      const ValueKey<String>('watchlist-quote-summary'),
+    );
+    expect(summary, findsOneWidget);
+    final metrics = tester.widget<AppMetricCluster>(
+      find.descendant(of: summary, matching: find.byType(AppMetricCluster)),
+    );
+    expect(metrics.items.map((item) => '${item.label}:${item.value}'), [
+      'Symbols:1',
+      'Quotes:1 / 1',
+      'Advancing:1',
+      'Declining:0',
+    ]);
+  });
+
   testWidgets('uses a bottom action sheet for row actions on Android', (
     tester,
   ) async {

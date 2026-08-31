@@ -321,6 +321,10 @@ class _WatchlistBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final byId = {for (final snapshot in snapshots) snapshot.item.id: snapshot};
+    final summary = WatchlistQuoteSummary.fromSnapshots(
+      symbolCount: items.length,
+      snapshots: snapshots,
+    );
     Widget list({ValueChanged<String>? onSelect}) => AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.narrow,
       expandSinglePrimary: true,
@@ -343,7 +347,15 @@ class _WatchlistBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           if (items.isEmpty)
             _WatchlistEmpty(onAdd: onAdd)
-          else
+          else ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+              child: _WatchlistSummary(
+                summary: summary,
+                loadingQuotes: loadingQuotes,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s8),
             AppGroupedSurface(
               padding: EdgeInsets.zero,
               child: Column(
@@ -372,6 +384,7 @@ class _WatchlistBody extends StatelessWidget {
                 ],
               ),
             ),
+          ],
         ],
       ),
     );
@@ -412,6 +425,48 @@ class _WatchlistBody extends StatelessWidget {
                 ),
         );
       },
+    );
+  }
+}
+
+class _WatchlistSummary extends StatelessWidget {
+  const _WatchlistSummary({required this.summary, required this.loadingQuotes});
+
+  final WatchlistQuoteSummary summary;
+  final bool loadingQuotes;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final waitingForFirstSnapshot =
+        loadingQuotes && summary.availableQuoteCount == 0;
+    final pendingValue = waitingForFirstSnapshot ? '…' : null;
+    return AppGroupedSurface(
+      key: const ValueKey<String>('watchlist-quote-summary'),
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: AppMetricCluster(
+        dense: true,
+        items: [
+          AppMetricItem(
+            label: l10n.watchlistSummarySymbols,
+            value: '${summary.symbolCount}',
+          ),
+          AppMetricItem(
+            label: l10n.watchlistSummaryQuotes,
+            value:
+                pendingValue ??
+                '${summary.availableQuoteCount} / ${summary.symbolCount}',
+          ),
+          AppMetricItem(
+            label: l10n.watchlistSummaryAdvancing,
+            value: pendingValue ?? '${summary.advancingCount}',
+          ),
+          AppMetricItem(
+            label: l10n.watchlistSummaryDeclining,
+            value: pendingValue ?? '${summary.decliningCount}',
+          ),
+        ],
+      ),
     );
   }
 }

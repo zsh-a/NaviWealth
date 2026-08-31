@@ -10438,6 +10438,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistPriceUnavailable => '暂无价格';
 
   @override
+  String get watchlistSummarySymbols => '标的';
+
+  @override
+  String get watchlistSummaryQuotes => '行情';
+
+  @override
+  String get watchlistSummaryAdvancing => '上涨';
+
+  @override
+  String get watchlistSummaryDeclining => '下跌';
+
+  @override
   String get watchlistFreshnessLive => '实时';
 
   @override

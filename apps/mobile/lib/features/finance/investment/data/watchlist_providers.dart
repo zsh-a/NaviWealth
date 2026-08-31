@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -108,6 +109,47 @@ class WatchlistQuoteSnapshot {
 
   Quote? get quote => response?.data;
   bool get hasError => error != null;
+}
+
+class WatchlistQuoteSummary {
+  const WatchlistQuoteSummary({
+    required this.symbolCount,
+    required this.availableQuoteCount,
+    required this.advancingCount,
+    required this.decliningCount,
+  });
+
+  factory WatchlistQuoteSummary.fromSnapshots({
+    required int symbolCount,
+    required Iterable<WatchlistQuoteSnapshot> snapshots,
+  }) {
+    var availableQuoteCount = 0;
+    var advancingCount = 0;
+    var decliningCount = 0;
+    for (final snapshot in snapshots) {
+      final quote = snapshot.quote;
+      if (quote == null) continue;
+      availableQuoteCount++;
+      final change = quote.change;
+      if (change == null) continue;
+      if (change > Decimal.zero) {
+        advancingCount++;
+      } else if (change < Decimal.zero) {
+        decliningCount++;
+      }
+    }
+    return WatchlistQuoteSummary(
+      symbolCount: symbolCount,
+      availableQuoteCount: availableQuoteCount,
+      advancingCount: advancingCount,
+      decliningCount: decliningCount,
+    );
+  }
+
+  final int symbolCount;
+  final int availableQuoteCount;
+  final int advancingCount;
+  final int decliningCount;
 }
 
 Future<List<WatchlistQuoteSnapshot>> _loadQuoteSnapshots(

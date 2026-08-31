@@ -18578,6 +18578,30 @@ abstract class AppLocalizations {
   /// **'No price'**
   String get watchlistPriceUnavailable;
 
+  /// Watchlist collection summary symbol count label
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols'**
+  String get watchlistSummarySymbols;
+
+  /// Watchlist collection summary available quote count label
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes'**
+  String get watchlistSummaryQuotes;
+
+  /// Watchlist collection summary advancing symbol count label
+  ///
+  /// In en, this message translates to:
+  /// **'Advancing'**
+  String get watchlistSummaryAdvancing;
+
+  /// Watchlist collection summary declining symbol count label
+  ///
+  /// In en, this message translates to:
+  /// **'Declining'**
+  String get watchlistSummaryDeclining;
+
   /// Market data freshness live label
   ///
   /// In en, this message translates to:

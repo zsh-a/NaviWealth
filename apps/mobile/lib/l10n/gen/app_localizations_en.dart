@@ -11022,6 +11022,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistPriceUnavailable => 'No price';
 
   @override
+  String get watchlistSummarySymbols => 'Symbols';
+
+  @override
+  String get watchlistSummaryQuotes => 'Quotes';
+
+  @override
+  String get watchlistSummaryAdvancing => 'Advancing';
+
+  @override
+  String get watchlistSummaryDeclining => 'Declining';
+
+  @override
   String get watchlistFreshnessLive => 'Live';
 
   @override
