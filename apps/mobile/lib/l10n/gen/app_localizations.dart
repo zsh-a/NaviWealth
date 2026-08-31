@@ -18855,6 +18855,30 @@ abstract class AppLocalizations {
   /// **'Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.'**
   String get watchlistSimulationHistoryDisclaimer;
 
+  /// Title for automatically recorded paper dividend references
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded dividends'**
+  String get watchlistSimulationDividendRecordsTitle;
+
+  /// Per-share dividend amount in a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} per share'**
+  String watchlistSimulationDividendPerShare(String amount);
+
+  /// Status for a cancelled paper dividend reference
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get watchlistSimulationDividendCancelled;
+
+  /// Disclosure for paper dividend references without holdings entitlement
+  ///
+  /// In en, this message translates to:
+  /// **'Reference only — quantity, tax, cash and NAV are not inferred from target weights.'**
+  String get watchlistSimulationDividendReferenceNote;
+
   /// Paper simulation creation sheet title
   ///
   /// In en, this message translates to:
@@ -18936,7 +18960,7 @@ abstract class AppLocalizations {
   /// Paper simulation delete confirmation body
   ///
   /// In en, this message translates to:
-  /// **'Only this paper scenario and its virtual weights will be removed.'**
+  /// **'Only this paper scenario, its virtual weights, observations, and recorded dividend references will be removed.'**
   String get watchlistSimulationDeleteBody;
 
   /// Paper simulation save failure

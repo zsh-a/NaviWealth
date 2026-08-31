@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 86', () {
-      expect(db.schemaVersion, 86);
+    test('is 87', () {
+      expect(db.schemaVersion, 87);
     });
   });
 
@@ -111,6 +111,7 @@ void main() {
     for (final table in const [
       'watchlist_simulations',
       'watchlist_simulation_positions',
+      'watchlist_simulation_action_entries',
     ]) {
       test('$table has sync columns', () async {
         final result = await db.customSelect('PRAGMA table_info($table)').get();
@@ -156,6 +157,44 @@ void main() {
         containsAll(['simulation_id', 'watchlist_item_id', 'target_weight']),
       );
     });
+
+    test(
+      'paper action entries keep unresolved money fields nullable',
+      () async {
+        final result = await db
+            .customSelect(
+              'PRAGMA table_info(watchlist_simulation_action_entries)',
+            )
+            .get();
+        final columns = {
+          for (final row in result)
+            row.read<String>('name'): row.read<int>('notnull'),
+        };
+        expect(
+          columns.keys,
+          containsAll([
+            'source_key',
+            'revision_hash',
+            'paper_state',
+            'cash_per_share',
+            'eligible_quantity',
+            'gross_amount',
+            'withholding_tax_amount',
+            'net_amount',
+            'base_currency_amount',
+          ]),
+        );
+        for (final field in const [
+          'eligible_quantity',
+          'gross_amount',
+          'withholding_tax_amount',
+          'net_amount',
+          'base_currency_amount',
+        ]) {
+          expect(columns[field], 0, reason: field);
+        }
+      },
+    );
 
     test('observation history is a local-only derived table', () async {
       final result = await db

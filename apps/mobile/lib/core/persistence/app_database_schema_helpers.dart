@@ -471,6 +471,12 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_item '
       'ON watchlist_simulation_positions(owner_user_id, watchlist_item_id) '
       'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_action_entries_hlc '
+      'ON watchlist_simulation_action_entries(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_action_entries_sim '
+      'ON watchlist_simulation_action_entries('
+      'owner_user_id, simulation_id, ex_date) '
+      'WHERE deleted_at IS NULL',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_observations_history '
       'ON watchlist_simulation_observations('
       'owner_user_id, simulation_id, observation_day)',

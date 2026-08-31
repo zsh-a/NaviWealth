@@ -54,6 +54,21 @@ void main() {
         'hlc',
       ]),
     );
+    final actionEntries = await db
+        .customSelect('PRAGMA table_info(watchlist_simulation_action_entries)')
+        .get();
+    expect(
+      actionEntries.map((row) => row.read<String>('name')),
+      containsAll([
+        'simulation_id',
+        'watchlist_item_id',
+        'source_key',
+        'revision_hash',
+        'cash_per_share',
+        'owner_user_id',
+        'hlc',
+      ]),
+    );
     final observations = await db
         .customSelect('PRAGMA table_info(watchlist_simulation_observations)')
         .get();
@@ -72,6 +87,6 @@ void main() {
     );
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 86);
+    expect(version.read<int>('user_version'), 87);
   });
 }

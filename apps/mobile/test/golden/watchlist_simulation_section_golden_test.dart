@@ -143,6 +143,16 @@ void main() {
         watchlistSimulationObservationsProvider.overrideWith(
           (_, _) => Stream.value(_observations),
         ),
+        watchlistSimulationActionEntriesProvider.overrideWith(
+          (_, _) => Stream.value(const []),
+        ),
+        watchlistSimulationActionReconciliationProvider.overrideWith(
+          (_, _) async => const WatchlistSimulationActionReconciliation(
+            materializedCount: 0,
+            failedSymbolCount: 0,
+            unsupportedSymbolCount: 0,
+          ),
+        ),
         watchlistSimulationObservationRecorderProvider.overrideWithValue(
           (_) async {},
         ),

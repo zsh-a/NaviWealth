@@ -46744,6 +46744,1611 @@ class WatchlistSimulationPositionsCompanion
   }
 }
 
+class $WatchlistSimulationActionEntriesTable
+    extends WatchlistSimulationActionEntries
+    with
+        TableInfo<
+          $WatchlistSimulationActionEntriesTable,
+          WatchlistSimulationActionEntryRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationActionEntriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>(
+        $WatchlistSimulationActionEntriesTable.$converterhlc,
+      );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _simulationIdMeta = const VerificationMeta(
+    'simulationId',
+  );
+  @override
+  late final GeneratedColumn<String> simulationId = GeneratedColumn<String>(
+    'simulation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _watchlistItemIdMeta = const VerificationMeta(
+    'watchlistItemId',
+  );
+  @override
+  late final GeneratedColumn<String> watchlistItemId = GeneratedColumn<String>(
+    'watchlist_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _symbolMeta = const VerificationMeta('symbol');
+  @override
+  late final GeneratedColumn<String> symbol = GeneratedColumn<String>(
+    'symbol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _marketMeta = const VerificationMeta('market');
+  @override
+  late final GeneratedColumn<String> market = GeneratedColumn<String>(
+    'market',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _datasetMeta = const VerificationMeta(
+    'dataset',
+  );
+  @override
+  late final GeneratedColumn<String> dataset = GeneratedColumn<String>(
+    'dataset',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceKeyMeta = const VerificationMeta(
+    'sourceKey',
+  );
+  @override
+  late final GeneratedColumn<String> sourceKey = GeneratedColumn<String>(
+    'source_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _revisionHashMeta = const VerificationMeta(
+    'revisionHash',
+  );
+  @override
+  late final GeneratedColumn<String> revisionHash = GeneratedColumn<String>(
+    'revision_hash',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+    'status',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _paperStateMeta = const VerificationMeta(
+    'paperState',
+  );
+  @override
+  late final GeneratedColumn<String> paperState = GeneratedColumn<String>(
+    'paper_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('referenceOnly'),
+  );
+  static const VerificationMeta _recordDateMeta = const VerificationMeta(
+    'recordDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordDate = GeneratedColumn<DateTime>(
+    'record_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _exDateMeta = const VerificationMeta('exDate');
+  @override
+  late final GeneratedColumn<DateTime> exDate = GeneratedColumn<DateTime>(
+    'ex_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _payDateMeta = const VerificationMeta(
+    'payDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> payDate = GeneratedColumn<DateTime>(
+    'pay_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _currencyMeta = const VerificationMeta(
+    'currency',
+  );
+  @override
+  late final GeneratedColumn<String> currency = GeneratedColumn<String>(
+    'currency',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 3,
+      maxTextLength: 8,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal, String> cashPerShare =
+      GeneratedColumn<String>(
+        'cash_per_share',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Decimal>(
+        $WatchlistSimulationActionEntriesTable.$convertercashPerShare,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  eligibleQuantity =
+      GeneratedColumn<String>(
+        'eligible_quantity',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$convertereligibleQuantityn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> grossAmount =
+      GeneratedColumn<String>(
+        'gross_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$convertergrossAmountn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  withholdingTaxAmount =
+      GeneratedColumn<String>(
+        'withholding_tax_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$converterwithholdingTaxAmountn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String> netAmount =
+      GeneratedColumn<String>(
+        'net_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$converternetAmountn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  baseCurrencyAmount =
+      GeneratedColumn<String>(
+        'base_currency_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$converterbaseCurrencyAmountn,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    watchlistItemId,
+    symbol,
+    market,
+    source,
+    dataset,
+    sourceKey,
+    revisionHash,
+    kind,
+    status,
+    paperState,
+    recordDate,
+    exDate,
+    payDate,
+    currency,
+    cashPerShare,
+    eligibleQuantity,
+    grossAmount,
+    withholdingTaxAmount,
+    netAmount,
+    baseCurrencyAmount,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulation_action_entries';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationActionEntryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('simulation_id')) {
+      context.handle(
+        _simulationIdMeta,
+        simulationId.isAcceptableOrUnknown(
+          data['simulation_id']!,
+          _simulationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_simulationIdMeta);
+    }
+    if (data.containsKey('watchlist_item_id')) {
+      context.handle(
+        _watchlistItemIdMeta,
+        watchlistItemId.isAcceptableOrUnknown(
+          data['watchlist_item_id']!,
+          _watchlistItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_watchlistItemIdMeta);
+    }
+    if (data.containsKey('symbol')) {
+      context.handle(
+        _symbolMeta,
+        symbol.isAcceptableOrUnknown(data['symbol']!, _symbolMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_symbolMeta);
+    }
+    if (data.containsKey('market')) {
+      context.handle(
+        _marketMeta,
+        market.isAcceptableOrUnknown(data['market']!, _marketMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marketMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('dataset')) {
+      context.handle(
+        _datasetMeta,
+        dataset.isAcceptableOrUnknown(data['dataset']!, _datasetMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_datasetMeta);
+    }
+    if (data.containsKey('source_key')) {
+      context.handle(
+        _sourceKeyMeta,
+        sourceKey.isAcceptableOrUnknown(data['source_key']!, _sourceKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceKeyMeta);
+    }
+    if (data.containsKey('revision_hash')) {
+      context.handle(
+        _revisionHashMeta,
+        revisionHash.isAcceptableOrUnknown(
+          data['revision_hash']!,
+          _revisionHashMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_revisionHashMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(
+        _statusMeta,
+        status.isAcceptableOrUnknown(data['status']!, _statusMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('paper_state')) {
+      context.handle(
+        _paperStateMeta,
+        paperState.isAcceptableOrUnknown(data['paper_state']!, _paperStateMeta),
+      );
+    }
+    if (data.containsKey('record_date')) {
+      context.handle(
+        _recordDateMeta,
+        recordDate.isAcceptableOrUnknown(data['record_date']!, _recordDateMeta),
+      );
+    }
+    if (data.containsKey('ex_date')) {
+      context.handle(
+        _exDateMeta,
+        exDate.isAcceptableOrUnknown(data['ex_date']!, _exDateMeta),
+      );
+    }
+    if (data.containsKey('pay_date')) {
+      context.handle(
+        _payDateMeta,
+        payDate.isAcceptableOrUnknown(data['pay_date']!, _payDateMeta),
+      );
+    }
+    if (data.containsKey('currency')) {
+      context.handle(
+        _currencyMeta,
+        currency.isAcceptableOrUnknown(data['currency']!, _currencyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_currencyMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationActionEntryRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationActionEntryRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistSimulationActionEntriesTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      simulationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simulation_id'],
+      )!,
+      watchlistItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}watchlist_item_id'],
+      )!,
+      symbol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}symbol'],
+      )!,
+      market: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}market'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      dataset: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dataset'],
+      )!,
+      sourceKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_key'],
+      )!,
+      revisionHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}revision_hash'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      status: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}status'],
+      )!,
+      paperState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}paper_state'],
+      )!,
+      recordDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}record_date'],
+      ),
+      exDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ex_date'],
+      ),
+      payDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}pay_date'],
+      ),
+      currency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}currency'],
+      )!,
+      cashPerShare: $WatchlistSimulationActionEntriesTable
+          .$convertercashPerShare
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}cash_per_share'],
+            )!,
+          ),
+      eligibleQuantity: $WatchlistSimulationActionEntriesTable
+          .$convertereligibleQuantityn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}eligible_quantity'],
+            ),
+          ),
+      grossAmount: $WatchlistSimulationActionEntriesTable.$convertergrossAmountn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}gross_amount'],
+            ),
+          ),
+      withholdingTaxAmount: $WatchlistSimulationActionEntriesTable
+          .$converterwithholdingTaxAmountn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}withholding_tax_amount'],
+            ),
+          ),
+      netAmount: $WatchlistSimulationActionEntriesTable.$converternetAmountn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}net_amount'],
+            ),
+          ),
+      baseCurrencyAmount: $WatchlistSimulationActionEntriesTable
+          .$converterbaseCurrencyAmountn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}base_currency_amount'],
+            ),
+          ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationActionEntriesTable createAlias(String alias) {
+    return $WatchlistSimulationActionEntriesTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+  static TypeConverter<Decimal, String> $convertercashPerShare =
+      const DecimalConverter();
+  static TypeConverter<Decimal, String> $convertereligibleQuantity =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertereligibleQuantityn =
+      NullAwareTypeConverter.wrap($convertereligibleQuantity);
+  static TypeConverter<Decimal, String> $convertergrossAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $convertergrossAmountn =
+      NullAwareTypeConverter.wrap($convertergrossAmount);
+  static TypeConverter<Decimal, String> $converterwithholdingTaxAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterwithholdingTaxAmountn =
+      NullAwareTypeConverter.wrap($converterwithholdingTaxAmount);
+  static TypeConverter<Decimal, String> $converternetAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converternetAmountn =
+      NullAwareTypeConverter.wrap($converternetAmount);
+  static TypeConverter<Decimal, String> $converterbaseCurrencyAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterbaseCurrencyAmountn =
+      NullAwareTypeConverter.wrap($converterbaseCurrencyAmount);
+}
+
+class WatchlistSimulationActionEntryRow extends DataClass
+    implements Insertable<WatchlistSimulationActionEntryRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String simulationId;
+  final String watchlistItemId;
+  final String symbol;
+  final String market;
+  final String source;
+  final String dataset;
+  final String sourceKey;
+  final String revisionHash;
+  final String kind;
+  final String status;
+  final String paperState;
+  final DateTime? recordDate;
+  final DateTime? exDate;
+  final DateTime? payDate;
+  final String currency;
+  final Decimal cashPerShare;
+  final Decimal? eligibleQuantity;
+  final Decimal? grossAmount;
+  final Decimal? withholdingTaxAmount;
+  final Decimal? netAmount;
+  final Decimal? baseCurrencyAmount;
+  final DateTime createdAt;
+  const WatchlistSimulationActionEntryRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.simulationId,
+    required this.watchlistItemId,
+    required this.symbol,
+    required this.market,
+    required this.source,
+    required this.dataset,
+    required this.sourceKey,
+    required this.revisionHash,
+    required this.kind,
+    required this.status,
+    required this.paperState,
+    this.recordDate,
+    this.exDate,
+    this.payDate,
+    required this.currency,
+    required this.cashPerShare,
+    this.eligibleQuantity,
+    this.grossAmount,
+    this.withholdingTaxAmount,
+    this.netAmount,
+    this.baseCurrencyAmount,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['simulation_id'] = Variable<String>(simulationId);
+    map['watchlist_item_id'] = Variable<String>(watchlistItemId);
+    map['symbol'] = Variable<String>(symbol);
+    map['market'] = Variable<String>(market);
+    map['source'] = Variable<String>(source);
+    map['dataset'] = Variable<String>(dataset);
+    map['source_key'] = Variable<String>(sourceKey);
+    map['revision_hash'] = Variable<String>(revisionHash);
+    map['kind'] = Variable<String>(kind);
+    map['status'] = Variable<String>(status);
+    map['paper_state'] = Variable<String>(paperState);
+    if (!nullToAbsent || recordDate != null) {
+      map['record_date'] = Variable<DateTime>(recordDate);
+    }
+    if (!nullToAbsent || exDate != null) {
+      map['ex_date'] = Variable<DateTime>(exDate);
+    }
+    if (!nullToAbsent || payDate != null) {
+      map['pay_date'] = Variable<DateTime>(payDate);
+    }
+    map['currency'] = Variable<String>(currency);
+    {
+      map['cash_per_share'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$convertercashPerShare.toSql(
+          cashPerShare,
+        ),
+      );
+    }
+    if (!nullToAbsent || eligibleQuantity != null) {
+      map['eligible_quantity'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$convertereligibleQuantityn
+            .toSql(eligibleQuantity),
+      );
+    }
+    if (!nullToAbsent || grossAmount != null) {
+      map['gross_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$convertergrossAmountn.toSql(
+          grossAmount,
+        ),
+      );
+    }
+    if (!nullToAbsent || withholdingTaxAmount != null) {
+      map['withholding_tax_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterwithholdingTaxAmountn
+            .toSql(withholdingTaxAmount),
+      );
+    }
+    if (!nullToAbsent || netAmount != null) {
+      map['net_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converternetAmountn.toSql(
+          netAmount,
+        ),
+      );
+    }
+    if (!nullToAbsent || baseCurrencyAmount != null) {
+      map['base_currency_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterbaseCurrencyAmountn
+            .toSql(baseCurrencyAmount),
+      );
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WatchlistSimulationActionEntriesCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistSimulationActionEntriesCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      simulationId: Value(simulationId),
+      watchlistItemId: Value(watchlistItemId),
+      symbol: Value(symbol),
+      market: Value(market),
+      source: Value(source),
+      dataset: Value(dataset),
+      sourceKey: Value(sourceKey),
+      revisionHash: Value(revisionHash),
+      kind: Value(kind),
+      status: Value(status),
+      paperState: Value(paperState),
+      recordDate: recordDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recordDate),
+      exDate: exDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(exDate),
+      payDate: payDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(payDate),
+      currency: Value(currency),
+      cashPerShare: Value(cashPerShare),
+      eligibleQuantity: eligibleQuantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(eligibleQuantity),
+      grossAmount: grossAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grossAmount),
+      withholdingTaxAmount: withholdingTaxAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(withholdingTaxAmount),
+      netAmount: netAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(netAmount),
+      baseCurrencyAmount: baseCurrencyAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(baseCurrencyAmount),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WatchlistSimulationActionEntryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationActionEntryRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      simulationId: serializer.fromJson<String>(json['simulationId']),
+      watchlistItemId: serializer.fromJson<String>(json['watchlistItemId']),
+      symbol: serializer.fromJson<String>(json['symbol']),
+      market: serializer.fromJson<String>(json['market']),
+      source: serializer.fromJson<String>(json['source']),
+      dataset: serializer.fromJson<String>(json['dataset']),
+      sourceKey: serializer.fromJson<String>(json['sourceKey']),
+      revisionHash: serializer.fromJson<String>(json['revisionHash']),
+      kind: serializer.fromJson<String>(json['kind']),
+      status: serializer.fromJson<String>(json['status']),
+      paperState: serializer.fromJson<String>(json['paperState']),
+      recordDate: serializer.fromJson<DateTime?>(json['recordDate']),
+      exDate: serializer.fromJson<DateTime?>(json['exDate']),
+      payDate: serializer.fromJson<DateTime?>(json['payDate']),
+      currency: serializer.fromJson<String>(json['currency']),
+      cashPerShare: serializer.fromJson<Decimal>(json['cashPerShare']),
+      eligibleQuantity: serializer.fromJson<Decimal?>(json['eligibleQuantity']),
+      grossAmount: serializer.fromJson<Decimal?>(json['grossAmount']),
+      withholdingTaxAmount: serializer.fromJson<Decimal?>(
+        json['withholdingTaxAmount'],
+      ),
+      netAmount: serializer.fromJson<Decimal?>(json['netAmount']),
+      baseCurrencyAmount: serializer.fromJson<Decimal?>(
+        json['baseCurrencyAmount'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'simulationId': serializer.toJson<String>(simulationId),
+      'watchlistItemId': serializer.toJson<String>(watchlistItemId),
+      'symbol': serializer.toJson<String>(symbol),
+      'market': serializer.toJson<String>(market),
+      'source': serializer.toJson<String>(source),
+      'dataset': serializer.toJson<String>(dataset),
+      'sourceKey': serializer.toJson<String>(sourceKey),
+      'revisionHash': serializer.toJson<String>(revisionHash),
+      'kind': serializer.toJson<String>(kind),
+      'status': serializer.toJson<String>(status),
+      'paperState': serializer.toJson<String>(paperState),
+      'recordDate': serializer.toJson<DateTime?>(recordDate),
+      'exDate': serializer.toJson<DateTime?>(exDate),
+      'payDate': serializer.toJson<DateTime?>(payDate),
+      'currency': serializer.toJson<String>(currency),
+      'cashPerShare': serializer.toJson<Decimal>(cashPerShare),
+      'eligibleQuantity': serializer.toJson<Decimal?>(eligibleQuantity),
+      'grossAmount': serializer.toJson<Decimal?>(grossAmount),
+      'withholdingTaxAmount': serializer.toJson<Decimal?>(withholdingTaxAmount),
+      'netAmount': serializer.toJson<Decimal?>(netAmount),
+      'baseCurrencyAmount': serializer.toJson<Decimal?>(baseCurrencyAmount),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WatchlistSimulationActionEntryRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? simulationId,
+    String? watchlistItemId,
+    String? symbol,
+    String? market,
+    String? source,
+    String? dataset,
+    String? sourceKey,
+    String? revisionHash,
+    String? kind,
+    String? status,
+    String? paperState,
+    Value<DateTime?> recordDate = const Value.absent(),
+    Value<DateTime?> exDate = const Value.absent(),
+    Value<DateTime?> payDate = const Value.absent(),
+    String? currency,
+    Decimal? cashPerShare,
+    Value<Decimal?> eligibleQuantity = const Value.absent(),
+    Value<Decimal?> grossAmount = const Value.absent(),
+    Value<Decimal?> withholdingTaxAmount = const Value.absent(),
+    Value<Decimal?> netAmount = const Value.absent(),
+    Value<Decimal?> baseCurrencyAmount = const Value.absent(),
+    DateTime? createdAt,
+  }) => WatchlistSimulationActionEntryRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    simulationId: simulationId ?? this.simulationId,
+    watchlistItemId: watchlistItemId ?? this.watchlistItemId,
+    symbol: symbol ?? this.symbol,
+    market: market ?? this.market,
+    source: source ?? this.source,
+    dataset: dataset ?? this.dataset,
+    sourceKey: sourceKey ?? this.sourceKey,
+    revisionHash: revisionHash ?? this.revisionHash,
+    kind: kind ?? this.kind,
+    status: status ?? this.status,
+    paperState: paperState ?? this.paperState,
+    recordDate: recordDate.present ? recordDate.value : this.recordDate,
+    exDate: exDate.present ? exDate.value : this.exDate,
+    payDate: payDate.present ? payDate.value : this.payDate,
+    currency: currency ?? this.currency,
+    cashPerShare: cashPerShare ?? this.cashPerShare,
+    eligibleQuantity: eligibleQuantity.present
+        ? eligibleQuantity.value
+        : this.eligibleQuantity,
+    grossAmount: grossAmount.present ? grossAmount.value : this.grossAmount,
+    withholdingTaxAmount: withholdingTaxAmount.present
+        ? withholdingTaxAmount.value
+        : this.withholdingTaxAmount,
+    netAmount: netAmount.present ? netAmount.value : this.netAmount,
+    baseCurrencyAmount: baseCurrencyAmount.present
+        ? baseCurrencyAmount.value
+        : this.baseCurrencyAmount,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  WatchlistSimulationActionEntryRow copyWithCompanion(
+    WatchlistSimulationActionEntriesCompanion data,
+  ) {
+    return WatchlistSimulationActionEntryRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      simulationId: data.simulationId.present
+          ? data.simulationId.value
+          : this.simulationId,
+      watchlistItemId: data.watchlistItemId.present
+          ? data.watchlistItemId.value
+          : this.watchlistItemId,
+      symbol: data.symbol.present ? data.symbol.value : this.symbol,
+      market: data.market.present ? data.market.value : this.market,
+      source: data.source.present ? data.source.value : this.source,
+      dataset: data.dataset.present ? data.dataset.value : this.dataset,
+      sourceKey: data.sourceKey.present ? data.sourceKey.value : this.sourceKey,
+      revisionHash: data.revisionHash.present
+          ? data.revisionHash.value
+          : this.revisionHash,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      status: data.status.present ? data.status.value : this.status,
+      paperState: data.paperState.present
+          ? data.paperState.value
+          : this.paperState,
+      recordDate: data.recordDate.present
+          ? data.recordDate.value
+          : this.recordDate,
+      exDate: data.exDate.present ? data.exDate.value : this.exDate,
+      payDate: data.payDate.present ? data.payDate.value : this.payDate,
+      currency: data.currency.present ? data.currency.value : this.currency,
+      cashPerShare: data.cashPerShare.present
+          ? data.cashPerShare.value
+          : this.cashPerShare,
+      eligibleQuantity: data.eligibleQuantity.present
+          ? data.eligibleQuantity.value
+          : this.eligibleQuantity,
+      grossAmount: data.grossAmount.present
+          ? data.grossAmount.value
+          : this.grossAmount,
+      withholdingTaxAmount: data.withholdingTaxAmount.present
+          ? data.withholdingTaxAmount.value
+          : this.withholdingTaxAmount,
+      netAmount: data.netAmount.present ? data.netAmount.value : this.netAmount,
+      baseCurrencyAmount: data.baseCurrencyAmount.present
+          ? data.baseCurrencyAmount.value
+          : this.baseCurrencyAmount,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationActionEntryRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('watchlistItemId: $watchlistItemId, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('source: $source, ')
+          ..write('dataset: $dataset, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('revisionHash: $revisionHash, ')
+          ..write('kind: $kind, ')
+          ..write('status: $status, ')
+          ..write('paperState: $paperState, ')
+          ..write('recordDate: $recordDate, ')
+          ..write('exDate: $exDate, ')
+          ..write('payDate: $payDate, ')
+          ..write('currency: $currency, ')
+          ..write('cashPerShare: $cashPerShare, ')
+          ..write('eligibleQuantity: $eligibleQuantity, ')
+          ..write('grossAmount: $grossAmount, ')
+          ..write('withholdingTaxAmount: $withholdingTaxAmount, ')
+          ..write('netAmount: $netAmount, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    watchlistItemId,
+    symbol,
+    market,
+    source,
+    dataset,
+    sourceKey,
+    revisionHash,
+    kind,
+    status,
+    paperState,
+    recordDate,
+    exDate,
+    payDate,
+    currency,
+    cashPerShare,
+    eligibleQuantity,
+    grossAmount,
+    withholdingTaxAmount,
+    netAmount,
+    baseCurrencyAmount,
+    createdAt,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationActionEntryRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.simulationId == this.simulationId &&
+          other.watchlistItemId == this.watchlistItemId &&
+          other.symbol == this.symbol &&
+          other.market == this.market &&
+          other.source == this.source &&
+          other.dataset == this.dataset &&
+          other.sourceKey == this.sourceKey &&
+          other.revisionHash == this.revisionHash &&
+          other.kind == this.kind &&
+          other.status == this.status &&
+          other.paperState == this.paperState &&
+          other.recordDate == this.recordDate &&
+          other.exDate == this.exDate &&
+          other.payDate == this.payDate &&
+          other.currency == this.currency &&
+          other.cashPerShare == this.cashPerShare &&
+          other.eligibleQuantity == this.eligibleQuantity &&
+          other.grossAmount == this.grossAmount &&
+          other.withholdingTaxAmount == this.withholdingTaxAmount &&
+          other.netAmount == this.netAmount &&
+          other.baseCurrencyAmount == this.baseCurrencyAmount &&
+          other.createdAt == this.createdAt);
+}
+
+class WatchlistSimulationActionEntriesCompanion
+    extends UpdateCompanion<WatchlistSimulationActionEntryRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> simulationId;
+  final Value<String> watchlistItemId;
+  final Value<String> symbol;
+  final Value<String> market;
+  final Value<String> source;
+  final Value<String> dataset;
+  final Value<String> sourceKey;
+  final Value<String> revisionHash;
+  final Value<String> kind;
+  final Value<String> status;
+  final Value<String> paperState;
+  final Value<DateTime?> recordDate;
+  final Value<DateTime?> exDate;
+  final Value<DateTime?> payDate;
+  final Value<String> currency;
+  final Value<Decimal> cashPerShare;
+  final Value<Decimal?> eligibleQuantity;
+  final Value<Decimal?> grossAmount;
+  final Value<Decimal?> withholdingTaxAmount;
+  final Value<Decimal?> netAmount;
+  final Value<Decimal?> baseCurrencyAmount;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const WatchlistSimulationActionEntriesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.simulationId = const Value.absent(),
+    this.watchlistItemId = const Value.absent(),
+    this.symbol = const Value.absent(),
+    this.market = const Value.absent(),
+    this.source = const Value.absent(),
+    this.dataset = const Value.absent(),
+    this.sourceKey = const Value.absent(),
+    this.revisionHash = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.status = const Value.absent(),
+    this.paperState = const Value.absent(),
+    this.recordDate = const Value.absent(),
+    this.exDate = const Value.absent(),
+    this.payDate = const Value.absent(),
+    this.currency = const Value.absent(),
+    this.cashPerShare = const Value.absent(),
+    this.eligibleQuantity = const Value.absent(),
+    this.grossAmount = const Value.absent(),
+    this.withholdingTaxAmount = const Value.absent(),
+    this.netAmount = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationActionEntriesCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String simulationId,
+    required String watchlistItemId,
+    required String symbol,
+    required String market,
+    required String source,
+    required String dataset,
+    required String sourceKey,
+    required String revisionHash,
+    required String kind,
+    required String status,
+    this.paperState = const Value.absent(),
+    this.recordDate = const Value.absent(),
+    this.exDate = const Value.absent(),
+    this.payDate = const Value.absent(),
+    required String currency,
+    required Decimal cashPerShare,
+    this.eligibleQuantity = const Value.absent(),
+    this.grossAmount = const Value.absent(),
+    this.withholdingTaxAmount = const Value.absent(),
+    this.netAmount = const Value.absent(),
+    this.baseCurrencyAmount = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       simulationId = Value(simulationId),
+       watchlistItemId = Value(watchlistItemId),
+       symbol = Value(symbol),
+       market = Value(market),
+       source = Value(source),
+       dataset = Value(dataset),
+       sourceKey = Value(sourceKey),
+       revisionHash = Value(revisionHash),
+       kind = Value(kind),
+       status = Value(status),
+       currency = Value(currency),
+       cashPerShare = Value(cashPerShare),
+       createdAt = Value(createdAt);
+  static Insertable<WatchlistSimulationActionEntryRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? simulationId,
+    Expression<String>? watchlistItemId,
+    Expression<String>? symbol,
+    Expression<String>? market,
+    Expression<String>? source,
+    Expression<String>? dataset,
+    Expression<String>? sourceKey,
+    Expression<String>? revisionHash,
+    Expression<String>? kind,
+    Expression<String>? status,
+    Expression<String>? paperState,
+    Expression<DateTime>? recordDate,
+    Expression<DateTime>? exDate,
+    Expression<DateTime>? payDate,
+    Expression<String>? currency,
+    Expression<String>? cashPerShare,
+    Expression<String>? eligibleQuantity,
+    Expression<String>? grossAmount,
+    Expression<String>? withholdingTaxAmount,
+    Expression<String>? netAmount,
+    Expression<String>? baseCurrencyAmount,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (simulationId != null) 'simulation_id': simulationId,
+      if (watchlistItemId != null) 'watchlist_item_id': watchlistItemId,
+      if (symbol != null) 'symbol': symbol,
+      if (market != null) 'market': market,
+      if (source != null) 'source': source,
+      if (dataset != null) 'dataset': dataset,
+      if (sourceKey != null) 'source_key': sourceKey,
+      if (revisionHash != null) 'revision_hash': revisionHash,
+      if (kind != null) 'kind': kind,
+      if (status != null) 'status': status,
+      if (paperState != null) 'paper_state': paperState,
+      if (recordDate != null) 'record_date': recordDate,
+      if (exDate != null) 'ex_date': exDate,
+      if (payDate != null) 'pay_date': payDate,
+      if (currency != null) 'currency': currency,
+      if (cashPerShare != null) 'cash_per_share': cashPerShare,
+      if (eligibleQuantity != null) 'eligible_quantity': eligibleQuantity,
+      if (grossAmount != null) 'gross_amount': grossAmount,
+      if (withholdingTaxAmount != null)
+        'withholding_tax_amount': withholdingTaxAmount,
+      if (netAmount != null) 'net_amount': netAmount,
+      if (baseCurrencyAmount != null)
+        'base_currency_amount': baseCurrencyAmount,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationActionEntriesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? simulationId,
+    Value<String>? watchlistItemId,
+    Value<String>? symbol,
+    Value<String>? market,
+    Value<String>? source,
+    Value<String>? dataset,
+    Value<String>? sourceKey,
+    Value<String>? revisionHash,
+    Value<String>? kind,
+    Value<String>? status,
+    Value<String>? paperState,
+    Value<DateTime?>? recordDate,
+    Value<DateTime?>? exDate,
+    Value<DateTime?>? payDate,
+    Value<String>? currency,
+    Value<Decimal>? cashPerShare,
+    Value<Decimal?>? eligibleQuantity,
+    Value<Decimal?>? grossAmount,
+    Value<Decimal?>? withholdingTaxAmount,
+    Value<Decimal?>? netAmount,
+    Value<Decimal?>? baseCurrencyAmount,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationActionEntriesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      simulationId: simulationId ?? this.simulationId,
+      watchlistItemId: watchlistItemId ?? this.watchlistItemId,
+      symbol: symbol ?? this.symbol,
+      market: market ?? this.market,
+      source: source ?? this.source,
+      dataset: dataset ?? this.dataset,
+      sourceKey: sourceKey ?? this.sourceKey,
+      revisionHash: revisionHash ?? this.revisionHash,
+      kind: kind ?? this.kind,
+      status: status ?? this.status,
+      paperState: paperState ?? this.paperState,
+      recordDate: recordDate ?? this.recordDate,
+      exDate: exDate ?? this.exDate,
+      payDate: payDate ?? this.payDate,
+      currency: currency ?? this.currency,
+      cashPerShare: cashPerShare ?? this.cashPerShare,
+      eligibleQuantity: eligibleQuantity ?? this.eligibleQuantity,
+      grossAmount: grossAmount ?? this.grossAmount,
+      withholdingTaxAmount: withholdingTaxAmount ?? this.withholdingTaxAmount,
+      netAmount: netAmount ?? this.netAmount,
+      baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (simulationId.present) {
+      map['simulation_id'] = Variable<String>(simulationId.value);
+    }
+    if (watchlistItemId.present) {
+      map['watchlist_item_id'] = Variable<String>(watchlistItemId.value);
+    }
+    if (symbol.present) {
+      map['symbol'] = Variable<String>(symbol.value);
+    }
+    if (market.present) {
+      map['market'] = Variable<String>(market.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (dataset.present) {
+      map['dataset'] = Variable<String>(dataset.value);
+    }
+    if (sourceKey.present) {
+      map['source_key'] = Variable<String>(sourceKey.value);
+    }
+    if (revisionHash.present) {
+      map['revision_hash'] = Variable<String>(revisionHash.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (paperState.present) {
+      map['paper_state'] = Variable<String>(paperState.value);
+    }
+    if (recordDate.present) {
+      map['record_date'] = Variable<DateTime>(recordDate.value);
+    }
+    if (exDate.present) {
+      map['ex_date'] = Variable<DateTime>(exDate.value);
+    }
+    if (payDate.present) {
+      map['pay_date'] = Variable<DateTime>(payDate.value);
+    }
+    if (currency.present) {
+      map['currency'] = Variable<String>(currency.value);
+    }
+    if (cashPerShare.present) {
+      map['cash_per_share'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$convertercashPerShare.toSql(
+          cashPerShare.value,
+        ),
+      );
+    }
+    if (eligibleQuantity.present) {
+      map['eligible_quantity'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$convertereligibleQuantityn
+            .toSql(eligibleQuantity.value),
+      );
+    }
+    if (grossAmount.present) {
+      map['gross_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$convertergrossAmountn.toSql(
+          grossAmount.value,
+        ),
+      );
+    }
+    if (withholdingTaxAmount.present) {
+      map['withholding_tax_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterwithholdingTaxAmountn
+            .toSql(withholdingTaxAmount.value),
+      );
+    }
+    if (netAmount.present) {
+      map['net_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converternetAmountn.toSql(
+          netAmount.value,
+        ),
+      );
+    }
+    if (baseCurrencyAmount.present) {
+      map['base_currency_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterbaseCurrencyAmountn
+            .toSql(baseCurrencyAmount.value),
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationActionEntriesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('watchlistItemId: $watchlistItemId, ')
+          ..write('symbol: $symbol, ')
+          ..write('market: $market, ')
+          ..write('source: $source, ')
+          ..write('dataset: $dataset, ')
+          ..write('sourceKey: $sourceKey, ')
+          ..write('revisionHash: $revisionHash, ')
+          ..write('kind: $kind, ')
+          ..write('status: $status, ')
+          ..write('paperState: $paperState, ')
+          ..write('recordDate: $recordDate, ')
+          ..write('exDate: $exDate, ')
+          ..write('payDate: $payDate, ')
+          ..write('currency: $currency, ')
+          ..write('cashPerShare: $cashPerShare, ')
+          ..write('eligibleQuantity: $eligibleQuantity, ')
+          ..write('grossAmount: $grossAmount, ')
+          ..write('withholdingTaxAmount: $withholdingTaxAmount, ')
+          ..write('netAmount: $netAmount, ')
+          ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $WatchlistSimulationObservationsTable
     extends WatchlistSimulationObservations
     with
@@ -47569,6 +49174,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WatchlistSimulationsTable(this);
   late final $WatchlistSimulationPositionsTable watchlistSimulationPositions =
       $WatchlistSimulationPositionsTable(this);
+  late final $WatchlistSimulationActionEntriesTable
+  watchlistSimulationActionEntries = $WatchlistSimulationActionEntriesTable(
+    this,
+  );
   late final $WatchlistSimulationObservationsTable
   watchlistSimulationObservations = $WatchlistSimulationObservationsTable(this);
   @override
@@ -47632,6 +49241,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     watchlistCollectionMembers,
     watchlistSimulations,
     watchlistSimulationPositions,
+    watchlistSimulationActionEntries,
     watchlistSimulationObservations,
   ];
 }
@@ -69275,6 +70885,698 @@ typedef $$WatchlistSimulationPositionsTableProcessedTableManager =
       WatchlistSimulationPositionRow,
       PrefetchHooks Function()
     >;
+typedef $$WatchlistSimulationActionEntriesTableCreateCompanionBuilder =
+    WatchlistSimulationActionEntriesCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String simulationId,
+      required String watchlistItemId,
+      required String symbol,
+      required String market,
+      required String source,
+      required String dataset,
+      required String sourceKey,
+      required String revisionHash,
+      required String kind,
+      required String status,
+      Value<String> paperState,
+      Value<DateTime?> recordDate,
+      Value<DateTime?> exDate,
+      Value<DateTime?> payDate,
+      required String currency,
+      required Decimal cashPerShare,
+      Value<Decimal?> eligibleQuantity,
+      Value<Decimal?> grossAmount,
+      Value<Decimal?> withholdingTaxAmount,
+      Value<Decimal?> netAmount,
+      Value<Decimal?> baseCurrencyAmount,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationActionEntriesTableUpdateCompanionBuilder =
+    WatchlistSimulationActionEntriesCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> simulationId,
+      Value<String> watchlistItemId,
+      Value<String> symbol,
+      Value<String> market,
+      Value<String> source,
+      Value<String> dataset,
+      Value<String> sourceKey,
+      Value<String> revisionHash,
+      Value<String> kind,
+      Value<String> status,
+      Value<String> paperState,
+      Value<DateTime?> recordDate,
+      Value<DateTime?> exDate,
+      Value<DateTime?> payDate,
+      Value<String> currency,
+      Value<Decimal> cashPerShare,
+      Value<Decimal?> eligibleQuantity,
+      Value<Decimal?> grossAmount,
+      Value<Decimal?> withholdingTaxAmount,
+      Value<Decimal?> netAmount,
+      Value<Decimal?> baseCurrencyAmount,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationActionEntriesTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationActionEntriesTable> {
+  $$WatchlistSimulationActionEntriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dataset => $composableBuilder(
+    column: $table.dataset,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get revisionHash => $composableBuilder(
+    column: $table.revisionHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get paperState => $composableBuilder(
+    column: $table.paperState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordDate => $composableBuilder(
+    column: $table.recordDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get exDate => $composableBuilder(
+    column: $table.exDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get payDate => $composableBuilder(
+    column: $table.payDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal, Decimal, String> get cashPerShare =>
+      $composableBuilder(
+        column: $table.cashPerShare,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get eligibleQuantity => $composableBuilder(
+    column: $table.eligibleQuantity,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get grossAmount =>
+      $composableBuilder(
+        column: $table.grossAmount,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get withholdingTaxAmount => $composableBuilder(
+    column: $table.withholdingTaxAmount,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String> get netAmount =>
+      $composableBuilder(
+        column: $table.netAmount,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationActionEntriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationActionEntriesTable> {
+  $$WatchlistSimulationActionEntriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get symbol => $composableBuilder(
+    column: $table.symbol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get market => $composableBuilder(
+    column: $table.market,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dataset => $composableBuilder(
+    column: $table.dataset,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceKey => $composableBuilder(
+    column: $table.sourceKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get revisionHash => $composableBuilder(
+    column: $table.revisionHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get status => $composableBuilder(
+    column: $table.status,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paperState => $composableBuilder(
+    column: $table.paperState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordDate => $composableBuilder(
+    column: $table.recordDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get exDate => $composableBuilder(
+    column: $table.exDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get payDate => $composableBuilder(
+    column: $table.payDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get currency => $composableBuilder(
+    column: $table.currency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cashPerShare => $composableBuilder(
+    column: $table.cashPerShare,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get eligibleQuantity => $composableBuilder(
+    column: $table.eligibleQuantity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get grossAmount => $composableBuilder(
+    column: $table.grossAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get withholdingTaxAmount => $composableBuilder(
+    column: $table.withholdingTaxAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get netAmount => $composableBuilder(
+    column: $table.netAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get baseCurrencyAmount => $composableBuilder(
+    column: $table.baseCurrencyAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationActionEntriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationActionEntriesTable> {
+  $$WatchlistSimulationActionEntriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get watchlistItemId => $composableBuilder(
+    column: $table.watchlistItemId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get symbol =>
+      $composableBuilder(column: $table.symbol, builder: (column) => column);
+
+  GeneratedColumn<String> get market =>
+      $composableBuilder(column: $table.market, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get dataset =>
+      $composableBuilder(column: $table.dataset, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceKey =>
+      $composableBuilder(column: $table.sourceKey, builder: (column) => column);
+
+  GeneratedColumn<String> get revisionHash => $composableBuilder(
+    column: $table.revisionHash,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get paperState => $composableBuilder(
+    column: $table.paperState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get recordDate => $composableBuilder(
+    column: $table.recordDate,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get exDate =>
+      $composableBuilder(column: $table.exDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get payDate =>
+      $composableBuilder(column: $table.payDate, builder: (column) => column);
+
+  GeneratedColumn<String> get currency =>
+      $composableBuilder(column: $table.currency, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal, String> get cashPerShare =>
+      $composableBuilder(
+        column: $table.cashPerShare,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get eligibleQuantity =>
+      $composableBuilder(
+        column: $table.eligibleQuantity,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get grossAmount =>
+      $composableBuilder(
+        column: $table.grossAmount,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get withholdingTaxAmount =>
+      $composableBuilder(
+        column: $table.withholdingTaxAmount,
+        builder: (column) => column,
+      );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get netAmount =>
+      $composableBuilder(column: $table.netAmount, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get baseCurrencyAmount =>
+      $composableBuilder(
+        column: $table.baseCurrencyAmount,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationActionEntriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationActionEntriesTable,
+          WatchlistSimulationActionEntryRow,
+          $$WatchlistSimulationActionEntriesTableFilterComposer,
+          $$WatchlistSimulationActionEntriesTableOrderingComposer,
+          $$WatchlistSimulationActionEntriesTableAnnotationComposer,
+          $$WatchlistSimulationActionEntriesTableCreateCompanionBuilder,
+          $$WatchlistSimulationActionEntriesTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationActionEntryRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationActionEntriesTable,
+              WatchlistSimulationActionEntryRow
+            >,
+          ),
+          WatchlistSimulationActionEntryRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationActionEntriesTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationActionEntriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationActionEntriesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationActionEntriesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationActionEntriesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> simulationId = const Value.absent(),
+                Value<String> watchlistItemId = const Value.absent(),
+                Value<String> symbol = const Value.absent(),
+                Value<String> market = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> dataset = const Value.absent(),
+                Value<String> sourceKey = const Value.absent(),
+                Value<String> revisionHash = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<String> status = const Value.absent(),
+                Value<String> paperState = const Value.absent(),
+                Value<DateTime?> recordDate = const Value.absent(),
+                Value<DateTime?> exDate = const Value.absent(),
+                Value<DateTime?> payDate = const Value.absent(),
+                Value<String> currency = const Value.absent(),
+                Value<Decimal> cashPerShare = const Value.absent(),
+                Value<Decimal?> eligibleQuantity = const Value.absent(),
+                Value<Decimal?> grossAmount = const Value.absent(),
+                Value<Decimal?> withholdingTaxAmount = const Value.absent(),
+                Value<Decimal?> netAmount = const Value.absent(),
+                Value<Decimal?> baseCurrencyAmount = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationActionEntriesCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                watchlistItemId: watchlistItemId,
+                symbol: symbol,
+                market: market,
+                source: source,
+                dataset: dataset,
+                sourceKey: sourceKey,
+                revisionHash: revisionHash,
+                kind: kind,
+                status: status,
+                paperState: paperState,
+                recordDate: recordDate,
+                exDate: exDate,
+                payDate: payDate,
+                currency: currency,
+                cashPerShare: cashPerShare,
+                eligibleQuantity: eligibleQuantity,
+                grossAmount: grossAmount,
+                withholdingTaxAmount: withholdingTaxAmount,
+                netAmount: netAmount,
+                baseCurrencyAmount: baseCurrencyAmount,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String simulationId,
+                required String watchlistItemId,
+                required String symbol,
+                required String market,
+                required String source,
+                required String dataset,
+                required String sourceKey,
+                required String revisionHash,
+                required String kind,
+                required String status,
+                Value<String> paperState = const Value.absent(),
+                Value<DateTime?> recordDate = const Value.absent(),
+                Value<DateTime?> exDate = const Value.absent(),
+                Value<DateTime?> payDate = const Value.absent(),
+                required String currency,
+                required Decimal cashPerShare,
+                Value<Decimal?> eligibleQuantity = const Value.absent(),
+                Value<Decimal?> grossAmount = const Value.absent(),
+                Value<Decimal?> withholdingTaxAmount = const Value.absent(),
+                Value<Decimal?> netAmount = const Value.absent(),
+                Value<Decimal?> baseCurrencyAmount = const Value.absent(),
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationActionEntriesCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                watchlistItemId: watchlistItemId,
+                symbol: symbol,
+                market: market,
+                source: source,
+                dataset: dataset,
+                sourceKey: sourceKey,
+                revisionHash: revisionHash,
+                kind: kind,
+                status: status,
+                paperState: paperState,
+                recordDate: recordDate,
+                exDate: exDate,
+                payDate: payDate,
+                currency: currency,
+                cashPerShare: cashPerShare,
+                eligibleQuantity: eligibleQuantity,
+                grossAmount: grossAmount,
+                withholdingTaxAmount: withholdingTaxAmount,
+                netAmount: netAmount,
+                baseCurrencyAmount: baseCurrencyAmount,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationActionEntriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationActionEntriesTable,
+      WatchlistSimulationActionEntryRow,
+      $$WatchlistSimulationActionEntriesTableFilterComposer,
+      $$WatchlistSimulationActionEntriesTableOrderingComposer,
+      $$WatchlistSimulationActionEntriesTableAnnotationComposer,
+      $$WatchlistSimulationActionEntriesTableCreateCompanionBuilder,
+      $$WatchlistSimulationActionEntriesTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationActionEntryRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationActionEntriesTable,
+          WatchlistSimulationActionEntryRow
+        >,
+      ),
+      WatchlistSimulationActionEntryRow,
+      PrefetchHooks Function()
+    >;
 typedef $$WatchlistSimulationObservationsTableCreateCompanionBuilder =
     WatchlistSimulationObservationsCompanion Function({
       required String id,
@@ -69796,6 +72098,12 @@ class $AppDatabaseManager {
       $$WatchlistSimulationPositionsTableTableManager(
         _db,
         _db.watchlistSimulationPositions,
+      );
+  $$WatchlistSimulationActionEntriesTableTableManager
+  get watchlistSimulationActionEntries =>
+      $$WatchlistSimulationActionEntriesTableTableManager(
+        _db,
+        _db.watchlistSimulationActionEntries,
       );
   $$WatchlistSimulationObservationsTableTableManager
   get watchlistSimulationObservations =>

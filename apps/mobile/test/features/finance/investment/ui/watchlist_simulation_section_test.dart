@@ -12,6 +12,7 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_simulation
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_simulation_section.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -86,6 +87,33 @@ final _snapshot = WatchlistQuoteSnapshot(
     source: 'test',
     fetchedAt: DateTime.utc(2026, 8, 31, 2),
   ),
+);
+
+final _dividendReference = WatchlistSimulationActionEntry(
+  id: 'action-dividend',
+  simulationId: _simulation.id,
+  watchlistItemId: _item.id,
+  symbol: 'AAPL',
+  market: AssetMarket.usStock.wire,
+  source: 'test',
+  dataset: 'fixture',
+  sourceKey: 'AAPL:dividend:1',
+  revisionHash: 'revision-1',
+  kind: MarketCorporateActionKind.distribution,
+  status: MarketCorporateActionStatus.implemented,
+  paperState: WatchlistSimulationPaperActionState.referenceOnly,
+  recordDate: DateTime.utc(2026, 9, 10),
+  exDate: DateTime.utc(2026, 9, 11),
+  payDate: DateTime.utc(2026, 9, 12),
+  currency: 'USD',
+  cashPerShare: Decimal.parse('0.25'),
+  eligibleQuantity: null,
+  grossAmount: null,
+  withholdingTaxAmount: null,
+  netAmount: null,
+  baseCurrencyAmount: null,
+  createdAt: DateTime.utc(2026, 9, 1),
+  sync: _sync,
 );
 
 final _observations = [
@@ -197,6 +225,27 @@ void main() {
     expect(find.byIcon(FLucideIcons.trash2), findsOneWidget);
   });
 
+  testWidgets('shows automatically recorded dividend references', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        actionEntries: [_dividendReference],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recorded dividends'), findsOneWidget);
+    expect(find.text(r'$0.25 per share'), findsOneWidget);
+    expect(
+      find.textContaining('quantity, tax, cash and NAV are not inferred'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('shows localized stock names beside simulation symbols', (
     tester,
   ) async {
@@ -219,6 +268,7 @@ Widget _wrap({
   required List<WatchlistSimulation> simulations,
   required List<WatchlistSimulationPosition> positions,
   WatchlistItem? item,
+  List<WatchlistSimulationActionEntry> actionEntries = const [],
 }) {
   return ProviderScope(
     overrides: [
@@ -231,6 +281,16 @@ Widget _wrap({
       ),
       watchlistSimulationObservationsProvider.overrideWith(
         (_, _) => Stream.value(_observations),
+      ),
+      watchlistSimulationActionEntriesProvider.overrideWith(
+        (_, _) => Stream.value(actionEntries),
+      ),
+      watchlistSimulationActionReconciliationProvider.overrideWith(
+        (_, _) async => const WatchlistSimulationActionReconciliation(
+          materializedCount: 0,
+          failedSymbolCount: 0,
+          unsupportedSymbolCount: 0,
+        ),
       ),
       watchlistSimulationObservationRecorderProvider.overrideWithValue(
         (_) async {},

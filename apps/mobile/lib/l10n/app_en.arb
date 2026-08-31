@@ -6120,6 +6120,17 @@
   "@watchlistSimulationHistoryBaselineOnly": { "description": "Explanation shown while only the simulation baseline exists" },
   "watchlistSimulationHistoryDisclaimer": "Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.",
   "@watchlistSimulationHistoryDisclaimer": { "description": "Scope disclosure below the paper simulation observation chart" },
+  "watchlistSimulationDividendRecordsTitle": "Recorded dividends",
+  "@watchlistSimulationDividendRecordsTitle": { "description": "Title for automatically recorded paper dividend references" },
+  "watchlistSimulationDividendPerShare": "{amount} per share",
+  "@watchlistSimulationDividendPerShare": {
+    "description": "Per-share dividend amount in a paper simulation",
+    "placeholders": { "amount": { "type": "String" } }
+  },
+  "watchlistSimulationDividendCancelled": "Cancelled",
+  "@watchlistSimulationDividendCancelled": { "description": "Status for a cancelled paper dividend reference" },
+  "watchlistSimulationDividendReferenceNote": "Reference only — quantity, tax, cash and NAV are not inferred from target weights.",
+  "@watchlistSimulationDividendReferenceNote": { "description": "Disclosure for paper dividend references without holdings entitlement" },
   "watchlistSimulationCreateTitle": "Create paper simulation",
   "@watchlistSimulationCreateTitle": { "description": "Paper simulation creation sheet title" },
   "watchlistSimulationNameField": "Simulation name",
@@ -6164,7 +6175,7 @@
     "description": "Paper simulation delete confirmation title",
     "placeholders": { "name": { "type": "String" } }
   },
-  "watchlistSimulationDeleteBody": "Only this paper scenario and its virtual weights will be removed.",
+  "watchlistSimulationDeleteBody": "Only this paper scenario, its virtual weights, observations, and recorded dividend references will be removed.",
   "@watchlistSimulationDeleteBody": { "description": "Paper simulation delete confirmation body" },
   "watchlistSimulationSaveFailed": "Could not save the simulation",
   "@watchlistSimulationSaveFailed": { "description": "Paper simulation save failure" },

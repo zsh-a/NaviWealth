@@ -110,6 +110,52 @@ class WatchlistSimulationPositions extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Synced paper-only corporate-action references for a watchlist simulation.
+///
+/// These rows preserve provider identity and revisions but deliberately do not
+/// represent real holdings, receivables, cash, journal entries, or postings.
+/// Until a holdings-based simulation captures eligible quantity, entries stay
+/// `referenceOnly` and must not affect the observation curve or NAV.
+@DataClassName('WatchlistSimulationActionEntryRow')
+class WatchlistSimulationActionEntries extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get simulationId => text()();
+  TextColumn get watchlistItemId => text()();
+  TextColumn get symbol => text()();
+  TextColumn get market => text()();
+  TextColumn get source => text()();
+  TextColumn get dataset => text()();
+  TextColumn get sourceKey => text()();
+  TextColumn get revisionHash => text()();
+  TextColumn get kind => text()();
+  TextColumn get status => text()();
+  TextColumn get paperState =>
+      text().withDefault(const Constant('referenceOnly'))();
+  DateTimeColumn get recordDate => dateTime().nullable()();
+  DateTimeColumn get exDate => dateTime().nullable()();
+  DateTimeColumn get payDate => dateTime().nullable()();
+  TextColumn get currency => text().withLength(min: 3, max: 8)();
+  TextColumn get cashPerShare => text().map(const DecimalConverter())();
+  TextColumn get eligibleQuantity =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get grossAmount =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get withholdingTaxAmount =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get netAmount => text().map(const DecimalConverter()).nullable()();
+  TextColumn get baseCurrencyAmount =>
+      text().map(const DecimalConverter()).nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => [
+    'UNIQUE(owner_user_id, simulation_id, source, dataset, source_key, kind)',
+  ];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 /// Daily, device-local observations for a paper watchlist simulation.
 ///
 /// Unlike the simulation definition and target weights, these rows are a

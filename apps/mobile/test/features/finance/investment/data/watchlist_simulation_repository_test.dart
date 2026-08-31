@@ -2,10 +2,35 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '../../../../core/sync/_outbox_test_ext.dart';
 import '../../data/repositories/_stub_stamper.dart';
+
+MarketCorporateAction _dividend({
+  required String revisionHash,
+  required String cashPerShare,
+  MarketCorporateActionStatus status = MarketCorporateActionStatus.implemented,
+  String sourceKey = '600519:2024-12-31',
+}) => MarketCorporateAction(
+  id: 'eastmoney:RPT_SHAREBONUS_DET:$sourceKey',
+  source: 'eastmoney',
+  dataset: 'RPT_SHAREBONUS_DET',
+  sourceKey: sourceKey,
+  revisionHash: revisionHash,
+  identityStrength: MarketCorporateActionIdentityStrength.strong,
+  symbol: '600519',
+  market: AssetMarket.cnA,
+  kind: MarketCorporateActionKind.distribution,
+  status: status,
+  recordDate: DateTime.utc(2024, 6, 20),
+  exDate: DateTime.utc(2024, 6, 21),
+  payDate: DateTime.utc(2024, 6, 21),
+  currency: 'CNY',
+  cashPerShare: Decimal.parse(cashPerShare),
+);
 
 void main() {
   test(
@@ -167,6 +192,165 @@ void main() {
       expect(observations[1].projectedValue, Decimal.parse('1200.0'));
       expect(observations[2].projectedValue, Decimal.parse('1080.00'));
       expect(outbox.queued, hasLength(queuedBeforeObservations));
+    },
+  );
+
+  test(
+    'materializes implemented dividends idempotently and applies revisions',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'A-share income references',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('100000'),
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+      outbox.clearQueued();
+
+      final first = await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'revision-1', cashPerShare: '2.5'),
+          ],
+        },
+      );
+      final duplicate = await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'revision-1', cashPerShare: '2.5'),
+          ],
+        },
+      );
+      final revised = await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'revision-2', cashPerShare: '3.0'),
+          ],
+        },
+      );
+
+      expect(first, hasLength(1));
+      expect(duplicate, isEmpty);
+      expect(revised.single.id, first.single.id);
+      final records = await repository
+          .watchActionEntries(
+            ownerUserId: 'u-test',
+            simulationId: simulation.id,
+          )
+          .first;
+      expect(records, hasLength(1));
+      expect(records.single.revisionHash, 'revision-2');
+      expect(records.single.cashPerShare, Decimal.parse('3.0'));
+      expect(records.single.isReferenceOnly, isTrue);
+      expect(records.single.eligibleQuantity, isNull);
+      expect(records.single.grossAmount, isNull);
+      expect(records.single.withholdingTaxAmount, isNull);
+      expect(records.single.netAmount, isNull);
+      expect(records.single.baseCurrencyAmount, isNull);
+      expect(outbox.queued, hasLength(2));
+      expect(
+        outbox.queued.map((item) => item.table),
+        everyElement(WatchlistSimulationRepository.actionEntriesTable),
+      );
+
+      for (final table in const [
+        'investment_portfolios',
+        'accounts',
+        'journal_entries',
+        'postings',
+      ]) {
+        final count = await db
+            .customSelect('SELECT COUNT(*) AS count FROM $table')
+            .getSingle();
+        expect(count.read<int>('count'), 0, reason: table);
+      }
+    },
+  );
+
+  test(
+    'records cancellation revisions but ignores new unimplemented plans',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'Cancellation references',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('100000'),
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'revision-1', cashPerShare: '2.5'),
+            _dividend(
+              revisionHash: 'proposal',
+              cashPerShare: '1.0',
+              status: MarketCorporateActionStatus.proposed,
+              sourceKey: '600519:2025-03-31',
+            ),
+          ],
+        },
+      );
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(
+              revisionHash: 'revision-cancelled',
+              cashPerShare: '2.5',
+              status: MarketCorporateActionStatus.cancelled,
+            ),
+          ],
+        },
+      );
+
+      final records = await repository
+          .watchActionEntries(
+            ownerUserId: 'u-test',
+            simulationId: simulation.id,
+          )
+          .first;
+      expect(records, hasLength(1));
+      expect(records.single.status, MarketCorporateActionStatus.cancelled);
+      expect(records.single.revisionHash, 'revision-cancelled');
+
+      outbox.clearQueued();
+      await repository.delete(simulation);
+      expect(
+        await repository
+            .watchActionEntries(
+              ownerUserId: 'u-test',
+              simulationId: simulation.id,
+            )
+            .first,
+        isEmpty,
+      );
+      expect(
+        outbox.queued.map((item) => item.table),
+        contains(WatchlistSimulationRepository.actionEntriesTable),
+      );
     },
   );
 

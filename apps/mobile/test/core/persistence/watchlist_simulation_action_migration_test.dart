@@ -7,9 +7,9 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 void main() {
-  test('v86 adds local-only corporate-action cache tables', () async {
+  test('v87 adds synced paper-only simulation action entries', () async {
     final dir = await Directory.systemTemp.createTemp(
-      'naviwealth-corporate-action-cache-v86-',
+      'naviwealth-simulation-actions-v87-',
     );
     addTearDown(() async {
       if (await dir.exists()) await dir.delete(recursive: true);
@@ -17,7 +17,7 @@ void main() {
     final file = File('${dir.path}/naviwealth.db');
     final legacy = sqlite3.sqlite3.open(file.path);
     try {
-      legacy.execute('PRAGMA user_version = 85');
+      legacy.execute('PRAGMA user_version = 86');
     } finally {
       legacy.close();
     }
@@ -27,53 +27,33 @@ void main() {
     );
     addTearDown(db.close);
 
-    final candidates = await db
-        .customSelect('PRAGMA table_info(market_corporate_action_candidates)')
+    final columns = await db
+        .customSelect('PRAGMA table_info(watchlist_simulation_action_entries)')
         .get();
-    final candidateColumns = candidates
-        .map((row) => row.read<String>('name'))
-        .toSet();
+    final names = columns.map((row) => row.read<String>('name')).toSet();
     expect(
-      candidateColumns,
+      names,
       containsAll([
         'id',
+        'owner_user_id',
+        'hlc',
+        'deleted_at',
+        'simulation_id',
+        'watchlist_item_id',
         'source',
         'dataset',
         'source_key',
         'revision_hash',
-        'identity_strength',
-        'symbol',
-        'market',
-        'kind',
-        'status',
         'record_date',
         'ex_date',
         'pay_date',
+        'currency',
         'cash_per_share',
-        'fetched_at',
-      ]),
-    );
-    expect(
-      candidateColumns.intersection({
-        'owner_user_id',
-        'hlc',
-        'updated_by_device',
-        'deleted_at',
-      }),
-      isEmpty,
-    );
-
-    final states = await db
-        .customSelect('PRAGMA table_info(market_corporate_action_fetch_states)')
-        .get();
-    expect(
-      states.map((row) => row.read<String>('name')),
-      containsAll([
-        'market',
-        'symbol',
-        'provider',
-        'disposition',
-        'fetched_at',
+        'eligible_quantity',
+        'gross_amount',
+        'withholding_tax_amount',
+        'net_amount',
+        'base_currency_amount',
       ]),
     );
 

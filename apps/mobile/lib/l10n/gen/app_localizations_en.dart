@@ -11191,6 +11191,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.';
 
   @override
+  String get watchlistSimulationDividendRecordsTitle => 'Recorded dividends';
+
+  @override
+  String watchlistSimulationDividendPerShare(String amount) {
+    return '$amount per share';
+  }
+
+  @override
+  String get watchlistSimulationDividendCancelled => 'Cancelled';
+
+  @override
+  String get watchlistSimulationDividendReferenceNote =>
+      'Reference only — quantity, tax, cash and NAV are not inferred from target weights.';
+
+  @override
   String get watchlistSimulationCreateTitle => 'Create paper simulation';
 
   @override
@@ -11251,7 +11266,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSimulationDeleteBody =>
-      'Only this paper scenario and its virtual weights will be removed.';
+      'Only this paper scenario, its virtual weights, observations, and recorded dividend references will be removed.';
 
   @override
   String get watchlistSimulationSaveFailed => 'Could not save the simulation';

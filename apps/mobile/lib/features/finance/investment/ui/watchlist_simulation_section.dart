@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_repository
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
 import 'package:naviwealth/features/finance/investment/domain/watchlist_simulation_projection.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class WatchlistSimulationSection extends ConsumerWidget {
@@ -335,6 +336,8 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
             observedAt: latestQuoteAt,
           ),
           const SizedBox(height: AppSpacing.s10),
+          _WatchlistSimulationDividendRecords(simulation: simulation),
+          const SizedBox(height: AppSpacing.s10),
           const AppDivider(horizontalPadding: 0),
           const SizedBox(height: AppSpacing.s10),
           for (var index = 0; index < positions.length; index++) ...[
@@ -373,6 +376,131 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WatchlistSimulationDividendRecords extends ConsumerWidget {
+  const _WatchlistSimulationDividendRecords({required this.simulation});
+
+  final WatchlistSimulation simulation;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reconciliation = ref.watch(
+      watchlistSimulationActionReconciliationProvider(simulation.id),
+    );
+    final entries = ref.watch(
+      watchlistSimulationActionEntriesProvider(simulation.id),
+    );
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    return entries.whenOrLoading(
+      context: context,
+      loading: () => reconciliation.isLoading
+          ? const SizedBox(
+              height: 32,
+              child: Center(child: FCircularProgress()),
+            )
+          : const SizedBox.shrink(),
+      error: (_, _) => Align(
+        alignment: Alignment.centerLeft,
+        child: FButton(
+          variant: FButtonVariant.outline,
+          onPress: () {
+            ref
+              ..invalidate(
+                watchlistSimulationActionEntriesProvider(simulation.id),
+              )
+              ..invalidate(
+                watchlistSimulationActionReconciliationProvider(simulation.id),
+              );
+          },
+          child: Text(l10n.commonRetry),
+        ),
+      ),
+      data: (records) {
+        if (records.isEmpty) {
+          if (!reconciliation.hasError) return const SizedBox.shrink();
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => ref.invalidate(
+                watchlistSimulationActionReconciliationProvider(simulation.id),
+              ),
+              child: Text(l10n.commonRetry),
+            ),
+          );
+        }
+        final sorted = records.toList()
+          ..sort((left, right) {
+            final leftDate = left.payDate ?? left.exDate ?? left.recordDate;
+            final rightDate = right.payDate ?? right.exDate ?? right.recordDate;
+            if (leftDate == null) return rightDate == null ? 0 : 1;
+            if (rightDate == null) return -1;
+            return rightDate.compareTo(leftDate);
+          });
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              l10n.watchlistSimulationDividendRecordsTitle,
+              style: context.labelStyle,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            for (var index = 0; index < sorted.length; index++) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      _paperDividendLabel(
+                        formatters,
+                        sorted[index],
+                        cancelledLabel:
+                            l10n.watchlistSimulationDividendCancelled,
+                      ),
+                      style: context.captionStyle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Text(
+                    l10n.watchlistSimulationDividendPerShare(
+                      formatters.currency(
+                        sorted[index].cashPerShare,
+                        code: sorted[index].currency,
+                      ),
+                    ),
+                    style: context.captionStyle,
+                  ),
+                ],
+              ),
+              if (index != sorted.length - 1)
+                const SizedBox(height: AppSpacing.s4),
+            ],
+            const SizedBox(height: AppSpacing.s6),
+            Text(
+              l10n.watchlistSimulationDividendReferenceNote,
+              style: context.captionStyle,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+String _paperDividendLabel(
+  AppFormatters formatters,
+  WatchlistSimulationActionEntry entry, {
+  required String cancelledLabel,
+}) {
+  final date = entry.payDate ?? entry.exDate ?? entry.recordDate;
+  final parts = <String>[entry.symbol];
+  if (date != null) parts.add(formatters.date(date));
+  if (entry.status == MarketCorporateActionStatus.cancelled) {
+    parts.add(cancelledLabel);
+  }
+  return parts.join(' · ');
 }
 
 class _WatchlistSimulationHistory extends ConsumerStatefulWidget {

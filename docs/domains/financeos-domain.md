@@ -76,6 +76,16 @@ or write `InvestmentPortfolio`, accounts, lots, journal entries, postings, or
 trade execution state. Virtual capital and target weights use `Decimal`; both
 tables sync under `fin:` and participate in encrypted backup.
 
+Implemented provider dividends may also materialize automatically as synced
+`watchlist_simulation_action_entries`. These rows preserve the provider source
+key, revision hash, dates, currency, and per-share `Decimal` terms. They remain
+paper-only and `referenceOnly`: eligible quantity, gross/net cash, withholding
+tax, base-currency value, and NAV application stay null until a holdings-based
+simulation can establish record-date entitlement. Provider cancellation or
+revision updates the same deterministic paper row; disappearance from a feed
+does not delete history. No materialization path may write real investment or
+ledger tables.
+
 The current projection applies available point-in-time daily percentage moves
 to virtual target weights. Missing quotes reduce priced coverage. A local-only
 `watchlist_simulation_observations` read model records the creation baseline

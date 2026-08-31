@@ -125,6 +125,7 @@ final class AppDatabaseTransactionScope {
     WatchlistCollectionMembers,
     WatchlistSimulations,
     WatchlistSimulationPositions,
+    WatchlistSimulationActionEntries,
     WatchlistSimulationObservations,
   ],
 )
@@ -153,7 +154,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 86;
+  int get schemaVersion => 87;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1078,6 +1079,13 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(marketCorporateActionCandidates);
         await m.createTable(marketCorporateActionFetchStates);
         await _createMarketCorporateActionIndexes(this);
+      }
+      // v86 -> v87: synced paper-only action references for simulations.
+      // Values remain per-share references until a future holdings-based model
+      // can establish eligible quantity; they never write the real ledger.
+      if (from < 87) {
+        await m.createTable(watchlistSimulationActionEntries);
+        await _createWatchlistIndexes(this);
       }
     },
     beforeOpen: (details) async {

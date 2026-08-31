@@ -199,9 +199,41 @@ void main() {
         deleted: false,
         deviceId: _devA,
       ),
+      RowChange(
+        table: prefixFinanceTable('watchlist_simulation_action_entries'),
+        id: 'action-1',
+        payload: <String, Object?>{
+          'id': 'action-1',
+          'simulation_id': 'simulation-1',
+          'watchlist_item_id': 'us_stock:AAPL',
+          'symbol': 'AAPL',
+          'market': 'us_stock',
+          'source': 'yfinance',
+          'dataset': 'chart',
+          'source_key': 'AAPL:dividend:1',
+          'revision_hash': 'revision-1',
+          'kind': 'distribution',
+          'status': 'implemented',
+          'paper_state': 'referenceOnly',
+          'record_date': 1_700_086_400,
+          'ex_date': 1_700_172_800,
+          'pay_date': 1_700_259_200,
+          'currency': 'USD',
+          'cash_per_share': '0.25',
+          'created_at': 1_700_000_000,
+          'owner_user_id': _user,
+          'updated_at': 1_700_000_000,
+          'updated_by_device': _devA,
+          'hlc': version,
+          'deleted_at': null,
+        },
+        version: version,
+        deleted: false,
+        deviceId: _devA,
+      ),
     ]);
 
-    expect(written, 2);
+    expect(written, 3);
     final simulation = await (db.select(
       db.watchlistSimulations,
     )..where((t) => t.id.equals('simulation-1'))).getSingle();
@@ -210,8 +242,14 @@ void main() {
     )..where((t) => t.id.equals('position-1'))).getSingle();
     expect(simulation.collectionId, 'collection-growth');
     expect(simulation.startingCapital.toString(), '100000');
+    final action = await (db.select(
+      db.watchlistSimulationActionEntries,
+    )..where((t) => t.id.equals('action-1'))).getSingle();
     expect(position.watchlistItemId, 'us_stock:AAPL');
     expect(position.targetWeight.toString(), '0.8');
+    expect(action.revisionHash, 'revision-1');
+    expect(action.cashPerShare.toString(), '0.25');
+    expect(action.eligibleQuantity, isNull);
   });
 
   test('skips rows that are not syncable tables', () async {

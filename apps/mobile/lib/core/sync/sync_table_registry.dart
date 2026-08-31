@@ -156,6 +156,10 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kFinanceDomainPrefix,
   ),
   SyncTableRegistration(
+    'watchlist_simulation_action_entries',
+    domainPrefix: kFinanceDomainPrefix,
+  ),
+  SyncTableRegistration(
     'options_strategy_profile',
     domainPrefix: kFinanceDomainPrefix,
     primaryKey: 'user_id',

@@ -10602,6 +10602,21 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅为每日观察曲线，不是历史净值或真实收益。同日刷新会覆盖当日记录，调仓仅影响后续观察值。';
 
   @override
+  String get watchlistSimulationDividendRecordsTitle => '已记录股息';
+
+  @override
+  String watchlistSimulationDividendPerShare(String amount) {
+    return '每股 $amount';
+  }
+
+  @override
+  String get watchlistSimulationDividendCancelled => '已取消';
+
+  @override
+  String get watchlistSimulationDividendReferenceNote =>
+      '仅作参考——不会根据目标权重推断持仓数量、税费、现金或净值。';
+
+  @override
   String get watchlistSimulationCreateTitle => '创建模拟组合';
 
   @override
@@ -10654,7 +10669,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get watchlistSimulationDeleteBody => '仅会移除此模拟情景及其虚拟权重。';
+  String get watchlistSimulationDeleteBody => '仅会移除此模拟情景、虚拟权重、观察记录和已记录的股息参考。';
 
   @override
   String get watchlistSimulationSaveFailed => '无法保存模拟组合';

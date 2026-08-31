@@ -7,6 +7,8 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 import 'package:uuid/uuid.dart';
 
 const _uuid = Uuid();
@@ -53,6 +55,70 @@ class WatchlistSimulationPosition {
   final SyncMeta sync;
 }
 
+enum WatchlistSimulationPaperActionState { referenceOnly }
+
+class WatchlistSimulationActionEntry {
+  const WatchlistSimulationActionEntry({
+    required this.id,
+    required this.simulationId,
+    required this.watchlistItemId,
+    required this.symbol,
+    required this.market,
+    required this.source,
+    required this.dataset,
+    required this.sourceKey,
+    required this.revisionHash,
+    required this.kind,
+    required this.status,
+    required this.paperState,
+    required this.recordDate,
+    required this.exDate,
+    required this.payDate,
+    required this.currency,
+    required this.cashPerShare,
+    required this.eligibleQuantity,
+    required this.grossAmount,
+    required this.withholdingTaxAmount,
+    required this.netAmount,
+    required this.baseCurrencyAmount,
+    required this.createdAt,
+    required this.sync,
+  });
+
+  final String id;
+  final String simulationId;
+  final String watchlistItemId;
+  final String symbol;
+  final String market;
+  final String source;
+  final String dataset;
+  final String sourceKey;
+  final String revisionHash;
+  final MarketCorporateActionKind kind;
+  final MarketCorporateActionStatus status;
+  final WatchlistSimulationPaperActionState paperState;
+  final DateTime? recordDate;
+  final DateTime? exDate;
+  final DateTime? payDate;
+  final String currency;
+  final Decimal cashPerShare;
+  final Decimal? eligibleQuantity;
+  final Decimal? grossAmount;
+  final Decimal? withholdingTaxAmount;
+  final Decimal? netAmount;
+  final Decimal? baseCurrencyAmount;
+  final DateTime createdAt;
+  final SyncMeta sync;
+
+  bool get isReferenceOnly =>
+      paperState == WatchlistSimulationPaperActionState.referenceOnly &&
+      eligibleQuantity == null &&
+      grossAmount == null &&
+      withholdingTaxAmount == null &&
+      netAmount == null &&
+      baseCurrencyAmount == null;
+}
+
 class WatchlistSimulationObservation {
   const WatchlistSimulationObservation({
     required this.id,
@@ -79,8 +145,9 @@ class WatchlistSimulationObservation {
 ///
 /// This repository intentionally has no dependency on the real investment
 /// portfolio, lots, accounts, journal entries, or postings. Every mutation is
-/// confined to the `watchlist_simulation*` row families; observations remain
-/// derived and local-only while simulation inputs use the sync outbox.
+/// confined to the `watchlist_simulation*` row families. Definitions, target
+/// weights, and paper action references use Sync v3; observations remain a
+/// derived device-local read model.
 class WatchlistSimulationRepository {
   WatchlistSimulationRepository({
     required AppDatabase db,
@@ -92,6 +159,7 @@ class WatchlistSimulationRepository {
 
   static const simulationsTable = 'watchlist_simulations';
   static const positionsTable = 'watchlist_simulation_positions';
+  static const actionEntriesTable = 'watchlist_simulation_action_entries';
 
   final AppDatabase _db;
   final OutboxStore _outbox;
@@ -118,6 +186,20 @@ class WatchlistSimulationRepository {
       ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]);
     return query.watch().map(
       (rows) => rows.map(_positionFromRow).toList(growable: false),
+    );
+  }
+
+  Stream<List<WatchlistSimulationActionEntry>> watchActionEntries({
+    required String ownerUserId,
+    required String simulationId,
+  }) {
+    final query = _db.select(_db.watchlistSimulationActionEntries)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.simulationId.equals(simulationId))
+      ..where((t) => t.deletedAt.isNull())
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return query.watch().map(
+      (rows) => rows.map(_actionEntryFromRow).toList(growable: false),
     );
   }
 
@@ -319,6 +401,153 @@ class WatchlistSimulationRepository {
     return result;
   }
 
+  /// Materializes implemented dividend terms as synced paper references.
+  ///
+  /// New rows require an implemented action whose best entitlement date is on
+  /// or after the simulation baseline. Existing deterministic rows may be
+  /// revised or cancelled. All money totals remain null because the legacy
+  /// weight-only simulation cannot establish record-date quantity.
+  Future<List<WatchlistSimulationActionEntry>> materializeDividendReferences({
+    required WatchlistSimulation simulation,
+    required Map<String, Iterable<MarketCorporateAction>>
+    actionsByWatchlistItemId,
+  }) async {
+    if (actionsByWatchlistItemId.isEmpty) return const [];
+    final stamp = await _stamper.stamp();
+    final materialized = <WatchlistSimulationActionEntry>[];
+    await _db.transaction(() async {
+      final activeSimulation =
+          await (_db.select(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (activeSimulation == null) {
+        throw StateError('Watchlist simulation is not active.');
+      }
+      final activePositions =
+          await (_db.select(_db.watchlistSimulationPositions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      final activeItemIds = activePositions
+          .map((row) => row.watchlistItemId)
+          .toSet();
+
+      for (final entry in actionsByWatchlistItemId.entries) {
+        if (!activeItemIds.contains(entry.key)) continue;
+        for (final action in entry.value) {
+          final expectedItemId =
+              '${action.market.wire}:${action.symbol.toUpperCase()}';
+          if (entry.key != expectedItemId ||
+              action.kind != MarketCorporateActionKind.distribution ||
+              !action.hasCashDistribution ||
+              action.currency == null) {
+            continue;
+          }
+          final id = _actionEntryId(
+            simulationId: simulation.id,
+            action: action,
+          );
+          final existing =
+              await (_db.select(_db.watchlistSimulationActionEntries)..where(
+                    (t) =>
+                        t.id.equals(id) &
+                        t.ownerUserId.equals(stamp.ownerUserId),
+                  ))
+                  .getSingleOrNull();
+          if (existing == null) {
+            final entitlementDate =
+                action.recordDate ?? action.exDate ?? action.payDate;
+            if (action.status != MarketCorporateActionStatus.implemented ||
+                entitlementDate == null ||
+                entitlementDate.isBefore(activeSimulation.baselineAt)) {
+              continue;
+            }
+          } else {
+            if (existing.paperState !=
+                WatchlistSimulationPaperActionState.referenceOnly.name) {
+              continue;
+            }
+            if (_actionEntryMatches(existing, entry.key, action)) continue;
+          }
+          final createdAt = existing?.createdAt ?? stamp.now;
+          await _db
+              .into(_db.watchlistSimulationActionEntries)
+              .insertOnConflictUpdate(
+                WatchlistSimulationActionEntriesCompanion.insert(
+                  id: id,
+                  simulationId: simulation.id,
+                  watchlistItemId: entry.key,
+                  symbol: action.symbol,
+                  market: action.market.wire,
+                  source: action.source,
+                  dataset: action.dataset,
+                  sourceKey: action.sourceKey,
+                  revisionHash: action.revisionHash,
+                  kind: action.kind.name,
+                  status: action.status.name,
+                  paperState: Value(
+                    WatchlistSimulationPaperActionState.referenceOnly.name,
+                  ),
+                  recordDate: Value(action.recordDate?.toUtc()),
+                  exDate: Value(action.exDate?.toUtc()),
+                  payDate: Value(action.payDate?.toUtc()),
+                  currency: action.currency!,
+                  cashPerShare: action.cashPerShare!,
+                  eligibleQuantity: const Value(null),
+                  grossAmount: const Value(null),
+                  withholdingTaxAmount: const Value(null),
+                  netAmount: const Value(null),
+                  baseCurrencyAmount: const Value(null),
+                  createdAt: createdAt,
+                  ownerUserId: stamp.ownerUserId,
+                  updatedAt: stamp.now,
+                  updatedByDevice: stamp.deviceId,
+                  hlc: stamp.hlc,
+                  deletedAt: const Value(null),
+                ),
+              );
+          await _outbox.enqueue(table: actionEntriesTable, rowId: id);
+          materialized.add(
+            WatchlistSimulationActionEntry(
+              id: id,
+              simulationId: simulation.id,
+              watchlistItemId: entry.key,
+              symbol: action.symbol,
+              market: action.market.wire,
+              source: action.source,
+              dataset: action.dataset,
+              sourceKey: action.sourceKey,
+              revisionHash: action.revisionHash,
+              kind: action.kind,
+              status: action.status,
+              paperState: WatchlistSimulationPaperActionState.referenceOnly,
+              recordDate: action.recordDate?.toUtc(),
+              exDate: action.exDate?.toUtc(),
+              payDate: action.payDate?.toUtc(),
+              currency: action.currency!,
+              cashPerShare: action.cashPerShare!,
+              eligibleQuantity: null,
+              grossAmount: null,
+              withholdingTaxAmount: null,
+              netAmount: null,
+              baseCurrencyAmount: null,
+              createdAt: createdAt,
+              sync: _syncFromStamp(stamp),
+            ),
+          );
+        }
+      }
+    });
+    return List<WatchlistSimulationActionEntry>.unmodifiable(materialized);
+  }
+
   Future<void> replaceAllocation({
     required WatchlistSimulation simulation,
     required Map<String, Decimal> targetWeights,
@@ -432,6 +661,27 @@ class WatchlistSimulationRepository {
         );
         await _outbox.enqueue(table: positionsTable, rowId: row.id);
       }
+      final activeActionEntries =
+          await (_db.select(_db.watchlistSimulationActionEntries)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final row in activeActionEntries) {
+        await (_db.update(
+          _db.watchlistSimulationActionEntries,
+        )..where((t) => t.id.equals(row.id))).write(
+          WatchlistSimulationActionEntriesCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(stamp.now),
+          ),
+        );
+        await _outbox.enqueue(table: actionEntriesTable, rowId: row.id);
+      }
       await (_db.delete(_db.watchlistSimulationObservations)..where(
             (t) =>
                 t.ownerUserId.equals(stamp.ownerUserId) &
@@ -518,6 +768,19 @@ class WatchlistSimulationRepository {
     return 'watchlist-simulation-position:$digest';
   }
 
+  static String _actionEntryId({
+    required String simulationId,
+    required MarketCorporateAction action,
+  }) {
+    final digest = sha256.convert(
+      utf8.encode(
+        '$simulationId\u0000${action.source}\u0000${action.dataset}'
+        '\u0000${action.sourceKey}\u0000${action.kind.name}',
+      ),
+    );
+    return 'watchlist-simulation-action:$digest';
+  }
+
   static String _observationId({
     required String simulationId,
     required String observationDay,
@@ -569,6 +832,78 @@ WatchlistSimulationPosition _positionFromRow(
   );
 }
 
+bool _actionEntryMatches(
+  WatchlistSimulationActionEntryRow row,
+  String watchlistItemId,
+  MarketCorporateAction action,
+) {
+  return row.deletedAt == null &&
+      row.watchlistItemId == watchlistItemId &&
+      row.symbol == action.symbol &&
+      row.market == action.market.wire &&
+      row.source == action.source &&
+      row.dataset == action.dataset &&
+      row.sourceKey == action.sourceKey &&
+      row.revisionHash == action.revisionHash &&
+      row.kind == action.kind.name &&
+      row.status == action.status.name &&
+      row.paperState ==
+          WatchlistSimulationPaperActionState.referenceOnly.name &&
+      _sameInstant(row.recordDate, action.recordDate) &&
+      _sameInstant(row.exDate, action.exDate) &&
+      _sameInstant(row.payDate, action.payDate) &&
+      row.currency == action.currency &&
+      row.cashPerShare == action.cashPerShare &&
+      row.eligibleQuantity == null &&
+      row.grossAmount == null &&
+      row.withholdingTaxAmount == null &&
+      row.netAmount == null &&
+      row.baseCurrencyAmount == null;
+}
+
+bool _sameInstant(DateTime? left, DateTime? right) {
+  if (left == null || right == null) return left == null && right == null;
+  return left.toUtc() == right.toUtc();
+}
+
+WatchlistSimulationActionEntry _actionEntryFromRow(
+  WatchlistSimulationActionEntryRow row,
+) => WatchlistSimulationActionEntry(
+  id: row.id,
+  simulationId: row.simulationId,
+  watchlistItemId: row.watchlistItemId,
+  symbol: row.symbol,
+  market: row.market,
+  source: row.source,
+  dataset: row.dataset,
+  sourceKey: row.sourceKey,
+  revisionHash: row.revisionHash,
+  kind: _enumByName(MarketCorporateActionKind.values, row.kind),
+  status: _enumByName(MarketCorporateActionStatus.values, row.status),
+  paperState: _enumByName(
+    WatchlistSimulationPaperActionState.values,
+    row.paperState,
+  ),
+  recordDate: row.recordDate?.toUtc(),
+  exDate: row.exDate?.toUtc(),
+  payDate: row.payDate?.toUtc(),
+  currency: row.currency,
+  cashPerShare: row.cashPerShare,
+  eligibleQuantity: row.eligibleQuantity,
+  grossAmount: row.grossAmount,
+  withholdingTaxAmount: row.withholdingTaxAmount,
+  netAmount: row.netAmount,
+  baseCurrencyAmount: row.baseCurrencyAmount,
+  createdAt: row.createdAt.toUtc(),
+  sync: SyncMeta(
+    ownerUserId: row.ownerUserId,
+    updatedAt: row.updatedAt.toUtc(),
+    updatedByDevice: row.updatedByDevice,
+    hlc: row.hlc,
+    deletedAt: row.deletedAt?.toUtc(),
+  ),
+);
+
 WatchlistSimulationObservation _observationFromRow(
   WatchlistSimulationObservationRow row,
 ) => WatchlistSimulationObservation(
@@ -581,6 +916,13 @@ WatchlistSimulationObservation _observationFromRow(
   pricedWeight: row.pricedWeight,
   missingQuoteWeight: row.missingQuoteWeight,
 );
+
+T _enumByName<T extends Enum>(Iterable<T> values, String name) {
+  for (final value in values) {
+    if (value.name == name) return value;
+  }
+  throw StateError('Unknown persisted enum value: $name');
+}
 
 SyncMeta _syncFromStamp(MutationStamp stamp) => SyncMeta(
   ownerUserId: stamp.ownerUserId,
