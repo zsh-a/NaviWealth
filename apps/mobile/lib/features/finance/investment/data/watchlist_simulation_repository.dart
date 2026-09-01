@@ -96,6 +96,18 @@ enum WatchlistSimulationPaperActionState {
   cancelled,
 }
 
+class WatchlistSimulationActionTarget {
+  const WatchlistSimulationActionTarget({
+    required this.watchlistItemId,
+    required this.symbol,
+    required this.market,
+  });
+
+  final String watchlistItemId;
+  final String symbol;
+  final AssetMarket market;
+}
+
 class WatchlistSimulationActionEntry {
   const WatchlistSimulationActionEntry({
     required this.id,
@@ -253,15 +265,68 @@ class WatchlistSimulationRepository {
     );
   }
 
+  Future<List<WatchlistSimulationActionTarget>> listActionTargets({
+    required String ownerUserId,
+    required String simulationId,
+  }) async {
+    final targets = <String, WatchlistSimulationActionTarget>{};
+    final holdings =
+        await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(simulationId) &
+                  t.deletedAt.isNull(),
+            ))
+            .get();
+    for (final row in holdings) {
+      final market = assetMarketFromWire(row.market);
+      if (market == null) continue;
+      targets[row.watchlistItemId] = WatchlistSimulationActionTarget(
+        watchlistItemId: row.watchlistItemId,
+        symbol: row.symbol,
+        market: market,
+      );
+    }
+    final actions =
+        await (_db.select(_db.watchlistSimulationActionEntries)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(simulationId) &
+                  t.deletedAt.isNull(),
+            ))
+            .get();
+    for (final row in actions) {
+      final market = assetMarketFromWire(row.market);
+      if (market == null) continue;
+      targets.putIfAbsent(
+        row.watchlistItemId,
+        () => WatchlistSimulationActionTarget(
+          watchlistItemId: row.watchlistItemId,
+          symbol: row.symbol,
+          market: market,
+        ),
+      );
+    }
+    return List<WatchlistSimulationActionTarget>.unmodifiable(targets.values);
+  }
+
   Stream<List<WatchlistSimulationObservation>> watchObservations({
     required String ownerUserId,
     required String simulationId,
-  }) {
+  }) async* {
+    final active = await _ensureObservationBaseline(
+      ownerUserId: ownerUserId,
+      simulationId: simulationId,
+    );
+    if (!active) {
+      yield const <WatchlistSimulationObservation>[];
+      return;
+    }
     final query = _db.select(_db.watchlistSimulationObservations)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.simulationId.equals(simulationId))
       ..orderBy([(t) => OrderingTerm.asc(t.observationDay)]);
-    return query.watch().map(
+    yield* query.watch().map(
       (rows) => rows.map(_observationFromRow).toList(growable: false),
     );
   }
@@ -390,6 +455,10 @@ class WatchlistSimulationRepository {
       throw ArgumentError('Invalid paper simulation observation.');
     }
     final ownerUserId = simulation.sync.ownerUserId;
+    await _ensureObservationBaseline(
+      ownerUserId: ownerUserId,
+      simulationId: simulation.id,
+    );
     final day = _observationDay(observedAt);
     final now = DateTime.now().toUtc();
     WatchlistSimulationObservation? result;
@@ -467,6 +536,83 @@ class WatchlistSimulationRepository {
     return result;
   }
 
+  /// Advances already trusted paper dividend rows from entitlement to gross
+  /// receivable and then to gross paper cash using only persisted dates.
+  ///
+  /// This reducer is intentionally provider-independent and monotonic. Once a
+  /// trusted amount reaches a later lifecycle state, offline refreshes or a
+  /// device with an earlier clock cannot move it backward.
+  Future<List<WatchlistSimulationActionEntry>> advanceDividendLifecycle({
+    required WatchlistSimulation simulation,
+    required DateTime asOf,
+  }) async {
+    final stamp = await _stamper.stamp();
+    final effectiveAsOf = asOf.toUtc();
+    final changedIds = <String>[];
+    await _db.transaction(() async {
+      final rows =
+          await (_db.select(_db.watchlistSimulationActionEntries)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final row in rows) {
+        if (row.status == MarketCorporateActionStatus.cancelled.name ||
+            row.grossAmount == null ||
+            !_isTrustedEntitlementState(row.paperState)) {
+          continue;
+        }
+        final current = _enumByName(
+          WatchlistSimulationPaperActionState.values,
+          row.paperState,
+        );
+        final target = _paperLifecycleAt(
+          current: current,
+          exDate: row.exDate,
+          payDate: row.payDate,
+          asOf: effectiveAsOf,
+        );
+        if (_paperStateRank(target) <= _paperStateRank(current)) continue;
+        await (_db.update(
+          _db.watchlistSimulationActionEntries,
+        )..where((t) => t.id.equals(row.id))).write(
+          WatchlistSimulationActionEntriesCompanion(
+            paperState: Value(target.name),
+            receivableGrossAmount: Value(
+              target == WatchlistSimulationPaperActionState.receivableGross
+                  ? row.grossAmount
+                  : null,
+            ),
+            paperCashGrossAmount: Value(
+              target == WatchlistSimulationPaperActionState.grossCashPendingTax
+                  ? row.grossAmount
+                  : null,
+            ),
+            stateAt: Value(
+              target == WatchlistSimulationPaperActionState.grossCashPendingTax
+                  ? row.payDate?.toUtc()
+                  : row.exDate?.toUtc(),
+            ),
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+          ),
+        );
+        await _outbox.enqueue(table: actionEntriesTable, rowId: row.id);
+        changedIds.add(row.id);
+      }
+    });
+    if (changedIds.isEmpty) return const [];
+    final rows = await (_db.select(
+      _db.watchlistSimulationActionEntries,
+    )..where((t) => t.id.isIn(changedIds))).get();
+    return List<WatchlistSimulationActionEntry>.unmodifiable(
+      rows.map(_actionEntryFromRow),
+    );
+  }
+
   /// Materializes implemented dividend terms as synced paper references.
   ///
   /// New rows require an implemented action whose best entitlement date is on
@@ -505,12 +651,37 @@ class WatchlistSimulationRepository {
                     t.deletedAt.isNull(),
               ))
               .get();
-      final activeItemIds = activePositions
+      final eligibleItemIds = activePositions
           .map((row) => row.watchlistItemId)
           .toSet();
+      if (activeSimulation.calculationMode ==
+          WatchlistSimulationCalculationMode.holdingsTotalReturnV2.name) {
+        final historicalHoldings =
+            await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+                  (t) =>
+                      t.ownerUserId.equals(stamp.ownerUserId) &
+                      t.simulationId.equals(simulation.id) &
+                      t.deletedAt.isNull(),
+                ))
+                .get();
+        eligibleItemIds.addAll(
+          historicalHoldings.map((row) => row.watchlistItemId),
+        );
+      }
+      final existingActionRows =
+          await (_db.select(_db.watchlistSimulationActionEntries)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      eligibleItemIds.addAll(
+        existingActionRows.map((row) => row.watchlistItemId),
+      );
 
       for (final entry in actionsByWatchlistItemId.entries) {
-        if (!activeItemIds.contains(entry.key)) continue;
+        if (!eligibleItemIds.contains(entry.key)) continue;
         final itemActions = entry.value.toList(growable: false);
         final hasTrustedAdjustmentCoverage = trustedAdjustmentCoverageItemIds
             .contains(entry.key);
@@ -552,6 +723,11 @@ class WatchlistSimulationRepository {
           if (action.status == MarketCorporateActionStatus.cancelled) {
             paperState = WatchlistSimulationPaperActionState.cancelled;
             stateAt = action.timelineDate?.toUtc();
+          } else if (_isTrustedEntitlementState(existing?.paperState) &&
+              action.status != MarketCorporateActionStatus.implemented) {
+            // A non-final provider revision cannot erase a trusted entitlement.
+            // Cancellation is the only non-implemented terminal transition.
+            continue;
           } else if (!hasTrustedAdjustmentCoverage &&
               _isTrustedEntitlementState(existing?.paperState)) {
             // A partial/stale fetch must not downgrade or revise a previously
@@ -563,11 +739,10 @@ class WatchlistSimulationRepository {
                       .holdingsTotalReturnV2
                       .name &&
               action.recordDate != null) {
-            final holdingQuery =
-                _db.select(_db.watchlistSimulationHoldingVersions)
+            final allocationQuery =
+                _db.select(_db.watchlistSimulationAllocationVersions)
                   ..where((t) => t.ownerUserId.equals(stamp.ownerUserId))
                   ..where((t) => t.simulationId.equals(simulation.id))
-                  ..where((t) => t.watchlistItemId.equals(entry.key))
                   ..where(
                     (t) => t.effectiveAt.isSmallerOrEqualValue(
                       action.recordDate!.toUtc(),
@@ -576,42 +751,85 @@ class WatchlistSimulationRepository {
                   ..where((t) => t.deletedAt.isNull())
                   ..orderBy([(t) => OrderingTerm.desc(t.effectiveAt)])
                   ..limit(1);
-            final holding = await holdingQuery.getSingleOrNull();
+            final allocation = await allocationQuery.getSingleOrNull();
+            final holding = allocation == null
+                ? null
+                : await (_db.select(_db.watchlistSimulationHoldingVersions)
+                        ..where(
+                          (t) =>
+                              t.ownerUserId.equals(stamp.ownerUserId) &
+                              t.allocationVersionId.equals(allocation.id) &
+                              t.watchlistItemId.equals(entry.key) &
+                              t.deletedAt.isNull(),
+                        ))
+                      .getSingleOrNull();
             eligibleQuantity = holding?.quantity;
             if (eligibleQuantity != null && holding != null) {
               for (final adjustment in itemActions) {
-                final multiplier = _quantityAdjustmentMultiplier(
+                final decision = _quantityAdjustmentDecision(
                   adjustment,
                   after: holding.effectiveAt.toUtc(),
                   before: action.recordDate!.toUtc(),
                 );
+                if (decision.blocksEntitlement) {
+                  eligibleQuantity = null;
+                  break;
+                }
+                final multiplier = decision.multiplier;
                 if (multiplier != null) {
                   eligibleQuantity = (eligibleQuantity! * multiplier).round(
                     scale: 12,
                   );
                 }
               }
-              grossAmount = (eligibleQuantity! * action.cashPerShare!).round(
-                scale: 12,
-              );
-              paperState =
-                  WatchlistSimulationPaperActionState.entitlementRecorded;
-              stateAt = action.recordDate?.toUtc();
-              final exDate = action.exDate?.toUtc();
-              final payDate = action.payDate?.toUtc();
-              if (exDate != null && !asOf.isBefore(exDate)) {
+              if (eligibleQuantity != null) {
+                grossAmount = (eligibleQuantity * action.cashPerShare!).round(
+                  scale: 12,
+                );
                 paperState =
-                    WatchlistSimulationPaperActionState.receivableGross;
-                receivableGrossAmount = grossAmount;
-                stateAt = exDate;
+                    WatchlistSimulationPaperActionState.entitlementRecorded;
+                stateAt = action.recordDate?.toUtc();
+                final exDate = action.exDate?.toUtc();
+                final payDate = action.payDate?.toUtc();
+                if (exDate != null && !asOf.isBefore(exDate)) {
+                  paperState =
+                      WatchlistSimulationPaperActionState.receivableGross;
+                  receivableGrossAmount = grossAmount;
+                  stateAt = exDate;
+                }
+                if (payDate != null && !asOf.isBefore(payDate)) {
+                  paperState =
+                      WatchlistSimulationPaperActionState.grossCashPendingTax;
+                  receivableGrossAmount = null;
+                  paperCashGrossAmount = grossAmount;
+                  stateAt = payDate;
+                }
               }
-              if (payDate != null && !asOf.isBefore(payDate)) {
-                paperState =
-                    WatchlistSimulationPaperActionState.grossCashPendingTax;
-                receivableGrossAmount = null;
-                paperCashGrossAmount = grossAmount;
-                stateAt = payDate;
-              }
+            }
+          }
+          if (_isTrustedEntitlementState(existing?.paperState)) {
+            if (!_isTrustedEntitlementState(paperState.name)) {
+              // Complete refreshes may correct terms, but missing evidence must
+              // not erase a quantity that was established from trusted history.
+              continue;
+            }
+            final currentState = _enumByName(
+              WatchlistSimulationPaperActionState.values,
+              existing!.paperState,
+            );
+            if (_paperStateRank(currentState) > _paperStateRank(paperState)) {
+              paperState = currentState;
+              stateAt = existing.stateAt?.toUtc();
+              receivableGrossAmount =
+                  paperState ==
+                      WatchlistSimulationPaperActionState.receivableGross
+                  ? grossAmount
+                  : null;
+              paperCashGrossAmount =
+                  paperState ==
+                      WatchlistSimulationPaperActionState.grossCashPendingTax
+                  ? grossAmount
+                  : null;
             }
           }
           if (existing != null &&
@@ -724,6 +942,21 @@ class WatchlistSimulationRepository {
       if (activeSimulation == null) {
         throw StateError('Watchlist simulation is not active.');
       }
+      final existingRows =
+          await (_db.select(_db.watchlistSimulationPositions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id),
+              ))
+              .get();
+      final activeWeights = <String, Decimal>{
+        for (final row in existingRows)
+          if (row.deletedAt == null) row.watchlistItemId: row.targetWeight,
+      };
+      if (activeSimulation.cashWeight == cashWeight &&
+          _decimalMapsEqual(activeWeights, targetWeights)) {
+        return;
+      }
       await (_db.update(_db.watchlistSimulations)..where(
             (t) =>
                 t.id.equals(simulation.id) &
@@ -739,13 +972,6 @@ class WatchlistSimulationRepository {
           );
       await _outbox.enqueue(table: simulationsTable, rowId: simulation.id);
 
-      final existingRows =
-          await (_db.select(_db.watchlistSimulationPositions)..where(
-                (t) =>
-                    t.ownerUserId.equals(stamp.ownerUserId) &
-                    t.simulationId.equals(simulation.id),
-              ))
-              .get();
       final existingByItemId = <String, WatchlistSimulationPositionRow>{
         for (final row in existingRows) row.watchlistItemId: row,
       };
@@ -902,6 +1128,42 @@ class WatchlistSimulationRepository {
     });
   }
 
+  Future<bool> _ensureObservationBaseline({
+    required String ownerUserId,
+    required String simulationId,
+  }) async {
+    final simulation =
+        await (_db.select(_db.watchlistSimulations)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) & t.id.equals(simulationId),
+            ))
+            .getSingleOrNull();
+    if (simulation == null || simulation.deletedAt != null) return false;
+    final now = DateTime.now().toUtc();
+    await _db
+        .into(_db.watchlistSimulationObservations)
+        .insert(
+          WatchlistSimulationObservationsCompanion.insert(
+            id: _observationId(
+              simulationId: simulationId,
+              observationDay: _observationDay(simulation.baselineAt),
+            ),
+            ownerUserId: ownerUserId,
+            simulationId: simulationId,
+            observationDay: _observationDay(simulation.baselineAt),
+            observedAt: simulation.baselineAt.toUtc(),
+            projectedValue: simulation.startingCapital,
+            weightedDailyChange: Decimal.zero,
+            pricedWeight: Decimal.zero,
+            missingQuoteWeight: Decimal.one - simulation.cashWeight,
+            createdAt: now,
+            updatedAt: now,
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+    return true;
+  }
+
   Future<void> _writeAllocationVersion({
     required WatchlistSimulation simulation,
     required Map<String, Decimal> targetWeights,
@@ -912,6 +1174,21 @@ class WatchlistSimulationRepository {
     required MutationStamp stamp,
   }) async {
     final versionId = _uuid.v4();
+    var effectiveAt = stamp.now.toUtc();
+    final latestVersionQuery =
+        _db.select(_db.watchlistSimulationAllocationVersions)
+          ..where((t) => t.ownerUserId.equals(stamp.ownerUserId))
+          ..where((t) => t.simulationId.equals(simulation.id))
+          ..orderBy([(t) => OrderingTerm.desc(t.effectiveAt)])
+          ..limit(1);
+    final latestVersion = await latestVersionQuery.getSingleOrNull();
+    if (latestVersion != null &&
+        effectiveAt.millisecondsSinceEpoch ~/ 1000 <=
+            latestVersion.effectiveAt.toUtc().millisecondsSinceEpoch ~/ 1000) {
+      effectiveAt = latestVersion.effectiveAt.toUtc().add(
+        const Duration(seconds: 1),
+      );
+    }
     final resolved = <String, _ResolvedHoldingVersion>{};
     for (final entry in targetWeights.entries) {
       final input = holdingInputs[entry.key];
@@ -919,9 +1196,25 @@ class WatchlistSimulationRepository {
       final priceCurrency = input?.priceCurrency?.trim().toUpperCase();
       final sameCurrency =
           priceCurrency != null && priceCurrency == simulation.baseCurrency;
+      final inputSymbol = input?.symbol.trim().toUpperCase();
+      final inputSource = input?.priceSource?.trim();
+      final priceAsOf = input?.priceAsOf?.toUtc();
+      final evidenceIdentity = input == null
+          ? null
+          : '${input.market.wire}:$inputSymbol';
+      final hasTrustedEvidence =
+          input != null &&
+          evidenceIdentity == entry.key &&
+          inputSymbol != null &&
+          inputSymbol.isNotEmpty &&
+          inputSource != null &&
+          inputSource.isNotEmpty &&
+          priceAsOf != null &&
+          !priceAsOf.isAfter(stamp.now.toUtc()) &&
+          input.quantityEligible;
       Decimal? quantity;
       if (capitalBase != null &&
-          (input?.quantityEligible ?? false) &&
+          hasTrustedEvidence &&
           price != null &&
           price > Decimal.zero &&
           sameCurrency) {
@@ -945,9 +1238,15 @@ class WatchlistSimulationRepository {
         quantity: quantity,
         rawPrice: price,
         priceCurrency: priceCurrency,
-        priceAsOf: input?.priceAsOf?.toUtc(),
-        priceSource: input?.priceSource,
-        fxToBase: price != null && sameCurrency ? Decimal.one : null,
+        priceAsOf: priceAsOf,
+        priceSource: inputSource,
+        fxToBase:
+            hasTrustedEvidence &&
+                price != null &&
+                price > Decimal.zero &&
+                sameCurrency
+            ? Decimal.one
+            : null,
       );
     }
     final isComplete =
@@ -959,7 +1258,7 @@ class WatchlistSimulationRepository {
           WatchlistSimulationAllocationVersionsCompanion.insert(
             id: versionId,
             simulationId: simulation.id,
-            effectiveAt: stamp.now,
+            effectiveAt: effectiveAt,
             reason: reason.name,
             cashWeight: cashWeight,
             isComplete: Value(isComplete),
@@ -994,7 +1293,7 @@ class WatchlistSimulationRepository {
               priceAsOf: Value(holding.priceAsOf),
               priceSource: Value(holding.priceSource),
               fxToBase: Value(holding.fxToBase),
-              effectiveAt: stamp.now,
+              effectiveAt: effectiveAt,
               createdAt: stamp.now,
               ownerUserId: stamp.ownerUserId,
               updatedAt: stamp.now,
@@ -1185,6 +1484,39 @@ WatchlistSimulationPosition _positionFromRow(
   );
 }
 
+bool _decimalMapsEqual(Map<String, Decimal> left, Map<String, Decimal> right) {
+  if (left.length != right.length) return false;
+  for (final entry in left.entries) {
+    if (right[entry.key] != entry.value) return false;
+  }
+  return true;
+}
+
+WatchlistSimulationPaperActionState _paperLifecycleAt({
+  required WatchlistSimulationPaperActionState current,
+  required DateTime? exDate,
+  required DateTime? payDate,
+  required DateTime asOf,
+}) {
+  if (payDate != null && !asOf.isBefore(payDate.toUtc())) {
+    return WatchlistSimulationPaperActionState.grossCashPendingTax;
+  }
+  if (exDate != null && !asOf.isBefore(exDate.toUtc())) {
+    return WatchlistSimulationPaperActionState.receivableGross;
+  }
+  return current;
+}
+
+int _paperStateRank(WatchlistSimulationPaperActionState state) {
+  return switch (state) {
+    WatchlistSimulationPaperActionState.referenceOnly => 0,
+    WatchlistSimulationPaperActionState.entitlementRecorded => 1,
+    WatchlistSimulationPaperActionState.receivableGross => 2,
+    WatchlistSimulationPaperActionState.grossCashPendingTax => 3,
+    WatchlistSimulationPaperActionState.cancelled => 4,
+  };
+}
+
 bool _isTrustedEntitlementState(String? value) {
   return value ==
           WatchlistSimulationPaperActionState.entitlementRecorded.name ||
@@ -1192,39 +1524,76 @@ bool _isTrustedEntitlementState(String? value) {
       value == WatchlistSimulationPaperActionState.grossCashPendingTax.name;
 }
 
-Decimal? _quantityAdjustmentMultiplier(
+class _QuantityAdjustmentDecision {
+  const _QuantityAdjustmentDecision({
+    this.multiplier,
+    this.blocksEntitlement = false,
+  });
+
+  final Decimal? multiplier;
+  final bool blocksEntitlement;
+}
+
+_QuantityAdjustmentDecision _quantityAdjustmentDecision(
   MarketCorporateAction action, {
   required DateTime after,
   required DateTime before,
 }) {
+  final isSplit =
+      action.kind == MarketCorporateActionKind.split && action.hasSplit;
+  final isStockDistribution =
+      action.kind == MarketCorporateActionKind.distribution &&
+      action.status == MarketCorporateActionStatus.implemented &&
+      action.hasStockDistribution;
+  if (!isSplit && !isStockDistribution) {
+    return const _QuantityAdjustmentDecision();
+  }
   if (action.status == MarketCorporateActionStatus.cancelled ||
       action.status == MarketCorporateActionStatus.proposed ||
       action.status == MarketCorporateActionStatus.approved) {
-    return null;
+    return const _QuantityAdjustmentDecision();
   }
-  final effectiveDate = action.exDate ?? action.timelineDate;
-  if (effectiveDate == null ||
-      !effectiveDate.toUtc().isAfter(after) ||
-      !effectiveDate.toUtc().isBefore(before)) {
-    return null;
+  final effectiveDate = action.exDate?.toUtc();
+  if (effectiveDate == null) {
+    final referenceDate = action.timelineDate?.toUtc();
+    final couldAffectEntitlement =
+        referenceDate == null ||
+        (!referenceDate.isBefore(after) && !referenceDate.isAfter(before));
+    return _QuantityAdjustmentDecision(
+      blocksEntitlement: couldAffectEntitlement,
+    );
   }
-  if (action.kind == MarketCorporateActionKind.split && action.hasSplit) {
-    return (Decimal.fromInt(action.splitNumerator!) /
-            Decimal.fromInt(action.splitDenominator!))
-        .toDecimal(scaleOnInfinitePrecision: 12);
+  if (effectiveDate.isBefore(after) || effectiveDate.isAfter(before)) {
+    return const _QuantityAdjustmentDecision();
   }
-  if (action.kind != MarketCorporateActionKind.distribution ||
-      action.status != MarketCorporateActionStatus.implemented ||
-      !action.hasStockDistribution) {
-    return null;
+  if (effectiveDate == after || effectiveDate == before) {
+    return const _QuantityAdjustmentDecision(blocksEntitlement: true);
   }
-  var addedRatio =
+  if (isSplit) {
+    return _QuantityAdjustmentDecision(
+      multiplier:
+          (Decimal.fromInt(action.splitNumerator!) /
+                  Decimal.fromInt(action.splitDenominator!))
+              .toDecimal(scaleOnInfinitePrecision: 12),
+    );
+  }
+
+  final components =
       (action.bonusRatio ?? Decimal.zero) +
       (action.capitalizationRatio ?? Decimal.zero);
-  if (addedRatio == Decimal.zero) {
-    addedRatio = action.totalStockDistributionRatio ?? Decimal.zero;
+  final combined = action.totalStockDistributionRatio;
+  if (combined != null &&
+      combined > Decimal.zero &&
+      components > Decimal.zero &&
+      combined != components) {
+    return const _QuantityAdjustmentDecision(blocksEntitlement: true);
   }
-  return addedRatio > Decimal.zero ? Decimal.one + addedRatio : null;
+  final addedRatio = combined != null && combined > Decimal.zero
+      ? combined
+      : components;
+  return addedRatio > Decimal.zero
+      ? _QuantityAdjustmentDecision(multiplier: Decimal.one + addedRatio)
+      : const _QuantityAdjustmentDecision();
 }
 
 bool _actionEntryMatches(

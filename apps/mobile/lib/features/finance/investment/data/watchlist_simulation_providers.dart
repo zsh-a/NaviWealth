@@ -66,11 +66,21 @@ class WatchlistSimulationActionReconciliation {
     required this.materializedCount,
     required this.failedSymbolCount,
     required this.unsupportedSymbolCount,
+    this.partialSymbolCount = 0,
+    this.staleSymbolCount = 0,
   });
 
   final int materializedCount;
   final int failedSymbolCount;
   final int unsupportedSymbolCount;
+  final int partialSymbolCount;
+  final int staleSymbolCount;
+
+  bool get hasCoverageIssues =>
+      failedSymbolCount > 0 ||
+      unsupportedSymbolCount > 0 ||
+      partialSymbolCount > 0 ||
+      staleSymbolCount > 0;
 }
 
 /// Reconciles normalized provider candidates into deterministic paper-only
@@ -96,50 +106,71 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
           unsupportedSymbolCount: 0,
         );
       }
+      final repository = await ref.watch(
+        watchlistSimulationRepositoryProvider.future,
+      );
+      final lifecycleAsOf = DateTime.now().toUtc();
+      final locallyAdvanced = await repository.advanceDividendLifecycle(
+        simulation: simulation,
+        asOf: lifecycleAsOf,
+      );
       final positions = await ref.watch(
         watchlistSimulationPositionsProvider(simulationId).future,
       );
       final items = await ref.watch(watchlistItemsProvider.future);
       final itemById = {for (final item in items) item.id: item};
+      final targetsById = <String, WatchlistSimulationActionTarget>{
+        for (final position in positions)
+          if (itemById[position.watchlistItemId] case final item?)
+            position.watchlistItemId: WatchlistSimulationActionTarget(
+              watchlistItemId: position.watchlistItemId,
+              symbol: item.symbol,
+              market: item.market,
+            ),
+      };
+      final persistedTargets = await repository.listActionTargets(
+        ownerUserId: simulation.sync.ownerUserId,
+        simulationId: simulation.id,
+      );
+      for (final target in persistedTargets) {
+        targetsById.putIfAbsent(target.watchlistItemId, () => target);
+      }
       final corporateActions = await ref.watch(
         corporateActionsServiceProvider.future,
       );
       final actionsByItemId = <String, Iterable<MarketCorporateAction>>{};
       final trustedAdjustmentCoverageItemIds = <String>{};
-      final lifecycleAsOf = DateTime.now().toUtc();
       final rangeEnd = lifecycleAsOf.add(const Duration(days: 365));
       var failedSymbolCount = 0;
       var unsupportedSymbolCount = 0;
-      for (final position in positions) {
-        final item = itemById[position.watchlistItemId];
-        if (item == null) continue;
+      var partialSymbolCount = 0;
+      var staleSymbolCount = 0;
+      for (final target in targetsById.values) {
         final result = await corporateActions.fetchRange(
           CorporateActionFetchRequest(
-            symbol: item.symbol,
-            market: item.market,
+            symbol: target.symbol,
+            market: target.market,
             from: simulation.baselineAt.subtract(const Duration(days: 1)),
             to: rangeEnd,
           ),
         );
         switch (result.disposition) {
           case CorporateActionFetchDisposition.success:
-            actionsByItemId[item.id] = result.actions;
-            trustedAdjustmentCoverageItemIds.add(item.id);
+            actionsByItemId[target.watchlistItemId] = result.actions;
+            trustedAdjustmentCoverageItemIds.add(target.watchlistItemId);
           case CorporateActionFetchDisposition.authoritativeEmpty:
-            trustedAdjustmentCoverageItemIds.add(item.id);
+            trustedAdjustmentCoverageItemIds.add(target.watchlistItemId);
           case CorporateActionFetchDisposition.partial:
-            actionsByItemId[item.id] = result.actions;
+            actionsByItemId[target.watchlistItemId] = result.actions;
+            partialSymbolCount++;
           case CorporateActionFetchDisposition.stale:
-            break;
+            staleSymbolCount++;
           case CorporateActionFetchDisposition.unsupported:
             unsupportedSymbolCount++;
           case CorporateActionFetchDisposition.failure:
             failedSymbolCount++;
         }
       }
-      final repository = await ref.watch(
-        watchlistSimulationRepositoryProvider.future,
-      );
       final materialized = await repository.materializeDividendReferences(
         simulation: simulation,
         actionsByWatchlistItemId: actionsByItemId,
@@ -147,9 +178,14 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
         lifecycleAsOf: lifecycleAsOf,
       );
       return WatchlistSimulationActionReconciliation(
-        materializedCount: materialized.length,
+        materializedCount: {
+          ...locallyAdvanced.map((entry) => entry.id),
+          ...materialized.map((entry) => entry.id),
+        }.length,
         failedSymbolCount: failedSymbolCount,
         unsupportedSymbolCount: unsupportedSymbolCount,
+        partialSymbolCount: partialSymbolCount,
+        staleSymbolCount: staleSymbolCount,
       );
     });
 

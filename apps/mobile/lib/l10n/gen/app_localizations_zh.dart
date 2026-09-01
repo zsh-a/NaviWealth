@@ -10605,6 +10605,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSimulationDividendRecordsTitle => '已记录股息';
 
   @override
+  String watchlistSimulationDividendCoverageWarning(
+    int failed,
+    int unsupported,
+    int partial,
+    int stale,
+  ) {
+    return '公司行动覆盖不完整：失败 $failed、不支持 $unsupported、部分数据 $partial、过期数据 $stale。';
+  }
+
+  @override
   String watchlistSimulationDividendPerShare(String amount) {
     return '每股 $amount';
   }

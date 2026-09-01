@@ -17,44 +17,146 @@ import 'package:naviwealth/features/finance/market/domain/market_corporate_actio
 const _source = 'yfinance';
 const _dataset = 'yahoo_chart';
 
+class YahooCorporateActionParseResult {
+  YahooCorporateActionParseResult({
+    required Iterable<MarketCorporateAction> actions,
+    required this.envelopeValid,
+    required this.droppedRows,
+    this.errorMessage,
+  }) : actions = List<MarketCorporateAction>.unmodifiable(actions);
+
+  final List<MarketCorporateAction> actions;
+  final bool envelopeValid;
+  final int droppedRows;
+  final String? errorMessage;
+}
+
 List<MarketCorporateAction> parseYahooMarketCorporateActions({
   required Map<String, Object?> responseBody,
   required String symbol,
   required String currency,
   required AssetMarket market,
-}) {
-  final result = _firstResult(responseBody);
-  if (result == null) return const [];
+}) => parseYahooMarketCorporateActionsDetailed(
+  responseBody: responseBody,
+  symbol: symbol,
+  currency: currency,
+  market: market,
+).actions;
 
-  final events = result['events'];
-  if (events is! Map) return const [];
+YahooCorporateActionParseResult parseYahooMarketCorporateActionsDetailed({
+  required Map<String, Object?> responseBody,
+  required String symbol,
+  required String currency,
+  required AssetMarket market,
+}) {
+  final chart = responseBody['chart'];
+  if (chart is! Map) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: false,
+      droppedRows: 0,
+      errorMessage: 'chart response is missing chart object',
+    );
+  }
+  if (chart['error'] != null) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: false,
+      droppedRows: 0,
+      errorMessage: 'chart response contains provider error',
+    );
+  }
+  final results = chart['result'];
+  if (results is! List) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: false,
+      droppedRows: 0,
+      errorMessage: 'chart.result is not a list',
+    );
+  }
+  if (results.isEmpty) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: true,
+      droppedRows: 0,
+    );
+  }
+  final first = results.first;
+  if (first is! Map) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: false,
+      droppedRows: 0,
+      errorMessage: 'chart.result first item is not an object',
+    );
+  }
+  final events = first['events'];
+  if (events == null) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: true,
+      droppedRows: 0,
+    );
+  }
+  if (events is! Map) {
+    return YahooCorporateActionParseResult(
+      actions: const [],
+      envelopeValid: false,
+      droppedRows: 0,
+      errorMessage: 'chart events block is not an object',
+    );
+  }
 
   final upperSymbol = symbol.toUpperCase();
   final upperCurrency = currency.toUpperCase();
   final out = <MarketCorporateAction>[];
+  var droppedRows = 0;
 
   final dividends = events['dividends'];
-  if (dividends is Map) {
+  if (dividends != null && dividends is! Map) {
+    droppedRows++;
+  } else if (dividends is Map) {
     for (final entry in dividends.entries) {
       final event = _parseDividend(
         entry.value,
-        upperSymbol,
-        upperCurrency,
-        market,
+        providerEventKey: entry.key.toString(),
+        symbol: upperSymbol,
+        currency: upperCurrency,
+        market: market,
       );
-      if (event != null) out.add(event);
+      if (event == null) {
+        droppedRows++;
+      } else {
+        out.add(event);
+      }
     }
   }
 
   final splits = events['splits'];
-  if (splits is Map) {
+  if (splits != null && splits is! Map) {
+    droppedRows++;
+  } else if (splits is Map) {
     for (final entry in splits.entries) {
-      final event = _parseSplit(entry.value, upperSymbol, market);
-      if (event != null) out.add(event);
+      final event = _parseSplit(
+        entry.value,
+        providerEventKey: entry.key.toString(),
+        symbol: upperSymbol,
+        market: market,
+      );
+      if (event == null) {
+        droppedRows++;
+      } else {
+        out.add(event);
+      }
     }
   }
 
-  return out;
+  return YahooCorporateActionParseResult(
+    actions: out,
+    envelopeValid: true,
+    droppedRows: droppedRows,
+  );
 }
 
 /// Compatibility projection for the existing investment event timeline.
@@ -98,28 +200,20 @@ List<CorporateActionEvent> parseYahooCorporateActions({
   ];
 }
 
-Map<String, Object?>? _firstResult(Map<String, Object?> body) {
-  final chart = body['chart'];
-  if (chart is! Map) return null;
-  final results = chart['result'];
-  if (results is! List || results.isEmpty) return null;
-  final first = results.first;
-  if (first is! Map) return null;
-  return first.cast<String, Object?>();
-}
-
 MarketCorporateAction? _parseDividend(
-  Object? raw,
-  String symbol,
-  String currency,
-  AssetMarket market,
-) {
+  Object? raw, {
+  required String providerEventKey,
+  required String symbol,
+  required String currency,
+  required AssetMarket market,
+}) {
   if (raw is! Map) return null;
   final date = _epochSecondsAsUtc(raw['date']);
   final amount = _decimal(raw['amount']);
   if (date == null || amount == null || amount < Decimal.zero) return null;
   final day = _day(date);
-  final sourceKey = 'div:$symbol:$day';
+  final eventKey = _hash(providerEventKey).substring(0, 12);
+  final sourceKey = 'div:$symbol:$day:$eventKey';
   return MarketCorporateAction(
     id: '$_source:$_dataset:$sourceKey',
     source: _source,
@@ -138,10 +232,11 @@ MarketCorporateAction? _parseDividend(
 }
 
 MarketCorporateAction? _parseSplit(
-  Object? raw,
-  String symbol,
-  AssetMarket market,
-) {
+  Object? raw, {
+  required String providerEventKey,
+  required String symbol,
+  required AssetMarket market,
+}) {
   if (raw is! Map) return null;
   final date = _epochSecondsAsUtc(raw['date']);
   if (date == null) return null;
@@ -154,7 +249,8 @@ MarketCorporateAction? _parseSplit(
     return null;
   }
   final day = _day(date);
-  final sourceKey = 'split:$symbol:$day';
+  final eventKey = _hash(providerEventKey).substring(0, 12);
+  final sourceKey = 'split:$symbol:$day:$eventKey';
   return MarketCorporateAction(
     id: '$_source:$_dataset:$sourceKey',
     source: _source,

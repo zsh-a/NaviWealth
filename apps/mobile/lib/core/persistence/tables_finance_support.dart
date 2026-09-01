@@ -165,9 +165,10 @@ class WatchlistSimulationHoldingVersions extends Table with SyncableTable {
 
 /// Synced paper-only corporate-action references for a watchlist simulation.
 ///
-/// These rows preserve provider identity and revisions but deliberately do not
-/// represent real holdings, receivables, cash, journal entries, or postings.
-/// Until a holdings-based simulation captures eligible quantity, entries stay
+/// These rows preserve provider identity and revisions. Gross receivable and
+/// pending-tax cash fields are paper-only lifecycle balances; they never
+/// represent real holdings, accounts, journal entries, or postings. Until a
+/// holdings-based simulation captures eligible quantity, entries stay
 /// `referenceOnly` and must not affect the observation curve or NAV.
 @DataClassName('WatchlistSimulationActionEntryRow')
 class WatchlistSimulationActionEntries extends Table with SyncableTable {

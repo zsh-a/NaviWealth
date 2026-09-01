@@ -2,6 +2,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_actions.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
 const _exDivTs1 = 1714521600; // 2024-05-01 UTC
 const _exDivTs2 = 1722470400; // 2024-08-01 UTC
@@ -167,6 +168,55 @@ void main() {
       // The id format is also stable enough to compose with the timeline
       // dedup keyed on `id`.
       expect(first.single.id, startsWith('div_AAPL_'));
+    });
+
+    test('detailed parser distinguishes malformed envelopes', () {
+      final parsed = parseYahooMarketCorporateActionsDetailed(
+        responseBody: const <String, Object?>{},
+        symbol: 'AAPL',
+        currency: 'USD',
+        market: AssetMarket.usStock,
+      );
+      expect(parsed.envelopeValid, isFalse);
+      expect(parsed.actions, isEmpty);
+      expect(parsed.errorMessage, isNotNull);
+    });
+
+    test('detailed parser reports mixed malformed rows as partial data', () {
+      final parsed = parseYahooMarketCorporateActionsDetailed(
+        responseBody: _chart(
+          events: <String, Object?>{
+            'dividends': <String, Object?>{
+              'bad': <String, Object?>{'date': _exDivTs1},
+              'good': <String, Object?>{'date': _exDivTs1, 'amount': 0.22},
+            },
+          },
+        ),
+        symbol: 'AAPL',
+        currency: 'USD',
+        market: AssetMarket.usStock,
+      );
+      expect(parsed.envelopeValid, isTrue);
+      expect(parsed.actions, hasLength(1));
+      expect(parsed.droppedRows, 1);
+    });
+
+    test('same-day provider event keys retain distinct identities', () {
+      final parsed = parseYahooMarketCorporateActionsDetailed(
+        responseBody: _chart(
+          events: <String, Object?>{
+            'dividends': <String, Object?>{
+              'event-a': <String, Object?>{'date': _exDivTs1, 'amount': 0.22},
+              'event-b': <String, Object?>{'date': _exDivTs1, 'amount': 0.03},
+            },
+          },
+        ),
+        symbol: 'AAPL',
+        currency: 'USD',
+        market: AssetMarket.usStock,
+      );
+      expect(parsed.actions, hasLength(2));
+      expect(parsed.actions.map((action) => action.id).toSet(), hasLength(2));
     });
 
     test('scheduledFor floors to UTC calendar day', () {

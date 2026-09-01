@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
@@ -35,21 +36,23 @@ MarketCorporateAction _dividend({
   cashPerShare: Decimal.parse(cashPerShare),
 );
 
-MarketCorporateAction _split() => MarketCorporateAction(
-  id: 'yfinance:chart:600519:split:2024-01-10',
-  source: 'yfinance',
-  dataset: 'chart',
-  sourceKey: '600519:split:2024-01-10',
-  revisionHash: 'split-revision',
-  identityStrength: MarketCorporateActionIdentityStrength.strong,
-  symbol: '600519',
-  market: AssetMarket.cnA,
-  kind: MarketCorporateActionKind.split,
-  status: MarketCorporateActionStatus.unknown,
-  exDate: DateTime.utc(2024, 1, 10),
-  splitNumerator: 2,
-  splitDenominator: 1,
-);
+MarketCorporateAction _split({bool omitExDate = false}) =>
+    MarketCorporateAction(
+      id: 'yfinance:chart:600519:split:2024-01-10',
+      source: 'yfinance',
+      dataset: 'chart',
+      sourceKey: '600519:split:2024-01-10',
+      revisionHash: 'split-revision',
+      identityStrength: MarketCorporateActionIdentityStrength.strong,
+      symbol: '600519',
+      market: AssetMarket.cnA,
+      kind: MarketCorporateActionKind.split,
+      status: MarketCorporateActionStatus.unknown,
+      announcementDate: DateTime.utc(2024, 1, 9),
+      exDate: omitExDate ? null : DateTime.utc(2024, 1, 10),
+      splitNumerator: 2,
+      splitDenominator: 1,
+    );
 
 void main() {
   test(
@@ -128,21 +131,36 @@ void main() {
       outbox.clearQueued();
       await repository.delete(simulation);
       expect(await repository.watchActive('u-test').first, isEmpty);
+      final deletedSimulation = await (db.select(
+        db.watchlistSimulations,
+      )..where((table) => table.id.equals(simulation.id))).getSingle();
+      expect(deletedSimulation.deletedAt, isNotNull);
+      final rawObservationCount = await db
+          .customSelect(
+            'SELECT COUNT(*) AS count FROM watchlist_simulation_observations '
+            'WHERE simulation_id = ?',
+            variables: [Variable<String>(simulation.id)],
+          )
+          .getSingle();
+      expect(rawObservationCount.read<int>('count'), 0);
       expect(
         await repository
             .watchPositions(ownerUserId: 'u-test', simulationId: simulation.id)
             .first,
         isEmpty,
       );
-      expect(
-        await repository
-            .watchObservations(
-              ownerUserId: 'u-test',
-              simulationId: simulation.id,
-            )
-            .first,
-        isEmpty,
-      );
+      final watchedAfterDelete = await repository
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first;
+      final countAfterWatch = await db
+          .customSelect(
+            'SELECT COUNT(*) AS count FROM watchlist_simulation_observations '
+            'WHERE simulation_id = ?',
+            variables: [Variable<String>(simulation.id)],
+          )
+          .getSingle();
+      expect(countAfterWatch.read<int>('count'), 0);
+      expect(watchedAfterDelete, isEmpty);
 
       for (final table in const [
         'investment_portfolios',
@@ -211,6 +229,47 @@ void main() {
       expect(observations[1].projectedValue, Decimal.parse('1200.0'));
       expect(observations[2].projectedValue, Decimal.parse('1080.00'));
       expect(outbox.queued, hasLength(queuedBeforeObservations));
+    },
+  );
+
+  test(
+    'rehydrates local baseline before the first restored observation',
+    () async {
+      final db = makeTestDatabase();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-growth',
+        name: 'Restored simulation',
+        baseCurrency: 'USD',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'us_stock:AAPL': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+      await db.delete(db.watchlistSimulationObservations).go();
+
+      final baseline = await repository
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first;
+      expect(baseline, hasLength(1));
+      expect(baseline.single.projectedValue, Decimal.parse('1000'));
+
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: simulation.baselineAt.add(const Duration(days: 1)),
+        weightedDailyChange: Decimal.parse('0.1'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+      );
+      final observations = await repository
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first;
+      expect(observations, hasLength(2));
+      expect(observations.last.projectedValue, Decimal.parse('1100.0'));
     },
   );
 
@@ -445,6 +504,241 @@ void main() {
     expect(record.grossAmount, Decimal.parse('25.0'));
   });
 
+  test('ambiguous adjustment date keeps dividend reference-only', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-cn',
+      name: 'Ambiguous adjustment',
+      baseCurrency: 'CNY',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'cn_a:600519': Decimal.one},
+      cashWeight: Decimal.zero,
+      holdingInputs: {
+        'cn_a:600519': WatchlistSimulationHoldingInput(
+          symbol: '600519',
+          market: AssetMarket.cnA,
+          rawPrice: Decimal.parse('200'),
+          priceCurrency: 'CNY',
+          priceAsOf: DateTime.utc(2023, 11, 14),
+          priceSource: 'fixture',
+        ),
+      },
+    );
+
+    await repository.materializeDividendReferences(
+      simulation: simulation,
+      actionsByWatchlistItemId: {
+        'cn_a:600519': [
+          _split(omitExDate: true),
+          _dividend(revisionHash: 'ambiguous-split', cashPerShare: '2.5'),
+        ],
+      },
+      trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+    );
+    final record =
+        (await repository
+                .watchActionEntries(
+                  ownerUserId: 'u-test',
+                  simulationId: simulation.id,
+                )
+                .first)
+            .single;
+    expect(
+      record.paperState,
+      WatchlistSimulationPaperActionState.referenceOnly,
+    );
+    expect(record.eligibleQuantity, isNull);
+    expect(record.grossAmount, isNull);
+  });
+
+  test(
+    'unchanged allocation save preserves trusted holding quantity',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final input = WatchlistSimulationHoldingInput(
+        symbol: '600519',
+        market: AssetMarket.cnA,
+        rawPrice: Decimal.parse('200'),
+        priceCurrency: 'CNY',
+        priceAsOf: DateTime.utc(2023, 11, 14),
+        priceSource: 'fixture',
+      );
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'No-op allocation',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {'cn_a:600519': input},
+      );
+      outbox.clearQueued();
+
+      await repository.replaceAllocation(
+        simulation: simulation,
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {'cn_a:600519': input},
+      );
+
+      expect(
+        await db.select(db.watchlistSimulationAllocationVersions).get(),
+        hasLength(1),
+      );
+      final holdings = await db
+          .select(db.watchlistSimulationHoldingVersions)
+          .get();
+      expect(holdings, hasLength(1));
+      expect(holdings.single.quantity, Decimal.parse('5'));
+      expect(outbox.queued, isEmpty);
+    },
+  );
+
+  test(
+    'record-date allocation membership prevents removed holding reuse',
+    () async {
+      final db = makeTestDatabase();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'Effective allocation',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {
+          'cn_a:600519': Decimal.parse('0.5'),
+          'cn_a:000001': Decimal.parse('0.5'),
+        },
+        cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:600519': WatchlistSimulationHoldingInput(
+            symbol: '600519',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('200'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+          'cn_a:000001': WatchlistSimulationHoldingInput(
+            symbol: '000001',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('10'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+        },
+      );
+      await repository.replaceAllocation(
+        simulation: simulation,
+        targetWeights: {'cn_a:000001': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:000001': WatchlistSimulationHoldingInput(
+            symbol: '000001',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('10'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+        },
+      );
+      final heldRecordDate = simulation.baselineAt;
+      final removedRecordDate = simulation.baselineAt.add(
+        const Duration(days: 2),
+      );
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(
+              revisionHash: 'held',
+              cashPerShare: '2.5',
+              sourceKey: '600519:held',
+              recordDate: heldRecordDate,
+            ),
+            _dividend(
+              revisionHash: 'removed',
+              cashPerShare: '2.5',
+              sourceKey: '600519:removed',
+              recordDate: removedRecordDate,
+            ),
+          ],
+        },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+        lifecycleAsOf: simulation.baselineAt,
+      );
+      final records = await repository
+          .watchActionEntries(
+            ownerUserId: 'u-test',
+            simulationId: simulation.id,
+          )
+          .first;
+      final bySourceKey = {
+        for (final record in records) record.sourceKey: record,
+      };
+      expect(
+        bySourceKey['600519:held']?.eligibleQuantity,
+        Decimal.parse('2.5'),
+      );
+      expect(
+        bySourceKey['600519:removed']?.paperState,
+        WatchlistSimulationPaperActionState.referenceOnly,
+      );
+      expect(bySourceKey['600519:removed']?.eligibleQuantity, isNull);
+    },
+  );
+
+  test('quantity remains unknown when quote identity is mismatched', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    await repository.create(
+      collectionId: 'collection-cn',
+      name: 'Mismatched evidence',
+      baseCurrency: 'CNY',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'cn_a:600519': Decimal.one},
+      cashWeight: Decimal.zero,
+      holdingInputs: {
+        'cn_a:600519': WatchlistSimulationHoldingInput(
+          symbol: '000001',
+          market: AssetMarket.cnA,
+          rawPrice: Decimal.parse('10'),
+          priceCurrency: 'CNY',
+          priceAsOf: DateTime.utc(2023, 11, 14),
+          priceSource: 'fixture',
+        ),
+      },
+    );
+    final holding = await db
+        .select(db.watchlistSimulationHoldingVersions)
+        .getSingle();
+    expect(holding.quantity, isNull);
+  });
+
   test(
     'moves gross entitlement from receivable to pending-tax paper cash',
     () async {
@@ -486,8 +780,13 @@ void main() {
           'cn_a:600519': [action],
         },
         trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
-        lifecycleAsOf: DateTime.utc(2024, 6, 21),
+        lifecycleAsOf: DateTime.utc(2024, 6, 20),
       );
+      final receivableTransition = await repository.advanceDividendLifecycle(
+        simulation: simulation,
+        asOf: DateTime.utc(2024, 6, 21),
+      );
+      expect(receivableTransition, hasLength(1));
       var record =
           (await repository
                   .watchActionEntries(
@@ -505,14 +804,11 @@ void main() {
       expect(record.paperCashGrossAmount, isNull);
       expect(record.stateAt, DateTime.utc(2024, 6, 21));
 
-      await repository.materializeDividendReferences(
+      final cashTransition = await repository.advanceDividendLifecycle(
         simulation: simulation,
-        actionsByWatchlistItemId: {
-          'cn_a:600519': [action],
-        },
-        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
-        lifecycleAsOf: DateTime.utc(2024, 6, 28),
+        asOf: DateTime.utc(2024, 6, 28),
       );
+      expect(cashTransition, hasLength(1));
       record =
           (await repository
                   .watchActionEntries(
@@ -532,15 +828,49 @@ void main() {
       expect(record.netAmount, isNull);
       expect(record.baseCurrencyAmount, isNull);
 
-      final duplicate = await repository.materializeDividendReferences(
+      final duplicate = await repository.advanceDividendLifecycle(
+        simulation: simulation,
+        asOf: DateTime.utc(2024, 6, 21),
+      );
+      expect(duplicate, isEmpty);
+      final earlierProviderReplay = await repository
+          .materializeDividendReferences(
+            simulation: simulation,
+            actionsByWatchlistItemId: {
+              'cn_a:600519': [action],
+            },
+            trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+            lifecycleAsOf: DateTime.utc(2024, 6, 20),
+          );
+      expect(earlierProviderReplay, isEmpty);
+      final nonFinalRevision = await repository.materializeDividendReferences(
         simulation: simulation,
         actionsByWatchlistItemId: {
-          'cn_a:600519': [action],
+          'cn_a:600519': [
+            _dividend(
+              revisionHash: 'regressed-proposal',
+              cashPerShare: '2.5',
+              status: MarketCorporateActionStatus.proposed,
+            ),
+          ],
         },
         trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
         lifecycleAsOf: DateTime.utc(2024, 7, 1),
       );
-      expect(duplicate, isEmpty);
+      expect(nonFinalRevision, isEmpty);
+      final preserved =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(
+        preserved.paperState,
+        WatchlistSimulationPaperActionState.grossCashPendingTax,
+      );
+      expect(preserved.revisionHash, 'lifecycle');
       final observations = await repository
           .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
           .first;

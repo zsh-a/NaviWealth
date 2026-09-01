@@ -63,7 +63,24 @@ void main() {
     expect(row.readNullable<String>('paper_cash_gross_amount'), isNull);
     expect(row.readNullable<int>('state_at'), isNull);
 
+    final triggers = await db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'trigger' "
+          "AND name LIKE 'trg_watchlist_sim_action_balances_%'",
+        )
+        .get();
+    expect(triggers, hasLength(2));
+    await expectLater(
+      db.customStatement(
+        'INSERT INTO watchlist_simulation_action_entries '
+        '(id, gross_amount, paper_state, receivable_gross_amount, '
+        'paper_cash_gross_amount) VALUES '
+        "('invalid', '10', 'grossCashPendingTax', '10', '10')",
+      ),
+      throwsA(anything),
+    );
+
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 89);
+    expect(version.read<int>('user_version'), 90);
   });
 }

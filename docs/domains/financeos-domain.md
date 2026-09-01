@@ -81,11 +81,16 @@ Existing simulations retain `weightedDailyChangeV1`. New simulations created
 with quote evidence use `holdingsTotalReturnV2`: creation captures raw price,
 price currency/date/source, target weight, and a virtual `Decimal` quantity
 only when the quote is non-stale and its currency equals the simulation base
-currency. Missing, stale, or cross-currency quotes keep quantity and
-`fx_to_base` null; the system never
-assumes missing FX equals one. Reallocations create a new effective-dated
-version but leave quantity unknown until a trustworthy capital base is
-available, rather than deriving holdings from the legacy projection curve.
+currency. Quantity evidence also requires canonical market/symbol identity,
+a non-empty source, and a non-future quote timestamp. Missing, stale,
+identity-mismatched, provenance-free, or cross-currency quotes keep quantity
+and `fx_to_base` null; the system never assumes missing FX equals one.
+Unchanged allocation saves are no-ops and preserve trusted quantities. Real
+reallocations create a new effective-dated version but leave quantity unknown
+until a trustworthy capital base is available, rather than deriving holdings
+from the legacy projection curve. Record-date lookup first selects the active
+allocation version and then its holding child, so a removed symbol cannot
+silently reuse an older quantity.
 
 Implemented provider dividends materialize automatically as deterministic
 synced `watchlist_simulation_action_entries`. Reconciliation requests an
@@ -96,10 +101,15 @@ entitlement; partial/stale refreshes may add reference terms but cannot
 downgrade a previously trusted entitlement. Provider source key, revision
 hash, dates, currency, and per-share terms always survive. Holdings V2 resolves
 the latest virtual holding at the record date and may record eligible quantity
-and gross paper entitlement. At ex-date that same gross amount becomes a paper
-receivable; at pay-date it moves to gross paper cash pending tax, clearing the
-receivable rather than adding a second amount. Both lifecycle balances are
-informational and excluded from NAV. Unknown withholding tax, net cash,
+and gross paper entitlement. Quantity adjustments require an explicit ex-date;
+missing or boundary-ambiguous dates and conflicting stock-distribution ratios
+leave the entitlement reference-only. After a trusted entitlement exists, a
+provider-independent local reducer advances it monotonically: at ex-date the
+same gross amount becomes a paper receivable; at pay-date it moves to gross
+paper cash pending tax, clearing the receivable rather than adding a second
+amount. Offline refreshes and earlier device clocks cannot move it backward.
+Both lifecycle balances are informational and excluded from NAV. Unknown
+withholding tax, net cash,
 base-currency value, and NAV application remain null. Legacy or incomplete
 holdings stay `referenceOnly`. Provider cancellation updates the same paper
 row even when coverage is incomplete; disappearance from a feed does not
@@ -107,12 +117,16 @@ delete history. No materialization path may write real investment or ledger
 tables.
 
 The current projection applies available point-in-time daily percentage moves
-to virtual target weights. Missing quotes reduce priced coverage. A local-only
-`watchlist_simulation_observations` read model records the creation baseline
-and at most one observation per UTC day. Same-day refreshes replace that day's
-projection from the prior observation, while allocation changes affect only
-future observations. These derived rows do not sync and are deleted with their
-simulation.
+to virtual target weights. Missing or stale quotes reduce priced coverage, and
+only quotes from the latest shared UTC observation day are combined; older
+quote days are treated as missing rather than attributed to a newer day. A
+local-only `watchlist_simulation_observations` read model records the creation
+baseline and at most one observation per UTC day. A synced/restored simulation
+rehydrates that baseline locally before recording a later observation.
+Same-day refreshes replace that day's projection from the prior observation,
+while allocation changes affect only future observations. These derived rows
+do not sync, are FinanceOS cache data, and are deleted when a simulation is
+tombstoned locally or through Sync v3.
 
 The observation curve is not historical NAV or actual return: it begins only
 when the simulation exists, treats missing quotes as flat, and does not infer FX

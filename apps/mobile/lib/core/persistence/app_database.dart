@@ -156,7 +156,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 89;
+  int get schemaVersion => 90;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -164,6 +164,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _createIndexes(this);
       await _createMarketCorporateActionIndexes(this);
+      await _createWatchlistSimulationLocalInvariants(this);
       await _createPortfolioIndexes(this);
       await _createSyncTables(this);
       await _createChatTables(this);
@@ -1126,11 +1127,86 @@ class AppDatabase extends _$AppDatabase {
           definition: 'INTEGER',
         );
       }
+      // v89 -> v90: upgraded databases receive the same gross lifecycle
+      // invariant as fresh schemas, and simulation tombstones clean up their
+      // device-local observation rows regardless of whether deletion was
+      // initiated locally or arrived through Sync v3.
+      if (from < 90) {
+        await _createWatchlistSimulationLocalInvariants(this);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
+}
+
+Future<void> _createWatchlistSimulationLocalInvariants(AppDatabase db) async {
+  Future<bool> hasTable(String name) async {
+    final row = await db
+        .customSelect(
+          "SELECT 1 AS present FROM sqlite_master WHERE type = 'table' "
+          'AND name = ? LIMIT 1',
+          variables: [Variable<String>(name)],
+        )
+        .getSingleOrNull();
+    return row != null;
+  }
+
+  if (await hasTable('watchlist_simulation_action_entries')) {
+    await db.customStatement('''
+      CREATE TRIGGER IF NOT EXISTS trg_watchlist_sim_action_balances_insert
+      BEFORE INSERT ON watchlist_simulation_action_entries
+      WHEN NEW.receivable_gross_amount IS NOT NULL
+       AND NEW.paper_cash_gross_amount IS NOT NULL
+      BEGIN
+        SELECT RAISE(ABORT, 'paper dividend balances are mutually exclusive');
+      END
+    ''');
+    await db.customStatement('''
+      CREATE TRIGGER IF NOT EXISTS trg_watchlist_sim_action_balances_update
+      BEFORE UPDATE OF receivable_gross_amount, paper_cash_gross_amount
+      ON watchlist_simulation_action_entries
+      WHEN NEW.receivable_gross_amount IS NOT NULL
+       AND NEW.paper_cash_gross_amount IS NOT NULL
+      BEGIN
+        SELECT RAISE(ABORT, 'paper dividend balances are mutually exclusive');
+      END
+    ''');
+  }
+
+  if (await hasTable('watchlist_simulations') &&
+      await hasTable('watchlist_simulation_observations')) {
+    await db.customStatement('''
+      CREATE TRIGGER IF NOT EXISTS trg_watchlist_simulation_tombstone_insert
+      AFTER INSERT ON watchlist_simulations
+      WHEN NEW.deleted_at IS NOT NULL
+      BEGIN
+        DELETE FROM watchlist_simulation_observations
+        WHERE owner_user_id = NEW.owner_user_id
+          AND simulation_id = NEW.id;
+      END
+    ''');
+    await db.customStatement('''
+      CREATE TRIGGER IF NOT EXISTS trg_watchlist_simulation_tombstone_cleanup
+      AFTER UPDATE OF deleted_at ON watchlist_simulations
+      WHEN NEW.deleted_at IS NOT NULL
+      BEGIN
+        DELETE FROM watchlist_simulation_observations
+        WHERE owner_user_id = NEW.owner_user_id
+          AND simulation_id = NEW.id;
+      END
+    ''');
+    await db.customStatement('''
+      CREATE TRIGGER IF NOT EXISTS trg_watchlist_simulation_delete_cleanup
+      AFTER DELETE ON watchlist_simulations
+      BEGIN
+        DELETE FROM watchlist_simulation_observations
+        WHERE owner_user_id = OLD.owner_user_id
+          AND simulation_id = OLD.id;
+      END
+    ''');
+  }
 }
 
 Future<void> _createPortfolioIndexes(AppDatabase db) async {

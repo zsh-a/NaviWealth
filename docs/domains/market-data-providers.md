@@ -43,7 +43,11 @@ facts. The service may feed read-only timelines, paper-simulation candidates,
 or a user-confirmed entry flow, but it must never write directly to real
 accounts, lots, journal entries, or postings. Provider failures, unsupported
 markets, authoritative empty responses, and partial/malformed payloads remain
-distinct result states.
+distinct result states. For Yahoo, a structurally valid empty events block is
+`authoritativeEmpty`, mixed valid and malformed rows are `partial`, and an
+invalid envelope or all-malformed event block is a failure. Provider event keys
+remain part of Yahoo's source-scoped identity so two same-day events do not
+collapse into one candidate.
 
 The cache and single-flight layer sits above provider adapters. Normalized
 candidates and fetch-state metadata persist in the device-local
@@ -53,7 +57,11 @@ remain outside Sync v3 and encrypted backups, and are cleared with FinanceOS
 cache cleanup. An expired successful cache may be returned only as an explicit
 `stale` result after refresh failure; it must never masquerade as fresh data.
 Provider source identity and normalized revision hashes survive persistence so
-later consumers can deduplicate revisions deterministically.
+later consumers can deduplicate revisions deterministically. Explicit
+simulation baseline ranges remain uncached for now: only a complete successful
+range may establish quantity-based entitlement, while an existing trusted
+entitlement can advance its date-driven paper lifecycle locally without a
+network refresh.
 
 ## Why the split exists
 

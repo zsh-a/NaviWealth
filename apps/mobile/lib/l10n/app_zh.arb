@@ -3378,6 +3378,7 @@
   "watchlistSimulationHistoryBaselineOnly": "已记录创建基线；在后续 UTC 日期收到可用行情后，曲线才会产生变动。",
   "watchlistSimulationHistoryDisclaimer": "仅为每日观察曲线，不是历史净值或真实收益。同日刷新会覆盖当日记录，调仓仅影响后续观察值。",
   "watchlistSimulationDividendRecordsTitle": "已记录股息",
+  "watchlistSimulationDividendCoverageWarning": "公司行动覆盖不完整：失败 {failed}、不支持 {unsupported}、部分数据 {partial}、过期数据 {stale}。",
   "watchlistSimulationDividendPerShare": "每股 {amount}",
   "watchlistSimulationDividendCancelled": "已取消",
   "watchlistSimulationDividendReceivable": "税前应收",

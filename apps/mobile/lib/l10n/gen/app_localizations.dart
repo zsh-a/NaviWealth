@@ -18861,6 +18861,17 @@ abstract class AppLocalizations {
   /// **'Recorded dividends'**
   String get watchlistSimulationDividendRecordsTitle;
 
+  /// Paper dividend reconciliation coverage warning
+  ///
+  /// In en, this message translates to:
+  /// **'Corporate-action coverage incomplete: {failed} failed, {unsupported} unsupported, {partial} partial, {stale} stale.'**
+  String watchlistSimulationDividendCoverageWarning(
+    int failed,
+    int unsupported,
+    int partial,
+    int stale,
+  );
+
   /// Per-share dividend amount in a paper simulation
   ///
   /// In en, this message translates to:

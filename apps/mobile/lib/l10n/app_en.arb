@@ -6122,6 +6122,16 @@
   "@watchlistSimulationHistoryDisclaimer": { "description": "Scope disclosure below the paper simulation observation chart" },
   "watchlistSimulationDividendRecordsTitle": "Recorded dividends",
   "@watchlistSimulationDividendRecordsTitle": { "description": "Title for automatically recorded paper dividend references" },
+  "watchlistSimulationDividendCoverageWarning": "Corporate-action coverage incomplete: {failed} failed, {unsupported} unsupported, {partial} partial, {stale} stale.",
+  "@watchlistSimulationDividendCoverageWarning": {
+    "description": "Paper dividend reconciliation coverage warning",
+    "placeholders": {
+      "failed": { "type": "int" },
+      "unsupported": { "type": "int" },
+      "partial": { "type": "int" },
+      "stale": { "type": "int" }
+    }
+  },
   "watchlistSimulationDividendPerShare": "{amount} per share",
   "@watchlistSimulationDividendPerShare": {
     "description": "Per-share dividend amount in a paper simulation",

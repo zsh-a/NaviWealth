@@ -299,6 +299,91 @@ void main() {
     );
   });
 
+  testWidgets('records only the latest shared UTC quote day', (tester) async {
+    final secondItem = WatchlistItem(
+      id: 'hk_stock:0700.HK',
+      symbol: '0700.HK',
+      market: AssetMarket.hkStock,
+      addedAt: DateTime.utc(2026, 8, 1),
+      alertRules: const PriceAlertRules(),
+      sync: _sync,
+    );
+    final secondPosition = WatchlistSimulationPosition(
+      id: 'position-tencent',
+      simulationId: _simulation.id,
+      watchlistItemId: secondItem.id,
+      targetWeight: Decimal.parse('0.45'),
+      createdAt: DateTime.utc(2026, 8, 31),
+      sync: _sync,
+    );
+    final firstPosition = WatchlistSimulationPosition(
+      id: _position.id,
+      simulationId: _position.simulationId,
+      watchlistItemId: _position.watchlistItemId,
+      targetWeight: Decimal.parse('0.45'),
+      createdAt: _position.createdAt,
+      sync: _position.sync,
+    );
+    final olderSnapshot = WatchlistQuoteSnapshot(
+      item: secondItem,
+      response: MarketResponse(
+        data: Quote(
+          symbol: secondItem.symbol,
+          currency: 'HKD',
+          price: Decimal.parse('500'),
+          previousClose: Decimal.parse('490'),
+          asOf: DateTime.utc(2026, 8, 30, 8),
+        ),
+        freshness: DataFreshness.cachedFresh,
+        source: 'test',
+        fetchedAt: DateTime.utc(2026, 8, 31),
+      ),
+    );
+    WatchlistSimulationObservationRequest? captured;
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [firstPosition, secondPosition],
+        items: [_item, secondItem],
+        snapshots: [_snapshot, olderSnapshot],
+        recorder: (request) async => captured = request,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(captured, isNotNull);
+    expect(captured!.pricedWeight, Decimal.parse('0.45'));
+    expect(captured!.missingQuoteWeight, Decimal.parse('0.45'));
+    expect(captured!.weightedDailyChange, Decimal.parse('0.0045'));
+  });
+
+  testWidgets('surfaces incomplete corporate-action coverage', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        reconciliation: const WatchlistSimulationActionReconciliation(
+          materializedCount: 0,
+          failedSymbolCount: 1,
+          unsupportedSymbolCount: 2,
+          partialSymbolCount: 3,
+          staleSymbolCount: 4,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining(
+        'coverage incomplete: 1 failed, 2 unsupported, 3 partial, 4 stale',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
   testWidgets('shows localized stock names beside simulation symbols', (
     tester,
   ) async {
@@ -321,7 +406,16 @@ Widget _wrap({
   required List<WatchlistSimulation> simulations,
   required List<WatchlistSimulationPosition> positions,
   WatchlistItem? item,
+  List<WatchlistItem>? items,
+  List<WatchlistQuoteSnapshot>? snapshots,
+  WatchlistSimulationObservationRecorder? recorder,
   List<WatchlistSimulationActionEntry> actionEntries = const [],
+  WatchlistSimulationActionReconciliation reconciliation =
+      const WatchlistSimulationActionReconciliation(
+        materializedCount: 0,
+        failedSymbolCount: 0,
+        unsupportedSymbolCount: 0,
+      ),
 }) {
   return ProviderScope(
     overrides: [
@@ -339,14 +433,10 @@ Widget _wrap({
         (_, _) => Stream.value(actionEntries),
       ),
       watchlistSimulationActionReconciliationProvider.overrideWith(
-        (_, _) async => const WatchlistSimulationActionReconciliation(
-          materializedCount: 0,
-          failedSymbolCount: 0,
-          unsupportedSymbolCount: 0,
-        ),
+        (_, _) async => reconciliation,
       ),
       watchlistSimulationObservationRecorderProvider.overrideWithValue(
-        (_) async {},
+        recorder ?? (_) async {},
       ),
     ],
     child: MaterialApp(
@@ -361,8 +451,8 @@ Widget _wrap({
             children: [
               WatchlistSimulationSection(
                 collection: _collection,
-                items: [item ?? _item],
-                snapshots: [_snapshot],
+                items: items ?? [item ?? _item],
+                snapshots: snapshots ?? [_snapshot],
               ),
             ],
           ),

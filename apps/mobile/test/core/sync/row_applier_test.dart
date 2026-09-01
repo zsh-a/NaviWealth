@@ -316,6 +316,52 @@ void main() {
     expect(action.eligibleQuantity.toString(), '100');
     expect(action.receivableGrossAmount, isNull);
     expect(action.paperCashGrossAmount.toString(), '25');
+
+    await db.customStatement('''
+      INSERT INTO watchlist_simulation_observations (
+        id, owner_user_id, simulation_id, observation_day, observed_at,
+        projected_value, weighted_daily_change, priced_weight,
+        missing_quote_weight, created_at, updated_at
+      ) VALUES (
+        'observation-1', '$_user', 'simulation-1', '2023-11-14',
+        1700000000, '100000', '0', '0', '0.8', 1700000000, 1700000000
+      )
+    ''');
+    final tombstoneVersion = _hlc(2_000);
+    expect(
+      await applier.applyAll([
+        RowChange(
+          table: prefixFinanceTable('watchlist_simulations'),
+          id: 'simulation-1',
+          payload: <String, Object?>{
+            'id': 'simulation-1',
+            'collection_id': 'collection-growth',
+            'name': 'Growth paper mix',
+            'base_currency': 'USD',
+            'starting_capital': '100000',
+            'cash_weight': '0.2',
+            'calculation_mode': 'holdingsTotalReturnV2',
+            'baseline_at': 1_700_000_000,
+            'created_at': 1_700_000_000,
+            'owner_user_id': _user,
+            'updated_at': 1_700_000_500,
+            'updated_by_device': _devB,
+            'hlc': tombstoneVersion,
+            'deleted_at': 1_700_000_500,
+          },
+          version: tombstoneVersion,
+          deleted: true,
+          deviceId: _devB,
+        ),
+      ]),
+      1,
+    );
+    final observationCount = await db
+        .customSelect(
+          'SELECT COUNT(*) AS count FROM watchlist_simulation_observations',
+        )
+        .getSingle();
+    expect(observationCount.read<int>('count'), 0);
   });
 
   test('skips rows that are not syncable tables', () async {

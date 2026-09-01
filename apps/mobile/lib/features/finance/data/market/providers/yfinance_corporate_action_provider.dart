@@ -88,19 +88,32 @@ class YFinanceCorporateActionProvider implements CorporateActionProvider {
       );
     }
     final currency = _currencyOf(body) ?? _defaultCurrencyFor(symbol);
-    final actions = parseYahooMarketCorporateActions(
+    final parsed = parseYahooMarketCorporateActionsDetailed(
       responseBody: body,
       symbol: symbol,
       currency: currency,
       market: request.market,
     );
+    if (!parsed.envelopeValid ||
+        (parsed.actions.isEmpty && parsed.droppedRows > 0)) {
+      throw ProviderResponseException(
+        parsed.errorMessage ??
+            'chart events contained no valid corporate-action rows',
+        provider: name,
+      );
+    }
     return CorporateActionFetchResult(
       provider: name,
-      disposition: actions.isEmpty
+      disposition: parsed.droppedRows > 0
+          ? CorporateActionFetchDisposition.partial
+          : parsed.actions.isEmpty
           ? CorporateActionFetchDisposition.authoritativeEmpty
           : CorporateActionFetchDisposition.success,
-      actions: actions,
+      actions: parsed.actions,
       fetchedAt: _now(),
+      warning: parsed.droppedRows > 0
+          ? 'Dropped ${parsed.droppedRows} malformed event row(s).'
+          : null,
     );
   }
 

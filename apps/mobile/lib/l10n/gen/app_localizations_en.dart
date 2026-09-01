@@ -11194,6 +11194,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSimulationDividendRecordsTitle => 'Recorded dividends';
 
   @override
+  String watchlistSimulationDividendCoverageWarning(
+    int failed,
+    int unsupported,
+    int partial,
+    int stale,
+  ) {
+    return 'Corporate-action coverage incomplete: $failed failed, $unsupported unsupported, $partial partial, $stale stale.';
+  }
+
+  @override
   String watchlistSimulationDividendPerShare(String amount) {
     return '$amount per share';
   }

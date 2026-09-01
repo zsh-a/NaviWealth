@@ -210,10 +210,40 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final itemById = {for (final item in items) item.id: item};
-    final changesByItemId = <String, Decimal?>{
-      for (final snapshot in snapshots)
-        snapshot.item.id: snapshot.quote?.changePercent,
-    };
+    final positionItemIds = positions
+        .map((position) => position.watchlistItemId)
+        .toSet();
+    DateTime? latestObservationDay;
+    for (final snapshot in snapshots) {
+      final quote = snapshot.quote;
+      if (!positionItemIds.contains(snapshot.item.id) ||
+          quote == null ||
+          quote.changePercent == null ||
+          snapshot.response?.freshness == DataFreshness.stale) {
+        continue;
+      }
+      final day = _utcObservationDay(quote.asOf);
+      if (latestObservationDay == null || day.isAfter(latestObservationDay)) {
+        latestObservationDay = day;
+      }
+    }
+    final changesByItemId = <String, Decimal?>{};
+    DateTime? latestQuoteAt;
+    for (final snapshot in snapshots) {
+      final quote = snapshot.quote;
+      final eligible =
+          positionItemIds.contains(snapshot.item.id) &&
+          quote != null &&
+          quote.changePercent != null &&
+          snapshot.response?.freshness != DataFreshness.stale &&
+          latestObservationDay != null &&
+          _utcObservationDay(quote.asOf) == latestObservationDay;
+      changesByItemId[snapshot.item.id] = eligible ? quote.changePercent : null;
+      if (eligible &&
+          (latestQuoteAt == null || quote.asOf.isAfter(latestQuoteAt))) {
+        latestQuoteAt = quote.asOf;
+      }
+    }
     final projection = WatchlistSimulationProjection.calculate(
       positions: positions.map(
         (position) => WatchlistSimulationQuoteInput(
@@ -227,21 +257,6 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
     final dailyMoveAmount = projection.dailyMoveAmount(
       simulation.startingCapital,
     );
-    final positionItemIds = positions
-        .map((position) => position.watchlistItemId)
-        .toSet();
-    DateTime? latestQuoteAt;
-    for (final snapshot in snapshots) {
-      final quote = snapshot.quote;
-      if (!positionItemIds.contains(snapshot.item.id) ||
-          quote == null ||
-          quote.changePercent == null) {
-        continue;
-      }
-      if (latestQuoteAt == null || quote.asOf.isAfter(latestQuoteAt)) {
-        latestQuoteAt = quote.asOf;
-      }
-    }
     return AppGroupedSurface(
       key: ValueKey<String>('watchlist-simulation-${simulation.id}'),
       padding: const EdgeInsets.all(AppSpacing.s12),
@@ -421,7 +436,16 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
         ),
       ),
       data: (records) {
+        final summary = reconciliation.asData?.value;
         if (records.isEmpty) {
+          if (summary?.hasCoverageIssues ?? false) {
+            return _DividendCoverageWarning(
+              summary: summary!,
+              onRetry: () => ref.invalidate(
+                watchlistSimulationActionReconciliationProvider(simulation.id),
+              ),
+            );
+          }
           if (!reconciliation.hasError) return const SizedBox.shrink();
           return Align(
             alignment: Alignment.centerLeft,
@@ -501,6 +525,17 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
               if (index != sorted.length - 1)
                 const SizedBox(height: AppSpacing.s4),
             ],
+            if (summary?.hasCoverageIssues ?? false) ...[
+              const SizedBox(height: AppSpacing.s8),
+              _DividendCoverageWarning(
+                summary: summary!,
+                onRetry: () => ref.invalidate(
+                  watchlistSimulationActionReconciliationProvider(
+                    simulation.id,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: AppSpacing.s6),
             Text(
               sorted.any(
@@ -526,6 +561,43 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _DividendCoverageWarning extends StatelessWidget {
+  const _DividendCoverageWarning({
+    required this.summary,
+    required this.onRetry,
+  });
+
+  final WatchlistSimulationActionReconciliation summary;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            l10n.watchlistSimulationDividendCoverageWarning(
+              summary.failedSymbolCount,
+              summary.unsupportedSymbolCount,
+              summary.partialSymbolCount,
+              summary.staleSymbolCount,
+            ),
+            style: context.captionStyle,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        FButton(
+          variant: FButtonVariant.outline,
+          onPress: onRetry,
+          child: Text(l10n.commonRetry),
+        ),
+      ],
     );
   }
 }
@@ -1184,6 +1256,11 @@ Map<String, WatchlistSimulationHoldingInput> _simulationHoldingInputs(
             DataFreshness.stale,
       ),
   };
+}
+
+DateTime _utcObservationDay(DateTime value) {
+  final utc = value.toUtc();
+  return DateTime.utc(utc.year, utc.month, utc.day);
 }
 
 String _symbolFromId(String id) {
