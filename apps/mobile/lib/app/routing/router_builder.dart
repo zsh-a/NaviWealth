@@ -338,23 +338,21 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
         builder: (context, state) =>
             _backSafe(const NotificationSettingsPage()),
       ),
-      if (kDebugMode) ...[
-        GoRoute(
-          path: 'logs',
-          name: SettingsRouteNames.logs,
-          builder: (context, state) => _backSafe(const LogViewerPage()),
-        ),
-        GoRoute(
-          path: 'performance',
-          name: SettingsRouteNames.performance,
-          builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
-        ),
-        GoRoute(
-          path: 'developer-issues',
-          name: SettingsRouteNames.developerIssues,
-          builder: (context, state) => _backSafe(const DeveloperIssuesPage()),
-        ),
-      ],
+      GoRoute(
+        path: 'logs',
+        name: SettingsRouteNames.logs,
+        builder: (context, state) => _backSafe(const LogViewerPage()),
+      ),
+      GoRoute(
+        path: 'performance',
+        name: SettingsRouteNames.performance,
+        builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
+      ),
+      GoRoute(
+        path: 'developer-issues',
+        name: SettingsRouteNames.developerIssues,
+        builder: (context, state) => _backSafe(const DeveloperIssuesPage()),
+      ),
       GoRoute(
         path: 'sync',
         name: SettingsRouteNames.sync,

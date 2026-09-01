@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -19,31 +18,27 @@ class AdvancedSettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final quality = kDebugMode
-        ? ref.watch(agent_providers.agentQualityReportProvider)
-        : null;
+    final quality = ref.watch(agent_providers.agentQualityReportProvider);
     return AppPageScaffold(
       title: l10n.settingsAdvancedHubTitle,
       childPad: false,
       child: SettingsPageFrame(
         children: [
-          if (quality != null) ...[
-            quality.when(
-              loading: () => const SkeletonCard(
-                padding: EdgeInsets.all(AppSpacing.s16),
-                child: SkeletonBox(width: double.infinity, height: 88),
-              ),
-              error: (error, stackTrace) => kDefaultError(
-                context,
-                error,
-                stackTrace,
-                onRetry: () =>
-                    ref.invalidate(agent_providers.agentQualityReportProvider),
-              ),
-              data: (report) => _AgentQualityDiagnostics(report: report),
+          quality.when(
+            loading: () => const SkeletonCard(
+              padding: EdgeInsets.all(AppSpacing.s16),
+              child: SkeletonBox(width: double.infinity, height: 88),
             ),
-            const SizedBox(height: AppSpacing.s16),
-          ],
+            error: (error, stackTrace) => kDefaultError(
+              context,
+              error,
+              stackTrace,
+              onRetry: () =>
+                  ref.invalidate(agent_providers.agentQualityReportProvider),
+            ),
+            data: (report) => _AgentQualityDiagnostics(report: report),
+          ),
+          const SizedBox(height: AppSpacing.s16),
           AppSection.group(
             title: l10n.settingsAdvancedSection,
             children: [
@@ -69,31 +64,28 @@ class AdvancedSettingsPage extends ConsumerWidget {
                 onTap: () =>
                     context.pushNamed(SettingsRouteNames.dataMaintenance),
               ),
-              if (kDebugMode) ...[
-                const AppGroupedDivider(),
-                InlineLinkRow(
-                  icon: FLucideIcons.bug,
-                  label: l10n.settingsLogsTitle,
-                  subtitle: l10n.settingsLogsSubtitle,
-                  onTap: () => context.pushNamed(SettingsRouteNames.logs),
-                ),
-                const AppGroupedDivider(),
-                InlineLinkRow(
-                  icon: FLucideIcons.activity,
-                  label: l10n.settingsPerfTitle,
-                  subtitle: l10n.settingsPerfSubtitle,
-                  onTap: () =>
-                      context.pushNamed(SettingsRouteNames.performance),
-                ),
-                const AppGroupedDivider(),
-                InlineLinkRow(
-                  icon: FLucideIcons.messageSquareWarning,
-                  label: l10n.developerIssuesAdvancedTitle,
-                  subtitle: l10n.developerIssuesAdvancedSubtitle,
-                  onTap: () =>
-                      context.pushNamed(SettingsRouteNames.developerIssues),
-                ),
-              ],
+              const AppGroupedDivider(),
+              InlineLinkRow(
+                icon: FLucideIcons.bug,
+                label: l10n.settingsLogsTitle,
+                subtitle: l10n.settingsLogsSubtitle,
+                onTap: () => context.pushNamed(SettingsRouteNames.logs),
+              ),
+              const AppGroupedDivider(),
+              InlineLinkRow(
+                icon: FLucideIcons.activity,
+                label: l10n.settingsPerfTitle,
+                subtitle: l10n.settingsPerfSubtitle,
+                onTap: () => context.pushNamed(SettingsRouteNames.performance),
+              ),
+              const AppGroupedDivider(),
+              InlineLinkRow(
+                icon: FLucideIcons.messageSquareWarning,
+                label: l10n.developerIssuesAdvancedTitle,
+                subtitle: l10n.developerIssuesAdvancedSubtitle,
+                onTap: () =>
+                    context.pushNamed(SettingsRouteNames.developerIssues),
+              ),
             ],
           ),
         ],
