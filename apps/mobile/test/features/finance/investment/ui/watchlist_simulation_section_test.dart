@@ -128,7 +128,7 @@ final _dividendEntitlement = WatchlistSimulationActionEntry(
   revisionHash: 'revision-2',
   kind: MarketCorporateActionKind.distribution,
   status: MarketCorporateActionStatus.implemented,
-  paperState: WatchlistSimulationPaperActionState.entitlementRecorded,
+  paperState: WatchlistSimulationPaperActionState.grossCashPendingTax,
   recordDate: DateTime.utc(2026, 9, 10),
   exDate: DateTime.utc(2026, 9, 11),
   payDate: DateTime.utc(2026, 9, 12),
@@ -136,6 +136,8 @@ final _dividendEntitlement = WatchlistSimulationActionEntry(
   cashPerShare: Decimal.parse('0.25'),
   eligibleQuantity: Decimal.parse('100'),
   grossAmount: Decimal.parse('25'),
+  paperCashGrossAmount: Decimal.parse('25'),
+  stateAt: DateTime.utc(2026, 9, 12),
   withholdingTaxAmount: null,
   netAmount: null,
   baseCurrencyAmount: null,
@@ -288,7 +290,11 @@ void main() {
 
     expect(find.text(r'$25.00 gross · 100 virtual shares'), findsOneWidget);
     expect(
-      find.textContaining('tax, net cash and NAV remain unapplied'),
+      find.textContaining('Gross paper cash · tax pending'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('informational and excluded from NAV'),
       findsOneWidget,
     );
   });

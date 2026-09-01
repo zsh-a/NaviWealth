@@ -115,8 +115,10 @@ void main() {
       expect(records.single.grossAmount, Decimal.parse('1250.0'));
       expect(
         records.single.paperState,
-        WatchlistSimulationPaperActionState.entitlementRecorded,
+        WatchlistSimulationPaperActionState.grossCashPendingTax,
       );
+      expect(records.single.receivableGrossAmount, isNull);
+      expect(records.single.paperCashGrossAmount, Decimal.parse('1250.0'));
     },
   );
 }

@@ -264,12 +264,17 @@ void main() {
           'revision_hash': 'revision-1',
           'kind': 'distribution',
           'status': 'implemented',
-          'paper_state': 'referenceOnly',
+          'paper_state': 'grossCashPendingTax',
           'record_date': 1_700_086_400,
           'ex_date': 1_700_172_800,
           'pay_date': 1_700_259_200,
           'currency': 'USD',
           'cash_per_share': '0.25',
+          'eligible_quantity': '100',
+          'gross_amount': '25',
+          'receivable_gross_amount': null,
+          'paper_cash_gross_amount': '25',
+          'state_at': 1_700_259_200,
           'created_at': 1_700_000_000,
           'owner_user_id': _user,
           'updated_at': 1_700_000_000,
@@ -308,7 +313,9 @@ void main() {
     expect(holding.fxToBase.toString(), '1');
     expect(action.revisionHash, 'revision-1');
     expect(action.cashPerShare.toString(), '0.25');
-    expect(action.eligibleQuantity, isNull);
+    expect(action.eligibleQuantity.toString(), '100');
+    expect(action.receivableGrossAmount, isNull);
+    expect(action.paperCashGrossAmount.toString(), '25');
   });
 
   test('skips rows that are not syncable tables', () async {

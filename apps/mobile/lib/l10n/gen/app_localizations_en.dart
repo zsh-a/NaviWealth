@@ -11202,6 +11202,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSimulationDividendCancelled => 'Cancelled';
 
   @override
+  String get watchlistSimulationDividendReceivable => 'Gross receivable';
+
+  @override
+  String get watchlistSimulationDividendCashPendingTax =>
+      'Gross paper cash · tax pending';
+
+  @override
   String watchlistSimulationDividendGross(String amount, String quantity) {
     return '$amount gross · $quantity virtual shares';
   }
@@ -11209,6 +11216,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get watchlistSimulationDividendEntitlementNote =>
       'Gross paper entitlement uses captured record-date virtual quantity; tax, net cash and NAV remain unapplied.';
+
+  @override
+  String get watchlistSimulationDividendLifecycleNote =>
+      'Gross receivable and pending-tax paper cash are informational and excluded from NAV; payment moves one gross amount and never counts it twice.';
 
   @override
   String get watchlistSimulationDividendReferenceNote =>

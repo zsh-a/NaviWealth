@@ -156,7 +156,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 88;
+  int get schemaVersion => 89;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1102,6 +1102,29 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(watchlistSimulationAllocationVersions);
         await m.createTable(watchlistSimulationHoldingVersions);
         await _createWatchlistIndexes(this);
+      }
+      // v88 -> v89: explicit gross lifecycle columns. Receivable and paper
+      // cash remain mutually exclusive and never enter NAV while tax/net are
+      // unknown.
+      if (from < 89) {
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulation_action_entries',
+          column: 'receivable_gross_amount',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulation_action_entries',
+          column: 'paper_cash_gross_amount',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulation_action_entries',
+          column: 'state_at',
+          definition: 'INTEGER',
+        );
       }
     },
     beforeOpen: (details) async {

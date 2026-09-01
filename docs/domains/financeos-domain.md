@@ -96,7 +96,10 @@ entitlement; partial/stale refreshes may add reference terms but cannot
 downgrade a previously trusted entitlement. Provider source key, revision
 hash, dates, currency, and per-share terms always survive. Holdings V2 resolves
 the latest virtual holding at the record date and may record eligible quantity
-and gross paper entitlement. Unknown withholding tax, net cash,
+and gross paper entitlement. At ex-date that same gross amount becomes a paper
+receivable; at pay-date it moves to gross paper cash pending tax, clearing the
+receivable rather than adding a second amount. Both lifecycle balances are
+informational and excluded from NAV. Unknown withholding tax, net cash,
 base-currency value, and NAV application remain null. Legacy or incomplete
 holdings stay `referenceOnly`. Provider cancellation updates the same paper
 row even when coverage is incomplete; disappearance from a feed does not

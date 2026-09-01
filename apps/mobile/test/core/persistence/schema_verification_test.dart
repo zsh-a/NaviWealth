@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 88', () {
-      expect(db.schemaVersion, 88);
+    test('is 89', () {
+      expect(db.schemaVersion, 89);
     });
   });
 
@@ -219,6 +219,9 @@ void main() {
             'cash_per_share',
             'eligible_quantity',
             'gross_amount',
+            'receivable_gross_amount',
+            'paper_cash_gross_amount',
+            'state_at',
             'withholding_tax_amount',
             'net_amount',
             'base_currency_amount',
@@ -227,12 +230,28 @@ void main() {
         for (final field in const [
           'eligible_quantity',
           'gross_amount',
+          'receivable_gross_amount',
+          'paper_cash_gross_amount',
+          'state_at',
           'withholding_tax_amount',
           'net_amount',
           'base_currency_amount',
         ]) {
           expect(columns[field], 0, reason: field);
         }
+        final tableSql = await db
+            .customSelect(
+              "SELECT sql FROM sqlite_master WHERE type = 'table' "
+              "AND name = 'watchlist_simulation_action_entries'",
+            )
+            .getSingle();
+        expect(
+          tableSql.read<String>('sql'),
+          contains(
+            'CHECK(receivable_gross_amount IS NULL OR '
+            'paper_cash_gross_amount IS NULL)',
+          ),
+        );
       },
     );
 

@@ -193,6 +193,11 @@ class WatchlistSimulationActionEntries extends Table with SyncableTable {
       text().map(const DecimalConverter()).nullable()();
   TextColumn get grossAmount =>
       text().map(const DecimalConverter()).nullable()();
+  TextColumn get receivableGrossAmount =>
+      text().map(const DecimalConverter()).nullable()();
+  TextColumn get paperCashGrossAmount =>
+      text().map(const DecimalConverter()).nullable()();
+  DateTimeColumn get stateAt => dateTime().nullable()();
   TextColumn get withholdingTaxAmount =>
       text().map(const DecimalConverter()).nullable()();
   TextColumn get netAmount => text().map(const DecimalConverter()).nullable()();
@@ -203,6 +208,7 @@ class WatchlistSimulationActionEntries extends Table with SyncableTable {
   @override
   List<String> get customConstraints => [
     'UNIQUE(owner_user_id, simulation_id, source, dataset, source_key, kind)',
+    'CHECK(receivable_gross_amount IS NULL OR paper_cash_gross_amount IS NULL)',
   ];
 
   @override

@@ -461,6 +461,10 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
                         sorted[index],
                         cancelledLabel:
                             l10n.watchlistSimulationDividendCancelled,
+                        receivableLabel:
+                            l10n.watchlistSimulationDividendReceivable,
+                        cashPendingTaxLabel:
+                            l10n.watchlistSimulationDividendCashPendingTax,
                       ),
                       style: context.captionStyle,
                     ),
@@ -502,8 +506,19 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
               sorted.any(
                     (record) =>
                         record.paperState ==
-                        WatchlistSimulationPaperActionState.entitlementRecorded,
+                            WatchlistSimulationPaperActionState
+                                .receivableGross ||
+                        record.paperState ==
+                            WatchlistSimulationPaperActionState
+                                .grossCashPendingTax,
                   )
+                  ? l10n.watchlistSimulationDividendLifecycleNote
+                  : sorted.any(
+                      (record) =>
+                          record.paperState ==
+                          WatchlistSimulationPaperActionState
+                              .entitlementRecorded,
+                    )
                   ? l10n.watchlistSimulationDividendEntitlementNote
                   : l10n.watchlistSimulationDividendReferenceNote,
               style: context.captionStyle,
@@ -519,12 +534,20 @@ String _paperDividendLabel(
   AppFormatters formatters,
   WatchlistSimulationActionEntry entry, {
   required String cancelledLabel,
+  required String receivableLabel,
+  required String cashPendingTaxLabel,
 }) {
   final date = entry.payDate ?? entry.exDate ?? entry.recordDate;
   final parts = <String>[entry.symbol];
   if (date != null) parts.add(formatters.date(date));
   if (entry.status == MarketCorporateActionStatus.cancelled) {
     parts.add(cancelledLabel);
+  } else if (entry.paperState ==
+      WatchlistSimulationPaperActionState.receivableGross) {
+    parts.add(receivableLabel);
+  } else if (entry.paperState ==
+      WatchlistSimulationPaperActionState.grossCashPendingTax) {
+    parts.add(cashPendingTaxLabel);
   }
   return parts.join(' · ');
 }

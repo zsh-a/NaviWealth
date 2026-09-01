@@ -49045,6 +49045,41 @@ class $WatchlistSimulationActionEntriesTable
       );
   @override
   late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  receivableGrossAmount =
+      GeneratedColumn<String>(
+        'receivable_gross_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$converterreceivableGrossAmountn,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
+  paperCashGrossAmount =
+      GeneratedColumn<String>(
+        'paper_cash_gross_amount',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<Decimal?>(
+        $WatchlistSimulationActionEntriesTable.$converterpaperCashGrossAmountn,
+      );
+  static const VerificationMeta _stateAtMeta = const VerificationMeta(
+    'stateAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> stateAt = GeneratedColumn<DateTime>(
+    'state_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Decimal?, String>
   withholdingTaxAmount =
       GeneratedColumn<String>(
         'withholding_tax_amount',
@@ -49115,6 +49150,9 @@ class $WatchlistSimulationActionEntriesTable
     cashPerShare,
     eligibleQuantity,
     grossAmount,
+    receivableGrossAmount,
+    paperCashGrossAmount,
+    stateAt,
     withholdingTaxAmount,
     netAmount,
     baseCurrencyAmount,
@@ -49294,6 +49332,12 @@ class $WatchlistSimulationActionEntriesTable
     } else if (isInserting) {
       context.missing(_currencyMeta);
     }
+    if (data.containsKey('state_at')) {
+      context.handle(
+        _stateAtMeta,
+        stateAt.isAcceptableOrUnknown(data['state_at']!, _stateAtMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -49423,6 +49467,26 @@ class $WatchlistSimulationActionEntriesTable
               data['${effectivePrefix}gross_amount'],
             ),
           ),
+      receivableGrossAmount: $WatchlistSimulationActionEntriesTable
+          .$converterreceivableGrossAmountn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}receivable_gross_amount'],
+            ),
+          ),
+      paperCashGrossAmount: $WatchlistSimulationActionEntriesTable
+          .$converterpaperCashGrossAmountn
+          .fromSql(
+            attachedDatabase.typeMapping.read(
+              DriftSqlType.string,
+              data['${effectivePrefix}paper_cash_gross_amount'],
+            ),
+          ),
+      stateAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}state_at'],
+      ),
       withholdingTaxAmount: $WatchlistSimulationActionEntriesTable
           .$converterwithholdingTaxAmountn
           .fromSql(
@@ -49469,6 +49533,14 @@ class $WatchlistSimulationActionEntriesTable
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $convertergrossAmountn =
       NullAwareTypeConverter.wrap($convertergrossAmount);
+  static TypeConverter<Decimal, String> $converterreceivableGrossAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterreceivableGrossAmountn =
+      NullAwareTypeConverter.wrap($converterreceivableGrossAmount);
+  static TypeConverter<Decimal, String> $converterpaperCashGrossAmount =
+      const DecimalConverter();
+  static TypeConverter<Decimal?, String?> $converterpaperCashGrossAmountn =
+      NullAwareTypeConverter.wrap($converterpaperCashGrossAmount);
   static TypeConverter<Decimal, String> $converterwithholdingTaxAmount =
       const DecimalConverter();
   static TypeConverter<Decimal?, String?> $converterwithholdingTaxAmountn =
@@ -49525,6 +49597,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
   final Decimal cashPerShare;
   final Decimal? eligibleQuantity;
   final Decimal? grossAmount;
+  final Decimal? receivableGrossAmount;
+  final Decimal? paperCashGrossAmount;
+  final DateTime? stateAt;
   final Decimal? withholdingTaxAmount;
   final Decimal? netAmount;
   final Decimal? baseCurrencyAmount;
@@ -49554,6 +49629,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
     required this.cashPerShare,
     this.eligibleQuantity,
     this.grossAmount,
+    this.receivableGrossAmount,
+    this.paperCashGrossAmount,
+    this.stateAt,
     this.withholdingTaxAmount,
     this.netAmount,
     this.baseCurrencyAmount,
@@ -49614,6 +49692,21 @@ class WatchlistSimulationActionEntryRow extends DataClass
           grossAmount,
         ),
       );
+    }
+    if (!nullToAbsent || receivableGrossAmount != null) {
+      map['receivable_gross_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterreceivableGrossAmountn
+            .toSql(receivableGrossAmount),
+      );
+    }
+    if (!nullToAbsent || paperCashGrossAmount != null) {
+      map['paper_cash_gross_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterpaperCashGrossAmountn
+            .toSql(paperCashGrossAmount),
+      );
+    }
+    if (!nullToAbsent || stateAt != null) {
+      map['state_at'] = Variable<DateTime>(stateAt);
     }
     if (!nullToAbsent || withholdingTaxAmount != null) {
       map['withholding_tax_amount'] = Variable<String>(
@@ -49676,6 +49769,15 @@ class WatchlistSimulationActionEntryRow extends DataClass
       grossAmount: grossAmount == null && nullToAbsent
           ? const Value.absent()
           : Value(grossAmount),
+      receivableGrossAmount: receivableGrossAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receivableGrossAmount),
+      paperCashGrossAmount: paperCashGrossAmount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(paperCashGrossAmount),
+      stateAt: stateAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(stateAt),
       withholdingTaxAmount: withholdingTaxAmount == null && nullToAbsent
           ? const Value.absent()
           : Value(withholdingTaxAmount),
@@ -49719,6 +49821,13 @@ class WatchlistSimulationActionEntryRow extends DataClass
       cashPerShare: serializer.fromJson<Decimal>(json['cashPerShare']),
       eligibleQuantity: serializer.fromJson<Decimal?>(json['eligibleQuantity']),
       grossAmount: serializer.fromJson<Decimal?>(json['grossAmount']),
+      receivableGrossAmount: serializer.fromJson<Decimal?>(
+        json['receivableGrossAmount'],
+      ),
+      paperCashGrossAmount: serializer.fromJson<Decimal?>(
+        json['paperCashGrossAmount'],
+      ),
+      stateAt: serializer.fromJson<DateTime?>(json['stateAt']),
       withholdingTaxAmount: serializer.fromJson<Decimal?>(
         json['withholdingTaxAmount'],
       ),
@@ -49757,6 +49866,11 @@ class WatchlistSimulationActionEntryRow extends DataClass
       'cashPerShare': serializer.toJson<Decimal>(cashPerShare),
       'eligibleQuantity': serializer.toJson<Decimal?>(eligibleQuantity),
       'grossAmount': serializer.toJson<Decimal?>(grossAmount),
+      'receivableGrossAmount': serializer.toJson<Decimal?>(
+        receivableGrossAmount,
+      ),
+      'paperCashGrossAmount': serializer.toJson<Decimal?>(paperCashGrossAmount),
+      'stateAt': serializer.toJson<DateTime?>(stateAt),
       'withholdingTaxAmount': serializer.toJson<Decimal?>(withholdingTaxAmount),
       'netAmount': serializer.toJson<Decimal?>(netAmount),
       'baseCurrencyAmount': serializer.toJson<Decimal?>(baseCurrencyAmount),
@@ -49789,6 +49903,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
     Decimal? cashPerShare,
     Value<Decimal?> eligibleQuantity = const Value.absent(),
     Value<Decimal?> grossAmount = const Value.absent(),
+    Value<Decimal?> receivableGrossAmount = const Value.absent(),
+    Value<Decimal?> paperCashGrossAmount = const Value.absent(),
+    Value<DateTime?> stateAt = const Value.absent(),
     Value<Decimal?> withholdingTaxAmount = const Value.absent(),
     Value<Decimal?> netAmount = const Value.absent(),
     Value<Decimal?> baseCurrencyAmount = const Value.absent(),
@@ -49820,6 +49937,13 @@ class WatchlistSimulationActionEntryRow extends DataClass
         ? eligibleQuantity.value
         : this.eligibleQuantity,
     grossAmount: grossAmount.present ? grossAmount.value : this.grossAmount,
+    receivableGrossAmount: receivableGrossAmount.present
+        ? receivableGrossAmount.value
+        : this.receivableGrossAmount,
+    paperCashGrossAmount: paperCashGrossAmount.present
+        ? paperCashGrossAmount.value
+        : this.paperCashGrossAmount,
+    stateAt: stateAt.present ? stateAt.value : this.stateAt,
     withholdingTaxAmount: withholdingTaxAmount.present
         ? withholdingTaxAmount.value
         : this.withholdingTaxAmount,
@@ -49877,6 +50001,13 @@ class WatchlistSimulationActionEntryRow extends DataClass
       grossAmount: data.grossAmount.present
           ? data.grossAmount.value
           : this.grossAmount,
+      receivableGrossAmount: data.receivableGrossAmount.present
+          ? data.receivableGrossAmount.value
+          : this.receivableGrossAmount,
+      paperCashGrossAmount: data.paperCashGrossAmount.present
+          ? data.paperCashGrossAmount.value
+          : this.paperCashGrossAmount,
+      stateAt: data.stateAt.present ? data.stateAt.value : this.stateAt,
       withholdingTaxAmount: data.withholdingTaxAmount.present
           ? data.withholdingTaxAmount.value
           : this.withholdingTaxAmount,
@@ -49915,6 +50046,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
           ..write('cashPerShare: $cashPerShare, ')
           ..write('eligibleQuantity: $eligibleQuantity, ')
           ..write('grossAmount: $grossAmount, ')
+          ..write('receivableGrossAmount: $receivableGrossAmount, ')
+          ..write('paperCashGrossAmount: $paperCashGrossAmount, ')
+          ..write('stateAt: $stateAt, ')
           ..write('withholdingTaxAmount: $withholdingTaxAmount, ')
           ..write('netAmount: $netAmount, ')
           ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
@@ -49949,6 +50083,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
     cashPerShare,
     eligibleQuantity,
     grossAmount,
+    receivableGrossAmount,
+    paperCashGrossAmount,
+    stateAt,
     withholdingTaxAmount,
     netAmount,
     baseCurrencyAmount,
@@ -49982,6 +50119,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
           other.cashPerShare == this.cashPerShare &&
           other.eligibleQuantity == this.eligibleQuantity &&
           other.grossAmount == this.grossAmount &&
+          other.receivableGrossAmount == this.receivableGrossAmount &&
+          other.paperCashGrossAmount == this.paperCashGrossAmount &&
+          other.stateAt == this.stateAt &&
           other.withholdingTaxAmount == this.withholdingTaxAmount &&
           other.netAmount == this.netAmount &&
           other.baseCurrencyAmount == this.baseCurrencyAmount &&
@@ -50014,6 +50154,9 @@ class WatchlistSimulationActionEntriesCompanion
   final Value<Decimal> cashPerShare;
   final Value<Decimal?> eligibleQuantity;
   final Value<Decimal?> grossAmount;
+  final Value<Decimal?> receivableGrossAmount;
+  final Value<Decimal?> paperCashGrossAmount;
+  final Value<DateTime?> stateAt;
   final Value<Decimal?> withholdingTaxAmount;
   final Value<Decimal?> netAmount;
   final Value<Decimal?> baseCurrencyAmount;
@@ -50044,6 +50187,9 @@ class WatchlistSimulationActionEntriesCompanion
     this.cashPerShare = const Value.absent(),
     this.eligibleQuantity = const Value.absent(),
     this.grossAmount = const Value.absent(),
+    this.receivableGrossAmount = const Value.absent(),
+    this.paperCashGrossAmount = const Value.absent(),
+    this.stateAt = const Value.absent(),
     this.withholdingTaxAmount = const Value.absent(),
     this.netAmount = const Value.absent(),
     this.baseCurrencyAmount = const Value.absent(),
@@ -50075,6 +50221,9 @@ class WatchlistSimulationActionEntriesCompanion
     required Decimal cashPerShare,
     this.eligibleQuantity = const Value.absent(),
     this.grossAmount = const Value.absent(),
+    this.receivableGrossAmount = const Value.absent(),
+    this.paperCashGrossAmount = const Value.absent(),
+    this.stateAt = const Value.absent(),
     this.withholdingTaxAmount = const Value.absent(),
     this.netAmount = const Value.absent(),
     this.baseCurrencyAmount = const Value.absent(),
@@ -50123,6 +50272,9 @@ class WatchlistSimulationActionEntriesCompanion
     Expression<String>? cashPerShare,
     Expression<String>? eligibleQuantity,
     Expression<String>? grossAmount,
+    Expression<String>? receivableGrossAmount,
+    Expression<String>? paperCashGrossAmount,
+    Expression<DateTime>? stateAt,
     Expression<String>? withholdingTaxAmount,
     Expression<String>? netAmount,
     Expression<String>? baseCurrencyAmount,
@@ -50154,6 +50306,11 @@ class WatchlistSimulationActionEntriesCompanion
       if (cashPerShare != null) 'cash_per_share': cashPerShare,
       if (eligibleQuantity != null) 'eligible_quantity': eligibleQuantity,
       if (grossAmount != null) 'gross_amount': grossAmount,
+      if (receivableGrossAmount != null)
+        'receivable_gross_amount': receivableGrossAmount,
+      if (paperCashGrossAmount != null)
+        'paper_cash_gross_amount': paperCashGrossAmount,
+      if (stateAt != null) 'state_at': stateAt,
       if (withholdingTaxAmount != null)
         'withholding_tax_amount': withholdingTaxAmount,
       if (netAmount != null) 'net_amount': netAmount,
@@ -50189,6 +50346,9 @@ class WatchlistSimulationActionEntriesCompanion
     Value<Decimal>? cashPerShare,
     Value<Decimal?>? eligibleQuantity,
     Value<Decimal?>? grossAmount,
+    Value<Decimal?>? receivableGrossAmount,
+    Value<Decimal?>? paperCashGrossAmount,
+    Value<DateTime?>? stateAt,
     Value<Decimal?>? withholdingTaxAmount,
     Value<Decimal?>? netAmount,
     Value<Decimal?>? baseCurrencyAmount,
@@ -50220,6 +50380,10 @@ class WatchlistSimulationActionEntriesCompanion
       cashPerShare: cashPerShare ?? this.cashPerShare,
       eligibleQuantity: eligibleQuantity ?? this.eligibleQuantity,
       grossAmount: grossAmount ?? this.grossAmount,
+      receivableGrossAmount:
+          receivableGrossAmount ?? this.receivableGrossAmount,
+      paperCashGrossAmount: paperCashGrossAmount ?? this.paperCashGrossAmount,
+      stateAt: stateAt ?? this.stateAt,
       withholdingTaxAmount: withholdingTaxAmount ?? this.withholdingTaxAmount,
       netAmount: netAmount ?? this.netAmount,
       baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
@@ -50316,6 +50480,21 @@ class WatchlistSimulationActionEntriesCompanion
         ),
       );
     }
+    if (receivableGrossAmount.present) {
+      map['receivable_gross_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterreceivableGrossAmountn
+            .toSql(receivableGrossAmount.value),
+      );
+    }
+    if (paperCashGrossAmount.present) {
+      map['paper_cash_gross_amount'] = Variable<String>(
+        $WatchlistSimulationActionEntriesTable.$converterpaperCashGrossAmountn
+            .toSql(paperCashGrossAmount.value),
+      );
+    }
+    if (stateAt.present) {
+      map['state_at'] = Variable<DateTime>(stateAt.value);
+    }
     if (withholdingTaxAmount.present) {
       map['withholding_tax_amount'] = Variable<String>(
         $WatchlistSimulationActionEntriesTable.$converterwithholdingTaxAmountn
@@ -50371,6 +50550,9 @@ class WatchlistSimulationActionEntriesCompanion
           ..write('cashPerShare: $cashPerShare, ')
           ..write('eligibleQuantity: $eligibleQuantity, ')
           ..write('grossAmount: $grossAmount, ')
+          ..write('receivableGrossAmount: $receivableGrossAmount, ')
+          ..write('paperCashGrossAmount: $paperCashGrossAmount, ')
+          ..write('stateAt: $stateAt, ')
           ..write('withholdingTaxAmount: $withholdingTaxAmount, ')
           ..write('netAmount: $netAmount, ')
           ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
@@ -73871,6 +74053,9 @@ typedef $$WatchlistSimulationActionEntriesTableCreateCompanionBuilder =
       required Decimal cashPerShare,
       Value<Decimal?> eligibleQuantity,
       Value<Decimal?> grossAmount,
+      Value<Decimal?> receivableGrossAmount,
+      Value<Decimal?> paperCashGrossAmount,
+      Value<DateTime?> stateAt,
       Value<Decimal?> withholdingTaxAmount,
       Value<Decimal?> netAmount,
       Value<Decimal?> baseCurrencyAmount,
@@ -73903,6 +74088,9 @@ typedef $$WatchlistSimulationActionEntriesTableUpdateCompanionBuilder =
       Value<Decimal> cashPerShare,
       Value<Decimal?> eligibleQuantity,
       Value<Decimal?> grossAmount,
+      Value<Decimal?> receivableGrossAmount,
+      Value<Decimal?> paperCashGrossAmount,
+      Value<DateTime?> stateAt,
       Value<Decimal?> withholdingTaxAmount,
       Value<Decimal?> netAmount,
       Value<Decimal?> baseCurrencyAmount,
@@ -74042,6 +74230,23 @@ class $$WatchlistSimulationActionEntriesTableFilterComposer
         column: $table.grossAmount,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get receivableGrossAmount => $composableBuilder(
+    column: $table.receivableGrossAmount,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
+  get paperCashGrossAmount => $composableBuilder(
+    column: $table.paperCashGrossAmount,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get stateAt => $composableBuilder(
+    column: $table.stateAt,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnWithTypeConverterFilters<Decimal?, Decimal, String>
   get withholdingTaxAmount => $composableBuilder(
@@ -74196,6 +74401,21 @@ class $$WatchlistSimulationActionEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get receivableGrossAmount => $composableBuilder(
+    column: $table.receivableGrossAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get paperCashGrossAmount => $composableBuilder(
+    column: $table.paperCashGrossAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get stateAt => $composableBuilder(
+    column: $table.stateAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get withholdingTaxAmount => $composableBuilder(
     column: $table.withholdingTaxAmount,
     builder: (column) => ColumnOrderings(column),
@@ -74321,6 +74541,21 @@ class $$WatchlistSimulationActionEntriesTableAnnotationComposer
         builder: (column) => column,
       );
 
+  GeneratedColumnWithTypeConverter<Decimal?, String>
+  get receivableGrossAmount => $composableBuilder(
+    column: $table.receivableGrossAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Decimal?, String> get paperCashGrossAmount =>
+      $composableBuilder(
+        column: $table.paperCashGrossAmount,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get stateAt =>
+      $composableBuilder(column: $table.stateAt, builder: (column) => column);
+
   GeneratedColumnWithTypeConverter<Decimal?, String> get withholdingTaxAmount =>
       $composableBuilder(
         column: $table.withholdingTaxAmount,
@@ -74410,6 +74645,9 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 Value<Decimal> cashPerShare = const Value.absent(),
                 Value<Decimal?> eligibleQuantity = const Value.absent(),
                 Value<Decimal?> grossAmount = const Value.absent(),
+                Value<Decimal?> receivableGrossAmount = const Value.absent(),
+                Value<Decimal?> paperCashGrossAmount = const Value.absent(),
+                Value<DateTime?> stateAt = const Value.absent(),
                 Value<Decimal?> withholdingTaxAmount = const Value.absent(),
                 Value<Decimal?> netAmount = const Value.absent(),
                 Value<Decimal?> baseCurrencyAmount = const Value.absent(),
@@ -74440,6 +74678,9 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 cashPerShare: cashPerShare,
                 eligibleQuantity: eligibleQuantity,
                 grossAmount: grossAmount,
+                receivableGrossAmount: receivableGrossAmount,
+                paperCashGrossAmount: paperCashGrossAmount,
+                stateAt: stateAt,
                 withholdingTaxAmount: withholdingTaxAmount,
                 netAmount: netAmount,
                 baseCurrencyAmount: baseCurrencyAmount,
@@ -74472,6 +74713,9 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 required Decimal cashPerShare,
                 Value<Decimal?> eligibleQuantity = const Value.absent(),
                 Value<Decimal?> grossAmount = const Value.absent(),
+                Value<Decimal?> receivableGrossAmount = const Value.absent(),
+                Value<Decimal?> paperCashGrossAmount = const Value.absent(),
+                Value<DateTime?> stateAt = const Value.absent(),
                 Value<Decimal?> withholdingTaxAmount = const Value.absent(),
                 Value<Decimal?> netAmount = const Value.absent(),
                 Value<Decimal?> baseCurrencyAmount = const Value.absent(),
@@ -74502,6 +74746,9 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 cashPerShare: cashPerShare,
                 eligibleQuantity: eligibleQuantity,
                 grossAmount: grossAmount,
+                receivableGrossAmount: receivableGrossAmount,
+                paperCashGrossAmount: paperCashGrossAmount,
+                stateAt: stateAt,
                 withholdingTaxAmount: withholdingTaxAmount,
                 netAmount: netAmount,
                 baseCurrencyAmount: baseCurrencyAmount,

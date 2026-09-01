@@ -18873,6 +18873,18 @@ abstract class AppLocalizations {
   /// **'Cancelled'**
   String get watchlistSimulationDividendCancelled;
 
+  /// Gross paper dividend receivable at ex-date
+  ///
+  /// In en, this message translates to:
+  /// **'Gross receivable'**
+  String get watchlistSimulationDividendReceivable;
+
+  /// Paid gross paper dividend awaiting tax/net normalization
+  ///
+  /// In en, this message translates to:
+  /// **'Gross paper cash · tax pending'**
+  String get watchlistSimulationDividendCashPendingTax;
+
   /// Gross paper dividend based on captured record-date virtual quantity
   ///
   /// In en, this message translates to:
@@ -18884,6 +18896,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Gross paper entitlement uses captured record-date virtual quantity; tax, net cash and NAV remain unapplied.'**
   String get watchlistSimulationDividendEntitlementNote;
+
+  /// Disclosure for gross paper dividend lifecycle without tax or NAV application
+  ///
+  /// In en, this message translates to:
+  /// **'Gross receivable and pending-tax paper cash are informational and excluded from NAV; payment moves one gross amount and never counts it twice.'**
+  String get watchlistSimulationDividendLifecycleNote;
 
   /// Disclosure for paper dividend references without holdings entitlement
   ///

@@ -91,6 +91,8 @@ class WatchlistSimulationPosition {
 enum WatchlistSimulationPaperActionState {
   referenceOnly,
   entitlementRecorded,
+  receivableGross,
+  grossCashPendingTax,
   cancelled,
 }
 
@@ -115,6 +117,9 @@ class WatchlistSimulationActionEntry {
     required this.cashPerShare,
     required this.eligibleQuantity,
     required this.grossAmount,
+    this.receivableGrossAmount,
+    this.paperCashGrossAmount,
+    this.stateAt,
     required this.withholdingTaxAmount,
     required this.netAmount,
     required this.baseCurrencyAmount,
@@ -141,6 +146,9 @@ class WatchlistSimulationActionEntry {
   final Decimal cashPerShare;
   final Decimal? eligibleQuantity;
   final Decimal? grossAmount;
+  final Decimal? receivableGrossAmount;
+  final Decimal? paperCashGrossAmount;
+  final DateTime? stateAt;
   final Decimal? withholdingTaxAmount;
   final Decimal? netAmount;
   final Decimal? baseCurrencyAmount;
@@ -151,6 +159,8 @@ class WatchlistSimulationActionEntry {
       paperState == WatchlistSimulationPaperActionState.referenceOnly &&
       eligibleQuantity == null &&
       grossAmount == null &&
+      receivableGrossAmount == null &&
+      paperCashGrossAmount == null &&
       withholdingTaxAmount == null &&
       netAmount == null &&
       baseCurrencyAmount == null;
@@ -469,9 +479,11 @@ class WatchlistSimulationRepository {
     required Map<String, Iterable<MarketCorporateAction>>
     actionsByWatchlistItemId,
     Set<String> trustedAdjustmentCoverageItemIds = const <String>{},
+    DateTime? lifecycleAsOf,
   }) async {
     if (actionsByWatchlistItemId.isEmpty) return const [];
     final stamp = await _stamper.stamp();
+    final asOf = (lifecycleAsOf ?? stamp.now).toUtc();
     final materialized = <WatchlistSimulationActionEntry>[];
     await _db.transaction(() async {
       final activeSimulation =
@@ -534,13 +546,14 @@ class WatchlistSimulationRepository {
           var paperState = WatchlistSimulationPaperActionState.referenceOnly;
           Decimal? eligibleQuantity;
           Decimal? grossAmount;
+          Decimal? receivableGrossAmount;
+          Decimal? paperCashGrossAmount;
+          DateTime? stateAt;
           if (action.status == MarketCorporateActionStatus.cancelled) {
             paperState = WatchlistSimulationPaperActionState.cancelled;
+            stateAt = action.timelineDate?.toUtc();
           } else if (!hasTrustedAdjustmentCoverage &&
-              existing?.paperState ==
-                  WatchlistSimulationPaperActionState
-                      .entitlementRecorded
-                      .name) {
+              _isTrustedEntitlementState(existing?.paperState)) {
             // A partial/stale fetch must not downgrade or revise a previously
             // trusted entitlement with an incomplete adjustment history.
             continue;
@@ -583,6 +596,22 @@ class WatchlistSimulationRepository {
               );
               paperState =
                   WatchlistSimulationPaperActionState.entitlementRecorded;
+              stateAt = action.recordDate?.toUtc();
+              final exDate = action.exDate?.toUtc();
+              final payDate = action.payDate?.toUtc();
+              if (exDate != null && !asOf.isBefore(exDate)) {
+                paperState =
+                    WatchlistSimulationPaperActionState.receivableGross;
+                receivableGrossAmount = grossAmount;
+                stateAt = exDate;
+              }
+              if (payDate != null && !asOf.isBefore(payDate)) {
+                paperState =
+                    WatchlistSimulationPaperActionState.grossCashPendingTax;
+                receivableGrossAmount = null;
+                paperCashGrossAmount = grossAmount;
+                stateAt = payDate;
+              }
             }
           }
           if (existing != null &&
@@ -593,6 +622,9 @@ class WatchlistSimulationRepository {
                 paperState: paperState,
                 eligibleQuantity: eligibleQuantity,
                 grossAmount: grossAmount,
+                receivableGrossAmount: receivableGrossAmount,
+                paperCashGrossAmount: paperCashGrossAmount,
+                stateAt: stateAt,
               )) {
             continue;
           }
@@ -620,6 +652,9 @@ class WatchlistSimulationRepository {
                   cashPerShare: action.cashPerShare!,
                   eligibleQuantity: Value(eligibleQuantity),
                   grossAmount: Value(grossAmount),
+                  receivableGrossAmount: Value(receivableGrossAmount),
+                  paperCashGrossAmount: Value(paperCashGrossAmount),
+                  stateAt: Value(stateAt),
                   withholdingTaxAmount: const Value(null),
                   netAmount: const Value(null),
                   baseCurrencyAmount: const Value(null),
@@ -653,6 +688,9 @@ class WatchlistSimulationRepository {
               cashPerShare: action.cashPerShare!,
               eligibleQuantity: eligibleQuantity,
               grossAmount: grossAmount,
+              receivableGrossAmount: receivableGrossAmount,
+              paperCashGrossAmount: paperCashGrossAmount,
+              stateAt: stateAt,
               withholdingTaxAmount: null,
               netAmount: null,
               baseCurrencyAmount: null,
@@ -1147,6 +1185,13 @@ WatchlistSimulationPosition _positionFromRow(
   );
 }
 
+bool _isTrustedEntitlementState(String? value) {
+  return value ==
+          WatchlistSimulationPaperActionState.entitlementRecorded.name ||
+      value == WatchlistSimulationPaperActionState.receivableGross.name ||
+      value == WatchlistSimulationPaperActionState.grossCashPendingTax.name;
+}
+
 Decimal? _quantityAdjustmentMultiplier(
   MarketCorporateAction action, {
   required DateTime after,
@@ -1189,6 +1234,9 @@ bool _actionEntryMatches(
   required WatchlistSimulationPaperActionState paperState,
   required Decimal? eligibleQuantity,
   required Decimal? grossAmount,
+  required Decimal? receivableGrossAmount,
+  required Decimal? paperCashGrossAmount,
+  required DateTime? stateAt,
 }) {
   return row.deletedAt == null &&
       row.watchlistItemId == watchlistItemId &&
@@ -1208,6 +1256,9 @@ bool _actionEntryMatches(
       row.cashPerShare == action.cashPerShare &&
       row.eligibleQuantity == eligibleQuantity &&
       row.grossAmount == grossAmount &&
+      row.receivableGrossAmount == receivableGrossAmount &&
+      row.paperCashGrossAmount == paperCashGrossAmount &&
+      _sameInstant(row.stateAt, stateAt) &&
       row.withholdingTaxAmount == null &&
       row.netAmount == null &&
       row.baseCurrencyAmount == null;
@@ -1243,6 +1294,9 @@ WatchlistSimulationActionEntry _actionEntryFromRow(
   cashPerShare: row.cashPerShare,
   eligibleQuantity: row.eligibleQuantity,
   grossAmount: row.grossAmount,
+  receivableGrossAmount: row.receivableGrossAmount,
+  paperCashGrossAmount: row.paperCashGrossAmount,
+  stateAt: row.stateAt?.toUtc(),
   withholdingTaxAmount: row.withholdingTaxAmount,
   netAmount: row.netAmount,
   baseCurrencyAmount: row.baseCurrencyAmount,

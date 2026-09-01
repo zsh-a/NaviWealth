@@ -106,7 +106,8 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
       );
       final actionsByItemId = <String, Iterable<MarketCorporateAction>>{};
       final trustedAdjustmentCoverageItemIds = <String>{};
-      final rangeEnd = DateTime.now().toUtc().add(const Duration(days: 365));
+      final lifecycleAsOf = DateTime.now().toUtc();
+      final rangeEnd = lifecycleAsOf.add(const Duration(days: 365));
       var failedSymbolCount = 0;
       var unsupportedSymbolCount = 0;
       for (final position in positions) {
@@ -143,6 +144,7 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
         simulation: simulation,
         actionsByWatchlistItemId: actionsByItemId,
         trustedAdjustmentCoverageItemIds: trustedAdjustmentCoverageItemIds,
+        lifecycleAsOf: lifecycleAsOf,
       );
       return WatchlistSimulationActionReconciliation(
         materializedCount: materialized.length,

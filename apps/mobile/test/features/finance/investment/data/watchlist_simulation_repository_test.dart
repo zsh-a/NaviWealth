@@ -14,6 +14,9 @@ MarketCorporateAction _dividend({
   required String cashPerShare,
   MarketCorporateActionStatus status = MarketCorporateActionStatus.implemented,
   String sourceKey = '600519:2024-12-31',
+  DateTime? recordDate,
+  DateTime? exDate,
+  DateTime? payDate,
 }) => MarketCorporateAction(
   id: 'eastmoney:RPT_SHAREBONUS_DET:$sourceKey',
   source: 'eastmoney',
@@ -25,9 +28,9 @@ MarketCorporateAction _dividend({
   market: AssetMarket.cnA,
   kind: MarketCorporateActionKind.distribution,
   status: status,
-  recordDate: DateTime.utc(2024, 6, 20),
-  exDate: DateTime.utc(2024, 6, 21),
-  payDate: DateTime.utc(2024, 6, 21),
+  recordDate: recordDate ?? DateTime.utc(2024, 6, 20),
+  exDate: exDate ?? DateTime.utc(2024, 6, 21),
+  payDate: payDate ?? DateTime.utc(2024, 6, 21),
   currency: 'CNY',
   cashPerShare: Decimal.parse(cashPerShare),
 );
@@ -441,6 +444,122 @@ void main() {
     expect(record.eligibleQuantity, Decimal.parse('10'));
     expect(record.grossAmount, Decimal.parse('25.0'));
   });
+
+  test(
+    'moves gross entitlement from receivable to pending-tax paper cash',
+    () async {
+      final db = makeTestDatabase();
+      final outbox = InMemoryOutboxStore();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'Dividend lifecycle',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:600519': WatchlistSimulationHoldingInput(
+            symbol: '600519',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('200'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+        },
+      );
+      final action = _dividend(
+        revisionHash: 'lifecycle',
+        cashPerShare: '2.5',
+        payDate: DateTime.utc(2024, 6, 28),
+      );
+
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [action],
+        },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+        lifecycleAsOf: DateTime.utc(2024, 6, 21),
+      );
+      var record =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(
+        record.paperState,
+        WatchlistSimulationPaperActionState.receivableGross,
+      );
+      expect(record.grossAmount, Decimal.parse('12.5'));
+      expect(record.receivableGrossAmount, Decimal.parse('12.5'));
+      expect(record.paperCashGrossAmount, isNull);
+      expect(record.stateAt, DateTime.utc(2024, 6, 21));
+
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [action],
+        },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+        lifecycleAsOf: DateTime.utc(2024, 6, 28),
+      );
+      record =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(
+        record.paperState,
+        WatchlistSimulationPaperActionState.grossCashPendingTax,
+      );
+      expect(record.receivableGrossAmount, isNull);
+      expect(record.paperCashGrossAmount, Decimal.parse('12.5'));
+      expect(record.stateAt, DateTime.utc(2024, 6, 28));
+      expect(record.withholdingTaxAmount, isNull);
+      expect(record.netAmount, isNull);
+      expect(record.baseCurrencyAmount, isNull);
+
+      final duplicate = await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [action],
+        },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+        lifecycleAsOf: DateTime.utc(2024, 7, 1),
+      );
+      expect(duplicate, isEmpty);
+      final observations = await repository
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first;
+      expect(observations, hasLength(1));
+      expect(observations.single.projectedValue, Decimal.parse('1000'));
+
+      for (final table in const [
+        'investment_portfolios',
+        'accounts',
+        'journal_entries',
+        'postings',
+      ]) {
+        final count = await db
+            .customSelect('SELECT COUNT(*) AS count FROM $table')
+            .getSingle();
+        expect(count.read<int>('count'), 0, reason: table);
+      }
+    },
+  );
 
   test('holdings V2 never treats missing FX as one', () async {
     final db = makeTestDatabase();
