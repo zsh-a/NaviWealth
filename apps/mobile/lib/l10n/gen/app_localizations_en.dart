@@ -10895,6 +10895,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'AI requires your own API key in Settings before it can run. The model connection is made directly from this device, and requests/data do not pass through our servers. On-device AI is not supported on web yet.';
 
   @override
+  String get aiChatErrorAuthentication =>
+      'The model provider rejected access. Check the API key or its permissions.';
+
+  @override
+  String get aiChatErrorEndpoint =>
+      'The model endpoint was not found. Check the provider Base URL.';
+
+  @override
+  String get aiChatErrorRateLimited =>
+      'The model provider is temporarily rate-limiting requests. Try again shortly.';
+
+  @override
+  String get aiChatErrorRequest =>
+      'The model rejected this request. Check the model name or provider settings.';
+
+  @override
+  String get aiChatErrorNetwork =>
+      'The model provider could not be reached. Check your network and try again.';
+
+  @override
+  String get aiChatErrorRuntime =>
+      'The on-device AI runtime encountered a temporary problem. Try again.';
+
+  @override
   String get expenseFormAiTimeframeRecent90Days => 'Last 90 days';
 
   @override

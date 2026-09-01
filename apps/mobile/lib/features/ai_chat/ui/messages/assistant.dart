@@ -44,7 +44,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
         _isError &&
         message.role == ChatRole.assistant &&
         isLastAssistant &&
-        message.errorMessage != 'device_unavailable';
+        !isChatConfigurationError(message.errorMessage);
     final retryBusy =
         showRetry && ref.watch(chatControllerProvider(sessionId)).isBusy;
 
@@ -101,7 +101,7 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
               color: context.theme.colors.destructive,
             ),
           ),
-          if (message.errorMessage == 'device_unavailable') ...[
+          if (isChatConfigurationError(message.errorMessage)) ...[
             const SizedBox(height: AppSpacing.s8),
             FButton(
               variant: FButtonVariant.outline,
@@ -246,10 +246,15 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
 
   String? _localizedErrorMessage(BuildContext context, String? raw) {
     if (raw == null || raw.isEmpty) return raw;
+    final l10n = AppLocalizations.of(context);
     return switch (raw) {
-      'device_unavailable' => AppLocalizations.of(
-        context,
-      ).aiChatDeviceUnavailable,
+      kChatErrorDeviceUnavailable => l10n.aiChatDeviceUnavailable,
+      kChatErrorAuthentication => l10n.aiChatErrorAuthentication,
+      kChatErrorEndpoint => l10n.aiChatErrorEndpoint,
+      kChatErrorRateLimited => l10n.aiChatErrorRateLimited,
+      kChatErrorRequest => l10n.aiChatErrorRequest,
+      kChatErrorNetwork => l10n.aiChatErrorNetwork,
+      kChatErrorRuntime => l10n.aiChatErrorRuntime,
       _ => raw,
     };
   }

@@ -18350,6 +18350,42 @@ abstract class AppLocalizations {
   /// **'AI requires your own API key in Settings before it can run. The model connection is made directly from this device, and requests/data do not pass through our servers. On-device AI is not supported on web yet.'**
   String get aiChatDeviceUnavailable;
 
+  /// Chat error shown when the model provider rejects the configured API key
+  ///
+  /// In en, this message translates to:
+  /// **'The model provider rejected access. Check the API key or its permissions.'**
+  String get aiChatErrorAuthentication;
+
+  /// Chat error shown when the configured model endpoint cannot be found
+  ///
+  /// In en, this message translates to:
+  /// **'The model endpoint was not found. Check the provider Base URL.'**
+  String get aiChatErrorEndpoint;
+
+  /// Chat error shown when the model provider returns a rate limit
+  ///
+  /// In en, this message translates to:
+  /// **'The model provider is temporarily rate-limiting requests. Try again shortly.'**
+  String get aiChatErrorRateLimited;
+
+  /// Chat error shown when the provider rejects the request configuration
+  ///
+  /// In en, this message translates to:
+  /// **'The model rejected this request. Check the model name or provider settings.'**
+  String get aiChatErrorRequest;
+
+  /// Chat error shown when the device cannot reach the model provider
+  ///
+  /// In en, this message translates to:
+  /// **'The model provider could not be reached. Check your network and try again.'**
+  String get aiChatErrorNetwork;
+
+  /// Chat error shown for recoverable runtime or provider failures
+  ///
+  /// In en, this message translates to:
+  /// **'The on-device AI runtime encountered a temporary problem. Try again.'**
+  String get aiChatErrorRuntime;
+
   /// AI context timeframe passed from the expense form
   ///
   /// In en, this message translates to:

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/ai_chat/domain/chat_error.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 import 'package:naviwealth/features/ai_chat/ui/messages/message_bubble.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -71,12 +72,31 @@ void main() {
     expect(find.text('继续'), findsNothing);
     expect(find.text('回答未完整接收'), findsNothing);
   });
+
+  testWidgets('configuration errors show a localized repair message', (
+    tester,
+  ) async {
+    await _pumpMessage(
+      tester,
+      _message(
+        content: '',
+        status: ChatMessageStatus.errored,
+        stopReason: ChatStopReason.error,
+        errorMessage: kChatErrorAuthentication,
+      ),
+      withAccessibilityScope: true,
+    );
+
+    expect(find.text('模型服务商拒绝了访问，请检查 API Key 或权限。'), findsOneWidget);
+    expect(find.text('添加模型服务商'), findsOneWidget);
+  });
 }
 
 ChatMessage _message({
   required String content,
   required ChatMessageStatus status,
   required ChatStopReason stopReason,
+  String? errorMessage,
 }) => ChatMessage(
   id: 'assistant-1',
   sessionId: 'session-1',
@@ -84,6 +104,7 @@ ChatMessage _message({
   role: ChatRole.assistant,
   content: content,
   status: status,
+  errorMessage: errorMessage,
   stopReason: stopReason,
   createdAt: DateTime.utc(2026, 8, 24),
 );
@@ -92,6 +113,7 @@ Future<void> _pumpMessage(
   WidgetTester tester,
   ChatMessage message, {
   bool isLastAssistant = false,
+  bool withAccessibilityScope = false,
 }) {
   return tester.pumpWidget(
     ProviderScope(
@@ -101,6 +123,16 @@ Future<void> _pumpMessage(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('zh'),
+        builder: (context, child) => withAccessibilityScope
+            ? FAccessibilityScope(
+                data: const FAccessibility(
+                  accessibleNavigation: false,
+                  motion: FAccessibilityMotion.disabled,
+                  focusHighlight: false,
+                ),
+                child: child!,
+              )
+            : child!,
         home: FTheme(
           data: FTheme.neutral.light.desktop,
           child: FScaffold(

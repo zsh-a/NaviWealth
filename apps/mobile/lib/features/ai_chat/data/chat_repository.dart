@@ -12,6 +12,7 @@ import '../../../core/ai/runtime/device/device_user_profile_prompt.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
+import '../domain/chat_error.dart';
 import '../domain/chat_models.dart';
 import '../domain/chat_turn_metadata.dart';
 import '../domain/conversation_checkpoint.dart';

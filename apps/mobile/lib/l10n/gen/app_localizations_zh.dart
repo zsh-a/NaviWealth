@@ -10316,6 +10316,24 @@ class AppLocalizationsZh extends AppLocalizations {
       'AI 需要在设置中配置自带 API Key 后启用（本机直连模型，请求与数据不经我方服务器）。Web 端暂不支持设备侧 AI。';
 
   @override
+  String get aiChatErrorAuthentication => '模型服务商拒绝了访问，请检查 API Key 或权限。';
+
+  @override
+  String get aiChatErrorEndpoint => '找不到模型服务端点，请检查服务商 Base URL。';
+
+  @override
+  String get aiChatErrorRateLimited => '模型服务商暂时限流，请稍后重试。';
+
+  @override
+  String get aiChatErrorRequest => '模型拒绝了这次请求，请检查模型名称或服务商设置。';
+
+  @override
+  String get aiChatErrorNetwork => '无法连接模型服务商，请检查网络后重试。';
+
+  @override
+  String get aiChatErrorRuntime => '端侧 AI 运行时暂时出现问题，请重试。';
+
+  @override
   String get expenseFormAiTimeframeRecent90Days => '最近 90 天';
 
   @override

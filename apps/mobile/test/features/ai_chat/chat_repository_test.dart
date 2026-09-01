@@ -11,6 +11,7 @@ import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/features/ai_chat/data/ai_chat_api_client.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_history_store.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_repository.dart';
+import 'package:naviwealth/features/ai_chat/domain/chat_error.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 import 'package:naviwealth/features/ai_chat/domain/chat_turn_metadata.dart';
 
@@ -543,6 +544,30 @@ void main() {
       expect(assistant.status, ChatMessageStatus.errored);
       expect(assistant.errorMessage, 'boom');
     });
+
+    test(
+      'stores a stable presentation key for provider auth failures',
+      () async {
+        api.script.addAll(const <AiChatEvent>[
+          ErrorEvent(
+            'invalid api key: provider detail',
+            code: 'provider_http_401',
+          ),
+          DoneEvent(stopReason: 'error', rounds: 1),
+        ]);
+
+        final id = await activeSessionId();
+        await repo.sendMessage(
+          sessionId: id,
+          ownerUserId: 'user-1',
+          content: 'hi',
+        );
+
+        final assistant = (await store.listMessages(id))
+            .firstWhere((m) => m.role == ChatRole.assistant);
+        expect(assistant.errorMessage, kChatErrorAuthentication);
+      },
+    );
 
     test('marks turn errored when the response stream is empty', () async {
       final id = await activeSessionId();

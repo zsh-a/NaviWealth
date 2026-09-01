@@ -14,6 +14,7 @@ import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../domain/chat_error.dart';
 import '../../domain/chat_models.dart';
 import '../../state/chat_controller.dart';
 import '../../state/composer_draft.dart';

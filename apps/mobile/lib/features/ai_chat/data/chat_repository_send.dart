@@ -351,12 +351,15 @@ mixin _ChatRepositorySend {
               clearProgress: true,
             );
             await _store.updateMessage(assistant);
-          case ErrorEvent(:final message):
+          case ErrorEvent(:final message, :final code):
             outcome = SendOutcome.errored;
             terminalReason = TerminalReason.streamError;
             assistant = assistant.copyWith(
               status: ChatMessageStatus.errored,
-              errorMessage: message,
+              errorMessage: chatErrorPresentationKey(
+                code: code,
+                message: message,
+              ),
               clearProgress: true,
             );
             await _store.updateMessage(assistant);
@@ -454,7 +457,7 @@ mixin _ChatRepositorySend {
         terminalReason = TerminalReason.streamError;
         assistant = assistant.copyWith(
           status: ChatMessageStatus.errored,
-          errorMessage: _describeError(e),
+          errorMessage: chatErrorPresentationKey(message: _describeError(e)),
           stopReason: ChatStopReason.error,
           clearProgress: true,
         );
