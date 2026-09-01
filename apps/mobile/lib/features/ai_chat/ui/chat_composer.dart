@@ -839,10 +839,48 @@ class _ProfileCaption extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final creds = ref.watch(llmCredentialsProvider).asData?.value;
-    final active = creds?.active;
-    if (active == null) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
+    final credentials = ref.watch(llmCredentialsProvider);
+    final creds = credentials.asData?.value;
+    final active = creds?.active;
+
+    // Do not show a setup prompt while secure storage is still warming. Once
+    // it has resolved to no active profile, make the next step visible before
+    // the user submits a turn and hits device_unavailable.
+    if (!credentials.hasValue) return const SizedBox.shrink();
+    if (active == null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.s6),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: FTooltip(
+            tipBuilder: (_, _) => Text(l10n.aiLlmEmpty),
+            child: AppTappable(
+              onPress: () => pushFromAiSurface(context, SettingsRoutes.aiLlm),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const AiSparkle(size: 11),
+                  const SizedBox(width: AppSpacing.s4),
+                  Text(
+                    l10n.aiLlmAddProvider,
+                    style: AiType.meta(context)
+                        .copyWith(color: context.theme.colors.primary),
+                  ),
+                  const SizedBox(width: AppSpacing.s4),
+                  Icon(
+                    FLucideIcons.chevronRight,
+                    size: AppIconSizes.xs,
+                    color: context.theme.colors.primary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.s6),
       child: Align(

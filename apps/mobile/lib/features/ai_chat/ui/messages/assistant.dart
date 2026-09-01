@@ -93,6 +93,16 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
               color: context.theme.colors.destructive,
             ),
           ),
+          if (message.errorMessage == 'device_unavailable') ...[
+            const SizedBox(height: AppSpacing.s8),
+            FButton(
+              variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.sm,
+              onPress: () => pushFromAiSurface(context, SettingsRoutes.aiLlm),
+              prefix: const Icon(FLucideIcons.settings, size: AppIconSizes.xs),
+              child: Text(l10n.aiLlmAddProvider),
+            ),
+          ],
         ],
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
@@ -113,7 +123,11 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
           // over follow-up chips so the primary next step is unambiguous.
           if (message.status == ChatMessageStatus.complete &&
               !_hasBlockingAction(message))
-            _FollowUpChips(sessionId: sessionId, tools: message.toolCalls),
+            _FollowUpChips(
+              sessionId: sessionId,
+              messageId: message.id,
+              tools: message.toolCalls,
+            ),
         ],
       ],
     );
@@ -531,9 +545,14 @@ bool _hasBlockingAction(ChatMessage message) {
 
 /// Context follow-up chips under the trailing complete assistant turn.
 class _FollowUpChips extends ConsumerWidget {
-  const _FollowUpChips({required this.sessionId, required this.tools});
+  const _FollowUpChips({
+    required this.sessionId,
+    required this.messageId,
+    required this.tools,
+  });
 
   final String sessionId;
+  final String messageId;
   final List<ToolInvocation> tools;
 
   @override
@@ -542,7 +561,17 @@ class _FollowUpChips extends ConsumerWidget {
     final turn = ref.watch(chatControllerProvider(sessionId));
     if (turn.isBusy) return const SizedBox.shrink();
 
+    // Invocation-specific chip rules are persisted on the local trace. Read
+    // them here so a contextual entry such as "explain this change" keeps
+    // producing relevant follow-ups after the turn has completed or the app
+    // has been restarted. Manual chat turns fall back to generic chips.
+    final trace = ref.watch(aiTraceByIdProvider(messageId)).asData?.value;
+    final rawIntent = trace?.invocation?['intent'];
+    final invocationIntent = rawIntent is String && rawIntent.isNotEmpty
+        ? rawIntent
+        : null;
     final chipIds = suggestReplyChips(
+      invocationIntent: invocationIntent,
       turnTools: {for (final t in tools) t.name},
     );
     if (chipIds.isEmpty) return const SizedBox.shrink();

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
+import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/speech/speech_recognizer.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/state/chat_controller.dart';
@@ -77,6 +79,24 @@ void main() {
 
     expect(cancelled, 1);
     expect(sent, isEmpty);
+  });
+
+  testWidgets('missing model profile exposes setup before sending', (
+    tester,
+  ) async {
+    await _pumpComposer(
+      tester,
+      preferences: preferences,
+      locale: const Locale('zh'),
+      isStreaming: false,
+      sessionId: 'session-1',
+      credentials: const LlmCredentials(),
+      onSend: (_) {},
+      onCancel: () {},
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('添加模型服务商'), findsOneWidget);
   });
 
   testWidgets('voice preparation remains cancellable while busy', (
@@ -195,6 +215,8 @@ Future<void> _pumpComposer(
   required bool isStreaming,
   required ValueChanged<String> onSend,
   required VoidCallback onCancel,
+  String? sessionId,
+  LlmCredentials? credentials,
   String? initialText,
   bool useInteractionVoice = false,
   bool voiceStarting = false,
@@ -208,7 +230,13 @@ Future<void> _pumpComposer(
 }) {
   return tester.pumpWidget(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        if (credentials != null)
+          llmCredentialsProvider.overrideWith(
+            () => _FakeCredentialsNotifier(credentials),
+          ),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
@@ -231,6 +259,7 @@ Future<void> _pumpComposer(
               child: ExcludeSemantics(
                 child: ChatComposer(
                   isStreaming: isStreaming,
+                  sessionId: sessionId,
                   initialText: initialText,
                   onSend: onSend,
                   onCancel: onCancel,
@@ -259,4 +288,13 @@ Future<void> _pumpComposer(
       ),
     ),
   );
+}
+
+final class _FakeCredentialsNotifier extends LlmCredentialsNotifier {
+  _FakeCredentialsNotifier(this._credentials);
+
+  final LlmCredentials _credentials;
+
+  @override
+  Future<LlmCredentials?> fetch() async => _credentials;
 }

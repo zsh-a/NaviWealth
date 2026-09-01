@@ -9,6 +9,7 @@ import '../../../../core/ai/composition/proposal_plan.dart';
 import '../../../../core/ai/progress/long_task_progress.dart';
 import '../../../../core/ai/runtime/device/tools/ask_user_tool.dart'
     show kAskUserToolName;
+import '../../../../core/ai/trace/trace.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../design_system/design_system.dart';

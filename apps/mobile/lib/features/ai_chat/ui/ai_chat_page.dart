@@ -19,6 +19,8 @@ import '../domain/chat_models.dart';
 import '../domain/chat_turn_metadata.dart';
 import '../state/chat_controller.dart';
 import '../state/chat_session_scope.dart';
+import 'ai_action_cards_rail.dart';
+import 'ai_context_summary_header.dart';
 import 'chat_composer.dart';
 import 'chat_conversation_view.dart';
 import 'sessions/sessions_panel.dart';
@@ -199,6 +201,7 @@ class _ChatPane extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final turn = ref.watch(chatControllerProvider(sessionId));
+    final messagesAsync = ref.watch(chatMessagesStreamProvider(sessionId));
     final routeCtx = ref.watch(aiContextProvider);
     final systemContext = routeCtx.toSystemContext();
 
@@ -227,6 +230,17 @@ class _ChatPane extends ConsumerWidget {
         constraints: const BoxConstraints(maxWidth: Breakpoints.readingColumn),
         child: Column(
           children: [
+            // Keep discovery chrome out of the blank-state suggestion list.
+            // Once a conversation has started, surface the latest domain
+            // context and agent-owned next actions above the timeline so the
+            // user can continue from current reality instead of composing a
+            // prompt from scratch.
+            _AiChatContextRail(
+              visible: messagesAsync.maybeWhen(
+                data: (messages) => messages.isNotEmpty,
+                orElse: () => false,
+              ),
+            ),
             Expanded(
               child: AnimatedSwitcher(
                 duration: AppMotionPolicy.duration(context, Motion.medium),
@@ -297,6 +311,27 @@ class _ChatPane extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _AiChatContextRail extends StatelessWidget {
+  const _AiChatContextRail({required this.visible});
+
+  final bool visible;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: AppMotionPolicy.duration(context, Motion.fast),
+      curve: Motion.standardDecelerate,
+      alignment: Alignment.topCenter,
+      child: visible
+          ? const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [AiContextSummaryHeader(), AiActionCardsRail()],
+            )
+          : const SizedBox(width: double.infinity),
     );
   }
 }
