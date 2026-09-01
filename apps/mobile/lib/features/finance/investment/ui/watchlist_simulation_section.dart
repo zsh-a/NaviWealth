@@ -152,10 +152,10 @@ class _WatchlistSimulationCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final positionsAsync = ref.watch(
-      watchlistSimulationPositionsProvider(simulation.id),
+    final allocationAsync = ref.watch(
+      watchlistSimulationAllocationProvider(simulation.id),
     );
-    return positionsAsync.whenOrLoading(
+    return allocationAsync.whenOrLoading(
       context: context,
       loading: () =>
           const AppGroupedSurface(child: Center(child: FCircularProgress())),
@@ -163,27 +163,69 @@ class _WatchlistSimulationCard extends ConsumerWidget {
         child: FButton(
           variant: FButtonVariant.outline,
           onPress: () => ref.invalidate(
-            watchlistSimulationPositionsProvider(simulation.id),
+            watchlistSimulationAllocationProvider(simulation.id),
           ),
           child: Text(AppLocalizations.of(context).commonRetry),
         ),
       ),
-      data: (positions) => _WatchlistSimulationCardBody(
-        simulation: simulation,
-        positions: positions,
-        items: items,
-        snapshots: snapshots,
-        onEdit: () => unawaited(
-          showWatchlistSimulationAllocationSheet(
-            context: context,
-            simulation: simulation,
-            positions: positions,
-            items: items,
-            snapshots: snapshots,
+      data: (allocation) {
+        if (!allocation.isUsable || allocation.cashWeight == null) {
+          final l10n = AppLocalizations.of(context);
+          final isPending =
+              allocation.status == WatchlistSimulationAllocationStatus.pending;
+          return AppGroupedSurface(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isPending
+                      ? l10n.watchlistSimulationAllocationSyncing
+                      : l10n.watchlistSimulationAllocationInvalid,
+                  style: context.captionStyle,
+                ),
+                if (!isPending) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    onPress: () => unawaited(
+                      showWatchlistSimulationAllocationSheet(
+                        context: context,
+                        simulation: simulation,
+                        positions: const [],
+                        cashWeight: Decimal.one,
+                        items: items,
+                        snapshots: snapshots,
+                      ),
+                    ),
+                    child: Text(l10n.watchlistSimulationAdjustAction),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+        return _WatchlistSimulationCardBody(
+          simulation: simulation,
+          positions: allocation.positions,
+          resolvedCashWeight: allocation.cashWeight!,
+          allocationBasisKey: allocation.allocationBasisKey!,
+          validAllocationBasisKeys: allocation.validAllocationBasisKeys,
+          items: items,
+          snapshots: snapshots,
+          onEdit: () => unawaited(
+            showWatchlistSimulationAllocationSheet(
+              context: context,
+              simulation: simulation,
+              positions: allocation.positions,
+              cashWeight: allocation.cashWeight!,
+              items: items,
+              snapshots: snapshots,
+            ),
           ),
-        ),
-        onDelete: () => unawaited(_deleteSimulation(context, ref, simulation)),
-      ),
+          onDelete: () =>
+              unawaited(_deleteSimulation(context, ref, simulation)),
+        );
+      },
     );
   }
 }
@@ -192,6 +234,9 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
   const _WatchlistSimulationCardBody({
     required this.simulation,
     required this.positions,
+    required this.resolvedCashWeight,
+    required this.allocationBasisKey,
+    required this.validAllocationBasisKeys,
     required this.items,
     required this.snapshots,
     required this.onEdit,
@@ -200,6 +245,9 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
 
   final WatchlistSimulation simulation;
   final List<WatchlistSimulationPosition> positions;
+  final Decimal resolvedCashWeight;
+  final String allocationBasisKey;
+  final Set<String> validAllocationBasisKeys;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
   final VoidCallback onEdit;
@@ -252,7 +300,7 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
           changePercent: changesByItemId[position.watchlistItemId],
         ),
       ),
-      cashWeight: simulation.cashWeight,
+      cashWeight: resolvedCashWeight,
     );
     final dailyMoveAmount = projection.dailyMoveAmount(
       simulation.startingCapital,
@@ -331,7 +379,7 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
               AppMetricItem(
                 label: l10n.watchlistSimulationCashWeight,
                 value: formatters.percent(
-                  simulation.cashWeight.toDouble(),
+                  resolvedCashWeight.toDouble(),
                   decimalDigits: 0,
                 ),
               ),
@@ -352,6 +400,8 @@ class _WatchlistSimulationCardBody extends StatelessWidget {
             simulation: simulation,
             projection: projection,
             observedAt: latestQuoteAt,
+            allocationBasisKey: allocationBasisKey,
+            validAllocationBasisKeys: validAllocationBasisKeys,
           ),
           const SizedBox(height: AppSpacing.s10),
           _WatchlistSimulationDividendRecords(simulation: simulation),
@@ -629,11 +679,15 @@ class _WatchlistSimulationHistory extends ConsumerStatefulWidget {
     required this.simulation,
     required this.projection,
     required this.observedAt,
+    required this.allocationBasisKey,
+    required this.validAllocationBasisKeys,
   });
 
   final WatchlistSimulation simulation;
   final WatchlistSimulationProjection projection;
   final DateTime? observedAt;
+  final String allocationBasisKey;
+  final Set<String> validAllocationBasisKeys;
 
   @override
   ConsumerState<_WatchlistSimulationHistory> createState() =>
@@ -677,7 +731,18 @@ class _WatchlistSimulationHistoryState
           ),
           data: (observations) => _WatchlistSimulationHistoryChart(
             simulation: widget.simulation,
-            observations: observations,
+            observations: observations
+                .where((observation) {
+                  final basisKey = observation.allocationBasisKey;
+                  if (basisKey != null) {
+                    return widget.validAllocationBasisKeys.contains(basisKey);
+                  }
+                  return observation.observationDay ==
+                      _utcObservationDay(widget.simulation.baselineAt)
+                          .toIso8601String()
+                          .substring(0, 10);
+                })
+                .toList(growable: false),
           ),
         ),
       ],
@@ -694,6 +759,7 @@ class _WatchlistSimulationHistoryState
       projection.pricedWeight,
       projection.missingQuoteWeight,
       widget.simulation.sync.hlc,
+      widget.allocationBasisKey,
     ].join('|');
     if (_scheduledSignature == signature) return;
     _scheduledSignature = signature;
@@ -707,6 +773,7 @@ class _WatchlistSimulationHistoryState
             weightedDailyChange: projection.weightedDailyChange,
             pricedWeight: projection.pricedWeight,
             missingQuoteWeight: projection.missingQuoteWeight,
+            allocationBasisKey: widget.allocationBasisKey,
           ),
         );
       } catch (_) {
@@ -982,6 +1049,7 @@ Future<void> showWatchlistSimulationAllocationSheet({
   required BuildContext context,
   required WatchlistSimulation simulation,
   required List<WatchlistSimulationPosition> positions,
+  required Decimal cashWeight,
   required List<WatchlistItem> items,
   required List<WatchlistQuoteSnapshot> snapshots,
 }) async {
@@ -996,6 +1064,7 @@ Future<void> showWatchlistSimulationAllocationSheet({
       builder: (_) => _WatchlistSimulationAllocationSheet(
         simulation: simulation,
         positions: positions,
+        cashWeight: cashWeight,
         items: items,
         snapshots: snapshots,
         dirty: dirty,
@@ -1010,6 +1079,7 @@ class _WatchlistSimulationAllocationSheet extends ConsumerStatefulWidget {
   const _WatchlistSimulationAllocationSheet({
     required this.simulation,
     required this.positions,
+    required this.cashWeight,
     required this.items,
     required this.snapshots,
     required this.dirty,
@@ -1017,6 +1087,7 @@ class _WatchlistSimulationAllocationSheet extends ConsumerStatefulWidget {
 
   final WatchlistSimulation simulation;
   final List<WatchlistSimulationPosition> positions;
+  final Decimal cashWeight;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
   final FormDirtyController dirty;
@@ -1053,7 +1124,7 @@ class _WatchlistSimulationAllocationSheetState
         ),
     };
     _cash = TextEditingController(
-      text: (widget.simulation.cashWeight * Decimal.fromInt(100)).toString(),
+      text: (widget.cashWeight * Decimal.fromInt(100)).toString(),
     );
     widget.dirty.bindTextControllers([..._weights.values, _cash]);
     widget.dirty.snapshotBaseline();

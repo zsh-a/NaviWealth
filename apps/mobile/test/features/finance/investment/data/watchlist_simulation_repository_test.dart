@@ -1,7 +1,9 @@
 import 'package:decimal/decimal.dart';
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
@@ -108,6 +110,10 @@ void main() {
         WatchlistSimulationRepository.simulationsTable,
         WatchlistSimulationRepository.positionsTable,
         WatchlistSimulationRepository.positionsTable,
+        WatchlistSimulationRepository.allocationVersionsTable,
+        WatchlistSimulationRepository.holdingVersionsTable,
+        WatchlistSimulationRepository.holdingVersionsTable,
+        WatchlistSimulationRepository.allocationHeadsTable,
       ]);
 
       outbox.clearQueued();
@@ -126,6 +132,9 @@ void main() {
         WatchlistSimulationRepository.simulationsTable,
         WatchlistSimulationRepository.positionsTable,
         WatchlistSimulationRepository.positionsTable,
+        WatchlistSimulationRepository.allocationVersionsTable,
+        WatchlistSimulationRepository.holdingVersionsTable,
+        WatchlistSimulationRepository.allocationHeadsTable,
       ]);
 
       outbox.clearQueued();
@@ -194,6 +203,11 @@ void main() {
         targetWeights: {'us_stock:AAPL': Decimal.one},
         cashWeight: Decimal.zero,
       );
+      final allocation = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      final allocationBasisKey = allocation.allocationBasisKey!;
       final baselineDay = simulation.baselineAt;
       final secondDay = baselineDay.add(const Duration(days: 1));
       final thirdDay = baselineDay.add(const Duration(days: 2));
@@ -205,6 +219,7 @@ void main() {
         weightedDailyChange: Decimal.parse('0.1'),
         pricedWeight: Decimal.one,
         missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: allocationBasisKey,
       );
       await repository.recordObservation(
         simulation: simulation,
@@ -212,6 +227,7 @@ void main() {
         weightedDailyChange: Decimal.parse('0.2'),
         pricedWeight: Decimal.one,
         missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: allocationBasisKey,
       );
       await repository.recordObservation(
         simulation: simulation,
@@ -219,6 +235,7 @@ void main() {
         weightedDailyChange: Decimal.parse('-0.1'),
         pricedWeight: Decimal.one,
         missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: allocationBasisKey,
       );
 
       final observations = await repository
@@ -250,6 +267,10 @@ void main() {
         targetWeights: {'us_stock:AAPL': Decimal.one},
         cashWeight: Decimal.zero,
       );
+      final allocation = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
       await db.delete(db.watchlistSimulationObservations).go();
 
       final baseline = await repository
@@ -264,6 +285,7 @@ void main() {
         weightedDailyChange: Decimal.parse('0.1'),
         pricedWeight: Decimal.one,
         missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: allocation.allocationBasisKey!,
       );
       final observations = await repository
           .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
@@ -429,6 +451,7 @@ void main() {
       );
       expect(record.eligibleQuantity, Decimal.parse('5'));
       expect(record.grossAmount, Decimal.parse('12.5'));
+      expect(record.allocationBasisKey, isNotNull);
       expect(record.withholdingTaxAmount, isNull);
       expect(record.netAmount, isNull);
       expect(record.baseCurrencyAmount, isNull);
@@ -452,6 +475,120 @@ void main() {
               .single;
       expect(preserved.revisionHash, 'revision-v2');
       expect(preserved.grossAmount, Decimal.parse('12.5'));
+
+      await (db.update(
+        db.watchlistSimulationActionEntries,
+      )..where((t) => t.id.equals(preserved.id))).write(
+        const WatchlistSimulationActionEntriesCompanion(
+          allocationBasisKey: Value(null),
+        ),
+      );
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'revision-v2', cashPerShare: '2.5'),
+          ],
+        },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+      );
+      final rematerialized =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(rematerialized.grossAmount, Decimal.parse('12.5'));
+      expect(rematerialized.allocationBasisKey, isNotNull);
+    },
+  );
+
+  test(
+    'losing record-date lineage cannot advance trusted paper cash',
+    () async {
+      final db = makeTestDatabase();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-cn',
+        name: 'Lineage-safe dividend',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'cn_a:600519': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:600519': WatchlistSimulationHoldingInput(
+            symbol: '600519',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('200'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 14),
+            priceSource: 'fixture',
+          ),
+        },
+      );
+      await repository.materializeDividendReferences(
+        simulation: simulation,
+        actionsByWatchlistItemId: {
+          'cn_a:600519': [
+            _dividend(revisionHash: 'lineage-a', cashPerShare: '2.5'),
+          ],
+        },
+        trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+      );
+      final trusted =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(trusted.grossAmount, Decimal.parse('12.5'));
+      expect(trusted.allocationBasisKey, isNotNull);
+
+      await repository.replaceAllocation(
+        simulation: simulation,
+        targetWeights: {'cn_a:000001': Decimal.one},
+        cashWeight: Decimal.zero,
+        holdingInputs: {
+          'cn_a:000001': WatchlistSimulationHoldingInput(
+            symbol: '000001',
+            market: AssetMarket.cnA,
+            rawPrice: Decimal.parse('10'),
+            priceCurrency: 'CNY',
+            priceAsOf: DateTime.utc(2023, 11, 15),
+            priceSource: 'fixture',
+          ),
+        },
+      );
+      await repository.advanceDividendLifecycle(
+        simulation: simulation,
+        asOf: DateTime.utc(2025),
+      );
+      final cleared =
+          (await repository
+                  .watchActionEntries(
+                    ownerUserId: 'u-test',
+                    simulationId: simulation.id,
+                  )
+                  .first)
+              .single;
+      expect(
+        cleared.paperState,
+        WatchlistSimulationPaperActionState.referenceOnly,
+      );
+      expect(cleared.eligibleQuantity, isNull);
+      expect(cleared.grossAmount, isNull);
+      expect(cleared.receivableGrossAmount, isNull);
+      expect(cleared.paperCashGrossAmount, isNull);
+      expect(cleared.allocationBasisKey, isNull);
     },
   );
 
@@ -706,6 +843,167 @@ void main() {
       expect(bySourceKey['600519:removed']?.eligibleQuantity, isNull);
     },
   );
+
+  test('headed lineage traverses virtual pre-v91 predecessors', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-cn',
+      name: 'Migrated lineage',
+      baseCurrency: 'CNY',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'cn_a:600519': Decimal.one},
+      cashWeight: Decimal.zero,
+      holdingInputs: {
+        'cn_a:600519': WatchlistSimulationHoldingInput(
+          symbol: '600519',
+          market: AssetMarket.cnA,
+          rawPrice: Decimal.parse('200'),
+          priceCurrency: 'CNY',
+          priceAsOf: DateTime.utc(2023, 11, 14),
+          priceSource: 'fixture',
+        ),
+      },
+    );
+    final legacyOne = await db
+        .select(db.watchlistSimulationAllocationVersions)
+        .getSingle();
+    await (db.update(
+      db.watchlistSimulationAllocationVersions,
+    )..where((t) => t.id.equals(legacyOne.id))).write(
+      const WatchlistSimulationAllocationVersionsCompanion(
+        requiresExplicitHead: Value(false),
+      ),
+    );
+    final legacyTwoAt = legacyOne.effectiveAt.add(const Duration(days: 1));
+    final headedAt = legacyTwoAt.add(const Duration(days: 1));
+
+    Future<void> insertVersion({
+      required String id,
+      required DateTime effectiveAt,
+      required Decimal quantity,
+      required bool explicit,
+      String? previousId,
+    }) async {
+      final hlc = Hlc(
+        wallMillis: effectiveAt.millisecondsSinceEpoch,
+        counter: 0,
+        nodeId: 'dev-$id',
+      );
+      await db
+          .into(db.watchlistSimulationAllocationVersions)
+          .insert(
+            WatchlistSimulationAllocationVersionsCompanion.insert(
+              id: id,
+              simulationId: simulation.id,
+              effectiveAt: effectiveAt,
+              reason: WatchlistSimulationAllocationReason.reallocation.name,
+              previousAllocationVersionId: Value(previousId),
+              requiresExplicitHead: Value(explicit),
+              cashWeight: Decimal.zero,
+              isComplete: const Value(true),
+              createdAt: effectiveAt,
+              ownerUserId: 'u-test',
+              updatedAt: effectiveAt,
+              updatedByDevice: 'dev-$id',
+              hlc: hlc,
+            ),
+          );
+      await db
+          .into(db.watchlistSimulationHoldingVersions)
+          .insert(
+            WatchlistSimulationHoldingVersionsCompanion.insert(
+              id: 'holding-$id',
+              allocationVersionId: id,
+              simulationId: simulation.id,
+              watchlistItemId: 'cn_a:600519',
+              symbol: '600519',
+              market: AssetMarket.cnA.wire,
+              targetWeight: Decimal.one,
+              quantity: Value(quantity),
+              rawPrice: const Value(null),
+              priceCurrency: const Value('CNY'),
+              priceAsOf: Value(effectiveAt),
+              priceSource: const Value('fixture'),
+              fxToBase: Value(Decimal.one),
+              effectiveAt: effectiveAt,
+              createdAt: effectiveAt,
+              ownerUserId: 'u-test',
+              updatedAt: effectiveAt,
+              updatedByDevice: 'dev-$id',
+              hlc: hlc,
+            ),
+          );
+    }
+
+    await insertVersion(
+      id: 'legacy-two',
+      effectiveAt: legacyTwoAt,
+      quantity: Decimal.parse('10'),
+      explicit: false,
+    );
+    await insertVersion(
+      id: 'headed-three',
+      effectiveAt: headedAt,
+      quantity: Decimal.parse('20'),
+      explicit: true,
+      previousId: 'legacy-two',
+    );
+    await (db.update(
+      db.watchlistSimulationAllocationHeads,
+    )..where((t) => t.id.equals(simulation.id))).write(
+      WatchlistSimulationAllocationHeadsCompanion(
+        allocationVersionId: const Value('headed-three'),
+        updatedAt: Value(headedAt),
+        updatedByDevice: const Value('dev-headed-three'),
+        hlc: Value(
+          Hlc(
+            wallMillis: headedAt.millisecondsSinceEpoch,
+            counter: 0,
+            nodeId: 'dev-headed-three',
+          ),
+        ),
+      ),
+    );
+
+    MarketCorporateAction at(String key, DateTime recordDate) => _dividend(
+      revisionHash: key,
+      cashPerShare: '1',
+      sourceKey: key,
+      recordDate: recordDate,
+      exDate: recordDate.add(const Duration(hours: 1)),
+      payDate: recordDate.add(const Duration(hours: 2)),
+    );
+    await repository.materializeDividendReferences(
+      simulation: simulation,
+      actionsByWatchlistItemId: {
+        'cn_a:600519': [
+          at(
+            'legacy-one-action',
+            legacyOne.effectiveAt.add(const Duration(hours: 12)),
+          ),
+          at('legacy-two-action', legacyTwoAt.add(const Duration(hours: 12))),
+          at('headed-three-action', headedAt.add(const Duration(hours: 12))),
+        ],
+      },
+      trustedAdjustmentCoverageItemIds: const {'cn_a:600519'},
+      lifecycleAsOf: legacyOne.effectiveAt,
+    );
+    final actions = await repository
+        .watchActionEntries(ownerUserId: 'u-test', simulationId: simulation.id)
+        .first;
+    final quantities = {
+      for (final action in actions) action.sourceKey: action.eligibleQuantity,
+    };
+    expect(quantities['legacy-one-action'], Decimal.parse('5'));
+    expect(quantities['legacy-two-action'], Decimal.parse('10'));
+    expect(quantities['headed-three-action'], Decimal.parse('20'));
+  });
 
   test('quantity remains unknown when quote identity is mismatched', () async {
     final db = makeTestDatabase();
@@ -1025,6 +1323,379 @@ void main() {
         outbox.queued.map((item) => item.table),
         contains(WatchlistSimulationRepository.actionEntriesTable),
       );
+    },
+  );
+
+  test('explicit protocol evidence blocks compatibility fallback', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-growth',
+      name: 'Paged mix',
+      baseCurrency: 'USD',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'us_stock:AAPL': Decimal.parse('0.6')},
+      cashWeight: Decimal.parse('0.4'),
+    );
+    await (db.delete(
+      db.watchlistSimulationAllocationHeads,
+    )..where((t) => t.simulationId.equals(simulation.id))).go();
+    await (db.delete(
+      db.watchlistSimulationHoldingVersions,
+    )..where((t) => t.simulationId.equals(simulation.id))).go();
+    await (db.delete(
+      db.watchlistSimulationAllocationVersions,
+    )..where((t) => t.simulationId.equals(simulation.id))).go();
+    await (db.update(
+      db.watchlistSimulations,
+    )..where((t) => t.id.equals(simulation.id))).write(
+      const WatchlistSimulationsCompanion(allocationProtocolVersion: Value(0)),
+    );
+    await (db.update(
+      db.watchlistSimulationPositions,
+    )..where((t) => t.simulationId.equals(simulation.id))).write(
+      const WatchlistSimulationPositionsCompanion(
+        requiresExplicitHead: Value(false),
+      ),
+    );
+    expect(
+      (await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      )).status,
+      WatchlistSimulationAllocationStatus.legacyFallback,
+    );
+
+    await db
+        .into(db.watchlistSimulationAllocationHeads)
+        .insert(
+          WatchlistSimulationAllocationHeadsCompanion.insert(
+            id: simulation.id,
+            simulationId: simulation.id,
+            allocationVersionId: 'missing-tombstoned-head-version',
+            createdAt: simulation.createdAt,
+            ownerUserId: 'u-test',
+            updatedAt: simulation.createdAt,
+            updatedByDevice: 'dev-tombstoned-head',
+            hlc: Hlc.parse('1700000002000.0000-dev-tombstoned-head'),
+            deletedAt: Value(simulation.createdAt),
+          ),
+        );
+    expect(
+      (await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      )).status,
+      WatchlistSimulationAllocationStatus.pending,
+    );
+    await (db.delete(
+      db.watchlistSimulationAllocationHeads,
+    )..where((t) => t.id.equals(simulation.id))).go();
+
+    await (db.update(
+      db.watchlistSimulationPositions,
+    )..where((t) => t.simulationId.equals(simulation.id))).write(
+      const WatchlistSimulationPositionsCompanion(
+        requiresExplicitHead: Value(true),
+      ),
+    );
+    expect(
+      (await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      )).status,
+      WatchlistSimulationAllocationStatus.pending,
+    );
+
+    await (db.update(
+      db.watchlistSimulationPositions,
+    )..where((t) => t.simulationId.equals(simulation.id))).write(
+      const WatchlistSimulationPositionsCompanion(
+        requiresExplicitHead: Value(false),
+      ),
+    );
+    await (db.update(
+      db.watchlistSimulations,
+    )..where((t) => t.id.equals(simulation.id))).write(
+      const WatchlistSimulationsCompanion(allocationProtocolVersion: Value(1)),
+    );
+    expect(
+      (await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      )).status,
+      WatchlistSimulationAllocationStatus.pending,
+    );
+
+    await (db.update(
+      db.watchlistSimulations,
+    )..where((t) => t.id.equals(simulation.id))).write(
+      const WatchlistSimulationsCompanion(allocationProtocolVersion: Value(0)),
+    );
+    await db
+        .into(db.watchlistSimulationAllocationVersions)
+        .insert(
+          WatchlistSimulationAllocationVersionsCompanion.insert(
+            id: 'explicit-tombstone',
+            simulationId: simulation.id,
+            effectiveAt: simulation.createdAt,
+            reason: WatchlistSimulationAllocationReason.reallocation.name,
+            requiresExplicitHead: const Value(true),
+            cashWeight: Decimal.one,
+            isComplete: const Value(true),
+            createdAt: simulation.createdAt,
+            ownerUserId: 'u-test',
+            updatedAt: simulation.createdAt,
+            updatedByDevice: 'dev-tombstone',
+            hlc: Hlc.parse('1700000003000.0000-dev-tombstone'),
+            deletedAt: Value(simulation.createdAt),
+          ),
+        );
+    expect(
+      (await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      )).status,
+      WatchlistSimulationAllocationStatus.pending,
+    );
+  });
+
+  test(
+    'atomic head selects one concurrent branch and blocks partial pages',
+    () async {
+      final db = makeTestDatabase();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-growth',
+        name: 'Concurrent mix',
+        baseCurrency: 'USD',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'us_stock:AAPL': Decimal.parse('0.6')},
+        cashWeight: Decimal.parse('0.4'),
+      );
+      final baseHead = await (db.select(
+        db.watchlistSimulationAllocationHeads,
+      )..where((t) => t.id.equals(simulation.id))).getSingle();
+      final now = simulation.createdAt.add(const Duration(seconds: 1));
+
+      Future<void> insertBranch({
+        required String id,
+        required String itemId,
+        required Decimal targetWeight,
+        required Decimal cashWeight,
+        required String hlc,
+      }) async {
+        await db
+            .into(db.watchlistSimulationAllocationVersions)
+            .insert(
+              WatchlistSimulationAllocationVersionsCompanion.insert(
+                id: id,
+                simulationId: simulation.id,
+                effectiveAt: now,
+                reason: WatchlistSimulationAllocationReason.reallocation.name,
+                previousAllocationVersionId: Value(
+                  baseHead.allocationVersionId,
+                ),
+                requiresExplicitHead: const Value(true),
+                cashWeight: cashWeight,
+                isComplete: const Value(true),
+                createdAt: now,
+                ownerUserId: 'u-test',
+                updatedAt: now,
+                updatedByDevice: 'dev-$id',
+                hlc: Hlc.parse(hlc),
+              ),
+            );
+        await db
+            .into(db.watchlistSimulationHoldingVersions)
+            .insert(
+              WatchlistSimulationHoldingVersionsCompanion.insert(
+                id: 'holding-$id',
+                allocationVersionId: id,
+                simulationId: simulation.id,
+                watchlistItemId: itemId,
+                symbol: itemId.split(':').last,
+                market: 'us_stock',
+                targetWeight: targetWeight,
+                effectiveAt: now,
+                createdAt: now,
+                ownerUserId: 'u-test',
+                updatedAt: now,
+                updatedByDevice: 'dev-$id',
+                hlc: Hlc.parse(hlc),
+              ),
+            );
+      }
+
+      await insertBranch(
+        id: 'branch-a',
+        itemId: 'us_stock:GOOG',
+        targetWeight: Decimal.parse('0.6'),
+        cashWeight: Decimal.parse('0.4'),
+        hlc: '1700000001000.0000-dev-a',
+      );
+      await insertBranch(
+        id: 'branch-b',
+        itemId: 'us_stock:MSFT',
+        targetWeight: Decimal.parse('0.5'),
+        cashWeight: Decimal.parse('0.5'),
+        hlc: '1700000001000.0000-dev-b',
+      );
+      await db
+          .into(db.watchlistSimulationPositions)
+          .insert(
+            WatchlistSimulationPositionsCompanion.insert(
+              id: 'legacy-merged-msft',
+              simulationId: simulation.id,
+              watchlistItemId: 'us_stock:MSFT',
+              targetWeight: Decimal.parse('0.5'),
+              createdAt: now,
+              ownerUserId: 'u-test',
+              updatedAt: now,
+              updatedByDevice: 'dev-b',
+              hlc: Hlc.parse('1700000001000.0000-dev-b'),
+            ),
+          );
+      await (db.update(
+        db.watchlistSimulationAllocationHeads,
+      )..where((t) => t.id.equals(simulation.id))).write(
+        WatchlistSimulationAllocationHeadsCompanion(
+          allocationVersionId: const Value('branch-b'),
+          updatedByDevice: const Value('dev-b'),
+          hlc: Value(Hlc.parse('1700000001000.0000-dev-b')),
+        ),
+      );
+
+      final rawLegacy = await (db.select(
+        db.watchlistSimulationPositions,
+      )..where((t) => t.simulationId.equals(simulation.id))).get();
+      final impossibleLegacyTotal = rawLegacy.fold<Decimal>(
+        simulation.cashWeight,
+        (sum, row) => sum + row.targetWeight,
+      );
+      expect(impossibleLegacyTotal, Decimal.parse('1.5'));
+      final selected = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      expect(selected.status, WatchlistSimulationAllocationStatus.selected);
+      expect(selected.cashWeight, Decimal.parse('0.5'));
+      expect(selected.positions.single.watchlistItemId, 'us_stock:MSFT');
+      final targets = await repository.listActionTargets(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      expect(
+        targets.map((target) => target.watchlistItemId),
+        containsAll(<String>['us_stock:AAPL', 'us_stock:MSFT']),
+      );
+      expect(
+        targets.map((target) => target.watchlistItemId),
+        isNot(contains('us_stock:GOOG')),
+      );
+
+      final branchBDay = simulation.baselineAt.add(const Duration(days: 1));
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: branchBDay,
+        weightedDailyChange: Decimal.parse('0.1'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: selected.allocationBasisKey!,
+      );
+      await (db.update(
+        db.watchlistSimulationAllocationHeads,
+      )..where((t) => t.id.equals(simulation.id))).write(
+        WatchlistSimulationAllocationHeadsCompanion(
+          allocationVersionId: const Value('branch-a'),
+          updatedByDevice: const Value('dev-a'),
+          hlc: Value(Hlc.parse('1700000001500.0000-dev-a')),
+        ),
+      );
+      await expectLater(
+        repository.recordObservation(
+          simulation: simulation,
+          observedAt: branchBDay.add(const Duration(hours: 1)),
+          weightedDailyChange: Decimal.parse('0.1'),
+          pricedWeight: Decimal.one,
+          missingQuoteWeight: Decimal.zero,
+          allocationBasisKey: selected.allocationBasisKey!,
+        ),
+        throwsStateError,
+      );
+      final branchA = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: simulation.baselineAt.add(const Duration(days: 2)),
+        weightedDailyChange: Decimal.parse('0.2'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: branchA.allocationBasisKey!,
+      );
+      final convergedObservations = await repository
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first;
+      expect(convergedObservations, hasLength(2));
+      expect(
+        convergedObservations.last.projectedValue,
+        Decimal.parse('1200.0'),
+      );
+
+      await (db.update(
+        db.watchlistSimulationAllocationHeads,
+      )..where((t) => t.id.equals(simulation.id))).write(
+        WatchlistSimulationAllocationHeadsCompanion(
+          allocationVersionId: const Value('missing-page'),
+          updatedByDevice: const Value('dev-c'),
+          hlc: Value(Hlc.parse('1700000002000.0000-dev-c')),
+        ),
+      );
+      expect(
+        (await repository.resolveAllocation(
+          ownerUserId: 'u-test',
+          simulationId: simulation.id,
+        )).status,
+        WatchlistSimulationAllocationStatus.pending,
+      );
+      await db
+          .into(db.watchlistSimulationAllocationVersions)
+          .insert(
+            WatchlistSimulationAllocationVersionsCompanion.insert(
+              id: 'missing-page',
+              simulationId: simulation.id,
+              effectiveAt: now.add(const Duration(seconds: 1)),
+              reason: WatchlistSimulationAllocationReason.reallocation.name,
+              previousAllocationVersionId: const Value('branch-b'),
+              requiresExplicitHead: const Value(true),
+              cashWeight: Decimal.one,
+              isComplete: const Value(true),
+              createdAt: now,
+              ownerUserId: 'u-test',
+              updatedAt: now,
+              updatedByDevice: 'dev-c',
+              hlc: Hlc.parse('1700000002000.0000-dev-c'),
+            ),
+          );
+      final recovered = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      expect(recovered.status, WatchlistSimulationAllocationStatus.selected);
+      expect(recovered.cashWeight, Decimal.one);
+      expect(recovered.positions, isEmpty);
     },
   );
 

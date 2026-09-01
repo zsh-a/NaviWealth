@@ -140,6 +140,16 @@ void main() {
         watchlistSimulationPositionsProvider.overrideWith(
           (_, _) => Stream.value(_positions),
         ),
+        watchlistSimulationAllocationProvider.overrideWith(
+          (_, _) => Stream.value(
+            ResolvedWatchlistSimulationAllocation(
+              status: WatchlistSimulationAllocationStatus.selected,
+              allocationVersionId: 'allocation-test',
+              cashWeight: _simulation.cashWeight,
+              positions: _positions,
+            ),
+          ),
+        ),
         watchlistSimulationObservationsProvider.overrideWith(
           (_, _) => Stream.value(_observations),
         ),

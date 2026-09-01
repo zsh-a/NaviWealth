@@ -45409,6 +45409,18 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
     requiredDuringInsert: false,
     defaultValue: const Constant('weightedDailyChangeV1'),
   );
+  static const VerificationMeta _allocationProtocolVersionMeta =
+      const VerificationMeta('allocationProtocolVersion');
+  @override
+  late final GeneratedColumn<int> allocationProtocolVersion =
+      GeneratedColumn<int>(
+        'allocation_protocol_version',
+        aliasedName,
+        false,
+        type: DriftSqlType.int,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0),
+      );
   static const VerificationMeta _baselineAtMeta = const VerificationMeta(
     'baselineAt',
   );
@@ -45445,6 +45457,7 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
     startingCapital,
     cashWeight,
     calculationMode,
+    allocationProtocolVersion,
     baselineAt,
     createdAt,
   ];
@@ -45540,6 +45553,15 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
         ),
       );
     }
+    if (data.containsKey('allocation_protocol_version')) {
+      context.handle(
+        _allocationProtocolVersionMeta,
+        allocationProtocolVersion.isAcceptableOrUnknown(
+          data['allocation_protocol_version']!,
+          _allocationProtocolVersionMeta,
+        ),
+      );
+    }
     if (data.containsKey('baseline_at')) {
       context.handle(
         _baselineAtMeta,
@@ -45620,6 +45642,10 @@ class $WatchlistSimulationsTable extends WatchlistSimulations
         DriftSqlType.string,
         data['${effectivePrefix}calculation_mode'],
       )!,
+      allocationProtocolVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}allocation_protocol_version'],
+      )!,
       baselineAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}baseline_at'],
@@ -45673,6 +45699,7 @@ class WatchlistSimulationRow extends DataClass
   final Decimal startingCapital;
   final Decimal cashWeight;
   final String calculationMode;
+  final int allocationProtocolVersion;
   final DateTime baselineAt;
   final DateTime createdAt;
   const WatchlistSimulationRow({
@@ -45688,6 +45715,7 @@ class WatchlistSimulationRow extends DataClass
     required this.startingCapital,
     required this.cashWeight,
     required this.calculationMode,
+    required this.allocationProtocolVersion,
     required this.baselineAt,
     required this.createdAt,
   });
@@ -45722,6 +45750,9 @@ class WatchlistSimulationRow extends DataClass
       );
     }
     map['calculation_mode'] = Variable<String>(calculationMode);
+    map['allocation_protocol_version'] = Variable<int>(
+      allocationProtocolVersion,
+    );
     map['baseline_at'] = Variable<DateTime>(baselineAt);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -45743,6 +45774,7 @@ class WatchlistSimulationRow extends DataClass
       startingCapital: Value(startingCapital),
       cashWeight: Value(cashWeight),
       calculationMode: Value(calculationMode),
+      allocationProtocolVersion: Value(allocationProtocolVersion),
       baselineAt: Value(baselineAt),
       createdAt: Value(createdAt),
     );
@@ -45766,6 +45798,9 @@ class WatchlistSimulationRow extends DataClass
       startingCapital: serializer.fromJson<Decimal>(json['startingCapital']),
       cashWeight: serializer.fromJson<Decimal>(json['cashWeight']),
       calculationMode: serializer.fromJson<String>(json['calculationMode']),
+      allocationProtocolVersion: serializer.fromJson<int>(
+        json['allocationProtocolVersion'],
+      ),
       baselineAt: serializer.fromJson<DateTime>(json['baselineAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
@@ -45786,6 +45821,9 @@ class WatchlistSimulationRow extends DataClass
       'startingCapital': serializer.toJson<Decimal>(startingCapital),
       'cashWeight': serializer.toJson<Decimal>(cashWeight),
       'calculationMode': serializer.toJson<String>(calculationMode),
+      'allocationProtocolVersion': serializer.toJson<int>(
+        allocationProtocolVersion,
+      ),
       'baselineAt': serializer.toJson<DateTime>(baselineAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
@@ -45804,6 +45842,7 @@ class WatchlistSimulationRow extends DataClass
     Decimal? startingCapital,
     Decimal? cashWeight,
     String? calculationMode,
+    int? allocationProtocolVersion,
     DateTime? baselineAt,
     DateTime? createdAt,
   }) => WatchlistSimulationRow(
@@ -45819,6 +45858,8 @@ class WatchlistSimulationRow extends DataClass
     startingCapital: startingCapital ?? this.startingCapital,
     cashWeight: cashWeight ?? this.cashWeight,
     calculationMode: calculationMode ?? this.calculationMode,
+    allocationProtocolVersion:
+        allocationProtocolVersion ?? this.allocationProtocolVersion,
     baselineAt: baselineAt ?? this.baselineAt,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -45850,6 +45891,9 @@ class WatchlistSimulationRow extends DataClass
       calculationMode: data.calculationMode.present
           ? data.calculationMode.value
           : this.calculationMode,
+      allocationProtocolVersion: data.allocationProtocolVersion.present
+          ? data.allocationProtocolVersion.value
+          : this.allocationProtocolVersion,
       baselineAt: data.baselineAt.present
           ? data.baselineAt.value
           : this.baselineAt,
@@ -45872,6 +45916,7 @@ class WatchlistSimulationRow extends DataClass
           ..write('startingCapital: $startingCapital, ')
           ..write('cashWeight: $cashWeight, ')
           ..write('calculationMode: $calculationMode, ')
+          ..write('allocationProtocolVersion: $allocationProtocolVersion, ')
           ..write('baselineAt: $baselineAt, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -45892,6 +45937,7 @@ class WatchlistSimulationRow extends DataClass
     startingCapital,
     cashWeight,
     calculationMode,
+    allocationProtocolVersion,
     baselineAt,
     createdAt,
   );
@@ -45911,6 +45957,7 @@ class WatchlistSimulationRow extends DataClass
           other.startingCapital == this.startingCapital &&
           other.cashWeight == this.cashWeight &&
           other.calculationMode == this.calculationMode &&
+          other.allocationProtocolVersion == this.allocationProtocolVersion &&
           other.baselineAt == this.baselineAt &&
           other.createdAt == this.createdAt);
 }
@@ -45929,6 +45976,7 @@ class WatchlistSimulationsCompanion
   final Value<Decimal> startingCapital;
   final Value<Decimal> cashWeight;
   final Value<String> calculationMode;
+  final Value<int> allocationProtocolVersion;
   final Value<DateTime> baselineAt;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
@@ -45945,6 +45993,7 @@ class WatchlistSimulationsCompanion
     this.startingCapital = const Value.absent(),
     this.cashWeight = const Value.absent(),
     this.calculationMode = const Value.absent(),
+    this.allocationProtocolVersion = const Value.absent(),
     this.baselineAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -45962,6 +46011,7 @@ class WatchlistSimulationsCompanion
     required Decimal startingCapital,
     this.cashWeight = const Value.absent(),
     this.calculationMode = const Value.absent(),
+    this.allocationProtocolVersion = const Value.absent(),
     required DateTime baselineAt,
     required DateTime createdAt,
     this.rowid = const Value.absent(),
@@ -45989,6 +46039,7 @@ class WatchlistSimulationsCompanion
     Expression<String>? startingCapital,
     Expression<String>? cashWeight,
     Expression<String>? calculationMode,
+    Expression<int>? allocationProtocolVersion,
     Expression<DateTime>? baselineAt,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
@@ -46006,6 +46057,8 @@ class WatchlistSimulationsCompanion
       if (startingCapital != null) 'starting_capital': startingCapital,
       if (cashWeight != null) 'cash_weight': cashWeight,
       if (calculationMode != null) 'calculation_mode': calculationMode,
+      if (allocationProtocolVersion != null)
+        'allocation_protocol_version': allocationProtocolVersion,
       if (baselineAt != null) 'baseline_at': baselineAt,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -46025,6 +46078,7 @@ class WatchlistSimulationsCompanion
     Value<Decimal>? startingCapital,
     Value<Decimal>? cashWeight,
     Value<String>? calculationMode,
+    Value<int>? allocationProtocolVersion,
     Value<DateTime>? baselineAt,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
@@ -46042,6 +46096,8 @@ class WatchlistSimulationsCompanion
       startingCapital: startingCapital ?? this.startingCapital,
       cashWeight: cashWeight ?? this.cashWeight,
       calculationMode: calculationMode ?? this.calculationMode,
+      allocationProtocolVersion:
+          allocationProtocolVersion ?? this.allocationProtocolVersion,
       baselineAt: baselineAt ?? this.baselineAt,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -46095,6 +46151,11 @@ class WatchlistSimulationsCompanion
     if (calculationMode.present) {
       map['calculation_mode'] = Variable<String>(calculationMode.value);
     }
+    if (allocationProtocolVersion.present) {
+      map['allocation_protocol_version'] = Variable<int>(
+        allocationProtocolVersion.value,
+      );
+    }
     if (baselineAt.present) {
       map['baseline_at'] = Variable<DateTime>(baselineAt.value);
     }
@@ -46122,6 +46183,7 @@ class WatchlistSimulationsCompanion
           ..write('startingCapital: $startingCapital, ')
           ..write('cashWeight: $cashWeight, ')
           ..write('calculationMode: $calculationMode, ')
+          ..write('allocationProtocolVersion: $allocationProtocolVersion, ')
           ..write('baselineAt: $baselineAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -46235,6 +46297,20 @@ class $WatchlistSimulationPositionsTable extends WatchlistSimulationPositions
       ).withConverter<Decimal>(
         $WatchlistSimulationPositionsTable.$convertertargetWeight,
       );
+  static const VerificationMeta _requiresExplicitHeadMeta =
+      const VerificationMeta('requiresExplicitHead');
+  @override
+  late final GeneratedColumn<bool> requiresExplicitHead = GeneratedColumn<bool>(
+    'requires_explicit_head',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("requires_explicit_head" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -46257,6 +46333,7 @@ class $WatchlistSimulationPositionsTable extends WatchlistSimulationPositions
     simulationId,
     watchlistItemId,
     targetWeight,
+    requiresExplicitHead,
     createdAt,
   ];
   @override
@@ -46334,6 +46411,15 @@ class $WatchlistSimulationPositionsTable extends WatchlistSimulationPositions
     } else if (isInserting) {
       context.missing(_watchlistItemIdMeta);
     }
+    if (data.containsKey('requires_explicit_head')) {
+      context.handle(
+        _requiresExplicitHeadMeta,
+        requiresExplicitHead.isAcceptableOrUnknown(
+          data['requires_explicit_head']!,
+          _requiresExplicitHeadMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -46395,6 +46481,10 @@ class $WatchlistSimulationPositionsTable extends WatchlistSimulationPositions
               data['${effectivePrefix}target_weight'],
             )!,
           ),
+      requiresExplicitHead: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}requires_explicit_head'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -46439,6 +46529,7 @@ class WatchlistSimulationPositionRow extends DataClass
   final String simulationId;
   final String watchlistItemId;
   final Decimal targetWeight;
+  final bool requiresExplicitHead;
   final DateTime createdAt;
   const WatchlistSimulationPositionRow({
     required this.ownerUserId,
@@ -46450,6 +46541,7 @@ class WatchlistSimulationPositionRow extends DataClass
     required this.simulationId,
     required this.watchlistItemId,
     required this.targetWeight,
+    required this.requiresExplicitHead,
     required this.createdAt,
   });
   @override
@@ -46476,6 +46568,7 @@ class WatchlistSimulationPositionRow extends DataClass
         ),
       );
     }
+    map['requires_explicit_head'] = Variable<bool>(requiresExplicitHead);
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -46493,6 +46586,7 @@ class WatchlistSimulationPositionRow extends DataClass
       simulationId: Value(simulationId),
       watchlistItemId: Value(watchlistItemId),
       targetWeight: Value(targetWeight),
+      requiresExplicitHead: Value(requiresExplicitHead),
       createdAt: Value(createdAt),
     );
   }
@@ -46512,6 +46606,9 @@ class WatchlistSimulationPositionRow extends DataClass
       simulationId: serializer.fromJson<String>(json['simulationId']),
       watchlistItemId: serializer.fromJson<String>(json['watchlistItemId']),
       targetWeight: serializer.fromJson<Decimal>(json['targetWeight']),
+      requiresExplicitHead: serializer.fromJson<bool>(
+        json['requiresExplicitHead'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -46528,6 +46625,7 @@ class WatchlistSimulationPositionRow extends DataClass
       'simulationId': serializer.toJson<String>(simulationId),
       'watchlistItemId': serializer.toJson<String>(watchlistItemId),
       'targetWeight': serializer.toJson<Decimal>(targetWeight),
+      'requiresExplicitHead': serializer.toJson<bool>(requiresExplicitHead),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -46542,6 +46640,7 @@ class WatchlistSimulationPositionRow extends DataClass
     String? simulationId,
     String? watchlistItemId,
     Decimal? targetWeight,
+    bool? requiresExplicitHead,
     DateTime? createdAt,
   }) => WatchlistSimulationPositionRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -46553,6 +46652,7 @@ class WatchlistSimulationPositionRow extends DataClass
     simulationId: simulationId ?? this.simulationId,
     watchlistItemId: watchlistItemId ?? this.watchlistItemId,
     targetWeight: targetWeight ?? this.targetWeight,
+    requiresExplicitHead: requiresExplicitHead ?? this.requiresExplicitHead,
     createdAt: createdAt ?? this.createdAt,
   );
   WatchlistSimulationPositionRow copyWithCompanion(
@@ -46578,6 +46678,9 @@ class WatchlistSimulationPositionRow extends DataClass
       targetWeight: data.targetWeight.present
           ? data.targetWeight.value
           : this.targetWeight,
+      requiresExplicitHead: data.requiresExplicitHead.present
+          ? data.requiresExplicitHead.value
+          : this.requiresExplicitHead,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -46594,6 +46697,7 @@ class WatchlistSimulationPositionRow extends DataClass
           ..write('simulationId: $simulationId, ')
           ..write('watchlistItemId: $watchlistItemId, ')
           ..write('targetWeight: $targetWeight, ')
+          ..write('requiresExplicitHead: $requiresExplicitHead, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -46610,6 +46714,7 @@ class WatchlistSimulationPositionRow extends DataClass
     simulationId,
     watchlistItemId,
     targetWeight,
+    requiresExplicitHead,
     createdAt,
   );
   @override
@@ -46625,6 +46730,7 @@ class WatchlistSimulationPositionRow extends DataClass
           other.simulationId == this.simulationId &&
           other.watchlistItemId == this.watchlistItemId &&
           other.targetWeight == this.targetWeight &&
+          other.requiresExplicitHead == this.requiresExplicitHead &&
           other.createdAt == this.createdAt);
 }
 
@@ -46639,6 +46745,7 @@ class WatchlistSimulationPositionsCompanion
   final Value<String> simulationId;
   final Value<String> watchlistItemId;
   final Value<Decimal> targetWeight;
+  final Value<bool> requiresExplicitHead;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const WatchlistSimulationPositionsCompanion({
@@ -46651,6 +46758,7 @@ class WatchlistSimulationPositionsCompanion
     this.simulationId = const Value.absent(),
     this.watchlistItemId = const Value.absent(),
     this.targetWeight = const Value.absent(),
+    this.requiresExplicitHead = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -46664,6 +46772,7 @@ class WatchlistSimulationPositionsCompanion
     required String simulationId,
     required String watchlistItemId,
     required Decimal targetWeight,
+    this.requiresExplicitHead = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -46685,6 +46794,7 @@ class WatchlistSimulationPositionsCompanion
     Expression<String>? simulationId,
     Expression<String>? watchlistItemId,
     Expression<String>? targetWeight,
+    Expression<bool>? requiresExplicitHead,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -46698,6 +46808,8 @@ class WatchlistSimulationPositionsCompanion
       if (simulationId != null) 'simulation_id': simulationId,
       if (watchlistItemId != null) 'watchlist_item_id': watchlistItemId,
       if (targetWeight != null) 'target_weight': targetWeight,
+      if (requiresExplicitHead != null)
+        'requires_explicit_head': requiresExplicitHead,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -46713,6 +46825,7 @@ class WatchlistSimulationPositionsCompanion
     Value<String>? simulationId,
     Value<String>? watchlistItemId,
     Value<Decimal>? targetWeight,
+    Value<bool>? requiresExplicitHead,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -46726,6 +46839,7 @@ class WatchlistSimulationPositionsCompanion
       simulationId: simulationId ?? this.simulationId,
       watchlistItemId: watchlistItemId ?? this.watchlistItemId,
       targetWeight: targetWeight ?? this.targetWeight,
+      requiresExplicitHead: requiresExplicitHead ?? this.requiresExplicitHead,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -46767,6 +46881,11 @@ class WatchlistSimulationPositionsCompanion
         ),
       );
     }
+    if (requiresExplicitHead.present) {
+      map['requires_explicit_head'] = Variable<bool>(
+        requiresExplicitHead.value,
+      );
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -46788,6 +46907,626 @@ class WatchlistSimulationPositionsCompanion
           ..write('simulationId: $simulationId, ')
           ..write('watchlistItemId: $watchlistItemId, ')
           ..write('targetWeight: $targetWeight, ')
+          ..write('requiresExplicitHead: $requiresExplicitHead, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WatchlistSimulationAllocationHeadsTable
+    extends WatchlistSimulationAllocationHeads
+    with
+        TableInfo<
+          $WatchlistSimulationAllocationHeadsTable,
+          WatchlistSimulationAllocationHeadRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WatchlistSimulationAllocationHeadsTable(
+    this.attachedDatabase, [
+    this._alias,
+  ]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByDeviceMeta = const VerificationMeta(
+    'updatedByDevice',
+  );
+  @override
+  late final GeneratedColumn<String> updatedByDevice = GeneratedColumn<String>(
+    'updated_by_device',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<Hlc, String> hlc =
+      GeneratedColumn<String>(
+        'hlc',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Hlc>(
+        $WatchlistSimulationAllocationHeadsTable.$converterhlc,
+      );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _simulationIdMeta = const VerificationMeta(
+    'simulationId',
+  );
+  @override
+  late final GeneratedColumn<String> simulationId = GeneratedColumn<String>(
+    'simulation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _allocationVersionIdMeta =
+      const VerificationMeta('allocationVersionId');
+  @override
+  late final GeneratedColumn<String> allocationVersionId =
+      GeneratedColumn<String>(
+        'allocation_version_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    allocationVersionId,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'watchlist_simulation_allocation_heads';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WatchlistSimulationAllocationHeadRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by_device')) {
+      context.handle(
+        _updatedByDeviceMeta,
+        updatedByDevice.isAcceptableOrUnknown(
+          data['updated_by_device']!,
+          _updatedByDeviceMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByDeviceMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('simulation_id')) {
+      context.handle(
+        _simulationIdMeta,
+        simulationId.isAcceptableOrUnknown(
+          data['simulation_id']!,
+          _simulationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_simulationIdMeta);
+    }
+    if (data.containsKey('allocation_version_id')) {
+      context.handle(
+        _allocationVersionIdMeta,
+        allocationVersionId.isAcceptableOrUnknown(
+          data['allocation_version_id']!,
+          _allocationVersionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_allocationVersionIdMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WatchlistSimulationAllocationHeadRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WatchlistSimulationAllocationHeadRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedByDevice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by_device'],
+      )!,
+      hlc: $WatchlistSimulationAllocationHeadsTable.$converterhlc.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}hlc'],
+        )!,
+      ),
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      simulationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}simulation_id'],
+      )!,
+      allocationVersionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allocation_version_id'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WatchlistSimulationAllocationHeadsTable createAlias(String alias) {
+    return $WatchlistSimulationAllocationHeadsTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Hlc, String> $converterhlc = const HlcConverter();
+}
+
+class WatchlistSimulationAllocationHeadRow extends DataClass
+    implements Insertable<WatchlistSimulationAllocationHeadRow> {
+  /// Owner partition. Sync filters every read by the active user id, so
+  /// even multi-account installs never leak rows across boundaries.
+  final String ownerUserId;
+
+  /// Server-authoritative wall time. The client writes this locally on
+  /// creation; the server stomps it on push. It is the *displayable*
+  /// "last modified" — never used for conflict resolution.
+  final DateTime updatedAt;
+
+  /// Last writer's device id. Drives the "edited from `<device>`" UI hint;
+  /// also useful when debugging cross-device weirdness.
+  final String updatedByDevice;
+
+  /// Hybrid Logical Clock — the single source of truth for ordering and
+  /// conflict resolution. See `domain/hlc.dart`.
+  final Hlc hlc;
+
+  /// Soft-delete tombstone. NULL means alive. Sync still ships deleted
+  /// rows so peers learn about the delete; physical removal happens only
+  /// during a separate `vacuum` pass.
+  final DateTime? deletedAt;
+  final String id;
+  final String simulationId;
+  final String allocationVersionId;
+  final DateTime createdAt;
+  const WatchlistSimulationAllocationHeadRow({
+    required this.ownerUserId,
+    required this.updatedAt,
+    required this.updatedByDevice,
+    required this.hlc,
+    this.deletedAt,
+    required this.id,
+    required this.simulationId,
+    required this.allocationVersionId,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by_device'] = Variable<String>(updatedByDevice);
+    {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationAllocationHeadsTable.$converterhlc.toSql(hlc),
+      );
+    }
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['simulation_id'] = Variable<String>(simulationId);
+    map['allocation_version_id'] = Variable<String>(allocationVersionId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  WatchlistSimulationAllocationHeadsCompanion toCompanion(bool nullToAbsent) {
+    return WatchlistSimulationAllocationHeadsCompanion(
+      ownerUserId: Value(ownerUserId),
+      updatedAt: Value(updatedAt),
+      updatedByDevice: Value(updatedByDevice),
+      hlc: Value(hlc),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      simulationId: Value(simulationId),
+      allocationVersionId: Value(allocationVersionId),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory WatchlistSimulationAllocationHeadRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WatchlistSimulationAllocationHeadRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedByDevice: serializer.fromJson<String>(json['updatedByDevice']),
+      hlc: serializer.fromJson<Hlc>(json['hlc']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      simulationId: serializer.fromJson<String>(json['simulationId']),
+      allocationVersionId: serializer.fromJson<String>(
+        json['allocationVersionId'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedByDevice': serializer.toJson<String>(updatedByDevice),
+      'hlc': serializer.toJson<Hlc>(hlc),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'simulationId': serializer.toJson<String>(simulationId),
+      'allocationVersionId': serializer.toJson<String>(allocationVersionId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  WatchlistSimulationAllocationHeadRow copyWith({
+    String? ownerUserId,
+    DateTime? updatedAt,
+    String? updatedByDevice,
+    Hlc? hlc,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? simulationId,
+    String? allocationVersionId,
+    DateTime? createdAt,
+  }) => WatchlistSimulationAllocationHeadRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+    hlc: hlc ?? this.hlc,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    simulationId: simulationId ?? this.simulationId,
+    allocationVersionId: allocationVersionId ?? this.allocationVersionId,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  WatchlistSimulationAllocationHeadRow copyWithCompanion(
+    WatchlistSimulationAllocationHeadsCompanion data,
+  ) {
+    return WatchlistSimulationAllocationHeadRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedByDevice: data.updatedByDevice.present
+          ? data.updatedByDevice.value
+          : this.updatedByDevice,
+      hlc: data.hlc.present ? data.hlc.value : this.hlc,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      simulationId: data.simulationId.present
+          ? data.simulationId.value
+          : this.simulationId,
+      allocationVersionId: data.allocationVersionId.present
+          ? data.allocationVersionId.value
+          : this.allocationVersionId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationAllocationHeadRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('allocationVersionId: $allocationVersionId, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    updatedAt,
+    updatedByDevice,
+    hlc,
+    deletedAt,
+    id,
+    simulationId,
+    allocationVersionId,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WatchlistSimulationAllocationHeadRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedByDevice == this.updatedByDevice &&
+          other.hlc == this.hlc &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.simulationId == this.simulationId &&
+          other.allocationVersionId == this.allocationVersionId &&
+          other.createdAt == this.createdAt);
+}
+
+class WatchlistSimulationAllocationHeadsCompanion
+    extends UpdateCompanion<WatchlistSimulationAllocationHeadRow> {
+  final Value<String> ownerUserId;
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedByDevice;
+  final Value<Hlc> hlc;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> simulationId;
+  final Value<String> allocationVersionId;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const WatchlistSimulationAllocationHeadsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.updatedByDevice = const Value.absent(),
+    this.hlc = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.simulationId = const Value.absent(),
+    this.allocationVersionId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  WatchlistSimulationAllocationHeadsCompanion.insert({
+    required String ownerUserId,
+    required DateTime updatedAt,
+    required String updatedByDevice,
+    required Hlc hlc,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String simulationId,
+    required String allocationVersionId,
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       updatedAt = Value(updatedAt),
+       updatedByDevice = Value(updatedByDevice),
+       hlc = Value(hlc),
+       id = Value(id),
+       simulationId = Value(simulationId),
+       allocationVersionId = Value(allocationVersionId),
+       createdAt = Value(createdAt);
+  static Insertable<WatchlistSimulationAllocationHeadRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedByDevice,
+    Expression<String>? hlc,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? simulationId,
+    Expression<String>? allocationVersionId,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedByDevice != null) 'updated_by_device': updatedByDevice,
+      if (hlc != null) 'hlc': hlc,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (simulationId != null) 'simulation_id': simulationId,
+      if (allocationVersionId != null)
+        'allocation_version_id': allocationVersionId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  WatchlistSimulationAllocationHeadsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedByDevice,
+    Value<Hlc>? hlc,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? simulationId,
+    Value<String>? allocationVersionId,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return WatchlistSimulationAllocationHeadsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedByDevice: updatedByDevice ?? this.updatedByDevice,
+      hlc: hlc ?? this.hlc,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      simulationId: simulationId ?? this.simulationId,
+      allocationVersionId: allocationVersionId ?? this.allocationVersionId,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedByDevice.present) {
+      map['updated_by_device'] = Variable<String>(updatedByDevice.value);
+    }
+    if (hlc.present) {
+      map['hlc'] = Variable<String>(
+        $WatchlistSimulationAllocationHeadsTable.$converterhlc.toSql(hlc.value),
+      );
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (simulationId.present) {
+      map['simulation_id'] = Variable<String>(simulationId.value);
+    }
+    if (allocationVersionId.present) {
+      map['allocation_version_id'] = Variable<String>(
+        allocationVersionId.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WatchlistSimulationAllocationHeadsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedByDevice: $updatedByDevice, ')
+          ..write('hlc: $hlc, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('simulationId: $simulationId, ')
+          ..write('allocationVersionId: $allocationVersionId, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -46904,6 +47643,31 @@ class $WatchlistSimulationAllocationVersionsTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _previousAllocationVersionIdMeta =
+      const VerificationMeta('previousAllocationVersionId');
+  @override
+  late final GeneratedColumn<String> previousAllocationVersionId =
+      GeneratedColumn<String>(
+        'previous_allocation_version_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _requiresExplicitHeadMeta =
+      const VerificationMeta('requiresExplicitHead');
+  @override
+  late final GeneratedColumn<bool> requiresExplicitHead = GeneratedColumn<bool>(
+    'requires_explicit_head',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("requires_explicit_head" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   late final GeneratedColumnWithTypeConverter<Decimal, String> cashWeight =
       GeneratedColumn<String>(
@@ -46952,6 +47716,8 @@ class $WatchlistSimulationAllocationVersionsTable
     simulationId,
     effectiveAt,
     reason,
+    previousAllocationVersionId,
+    requiresExplicitHead,
     cashWeight,
     isComplete,
     createdAt,
@@ -47039,6 +47805,24 @@ class $WatchlistSimulationAllocationVersionsTable
     } else if (isInserting) {
       context.missing(_reasonMeta);
     }
+    if (data.containsKey('previous_allocation_version_id')) {
+      context.handle(
+        _previousAllocationVersionIdMeta,
+        previousAllocationVersionId.isAcceptableOrUnknown(
+          data['previous_allocation_version_id']!,
+          _previousAllocationVersionIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('requires_explicit_head')) {
+      context.handle(
+        _requiresExplicitHeadMeta,
+        requiresExplicitHead.isAcceptableOrUnknown(
+          data['requires_explicit_head']!,
+          _requiresExplicitHeadMeta,
+        ),
+      );
+    }
     if (data.containsKey('is_complete')) {
       context.handle(
         _isCompleteMeta,
@@ -47103,6 +47887,14 @@ class $WatchlistSimulationAllocationVersionsTable
         DriftSqlType.string,
         data['${effectivePrefix}reason'],
       )!,
+      previousAllocationVersionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}previous_allocation_version_id'],
+      ),
+      requiresExplicitHead: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}requires_explicit_head'],
+      )!,
       cashWeight: $WatchlistSimulationAllocationVersionsTable
           .$convertercashWeight
           .fromSql(
@@ -47159,6 +47951,8 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
   final String simulationId;
   final DateTime effectiveAt;
   final String reason;
+  final String? previousAllocationVersionId;
+  final bool requiresExplicitHead;
   final Decimal cashWeight;
   final bool isComplete;
   final DateTime createdAt;
@@ -47172,6 +47966,8 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
     required this.simulationId,
     required this.effectiveAt,
     required this.reason,
+    this.previousAllocationVersionId,
+    required this.requiresExplicitHead,
     required this.cashWeight,
     required this.isComplete,
     required this.createdAt,
@@ -47194,6 +47990,12 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
     map['simulation_id'] = Variable<String>(simulationId);
     map['effective_at'] = Variable<DateTime>(effectiveAt);
     map['reason'] = Variable<String>(reason);
+    if (!nullToAbsent || previousAllocationVersionId != null) {
+      map['previous_allocation_version_id'] = Variable<String>(
+        previousAllocationVersionId,
+      );
+    }
+    map['requires_explicit_head'] = Variable<bool>(requiresExplicitHead);
     {
       map['cash_weight'] = Variable<String>(
         $WatchlistSimulationAllocationVersionsTable.$convertercashWeight.toSql(
@@ -47221,6 +48023,11 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
       simulationId: Value(simulationId),
       effectiveAt: Value(effectiveAt),
       reason: Value(reason),
+      previousAllocationVersionId:
+          previousAllocationVersionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousAllocationVersionId),
+      requiresExplicitHead: Value(requiresExplicitHead),
       cashWeight: Value(cashWeight),
       isComplete: Value(isComplete),
       createdAt: Value(createdAt),
@@ -47242,6 +48049,12 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
       simulationId: serializer.fromJson<String>(json['simulationId']),
       effectiveAt: serializer.fromJson<DateTime>(json['effectiveAt']),
       reason: serializer.fromJson<String>(json['reason']),
+      previousAllocationVersionId: serializer.fromJson<String?>(
+        json['previousAllocationVersionId'],
+      ),
+      requiresExplicitHead: serializer.fromJson<bool>(
+        json['requiresExplicitHead'],
+      ),
       cashWeight: serializer.fromJson<Decimal>(json['cashWeight']),
       isComplete: serializer.fromJson<bool>(json['isComplete']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -47260,6 +48073,10 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
       'simulationId': serializer.toJson<String>(simulationId),
       'effectiveAt': serializer.toJson<DateTime>(effectiveAt),
       'reason': serializer.toJson<String>(reason),
+      'previousAllocationVersionId': serializer.toJson<String?>(
+        previousAllocationVersionId,
+      ),
+      'requiresExplicitHead': serializer.toJson<bool>(requiresExplicitHead),
       'cashWeight': serializer.toJson<Decimal>(cashWeight),
       'isComplete': serializer.toJson<bool>(isComplete),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -47276,6 +48093,8 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
     String? simulationId,
     DateTime? effectiveAt,
     String? reason,
+    Value<String?> previousAllocationVersionId = const Value.absent(),
+    bool? requiresExplicitHead,
     Decimal? cashWeight,
     bool? isComplete,
     DateTime? createdAt,
@@ -47289,6 +48108,10 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
     simulationId: simulationId ?? this.simulationId,
     effectiveAt: effectiveAt ?? this.effectiveAt,
     reason: reason ?? this.reason,
+    previousAllocationVersionId: previousAllocationVersionId.present
+        ? previousAllocationVersionId.value
+        : this.previousAllocationVersionId,
+    requiresExplicitHead: requiresExplicitHead ?? this.requiresExplicitHead,
     cashWeight: cashWeight ?? this.cashWeight,
     isComplete: isComplete ?? this.isComplete,
     createdAt: createdAt ?? this.createdAt,
@@ -47314,6 +48137,12 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
           ? data.effectiveAt.value
           : this.effectiveAt,
       reason: data.reason.present ? data.reason.value : this.reason,
+      previousAllocationVersionId: data.previousAllocationVersionId.present
+          ? data.previousAllocationVersionId.value
+          : this.previousAllocationVersionId,
+      requiresExplicitHead: data.requiresExplicitHead.present
+          ? data.requiresExplicitHead.value
+          : this.requiresExplicitHead,
       cashWeight: data.cashWeight.present
           ? data.cashWeight.value
           : this.cashWeight,
@@ -47336,6 +48165,8 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
           ..write('simulationId: $simulationId, ')
           ..write('effectiveAt: $effectiveAt, ')
           ..write('reason: $reason, ')
+          ..write('previousAllocationVersionId: $previousAllocationVersionId, ')
+          ..write('requiresExplicitHead: $requiresExplicitHead, ')
           ..write('cashWeight: $cashWeight, ')
           ..write('isComplete: $isComplete, ')
           ..write('createdAt: $createdAt')
@@ -47354,6 +48185,8 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
     simulationId,
     effectiveAt,
     reason,
+    previousAllocationVersionId,
+    requiresExplicitHead,
     cashWeight,
     isComplete,
     createdAt,
@@ -47371,6 +48204,9 @@ class WatchlistSimulationAllocationVersionRow extends DataClass
           other.simulationId == this.simulationId &&
           other.effectiveAt == this.effectiveAt &&
           other.reason == this.reason &&
+          other.previousAllocationVersionId ==
+              this.previousAllocationVersionId &&
+          other.requiresExplicitHead == this.requiresExplicitHead &&
           other.cashWeight == this.cashWeight &&
           other.isComplete == this.isComplete &&
           other.createdAt == this.createdAt);
@@ -47387,6 +48223,8 @@ class WatchlistSimulationAllocationVersionsCompanion
   final Value<String> simulationId;
   final Value<DateTime> effectiveAt;
   final Value<String> reason;
+  final Value<String?> previousAllocationVersionId;
+  final Value<bool> requiresExplicitHead;
   final Value<Decimal> cashWeight;
   final Value<bool> isComplete;
   final Value<DateTime> createdAt;
@@ -47401,6 +48239,8 @@ class WatchlistSimulationAllocationVersionsCompanion
     this.simulationId = const Value.absent(),
     this.effectiveAt = const Value.absent(),
     this.reason = const Value.absent(),
+    this.previousAllocationVersionId = const Value.absent(),
+    this.requiresExplicitHead = const Value.absent(),
     this.cashWeight = const Value.absent(),
     this.isComplete = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -47416,6 +48256,8 @@ class WatchlistSimulationAllocationVersionsCompanion
     required String simulationId,
     required DateTime effectiveAt,
     required String reason,
+    this.previousAllocationVersionId = const Value.absent(),
+    this.requiresExplicitHead = const Value.absent(),
     required Decimal cashWeight,
     this.isComplete = const Value.absent(),
     required DateTime createdAt,
@@ -47440,6 +48282,8 @@ class WatchlistSimulationAllocationVersionsCompanion
     Expression<String>? simulationId,
     Expression<DateTime>? effectiveAt,
     Expression<String>? reason,
+    Expression<String>? previousAllocationVersionId,
+    Expression<bool>? requiresExplicitHead,
     Expression<String>? cashWeight,
     Expression<bool>? isComplete,
     Expression<DateTime>? createdAt,
@@ -47455,6 +48299,10 @@ class WatchlistSimulationAllocationVersionsCompanion
       if (simulationId != null) 'simulation_id': simulationId,
       if (effectiveAt != null) 'effective_at': effectiveAt,
       if (reason != null) 'reason': reason,
+      if (previousAllocationVersionId != null)
+        'previous_allocation_version_id': previousAllocationVersionId,
+      if (requiresExplicitHead != null)
+        'requires_explicit_head': requiresExplicitHead,
       if (cashWeight != null) 'cash_weight': cashWeight,
       if (isComplete != null) 'is_complete': isComplete,
       if (createdAt != null) 'created_at': createdAt,
@@ -47472,6 +48320,8 @@ class WatchlistSimulationAllocationVersionsCompanion
     Value<String>? simulationId,
     Value<DateTime>? effectiveAt,
     Value<String>? reason,
+    Value<String?>? previousAllocationVersionId,
+    Value<bool>? requiresExplicitHead,
     Value<Decimal>? cashWeight,
     Value<bool>? isComplete,
     Value<DateTime>? createdAt,
@@ -47487,6 +48337,9 @@ class WatchlistSimulationAllocationVersionsCompanion
       simulationId: simulationId ?? this.simulationId,
       effectiveAt: effectiveAt ?? this.effectiveAt,
       reason: reason ?? this.reason,
+      previousAllocationVersionId:
+          previousAllocationVersionId ?? this.previousAllocationVersionId,
+      requiresExplicitHead: requiresExplicitHead ?? this.requiresExplicitHead,
       cashWeight: cashWeight ?? this.cashWeight,
       isComplete: isComplete ?? this.isComplete,
       createdAt: createdAt ?? this.createdAt,
@@ -47528,6 +48381,16 @@ class WatchlistSimulationAllocationVersionsCompanion
     if (reason.present) {
       map['reason'] = Variable<String>(reason.value);
     }
+    if (previousAllocationVersionId.present) {
+      map['previous_allocation_version_id'] = Variable<String>(
+        previousAllocationVersionId.value,
+      );
+    }
+    if (requiresExplicitHead.present) {
+      map['requires_explicit_head'] = Variable<bool>(
+        requiresExplicitHead.value,
+      );
+    }
     if (cashWeight.present) {
       map['cash_weight'] = Variable<String>(
         $WatchlistSimulationAllocationVersionsTable.$convertercashWeight.toSql(
@@ -47559,6 +48422,8 @@ class WatchlistSimulationAllocationVersionsCompanion
           ..write('simulationId: $simulationId, ')
           ..write('effectiveAt: $effectiveAt, ')
           ..write('reason: $reason, ')
+          ..write('previousAllocationVersionId: $previousAllocationVersionId, ')
+          ..write('requiresExplicitHead: $requiresExplicitHead, ')
           ..write('cashWeight: $cashWeight, ')
           ..write('isComplete: $isComplete, ')
           ..write('createdAt: $createdAt, ')
@@ -49113,6 +49978,17 @@ class $WatchlistSimulationActionEntriesTable
       ).withConverter<Decimal?>(
         $WatchlistSimulationActionEntriesTable.$converterbaseCurrencyAmountn,
       );
+  static const VerificationMeta _allocationBasisKeyMeta =
+      const VerificationMeta('allocationBasisKey');
+  @override
+  late final GeneratedColumn<String> allocationBasisKey =
+      GeneratedColumn<String>(
+        'allocation_basis_key',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -49156,6 +50032,7 @@ class $WatchlistSimulationActionEntriesTable
     withholdingTaxAmount,
     netAmount,
     baseCurrencyAmount,
+    allocationBasisKey,
     createdAt,
   ];
   @override
@@ -49338,6 +50215,15 @@ class $WatchlistSimulationActionEntriesTable
         stateAt.isAcceptableOrUnknown(data['state_at']!, _stateAtMeta),
       );
     }
+    if (data.containsKey('allocation_basis_key')) {
+      context.handle(
+        _allocationBasisKeyMeta,
+        allocationBasisKey.isAcceptableOrUnknown(
+          data['allocation_basis_key']!,
+          _allocationBasisKeyMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -49510,6 +50396,10 @@ class $WatchlistSimulationActionEntriesTable
               data['${effectivePrefix}base_currency_amount'],
             ),
           ),
+      allocationBasisKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allocation_basis_key'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -49603,6 +50493,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
   final Decimal? withholdingTaxAmount;
   final Decimal? netAmount;
   final Decimal? baseCurrencyAmount;
+  final String? allocationBasisKey;
   final DateTime createdAt;
   const WatchlistSimulationActionEntryRow({
     required this.ownerUserId,
@@ -49635,6 +50526,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
     this.withholdingTaxAmount,
     this.netAmount,
     this.baseCurrencyAmount,
+    this.allocationBasisKey,
     required this.createdAt,
   });
   @override
@@ -49727,6 +50619,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
             .toSql(baseCurrencyAmount),
       );
     }
+    if (!nullToAbsent || allocationBasisKey != null) {
+      map['allocation_basis_key'] = Variable<String>(allocationBasisKey);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -49787,6 +50682,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
       baseCurrencyAmount: baseCurrencyAmount == null && nullToAbsent
           ? const Value.absent()
           : Value(baseCurrencyAmount),
+      allocationBasisKey: allocationBasisKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(allocationBasisKey),
       createdAt: Value(createdAt),
     );
   }
@@ -49835,6 +50733,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
       baseCurrencyAmount: serializer.fromJson<Decimal?>(
         json['baseCurrencyAmount'],
       ),
+      allocationBasisKey: serializer.fromJson<String?>(
+        json['allocationBasisKey'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -49874,6 +50775,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
       'withholdingTaxAmount': serializer.toJson<Decimal?>(withholdingTaxAmount),
       'netAmount': serializer.toJson<Decimal?>(netAmount),
       'baseCurrencyAmount': serializer.toJson<Decimal?>(baseCurrencyAmount),
+      'allocationBasisKey': serializer.toJson<String?>(allocationBasisKey),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -49909,6 +50811,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
     Value<Decimal?> withholdingTaxAmount = const Value.absent(),
     Value<Decimal?> netAmount = const Value.absent(),
     Value<Decimal?> baseCurrencyAmount = const Value.absent(),
+    Value<String?> allocationBasisKey = const Value.absent(),
     DateTime? createdAt,
   }) => WatchlistSimulationActionEntryRow(
     ownerUserId: ownerUserId ?? this.ownerUserId,
@@ -49951,6 +50854,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
     baseCurrencyAmount: baseCurrencyAmount.present
         ? baseCurrencyAmount.value
         : this.baseCurrencyAmount,
+    allocationBasisKey: allocationBasisKey.present
+        ? allocationBasisKey.value
+        : this.allocationBasisKey,
     createdAt: createdAt ?? this.createdAt,
   );
   WatchlistSimulationActionEntryRow copyWithCompanion(
@@ -50015,6 +50921,9 @@ class WatchlistSimulationActionEntryRow extends DataClass
       baseCurrencyAmount: data.baseCurrencyAmount.present
           ? data.baseCurrencyAmount.value
           : this.baseCurrencyAmount,
+      allocationBasisKey: data.allocationBasisKey.present
+          ? data.allocationBasisKey.value
+          : this.allocationBasisKey,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -50052,6 +50961,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
           ..write('withholdingTaxAmount: $withholdingTaxAmount, ')
           ..write('netAmount: $netAmount, ')
           ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
+          ..write('allocationBasisKey: $allocationBasisKey, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -50089,6 +50999,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
     withholdingTaxAmount,
     netAmount,
     baseCurrencyAmount,
+    allocationBasisKey,
     createdAt,
   ]);
   @override
@@ -50125,6 +51036,7 @@ class WatchlistSimulationActionEntryRow extends DataClass
           other.withholdingTaxAmount == this.withholdingTaxAmount &&
           other.netAmount == this.netAmount &&
           other.baseCurrencyAmount == this.baseCurrencyAmount &&
+          other.allocationBasisKey == this.allocationBasisKey &&
           other.createdAt == this.createdAt);
 }
 
@@ -50160,6 +51072,7 @@ class WatchlistSimulationActionEntriesCompanion
   final Value<Decimal?> withholdingTaxAmount;
   final Value<Decimal?> netAmount;
   final Value<Decimal?> baseCurrencyAmount;
+  final Value<String?> allocationBasisKey;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const WatchlistSimulationActionEntriesCompanion({
@@ -50193,6 +51106,7 @@ class WatchlistSimulationActionEntriesCompanion
     this.withholdingTaxAmount = const Value.absent(),
     this.netAmount = const Value.absent(),
     this.baseCurrencyAmount = const Value.absent(),
+    this.allocationBasisKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -50227,6 +51141,7 @@ class WatchlistSimulationActionEntriesCompanion
     this.withholdingTaxAmount = const Value.absent(),
     this.netAmount = const Value.absent(),
     this.baseCurrencyAmount = const Value.absent(),
+    this.allocationBasisKey = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : ownerUserId = Value(ownerUserId),
@@ -50278,6 +51193,7 @@ class WatchlistSimulationActionEntriesCompanion
     Expression<String>? withholdingTaxAmount,
     Expression<String>? netAmount,
     Expression<String>? baseCurrencyAmount,
+    Expression<String>? allocationBasisKey,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -50316,6 +51232,8 @@ class WatchlistSimulationActionEntriesCompanion
       if (netAmount != null) 'net_amount': netAmount,
       if (baseCurrencyAmount != null)
         'base_currency_amount': baseCurrencyAmount,
+      if (allocationBasisKey != null)
+        'allocation_basis_key': allocationBasisKey,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -50352,6 +51270,7 @@ class WatchlistSimulationActionEntriesCompanion
     Value<Decimal?>? withholdingTaxAmount,
     Value<Decimal?>? netAmount,
     Value<Decimal?>? baseCurrencyAmount,
+    Value<String?>? allocationBasisKey,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -50387,6 +51306,7 @@ class WatchlistSimulationActionEntriesCompanion
       withholdingTaxAmount: withholdingTaxAmount ?? this.withholdingTaxAmount,
       netAmount: netAmount ?? this.netAmount,
       baseCurrencyAmount: baseCurrencyAmount ?? this.baseCurrencyAmount,
+      allocationBasisKey: allocationBasisKey ?? this.allocationBasisKey,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -50514,6 +51434,9 @@ class WatchlistSimulationActionEntriesCompanion
             .toSql(baseCurrencyAmount.value),
       );
     }
+    if (allocationBasisKey.present) {
+      map['allocation_basis_key'] = Variable<String>(allocationBasisKey.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -50556,6 +51479,7 @@ class WatchlistSimulationActionEntriesCompanion
           ..write('withholdingTaxAmount: $withholdingTaxAmount, ')
           ..write('netAmount: $netAmount, ')
           ..write('baseCurrencyAmount: $baseCurrencyAmount, ')
+          ..write('allocationBasisKey: $allocationBasisKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -50673,6 +51597,17 @@ class $WatchlistSimulationObservationsTable
       ).withConverter<Decimal>(
         $WatchlistSimulationObservationsTable.$convertermissingQuoteWeight,
       );
+  static const VerificationMeta _allocationBasisKeyMeta =
+      const VerificationMeta('allocationBasisKey');
+  @override
+  late final GeneratedColumn<String> allocationBasisKey =
+      GeneratedColumn<String>(
+        'allocation_basis_key',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -50706,6 +51641,7 @@ class $WatchlistSimulationObservationsTable
     weightedDailyChange,
     pricedWeight,
     missingQuoteWeight,
+    allocationBasisKey,
     createdAt,
     updatedAt,
   ];
@@ -50766,6 +51702,15 @@ class $WatchlistSimulationObservationsTable
       );
     } else if (isInserting) {
       context.missing(_observedAtMeta);
+    }
+    if (data.containsKey('allocation_basis_key')) {
+      context.handle(
+        _allocationBasisKeyMeta,
+        allocationBasisKey.isAcceptableOrUnknown(
+          data['allocation_basis_key']!,
+          _allocationBasisKeyMeta,
+        ),
+      );
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -50846,6 +51791,10 @@ class $WatchlistSimulationObservationsTable
               data['${effectivePrefix}missing_quote_weight'],
             )!,
           ),
+      allocationBasisKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}allocation_basis_key'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -50883,6 +51832,7 @@ class WatchlistSimulationObservationRow extends DataClass
   final Decimal weightedDailyChange;
   final Decimal pricedWeight;
   final Decimal missingQuoteWeight;
+  final String? allocationBasisKey;
   final DateTime createdAt;
   final DateTime updatedAt;
   const WatchlistSimulationObservationRow({
@@ -50895,6 +51845,7 @@ class WatchlistSimulationObservationRow extends DataClass
     required this.weightedDailyChange,
     required this.pricedWeight,
     required this.missingQuoteWeight,
+    this.allocationBasisKey,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -50932,6 +51883,9 @@ class WatchlistSimulationObservationRow extends DataClass
             .toSql(missingQuoteWeight),
       );
     }
+    if (!nullToAbsent || allocationBasisKey != null) {
+      map['allocation_basis_key'] = Variable<String>(allocationBasisKey);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -50948,6 +51902,9 @@ class WatchlistSimulationObservationRow extends DataClass
       weightedDailyChange: Value(weightedDailyChange),
       pricedWeight: Value(pricedWeight),
       missingQuoteWeight: Value(missingQuoteWeight),
+      allocationBasisKey: allocationBasisKey == null && nullToAbsent
+          ? const Value.absent()
+          : Value(allocationBasisKey),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -50972,6 +51929,9 @@ class WatchlistSimulationObservationRow extends DataClass
       missingQuoteWeight: serializer.fromJson<Decimal>(
         json['missingQuoteWeight'],
       ),
+      allocationBasisKey: serializer.fromJson<String?>(
+        json['allocationBasisKey'],
+      ),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -50989,6 +51949,7 @@ class WatchlistSimulationObservationRow extends DataClass
       'weightedDailyChange': serializer.toJson<Decimal>(weightedDailyChange),
       'pricedWeight': serializer.toJson<Decimal>(pricedWeight),
       'missingQuoteWeight': serializer.toJson<Decimal>(missingQuoteWeight),
+      'allocationBasisKey': serializer.toJson<String?>(allocationBasisKey),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -51004,6 +51965,7 @@ class WatchlistSimulationObservationRow extends DataClass
     Decimal? weightedDailyChange,
     Decimal? pricedWeight,
     Decimal? missingQuoteWeight,
+    Value<String?> allocationBasisKey = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => WatchlistSimulationObservationRow(
@@ -51016,6 +51978,9 @@ class WatchlistSimulationObservationRow extends DataClass
     weightedDailyChange: weightedDailyChange ?? this.weightedDailyChange,
     pricedWeight: pricedWeight ?? this.pricedWeight,
     missingQuoteWeight: missingQuoteWeight ?? this.missingQuoteWeight,
+    allocationBasisKey: allocationBasisKey.present
+        ? allocationBasisKey.value
+        : this.allocationBasisKey,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -51048,6 +52013,9 @@ class WatchlistSimulationObservationRow extends DataClass
       missingQuoteWeight: data.missingQuoteWeight.present
           ? data.missingQuoteWeight.value
           : this.missingQuoteWeight,
+      allocationBasisKey: data.allocationBasisKey.present
+          ? data.allocationBasisKey.value
+          : this.allocationBasisKey,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -51065,6 +52033,7 @@ class WatchlistSimulationObservationRow extends DataClass
           ..write('weightedDailyChange: $weightedDailyChange, ')
           ..write('pricedWeight: $pricedWeight, ')
           ..write('missingQuoteWeight: $missingQuoteWeight, ')
+          ..write('allocationBasisKey: $allocationBasisKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -51082,6 +52051,7 @@ class WatchlistSimulationObservationRow extends DataClass
     weightedDailyChange,
     pricedWeight,
     missingQuoteWeight,
+    allocationBasisKey,
     createdAt,
     updatedAt,
   );
@@ -51098,6 +52068,7 @@ class WatchlistSimulationObservationRow extends DataClass
           other.weightedDailyChange == this.weightedDailyChange &&
           other.pricedWeight == this.pricedWeight &&
           other.missingQuoteWeight == this.missingQuoteWeight &&
+          other.allocationBasisKey == this.allocationBasisKey &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -51113,6 +52084,7 @@ class WatchlistSimulationObservationsCompanion
   final Value<Decimal> weightedDailyChange;
   final Value<Decimal> pricedWeight;
   final Value<Decimal> missingQuoteWeight;
+  final Value<String?> allocationBasisKey;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -51126,6 +52098,7 @@ class WatchlistSimulationObservationsCompanion
     this.weightedDailyChange = const Value.absent(),
     this.pricedWeight = const Value.absent(),
     this.missingQuoteWeight = const Value.absent(),
+    this.allocationBasisKey = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -51140,6 +52113,7 @@ class WatchlistSimulationObservationsCompanion
     required Decimal weightedDailyChange,
     required Decimal pricedWeight,
     required Decimal missingQuoteWeight,
+    this.allocationBasisKey = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -51164,6 +52138,7 @@ class WatchlistSimulationObservationsCompanion
     Expression<String>? weightedDailyChange,
     Expression<String>? pricedWeight,
     Expression<String>? missingQuoteWeight,
+    Expression<String>? allocationBasisKey,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -51180,6 +52155,8 @@ class WatchlistSimulationObservationsCompanion
       if (pricedWeight != null) 'priced_weight': pricedWeight,
       if (missingQuoteWeight != null)
         'missing_quote_weight': missingQuoteWeight,
+      if (allocationBasisKey != null)
+        'allocation_basis_key': allocationBasisKey,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -51196,6 +52173,7 @@ class WatchlistSimulationObservationsCompanion
     Value<Decimal>? weightedDailyChange,
     Value<Decimal>? pricedWeight,
     Value<Decimal>? missingQuoteWeight,
+    Value<String?>? allocationBasisKey,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -51210,6 +52188,7 @@ class WatchlistSimulationObservationsCompanion
       weightedDailyChange: weightedDailyChange ?? this.weightedDailyChange,
       pricedWeight: pricedWeight ?? this.pricedWeight,
       missingQuoteWeight: missingQuoteWeight ?? this.missingQuoteWeight,
+      allocationBasisKey: allocationBasisKey ?? this.allocationBasisKey,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -51260,6 +52239,9 @@ class WatchlistSimulationObservationsCompanion
             .toSql(missingQuoteWeight.value),
       );
     }
+    if (allocationBasisKey.present) {
+      map['allocation_basis_key'] = Variable<String>(allocationBasisKey.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -51284,6 +52266,7 @@ class WatchlistSimulationObservationsCompanion
           ..write('weightedDailyChange: $weightedDailyChange, ')
           ..write('pricedWeight: $pricedWeight, ')
           ..write('missingQuoteWeight: $missingQuoteWeight, ')
+          ..write('allocationBasisKey: $allocationBasisKey, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -51388,6 +52371,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WatchlistSimulationsTable(this);
   late final $WatchlistSimulationPositionsTable watchlistSimulationPositions =
       $WatchlistSimulationPositionsTable(this);
+  late final $WatchlistSimulationAllocationHeadsTable
+  watchlistSimulationAllocationHeads = $WatchlistSimulationAllocationHeadsTable(
+    this,
+  );
   late final $WatchlistSimulationAllocationVersionsTable
   watchlistSimulationAllocationVersions =
       $WatchlistSimulationAllocationVersionsTable(this);
@@ -51462,6 +52449,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     watchlistCollectionMembers,
     watchlistSimulations,
     watchlistSimulationPositions,
+    watchlistSimulationAllocationHeads,
     watchlistSimulationAllocationVersions,
     watchlistSimulationHoldingVersions,
     watchlistSimulationActionEntries,
@@ -72408,6 +73396,7 @@ typedef $$WatchlistSimulationsTableCreateCompanionBuilder =
       required Decimal startingCapital,
       Value<Decimal> cashWeight,
       Value<String> calculationMode,
+      Value<int> allocationProtocolVersion,
       required DateTime baselineAt,
       required DateTime createdAt,
       Value<int> rowid,
@@ -72426,6 +73415,7 @@ typedef $$WatchlistSimulationsTableUpdateCompanionBuilder =
       Value<Decimal> startingCapital,
       Value<Decimal> cashWeight,
       Value<String> calculationMode,
+      Value<int> allocationProtocolVersion,
       Value<DateTime> baselineAt,
       Value<DateTime> createdAt,
       Value<int> rowid,
@@ -72500,6 +73490,11 @@ class $$WatchlistSimulationsTableFilterComposer
 
   ColumnFilters<String> get calculationMode => $composableBuilder(
     column: $table.calculationMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get allocationProtocolVersion => $composableBuilder(
+    column: $table.allocationProtocolVersion,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -72583,6 +73578,11 @@ class $$WatchlistSimulationsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get allocationProtocolVersion => $composableBuilder(
+    column: $table.allocationProtocolVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get baselineAt => $composableBuilder(
     column: $table.baselineAt,
     builder: (column) => ColumnOrderings(column),
@@ -72655,6 +73655,11 @@ class $$WatchlistSimulationsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get allocationProtocolVersion => $composableBuilder(
+    column: $table.allocationProtocolVersion,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get baselineAt => $composableBuilder(
     column: $table.baselineAt,
     builder: (column) => column,
@@ -72719,6 +73724,7 @@ class $$WatchlistSimulationsTableTableManager
                 Value<Decimal> startingCapital = const Value.absent(),
                 Value<Decimal> cashWeight = const Value.absent(),
                 Value<String> calculationMode = const Value.absent(),
+                Value<int> allocationProtocolVersion = const Value.absent(),
                 Value<DateTime> baselineAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -72735,6 +73741,7 @@ class $$WatchlistSimulationsTableTableManager
                 startingCapital: startingCapital,
                 cashWeight: cashWeight,
                 calculationMode: calculationMode,
+                allocationProtocolVersion: allocationProtocolVersion,
                 baselineAt: baselineAt,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -72753,6 +73760,7 @@ class $$WatchlistSimulationsTableTableManager
                 required Decimal startingCapital,
                 Value<Decimal> cashWeight = const Value.absent(),
                 Value<String> calculationMode = const Value.absent(),
+                Value<int> allocationProtocolVersion = const Value.absent(),
                 required DateTime baselineAt,
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -72769,6 +73777,7 @@ class $$WatchlistSimulationsTableTableManager
                 startingCapital: startingCapital,
                 cashWeight: cashWeight,
                 calculationMode: calculationMode,
+                allocationProtocolVersion: allocationProtocolVersion,
                 baselineAt: baselineAt,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -72813,6 +73822,7 @@ typedef $$WatchlistSimulationPositionsTableCreateCompanionBuilder =
       required String simulationId,
       required String watchlistItemId,
       required Decimal targetWeight,
+      Value<bool> requiresExplicitHead,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -72827,6 +73837,7 @@ typedef $$WatchlistSimulationPositionsTableUpdateCompanionBuilder =
       Value<String> simulationId,
       Value<String> watchlistItemId,
       Value<Decimal> targetWeight,
+      Value<bool> requiresExplicitHead,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -72886,6 +73897,11 @@ class $$WatchlistSimulationPositionsTableFilterComposer
         column: $table.targetWeight,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnFilters<bool> get requiresExplicitHead => $composableBuilder(
+    column: $table.requiresExplicitHead,
+    builder: (column) => ColumnFilters(column),
+  );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
@@ -72947,6 +73963,11 @@ class $$WatchlistSimulationPositionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get requiresExplicitHead => $composableBuilder(
+    column: $table.requiresExplicitHead,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -72999,6 +74020,11 @@ class $$WatchlistSimulationPositionsTableAnnotationComposer
         column: $table.targetWeight,
         builder: (column) => column,
       );
+
+  GeneratedColumn<bool> get requiresExplicitHead => $composableBuilder(
+    column: $table.requiresExplicitHead,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -73059,6 +74085,7 @@ class $$WatchlistSimulationPositionsTableTableManager
                 Value<String> simulationId = const Value.absent(),
                 Value<String> watchlistItemId = const Value.absent(),
                 Value<Decimal> targetWeight = const Value.absent(),
+                Value<bool> requiresExplicitHead = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistSimulationPositionsCompanion(
@@ -73071,6 +74098,7 @@ class $$WatchlistSimulationPositionsTableTableManager
                 simulationId: simulationId,
                 watchlistItemId: watchlistItemId,
                 targetWeight: targetWeight,
+                requiresExplicitHead: requiresExplicitHead,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -73085,6 +74113,7 @@ class $$WatchlistSimulationPositionsTableTableManager
                 required String simulationId,
                 required String watchlistItemId,
                 required Decimal targetWeight,
+                Value<bool> requiresExplicitHead = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistSimulationPositionsCompanion.insert(
@@ -73097,6 +74126,7 @@ class $$WatchlistSimulationPositionsTableTableManager
                 simulationId: simulationId,
                 watchlistItemId: watchlistItemId,
                 targetWeight: targetWeight,
+                requiresExplicitHead: requiresExplicitHead,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -73129,6 +74159,310 @@ typedef $$WatchlistSimulationPositionsTableProcessedTableManager =
       WatchlistSimulationPositionRow,
       PrefetchHooks Function()
     >;
+typedef $$WatchlistSimulationAllocationHeadsTableCreateCompanionBuilder =
+    WatchlistSimulationAllocationHeadsCompanion Function({
+      required String ownerUserId,
+      required DateTime updatedAt,
+      required String updatedByDevice,
+      required Hlc hlc,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String simulationId,
+      required String allocationVersionId,
+      required DateTime createdAt,
+      Value<int> rowid,
+    });
+typedef $$WatchlistSimulationAllocationHeadsTableUpdateCompanionBuilder =
+    WatchlistSimulationAllocationHeadsCompanion Function({
+      Value<String> ownerUserId,
+      Value<DateTime> updatedAt,
+      Value<String> updatedByDevice,
+      Value<Hlc> hlc,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> simulationId,
+      Value<String> allocationVersionId,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$WatchlistSimulationAllocationHeadsTableFilterComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationAllocationHeadsTable> {
+  $$WatchlistSimulationAllocationHeadsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Hlc, Hlc, String> get hlc =>
+      $composableBuilder(
+        column: $table.hlc,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get allocationVersionId => $composableBuilder(
+    column: $table.allocationVersionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$WatchlistSimulationAllocationHeadsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationAllocationHeadsTable> {
+  $$WatchlistSimulationAllocationHeadsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get hlc => $composableBuilder(
+    column: $table.hlc,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allocationVersionId => $composableBuilder(
+    column: $table.allocationVersionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$WatchlistSimulationAllocationHeadsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WatchlistSimulationAllocationHeadsTable> {
+  $$WatchlistSimulationAllocationHeadsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedByDevice => $composableBuilder(
+    column: $table.updatedByDevice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<Hlc, String> get hlc =>
+      $composableBuilder(column: $table.hlc, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get simulationId => $composableBuilder(
+    column: $table.simulationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get allocationVersionId => $composableBuilder(
+    column: $table.allocationVersionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$WatchlistSimulationAllocationHeadsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WatchlistSimulationAllocationHeadsTable,
+          WatchlistSimulationAllocationHeadRow,
+          $$WatchlistSimulationAllocationHeadsTableFilterComposer,
+          $$WatchlistSimulationAllocationHeadsTableOrderingComposer,
+          $$WatchlistSimulationAllocationHeadsTableAnnotationComposer,
+          $$WatchlistSimulationAllocationHeadsTableCreateCompanionBuilder,
+          $$WatchlistSimulationAllocationHeadsTableUpdateCompanionBuilder,
+          (
+            WatchlistSimulationAllocationHeadRow,
+            BaseReferences<
+              _$AppDatabase,
+              $WatchlistSimulationAllocationHeadsTable,
+              WatchlistSimulationAllocationHeadRow
+            >,
+          ),
+          WatchlistSimulationAllocationHeadRow,
+          PrefetchHooks Function()
+        > {
+  $$WatchlistSimulationAllocationHeadsTableTableManager(
+    _$AppDatabase db,
+    $WatchlistSimulationAllocationHeadsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WatchlistSimulationAllocationHeadsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$WatchlistSimulationAllocationHeadsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$WatchlistSimulationAllocationHeadsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedByDevice = const Value.absent(),
+                Value<Hlc> hlc = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> simulationId = const Value.absent(),
+                Value<String> allocationVersionId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationAllocationHeadsCompanion(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                allocationVersionId: allocationVersionId,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required DateTime updatedAt,
+                required String updatedByDevice,
+                required Hlc hlc,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String simulationId,
+                required String allocationVersionId,
+                required DateTime createdAt,
+                Value<int> rowid = const Value.absent(),
+              }) => WatchlistSimulationAllocationHeadsCompanion.insert(
+                ownerUserId: ownerUserId,
+                updatedAt: updatedAt,
+                updatedByDevice: updatedByDevice,
+                hlc: hlc,
+                deletedAt: deletedAt,
+                id: id,
+                simulationId: simulationId,
+                allocationVersionId: allocationVersionId,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$WatchlistSimulationAllocationHeadsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WatchlistSimulationAllocationHeadsTable,
+      WatchlistSimulationAllocationHeadRow,
+      $$WatchlistSimulationAllocationHeadsTableFilterComposer,
+      $$WatchlistSimulationAllocationHeadsTableOrderingComposer,
+      $$WatchlistSimulationAllocationHeadsTableAnnotationComposer,
+      $$WatchlistSimulationAllocationHeadsTableCreateCompanionBuilder,
+      $$WatchlistSimulationAllocationHeadsTableUpdateCompanionBuilder,
+      (
+        WatchlistSimulationAllocationHeadRow,
+        BaseReferences<
+          _$AppDatabase,
+          $WatchlistSimulationAllocationHeadsTable,
+          WatchlistSimulationAllocationHeadRow
+        >,
+      ),
+      WatchlistSimulationAllocationHeadRow,
+      PrefetchHooks Function()
+    >;
 typedef $$WatchlistSimulationAllocationVersionsTableCreateCompanionBuilder =
     WatchlistSimulationAllocationVersionsCompanion Function({
       required String ownerUserId,
@@ -73140,6 +74474,8 @@ typedef $$WatchlistSimulationAllocationVersionsTableCreateCompanionBuilder =
       required String simulationId,
       required DateTime effectiveAt,
       required String reason,
+      Value<String?> previousAllocationVersionId,
+      Value<bool> requiresExplicitHead,
       required Decimal cashWeight,
       Value<bool> isComplete,
       required DateTime createdAt,
@@ -73156,6 +74492,8 @@ typedef $$WatchlistSimulationAllocationVersionsTableUpdateCompanionBuilder =
       Value<String> simulationId,
       Value<DateTime> effectiveAt,
       Value<String> reason,
+      Value<String?> previousAllocationVersionId,
+      Value<bool> requiresExplicitHead,
       Value<Decimal> cashWeight,
       Value<bool> isComplete,
       Value<DateTime> createdAt,
@@ -73215,6 +74553,16 @@ class $$WatchlistSimulationAllocationVersionsTableFilterComposer
 
   ColumnFilters<String> get reason => $composableBuilder(
     column: $table.reason,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get previousAllocationVersionId => $composableBuilder(
+    column: $table.previousAllocationVersionId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get requiresExplicitHead => $composableBuilder(
+    column: $table.requiresExplicitHead,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -73290,6 +74638,16 @@ class $$WatchlistSimulationAllocationVersionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get previousAllocationVersionId => $composableBuilder(
+    column: $table.previousAllocationVersionId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get requiresExplicitHead => $composableBuilder(
+    column: $table.requiresExplicitHead,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get cashWeight => $composableBuilder(
     column: $table.cashWeight,
     builder: (column) => ColumnOrderings(column),
@@ -73350,6 +74708,16 @@ class $$WatchlistSimulationAllocationVersionsTableAnnotationComposer
 
   GeneratedColumn<String> get reason =>
       $composableBuilder(column: $table.reason, builder: (column) => column);
+
+  GeneratedColumn<String> get previousAllocationVersionId => $composableBuilder(
+    column: $table.previousAllocationVersionId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get requiresExplicitHead => $composableBuilder(
+    column: $table.requiresExplicitHead,
+    builder: (column) => column,
+  );
 
   GeneratedColumnWithTypeConverter<Decimal, String> get cashWeight =>
       $composableBuilder(
@@ -73421,6 +74789,9 @@ class $$WatchlistSimulationAllocationVersionsTableTableManager
                 Value<String> simulationId = const Value.absent(),
                 Value<DateTime> effectiveAt = const Value.absent(),
                 Value<String> reason = const Value.absent(),
+                Value<String?> previousAllocationVersionId =
+                    const Value.absent(),
+                Value<bool> requiresExplicitHead = const Value.absent(),
                 Value<Decimal> cashWeight = const Value.absent(),
                 Value<bool> isComplete = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -73435,6 +74806,8 @@ class $$WatchlistSimulationAllocationVersionsTableTableManager
                 simulationId: simulationId,
                 effectiveAt: effectiveAt,
                 reason: reason,
+                previousAllocationVersionId: previousAllocationVersionId,
+                requiresExplicitHead: requiresExplicitHead,
                 cashWeight: cashWeight,
                 isComplete: isComplete,
                 createdAt: createdAt,
@@ -73451,6 +74824,9 @@ class $$WatchlistSimulationAllocationVersionsTableTableManager
                 required String simulationId,
                 required DateTime effectiveAt,
                 required String reason,
+                Value<String?> previousAllocationVersionId =
+                    const Value.absent(),
+                Value<bool> requiresExplicitHead = const Value.absent(),
                 required Decimal cashWeight,
                 Value<bool> isComplete = const Value.absent(),
                 required DateTime createdAt,
@@ -73465,6 +74841,8 @@ class $$WatchlistSimulationAllocationVersionsTableTableManager
                 simulationId: simulationId,
                 effectiveAt: effectiveAt,
                 reason: reason,
+                previousAllocationVersionId: previousAllocationVersionId,
+                requiresExplicitHead: requiresExplicitHead,
                 cashWeight: cashWeight,
                 isComplete: isComplete,
                 createdAt: createdAt,
@@ -74059,6 +75437,7 @@ typedef $$WatchlistSimulationActionEntriesTableCreateCompanionBuilder =
       Value<Decimal?> withholdingTaxAmount,
       Value<Decimal?> netAmount,
       Value<Decimal?> baseCurrencyAmount,
+      Value<String?> allocationBasisKey,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -74094,6 +75473,7 @@ typedef $$WatchlistSimulationActionEntriesTableUpdateCompanionBuilder =
       Value<Decimal?> withholdingTaxAmount,
       Value<Decimal?> netAmount,
       Value<Decimal?> baseCurrencyAmount,
+      Value<String?> allocationBasisKey,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -74266,6 +75646,11 @@ class $$WatchlistSimulationActionEntriesTableFilterComposer
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
 
+  ColumnFilters<String> get allocationBasisKey => $composableBuilder(
+    column: $table.allocationBasisKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
@@ -74431,6 +75816,11 @@ class $$WatchlistSimulationActionEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get allocationBasisKey => $composableBuilder(
+    column: $table.allocationBasisKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -74571,6 +75961,11 @@ class $$WatchlistSimulationActionEntriesTableAnnotationComposer
         builder: (column) => column,
       );
 
+  GeneratedColumn<String> get allocationBasisKey => $composableBuilder(
+    column: $table.allocationBasisKey,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
@@ -74651,6 +76046,7 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 Value<Decimal?> withholdingTaxAmount = const Value.absent(),
                 Value<Decimal?> netAmount = const Value.absent(),
                 Value<Decimal?> baseCurrencyAmount = const Value.absent(),
+                Value<String?> allocationBasisKey = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistSimulationActionEntriesCompanion(
@@ -74684,6 +76080,7 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 withholdingTaxAmount: withholdingTaxAmount,
                 netAmount: netAmount,
                 baseCurrencyAmount: baseCurrencyAmount,
+                allocationBasisKey: allocationBasisKey,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -74719,6 +76116,7 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 Value<Decimal?> withholdingTaxAmount = const Value.absent(),
                 Value<Decimal?> netAmount = const Value.absent(),
                 Value<Decimal?> baseCurrencyAmount = const Value.absent(),
+                Value<String?> allocationBasisKey = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => WatchlistSimulationActionEntriesCompanion.insert(
@@ -74752,6 +76150,7 @@ class $$WatchlistSimulationActionEntriesTableTableManager
                 withholdingTaxAmount: withholdingTaxAmount,
                 netAmount: netAmount,
                 baseCurrencyAmount: baseCurrencyAmount,
+                allocationBasisKey: allocationBasisKey,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -74795,6 +76194,7 @@ typedef $$WatchlistSimulationObservationsTableCreateCompanionBuilder =
       required Decimal weightedDailyChange,
       required Decimal pricedWeight,
       required Decimal missingQuoteWeight,
+      Value<String?> allocationBasisKey,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<int> rowid,
@@ -74810,6 +76210,7 @@ typedef $$WatchlistSimulationObservationsTableUpdateCompanionBuilder =
       Value<Decimal> weightedDailyChange,
       Value<Decimal> pricedWeight,
       Value<Decimal> missingQuoteWeight,
+      Value<String?> allocationBasisKey,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -74871,6 +76272,11 @@ class $$WatchlistSimulationObservationsTableFilterComposer
   get missingQuoteWeight => $composableBuilder(
     column: $table.missingQuoteWeight,
     builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get allocationBasisKey => $composableBuilder(
+    column: $table.allocationBasisKey,
+    builder: (column) => ColumnFilters(column),
   );
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
@@ -74935,6 +76341,11 @@ class $$WatchlistSimulationObservationsTableOrderingComposer
 
   ColumnOrderings<String> get missingQuoteWeight => $composableBuilder(
     column: $table.missingQuoteWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get allocationBasisKey => $composableBuilder(
+    column: $table.allocationBasisKey,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -75005,6 +76416,11 @@ class $$WatchlistSimulationObservationsTableAnnotationComposer
         builder: (column) => column,
       );
 
+  GeneratedColumn<String> get allocationBasisKey => $composableBuilder(
+    column: $table.allocationBasisKey,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -75067,6 +76483,7 @@ class $$WatchlistSimulationObservationsTableTableManager
                 Value<Decimal> weightedDailyChange = const Value.absent(),
                 Value<Decimal> pricedWeight = const Value.absent(),
                 Value<Decimal> missingQuoteWeight = const Value.absent(),
+                Value<String?> allocationBasisKey = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -75080,6 +76497,7 @@ class $$WatchlistSimulationObservationsTableTableManager
                 weightedDailyChange: weightedDailyChange,
                 pricedWeight: pricedWeight,
                 missingQuoteWeight: missingQuoteWeight,
+                allocationBasisKey: allocationBasisKey,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -75095,6 +76513,7 @@ class $$WatchlistSimulationObservationsTableTableManager
                 required Decimal weightedDailyChange,
                 required Decimal pricedWeight,
                 required Decimal missingQuoteWeight,
+                Value<String?> allocationBasisKey = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
@@ -75108,6 +76527,7 @@ class $$WatchlistSimulationObservationsTableTableManager
                 weightedDailyChange: weightedDailyChange,
                 pricedWeight: pricedWeight,
                 missingQuoteWeight: missingQuoteWeight,
+                allocationBasisKey: allocationBasisKey,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -75305,6 +76725,12 @@ class $AppDatabaseManager {
       $$WatchlistSimulationPositionsTableTableManager(
         _db,
         _db.watchlistSimulationPositions,
+      );
+  $$WatchlistSimulationAllocationHeadsTableTableManager
+  get watchlistSimulationAllocationHeads =>
+      $$WatchlistSimulationAllocationHeadsTableTableManager(
+        _db,
+        _db.watchlistSimulationAllocationHeads,
       );
   $$WatchlistSimulationAllocationVersionsTableTableManager
   get watchlistSimulationAllocationVersions =>

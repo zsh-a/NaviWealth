@@ -37,6 +37,7 @@ void main() {
         'starting_capital',
         'cash_weight',
         'calculation_mode',
+        'allocation_protocol_version',
         'baseline_at',
         'owner_user_id',
         'hlc',
@@ -51,11 +52,13 @@ void main() {
         'simulation_id',
         'watchlist_item_id',
         'target_weight',
+        'requires_explicit_head',
         'owner_user_id',
         'hlc',
       ]),
     );
     for (final table in const [
+      'watchlist_simulation_allocation_heads',
       'watchlist_simulation_allocation_versions',
       'watchlist_simulation_holding_versions',
     ]) {
@@ -77,6 +80,7 @@ void main() {
         'source_key',
         'revision_hash',
         'cash_per_share',
+        'allocation_basis_key',
         'owner_user_id',
         'hlc',
       ]),
@@ -91,6 +95,7 @@ void main() {
         'simulation_id',
         'observation_day',
         'projected_value',
+        'allocation_basis_key',
       ]),
     );
     expect(
@@ -99,6 +104,6 @@ void main() {
     );
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 90);
+    expect(version.read<int>('user_version'), 91);
   });
 }

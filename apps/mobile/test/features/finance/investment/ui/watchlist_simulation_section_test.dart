@@ -426,6 +426,19 @@ Widget _wrap({
       watchlistSimulationPositionsProvider.overrideWith(
         (_, _) => Stream.value(positions),
       ),
+      watchlistSimulationAllocationProvider.overrideWith((_, simulationId) {
+        final simulation = simulations.firstWhere(
+          (candidate) => candidate.id == simulationId,
+        );
+        return Stream.value(
+          ResolvedWatchlistSimulationAllocation(
+            status: WatchlistSimulationAllocationStatus.selected,
+            allocationVersionId: 'allocation-test',
+            cashWeight: simulation.cashWeight,
+            positions: positions,
+          ),
+        );
+      }),
       watchlistSimulationObservationsProvider.overrideWith(
         (_, _) => Stream.value(_observations),
       ),

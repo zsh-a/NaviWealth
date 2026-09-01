@@ -3395,6 +3395,8 @@
   "watchlistSimulationDefaultName": "{collection}模拟",
   "watchlistSimulationAdjustTitle": "调整模拟配置",
   "watchlistSimulationAllocationNote": "设置各标的与虚拟现金的目标百分比，合计必须为 100%。",
+  "watchlistSimulationAllocationSyncing": "配置快照仍在同步中。选中的快照完整前不会显示相关数值。",
+  "watchlistSimulationAllocationInvalid": "此配置无效。请编辑模拟组合，使权重合计恢复为 100%。",
   "watchlistSimulationWeightField": "{symbol} 目标权重（%）",
   "watchlistSimulationCashField": "虚拟现金（%）",
   "watchlistSimulationInvalidWeight": "请输入 0 到 100 之间的百分比",

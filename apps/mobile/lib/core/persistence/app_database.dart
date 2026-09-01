@@ -125,6 +125,7 @@ final class AppDatabaseTransactionScope {
     WatchlistCollectionMembers,
     WatchlistSimulations,
     WatchlistSimulationPositions,
+    WatchlistSimulationAllocationHeads,
     WatchlistSimulationAllocationVersions,
     WatchlistSimulationHoldingVersions,
     WatchlistSimulationActionEntries,
@@ -156,7 +157,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 90;
+  int get schemaVersion => 91;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1133,6 +1134,54 @@ class AppDatabase extends _$AppDatabase {
       // initiated locally or arrived through Sync v3.
       if (from < 90) {
         await _createWatchlistSimulationLocalInvariants(this);
+      }
+      // v90 -> v91: allocations become immutable snapshots selected by one
+      // deterministic LWW head. Removing effective-at uniqueness preserves
+      // concurrent branches until the head chooses exactly one winner.
+      if (from < 91) {
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulations',
+          column: 'allocation_protocol_version',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulation_positions',
+          column: 'requires_explicit_head',
+          definition: 'INTEGER NOT NULL DEFAULT 0',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulation_action_entries',
+          column: 'allocation_basis_key',
+          definition: 'TEXT',
+        );
+        await _addColumnIfMissing(
+          this,
+          table: 'watchlist_simulation_observations',
+          column: 'allocation_basis_key',
+          definition: 'TEXT',
+        );
+        await m.createTable(watchlistSimulationAllocationHeads);
+        final allocationColumns = await customSelect(
+          'PRAGMA table_info(watchlist_simulation_allocation_versions)',
+        ).get();
+        if (allocationColumns.isEmpty) {
+          await m.createTable(watchlistSimulationAllocationVersions);
+        } else {
+          await m.alterTable(
+            TableMigration(
+              watchlistSimulationAllocationVersions,
+              newColumns: [
+                watchlistSimulationAllocationVersions
+                    .previousAllocationVersionId,
+                watchlistSimulationAllocationVersions.requiresExplicitHead,
+              ],
+            ),
+          );
+        }
+        await _createWatchlistAtomicAllocationIndexes(this);
       }
     },
     beforeOpen: (details) async {

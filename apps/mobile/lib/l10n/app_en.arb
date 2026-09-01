@@ -6182,6 +6182,10 @@
   "@watchlistSimulationAdjustTitle": { "description": "Paper allocation edit sheet title" },
   "watchlistSimulationAllocationNote": "Set target percentages for symbols and virtual cash. The total must equal 100%.",
   "@watchlistSimulationAllocationNote": { "description": "Paper allocation edit guidance" },
+  "watchlistSimulationAllocationSyncing": "This allocation snapshot is still syncing. Values remain hidden until the selected snapshot is complete.",
+  "@watchlistSimulationAllocationSyncing": { "description": "Paper allocation pending atomic snapshot state" },
+  "watchlistSimulationAllocationInvalid": "This allocation is invalid. Edit the simulation to restore weights totaling 100%.",
+  "@watchlistSimulationAllocationInvalid": { "description": "Paper allocation integrity error state" },
   "watchlistSimulationWeightField": "{symbol} target (%)",
   "@watchlistSimulationWeightField": {
     "description": "Target weight field for one simulated symbol",

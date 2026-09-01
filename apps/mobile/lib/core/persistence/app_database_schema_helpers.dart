@@ -471,6 +471,11 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_item '
       'ON watchlist_simulation_positions(owner_user_id, watchlist_item_id) '
       'WHERE deleted_at IS NULL',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_hlc '
+      'ON watchlist_simulation_allocation_heads(owner_user_id, hlc)',
+  'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_simulation '
+      'ON watchlist_simulation_allocation_heads('
+      'owner_user_id, simulation_id) WHERE deleted_at IS NULL',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_versions_hlc '
       'ON watchlist_simulation_allocation_versions(owner_user_id, hlc)',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_versions_time '
@@ -527,6 +532,28 @@ Future<void> _createMarketCorporateActionIndexes(AppDatabase db) async {
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_market_corporate_actions_symbol '
     'ON market_corporate_action_candidates(market, symbol, fetched_at)',
+  );
+}
+
+Future<void> _createWatchlistAtomicAllocationIndexes(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_hlc '
+    'ON watchlist_simulation_allocation_heads(owner_user_id, hlc)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_simulation '
+    'ON watchlist_simulation_allocation_heads('
+    'owner_user_id, simulation_id) WHERE deleted_at IS NULL',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_versions_hlc '
+    'ON watchlist_simulation_allocation_versions(owner_user_id, hlc)',
+  );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_versions_time '
+    'ON watchlist_simulation_allocation_versions('
+    'owner_user_id, simulation_id, effective_at) '
+    'WHERE deleted_at IS NULL',
   );
 }
 

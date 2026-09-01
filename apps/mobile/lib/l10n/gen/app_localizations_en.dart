@@ -11273,6 +11273,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set target percentages for symbols and virtual cash. The total must equal 100%.';
 
   @override
+  String get watchlistSimulationAllocationSyncing =>
+      'This allocation snapshot is still syncing. Values remain hidden until the selected snapshot is complete.';
+
+  @override
+  String get watchlistSimulationAllocationInvalid =>
+      'This allocation is invalid. Edit the simulation to restore weights totaling 100%.';
+
+  @override
   String watchlistSimulationWeightField(String symbol) {
     return '$symbol target (%)';
   }

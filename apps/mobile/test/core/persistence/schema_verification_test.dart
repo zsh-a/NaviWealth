@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 90', () {
-      expect(db.schemaVersion, 90);
+    test('is 91', () {
+      expect(db.schemaVersion, 91);
     });
   });
 
@@ -111,6 +111,7 @@ void main() {
     for (final table in const [
       'watchlist_simulations',
       'watchlist_simulation_positions',
+      'watchlist_simulation_allocation_heads',
       'watchlist_simulation_allocation_versions',
       'watchlist_simulation_holding_versions',
       'watchlist_simulation_action_entries',
@@ -140,6 +141,7 @@ void main() {
           'starting_capital',
           'cash_weight',
           'calculation_mode',
+          'allocation_protocol_version',
           'baseline_at',
         ]),
       );
@@ -157,7 +159,12 @@ void main() {
           .get();
       expect(
         positionColumns.map((row) => row.read<String>('name')),
-        containsAll(['simulation_id', 'watchlist_item_id', 'target_weight']),
+        containsAll([
+          'simulation_id',
+          'watchlist_item_id',
+          'target_weight',
+          'requires_explicit_head',
+        ]),
       );
     });
 
@@ -225,6 +232,7 @@ void main() {
             'withholding_tax_amount',
             'net_amount',
             'base_currency_amount',
+            'allocation_basis_key',
           ]),
         );
         for (final field in const [
@@ -236,6 +244,7 @@ void main() {
           'withholding_tax_amount',
           'net_amount',
           'base_currency_amount',
+          'allocation_basis_key',
         ]) {
           expect(columns[field], 0, reason: field);
         }
@@ -270,6 +279,7 @@ void main() {
           'weighted_daily_change',
           'priced_weight',
           'missing_quote_weight',
+          'allocation_basis_key',
         ]),
       );
       expect(

@@ -20,6 +20,13 @@ enum WatchlistSimulationCalculationMode {
 
 enum WatchlistSimulationAllocationReason { creation, reallocation }
 
+enum WatchlistSimulationAllocationStatus {
+  selected,
+  legacyFallback,
+  pending,
+  invalid,
+}
+
 class WatchlistSimulationHoldingInput {
   const WatchlistSimulationHoldingInput({
     required this.symbol,
@@ -53,6 +60,7 @@ class WatchlistSimulation {
     required this.cashWeight,
     this.calculationMode =
         WatchlistSimulationCalculationMode.weightedDailyChangeV1,
+    this.allocationProtocolVersion = 0,
     required this.baselineAt,
     required this.createdAt,
     required this.sync,
@@ -65,9 +73,45 @@ class WatchlistSimulation {
   final Decimal startingCapital;
   final Decimal cashWeight;
   final WatchlistSimulationCalculationMode calculationMode;
+  final int allocationProtocolVersion;
   final DateTime baselineAt;
   final DateTime createdAt;
   final SyncMeta sync;
+}
+
+class ResolvedWatchlistSimulationAllocation {
+  const ResolvedWatchlistSimulationAllocation({
+    required this.status,
+    required this.allocationVersionId,
+    required this.cashWeight,
+    required this.positions,
+    String? allocationBasisKey,
+    Set<String> validAllocationBasisKeys = const <String>{},
+  }) : _allocationBasisKey = allocationBasisKey,
+       _validAllocationBasisKeys = validAllocationBasisKeys;
+
+  final WatchlistSimulationAllocationStatus status;
+  final String? allocationVersionId;
+  final Decimal? cashWeight;
+  final List<WatchlistSimulationPosition> positions;
+  final String? _allocationBasisKey;
+  final Set<String> _validAllocationBasisKeys;
+
+  String? get allocationBasisKey =>
+      _allocationBasisKey ??
+      (allocationVersionId == null
+          ? null
+          : _versionAllocationBasisKey(allocationVersionId!));
+
+  Set<String> get validAllocationBasisKeys {
+    if (_validAllocationBasisKeys.isNotEmpty) return _validAllocationBasisKeys;
+    final basisKey = allocationBasisKey;
+    return basisKey == null ? const <String>{} : {basisKey};
+  }
+
+  bool get isUsable =>
+      status == WatchlistSimulationAllocationStatus.selected ||
+      status == WatchlistSimulationAllocationStatus.legacyFallback;
 }
 
 class WatchlistSimulationPosition {
@@ -135,6 +179,7 @@ class WatchlistSimulationActionEntry {
     required this.withholdingTaxAmount,
     required this.netAmount,
     required this.baseCurrencyAmount,
+    this.allocationBasisKey,
     required this.createdAt,
     required this.sync,
   });
@@ -164,18 +209,22 @@ class WatchlistSimulationActionEntry {
   final Decimal? withholdingTaxAmount;
   final Decimal? netAmount;
   final Decimal? baseCurrencyAmount;
+  final String? allocationBasisKey;
   final DateTime createdAt;
   final SyncMeta sync;
 
+  bool get hasPaperValue =>
+      eligibleQuantity != null ||
+      grossAmount != null ||
+      receivableGrossAmount != null ||
+      paperCashGrossAmount != null ||
+      withholdingTaxAmount != null ||
+      netAmount != null ||
+      baseCurrencyAmount != null;
+
   bool get isReferenceOnly =>
       paperState == WatchlistSimulationPaperActionState.referenceOnly &&
-      eligibleQuantity == null &&
-      grossAmount == null &&
-      receivableGrossAmount == null &&
-      paperCashGrossAmount == null &&
-      withholdingTaxAmount == null &&
-      netAmount == null &&
-      baseCurrencyAmount == null;
+      !hasPaperValue;
 }
 
 class WatchlistSimulationObservation {
@@ -188,6 +237,7 @@ class WatchlistSimulationObservation {
     required this.weightedDailyChange,
     required this.pricedWeight,
     required this.missingQuoteWeight,
+    this.allocationBasisKey,
   });
 
   final String id;
@@ -198,6 +248,7 @@ class WatchlistSimulationObservation {
   final Decimal weightedDailyChange;
   final Decimal pricedWeight;
   final Decimal missingQuoteWeight;
+  final String? allocationBasisKey;
 }
 
 /// Paper-only repository for watchlist allocation scenarios.
@@ -218,6 +269,7 @@ class WatchlistSimulationRepository {
 
   static const simulationsTable = 'watchlist_simulations';
   static const positionsTable = 'watchlist_simulation_positions';
+  static const allocationHeadsTable = 'watchlist_simulation_allocation_heads';
   static const allocationVersionsTable =
       'watchlist_simulation_allocation_versions';
   static const holdingVersionsTable = 'watchlist_simulation_holding_versions';
@@ -240,14 +292,260 @@ class WatchlistSimulationRepository {
   Stream<List<WatchlistSimulationPosition>> watchPositions({
     required String ownerUserId,
     required String simulationId,
+  }) => watchResolvedAllocation(
+    ownerUserId: ownerUserId,
+    simulationId: simulationId,
+  ).map((allocation) => allocation.positions);
+
+  Stream<ResolvedWatchlistSimulationAllocation> watchResolvedAllocation({
+    required String ownerUserId,
+    required String simulationId,
   }) {
-    final query = _db.select(_db.watchlistSimulationPositions)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.simulationId.equals(simulationId))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]);
-    return query.watch().map(
-      (rows) => rows.map(_positionFromRow).toList(growable: false),
+    return _allocationSnapshotQuery(
+      ownerUserId: ownerUserId,
+      simulationId: simulationId,
+    ).watch().map(_resolveAllocationSnapshot);
+  }
+
+  Future<ResolvedWatchlistSimulationAllocation> resolveAllocation({
+    required String ownerUserId,
+    required String simulationId,
+  }) async {
+    final rows = await _allocationSnapshotQuery(
+      ownerUserId: ownerUserId,
+      simulationId: simulationId,
+    ).get();
+    return _resolveAllocationSnapshot(rows);
+  }
+
+  JoinedSelectStatement<HasResultSet, dynamic> _allocationSnapshotQuery({
+    required String ownerUserId,
+    required String simulationId,
+  }) {
+    final simulations = _db.watchlistSimulations;
+    final heads = _db.watchlistSimulationAllocationHeads;
+    final versions = _db.watchlistSimulationAllocationVersions;
+    final holdings = _db.watchlistSimulationHoldingVersions;
+    final positions = _db.watchlistSimulationPositions;
+    return _db.select(simulations).join([
+        leftOuterJoin(
+          heads,
+          heads.ownerUserId.equalsExp(simulations.ownerUserId) &
+              heads.simulationId.equalsExp(simulations.id),
+        ),
+        leftOuterJoin(
+          versions,
+          versions.ownerUserId.equalsExp(simulations.ownerUserId) &
+              versions.simulationId.equalsExp(simulations.id),
+        ),
+        leftOuterJoin(
+          holdings,
+          holdings.ownerUserId.equalsExp(simulations.ownerUserId) &
+              holdings.simulationId.equalsExp(simulations.id) &
+              holdings.allocationVersionId.equalsExp(versions.id),
+        ),
+        leftOuterJoin(
+          positions,
+          positions.ownerUserId.equalsExp(simulations.ownerUserId) &
+              positions.simulationId.equalsExp(simulations.id),
+        ),
+      ])
+      ..where(simulations.ownerUserId.equals(ownerUserId))
+      ..where(simulations.id.equals(simulationId))
+      ..where(simulations.deletedAt.isNull());
+  }
+
+  ResolvedWatchlistSimulationAllocation _resolveAllocationSnapshot(
+    List<TypedResult> rows,
+  ) {
+    if (rows.isEmpty) return _invalidAllocation;
+    final simulation = rows.first.readTable(_db.watchlistSimulations);
+    final heads = <String, WatchlistSimulationAllocationHeadRow>{};
+    final versions = <String, WatchlistSimulationAllocationVersionRow>{};
+    final holdings = <String, WatchlistSimulationHoldingVersionRow>{};
+    final positionRows = <String, WatchlistSimulationPositionRow>{};
+    for (final result in rows) {
+      final head = result.readTableOrNull(
+        _db.watchlistSimulationAllocationHeads,
+      );
+      if (head != null) heads[head.id] = head;
+      final version = result.readTableOrNull(
+        _db.watchlistSimulationAllocationVersions,
+      );
+      if (version != null) versions[version.id] = version;
+      final holding = result.readTableOrNull(
+        _db.watchlistSimulationHoldingVersions,
+      );
+      if (holding != null) holdings[holding.id] = holding;
+      final position = result.readTableOrNull(_db.watchlistSimulationPositions);
+      if (position != null) positionRows[position.id] = position;
+    }
+
+    final activeHead = heads.values
+        .where(
+          (head) =>
+              head.id == simulation.id &&
+              head.simulationId == simulation.id &&
+              head.deletedAt == null,
+        )
+        .firstOrNull;
+    final activeVersions = <String, WatchlistSimulationAllocationVersionRow>{
+      for (final version in versions.values)
+        if (version.deletedAt == null) version.id: version,
+    };
+    final activeHoldings = holdings.values
+        .where((holding) => holding.deletedAt == null)
+        .toList(growable: false);
+    if (activeHead != null) {
+      final version = activeVersions[activeHead.allocationVersionId];
+      if (version == null) return _pendingAllocation;
+      final lineageIds = _allocationLineageVersionIds(
+        current: version,
+        versions: activeVersions.values,
+      );
+      return _resolveVersionSnapshot(
+        version: version,
+        holdings: activeHoldings,
+        status: WatchlistSimulationAllocationStatus.selected,
+        incompleteStatus: WatchlistSimulationAllocationStatus.pending,
+        validBasisKeys: lineageIds.map(_versionAllocationBasisKey).toSet(),
+      );
+    }
+
+    final hasExplicitProtocolEvidence =
+        simulation.allocationProtocolVersion > 0 ||
+        heads.values.isNotEmpty ||
+        versions.values.any((version) => version.requiresExplicitHead) ||
+        positionRows.values.any((position) => position.requiresExplicitHead);
+    if (hasExplicitProtocolEvidence) return _pendingAllocation;
+
+    final legacyVersions = activeVersions.values.toList(growable: false)
+      ..sort(_compareAllocationVersionsNewestFirst);
+    for (final version in legacyVersions) {
+      final resolved = _resolveVersionSnapshot(
+        version: version,
+        holdings: activeHoldings,
+        status: WatchlistSimulationAllocationStatus.legacyFallback,
+        incompleteStatus: WatchlistSimulationAllocationStatus.pending,
+        validBasisKeys: legacyVersions
+            .map((candidate) => _versionAllocationBasisKey(candidate.id))
+            .toSet(),
+      );
+      if (resolved.isUsable) return resolved;
+    }
+    if (legacyVersions.isNotEmpty ||
+        simulation.calculationMode !=
+            WatchlistSimulationCalculationMode.weightedDailyChangeV1.name) {
+      return _pendingAllocation;
+    }
+
+    final positions =
+        positionRows.values
+            .where((position) => position.deletedAt == null)
+            .map(_positionFromRow)
+            .toList(growable: false)
+          ..sort(
+            (left, right) =>
+                left.watchlistItemId.compareTo(right.watchlistItemId),
+          );
+    if (!_validAllocation(positions, simulation.cashWeight)) {
+      return _invalidAllocation;
+    }
+    return ResolvedWatchlistSimulationAllocation(
+      status: WatchlistSimulationAllocationStatus.legacyFallback,
+      allocationVersionId: null,
+      allocationBasisKey: _legacyAllocationBasisKey(
+        cashWeight: simulation.cashWeight,
+        positions: positions,
+      ),
+      validAllocationBasisKeys: {
+        _legacyAllocationBasisKey(
+          cashWeight: simulation.cashWeight,
+          positions: positions,
+        ),
+      },
+      cashWeight: simulation.cashWeight,
+      positions: List<WatchlistSimulationPosition>.unmodifiable(positions),
+    );
+  }
+
+  Future<ResolvedWatchlistSimulationAllocation> _resolveVersion({
+    required String ownerUserId,
+    required WatchlistSimulationAllocationVersionRow version,
+    required WatchlistSimulationAllocationStatus status,
+    required WatchlistSimulationAllocationStatus incompleteStatus,
+  }) async {
+    final holdings =
+        await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(version.simulationId) &
+                  t.allocationVersionId.equals(version.id) &
+                  t.deletedAt.isNull(),
+            ))
+            .get();
+    return _resolveVersionSnapshot(
+      version: version,
+      holdings: holdings,
+      status: status,
+      incompleteStatus: incompleteStatus,
+    );
+  }
+
+  ResolvedWatchlistSimulationAllocation _resolveVersionSnapshot({
+    required WatchlistSimulationAllocationVersionRow version,
+    required Iterable<WatchlistSimulationHoldingVersionRow> holdings,
+    required WatchlistSimulationAllocationStatus status,
+    required WatchlistSimulationAllocationStatus incompleteStatus,
+    Set<String>? validBasisKeys,
+  }) {
+    final positions =
+        holdings
+            .where((holding) => holding.allocationVersionId == version.id)
+            .map(_positionFromHoldingRow)
+            .toList(growable: false)
+          ..sort(
+            (left, right) =>
+                left.watchlistItemId.compareTo(right.watchlistItemId),
+          );
+    final malformed =
+        version.cashWeight < Decimal.zero ||
+        version.cashWeight > Decimal.one ||
+        positions.any(
+          (position) =>
+              position.targetWeight <= Decimal.zero ||
+              position.targetWeight > Decimal.one,
+        ) ||
+        positions.map((position) => position.watchlistItemId).toSet().length !=
+            positions.length;
+    final total = positions.fold<Decimal>(
+      version.cashWeight,
+      (sum, position) => sum + position.targetWeight,
+    );
+    if (malformed || total > Decimal.one) {
+      return ResolvedWatchlistSimulationAllocation(
+        status: WatchlistSimulationAllocationStatus.invalid,
+        allocationVersionId: version.id,
+        cashWeight: null,
+        positions: const [],
+      );
+    }
+    if (total < Decimal.one) {
+      return ResolvedWatchlistSimulationAllocation(
+        status: incompleteStatus,
+        allocationVersionId: version.id,
+        cashWeight: null,
+        positions: const [],
+      );
+    }
+    return ResolvedWatchlistSimulationAllocation(
+      status: status,
+      allocationVersionId: version.id,
+      allocationBasisKey: _versionAllocationBasisKey(version.id),
+      validAllocationBasisKeys:
+          validBasisKeys ?? {_versionAllocationBasisKey(version.id)},
+      cashWeight: version.cashWeight,
+      positions: List<WatchlistSimulationPosition>.unmodifiable(positions),
     );
   }
 
@@ -270,44 +568,130 @@ class WatchlistSimulationRepository {
     required String simulationId,
   }) async {
     final targets = <String, WatchlistSimulationActionTarget>{};
-    final holdings =
-        await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
-              (t) =>
-                  t.ownerUserId.equals(ownerUserId) &
-                  t.simulationId.equals(simulationId) &
-                  t.deletedAt.isNull(),
-            ))
-            .get();
-    for (final row in holdings) {
-      final market = assetMarketFromWire(row.market);
-      if (market == null) continue;
-      targets[row.watchlistItemId] = WatchlistSimulationActionTarget(
-        watchlistItemId: row.watchlistItemId,
-        symbol: row.symbol,
-        market: market,
-      );
-    }
-    final actions =
-        await (_db.select(_db.watchlistSimulationActionEntries)..where(
-              (t) =>
-                  t.ownerUserId.equals(ownerUserId) &
-                  t.simulationId.equals(simulationId) &
-                  t.deletedAt.isNull(),
-            ))
-            .get();
-    for (final row in actions) {
-      final market = assetMarketFromWire(row.market);
-      if (market == null) continue;
-      targets.putIfAbsent(
-        row.watchlistItemId,
-        () => WatchlistSimulationActionTarget(
+    final lineage = await _selectedAllocationLineage(
+      ownerUserId: ownerUserId,
+      simulationId: simulationId,
+    );
+    if (lineage.versionIds.isNotEmpty) {
+      final holdings =
+          await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+                (t) =>
+                    t.ownerUserId.equals(ownerUserId) &
+                    t.simulationId.equals(simulationId) &
+                    t.allocationVersionId.isIn(lineage.versionIds) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final row in holdings) {
+        final market = assetMarketFromWire(row.market);
+        if (market == null) continue;
+        targets[row.watchlistItemId] = WatchlistSimulationActionTarget(
           watchlistItemId: row.watchlistItemId,
           symbol: row.symbol,
           market: market,
-        ),
-      );
+        );
+      }
+    } else if (lineage.allowsLegacyPositions) {
+      final positions =
+          await (_db.select(_db.watchlistSimulationPositions)..where(
+                (t) =>
+                    t.ownerUserId.equals(ownerUserId) &
+                    t.simulationId.equals(simulationId) &
+                    t.deletedAt.isNull(),
+              ))
+              .get();
+      for (final row in positions) {
+        final separator = row.watchlistItemId.indexOf(':');
+        if (separator <= 0) continue;
+        final market = assetMarketFromWire(
+          row.watchlistItemId.substring(0, separator),
+        );
+        if (market == null) continue;
+        targets[row.watchlistItemId] = WatchlistSimulationActionTarget(
+          watchlistItemId: row.watchlistItemId,
+          symbol: row.watchlistItemId.substring(separator + 1),
+          market: market,
+        );
+      }
     }
     return List<WatchlistSimulationActionTarget>.unmodifiable(targets.values);
+  }
+
+  Future<_SelectedAllocationLineage> _selectedAllocationLineage({
+    required String ownerUserId,
+    required String simulationId,
+  }) async {
+    final simulation =
+        await (_db.select(_db.watchlistSimulations)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.id.equals(simulationId) &
+                  t.deletedAt.isNull(),
+            ))
+            .getSingleOrNull();
+    if (simulation == null) return const _SelectedAllocationLineage.pending();
+    final versions =
+        await (_db.select(_db.watchlistSimulationAllocationVersions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(simulationId),
+            ))
+            .get();
+    final activeVersions = <String, WatchlistSimulationAllocationVersionRow>{
+      for (final version in versions)
+        if (version.deletedAt == null) version.id: version,
+    };
+    final headEvidence =
+        await (_db.select(_db.watchlistSimulationAllocationHeads)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.id.equals(simulationId) &
+                  t.simulationId.equals(simulationId),
+            ))
+            .getSingleOrNull();
+    final head = headEvidence?.deletedAt == null ? headEvidence : null;
+    if (head != null) {
+      final ids = <String>{};
+      final visited = <String>{};
+      var current = activeVersions[head.allocationVersionId];
+      while (current != null && visited.add(current.id)) {
+        ids.add(current.id);
+        final previousId = current.previousAllocationVersionId;
+        if (previousId != null) {
+          current = activeVersions[previousId];
+        } else if (!current.requiresExplicitHead) {
+          current = _legacyAllocationPredecessor(
+            current: current,
+            versions: activeVersions.values,
+          );
+        } else {
+          current = null;
+        }
+      }
+      if (ids.isEmpty) return const _SelectedAllocationLineage.pending();
+      return _SelectedAllocationLineage(versionIds: ids);
+    }
+    final positions =
+        await (_db.select(_db.watchlistSimulationPositions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(simulationId),
+            ))
+            .get();
+    final hasExplicitEvidence =
+        simulation.allocationProtocolVersion > 0 ||
+        headEvidence != null ||
+        versions.any((version) => version.requiresExplicitHead) ||
+        positions.any((position) => position.requiresExplicitHead);
+    if (hasExplicitEvidence) {
+      return const _SelectedAllocationLineage.pending();
+    }
+    if (activeVersions.isNotEmpty) {
+      return _SelectedAllocationLineage(
+        versionIds: activeVersions.keys.toSet(),
+      );
+    }
+    return const _SelectedAllocationLineage.legacyPositions();
   }
 
   Stream<List<WatchlistSimulationObservation>> watchObservations({
@@ -361,6 +745,7 @@ class WatchlistSimulationRepository {
       calculationMode: holdingInputs == null
           ? WatchlistSimulationCalculationMode.weightedDailyChangeV1
           : WatchlistSimulationCalculationMode.holdingsTotalReturnV2,
+      allocationProtocolVersion: 1,
       baselineAt: stamp.now,
       createdAt: stamp.now,
       sync: _syncFromStamp(stamp),
@@ -377,6 +762,7 @@ class WatchlistSimulationRepository {
               startingCapital: simulation.startingCapital,
               cashWeight: Value(simulation.cashWeight),
               calculationMode: Value(simulation.calculationMode.name),
+              allocationProtocolVersion: const Value(1),
               baselineAt: simulation.baselineAt,
               createdAt: simulation.createdAt,
               ownerUserId: stamp.ownerUserId,
@@ -415,17 +801,21 @@ class WatchlistSimulationRepository {
           stamp: stamp,
         );
       }
-      if (holdingInputs != null) {
-        await _writeAllocationVersion(
-          simulation: simulation,
-          targetWeights: targetWeights,
-          cashWeight: cashWeight,
-          holdingInputs: holdingInputs,
-          reason: WatchlistSimulationAllocationReason.creation,
-          capitalBase: startingCapital,
-          stamp: stamp,
-        );
-      }
+      final allocationVersionId = await _writeAllocationVersion(
+        simulation: simulation,
+        targetWeights: targetWeights,
+        cashWeight: cashWeight,
+        holdingInputs: holdingInputs ?? const {},
+        reason: WatchlistSimulationAllocationReason.creation,
+        capitalBase: holdingInputs == null ? null : startingCapital,
+        previousAllocationVersionId: null,
+        stamp: stamp,
+      );
+      await _writeAllocationHead(
+        simulationId: simulation.id,
+        allocationVersionId: allocationVersionId,
+        stamp: stamp,
+      );
     });
     return simulation;
   }
@@ -442,6 +832,7 @@ class WatchlistSimulationRepository {
     required Decimal weightedDailyChange,
     required Decimal pricedWeight,
     required Decimal missingQuoteWeight,
+    required String allocationBasisKey,
   }) async {
     if (observedAt.isBefore(simulation.baselineAt) ||
         pricedWeight <= Decimal.zero) {
@@ -455,10 +846,13 @@ class WatchlistSimulationRepository {
       throw ArgumentError('Invalid paper simulation observation.');
     }
     final ownerUserId = simulation.sync.ownerUserId;
-    await _ensureObservationBaseline(
+    final allocationReady = await _ensureObservationBaseline(
       ownerUserId: ownerUserId,
       simulationId: simulation.id,
     );
+    if (!allocationReady) {
+      throw StateError('Watchlist simulation allocation is not usable.');
+    }
     final day = _observationDay(observedAt);
     final now = DateTime.now().toUtc();
     WatchlistSimulationObservation? result;
@@ -472,32 +866,49 @@ class WatchlistSimulationRepository {
               ))
               .getSingleOrNull();
       if (activeSimulation == null) return;
-
-      final latestQuery = _db.select(_db.watchlistSimulationObservations)
+      final allocation = await resolveAllocation(
+        ownerUserId: ownerUserId,
+        simulationId: simulation.id,
+      );
+      if (!allocation.isUsable ||
+          allocation.allocationBasisKey != allocationBasisKey) {
+        throw StateError('Watchlist simulation allocation changed.');
+      }
+      final validBasisKeys = allocation.validAllocationBasisKeys;
+      final observationQuery = _db.select(_db.watchlistSimulationObservations)
         ..where((t) => t.ownerUserId.equals(ownerUserId))
         ..where((t) => t.simulationId.equals(simulation.id))
-        ..orderBy([(t) => OrderingTerm.desc(t.observationDay)])
-        ..limit(1);
-      final latest = await latestQuery.getSingleOrNull();
+        ..orderBy([(t) => OrderingTerm.asc(t.observationDay)]);
+      final allRows = await observationQuery.get();
+      final baselineDay = _observationDay(activeSimulation.baselineAt);
+      final validRows = <WatchlistSimulationObservationRow>[];
+      for (final row in allRows) {
+        final isBaseline =
+            row.allocationBasisKey == null && row.observationDay == baselineDay;
+        final isValidBasis =
+            row.allocationBasisKey != null &&
+            validBasisKeys.contains(row.allocationBasisKey);
+        if (isBaseline || isValidBasis) {
+          validRows.add(row);
+        } else {
+          await (_db.delete(
+            _db.watchlistSimulationObservations,
+          )..where((t) => t.id.equals(row.id))).go();
+        }
+      }
+      final latest = validRows.lastOrNull;
       if (latest != null && latest.observationDay.compareTo(day) > 0) return;
 
-      final currentQuery = _db.select(_db.watchlistSimulationObservations)
-        ..where((t) => t.ownerUserId.equals(ownerUserId))
-        ..where((t) => t.simulationId.equals(simulation.id))
-        ..where((t) => t.observationDay.equals(day));
-      final current = await currentQuery.getSingleOrNull();
+      final current = validRows
+          .where((row) => row.observationDay == day)
+          .firstOrNull;
       if (current != null && observedAt.isBefore(current.observedAt)) {
         result = _observationFromRow(current);
         return;
       }
-
-      final previousQuery = _db.select(_db.watchlistSimulationObservations)
-        ..where((t) => t.ownerUserId.equals(ownerUserId))
-        ..where((t) => t.simulationId.equals(simulation.id))
-        ..where((t) => t.observationDay.isSmallerThanValue(day))
-        ..orderBy([(t) => OrderingTerm.desc(t.observationDay)])
-        ..limit(1);
-      final previous = await previousQuery.getSingleOrNull();
+      final previous = validRows
+          .where((row) => row.observationDay.compareTo(day) < 0)
+          .lastOrNull;
       final projectedValue = previous == null
           ? simulation.startingCapital
           : (previous.projectedValue * (Decimal.one + weightedDailyChange))
@@ -516,6 +927,7 @@ class WatchlistSimulationRepository {
         weightedDailyChange: weightedDailyChange,
         pricedWeight: pricedWeight,
         missingQuoteWeight: missingQuoteWeight,
+        allocationBasisKey: Value(allocationBasisKey),
         createdAt: current?.createdAt ?? now,
         updatedAt: now,
       );
@@ -531,6 +943,7 @@ class WatchlistSimulationRepository {
         weightedDailyChange: weightedDailyChange,
         pricedWeight: pricedWeight,
         missingQuoteWeight: missingQuoteWeight,
+        allocationBasisKey: allocationBasisKey,
       );
     });
     return result;
@@ -562,6 +975,59 @@ class WatchlistSimulationRepository {
         if (row.status == MarketCorporateActionStatus.cancelled.name ||
             row.grossAmount == null ||
             !_isTrustedEntitlementState(row.paperState)) {
+          continue;
+        }
+        final recordDate = row.recordDate?.toUtc();
+        if (recordDate == null || row.allocationBasisKey == null) {
+          // Migrated valued rows without provenance cannot advance until a
+          // trusted rematerialization establishes their allocation basis.
+          continue;
+        }
+        final allocation = await _allocationVersionAt(
+          ownerUserId: stamp.ownerUserId,
+          simulationId: simulation.id,
+          effectiveAt: recordDate,
+        );
+        if (allocation.pending) continue;
+        final allocationVersion = allocation.version;
+        final expectedBasis = allocationVersion == null
+            ? null
+            : _versionAllocationBasisKey(allocationVersion.id);
+        final holding = allocationVersion == null
+            ? null
+            : await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+                    (t) =>
+                        t.ownerUserId.equals(stamp.ownerUserId) &
+                        t.allocationVersionId.equals(allocationVersion.id) &
+                        t.watchlistItemId.equals(row.watchlistItemId) &
+                        t.deletedAt.isNull(),
+                  ))
+                  .getSingleOrNull();
+        if (expectedBasis != row.allocationBasisKey ||
+            holding?.quantity == null) {
+          await (_db.update(
+            _db.watchlistSimulationActionEntries,
+          )..where((t) => t.id.equals(row.id))).write(
+            WatchlistSimulationActionEntriesCompanion(
+              paperState: Value(
+                WatchlistSimulationPaperActionState.referenceOnly.name,
+              ),
+              eligibleQuantity: const Value(null),
+              grossAmount: const Value(null),
+              receivableGrossAmount: const Value(null),
+              paperCashGrossAmount: const Value(null),
+              stateAt: const Value(null),
+              allocationBasisKey: const Value(null),
+              withholdingTaxAmount: const Value(null),
+              netAmount: const Value(null),
+              baseCurrencyAmount: const Value(null),
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+            ),
+          );
+          await _outbox.enqueue(table: actionEntriesTable, rowId: row.id);
+          changedIds.add(row.id);
           continue;
         }
         final current = _enumByName(
@@ -643,29 +1109,36 @@ class WatchlistSimulationRepository {
       if (activeSimulation == null) {
         throw StateError('Watchlist simulation is not active.');
       }
-      final activePositions =
-          await (_db.select(_db.watchlistSimulationPositions)..where(
-                (t) =>
-                    t.ownerUserId.equals(stamp.ownerUserId) &
-                    t.simulationId.equals(simulation.id) &
-                    t.deletedAt.isNull(),
-              ))
-              .get();
-      final eligibleItemIds = activePositions
-          .map((row) => row.watchlistItemId)
-          .toSet();
-      if (activeSimulation.calculationMode ==
-          WatchlistSimulationCalculationMode.holdingsTotalReturnV2.name) {
-        final historicalHoldings =
+      final lineage = await _selectedAllocationLineage(
+        ownerUserId: stamp.ownerUserId,
+        simulationId: simulation.id,
+      );
+      if (lineage.pending) return;
+      final allocationEligibleItemIds = <String>{};
+      if (lineage.versionIds.isNotEmpty) {
+        final selectedHoldings =
             await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+                  (t) =>
+                      t.ownerUserId.equals(stamp.ownerUserId) &
+                      t.simulationId.equals(simulation.id) &
+                      t.allocationVersionId.isIn(lineage.versionIds) &
+                      t.deletedAt.isNull(),
+                ))
+                .get();
+        allocationEligibleItemIds.addAll(
+          selectedHoldings.map((row) => row.watchlistItemId),
+        );
+      } else if (lineage.allowsLegacyPositions) {
+        final activePositions =
+            await (_db.select(_db.watchlistSimulationPositions)..where(
                   (t) =>
                       t.ownerUserId.equals(stamp.ownerUserId) &
                       t.simulationId.equals(simulation.id) &
                       t.deletedAt.isNull(),
                 ))
                 .get();
-        eligibleItemIds.addAll(
-          historicalHoldings.map((row) => row.watchlistItemId),
+        allocationEligibleItemIds.addAll(
+          activePositions.map((row) => row.watchlistItemId),
         );
       }
       final existingActionRows =
@@ -676,12 +1149,9 @@ class WatchlistSimulationRepository {
                     t.deletedAt.isNull(),
               ))
               .get();
-      eligibleItemIds.addAll(
-        existingActionRows.map((row) => row.watchlistItemId),
-      );
+      final existingActionIds = {for (final row in existingActionRows) row.id};
 
       for (final entry in actionsByWatchlistItemId.entries) {
-        if (!eligibleItemIds.contains(entry.key)) continue;
         final itemActions = entry.value.toList(growable: false);
         final hasTrustedAdjustmentCoverage = trustedAdjustmentCoverageItemIds
             .contains(entry.key);
@@ -698,6 +1168,10 @@ class WatchlistSimulationRepository {
             simulationId: simulation.id,
             action: action,
           );
+          if (!allocationEligibleItemIds.contains(entry.key) &&
+              !existingActionIds.contains(id)) {
+            continue;
+          }
           final existing =
               await (_db.select(_db.watchlistSimulationActionEntries)..where(
                     (t) =>
@@ -705,6 +1179,30 @@ class WatchlistSimulationRepository {
                         t.ownerUserId.equals(stamp.ownerUserId),
                   ))
                   .getSingleOrNull();
+          if (existing != null &&
+              lineage.versionIds.isNotEmpty &&
+              !allocationEligibleItemIds.contains(entry.key)) {
+            await (_db.update(
+              _db.watchlistSimulationActionEntries,
+            )..where((t) => t.id.equals(existing.id))).write(
+              WatchlistSimulationActionEntriesCompanion(
+                eligibleQuantity: const Value(null),
+                grossAmount: const Value(null),
+                receivableGrossAmount: const Value(null),
+                paperCashGrossAmount: const Value(null),
+                allocationBasisKey: const Value(null),
+                updatedAt: Value(stamp.now),
+                updatedByDevice: Value(stamp.deviceId),
+                hlc: Value(stamp.hlc),
+                deletedAt: Value(stamp.now),
+              ),
+            );
+            await _outbox.enqueue(
+              table: actionEntriesTable,
+              rowId: existing.id,
+            );
+            continue;
+          }
           if (existing == null) {
             final entitlementDate =
                 action.recordDate ?? action.exDate ?? action.payDate;
@@ -720,6 +1218,8 @@ class WatchlistSimulationRepository {
           Decimal? receivableGrossAmount;
           Decimal? paperCashGrossAmount;
           DateTime? stateAt;
+          String? allocationBasisKey;
+          var provenanceInvalidated = false;
           if (action.status == MarketCorporateActionStatus.cancelled) {
             paperState = WatchlistSimulationPaperActionState.cancelled;
             stateAt = action.timelineDate?.toUtc();
@@ -739,31 +1239,35 @@ class WatchlistSimulationRepository {
                       .holdingsTotalReturnV2
                       .name &&
               action.recordDate != null) {
-            final allocationQuery =
-                _db.select(_db.watchlistSimulationAllocationVersions)
-                  ..where((t) => t.ownerUserId.equals(stamp.ownerUserId))
-                  ..where((t) => t.simulationId.equals(simulation.id))
-                  ..where(
-                    (t) => t.effectiveAt.isSmallerOrEqualValue(
-                      action.recordDate!.toUtc(),
-                    ),
-                  )
-                  ..where((t) => t.deletedAt.isNull())
-                  ..orderBy([(t) => OrderingTerm.desc(t.effectiveAt)])
-                  ..limit(1);
-            final allocation = await allocationQuery.getSingleOrNull();
-            final holding = allocation == null
+            final allocation = await _allocationVersionAt(
+              ownerUserId: stamp.ownerUserId,
+              simulationId: simulation.id,
+              effectiveAt: action.recordDate!.toUtc(),
+            );
+            if (allocation.pending) continue;
+            final allocationVersion = allocation.version;
+            allocationBasisKey = allocationVersion == null
                 ? null
-                : await (_db.select(_db.watchlistSimulationHoldingVersions)
-                        ..where(
-                          (t) =>
-                              t.ownerUserId.equals(stamp.ownerUserId) &
-                              t.allocationVersionId.equals(allocation.id) &
-                              t.watchlistItemId.equals(entry.key) &
-                              t.deletedAt.isNull(),
-                        ))
+                : _versionAllocationBasisKey(allocationVersion.id);
+            final holding = allocationVersion == null
+                ? null
+                : await (_db.select(
+                        _db.watchlistSimulationHoldingVersions,
+                      )..where(
+                        (t) =>
+                            t.ownerUserId.equals(stamp.ownerUserId) &
+                            t.allocationVersionId.equals(allocationVersion.id) &
+                            t.watchlistItemId.equals(entry.key) &
+                            t.deletedAt.isNull(),
+                      ))
                       .getSingleOrNull();
+            provenanceInvalidated =
+                _isTrustedEntitlementState(existing?.paperState) &&
+                (holding == null ||
+                    (existing!.allocationBasisKey != null &&
+                        existing.allocationBasisKey != allocationBasisKey));
             eligibleQuantity = holding?.quantity;
+            var adjustmentEvidenceBlocked = false;
             if (eligibleQuantity != null && holding != null) {
               for (final adjustment in itemActions) {
                 final decision = _quantityAdjustmentDecision(
@@ -773,6 +1277,7 @@ class WatchlistSimulationRepository {
                 );
                 if (decision.blocksEntitlement) {
                   eligibleQuantity = null;
+                  adjustmentEvidenceBlocked = true;
                   break;
                 }
                 final multiplier = decision.multiplier;
@@ -781,6 +1286,11 @@ class WatchlistSimulationRepository {
                     scale: 12,
                   );
                 }
+              }
+              if (adjustmentEvidenceBlocked &&
+                  _isTrustedEntitlementState(existing?.paperState) &&
+                  !provenanceInvalidated) {
+                continue;
               }
               if (eligibleQuantity != null) {
                 grossAmount = (eligibleQuantity * action.cashPerShare!).round(
@@ -806,30 +1316,40 @@ class WatchlistSimulationRepository {
                 }
               }
             }
+          } else if (_isTrustedEntitlementState(existing?.paperState)) {
+            provenanceInvalidated = true;
           }
-          if (_isTrustedEntitlementState(existing?.paperState)) {
-            if (!_isTrustedEntitlementState(paperState.name)) {
-              // Complete refreshes may correct terms, but missing evidence must
-              // not erase a quantity that was established from trusted history.
+          if (_isTrustedEntitlementState(existing?.paperState) &&
+              action.status != MarketCorporateActionStatus.cancelled) {
+            if (provenanceInvalidated) {
+              paperState = WatchlistSimulationPaperActionState.referenceOnly;
+              eligibleQuantity = null;
+              grossAmount = null;
+              receivableGrossAmount = null;
+              paperCashGrossAmount = null;
+              stateAt = null;
+              allocationBasisKey = null;
+            } else if (!_isTrustedEntitlementState(paperState.name)) {
               continue;
-            }
-            final currentState = _enumByName(
-              WatchlistSimulationPaperActionState.values,
-              existing!.paperState,
-            );
-            if (_paperStateRank(currentState) > _paperStateRank(paperState)) {
-              paperState = currentState;
-              stateAt = existing.stateAt?.toUtc();
-              receivableGrossAmount =
-                  paperState ==
-                      WatchlistSimulationPaperActionState.receivableGross
-                  ? grossAmount
-                  : null;
-              paperCashGrossAmount =
-                  paperState ==
-                      WatchlistSimulationPaperActionState.grossCashPendingTax
-                  ? grossAmount
-                  : null;
+            } else {
+              final currentState = _enumByName(
+                WatchlistSimulationPaperActionState.values,
+                existing!.paperState,
+              );
+              if (_paperStateRank(currentState) > _paperStateRank(paperState)) {
+                paperState = currentState;
+                stateAt = existing.stateAt?.toUtc();
+                receivableGrossAmount =
+                    paperState ==
+                        WatchlistSimulationPaperActionState.receivableGross
+                    ? grossAmount
+                    : null;
+                paperCashGrossAmount =
+                    paperState ==
+                        WatchlistSimulationPaperActionState.grossCashPendingTax
+                    ? grossAmount
+                    : null;
+              }
             }
           }
           if (existing != null &&
@@ -843,6 +1363,7 @@ class WatchlistSimulationRepository {
                 receivableGrossAmount: receivableGrossAmount,
                 paperCashGrossAmount: paperCashGrossAmount,
                 stateAt: stateAt,
+                allocationBasisKey: allocationBasisKey,
               )) {
             continue;
           }
@@ -876,6 +1397,7 @@ class WatchlistSimulationRepository {
                   withholdingTaxAmount: const Value(null),
                   netAmount: const Value(null),
                   baseCurrencyAmount: const Value(null),
+                  allocationBasisKey: Value(allocationBasisKey),
                   createdAt: createdAt,
                   ownerUserId: stamp.ownerUserId,
                   updatedAt: stamp.now,
@@ -912,6 +1434,7 @@ class WatchlistSimulationRepository {
               withholdingTaxAmount: null,
               netAmount: null,
               baseCurrencyAmount: null,
+              allocationBasisKey: allocationBasisKey,
               createdAt: createdAt,
               sync: _syncFromStamp(stamp),
             ),
@@ -942,6 +1465,13 @@ class WatchlistSimulationRepository {
       if (activeSimulation == null) {
         throw StateError('Watchlist simulation is not active.');
       }
+      final resolved = await resolveAllocation(
+        ownerUserId: stamp.ownerUserId,
+        simulationId: simulation.id,
+      );
+      if (resolved.status == WatchlistSimulationAllocationStatus.pending) {
+        throw StateError('Watchlist simulation allocation is still syncing.');
+      }
       final existingRows =
           await (_db.select(_db.watchlistSimulationPositions)..where(
                 (t) =>
@@ -949,12 +1479,21 @@ class WatchlistSimulationRepository {
                     t.simulationId.equals(simulation.id),
               ))
               .get();
-      final activeWeights = <String, Decimal>{
-        for (final row in existingRows)
-          if (row.deletedAt == null) row.watchlistItemId: row.targetWeight,
-      };
-      if (activeSimulation.cashWeight == cashWeight &&
-          _decimalMapsEqual(activeWeights, targetWeights)) {
+      final currentWeights = resolved.isUsable
+          ? <String, Decimal>{
+              for (final position in resolved.positions)
+                position.watchlistItemId: position.targetWeight,
+            }
+          : <String, Decimal>{
+              for (final row in existingRows)
+                if (row.deletedAt == null)
+                  row.watchlistItemId: row.targetWeight,
+            };
+      final currentCashWeight = resolved.isUsable
+          ? resolved.cashWeight
+          : activeSimulation.cashWeight;
+      if (currentCashWeight == cashWeight &&
+          _decimalMapsEqual(currentWeights, targetWeights)) {
         return;
       }
       await (_db.update(_db.watchlistSimulations)..where(
@@ -965,6 +1504,7 @@ class WatchlistSimulationRepository {
           .write(
             WatchlistSimulationsCompanion(
               cashWeight: Value(cashWeight),
+              allocationProtocolVersion: const Value(1),
               updatedAt: Value(stamp.now),
               updatedByDevice: Value(stamp.deviceId),
               hlc: Value(stamp.hlc),
@@ -984,6 +1524,7 @@ class WatchlistSimulationRepository {
           _db.watchlistSimulationPositions,
         )..where((t) => t.id.equals(row.id))).write(
           WatchlistSimulationPositionsCompanion(
+            requiresExplicitHead: const Value(true),
             updatedAt: Value(stamp.now),
             updatedByDevice: Value(stamp.deviceId),
             hlc: Value(stamp.hlc),
@@ -1001,18 +1542,21 @@ class WatchlistSimulationRepository {
           stamp: stamp,
         );
       }
-      if (activeSimulation.calculationMode ==
-          WatchlistSimulationCalculationMode.holdingsTotalReturnV2.name) {
-        await _writeAllocationVersion(
-          simulation: simulation,
-          targetWeights: targetWeights,
-          cashWeight: cashWeight,
-          holdingInputs: holdingInputs ?? const {},
-          reason: WatchlistSimulationAllocationReason.reallocation,
-          capitalBase: null,
-          stamp: stamp,
-        );
-      }
+      final allocationVersionId = await _writeAllocationVersion(
+        simulation: simulation,
+        targetWeights: targetWeights,
+        cashWeight: cashWeight,
+        holdingInputs: holdingInputs ?? const {},
+        reason: WatchlistSimulationAllocationReason.reallocation,
+        capitalBase: null,
+        previousAllocationVersionId: resolved.allocationVersionId,
+        stamp: stamp,
+      );
+      await _writeAllocationHead(
+        simulationId: simulation.id,
+        allocationVersionId: allocationVersionId,
+        stamp: stamp,
+      );
     });
   }
 
@@ -1034,6 +1578,31 @@ class WatchlistSimulationRepository {
             ),
           );
       await _outbox.enqueue(table: simulationsTable, rowId: simulation.id);
+
+      final allocationHead =
+          await (_db.select(_db.watchlistSimulationAllocationHeads)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.id.equals(simulation.id) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (allocationHead != null) {
+        await (_db.update(
+          _db.watchlistSimulationAllocationHeads,
+        )..where((t) => t.id.equals(simulation.id))).write(
+          WatchlistSimulationAllocationHeadsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: Value(stamp.now),
+          ),
+        );
+        await _outbox.enqueue(
+          table: allocationHeadsTable,
+          rowId: simulation.id,
+        );
+      }
 
       final activePositions =
           await (_db.select(_db.watchlistSimulationPositions)..where(
@@ -1128,6 +1697,120 @@ class WatchlistSimulationRepository {
     });
   }
 
+  Future<_RecordDateAllocationResolution> _allocationVersionAt({
+    required String ownerUserId,
+    required String simulationId,
+    required DateTime effectiveAt,
+  }) async {
+    final simulation =
+        await (_db.select(_db.watchlistSimulations)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.id.equals(simulationId) &
+                  t.deletedAt.isNull(),
+            ))
+            .getSingleOrNull();
+    if (simulation == null) {
+      return const _RecordDateAllocationResolution.none();
+    }
+    final versions =
+        await (_db.select(_db.watchlistSimulationAllocationVersions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(simulationId),
+            ))
+            .get();
+    final activeVersions = <String, WatchlistSimulationAllocationVersionRow>{
+      for (final version in versions)
+        if (version.deletedAt == null) version.id: version,
+    };
+    final headEvidence =
+        await (_db.select(_db.watchlistSimulationAllocationHeads)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.id.equals(simulationId) &
+                  t.simulationId.equals(simulationId),
+            ))
+            .getSingleOrNull();
+    final head = headEvidence?.deletedAt == null ? headEvidence : null;
+    if (head != null) {
+      final visited = <String>{};
+      var current = activeVersions[head.allocationVersionId];
+      if (current == null) {
+        return const _RecordDateAllocationResolution.pending();
+      }
+      while (current != null) {
+        final selected = current;
+        if (!visited.add(selected.id)) break;
+        if (!selected.effectiveAt.toUtc().isAfter(effectiveAt)) {
+          final resolved = await _resolveVersion(
+            ownerUserId: ownerUserId,
+            version: selected,
+            status: WatchlistSimulationAllocationStatus.selected,
+            incompleteStatus: WatchlistSimulationAllocationStatus.pending,
+          );
+          if (!resolved.isUsable) {
+            return const _RecordDateAllocationResolution.pending();
+          }
+          return _RecordDateAllocationResolution.usable(selected);
+        }
+        final previousId = selected.previousAllocationVersionId;
+        final previous = previousId == null
+            ? (!selected.requiresExplicitHead
+                  ? _legacyAllocationPredecessor(
+                      current: selected,
+                      versions: activeVersions.values,
+                    )
+                  : null)
+            : activeVersions[previousId];
+        if (previousId != null && previous == null) {
+          return const _RecordDateAllocationResolution.pending();
+        }
+        if (previous == null) {
+          return const _RecordDateAllocationResolution.none();
+        }
+        current = previous;
+      }
+      return const _RecordDateAllocationResolution.pending();
+    }
+    final positions =
+        await (_db.select(_db.watchlistSimulationPositions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.simulationId.equals(simulationId),
+            ))
+            .get();
+    final hasExplicitEvidence =
+        simulation.allocationProtocolVersion > 0 ||
+        headEvidence != null ||
+        versions.any((version) => version.requiresExplicitHead) ||
+        positions.any((position) => position.requiresExplicitHead);
+    if (hasExplicitEvidence) {
+      return const _RecordDateAllocationResolution.pending();
+    }
+    final legacy =
+        activeVersions.values
+            .where(
+              (version) => !version.effectiveAt.toUtc().isAfter(effectiveAt),
+            )
+            .toList(growable: false)
+          ..sort(_compareAllocationVersionsNewestFirst);
+    for (final version in legacy) {
+      final resolved = await _resolveVersion(
+        ownerUserId: ownerUserId,
+        version: version,
+        status: WatchlistSimulationAllocationStatus.legacyFallback,
+        incompleteStatus: WatchlistSimulationAllocationStatus.pending,
+      );
+      if (resolved.isUsable) {
+        return _RecordDateAllocationResolution.usable(version);
+      }
+    }
+    return legacy.isEmpty
+        ? const _RecordDateAllocationResolution.none()
+        : const _RecordDateAllocationResolution.pending();
+  }
+
   Future<bool> _ensureObservationBaseline({
     required String ownerUserId,
     required String simulationId,
@@ -1139,15 +1822,25 @@ class WatchlistSimulationRepository {
             ))
             .getSingleOrNull();
     if (simulation == null || simulation.deletedAt != null) return false;
+    final allocation = await resolveAllocation(
+      ownerUserId: ownerUserId,
+      simulationId: simulationId,
+    );
+    if (!allocation.isUsable || allocation.cashWeight == null) return false;
+    final baselineId = _observationId(
+      simulationId: simulationId,
+      observationDay: _observationDay(simulation.baselineAt),
+    );
+    final existing = await (_db.select(
+      _db.watchlistSimulationObservations,
+    )..where((t) => t.id.equals(baselineId))).getSingleOrNull();
+    if (existing != null) return true;
     final now = DateTime.now().toUtc();
     await _db
         .into(_db.watchlistSimulationObservations)
         .insert(
           WatchlistSimulationObservationsCompanion.insert(
-            id: _observationId(
-              simulationId: simulationId,
-              observationDay: _observationDay(simulation.baselineAt),
-            ),
+            id: baselineId,
             ownerUserId: ownerUserId,
             simulationId: simulationId,
             observationDay: _observationDay(simulation.baselineAt),
@@ -1155,7 +1848,7 @@ class WatchlistSimulationRepository {
             projectedValue: simulation.startingCapital,
             weightedDailyChange: Decimal.zero,
             pricedWeight: Decimal.zero,
-            missingQuoteWeight: Decimal.one - simulation.cashWeight,
+            missingQuoteWeight: Decimal.one - allocation.cashWeight!,
             createdAt: now,
             updatedAt: now,
           ),
@@ -1164,13 +1857,14 @@ class WatchlistSimulationRepository {
     return true;
   }
 
-  Future<void> _writeAllocationVersion({
+  Future<String> _writeAllocationVersion({
     required WatchlistSimulation simulation,
     required Map<String, Decimal> targetWeights,
     required Decimal cashWeight,
     required Map<String, WatchlistSimulationHoldingInput> holdingInputs,
     required WatchlistSimulationAllocationReason reason,
     required Decimal? capitalBase,
+    required String? previousAllocationVersionId,
     required MutationStamp stamp,
   }) async {
     final versionId = _uuid.v4();
@@ -1260,6 +1954,8 @@ class WatchlistSimulationRepository {
             simulationId: simulation.id,
             effectiveAt: effectiveAt,
             reason: reason.name,
+            previousAllocationVersionId: Value(previousAllocationVersionId),
+            requiresExplicitHead: const Value(true),
             cashWeight: cashWeight,
             isComplete: Value(isComplete),
             createdAt: stamp.now,
@@ -1303,6 +1999,37 @@ class WatchlistSimulationRepository {
           );
       await _outbox.enqueue(table: holdingVersionsTable, rowId: id);
     }
+    return versionId;
+  }
+
+  Future<void> _writeAllocationHead({
+    required String simulationId,
+    required String allocationVersionId,
+    required MutationStamp stamp,
+  }) async {
+    final existing =
+        await (_db.select(_db.watchlistSimulationAllocationHeads)..where(
+              (t) =>
+                  t.ownerUserId.equals(stamp.ownerUserId) &
+                  t.id.equals(simulationId),
+            ))
+            .getSingleOrNull();
+    await _db
+        .into(_db.watchlistSimulationAllocationHeads)
+        .insertOnConflictUpdate(
+          WatchlistSimulationAllocationHeadsCompanion.insert(
+            id: simulationId,
+            simulationId: simulationId,
+            allocationVersionId: allocationVersionId,
+            createdAt: existing?.createdAt ?? stamp.now,
+            ownerUserId: stamp.ownerUserId,
+            updatedAt: stamp.now,
+            updatedByDevice: stamp.deviceId,
+            hlc: stamp.hlc,
+            deletedAt: const Value(null),
+          ),
+        );
+    await _outbox.enqueue(table: allocationHeadsTable, rowId: simulationId);
   }
 
   Future<void> _writePosition({
@@ -1324,6 +2051,7 @@ class WatchlistSimulationRepository {
             simulationId: simulationId,
             watchlistItemId: watchlistItemId,
             targetWeight: targetWeight,
+            requiresExplicitHead: const Value(true),
             createdAt: createdAt,
             ownerUserId: stamp.ownerUserId,
             updatedAt: stamp.now,
@@ -1453,6 +2181,7 @@ WatchlistSimulation _simulationFromRow(WatchlistSimulationRow row) {
       WatchlistSimulationCalculationMode.values,
       row.calculationMode,
     ),
+    allocationProtocolVersion: row.allocationProtocolVersion,
     baselineAt: row.baselineAt,
     createdAt: row.createdAt,
     sync: SyncMeta(
@@ -1465,11 +2194,160 @@ WatchlistSimulation _simulationFromRow(WatchlistSimulationRow row) {
   );
 }
 
+int _compareAllocationVersionsNewestFirst(
+  WatchlistSimulationAllocationVersionRow left,
+  WatchlistSimulationAllocationVersionRow right,
+) {
+  final byTime = right.effectiveAt.compareTo(left.effectiveAt);
+  if (byTime != 0) return byTime;
+  final byHlc = right.hlc.compareTo(left.hlc);
+  if (byHlc != 0) return byHlc;
+  return right.id.compareTo(left.id);
+}
+
+WatchlistSimulationAllocationVersionRow? _legacyAllocationPredecessor({
+  required WatchlistSimulationAllocationVersionRow current,
+  required Iterable<WatchlistSimulationAllocationVersionRow> versions,
+}) {
+  final legacy =
+      versions
+          .where((version) => !version.requiresExplicitHead)
+          .toList(growable: false)
+        ..sort(_compareAllocationVersionsNewestFirst);
+  final index = legacy.indexWhere((version) => version.id == current.id);
+  return index >= 0 && index + 1 < legacy.length ? legacy[index + 1] : null;
+}
+
+Set<String> _allocationLineageVersionIds({
+  required WatchlistSimulationAllocationVersionRow current,
+  required Iterable<WatchlistSimulationAllocationVersionRow> versions,
+}) {
+  final byId = {for (final version in versions) version.id: version};
+  final ids = <String>{};
+  var candidate = current;
+  while (ids.add(candidate.id)) {
+    final previousId = candidate.previousAllocationVersionId;
+    final previous = previousId == null
+        ? (!candidate.requiresExplicitHead
+              ? _legacyAllocationPredecessor(
+                  current: candidate,
+                  versions: byId.values,
+                )
+              : null)
+        : byId[previousId];
+    if (previous == null) break;
+    candidate = previous;
+  }
+  return ids;
+}
+
+String _versionAllocationBasisKey(String versionId) => 'version:$versionId';
+
+String _legacyAllocationBasisKey({
+  required Decimal cashWeight,
+  required Iterable<WatchlistSimulationPosition> positions,
+}) {
+  final sorted = positions.toList(growable: false)
+    ..sort(
+      (left, right) => left.watchlistItemId.compareTo(right.watchlistItemId),
+    );
+  final parts = sorted.map(
+    (position) => '${position.watchlistItemId}=${position.targetWeight}',
+  );
+  return 'legacy-v1:$cashWeight|${parts.join('|')}';
+}
+
+class _SelectedAllocationLineage {
+  const _SelectedAllocationLineage({required this.versionIds})
+    : pending = false,
+      allowsLegacyPositions = false;
+
+  const _SelectedAllocationLineage.pending()
+    : versionIds = const <String>{},
+      pending = true,
+      allowsLegacyPositions = false;
+
+  const _SelectedAllocationLineage.legacyPositions()
+    : versionIds = const <String>{},
+      pending = false,
+      allowsLegacyPositions = true;
+
+  final Set<String> versionIds;
+  final bool pending;
+  final bool allowsLegacyPositions;
+}
+
+class _RecordDateAllocationResolution {
+  const _RecordDateAllocationResolution.usable(this.version) : pending = false;
+  const _RecordDateAllocationResolution.pending()
+    : version = null,
+      pending = true;
+  const _RecordDateAllocationResolution.none()
+    : version = null,
+      pending = false;
+
+  final WatchlistSimulationAllocationVersionRow? version;
+  final bool pending;
+}
+
+const _pendingAllocation = ResolvedWatchlistSimulationAllocation(
+  status: WatchlistSimulationAllocationStatus.pending,
+  allocationVersionId: null,
+  cashWeight: null,
+  positions: [],
+);
+
+const _invalidAllocation = ResolvedWatchlistSimulationAllocation(
+  status: WatchlistSimulationAllocationStatus.invalid,
+  allocationVersionId: null,
+  cashWeight: null,
+  positions: [],
+);
+
+bool _validAllocation(
+  Iterable<WatchlistSimulationPosition> positions,
+  Decimal cashWeight,
+) {
+  if (cashWeight < Decimal.zero || cashWeight > Decimal.one) return false;
+  var total = cashWeight;
+  final ids = <String>{};
+  for (final position in positions) {
+    if (!ids.add(position.watchlistItemId) ||
+        position.targetWeight <= Decimal.zero ||
+        position.targetWeight > Decimal.one) {
+      return false;
+    }
+    total += position.targetWeight;
+  }
+  return total == Decimal.one;
+}
+
 WatchlistSimulationPosition _positionFromRow(
   WatchlistSimulationPositionRow row,
 ) {
   return WatchlistSimulationPosition(
     id: row.id,
+    simulationId: row.simulationId,
+    watchlistItemId: row.watchlistItemId,
+    targetWeight: row.targetWeight,
+    createdAt: row.createdAt,
+    sync: SyncMeta(
+      ownerUserId: row.ownerUserId,
+      updatedAt: row.updatedAt,
+      updatedByDevice: row.updatedByDevice,
+      hlc: row.hlc,
+      deletedAt: row.deletedAt,
+    ),
+  );
+}
+
+WatchlistSimulationPosition _positionFromHoldingRow(
+  WatchlistSimulationHoldingVersionRow row,
+) {
+  return WatchlistSimulationPosition(
+    id:
+        'watchlist-simulation-position:${row.simulationId}:'
+        '${row.watchlistItemId}',
     simulationId: row.simulationId,
     watchlistItemId: row.watchlistItemId,
     targetWeight: row.targetWeight,
@@ -1606,6 +2484,7 @@ bool _actionEntryMatches(
   required Decimal? receivableGrossAmount,
   required Decimal? paperCashGrossAmount,
   required DateTime? stateAt,
+  required String? allocationBasisKey,
 }) {
   return row.deletedAt == null &&
       row.watchlistItemId == watchlistItemId &&
@@ -1628,6 +2507,7 @@ bool _actionEntryMatches(
       row.receivableGrossAmount == receivableGrossAmount &&
       row.paperCashGrossAmount == paperCashGrossAmount &&
       _sameInstant(row.stateAt, stateAt) &&
+      row.allocationBasisKey == allocationBasisKey &&
       row.withholdingTaxAmount == null &&
       row.netAmount == null &&
       row.baseCurrencyAmount == null;
@@ -1669,6 +2549,7 @@ WatchlistSimulationActionEntry _actionEntryFromRow(
   withholdingTaxAmount: row.withholdingTaxAmount,
   netAmount: row.netAmount,
   baseCurrencyAmount: row.baseCurrencyAmount,
+  allocationBasisKey: row.allocationBasisKey,
   createdAt: row.createdAt.toUtc(),
   sync: SyncMeta(
     ownerUserId: row.ownerUserId,
@@ -1690,6 +2571,7 @@ WatchlistSimulationObservation _observationFromRow(
   weightedDailyChange: row.weightedDailyChange,
   pricedWeight: row.pricedWeight,
   missingQuoteWeight: row.missingQuoteWeight,
+  allocationBasisKey: row.allocationBasisKey,
 );
 
 T _enumByName<T extends Enum>(Iterable<T> values, String name) {

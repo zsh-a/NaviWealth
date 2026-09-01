@@ -302,8 +302,13 @@ RebalanceExecutionSession _executionSession() {
 /// so the test binding's `_verifyInvariants` doesn't complain about leftover
 /// timers after the widget tree is disposed.
 Future<void> _drainTimers(WidgetTester tester) async {
-  // Advance the fake clock enough to flush any repeating timers.
+  // Advance the fake clock enough to flush repeating timers, then run a few
+  // short frames for zero-duration cleanup scheduled while providers dispose
+  // their Drift query subscriptions.
   await tester.pump(const Duration(seconds: 10));
+  for (var i = 0; i < 4; i++) {
+    await tester.pump(const Duration(milliseconds: 1));
+  }
 }
 
 void main() {

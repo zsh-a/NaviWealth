@@ -70,10 +70,18 @@ rounding.
 ### Watchlist Paper Simulations
 
 Watchlist simulations are a separate paper-only aggregate backed by
-`watchlist_simulations`, positions, effective-dated allocation versions,
-virtual holding versions, and action entries. They may reference a watchlist
-collection and canonical watchlist-item ids, but must never reuse or write
-`InvestmentPortfolio`, accounts, lots, journal entries, postings, or trade
+`watchlist_simulations`, legacy compatibility positions, a deterministic
+allocation head, immutable effective-dated allocation versions, virtual holding
+versions, and action entries. The head row id equals the simulation id, so Sync
+v3 LWW selects one complete allocation snapshot atomically instead of merging
+independently-authored position rows into an impossible total. Head-first page
+arrival is an explicit pending state; values and entitlement materialization
+remain blocked until the selected version's cash and holding weights total
+exactly 100%. Simulation and compatibility-position protocol markers prevent a
+missing or tombstoned head page from being mistaken for legacy data. Concurrent losing
+branches remain immutable history but are never projected. They may reference
+a watchlist collection and canonical watchlist-item ids, but must never reuse or
+write `InvestmentPortfolio`, accounts, lots, journal entries, postings, or trade
 execution state. All paper source rows sync under `fin:` and participate in
 encrypted backup; local observations remain derived.
 
@@ -86,11 +94,19 @@ a non-empty source, and a non-future quote timestamp. Missing, stale,
 identity-mismatched, provenance-free, or cross-currency quotes keep quantity
 and `fx_to_base` null; the system never assumes missing FX equals one.
 Unchanged allocation saves are no-ops and preserve trusted quantities. Real
-reallocations create a new effective-dated version but leave quantity unknown
-until a trustworthy capital base is available, rather than deriving holdings
-from the legacy projection curve. Record-date lookup first selects the active
-allocation version and then its holding child, so a removed symbol cannot
-silently reuse an older quantity.
+reallocations create a new effective-dated version, link it to the previously
+selected version, and atomically advance the deterministic head. Quantity stays
+unknown until a trustworthy capital base is available rather than being derived
+from the legacy projection curve. Record-date lookup walks the selected head's
+predecessor lineage before reading its holding child, so a concurrent losing
+branch or removed symbol cannot silently supply an older quantity. Pre-head
+rows retain a deterministic legacy fallback and are linked as virtual
+predecessors when the first headed version is introduced; every newly written
+version requires an explicit head and can never be selected by fallback
+heuristics. Valued action entries and local observations store an allocation
+basis key. A head change immediately hides basis-mismatched paper cash and
+curve points, while later reconciliation clears or rebuilds those derived
+values from the winning lineage.
 
 Implemented provider dividends materialize automatically as deterministic
 synced `watchlist_simulation_action_entries`. Reconciliation requests an

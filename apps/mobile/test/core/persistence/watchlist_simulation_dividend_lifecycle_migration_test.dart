@@ -49,6 +49,7 @@ void main() {
         'receivable_gross_amount',
         'paper_cash_gross_amount',
         'state_at',
+        'allocation_basis_key',
       ]),
     );
     final row = await db
@@ -81,6 +82,6 @@ void main() {
     );
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 90);
+    expect(version.read<int>('user_version'), 91);
   });
 }

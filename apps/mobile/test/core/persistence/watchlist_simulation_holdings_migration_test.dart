@@ -60,6 +60,7 @@ void main() {
     expect(legacyRow.read<String>('calculation_mode'), 'weightedDailyChangeV1');
 
     for (final table in const [
+      'watchlist_simulation_allocation_heads',
       'watchlist_simulation_allocation_versions',
       'watchlist_simulation_holding_versions',
     ]) {
@@ -93,6 +94,6 @@ void main() {
     );
 
     final version = await db.customSelect('PRAGMA user_version').getSingle();
-    expect(version.read<int>('user_version'), 90);
+    expect(version.read<int>('user_version'), 91);
   });
 }

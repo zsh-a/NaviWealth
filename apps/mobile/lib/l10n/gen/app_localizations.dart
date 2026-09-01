@@ -18968,6 +18968,18 @@ abstract class AppLocalizations {
   /// **'Set target percentages for symbols and virtual cash. The total must equal 100%.'**
   String get watchlistSimulationAllocationNote;
 
+  /// Paper allocation pending atomic snapshot state
+  ///
+  /// In en, this message translates to:
+  /// **'This allocation snapshot is still syncing. Values remain hidden until the selected snapshot is complete.'**
+  String get watchlistSimulationAllocationSyncing;
+
+  /// Paper allocation integrity error state
+  ///
+  /// In en, this message translates to:
+  /// **'This allocation is invalid. Edit the simulation to restore weights totaling 100%.'**
+  String get watchlistSimulationAllocationInvalid;
+
   /// Target weight field for one simulated symbol
   ///
   /// In en, this message translates to:

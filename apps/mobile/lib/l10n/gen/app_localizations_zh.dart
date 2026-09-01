@@ -10677,6 +10677,14 @@ class AppLocalizationsZh extends AppLocalizations {
       '设置各标的与虚拟现金的目标百分比，合计必须为 100%。';
 
   @override
+  String get watchlistSimulationAllocationSyncing =>
+      '配置快照仍在同步中。选中的快照完整前不会显示相关数值。';
+
+  @override
+  String get watchlistSimulationAllocationInvalid =>
+      '此配置无效。请编辑模拟组合，使权重合计恢复为 100%。';
+
+  @override
   String watchlistSimulationWeightField(String symbol) {
     return '$symbol 目标权重（%）';
   }

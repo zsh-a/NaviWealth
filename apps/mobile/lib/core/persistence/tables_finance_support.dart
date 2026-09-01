@@ -87,6 +87,8 @@ class WatchlistSimulations extends Table with SyncableTable {
       text().map(const DecimalConverter()).withDefault(const Constant('0'))();
   TextColumn get calculationMode =>
       text().withDefault(const Constant('weightedDailyChangeV1'))();
+  IntColumn get allocationProtocolVersion =>
+      integer().withDefault(const Constant(0))();
   DateTimeColumn get baselineAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
 
@@ -101,6 +103,8 @@ class WatchlistSimulationPositions extends Table with SyncableTable {
   TextColumn get simulationId => text()();
   TextColumn get watchlistItemId => text()();
   TextColumn get targetWeight => text().map(const DecimalConverter())();
+  BoolColumn get requiresExplicitHead =>
+      boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 
   @override
@@ -112,21 +116,37 @@ class WatchlistSimulationPositions extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Effective-dated allocation header for holdings-based paper entitlement.
+/// One deterministic LWW pointer to the selected immutable allocation.
+///
+/// The row id must equal [simulationId] so concurrent devices update the same
+/// Sync v3 row instead of merging independently-authored allocation children.
+@DataClassName('WatchlistSimulationAllocationHeadRow')
+class WatchlistSimulationAllocationHeads extends Table with SyncableTable {
+  TextColumn get id => text()();
+  TextColumn get simulationId => text()();
+  TextColumn get allocationVersionId => text()();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  List<String> get customConstraints => ['CHECK(id = simulation_id)'];
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Effective-dated immutable allocation header for paper simulations.
 @DataClassName('WatchlistSimulationAllocationVersionRow')
 class WatchlistSimulationAllocationVersions extends Table with SyncableTable {
   TextColumn get id => text()();
   TextColumn get simulationId => text()();
   DateTimeColumn get effectiveAt => dateTime()();
   TextColumn get reason => text()();
+  TextColumn get previousAllocationVersionId => text().nullable()();
+  BoolColumn get requiresExplicitHead =>
+      boolean().withDefault(const Constant(false))();
   TextColumn get cashWeight => text().map(const DecimalConverter())();
   BoolColumn get isComplete => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
-
-  @override
-  List<String> get customConstraints => [
-    'UNIQUE(owner_user_id, simulation_id, effective_at)',
-  ];
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -204,6 +224,7 @@ class WatchlistSimulationActionEntries extends Table with SyncableTable {
   TextColumn get netAmount => text().map(const DecimalConverter()).nullable()();
   TextColumn get baseCurrencyAmount =>
       text().map(const DecimalConverter()).nullable()();
+  TextColumn get allocationBasisKey => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
 
   @override
@@ -234,6 +255,7 @@ class WatchlistSimulationObservations extends Table {
   TextColumn get weightedDailyChange => text().map(const DecimalConverter())();
   TextColumn get pricedWeight => text().map(const DecimalConverter())();
   TextColumn get missingQuoteWeight => text().map(const DecimalConverter())();
+  TextColumn get allocationBasisKey => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 

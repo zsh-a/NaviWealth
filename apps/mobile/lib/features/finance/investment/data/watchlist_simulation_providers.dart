@@ -31,6 +31,21 @@ final watchlistSimulationsProvider =
       yield* repository.watchActive(ownerUserId);
     });
 
+final watchlistSimulationAllocationProvider = StreamProvider.autoDispose
+    .family<ResolvedWatchlistSimulationAllocation, String>((
+      ref,
+      simulationId,
+    ) async* {
+      final repository = await ref.watch(
+        watchlistSimulationRepositoryProvider.future,
+      );
+      final ownerUserId = await ref.watch(currentUserIdProvider)();
+      yield* repository.watchResolvedAllocation(
+        ownerUserId: ownerUserId,
+        simulationId: simulationId,
+      );
+    });
+
 final watchlistSimulationPositionsProvider = StreamProvider.autoDispose
     .family<List<WatchlistSimulationPosition>, String>((
       ref,
@@ -51,14 +66,35 @@ final watchlistSimulationActionEntriesProvider = StreamProvider.autoDispose
       ref,
       simulationId,
     ) async* {
+      final allocation = ref
+          .watch(watchlistSimulationAllocationProvider(simulationId))
+          .asData
+          ?.value;
+      if (allocation == null || !allocation.isUsable) {
+        yield const <WatchlistSimulationActionEntry>[];
+        return;
+      }
       final repository = await ref.watch(
         watchlistSimulationRepositoryProvider.future,
       );
       final ownerUserId = await ref.watch(currentUserIdProvider)();
-      yield* repository.watchActionEntries(
-        ownerUserId: ownerUserId,
-        simulationId: simulationId,
-      );
+      yield* repository
+          .watchActionEntries(
+            ownerUserId: ownerUserId,
+            simulationId: simulationId,
+          )
+          .map(
+            (entries) => entries
+                .where(
+                  (entry) =>
+                      (entry.allocationBasisKey == null &&
+                          !entry.hasPaperValue) ||
+                      allocation.validAllocationBasisKeys.contains(
+                        entry.allocationBasisKey,
+                      ),
+                )
+                .toList(growable: false),
+          );
     });
 
 class WatchlistSimulationActionReconciliation {
@@ -68,6 +104,7 @@ class WatchlistSimulationActionReconciliation {
     required this.unsupportedSymbolCount,
     this.partialSymbolCount = 0,
     this.staleSymbolCount = 0,
+    this.allocationUnavailable = false,
   });
 
   final int materializedCount;
@@ -75,8 +112,10 @@ class WatchlistSimulationActionReconciliation {
   final int unsupportedSymbolCount;
   final int partialSymbolCount;
   final int staleSymbolCount;
+  final bool allocationUnavailable;
 
   bool get hasCoverageIssues =>
+      allocationUnavailable ||
       failedSymbolCount > 0 ||
       unsupportedSymbolCount > 0 ||
       partialSymbolCount > 0 ||
@@ -110,13 +149,22 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
         watchlistSimulationRepositoryProvider.future,
       );
       final lifecycleAsOf = DateTime.now().toUtc();
+      final allocation = await ref.watch(
+        watchlistSimulationAllocationProvider(simulationId).future,
+      );
+      if (!allocation.isUsable) {
+        return const WatchlistSimulationActionReconciliation(
+          materializedCount: 0,
+          failedSymbolCount: 0,
+          unsupportedSymbolCount: 0,
+          allocationUnavailable: true,
+        );
+      }
       final locallyAdvanced = await repository.advanceDividendLifecycle(
         simulation: simulation,
         asOf: lifecycleAsOf,
       );
-      final positions = await ref.watch(
-        watchlistSimulationPositionsProvider(simulationId).future,
-      );
+      final positions = allocation.positions;
       final items = await ref.watch(watchlistItemsProvider.future);
       final itemById = {for (final item in items) item.id: item};
       final targetsById = <String, WatchlistSimulationActionTarget>{
@@ -194,14 +242,44 @@ final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
       ref,
       simulationId,
     ) async* {
+      final allocation = ref
+          .watch(watchlistSimulationAllocationProvider(simulationId))
+          .asData
+          ?.value;
+      final simulations = ref.watch(watchlistSimulationsProvider).asData?.value;
+      final simulation = simulations
+          ?.where((candidate) => candidate.id == simulationId)
+          .firstOrNull;
+      if (allocation == null || !allocation.isUsable || simulation == null) {
+        yield const <WatchlistSimulationObservation>[];
+        return;
+      }
+      final baselineUtc = simulation.baselineAt.toUtc();
+      String twoDigits(int part) => part.toString().padLeft(2, '0');
+      final baselineDay =
+          '${baselineUtc.year.toString().padLeft(4, '0')}-'
+          '${twoDigits(baselineUtc.month)}-${twoDigits(baselineUtc.day)}';
       final repository = await ref.watch(
         watchlistSimulationRepositoryProvider.future,
       );
       final ownerUserId = await ref.watch(currentUserIdProvider)();
-      yield* repository.watchObservations(
-        ownerUserId: ownerUserId,
-        simulationId: simulationId,
-      );
+      yield* repository
+          .watchObservations(
+            ownerUserId: ownerUserId,
+            simulationId: simulationId,
+          )
+          .map(
+            (observations) => observations
+                .where(
+                  (observation) =>
+                      allocation.validAllocationBasisKeys.contains(
+                        observation.allocationBasisKey,
+                      ) ||
+                      (observation.allocationBasisKey == null &&
+                          observation.observationDay == baselineDay),
+                )
+                .toList(growable: false),
+          );
     });
 
 class WatchlistSimulationObservationRequest {
@@ -211,6 +289,7 @@ class WatchlistSimulationObservationRequest {
     required this.weightedDailyChange,
     required this.pricedWeight,
     required this.missingQuoteWeight,
+    required this.allocationBasisKey,
   });
 
   final WatchlistSimulation simulation;
@@ -218,6 +297,7 @@ class WatchlistSimulationObservationRequest {
   final Decimal weightedDailyChange;
   final Decimal pricedWeight;
   final Decimal missingQuoteWeight;
+  final String allocationBasisKey;
 }
 
 typedef WatchlistSimulationObservationRecorder = Future<void> Function(
@@ -236,6 +316,7 @@ final watchlistSimulationObservationRecorderProvider =
           weightedDailyChange: request.weightedDailyChange,
           pricedWeight: request.pricedWeight,
           missingQuoteWeight: request.missingQuoteWeight,
+          allocationBasisKey: request.allocationBasisKey,
         );
       };
     });
