@@ -46,7 +46,7 @@ dependencies:
     sdk: flutter
   forui: ^0.26.0
   freezed_annotation: ^3.1.0
-  go_router: ^17.3.0
+  go_router: ^18.0.0
   # D-2.2 (`docs/healthos-domain.md` §2): HealthKit (iOS) + Health Connect
   # (Android) adapter. Web is unsupported; conditional import returns a
   # not-supported stub there.
