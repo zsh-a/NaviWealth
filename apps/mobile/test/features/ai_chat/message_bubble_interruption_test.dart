@@ -40,6 +40,22 @@ void main() {
     expect(find.text('继续'), findsNothing);
   });
 
+  testWidgets('failed trailing assistant turn exposes a retry action', (
+    tester,
+  ) async {
+    await _pumpMessage(
+      tester,
+      _message(
+        content: '已经接收的部分回复',
+        status: ChatMessageStatus.errored,
+        stopReason: ChatStopReason.error,
+      ),
+      isLastAssistant: true,
+    );
+
+    expect(find.text('重新生成'), findsOneWidget);
+  });
+
   testWidgets('pending interaction does not offer truncation continuation', (
     tester,
   ) async {
@@ -72,7 +88,11 @@ ChatMessage _message({
   createdAt: DateTime.utc(2026, 8, 24),
 );
 
-Future<void> _pumpMessage(WidgetTester tester, ChatMessage message) {
+Future<void> _pumpMessage(
+  WidgetTester tester,
+  ChatMessage message, {
+  bool isLastAssistant = false,
+}) {
   return tester.pumpWidget(
     ProviderScope(
       child: MaterialApp(
@@ -88,6 +108,7 @@ Future<void> _pumpMessage(WidgetTester tester, ChatMessage message) {
             child: MessageBubble(
               sessionId: message.sessionId,
               message: message,
+              isLastAssistant: isLastAssistant,
               animateIn: false,
             ),
           ),

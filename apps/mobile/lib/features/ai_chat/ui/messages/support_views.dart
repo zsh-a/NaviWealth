@@ -112,6 +112,53 @@ class _ContinueButton extends StatelessWidget {
   }
 }
 
+/// Explicit recovery affordance for a failed trailing assistant turn.
+///
+/// This is intentionally separate from [_ContinueButton]: continuation keeps
+/// the partial answer, while retry discards that turn and starts over from the
+/// original user prompt.
+class _RetryAssistantButton extends StatelessWidget {
+  const _RetryAssistantButton({
+    required this.enabled,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final bool enabled;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled
+        ? context.theme.colors.primary
+        : context.theme.colors.mutedForeground;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
+      child: AppTappable(
+        onPress: enabled ? onPressed : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s2,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(FLucideIcons.refreshCw, size: AppIconSizes.xs, color: color),
+              const SizedBox(width: AppSpacing.s4),
+              Text(
+                label,
+                style: context.captionLabelStyle.copyWith(color: color),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _SystemNotice extends StatelessWidget {
   const _SystemNotice({required this.text});
   final String text;
@@ -179,9 +226,12 @@ class _AssistantActions extends ConsumerWidget {
             onPressed: turn.isBusy
                 ? null
                 : () {
+                    final systemContext = ref
+                        .read(aiContextProvider)
+                        .toSystemContext();
                     ref
                         .read(chatControllerProvider(sessionId).notifier)
-                        .regenerateLast();
+                        .regenerateLast(systemContext: systemContext);
                   },
           ),
         _IconAction(

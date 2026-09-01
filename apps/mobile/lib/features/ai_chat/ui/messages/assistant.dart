@@ -39,6 +39,14 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
     final textColor = colors.foreground;
     final isStreaming = message.status == ChatMessageStatus.streaming;
     final hasProgress = isStreaming && message.progress != null;
+    final showRetry =
+        !isStreaming &&
+        _isError &&
+        message.role == ChatRole.assistant &&
+        isLastAssistant &&
+        message.errorMessage != 'device_unavailable';
+    final retryBusy =
+        showRetry && ref.watch(chatControllerProvider(sessionId)).isBusy;
 
     final stopReason = message.stopReason;
     final showTruncation =
@@ -104,6 +112,19 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
             ),
           ],
         ],
+        if (showRetry)
+          _RetryAssistantButton(
+            enabled: !retryBusy,
+            label: l10n.aiChatMessageRegenerate,
+            onPressed: () {
+              final systemContext = ref
+                  .read(aiContextProvider)
+                  .toSystemContext();
+              ref
+                  .read(chatControllerProvider(sessionId).notifier)
+                  .regenerateLast(systemContext: systemContext);
+            },
+          ),
         if (showTruncation)
           _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
         if (!isStreaming &&
