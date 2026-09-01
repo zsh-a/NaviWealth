@@ -103,12 +103,10 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
           ),
           if (isChatConfigurationError(message.errorMessage)) ...[
             const SizedBox(height: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.outline,
-              size: FButtonSizeVariant.sm,
+            AppQuietButton(
+              label: l10n.aiLlmAddProvider,
               onPress: () => pushFromAiSurface(context, SettingsRoutes.aiLlm),
               prefix: const Icon(FLucideIcons.settings, size: AppIconSizes.xs),
-              child: Text(l10n.aiLlmAddProvider),
             ),
           ],
         ],
