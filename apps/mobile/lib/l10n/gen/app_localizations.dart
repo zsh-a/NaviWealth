@@ -4289,12 +4289,6 @@ abstract class AppLocalizations {
   /// **'No insight available for this entry.'**
   String get activityEntryDetailNoExplanation;
 
-  /// Transaction detail posting line count
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 line} other{{count} lines}}'**
-  String activityEntryDetailLegCount(int count);
-
   /// Transaction detail section title for the full posting breakdown
   ///
   /// In en, this message translates to:
@@ -4553,10 +4547,10 @@ abstract class AppLocalizations {
   /// **'Add account'**
   String get homeQuickAddAccount;
 
-  /// Home quick action label that opens the new expense or journal entry flow.
+  /// Home quick action label that opens the new expense form.
   ///
   /// In en, this message translates to:
-  /// **'Record entry'**
+  /// **'Record expense'**
   String get homeQuickRecordEntry;
 
   /// Home quick action label that opens the activity ingest flow.
@@ -10752,12 +10746,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask NaviWealth about finance, knowledge, health, or plans'**
   String get aiChatComposerHintIdle;
-
-  /// No description provided for @aiChatComposerHintStreaming.
-  ///
-  /// In en, this message translates to:
-  /// **'Generating answer…'**
-  String get aiChatComposerHintStreaming;
 
   /// No description provided for @aiChatComposerSendTooltip.
   ///
@@ -28477,6 +28465,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Theme, colors and language'**
   String get settingsAppearanceSummary;
+
+  /// No description provided for @activitySearchCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse search'**
+  String get activitySearchCollapse;
+
+  /// No description provided for @activityAccountsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Accounts could not be loaded. Try again.'**
+  String get activityAccountsUnavailable;
+
+  /// No description provided for @executionOpenActionsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The action list is incomplete. Retry to load all actions.'**
+  String get executionOpenActionsUnavailable;
+
+  /// No description provided for @knowledgeNewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'New note'**
+  String get knowledgeNewNote;
+
+  /// No description provided for @knowledgeNewDecision.
+  ///
+  /// In en, this message translates to:
+  /// **'New decision'**
+  String get knowledgeNewDecision;
 }
 
 class _AppLocalizationsDelegate

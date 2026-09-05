@@ -378,6 +378,13 @@ void main() {
 
     expect(find.text('Add financial data'), findsOneWidget);
     expect(find.text('Start with real activity'), findsOneWidget);
+    await tester.tap(find.text('Add financial data'));
+    await tester.pumpAndSettle();
+    expect(find.text('Record activity'), findsOneWidget);
+    expect(
+      find.text('Import a statement and review only exceptions'),
+      findsOneWidget,
+    );
   });
 
   runResponsiveGolden(
@@ -422,7 +429,7 @@ void main() {
           child: const HomePage(),
         );
 
-        expect(find.text('Record entry'), findsOneWidget);
+        expect(find.text('Record expense'), findsOneWidget);
         expect(find.text('Transfer'), findsOneWidget);
         expect(find.text('Weekly groceries'), findsOneWidget);
         expect(

@@ -220,7 +220,12 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
   }
 
   void _closeSearch(ActivityFeedQueryController controller) {
-    _clearSearch(controller);
+    final pending = _pendingSearchText;
+    if (pending != null) {
+      _searchDebounce?.cancel();
+      _pendingSearchText = null;
+      controller.mutateQuery((q) => q.copyWith(searchText: pending));
+    }
     _searchFocus.unfocus();
     setState(() => _searchOpen = false);
   }
@@ -316,16 +321,30 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
             );
           }
           if (_searchOpen) {
-            return Row(
+            return Column(
               key: const ValueKey<String>('activity-search'),
               children: [
-                Expanded(child: searchField()),
-                const SizedBox(width: AppSpacing.s8),
-                AppIconButton(
-                  icon: FLucideIcons.x,
-                  tooltip: l10n.commonClose,
-                  onPress: () => _closeSearch(controller),
+                Row(
+                  children: [
+                    Expanded(child: searchField()),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _searchController,
+                      builder: (_, value, _) => value.text.isEmpty
+                          ? const SizedBox.shrink()
+                          : AppIconButton(
+                              icon: FLucideIcons.x,
+                              tooltip: l10n.formDateFieldClearTooltip,
+                              onPress: () => _clearSearch(controller),
+                            ),
+                    ),
+                    AppIconButton(
+                      icon: FLucideIcons.chevronUp,
+                      tooltip: l10n.activitySearchCollapse,
+                      onPress: () => _closeSearch(controller),
+                    ),
+                  ],
                 ),
+                filterButton(),
               ],
             );
           }
@@ -337,6 +356,9 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
               AppIconButton(
                 icon: FLucideIcons.search,
                 tooltip: l10n.activityFeedSearchAction,
+                surface: _searchController.text.isEmpty
+                    ? AppIconButtonSurface.plain
+                    : AppIconButtonSurface.softSelected,
                 onPress: _openSearch,
               ),
             ],

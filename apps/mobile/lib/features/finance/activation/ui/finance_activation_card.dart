@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../activity/ui/activity_action_panel.dart';
 import '../../composition/finance_route_paths.dart';
 import '../data/finance_activation_providers.dart';
 import '../data/finance_activation_store.dart';
@@ -105,7 +106,11 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
               ref
                   .read(productMetricsProvider.notifier)
                   .record(ProductFunnelEvent.activationStarted);
-              context.push(route);
+              if (snapshot.stage == FinanceActivationStage.addData) {
+                unawaited(showActivityActionPanel(context));
+              } else {
+                context.push(route);
+              }
             },
             child: Text(action),
           ),

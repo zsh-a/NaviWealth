@@ -2497,17 +2497,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No insight available for this entry.';
 
   @override
-  String activityEntryDetailLegCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count lines',
-      one: '1 line',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get activityEntryDetailLedgerTitle => 'Ledger breakdown';
 
   @override
@@ -2660,7 +2649,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeQuickAddAccount => 'Add account';
 
   @override
-  String get homeQuickRecordEntry => 'Record entry';
+  String get homeQuickRecordEntry => 'Record expense';
 
   @override
   String get homeQuickImport => 'Import statements';
@@ -6417,9 +6406,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aiChatComposerHintIdle =>
       'Ask NaviWealth about finance, knowledge, health, or plans';
-
-  @override
-  String get aiChatComposerHintStreaming => 'Generating answer…';
 
   @override
   String get aiChatComposerSendTooltip => 'Send (⌘/Ctrl + Enter)';
@@ -16938,4 +16924,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAppearanceSummary => 'Theme, colors and language';
+
+  @override
+  String get activitySearchCollapse => 'Collapse search';
+
+  @override
+  String get activityAccountsUnavailable =>
+      'Accounts could not be loaded. Try again.';
+
+  @override
+  String get executionOpenActionsUnavailable =>
+      'The action list is incomplete. Retry to load all actions.';
+
+  @override
+  String get knowledgeNewNote => 'New note';
+
+  @override
+  String get knowledgeNewDecision => 'New decision';
 }

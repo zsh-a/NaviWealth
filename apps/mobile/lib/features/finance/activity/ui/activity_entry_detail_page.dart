@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/composition/finance_route_paths.dart
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/entry_kind.dart';
+import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 
 import '../../../../core/ai/write/write.dart';
@@ -36,7 +37,7 @@ part 'activity_entry_detail_ledger.dart';
 /// Layout (top → bottom):
 ///  1. Hero amount + title + date / time
 ///  2. Local insight block for deterministic transaction patterns
-///  3. Posting breakdown (debits / credits in the existing widget)
+///  3. Accounts and categories, with the full ledger behind disclosure
 ///  4. Edit (expense) + delete
 class ActivityEntryDetailPage extends ConsumerStatefulWidget {
   const ActivityEntryDetailPage({
@@ -56,6 +57,7 @@ class ActivityEntryDetailPage extends ConsumerStatefulWidget {
 class _ActivityEntryDetailPageState
     extends ConsumerState<ActivityEntryDetailPage> {
   bool _deleting = false;
+  bool _ledgerExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -127,11 +129,38 @@ class _ActivityEntryDetailPageState
             _AiInsightCard(insight: aiInsight),
           ],
           const SizedBox(height: AppSpacing.s12),
-          _LedgerBreakdownCard(
-            postings: widget.entry.postings,
-            accountsById: widget.accountsById,
-            formatters: formatters,
+          for (final accountId
+              in widget.entry.postings.map((p) => p.accountId).toSet())
+            if (widget.accountsById[accountId] case final account?)
+              AppNavRow(
+                icon:
+                    account.category == AccountSide.expense ||
+                        account.category == AccountSide.income
+                    ? FLucideIcons.tag
+                    : FLucideIcons.wallet,
+                title: localizedAccountPath(l10n, account, widget.accountsById),
+                showChevron: false,
+              ),
+          Semantics(
+            expanded: _ledgerExpanded,
+            child: AppNavRow(
+              icon: FLucideIcons.listTree,
+              title: l10n.activityEntryDetailLedgerTitle,
+              showChevron: false,
+              trailing: Icon(
+                _ledgerExpanded
+                    ? FLucideIcons.chevronUp
+                    : FLucideIcons.chevronDown,
+              ),
+              onTap: () => setState(() => _ledgerExpanded = !_ledgerExpanded),
+            ),
           ),
+          if (_ledgerExpanded)
+            _LedgerBreakdownCard(
+              postings: widget.entry.postings,
+              accountsById: widget.accountsById,
+              formatters: formatters,
+            ),
         ],
       ),
     );

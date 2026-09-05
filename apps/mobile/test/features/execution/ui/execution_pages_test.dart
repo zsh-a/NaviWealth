@@ -30,6 +30,44 @@ import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
+  testWidgets('Today retains known actions while inventory fails and retries', (
+    tester,
+  ) async {
+    final today = _action(id: 'today', title: 'Keep this action visible');
+    var attempts = 0;
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionTodayPage(),
+        overrides: [
+          ..._executionOverrides(todayActions: [today]).where(
+            (override) => override.origin != executionOpenActionsProvider,
+          ),
+          executionOpenActionsProvider.overrideWith((_) {
+            attempts++;
+            return attempts == 1
+                ? Stream<List<ExecutionAction>>.error(StateError('unavailable'))
+                : Stream.value([today]);
+          }),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Keep this action visible'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Today 0'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Blocked').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Keep this action visible'), findsNothing);
+    await tester.tap(find.bySemanticsLabel('Today').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Keep this action visible'), findsOneWidget);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(attempts, 2);
+    expect(find.text('Retry'), findsNothing);
+    expect(find.text('Keep this action visible'), findsOneWidget);
+  });
+
   testWidgets('Today keeps review reachable and offers focused capture', (
     tester,
   ) async {

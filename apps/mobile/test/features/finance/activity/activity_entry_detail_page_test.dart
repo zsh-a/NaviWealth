@@ -222,6 +222,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Cash'), findsOneWidget);
+    expect(find.text('Living'), findsOneWidget);
+    expect(find.byType(SignedMoneyText), findsOneWidget);
+    await tester.tap(find.text('Ledger breakdown'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SignedMoneyText), findsWidgets);
     expect(find.text('Expense'), findsOneWidget);
     expect(find.text('Coffee'), findsOneWidget);
     expect(find.text('Blue Bottle'), findsOneWidget);
@@ -244,6 +250,8 @@ void main() {
     await tester.pumpWidget(_wrap(entry: _multiUnitEntry()));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Ledger breakdown'));
+    await tester.pumpAndSettle();
     final positiveLabel = find.text('Σ AAPL');
     final negativeLabel = find.text('Σ USD');
     expect(positiveLabel, findsOneWidget);

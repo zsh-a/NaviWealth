@@ -19,11 +19,39 @@ import 'widgets/knowledge_tag_chips.dart';
 
 enum _CaptureType { note, decision }
 
-Future<void> showKnowledgeCaptureSheet(BuildContext context) {
-  return showGuardedFormSheet<void>(
+Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+  final type = await showAppSheet<_CaptureType>(
     context: context,
-    builder: (_, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
+    title: l10n.knowledgeCaptureAction,
+    builder: (sheetContext) => AppActionSheetList(
+      children: [
+        AppActionSheetTile(
+          icon: FLucideIcons.fileText,
+          title: l10n.knowledgeNewNote,
+          onPress: () => Navigator.pop(sheetContext, _CaptureType.note),
+        ),
+        AppActionSheetTile(
+          icon: FLucideIcons.circleCheck,
+          title: l10n.knowledgeNewDecision,
+          onPress: () => Navigator.pop(sheetContext, _CaptureType.decision),
+        ),
+      ],
+    ),
   );
+  if (type == null) return;
+  await Future<void>.delayed(Motion.medium);
+  if (!context.mounted) return;
+  if (type == _CaptureType.decision) {
+    await Navigator.of(context, rootNavigator: true).push<bool>(
+      MaterialPageRoute(builder: (_) => const _DecisionCapturePage()),
+    );
+  } else {
+    await showGuardedFormSheet<void>(
+      context: context,
+      builder: (_, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
+    );
+  }
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
@@ -116,23 +144,6 @@ class _KnowledgeCaptureSheetState
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.fullPage)
-          SegmentedRow<_CaptureType>(
-            options: _CaptureType.values,
-            value: _type,
-            labelOf: (value) => switch (value) {
-              _CaptureType.note => l10n.knowledgeSegmentNotes,
-              _CaptureType.decision => l10n.knowledgeSegmentDecisions,
-            },
-            onChanged: _saving
-                ? (_) {}
-                : (value) {
-                    if (value == _CaptureType.decision) {
-                      unawaited(_openDecision());
-                    }
-                  },
-          ),
-        const SizedBox(height: AppSpacing.s16),
         FTextField(
           control: FTextFieldControl.managed(controller: _title),
           enabled: !_saving,
@@ -231,7 +242,7 @@ class _KnowledgeCaptureSheetState
     );
     if (widget.fullPage) {
       return AppFormPageScaffold(
-        title: Text(l10n.knowledgeSegmentDecisions),
+        title: Text(l10n.knowledgeNewDecision),
         confirmLeave: widget.confirmLeave,
         child: AppFormScaffoldBody(
           action: footer,
@@ -245,16 +256,6 @@ class _KnowledgeCaptureSheetState
       footer: footer,
       child: fields,
     );
-  }
-
-  Future<void> _openDecision() async {
-    final saved = await Navigator.of(context, rootNavigator: true).push<bool>(
-      MaterialPageRoute(builder: (_) => const _DecisionCapturePage()),
-    );
-    // A note draft belongs to its sheet and survives switching to a decision.
-    if (saved == true && mounted && !widget.dirty.isDirty) {
-      Navigator.pop(context);
-    }
   }
 
   Future<void> _save() async {

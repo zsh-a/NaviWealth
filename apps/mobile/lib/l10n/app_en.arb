@@ -1241,11 +1241,6 @@
   "@activityEntryDetailAiExplanation": { "description": "Section header for the AI-generated explanation block in the activity entry detail page" },
   "activityEntryDetailNoExplanation": "No insight available for this entry.",
   "@activityEntryDetailNoExplanation": { "description": "Empty state when no AI explanation is available" },
-  "activityEntryDetailLegCount": "{count, plural, =1{1 line} other{{count} lines}}",
-  "@activityEntryDetailLegCount": {
-    "description": "Transaction detail posting line count",
-    "placeholders": { "count": { "type": "int" } }
-  },
   "activityEntryDetailLedgerTitle": "Ledger breakdown",
   "@activityEntryDetailLedgerTitle": { "description": "Transaction detail section title for the full posting breakdown" },
   "aiContextSummaryThisMonth": "Monthly summary",
@@ -1338,8 +1333,8 @@
   "homeNetWorthTitle": "Net Worth",
   "homeQuickAddAccount": "Add account",
   "@homeQuickAddAccount": { "description": "Home quick action label that opens the new account flow." },
-  "homeQuickRecordEntry": "Record entry",
-  "@homeQuickRecordEntry": { "description": "Home quick action label that opens the new expense or journal entry flow." },
+  "homeQuickRecordEntry": "Record expense",
+  "@homeQuickRecordEntry": { "description": "Home quick action label that opens the new expense form." },
   "homeQuickImport": "Import statements",
   "@homeQuickImport": { "description": "Home quick action label that opens the activity ingest flow." },
   "financePrivacyHideAmountsTooltip": "Hide amounts",
@@ -3185,7 +3180,6 @@
   },
 
   "aiChatComposerHintIdle": "Ask NaviWealth about finance, knowledge, health, or plans",
-  "aiChatComposerHintStreaming": "Generating answer…",
   "aiChatComposerSendTooltip": "Send (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "Stop generating",
   "speechInputStartTooltip": "Start voice input",
@@ -8351,5 +8345,10 @@
   "commonLoadMore": "Load more",
   "knowledgeSearchLimitHint": "Showing the top 50 matches. Refine your search to find more specific results.",
   "knowledgeCaptureMetadata": "Source and tags",
-  "settingsAppearanceSummary": "Theme, colors and language"
+  "settingsAppearanceSummary": "Theme, colors and language",
+  "activitySearchCollapse": "Collapse search",
+  "activityAccountsUnavailable": "Accounts could not be loaded. Try again.",
+  "executionOpenActionsUnavailable": "The action list is incomplete. Retry to load all actions.",
+  "knowledgeNewNote": "New note",
+  "knowledgeNewDecision": "New decision"
 }

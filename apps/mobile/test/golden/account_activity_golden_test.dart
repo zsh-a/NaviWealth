@@ -193,6 +193,7 @@ List<Override> _accountOverrides() {
     dashboardBaseCurrencyProvider.overrideWith((_) => 'CNY'),
     dashboardSnapshotProvider.overrideWith((_) => _snapshot()),
     dashboardTrendProvider.overrideWith((_, _) => _trend()),
+    dashboardTimeRangeProvider.overrideWith((_) => _trend().range),
   ];
 }
 

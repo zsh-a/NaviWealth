@@ -137,8 +137,9 @@ Rules:
   the global primary; status and market colors always stay semantic.
 - Additional route prefixes that belong to a domain but are not tabs use `DomainPack.additionalPathPrefixes`.
 - Desktop uses one visual sidebar at the large window class (1200dp+). Its
-  workspace row switches between Life and active domains; its destinations
-  are the tabs of the current domain. Do not stack a domain dock beside a
+  workspace row switches between Life and active domains. Life and all enabled
+  domains remain directly reachable in the sidebar, including from Life. The
+  current domain's tabs appear below a divider. Do not stack a domain dock beside a
   second tab sidebar.
 - Compact and medium layouts keep domain-local bottom/rail navigation and use
   the header workspace switcher. Finance-only installations resolve `/life`

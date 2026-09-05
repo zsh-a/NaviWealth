@@ -74,6 +74,32 @@ ProviderContainer _container() {
 }
 
 void main() {
+  testWidgets('mobile search retains filters and collapsing preserves query', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final container = _container();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(FLucideIcons.search));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(FTextField), 'coffee');
+    await tester.pump();
+    expect(find.byIcon(FLucideIcons.listFilter), findsOneWidget);
+    await tester.tap(find.byIcon(FLucideIcons.chevronUp));
+    await tester.pumpAndSettle();
+    expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
+    expect(find.byType(FTextField), findsNothing);
+    await tester.tap(find.byIcon(FLucideIcons.search));
+    await tester.pumpAndSettle();
+    expect(find.text('coffee'), findsOneWidget);
+    await tester.tap(find.byIcon(FLucideIcons.x));
+    await tester.pumpAndSettle();
+    expect(container.read(activityFeedQueryProvider).searchText, isEmpty);
+  });
+
   setUp(() async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     _preferences = await SharedPreferences.getInstance();

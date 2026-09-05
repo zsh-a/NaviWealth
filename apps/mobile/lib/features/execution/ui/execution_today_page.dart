@@ -59,7 +59,7 @@ final _executionTodayViewProvider =
           .value;
 
       return actionsAsync.whenData((actions) {
-        final openActions = openActionsAsync.value ?? actions;
+        final openActions = openActionsAsync.value ?? const <ExecutionAction>[];
         final filteredActions = filteredExecutionActions(
           filter: filter,
           todayActions: actions,
@@ -72,6 +72,7 @@ final _executionTodayViewProvider =
             .where(
               (action) =>
                   filter != ExecutionTodayFilter.today ||
+                  !openActions.any((open) => open.id == action.id) ||
                   !focusOrder.containsKey(action.id),
             )
             .toList(growable: false);
@@ -87,6 +88,7 @@ final _executionTodayViewProvider =
         });
         return _ExecutionTodayView(
           openActions: openActions,
+          openActionsStatus: openActionsAsync,
           plans: plans,
           relations: relations,
           focusIds: focusIds,
@@ -108,6 +110,7 @@ final _executionTodayViewProvider =
 class _ExecutionTodayView {
   const _ExecutionTodayView({
     required this.openActions,
+    required this.openActionsStatus,
     required this.plans,
     required this.relations,
     required this.focusIds,
@@ -116,6 +119,7 @@ class _ExecutionTodayView {
     required this.suggestedFocus,
   });
 
+  final AsyncValue<List<ExecutionAction>> openActionsStatus;
   final List<ExecutionAction> openActions;
   final List<ExecutionPlan> plans;
   final ExecutionRelations? relations;
@@ -139,7 +143,10 @@ class _TodayListState extends ConsumerState<_TodayList> {
     ref.invalidate(executionPlansProvider);
     ref.invalidate(executionRecentProgressProvider);
     ref.invalidate(executionActionRelationsProvider);
-    await ref.read(executionTodayActionsProvider.future);
+    await Future.wait([
+      ref.read(executionTodayActionsProvider.future),
+      ref.read(executionOpenActionsProvider.future),
+    ]);
   }
 
   @override
@@ -177,7 +184,26 @@ class _TodayListState extends ConsumerState<_TodayList> {
           final snapshot = view.snapshot;
           final suggestedFocus = view.suggestedFocus;
 
+          final inventory = view.openActionsStatus;
           final actionModules = <Widget>[
+            if (inventory.hasError || !inventory.hasValue)
+              AppStatusBanner(
+                compact: true,
+                kind: inventory.hasError
+                    ? AppStatusKind.error
+                    : AppStatusKind.info,
+                message: inventory.hasError
+                    ? l10n.executionOpenActionsUnavailable
+                    : l10n.commonLoading,
+                action: inventory.hasError
+                    ? FButton(
+                        variant: FButtonVariant.ghost,
+                        onPress: () =>
+                            ref.invalidate(executionOpenActionsProvider),
+                        child: Text(l10n.commonRetry),
+                      )
+                    : null,
+              ),
             if (_filter == ExecutionTodayFilter.today && openActions.isNotEmpty)
               _DailyFocusPanel(
                 actions: openActions,
@@ -191,7 +217,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                 onOpen: (action) =>
                     context.push(ExecutionRoutes.action(action.id)),
               ),
-            if (visibleActions.isEmpty) ...[
+            if (visibleActions.isEmpty && inventory.hasValue) ...[
               if (!(_filter == ExecutionTodayFilter.today &&
                   focusIds.isNotEmpty))
                 AppEmptyState(
@@ -225,6 +251,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
             stage: AppCollapsingStage(
               child: ExecutionOverviewStrip(
                 snapshot: snapshot,
+                inventoryAvailable: inventory.hasValue,
                 selectedFilter: _filter,
                 onFilterChanged: (filter) => setState(() => _filter = filter),
               ),

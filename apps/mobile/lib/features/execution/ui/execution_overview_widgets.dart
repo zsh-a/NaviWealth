@@ -7,9 +7,11 @@ class ExecutionOverviewStrip extends StatelessWidget {
     required this.snapshot,
     required this.selectedFilter,
     required this.onFilterChanged,
+    this.inventoryAvailable = true,
   });
 
   final ExecutionOverviewSnapshot snapshot;
+  final bool inventoryAvailable;
   final ExecutionTodayFilter selectedFilter;
   final ValueChanged<ExecutionTodayFilter> onFilterChanged;
 
@@ -31,7 +33,9 @@ class ExecutionOverviewStrip extends StatelessWidget {
         ExecutionTodayFilter.today =>
           '${l10n.executionOverviewFocus} ${snapshot.todayCount}',
         ExecutionTodayFilter.blocked =>
-          '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}',
+          inventoryAvailable
+              ? '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
+              : l10n.executionOverviewBlocked,
       },
       semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
       iconOf: executionTodayFilterIcon,

@@ -2394,16 +2394,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityEntryDetailNoExplanation => '暂无该笔记录的洞察。';
 
   @override
-  String activityEntryDetailLegCount(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count 行',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get activityEntryDetailLedgerTitle => '完整分录';
 
   @override
@@ -2549,7 +2539,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeQuickAddAccount => '添加账户';
 
   @override
-  String get homeQuickRecordEntry => '记一笔';
+  String get homeQuickRecordEntry => '记支出';
 
   @override
   String get homeQuickImport => '导入账单';
@@ -6076,9 +6066,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiChatComposerHintIdle => '问问 NaviWealth：财务、知识、健康或计划都可以';
-
-  @override
-  String get aiChatComposerHintStreaming => '正在生成回答…';
 
   @override
   String get aiChatComposerSendTooltip => '发送 (⌘/Ctrl + Enter)';
@@ -16039,4 +16026,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsAppearanceSummary => '主题、颜色与语言';
+
+  @override
+  String get activitySearchCollapse => '收起搜索';
+
+  @override
+  String get activityAccountsUnavailable => '账户加载失败，请重试。';
+
+  @override
+  String get executionOpenActionsUnavailable => '行动列表尚未完整加载，请重试。';
+
+  @override
+  String get knowledgeNewNote => '新建笔记';
+
+  @override
+  String get knowledgeNewDecision => '新建决策';
 }

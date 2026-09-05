@@ -68,8 +68,8 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final accounts =
-        ref.watch(accountsStreamProvider).value ?? const <Account>[];
+    final accountsAsync = ref.watch(accountsStreamProvider);
+    final accounts = accountsAsync.value ?? const <Account>[];
     return ValueListenableBuilder<ActivityFeedQuery>(
       valueListenable: draft,
       builder: (context, query, _) => Column(
@@ -102,7 +102,20 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.s20),
           AppSheetSectionLabel(l10n.activityFeedFilterAccount),
-          if (accounts.isEmpty)
+          if (accountsAsync.hasError)
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              compact: true,
+              message: l10n.activityAccountsUnavailable,
+              action: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => ref.invalidate(accountsStreamProvider),
+                child: Text(l10n.commonRetry),
+              ),
+            )
+          else if (!accountsAsync.hasValue)
+            Text(l10n.commonLoading, style: context.captionStyle)
+          else if (accounts.isEmpty)
             Padding(
               padding: const EdgeInsets.only(
                 top: AppSpacing.s4,
@@ -192,13 +205,24 @@ class _KindFilterRow extends StatelessWidget {
   }
 }
 
+/// Convert picker-inclusive calendar dates to the feed's half-open interval.
+DateTimeRange activityQueryRange(DateTimeRange range) => DateTimeRange(
+  start: DateTime(range.start.year, range.start.month, range.start.day),
+  end: DateTime(range.end.year, range.end.month, range.end.day + 1),
+);
+
+DateTimeRange activityPickerRange(DateTimeRange range) => DateTimeRange(
+  start: range.start,
+  end: DateTime(range.end.year, range.end.month, range.end.day - 1),
+);
+
 enum _DateRange { thisWeek, thisMonth, lastMonth, thisYear, custom }
 
 DateTimeRange? _rangeFor(_DateRange r) {
   final now = DateTime.now();
   switch (r) {
     case _DateRange.thisWeek:
-      final start = now.subtract(Duration(days: now.weekday - 1));
+      final start = DateTime(now.year, now.month, now.day - now.weekday + 1);
       return DateTimeRange(
         start: DateTime(start.year, start.month, start.day),
         end: DateTime(now.year, now.month, now.day + 1),
@@ -244,7 +268,7 @@ _DateRange? _activeRangeOf(DateTimeRange? r) {
 String _formatRange(AppLocalizations l10n, DateTimeRange r) {
   String fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-  return '${fmt(r.start)} → ${fmt(r.end.subtract(const Duration(days: 1)))}';
+  return '${fmt(r.start)} → ${fmt(activityPickerRange(r).end)}';
 }
 
 String activityFeedDateRangeLabel(AppLocalizations l10n, DateTimeRange? range) {
@@ -315,13 +339,13 @@ class _DateRangeRow extends StatelessWidget {
       firstDate: DateTime(now.year - 10),
       lastDate: DateTime(now.year + 1),
       initialDateRange:
-          current ??
+          (current == null ? null : activityPickerRange(current!)) ??
           DateTimeRange(
             start: DateTime(now.year, now.month),
-            end: DateTime(now.year, now.month, now.day + 1),
+            end: DateTime(now.year, now.month, now.day),
           ),
     );
-    if (result != null) onChanged(result);
+    if (result != null) onChanged(activityQueryRange(result));
   }
 }
 

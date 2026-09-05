@@ -198,6 +198,15 @@ void main() {
 
       expect(find.byType(DesktopSidebar), findsOneWidget);
       expect(find.text(l10n.lifeNavLabel), findsWidgets);
+      final sidebar = tester.widget<DesktopSidebar>(
+        find.byType(DesktopSidebar),
+      );
+      expect(
+        sidebar.destinations.map((d) => d.label),
+        contains(financeDomainShell(l10n).label),
+      );
+      expect(sidebar.destinations, hasLength(2));
+
       expect(
         find.descendant(
           of: find.byType(DesktopSidebar),
@@ -206,6 +215,36 @@ void main() {
         findsNothing,
       );
     });
+  });
+
+  testWidgets('desktop Life opens enabled domains without a switcher sheet', (
+    tester,
+  ) async {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    final container = await _pumpAt(
+      tester,
+      initialLocation: AppRoutes.life,
+      viewportSize: _desktopSize,
+      domains: [financeDomainShell(l10n), healthDomainShell(l10n)],
+    );
+    final sidebar = find.byType(DesktopSidebar);
+    await tester.tap(
+      find.descendant(
+        of: sidebar,
+        matching: find.text(healthDomainShell(l10n).label),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
+    expect(_currentPath(container), AppRoutes.healthToday);
+    expect(find.byType(HealthTodayPage), findsOneWidget);
+    expect(
+      tester.widget<DesktopSidebar>(sidebar).destinations.map((d) => d.label),
+      contains(financeDomainShell(l10n).label),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    container.dispose();
+    await tester.pump(const Duration(milliseconds: 900));
   });
 
   group('Multi-domain dock (Health opt-in)', () {

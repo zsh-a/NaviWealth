@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -53,33 +54,55 @@ void main() {
     expect(cancelled, 0);
   });
 
-  testWidgets('streaming composer disables input and exposes stop action', (
-    tester,
-  ) async {
-    final sent = <String>[];
-    var cancelled = 0;
+  testWidgets(
+    'streaming composer preserves an editable draft and exposes stop',
+    (tester) async {
+      final sent = <String>[];
+      var cancelled = 0;
 
-    await _pumpComposer(
-      tester,
-      preferences: preferences,
-      locale: const Locale('zh'),
-      isStreaming: true,
-      initialText: 'ignored draft',
-      onSend: sent.add,
-      onCancel: () => cancelled++,
-    );
+      await _pumpComposer(
+        tester,
+        preferences: preferences,
+        locale: const Locale('zh'),
+        isStreaming: true,
+        initialText: 'ignored draft',
+        onSend: sent.add,
+        onCancel: () => cancelled++,
+      );
 
-    expect(find.text('正在生成回答…'), findsOneWidget);
+      await tester.enterText(find.byType(EditableText), 'Next question');
 
-    final editable = tester.widget<EditableText>(find.byType(EditableText));
-    expect(editable.readOnly, isTrue);
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      expect(editable.readOnly, isFalse);
+      expect(editable.controller.text, 'Next question');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(sent, isEmpty);
+      expect(editable.controller.text, 'Next question');
 
-    await tester.tap(find.byIcon(FLucideIcons.square));
-    await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(find.byIcon(FLucideIcons.square));
+      await tester.pump(const Duration(milliseconds: 120));
 
-    expect(cancelled, 1);
-    expect(sent, isEmpty);
-  });
+      expect(cancelled, 1);
+      expect(sent, isEmpty);
+      await _pumpComposer(
+        tester,
+        preferences: preferences,
+        locale: const Locale('zh'),
+        isStreaming: false,
+        initialText: 'ignored draft',
+        onSend: sent.add,
+        onCancel: () => cancelled++,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Next question'), findsOneWidget);
+      await tester.tap(find.byIcon(FLucideIcons.arrowUp));
+      await tester.pump(const Duration(milliseconds: 120));
+      expect(sent, ['Next question']);
+    },
+  );
 
   testWidgets('missing model profile exposes setup before sending', (
     tester,

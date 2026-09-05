@@ -413,6 +413,8 @@ void main() {
 
     expect(find.text('Food'), findsOneWidget);
     expect(find.text('Wallet'), findsOneWidget);
+    await tester.tap(find.text('Ledger breakdown'));
+    await tester.pumpAndSettle();
     expect(find.text('+¥32'), findsOneWidget);
   });
 }

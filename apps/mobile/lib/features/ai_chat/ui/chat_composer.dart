@@ -177,7 +177,7 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
 
   void _send() {
     final text = _controller.text;
-    if (text.trim().isEmpty) return;
+    if (widget.isStreaming || text.trim().isEmpty) return;
     final replaceId = _replaceMessageId;
     final sessionId = widget.sessionId;
     final inputOrigin = _draftInputOrigin;
@@ -448,12 +448,9 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                             keyboardType: TextInputType.multiline,
                             minLines: 1,
                             maxLines: 6,
-                            enabled: !widget._busy,
-                            hint: widget.isStreaming
-                                ? l10n.aiChatComposerHintStreaming
-                                : (editing
-                                      ? l10n.aiChatEditUserMessageTitle
-                                      : l10n.aiChatComposerHintIdle),
+                            hint: editing
+                                ? l10n.aiChatEditUserMessageTitle
+                                : l10n.aiChatComposerHintIdle,
                           ),
                         ),
                       ),

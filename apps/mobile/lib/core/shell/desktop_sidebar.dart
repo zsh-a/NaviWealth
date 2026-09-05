@@ -109,16 +109,22 @@ class DesktopSidebar extends ConsumerWidget {
                           vertical: AppSpacing.s4,
                         ),
                         itemCount: destinations.length,
-                        itemBuilder: (_, i) => _SidebarRow(
-                          icon: i == selectedIndex
-                              ? destinations[i].selectedIcon
-                              : destinations[i].icon,
-                          label: destinations[i].label,
-                          selected: i == selectedIndex,
-                          collapsed: metrics.collapsed,
-                          labelOpacity: metrics.labelOpacity,
-                          accentColor: accentColor,
-                          onPress: () => onDestinationSelected(i),
+                        itemBuilder: (_, i) => Column(
+                          children: [
+                            if (destinations[i].startsSection)
+                              const AppDivider(),
+                            _SidebarRow(
+                              icon: i == selectedIndex
+                                  ? destinations[i].selectedIcon
+                                  : destinations[i].icon,
+                              label: destinations[i].label,
+                              selected: i == selectedIndex,
+                              collapsed: metrics.collapsed,
+                              labelOpacity: metrics.labelOpacity,
+                              accentColor: accentColor,
+                              onPress: () => onDestinationSelected(i),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -215,11 +221,13 @@ class DesktopSidebarDestination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
+    this.startsSection = false,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
+  final bool startsSection;
 }
 
 /// Current workspace affordance shown above domain-local destinations.

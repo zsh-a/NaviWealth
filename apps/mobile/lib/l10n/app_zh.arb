@@ -758,7 +758,6 @@
   "activityEntryDetailTitle": "交易明细",
   "activityEntryDetailAiExplanation": "记录洞察",
   "activityEntryDetailNoExplanation": "暂无该笔记录的洞察。",
-  "activityEntryDetailLegCount": "{count, plural, other{{count} 行}}",
   "activityEntryDetailLedgerTitle": "完整分录",
   "aiContextSummaryThisMonth": "本月概览",
   "aiContextSummaryNetWorthLine": "本月净值 {pct}",
@@ -803,7 +802,7 @@
   "homeAiAssistantTooltip": "AI 助手",
   "homeNetWorthTitle": "净资产",
   "homeQuickAddAccount": "添加账户",
-  "homeQuickRecordEntry": "记一笔",
+  "homeQuickRecordEntry": "记支出",
   "homeQuickImport": "导入账单",
   "financePrivacyHideAmountsTooltip": "隐藏金额",
   "financePrivacyShowAmountsTooltip": "显示金额",
@@ -1955,7 +1954,6 @@
   "aiChatRelativeDaysAgo": "{days} 天前",
 
   "aiChatComposerHintIdle": "问问 NaviWealth：财务、知识、健康或计划都可以",
-  "aiChatComposerHintStreaming": "正在生成回答…",
   "aiChatComposerSendTooltip": "发送 (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "停止生成",
   "speechInputStartTooltip": "开始语音输入",
@@ -5137,5 +5135,10 @@
   "commonLoadMore": "加载更多",
   "knowledgeSearchLimitHint": "当前显示最相关的 50 条结果，请细化搜索条件。",
   "knowledgeCaptureMetadata": "来源与标签",
-  "settingsAppearanceSummary": "主题、颜色与语言"
+  "settingsAppearanceSummary": "主题、颜色与语言",
+  "activitySearchCollapse": "收起搜索",
+  "activityAccountsUnavailable": "账户加载失败，请重试。",
+  "executionOpenActionsUnavailable": "行动列表尚未完整加载，请重试。",
+  "knowledgeNewNote": "新建笔记",
+  "knowledgeNewDecision": "新建决策"
 }

@@ -44,7 +44,7 @@ void main() {
   }, tags: 'flow');
 
   testWidgets(
-    'decision capture uses a guarded page and preserves the note draft',
+    'decision capture starts independently and guards unsaved changes',
     (tester) async {
       final data = await FlowDataHarness.create();
       addTearDown(data.dispose);
@@ -56,15 +56,8 @@ void main() {
       );
       await tester.tap(find.bySemanticsLabel('New capture').first);
       await tester.pumpAndSettle();
-      expect(
-        find.byKey(const ValueKey('knowledge-capture-source-url')),
-        findsNothing,
-      );
-      await tester.enterText(
-        find.widgetWithText(FTextField, 'Content (Markdown)'),
-        'Keep this note draft',
-      );
-      await tester.tap(find.text('Decisions'));
+      expect(find.text('New note'), findsOneWidget);
+      await tester.tap(find.text('New decision'));
       await tester.pumpAndSettle();
       expect(find.byType(AppFormPageScaffold), findsOneWidget);
       await tester.enterText(
@@ -78,8 +71,9 @@ void main() {
       await tester.tap(find.text('Discard'));
       await tester.pumpAndSettle();
       expect(find.byType(AppFormPageScaffold), findsNothing);
-      expect(find.text('Keep this note draft'), findsOneWidget);
-      await tester.tap(find.text('Decisions'));
+      await tester.tap(find.bySemanticsLabel('New capture').first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New decision'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.widgetWithText(FTextField, 'Question'),
@@ -99,7 +93,10 @@ void main() {
       expect(decisions.single.question, 'Should I proceed?');
       expect(decisions.single.selectedLabel, 'Proceed');
       expect(find.byType(AppFormPageScaffold), findsNothing);
-      expect(find.text('Keep this note draft'), findsOneWidget);
+      expect(
+        find.widgetWithText(FTextField, 'Content (Markdown)'),
+        findsNothing,
+      );
       await closeApp(tester);
     },
     tags: 'flow',

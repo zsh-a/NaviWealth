@@ -542,6 +542,8 @@ class KnowledgeInboxPageObject {
     expect(add, findsWidgets, reason: 'knowledge capture action missing');
     await tester.tap(add.first);
     await _settleKnowledgeCapture(tester);
+    await tester.tap(find.text('New note'));
+    await _settleKnowledgeCapture(tester);
 
     await tester.enterText(
       find.widgetWithText(FTextField, 'Content (Markdown)'),

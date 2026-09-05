@@ -13,7 +13,6 @@ class _LedgerBreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final totals = _computeUnitTotals(postings);
     return SoftCard.raised(
       padding: const EdgeInsets.symmetric(
@@ -23,24 +22,6 @@ class _LedgerBreakdownCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.activityEntryDetailLedgerTitle,
-                  style: context.labelStyle,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              AppBadge(
-                label: l10n.activityEntryDetailLegCount(postings.length),
-                icon: FLucideIcons.gitBranch,
-                size: AppBadgeSize.compact,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          const AppDivider(horizontalPadding: 0),
           for (var i = 0; i < postings.length; i++) ...[
             if (i > 0) const AppDivider(horizontalPadding: 0),
             _DetailPostingRow(

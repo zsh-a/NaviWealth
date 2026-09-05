@@ -268,12 +268,19 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
         selectedIcon: FLucideIcons.house,
         label: l10n.lifeNavLabel,
       ),
+      for (final spec in specs)
+        DesktopSidebarDestination(
+          icon: spec.icon,
+          selectedIcon: spec.selectedIcon,
+          label: spec.label,
+        ),
       if (!onLife)
         for (final tab in activeSpec.tabs)
           DesktopSidebarDestination(
             icon: tab.icon,
             selectedIcon: tab.selectedIcon,
             label: tab.label,
+            startsSection: tab == activeSpec.tabs.first,
           ),
     ];
     return DesktopSidebar(
@@ -288,15 +295,18 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
       selectedIndex: onLife
           ? 0
           : selectedTab < 0
-          ? -1
-          : selectedTab + 1,
+          ? specs.indexOf(activeSpec) + 1
+          : selectedTab + specs.length + 1,
       onDestinationSelected: (index) {
         AppInteraction.signal(AppInteractionIntent.navigate);
         if (index == 0) {
           GoRouter.of(context).go(AppRoutes.life);
           return;
         }
-        GoRouter.of(context).go(activeSpec.tabs[index - 1].routePath);
+        final path = index <= specs.length
+            ? specs[index - 1].tabs.first.routePath
+            : activeSpec.tabs[index - specs.length - 1].routePath;
+        GoRouter.of(context).go(path);
       },
       footerActions: [
         if (ref.watch(deviceLlmPlatformSupportedProvider))

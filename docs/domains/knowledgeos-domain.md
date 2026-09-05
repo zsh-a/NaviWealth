@@ -67,8 +67,9 @@ Key files:
 Capture lets the user choose Note or Decision directly. It never saves an
 intermediate Note merely to classify or promote it later. Notes use a guarded
 sheet with source and tags collapsed initially. Structured Decision capture
-opens a full page with an unsaved-changes guard; returning preserves any Note
-draft in the sheet. A new Decision
+opens a full page with an unsaved-changes guard. The initial action chooser
+closes before opening either form; switching types is not presented as a tab
+inside an existing draft. A new Decision
 requires a question, one to three unique candidate options, and an explicit
 selection from those options. Each option may keep a short rationale; existing
 rows with more options remain editable without adding further options. The

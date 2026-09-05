@@ -31,10 +31,16 @@ Account _account(String id, String name) {
   );
 }
 
-Widget _wrap({required List<Account> accounts, Widget? home}) {
+Widget _wrap({
+  required List<Account> accounts,
+  Stream<List<Account>> Function()? accountStream,
+  Widget? home,
+}) {
   return ProviderScope(
     overrides: [
-      accountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
+      accountsStreamProvider.overrideWith(
+        (_) => accountStream?.call() ?? Stream.value(accounts),
+      ),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -65,6 +71,51 @@ class _OpenSheetHost extends StatelessWidget {
 }
 
 void main() {
+  testWidgets('failed account load offers retry instead of an empty state', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(420, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    var attempts = 0;
+    await tester.pumpWidget(
+      _wrap(
+        accounts: const [],
+        accountStream: () {
+          attempts++;
+          return attempts == 1
+              ? Stream<List<Account>>.error(StateError('unavailable'))
+              : Stream.value([_account('a1', 'Wallet')]);
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open-filter'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Accounts could not be loaded. Try again.'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('No accounts yet — add one from the Accounts tab.'),
+      findsNothing,
+    );
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(find.text('Wallet'), findsOneWidget);
+  });
+
+  test('custom dates include the final day and round trip across year end', () {
+    final selected = DateTimeRange(
+      start: DateTime(2026, 12, 31),
+      end: DateTime(2026, 12, 31),
+    );
+    final query = activityQueryRange(selected);
+    expect(query.start, DateTime(2026, 12, 31));
+    expect(query.end, DateTime(2027));
+    expect(DateTime(2026, 12, 31, 23, 59).isBefore(query.end), isTrue);
+    expect(activityPickerRange(query), selected);
+  });
+
   testWidgets('shows account empty state when no accounts exist', (
     tester,
   ) async {
