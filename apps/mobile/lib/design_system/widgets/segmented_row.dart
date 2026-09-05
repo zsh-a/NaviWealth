@@ -50,12 +50,16 @@ class SegmentedRow<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    if (options.isEmpty) return const SizedBox.shrink();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final n = options.length;
         const gap = AppSpacing.s4;
-        final maxW = constraints.maxWidth;
+        final maxW = (constraints.maxWidth - AppSpacing.s8).clamp(
+          0.0,
+          double.infinity,
+        );
         final textScale = MediaQuery.textScalerOf(context).scale(1);
         final effectiveMinSegmentWidth =
             minSegmentWidth * (textScale < 1 ? 1 : textScale);
@@ -120,7 +124,39 @@ class SegmentedRow<T> extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
-            child: fits ? row : wrapped,
+            child: fits
+                ? Stack(
+                    children: [
+                      if (options.indexOf(value) case final selected
+                          when selected >= 0)
+                        AnimatedPositionedDirectional(
+                          duration: AppMotionPolicy.duration(
+                            context,
+                            Motion.componentChange,
+                            role: AppMotionRole.decorative,
+                          ),
+                          curve: Motion.standardDecelerate,
+                          start: selected * ((maxW + gap) / n),
+                          width: (maxW - gap * (n - 1)) / n,
+                          top: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: colors.primary.withValues(
+                                  alpha: AppOpacity.faint,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      row,
+                    ],
+                  )
+                : wrapped,
           ),
         );
 
@@ -194,12 +230,14 @@ class SegmentedRow<T> extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               content,
-              const SizedBox(height: AppSpacing.s2),
-              AppSelectionIndicator(
-                selected: selected,
-                length: AppSpacing.s16,
-                thickness: AppSpacing.s2,
-              ),
+              if (!expand) ...[
+                const SizedBox(height: AppSpacing.s2),
+                AppSelectionIndicator(
+                  selected: selected,
+                  length: AppSpacing.s16,
+                  thickness: AppSpacing.s2,
+                ),
+              ],
             ],
           ),
         ),

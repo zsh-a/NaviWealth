@@ -57,7 +57,7 @@ extension _NwLineChartBars on _NwLineChartState {
                   strokeColor: effectiveColor.withValues(
                     alpha: AppOpacity.halo,
                   ),
-                  strokeWidth: AppStroke.halo,
+                  strokeWidth: AppStroke.branch,
                 );
               }
             : (spot, percent, barData, index) =>
@@ -82,8 +82,8 @@ extension _NwLineChartBars on _NwLineChartState {
   }
 
   double _defaultFillTopAlpha(BuildContext context) {
-    // Slightly richer area fill so premium trends read as "stage charts"
-    // rather than bare polylines — still restrained on light canvas.
-    return context.theme.colors.brightness == Brightness.dark ? 0.22 : 0.16;
+    // Keep filled areas behind the data line; dark backgrounds need a
+    // slightly stronger wash to preserve the same hierarchy.
+    return context.theme.colors.brightness == Brightness.dark ? 0.14 : 0.08;
   }
 }

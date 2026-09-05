@@ -106,6 +106,7 @@ class MoneyText extends StatelessWidget {
     this.compact = false,
     this.showSign = false,
     this.semanticsLabel,
+    this.emphasizeInteger = false,
   });
 
   /// Amount in the major unit (e.g. `1234.5` = ¥1,234.50). Accepts `num` so
@@ -150,6 +151,9 @@ class MoneyText extends StatelessWidget {
   /// instead of just the digits.
   final String? semanticsLabel;
 
+  /// Display-size amounts can de-emphasize the currency and fraction.
+  final bool emphasizeInteger;
+
   @override
   Widget build(BuildContext context) {
     final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
@@ -169,8 +173,11 @@ class MoneyText extends StatelessWidget {
       );
     }
     final formatted = _format(context);
-    return Text(
-      formatted,
+    return _AmountLabel(
+      formatted: formatted,
+      emphasizeInteger: emphasizeInteger,
+      locale:
+          locale ?? Localizations.maybeLocaleOf(context)?.toString() ?? 'en',
       style: effectiveStyle,
       textAlign: textAlign,
       maxLines: 1,
@@ -270,6 +277,7 @@ class SignedMoneyText extends StatelessWidget {
     this.maxLines = 1,
     this.overflow = TextOverflow.ellipsis,
     this.semanticsLabel,
+    this.emphasizeInteger = false,
   });
 
   final Decimal? amount;
@@ -283,6 +291,9 @@ class SignedMoneyText extends StatelessWidget {
   final int? maxLines;
   final TextOverflow? overflow;
   final String? semanticsLabel;
+
+  /// Display-size amounts can de-emphasize the currency and fraction.
+  final bool emphasizeInteger;
 
   @override
   Widget build(BuildContext context) {
@@ -309,8 +320,10 @@ class SignedMoneyText extends StatelessWidget {
             AmountPrivacyScope.hiddenSemanticsLabelOf(context),
       );
     }
-    return Text(
-      formatted,
+    return _AmountLabel(
+      formatted: formatted,
+      emphasizeInteger: emphasizeInteger,
+      locale: formatters.locale.toString(),
       style: effectiveStyle,
       textAlign: textAlign,
       maxLines: maxLines,
@@ -492,4 +505,70 @@ enum DualMoneyLayout {
 
   /// Two stacked lines, primary on top.
   stacked,
+}
+
+/// Preserve the formatter's literal output, including locale-specific order,
+/// separators and signs. Styling never changes the amount or spoken value.
+class _AmountLabel extends StatelessWidget {
+  const _AmountLabel({
+    required this.formatted,
+    required this.style,
+    required this.locale,
+    required this.emphasizeInteger,
+    this.textAlign,
+    this.maxLines = 1,
+    this.overflow,
+    this.semanticsLabel,
+  });
+
+  final String formatted;
+  final TextStyle style;
+  final String locale;
+  final bool emphasizeInteger;
+  final TextAlign? textAlign;
+  final int? maxLines;
+  final TextOverflow? overflow;
+  final String? semanticsLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = formatted.indexOf(RegExp(r'[0-9]'));
+    if (!emphasizeInteger || first < 0) {
+      return Text(
+        formatted,
+        style: style,
+        textAlign: textAlign,
+        maxLines: maxLines,
+        overflow: overflow,
+        semanticsLabel: semanticsLabel,
+      );
+    }
+    final last = formatted.lastIndexOf(RegExp(r'[0-9]'));
+    final decimal = NumberFormat.decimalPattern(locale).symbols.DECIMAL_SEP;
+    final separator = formatted.indexOf(decimal, first);
+    final fraction = separator >= first && separator < last
+        ? separator
+        : last + 1;
+    final secondary = style.copyWith(
+      fontSize:
+          (style.fontSize ?? TypographyTokens.numericBody.fontSize!) * 0.72,
+      fontWeight: FontWeight.w500,
+    );
+    return Text.rich(
+      TextSpan(
+        children: [
+          if (first > 0)
+            TextSpan(text: formatted.substring(0, first), style: secondary),
+          TextSpan(text: formatted.substring(first, fraction)),
+          if (fraction < formatted.length)
+            TextSpan(text: formatted.substring(fraction), style: secondary),
+        ],
+      ),
+      style: style,
+      textAlign: textAlign,
+      maxLines: maxLines,
+      overflow: overflow,
+      semanticsLabel: semanticsLabel,
+    );
+  }
 }

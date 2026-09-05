@@ -180,56 +180,63 @@ class _KnowledgeCaptureSheetState
             child: Text(l10n.knowledgeCaptureMetadata),
           ),
         ],
-        if (_type == _CaptureType.note && _showMetadata) ...[
-          const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            key: const ValueKey('knowledge-capture-source-url'),
-            control: FTextFieldControl.managed(controller: _source),
-            enabled: !_saving,
-            keyboardType: TextInputType.url,
-            textInputAction: TextInputAction.next,
-            label: Text(l10n.knowledgeNoteSourceUrlLabel),
+        if (_type == _CaptureType.note)
+          AnimatedSizeFade(
+            visible: _showMetadata,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: AppSpacing.s12),
+                FTextField(
+                  key: const ValueKey('knowledge-capture-source-url'),
+                  control: FTextFieldControl.managed(controller: _source),
+                  enabled: !_saving,
+                  keyboardType: TextInputType.url,
+                  textInputAction: TextInputAction.next,
+                  label: Text(l10n.knowledgeNoteSourceUrlLabel),
+                ),
+                if (_source.text.trim().isNotEmpty &&
+                    normalizeKnowledgeSourceUrl(_source.text) == null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppStatusBanner(
+                    kind: AppStatusKind.error,
+                    compact: true,
+                    message: l10n.knowledgeSourceInvalid,
+                  ),
+                ],
+                if (_duplicateSource != null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppStatusBanner(
+                    key: const Key('knowledge-duplicate-source-warning'),
+                    kind: AppStatusKind.warning,
+                    compact: true,
+                    message: l10n.knowledgeSourceDuplicateTitle,
+                    details: l10n.knowledgeSourceDuplicateBody(
+                      _duplicateSource!.title.isEmpty
+                          ? l10n.knowledgeUntitled
+                          : _duplicateSource!.title,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.s12),
+                FTextField(
+                  key: const ValueKey('knowledge-capture-tags'),
+                  control: FTextFieldControl.managed(controller: _tags),
+                  enabled: !_saving,
+                  label: Text(l10n.knowledgeNoteTagsLabel),
+                  hint: l10n.knowledgeNoteTagsHint,
+                ),
+                if (parseKnowledgeTags(_tags.text) case final tagPreview
+                    when tagPreview.isNotEmpty) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  KnowledgeTagChips(
+                    tags: tagPreview,
+                    keyPrefix: 'knowledge-capture-tag',
+                  ),
+                ],
+              ],
+            ),
           ),
-          if (_source.text.trim().isNotEmpty &&
-              normalizeKnowledgeSourceUrl(_source.text) == null) ...[
-            const SizedBox(height: AppSpacing.s8),
-            AppStatusBanner(
-              kind: AppStatusKind.error,
-              compact: true,
-              message: l10n.knowledgeSourceInvalid,
-            ),
-          ],
-          if (_duplicateSource != null) ...[
-            const SizedBox(height: AppSpacing.s8),
-            AppStatusBanner(
-              key: const Key('knowledge-duplicate-source-warning'),
-              kind: AppStatusKind.warning,
-              compact: true,
-              message: l10n.knowledgeSourceDuplicateTitle,
-              details: l10n.knowledgeSourceDuplicateBody(
-                _duplicateSource!.title.isEmpty
-                    ? l10n.knowledgeUntitled
-                    : _duplicateSource!.title,
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            key: const ValueKey('knowledge-capture-tags'),
-            control: FTextFieldControl.managed(controller: _tags),
-            enabled: !_saving,
-            label: Text(l10n.knowledgeNoteTagsLabel),
-            hint: l10n.knowledgeNoteTagsHint,
-          ),
-          if (parseKnowledgeTags(_tags.text) case final tagPreview
-              when tagPreview.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.s8),
-            KnowledgeTagChips(
-              tags: tagPreview,
-              keyPrefix: 'knowledge-capture-tag',
-            ),
-          ],
-        ],
         if (_error case final message?) ...[
           const SizedBox(height: AppSpacing.s10),
           AppStatusBanner(

@@ -237,6 +237,7 @@ class _BalanceOverview extends ConsumerWidget {
                 fit: BoxFit.scaleDown,
                 alignment: AlignmentDirectional.centerStart,
                 child: AnimatedMoneyText(
+                  emphasizeInteger: true,
                   amount: netWorth.toDouble(),
                   currencyCode: baseCurrency,
                   style: TypographyTokens.displayLarge,

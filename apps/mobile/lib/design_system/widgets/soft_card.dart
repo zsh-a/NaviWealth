@@ -96,7 +96,7 @@ class SoftCard extends StatefulWidget {
   final VoidCallback? onPress;
 
   /// Override corner radius. When null, resolves from [level] via
-  /// `theme.card`: flat/raised → [AppRadius.lg], hero → [AppRadius.xl].
+  /// `theme.card`: flat/raised → [AppRadius.md], hero → [AppRadius.lg].
   final double? borderRadius;
 
   /// Apply the level's surface fill. Disable for nested rows that sit
@@ -227,11 +227,7 @@ class _SoftCardState extends State<SoftCard> {
     );
 
     final baseFill = widget.tinted
-        ? _surfaceFill(
-            surfaces: context.appTheme.surfaces,
-            primary: colors.primary,
-            isDark: isDark,
-          )
+        ? _surfaceFill(context.appTheme.surfaces)
         : Colors.transparent;
 
     final hoverBoost = isDark ? AppOpacity.hoverTintDark : AppOpacity.hoverTint;
@@ -249,12 +245,12 @@ class _SoftCardState extends State<SoftCard> {
 
     // One border strategy for the whole app (blueprint §8.3):
     // raised = borderless + shadow (fill difference carries dark mode),
-    // flat = whisper edge in dark only, hero = defined anchor edge.
+    // flat = whisper edge in dark only, hero = a quiet edge with depth carried by the surface.
     final borderAlpha = switch (widget.level) {
       SoftCardLevel.flat =>
         isDark ? AppOpacity.whisper : AppOpacity.transparent,
       SoftCardLevel.raised => AppOpacity.transparent,
-      SoftCardLevel.hero => isDark ? AppOpacity.disabled : AppOpacity.medium,
+      SoftCardLevel.hero => isDark ? AppOpacity.subtle : AppOpacity.light,
     };
 
     final borderColor = borderAlpha == AppOpacity.transparent
@@ -267,7 +263,7 @@ class _SoftCardState extends State<SoftCard> {
               : ColorPalette.surfaceHairline.withValues(alpha: borderAlpha));
 
     final gradient = widget.level == SoftCardLevel.hero && widget.tinted
-        ? _heroGradient(primary: colors.primary, isDark: isDark, base: fill)
+        ? _heroGradient(primary: colors.primary, base: fill)
         : null;
 
     // Keyboard focus ring wins over the level border (doc 11 §9).
@@ -286,42 +282,16 @@ class _SoftCardState extends State<SoftCard> {
     );
   }
 
-  Color _surfaceFill({
-    required AppSurfaces surfaces,
-    required Color primary,
-    required bool isDark,
-  }) {
-    if (!isDark) {
-      // Cool canvas + white modules. Flat dissolves; raised/hero lift with
-      // shadow rather than stacking greys.
-      return switch (widget.level) {
-        SoftCardLevel.flat => surfaces.card,
-        SoftCardLevel.raised => surfaces.raised,
-        SoftCardLevel.hero => surfaces.hero,
-      };
-    }
-    // Resolved surfaces carry the surface-style preference (OLED pulls the
-    // whole ladder down) — never reach for palette constants here.
-    return switch (widget.level) {
-      SoftCardLevel.flat => surfaces.card,
-      SoftCardLevel.raised => surfaces.raised,
-      SoftCardLevel.hero => Color.alphaBlend(
-        primary.withValues(alpha: AppOpacity.faint),
-        surfaces.hero,
-      ),
-    };
-  }
+  Color _surfaceFill(AppSurfaces surfaces) => switch (widget.level) {
+    SoftCardLevel.flat => surfaces.card,
+    SoftCardLevel.raised => surfaces.raised,
+    SoftCardLevel.hero => surfaces.hero,
+  };
 
-  LinearGradient _heroGradient({
-    required Color primary,
-    required bool isDark,
-    required Color base,
-  }) {
-    // Light mode: slightly stronger cyan wash so hero cards don't read as
-    // plain white slabs against the cool canvas.
-    final wash = isDark
-        ? primary.withValues(alpha: AppOpacity.light)
-        : primary.withValues(alpha: AppOpacity.subtle);
+  LinearGradient _heroGradient({required Color primary, required Color base}) {
+    // A small directional wash preserves the page anchor without tinting
+    // the whole card or competing with its data.
+    final wash = primary.withValues(alpha: AppOpacity.faint);
     return LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,

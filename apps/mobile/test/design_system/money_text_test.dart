@@ -19,6 +19,51 @@ DisplayMoney _money(String amount, String currency) =>
 void main() {
   setUpAll(AppFormatters.ensureInitialized);
 
+  testWidgets(
+    'display amounts preserve localized output and spoken precision',
+    (tester) async {
+      for (final locale in ['en_US', 'de_DE', 'zh_CN']) {
+        await tester.pumpWidget(
+          _wrap(
+            MoneyText(
+              amount: -12345.67,
+              currencyCode: 'EUR',
+              locale: locale,
+              emphasizeInteger: true,
+              style: const TextStyle(fontSize: 40),
+            ),
+          ),
+        );
+        final emphasized = tester.widget<Text>(find.byType(Text));
+        final rendered = emphasized.textSpan!.toPlainText();
+        final spoken = emphasized.semanticsLabel;
+        final spans = (emphasized.textSpan! as TextSpan).children!;
+        expect((spans.first as TextSpan).style!.fontSize, lessThan(40));
+        await tester.pumpWidget(
+          _wrap(
+            MoneyText(amount: -12345.67, currencyCode: 'EUR', locale: locale),
+          ),
+        );
+        final plain = tester.widget<Text>(find.byType(Text));
+        expect(rendered, plain.data);
+        expect(spoken, plain.semanticsLabel);
+      }
+    },
+  );
+
+  testWidgets('display emphasis never exposes private values', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const AmountPrivacyScope(
+          hidden: true,
+          child: MoneyText(amount: 98765.43, emphasizeInteger: true),
+        ),
+      ),
+    );
+    expect(find.byType(AmountPrivacyPlaceholder), findsOneWidget);
+    expect(find.textContaining('98,765', findRichText: true), findsNothing);
+  });
+
   testWidgets('MoneyText renders symbol + grouped value', (tester) async {
     await tester.pumpWidget(
       _wrap(

@@ -142,8 +142,8 @@ const CardSpec kAppCardSpec = CardSpec(
   padding: AppPageRhythm.cardPadding,
   densePadding: AppPageRhythm.densePadding,
   heroPadding: AppPageRhythm.heroPadding,
-  radius: AppRadius.lg,
-  heroRadius: AppRadius.xl,
+  radius: AppRadius.md,
+  heroRadius: AppRadius.lg,
 );
 
 const BadgeSpec kAppBadgeSpec = BadgeSpec(

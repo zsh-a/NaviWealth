@@ -34,7 +34,7 @@ class ColorPalette {
   // Re-derived into the cyan-gray navy hue family (was Tailwind slate
   // #8F9BB3, a blue-purple outlier). navy300 is the dark-mode muted
   // foreground, so its hue tints every secondary line of dark text.
-  static const Color navy300 = Color(0xFF90A6AD);
+  static const Color navy300 = Color(0xFFA2B3B9);
   static const Color navy400 = Color(0xFF6B838A);
   static const Color navy500 = Color(0xFF4D666D);
   static const Color navy600 = Color(0xFF3A5058);
@@ -46,8 +46,8 @@ class ColorPalette {
   // ladder; cyan is now reserved for interaction and data emphasis.
   static const Color navy950 = Color(0xFF071821);
   static const Color navyGlass = Color(0xFF101F2A);
-  static const Color navyRaised = Color(0xFF142936);
-  static const Color navyHero = Color(0xFF1B3542);
+  static const Color navyRaised = Color(0xFF172731);
+  static const Color navyHero = Color(0xFF1D303A);
   static const Color navySoftBorder = Color(0xFFCAD7DA);
 
   // ── OLED surfaces (AppSurfaceStyle.oled, dark only) ────────────────────

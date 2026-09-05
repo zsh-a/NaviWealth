@@ -39,6 +39,20 @@ BoxDecoration appGlassDecoration(
   return BoxDecoration(
     color: glassColor,
     borderRadius: borderRadius,
+    gradient:
+        frosted && (role == AppGlassRole.chrome || role == AppGlassRole.sticky)
+        ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color.alphaBlend(
+                ColorPalette.neutral0.withValues(alpha: AppOpacity.whisper),
+                glassColor,
+              ),
+              glassColor,
+            ],
+          )
+        : null,
     border: Border.all(color: borderColor, width: AppStroke.hairline),
     boxShadow: boxShadow,
   );

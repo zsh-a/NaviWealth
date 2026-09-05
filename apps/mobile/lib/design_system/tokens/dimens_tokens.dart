@@ -240,57 +240,39 @@ class AppShadow {
     ),
   ];
 
-  /// Standard card shadow — subtle depth.
+  /// Quiet, close-to-surface depth for content modules.
   static const List<BoxShadow> card = [
     BoxShadow(
       color: ColorPalette.shadowNavy04,
-      blurRadius: 16,
-      offset: Offset(0, 6),
+      blurRadius: 10,
+      offset: Offset(0, 2),
     ),
   ];
-
-  /// Dark raised modules — soft black lift so cards leave the canvas.
   static const List<BoxShadow> cardDark = [
     BoxShadow(
       color: ColorPalette.shadowDarkRaised,
-      blurRadius: 20,
-      offset: Offset(0, 8),
+      blurRadius: 12,
+      offset: Offset(0, 3),
     ),
   ];
-
-  /// Card hover / pressed state — slightly deeper.
   static const List<BoxShadow> cardHover = [
     BoxShadow(
       color: ColorPalette.shadowNavy08,
-      blurRadius: 20,
-      offset: Offset(0, 8),
+      blurRadius: 14,
+      offset: Offset(0, 4),
     ),
   ];
-
-  /// Hero card — deeper ambient shadow + brand whisper.
   static const List<BoxShadow> hero = [
     BoxShadow(
-      color: ColorPalette.shadowNavy08,
-      blurRadius: 28,
-      offset: Offset(0, 10),
-    ),
-    BoxShadow(
-      color: ColorPalette.shadowCyan04,
-      blurRadius: 40,
-      offset: Offset(0, 16),
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 20,
+      offset: Offset(0, 6),
     ),
   ];
-
-  /// Dark hero — depth plus a restrained cyan halo.
   static const List<BoxShadow> heroDark = [
     BoxShadow(
-      color: ColorPalette.shadowDarkHero,
-      blurRadius: 32,
-      offset: Offset(0, 12),
-    ),
-    BoxShadow(
-      color: ColorPalette.shadowCyan04,
-      blurRadius: 28,
+      color: ColorPalette.shadowDarkRaised,
+      blurRadius: 20,
       offset: Offset(0, 6),
     ),
   ];

@@ -71,6 +71,7 @@ class _NetWorthHeader extends ConsumerWidget {
                   fit: BoxFit.scaleDown,
                   alignment: AlignmentDirectional.centerStart,
                   child: AnimatedMoneyText(
+                    emphasizeInteger: true,
                     amount: value,
                     currencyCode: snapshot.baseCurrency,
                     style: TypographyTokens.displayLarge,

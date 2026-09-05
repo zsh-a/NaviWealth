@@ -147,20 +147,27 @@ class _ActivityEntryDetailPageState
               icon: FLucideIcons.listTree,
               title: l10n.activityEntryDetailLedgerTitle,
               showChevron: false,
-              trailing: Icon(
-                _ledgerExpanded
-                    ? FLucideIcons.chevronUp
-                    : FLucideIcons.chevronDown,
+              trailing: AnimatedRotation(
+                turns: _ledgerExpanded ? 0.5 : 0,
+                duration: AppMotionPolicy.duration(
+                  context,
+                  Motion.componentChange,
+                  role: AppMotionRole.decorative,
+                ),
+                curve: Motion.standard,
+                child: const Icon(FLucideIcons.chevronDown),
               ),
               onTap: () => setState(() => _ledgerExpanded = !_ledgerExpanded),
             ),
           ),
-          if (_ledgerExpanded)
-            _LedgerBreakdownCard(
+          AnimatedSizeFade(
+            visible: _ledgerExpanded,
+            child: _LedgerBreakdownCard(
               postings: widget.entry.postings,
               accountsById: widget.accountsById,
               formatters: formatters,
             ),
+          ),
         ],
       ),
     );

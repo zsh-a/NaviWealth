@@ -119,3 +119,22 @@ signal of direction, even in colorblind mode.
 3. Run `flutter analyze` and `flutter test` from `apps/mobile/`.
 4. Commit the Dart change together with the regenerated `tokens.json`.
 5. For Figma, re-import the regenerated `tokens.json` via Tokens Studio.
+
+## Visual hierarchy and transitions
+
+- Ordinary cards use the medium radius with close, soft shadows. Hero cards
+  use the large radius and a faint accent wash; dark separation comes mainly
+  from the surface ladder rather than bright outlines.
+- Use `emphasizeInteger: true` on display-size `MoneyText`,
+  `AnimatedMoneyText`, or `SignedMoneyText`. This preserves the formatter's
+  full amount and accessibility label while reducing the size of the currency
+  and fraction. Dense rows retain uniform type; privacy placeholders apply
+  before the styled amount is rendered.
+- Use `AnimatedSizeFade` for disclosures. Outgoing content fades before being
+  removed and cannot receive input or accessibility focus. Reduced motion
+  uses a short fade without spatial expansion.
+- Segmented controls use a sliding selection surface when options fit one
+  row, and retain local selection marks in wrapped layouts. Selection motion
+  and chart interpolation stop under reduced motion.
+- Glass highlights are reserved for floating navigation and sticky chrome;
+  content modules remain opaque and high-contrast surfaces omit live blur.

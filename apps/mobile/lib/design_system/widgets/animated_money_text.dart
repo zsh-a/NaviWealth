@@ -40,6 +40,7 @@ class AnimatedMoneyText extends StatefulWidget {
     this.shortDeltaThreshold = 0.05,
     this.minDeltaThreshold = 0,
     this.highlightChanges = true,
+    this.emphasizeInteger = false,
   });
 
   // -- MoneyText pass-through props -----------------------------------------
@@ -54,6 +55,7 @@ class AnimatedMoneyText extends StatefulWidget {
   final String? locale;
   final TextAlign? textAlign;
   final bool compact;
+  final bool emphasizeInteger;
   final bool showSign;
   final String? semanticsLabel;
 
@@ -215,6 +217,7 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
   Widget _staticMoneyText(num? value) {
     return MoneyText(
       amount: value,
+      emphasizeInteger: widget.emphasizeInteger,
       currencyCode: widget.currencyCode,
       symbol: widget.symbol,
       symbolStyle: widget.symbolStyle,

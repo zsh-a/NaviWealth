@@ -83,7 +83,7 @@ void main() {
     );
 
     final radius = _decoration(tester).borderRadius as BorderRadius?;
-    expect(radius?.topLeft.x, AppRadius.xl);
+    expect(radius?.topLeft.x, AppRadius.lg);
   });
 
   testWidgets('hero cards use a brand-wash gradient', (tester) async {

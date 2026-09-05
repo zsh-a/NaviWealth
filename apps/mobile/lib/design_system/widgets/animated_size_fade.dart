@@ -3,21 +3,9 @@ import 'package:flutter/material.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
 
-/// Combines [AnimatedSize] and [AnimatedOpacity] for content that
-/// expands/collapses with a smooth height animation and fade.
-///
-/// When [visible] is `false`, the child is replaced by
-/// [SizedBox.shrink()] with opacity 0 — the height animates to zero
-/// and the content fades out simultaneously.
-///
-/// ```dart
-/// AnimatedSizeFade(
-///   visible: _expanded,
-///   child: DetailSection(data),
-/// )
-/// ```
-///
-/// The animation respects [MediaQueryData.disableAnimations].
+/// Reveals content without removing the outgoing body before its fade ends.
+/// Hidden content is removed after the transition and cannot receive input
+/// or accessibility focus while collapsing.
 class AnimatedSizeFade extends StatelessWidget {
   const AnimatedSizeFade({
     super.key,
@@ -28,36 +16,52 @@ class AnimatedSizeFade extends StatelessWidget {
     this.alignment = Alignment.topCenter,
   });
 
-  /// Whether the child is visible. When toggled from `true` to `false`,
-  /// the content fades out and the height collapses to zero.
   final bool visible;
-
-  /// The content to show when [visible] is `true`.
   final Widget child;
-
-  /// Duration for both the size and opacity transitions.
   final Duration duration;
-
-  /// Easing curve for the [AnimatedSize] transition.
   final Curve curve;
-
-  /// Alignment for the [AnimatedSize] expansion. Defaults to
-  /// [Alignment.topCenter] so content grows downward.
   final AlignmentGeometry alignment;
 
   @override
   Widget build(BuildContext context) {
     final effectiveDuration = AppMotionPolicy.duration(context, duration);
-
-    return AnimatedSize(
-      duration: effectiveDuration,
-      curve: curve,
-      alignment: alignment,
-      child: AnimatedOpacity(
-        duration: effectiveDuration,
-        curve: curve,
-        opacity: visible ? 1 : 0,
-        child: visible ? child : const SizedBox.shrink(),
+    return ExcludeFocus(
+      excluding: !visible,
+      child: ExcludeSemantics(
+        excluding: !visible,
+        child: IgnorePointer(
+          ignoring: !visible,
+          child: AnimatedSwitcher(
+            duration: effectiveDuration,
+            reverseDuration: effectiveDuration,
+            switchInCurve: curve,
+            switchOutCurve: curve,
+            layoutBuilder: (current, previous) => Stack(
+              alignment: alignment.resolve(Directionality.of(context)),
+              children: [
+                for (final outgoing in previous)
+                  ExcludeFocus(
+                    child: ExcludeSemantics(
+                      child: IgnorePointer(child: outgoing),
+                    ),
+                  ),
+                ?current,
+              ],
+            ),
+            transitionBuilder: (child, animation) {
+              final faded = FadeTransition(opacity: animation, child: child);
+              if (AppMotionPolicy.reduceMotion(context)) return faded;
+              return SizeTransition(
+                sizeFactor: animation,
+                alignment: alignment,
+                child: faded,
+              );
+            },
+            child: visible
+                ? KeyedSubtree(key: const ValueKey('expanded'), child: child)
+                : const SizedBox.shrink(key: ValueKey('collapsed')),
+          ),
+        ),
       ),
     );
   }

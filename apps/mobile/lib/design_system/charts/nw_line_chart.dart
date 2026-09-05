@@ -358,7 +358,15 @@ class _NwLineChartState extends State<NwLineChart> {
     // The main chart — wrapped in RepaintBoundary. Does NOT rebuild on
     // touch because we only update _touchNotifier (not setState).
     Widget chartWidget = RepaintBoundary(
-      child: LineChart(chartDataObj.chartData),
+      child: LineChart(
+        chartDataObj.chartData,
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.componentChange,
+          role: AppMotionRole.status,
+        ),
+        curve: Motion.standardDecelerate,
+      ),
     );
 
     // First-data entrance: a one-shot left → right reveal (doc 11 §7).

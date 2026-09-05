@@ -42,13 +42,8 @@ void main() {
     expect(find.text('A'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
     expect(find.text('C'), findsOneWidget);
-    expect(find.byType(AppSelectionIndicator), findsNWidgets(3));
-    expect(
-      tester
-          .widgetList<AnimatedOpacity>(find.byType(AnimatedOpacity))
-          .map((widget) => widget.opacity),
-      orderedEquals(const [1.0, 0.0, 0.0]),
-    );
+    expect(find.byType(AnimatedPositionedDirectional), findsOneWidget);
+    expect(find.byType(AppSelectionIndicator), findsNothing);
 
     await tester.tap(find.text('B'));
     await tester.pump(const Duration(milliseconds: 120));

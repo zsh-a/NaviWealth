@@ -61,6 +61,7 @@ class _HeroAmountCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s16),
           if (headline != null)
             SignedMoneyText(
+              emphasizeInteger: true,
               amount: headline.units,
               unit: headline.unit,
               formatters: formatters,

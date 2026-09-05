@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_interaction.dart';
 import 'soft_card.dart';
@@ -53,10 +55,19 @@ class AppDisclosureHeader extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-            size: AppIconSizes.md,
-            color: colors.mutedForeground,
+          AnimatedRotation(
+            turns: expanded ? 0.5 : 0,
+            duration: AppMotionPolicy.duration(
+              context,
+              Motion.componentChange,
+              role: AppMotionRole.decorative,
+            ),
+            curve: Motion.standard,
+            child: Icon(
+              FLucideIcons.chevronDown,
+              size: AppIconSizes.md,
+              color: colors.mutedForeground,
+            ),
           ),
         ],
       ),

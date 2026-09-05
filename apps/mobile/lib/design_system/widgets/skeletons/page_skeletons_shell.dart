@@ -58,9 +58,11 @@ class _PageSkeletonShellState<T> extends State<PageSkeletonShell<T>> {
     return AnimatedSwitcher(
       duration: AppMotionPolicy.duration(
         context,
-        Motion.fast,
+        Motion.contentTransition,
         role: AppMotionRole.decorative,
       ),
+      switchInCurve: Motion.standardDecelerate,
+      switchOutCurve: Motion.standardAccelerate,
       child: showSkeleton
           ? KeyedSubtree(
               key: const ValueKey('page-skeleton'),
