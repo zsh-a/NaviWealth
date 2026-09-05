@@ -78,12 +78,7 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
             children: [
               Icon(FLucideIcons.route, color: context.theme.colors.primary),
               const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Text(
-                  l10n.financeActivationTitle,
-                  style: context.rowTitleStyle,
-                ),
-              ),
+              Expanded(child: Text(title, style: context.rowTitleStyle)),
               AppBadge(
                 label: l10n.financeActivationProgress(
                   snapshot.completedSteps,
@@ -97,14 +92,12 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
                 onPress: () => ref
                     .read(financeActivationDismissedProvider.notifier)
                     .dismiss(),
-                size: 32,
+                size: 44,
                 iconSize: AppIconSizes.xs,
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(title, style: context.labelStyle),
-          const SizedBox(height: AppSpacing.s4),
           Text(body, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s12),
           FButton(

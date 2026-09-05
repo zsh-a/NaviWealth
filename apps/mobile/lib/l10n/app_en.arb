@@ -7942,7 +7942,7 @@
   "financeActivationProgress": "{completed}/{total}",
   "@financeActivationProgress": { "placeholders": { "completed": { "type": "int" }, "total": { "type": "int" } } },
   "financeActivationDataTitle": "Start with real activity",
-  "financeActivationDataBody": "Add an entry manually or import a statement so the result is grounded in your own data.",
+  "financeActivationDataBody": "Record an entry or import a statement to get started.",
   "financeActivationDataAction": "Add financial data",
   "financeActivationReviewTitle": "Review only the exceptions",
   "financeActivationReviewBody": "{count} items still need confirmation or recovery.",
@@ -8176,7 +8176,7 @@
   "rebalanceCapitalFirstAction": "Resolve capital movements first",
   "rebalanceResolveTransferAction": "Resolve transfer",
   "healthActivationTitle": "Connect your health data",
-  "healthActivationBody": "Choose the source you already use. HealthOS stays useful with manual entries, and every connection is read-only.",
+  "healthActivationBody": "Sync a health source or record a measurement manually. Connections are read-only.",
   "healthActivationAction": "Connect system health",
   "healthActivationGarminAction": "Connect Garmin",
   "healthActivationManualAction": "Record manually",
@@ -8347,5 +8347,9 @@
   "@developerIssuesToolErrorsAttached": { "placeholders": { "count": { "type": "int" } } },
   "developerIssuesExportFailedToast": "Couldn't open the export sheet. Try again.",
   "developerIssuesAdvancedTitle": "Product issue reports",
-  "developerIssuesAdvancedSubtitle": "Capture route, build, latest trace, and bounded tool error codes locally"
+  "developerIssuesAdvancedSubtitle": "Capture route, build, latest trace, and bounded tool error codes locally",
+  "commonLoadMore": "Load more",
+  "knowledgeSearchLimitHint": "Showing the top 50 matches. Refine your search to find more specific results.",
+  "knowledgeCaptureMetadata": "Source and tags",
+  "settingsAppearanceSummary": "Theme, colors and language"
 }

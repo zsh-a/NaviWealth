@@ -1,6 +1,8 @@
 /// KnowledgeOS repository for Notes, Decisions, and Relations.
 library;
 
+import 'dart:convert';
+
 import 'package:drift/drift.dart' hide Column;
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/op_outbox.dart';

@@ -15014,7 +15014,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get financeActivationDataTitle => '从真实流水开始';
 
   @override
-  String get financeActivationDataBody => '手工记一笔或导入账单，让结果建立在你自己的数据上。';
+  String get financeActivationDataBody => '记一笔收支，或导入账单，开始整理财务。';
 
   @override
   String get financeActivationDataAction => '添加财务数据';
@@ -15662,8 +15662,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthActivationTitle => '连接健康数据';
 
   @override
-  String get healthActivationBody =>
-      '选择你已经在用的数据源。所有连接均为只读，也可以仅靠手动记录使用 HealthOS。';
+  String get healthActivationBody => '同步健康数据源，或手动记录身体测量。连接仅读取数据。';
 
   @override
   String get healthActivationAction => '连接系统健康';
@@ -16028,4 +16027,16 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get developerIssuesAdvancedSubtitle =>
       '在本地捕获页面、构建版本、最新 Trace 与有限工具错误码';
+
+  @override
+  String get commonLoadMore => '加载更多';
+
+  @override
+  String get knowledgeSearchLimitHint => '当前显示最相关的 50 条结果，请细化搜索条件。';
+
+  @override
+  String get knowledgeCaptureMetadata => '来源与标签';
+
+  @override
+  String get settingsAppearanceSummary => '主题、颜色与语言';
 }

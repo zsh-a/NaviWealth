@@ -46,10 +46,14 @@ hidden tab, background Agent, triage queue, or separate lifecycle dashboard.
 Due decisions surface as a compact Inbox section and remain available through
 `list_due_reviews` and normal Library access. Inbox limits its Note list to
 recent captures; the full collection belongs to Library. Due reviews use an
-independent owner-scoped repository query, so the Library's recent-row limit
-cannot omit older due decisions. Inbox previews three reviews and expands the
+independent owner-scoped repository query and refresh with foreground time,
+so older decisions and newly due reviews remain visible. Inbox previews three reviews and expands the
 complete due list lazily. Notes and reviews retain independent loading/error
-states; refresh waits for both sections.
+states; refresh waits for both sections. Library grows its live browse window
+in batches of 50, with deterministic updated-time ordering and a load-more
+control. Tag facets cover the full library; tag filtering precedes the query
+limit. Ranked search displays up to 50 results and explains when to refine the
+query.
 
 Key files:
 
@@ -61,7 +65,10 @@ Key files:
 - `features/knowledge/ui/knowledge_decision_detail_page.dart`
 
 Capture lets the user choose Note or Decision directly. It never saves an
-intermediate Note merely to classify or promote it later. A new Decision
+intermediate Note merely to classify or promote it later. Notes use a guarded
+sheet with source and tags collapsed initially. Structured Decision capture
+opens a full page with an unsaved-changes guard; returning preserves any Note
+draft in the sheet. A new Decision
 requires a question, one to three unique candidate options, and an explicit
 selection from those options. Each option may keep a short rationale; existing
 rows with more options remain editable without adding further options. The

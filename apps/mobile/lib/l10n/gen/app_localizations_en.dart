@@ -15858,7 +15858,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financeActivationDataBody =>
-      'Add an entry manually or import a statement so the result is grounded in your own data.';
+      'Record an entry or import a statement to get started.';
 
   @override
   String get financeActivationDataAction => 'Add financial data';
@@ -16546,7 +16546,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthActivationBody =>
-      'Choose the source you already use. HealthOS stays useful with manual entries, and every connection is read-only.';
+      'Sync a health source or record a measurement manually. Connections are read-only.';
 
   @override
   String get healthActivationAction => 'Connect system health';
@@ -16925,4 +16925,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get developerIssuesAdvancedSubtitle =>
       'Capture route, build, latest trace, and bounded tool error codes locally';
+
+  @override
+  String get commonLoadMore => 'Load more';
+
+  @override
+  String get knowledgeSearchLimitHint =>
+      'Showing the top 50 matches. Refine your search to find more specific results.';
+
+  @override
+  String get knowledgeCaptureMetadata => 'Source and tags';
+
+  @override
+  String get settingsAppearanceSummary => 'Theme, colors and language';
 }

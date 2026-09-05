@@ -101,14 +101,16 @@ class ExecutionActionCard extends StatelessWidget {
                               spacing: AppSpacing.s6,
                               runSpacing: AppSpacing.s6,
                               children: [
-                                AppBadge(
-                                  label: executionStatusLabel(
-                                    l10n,
-                                    action.status,
+                                if (!compact ||
+                                    action.status != ExecutionActionStatus.todo)
+                                  AppBadge(
+                                    label: executionStatusLabel(
+                                      l10n,
+                                      action.status,
+                                    ),
+                                    tone: statusTone,
+                                    size: AppBadgeSize.compact,
                                   ),
-                                  tone: statusTone,
-                                  size: AppBadgeSize.compact,
-                                ),
                                 if (action.priority == ExecutionPriority.high)
                                   AppBadge(
                                     label: l10n.executionPriorityHigh,

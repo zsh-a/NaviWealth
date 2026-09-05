@@ -396,3 +396,22 @@ class _BiometricUnlockRowState extends ConsumerState<_BiometricUnlockRow> {
     ref.read(biometricUnlockSessionProvider.notifier).unlock();
   }
 }
+
+class AppearanceSettingsPage extends StatelessWidget {
+  const AppearanceSettingsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) => AppPageScaffold(
+    title: AppLocalizations.of(context).settingsAppearanceSection,
+    childPad: false,
+    child: ListView(
+      children: const [
+        AdaptiveContentFrame(
+          maxWidth: AdaptiveMaxWidth.narrow,
+          padding: EdgeInsets.all(AppSpacing.s16),
+          primary: _Section(child: _AppearanceSection()),
+        ),
+      ],
+    ),
+  );
+}

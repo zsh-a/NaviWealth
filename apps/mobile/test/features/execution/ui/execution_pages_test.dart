@@ -10,6 +10,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/design_system/widgets/app_toast.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
 import 'package:naviwealth/features/execution/data/execution_daily_focus.dart';
@@ -151,6 +152,54 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
     expect(find.byIcon(FLucideIcons.arrowDown), findsNothing);
+  });
+
+  testWidgets('daily focus completes in place and supports undo', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repository = ExecutionRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+    );
+    final action = _action(id: 'focused', title: 'Finish the important task');
+    await repository.upsertAction(action);
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionTodayPage(),
+        overrides: [
+          executionRepositoryProvider.overrideWith((_) async => repository),
+          executionOwnerUserIdProvider.overrideWith((_) async => 'user'),
+          mutationStamperProvider.overrideWith(
+            (_) async => makeStubStamper(userId: 'user'),
+          ),
+          execution_agent_providers.latestExecutionReviewArtifactProvider
+              .overrideWith((_) async => null),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ExecutionTodayPage)),
+    );
+    await container.read(executionDailyFocusProvider.notifier).set([action.id]);
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('Done'));
+    await tester.pumpAndSettle();
+    expect(
+      (await repository.findAction(ownerUserId: 'user', id: action.id))?.status,
+      ExecutionActionStatus.done,
+    );
+    expect(container.read(executionDailyFocusProvider), isEmpty);
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(
+      (await repository.findAction(ownerUserId: 'user', id: action.id))?.status,
+      ExecutionActionStatus.todo,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 7));
   });
 
   testWidgets('Plans renders open actions without a container', (tester) async {
@@ -672,6 +721,7 @@ Widget _wrap(
     overrides: overrides,
     child: MaterialApp(
       theme: AppTheme.light(),
+      builder: (context, child) => AppMessenger.init(child: child!),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),

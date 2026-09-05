@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'overview/settings_overview.dart';
+export 'overview/settings_overview.dart' show AppearanceSettingsPage;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});

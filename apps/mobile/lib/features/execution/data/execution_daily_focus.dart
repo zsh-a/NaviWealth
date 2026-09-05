@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/auth/current_user.dart';
+import '../../../core/time/current_time_provider.dart';
 import '../../../design_system/preferences/theme_preferences.dart';
 
 String executionDailyFocusKey(String ownerUserId) =>
@@ -11,6 +12,7 @@ String executionDailyFocusKey(String ownerUserId) =>
 
 final executionDailyFocusProvider =
     StateNotifierProvider<ExecutionDailyFocusController, List<String>>((ref) {
+      ref.watch(currentLocalDayProvider);
       SharedPreferences? preferences;
       try {
         preferences = ref.watch(sharedPreferencesProvider);
@@ -18,19 +20,28 @@ final executionDailyFocusProvider =
         // Focus remains usable in isolated surfaces without app bootstrap.
       }
       final ownerUserId = ref.watch(activeUserIdProvider) ?? kLocalOnlyUserId;
-      return ExecutionDailyFocusController(preferences, ownerUserId);
+      return ExecutionDailyFocusController(
+        preferences,
+        ownerUserId,
+        now: () => ref.read(currentTimeProvider),
+      );
     });
 
 final class ExecutionDailyFocusController extends StateNotifier<List<String>> {
-  ExecutionDailyFocusController(this._preferences, this._ownerUserId)
-    : super(
-        _preferences == null
-            ? const <String>[]
-            : _readToday(_preferences, _ownerUserId),
-      );
+  ExecutionDailyFocusController(
+    this._preferences,
+    this._ownerUserId, {
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now,
+       super(
+         _preferences == null
+             ? const <String>[]
+             : _readToday(_preferences, _ownerUserId, (now ?? DateTime.now)()),
+       );
 
   final SharedPreferences? _preferences;
   final String _ownerUserId;
+  final DateTime Function() _now;
 
   /// Returns false instead of silently evicting a selected action when full.
   Future<bool> toggle(String actionId) async {
@@ -74,7 +85,7 @@ final class ExecutionDailyFocusController extends StateNotifier<List<String>> {
     await _preferences?.setString(
       executionDailyFocusKey(_ownerUserId),
       jsonEncode(<String, Object?>{
-        'day': _localDayKey(DateTime.now()),
+        'day': _localDayKey(_now()),
         'action_ids': normalized,
       }),
     );
@@ -83,13 +94,13 @@ final class ExecutionDailyFocusController extends StateNotifier<List<String>> {
   static List<String> _readToday(
     SharedPreferences preferences,
     String ownerUserId,
+    DateTime now,
   ) {
     final encoded = preferences.getString(executionDailyFocusKey(ownerUserId));
     if (encoded == null) return const <String>[];
     try {
       final json = jsonDecode(encoded);
-      if (json is! Map<String, Object?> ||
-          json['day'] != _localDayKey(DateTime.now())) {
+      if (json is! Map<String, Object?> || json['day'] != _localDayKey(now)) {
         return const <String>[];
       }
       final ids = json['action_ids'];

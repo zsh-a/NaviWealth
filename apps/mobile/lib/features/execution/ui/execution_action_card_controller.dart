@@ -28,7 +28,11 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     this.outcome,
     this.focusSelected = false,
     this.onToggleFocus,
+    this.completionBuilder,
   });
+
+  /// Reuses status feedback and undo for the compact daily-focus row.
+  final Widget Function(bool busy, VoidCallback onDone)? completionBuilder;
 
   final ExecutionAction action;
   final VoidCallback onEdit;
@@ -135,6 +139,14 @@ class _ExecutionActionCardControllerState
 
   @override
   Widget build(BuildContext context) {
+    void complete() => unawaited(
+      _changeStatus(
+        ExecutionActionStatus.done,
+        progressNote: widget.doneProgressNote,
+      ),
+    );
+    final completionBuilder = widget.completionBuilder;
+    if (completionBuilder != null) return completionBuilder(_busy, complete);
     return ExecutionActionCard(
       action: widget.action,
       busy: _busy,

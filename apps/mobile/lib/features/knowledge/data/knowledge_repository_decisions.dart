@@ -13,12 +13,17 @@ mixin KnowledgeDecisionsRepositoryMixin {
   Stream<List<KnowledgeDecision>> watchDecisions({
     required String ownerUserId,
     int? limit,
+    bool orderByUpdated = false,
   }) {
     final q = _db.select(_db.knowledgeDecisions)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
-        (t) => OrderingTerm(expression: t.decidedAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(
+          expression: orderByUpdated ? t.updatedAt : t.decidedAt,
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(expression: t.id),
       ]);
     if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(knowledgeDecisionFromRow).toList());

@@ -9,7 +9,7 @@ import {
 // PathUrlStrategy is enabled in app/bootstrap.dart, so the routes below
 // must work as direct hits without any `#/` fragment. The asserted route
 // paths come from app/route_paths.dart and docs/web-routing.md.
-const ROUTES = ['/', '/activity', '/wealth', '/plan', '/settings'] as const;
+const ROUTES = ['/', '/activity', '/wealth', '/plan', '/settings', '/settings/appearance'] as const;
 
 test.describe('go_router (PathUrlStrategy)', () => {
   for (const route of ROUTES) {

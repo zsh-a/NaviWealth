@@ -67,7 +67,9 @@ class _DashboardBody extends ConsumerWidget {
               : AdaptiveMaxWidth.dashboard,
           onRefresh: onRefresh,
           greeting: const HomeGreetingHeader(),
-          stage: snapshot != null
+          stage: showActivation && snapshot?.isEmpty == true
+              ? const SizedBox.shrink()
+              : snapshot != null
               ? _NetWorthHeader(snapshot: snapshot)
               : snapshotAsync.when(
                   loading: () => const _NetWorthStageSkeleton(),
@@ -78,7 +80,10 @@ class _DashboardBody extends ConsumerWidget {
                   ),
                   data: (value) => _NetWorthHeader(snapshot: value),
                 ),
-          stickyBuilder: snapshot == null ? null : stickyNetWorth,
+          stickyBuilder:
+              snapshot == null || (showActivation && snapshot.isEmpty)
+              ? null
+              : stickyNetWorth,
           modules: [
             _HomeSummaryLayout(
               showActivation: showActivation,

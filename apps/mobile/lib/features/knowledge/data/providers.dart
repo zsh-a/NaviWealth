@@ -8,6 +8,7 @@ import '../../../core/ai/local/memory/providers.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/sync/outbox_provider.dart';
+import '../../../core/time/current_time_provider.dart';
 import '../domain/knowledge_models.dart';
 import 'knowledge_repository.dart';
 import 'knowledge_search_service.dart';
@@ -57,11 +58,12 @@ final knowledgeRecentNotesProvider =
 
 final knowledgeDueReviewsProvider =
     StreamProvider.autoDispose<List<KnowledgeDecision>>((ref) async* {
+      final asOf = ref.watch(currentTimeProvider);
       final ownerUserId = await ref.watch(knowledgeOwnerUserIdProvider.future);
       final repository = await ref.watch(knowledgeRepositoryProvider.future);
       yield* repository.watchDueReviews(
         ownerUserId: ownerUserId,
-        asOf: DateTime.now().toUtc(),
+        asOf: asOf.toUtc(),
       );
     });
 
@@ -143,3 +145,39 @@ final knowledgeRelationSuggestionsProvider = FutureProvider.autoDispose
         topK: 12,
       );
     });
+
+/// Grow the live query window on demand so edits/deletes cannot leave holes
+/// between separately cached offset pages. One extra row signals more results.
+final knowledgeLibraryNotesProvider = StreamProvider.autoDispose
+    .family<List<KnowledgeNote>, ({int limit, String? tag})>((
+      ref,
+      request,
+    ) async* {
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchNotes(
+        ownerUserId: owner,
+        limit: request.limit + 1,
+        tag: request.tag,
+        orderByUpdated: true,
+      );
+    });
+
+final knowledgeLibraryDecisionsProvider = StreamProvider.autoDispose
+    .family<List<KnowledgeDecision>, int>((ref, limit) async* {
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchDecisions(
+        ownerUserId: owner,
+        limit: limit + 1,
+        orderByUpdated: true,
+      );
+    });
+
+final knowledgeLibraryTagsProvider = StreamProvider.autoDispose<List<String>>((
+  ref,
+) async* {
+  final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+  final repository = await ref.watch(knowledgeRepositoryProvider.future);
+  yield* repository.watchNoteTags(ownerUserId: owner);
+});

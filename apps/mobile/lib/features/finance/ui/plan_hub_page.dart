@@ -297,9 +297,10 @@ class _PlanSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppSection.group(
-      title: title,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SectionHeader(title: title),
         for (final (index, entry) in entries.indexed) ...[
           if (index > 0) const FDivider(),
           _PlanRow(spec: entry),
@@ -330,9 +331,10 @@ class _CollapsiblePlanSectionState extends State<_CollapsiblePlanSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AppSection.group(
-      title: widget.title,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SectionHeader(title: widget.title),
         Semantics(
           expanded: _expanded,
           child: AppNavRow(
@@ -371,7 +373,7 @@ class _PlanRow extends StatelessWidget {
     return AppNavRow(
       icon: spec.icon,
       title: spec.title,
-      subtitle: spec.requiresAttention ? null : spec.subtitle,
+      subtitle: spec.subtitle,
       titleMaxLines: 2,
       subtitleMaxLines: 2,
       onTap: () => context.push(spec.path),

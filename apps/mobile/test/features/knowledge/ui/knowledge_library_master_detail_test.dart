@@ -66,6 +66,14 @@ Widget _wrap({
   );
   return ProviderScope(
     overrides: [
+      if (notes != null)
+        knowledgeLibraryNotesProvider.overrideWith(
+          (_, request) => Stream.value(notes.take(request.limit + 1).toList()),
+        ),
+      if (decisions != null)
+        knowledgeLibraryDecisionsProvider.overrideWith(
+          (_, limit) => Stream.value(decisions.take(limit + 1).toList()),
+        ),
       sharedPreferencesProvider.overrideWithValue(_prefs),
       knowledgeRepositoryProvider.overrideWith((_) async => _repository),
       knowledgeOwnerUserIdProvider.overrideWith(
@@ -189,6 +197,12 @@ void main() {
       ),
     ];
 
+    for (final item in notes) {
+      await _repository.upsertNote(item);
+    }
+    for (final item in decisions) {
+      await _repository.upsertDecision(item);
+    }
     await _setSurface(tester, 800);
     await tester.pumpWidget(
       _wrap(contentWidth: 700, notes: notes, decisions: decisions),

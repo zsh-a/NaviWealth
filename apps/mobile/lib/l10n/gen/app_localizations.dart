@@ -26599,7 +26599,7 @@ abstract class AppLocalizations {
   /// No description provided for @financeActivationDataBody.
   ///
   /// In en, this message translates to:
-  /// **'Add an entry manually or import a statement so the result is grounded in your own data.'**
+  /// **'Record an entry or import a statement to get started.'**
   String get financeActivationDataBody;
 
   /// No description provided for @financeActivationDataAction.
@@ -27823,7 +27823,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthActivationBody.
   ///
   /// In en, this message translates to:
-  /// **'Choose the source you already use. HealthOS stays useful with manual entries, and every connection is read-only.'**
+  /// **'Sync a health source or record a measurement manually. Connections are read-only.'**
   String get healthActivationBody;
 
   /// No description provided for @healthActivationAction.
@@ -28453,6 +28453,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Capture route, build, latest trace, and bounded tool error codes locally'**
   String get developerIssuesAdvancedSubtitle;
+
+  /// No description provided for @commonLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get commonLoadMore;
+
+  /// No description provided for @knowledgeSearchLimitHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the top 50 matches. Refine your search to find more specific results.'**
+  String get knowledgeSearchLimitHint;
+
+  /// No description provided for @knowledgeCaptureMetadata.
+  ///
+  /// In en, this message translates to:
+  /// **'Source and tags'**
+  String get knowledgeCaptureMetadata;
+
+  /// No description provided for @settingsAppearanceSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme, colors and language'**
+  String get settingsAppearanceSummary;
 }
 
 class _AppLocalizationsDelegate

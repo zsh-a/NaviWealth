@@ -4732,7 +4732,7 @@
   "financeActivationProgress": "{completed}/{total}",
   "@financeActivationProgress": { "placeholders": { "completed": { "type": "int" }, "total": { "type": "int" } } },
   "financeActivationDataTitle": "从真实流水开始",
-  "financeActivationDataBody": "手工记一笔或导入账单，让结果建立在你自己的数据上。",
+  "financeActivationDataBody": "记一笔收支，或导入账单，开始整理财务。",
   "financeActivationDataAction": "添加财务数据",
   "financeActivationReviewTitle": "只处理例外项",
   "financeActivationReviewBody": "还有 {count} 项需要确认或恢复。",
@@ -4966,7 +4966,7 @@
   "rebalanceCapitalFirstAction": "请先处理资金调拨",
   "rebalanceResolveTransferAction": "处理调拨",
   "healthActivationTitle": "连接健康数据",
-  "healthActivationBody": "选择你已经在用的数据源。所有连接均为只读，也可以仅靠手动记录使用 HealthOS。",
+  "healthActivationBody": "同步健康数据源，或手动记录身体测量。连接仅读取数据。",
   "healthActivationAction": "连接系统健康",
   "healthActivationGarminAction": "连接 Garmin",
   "healthActivationManualAction": "手动记录",
@@ -5133,5 +5133,9 @@
   "@developerIssuesToolErrorsAttached": { "placeholders": { "count": { "type": "int" } } },
   "developerIssuesExportFailedToast": "无法打开导出面板，请重试。",
   "developerIssuesAdvancedTitle": "产品问题报告",
-  "developerIssuesAdvancedSubtitle": "在本地捕获页面、构建版本、最新 Trace 与有限工具错误码"
+  "developerIssuesAdvancedSubtitle": "在本地捕获页面、构建版本、最新 Trace 与有限工具错误码",
+  "commonLoadMore": "加载更多",
+  "knowledgeSearchLimitHint": "当前显示最相关的 50 条结果，请细化搜索条件。",
+  "knowledgeCaptureMetadata": "来源与标签",
+  "settingsAppearanceSummary": "主题、颜色与语言"
 }

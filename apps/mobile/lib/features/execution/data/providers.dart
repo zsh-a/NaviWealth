@@ -5,6 +5,7 @@ import '../../../core/persistence/providers.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/outbox_provider.dart';
 import '../../../core/sync/sync_meta.dart';
+import '../../../core/time/current_time_provider.dart';
 import '../domain/execution_models.dart';
 import 'execution_repository.dart';
 
@@ -24,12 +25,10 @@ final executionOwnerUserIdProvider = FutureProvider.autoDispose<String>((ref) {
 
 final executionTodayActionsProvider =
     StreamProvider.autoDispose<List<ExecutionAction>>((ref) async* {
+      final asOf = ref.watch(currentLocalDayProvider);
       final ownerUserId = await ref.watch(executionOwnerUserIdProvider.future);
       final repository = await ref.watch(executionRepositoryProvider.future);
-      yield* repository.watchTodayActions(
-        ownerUserId: ownerUserId,
-        asOf: DateTime.now(),
-      );
+      yield* repository.watchTodayActions(ownerUserId: ownerUserId, asOf: asOf);
     });
 
 final executionOpenActionsProvider =

@@ -24,21 +24,7 @@ part 'settings_overview_account.dart';
 part 'settings_overview_preferences.dart';
 part 'settings_overview_sections.dart';
 
-/// Settings landing page — iOS-style inset-grouped sections.
-///
-/// Section order maps to user mental model (most-personal → least):
-///
-///   1. Account             cloud / device identity
-///   2. Appearance          theme / market color / language
-///   3. AI                  providers, models, agents → privacy and history
-///   4. Data & Sync         sync + backup / storage
-///   5. Notifications       notifications + device/privacy switches
-///   6. LifeOS Domains      FinanceOS / HealthOS / KnowledgeOS
-///   7. About & Diagnostics version / logs / performance
-///
-/// The previous `_AccountHeader` decorative tile is gone — the page
-/// title comes from `appSubPageHeader` in `settings_page.dart`, so the
-/// section list starts at the top with no redundant chrome.
+/// Global settings, with data controls before visual customization.
 class SettingsOverview extends ConsumerWidget {
   const SettingsOverview({super.key});
 
@@ -58,8 +44,12 @@ class SettingsOverview extends ConsumerWidget {
     final appearanceGroup = AppEntrance(
       role: AppMotionRole.decorative,
       child: _Section(
-        title: l10n.settingsAppearanceSection,
-        child: const _AppearanceSection(),
+        child: InlineLinkRow(
+          icon: FLucideIcons.palette,
+          label: l10n.settingsAppearanceSection,
+          subtitle: l10n.settingsAppearanceSummary,
+          onTap: () => context.pushNamed(SettingsRouteNames.appearance),
+        ),
       ),
     );
     final aiGroup = AppEntrance(
@@ -167,11 +157,11 @@ class SettingsOverview extends ConsumerWidget {
 
     final groups = <Widget>[
       accountGroup,
-      appearanceGroup,
-      aiGroup,
       dataGroup,
-      notificationsPrivacyGroup,
       domainsGroup,
+      aiGroup,
+      appearanceGroup,
+      notificationsPrivacyGroup,
       advancedGroup,
     ];
 

@@ -13,15 +13,53 @@ mixin KnowledgeNotesRepositoryMixin {
   Stream<List<KnowledgeNote>> watchNotes({
     required String ownerUserId,
     int? limit,
+    String? tag,
+    bool orderByUpdated = false,
   }) {
     final q = _db.select(_db.knowledgeNotes)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
-        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(
+          expression: orderByUpdated ? t.updatedAt : t.createdAt,
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(expression: t.id),
       ]);
+    if (tag != null) {
+      q.where(
+        (t) => FunctionCallExpression<int>('instr', [
+          t.tagsJson,
+          Variable<String>(jsonEncode(tag)),
+        ]).isBiggerThanValue(0),
+      );
+    }
     if (limit != null) q.limit(limit);
     return q.watch().map((rows) => rows.map(knowledgeNoteFromRow).toList());
+  }
+
+  /// Read only tag metadata across the full library, independently of paging.
+  Stream<List<String>> watchNoteTags({required String ownerUserId}) {
+    final table = _db.knowledgeNotes;
+    final query = _db.selectOnly(table)
+      ..addColumns([table.tagsJson])
+      ..where(table.ownerUserId.equals(ownerUserId) & table.deletedAt.isNull());
+    return query.watch().map((rows) {
+      final counts = <String, int>{};
+      for (final row in rows) {
+        for (final tag in decodeStringList(
+          row.read(table.tagsJson) ?? '[]',
+        ).toSet()) {
+          if (tag.trim().isNotEmpty) {
+            counts.update(tag, (n) => n + 1, ifAbsent: () => 1);
+          }
+        }
+      }
+      return counts.keys.toList()..sort((a, b) {
+        final count = counts[b]!.compareTo(counts[a]!);
+        return count != 0 ? count : a.compareTo(b);
+      });
+    });
   }
 
   Future<List<KnowledgeNote>> listNotes({

@@ -21,7 +21,7 @@ class _Section extends StatelessWidget {
             titleColor: context.theme.colors.mutedForeground,
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.s4,
-              AppSpacing.s20,
+              0,
               AppSpacing.s4,
               AppSpacing.s8,
             ),

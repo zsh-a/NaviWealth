@@ -307,6 +307,16 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
     ),
     routes: [
       GoRoute(
+        path: 'appearance',
+        name: SettingsRouteNames.appearance,
+        builder: (context, state) => _backSafe(
+          DeferredRoute(
+            load: settings_lib.loadLibrary,
+            builder: (_) => settings_lib.AppearanceSettingsPage(),
+          ),
+        ),
+      ),
+      GoRoute(
         path: 'devices',
         name: SettingsRouteNames.devices,
         builder: (context, state) => _backSafe(

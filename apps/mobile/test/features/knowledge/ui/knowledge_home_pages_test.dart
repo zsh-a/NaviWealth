@@ -192,6 +192,49 @@ void main() {
     expect(completed, isTrue);
   });
 
+  testWidgets('Library loads the next window without jumping to the top', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeLibraryPage(),
+        notes: [
+          for (var i = 0; i < 60; i++) _note('page-$i', 'Page note $i', 60 - i),
+        ],
+        decisions: const [],
+      ),
+    );
+    await _settlePaint(tester);
+    await tester.scrollUntilVisible(
+      find.text('Load more'),
+      500,
+      scrollable: find.byType(Scrollable).last,
+      maxScrolls: 50,
+    );
+    await _settlePaint(tester);
+    final before = tester
+        .state<ScrollableState>(find.byType(Scrollable).last)
+        .position
+        .pixels;
+    await tester.tap(find.text('Load more'));
+    await _settlePaint(tester);
+    expect(
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).last)
+          .position
+          .pixels,
+      closeTo(before, 1),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Page note 59'),
+      400,
+      scrollable: find.byType(Scrollable).last,
+      maxScrolls: 30,
+    );
+    expect(find.text('Page note 59'), findsOneWidget);
+    expect(find.text('Load more'), findsNothing);
+  });
+
   testWidgets('Library searches across Notes and Decisions with a type scope', (
     tester,
   ) async {
@@ -337,6 +380,23 @@ Widget _wrap(
 }) {
   return ProviderScope(
     overrides: [
+      knowledgeLibraryNotesProvider.overrideWith(
+        (_, request) => Stream.value(
+          notes
+              .where(
+                (note) =>
+                    request.tag == null || note.tags.contains(request.tag),
+              )
+              .take(request.limit + 1)
+              .toList(),
+        ),
+      ),
+      knowledgeLibraryDecisionsProvider.overrideWith(
+        (_, limit) => Stream.value(decisions.take(limit + 1).toList()),
+      ),
+      knowledgeLibraryTagsProvider.overrideWith(
+        (_) => Stream.value(notes.expand((note) => note.tags).toSet().toList()),
+      ),
       knowledgeNotesProvider.overrideWith(
         (_) => notesStream ?? Stream.value(notes),
       ),

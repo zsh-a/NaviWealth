@@ -1,18 +1,3 @@
-// Behavior verification for the web routing surface:
-// path URL strategy + go_router + shell navigation. These tests exercise the
-// core URL flows:
-//   1. deep-link arrival
-//   2. tab navigation (the URL stays in sync with the visible tab)
-//   3. back/forward + refresh (re-driving the router from a stored URL lands
-//      on the same page; Riverpod state is reset, URL is the source of truth)
-//
-// Real browser history (`window.history.back/forward`) is platform glue we
-// can't drive from a widget test — those flows are covered by the manual
-// checklist in apps/mobile/docs/development/web-routing.md and live cross-browser runs in
-// FIR-40. What we *can* assert here is the router contract those flows rely
-// on: a given URL deterministically maps to a given page, and the bottom nav
-// keeps the URL up to date.
-
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
@@ -31,11 +16,13 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/desktop_sidebar.dart';
 import 'package:naviwealth/core/shell/route_error_page.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/ai_chat_page.dart';
 import 'package:naviwealth/features/auth/ui/devices_page.dart';
 import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
 import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
+import 'package:naviwealth/features/finance/activation/data/finance_activation_store.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_entry_detail_page.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_page.dart';
 import 'package:naviwealth/features/finance/analytics/data/benchmark/benchmark_history_source.dart';
@@ -94,6 +81,11 @@ import '../core/persistence/test_database.dart';
 import '../features/finance/data/repositories/_stub_stamper.dart';
 import '../features/finance/rebalance/data/rebalance_execution_test_fixtures.dart';
 
+class _RoutingTime extends CurrentTime {
+  @override
+  DateTime build() => DateTime.now();
+}
+
 class _OfflineBenchmarkSource implements BenchmarkHistorySource {
   @override
   Future<List<TimeSeriesPoint>> seriesFor({
@@ -148,6 +140,7 @@ Future<ProviderContainer> _pumpAt(
   addTearDown(db.close);
   final container = ProviderContainer(
     overrides: [
+      currentTimeProvider.overrideWith(_RoutingTime.new),
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
       mutationStamperProvider.overrideWith((_) async => makeStubStamper()),
@@ -400,6 +393,7 @@ void main() {
         AppRoutes.spending: SpendingPage,
         AppRoutes.planFire: FirePage,
         AppRoutes.assistant: AiChatPage,
+        '/settings/appearance': AppearanceSettingsPage,
         AppRoutes.settingsDevices: DevicesPage,
         AppRoutes.settingsFxRates: FxRatesPage,
         AppRoutes.settingsRiskThresholds: RiskThresholdsPage,
@@ -706,6 +700,10 @@ void main() {
       tester,
     ) async {
       final container = await _pumpAt(tester);
+      await container
+          .read(financeActivationDismissedProvider.notifier)
+          .dismiss();
+      await tester.pumpAndSettle();
       expect(find.byType(HomePage), findsOneWidget);
       expect(find.byType(FloatingGlassNavBar), findsOneWidget);
 

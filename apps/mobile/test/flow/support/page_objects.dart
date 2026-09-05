@@ -547,6 +547,10 @@ class KnowledgeInboxPageObject {
       find.widgetWithText(FTextField, 'Content (Markdown)'),
       body,
     );
+    if (sourceUrl != null || tags != null) {
+      await tester.tap(find.text('Source and tags'));
+      await _settleKnowledgeCapture(tester);
+    }
     if (sourceUrl != null) {
       await tester.enterText(
         find.descendant(

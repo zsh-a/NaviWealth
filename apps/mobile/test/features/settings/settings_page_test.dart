@@ -56,6 +56,11 @@ GoRouter _router({
         builder: (_, _) => const SettingsPage(),
         routes: [
           GoRoute(
+            path: 'appearance',
+            name: SettingsRouteNames.appearance,
+            builder: (_, _) => const AppearanceSettingsPage(),
+          ),
+          GoRoute(
             path: 'domains',
             name: AppRouteNames.domains,
             builder: (_, _) => const DomainsSettingsPage(),
@@ -255,7 +260,7 @@ void main() {
 
         final prefs = await SharedPreferences.getInstance();
         await tester.pumpWidget(
-          await _wrap(prefs, initialLocation: AppRoutes.settings),
+          await _wrap(prefs, initialLocation: SettingsRoutes.appearance),
         );
         await tester.pumpAndSettle();
 
@@ -383,6 +388,27 @@ void main() {
 
   group('Settings → hierarchy', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    _testWidgets('appearance opens separately and preserves theme controls', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settings),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Theme'), findsNothing);
+      await tester.ensureVisible(find.text('Appearance'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Appearance'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppearanceSettingsPage), findsOneWidget);
+      expect(find.text('Theme'), findsOneWidget);
+      expect(find.text('Language'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('app.back')));
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsPage), findsOneWidget);
+    });
 
     _testWidgets('shows the new grouped labels in Chinese', (tester) async {
       final prefs = await SharedPreferences.getInstance();

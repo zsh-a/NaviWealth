@@ -254,6 +254,7 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
               AppMetricHeader(
                 icon: FLucideIcons.heartPulse,
                 title: l10n.healthActivationTitle,
+                showChevron: false,
                 color: context.appTheme.status.info.fg,
               ),
               const SizedBox(height: AppSpacing.s8),
@@ -268,36 +269,39 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
                 ),
               ],
               const SizedBox(height: AppSpacing.s12),
-              AppAdaptiveActionMenu(
-                title: l10n.healthActivationTitle,
-                subtitle: l10n.healthActivationBody,
-                actions: [
-                  AppAdaptiveAction(
-                    icon: FLucideIcons.heartPulse,
-                    title: l10n.healthActivationAction,
-                    onPress: _activatePlatform,
-                  ),
-                  AppAdaptiveAction(
-                    icon: FLucideIcons.watch,
-                    title: l10n.healthActivationGarminAction,
-                    onPress: _activateGarmin,
-                  ),
-                  AppAdaptiveAction(
-                    icon: FLucideIcons.pencil,
-                    title: l10n.healthActivationManualAction,
-                    onPress: _recordManually,
-                  ),
-                ],
-                triggerBuilder: (context, openMenu, focusNode) => SizedBox(
+              if (ref
+                      .watch(health_data.healthPlatformStatusProvider)
+                      .value
+                      ?.available ==
+                  true) ...[
+                SizedBox(
                   width: double.infinity,
                   child: FButton(
-                    focusNode: focusNode,
-                    onPress: _running ? null : openMenu,
+                    onPress: _running ? null : _activatePlatform,
                     child: _running
                         ? const FCircularProgress()
-                        : Text(l10n.healthActivationTitle),
+                        : Text(l10n.healthActivationAction),
                   ),
                 ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s8,
+                children: [
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: _running ? null : _activateGarmin,
+                    child: Text(l10n.healthActivationGarminAction),
+                  ),
+                  FButton(
+                    variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
+                    onPress: _running ? null : _recordManually,
+                    child: Text(l10n.healthActivationManualAction),
+                  ),
+                ],
               ),
             ],
           ),

@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/features/knowledge/application/knowledge_decision_from_note_service.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
+import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -31,16 +34,21 @@ SyncMeta _sync(int tick, {DateTime? deletedAt}) {
   );
 }
 
-KnowledgeNote _note(String id, int tick, {String? title, String? sourceUrl}) =>
-    KnowledgeNote(
-      id: id,
-      title: title ?? id,
-      bodyMd: 'body $id',
-      sourceUrl: sourceUrl,
-      tags: <String>['tag-$id'],
-      createdAt: _sync(tick).updatedAt,
-      sync: _sync(tick),
-    );
+KnowledgeNote _note(
+  String id,
+  int tick, {
+  String? title,
+  String? sourceUrl,
+  List<String>? tags,
+}) => KnowledgeNote(
+  id: id,
+  title: title ?? id,
+  bodyMd: 'body $id',
+  sourceUrl: sourceUrl,
+  tags: tags ?? <String>['tag-$id'],
+  createdAt: _sync(tick).updatedAt,
+  sync: _sync(tick),
+);
 
 KnowledgeDecision _decision(
   String id,
@@ -72,6 +80,80 @@ void main() {
   });
 
   tearDown(() => database.close());
+
+  test(
+    'due reviews refresh when time advances without a database write',
+    () async {
+      final due = DateTime.utc(2026, 9, 6);
+      await repository.upsertDecision(_decision('timed', 0, reviewDate: due));
+      final container = ProviderContainer(
+        overrides: [
+          knowledgeRepositoryProvider.overrideWith((_) async => repository),
+          knowledgeOwnerUserIdProvider.overrideWith((_) async => _owner),
+          currentTimeProvider.overrideWith(_ReviewClock.new),
+        ],
+      );
+      final subscription = container.listen(
+        knowledgeDueReviewsProvider,
+        (_, _) {},
+      );
+      expect(await container.read(knowledgeDueReviewsProvider.future), isEmpty);
+      (container.read(currentTimeProvider.notifier) as _ReviewClock).advance(
+        due,
+      );
+      await container.pump();
+      expect(
+        (await container.read(knowledgeDueReviewsProvider.future)).single.id,
+        'timed',
+      );
+      subscription.close();
+      container.dispose();
+    },
+  );
+
+  test('library windows grow past 200 with stable updated ordering', () async {
+    for (var i = 0; i < 205; i++) {
+      await repository.upsertNote(_note('note-$i', i));
+      await repository.upsertDecision(_decision('decision-$i', i));
+    }
+    final first = await repository
+        .watchNotes(ownerUserId: _owner, limit: 51, orderByUpdated: true)
+        .first;
+    final all = await repository
+        .watchNotes(ownerUserId: _owner, limit: 251, orderByUpdated: true)
+        .first;
+    expect(first.length, 51);
+    expect(first.first.id, 'note-204');
+    expect(all.length, 205);
+    expect(all.last.id, 'note-0');
+    final decisions = await repository
+        .watchDecisions(ownerUserId: _owner, limit: 251, orderByUpdated: true)
+        .first;
+    expect(decisions.length, 205);
+    expect(decisions.last.id, 'decision-0');
+    final tags = await repository.watchNoteTags(ownerUserId: _owner).first;
+    expect(tags, contains('tag-note-0'));
+    expect(tags.length, 205);
+  });
+
+  test(
+    'tag filtering precedes limit and treats SQL wildcards literally',
+    () async {
+      await repository.upsertNote(_note('old', 0, tags: ['100%', 'a_b']));
+      await repository.upsertNote(_note('new', 1, tags: ['1000', 'axb']));
+      for (final tag in ['100%', 'a_b']) {
+        final hits = await repository
+            .watchNotes(
+              ownerUserId: _owner,
+              tag: tag,
+              limit: 1,
+              orderByUpdated: true,
+            )
+            .first;
+        expect(hits.single.id, 'old');
+      }
+    },
+  );
 
   test(
     'schema contains no legacy KnowledgeOS objects or side tables',
@@ -344,4 +426,10 @@ void main() {
       expect(tombstone?.sync.deletedAt, isNotNull);
     },
   );
+}
+
+class _ReviewClock extends CurrentTime {
+  void advance(DateTime time) => state = time;
+  @override
+  DateTime build() => DateTime.utc(2026, 9, 5);
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/services.dart' show TextInputAction, TextInputType;
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -28,7 +27,14 @@ Future<void> showKnowledgeCaptureSheet(BuildContext context) {
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
-  const _KnowledgeCaptureSheet({required this.dirty});
+  const _KnowledgeCaptureSheet({
+    required this.dirty,
+    this.fullPage = false,
+    this.confirmLeave,
+  });
+
+  final bool fullPage;
+  final Future<bool> Function()? confirmLeave;
 
   final FormDirtyController dirty;
 
@@ -49,6 +55,7 @@ class _KnowledgeCaptureSheetState
   var _sourceCheckSerial = 0;
   var _type = _CaptureType.note;
   var _saving = false;
+  var _showMetadata = false;
   String? _error;
 
   bool get _canSave {
@@ -63,6 +70,7 @@ class _KnowledgeCaptureSheetState
   @override
   void initState() {
     super.initState();
+    if (widget.fullPage) _type = _CaptureType.decision;
     _options = KnowledgeDecisionOptionsController();
     _title.addListener(_onTextChanged);
     _body.addListener(_onTextChanged);
@@ -97,19 +105,18 @@ class _KnowledgeCaptureSheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AppSheet(
-      title: l10n.knowledgeCaptureTitle,
-      footer: AppSheetFooter(
-        submitLabel: l10n.commonSave,
-        cancelLabel: l10n.commonCancel,
-        onSubmit: _save,
-        enabled: _canSave,
-        busy: _saving,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    final footer = AppSheetFooter(
+      submitLabel: l10n.commonSave,
+      cancelLabel: l10n.commonCancel,
+      onSubmit: _save,
+      enabled: _canSave,
+      busy: _saving,
+    );
+    final fields = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!widget.fullPage)
           SegmentedRow<_CaptureType>(
             options: _CaptureType.values,
             value: _type,
@@ -120,104 +127,134 @@ class _KnowledgeCaptureSheetState
             onChanged: _saving
                 ? (_) {}
                 : (value) {
-                    widget.dirty.markDirty();
-                    setState(() {
-                      _type = value;
-                      _error = null;
-                    });
+                    if (value == _CaptureType.decision) {
+                      unawaited(_openDecision());
+                    }
                   },
           ),
-          const SizedBox(height: AppSpacing.s16),
-          FTextField(
-            control: FTextFieldControl.managed(controller: _title),
+        const SizedBox(height: AppSpacing.s16),
+        FTextField(
+          control: FTextFieldControl.managed(controller: _title),
+          enabled: !_saving,
+          autofocus: true,
+          textInputAction: TextInputAction.next,
+          label: Text(
+            _type == _CaptureType.note
+                ? l10n.knowledgeCaptureTitleField
+                : l10n.knowledgeDecisionQuestionLabel,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        if (_type == _CaptureType.decision) ...[
+          KnowledgeDecisionOptionsEditor(
+            controller: _options,
+            keyPrefix: 'knowledge-capture-option',
             enabled: !_saving,
-            autofocus: true,
-            textInputAction: TextInputAction.next,
-            label: Text(
-              _type == _CaptureType.note
-                  ? l10n.knowledgeCaptureTitleField
-                  : l10n.knowledgeDecisionQuestionLabel,
-            ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          if (_type == _CaptureType.decision) ...[
-            KnowledgeDecisionOptionsEditor(
-              controller: _options,
-              keyPrefix: 'knowledge-capture-option',
-              enabled: !_saving,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-          ],
-          KnowledgeMarkdownEditor(
-            controller: _body,
-            minLines: 4,
-            maxLines: 10,
-            enabled: !_saving,
-            label: _type == _CaptureType.note
-                ? l10n.knowledgeCaptureBodyField
-                : l10n.knowledgeWriterRationaleMarkdownLabel,
+        ],
+        KnowledgeMarkdownEditor(
+          controller: _body,
+          minLines: 4,
+          maxLines: 10,
+          enabled: !_saving,
+          label: _type == _CaptureType.note
+              ? l10n.knowledgeCaptureBodyField
+              : l10n.knowledgeWriterRationaleMarkdownLabel,
+        ),
+        if (_type == _CaptureType.note) ...[
+          FButton(
+            variant: FButtonVariant.ghost,
+            onPress: () => setState(() => _showMetadata = !_showMetadata),
+            child: Text(l10n.knowledgeCaptureMetadata),
           ),
-          if (_type == _CaptureType.note) ...[
-            const SizedBox(height: AppSpacing.s12),
-            FTextField(
-              key: const ValueKey('knowledge-capture-source-url'),
-              control: FTextFieldControl.managed(controller: _source),
-              enabled: !_saving,
-              keyboardType: TextInputType.url,
-              textInputAction: TextInputAction.next,
-              label: Text(l10n.knowledgeNoteSourceUrlLabel),
-            ),
-            if (_source.text.trim().isNotEmpty &&
-                normalizeKnowledgeSourceUrl(_source.text) == null) ...[
-              const SizedBox(height: AppSpacing.s8),
-              AppStatusBanner(
-                kind: AppStatusKind.error,
-                compact: true,
-                message: l10n.knowledgeSourceInvalid,
-              ),
-            ],
-            if (_duplicateSource != null) ...[
-              const SizedBox(height: AppSpacing.s8),
-              AppStatusBanner(
-                key: const Key('knowledge-duplicate-source-warning'),
-                kind: AppStatusKind.warning,
-                compact: true,
-                message: l10n.knowledgeSourceDuplicateTitle,
-                details: l10n.knowledgeSourceDuplicateBody(
-                  _duplicateSource!.title.isEmpty
-                      ? l10n.knowledgeUntitled
-                      : _duplicateSource!.title,
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.s12),
-            FTextField(
-              key: const ValueKey('knowledge-capture-tags'),
-              control: FTextFieldControl.managed(controller: _tags),
-              enabled: !_saving,
-              label: Text(l10n.knowledgeNoteTagsLabel),
-              hint: l10n.knowledgeNoteTagsHint,
-            ),
-            if (parseKnowledgeTags(_tags.text) case final tagPreview
-                when tagPreview.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.s8),
-              KnowledgeTagChips(
-                tags: tagPreview,
-                keyPrefix: 'knowledge-capture-tag',
-              ),
-            ],
-          ],
-          if (_error case final message?) ...[
-            const SizedBox(height: AppSpacing.s10),
+        ],
+        if (_type == _CaptureType.note && _showMetadata) ...[
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            key: const ValueKey('knowledge-capture-source-url'),
+            control: FTextFieldControl.managed(controller: _source),
+            enabled: !_saving,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.next,
+            label: Text(l10n.knowledgeNoteSourceUrlLabel),
+          ),
+          if (_source.text.trim().isNotEmpty &&
+              normalizeKnowledgeSourceUrl(_source.text) == null) ...[
+            const SizedBox(height: AppSpacing.s8),
             AppStatusBanner(
               kind: AppStatusKind.error,
               compact: true,
-              message: message,
+              message: l10n.knowledgeSourceInvalid,
+            ),
+          ],
+          if (_duplicateSource != null) ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppStatusBanner(
+              key: const Key('knowledge-duplicate-source-warning'),
+              kind: AppStatusKind.warning,
+              compact: true,
+              message: l10n.knowledgeSourceDuplicateTitle,
+              details: l10n.knowledgeSourceDuplicateBody(
+                _duplicateSource!.title.isEmpty
+                    ? l10n.knowledgeUntitled
+                    : _duplicateSource!.title,
+              ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s12),
+          FTextField(
+            key: const ValueKey('knowledge-capture-tags'),
+            control: FTextFieldControl.managed(controller: _tags),
+            enabled: !_saving,
+            label: Text(l10n.knowledgeNoteTagsLabel),
+            hint: l10n.knowledgeNoteTagsHint,
+          ),
+          if (parseKnowledgeTags(_tags.text) case final tagPreview
+              when tagPreview.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            KnowledgeTagChips(
+              tags: tagPreview,
+              keyPrefix: 'knowledge-capture-tag',
             ),
           ],
         ],
-      ),
+        if (_error case final message?) ...[
+          const SizedBox(height: AppSpacing.s10),
+          AppStatusBanner(
+            kind: AppStatusKind.error,
+            compact: true,
+            message: message,
+          ),
+        ],
+      ],
     );
+    if (widget.fullPage) {
+      return AppFormPageScaffold(
+        title: Text(l10n.knowledgeSegmentDecisions),
+        confirmLeave: widget.confirmLeave,
+        child: AppFormScaffoldBody(
+          action: footer,
+          onSubmit: _canSave && !_saving ? _save : null,
+          children: [fields],
+        ),
+      );
+    }
+    return AppSheet(
+      title: l10n.knowledgeCaptureTitle,
+      footer: footer,
+      child: fields,
+    );
+  }
+
+  Future<void> _openDecision() async {
+    final saved = await Navigator.of(context, rootNavigator: true).push<bool>(
+      MaterialPageRoute(builder: (_) => const _DecisionCapturePage()),
+    );
+    // A note draft belongs to its sheet and survives switching to a decision.
+    if (saved == true && mounted && !widget.dirty.isDirty) {
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _save() async {
@@ -291,7 +328,7 @@ class _KnowledgeCaptureSheetState
       ref.invalidate(knowledgeNotesProvider);
       ref.invalidate(knowledgeDecisionsProvider);
       widget.dirty.markPristine();
-      if (mounted) Navigator.pop(context);
+      if (mounted) Navigator.pop(context, true);
     } on Object catch (error, stackTrace) {
       if (!mounted) return;
       setState(() {
@@ -350,4 +387,27 @@ class _KnowledgeCaptureSheetState
     }
     setState(() => _duplicateSource = duplicate);
   }
+}
+
+class _DecisionCapturePage extends ConsumerStatefulWidget {
+  const _DecisionCapturePage();
+
+  @override
+  ConsumerState<_DecisionCapturePage> createState() =>
+      _DecisionCapturePageState();
+}
+
+class _DecisionCapturePageState extends ConsumerState<_DecisionCapturePage>
+    with FormDirtyGuard<_DecisionCapturePage> {
+  @override
+  String get leaveFallback => '/knowledge';
+
+  @override
+  Widget build(BuildContext context) => guardedScope(
+    child: _KnowledgeCaptureSheet(
+      dirty: dirty,
+      fullPage: true,
+      confirmLeave: handleBackIntent,
+    ),
+  );
 }

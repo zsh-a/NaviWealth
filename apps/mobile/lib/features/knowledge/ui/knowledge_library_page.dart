@@ -43,7 +43,11 @@ class KnowledgeLibraryPage extends ConsumerStatefulWidget {
 
 class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   static const _searchDebounce = Duration(milliseconds: 250);
-  static const _tagFacetLimit = 12;
+  static const _pageSize = 50;
+  int _limit = _pageSize;
+  int _previousLimit = _pageSize;
+  List<KnowledgeNote>? _previousNotes;
+  List<KnowledgeDecision>? _previousDecisions;
 
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
@@ -64,7 +68,10 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     _debounce?.cancel();
     _debounce = Timer(_searchDebounce, () {
       if (!mounted) return;
-      setState(() => _query = value.text.trim());
+      setState(() {
+        _query = value.text.trim();
+        _limit = _pageSize;
+      });
     });
   }
 
@@ -103,12 +110,31 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   Widget _buildBody(BuildContext context, {required bool inMasterDetail}) {
     final l10n = AppLocalizations.of(context);
-    final notes = ref.watch(knowledgeNotesProvider);
-    final decisions = ref.watch(knowledgeDecisionsProvider);
-    final tagFacets = _tagFacets(
-      notes.asData?.value ?? const <KnowledgeNote>[],
-      selectedTag: _selectedTag,
-    );
+    final notesProvider = knowledgeLibraryNotesProvider((
+      limit: _limit,
+      tag: _selectedTag,
+    ));
+    final decisionsProvider = knowledgeLibraryDecisionsProvider(_limit);
+    final nextNotes = ref.watch(notesProvider);
+    final nextDecisions = ref.watch(decisionsProvider);
+    final loadingMore =
+        _limit > _previousLimit &&
+        ((_scope != _LibraryScope.decisions && nextNotes.isLoading) ||
+            (_scope != _LibraryScope.notes && nextDecisions.isLoading));
+    final notes = loadingMore && _previousNotes != null
+        ? AsyncData(_previousNotes!)
+        : nextNotes;
+    final decisions = loadingMore && _previousDecisions != null
+        ? AsyncData(_previousDecisions!)
+        : nextDecisions;
+    final tagFacets =
+        ref.watch(knowledgeLibraryTagsProvider).value ?? const <String>[];
+    void retryBrowse() {
+      ref.invalidate(notesProvider);
+      ref.invalidate(decisionsProvider);
+      ref.invalidate(knowledgeLibraryTagsProvider);
+    }
+
     final searchResults = _query.isEmpty
         ? null
         : ref.watch(
@@ -165,6 +191,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                 onChanged: (scope) {
                   setState(() {
                     _scope = scope;
+                    _limit = _pageSize;
                     if (scope == _LibraryScope.decisions) {
                       _selectedTag = null;
                     }
@@ -182,6 +209,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                   onChanged: (tag) {
                     setState(() {
                       _selectedTag = tag;
+                      _limit = _pageSize;
                       if (tag != null) _scope = _LibraryScope.notes;
                     });
                   },
@@ -193,6 +221,16 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
         Expanded(
           child: searchResults == null
               ? _LibraryBrowse(
+                  limit: loadingMore ? _previousLimit : _limit,
+                  onLoadMore: loadingMore
+                      ? null
+                      : () => setState(() {
+                          _previousNotes = notes.value;
+                          _previousDecisions = decisions.value;
+                          _previousLimit = _limit;
+                          _limit += _pageSize;
+                        }),
+                  onRetry: retryBrowse,
                   scope: _scope,
                   selectedTag: _selectedTag,
                   notes: notes,
@@ -213,31 +251,6 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
         ),
       ],
     );
-  }
-
-  List<String> _tagFacets(
-    List<KnowledgeNote> notes, {
-    required String? selectedTag,
-  }) {
-    final counts = <String, int>{};
-    for (final note in notes) {
-      for (final tag in note.tags.toSet()) {
-        if (tag.trim().isEmpty) continue;
-        counts.update(tag, (count) => count + 1, ifAbsent: () => 1);
-      }
-    }
-    final tags = counts.keys.toList(growable: false)
-      ..sort((a, b) {
-        final byCount = counts[b]!.compareTo(counts[a]!);
-        if (byCount != 0) return byCount;
-        final byLabel = a.toLowerCase().compareTo(b.toLowerCase());
-        return byLabel != 0 ? byLabel : a.compareTo(b);
-      });
-    final visible = tags.take(_tagFacetLimit).toList();
-    if (selectedTag != null && !visible.contains(selectedTag)) {
-      visible.insert(0, selectedTag);
-    }
-    return visible;
   }
 }
 
@@ -290,12 +303,18 @@ class _LibraryTagFilter extends StatelessWidget {
 class _LibraryBrowse extends ConsumerWidget {
   const _LibraryBrowse({
     required this.scope,
+    required this.limit,
+    required this.onLoadMore,
+    required this.onRetry,
     required this.selectedTag,
     required this.notes,
     required this.decisions,
     required this.inMasterDetail,
   });
 
+  final int limit;
+  final VoidCallback? onLoadMore;
+  final VoidCallback onRetry;
   final _LibraryScope scope;
   final String? selectedTag;
   final AsyncValue<List<KnowledgeNote>> notes;
@@ -311,10 +330,10 @@ class _LibraryBrowse extends ConsumerWidget {
     if (scope == _LibraryScope.notes) {
       return notes.when(
         loading: skeleton,
-        error: (_, _) => _LibraryError(
-          onRetry: () => ref.invalidate(knowledgeNotesProvider),
-        ),
+        error: (_, _) => _LibraryError(onRetry: onRetry),
         data: (items) => _LibraryList(
+          limit: limit,
+          onLoadMore: onLoadMore,
           entries: items
               .where(
                 (note) =>
@@ -331,10 +350,10 @@ class _LibraryBrowse extends ConsumerWidget {
     if (scope == _LibraryScope.decisions) {
       return decisions.when(
         loading: skeleton,
-        error: (_, _) => _LibraryError(
-          onRetry: () => ref.invalidate(knowledgeDecisionsProvider),
-        ),
+        error: (_, _) => _LibraryError(onRetry: onRetry),
         data: (items) => _LibraryList(
+          limit: limit,
+          onLoadMore: onLoadMore,
           entries: items
               .map(_LibraryEntry.fromDecision)
               .toList(growable: false),
@@ -344,23 +363,26 @@ class _LibraryBrowse extends ConsumerWidget {
         ),
       );
     }
-    void retryAll() {
-      ref.invalidate(knowledgeNotesProvider);
-      ref.invalidate(knowledgeDecisionsProvider);
-    }
-
     return notes.when(
       loading: skeleton,
-      error: (_, _) => _LibraryError(onRetry: retryAll),
+      error: (_, _) => _LibraryError(onRetry: onRetry),
       data: (noteItems) => decisions.when(
         loading: skeleton,
-        error: (_, _) => _LibraryError(onRetry: retryAll),
+        error: (_, _) => _LibraryError(onRetry: onRetry),
         data: (decisionItems) {
-          final entries = <_LibraryEntry>[
-            ...noteItems.map(_LibraryEntry.fromNote),
-            ...decisionItems.map(_LibraryEntry.fromDecision),
-          ]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          final entries =
+              <_LibraryEntry>[
+                ...noteItems.map(_LibraryEntry.fromNote),
+                ...decisionItems.map(_LibraryEntry.fromDecision),
+              ]..sort((a, b) {
+                final date = b.updatedAt.compareTo(a.updatedAt);
+                if (date != 0) return date;
+                final kind = a.kind.compareTo(b.kind);
+                return kind != 0 ? kind : a.id.compareTo(b.id);
+              });
           return _LibraryList(
+            limit: limit,
+            onLoadMore: onLoadMore,
             entries: entries,
             emptyTitle: AppLocalizations.of(context).knowledgeLibraryEmptyTitle,
             groupByDate: selectedTag == null,
@@ -391,15 +413,30 @@ class _LibrarySearchResults extends StatelessWidget {
         padding: shellTabContentPadding(context),
       ),
       error: (_, _) => _LibraryError(onRetry: onRetry),
-      data: (hits) => _LibraryList(
-        entries: hits
-            .map((hit) => _LibraryEntry.fromSearchHit(hit))
-            .toList(growable: false),
-        emptyTitle: AppLocalizations.of(context).knowledgeLibraryNoResultsTitle,
-        emptyMessage: AppLocalizations.of(context)
-            .knowledgeLibraryNoResultsBody,
-        emptyIcon: FLucideIcons.searchX,
-        inMasterDetail: inMasterDetail,
+      data: (hits) => Column(
+        children: [
+          if (hits.length >= 50)
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Text(
+                AppLocalizations.of(context).knowledgeSearchLimitHint,
+                style: context.captionStyle,
+              ),
+            ),
+          Expanded(
+            child: _LibraryList(
+              entries: hits
+                  .map((hit) => _LibraryEntry.fromSearchHit(hit))
+                  .toList(growable: false),
+              emptyTitle: AppLocalizations.of(context)
+                  .knowledgeLibraryNoResultsTitle,
+              emptyMessage: AppLocalizations.of(context)
+                  .knowledgeLibraryNoResultsBody,
+              emptyIcon: FLucideIcons.searchX,
+              inMasterDetail: inMasterDetail,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -411,11 +448,29 @@ class _LibraryList extends ConsumerWidget {
     required this.emptyTitle,
     required this.inMasterDetail,
     this.emptyMessage,
+    this.limit,
+    this.onLoadMore,
     this.emptyIcon = FLucideIcons.library,
     this.groupByDate = false,
   });
 
+  final int? limit;
+  final VoidCallback? onLoadMore;
   final List<_LibraryEntry> entries;
+
+  List<_LibraryEntry> get visibleEntries =>
+      limit == null ? entries : entries.take(limit!).toList(growable: false);
+  bool get hasMore => limit != null && entries.length > limit!;
+
+  Widget _loadMore(BuildContext context) => FButton(
+    variant: FButtonVariant.ghost,
+    onPress: onLoadMore,
+    child: Text(
+      onLoadMore == null
+          ? AppLocalizations.of(context).commonLoading
+          : AppLocalizations.of(context).commonLoadMore,
+    ),
+  );
   final String emptyTitle;
   final String? emptyMessage;
   final IconData emptyIcon;
@@ -441,10 +496,11 @@ class _LibraryList extends ConsumerWidget {
     }
     return ListView.separated(
       padding: shellTabContentPadding(context),
-      itemCount: entries.length,
+      itemCount: visibleEntries.length + (hasMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
-      itemBuilder: (context, index) =>
-          _buildEntryTile(context, ref, l10n, entries[index]),
+      itemBuilder: (context, index) => index == visibleEntries.length
+          ? _loadMore(context)
+          : _buildEntryTile(context, ref, l10n, visibleEntries[index]),
     );
   }
 
@@ -453,28 +509,30 @@ class _LibraryList extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations l10n,
   ) {
-    final sections = _groupByUpdatedBucket(entries, l10n);
-    return ListView(
-      padding: shellTabContentPadding(context),
-      children: [
-        for (final (label, sectionEntries) in sections) ...[
-          SectionHeader(
-            title: label,
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s4,
-              AppSpacing.s8,
-              AppSpacing.s4,
-              AppSpacing.s8,
-            ),
+    final sections = _groupByUpdatedBucket(visibleEntries, l10n);
+    final builders = <WidgetBuilder>[
+      for (final (label, sectionEntries) in sections) ...[
+        (_) => SectionHeader(
+          title: label,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s4,
+            AppSpacing.s8,
+            AppSpacing.s4,
+            AppSpacing.s8,
           ),
-          for (var index = 0; index < sectionEntries.length; index++) ...[
-            _buildEntryTile(context, ref, l10n, sectionEntries[index]),
-            if (index != sectionEntries.length - 1)
-              const SizedBox(height: AppSpacing.s10),
-          ],
-          const SizedBox(height: AppSpacing.s10),
-        ],
+        ),
+        for (final entry in sectionEntries)
+          (context) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.s10),
+            child: _buildEntryTile(context, ref, l10n, entry),
+          ),
       ],
+      if (hasMore) _loadMore,
+    ];
+    return ListView.builder(
+      padding: shellTabContentPadding(context),
+      itemCount: builders.length,
+      itemBuilder: (context, index) => builders[index](context),
     );
   }
 

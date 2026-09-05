@@ -1,7 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
@@ -39,6 +42,68 @@ void main() {
     expect(notes.single.tags, containsAll(<String>['recovery', 'planning']));
     await closeApp(tester);
   }, tags: 'flow');
+
+  testWidgets(
+    'decision capture uses a guarded page and preserves the note draft',
+    (tester) async {
+      final data = await FlowDataHarness.create();
+      addTearDown(data.dispose);
+      await data.enableDomains(const [DomainScope.knowledge]);
+      await bootApp(
+        tester,
+        liveData: data,
+        initialLocation: KnowledgeRoutes.inbox,
+      );
+      await tester.tap(find.bySemanticsLabel('New capture').first);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('knowledge-capture-source-url')),
+        findsNothing,
+      );
+      await tester.enterText(
+        find.widgetWithText(FTextField, 'Content (Markdown)'),
+        'Keep this note draft',
+      );
+      await tester.tap(find.text('Decisions'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppFormPageScaffold), findsOneWidget);
+      await tester.enterText(
+        find.byType(FTextField).first,
+        'Should I proceed?',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text('Discard changes?'), findsOneWidget);
+      await tester.tap(find.text('Discard'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppFormPageScaffold), findsNothing);
+      expect(find.text('Keep this note draft'), findsOneWidget);
+      await tester.tap(find.text('Decisions'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(FTextField, 'Question'),
+        'Should I proceed?',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('knowledge-capture-option-label-0')),
+        'Proceed',
+      );
+      await tester.pump();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      final repository = KnowledgeRepository(db: data.db, outbox: data.outbox);
+      final decisions = await repository.listDecisions(
+        ownerUserId: kLocalOnlyUserId,
+      );
+      expect(decisions.single.question, 'Should I proceed?');
+      expect(decisions.single.selectedLabel, 'Proceed');
+      expect(find.byType(AppFormPageScaffold), findsNothing);
+      expect(find.text('Keep this note draft'), findsOneWidget);
+      await closeApp(tester);
+    },
+    tags: 'flow',
+  );
 
   testWidgets('Task: Duplicate source warns without blocking capture', (
     tester,

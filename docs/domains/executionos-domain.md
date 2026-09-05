@@ -99,6 +99,9 @@ Key files:
 The daily Top 3 is device-local and resets with the local calendar day. Review
 may recommend focus IDs, but Today adopts them only after confirmation.
 Focus ordering and removal are shown only in the explicit Edit focus mode.
+Focus rows complete actions directly through the shared status/undo controller.
+Foreground time refreshes on resume and minute ticks; local-day changes refresh
+Today and reset the device-local focus selection without restarting the app.
 Unscheduled backlog stays in Plans; priority alone never promotes an Action to
 Today.
 

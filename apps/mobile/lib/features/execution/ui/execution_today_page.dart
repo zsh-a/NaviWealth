@@ -415,18 +415,34 @@ class _DailyFocusPanelState extends ConsumerState<_DailyFocusPanel> {
             ],
           ] else
             for (var index = 0; index < selected.length; index++)
-              _DailyFocusRow(
-                index: index,
+              ExecutionActionCardController(
+                key: ValueKey(selected[index].id),
                 action: selected[index],
-                count: selected.length,
-                editing: _editing,
-                onOpen: () => widget.onOpen(selected[index]),
-                onMove: (offset) => ref
-                    .read(executionDailyFocusProvider.notifier)
-                    .move(selected[index].id, offset),
-                onRemove: () => ref
-                    .read(executionDailyFocusProvider.notifier)
-                    .toggle(selected[index].id),
+                onEdit: () => showExecutionActionSheet(
+                  context: context,
+                  action: selected[index],
+                ),
+                onRecordProgress: () => showExecutionProgressSheet(
+                  context: context,
+                  action: selected[index],
+                ),
+                doneProgressNote: l10n.executionProgressDoneDefault,
+                droppedProgressNote: l10n.executionProgressDroppedDefault,
+                completionBuilder: (busy, onDone) => _DailyFocusRow(
+                  busy: busy,
+                  onDone: onDone,
+                  index: index,
+                  action: selected[index],
+                  count: selected.length,
+                  editing: _editing,
+                  onOpen: () => widget.onOpen(selected[index]),
+                  onMove: (offset) => ref
+                      .read(executionDailyFocusProvider.notifier)
+                      .move(selected[index].id, offset),
+                  onRemove: () => ref
+                      .read(executionDailyFocusProvider.notifier)
+                      .toggle(selected[index].id),
+                ),
               ),
         ],
       ),
@@ -453,6 +469,8 @@ List<ExecutionAction> _recommendedFocusActions(
 class _DailyFocusRow extends StatelessWidget {
   const _DailyFocusRow({
     required this.index,
+    required this.busy,
+    required this.onDone,
     required this.action,
     required this.count,
     required this.onOpen,
@@ -461,6 +479,8 @@ class _DailyFocusRow extends StatelessWidget {
     required this.onRemove,
   });
 
+  final bool busy;
+  final VoidCallback onDone;
   final int index;
   final ExecutionAction action;
   final int count;
@@ -476,6 +496,13 @@ class _DailyFocusRow extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.s4),
       child: Row(
         children: [
+          if (!editing)
+            AppIconButton(
+              icon: FLucideIcons.circleCheck,
+              tooltip: l10n.executionActionDone,
+              busy: busy,
+              onPress: busy ? null : onDone,
+            ),
           AppBadge(
             label: '${index + 1}',
             size: AppBadgeSize.compact,
@@ -484,7 +511,7 @@ class _DailyFocusRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: AppTappable(
-              onPress: onOpen,
+              onPress: busy ? null : onOpen,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
                 child: Text(
@@ -500,7 +527,7 @@ class _DailyFocusRow extends StatelessWidget {
               icon: FLucideIcons.arrowUp,
               tooltip: l10n.executionDailyFocusMoveUp,
               onPress: index == 0 ? null : () => onMove(-1),
-              size: 32,
+              size: 44,
               iconSize: AppIconSizes.xs,
             ),
           if (editing)
@@ -508,7 +535,7 @@ class _DailyFocusRow extends StatelessWidget {
               icon: FLucideIcons.arrowDown,
               tooltip: l10n.executionDailyFocusMoveDown,
               onPress: index == count - 1 ? null : () => onMove(1),
-              size: 32,
+              size: 44,
               iconSize: AppIconSizes.xs,
             ),
           if (editing)
@@ -516,7 +543,7 @@ class _DailyFocusRow extends StatelessWidget {
               icon: FLucideIcons.x,
               tooltip: l10n.executionDailyFocusRemove,
               onPress: onRemove,
-              size: 32,
+              size: 44,
               iconSize: AppIconSizes.xs,
             ),
         ],

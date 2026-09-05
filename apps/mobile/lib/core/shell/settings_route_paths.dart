@@ -3,6 +3,7 @@ library;
 
 abstract final class SettingsRoutes {
   static const root = '/settings';
+  static const appearance = '/settings/appearance';
   static const devices = '/settings/devices';
   static const fxRates = '/settings/fx-rates';
   static const backup = '/settings/backup';
@@ -40,6 +41,7 @@ abstract final class SettingsRoutes {
 
 abstract final class SettingsRouteNames {
   static const root = 'settings';
+  static const appearance = 'appearance';
   static const devices = 'devices';
   static const fxRates = 'fx-rates';
   static const backup = 'backup';

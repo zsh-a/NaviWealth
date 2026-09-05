@@ -204,8 +204,8 @@ void main() {
     expect(find.text('On track'), findsWidgets);
     expect(
       find.text('2 reviews due'),
-      findsOneWidget,
-      reason: 'The status is promoted once; the stable entry keeps its title.',
+      findsNWidgets(2),
+      reason: 'The stable entry retains its status when attention is collapsed.',
     );
     expect(find.text('7.5% drift'), findsNothing);
     expect(find.text('62% used this month'), findsOneWidget);
@@ -221,8 +221,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(
       find.text('7.5% drift'),
-      findsNothing,
-    ); // Hidden in collapsed attention.
+      findsOneWidget,
+    ); // The tool retains its status even while attention is collapsed.
     expect(find.text(l10n.incomeStrategyTitle), findsOneWidget);
     expect(find.text(l10n.planExploreActiveOptions(1)), findsOneWidget);
   });
