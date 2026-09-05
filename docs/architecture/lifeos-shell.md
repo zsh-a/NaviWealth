@@ -139,8 +139,9 @@ Rules:
 - Desktop uses one visual sidebar at the large window class (1200dp+). Its
   workspace row switches between Life and active domains. Life and all enabled
   domains remain directly reachable in the sidebar, including from Life. The
-  current domain's tabs appear below a divider. Do not stack a domain dock beside a
-  second tab sidebar.
+  current domain's tabs appear immediately beneath their domain parent, with
+  indentation in the expanded sidebar. Active-domain emphasis is distinct from
+  the selected page marker. Do not stack a domain dock beside a second tab sidebar.
 - Compact and medium layouts keep domain-local bottom/rail navigation and use
   the header workspace switcher. Finance-only installations resolve `/life`
   to Finance Today; the Life workspace becomes useful only when at least one

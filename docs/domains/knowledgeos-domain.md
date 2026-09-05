@@ -49,7 +49,10 @@ recent captures; the full collection belongs to Library. Due reviews use an
 independent owner-scoped repository query and refresh with foreground time,
 so older decisions and newly due reviews remain visible. Inbox previews three reviews and expands the
 complete due list lazily. Notes and reviews retain independent loading/error
-states; refresh waits for both sections. Library grows its live browse window
+states; refresh waits for both sections. Wide Inbox layouts place recent Notes
+in the primary pane and due reviews in an independently scrolling supporting
+pane; narrow or large-text layouts retain the review-first single list.
+Library grows its live browse window
 in batches of 50, with deterministic updated-time ordering and a load-more
 control. Tag facets cover the full library; tag filtering precedes the query
 limit. Ranked search displays up to 50 results and explains when to refine the

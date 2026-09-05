@@ -238,6 +238,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 900));
     expect(_currentPath(container), AppRoutes.healthToday);
     expect(find.byType(HealthTodayPage), findsOneWidget);
+    final navigation = tester.widget<DesktopSidebar>(sidebar);
+    final parent = navigation.destinations.indexWhere((d) => d.activeGroup);
+    expect(
+      navigation.destinations[parent].label,
+      healthDomainShell(l10n).label,
+    );
+    expect(navigation.destinations[parent + 1].nested, isTrue);
+    expect(navigation.selectedIndex, parent + 1);
     expect(
       tester.widget<DesktopSidebar>(sidebar).destinations.map((d) => d.label),
       contains(financeDomainShell(l10n).label),

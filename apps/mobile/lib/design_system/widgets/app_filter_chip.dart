@@ -59,45 +59,51 @@ class AppFilterChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Semantics(
-            button: onPress != null,
-            selected: active,
-            label: label,
-            excludeSemantics: true,
-            child: FTappable(
-              onPress: onPress,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minHeight: AppControlHeights.touchTarget,
-                ),
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: AppSpacing.s10,
-                    right: showClear ? AppSpacing.s4 : AppSpacing.s10,
+          Flexible(
+            child: Semantics(
+              button: onPress != null,
+              selected: active,
+              label: label,
+              excludeSemantics: true,
+              child: FTappable(
+                onPress: onPress,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: AppControlHeights.touchTarget,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        icon ??
-                            (active ? FLucideIcons.check : FLucideIcons.circle),
-                        size: AppIconSizes.xs,
-                        color: active ? colors.primary : colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s6),
-                      Flexible(
-                        child: Text(
-                          label,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style:
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: AppSpacing.s10,
+                      right: showClear ? AppSpacing.s4 : AppSpacing.s10,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon ??
                               (active
-                                      ? context.captionLabelStyle
-                                      : context.captionMediumStyle)
-                                  .copyWith(color: foreground),
+                                  ? FLucideIcons.check
+                                  : FLucideIcons.circle),
+                          size: AppIconSizes.xs,
+                          color: active
+                              ? colors.primary
+                              : colors.mutedForeground,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.s6),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                (active
+                                        ? context.captionLabelStyle
+                                        : context.captionMediumStyle)
+                                    .copyWith(color: foreground),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

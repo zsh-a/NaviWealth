@@ -74,6 +74,37 @@ ProviderContainer _container() {
 }
 
 void main() {
+  testWidgets('clearing a filter chip preserves search and other filters', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final container = _container();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(_wrap(container: container, textScale: 1.5));
+    await tester.pumpAndSettle();
+    container
+        .read(activityFeedQueryProvider.notifier)
+        .setQuery(
+          const ActivityFeedQuery(
+            kinds: {ActivityKind.expense, ActivityKind.transfer},
+            accountIds: {'account'},
+            searchText: 'coffee',
+          ),
+        );
+    await tester.pumpAndSettle();
+    final chip = find.widgetWithText(AppFilterChip, 'Expense');
+    await tester.tap(
+      find.descendant(of: chip, matching: find.byIcon(FLucideIcons.x)),
+    );
+    await tester.pumpAndSettle();
+    final query = container.read(activityFeedQueryProvider);
+    expect(query.kinds, {ActivityKind.transfer});
+    expect(query.accountIds, {'account'});
+    expect(query.searchText, 'coffee');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('mobile search retains filters and collapsing preserves query', (
     tester,
   ) async {
@@ -194,7 +225,7 @@ void main() {
         );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('All dates · 2 kinds'));
+    await tester.tap(find.byIcon(FLucideIcons.listFilter));
     await tester.pumpAndSettle();
     await tester.tap(find.text('All'));
     await tester.pumpAndSettle();

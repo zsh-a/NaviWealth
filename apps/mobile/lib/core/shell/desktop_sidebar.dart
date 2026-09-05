@@ -109,22 +109,19 @@ class DesktopSidebar extends ConsumerWidget {
                           vertical: AppSpacing.s4,
                         ),
                         itemCount: destinations.length,
-                        itemBuilder: (_, i) => Column(
-                          children: [
-                            if (destinations[i].startsSection)
-                              const AppDivider(),
-                            _SidebarRow(
-                              icon: i == selectedIndex
-                                  ? destinations[i].selectedIcon
-                                  : destinations[i].icon,
-                              label: destinations[i].label,
-                              selected: i == selectedIndex,
-                              collapsed: metrics.collapsed,
-                              labelOpacity: metrics.labelOpacity,
-                              accentColor: accentColor,
-                              onPress: () => onDestinationSelected(i),
-                            ),
-                          ],
+                        itemBuilder: (_, i) => _SidebarRow(
+                          icon:
+                              i == selectedIndex || destinations[i].activeGroup
+                              ? destinations[i].selectedIcon
+                              : destinations[i].icon,
+                          label: destinations[i].label,
+                          selected: i == selectedIndex,
+                          nested: destinations[i].nested,
+                          activeGroup: destinations[i].activeGroup,
+                          collapsed: metrics.collapsed,
+                          labelOpacity: metrics.labelOpacity,
+                          accentColor: accentColor,
+                          onPress: () => onDestinationSelected(i),
                         ),
                       ),
                     ),
@@ -221,13 +218,15 @@ class DesktopSidebarDestination {
     required this.icon,
     required this.selectedIcon,
     required this.label,
-    this.startsSection = false,
+    this.nested = false,
+    this.activeGroup = false,
   });
 
   final IconData icon;
   final IconData selectedIcon;
   final String label;
-  final bool startsSection;
+  final bool nested;
+  final bool activeGroup;
 }
 
 /// Current workspace affordance shown above domain-local destinations.
@@ -279,6 +278,8 @@ class _SidebarRow extends StatefulWidget {
     required this.label,
     required this.onPress,
     this.selected = false,
+    this.nested = false,
+    this.activeGroup = false,
     this.emphasized = false,
     this.collapsed = false,
     this.labelOpacity = 1,
@@ -291,6 +292,8 @@ class _SidebarRow extends StatefulWidget {
   final String label;
   final VoidCallback onPress;
   final bool selected;
+  final bool nested;
+  final bool activeGroup;
   final bool emphasized;
   final bool collapsed;
   final double labelOpacity;
@@ -319,12 +322,14 @@ class _SidebarRowState extends State<_SidebarRow> {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final accent = widget.accentColor ?? colors.primary;
-    final foreground = widget.selected
+    final foreground = widget.selected || widget.activeGroup
         ? accent
         : widget.emphasized
         ? colors.primary
         : colors.mutedForeground;
-    final background = _hovered
+    final background = widget.selected
+        ? accent.withValues(alpha: AppOpacity.whisper)
+        : _hovered
         ? colors.foreground.withValues(alpha: AppOpacity.whisper)
         : Colors.transparent;
 
@@ -365,8 +370,13 @@ class _SidebarRowState extends State<_SidebarRow> {
                   ),
                 ),
               Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: widget.collapsed ? 0 : AppSpacing.s8,
+                padding: EdgeInsetsDirectional.only(
+                  start: widget.collapsed
+                      ? 0
+                      : widget.nested
+                      ? AppSpacing.s24
+                      : AppSpacing.s8,
+                  end: widget.collapsed ? 0 : AppSpacing.s8,
                 ),
                 child: Row(
                   children: [
@@ -398,11 +408,13 @@ class _SidebarRowState extends State<_SidebarRow> {
                             child: Text(
                               widget.label,
                               style:
-                                  (widget.selected
+                                  (widget.selected || widget.activeGroup
                                           ? context.labelStyle
                                           : context.mediumLabelStyle)
                                       .copyWith(
-                                        color: widget.selected
+                                        color:
+                                            widget.selected ||
+                                                widget.activeGroup
                                             ? accent
                                             : widget.emphasized
                                             ? colors.primary

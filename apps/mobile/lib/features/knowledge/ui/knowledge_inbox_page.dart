@@ -67,7 +67,7 @@ class _InboxContentState extends ConsumerState<_InboxContent> {
     final hasOverdue = decisions.any(
       (decision) => (decision.daysOverdue(DateTime.now().toUtc()) ?? 0) > 0,
     );
-    final rows = <WidgetBuilder>[
+    final reviewRows = <WidgetBuilder>[
       if (decisions.isNotEmpty || dueReviews.isLoading || dueReviews.hasError)
         (_) => SectionHeader.module(
           title: l10n.knowledgeInboxDueReviewsTitle,
@@ -96,6 +96,8 @@ class _InboxContentState extends ConsumerState<_InboxContent> {
           expandedLabel: l10n.knowledgeInboxHideReviews,
           onToggle: () => setState(() => _allReviews = !_allReviews),
         ),
+    ];
+    final noteRows = <WidgetBuilder>[
       if (notes.isNotEmpty || recentNotes.isLoading || recentNotes.hasError)
         (_) => SectionHeader.module(title: l10n.knowledgeInboxRecentNotesTitle),
       if (recentNotes.hasError)
@@ -120,6 +122,7 @@ class _InboxContentState extends ConsumerState<_InboxContent> {
           !dueReviews.hasError)
         (_) => AppEmptyState(
           icon: FLucideIcons.notebookPen,
+          compact: true,
           title: l10n.knowledgeInboxEmptyTitle,
           message: l10n.knowledgeInboxEmptyBody,
           action: AppActionButton(
@@ -128,15 +131,68 @@ class _InboxContentState extends ConsumerState<_InboxContent> {
           ),
         ),
     ];
-    return BriefLazyListScaffold(
-      padding: shellTabContentPadding(context),
-      onRefresh: _refresh,
-      greeting: const KnowledgeGreetingHeader(),
-      stage: const SizedBox.shrink(),
-      itemCount: rows.length,
-      itemBuilder: (context, index) => rows[index](context),
+    final rows = [...reviewRows, ...noteRows];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final padding = shellTabContentPadding(context)
+            .resolve(Directionality.of(context));
+        final contentWidth = constraints.maxWidth - padding.horizontal;
+        final split =
+            contentWidth >= Breakpoints.contentTwoColumn &&
+            MediaQuery.textScalerOf(context).scale(1) <= 1.3 &&
+            noteRows.isNotEmpty &&
+            reviewRows.isNotEmpty;
+        if (!split) {
+          return BriefLazyListScaffold(
+            padding: padding,
+            onRefresh: _refresh,
+            greeting: const KnowledgeGreetingHeader(),
+            itemCount: rows.length,
+            itemBuilder: (context, index) => rows[index](context),
+          );
+        }
+        return AppAtmosphere(
+          child: Padding(
+            padding: padding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const KnowledgeGreetingHeader(),
+                const SizedBox(height: AppPageRhythm.module),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, paneConstraints) =>
+                        AdaptiveSupportingPane(
+                          primary: SizedBox(
+                            height: paneConstraints.maxHeight,
+                            child: _pane('notes', noteRows),
+                          ),
+                          supporting: SizedBox(
+                            height: paneConstraints.maxHeight,
+                            child: _pane('reviews', reviewRows),
+                          ),
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
+
+  Widget _pane(String name, List<WidgetBuilder> rows) => AppRefreshIndicator(
+    onRefresh: _refresh,
+    child: ListView.separated(
+      key: PageStorageKey('knowledge-inbox-$name'),
+      primary: false,
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: rows.length,
+      separatorBuilder: (_, _) => const SizedBox(height: AppPageRhythm.module),
+      itemBuilder: (context, index) => rows[index](context),
+    ),
+  );
 
   Widget _sectionError(AppLocalizations l10n, VoidCallback onRetry) =>
       AppEmptyState.error(

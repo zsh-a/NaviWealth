@@ -13,7 +13,7 @@ const double kAppCollapseExtent = 88;
 /// Scroll-linked stage for page heroes (net worth, recovery score, focus count).
 ///
 /// Tracks the nearest ancestor [Scrollable] via [AnimatedBuilder] and gently
-/// scales the child toward [minScale] as the user scrolls down.
+/// scales the child and its occupied height toward [minScale] while scrolling.
 ///
 /// Place this *inside* a scroll view so [Scrollable.maybeOf] resolves.
 /// Prefer wrapping the whole hero module — alignment stays top-centered.
@@ -59,11 +59,15 @@ class AppCollapsingStage extends StatelessWidget {
         // Avoid FilterQuality.medium — it forces extra texture sampling
         // every scroll frame for a subtle visual polish that is not worth
         // the raster cost on chart-heavy dashboards.
-        return Transform.scale(
-          scale: scale,
+        return Align(
           alignment: Alignment.topCenter,
-          filterQuality: FilterQuality.low,
-          child: Opacity(opacity: opacity, child: child),
+          heightFactor: scale,
+          child: Transform.scale(
+            scale: scale,
+            alignment: Alignment.topCenter,
+            filterQuality: FilterQuality.low,
+            child: Opacity(opacity: opacity, child: child),
+          ),
         );
       },
       child: child,
@@ -242,13 +246,19 @@ class AppCollapsedSummaryBar extends StatelessWidget {
     }
 
     final showing = opacity > 0.02;
-    return IgnorePointer(
-      ignoring: !showing,
-      child: Opacity(
-        opacity: opacity,
-        child: Transform.translate(
-          offset: Offset(0, slide),
-          child: _StickyGlassChrome(padding: padding, child: child),
+    return ExcludeFocus(
+      excluding: !showing,
+      child: ExcludeSemantics(
+        excluding: !showing,
+        child: IgnorePointer(
+          ignoring: !showing,
+          child: Opacity(
+            opacity: opacity,
+            child: Transform.translate(
+              offset: Offset(0, slide),
+              child: _StickyGlassChrome(padding: padding, child: child),
+            ),
+          ),
         ),
       ),
     );

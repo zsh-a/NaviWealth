@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -139,7 +141,42 @@ void main() {
       'note:note-1',
     );
     expect(find.byType(KnowledgeNoteDetailPage), findsOneWidget);
+    expect(
+      tester.widget<AppSelectedRow>(find.byType(AppSelectedRow)).selected,
+      isTrue,
+    );
     expect(find.text('pushed-note-detail'), findsNothing);
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('row actions reveal on mouse hover and keyboard focus', (
+    tester,
+  ) async {
+    await _setSurface(tester, 800);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: const Offset(790, 890));
+    await tester.pumpWidget(_wrap(contentWidth: 700));
+    await _settlePaint(tester);
+    final menu = find.byIcon(FLucideIcons.ellipsis);
+    double opacity() => tester
+        .widget<AnimatedOpacity>(
+          find.ancestor(of: menu, matching: find.byType(AnimatedOpacity)).first,
+        )
+        .opacity;
+    expect(opacity(), 0);
+    await mouse.moveTo(tester.getCenter(find.text('Library note')));
+    await tester.pumpAndSettle();
+    expect(opacity(), 1);
+    await mouse.moveTo(const Offset(790, 890));
+    await tester.pumpAndSettle();
+    expect(opacity(), 0);
+    // Reach the row through normal keyboard traversal, without a mouse.
+    for (var i = 0; i < 20 && opacity() == 0; i++) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pumpAndSettle();
+    }
+    expect(opacity(), 1);
+    await mouse.removePointer();
     await _disposeWidget(tester);
   });
 

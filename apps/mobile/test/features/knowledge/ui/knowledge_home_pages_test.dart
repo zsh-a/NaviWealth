@@ -15,6 +15,50 @@ import 'package:naviwealth/features/knowledge/ui/knowledge_library_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
+  testWidgets('wide Inbox keeps reviews lazy beside recent notes', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeInboxPage(),
+        notes: [_note('note', 'Recent capture', 1)],
+        decisions: List.generate(
+          100,
+          (i) => _decision(
+            id: 'due-$i',
+            question: 'Review $i',
+            reviewDate: DateTime.utc(2020),
+            status: DecisionStatus.active,
+            tick: i,
+          ),
+        ),
+      ),
+    );
+    await _settlePaint(tester);
+    expect(find.byType(AdaptiveSupportingPane), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Recent notes')).dx,
+      lessThan(tester.getTopLeft(find.text('Due for review')).dx),
+    );
+    await tester.tap(find.text('Show all 100 reviews'));
+    await _settlePaint(tester);
+    expect(find.text('Review 99'), findsNothing);
+    final reviews = find.descendant(
+      of: find.byKey(const PageStorageKey('knowledge-inbox-reviews')),
+      matching: find.byType(Scrollable),
+    );
+    await tester.scrollUntilVisible(
+      find.text('Review 99'),
+      600,
+      scrollable: reviews,
+      maxScrolls: 100,
+    );
+    expect(find.text('Recent capture'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Inbox focuses due reviews and recent Notes', (tester) async {
     final notes = List<KnowledgeNote>.generate(
       10,

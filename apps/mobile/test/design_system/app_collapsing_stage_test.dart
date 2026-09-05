@@ -17,7 +17,7 @@ void main() {
             children: const [
               AppCollapsingStage(
                 key: Key('collapse'),
-                collapseExtent: 80,
+                collapseExtent: 40,
                 minScale: 0.5,
                 child: SizedBox(
                   key: Key('stage-box'),
@@ -45,12 +45,18 @@ void main() {
 
     // storage[0] is the X scale (Z is always 1.0 so getMaxScaleOnAxis is useless).
     expect(scaleOf().transform.storage[0], closeTo(1.0, 0.01));
+    expect(tester.getSize(find.byKey(const Key('collapse'))).height, 160);
 
-    controller.jumpTo(120);
+    controller.jumpTo(40);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 16));
 
     expect(scaleOf().transform.storage[0], lessThan(0.9));
+    expect(tester.getSize(find.byKey(const Key('collapse'))).height, 80);
+    controller.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(tester.getSize(find.byKey(const Key('collapse'))).height, 160);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('AppCollapsingScrollHost reveals sticky summary on scroll', (

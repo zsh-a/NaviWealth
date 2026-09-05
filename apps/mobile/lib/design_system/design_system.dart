@@ -83,6 +83,7 @@ export 'widgets/app_refresh_indicator.dart';
 export 'widgets/app_reveal_control.dart';
 export 'widgets/app_section.dart';
 export 'widgets/app_selectable_text.dart';
+export 'widgets/app_selected_row.dart';
 export 'widgets/app_selection_indicator.dart';
 export 'widgets/app_sheet.dart';
 export 'widgets/app_status_banner.dart';

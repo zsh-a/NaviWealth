@@ -62,7 +62,15 @@ class MasterDetailLayout extends ConsumerWidget {
             layoutBuilder: (current, previous) => Stack(
               fit: StackFit.expand,
               alignment: Alignment.topLeft,
-              children: [...previous, ?current],
+              children: [
+                for (final outgoing in previous)
+                  ExcludeFocus(
+                    child: ExcludeSemantics(
+                      child: IgnorePointer(child: outgoing),
+                    ),
+                  ),
+                ?current,
+              ],
             ),
             child: KeyedSubtree(key: ValueKey(selected), child: detail),
           ),

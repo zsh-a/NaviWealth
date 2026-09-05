@@ -225,22 +225,31 @@ class _PlansBodyState extends ConsumerState<_PlansBody> {
         itemBuilders.add(
           (_) => Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-            child: ExecutionPlanCardController(
-              plan: plan,
-              openActionCount: actionCountByPlan[plan.id] ?? 0,
-              blockedActionCount: blockedCountByPlan[plan.id] ?? 0,
-              onCreateAction: () => showExecutionActionSheet(
-                context: context,
-                initialPlanId: plan.id,
+            child: AppSelectedRow(
+              selected:
+                  widget.inMasterDetail && selectedQueryOf(context) == plan.id,
+              color: DomainAccents.execution.resolve(
+                context.appTheme.brightness,
               ),
-              onEdit: () =>
-                  showExecutionPlanSheet(context: context, plan: plan),
-              onRecordProgress: () =>
-                  showExecutionProgressSheet(context: context, planId: plan.id),
-              onOpen: () => _openPlan(
-                context,
-                inMasterDetail: widget.inMasterDetail,
-                id: plan.id,
+              child: ExecutionPlanCardController(
+                plan: plan,
+                openActionCount: actionCountByPlan[plan.id] ?? 0,
+                blockedActionCount: blockedCountByPlan[plan.id] ?? 0,
+                onCreateAction: () => showExecutionActionSheet(
+                  context: context,
+                  initialPlanId: plan.id,
+                ),
+                onEdit: () =>
+                    showExecutionPlanSheet(context: context, plan: plan),
+                onRecordProgress: () => showExecutionProgressSheet(
+                  context: context,
+                  planId: plan.id,
+                ),
+                onOpen: () => _openPlan(
+                  context,
+                  inMasterDetail: widget.inMasterDetail,
+                  id: plan.id,
+                ),
               ),
             ),
           ),

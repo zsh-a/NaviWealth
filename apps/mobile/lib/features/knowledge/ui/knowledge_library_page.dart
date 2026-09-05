@@ -547,32 +547,38 @@ class _LibraryList extends ConsumerWidget {
     final noteAccent = DomainAccents.knowledge.resolve(
       context.appTheme.brightness,
     );
-    return KnowledgeEntryTile(
-      key: ValueKey<String>('knowledge-library-${entry.kind}-${entry.id}'),
-      title: entry.title.isEmpty ? l10n.knowledgeUntitled : entry.title,
-      subtitle: entry.subtitle,
-      meta: _relativeMeta(l10n, entry.updatedAt),
-      tags: entry.tags,
-      kindLabel: entry.kind == 'note'
-          ? l10n.knowledgeKindNote
-          : l10n.knowledgeKindDecision,
-      icon: entry.kind == 'note'
-          ? FLucideIcons.fileText
-          : FLucideIcons.circleCheck,
-      iconColor: entry.kind == 'note'
-          ? noteAccent
-          : context.appTheme.status.info.fg,
-      decisionStatus: entry.decisionStatus,
-      menuActions: [
-        AppAdaptiveAction(
-          icon: FLucideIcons.trash2,
-          title: l10n.commonDelete,
-          destructive: true,
-          onPress: () => _deleteEntry(context, ref, entry),
-        ),
-      ],
-      onPress: () =>
-          _openEntry(context, entry: entry, inMasterDetail: inMasterDetail),
+    return AppSelectedRow(
+      selected:
+          inMasterDetail &&
+          selectedQueryOf(context) == '${entry.kind}:${entry.id}',
+      color: noteAccent,
+      child: KnowledgeEntryTile(
+        key: ValueKey<String>('knowledge-library-${entry.kind}-${entry.id}'),
+        title: entry.title.isEmpty ? l10n.knowledgeUntitled : entry.title,
+        subtitle: entry.subtitle,
+        meta: _relativeMeta(l10n, entry.updatedAt),
+        tags: entry.tags,
+        kindLabel: entry.kind == 'note'
+            ? l10n.knowledgeKindNote
+            : l10n.knowledgeKindDecision,
+        icon: entry.kind == 'note'
+            ? FLucideIcons.fileText
+            : FLucideIcons.circleCheck,
+        iconColor: entry.kind == 'note'
+            ? noteAccent
+            : context.appTheme.status.info.fg,
+        decisionStatus: entry.decisionStatus,
+        menuActions: [
+          AppAdaptiveAction(
+            icon: FLucideIcons.trash2,
+            title: l10n.commonDelete,
+            destructive: true,
+            onPress: () => _deleteEntry(context, ref, entry),
+          ),
+        ],
+        onPress: () =>
+            _openEntry(context, entry: entry, inMasterDetail: inMasterDetail),
+      ),
     );
   }
 

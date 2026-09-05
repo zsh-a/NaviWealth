@@ -268,21 +268,36 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
         selectedIcon: FLucideIcons.house,
         label: l10n.lifeNavLabel,
       ),
-      for (final spec in specs)
+    ];
+    final paths = <String>[AppRoutes.life];
+    var selectedIndex = 0;
+    for (final spec in specs) {
+      final active = !onLife && spec == activeSpec;
+      if (active && selectedTab < 0) selectedIndex = destinations.length;
+      destinations.add(
         DesktopSidebarDestination(
           icon: spec.icon,
           selectedIcon: spec.selectedIcon,
           label: spec.label,
+          activeGroup: active,
         ),
-      if (!onLife)
-        for (final tab in activeSpec.tabs)
+      );
+      paths.add(spec.tabs.first.routePath);
+      if (!active) continue;
+      for (var i = 0; i < spec.tabs.length; i++) {
+        final tab = spec.tabs[i];
+        if (i == selectedTab) selectedIndex = destinations.length;
+        destinations.add(
           DesktopSidebarDestination(
             icon: tab.icon,
             selectedIcon: tab.selectedIcon,
             label: tab.label,
-            startsSection: tab == activeSpec.tabs.first,
+            nested: true,
           ),
-    ];
+        );
+        paths.add(tab.routePath);
+      }
+    }
     return DesktopSidebar(
       workspace: DesktopSidebarWorkspace(
         icon: workspaceIcon,
@@ -292,21 +307,10 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
       ),
       destinations: destinations,
       accentColor: accentColor,
-      selectedIndex: onLife
-          ? 0
-          : selectedTab < 0
-          ? specs.indexOf(activeSpec) + 1
-          : selectedTab + specs.length + 1,
+      selectedIndex: selectedIndex,
       onDestinationSelected: (index) {
         AppInteraction.signal(AppInteractionIntent.navigate);
-        if (index == 0) {
-          GoRouter.of(context).go(AppRoutes.life);
-          return;
-        }
-        final path = index <= specs.length
-            ? specs[index - 1].tabs.first.routePath
-            : activeSpec.tabs[index - specs.length - 1].routePath;
-        GoRouter.of(context).go(path);
+        GoRouter.of(context).go(paths[index]);
       },
       footerActions: [
         if (ref.watch(deviceLlmPlatformSupportedProvider))

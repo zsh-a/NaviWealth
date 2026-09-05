@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:forui/forui.dart';
 
 import '../../../../design_system/design_system.dart';
@@ -64,121 +65,166 @@ class KnowledgeEntryTile extends StatelessWidget {
     );
     final tileColor =
         iconColor ?? (accented ? knowledgeAccent : colors.mutedForeground);
-    return SoftCard.flat(
-      onPress: onPress,
-      padding: const EdgeInsets.all(AppSpacing.s14),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppIconTile(
-            icon: icon,
-            color: tileColor,
-            size: AppControlHeights.touchTarget,
-            iconSize: AppIconSizes.sm,
-            radius: AppRadius.md,
-            backgroundOpacity: accented || iconColor != null
-                ? AppOpacity.whisper
-                : AppOpacity.subtle,
-            foregroundOpacity: 1,
-          ),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.rowTitleStyle,
+    return _EntryInteraction(
+      builder: (context, showActions) => SoftCard.flat(
+        onPress: onPress,
+        padding: const EdgeInsets.all(AppSpacing.s14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AppIconTile(
+              icon: icon,
+              color: tileColor,
+              size: AppControlHeights.touchTarget,
+              iconSize: AppIconSizes.sm,
+              radius: AppRadius.md,
+              backgroundOpacity: accented || iconColor != null
+                  ? AppOpacity.whisper
+                  : AppOpacity.subtle,
+              foregroundOpacity: 1,
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.rowTitleStyle,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      FBadge(child: Text(kindLabel)),
+                      if (decisionStatus case final status?) ...[
+                        const SizedBox(width: AppSpacing.s4),
+                        AppBadge(
+                          label: knowledgeDecisionStatusLabel(l10n, status),
+                          tone: _decisionStatusTone(status),
+                          size: AppBadgeSize.compact,
+                          icon: _decisionStatusIcon(status),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (secondary != null && secondary.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      secondary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.bodyCaptionStyle,
+                    ),
+                  ],
+                  if (metadata != null && metadata.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s6),
+                    Text(metadata, style: context.captionMediumStyle),
+                  ],
+                  if (visibleTags.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    Wrap(
+                      spacing: AppSpacing.s4,
+                      runSpacing: AppSpacing.s4,
+                      children: [
+                        for (final tag in visibleTags.take(3))
+                          AppBadge(
+                            label: tag,
+                            size: AppBadgeSize.compact,
+                            outlined: true,
+                          ),
+                        if (visibleTags.length > 3)
+                          AppBadge(
+                            label: '+${visibleTags.length - 3}',
+                            size: AppBadgeSize.compact,
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            if (menuActions.isNotEmpty)
+              IgnorePointer(
+                ignoring: !showActions,
+                child: AnimatedOpacity(
+                  opacity: showActions ? 1 : 0,
+                  duration: AppMotionPolicy.duration(context, Motion.fast),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.s6),
+                    child: AppAdaptiveActionMenu(
+                      title: title,
+                      actions: menuActions,
+                      triggerBuilder: (context, openMenu, focusNode) => Focus(
+                        focusNode: focusNode,
+                        child: AppIconButton(
+                          icon: FLucideIcons.ellipsis,
+                          tooltip: l10n.shellMoreActions,
+                          onPress: openMenu,
+                          size: 32,
+                          iconSize: AppIconSizes.xs,
+                          iconColor: colors.mutedForeground,
+                          surface: AppIconButtonSurface.softMuted,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.s8),
-                    FBadge(child: Text(kindLabel)),
-                    if (decisionStatus case final status?) ...[
-                      const SizedBox(width: AppSpacing.s4),
-                      AppBadge(
-                        label: knowledgeDecisionStatusLabel(l10n, status),
-                        tone: _decisionStatusTone(status),
-                        size: AppBadgeSize.compact,
-                        icon: _decisionStatusIcon(status),
-                      ),
-                    ],
-                  ],
-                ),
-                if (secondary != null && secondary.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(
-                    secondary,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: context.bodyCaptionStyle,
-                  ),
-                ],
-                if (metadata != null && metadata.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s6),
-                  Text(metadata, style: context.captionMediumStyle),
-                ],
-                if (visibleTags.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  Wrap(
-                    spacing: AppSpacing.s4,
-                    runSpacing: AppSpacing.s4,
-                    children: [
-                      for (final tag in visibleTags.take(3))
-                        AppBadge(
-                          label: tag,
-                          size: AppBadgeSize.compact,
-                          outlined: true,
-                        ),
-                      if (visibleTags.length > 3)
-                        AppBadge(
-                          label: '+${visibleTags.length - 3}',
-                          size: AppBadgeSize.compact,
-                        ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          if (menuActions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s6),
-              child: AppAdaptiveActionMenu(
-                title: title,
-                actions: menuActions,
-                triggerBuilder: (context, openMenu, focusNode) => Focus(
-                  focusNode: focusNode,
-                  child: AppIconButton(
-                    icon: FLucideIcons.ellipsis,
-                    tooltip: l10n.shellMoreActions,
-                    onPress: openMenu,
-                    size: 32,
-                    iconSize: AppIconSizes.xs,
-                    iconColor: colors.mutedForeground,
-                    surface: AppIconButtonSurface.softMuted,
                   ),
                 ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s12),
+                child: Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.sm,
+                  color: colors.mutedForeground,
+                ),
               ),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s12),
-              child: Icon(
-                FLucideIcons.chevronRight,
-                size: AppIconSizes.sm,
-                color: colors.mutedForeground,
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+/// Pointer users see secondary actions on hover; keyboard focus reveals the
+/// same controls. Touch and assistive navigation keep the action discoverable.
+class _EntryInteraction extends StatefulWidget {
+  const _EntryInteraction({required this.builder});
+
+  final Widget Function(BuildContext, bool) builder;
+
+  @override
+  State<_EntryInteraction> createState() => _EntryInteractionState();
+}
+
+class _EntryInteractionState extends State<_EntryInteraction> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: RendererBinding.instance.mouseTracker,
+    builder: (context, _) => MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Focus(
+        canRequestFocus: false,
+        onFocusChange: (focused) => setState(() => _focused = focused),
+        child: widget.builder(
+          context,
+          _hovered ||
+              _focused ||
+              !RendererBinding.instance.mouseTracker.mouseIsConnected ||
+              MediaQuery.accessibleNavigationOf(context),
+        ),
+      ),
+    ),
+  );
 }
 
 /// Tone mapping follows the execution-domain precedent

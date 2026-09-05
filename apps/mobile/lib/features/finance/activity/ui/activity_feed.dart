@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_repo
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/shell/selection_query.dart';
 import '../../../../core/shell/shell_chrome.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -381,15 +382,19 @@ class _VirtualizedDayEntry extends ConsumerWidget {
         confirm: () => _confirmAndDelete(context, ref),
         // The feed re-flows via provider invalidation; no row animation.
         removeRow: false,
-        child: ActivityFeedEntrySurface(
-          entry: entry,
-          accountsById: accountsById,
-          formatter: formatter,
-          onPress: onEntryOpen == null
-              ? null
-              : () => onEntryOpen!(entry.entry.id),
-          isFirstInGroup: isFirstInDay,
-          isLastInGroup: isLastInDay,
+        child: AppSelectedRow(
+          selected:
+              onEntryOpen != null && selectedQueryOf(context) == entry.entry.id,
+          child: ActivityFeedEntrySurface(
+            entry: entry,
+            accountsById: accountsById,
+            formatter: formatter,
+            onPress: onEntryOpen == null
+                ? null
+                : () => onEntryOpen!(entry.entry.id),
+            isFirstInGroup: isFirstInDay,
+            isLastInGroup: isLastInDay,
+          ),
         ),
       ),
     );
@@ -641,6 +646,7 @@ class _EmptyFeed extends StatelessWidget {
       children: [
         AppEmptyState(
           icon: filtered ? FLucideIcons.filter : FLucideIcons.workflow,
+          compact: filtered,
           title: message,
           action: actionLabel != null && onAction != null
               ? ConstrainedBox(

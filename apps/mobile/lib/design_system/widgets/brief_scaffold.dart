@@ -219,7 +219,7 @@ class BriefLazyListScaffold extends StatelessWidget {
   const BriefLazyListScaffold({
     super.key,
     required this.greeting,
-    required this.stage,
+    this.stage,
     required this.itemCount,
     required this.itemBuilder,
     this.modules = const <Widget>[],
@@ -232,7 +232,7 @@ class BriefLazyListScaffold extends StatelessWidget {
   });
 
   final Widget greeting;
-  final Widget stage;
+  final Widget? stage;
   final List<Widget> modules;
   final Widget? listHeader;
   final int itemCount;
@@ -256,8 +256,10 @@ class BriefLazyListScaffold extends StatelessWidget {
     final resolved = contentPadding.resolve(Directionality.of(context));
     final headerChildren = <Widget>[
       greeting,
-      const SizedBox(height: AppPageRhythm.module),
-      stage,
+      if (stage case final stage?) ...[
+        const SizedBox(height: AppPageRhythm.module),
+        stage,
+      ],
       if (modules.isNotEmpty) ...[
         const SizedBox(height: AppPageRhythm.section),
         ...BriefScaffold._interleave(modules, AppPageRhythm.module),
