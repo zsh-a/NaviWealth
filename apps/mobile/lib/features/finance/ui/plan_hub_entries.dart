@@ -53,7 +53,9 @@ _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
     group: _PlanEntryGroup.cashSafety,
     icon: FLucideIcons.calendarRange,
     title: l10n.moneyRunwayTitle,
-    subtitle: _runwayStatusLabel(l10n, runway),
+    subtitle: status.unavailableSources.contains(PlanningSource.runway)
+        ? l10n.planStatusUnavailable
+        : _runwayStatusLabel(l10n, runway),
     path: FinanceRoutes.planRunway,
     tone: switch (runway) {
       PlanningRunwayStatus.healthy => AppBadgeTone.success,
@@ -89,7 +91,9 @@ _PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
     group: _PlanEntryGroup.cashSafety,
     icon: FLucideIcons.piggyBank,
     title: l10n.planBudgetSectionTitle,
-    subtitle: subtitle,
+    subtitle: status.unavailableSources.contains(PlanningSource.budget)
+        ? l10n.planStatusUnavailable
+        : subtitle,
     path: FinanceRoutes.planBudget,
     tone: switch (signal) {
       BudgetSignal.overBudget => AppBadgeTone.error,
@@ -112,7 +116,9 @@ _PlanEntrySpec _lifeEventsEntry(
     group: _PlanEntryGroup.longTermGoals,
     icon: FLucideIcons.waypoints,
     title: l10n.lifeEventScenariosTitle,
-    subtitle: pending == null
+    subtitle: status.unavailableSources.contains(PlanningSource.reviews)
+        ? l10n.planStatusUnavailable
+        : pending == null
         ? l10n.planStatusLoading
         : pending == 0
         ? l10n.planStatusNoPendingReviews
@@ -172,7 +178,9 @@ _PlanEntrySpec _dcaEntry(
   group: _PlanEntryGroup.investmentPlan,
   icon: FLucideIcons.calendarClock,
   title: l10n.planDcaPlanTitle,
-  subtitle: _dcaStatusLabel(context, l10n, status),
+  subtitle: status.unavailableSources.contains(PlanningSource.dca)
+      ? l10n.planStatusUnavailable
+      : _dcaStatusLabel(context, l10n, status),
   path: FinanceRoutes.planDca,
   tone: status.dcaDue
       ? AppBadgeTone.warning
@@ -192,7 +200,9 @@ _PlanEntrySpec _incomeStrategyEntry(
     group: _PlanEntryGroup.investmentPlan,
     icon: FLucideIcons.candlestickChart,
     title: l10n.incomeStrategyTitle,
-    subtitle: activeOptions > 0
+    subtitle: status.unavailableSources.contains(PlanningSource.income)
+        ? l10n.planStatusUnavailable
+        : activeOptions > 0
         ? l10n.planExploreActiveOptions(activeOptions)
         : l10n.planIncomeSectionSubtitle,
     path: FinanceRoutes.planIncome,
@@ -207,7 +217,9 @@ _PlanEntrySpec _rebalanceEntry(
   group: _PlanEntryGroup.investmentPlan,
   icon: FLucideIcons.scale,
   title: l10n.planRebalanceSectionTitle,
-  subtitle: _rebalanceStatusLabel(l10n, status),
+  subtitle: status.unavailableSources.contains(PlanningSource.rebalance)
+      ? l10n.planStatusUnavailable
+      : _rebalanceStatusLabel(l10n, status),
   path: FinanceRoutes.planRebalance,
   tone: switch (status.rebalance) {
     PlanningRebalanceStatus.balanced => AppBadgeTone.success,
@@ -254,16 +266,4 @@ String _dcaStatusLabel(
   final date = MaterialLocalizations.of(context)
       .formatShortDate(nextDue.toLocal());
   return l10n.planStatusDcaNext(date);
-}
-
-String _toneLabel(BuildContext context, AppBadgeTone tone) {
-  final l10n = AppLocalizations.of(context);
-  return switch (tone) {
-    AppBadgeTone.neutral => l10n.planStatusView,
-    AppBadgeTone.accent => l10n.planStatusInProgress,
-    AppBadgeTone.info => l10n.planStatusView,
-    AppBadgeTone.success => l10n.planStatusOnTrack,
-    AppBadgeTone.warning => l10n.planStatusNeedsAttention,
-    AppBadgeTone.error => l10n.planStatusActionRequired,
-  };
 }

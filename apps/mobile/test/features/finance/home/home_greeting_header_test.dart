@@ -48,7 +48,7 @@ Widget _wrap() {
 }
 
 void main() {
-  testWidgets('renders a time-of-day greeting + shell chrome actions', (
+  testWidgets('renders the Finance task heading and shell actions', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(900, 400));
@@ -62,7 +62,6 @@ void main() {
     // hidden here because only one domain is registered in this scope.
     expect(find.byIcon(FLucideIcons.search), findsOneWidget);
     expect(find.byIcon(FLucideIcons.settings), findsOneWidget);
-    // Some greeting is rendered — the exact text depends on local time.
-    expect(find.byType(Text), findsWidgets);
+    expect(find.text('Finance overview'), findsOneWidget);
   });
 }

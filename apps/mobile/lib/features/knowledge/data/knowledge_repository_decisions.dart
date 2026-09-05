@@ -53,24 +53,44 @@ mixin KnowledgeDecisionsRepositoryMixin {
     required DateTime asOf,
     int limit = 100,
   }) async {
+    final rows = await _dueReviewsQuery(
+      ownerUserId: ownerUserId,
+      asOf: asOf,
+      limit: limit,
+    ).get();
+    return rows.map(knowledgeDecisionFromRow).toList();
+  }
+
+  /// Complete due work, independent of the recent Library browse window.
+  Stream<List<KnowledgeDecision>> watchDueReviews({
+    required String ownerUserId,
+    required DateTime asOf,
+  }) => _dueReviewsQuery(
+    ownerUserId: ownerUserId,
+    asOf: asOf,
+  ).watch().map((rows) => rows.map(knowledgeDecisionFromRow).toList());
+
+  Selectable<KnowledgeDecisionRow> _dueReviewsQuery({
+    required String ownerUserId,
+    required DateTime asOf,
+    int? limit,
+  }) {
     final q = _db.select(_db.knowledgeDecisions)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.ownerUserId.equals(ownerUserId) & t.deletedAt.isNull())
       ..where(
-        (t) => t.status.isIn(<String>[
+        (t) => t.status.isIn([
           DecisionStatus.active.wire,
           DecisionStatus.draft.wire,
           DecisionStatus.paused.wire,
         ]),
       )
-      ..where((t) => t.reviewDate.isNotNull())
       ..where((t) => t.reviewDate.isSmallerOrEqualValue(asOf))
       ..orderBy([
-        (t) => OrderingTerm(expression: t.reviewDate, mode: OrderingMode.asc),
-      ])
-      ..limit(limit);
-    final rows = await q.get();
-    return rows.map(knowledgeDecisionFromRow).toList();
+        (t) => OrderingTerm(expression: t.reviewDate),
+        (t) => OrderingTerm(expression: t.id),
+      ]);
+    if (limit != null) q.limit(limit);
+    return q;
   }
 
   Future<KnowledgeDecision?> findDecision({

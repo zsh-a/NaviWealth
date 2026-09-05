@@ -20,146 +20,131 @@ class KnowledgeInboxPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Headerless cockpit root, same as the other domains' Today briefs: the
-    // editorial greeting ([KnowledgeGreetingHeader]) replaces the static
-    // page title and hosts the injected shell chrome via [ShellActionRow]
-    // plus the capture action that used to live in the tab header. Global
-    // chrome (sync strip, undo banner) is injected by DomainTabsShell.
-    return ShellCanvasScaffold(
+    return const ShellCanvasScaffold(
       childPad: false,
       child: ShellTabPause(
         routePath: KnowledgeRoutes.inbox,
-        child: _InboxContent(
-          recentNotes: ref.watch(knowledgeRecentNotesProvider),
-          dueReviews: ref.watch(knowledgeDueReviewsProvider),
-        ),
+        child: _InboxContent(),
       ),
     );
   }
 }
 
-class _InboxContent extends ConsumerWidget {
-  const _InboxContent({required this.recentNotes, required this.dueReviews});
+class _InboxContent extends ConsumerStatefulWidget {
+  const _InboxContent();
 
-  final AsyncValue<List<KnowledgeNote>> recentNotes;
-  final AsyncValue<List<KnowledgeDecision>> dueReviews;
+  @override
+  ConsumerState<_InboxContent> createState() => _InboxContentState();
+}
 
-  Future<void> _refresh(WidgetRef ref) async {
+class _InboxContentState extends ConsumerState<_InboxContent> {
+  static const _reviewPreviewLimit = 3;
+  bool _allReviews = false;
+
+  Future<void> _refresh() async {
     ref.invalidate(knowledgeNotesProvider);
-    ref.invalidate(knowledgeDecisionsProvider);
-    await ref.read(knowledgeNotesProvider.future);
+    ref.invalidate(knowledgeDueReviewsProvider);
+    try {
+      await Future.wait([
+        ref.read(knowledgeNotesProvider.future),
+        ref.read(knowledgeDueReviewsProvider.future),
+      ]);
+    } catch (_) {
+      // Each section renders its own retry state while retaining other data.
+    }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    // Scope above the loading/data branches: the entrance watermark survives
-    // pull-to-refresh, so recycled rows never replay the entrance when they
-    // scroll back into view.
-    return AppEntranceScope(child: _buildBody(context, ref, l10n));
-  }
-
-  Widget _buildBody(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l10n,
-  ) {
-    if (recentNotes.isLoading || dueReviews.isLoading) {
-      return AppListPageSkeleton(
-        padding: shellTabContentPadding(context),
-        showControls: false,
-      );
-    }
-    if (recentNotes.hasError || dueReviews.hasError) {
-      return AppEmptyState.error(
-        title: l10n.commonLoadFailed,
-        retryLabel: l10n.commonRetry,
-        onRetry: () {
-          ref.invalidate(knowledgeNotesProvider);
-          ref.invalidate(knowledgeDecisionsProvider);
-        },
-        compact: true,
-      );
-    }
-
-    final notes = recentNotes.asData?.value ?? const <KnowledgeNote>[];
-    final decisions = dueReviews.asData?.value ?? const <KnowledgeDecision>[];
-    final now = DateTime.now().toUtc();
+    final recentNotes = ref.watch(knowledgeRecentNotesProvider);
+    final dueReviews = ref.watch(knowledgeDueReviewsProvider);
+    final notes = recentNotes.value ?? const <KnowledgeNote>[];
+    final decisions = dueReviews.value ?? const <KnowledgeDecision>[];
+    final shownReviews = _allReviews
+        ? decisions
+        : decisions.take(_reviewPreviewLimit).toList(growable: false);
     final hasOverdue = decisions.any(
-      (decision) => (decision.daysOverdue(now) ?? 0) > 0,
+      (decision) => (decision.daysOverdue(DateTime.now().toUtc()) ?? 0) > 0,
     );
-
+    final rows = <WidgetBuilder>[
+      if (decisions.isNotEmpty || dueReviews.isLoading || dueReviews.hasError)
+        (_) => SectionHeader.module(
+          title: l10n.knowledgeInboxDueReviewsTitle,
+          titleColor: hasOverdue ? context.appTheme.status.warning.fg : null,
+          trailing: decisions.isEmpty
+              ? null
+              : AppBadge(
+                  label: '${decisions.length}',
+                  size: AppBadgeSize.compact,
+                  tone: hasOverdue ? AppBadgeTone.warning : AppBadgeTone.info,
+                ),
+        ),
+      if (dueReviews.hasError)
+        (_) => _sectionError(
+          l10n,
+          () => ref.invalidate(knowledgeDueReviewsProvider),
+        )
+      else if (dueReviews.isLoading && !dueReviews.hasValue)
+        (_) => const SkeletonBox(height: 64),
+      for (final decision in shownReviews)
+        (_) => _DueDecisionTile(decision: decision),
+      if (decisions.length > _reviewPreviewLimit)
+        (_) => AppRevealControl(
+          expanded: _allReviews,
+          collapsedLabel: l10n.knowledgeInboxShowReviews(decisions.length),
+          expandedLabel: l10n.knowledgeInboxHideReviews,
+          onToggle: () => setState(() => _allReviews = !_allReviews),
+        ),
+      if (notes.isNotEmpty || recentNotes.isLoading || recentNotes.hasError)
+        (_) => SectionHeader.module(title: l10n.knowledgeInboxRecentNotesTitle),
+      if (recentNotes.hasError)
+        (_) => _sectionError(l10n, () => ref.invalidate(knowledgeNotesProvider))
+      else if (recentNotes.isLoading && !recentNotes.hasValue)
+        (_) => const SkeletonBox(height: 64),
+      for (final note in notes)
+        (_) => KnowledgeEntryTile(
+          key: ValueKey<String>('knowledge-inbox-note-${note.id}'),
+          title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+          subtitle: knowledgeExcerpt(note.bodyMd),
+          tags: note.tags,
+          kindLabel: l10n.knowledgeKindNote,
+          icon: FLucideIcons.fileText,
+          onPress: () => context.push(KnowledgeRoutes.note(note.id)),
+        ),
+      if (decisions.isEmpty &&
+          notes.isEmpty &&
+          !recentNotes.isLoading &&
+          !dueReviews.isLoading &&
+          !recentNotes.hasError &&
+          !dueReviews.hasError)
+        (_) => AppEmptyState(
+          icon: FLucideIcons.notebookPen,
+          title: l10n.knowledgeInboxEmptyTitle,
+          message: l10n.knowledgeInboxEmptyBody,
+          action: AppActionButton(
+            onPress: () => showKnowledgeCaptureSheet(context),
+            child: Text(l10n.knowledgeCaptureAction),
+          ),
+        ),
+    ];
     return BriefLazyListScaffold(
       padding: shellTabContentPadding(context),
-      onRefresh: () => _refresh(ref),
+      onRefresh: _refresh,
       greeting: const KnowledgeGreetingHeader(),
-      // The due-review section is the inbox's reason to exist, so it takes
-      // the stage slot directly under the greeting.
-      stage: decisions.isEmpty
-          ? const SizedBox.shrink()
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SectionHeader.module(
-                  title: l10n.knowledgeInboxDueReviewsTitle,
-                  titleColor: hasOverdue
-                      ? context.appTheme.status.warning.fg
-                      : null,
-                  trailing: AppBadge(
-                    label: '${decisions.length}',
-                    size: AppBadgeSize.compact,
-                    tone: hasOverdue ? AppBadgeTone.warning : AppBadgeTone.info,
-                  ),
-                ),
-                for (var index = 0; index < decisions.length; index++) ...[
-                  if (index > 0) const SizedBox(height: AppSpacing.s10),
-                  AppOnceEntrance(
-                    index: index,
-                    child: _DueDecisionTile(decision: decisions[index]),
-                  ),
-                ],
-              ],
-            ),
-      modules: [
-        if (decisions.isEmpty && notes.isEmpty)
-          AppEmptyState(
-            icon: FLucideIcons.notebookPen,
-            title: l10n.knowledgeInboxEmptyTitle,
-            message: l10n.knowledgeInboxEmptyBody,
-            action: AppActionButton(
-              onPress: () => showKnowledgeCaptureSheet(context),
-              child: Text(l10n.knowledgeCaptureAction),
-            ),
-          ),
-      ],
-      listHeader: notes.isEmpty
-          ? null
-          : SectionHeader.module(
-              title: l10n.knowledgeInboxRecentNotesTitle,
-              trailing: AppBadge(
-                label: '${notes.length}',
-                size: AppBadgeSize.compact,
-              ),
-            ),
-      itemCount: notes.length,
-      itemBuilder: (context, index) {
-        final note = notes[index];
-        return AppOnceEntrance(
-          // Offset past the due-review rows: both lists share one tracker.
-          index: decisions.length + index,
-          child: KnowledgeEntryTile(
-            key: ValueKey<String>('knowledge-inbox-note-${note.id}'),
-            title: note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-            subtitle: knowledgeExcerpt(note.bodyMd),
-            tags: note.tags,
-            kindLabel: l10n.knowledgeKindNote,
-            icon: FLucideIcons.fileText,
-            onPress: () => context.push(KnowledgeRoutes.note(note.id)),
-          ),
-        );
-      },
+      stage: const SizedBox.shrink(),
+      itemCount: rows.length,
+      itemBuilder: (context, index) => rows[index](context),
     );
   }
+
+  Widget _sectionError(AppLocalizations l10n, VoidCallback onRetry) =>
+      AppEmptyState.error(
+        title: l10n.commonLoadFailed,
+        retryLabel: l10n.commonRetry,
+        onRetry: onRetry,
+        compact: true,
+      );
 }
 
 class _DueDecisionTile extends StatelessWidget {

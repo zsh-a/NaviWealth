@@ -46,14 +46,8 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return const ShellCanvasScaffold(
-      // The home cockpit owns its hero greeting; we drop the static
-      // "Overview" page title in favour of a personalized status line
-      // rendered inside [HomeGreetingHeader]. ShellCanvasScaffold keeps
-      // this headerless tab root inside the shared shell contract while
-      // [ShellActionRow] injects the compact global chrome from the hero.
       childPad: false,
-      // Unmount live dashboard watches while another finance tab is
-      // visible so holdings / agent / activity streams can pause.
+      // Retain the dashboard across tab switches; pause offstage tickers.
       child: ShellTabPause(
         routePath: FinanceRoutes.home,
         placeholder: HomeSkeleton(),

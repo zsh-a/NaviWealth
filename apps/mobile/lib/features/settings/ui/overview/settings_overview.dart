@@ -65,7 +65,6 @@ class SettingsOverview extends ConsumerWidget {
     final aiGroup = AppEntrance(
       role: AppMotionRole.decorative,
       child: _Section(
-        title: l10n.settingsAiSection,
         child: InlineLinkRow(
           icon: FLucideIcons.sparkles,
           label: l10n.settingsAiHubTitle,
@@ -135,7 +134,6 @@ class SettingsOverview extends ConsumerWidget {
     final domainsGroup = AppEntrance(
       role: AppMotionRole.decorative,
       child: _Section(
-        title: l10n.settingsDomainsSection,
         child: InlineLinkRow(
           icon: FLucideIcons.blocks,
           label: l10n.settingsDomainsTitle,

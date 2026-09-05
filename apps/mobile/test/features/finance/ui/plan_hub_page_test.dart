@@ -204,8 +204,8 @@ void main() {
     expect(find.text('On track'), findsWidgets);
     expect(
       find.text('2 reviews due'),
-      findsNWidgets(2),
-      reason: 'Attention promotion must not hide the stable plan entry.',
+      findsOneWidget,
+      reason: 'The status is promoted once; the stable entry keeps its title.',
     );
     expect(find.text('7.5% drift'), findsNothing);
     expect(find.text('62% used this month'), findsOneWidget);
@@ -219,10 +219,34 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.planInvestmentToolsTitle));
     await tester.pumpAndSettle();
-    expect(find.text('7.5% drift'), findsOneWidget);
+    expect(
+      find.text('7.5% drift'),
+      findsNothing,
+    ); // Hidden in collapsed attention.
     expect(find.text(l10n.incomeStrategyTitle), findsOneWidget);
     expect(find.text(l10n.planExploreActiveOptions(1)), findsOneWidget);
   });
+
+  testWidgets(
+    'failed sources show unavailable without blocking healthy entries',
+    (tester) async {
+      final l10n = await AppLocalizations.delegate.load(const Locale('en'));
+      await tester.pumpWidget(
+        _wrapAsync(
+          AsyncValue.data(_view(FireGoal.unset())),
+          status: _settledStatus(
+            runway: null,
+            unavailableSources: {PlanningSource.runway},
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text(l10n.planStatusUnavailable), findsOneWidget);
+      expect(find.text(l10n.planStatusLoading), findsNothing);
+      expect(find.text('62% used this month'), findsOneWidget);
+      expect(find.text(l10n.planStatusPartiallyUnavailable), findsOneWidget);
+    },
+  );
 
   testWidgets('plan hub stays bounded on a narrow scaled viewport', (
     tester,
@@ -264,7 +288,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text(l10n.planStatusActionRequired), findsWidgets);
+    expect(find.text(l10n.planStatusActionRequired), findsNothing);
     expect(find.text(l10n.moneyRunwayStatusShortfall), findsWidgets);
     expect(find.text(l10n.planAttentionCount(5)), findsOneWidget);
     expect(find.text(l10n.planAttentionShowAll(4)), findsOneWidget);
@@ -379,11 +403,12 @@ FireDashboardView _view(FireGoal goal, {Decimal? currentNetWorth}) =>
     );
 
 PlanningHubStatus _settledStatus({
-  PlanningRunwayStatus runway = PlanningRunwayStatus.healthy,
+  PlanningRunwayStatus? runway = PlanningRunwayStatus.healthy,
   int pendingLifeEventReviews = 0,
   PlanningRebalanceStatus rebalance = PlanningRebalanceStatus.balanced,
   BudgetSignal budgetSignal = BudgetSignal.comfortable,
   bool dcaDue = false,
+  Set<PlanningSource> unavailableSources = const {},
 }) => PlanningHubStatus(
   runway: runway,
   pendingLifeEventReviews: pendingLifeEventReviews,
@@ -398,5 +423,6 @@ PlanningHubStatus _settledStatus({
   wheelCycleCount: 0,
   wheelOpenPositionCount: 0,
   isLoading: false,
-  hasError: false,
+  hasError: unavailableSources.isNotEmpty,
+  unavailableSources: unavailableSources,
 );

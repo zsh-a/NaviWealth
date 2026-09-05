@@ -98,6 +98,7 @@ Key files:
 
 The daily Top 3 is device-local and resets with the local calendar day. Review
 may recommend focus IDs, but Today adopts them only after confirmation.
+Focus ordering and removal are shown only in the explicit Edit focus mode.
 Unscheduled backlog stays in Plans; priority alone never promotes an Action to
 Today.
 

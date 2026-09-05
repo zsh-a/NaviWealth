@@ -27,10 +27,7 @@ class ExecutionTodayPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Headerless cockpit root, same as FinanceOS Today: the editorial
-    // greeting ([ExecutionGreetingHeader]) replaces the static page title
-    // and hosts the injected shell chrome via [ShellActionRow]. Global
-    // chrome (sync strip, undo banner) is injected by DomainTabsShell.
+    // The task header owns actions; DomainTabsShell supplies global overlays.
     return ShellCanvasScaffold(
       childPad: false,
       child: ShellTabPause(
@@ -343,7 +340,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
   }
 }
 
-class _DailyFocusPanel extends ConsumerWidget {
+class _DailyFocusPanel extends ConsumerStatefulWidget {
   const _DailyFocusPanel({
     required this.actions,
     required this.selectedIds,
@@ -359,12 +356,19 @@ class _DailyFocusPanel extends ConsumerWidget {
   final ValueChanged<ExecutionAction> onOpen;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DailyFocusPanel> createState() => _DailyFocusPanelState();
+}
+
+class _DailyFocusPanelState extends ConsumerState<_DailyFocusPanel> {
+  bool _editing = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final byId = <String, ExecutionAction>{
-      for (final action in actions) action.id: action,
+      for (final action in widget.actions) action.id: action,
     };
-    final selected = selectedIds
+    final selected = widget.selectedIds
         .map((id) => byId[id])
         .whereType<ExecutionAction>()
         .toList(growable: false);
@@ -378,29 +382,33 @@ class _DailyFocusPanel extends ConsumerWidget {
             icon: FLucideIcons.target,
             title: l10n.executionDailyFocusTitle,
             color: context.appTheme.status.info.fg,
-            trailing: AppBadge(
-              label: l10n.executionDailyFocusCount(selected.length),
-              size: AppBadgeSize.compact,
-              tone: selected.length == 3
-                  ? AppBadgeTone.info
-                  : AppBadgeTone.neutral,
-            ),
+            trailing: selected.isEmpty
+                ? null
+                : FButton(
+                    variant: FButtonVariant.ghost,
+                    onPress: () => setState(() => _editing = !_editing),
+                    child: Text(
+                      _editing ? l10n.commonDone : l10n.executionDailyFocusEdit,
+                    ),
+                  ),
           ),
           const SizedBox(height: AppSpacing.s8),
           if (selected.isEmpty) ...[
             Text(l10n.executionDailyFocusEmpty, style: context.captionStyle),
-            if (suggestedActions.isNotEmpty) ...[
+            if (widget.suggestedActions.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s10),
               AppStatusBanner(
                 compact: true,
                 kind: AppStatusKind.info,
                 icon: FLucideIcons.sparkles,
                 message: l10n.executionDailyFocusSuggestion(
-                  suggestedActions.map((action) => action.title).join(' · '),
+                  widget.suggestedActions
+                      .map((action) => action.title)
+                      .join(' · '),
                 ),
                 action: FButton(
                   variant: FButtonVariant.ghost,
-                  onPress: onAdoptSuggestions,
+                  onPress: widget.onAdoptSuggestions,
                   child: Text(l10n.executionDailyFocusUseSuggestion),
                 ),
               ),
@@ -411,7 +419,8 @@ class _DailyFocusPanel extends ConsumerWidget {
                 index: index,
                 action: selected[index],
                 count: selected.length,
-                onOpen: () => onOpen(selected[index]),
+                editing: _editing,
+                onOpen: () => widget.onOpen(selected[index]),
                 onMove: (offset) => ref
                     .read(executionDailyFocusProvider.notifier)
                     .move(selected[index].id, offset),
@@ -448,6 +457,7 @@ class _DailyFocusRow extends StatelessWidget {
     required this.count,
     required this.onOpen,
     required this.onMove,
+    required this.editing,
     required this.onRemove,
   });
 
@@ -456,6 +466,7 @@ class _DailyFocusRow extends StatelessWidget {
   final int count;
   final VoidCallback onOpen;
   final ValueChanged<int> onMove;
+  final bool editing;
   final VoidCallback onRemove;
 
   @override
@@ -484,27 +495,30 @@ class _DailyFocusRow extends StatelessWidget {
               ),
             ),
           ),
-          AppIconButton(
-            icon: FLucideIcons.arrowUp,
-            tooltip: l10n.executionDailyFocusMoveUp,
-            onPress: index == 0 ? null : () => onMove(-1),
-            size: 32,
-            iconSize: AppIconSizes.xs,
-          ),
-          AppIconButton(
-            icon: FLucideIcons.arrowDown,
-            tooltip: l10n.executionDailyFocusMoveDown,
-            onPress: index == count - 1 ? null : () => onMove(1),
-            size: 32,
-            iconSize: AppIconSizes.xs,
-          ),
-          AppIconButton(
-            icon: FLucideIcons.x,
-            tooltip: l10n.executionDailyFocusRemove,
-            onPress: onRemove,
-            size: 32,
-            iconSize: AppIconSizes.xs,
-          ),
+          if (editing)
+            AppIconButton(
+              icon: FLucideIcons.arrowUp,
+              tooltip: l10n.executionDailyFocusMoveUp,
+              onPress: index == 0 ? null : () => onMove(-1),
+              size: 32,
+              iconSize: AppIconSizes.xs,
+            ),
+          if (editing)
+            AppIconButton(
+              icon: FLucideIcons.arrowDown,
+              tooltip: l10n.executionDailyFocusMoveDown,
+              onPress: index == count - 1 ? null : () => onMove(1),
+              size: 32,
+              iconSize: AppIconSizes.xs,
+            ),
+          if (editing)
+            AppIconButton(
+              icon: FLucideIcons.x,
+              tooltip: l10n.executionDailyFocusRemove,
+              onPress: onRemove,
+              size: 32,
+              iconSize: AppIconSizes.xs,
+            ),
         ],
       ),
     );

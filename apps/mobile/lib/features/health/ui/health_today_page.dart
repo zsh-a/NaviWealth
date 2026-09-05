@@ -6,8 +6,8 @@
 /// surfaces; Today stays the dense operational entry point.
 ///
 /// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3): a
-/// headerless cockpit root (`ShellCanvasScaffold`) with the editorial
-/// greeting header ([HealthGreetingHeader]) inside the brief — the same
+/// headerless cockpit root (`ShellCanvasScaffold`) with the task
+/// header ([HealthGreetingHeader]) inside the brief — the same
 /// pattern as FinanceOS Today — plus `SoftCard` surfaces and
 /// `context.theme` tokens — never Material `Scaffold` / `Theme.of` —
 /// so HealthOS reads as the same app as Finance / Knowledge.
@@ -29,7 +29,6 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
 import '../data/health_metric_source.dart';
-import '../data/health_sync_service.dart';
 import '../data/health_sync_status.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric.dart';
@@ -90,10 +89,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
           ? const FadeSlideIn(child: _RecoveryHero())
           : const _HealthActivationCard(),
     );
-    // Headerless cockpit root, same as FinanceOS Today: the editorial
-    // greeting ([HealthGreetingHeader]) replaces the static page title and
-    // hosts the injected shell chrome via [ShellActionRow]. Global chrome
-    // (sync strip, undo banner) is injected by DomainTabsShell.
+    // The task header owns actions; DomainTabsShell supplies global overlays.
     return ShellCanvasScaffold(
       childPad: false,
       child: ShellTabPause(
@@ -497,7 +493,7 @@ class _DataSourcePanel extends StatelessWidget {
           return const Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _HealthKitSyncCard(showActions: false),
+              _HealthKitSyncCard(),
               SizedBox(height: AppSpacing.s8),
               GarminSyncStatusCard(showActions: false),
             ],
@@ -506,7 +502,7 @@ class _DataSourcePanel extends StatelessWidget {
         return const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: _HealthKitSyncCard(showActions: false)),
+            Expanded(child: _HealthKitSyncCard()),
             SizedBox(width: AppSpacing.s8),
             Expanded(child: GarminSyncStatusCard(showActions: false)),
           ],
@@ -516,57 +512,11 @@ class _DataSourcePanel extends StatelessWidget {
   }
 }
 
-class _HealthKitSyncCard extends ConsumerStatefulWidget {
-  const _HealthKitSyncCard({required this.showActions});
-
-  final bool showActions;
+class _HealthKitSyncCard extends ConsumerWidget {
+  const _HealthKitSyncCard();
 
   @override
-  ConsumerState<_HealthKitSyncCard> createState() => _HealthKitSyncCardState();
-}
-
-class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
-  bool _syncing = false;
-  HealthSyncResult? _lastResult;
-
-  Future<void> _syncHealthKit() async {
-    if (_syncing) return;
-    setState(() => _syncing = true);
-    try {
-      final service = await ref.read(
-        health_data.healthSyncServiceProvider.future,
-      );
-      if (!await service.hasPermissions()) {
-        final granted = await service.requestPermissions();
-        if (!granted) {
-          if (!mounted) return;
-          setState(() {
-            _lastResult = HealthSyncResult.skipped(
-              startedAt: DateTime.now().toUtc(),
-              errorMessage: AppLocalizations.of(context)
-                  .healthSyncPermissionDenied,
-            );
-          });
-          await service.recordResult(_lastResult!);
-          ref.invalidate(health_data.healthSyncStatusProvider);
-          ref.invalidate(health_data.healthPlatformStatusProvider);
-          return;
-        }
-      }
-      final result = await service.syncRange();
-      if (!mounted) return;
-      setState(() => _lastResult = result);
-      ref.invalidate(health_data.healthSyncStatusProvider);
-      ref.invalidate(health_data.healthPlatformStatusProvider);
-      ref.invalidate(health_data.healthSourceDataSummaryProvider);
-      ref.invalidate(healthTodaySnapshotProvider);
-    } finally {
-      if (mounted) setState(() => _syncing = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final optIns = ref.watch(core_auth.domainOptInsProvider).value;
     final enabled = optIns?.contains(DomainScope.health) ?? false;
@@ -599,6 +549,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
             icon: enabled ? FLucideIcons.activity : FLucideIcons.circleOff,
             title: l10n.healthKitTitle,
             color: _healthKitColor(
+              context,
               enabled,
               platformStatus: platformStatus,
               persisted: persisted,
@@ -637,36 +588,19 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-          if (widget.showActions) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: AppBusyButton(
-                label: l10n.healthSyncAction,
-                busyLabel: l10n.healthSyncingButton,
-                busy: _syncing,
-                variant: FButtonVariant.outline,
-                prefix: const Icon(
-                  FLucideIcons.refreshCw,
-                  size: AppIconSizes.xs,
-                ),
-                onPress: enabled ? _syncHealthKit : null,
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 
   Color _healthKitColor(
+    BuildContext context,
     bool enabled, {
     required AsyncValue<health_data.HealthPlatformStatus> platformStatus,
     required HealthSyncStatus? persisted,
   }) {
     final colors = context.theme.colors;
     if (!enabled) return colors.mutedForeground;
-    if (_syncing) return colors.primary;
     final status = platformStatus.value;
     if (status?.needsPermission == true) {
       return context.appTheme.status.warning.fg;
@@ -683,7 +617,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     required HealthSyncStatus? persisted,
   }) {
     if (!enabled) return l10n.healthNotEnabled;
-    if (_syncing || platformStatus.isLoading) return l10n.healthSourceChecking;
+    if (platformStatus.isLoading) return l10n.healthSourceChecking;
     final status = platformStatus.value;
     if (status == null || !status.available || status.checkFailed) {
       return l10n.healthSourceUnavailable;
@@ -699,7 +633,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     required HealthSyncStatus? persisted,
   }) {
     if (!enabled) return AppBadgeTone.neutral;
-    if (_syncing || platformStatus.isLoading) return AppBadgeTone.info;
+    if (platformStatus.isLoading) return AppBadgeTone.info;
     final status = platformStatus.value;
     if (status == null || !status.available || status.checkFailed) {
       return AppBadgeTone.neutral;
@@ -709,8 +643,7 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     return AppBadgeTone.success;
   }
 
-  bool _hasSyncFailure(HealthSyncStatus? persisted) =>
-      _lastResult?.ok == false || persisted?.ok == false;
+  bool _hasSyncFailure(HealthSyncStatus? persisted) => persisted?.ok == false;
 
   String _healthKitText(
     AppLocalizations l10n,
@@ -719,23 +652,15 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
     required HealthSyncStatus? persisted,
   }) {
     if (!enabled) return l10n.healthNotEnabled;
-    if (_syncing) return l10n.healthSyncingData;
     if (platformStatus.isLoading) return l10n.healthSourceChecking;
     final status = platformStatus.value;
     if (status == null || !status.available || status.checkFailed) {
       return l10n.healthSourceUnavailable;
     }
     if (status.needsPermission) return l10n.healthSourcePermissionRequired;
-    final result = _lastResult;
-    if (result == null) {
-      if (persisted == null) return l10n.healthSyncReady;
-      if (!persisted.ok) return _syncFailureText(l10n, persisted.errorCode);
-      return l10n.healthSourceReady;
-    }
-    if (result.ok) {
-      return l10n.healthSourceReady;
-    }
-    return _syncFailureText(l10n, result.errorMessage);
+    if (persisted == null) return l10n.healthSyncReady;
+    if (!persisted.ok) return _syncFailureText(l10n, persisted.errorCode);
+    return l10n.healthSourceReady;
   }
 
   String _syncFailureText(AppLocalizations l10n, String? errorCode) {
@@ -754,9 +679,8 @@ class _HealthKitSyncCardState extends ConsumerState<_HealthKitSyncCard> {
   }) {
     final details = <String>[];
     final status = persisted;
-    final localResult = _lastResult;
-    if (status?.ok == false || localResult?.ok == false) {
-      final attemptedAt = localResult?.completedAt ?? status?.completedAt;
+    if (status?.ok == false) {
+      final attemptedAt = status?.completedAt;
       if (attemptedAt != null) {
         details.add(l10n.healthSourceLastAttempt(_ago(l10n, attemptedAt)));
       }

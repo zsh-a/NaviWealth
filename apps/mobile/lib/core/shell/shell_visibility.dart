@@ -1,10 +1,9 @@
 /// Shell-tab visibility for offstage [StatefulShellRoute.indexedStack]
 /// branches.
 ///
-/// Indexed-stack tabs stay mounted when inactive. Without a pause signal,
-/// their Riverpod watches keep Drift streams and chart rebuilds alive in the
-/// background. [ShellTabPause] listens to the active GoRouter configuration
-/// directly so visible and hidden shell branches share the same semantics.
+/// [ShellTabPause] retains page state and disables offstage tickers. It does
+/// not suspend Riverpod subscriptions or database streams. It listens to the
+/// active GoRouter configuration so visible and hidden branches agree.
 /// The providers remain a lightweight fallback for standalone surfaces and
 /// tests that intentionally render without a router.
 library;

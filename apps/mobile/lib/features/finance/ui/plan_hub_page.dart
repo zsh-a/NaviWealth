@@ -368,22 +368,12 @@ class _PlanRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final needsAttention =
-        spec.tone == AppBadgeTone.warning || spec.tone == AppBadgeTone.error;
     return AppNavRow(
       icon: spec.icon,
       title: spec.title,
-      subtitle: spec.subtitle,
-      tone: needsAttention ? spec.tone : null,
+      subtitle: spec.requiresAttention ? null : spec.subtitle,
       titleMaxLines: 2,
       subtitleMaxLines: 2,
-      trailing: needsAttention
-          ? AppBadge(
-              label: _toneLabel(context, spec.tone),
-              tone: spec.tone,
-              size: AppBadgeSize.compact,
-            )
-          : null,
       onTap: () => context.push(spec.path),
     );
   }

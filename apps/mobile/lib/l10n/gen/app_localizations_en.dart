@@ -10,6 +10,30 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get financeOverviewTitle => 'Finance overview';
+
+  @override
+  String get healthOverviewTitle => 'Health overview';
+
+  @override
+  String get executionTodayActionsTitle => 'Today’s actions';
+
+  @override
+  String knowledgeInboxShowReviews(int count) {
+    return 'Show all $count reviews';
+  }
+
+  @override
+  String get knowledgeInboxHideReviews => 'Show fewer reviews';
+
+  @override
+  String get executionDailyFocusEdit => 'Edit focus';
+
+  @override
+  String get settingsAiNativeOnly =>
+      'AI services and device models are available in the native app.';
+
+  @override
   String commonSelectedCount(int count) {
     return '$count selected';
   }
@@ -2197,9 +2221,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeGreetingNight => 'Good night';
-
-  @override
-  String get homeTodayBriefSubtitle => 'Today\'s financial overview';
 
   @override
   String get lifeBriefSubtitle => 'See what needs your attention today';
@@ -7784,17 +7805,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccountSection => 'Account';
 
   @override
-  String get settingsAiSection => 'AI';
+  String get settingsAiHubTitle => 'AI assistant';
 
   @override
-  String get settingsAiHubTitle => 'AI & device intelligence';
+  String get settingsAiHubSubtitle => 'Services, memory, and privacy';
 
   @override
-  String get settingsAiHubSubtitle =>
-      'Providers, local models, agents, privacy, and activity';
-
-  @override
-  String get settingsAiHubRuntimeSection => 'Runtime';
+  String get settingsAiHubRuntimeSection => 'Services & voice';
 
   @override
   String get settingsAiHubTrustSection => 'Memory & privacy';
@@ -8119,9 +8136,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupDomainPageTitle(String domain) {
     return '$domain backup';
   }
-
-  @override
-  String get settingsDomainsSection => 'Domains';
 
   @override
   String get settingsDomainsDeepLinkBlockedNotice =>
@@ -12661,9 +12675,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTodayTitle => 'Today';
 
   @override
-  String get healthTodayBriefSubtitle => 'Today\'s health overview';
-
-  @override
   String get healthTrendTitle => 'Trends';
 
   @override
@@ -13775,9 +13786,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get executionTodayTitle => 'Today';
-
-  @override
-  String get executionTodayBriefSubtitle => 'Today\'s execution overview';
 
   @override
   String get executionPlansTitle => 'Plans';

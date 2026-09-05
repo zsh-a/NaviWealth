@@ -1,24 +1,13 @@
 part of 'home_page.dart';
 
-class _DashboardBody extends StatelessWidget {
+class _DashboardBody extends ConsumerWidget {
   const _DashboardBody({required this.snapshotAsync});
-
-  final AsyncValue<DashboardSnapshot> snapshotAsync;
-
-  @override
-  Widget build(BuildContext context) =>
-      _DashboardBodyContent(snapshotAsync: snapshotAsync);
-}
-
-class _DashboardBodyContent extends ConsumerWidget {
-  const _DashboardBodyContent({required this.snapshotAsync});
 
   final AsyncValue<DashboardSnapshot> snapshotAsync;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshot = snapshotAsync.value;
-    final amountsHidden = ref.watch(financeAmountsHiddenProvider);
     final activation = ref.watch(financeActivationProvider).value;
     final importConfirmed = ref.watch(financeImportConfirmedProvider);
     final activationDismissed = ref.watch(financeActivationDismissedProvider);
@@ -71,36 +60,33 @@ class _DashboardBodyContent extends ConsumerWidget {
           );
         }
 
-        return AmountPrivacyScope(
-          hidden: amountsHidden,
-          child: BriefScaffold(
-            padding: padding,
-            maxContentWidth: !hasEstablishedData
-                ? AdaptiveMaxWidth.narrow
-                : AdaptiveMaxWidth.dashboard,
-            onRefresh: onRefresh,
-            greeting: const HomeGreetingHeader(),
-            stage: snapshot != null
-                ? _NetWorthHeader(snapshot: snapshot)
-                : snapshotAsync.when(
-                    loading: () => const _NetWorthStageSkeleton(),
-                    error: (error, stackTrace) => _NetWorthStageError(
-                      error: error,
-                      stackTrace: stackTrace,
-                      onRetry: () => ref.invalidate(dashboardSnapshotProvider),
-                    ),
-                    data: (value) => _NetWorthHeader(snapshot: value),
+        return BriefScaffold(
+          padding: padding,
+          maxContentWidth: !hasEstablishedData
+              ? AdaptiveMaxWidth.narrow
+              : AdaptiveMaxWidth.dashboard,
+          onRefresh: onRefresh,
+          greeting: const HomeGreetingHeader(),
+          stage: snapshot != null
+              ? _NetWorthHeader(snapshot: snapshot)
+              : snapshotAsync.when(
+                  loading: () => const _NetWorthStageSkeleton(),
+                  error: (error, stackTrace) => _NetWorthStageError(
+                    error: error,
+                    stackTrace: stackTrace,
+                    onRetry: () => ref.invalidate(dashboardSnapshotProvider),
                   ),
-            stickyBuilder: snapshot == null ? null : stickyNetWorth,
-            modules: [
-              _HomeSummaryLayout(
-                showActivation: showActivation,
-                quickActionMode: hasEstablishedData
-                    ? HomeQuickActionMode.active
-                    : HomeQuickActionMode.onboarding,
-              ),
-            ],
-          ),
+                  data: (value) => _NetWorthHeader(snapshot: value),
+                ),
+          stickyBuilder: snapshot == null ? null : stickyNetWorth,
+          modules: [
+            _HomeSummaryLayout(
+              showActivation: showActivation,
+              quickActionMode: hasEstablishedData
+                  ? HomeQuickActionMode.active
+                  : HomeQuickActionMode.onboarding,
+            ),
+          ],
         );
       },
     );

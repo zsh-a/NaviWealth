@@ -27,6 +27,7 @@ import '../core/ai/composition/system_prompt_blocks.dart';
 import '../core/ai/composition/tool_descriptor_lookup.dart';
 import '../core/ai/contracts/tool_descriptor.dart';
 import '../core/ai/intent/intent.dart';
+import '../core/ai/llm_credentials/providers.dart';
 import '../core/ai/local/memory/memory_access_policy.dart';
 import '../core/ai/local/memory/memory_proposal_applier.dart';
 import '../core/ai/local/memory/providers.dart';
@@ -72,8 +73,9 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
     ...appShareIntentNavigationOverrides(),
     ...aiChatSurfaceOverrides(),
     domainTabsAssistantActionProvider.overrideWith(
-      (ref) =>
-          (context, widgetRef) => askAi(context, widgetRef),
+      (ref) => ref.watch(deviceLlmPlatformSupportedProvider)
+          ? (context, widgetRef) => askAi(context, widgetRef)
+          : null,
     ),
     domainPackRegistryProvider.overrideWith((ref) => resolvedPacks),
     memoryAccessPolicyProvider.overrideWith(

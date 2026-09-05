@@ -56,27 +56,13 @@ final knowledgeRecentNotesProvider =
     });
 
 final knowledgeDueReviewsProvider =
-    Provider.autoDispose<AsyncValue<List<KnowledgeDecision>>>((ref) {
-      final now = DateTime.now().toUtc();
-      return ref.watch(knowledgeDecisionsProvider).whenData((decisions) {
-        final due = decisions
-            .where((decision) {
-              final reviewDate = decision.reviewDate;
-              return reviewDate != null &&
-                  !reviewDate.toUtc().isAfter(now) &&
-                  switch (decision.status) {
-                    DecisionStatus.active ||
-                    DecisionStatus.draft ||
-                    DecisionStatus.paused => true,
-                    _ => false,
-                  };
-            })
-            .toList(growable: false);
-        due.sort(
-          (a, b) => a.reviewDate!.toUtc().compareTo(b.reviewDate!.toUtc()),
-        );
-        return due;
-      });
+    StreamProvider.autoDispose<List<KnowledgeDecision>>((ref) async* {
+      final ownerUserId = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchDueReviews(
+        ownerUserId: ownerUserId,
+        asOf: DateTime.now().toUtc(),
+      );
     });
 
 typedef KnowledgeRelationSubject = ({String kind, String id});

@@ -141,6 +141,16 @@ void main() {
     expect(find.text('Resolve the launch blocker'), findsOneWidget);
     expect(find.text('Confirm the launch scope'), findsOneWidget);
     expect(find.text('Next actions'), findsNothing);
+    expect(find.byIcon(FLucideIcons.arrowUp), findsNothing);
+    await tester.tap(find.text('Edit focus'));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(FLucideIcons.arrowDown), findsNWidgets(2));
+    await tester.tap(find.byIcon(FLucideIcons.arrowDown).first);
+    await tester.pumpAndSettle();
+    expect(container.read(executionDailyFocusProvider), ['second', 'first']);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(FLucideIcons.arrowDown), findsNothing);
   });
 
   testWidgets('Plans renders open actions without a container', (tester) async {

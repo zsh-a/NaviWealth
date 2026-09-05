@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -55,7 +57,7 @@ void main() {
     expect(find.text('Future review'), findsNothing);
     expect(find.text('Already verified'), findsNothing);
     expect(find.text('Note 0'), findsOneWidget);
-    expect(find.text('8'), findsOneWidget);
+    expect(find.text('8'), findsNothing); // A preview count is not a total.
   });
 
   testWidgets('Inbox renders note subtitles as plain-text excerpts', (
@@ -81,6 +83,113 @@ void main() {
 
     expect(find.text('Bold claim with code inline'), findsOneWidget);
     expect(find.textContaining('**'), findsNothing);
+  });
+
+  testWidgets('Inbox keeps notes usable when reviews fail', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeInboxPage(),
+        notes: [_note('kept', 'Available note', 1)],
+        decisions: const [],
+        reviewsStream: Stream.error(StateError('review unavailable')),
+      ),
+    );
+    await _settlePaint(tester);
+    expect(find.text('Available note'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(find.text('Inbox is empty'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Inbox keeps due work usable when notes fail', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeInboxPage(),
+        notes: const [],
+        decisions: [
+          _decision(
+            id: 'due',
+            question: 'Available review',
+            reviewDate: DateTime.utc(2020),
+            status: DecisionStatus.active,
+            tick: 1,
+          ),
+        ],
+        notesStream: Stream.error(StateError('notes unavailable')),
+      ),
+    );
+    await _settlePaint(tester);
+    expect(find.text('Available review'), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Inbox previews three reviews and expands the complete list', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeInboxPage(),
+        notes: [_note('note', 'Recent capture', 1)],
+        decisions: List.generate(
+          5,
+          (i) => _decision(
+            id: 'due-$i',
+            question: 'Review $i',
+            reviewDate: DateTime.utc(2020),
+            status: DecisionStatus.active,
+            tick: i,
+          ),
+        ),
+      ),
+    );
+    await _settlePaint(tester);
+    expect(find.text('Review 3'), findsNothing);
+    await tester.scrollUntilVisible(find.text('Show all 5 reviews'), 100);
+    await tester.tap(find.text('Show all 5 reviews'));
+    await _settlePaint(tester);
+    await tester.scrollUntilVisible(find.text('Review 4'), 100);
+    expect(find.text('Review 4'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Show fewer reviews'), 100);
+    await tester.tap(find.text('Show fewer reviews'));
+    await _settlePaint(tester);
+    expect(find.text('Review 4'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Inbox refresh waits for both independent sections', (
+    tester,
+  ) async {
+    final notes = StreamController<List<KnowledgeNote>>.broadcast();
+    final reviews = StreamController<List<KnowledgeDecision>>.broadcast();
+    addTearDown(notes.close);
+    addTearDown(reviews.close);
+    await tester.pumpWidget(
+      _wrap(
+        const KnowledgeInboxPage(),
+        notes: const [],
+        decisions: const [],
+        notesStream: notes.stream,
+        reviewsStream: reviews.stream,
+      ),
+    );
+    await tester.pump();
+    notes.add(const []);
+    reviews.add(const []);
+    await _settlePaint(tester);
+    var completed = false;
+    final refresh = tester
+        .widget<BriefLazyListScaffold>(find.byType(BriefLazyListScaffold))
+        .onRefresh!()
+        .then((_) => completed = true);
+    await tester.pump();
+    notes.add([_note('new', 'Refreshed note', 2)]);
+    await _settlePaint(tester);
+    expect(completed, isFalse);
+    reviews.add(const []);
+    await _settlePaint(tester);
+    await refresh;
+    expect(completed, isTrue);
   });
 
   testWidgets('Library searches across Notes and Decisions with a type scope', (
@@ -223,10 +332,32 @@ Widget _wrap(
   required List<KnowledgeDecision> decisions,
   List<KnowledgeSearchHit> Function(KnowledgeLibrarySearchRequest request)?
   search,
+  Stream<List<KnowledgeNote>>? notesStream,
+  Stream<List<KnowledgeDecision>>? reviewsStream,
 }) {
   return ProviderScope(
     overrides: [
-      knowledgeNotesProvider.overrideWith((_) => Stream.value(notes)),
+      knowledgeNotesProvider.overrideWith(
+        (_) => notesStream ?? Stream.value(notes),
+      ),
+      knowledgeDueReviewsProvider.overrideWith(
+        (_) =>
+            reviewsStream ??
+            Stream.value(
+              decisions
+                  .where(
+                    (decision) =>
+                        decision.reviewDate != null &&
+                        !decision.reviewDate!.isAfter(DateTime.now()) &&
+                        {
+                          DecisionStatus.active,
+                          DecisionStatus.draft,
+                          DecisionStatus.paused,
+                        }.contains(decision.status),
+                  )
+                  .toList(),
+            ),
+      ),
       knowledgeDecisionsProvider.overrideWith((_) => Stream.value(decisions)),
       if (search != null)
         knowledgeLibrarySearchProvider.overrideWith(

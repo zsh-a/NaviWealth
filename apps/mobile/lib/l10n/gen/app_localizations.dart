@@ -98,6 +98,48 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @financeOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance overview'**
+  String get financeOverviewTitle;
+
+  /// No description provided for @healthOverviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Health overview'**
+  String get healthOverviewTitle;
+
+  /// No description provided for @executionTodayActionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today’s actions'**
+  String get executionTodayActionsTitle;
+
+  /// No description provided for @knowledgeInboxShowReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all {count} reviews'**
+  String knowledgeInboxShowReviews(int count);
+
+  /// No description provided for @knowledgeInboxHideReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Show fewer reviews'**
+  String get knowledgeInboxHideReviews;
+
+  /// No description provided for @executionDailyFocusEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit focus'**
+  String get executionDailyFocusEdit;
+
+  /// No description provided for @settingsAiNativeOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'AI services and device models are available in the native app.'**
+  String get settingsAiNativeOnly;
+
   /// No description provided for @commonSelectedCount.
   ///
   /// In en, this message translates to:
@@ -3790,12 +3832,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Good night'**
   String get homeGreetingNight;
-
-  /// Subtitle under the FinanceOS Today greeting
-  ///
-  /// In en, this message translates to:
-  /// **'Today\'s financial overview'**
-  String get homeTodayBriefSubtitle;
 
   /// Subtitle under the Life hub greeting
   ///
@@ -13087,28 +13123,22 @@ abstract class AppLocalizations {
   /// **'Account'**
   String get settingsAccountSection;
 
-  /// No description provided for @settingsAiSection.
-  ///
-  /// In en, this message translates to:
-  /// **'AI'**
-  String get settingsAiSection;
-
   /// No description provided for @settingsAiHubTitle.
   ///
   /// In en, this message translates to:
-  /// **'AI & device intelligence'**
+  /// **'AI assistant'**
   String get settingsAiHubTitle;
 
   /// No description provided for @settingsAiHubSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Providers, local models, agents, privacy, and activity'**
+  /// **'Services, memory, and privacy'**
   String get settingsAiHubSubtitle;
 
   /// No description provided for @settingsAiHubRuntimeSection.
   ///
   /// In en, this message translates to:
-  /// **'Runtime'**
+  /// **'Services & voice'**
   String get settingsAiHubRuntimeSection;
 
   /// No description provided for @settingsAiHubTrustSection.
@@ -13656,12 +13686,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{domain} backup'**
   String backupDomainPageTitle(String domain);
-
-  /// Settings section header for LifeOS domain opt-in management
-  ///
-  /// In en, this message translates to:
-  /// **'Domains'**
-  String get settingsDomainsSection;
 
   /// No description provided for @settingsDomainsDeepLinkBlockedNotice.
   ///
@@ -21224,12 +21248,6 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get healthTodayTitle;
 
-  /// Subtitle under the HealthOS Today greeting
-  ///
-  /// In en, this message translates to:
-  /// **'Today\'s health overview'**
-  String get healthTodayBriefSubtitle;
-
   /// No description provided for @healthTrendTitle.
   ///
   /// In en, this message translates to:
@@ -23221,12 +23239,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today'**
   String get executionTodayTitle;
-
-  /// Subtitle under the ExecutionOS Today greeting
-  ///
-  /// In en, this message translates to:
-  /// **'Today\'s execution overview'**
-  String get executionTodayBriefSubtitle;
 
   /// No description provided for @executionPlansTitle.
   ///

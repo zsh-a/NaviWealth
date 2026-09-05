@@ -28,6 +28,7 @@ void main() {
     await pumpAndSnapshotMobile(
       tester,
       name: 'health_today_page',
+      routePath: '/health',
       variant: variant,
       child: const HealthTodayPage(),
       overrides: [
@@ -64,24 +65,31 @@ void main() {
     await pumpAndSnapshotMobile(
       tester,
       name: 'knowledge_inbox_page',
+      routePath: '/knowledge',
       variant: variant,
       child: const KnowledgeInboxPage(),
       overrides: [
+        knowledgeDueReviewsProvider.overrideWith(
+          (_) => Stream.value(const <KnowledgeDecision>[]),
+        ),
         knowledgeNotesProvider.overrideWith(
           (_) => Stream<List<KnowledgeNote>>.value(const <KnowledgeNote>[]),
         ),
       ],
     );
+    expect(find.text('Inbox'), findsOneWidget);
   });
 
   runAllVariants('execution_today_page', (tester, variant) async {
     await pumpAndSnapshotMobile(
       tester,
       name: 'execution_today_page',
+      routePath: '/execution',
       variant: variant,
       child: const ExecutionTodayPage(),
       overrides: _emptyExecutionOverrides(),
     );
+    expect(find.text('Today’s actions'), findsOneWidget);
   });
 }
 

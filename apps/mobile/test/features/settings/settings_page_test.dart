@@ -5,6 +5,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -95,11 +96,13 @@ Future<Widget> _wrap(
   String initialLocation = AppRoutes.settingsDomains,
   Locale? locale,
   TextScaler? textScaler,
+  bool aiSupported = true,
 }) async {
   final db = makeTestDatabase();
   addTearDown(db.close);
   return ProviderScope(
     overrides: [
+      deviceLlmPlatformSupportedProvider.overrideWithValue(aiSupported),
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
       currentUserIdProvider.overrideWithValue(() async => kLocalOnlyUserId),
@@ -292,14 +295,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('AI & device intelligence'), findsOneWidget);
+      expect(find.text('AI assistant'), findsOneWidget);
       expect(find.text('AI privacy'), findsNothing);
       expect(find.text('AI Models'), findsNothing);
       expect(find.text('App Logs'), findsNothing);
 
-      await tester.ensureVisible(find.text('AI & device intelligence'));
+      await tester.ensureVisible(find.text('AI assistant'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('AI & device intelligence'));
+      await tester.tap(find.text('AI assistant'));
       await tester.pumpAndSettle();
 
       expect(find.text('AI privacy'), findsOneWidget);
@@ -397,7 +400,7 @@ void main() {
       expect(find.text('关于与诊断'), findsOneWidget);
     });
 
-    _testWidgets('keeps adjacent settings groups aligned on a wide surface', (
+    _testWidgets('shows one standalone AI entry on a wide surface', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(1280, 900);
@@ -410,9 +413,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final aiY = tester.getTopLeft(find.text('AI')).dy;
-      final dataY = tester.getTopLeft(find.text('Data & sync')).dy;
-      expect((aiY - dataY).abs(), lessThan(1));
+      expect(find.text('AI assistant'), findsOneWidget);
+      expect(find.text('AI'), findsNothing);
+      expect(find.text('Data & sync'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     _testWidgets('exposes conversations from the AI hub', (tester) async {
@@ -427,6 +431,28 @@ void main() {
         find.text('Continue or review your AI conversations'),
         findsOneWidget,
       );
+    });
+
+    _testWidgets('unsupported platforms keep history but hide native setup', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(
+          prefs,
+          initialLocation: AppRoutes.settingsAi,
+          aiSupported: false,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(AiSettingsHubPage)),
+      );
+      expect(find.text(l10n.settingsAiNativeOnly), findsOneWidget);
+      expect(find.text(l10n.settingsAiLlmTitle), findsNothing);
+      expect(find.text(l10n.settingsAiModelsTitle), findsNothing);
+      expect(find.text(l10n.settingsAiHistoryTitle), findsOneWidget);
+      expect(find.text(l10n.personalMemoryTitle), findsOneWidget);
     });
 
     _testWidgets('does not overflow at large text scale', (tester) async {
@@ -446,7 +472,7 @@ void main() {
 
       final exception = tester.takeException();
       expect(exception, isNull);
-      expect(find.text('AI & device intelligence'), findsOneWidget);
+      expect(find.text('AI assistant'), findsOneWidget);
     });
   });
 

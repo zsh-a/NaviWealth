@@ -45,7 +45,11 @@ Inbox and Library are the only shell tabs. KnowledgeOS has no Review route,
 hidden tab, background Agent, triage queue, or separate lifecycle dashboard.
 Due decisions surface as a compact Inbox section and remain available through
 `list_due_reviews` and normal Library access. Inbox limits its Note list to
-recent captures; the full collection belongs to Library.
+recent captures; the full collection belongs to Library. Due reviews use an
+independent owner-scoped repository query, so the Library's recent-row limit
+cannot omit older due decisions. Inbox previews three reviews and expands the
+complete due list lazily. Notes and reviews retain independent loading/error
+states; refresh waits for both sections.
 
 Key files:
 

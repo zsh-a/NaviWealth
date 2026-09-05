@@ -10,6 +10,29 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get financeOverviewTitle => '财务概览';
+
+  @override
+  String get healthOverviewTitle => '健康概览';
+
+  @override
+  String get executionTodayActionsTitle => '今日行动';
+
+  @override
+  String knowledgeInboxShowReviews(int count) {
+    return '查看全部 $count 项回顾';
+  }
+
+  @override
+  String get knowledgeInboxHideReviews => '收起回顾';
+
+  @override
+  String get executionDailyFocusEdit => '编辑重点';
+
+  @override
+  String get settingsAiNativeOnly => 'AI 服务和设备模型仅在原生应用中可用。';
+
+  @override
   String commonSelectedCount(int count) {
     return '已选择 $count 项';
   }
@@ -2107,9 +2130,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeGreetingNight => '夜深了';
-
-  @override
-  String get homeTodayBriefSubtitle => '今日财务概览';
 
   @override
   String get lifeBriefSubtitle => '集中查看今天值得关注的动态';
@@ -7372,16 +7392,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAccountSection => '账户';
 
   @override
-  String get settingsAiSection => 'AI';
+  String get settingsAiHubTitle => 'AI 助手';
 
   @override
-  String get settingsAiHubTitle => 'AI 与设备智能';
+  String get settingsAiHubSubtitle => '服务、记忆与隐私';
 
   @override
-  String get settingsAiHubSubtitle => '服务、设备模型、智能体、隐私与活动记录';
-
-  @override
-  String get settingsAiHubRuntimeSection => '运行环境';
+  String get settingsAiHubRuntimeSection => '服务与语音';
 
   @override
   String get settingsAiHubTrustSection => '记忆与隐私';
@@ -7689,9 +7706,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String backupDomainPageTitle(String domain) {
     return '$domain 备份';
   }
-
-  @override
-  String get settingsDomainsSection => '功能领域';
 
   @override
   String get settingsDomainsDeepLinkBlockedNotice => '该链接属于尚未开通的领域,在下方开通后即可访问。';
@@ -11990,9 +12004,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTodayTitle => '今日';
 
   @override
-  String get healthTodayBriefSubtitle => '今日健康概览';
-
-  @override
   String get healthTrendTitle => '趋势';
 
   @override
@@ -13042,9 +13053,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get executionTodayTitle => '今天';
-
-  @override
-  String get executionTodayBriefSubtitle => '今日执行概览';
 
   @override
   String get executionPlansTitle => '计划';

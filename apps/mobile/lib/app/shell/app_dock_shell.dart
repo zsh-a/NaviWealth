@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/ai/composition/ai_context.dart';
 import '../../core/ai/composition/ask_ai.dart';
+import '../../core/ai/llm_credentials/providers.dart';
 import '../../core/developer/developer_issue.dart';
 import '../../core/developer/providers.dart';
 import '../../core/lifeos/domain_pack.dart';
@@ -298,12 +299,13 @@ class _UnifiedDesktopSidebar extends ConsumerWidget {
         GoRouter.of(context).go(activeSpec.tabs[index - 1].routePath);
       },
       footerActions: [
-        DesktopSidebarAction(
-          icon: FLucideIcons.sparkles,
-          label: l10n.navAskAi,
-          onPress: () => askAi(context, ref),
-          emphasized: true,
-        ),
+        if (ref.watch(deviceLlmPlatformSupportedProvider))
+          DesktopSidebarAction(
+            icon: FLucideIcons.sparkles,
+            label: l10n.navAskAi,
+            onPress: () => askAi(context, ref),
+            emphasized: true,
+          ),
       ],
       forceCollapsed: forceCollapsed,
     );

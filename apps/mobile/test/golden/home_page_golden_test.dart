@@ -1,11 +1,11 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/design_system/widgets/soft_card.dart';
 import 'package:naviwealth/features/finance/activation/data/finance_activation_providers.dart';
 import 'package:naviwealth/features/finance/activation/domain/finance_activation.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
@@ -376,8 +376,8 @@ void main() {
       child: const HomePage(),
     );
 
-    expect(find.text('Add account'), findsOneWidget);
-    expect(find.text('Import statements'), findsOneWidget);
+    expect(find.text('Add financial data'), findsOneWidget);
+    expect(find.text('Start with real activity'), findsOneWidget);
   });
 
   runResponsiveGolden(
@@ -393,8 +393,8 @@ void main() {
         child: const HomePage(),
       );
 
-      expect(find.text('Add account'), findsOneWidget);
-      expect(find.text('Import statements'), findsOneWidget);
+      expect(find.text('Add financial data'), findsOneWidget);
+      expect(find.text('Start with real activity'), findsOneWidget);
     },
   );
 
@@ -427,7 +427,15 @@ void main() {
         expect(find.text('Weekly groceries'), findsOneWidget);
         expect(
           tester
-              .getSize(find.byKey(const ValueKey('cashflow-balance-bar')))
+              .getSize(
+                find
+                    .byWidgetPredicate(
+                      (widget) =>
+                          widget is SoftCard &&
+                          widget.level == SoftCardLevel.hero,
+                    )
+                    .first,
+              )
               .width,
           greaterThan(200),
         );

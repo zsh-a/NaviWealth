@@ -19,6 +19,7 @@ import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/app/shell/shell_chrome.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -47,6 +48,7 @@ Future<ProviderContainer> _pumpAt(
   String initialLocation = '/',
   Size viewportSize = _mobileSize,
   required List<DomainShellSpec> domains,
+  bool aiSupported = true,
 }) async {
   tester.view.physicalSize = viewportSize;
   tester.view.devicePixelRatio = 1.0;
@@ -62,6 +64,7 @@ Future<ProviderContainer> _pumpAt(
       .write(DomainOptIns(<DomainScope>{for (final d in domains) d.scope}));
   final container = ProviderContainer(
     overrides: [
+      deviceLlmPlatformSupportedProvider.overrideWithValue(aiSupported),
       appDatabaseProvider.overrideWith((_) async => db),
       mutationStamperProvider.overrideWith((_) async => makeStubStamper()),
       currentUserIdProvider.overrideWithValue(() async => 'u-test'),
@@ -111,6 +114,20 @@ void main() {
       originalHandler?.call(details);
     };
     addTearDown(() => FlutterError.onError = originalHandler);
+  });
+
+  testWidgets('desktop hides Ask AI when the runtime is unsupported', (
+    tester,
+  ) async {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    await _pumpAt(
+      tester,
+      viewportSize: _desktopSize,
+      domains: [financeDomainShell(l10n)],
+      aiSupported: false,
+    );
+    expect(find.text(l10n.navAskAi), findsNothing);
+    expect(find.byType(DesktopSidebar), findsOneWidget);
   });
 
   group('Finance-only shell', () {
@@ -287,7 +304,7 @@ void main() {
     });
 
     testWidgets(
-      '/health renders HealthTodayPage with cockpit greeting (no FHeader)',
+      '/health renders HealthTodayPage with task heading (no FHeader)',
       (tester) async {
         final l10n = lookupAppLocalizations(const Locale('en'));
         final container = await _pumpAt(
@@ -304,7 +321,7 @@ void main() {
         expect(
           find.descendant(
             of: find.byType(HealthTodayPage),
-            matching: find.text(l10n.healthTodayBriefSubtitle),
+            matching: find.text(l10n.healthOverviewTitle),
           ),
           findsOneWidget,
         );

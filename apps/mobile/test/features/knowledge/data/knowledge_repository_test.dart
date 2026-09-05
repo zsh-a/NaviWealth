@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -40,15 +42,22 @@ KnowledgeNote _note(String id, int tick, {String? title, String? sourceUrl}) =>
       sync: _sync(tick),
     );
 
-KnowledgeDecision _decision(String id, int tick) => KnowledgeDecision(
+KnowledgeDecision _decision(
+  String id,
+  int tick, {
+  DateTime? reviewDate,
+  DecisionStatus status = DecisionStatus.active,
+  SyncMeta? sync,
+}) => KnowledgeDecision(
   id: id,
   question: 'question $id',
   options: <DecisionOption>[DecisionOption(label: 'yes')],
   selectedLabel: 'yes',
   rationaleMd: 'because',
-  status: DecisionStatus.active,
+  status: status,
+  reviewDate: reviewDate,
   decidedAt: _sync(tick).updatedAt,
-  sync: _sync(tick),
+  sync: sync ?? _sync(tick),
 );
 
 void main() {
@@ -98,6 +107,77 @@ void main() {
         decisionColumns.map((row) => row.read<String>('name')),
         isNot(contains('context_snapshot_json')),
       );
+    },
+  );
+
+  test(
+    'due review stream includes old decisions beyond the browse limit',
+    () async {
+      final asOf = DateTime.utc(2026, 9, 1);
+      final dueDate = DateTime.utc(2026, 8, 1);
+      await repository.transaction(() async {
+        await repository.upsertDecision(
+          _decision('old-due', 0, reviewDate: dueDate),
+        );
+        for (var i = 1; i <= 205; i++) {
+          await repository.upsertDecision(_decision('new-$i', i));
+        }
+        await repository.upsertDecision(
+          _decision('future', 210, reviewDate: DateTime.utc(2099)),
+        );
+        await repository.upsertDecision(
+          _decision(
+            'verified',
+            211,
+            reviewDate: dueDate,
+            status: DecisionStatus.verified,
+          ),
+        );
+        await repository.upsertDecision(
+          _decision(
+            'deleted',
+            212,
+            reviewDate: dueDate,
+            sync: _sync(212, deletedAt: asOf),
+          ),
+        );
+        await repository.upsertDecision(
+          _decision(
+            'other-owner',
+            213,
+            reviewDate: dueDate,
+            sync: _sync(213).copyWith(ownerUserId: 'other'),
+          ),
+        );
+      });
+      expect(
+        (await repository.watchDecisions(ownerUserId: _owner, limit: 200).first)
+            .any((d) => d.id == 'old-due'),
+        isFalse,
+      );
+      final stream = StreamIterator(
+        repository.watchDueReviews(ownerUserId: _owner, asOf: asOf),
+      );
+      addTearDown(stream.cancel);
+      expect(await stream.moveNext(), isTrue);
+      expect(stream.current.map((d) => d.id), ['old-due']);
+      expect(
+        (await repository.listDueReviews(
+          ownerUserId: _owner,
+          asOf: asOf,
+        )).map((d) => d.id),
+        ['old-due'],
+      );
+      await repository.upsertDecision(
+        _decision(
+          'old-due',
+          0,
+          reviewDate: dueDate,
+          status: DecisionStatus.verified,
+        ),
+      );
+      expect(await stream.moveNext(), isTrue);
+      expect(stream.current, isEmpty);
     },
   );
 

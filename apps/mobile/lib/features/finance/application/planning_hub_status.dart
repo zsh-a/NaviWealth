@@ -13,6 +13,8 @@ enum PlanningRunwayStatus { needsData, healthy, watch, shortfall }
 
 enum PlanningRebalanceStatus { needsData, balanced, attention, active }
 
+enum PlanningSource { runway, reviews, rebalance, budget, dca, income }
+
 final class PlanningHubStatus {
   const PlanningHubStatus({
     required this.runway,
@@ -29,6 +31,7 @@ final class PlanningHubStatus {
     required this.wheelOpenPositionCount,
     required this.isLoading,
     required this.hasError,
+    this.unavailableSources = const {},
   });
 
   const PlanningHubStatus.loading()
@@ -45,7 +48,8 @@ final class PlanningHubStatus {
       wheelCycleCount = null,
       wheelOpenPositionCount = null,
       isLoading = true,
-      hasError = false;
+      hasError = false,
+      unavailableSources = const {};
 
   final PlanningRunwayStatus? runway;
   final int? pendingLifeEventReviews;
@@ -61,6 +65,7 @@ final class PlanningHubStatus {
   final int? wheelOpenPositionCount;
   final bool isLoading;
   final bool hasError;
+  final Set<PlanningSource> unavailableSources;
 }
 
 final planningHubStatusProvider = Provider.autoDispose<PlanningHubStatus>((
@@ -136,5 +141,14 @@ final planningHubStatusProvider = Provider.autoDispose<PlanningHubStatus>((
         .length,
     isLoading: asyncSources.any((source) => source.isLoading),
     hasError: asyncSources.any((source) => source.hasError),
+    unavailableSources: {
+      if (runwayAsync.hasError) PlanningSource.runway,
+      if (decisionsAsync.hasError) PlanningSource.reviews,
+      if (activeRebalanceAsync.hasError || rebalanceSnapshot.hasError)
+        PlanningSource.rebalance,
+      if (budgetSummaryAsync.hasError) PlanningSource.budget,
+      if (dcaPlansAsync.hasError) PlanningSource.dca,
+      if (wheelCyclesAsync.hasError) PlanningSource.income,
+    },
   );
 });
