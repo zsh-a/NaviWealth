@@ -35,6 +35,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+import '../../../../support/test_app_theme.dart';
 import '../../data/repositories/_stub_stamper.dart';
 
 SyncMeta _meta() => SyncMeta(
@@ -123,6 +124,7 @@ Future<Widget> _wrap({
       ),
     ],
     child: MaterialApp(
+      builder: buildTestAppTheme,
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -254,6 +256,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
+          builder: buildTestAppTheme,
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

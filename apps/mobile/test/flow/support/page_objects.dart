@@ -124,42 +124,23 @@ class ActivityPageObject {
 
   final WidgetTester tester;
 
-  Future<void> openTradeEntry() async {
+  Future<void> openTradeEntry() => _openCapture('Trade');
+
+  Future<void> openExpenseEntry() => _openCapture('Expense');
+
+  Future<void> openTransferEntry() => _openCapture('Transfer');
+
+  Future<void> _openCapture(String label) async {
     final add = find.byIcon(FLucideIcons.plus);
     expect(add, findsWidgets, reason: 'activity add action missing');
     await tester.tap(add.last);
     await settle(tester);
 
     expect(find.text('Record activity'), findsOneWidget);
-    final trade = find.byType(AppActionSheetTile);
-    expect(trade, findsWidgets, reason: 'trade action missing');
-    await tester.tap(trade.at(1));
-    await settle(tester);
-  }
-
-  Future<void> openExpenseEntry() async {
-    final add = find.byIcon(FLucideIcons.plus);
-    expect(add, findsWidgets, reason: 'activity add action missing');
-    await tester.tap(add.last);
-    await settle(tester);
-
-    expect(find.text('Record activity'), findsOneWidget);
-    final expense = find.byType(AppActionSheetTile);
-    expect(expense, findsWidgets, reason: 'expense action missing');
-    await tester.tap(expense.first);
-    await settle(tester);
-  }
-
-  Future<void> openTransferEntry() async {
-    final add = find.byIcon(FLucideIcons.plus);
-    expect(add, findsWidgets, reason: 'activity add action missing');
-    await tester.tap(add.last);
-    await settle(tester);
-
-    expect(find.text('Record activity'), findsOneWidget);
-    final transfer = find.byType(AppActionSheetTile);
-    expect(transfer, findsWidgets, reason: 'transfer action missing');
-    await tester.tap(transfer.at(2));
+    final action = find.widgetWithText(AppActionSheetTile, label);
+    expect(action, findsOneWidget, reason: '$label action missing');
+    await tester.ensureVisible(action);
+    await tester.tap(action);
     await settle(tester);
   }
 
@@ -825,6 +806,14 @@ class PlanPageObject {
   }
 
   Future<void> _openPlanAction(String label) async {
+    if (label == 'Rebalance' || label == 'Income strategy') {
+      final disclosure = find.byKey(
+        const ValueKey('plan-investment-tools-disclosure'),
+      );
+      await tester.ensureVisible(disclosure);
+      await tester.tap(disclosure);
+      await settle(tester);
+    }
     var action = find.text(label).hitTestable();
     if (action.evaluate().isEmpty) {
       // The plan hub is a lazy brief list: scroll the section into view.

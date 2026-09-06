@@ -56,6 +56,9 @@ void main() {
     await tester.tap(find.text('Sources'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byIcon(FLucideIcons.chevronUp), findsOneWidget);
+    expect(expanded, isTrue);
+    await tester.tap(find.text('Sources'));
+    await tester.pumpAndSettle();
+    expect(expanded, isFalse);
   });
 }

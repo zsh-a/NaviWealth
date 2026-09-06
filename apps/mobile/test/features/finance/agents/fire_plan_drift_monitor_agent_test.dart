@@ -1,26 +1,13 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/domain_composition.dart';
-import 'package:naviwealth/app/domain_packs/finance_pack.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
-import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
-import 'package:naviwealth/core/ai/agents/agent_registry.dart';
-import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
-import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
-import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
-import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
-import 'package:naviwealth/features/finance/agents/providers.dart'
-    as finance_agent_providers;
-import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_goal.dart';
@@ -236,70 +223,6 @@ void main() {
     expect(trend.body, contains('提取率 +2.4 个百分点'));
     expect(trend.body, contains('净资产 -¥100,000.00'));
   });
-
-  test('finance providers include FIRE drift monitor agent', () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final artifactStore = SqliteAgentArtifactStore(db: db);
-    await artifactStore.save(
-      _artifact(
-        id: 'fire-drift',
-        agentId: kFirePlanDriftMonitorAgentId,
-        createdAt: now.add(const Duration(minutes: 2)),
-      ),
-    );
-    await artifactStore.save(
-      _artifact(
-        id: 'cashflow-anomaly',
-        agentId: kCashflowAnomalyReviewAgentId,
-        createdAt: now.add(const Duration(minutes: 1)),
-      ),
-    );
-    await artifactStore.save(
-      _artifact(
-        id: 'wealth-review',
-        agentId: kWeeklyWealthReviewAgentId,
-        createdAt: now,
-      ),
-    );
-    final container = ProviderContainer(
-      overrides: [
-        currentUserIdProvider.overrideWithValue(() async => 'u'),
-        agentRegistrationProvider.overrideWith(
-          (ref) => domainAgentRegistrations(ref, [kFinancePack]),
-        ),
-        agentPresentationSpecsProvider.overrideWithValue(
-          domainAgentPresentationSpecs([kFinancePack]),
-        ),
-        agent_providers.agentRunStoreProvider.overrideWith(
-          (ref) async => InMemoryAgentRunStore(),
-        ),
-        agent_providers.agentArtifactStoreProvider.overrideWith(
-          (ref) async => artifactStore,
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
-
-    final agents = container.read(
-      finance_agent_providers.financeAgentsProvider,
-    );
-    final artifacts = await container.read(
-      finance_agent_providers.latestFinanceAgentArtifactsProvider.future,
-    );
-
-    expect(agents.map((agent) => agent.id), [
-      kWeeklyWealthReviewAgentId,
-      kCashflowAnomalyReviewAgentId,
-      kFirePlanDriftMonitorAgentId,
-      kOptionsIncomeRiskReviewAgentId,
-    ]);
-    expect(artifacts.map((artifact) => artifact.id), [
-      'fire-drift',
-      'cashflow-anomaly',
-      'wealth-review',
-    ]);
-  });
 }
 
 FireState _state({
@@ -328,23 +251,5 @@ FireState _state({
     fireEtaMonths: etaMonths,
     currencyMismatchCount: 0,
     computedAt: DateTime.utc(2026, 7, 5),
-  );
-}
-
-AgentArtifact _artifact({
-  required String id,
-  required String agentId,
-  required DateTime createdAt,
-}) {
-  return AgentArtifact(
-    id: id,
-    ownerUserId: 'u',
-    agentId: agentId,
-    domain: 'finance',
-    kind: AgentArtifactKind.review,
-    severity: AgentArtifactSeverity.info,
-    title: id,
-    summary: id,
-    createdAt: createdAt,
   );
 }

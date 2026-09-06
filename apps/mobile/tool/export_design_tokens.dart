@@ -155,6 +155,15 @@ Map<String, Object> buildTokens() => {
       'test/tools/export_design_tokens_test.dart',
   'color': _colorGroup(),
   'spacing': _spacingGroup(),
+  'size': {
+    'chart': {
+      'simulationHistory': _dimension(AppChartHeights.simulationHistory),
+    },
+    'controlHeight': {
+      'chartLoadingState': _dimension(AppControlHeights.chartLoadingState),
+    },
+    'controlWidth': {'scheduleDate': _dimension(AppControlWidths.scheduleDate)},
+  },
   'stroke': _strokeGroup(),
   'radius': _radiusGroup(),
   'opacity': _opacityGroup(),
@@ -294,7 +303,10 @@ Map<String, Object> _colorGroup() => {
       '800': _color(ColorPalette.indigo800),
       '900': _color(ColorPalette.indigo900),
     },
-    'orange': {'500': _color(ColorPalette.orange500)},
+    'orange': {
+      '500': _color(ColorPalette.orange500),
+      '600': _color(ColorPalette.orange600),
+    },
     'colorblind': {
       r'$description':
           'Wong / Okabe-Ito accents for the colorblind market mode — '

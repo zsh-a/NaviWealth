@@ -25,6 +25,7 @@ import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -32,6 +33,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
 import '../features/finance/data/repositories/_stub_stamper.dart';
+
+// Navigation assertions do not depend on the foreground minute ticker.
+class _FixedCurrentTime extends CurrentTime {
+  @override
+  DateTime build() => DateTime(2026, 9, 1);
+}
 
 Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   tester.view.physicalSize = const Size(400, 800);
@@ -52,6 +59,7 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   );
   final container = ProviderContainer(
     overrides: [
+      currentTimeProvider.overrideWith(_FixedCurrentTime.new),
       appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
       mutationStamperProvider.overrideWith((_) async => makeStubStamper()),

@@ -7,6 +7,8 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/auth/ui/devices_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../support/test_app_theme.dart';
+
 class _FailingDevicesNotifier extends DevicesNotifier {
   @override
   Future<DevicesResponse> build() async {
@@ -25,6 +27,7 @@ void main() {
       ProviderScope(
         overrides: [devicesProvider.overrideWith(_FailingDevicesNotifier.new)],
         child: MaterialApp(
+          builder: buildTestAppTheme,
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

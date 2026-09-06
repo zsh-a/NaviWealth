@@ -16,9 +16,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../support/test_app_theme.dart';
+
 Future<void> _pump(WidgetTester tester, Widget child) async {
   await tester.pumpWidget(
     MaterialApp(
+      builder: buildTestAppTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
@@ -597,6 +600,7 @@ void main() {
       await tester.pump(); // schedule frame
       await tester.pumpWidget(
         const MaterialApp(
+          builder: buildTestAppTheme,
           home: Scaffold(body: AiMarkdown(text: text)),
         ),
       );

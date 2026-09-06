@@ -21,6 +21,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+import '../../../../support/test_app_theme.dart';
 import '../../data/repositories/_stub_stamper.dart';
 
 /// Build a [BudgetRow] without going through the live Drift database —
@@ -104,6 +105,7 @@ Future<void> _pump(WidgetTester tester, List<BudgetRow> rows) async {
         }),
       ],
       child: MaterialApp(
+        builder: buildTestAppTheme,
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -147,6 +149,7 @@ Future<void> _pumpLive(
         }),
       ],
       child: MaterialApp(
+        builder: buildTestAppTheme,
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

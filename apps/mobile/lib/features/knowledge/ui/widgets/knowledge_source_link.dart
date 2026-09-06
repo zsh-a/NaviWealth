@@ -43,13 +43,7 @@ class KnowledgeSourceLink extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    knowledgeSourceHost(uri),
-                    style: context.theme.typography.body.sm.copyWith(
-                      color: colors.foreground,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text(knowledgeSourceHost(uri), style: context.labelStyle),
                   const SizedBox(height: AppSpacing.s2),
                   Text(
                     uri.toString(),

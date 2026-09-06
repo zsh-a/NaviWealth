@@ -10,6 +10,8 @@ import 'package:naviwealth/features/ai_chat/domain/chat_models.dart';
 import 'package:naviwealth/features/ai_chat/ui/proposals/propose_card.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../support/test_app_theme.dart';
+
 ReadyProposalPlan _child(int index) => ReadyProposalPlan(
   proposalId: 'child-$index',
   kind: 'expense',
@@ -49,6 +51,7 @@ Widget _wrap(ProposalApplyState state) {
   );
   return ProviderScope(
     child: MaterialApp(
+      builder: buildTestAppTheme,
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

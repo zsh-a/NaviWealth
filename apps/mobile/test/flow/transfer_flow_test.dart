@@ -45,7 +45,7 @@ void main() {
       await bootApp(tester, liveData: data);
 
       final shell = AppShell(tester)..expectMounted();
-      await shell.openTab('Activity');
+      await shell.openTab('Records');
 
       final activity = ActivityPageObject(tester);
       await activity.openTransferEntry();

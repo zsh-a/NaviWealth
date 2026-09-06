@@ -5,6 +5,8 @@ import 'package:naviwealth/features/finance/ai_tools/query_plan/query_plan.dart'
 import 'package:naviwealth/features/finance/ui/command_palette/finance_ask_ai_result_pane.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../support/test_app_theme.dart';
+
 DateTime _frozenNow = DateTime.utc(2026, 5, 15);
 
 TransactionInput _coffee(String id, DateTime when, int minorAbs) =>
@@ -19,6 +21,7 @@ TransactionInput _coffee(String id, DateTime when, int minorAbs) =>
 Widget _wrap(Widget child) {
   // Force zh so the assertions can match the Chinese surface text.
   return MaterialApp(
+    builder: buildTestAppTheme,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: const Locale('zh'),

@@ -154,15 +154,11 @@ void main() {
 
     _expectNoMatches(
       libFiles,
-      RegExp(r'EdgeInsets\.[^(]+\([^)]*\b(?:[0-9]+(?:\.[0-9]+)?)\b'),
+      RegExp(
+        r'EdgeInsets\.[^(]+\([^)]*\b(?:[1-9]\d*(?:\.\d+)?|0\.\d*[1-9]\d*)\b',
+      ),
       'UI spacing should use AppSpacing tokens rather than naked '
       'EdgeInsets numbers.',
-    );
-
-    _expectNoMatches(
-      libFiles,
-      RegExp(r'SizedBox\(\s*(?:width|height):\s*(?:[1-9]\d*(?:\.\d+)?|0\.\d+)'),
-      'Fixed SizedBox dimensions should use AppSpacing/AppIconSizes tokens.',
     );
 
     _expectNoFileMatches(

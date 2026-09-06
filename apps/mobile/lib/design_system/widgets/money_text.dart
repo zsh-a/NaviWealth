@@ -552,7 +552,7 @@ class _AmountLabel extends StatelessWidget {
     final secondary = style.copyWith(
       fontSize:
           (style.fontSize ?? TypographyTokens.numericBody.fontSize!) * 0.72,
-      fontWeight: FontWeight.w500,
+      fontWeight: TypographyTokens.numericCaption.fontWeight,
     );
     return Text.rich(
       TextSpan(

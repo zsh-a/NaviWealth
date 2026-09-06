@@ -162,6 +162,7 @@ class ColorPalette {
 
   // ── Orange (knowledge / expense accent) ────────────────────────────────
   static const Color orange500 = Color(0xFFF97316);
+  static const Color orange600 = Color(0xFFEA580C);
 
   // ── Color-blind friendly accents (Wong / Okabe-Ito palette) ────────────
   // These read distinctly under deuteranopia and protanopia and are used as
@@ -233,7 +234,7 @@ class KnowledgeTypeColors {
 class ExpenseCategoryColors {
   const ExpenseCategoryColors._();
 
-  static const Color dining = Color(0xFFEA580C);
+  static const Color dining = ColorPalette.orange600;
   static const Color groceries = Color(0xFF65A30D);
   static const Color coffee = Color(0xFFCA8A04);
   static const Color transport = Color(0xFF0284C7);

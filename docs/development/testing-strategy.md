@@ -82,6 +82,17 @@ contract and deterministic multi-device E2E coverage rather than a page flow.
 layer in tests, never wrap providers in static `AsyncValue`. This is where
 form logic, money/FX, domain services, and individual widgets are proven.
 
+For isolated Forui widget tests, set `MaterialApp.builder` (or
+`MaterialApp.router.builder`) to `buildTestAppTheme` from
+`apps/mobile/test/support/test_app_theme.dart`. The scope must sit above the
+Navigator so sheets and dialogs inherit Forui theme and accessibility state.
+Full-app flows already receive these scopes from `NaviWealthApp`.
+
+Prefer observable behavior over widget implementation details: select actions
+by their label or key, verify enabled state and results, and avoid asserting
+menu indices or callback identity. Agent registration belongs in composition
+tests; individual agent tests should cover their own analysis and outputs.
+
 ### Integration (real chain, ~10%)
 Exercises **repository → real Drift → read model** with a real
 `AppDatabase` (unkeyed in-memory, production encryption bootstrap bypassed), so

@@ -152,11 +152,11 @@ NaviWealth-owned integration boundaries and host limitations.
 These are accepted follow-ups but are not allowed to displace `Now` work
 without an explicit reorder.
 
-Shared delivery risk: the Android emulator integration workflow is
-temporarily skipped on CI while an upstream Flutter Semantics assertion blocks
-the integration flow (flutter/flutter#191095). The on-device exit evidence of
-the first two initiatives below is pending the restored gate
-(`RUN_FLUTTER_TESTS` in `.github/workflows/integration-device.yml`).
+Shared delivery risk: the Android emulator integration workflow is enabled
+with Flutter 3.47.2; its temporary `RUN_FLUTTER_TESTS` gate has been removed.
+The on-device exit evidence of the first two initiatives below still requires
+a successful run of `.github/workflows/integration-device.yml`; passing the
+local headless suite does not establish device integration success.
 
 ### Data Portability Recovery Correctness
 

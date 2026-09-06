@@ -18,6 +18,8 @@ import 'package:naviwealth/features/finance/options_income/domain/options_strate
 import 'package:naviwealth/features/finance/options_income/ui/income_planner/income_planner_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../../support/test_app_theme.dart';
+
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',
   updatedAt: DateTime.utc(2026, 6, 20),
@@ -116,6 +118,7 @@ Future<void> _pump(WidgetTester tester) async {
         ),
       ],
       child: MaterialApp(
+        builder: buildTestAppTheme,
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

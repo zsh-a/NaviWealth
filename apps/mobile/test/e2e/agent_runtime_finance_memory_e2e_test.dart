@@ -27,7 +27,7 @@ void main() {
           'get_net_worth_summary',
           'list_payment_accounts',
           'propose_expense',
-          'propose_project',
+          'propose_plan',
           'propose_action',
           'propose_progress',
           'propose_action_status_update',
@@ -35,7 +35,7 @@ void main() {
         ]),
       );
       expect(_toolDomain(toolsByName['propose_expense']), 'finance');
-      expect(_toolDomain(toolsByName['propose_project']), 'execution');
+      expect(_toolDomain(toolsByName['propose_plan']), 'execution');
       expect(_toolDomain(toolsByName['propose_capture']), 'knowledge');
     });
 
@@ -70,10 +70,10 @@ void main() {
       expect(day1ToolNames, contains('get_cashflow_buckets'));
       expect(day1ToolNames, contains('get_net_worth_summary'));
       expect(day1ToolNames, contains('list_payment_accounts'));
-      expect(day1ToolNames, contains('propose_project'));
+      expect(day1ToolNames, contains('propose_plan'));
       expect(day1ToolNames, contains('propose_action'));
       expect(day1ToolNames, contains('remember_fact'));
-      expect(dispatcher.projects, isNotEmpty);
+      expect(dispatcher.plans, isNotEmpty);
       expect(dispatcher.actions.length, greaterThanOrEqualTo(2));
       expect(dispatcher.memories, isNotEmpty);
       expect(

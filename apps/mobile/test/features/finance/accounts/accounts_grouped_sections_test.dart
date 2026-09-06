@@ -13,6 +13,8 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../support/test_app_theme.dart';
+
 final _sync = SyncMeta(
   ownerUserId: 'u-test',
   updatedAt: DateTime.utc(2026, 1, 1),
@@ -44,6 +46,7 @@ Account _account({
 Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) {
   return ProviderScope(
     child: MaterialApp(
+      builder: buildTestAppTheme,
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

@@ -20,6 +20,8 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../app/agent_runtime_native_bridge_test_harness.dart';
 
+import '../../../support/test_app_theme.dart';
+
 void main() {
   testWidgets('shows runtime check unavailable without active profile', (
     tester,
@@ -144,6 +146,7 @@ Widget _wrap({
         }),
     ],
     child: MaterialApp(
+      builder: buildTestAppTheme,
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

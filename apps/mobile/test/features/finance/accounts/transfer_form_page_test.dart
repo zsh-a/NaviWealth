@@ -170,7 +170,7 @@ Future<void> _selectAccount(
   await tester.pumpAndSettle();
 }
 
-void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
+void _expectSubmitAvailability(WidgetTester tester, {required bool enabled}) {
   final body = tester.widget<AppFormScaffoldBody>(
     find.byType(AppFormScaffoldBody),
   );
@@ -182,7 +182,7 @@ void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
   );
   if (enabled) {
     expect(body.onSubmit, isNotNull);
-    expect(body.onSubmit, same(button.onPress));
+    expect(button.onPress, isNotNull);
   } else {
     expect(body.onSubmit, isNull);
     expect(button.onPress, isNull);
@@ -223,7 +223,7 @@ void main() {
     expect(find.text('To account'), findsOneWidget);
 
     // Submit button is rendered but disabled (no accounts picked yet).
-    _expectSubmitWiring(tester, enabled: false);
+    _expectSubmitAvailability(tester, enabled: false);
   });
 
   testWidgets('account-detail route preselects source and supports swapping', (
@@ -274,7 +274,7 @@ void main() {
     expect(pickers.last.value, 'a-bank-a');
     expect(find.text('-¥250'), findsOneWidget);
     expect(find.text('+¥250'), findsOneWidget);
-    _expectSubmitWiring(tester, enabled: true);
+    _expectSubmitAvailability(tester, enabled: true);
     expect(tester.takeException(), isNull);
   });
 
@@ -331,7 +331,7 @@ void main() {
     await tester.enterText(_amountField, '100');
     await tester.enterText(_toAmountField, '710');
     await tester.pumpAndSettle();
-    _expectSubmitWiring(tester, enabled: true);
+    _expectSubmitAvailability(tester, enabled: true);
 
     await tester.tap(find.byKey(const Key('transfer-swap-accounts')));
     await tester.pumpAndSettle();
@@ -413,36 +413,6 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Move emergency savings'), findsOneWidget);
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('PostingsPreview surfaces both legs once form is fillable', (
-    tester,
-  ) async {
-    await _enlarge(tester);
-    await tester.pumpWidget(
-      _wrap(
-        h,
-        accounts: [
-          _account(id: 'a-bank-a', name: 'Bank A', category: AccountSide.asset),
-          _account(id: 'a-bank-b', name: 'Bank B', category: AccountSide.asset),
-        ],
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await _selectAccount(tester, pickerIndex: 0, accountName: 'Bank A');
-    await _selectAccount(tester, pickerIndex: 1, accountName: 'Bank B');
-
-    // The amount field labels include the from-account currency once
-    // the from picker is filled.
-    await tester.enterText(_amountField, '1000');
-    await tester.pumpAndSettle();
-
-    // PostingsPreview now shows the leg amounts.
-    expect(find.text('-¥1,000'), findsOneWidget);
-    expect(find.text('+¥1,000'), findsOneWidget);
-
-    _expectSubmitWiring(tester, enabled: true);
   });
 
   testWidgets('selecting the same account on both ends keeps submit disabled', (

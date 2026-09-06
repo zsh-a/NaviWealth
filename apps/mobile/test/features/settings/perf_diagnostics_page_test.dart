@@ -11,6 +11,8 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/perf_diagnostics_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../support/test_app_theme.dart';
+
 FrameTiming _frame({
   required int vsyncStartUs,
   required int totalUs,
@@ -55,6 +57,7 @@ void main() {
       ProviderScope(
         overrides: [frameTimingCollectorProvider.overrideWithValue(collector)],
         child: MaterialApp(
+          builder: buildTestAppTheme,
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -103,6 +106,7 @@ void main() {
       ProviderScope(
         overrides: [frameTimingCollectorProvider.overrideWithValue(collector)],
         child: MaterialApp(
+          builder: buildTestAppTheme,
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

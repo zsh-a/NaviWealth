@@ -465,7 +465,7 @@ class _WatchlistSimulationDividendRecords extends ConsumerWidget {
       context: context,
       loading: () => reconciliation.isLoading
           ? const SizedBox(
-              height: 32,
+              height: AppSpacing.s32,
               child: Center(child: FCircularProgress()),
             )
           : const SizedBox.shrink(),
@@ -716,7 +716,7 @@ class _WatchlistSimulationHistoryState
         history.whenOrLoading(
           context: context,
           loading: () => const SizedBox(
-            height: 120,
+            height: AppControlHeights.chartLoadingState,
             child: Center(child: FCircularProgress()),
           ),
           error: (_, _) => Align(
@@ -829,7 +829,7 @@ class _WatchlistSimulationHistoryChart extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.s8),
         SizedBox(
-          height: 150,
+          height: AppChartHeights.simulationHistory,
           child: NwLineChart(
             key: ValueKey<String>(
               'watchlist-simulation-history-chart-${simulation.id}',

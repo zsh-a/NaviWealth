@@ -120,7 +120,7 @@ jobs:
         run: python3 -m tool.asset_catalog.validate_release
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.47.0'
+          flutter-version: '3.47.2'
           cache: true
       - uses: actions/setup-java@v6
         with:

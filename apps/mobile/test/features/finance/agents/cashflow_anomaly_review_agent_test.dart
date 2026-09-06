@@ -1,24 +1,11 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/app/domain_composition.dart';
-import 'package:naviwealth/app/domain_packs/finance_pack.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
-import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
-import 'package:naviwealth/core/ai/agents/agent_registry.dart';
-import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
-import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
-import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
-import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
-import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
-import 'package:naviwealth/features/finance/agents/providers.dart'
-    as finance_agent_providers;
-import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/expense/data/expense_anomaly_insight_provider.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -108,83 +95,4 @@ void main() {
     expect(trace.spans.single.attributes, containsPair('deterministic', true));
     expect(trace.spans.single.attributes, containsPair('delta_pct', 62));
   });
-
-  test(
-    'finance providers include anomaly agent and latest domain artifacts',
-    () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final artifactStore = SqliteAgentArtifactStore(db: db);
-      await artifactStore.save(
-        _artifact(
-          id: 'wealth-review',
-          agentId: kWeeklyWealthReviewAgentId,
-          createdAt: now,
-        ),
-      );
-      await artifactStore.save(
-        _artifact(
-          id: 'cashflow-anomaly',
-          agentId: kCashflowAnomalyReviewAgentId,
-          createdAt: now.add(const Duration(minutes: 1)),
-          kind: AgentArtifactKind.alert,
-        ),
-      );
-      final container = ProviderContainer(
-        overrides: [
-          currentUserIdProvider.overrideWithValue(() async => 'u'),
-          agentRegistrationProvider.overrideWith(
-            (ref) => domainAgentRegistrations(ref, [kFinancePack]),
-          ),
-          agentPresentationSpecsProvider.overrideWithValue(
-            domainAgentPresentationSpecs([kFinancePack]),
-          ),
-          agent_providers.agentRunStoreProvider.overrideWith(
-            (ref) async => InMemoryAgentRunStore(),
-          ),
-          agent_providers.agentArtifactStoreProvider.overrideWith(
-            (ref) async => artifactStore,
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final agents = container.read(
-        finance_agent_providers.financeAgentsProvider,
-      );
-      final artifacts = await container.read(
-        finance_agent_providers.latestFinanceAgentArtifactsProvider.future,
-      );
-
-      expect(agents.map((agent) => agent.id), [
-        kWeeklyWealthReviewAgentId,
-        kCashflowAnomalyReviewAgentId,
-        kFirePlanDriftMonitorAgentId,
-        kOptionsIncomeRiskReviewAgentId,
-      ]);
-      expect(artifacts.map((artifact) => artifact.id), [
-        'cashflow-anomaly',
-        'wealth-review',
-      ]);
-    },
-  );
-}
-
-AgentArtifact _artifact({
-  required String id,
-  required String agentId,
-  required DateTime createdAt,
-  AgentArtifactKind kind = AgentArtifactKind.review,
-}) {
-  return AgentArtifact(
-    id: id,
-    ownerUserId: 'u',
-    agentId: agentId,
-    domain: 'finance',
-    kind: kind,
-    severity: AgentArtifactSeverity.info,
-    title: id,
-    summary: id,
-    createdAt: createdAt,
-  );
 }

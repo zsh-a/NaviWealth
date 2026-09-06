@@ -14,6 +14,8 @@ import 'package:naviwealth/features/auth/ui/login_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/test_app_theme.dart';
+
 late SharedPreferences _preferences;
 
 class _StubAuthApi implements AuthApiClient {
@@ -117,6 +119,7 @@ Future<void> _pump(WidgetTester tester, ProviderContainer container) async {
     UncontrolledProviderScope(
       container: container,
       child: const MaterialApp(
+        builder: buildTestAppTheme,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         locale: Locale('en'),

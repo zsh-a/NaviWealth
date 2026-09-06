@@ -10,6 +10,8 @@ import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/ui/corporate_action_entry_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../support/test_app_theme.dart';
+
 const _testAsset = CorporateActionAsset(
   id: 'AAPL',
   displayName: 'Apple',
@@ -40,6 +42,7 @@ Future<void> _pump(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
+      builder: buildTestAppTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: CorporateActionEntryPage(

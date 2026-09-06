@@ -9,6 +9,8 @@ import 'package:naviwealth/features/finance/income_strategy/domain/income_strate
 import 'package:naviwealth/features/finance/income_strategy/ui/income_strategy_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../support/test_app_theme.dart';
+
 void main() {
   testWidgets('renders registered strategy modules on a compact phone', (
     tester,
@@ -28,6 +30,7 @@ void main() {
           }),
         ],
         child: MaterialApp(
+          builder: buildTestAppTheme,
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

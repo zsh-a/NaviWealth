@@ -26,7 +26,7 @@ final class LongTaskFinanceMemoryScenario {
   static const Set<String> _executionToolNames = <String>{
     'summarize_execution_progress',
     'list_open_actions',
-    'propose_project',
+    'propose_plan',
     'propose_action',
     'propose_progress',
     'propose_action_status_update',
@@ -150,7 +150,7 @@ final class LongTaskFinanceMemoryScenario {
       'Do not answer from memory alone. Use tools for durable state and data. '
       'On Day 1, call build_context, get_cashflow_buckets, '
       'get_net_worth_summary, and list_payment_accounts before creating the '
-      'plan. Then use propose_project with a reason, create at least two '
+      'plan. Then use propose_plan with a reason, create at least two '
       'concrete propose_action entries with reasons, and remember_fact. '
       'On Day 7, call build_context and get_cashflow_buckets before replanning. '
       'Record the 12.40 USD LLM cost with propose_expense, update execution '
@@ -196,7 +196,7 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
   final calls = <ScenarioToolCall>[];
   final memories = <ScenarioMemoryFact>[];
   final expenses = <Map<String, Object?>>[];
-  final projects = <Map<String, Object?>>[];
+  final plans = <Map<String, Object?>>[];
   final actions = <Map<String, Object?>>[];
   final progressEntries = <Map<String, Object?>>[];
   final statusUpdates = <Map<String, Object?>>[];
@@ -220,7 +220,7 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
       'propose_expense' => _proposeExpense(object),
       'summarize_execution_progress' => _executionSummary(),
       'list_open_actions' => <String, Object?>{'actions': _openActions()},
-      'propose_project' => _proposeProject(object),
+      'propose_plan' => _proposePlan(object),
       'propose_action' => _proposeAction(object),
       'propose_progress' => _proposeProgress(object),
       'propose_action_status_update' => _proposeActionStatusUpdate(object),
@@ -397,7 +397,7 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
   }
 
   Map<String, Object?> _executionSummary() => <String, Object?>{
-    'projects': projects,
+    'plans': plans,
     'open_actions': _openActions(),
     'progress': progressEntries,
     'status_updates': statusUpdates,
@@ -409,9 +409,9 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
         .toList(growable: false);
   }
 
-  Map<String, Object?> _proposeProject(Map<String, Object?> input) {
-    final project = <String, Object?>{
-      'id': _string(input['id'], fallback: 'project_${projects.length + 1}'),
+  Map<String, Object?> _proposePlan(Map<String, Object?> input) {
+    final plan = <String, Object?>{
+      'id': _string(input['id'], fallback: 'plan_${plans.length + 1}'),
       'title': _string(input['title'], fallback: 'Agent runtime validation'),
       'summary': _string(
         input['description'] ?? input['summary'],
@@ -425,12 +425,12 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
       'reason': _string(input['reason'], fallback: 'Long-task validation plan'),
       'status': 'active',
     };
-    projects.add(project);
+    plans.add(plan);
     return _readyProposal(
-      id: 'proposal_execution_plan_${projects.length}',
+      id: 'proposal_execution_plan_${plans.length}',
       kind: 'execution_plan',
-      summary: 'Create project ${project['title']}',
-      payload: project,
+      summary: 'Create plan ${plan['title']}',
+      payload: plan,
     );
   }
 
@@ -440,7 +440,7 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
       'title': _string(input['title'], fallback: 'Runtime validation action'),
       'plan_id': _string(
         input['plan_id'],
-        fallback: projects.isEmpty ? 'project_1' : '${projects.last['id']}',
+        fallback: plans.isEmpty ? 'plan_1' : '${plans.last['id']}',
       ),
       'due_at': _string(input['due_at'] ?? input['due_date'], fallback: ''),
       'scheduled_for': _string(input['scheduled_for'], fallback: ''),
@@ -462,7 +462,7 @@ final class ScenarioToolDispatcher implements DeviceToolDispatcher {
   Map<String, Object?> _proposeProgress(Map<String, Object?> input) {
     final progress = <String, Object?>{
       'id': 'progress_${progressEntries.length + 1}',
-      'plan_id': _string(input['plan_id'], fallback: 'project_1'),
+      'plan_id': _string(input['plan_id'], fallback: 'plan_1'),
       'action_id': _string(input['action_id'], fallback: ''),
       'note': _string(input['note'], fallback: jsonEncode(input)),
       'kind': _string(input['kind'], fallback: 'checkin'),

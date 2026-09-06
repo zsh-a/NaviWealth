@@ -696,8 +696,8 @@ class _VoiceSignal extends StatelessWidget {
   Widget build(BuildContext context) {
     const heights = <double>[8, 14, 10];
     return SizedBox(
-      width: 14,
-      height: 18,
+      width: AppIconSizes.xs,
+      height: AppIconSizes.h18,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,

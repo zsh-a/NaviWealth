@@ -326,6 +326,9 @@ class AppChartHeights {
   /// Compact card chart / chart-shaped loading state.
   static const double compact = 140;
 
+  /// Watchlist simulation history beneath the position summary.
+  static const double simulationHistory = 150;
+
   /// Standard chart in detail pages and dashboard cards.
   static const double standard = 180;
 
@@ -360,6 +363,9 @@ class AppControlHeights {
 
   /// Compact loading placeholder that keeps cards from collapsing.
   static const double compactLoadingState = 96;
+
+  /// Loading placeholder for a card-level history chart.
+  static const double chartLoadingState = 120;
 
   /// Portfolio overview rail containing compact allocation cards.
   static const double portfolioOverviewRail = 164;
@@ -428,6 +434,9 @@ class AppControlWidths {
 
   /// Narrow index column for dense tabular schedules.
   static const double scheduleIndex = AppSpacing.s48;
+
+  /// Short date labels beside scheduled cash flows.
+  static const double scheduleDate = 72;
 
   /// Numeric/date columns in dense tabular schedules.
   static const double scheduleValue = 100;

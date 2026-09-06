@@ -9,6 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/shell/route_error_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../support/test_app_theme.dart';
+
 GoRouter _router({String initialLocation = '/'}) {
   return GoRouter(
     initialLocation: initialLocation,
@@ -22,6 +24,7 @@ GoRouter _router({String initialLocation = '/'}) {
 
 Widget _wrap(GoRouter router) {
   return MaterialApp.router(
+    builder: buildTestAppTheme,
     routerConfig: router,
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

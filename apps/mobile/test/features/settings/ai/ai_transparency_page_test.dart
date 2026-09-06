@@ -8,6 +8,8 @@ import 'package:naviwealth/features/settings/ui/ai/ai_transparency_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../support/test_app_theme.dart';
+
 void main() {
   group('summarizeContextPackTraceWindow', () {
     test('aggregates only traces with ContextPack sizing attributes', () {
@@ -82,6 +84,7 @@ void main() {
             aiTraceStoreProvider.overrideWithValue(store),
           ],
           child: MaterialApp(
+            builder: buildTestAppTheme,
             theme: AppTheme.light(),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,

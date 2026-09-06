@@ -13,7 +13,6 @@ void main() {
     final db = makeTestDatabase();
     addTearDown(db.close);
 
-    expect(db.schemaVersion, 70);
     final tables = await db.customSelect('''
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name LIKE 'rebalance_execution_%'

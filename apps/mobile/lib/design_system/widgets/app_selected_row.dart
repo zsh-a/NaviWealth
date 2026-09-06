@@ -27,7 +27,9 @@ class AppSelectedRow extends StatelessWidget {
           border: BorderDirectional(
             start: BorderSide(
               width: AppStroke.branch,
-              color: selected ? accent : accent.withValues(alpha: 0),
+              color: selected
+                  ? accent
+                  : accent.withValues(alpha: AppOpacity.transparent),
             ),
           ),
         ),

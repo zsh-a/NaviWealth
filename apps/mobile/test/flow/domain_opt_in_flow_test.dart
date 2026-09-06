@@ -31,9 +31,7 @@ void main() {
       isTrue,
     );
     expect(
-      find.text(
-        'Inbox, Library, Review, AI tools, and Memory indexing are enabled',
-      ),
+      find.text('Inbox, Library, AI tools, and Memory indexing are enabled'),
       findsOneWidget,
     );
     await closeApp(tester);

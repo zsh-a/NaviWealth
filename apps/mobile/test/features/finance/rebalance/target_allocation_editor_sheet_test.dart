@@ -14,6 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 
+import '../../../support/test_app_theme.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -198,6 +200,7 @@ Future<void> _pumpWithContainer(
     UncontrolledProviderScope(
       container: container,
       child: MaterialApp(
+        builder: buildTestAppTheme,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.dark(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,

@@ -16,6 +16,8 @@ import 'package:naviwealth/features/finance/expense/ui/spending_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../support/test_app_theme.dart';
+
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',
   updatedAt: DateTime.utc(2026, 4, 1),
@@ -64,6 +66,7 @@ Future<ProviderScope> _wrap({
       fxRatesStreamProvider.overrideWith((ref) => Stream.value(const [])),
     ],
     child: MaterialApp(
+      builder: buildTestAppTheme,
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

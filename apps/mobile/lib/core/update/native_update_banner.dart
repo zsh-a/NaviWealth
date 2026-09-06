@@ -131,7 +131,9 @@ final class _NativeUpdateBannerState extends ConsumerState<NativeUpdateBanner>
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: context.theme.typography.body.xs.copyWith(
-                              color: colors.background.withValues(alpha: 0.8),
+                              color: colors.background.withValues(
+                                alpha: AppOpacity.emphasis,
+                              ),
                             ),
                           ),
                         ),
@@ -141,14 +143,18 @@ final class _NativeUpdateBannerState extends ConsumerState<NativeUpdateBanner>
                       _ProgressBar(
                         progress: progress,
                         foreground: colors.background,
-                        background: colors.background.withValues(alpha: 0.2),
+                        background: colors.background.withValues(
+                          alpha: AppOpacity.highlight,
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.s4),
                       Text(
                         l10n.nativeUpdateDownloading(_progressPercent),
                         textAlign: TextAlign.end,
                         style: context.theme.typography.body.xs.copyWith(
-                          color: colors.background.withValues(alpha: 0.8),
+                          color: colors.background.withValues(
+                            alpha: AppOpacity.emphasis,
+                          ),
                         ),
                       ),
                     ],
@@ -324,7 +330,7 @@ final class _ProgressBar extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.sm),
       child: SizedBox(
-        height: 4,
+        height: AppStroke.indicator,
         child: DecoratedBox(
           decoration: BoxDecoration(color: background),
           child: Align(

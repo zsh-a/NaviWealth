@@ -32,7 +32,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Import statements'), findsOneWidget);
-    expect(find.text('Record entry'), findsOneWidget);
+    expect(
+      find.text(
+        AppLocalizations.of(tester.element(find.byType(HomeQuickActions)))
+            .homeQuickRecordEntry,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Transfer'), findsOneWidget);
     expect(find.text('Monthly close'), findsNothing);
     expect(find.text('Add account'), findsNothing);
@@ -66,7 +72,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Import statements'), findsOneWidget);
-    expect(find.text('Record entry'), findsOneWidget);
+    expect(
+      find.text(
+        AppLocalizations.of(tester.element(find.byType(HomeQuickActions)))
+            .homeQuickRecordEntry,
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Transfer'), findsOneWidget);
     expect(find.text('Monthly close'), findsNothing);
     expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
@@ -96,7 +108,13 @@ void main() {
 
     expect(find.text('Add account'), findsOneWidget);
     expect(find.text('Import statements'), findsOneWidget);
-    expect(find.text('Record entry'), findsNothing);
+    expect(
+      find.text(
+        AppLocalizations.of(tester.element(find.byType(HomeQuickActions)))
+            .homeQuickRecordEntry,
+      ),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
 }

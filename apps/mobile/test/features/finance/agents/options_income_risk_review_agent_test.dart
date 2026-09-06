@@ -1,28 +1,15 @@
 import 'dart:async';
 
 import 'package:decimal/decimal.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
-import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
-import 'package:naviwealth/core/ai/agents/agent_registry.dart';
-import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
-import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/trace/ai_trace_store.dart';
-import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
-import 'package:naviwealth/core/lifeos/domain_pack.dart';
-import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
-import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
 import 'package:naviwealth/features/finance/agents/options_income_risk_review_agent.dart';
-import 'package:naviwealth/features/finance/agents/providers.dart'
-    as finance_agent_providers;
-import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/options_income/data/options_opportunity_cache_repository.dart';
@@ -30,7 +17,6 @@ import 'package:naviwealth/features/finance/options_income/data/providers.dart';
 import 'package:naviwealth/features/finance/options_income/domain/opportunity_explanation.dart';
 import 'package:naviwealth/features/finance/options_income/domain/option_contract.dart';
 import 'package:naviwealth/features/finance/options_income/domain/options_opportunity.dart';
-import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -256,126 +242,7 @@ void main() {
       expect(snapshot.scanState, same(scanState));
     },
   );
-
-  test('finance providers include options income risk review agent', () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final artifactStore = SqliteAgentArtifactStore(db: db);
-    await artifactStore.save(
-      _artifact(
-        id: 'options-risk',
-        agentId: kOptionsIncomeRiskReviewAgentId,
-        createdAt: now.add(const Duration(minutes: 3)),
-      ),
-    );
-    await artifactStore.save(
-      _artifact(
-        id: 'fire-drift',
-        agentId: kFirePlanDriftMonitorAgentId,
-        createdAt: now.add(const Duration(minutes: 2)),
-      ),
-    );
-    await artifactStore.save(
-      _artifact(
-        id: 'cashflow-anomaly',
-        agentId: kCashflowAnomalyReviewAgentId,
-        createdAt: now.add(const Duration(minutes: 1)),
-      ),
-    );
-    await artifactStore.save(
-      _artifact(
-        id: 'wealth-review',
-        agentId: kWeeklyWealthReviewAgentId,
-        createdAt: now,
-      ),
-    );
-    final container = ProviderContainer(
-      overrides: [
-        currentUserIdProvider.overrideWithValue(() async => 'u'),
-        agentRegistrationProvider.overrideWith((ref) {
-          return [
-            for (final agent in ref.watch(
-              finance_agent_providers.financeAgentsProvider,
-            ))
-              DomainAgentRegistration(
-                agent: agent,
-                domain: DomainScope.finance,
-              ),
-          ];
-        }),
-        agentPresentationSpecsProvider.overrideWithValue(
-          _financePresentationSpecs,
-        ),
-        agent_providers.agentRunStoreProvider.overrideWith(
-          (ref) async => InMemoryAgentRunStore(),
-        ),
-        agent_providers.agentArtifactStoreProvider.overrideWith(
-          (ref) async => artifactStore,
-        ),
-      ],
-    );
-    addTearDown(container.dispose);
-
-    final agents = container.read(
-      finance_agent_providers.financeAgentsProvider,
-    );
-    final artifacts = await container.read(
-      finance_agent_providers.latestFinanceAgentArtifactsProvider.future,
-    );
-
-    expect(agents.map((agent) => agent.id), [
-      kWeeklyWealthReviewAgentId,
-      kCashflowAnomalyReviewAgentId,
-      kFirePlanDriftMonitorAgentId,
-      kOptionsIncomeRiskReviewAgentId,
-    ]);
-    expect(artifacts.map((artifact) => artifact.id), [
-      'options-risk',
-      'fire-drift',
-      'cashflow-anomaly',
-      'wealth-review',
-    ]);
-  });
 }
-
-const _financePresentationSpecs = <String, AgentPresentationSpec>{
-  kWeeklyWealthReviewAgentId: AgentPresentationSpec(
-    agentId: kWeeklyWealthReviewAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-  kCashflowAnomalyReviewAgentId: AgentPresentationSpec(
-    agentId: kCashflowAnomalyReviewAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-  kFirePlanDriftMonitorAgentId: AgentPresentationSpec(
-    agentId: kFirePlanDriftMonitorAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-  kOptionsIncomeRiskReviewAgentId: AgentPresentationSpec(
-    agentId: kOptionsIncomeRiskReviewAgentId,
-    domain: DomainScope.finance,
-    icon: IconData(0),
-    label: _agentLabel,
-    description: _agentDescription,
-    placement: AgentResultPlacement.domainHome,
-  ),
-};
-
-String _agentLabel(AppLocalizations _) => 'Agent';
-
-String _agentDescription(AppLocalizations _) => 'Agent';
 
 OptionsOpportunity _opportunity({
   required String symbol,
@@ -436,23 +303,5 @@ OptionsOpportunity _opportunity({
     score: Decimal.parse(score),
     scannedAt: scannedAt,
     scanId: scanId,
-  );
-}
-
-AgentArtifact _artifact({
-  required String id,
-  required String agentId,
-  required DateTime createdAt,
-}) {
-  return AgentArtifact(
-    id: id,
-    ownerUserId: 'u',
-    agentId: agentId,
-    domain: 'finance',
-    kind: AgentArtifactKind.review,
-    severity: AgentArtifactSeverity.info,
-    title: id,
-    summary: id,
-    createdAt: createdAt,
   );
 }

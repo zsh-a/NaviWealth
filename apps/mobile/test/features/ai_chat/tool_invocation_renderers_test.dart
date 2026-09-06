@@ -6,8 +6,11 @@ import 'package:naviwealth/features/ai_chat/ui/tools/renderers/tool_invocation_r
 import 'package:naviwealth/features/ai_chat/ui/tools/tool_invocation_card.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../support/test_app_theme.dart';
+
 Widget _wrap(Widget child) {
   return MaterialApp(
+    builder: buildTestAppTheme,
     theme: AppTheme.light(),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

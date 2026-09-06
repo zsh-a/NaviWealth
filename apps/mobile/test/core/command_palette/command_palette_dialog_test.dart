@@ -8,9 +8,12 @@ import 'package:naviwealth/core/command_palette/command_palette_dialog.dart'
     show resetCommandPaletteForTest;
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../support/test_app_theme.dart';
+
 Widget _wrap(Widget child) {
   return ProviderScope(
     child: MaterialApp(
+      builder: buildTestAppTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: child,
@@ -99,8 +102,8 @@ void main() {
       expect(find.text('First command'), findsOneWidget);
       expect(find.text('Second command'), findsOneWidget);
 
-      final TextField field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.autofocus, isTrue);
+      final field = tester.widget<EditableText>(find.byType(EditableText));
+      expect(field.focusNode.hasFocus, isTrue);
     });
 
     testWidgets('typing filters the list', (tester) async {
@@ -136,7 +139,7 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'expense');
+      await tester.enterText(find.byType(EditableText), 'expense');
       await tester.pumpAndSettle();
 
       expect(find.text('Go to Expenses'), findsOneWidget);
@@ -260,7 +263,7 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.enterText(find.byType(TextField), 'target');
+      await tester.enterText(find.byType(EditableText), 'target');
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
@@ -337,7 +340,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('First command'), findsOneWidget);
-      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(EditableText), findsOneWidget);
     });
 
     testWidgets('shows empty-state message when no command matches', (
@@ -368,7 +371,7 @@ void main() {
 
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'zzznothing');
+      await tester.enterText(find.byType(EditableText), 'zzznothing');
       await tester.pumpAndSettle();
 
       expect(find.text('First command'), findsNothing);

@@ -46,8 +46,7 @@ class DomainAccent {
 ///  * [execution] — orange, the action hue. The light variant mirrors
 ///    Tailwind orange-600 (same value as `ExpenseCategoryColors.dining`) so
 ///    selected labels stay legible on white; the dark variant reuses the
-///    palette's [ColorPalette.orange500]. Kept out of [ColorPalette] so the
-///    design-token export surface is unchanged.
+///    palette's [ColorPalette.orange500].
 abstract final class DomainAccents {
   static const DomainAccent finance = DomainAccent(
     light: ColorPalette.cyanBrand800,
@@ -65,7 +64,7 @@ abstract final class DomainAccents {
   );
 
   static const DomainAccent execution = DomainAccent(
-    light: Color(0xFFEA580C),
+    light: ColorPalette.orange600,
     dark: ColorPalette.orange500,
   );
 }

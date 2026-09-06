@@ -338,7 +338,7 @@ class _RunwayFlowRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 72,
+            width: AppControlWidths.scheduleDate,
             child: Text(
               formatters.date(flow.date.toLocal()),
               style: context.captionStyle,

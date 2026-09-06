@@ -238,6 +238,9 @@ final class _UnreadablePlatformFile extends PlatformFile {
   Future<int> length() async => 1;
 
   @override
+  int lengthSync() => 1;
+
+  @override
   Future<Uint8List> readAsBytes() async {
     throw StateError('bytes unavailable');
   }

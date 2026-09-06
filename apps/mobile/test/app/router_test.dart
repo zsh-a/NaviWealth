@@ -882,8 +882,8 @@ void main() {
     testWidgets('DesktopSidebar selectedIndex follows the current URL', (
       tester,
     ) async {
-      // FIRE lives under Plan (/plan/fire); the Plan tab (index 3) stays
-      // selected while the user is on any /plan/* sub-page.
+      // FIRE lives under Plan; inserting other sidebar destinations must not
+      // change which domain tab is selected for a /plan/* sub-page.
       final container = await _pumpAt(
         tester,
         initialLocation: AppRoutes.planFire,
@@ -892,7 +892,7 @@ void main() {
       final sidebar = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      expect(sidebar.selectedIndex, 4);
+      expect(sidebar.destinations[sidebar.selectedIndex].label, 'Plan');
 
       // Settings is off-nav (IA contract §1) — navigating to /settings
       // exits the shell and the sidebar isn't visible. So we hop to
@@ -903,7 +903,7 @@ void main() {
       final updated = tester.widget<DesktopSidebar>(
         find.byType(DesktopSidebar),
       );
-      expect(updated.selectedIndex, 3);
+      expect(updated.destinations[updated.selectedIndex].label, 'Wealth');
       await _drainTimers(tester);
     });
 

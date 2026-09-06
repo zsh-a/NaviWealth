@@ -17,7 +17,7 @@ import 'package:naviwealth/features/finance/agents/providers.dart'
 import 'package:naviwealth/features/finance/agents/weekly_wealth_review_agent.dart';
 
 void main() {
-  test('latestFinanceAgentArtifactsProvider returns one newest artifact per finance agent', () async {
+  test('Finance home returns the newest visible review and excludes settings-only agents', () async {
     final now = DateTime.utc(2026, 7, 5, 12);
     final artifactStore = _FakeArtifactStore([
       _artifact(
@@ -81,22 +81,9 @@ void main() {
       finance_agent_providers.latestFinanceAgentArtifactsProvider.future,
     );
 
-    expect(artifacts.map((artifact) => artifact.id), [
-      'fire-latest',
-      'options-latest',
-      'weekly-latest',
-      'cashflow-latest',
-    ]);
-    expect(artifacts.map((artifact) => artifact.domain).toSet(), {'finance'});
-    expect(
-      artifacts.map((artifact) => artifact.agentId).toSet(),
-      containsAll(<String>{
-        kWeeklyWealthReviewAgentId,
-        kCashflowAnomalyReviewAgentId,
-        kFirePlanDriftMonitorAgentId,
-        kOptionsIncomeRiskReviewAgentId,
-      }),
-    );
+    expect(artifacts.map((artifact) => artifact.id), ['weekly-latest']);
+    expect(artifacts.single.agentId, kWeeklyWealthReviewAgentId);
+    expect(artifacts.single.domain, 'finance');
   });
 }
 

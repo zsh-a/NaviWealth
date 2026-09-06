@@ -44,6 +44,7 @@ changed.
 | `color.semantic.{light,dark}` | `lib/design_system/theme/semantic_colors.dart` (`SemanticColors`) |
 | `color.market.{redUpGreenDown,greenUpRedDown,colorblind}.{light,dark}` | `lib/design_system/theme/market_colors.dart` (`MarketColors.fromMode`) |
 | `spacing`, `stroke`, `radius`, `opacity`, `iconSize`, `blur`, `shadow` | `lib/design_system/tokens/dimens_tokens.dart` (`AppSpacing`, `AppStroke`, `AppRadius`, `AppOpacity`, `AppIconSizes`, `AppBlur`, `AppShadow`) |
+| `size.{chart,controlHeight,controlWidth}` | `dimens_tokens.dart` (simulation history, loading placeholder, schedule date) |
 | `typography` | `lib/design_system/tokens/typography_tokens.dart` (`TypographyTokens`) |
 | `motion.{duration,easing}` | `lib/design_system/tokens/motion_tokens.dart` (`Motion`) |
 | `breakpoint` | `lib/design_system/tokens/breakpoints.dart` (`Breakpoints`) |

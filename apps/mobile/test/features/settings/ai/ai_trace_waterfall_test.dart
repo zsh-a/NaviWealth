@@ -4,6 +4,8 @@ import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/features/settings/ui/ai/transparency/trace_waterfall.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../support/test_app_theme.dart';
+
 AiTrace _trace() => const AiTrace(
   requestId: 'req-1',
   startedAtIso: '2026-05-17T10:00:00.000Z',
@@ -54,6 +56,7 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
     MaterialApp(
+      builder: buildTestAppTheme,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(

@@ -41,42 +41,28 @@ jobs:
       run:
         working-directory: apps/mobile
     steps:
-      # Flutter 3.47.0 currently asserts in Semantics during the integration
-      # flow (flutter/flutter#191095). Set the repository Actions variable
-      # RUN_FLUTTER_TESTS=true to restore this gate after the upstream fix.
-      - name: Android integration tests temporarily skipped
-        if: vars.RUN_FLUTTER_TESTS != 'true'
-        working-directory: ${{ github.workspace }}
-        run: echo "::warning::Android integration tests are temporarily skipped due to flutter/flutter#191095."
       - uses: actions/checkout@v7
-        if: vars.RUN_FLUTTER_TESTS == 'true'
         with:
           submodules: recursive
       - uses: actions/setup-java@v6
-        if: vars.RUN_FLUTTER_TESTS == 'true'
         with:
           distribution: temurin
           java-version: '17'
       - uses: subosito/flutter-action@v2
-        if: vars.RUN_FLUTTER_TESTS == 'true'
         with:
-          flutter-version: '3.47.0'
+          flutter-version: '3.47.2'
           cache: true
-      - if: vars.RUN_FLUTTER_TESTS == 'true'
-        run: flutter pub get
+      - run: flutter pub get
       - name: Stub web-only font assets so the asset bundle resolves
-        if: vars.RUN_FLUTTER_TESTS == 'true'
         run: tool/prepare-test-font-stubs.sh
       # KVM is required for a hardware-accelerated emulator on the runner.
       - name: Enable KVM
-        if: vars.RUN_FLUTTER_TESTS == 'true'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
       - name: Run integration_test on emulator
-        if: vars.RUN_FLUTTER_TESTS == 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -87,7 +73,7 @@ jobs:
             bash tool/run-android-integration.sh "$device_id"
             bash tool/run-android-backup-interruption.sh
       - name: Upload integration test events
-        if: ${{ vars.RUN_FLUTTER_TESTS == 'true' && failure() }}
+        if: ${{ failure() }}
         uses: actions/upload-artifact@v4
         with:
           name: android-integration-test-events

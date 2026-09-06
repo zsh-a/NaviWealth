@@ -21,6 +21,8 @@ import 'package:naviwealth/features/finance/options_income/domain/trade_journal_
 import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../../../support/test_app_theme.dart';
+
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',
   updatedAt: DateTime.utc(2026, 5, 24),
@@ -103,6 +105,7 @@ Future<void> _pump(
         ),
       ],
       child: MaterialApp(
+        builder: buildTestAppTheme,
         theme: AppTheme.light(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
