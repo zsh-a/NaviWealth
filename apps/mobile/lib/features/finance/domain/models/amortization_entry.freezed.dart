@@ -26,16 +26,21 @@ $AmortizationEntryCopyWith<AmortizationEntry> get copyWith => _$AmortizationEntr
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AmortizationEntry&&(identical(other.id, id) || other.id == id)&&(identical(other.liabilityId, liabilityId) || other.liabilityId == liabilityId)&&(identical(other.periodIndex, periodIndex) || other.periodIndex == periodIndex)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.principalPayment, principalPayment) || other.principalPayment == principalPayment)&&(identical(other.interestPayment, interestPayment) || other.interestPayment == interestPayment)&&(identical(other.remainingBalance, remainingBalance) || other.remainingBalance == remainingBalance)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as AmortizationEntry;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AmortizationEntry&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.liabilityId, _this.liabilityId) || other.liabilityId == _this.liabilityId)&&(identical(other.periodIndex, _this.periodIndex) || other.periodIndex == _this.periodIndex)&&(identical(other.dueDate, _this.dueDate) || other.dueDate == _this.dueDate)&&(identical(other.principalPayment, _this.principalPayment) || other.principalPayment == _this.principalPayment)&&(identical(other.interestPayment, _this.interestPayment) || other.interestPayment == _this.interestPayment)&&(identical(other.remainingBalance, _this.remainingBalance) || other.remainingBalance == _this.remainingBalance)&&(identical(other.paidAt, _this.paidAt) || other.paidAt == _this.paidAt)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,liabilityId,periodIndex,dueDate,principalPayment,interestPayment,remainingBalance,paidAt,sync);
+int get hashCode {
+  final _this = this as AmortizationEntry;
+  return Object.hash(runtimeType,_this.id,_this.liabilityId,_this.periodIndex,_this.dueDate,_this.principalPayment,_this.interestPayment,_this.remainingBalance,_this.paidAt,_this.sync);
+}
 
 @override
 String toString() {
-  return 'AmortizationEntry(id: $id, liabilityId: $liabilityId, periodIndex: $periodIndex, dueDate: $dueDate, principalPayment: $principalPayment, interestPayment: $interestPayment, remainingBalance: $remainingBalance, paidAt: $paidAt, sync: $sync)';
+  final _this = this as AmortizationEntry;
+  return 'AmortizationEntry(id: ${_this.id}, liabilityId: ${_this.liabilityId}, periodIndex: ${_this.periodIndex}, dueDate: ${_this.dueDate}, principalPayment: ${_this.principalPayment}, interestPayment: ${_this.interestPayment}, remainingBalance: ${_this.remainingBalance}, paidAt: ${_this.paidAt}, sync: ${_this.sync})';
 }
 
 
@@ -247,16 +252,18 @@ _$AmortizationEntryCopyWith<_AmortizationEntry> get copyWith => __$AmortizationE
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AmortizationEntry&&(identical(other.id, id) || other.id == id)&&(identical(other.liabilityId, liabilityId) || other.liabilityId == liabilityId)&&(identical(other.periodIndex, periodIndex) || other.periodIndex == periodIndex)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.principalPayment, principalPayment) || other.principalPayment == principalPayment)&&(identical(other.interestPayment, interestPayment) || other.interestPayment == interestPayment)&&(identical(other.remainingBalance, remainingBalance) || other.remainingBalance == remainingBalance)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _AmortizationEntry&&(identical(other.id, id) || other.id == id)&&(identical(other.liabilityId, liabilityId) || other.liabilityId == liabilityId)&&(identical(other.periodIndex, periodIndex) || other.periodIndex == periodIndex)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.principalPayment, principalPayment) || other.principalPayment == principalPayment)&&(identical(other.interestPayment, interestPayment) || other.interestPayment == interestPayment)&&(identical(other.remainingBalance, remainingBalance) || other.remainingBalance == remainingBalance)&&(identical(other.paidAt, paidAt) || other.paidAt == paidAt)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,liabilityId,periodIndex,dueDate,principalPayment,interestPayment,remainingBalance,paidAt,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,liabilityId,periodIndex,dueDate,principalPayment,interestPayment,remainingBalance,paidAt,sync);
+}
 
 @override
 String toString() {
-  return 'AmortizationEntry(id: $id, liabilityId: $liabilityId, periodIndex: $periodIndex, dueDate: $dueDate, principalPayment: $principalPayment, interestPayment: $interestPayment, remainingBalance: $remainingBalance, paidAt: $paidAt, sync: $sync)';
+    return 'AmortizationEntry(id: $id, liabilityId: $liabilityId, periodIndex: $periodIndex, dueDate: $dueDate, principalPayment: $principalPayment, interestPayment: $interestPayment, remainingBalance: $remainingBalance, paidAt: $paidAt, sync: $sync)';
 }
 
 

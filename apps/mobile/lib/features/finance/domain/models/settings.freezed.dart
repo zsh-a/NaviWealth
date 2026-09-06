@@ -26,16 +26,21 @@ $SettingsCopyWith<Settings> get copyWith => _$SettingsCopyWithImpl<Settings>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Settings&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.baseCurrency, baseCurrency) || other.baseCurrency == baseCurrency)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.privacyMode, privacyMode) || other.privacyMode == privacyMode)&&(identical(other.costBasisMethod, costBasisMethod) || other.costBasisMethod == costBasisMethod)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Settings;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Settings&&(identical(other.userId, _this.userId) || other.userId == _this.userId)&&(identical(other.baseCurrency, _this.baseCurrency) || other.baseCurrency == _this.baseCurrency)&&(identical(other.themeMode, _this.themeMode) || other.themeMode == _this.themeMode)&&(identical(other.privacyMode, _this.privacyMode) || other.privacyMode == _this.privacyMode)&&(identical(other.costBasisMethod, _this.costBasisMethod) || other.costBasisMethod == _this.costBasisMethod)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId,baseCurrency,themeMode,privacyMode,costBasisMethod,sync);
+int get hashCode {
+  final _this = this as Settings;
+  return Object.hash(runtimeType,_this.userId,_this.baseCurrency,_this.themeMode,_this.privacyMode,_this.costBasisMethod,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Settings(userId: $userId, baseCurrency: $baseCurrency, themeMode: $themeMode, privacyMode: $privacyMode, costBasisMethod: $costBasisMethod, sync: $sync)';
+  final _this = this as Settings;
+  return 'Settings(userId: ${_this.userId}, baseCurrency: ${_this.baseCurrency}, themeMode: ${_this.themeMode}, privacyMode: ${_this.privacyMode}, costBasisMethod: ${_this.costBasisMethod}, sync: ${_this.sync})';
 }
 
 
@@ -241,16 +246,18 @@ _$SettingsCopyWith<_Settings> get copyWith => __$SettingsCopyWithImpl<_Settings>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Settings&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.baseCurrency, baseCurrency) || other.baseCurrency == baseCurrency)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.privacyMode, privacyMode) || other.privacyMode == privacyMode)&&(identical(other.costBasisMethod, costBasisMethod) || other.costBasisMethod == costBasisMethod)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Settings&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.baseCurrency, baseCurrency) || other.baseCurrency == baseCurrency)&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.privacyMode, privacyMode) || other.privacyMode == privacyMode)&&(identical(other.costBasisMethod, costBasisMethod) || other.costBasisMethod == costBasisMethod)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId,baseCurrency,themeMode,privacyMode,costBasisMethod,sync);
+int get hashCode {
+    return Object.hash(runtimeType,userId,baseCurrency,themeMode,privacyMode,costBasisMethod,sync);
+}
 
 @override
 String toString() {
-  return 'Settings(userId: $userId, baseCurrency: $baseCurrency, themeMode: $themeMode, privacyMode: $privacyMode, costBasisMethod: $costBasisMethod, sync: $sync)';
+    return 'Settings(userId: $userId, baseCurrency: $baseCurrency, themeMode: $themeMode, privacyMode: $privacyMode, costBasisMethod: $costBasisMethod, sync: $sync)';
 }
 
 

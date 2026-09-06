@@ -40,16 +40,21 @@ $AccountCopyWith<Account> get copyWith => _$AccountCopyWithImpl<Account>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Account;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Account&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.institution, _this.institution) || other.institution == _this.institution)&&(identical(other.accountNumber, _this.accountNumber) || other.accountNumber == _this.accountNumber)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.archived, _this.archived) || other.archived == _this.archived)&&(identical(other.category, _this.category) || other.category == _this.category)&&(identical(other.parentId, _this.parentId) || other.parentId == _this.parentId)&&(identical(other.icon, _this.icon) || other.icon == _this.icon)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,parentId,icon,color,sync);
+int get hashCode {
+  final _this = this as Account;
+  return Object.hash(runtimeType,_this.id,_this.type,_this.name,_this.currency,_this.institution,_this.accountNumber,_this.note,_this.archived,_this.category,_this.parentId,_this.icon,_this.color,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, parentId: $parentId, icon: $icon, color: $color, sync: $sync)';
+  final _this = this as Account;
+  return 'Account(id: ${_this.id}, type: ${_this.type}, name: ${_this.name}, currency: ${_this.currency}, institution: ${_this.institution}, accountNumber: ${_this.accountNumber}, note: ${_this.note}, archived: ${_this.archived}, category: ${_this.category}, parentId: ${_this.parentId}, icon: ${_this.icon}, color: ${_this.color}, sync: ${_this.sync})';
 }
 
 
@@ -283,16 +288,18 @@ _$AccountCopyWith<_Account> get copyWith => __$AccountCopyWithImpl<_Account>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Account&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.institution, institution) || other.institution == institution)&&(identical(other.accountNumber, accountNumber) || other.accountNumber == accountNumber)&&(identical(other.note, note) || other.note == note)&&(identical(other.archived, archived) || other.archived == archived)&&(identical(other.category, category) || other.category == category)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.icon, icon) || other.icon == icon)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,parentId,icon,color,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,type,name,currency,institution,accountNumber,note,archived,category,parentId,icon,color,sync);
+}
 
 @override
 String toString() {
-  return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, parentId: $parentId, icon: $icon, color: $color, sync: $sync)';
+    return 'Account(id: $id, type: $type, name: $name, currency: $currency, institution: $institution, accountNumber: $accountNumber, note: $note, archived: $archived, category: $category, parentId: $parentId, icon: $icon, color: $color, sync: $sync)';
 }
 
 

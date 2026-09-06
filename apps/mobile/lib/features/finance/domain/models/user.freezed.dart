@@ -26,16 +26,21 @@ $UserCopyWith<User> get copyWith => _$UserCopyWithImpl<User>(this as User, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as User;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is User&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.email, _this.email) || other.email == _this.email)&&(identical(other.createdAt, _this.createdAt) || other.createdAt == _this.createdAt)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,createdAt,sync);
+int get hashCode {
+  final _this = this as User;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.email,_this.createdAt,_this.sync);
+}
 
 @override
 String toString() {
-  return 'User(id: $id, name: $name, email: $email, createdAt: $createdAt, sync: $sync)';
+  final _this = this as User;
+  return 'User(id: ${_this.id}, name: ${_this.name}, email: ${_this.email}, createdAt: ${_this.createdAt}, sync: ${_this.sync})';
 }
 
 
@@ -239,16 +244,18 @@ _$UserCopyWith<_User> get copyWith => __$UserCopyWithImpl<_User>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _User&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.email, email) || other.email == email)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,email,createdAt,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,email,createdAt,sync);
+}
 
 @override
 String toString() {
-  return 'User(id: $id, name: $name, email: $email, createdAt: $createdAt, sync: $sync)';
+    return 'User(id: $id, name: $name, email: $email, createdAt: $createdAt, sync: $sync)';
 }
 
 

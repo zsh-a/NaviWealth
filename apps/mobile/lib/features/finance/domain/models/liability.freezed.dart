@@ -32,16 +32,21 @@ $LiabilityCopyWith<Liability> get copyWith => _$LiabilityCopyWithImpl<Liability>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Liability&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.principal, principal) || other.principal == principal)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.rateType, rateType) || other.rateType == rateType)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.monthlyPayment, monthlyPayment) || other.monthlyPayment == monthlyPayment)&&(identical(other.statementDay, statementDay) || other.statementDay == statementDay)&&(identical(other.paymentDueDay, paymentDueDay) || other.paymentDueDay == paymentDueDay)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Liability;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Liability&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.principal, _this.principal) || other.principal == _this.principal)&&(identical(other.interestRate, _this.interestRate) || other.interestRate == _this.interestRate)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.paymentMethod, _this.paymentMethod) || other.paymentMethod == _this.paymentMethod)&&(identical(other.rateType, _this.rateType) || other.rateType == _this.rateType)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.startDate, _this.startDate) || other.startDate == _this.startDate)&&(identical(other.endDate, _this.endDate) || other.endDate == _this.endDate)&&(identical(other.termMonths, _this.termMonths) || other.termMonths == _this.termMonths)&&(identical(other.monthlyPayment, _this.monthlyPayment) || other.monthlyPayment == _this.monthlyPayment)&&(identical(other.statementDay, _this.statementDay) || other.statementDay == _this.statementDay)&&(identical(other.paymentDueDay, _this.paymentDueDay) || other.paymentDueDay == _this.paymentDueDay)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,principal,interestRate,currency,paymentMethod,rateType,accountId,startDate,endDate,termMonths,monthlyPayment,statementDay,paymentDueDay,note,sync);
+int get hashCode {
+  final _this = this as Liability;
+  return Object.hash(runtimeType,_this.id,_this.type,_this.name,_this.principal,_this.interestRate,_this.currency,_this.paymentMethod,_this.rateType,_this.accountId,_this.startDate,_this.endDate,_this.termMonths,_this.monthlyPayment,_this.statementDay,_this.paymentDueDay,_this.note,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Liability(id: $id, type: $type, name: $name, principal: $principal, interestRate: $interestRate, currency: $currency, paymentMethod: $paymentMethod, rateType: $rateType, accountId: $accountId, startDate: $startDate, endDate: $endDate, termMonths: $termMonths, monthlyPayment: $monthlyPayment, statementDay: $statementDay, paymentDueDay: $paymentDueDay, note: $note, sync: $sync)';
+  final _this = this as Liability;
+  return 'Liability(id: ${_this.id}, type: ${_this.type}, name: ${_this.name}, principal: ${_this.principal}, interestRate: ${_this.interestRate}, currency: ${_this.currency}, paymentMethod: ${_this.paymentMethod}, rateType: ${_this.rateType}, accountId: ${_this.accountId}, startDate: ${_this.startDate}, endDate: ${_this.endDate}, termMonths: ${_this.termMonths}, monthlyPayment: ${_this.monthlyPayment}, statementDay: ${_this.statementDay}, paymentDueDay: ${_this.paymentDueDay}, note: ${_this.note}, sync: ${_this.sync})';
 }
 
 
@@ -275,16 +280,18 @@ _$LiabilityCopyWith<_Liability> get copyWith => __$LiabilityCopyWithImpl<_Liabil
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Liability&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.principal, principal) || other.principal == principal)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.rateType, rateType) || other.rateType == rateType)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.monthlyPayment, monthlyPayment) || other.monthlyPayment == monthlyPayment)&&(identical(other.statementDay, statementDay) || other.statementDay == statementDay)&&(identical(other.paymentDueDay, paymentDueDay) || other.paymentDueDay == paymentDueDay)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Liability&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.principal, principal) || other.principal == principal)&&(identical(other.interestRate, interestRate) || other.interestRate == interestRate)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.paymentMethod, paymentMethod) || other.paymentMethod == paymentMethod)&&(identical(other.rateType, rateType) || other.rateType == rateType)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.endDate, endDate) || other.endDate == endDate)&&(identical(other.termMonths, termMonths) || other.termMonths == termMonths)&&(identical(other.monthlyPayment, monthlyPayment) || other.monthlyPayment == monthlyPayment)&&(identical(other.statementDay, statementDay) || other.statementDay == statementDay)&&(identical(other.paymentDueDay, paymentDueDay) || other.paymentDueDay == paymentDueDay)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,principal,interestRate,currency,paymentMethod,rateType,accountId,startDate,endDate,termMonths,monthlyPayment,statementDay,paymentDueDay,note,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,type,name,principal,interestRate,currency,paymentMethod,rateType,accountId,startDate,endDate,termMonths,monthlyPayment,statementDay,paymentDueDay,note,sync);
+}
 
 @override
 String toString() {
-  return 'Liability(id: $id, type: $type, name: $name, principal: $principal, interestRate: $interestRate, currency: $currency, paymentMethod: $paymentMethod, rateType: $rateType, accountId: $accountId, startDate: $startDate, endDate: $endDate, termMonths: $termMonths, monthlyPayment: $monthlyPayment, statementDay: $statementDay, paymentDueDay: $paymentDueDay, note: $note, sync: $sync)';
+    return 'Liability(id: $id, type: $type, name: $name, principal: $principal, interestRate: $interestRate, currency: $currency, paymentMethod: $paymentMethod, rateType: $rateType, accountId: $accountId, startDate: $startDate, endDate: $endDate, termMonths: $termMonths, monthlyPayment: $monthlyPayment, statementDay: $statementDay, paymentDueDay: $paymentDueDay, note: $note, sync: $sync)';
 }
 
 

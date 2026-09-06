@@ -26,16 +26,21 @@ $GoalCopyWith<Goal> get copyWith => _$GoalCopyWithImpl<Goal>(this as Goal, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Goal&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.targetAmount, targetAmount) || other.targetAmount == targetAmount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.targetAllocationJson, targetAllocationJson) || other.targetAllocationJson == targetAllocationJson)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Goal;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Goal&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.targetAmount, _this.targetAmount) || other.targetAmount == _this.targetAmount)&&(identical(other.targetDate, _this.targetDate) || other.targetDate == _this.targetDate)&&(identical(other.targetAllocationJson, _this.targetAllocationJson) || other.targetAllocationJson == _this.targetAllocationJson)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,targetAmount,targetDate,targetAllocationJson,note,sync);
+int get hashCode {
+  final _this = this as Goal;
+  return Object.hash(runtimeType,_this.id,_this.type,_this.name,_this.currency,_this.targetAmount,_this.targetDate,_this.targetAllocationJson,_this.note,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Goal(id: $id, type: $type, name: $name, currency: $currency, targetAmount: $targetAmount, targetDate: $targetDate, targetAllocationJson: $targetAllocationJson, note: $note, sync: $sync)';
+  final _this = this as Goal;
+  return 'Goal(id: ${_this.id}, type: ${_this.type}, name: ${_this.name}, currency: ${_this.currency}, targetAmount: ${_this.targetAmount}, targetDate: ${_this.targetDate}, targetAllocationJson: ${_this.targetAllocationJson}, note: ${_this.note}, sync: ${_this.sync})';
 }
 
 
@@ -247,16 +252,18 @@ _$GoalCopyWith<_Goal> get copyWith => __$GoalCopyWithImpl<_Goal>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Goal&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.targetAmount, targetAmount) || other.targetAmount == targetAmount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.targetAllocationJson, targetAllocationJson) || other.targetAllocationJson == targetAllocationJson)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Goal&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.name, name) || other.name == name)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.targetAmount, targetAmount) || other.targetAmount == targetAmount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.targetAllocationJson, targetAllocationJson) || other.targetAllocationJson == targetAllocationJson)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,name,currency,targetAmount,targetDate,targetAllocationJson,note,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,type,name,currency,targetAmount,targetDate,targetAllocationJson,note,sync);
+}
 
 @override
 String toString() {
-  return 'Goal(id: $id, type: $type, name: $name, currency: $currency, targetAmount: $targetAmount, targetDate: $targetDate, targetAllocationJson: $targetAllocationJson, note: $note, sync: $sync)';
+    return 'Goal(id: $id, type: $type, name: $name, currency: $currency, targetAmount: $targetAmount, targetDate: $targetDate, targetAllocationJson: $targetAllocationJson, note: $note, sync: $sync)';
 }
 
 

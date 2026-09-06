@@ -26,16 +26,21 @@ $ExpenseCopyWith<Expense> get copyWith => _$ExpenseCopyWithImpl<Expense>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fromAccountId, fromAccountId) || other.fromAccountId == fromAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Expense;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Expense&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.categoryId, _this.categoryId) || other.categoryId == _this.categoryId)&&(identical(other.fromAccountId, _this.fromAccountId) || other.fromAccountId == _this.fromAccountId)&&(identical(other.amount, _this.amount) || other.amount == _this.amount)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.tradeDate, _this.tradeDate) || other.tradeDate == _this.tradeDate)&&const DeepCollectionEquality().equals(other.tags, _this.tags)&&(identical(other.note, _this.note) || other.note == _this.note)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,categoryId,fromAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(tags),note,sync);
+int get hashCode {
+  final _this = this as Expense;
+  return Object.hash(runtimeType,_this.id,_this.categoryId,_this.fromAccountId,_this.amount,_this.currency,_this.tradeDate,const DeepCollectionEquality().hash(_this.tags),_this.note,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Expense(id: $id, categoryId: $categoryId, fromAccountId: $fromAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
+  final _this = this as Expense;
+  return 'Expense(id: ${_this.id}, categoryId: ${_this.categoryId}, fromAccountId: ${_this.fromAccountId}, amount: ${_this.amount}, currency: ${_this.currency}, tradeDate: ${_this.tradeDate}, tags: ${_this.tags}, note: ${_this.note}, sync: ${_this.sync})';
 }
 
 
@@ -253,16 +258,18 @@ _$ExpenseCopyWith<_Expense> get copyWith => __$ExpenseCopyWithImpl<_Expense>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fromAccountId, fromAccountId) || other.fromAccountId == fromAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Expense&&(identical(other.id, id) || other.id == id)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.fromAccountId, fromAccountId) || other.fromAccountId == fromAccountId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.tradeDate, tradeDate) || other.tradeDate == tradeDate)&&const DeepCollectionEquality().equals(other.tags, _tags)&&(identical(other.note, note) || other.note == note)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,categoryId,fromAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(_tags),note,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,categoryId,fromAccountId,amount,currency,tradeDate,const DeepCollectionEquality().hash(_tags),note,sync);
+}
 
 @override
 String toString() {
-  return 'Expense(id: $id, categoryId: $categoryId, fromAccountId: $fromAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
+    return 'Expense(id: $id, categoryId: $categoryId, fromAccountId: $fromAccountId, amount: $amount, currency: $currency, tradeDate: $tradeDate, tags: $tags, note: $note, sync: $sync)';
 }
 
 

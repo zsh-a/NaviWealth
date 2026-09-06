@@ -26,16 +26,21 @@ $CurrencyCopyWith<Currency> get copyWith => _$CurrencyCopyWithImpl<Currency>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol));
+  final _this = this as Currency;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Currency&&(identical(other.code, _this.code) || other.code == _this.code)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.decimals, _this.decimals) || other.decimals == _this.decimals)&&(identical(other.symbol, _this.symbol) || other.symbol == _this.symbol));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,code,name,decimals,symbol);
+int get hashCode {
+  final _this = this as Currency;
+  return Object.hash(runtimeType,_this.code,_this.name,_this.decimals,_this.symbol);
+}
 
 @override
 String toString() {
-  return 'Currency(code: $code, name: $name, decimals: $decimals, symbol: $symbol)';
+  final _this = this as Currency;
+  return 'Currency(code: ${_this.code}, name: ${_this.name}, decimals: ${_this.decimals}, symbol: ${_this.symbol})';
 }
 
 
@@ -228,16 +233,18 @@ _$CurrencyCopyWith<_Currency> get copyWith => __$CurrencyCopyWithImpl<_Currency>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Currency&&(identical(other.code, code) || other.code == code)&&(identical(other.name, name) || other.name == name)&&(identical(other.decimals, decimals) || other.decimals == decimals)&&(identical(other.symbol, symbol) || other.symbol == symbol));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,code,name,decimals,symbol);
+int get hashCode {
+    return Object.hash(runtimeType,code,name,decimals,symbol);
+}
 
 @override
 String toString() {
-  return 'Currency(code: $code, name: $name, decimals: $decimals, symbol: $symbol)';
+    return 'Currency(code: $code, name: $name, decimals: $decimals, symbol: $symbol)';
 }
 
 

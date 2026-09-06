@@ -26,16 +26,21 @@ $OpLogCopyWith<OpLog> get copyWith => _$OpLogCopyWithImpl<OpLog>(this as OpLog, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is OpLog&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.hlc, hlc) || other.hlc == hlc)&&(identical(other.op, op) || other.op == op)&&(identical(other.entityTable, entityTable) || other.entityTable == entityTable)&&(identical(other.entityId, entityId) || other.entityId == entityId)&&(identical(other.patchJson, patchJson) || other.patchJson == patchJson)&&(identical(other.syncedAt, syncedAt) || other.syncedAt == syncedAt));
+  final _this = this as OpLog;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is OpLog&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.ownerUserId, _this.ownerUserId) || other.ownerUserId == _this.ownerUserId)&&(identical(other.deviceId, _this.deviceId) || other.deviceId == _this.deviceId)&&(identical(other.hlc, _this.hlc) || other.hlc == _this.hlc)&&(identical(other.op, _this.op) || other.op == _this.op)&&(identical(other.entityTable, _this.entityTable) || other.entityTable == _this.entityTable)&&(identical(other.entityId, _this.entityId) || other.entityId == _this.entityId)&&(identical(other.patchJson, _this.patchJson) || other.patchJson == _this.patchJson)&&(identical(other.syncedAt, _this.syncedAt) || other.syncedAt == _this.syncedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,ownerUserId,deviceId,hlc,op,entityTable,entityId,patchJson,syncedAt);
+int get hashCode {
+  final _this = this as OpLog;
+  return Object.hash(runtimeType,_this.id,_this.ownerUserId,_this.deviceId,_this.hlc,_this.op,_this.entityTable,_this.entityId,_this.patchJson,_this.syncedAt);
+}
 
 @override
 String toString() {
-  return 'OpLog(id: $id, ownerUserId: $ownerUserId, deviceId: $deviceId, hlc: $hlc, op: $op, entityTable: $entityTable, entityId: $entityId, patchJson: $patchJson, syncedAt: $syncedAt)';
+  final _this = this as OpLog;
+  return 'OpLog(id: ${_this.id}, ownerUserId: ${_this.ownerUserId}, deviceId: ${_this.deviceId}, hlc: ${_this.hlc}, op: ${_this.op}, entityTable: ${_this.entityTable}, entityId: ${_this.entityId}, patchJson: ${_this.patchJson}, syncedAt: ${_this.syncedAt})';
 }
 
 
@@ -238,16 +243,18 @@ _$OpLogCopyWith<_OpLog> get copyWith => __$OpLogCopyWithImpl<_OpLog>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _OpLog&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.hlc, hlc) || other.hlc == hlc)&&(identical(other.op, op) || other.op == op)&&(identical(other.entityTable, entityTable) || other.entityTable == entityTable)&&(identical(other.entityId, entityId) || other.entityId == entityId)&&(identical(other.patchJson, patchJson) || other.patchJson == patchJson)&&(identical(other.syncedAt, syncedAt) || other.syncedAt == syncedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _OpLog&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.deviceId, deviceId) || other.deviceId == deviceId)&&(identical(other.hlc, hlc) || other.hlc == hlc)&&(identical(other.op, op) || other.op == op)&&(identical(other.entityTable, entityTable) || other.entityTable == entityTable)&&(identical(other.entityId, entityId) || other.entityId == entityId)&&(identical(other.patchJson, patchJson) || other.patchJson == patchJson)&&(identical(other.syncedAt, syncedAt) || other.syncedAt == syncedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,ownerUserId,deviceId,hlc,op,entityTable,entityId,patchJson,syncedAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,ownerUserId,deviceId,hlc,op,entityTable,entityId,patchJson,syncedAt);
+}
 
 @override
 String toString() {
-  return 'OpLog(id: $id, ownerUserId: $ownerUserId, deviceId: $deviceId, hlc: $hlc, op: $op, entityTable: $entityTable, entityId: $entityId, patchJson: $patchJson, syncedAt: $syncedAt)';
+    return 'OpLog(id: $id, ownerUserId: $ownerUserId, deviceId: $deviceId, hlc: $hlc, op: $op, entityTable: $entityTable, entityId: $entityId, patchJson: $patchJson, syncedAt: $syncedAt)';
 }
 
 

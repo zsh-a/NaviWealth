@@ -26,16 +26,21 @@ $DeviceCopyWith<Device> get copyWith => _$DeviceCopyWithImpl<Device>(this as Dev
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Device&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.appVersion, appVersion) || other.appVersion == appVersion)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.lastHlc, lastHlc) || other.lastHlc == lastHlc)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Device;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Device&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.platform, _this.platform) || other.platform == _this.platform)&&(identical(other.appVersion, _this.appVersion) || other.appVersion == _this.appVersion)&&(identical(other.lastSyncAt, _this.lastSyncAt) || other.lastSyncAt == _this.lastSyncAt)&&(identical(other.lastHlc, _this.lastHlc) || other.lastHlc == _this.lastHlc)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,platform,appVersion,lastSyncAt,lastHlc,sync);
+int get hashCode {
+  final _this = this as Device;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.platform,_this.appVersion,_this.lastSyncAt,_this.lastHlc,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Device(id: $id, name: $name, platform: $platform, appVersion: $appVersion, lastSyncAt: $lastSyncAt, lastHlc: $lastHlc, sync: $sync)';
+  final _this = this as Device;
+  return 'Device(id: ${_this.id}, name: ${_this.name}, platform: ${_this.platform}, appVersion: ${_this.appVersion}, lastSyncAt: ${_this.lastSyncAt}, lastHlc: ${_this.lastHlc}, sync: ${_this.sync})';
 }
 
 
@@ -243,16 +248,18 @@ _$DeviceCopyWith<_Device> get copyWith => __$DeviceCopyWithImpl<_Device>(this, _
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Device&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.appVersion, appVersion) || other.appVersion == appVersion)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.lastHlc, lastHlc) || other.lastHlc == lastHlc)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Device&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.platform, platform) || other.platform == platform)&&(identical(other.appVersion, appVersion) || other.appVersion == appVersion)&&(identical(other.lastSyncAt, lastSyncAt) || other.lastSyncAt == lastSyncAt)&&(identical(other.lastHlc, lastHlc) || other.lastHlc == lastHlc)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,platform,appVersion,lastSyncAt,lastHlc,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,platform,appVersion,lastSyncAt,lastHlc,sync);
+}
 
 @override
 String toString() {
-  return 'Device(id: $id, name: $name, platform: $platform, appVersion: $appVersion, lastSyncAt: $lastSyncAt, lastHlc: $lastHlc, sync: $sync)';
+    return 'Device(id: $id, name: $name, platform: $platform, appVersion: $appVersion, lastSyncAt: $lastSyncAt, lastHlc: $lastHlc, sync: $sync)';
 }
 
 

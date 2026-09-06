@@ -26,16 +26,21 @@ $AssetCopyWith<Asset> get copyWith => _$AssetCopyWithImpl<Asset>(this as Asset, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Asset;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Asset&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.type, _this.type) || other.type == _this.type)&&(identical(other.symbol, _this.symbol) || other.symbol == _this.symbol)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.market, _this.market) || other.market == _this.market)&&(identical(other.industry, _this.industry) || other.industry == _this.industry)&&(identical(other.region, _this.region) || other.region == _this.region)&&(identical(other.isin, _this.isin) || other.isin == _this.isin)&&(identical(other.logoUrl, _this.logoUrl) || other.logoUrl == _this.logoUrl)&&(identical(other.metadataJson, _this.metadataJson) || other.metadataJson == _this.metadataJson)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,logoUrl,metadataJson,sync);
+int get hashCode {
+  final _this = this as Asset;
+  return Object.hash(runtimeType,_this.id,_this.type,_this.symbol,_this.currency,_this.name,_this.market,_this.industry,_this.region,_this.isin,_this.logoUrl,_this.metadataJson,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
+  final _this = this as Asset;
+  return 'Asset(id: ${_this.id}, type: ${_this.type}, symbol: ${_this.symbol}, currency: ${_this.currency}, name: ${_this.name}, market: ${_this.market}, industry: ${_this.industry}, region: ${_this.region}, isin: ${_this.isin}, logoUrl: ${_this.logoUrl}, metadataJson: ${_this.metadataJson}, sync: ${_this.sync})';
 }
 
 
@@ -253,16 +258,18 @@ _$AssetCopyWith<_Asset> get copyWith => __$AssetCopyWithImpl<_Asset>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Asset&&(identical(other.id, id) || other.id == id)&&(identical(other.type, type) || other.type == type)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.name, name) || other.name == name)&&(identical(other.market, market) || other.market == market)&&(identical(other.industry, industry) || other.industry == industry)&&(identical(other.region, region) || other.region == region)&&(identical(other.isin, isin) || other.isin == isin)&&(identical(other.logoUrl, logoUrl) || other.logoUrl == logoUrl)&&(identical(other.metadataJson, metadataJson) || other.metadataJson == metadataJson)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,logoUrl,metadataJson,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,type,symbol,currency,name,market,industry,region,isin,logoUrl,metadataJson,sync);
+}
 
 @override
 String toString() {
-  return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
+    return 'Asset(id: $id, type: $type, symbol: $symbol, currency: $currency, name: $name, market: $market, industry: $industry, region: $region, isin: $isin, logoUrl: $logoUrl, metadataJson: $metadataJson, sync: $sync)';
 }
 
 

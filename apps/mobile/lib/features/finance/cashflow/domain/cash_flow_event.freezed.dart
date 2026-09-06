@@ -30,16 +30,21 @@ $CashFlowEventCopyWith<CashFlowEvent> get copyWith => _$CashFlowEventCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.counterAccountName, counterAccountName) || other.counterAccountName == counterAccountName)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
+  final _this = this as CashFlowEvent;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CashFlowEvent&&(identical(other.journalEntryId, _this.journalEntryId) || other.journalEntryId == _this.journalEntryId)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.signedAmount, _this.signedAmount) || other.signedAmount == _this.signedAmount)&&(identical(other.originalAmount, _this.originalAmount) || other.originalAmount == _this.originalAmount)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.counterAccountSide, _this.counterAccountSide) || other.counterAccountSide == _this.counterAccountSide)&&(identical(other.counterAccountId, _this.counterAccountId) || other.counterAccountId == _this.counterAccountId)&&(identical(other.counterAccountName, _this.counterAccountName) || other.counterAccountName == _this.counterAccountName)&&(identical(other.isForecast, _this.isForecast) || other.isForecast == _this.isForecast));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,counterAccountId,counterAccountName,isForecast);
+int get hashCode {
+  final _this = this as CashFlowEvent;
+  return Object.hash(runtimeType,_this.journalEntryId,_this.date,_this.kind,_this.signedAmount,_this.originalAmount,_this.currency,_this.accountId,_this.counterAccountSide,_this.counterAccountId,_this.counterAccountName,_this.isForecast);
+}
 
 @override
 String toString() {
-  return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, counterAccountId: $counterAccountId, counterAccountName: $counterAccountName, isForecast: $isForecast)';
+  final _this = this as CashFlowEvent;
+  return 'CashFlowEvent(journalEntryId: ${_this.journalEntryId}, date: ${_this.date}, kind: ${_this.kind}, signedAmount: ${_this.signedAmount}, originalAmount: ${_this.originalAmount}, currency: ${_this.currency}, accountId: ${_this.accountId}, counterAccountSide: ${_this.counterAccountSide}, counterAccountId: ${_this.counterAccountId}, counterAccountName: ${_this.counterAccountName}, isForecast: ${_this.isForecast})';
 }
 
 
@@ -250,16 +255,18 @@ _$CashFlowEventCopyWith<_CashFlowEvent> get copyWith => __$CashFlowEventCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.counterAccountName, counterAccountName) || other.counterAccountName == counterAccountName)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _CashFlowEvent&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.signedAmount, signedAmount) || other.signedAmount == signedAmount)&&(identical(other.originalAmount, originalAmount) || other.originalAmount == originalAmount)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.counterAccountSide, counterAccountSide) || other.counterAccountSide == counterAccountSide)&&(identical(other.counterAccountId, counterAccountId) || other.counterAccountId == counterAccountId)&&(identical(other.counterAccountName, counterAccountName) || other.counterAccountName == counterAccountName)&&(identical(other.isForecast, isForecast) || other.isForecast == isForecast));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,counterAccountId,counterAccountName,isForecast);
+int get hashCode {
+    return Object.hash(runtimeType,journalEntryId,date,kind,signedAmount,originalAmount,currency,accountId,counterAccountSide,counterAccountId,counterAccountName,isForecast);
+}
 
 @override
 String toString() {
-  return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, counterAccountId: $counterAccountId, counterAccountName: $counterAccountName, isForecast: $isForecast)';
+    return 'CashFlowEvent(journalEntryId: $journalEntryId, date: $date, kind: $kind, signedAmount: $signedAmount, originalAmount: $originalAmount, currency: $currency, accountId: $accountId, counterAccountSide: $counterAccountSide, counterAccountId: $counterAccountId, counterAccountName: $counterAccountName, isForecast: $isForecast)';
 }
 
 

@@ -30,16 +30,21 @@ $PriceObservationCopyWith<PriceObservation> get copyWith => _$PriceObservationCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PriceObservation&&(identical(other.id, id) || other.id == id)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.quoteCurrency, quoteCurrency) || other.quoteCurrency == quoteCurrency)&&(identical(other.observedOn, observedOn) || other.observedOn == observedOn)&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.source, source) || other.source == source)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as PriceObservation;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PriceObservation&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.unit, _this.unit) || other.unit == _this.unit)&&(identical(other.quoteCurrency, _this.quoteCurrency) || other.quoteCurrency == _this.quoteCurrency)&&(identical(other.observedOn, _this.observedOn) || other.observedOn == _this.observedOn)&&(identical(other.perUnit, _this.perUnit) || other.perUnit == _this.perUnit)&&(identical(other.source, _this.source) || other.source == _this.source)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,unit,quoteCurrency,observedOn,perUnit,source,sync);
+int get hashCode {
+  final _this = this as PriceObservation;
+  return Object.hash(runtimeType,_this.id,_this.unit,_this.quoteCurrency,_this.observedOn,_this.perUnit,_this.source,_this.sync);
+}
 
 @override
 String toString() {
-  return 'PriceObservation(id: $id, unit: $unit, quoteCurrency: $quoteCurrency, observedOn: $observedOn, perUnit: $perUnit, source: $source, sync: $sync)';
+  final _this = this as PriceObservation;
+  return 'PriceObservation(id: ${_this.id}, unit: ${_this.unit}, quoteCurrency: ${_this.quoteCurrency}, observedOn: ${_this.observedOn}, perUnit: ${_this.perUnit}, source: ${_this.source}, sync: ${_this.sync})';
 }
 
 
@@ -251,16 +256,18 @@ _$PriceObservationCopyWith<_PriceObservation> get copyWith => __$PriceObservatio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PriceObservation&&(identical(other.id, id) || other.id == id)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.quoteCurrency, quoteCurrency) || other.quoteCurrency == quoteCurrency)&&(identical(other.observedOn, observedOn) || other.observedOn == observedOn)&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.source, source) || other.source == source)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PriceObservation&&(identical(other.id, id) || other.id == id)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.quoteCurrency, quoteCurrency) || other.quoteCurrency == quoteCurrency)&&(identical(other.observedOn, observedOn) || other.observedOn == observedOn)&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.source, source) || other.source == source)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,unit,quoteCurrency,observedOn,perUnit,source,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,unit,quoteCurrency,observedOn,perUnit,source,sync);
+}
 
 @override
 String toString() {
-  return 'PriceObservation(id: $id, unit: $unit, quoteCurrency: $quoteCurrency, observedOn: $observedOn, perUnit: $perUnit, source: $source, sync: $sync)';
+    return 'PriceObservation(id: $id, unit: $unit, quoteCurrency: $quoteCurrency, observedOn: $observedOn, perUnit: $perUnit, source: $source, sync: $sync)';
 }
 
 

@@ -26,16 +26,21 @@ $SyncMetaCopyWith<SyncMeta> get copyWith => _$SyncMetaCopyWithImpl<SyncMeta>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SyncMeta&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedByDevice, updatedByDevice) || other.updatedByDevice == updatedByDevice)&&(identical(other.hlc, hlc) || other.hlc == hlc)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt));
+  final _this = this as SyncMeta;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SyncMeta&&(identical(other.ownerUserId, _this.ownerUserId) || other.ownerUserId == _this.ownerUserId)&&(identical(other.updatedAt, _this.updatedAt) || other.updatedAt == _this.updatedAt)&&(identical(other.updatedByDevice, _this.updatedByDevice) || other.updatedByDevice == _this.updatedByDevice)&&(identical(other.hlc, _this.hlc) || other.hlc == _this.hlc)&&(identical(other.deletedAt, _this.deletedAt) || other.deletedAt == _this.deletedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ownerUserId,updatedAt,updatedByDevice,hlc,deletedAt);
+int get hashCode {
+  final _this = this as SyncMeta;
+  return Object.hash(runtimeType,_this.ownerUserId,_this.updatedAt,_this.updatedByDevice,_this.hlc,_this.deletedAt);
+}
 
 @override
 String toString() {
-  return 'SyncMeta(ownerUserId: $ownerUserId, updatedAt: $updatedAt, updatedByDevice: $updatedByDevice, hlc: $hlc, deletedAt: $deletedAt)';
+  final _this = this as SyncMeta;
+  return 'SyncMeta(ownerUserId: ${_this.ownerUserId}, updatedAt: ${_this.updatedAt}, updatedByDevice: ${_this.updatedByDevice}, hlc: ${_this.hlc}, deletedAt: ${_this.deletedAt})';
 }
 
 
@@ -230,16 +235,18 @@ _$SyncMetaCopyWith<_SyncMeta> get copyWith => __$SyncMetaCopyWithImpl<_SyncMeta>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SyncMeta&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedByDevice, updatedByDevice) || other.updatedByDevice == updatedByDevice)&&(identical(other.hlc, hlc) || other.hlc == hlc)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _SyncMeta&&(identical(other.ownerUserId, ownerUserId) || other.ownerUserId == ownerUserId)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedByDevice, updatedByDevice) || other.updatedByDevice == updatedByDevice)&&(identical(other.hlc, hlc) || other.hlc == hlc)&&(identical(other.deletedAt, deletedAt) || other.deletedAt == deletedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,ownerUserId,updatedAt,updatedByDevice,hlc,deletedAt);
+int get hashCode {
+    return Object.hash(runtimeType,ownerUserId,updatedAt,updatedByDevice,hlc,deletedAt);
+}
 
 @override
 String toString() {
-  return 'SyncMeta(ownerUserId: $ownerUserId, updatedAt: $updatedAt, updatedByDevice: $updatedByDevice, hlc: $hlc, deletedAt: $deletedAt)';
+    return 'SyncMeta(ownerUserId: $ownerUserId, updatedAt: $updatedAt, updatedByDevice: $updatedByDevice, hlc: $hlc, deletedAt: $deletedAt)';
 }
 
 

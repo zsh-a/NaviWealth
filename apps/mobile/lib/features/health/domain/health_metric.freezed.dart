@@ -39,16 +39,21 @@ $HealthMetricCopyWith<HealthMetric> get copyWith => _$HealthMetricCopyWithImpl<H
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HealthMetric&&(identical(other.id, id) || other.id == id)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.value, value) || other.value == value)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.payloadJson, payloadJson) || other.payloadJson == payloadJson)&&(identical(other.sourceDevice, sourceDevice) || other.sourceDevice == sourceDevice)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as HealthMetric;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HealthMetric&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.capturedAt, _this.capturedAt) || other.capturedAt == _this.capturedAt)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.unit, _this.unit) || other.unit == _this.unit)&&(identical(other.payloadJson, _this.payloadJson) || other.payloadJson == _this.payloadJson)&&(identical(other.sourceDevice, _this.sourceDevice) || other.sourceDevice == _this.sourceDevice)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,capturedAt,kind,value,unit,payloadJson,sourceDevice,sync);
+int get hashCode {
+  final _this = this as HealthMetric;
+  return Object.hash(runtimeType,_this.id,_this.capturedAt,_this.kind,_this.value,_this.unit,_this.payloadJson,_this.sourceDevice,_this.sync);
+}
 
 @override
 String toString() {
-  return 'HealthMetric(id: $id, capturedAt: $capturedAt, kind: $kind, value: $value, unit: $unit, payloadJson: $payloadJson, sourceDevice: $sourceDevice, sync: $sync)';
+  final _this = this as HealthMetric;
+  return 'HealthMetric(id: ${_this.id}, capturedAt: ${_this.capturedAt}, kind: ${_this.kind}, value: ${_this.value}, unit: ${_this.unit}, payloadJson: ${_this.payloadJson}, sourceDevice: ${_this.sourceDevice}, sync: ${_this.sync})';
 }
 
 
@@ -271,16 +276,18 @@ _$HealthMetricCopyWith<_HealthMetric> get copyWith => __$HealthMetricCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _HealthMetric&&(identical(other.id, id) || other.id == id)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.value, value) || other.value == value)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.payloadJson, payloadJson) || other.payloadJson == payloadJson)&&(identical(other.sourceDevice, sourceDevice) || other.sourceDevice == sourceDevice)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HealthMetric&&(identical(other.id, id) || other.id == id)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.value, value) || other.value == value)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.payloadJson, payloadJson) || other.payloadJson == payloadJson)&&(identical(other.sourceDevice, sourceDevice) || other.sourceDevice == sourceDevice)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,capturedAt,kind,value,unit,payloadJson,sourceDevice,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,capturedAt,kind,value,unit,payloadJson,sourceDevice,sync);
+}
 
 @override
 String toString() {
-  return 'HealthMetric(id: $id, capturedAt: $capturedAt, kind: $kind, value: $value, unit: $unit, payloadJson: $payloadJson, sourceDevice: $sourceDevice, sync: $sync)';
+    return 'HealthMetric(id: $id, capturedAt: $capturedAt, kind: $kind, value: $value, unit: $unit, payloadJson: $payloadJson, sourceDevice: $sourceDevice, sync: $sync)';
 }
 
 

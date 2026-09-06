@@ -26,16 +26,21 @@ $TagCopyWith<Tag> get copyWith => _$TagCopyWithImpl<Tag>(this as Tag, _$identity
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Tag;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Tag&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.color, _this.color) || other.color == _this.color)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,kind,color,sync);
+int get hashCode {
+  final _this = this as Tag;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.kind,_this.color,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Tag(id: $id, name: $name, kind: $kind, color: $color, sync: $sync)';
+  final _this = this as Tag;
+  return 'Tag(id: ${_this.id}, name: ${_this.name}, kind: ${_this.kind}, color: ${_this.color}, sync: ${_this.sync})';
 }
 
 
@@ -239,16 +244,18 @@ _$TagCopyWith<_Tag> get copyWith => __$TagCopyWithImpl<_Tag>(this, _$identity);
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Tag&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.color, color) || other.color == color)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,kind,color,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,kind,color,sync);
+}
 
 @override
 String toString() {
-  return 'Tag(id: $id, name: $name, kind: $kind, color: $color, sync: $sync)';
+    return 'Tag(id: $id, name: $name, kind: $kind, color: $color, sync: $sync)';
 }
 
 
@@ -313,16 +320,21 @@ $TagLinkCopyWith<TagLink> get copyWith => _$TagLinkCopyWithImpl<TagLink>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TagLink&&(identical(other.id, id) || other.id == id)&&(identical(other.tagId, tagId) || other.tagId == tagId)&&(identical(other.entityTable, entityTable) || other.entityTable == entityTable)&&(identical(other.entityId, entityId) || other.entityId == entityId)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as TagLink;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TagLink&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.tagId, _this.tagId) || other.tagId == _this.tagId)&&(identical(other.entityTable, _this.entityTable) || other.entityTable == _this.entityTable)&&(identical(other.entityId, _this.entityId) || other.entityId == _this.entityId)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,tagId,entityTable,entityId,sync);
+int get hashCode {
+  final _this = this as TagLink;
+  return Object.hash(runtimeType,_this.id,_this.tagId,_this.entityTable,_this.entityId,_this.sync);
+}
 
 @override
 String toString() {
-  return 'TagLink(id: $id, tagId: $tagId, entityTable: $entityTable, entityId: $entityId, sync: $sync)';
+  final _this = this as TagLink;
+  return 'TagLink(id: ${_this.id}, tagId: ${_this.tagId}, entityTable: ${_this.entityTable}, entityId: ${_this.entityId}, sync: ${_this.sync})';
 }
 
 
@@ -526,16 +538,18 @@ _$TagLinkCopyWith<_TagLink> get copyWith => __$TagLinkCopyWithImpl<_TagLink>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TagLink&&(identical(other.id, id) || other.id == id)&&(identical(other.tagId, tagId) || other.tagId == tagId)&&(identical(other.entityTable, entityTable) || other.entityTable == entityTable)&&(identical(other.entityId, entityId) || other.entityId == entityId)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _TagLink&&(identical(other.id, id) || other.id == id)&&(identical(other.tagId, tagId) || other.tagId == tagId)&&(identical(other.entityTable, entityTable) || other.entityTable == entityTable)&&(identical(other.entityId, entityId) || other.entityId == entityId)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,tagId,entityTable,entityId,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,tagId,entityTable,entityId,sync);
+}
 
 @override
 String toString() {
-  return 'TagLink(id: $id, tagId: $tagId, entityTable: $entityTable, entityId: $entityId, sync: $sync)';
+    return 'TagLink(id: $id, tagId: $tagId, entityTable: $entityTable, entityId: $entityId, sync: $sync)';
 }
 
 

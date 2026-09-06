@@ -37,16 +37,21 @@ $JournalEntryCopyWith<JournalEntry> get copyWith => _$JournalEntryCopyWithImpl<J
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is JournalEntry&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.settledOn, settledOn) || other.settledOn == settledOn)&&(identical(other.narration, narration) || other.narration == narration)&&(identical(other.payee, payee) || other.payee == payee)&&const DeepCollectionEquality().equals(other.tagIds, tagIds)&&(identical(other.flag, flag) || other.flag == flag)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as JournalEntry;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is JournalEntry&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.date, _this.date) || other.date == _this.date)&&(identical(other.settledOn, _this.settledOn) || other.settledOn == _this.settledOn)&&(identical(other.narration, _this.narration) || other.narration == _this.narration)&&(identical(other.payee, _this.payee) || other.payee == _this.payee)&&const DeepCollectionEquality().equals(other.tagIds, _this.tagIds)&&(identical(other.flag, _this.flag) || other.flag == _this.flag)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,date,settledOn,narration,payee,const DeepCollectionEquality().hash(tagIds),flag,sync);
+int get hashCode {
+  final _this = this as JournalEntry;
+  return Object.hash(runtimeType,_this.id,_this.date,_this.settledOn,_this.narration,_this.payee,const DeepCollectionEquality().hash(_this.tagIds),_this.flag,_this.sync);
+}
 
 @override
 String toString() {
-  return 'JournalEntry(id: $id, date: $date, settledOn: $settledOn, narration: $narration, payee: $payee, tagIds: $tagIds, flag: $flag, sync: $sync)';
+  final _this = this as JournalEntry;
+  return 'JournalEntry(id: ${_this.id}, date: ${_this.date}, settledOn: ${_this.settledOn}, narration: ${_this.narration}, payee: ${_this.payee}, tagIds: ${_this.tagIds}, flag: ${_this.flag}, sync: ${_this.sync})';
 }
 
 
@@ -273,16 +278,18 @@ _$JournalEntryCopyWith<_JournalEntry> get copyWith => __$JournalEntryCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _JournalEntry&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.settledOn, settledOn) || other.settledOn == settledOn)&&(identical(other.narration, narration) || other.narration == narration)&&(identical(other.payee, payee) || other.payee == payee)&&const DeepCollectionEquality().equals(other._tagIds, _tagIds)&&(identical(other.flag, flag) || other.flag == flag)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _JournalEntry&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.settledOn, settledOn) || other.settledOn == settledOn)&&(identical(other.narration, narration) || other.narration == narration)&&(identical(other.payee, payee) || other.payee == payee)&&const DeepCollectionEquality().equals(other.tagIds, _tagIds)&&(identical(other.flag, flag) || other.flag == flag)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,date,settledOn,narration,payee,const DeepCollectionEquality().hash(_tagIds),flag,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,date,settledOn,narration,payee,const DeepCollectionEquality().hash(_tagIds),flag,sync);
+}
 
 @override
 String toString() {
-  return 'JournalEntry(id: $id, date: $date, settledOn: $settledOn, narration: $narration, payee: $payee, tagIds: $tagIds, flag: $flag, sync: $sync)';
+    return 'JournalEntry(id: $id, date: $date, settledOn: $settledOn, narration: $narration, payee: $payee, tagIds: $tagIds, flag: $flag, sync: $sync)';
 }
 
 

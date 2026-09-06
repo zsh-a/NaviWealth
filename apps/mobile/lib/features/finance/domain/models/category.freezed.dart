@@ -26,16 +26,21 @@ $CategoryCopyWith<Category> get copyWith => _$CategoryCopyWithImpl<Category>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Category;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Category&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.name, _this.name) || other.name == _this.name)&&(identical(other.parentId, _this.parentId) || other.parentId == _this.parentId)&&(identical(other.sortOrder, _this.sortOrder) || other.sortOrder == _this.sortOrder)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,parentId,sortOrder,sync);
+int get hashCode {
+  final _this = this as Category;
+  return Object.hash(runtimeType,_this.id,_this.name,_this.parentId,_this.sortOrder,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Category(id: $id, name: $name, parentId: $parentId, sortOrder: $sortOrder, sync: $sync)';
+  final _this = this as Category;
+  return 'Category(id: ${_this.id}, name: ${_this.name}, parentId: ${_this.parentId}, sortOrder: ${_this.sortOrder}, sync: ${_this.sync})';
 }
 
 
@@ -239,16 +244,18 @@ _$CategoryCopyWith<_Category> get copyWith => __$CategoryCopyWithImpl<_Category>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Category&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.parentId, parentId) || other.parentId == parentId)&&(identical(other.sortOrder, sortOrder) || other.sortOrder == sortOrder)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,parentId,sortOrder,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,name,parentId,sortOrder,sync);
+}
 
 @override
 String toString() {
-  return 'Category(id: $id, name: $name, parentId: $parentId, sortOrder: $sortOrder, sync: $sync)';
+    return 'Category(id: $id, name: $name, parentId: $parentId, sortOrder: $sortOrder, sync: $sync)';
 }
 
 

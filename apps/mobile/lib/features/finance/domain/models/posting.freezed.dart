@@ -26,16 +26,21 @@ $CostCopyWith<Cost> get copyWith => _$CostCopyWithImpl<Cost>(this as Cost, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Cost&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.acquiredOn, acquiredOn) || other.acquiredOn == acquiredOn));
+  final _this = this as Cost;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Cost&&(identical(other.perUnit, _this.perUnit) || other.perUnit == _this.perUnit)&&(identical(other.currency, _this.currency) || other.currency == _this.currency)&&(identical(other.lotId, _this.lotId) || other.lotId == _this.lotId)&&(identical(other.acquiredOn, _this.acquiredOn) || other.acquiredOn == _this.acquiredOn));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,perUnit,currency,lotId,acquiredOn);
+int get hashCode {
+  final _this = this as Cost;
+  return Object.hash(runtimeType,_this.perUnit,_this.currency,_this.lotId,_this.acquiredOn);
+}
 
 @override
 String toString() {
-  return 'Cost(perUnit: $perUnit, currency: $currency, lotId: $lotId, acquiredOn: $acquiredOn)';
+  final _this = this as Cost;
+  return 'Cost(perUnit: ${_this.perUnit}, currency: ${_this.currency}, lotId: ${_this.lotId}, acquiredOn: ${_this.acquiredOn})';
 }
 
 
@@ -228,16 +233,18 @@ _$CostCopyWith<_Cost> get copyWith => __$CostCopyWithImpl<_Cost>(this, _$identit
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Cost&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.acquiredOn, acquiredOn) || other.acquiredOn == acquiredOn));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Cost&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.currency, currency) || other.currency == currency)&&(identical(other.lotId, lotId) || other.lotId == lotId)&&(identical(other.acquiredOn, acquiredOn) || other.acquiredOn == acquiredOn));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,perUnit,currency,lotId,acquiredOn);
+int get hashCode {
+    return Object.hash(runtimeType,perUnit,currency,lotId,acquiredOn);
+}
 
 @override
 String toString() {
-  return 'Cost(perUnit: $perUnit, currency: $currency, lotId: $lotId, acquiredOn: $acquiredOn)';
+    return 'Cost(perUnit: $perUnit, currency: $currency, lotId: $lotId, acquiredOn: $acquiredOn)';
 }
 
 
@@ -292,16 +299,21 @@ $PriceCopyWith<Price> get copyWith => _$PriceCopyWithImpl<Price>(this as Price, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Price&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.currency, currency) || other.currency == currency));
+  final _this = this as Price;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Price&&(identical(other.perUnit, _this.perUnit) || other.perUnit == _this.perUnit)&&(identical(other.currency, _this.currency) || other.currency == _this.currency));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,perUnit,currency);
+int get hashCode {
+  final _this = this as Price;
+  return Object.hash(runtimeType,_this.perUnit,_this.currency);
+}
 
 @override
 String toString() {
-  return 'Price(perUnit: $perUnit, currency: $currency)';
+  final _this = this as Price;
+  return 'Price(perUnit: ${_this.perUnit}, currency: ${_this.currency})';
 }
 
 
@@ -490,16 +502,18 @@ _$PriceCopyWith<_Price> get copyWith => __$PriceCopyWithImpl<_Price>(this, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Price&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.currency, currency) || other.currency == currency));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Price&&(identical(other.perUnit, perUnit) || other.perUnit == perUnit)&&(identical(other.currency, currency) || other.currency == currency));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,perUnit,currency);
+int get hashCode {
+    return Object.hash(runtimeType,perUnit,currency);
+}
 
 @override
 String toString() {
-  return 'Price(perUnit: $perUnit, currency: $currency)';
+    return 'Price(perUnit: $perUnit, currency: $currency)';
 }
 
 
@@ -559,16 +573,21 @@ $PostingCopyWith<Posting> get copyWith => _$PostingCopyWithImpl<Posting>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Posting&&(identical(other.id, id) || other.id == id)&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.position, position) || other.position == position)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.units, units) || other.units == units)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.price, price) || other.price == price)&&(identical(other.sync, sync) || other.sync == sync));
+  final _this = this as Posting;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Posting&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.journalEntryId, _this.journalEntryId) || other.journalEntryId == _this.journalEntryId)&&(identical(other.position, _this.position) || other.position == _this.position)&&(identical(other.accountId, _this.accountId) || other.accountId == _this.accountId)&&(identical(other.units, _this.units) || other.units == _this.units)&&(identical(other.unit, _this.unit) || other.unit == _this.unit)&&(identical(other.cost, _this.cost) || other.cost == _this.cost)&&(identical(other.price, _this.price) || other.price == _this.price)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,journalEntryId,position,accountId,units,unit,cost,price,sync);
+int get hashCode {
+  final _this = this as Posting;
+  return Object.hash(runtimeType,_this.id,_this.journalEntryId,_this.position,_this.accountId,_this.units,_this.unit,_this.cost,_this.price,_this.sync);
+}
 
 @override
 String toString() {
-  return 'Posting(id: $id, journalEntryId: $journalEntryId, position: $position, accountId: $accountId, units: $units, unit: $unit, cost: $cost, price: $price, sync: $sync)';
+  final _this = this as Posting;
+  return 'Posting(id: ${_this.id}, journalEntryId: ${_this.journalEntryId}, position: ${_this.position}, accountId: ${_this.accountId}, units: ${_this.units}, unit: ${_this.unit}, cost: ${_this.cost}, price: ${_this.price}, sync: ${_this.sync})';
 }
 
 
@@ -811,16 +830,18 @@ _$PostingCopyWith<_Posting> get copyWith => __$PostingCopyWithImpl<_Posting>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Posting&&(identical(other.id, id) || other.id == id)&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.position, position) || other.position == position)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.units, units) || other.units == units)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.price, price) || other.price == price)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _Posting&&(identical(other.id, id) || other.id == id)&&(identical(other.journalEntryId, journalEntryId) || other.journalEntryId == journalEntryId)&&(identical(other.position, position) || other.position == position)&&(identical(other.accountId, accountId) || other.accountId == accountId)&&(identical(other.units, units) || other.units == units)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.cost, cost) || other.cost == cost)&&(identical(other.price, price) || other.price == price)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,journalEntryId,position,accountId,units,unit,cost,price,sync);
+int get hashCode {
+    return Object.hash(runtimeType,id,journalEntryId,position,accountId,units,unit,cost,price,sync);
+}
 
 @override
 String toString() {
-  return 'Posting(id: $id, journalEntryId: $journalEntryId, position: $position, accountId: $accountId, units: $units, unit: $unit, cost: $cost, price: $price, sync: $sync)';
+    return 'Posting(id: $id, journalEntryId: $journalEntryId, position: $position, accountId: $accountId, units: $units, unit: $unit, cost: $cost, price: $price, sync: $sync)';
 }
 
 
