@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "flutter_version": "3.44.5",
+  "flutter_version": "3.47.2",
   "generator": "apps/mobile/test/readme_screenshots/readme_screenshot_test.dart",
   "screenshots": [
     {
@@ -10,14 +10,14 @@
       "height": 760,
       "locale": "zh",
       "theme": "dark",
-      "expected_visible_text": ["今日恢复", "将深度工作留给上午", "焦点"],
-      "description": "HealthOS recovery and briefing, KnowledgeOS AI inbox, and ExecutionOS daily focus in one LifeOS workspace."
+      "expected_visible_text": ["今日恢复", "将深度工作留给上午", "今日行动"],
+      "description": "HealthOS recovery, KnowledgeOS inbox, and ExecutionOS daily actions in one LifeOS workspace."
     },
     {
       "id": "wealth-overview",
       "path": "generated/wealth-overview.png",
       "width": 780,
-      "height": 1520,
+      "height": 1688,
       "locale": "zh",
       "theme": "dark",
       "expected_visible_text": ["净资产", "¥137,899.80"],

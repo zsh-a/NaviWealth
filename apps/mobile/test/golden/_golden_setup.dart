@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -163,7 +164,11 @@ void testVisualGolden(
     final previous = debugDisableShadows;
     debugDisableShadows = false;
     try {
-      await body(tester);
+      // Morning atmosphere is part of the baseline, independent of runner time.
+      await withClock(
+        Clock.fixed(DateTime(2026, 7, 12, 9, 30)),
+        () => body(tester),
+      );
     } finally {
       debugDisableShadows = previous;
     }

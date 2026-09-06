@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -40,7 +41,7 @@ class AppAtmosphere extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
-    final period = this.period ?? atmospherePeriodForHour(DateTime.now().hour);
+    final period = this.period ?? atmospherePeriodForHour(clock.now().hour);
     final wash = _wash(
       period: period,
       isDark: isDark,

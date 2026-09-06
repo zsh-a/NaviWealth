@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -67,17 +68,31 @@ void main() {
         child: const Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(child: HealthTodayPage()),
+            Expanded(
+              child: ReadmeRouteSurface(
+                routePath: AppRoutes.healthToday,
+                child: HealthTodayPage(),
+              ),
+            ),
             VerticalDivider(width: 1),
-            Expanded(child: KnowledgeInboxPage()),
+            Expanded(
+              child: ReadmeRouteSurface(
+                routePath: AppRoutes.knowledgeInbox,
+                child: KnowledgeInboxPage(),
+              ),
+            ),
             VerticalDivider(width: 1),
-            Expanded(child: ExecutionTodayPage()),
+            Expanded(
+              child: ReadmeRouteSurface(
+                routePath: AppRoutes.executionToday,
+                child: ExecutionTodayPage(),
+              ),
+            ),
           ],
         ),
       );
       expect(find.text('今日恢复'), findsOneWidget);
       expect(find.text('充分恢复'), findsWidgets);
-      expect(find.text('晨间简报'), findsOneWidget);
       expect(find.text('将深度工作留给上午'), findsOneWidget);
       expect(find.text('整理本周复盘中的三个关键信号'), findsOneWidget);
     },
@@ -86,11 +101,18 @@ void main() {
   readmeScreenshot(
     'README wealth overview',
     body: (tester) async {
+      final database = makeTestDatabase();
+      addTearDown(database.close);
       await pumpReadmeScreenshot(
         tester,
         profile: ReadmeScreenshotProfile.mobileShowcase,
+        routePath: AppRoutes.wealth,
         goldenPath: '$_output/wealth-overview.png',
-        overrides: readmeWealthOverrides(),
+        overrides: <Override>[
+          appDatabaseProvider.overrideWith((_) async => database),
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          ...readmeWealthOverrides(),
+        ],
         child: const WealthHubPage(),
       );
       expect(find.text('净资产'), findsWidgets);

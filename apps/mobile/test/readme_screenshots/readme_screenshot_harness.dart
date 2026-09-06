@@ -18,7 +18,7 @@ enum ReadmeScreenshotProfile {
 
 extension ReadmeScreenshotProfileData on ReadmeScreenshotProfile {
   Size get logicalSize => switch (this) {
-    ReadmeScreenshotProfile.mobileShowcase => const Size(390, 760),
+    ReadmeScreenshotProfile.mobileShowcase => const Size(390, 844),
     ReadmeScreenshotProfile.featureCard => const Size(390, 440),
     ReadmeScreenshotProfile.desktopShowcase => const Size(1280, 560),
     ReadmeScreenshotProfile.domainShowcase => const Size(1280, 760),
@@ -54,6 +54,7 @@ Future<void> pumpReadmeScreenshot(
   required String goldenPath,
   required Widget child,
   List<Override> overrides = const [],
+  String routePath = '/',
   Locale locale = const Locale('zh'),
 }) async {
   await loadGoldenFonts();
@@ -71,7 +72,8 @@ Future<void> pumpReadmeScreenshot(
   });
 
   final router = GoRouter(
-    routes: <RouteBase>[GoRoute(path: '/', builder: (_, _) => child)],
+    initialLocation: routePath,
+    routes: <RouteBase>[GoRoute(path: routePath, builder: (_, _) => child)],
     errorBuilder: (_, _) => const SizedBox.shrink(),
   );
   addTearDown(router.dispose);
@@ -128,9 +130,45 @@ void readmeScreenshot(
   String description, {
   required Future<void> Function(WidgetTester tester) body,
 }) {
-  testVisualGolden(
-    description,
-    body,
-    tags: const <String>['golden', 'readme-screenshot'],
+  testVisualGolden(description, (tester) async {
+    try {
+      await body(tester);
+    } finally {
+      // Dispose provider subscriptions before database tearDown callbacks.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump(const Duration(milliseconds: 1));
+    }
+  }, tags: const <String>['golden', 'readme-screenshot']);
+}
+
+/// Each side-by-side domain needs its own active route for ShellTabPause.
+class ReadmeRouteSurface extends StatefulWidget {
+  const ReadmeRouteSurface({
+    super.key,
+    required this.routePath,
+    required this.child,
+  });
+
+  final String routePath;
+  final Widget child;
+
+  @override
+  State<ReadmeRouteSurface> createState() => _ReadmeRouteSurfaceState();
+}
+
+class _ReadmeRouteSurfaceState extends State<ReadmeRouteSurface> {
+  late final _router = GoRouter(
+    initialLocation: widget.routePath,
+    routes: [GoRoute(path: widget.routePath, builder: (_, _) => widget.child)],
   );
+
+  @override
+  Widget build(BuildContext context) => Router.withConfig(config: _router);
+
+  @override
+  void dispose() {
+    _router.dispose();
+    super.dispose();
+  }
 }

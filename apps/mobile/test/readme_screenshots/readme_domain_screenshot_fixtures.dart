@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
@@ -83,6 +84,10 @@ final _executionActions = <ExecutionAction>[
 ];
 
 List<Override> readmeDomainShowcaseOverrides() => <Override>[
+  currentTimeProvider.overrideWithBuild((_, _) => _domainShowcaseNow),
+  knowledgeDueReviewsProvider.overrideWith(
+    (_) => Stream.value(const <KnowledgeDecision>[]),
+  ),
   healthHasAnyDataProvider.overrideWith((_) async => true),
   health_data.garminSyncControllerProvider.overrideWithBuild(
     (_, _) => const GarminInitial(),

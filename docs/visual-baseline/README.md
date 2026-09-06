@@ -14,8 +14,8 @@ cd apps/mobile
 ```
 
 `docs/assets/readme/manifest.json` pins each image's dimensions, locale,
-theme, and description. Pull requests render a review artifact and warn on
-visual drift without blocking unrelated UI work.
+theme, and description. CI uploads refreshed images and fails when committed
+screenshots are stale; review and commit the generated images with UI changes.
 
 ## Golden screenshot regression
 
@@ -73,6 +73,11 @@ its budget is spent on width and text-scale coverage.
 Goldens are byte-compared PNGs and depend on the rasteriser. **Linux is the
 source of truth** — the `golden regression (mobile)` job in `mobile.yml` runs
 on `ubuntu-latest` and asserts against the checked-in PNGs.
+
+`testVisualGolden` fixes the clock to 09:30 so time-of-day atmosphere colors
+do not depend on the runner's local time. README captures use the same clock;
+each domain in the side-by-side showcase has its own active router, and the
+test unmounts provider scopes before closing its in-memory database.
 
 `apps/mobile/test/golden/flutter_test_config.dart` skips PNG comparison on
 non-Linux hosts. The responsive harness still pumps the full surface and
