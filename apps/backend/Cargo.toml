@@ -22,7 +22,7 @@ console_error_panic_hook = "0.1"
 # Auth (FIR-29). HS256 JWT is hand-rolled on hmac+sha2 because `jsonwebtoken`
 # does not build for `wasm32-unknown-unknown` without a non-default crypto
 # backend; argon2 is pure-Rust and salt entropy comes from `getrandom` (js).
-argon2 = "0.5"
+argon2 = "0.6"
 # Keep hmac and sha2 on the same digest trait family so `Hmac<Sha256>: Mac`
 # remains valid for HS256 JWT and scoped-detail merchant hashes.
 hmac = "0.13"
