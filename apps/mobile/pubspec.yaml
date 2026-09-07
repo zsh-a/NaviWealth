@@ -110,7 +110,7 @@ dev_dependencies:
   # drift_dev 2.34.1+ requires analyzer 13, while freezed 3.2.5 currently
   # requires analyzer <11. Keep the generator pinned until those toolchains
   # converge; the runtime drift package can still take compatible patches.
-  drift_dev: 2.34.5
+  drift_dev: 2.34.6
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
