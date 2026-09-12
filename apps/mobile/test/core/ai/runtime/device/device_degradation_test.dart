@@ -273,6 +273,7 @@ void main() {
         'get_stress_trend',
         'get_subscription_changes',
         'get_transfer_links',
+        'get_watchlist',
         'get_wheel_lifecycle',
         'list_blocked_actions',
         'list_due_reviews',

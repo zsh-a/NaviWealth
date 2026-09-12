@@ -16,6 +16,7 @@ import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_library_page.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_note_detail_page.dart';
+import 'package:naviwealth/features/knowledge/ui/widgets/knowledge_entry_tile.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -255,7 +256,13 @@ void main() {
     expect(find.text('Earlier'), findsOneWidget);
     // Decision rows carry a status badge, and every row has an overflow menu.
     expect(find.text('Active'), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.ellipsis), findsNWidgets(3));
+    expect(
+      find.descendant(
+        of: find.byType(KnowledgeEntryTile),
+        matching: find.byIcon(FLucideIcons.ellipsis),
+      ),
+      findsNWidgets(3),
+    );
     await _disposeWidget(tester);
   });
 }
