@@ -42,6 +42,119 @@ Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
 }
 
 void main() {
+  test(
+    'axis thinning retains real ticks instead of rejecting the whole scale',
+    () {
+      final meta = TitleMeta(
+        min: 0,
+        max: 9.25,
+        parentAxisSize: 220,
+        axisPosition: 0,
+        appliedInterval: 1,
+        sideTitles: const SideTitles(),
+        formattedValue: '',
+        axisSide: AxisSide.left,
+        rotationQuarterTurns: 0,
+      );
+      final shown = [
+        for (var value = 0; value <= 9; value++)
+          if (shouldRenderAxisLabel(
+            value: value.toDouble(),
+            meta: meta,
+            range: 9.25,
+            maxLabels: 3,
+          ))
+            value,
+      ];
+      expect(shown, [0, 4, 8]);
+    },
+  );
+
+  testWidgets(
+    'disjoint segments keep one visual identity and scrub beyond the first segment',
+    (tester) async {
+      final states = <NwScrubState?>[];
+      await tester.pumpWidget(
+        _wrap(
+          NwLineChart(
+            uniformSeriesStyle: true,
+            touchSelection: ChartTouchSelection.nearest,
+            showXAxis: false,
+            showYAxis: false,
+            minX: 0,
+            maxX: 10,
+            onScrubChanged: states.add,
+            series: const [
+              ChartSeries(
+                name: 'HRV',
+                points: [ChartPoint(x: 0, y: 10), ChartPoint(x: 1, y: 10)],
+              ),
+              ChartSeries(
+                name: 'HRV',
+                points: [ChartPoint(x: 8, y: 12), ChartPoint(x: 9, y: 12)],
+              ),
+            ],
+          ),
+        ),
+      );
+      final chart = tester.widget<LineChart>(find.byType(LineChart));
+      expect(chart.data.lineBarsData.map((bar) => bar.dashArray), [null, null]);
+      expect(
+        chart.data.lineBarsData.first.color,
+        chart.data.lineBarsData.last.color,
+      );
+      final rect = tester.getRect(find.byType(LineChart));
+      final gesture = await tester.startGesture(
+        Offset(rect.left + rect.width * 0.9, rect.center.dy),
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+      await tester.pump();
+      expect(states.last!.point.x, 9);
+      expect(states.last!.seriesIndex, 1);
+      await gesture.up();
+    },
+  );
+
+  testWidgets(
+    'missing bar categories retain dates without a zero rod or wrong tooltip',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const NwBarChart(
+            series: [
+              CategorySeries(
+                name: 'missing-source',
+                data: [
+                  CategoryDatum(label: 'Mon', value: 0, isMissing: true),
+                  CategoryDatum(label: 'Tue', value: 0),
+                ],
+              ),
+              CategorySeries(
+                name: 'recorded-source',
+                data: [
+                  CategoryDatum(label: 'Mon', value: 7),
+                  CategoryDatum(label: 'Tue', value: 0, isMissing: true),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+      final chart = tester.widget<BarChart>(find.byType(BarChart));
+      final groups = chart.data.barGroups;
+      expect(groups, hasLength(2));
+      expect(groups.first.barRods.single.toY, 7);
+      expect(groups.last.barRods.single.toY, 0);
+      final tooltip = chart.data.barTouchData.touchTooltipData.getTooltipItem(
+        groups.first,
+        0,
+        groups.first.barRods.single,
+        0,
+      );
+      expect(tooltip!.text, startsWith('recorded-source'));
+    },
+  );
+
   group('NwLineChart', () {
     testWidgets('renders empty placeholder when no series have points', (
       tester,

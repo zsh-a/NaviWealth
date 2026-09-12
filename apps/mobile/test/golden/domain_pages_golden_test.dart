@@ -13,6 +13,7 @@ import 'package:naviwealth/features/health/agents/providers.dart'
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
 import 'package:naviwealth/features/health/data/health_metric_repository.dart';
 import 'package:naviwealth/features/health/data/health_metric_write_service.dart';
+import 'package:naviwealth/features/health/data/health_series_providers.dart';
 import 'package:naviwealth/features/health/data/providers.dart' as health_data;
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
@@ -40,7 +41,7 @@ void main() {
       repository: repository,
       stamper: makeStubStamper(userId: 'golden-user'),
     );
-    final at = DateTime.now().toUtc().subtract(const Duration(minutes: 20));
+    final at = DateTime.utc(2026, 9, 12, 12);
     await writer.recordBodyMeasurement(
       kind: HealthMetricKind.weight,
       value: 72.5,
@@ -59,6 +60,7 @@ void main() {
       child: const HealthTodayPage(),
       overrides: [
         appDatabaseProvider.overrideWith((_) async => db),
+        healthClockProvider.overrideWithValue(() => DateTime(2026, 9, 12, 12)),
         currentUserIdProvider.overrideWithValue(() async => 'golden-user'),
         health_data.healthMetricRepositoryProvider.overrideWith(
           (_) async => repository,
@@ -75,8 +77,8 @@ void main() {
         ),
       ],
     );
-    expect(find.text('72.5'), findsOneWidget);
-    expect(find.text('18.5'), findsOneWidget);
+    expect(find.text('72.5 kg'), findsOneWidget);
+    expect(find.text('18.5 %'), findsOneWidget);
     expect(find.text('Connect your health data'), findsNothing);
   });
 
@@ -102,7 +104,7 @@ void main() {
         recoverySignalProvider.overrideWith(
           (_) async => <String, Object?>{'score': 74, 'verdict': 'steady'},
         ),
-        recoverySparklineProvider.overrideWith((_) async => const <double>[]),
+
         weeklySummaryProvider.overrideWith((_) async => null),
         health_agent_providers.latestRecoveryAlertRunProvider.overrideWith(
           (_) async => null,

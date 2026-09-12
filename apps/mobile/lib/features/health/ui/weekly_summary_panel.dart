@@ -31,15 +31,22 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
           if (summary.totalSteps > 0)
             _WeeklyStat(
               icon: FLucideIcons.footprints,
-              value: Fmt.number(summary.totalSteps.round()),
+              value: HealthMetricKind.stepsDaily.formatValue(
+                l10n,
+                summary.totalSteps,
+              ),
               label: l10n.healthStepsMetricLabel,
               color: HealthMetricColors.steps,
             ),
           if (summary.avgSleepHours > 0)
             _WeeklyStat(
               icon: FLucideIcons.moon,
-              value: '${_round(summary.avgSleepHours)}h',
-              label: l10n.healthSleepMetricLabel,
+              value: HealthMetricKind.sleepSession.formatValue(
+                l10n,
+                summary.avgSleepHours,
+              ),
+              label:
+                  '${l10n.healthSleepMetricLabel} · ${l10n.healthAverageShort}',
               color: HealthMetricColors.sleep,
             ),
           if (summary.workoutCount > 0)
@@ -56,20 +63,29 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
           if (summary.avgHrv > 0)
             _WeeklyStat(
               icon: FLucideIcons.heartPulse,
-              value: '${summary.avgHrv.round()}ms',
-              label: l10n.healthHrvMetricLabel,
+              value: HealthMetricKind.hrvDaily.formatValue(
+                l10n,
+                summary.avgHrv,
+              ),
+              label:
+                  '${l10n.healthHrvMetricLabel} · ${l10n.healthAverageShort}',
               color: HealthMetricColors.hrv,
             ),
           if (summary.avgRhr > 0)
             _WeeklyStat(
               icon: FLucideIcons.heart,
-              value: '${summary.avgRhr.round()}bpm',
-              label: l10n.healthRhrMetricLabel,
+              value: HealthMetricKind.rhrDaily.formatValue(
+                l10n,
+                summary.avgRhr,
+              ),
+              label:
+                  '${l10n.healthRhrMetricLabel} · ${l10n.healthAverageShort}',
               color: HealthMetricColors.rhr,
             ),
         ];
         if (stats.isEmpty) return const SizedBox.shrink();
         return SoftCard(
+          onPress: () => context.go(healthTrendPath(windowDays: 7)),
           level: SoftCardLevel.raised,
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
@@ -78,12 +94,7 @@ class _WeeklySummaryMetricsCard extends StatelessWidget {
               AppMetricHeader(
                 icon: FLucideIcons.calendarDays,
                 title: l10n.healthWeeklySummaryTitle,
-                subtitle: l10n.healthWeeklySummarySubtitle,
                 color: colors.mutedForeground,
-                trailing: const AppBadge(
-                  label: '7d',
-                  size: AppBadgeSize.compact,
-                ),
               ),
               const SizedBox(height: AppSpacing.s12),
               Wrap(

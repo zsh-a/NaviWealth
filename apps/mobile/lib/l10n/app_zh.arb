@@ -1,4 +1,106 @@
 {
+  "healthWindowDays": "最近 {days} 天",
+  "@healthWindowDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthWindowShort": "{days}天",
+  "@healthWindowShort": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthAllMetrics": "所有指标",
+  "healthSingleDayHint": "已有 1 天的数据，继续记录即可查看变化。",
+  "healthDurationHours": "{hours} 小时",
+  "@healthDurationHours": {"placeholders": {"hours": {"type": "int"}}},
+  "healthNoRecordsInWindow": "这段时间还没有记录。可以切换更长周期，或添加记录。",
+  "healthMissingMetrics": "暂无记录的指标（{count}）",
+  "@healthMissingMetrics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "healthSleepDailyDefinition": "按醒来日期汇总睡眠时长，包含当天小睡。",
+  "healthActiveEnergyDefinition": "活动消耗，不包含基础代谢。",
+  "healthRecordedDaysDefinition": "按有记录的日期统计；缺失日期不计为零。",
+  "healthTrainingImproving": "提升",
+  "healthTrainingProductive": "有效训练",
+  "healthTrainingMaintaining": "维持",
+  "healthTrainingRecovery": "恢复",
+  "healthTrainingStrained": "负荷偏高",
+  "healthObservedDayAverage": "有记录 {recorded}/{days} 天",
+  "@healthObservedDayAverage": {
+    "placeholders": {
+      "recorded": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthLatestRecordOn": "最近记录 · {date}",
+  "@healthLatestRecordOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "healthComparisonNeedsHistory": "已有记录会保留展示；积累上一周期的数据后可比较变化。",
+  "healthComparisonDefinition": "有记录日均值，对比此前 {days} 天；活动指标不比较未结束的当天。",
+  "@healthComparisonDefinition": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthTodaySoFar": "今日累计",
+  "healthPeriodAverage": "日均 {value}",
+  "@healthPeriodAverage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "healthPeriodTotal": "合计 {value}",
+  "@healthPeriodTotal": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMissingDataDefinition": "空白表示未记录，不代表 0。点击下方日期可核对具体记录。",
+  "healthPeriodChange": "日均变化 {change} · 对比此前 {days} 天",
+  "@healthPeriodChange": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRecordsTitle": "记录与来源",
+  "healthManualSource": "手动记录",
+  "healthUnknownSource": "未知来源",
+  "healthMeasurementNoteOptional": "添加备注（可选）",
+  "healthRecoveryBuilding": "恢复基线积累中",
+  "healthRecoveryBuildingHint": "恢复判断需要更多睡眠或心率记录，已记录的体测数据不受影响。",
+  "healthEditMeasurement": "修改体测",
+  "healthAverageShort": "日均",
   "financeOverviewTitle": "财务概览",
   "healthOverviewTitle": "健康概览",
   "executionTodayActionsTitle": "今日行动",
@@ -3720,7 +3822,6 @@
   "healthTabPlan": "计划",
   "healthSourcesTitle": "数据源",
   "healthSourcesSubtitle": "HealthKit / Health Connect 与 Garmin",
-  "healthNoDataSyncHint": "展开下方「数据源」进行同步或连接设备",
   "healthCommandToday": "健康 · 今日",
   "healthCommandTrend": "健康 · 趋势",
   "healthCommandPlan": "健康 · 计划",
@@ -3728,7 +3829,6 @@
   "healthConfidenceLabel": "置信度",
   "healthConfidenceLow": "低",
   "healthConfidenceMedium": "中",
-  "healthRecentHrvLabel": "HRV（近期均值）",
   "healthRecentSleepLabel": "睡眠（近期均值）",
   "healthRecentRhrLabel": "静息心率（近期均值）",
   "healthRecentVo2MaxLabel": "VO₂max（近期均值）",
@@ -3751,19 +3851,11 @@
   "healthTrendSleepSubtitle": "每晚小时数",
   "healthTrendHeartRateSubtitle": "每日平均心率",
   "healthTrendRespiratoryTitle": "呼吸",
-  "healthTrendRespiratorySubtitle": "每日平均呼吸率",
   "healthTrendRhrTitle": "静息心率",
   "healthTrendRhrSubtitle": "每日静息心率",
-  "healthTrendWorkoutSubtitle": "每天分钟数",
   "healthTrendStepsSubtitle": "每天步数",
   "healthTrendWalkingDistanceTitle": "步行距离",
-  "healthTrendWalkingDistanceSubtitle": "每天公里数",
   "healthTrendFlightsTitle": "楼层",
-  "healthTrendFlightsSubtitle": "每天爬楼层数",
-  "healthTrendWeightTitle": "体重",
-  "healthTrendWeightSubtitle": "体重记录",
-  "healthTrendBodyFatTitle": "体脂",
-  "healthTrendBodyFatSubtitle": "体脂比例",
   "healthTrendVo2MaxTitle": "VO₂max",
   "healthTrendVo2MaxSubtitle": "最大摄氧量",
   "healthBodyBatteryMetricLabel": "电量",
@@ -3776,17 +3868,14 @@
   "healthSleepAwakeLabel": "清醒",
   "healthTrendBodyBatteryTitle": "电量",
   "healthTrendBodyBatterySubtitle": "每日最高电量",
-  "healthTrendStressTitle": "压力",
   "healthTrendStressSubtitle": "每日平均压力",
   "healthTrendTrainingLoadTitle": "训练负荷",
   "healthTrendTrainingLoadSubtitle": "每周训练负荷",
   "healthTrendTrainingEffectTitle": "训练效果",
   "healthTrendTrainingEffectSubtitle": "体能提升信号",
-  "healthWeeklySummaryTitle": "本周状态",
-  "healthWeeklySummarySubtitle": "最近 7 天关键健康信号",
+  "healthWeeklySummaryTitle": "近 7 天",
   "healthWeeklySummaryEmpty": "同步几天数据后，这里会汇总步数、睡眠、训练和恢复指标。",
   "healthSpo2MetricLabel": "血氧",
-  "healthTrendSpo2Title": "血氧",
   "healthTrendSpo2Subtitle": "每日平均血氧饱和度",
   "healthTrendTotalEnergyTitle": "总能量",
   "healthTrendTotalEnergySubtitle": "每日总消耗卡路里",
@@ -3794,7 +3883,6 @@
   "healthSyncAction": "同步",
   "healthSyncPermissionDenied": "权限被拒绝",
   "healthSyncingData": "正在同步健康数据…",
-  "healthSyncReady": "同步最近 30 天健康数据",
   "healthSyncResult": "已同步 {upserted} 新数据 · {unchanged} 未变",
   "healthSyncFailed": "同步失败",
   "healthSourceChecking": "正在检查连接…",
@@ -3802,23 +3890,14 @@
   "healthSourcePermissionRequired": "需要权限",
   "healthSourceUnavailable": "不可用",
   "healthSourceSyncFailed": "同步失败",
-  "healthSourceLastSync": "同步于 {time}",
-  "@healthSourceLastSync": {
-    "placeholders": { "time": { "type": "String" } }
-  },
   "healthSourceLastAttempt": "最近尝试于 {time}",
   "@healthSourceLastAttempt": {
-    "placeholders": { "time": { "type": "String" } }
-  },
-  "healthSourceLastSuccess": "上次成功于 {time}",
-  "@healthSourceLastSuccess": {
     "placeholders": { "time": { "type": "String" } }
   },
   "healthSourceDataAt": "数据于 {time}",
   "@healthSourceDataAt": {
     "placeholders": { "time": { "type": "String" } }
   },
-  "healthSourceNoData": "还没有导入数据",
   "healthSyncButton": "同步",
   "healthSyncingButton": "同步中",
   "healthRecoveryTitle": "今日恢复",
@@ -3860,7 +3939,6 @@
   "healthPlanAvoidPressure": "避免连续高压会议和晚间训练。",
   "healthPlanSyncFirst": "先同步 Health Connect 数据。",
   "healthPlanTrackMore": "连续记录几天后再判断趋势。",
-  "healthPlanEnableHint": "请在“设置 → 功能领域”中启用 HealthOS，才能查看恢复建议。",
   "healthPlanDisclaimerTitle": "仅供健康参考",
   "healthPlanDisclaimer": "不是医学诊断，仅供日常作息判断。HealthOS 不会自动调整你的日程。",
   "healthRecordBodyMetricAction": "记录身体指标",
@@ -4018,7 +4096,6 @@
   "amountHidden": "金额已隐藏",
   "tradeVerbBuy": "买入",
   "tradeVerbSell": "卖出",
-  "healthNotEnabled": "HealthOS 未启用",
   "healthPlanLoadFailed": "Plan 加载失败：{message}",
   "healthGarminTitle": "Garmin Connect",
   "healthGarminDisconnected": "未连接",

@@ -37,13 +37,16 @@ bool shouldRenderAxisLabel({
   final effectiveMax = maxLabels < maxByWidth ? maxLabels : maxByWidth;
   if (effectiveMax <= 0) return false;
 
-  final interval = range / effectiveMax;
+  // Filter the ticks the renderer actually emits. A second, unrelated
+  // interval grid can reject every tick (e.g. bar range 0–9.25 with ticks
+  // every 1). Anchor to the first real tick, not to an arbitrary epoch.
+  final interval = meta.appliedInterval;
   if (interval <= 0) return true;
-
-  // Render the label only if its position is "close enough" to an
-  // interval grid.  The small epsilon absorbs floating-point drift.
-  final epsilon = interval * 0.01;
-  return (value - epsilon) % interval < epsilon * 2;
+  final firstTick = (meta.min / interval).ceil() * interval;
+  final index = (value - firstTick) / interval;
+  if (index < -0.001 || (index - index.round()).abs() > 0.001) return false;
+  final stride = (range / interval / effectiveMax).ceil().clamp(1, 1000000);
+  return index.round() % stride == 0;
 }
 
 /// Date-axis label format presets. Picked to match the time-window buttons

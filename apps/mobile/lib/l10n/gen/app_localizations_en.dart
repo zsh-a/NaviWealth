@@ -10,6 +10,130 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String healthWindowDays(int days) {
+    return 'Last $days days';
+  }
+
+  @override
+  String healthWindowShort(int days) {
+    return '${days}d';
+  }
+
+  @override
+  String get healthAllMetrics => 'All metrics';
+
+  @override
+  String get healthSingleDayHint =>
+      'One recorded day. More dates will reveal a trend.';
+
+  @override
+  String healthDurationHours(int hours) {
+    return '${hours}h';
+  }
+
+  @override
+  String get healthNoRecordsInWindow =>
+      'No records in this period. Try a longer window or add a measurement.';
+
+  @override
+  String healthMissingMetrics(int count) {
+    return 'Metrics without records ($count)';
+  }
+
+  @override
+  String get healthSleepDailyDefinition =>
+      'Sleep duration by local wake date, including naps.';
+
+  @override
+  String get healthActiveEnergyDefinition =>
+      'Energy from activity, excluding resting energy.';
+
+  @override
+  String get healthRecordedDaysDefinition =>
+      'Based on recorded dates; missing dates are not zero.';
+
+  @override
+  String get healthTrainingImproving => 'Improving';
+
+  @override
+  String get healthTrainingProductive => 'Productive';
+
+  @override
+  String get healthTrainingMaintaining => 'Maintaining';
+
+  @override
+  String get healthTrainingRecovery => 'Recovery';
+
+  @override
+  String get healthTrainingStrained => 'Strained';
+
+  @override
+  String healthObservedDayAverage(int recorded, int days) {
+    return 'Recorded $recorded/$days days';
+  }
+
+  @override
+  String healthLatestRecordOn(String date) {
+    return 'Latest record · $date';
+  }
+
+  @override
+  String get healthComparisonNeedsHistory =>
+      'Your records are shown below. A previous period is needed to compare changes.';
+
+  @override
+  String healthComparisonDefinition(int days) {
+    return 'Recorded-day averages vs the previous $days days; activity comparisons exclude the unfinished day.';
+  }
+
+  @override
+  String get healthTodaySoFar => 'Today so far';
+
+  @override
+  String healthPeriodAverage(String value) {
+    return 'Daily average $value';
+  }
+
+  @override
+  String healthPeriodTotal(String value) {
+    return 'Total $value';
+  }
+
+  @override
+  String get healthMissingDataDefinition =>
+      'Gaps mean unrecorded, not zero. Open a date below to inspect its records.';
+
+  @override
+  String healthPeriodChange(String change, int days) {
+    return 'Daily average change $change · vs previous $days days';
+  }
+
+  @override
+  String get healthRecordsTitle => 'Records & sources';
+
+  @override
+  String get healthManualSource => 'Manual';
+
+  @override
+  String get healthUnknownSource => 'Unknown source';
+
+  @override
+  String get healthMeasurementNoteOptional => 'Add a note (optional)';
+
+  @override
+  String get healthRecoveryBuilding => 'Building your recovery baseline';
+
+  @override
+  String get healthRecoveryBuildingHint =>
+      'Recovery needs more sleep or heart-rate history. Your measurements remain available.';
+
+  @override
+  String get healthEditMeasurement => 'Edit measurement';
+
+  @override
+  String get healthAverageShort => 'Daily average';
+
+  @override
   String get financeOverviewTitle => 'Finance overview';
 
   @override
@@ -12844,10 +12968,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthSourcesSubtitle => 'HealthKit / Health Connect and Garmin';
 
   @override
-  String get healthNoDataSyncHint =>
-      'Open Sources below to sync or connect a device';
-
-  @override
   String get healthCommandToday => 'Health · Today';
 
   @override
@@ -12867,9 +12987,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthConfidenceMedium => 'Medium';
-
-  @override
-  String get healthRecentHrvLabel => 'HRV (recent average)';
 
   @override
   String get healthRecentSleepLabel => 'Sleep (recent average)';
@@ -12946,17 +13063,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendRespiratoryTitle => 'Respiration';
 
   @override
-  String get healthTrendRespiratorySubtitle =>
-      'Daily average respiratory rate ';
-
-  @override
   String get healthTrendRhrTitle => 'Resting HR';
 
   @override
   String get healthTrendRhrSubtitle => 'Daily resting heart rate ';
-
-  @override
-  String get healthTrendWorkoutSubtitle => 'Daily minutes ';
 
   @override
   String get healthTrendStepsSubtitle => 'Daily steps ';
@@ -12965,25 +13075,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendWalkingDistanceTitle => 'Walking distance';
 
   @override
-  String get healthTrendWalkingDistanceSubtitle => 'Daily kilometers ';
-
-  @override
   String get healthTrendFlightsTitle => 'Flights climbed';
-
-  @override
-  String get healthTrendFlightsSubtitle => 'Daily flights climbed ';
-
-  @override
-  String get healthTrendWeightTitle => 'Weight';
-
-  @override
-  String get healthTrendWeightSubtitle => 'Weight records ';
-
-  @override
-  String get healthTrendBodyFatTitle => 'Body fat';
-
-  @override
-  String get healthTrendBodyFatSubtitle => 'Body fat percentage ';
 
   @override
   String get healthTrendVo2MaxTitle => 'VO₂max';
@@ -13022,9 +13114,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendBodyBatterySubtitle => 'Daily max level';
 
   @override
-  String get healthTrendStressTitle => 'Stress';
-
-  @override
   String get healthTrendStressSubtitle => 'Daily average level ';
 
   @override
@@ -13040,11 +13129,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthTrendTrainingEffectSubtitle => 'Fitness improvement signal';
 
   @override
-  String get healthWeeklySummaryTitle => 'Weekly status';
-
-  @override
-  String get healthWeeklySummarySubtitle =>
-      'Key health signals from the last 7 days';
+  String get healthWeeklySummaryTitle => 'Last 7 days';
 
   @override
   String get healthWeeklySummaryEmpty =>
@@ -13052,9 +13137,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthSpo2MetricLabel => 'SpO₂';
-
-  @override
-  String get healthTrendSpo2Title => 'Blood oxygen';
 
   @override
   String get healthTrendSpo2Subtitle => 'Daily average SpO₂';
@@ -13076,9 +13158,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthSyncingData => 'Syncing health data…';
-
-  @override
-  String get healthSyncReady => 'Sync last 30 days of health data';
 
   @override
   String healthSyncResult(Object unchanged, Object upserted) {
@@ -13104,27 +13183,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthSourceSyncFailed => 'Sync failed';
 
   @override
-  String healthSourceLastSync(String time) {
-    return 'Synced $time';
-  }
-
-  @override
   String healthSourceLastAttempt(String time) {
     return 'Tried $time';
-  }
-
-  @override
-  String healthSourceLastSuccess(String time) {
-    return 'Last success $time';
   }
 
   @override
   String healthSourceDataAt(String time) {
     return 'Data $time';
   }
-
-  @override
-  String get healthSourceNoData => 'No data imported yet';
 
   @override
   String get healthSyncButton => 'Sync';
@@ -13224,10 +13290,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get healthPlanTrackMore =>
       'Track for a few more days before judging trends.';
-
-  @override
-  String get healthPlanEnableHint =>
-      'Enable HealthOS in Settings → Domains to see recovery advice.';
 
   @override
   String get healthPlanDisclaimerTitle => 'Health guidance only';
@@ -13761,9 +13823,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeVerbSell => 'Sell';
-
-  @override
-  String get healthNotEnabled => 'HealthOS not enabled';
 
   @override
   String healthPlanLoadFailed(String message) {

@@ -1,15 +1,10 @@
-// D-2.7 Trend projection tests.
-//
-// `healthTrendProject` shapes rows → ChartPoints. Test the projection
-// in isolation so the chart widget doesn't drag fl_chart paint code
-// into a unit-test harness.
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/health/composition/health_trend_location.dart';
+import 'package:naviwealth/features/health/data/health_series.dart';
 import 'package:naviwealth/features/health/domain/health_metric.dart';
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
-import 'package:naviwealth/features/health/ui/health_trend_page.dart';
 
 HealthMetric _row({
   required String id,
@@ -17,12 +12,14 @@ HealthMetric _row({
   required DateTime at,
   required double value,
   String? unit,
+  String? source,
 }) => HealthMetric(
   id: id,
   capturedAt: at,
   kind: kind,
   value: value,
   unit: unit ?? kind.defaultUnit,
+  sourceDevice: source,
   sync: SyncMeta(
     ownerUserId: 'u',
     updatedAt: at,
@@ -34,7 +31,7 @@ HealthMetric _row({
 
 void main() {
   final now = DateTime.utc(2026, 5, 27, 12);
-  final cutoff = now.subtract(const Duration(days: 30));
+  final window = HealthWindow(now: now, days: 7);
 
   group('healthTrendPath', () {
     test('encodes exact metric target', () {
@@ -59,127 +56,204 @@ void main() {
     });
   });
 
-  group('healthTrendProject', () {
-    test('hrv rows → ascending points, values pass through', () {
-      final pts = healthTrendProject(
-        rows: [
-          _row(
-            id: 'h2',
-            kind: HealthMetricKind.hrvDaily,
-            at: now.subtract(const Duration(days: 1)),
-            value: 52,
-          ),
-          _row(
-            id: 'h1',
-            kind: HealthMetricKind.hrvDaily,
-            at: now.subtract(const Duration(days: 3)),
-            value: 48,
-          ),
-        ],
-        kind: HealthMetricKind.hrvDaily,
-        cutoff: cutoff,
-      );
-      expect(pts, hasLength(2));
-      expect(pts.first.y, 48);
-      expect(pts.last.y, 52);
-      expect(pts.first.x, lessThan(pts.last.x));
-    });
+  test('default URL has no empty query', () {
+    expect(healthTrendPath(), '/health/trend');
+  });
 
-    test('sleep rows → hours conversion', () {
-      final pts = healthTrendProject(
-        rows: [
-          _row(
-            id: 's1',
-            kind: HealthMetricKind.sleepSession,
-            at: now.subtract(const Duration(days: 1)),
-            value: 7 * 3600.0,
-          ),
-        ],
+  test('windows contain exactly 7/30/90 calendar dates including today', () {
+    for (final days in [7, 30, 90]) {
+      final w = HealthWindow(now: now, days: days);
+      expect(w.dates.length, days);
+      expect(w.contains(w.start), isTrue);
+      expect(w.contains(w.end), isFalse);
+      expect(w.previous.end, w.start);
+    }
+  });
+
+  HealthSeries project(HealthMetricKind kind, List<HealthMetric> rows) =>
+      buildHealthSeries(
+        kind: kind,
+        rows: rows,
+        window: window,
+        localize: (d) => d.toUtc(),
+      );
+
+  test('canonical daily source wins; missing dates stay gaps, not zero', () {
+    final series = project(HealthMetricKind.stepsDaily, [
+      _row(
+        id: 'garmin:steps:1',
+        kind: HealthMetricKind.stepsDaily,
+        at: now,
+        value: 6000,
+        source: 'Garmin',
+      ),
+      _row(
+        id: 'hk:steps:1',
+        kind: HealthMetricKind.stepsDaily,
+        at: now,
+        value: 9000,
+        source: 'HealthKit',
+      ),
+      _row(
+        id: 'garmin:steps:2',
+        kind: HealthMetricKind.stepsDaily,
+        at: now.subtract(const Duration(days: 2)),
+        value: 0,
+      ),
+    ]);
+    expect(series.samples.map((s) => s.value), [0, 6000]);
+    expect(series.recordedDays, 2);
+    expect(series.average, 3000);
+    expect(series.segments.length, 2);
+    expect(series.latest!.records.single.id, 'garmin:steps:1');
+  });
+
+  test('sleep sums night and nap by wake day after source deduplication', () {
+    final night = DateTime.utc(2026, 5, 26, 23);
+    final series = project(HealthMetricKind.sleepSession, [
+      _row(
+        id: 'garmin:sleep:night',
         kind: HealthMetricKind.sleepSession,
-        cutoff: cutoff,
-      );
-      expect(pts.single.y, 7.0);
-    });
+        at: night,
+        value: 7,
+        unit: 'h',
+      ),
+      _row(
+        id: 'hk:sleep:night',
+        kind: HealthMetricKind.sleepSession,
+        at: night,
+        value: 420,
+        unit: 'min',
+      ),
+      _row(
+        id: 'garmin:sleep:nap',
+        kind: HealthMetricKind.sleepSession,
+        at: DateTime.utc(2026, 5, 27, 13),
+        value: 1800,
+      ),
+    ]);
+    expect(series.samples.single.day, DateTime.utc(2026, 5, 27));
+    expect(series.samples.single.value, 7.5);
+    expect(series.samples.single.records.length, 2);
+  });
 
-    test('body fat rows → percentage points', () {
-      final pts = healthTrendProject(
-        rows: [
-          _row(
-            id: 'bf1',
-            kind: HealthMetricKind.bodyFat,
-            at: now.subtract(const Duration(days: 1)),
-            value: 0.184,
-          ),
-        ],
+  test('session attribution is local, encoded daily dates never shift', () {
+    final at = DateTime.utc(2026, 5, 26, 23);
+    DateTime east(DateTime d) => d.toUtc().add(const Duration(hours: 8));
+    final workout = _row(
+      id: 'w',
+      kind: HealthMetricKind.workoutSession,
+      at: at,
+      value: 1800,
+    );
+    final daily = _row(
+      id: 'd',
+      kind: HealthMetricKind.stepsDaily,
+      at: DateTime.utc(2026, 5, 26),
+      value: 500,
+    );
+    expect(healthMetricDay(workout, localize: east), DateTime.utc(2026, 5, 27));
+    expect(
+      healthMetricDay(
+        daily,
+        localize: (d) => d.subtract(const Duration(hours: 8)),
+      ),
+      DateTime.utc(2026, 5, 26),
+    );
+  });
+
+  test(
+    'manual date does not shift and body fat converts fraction to percent',
+    () {
+      final row = _row(
+        id: 'manual:body_fat:u:2026-05-27',
         kind: HealthMetricKind.bodyFat,
-        cutoff: cutoff,
+        at: DateTime.utc(2026, 5, 27, 12),
+        value: 0.184,
       );
-      expect(pts.single.y, closeTo(18.4, 1e-6));
-    });
+      expect(
+        healthMetricDay(row, localize: (d) => d.add(const Duration(hours: 14))),
+        DateTime.utc(2026, 5, 27),
+      );
+      expect(
+        project(HealthMetricKind.bodyFat, [row]).latest!.value,
+        closeTo(18.4, 1e-6),
+      );
+    },
+  );
 
-    test('workout rows aggregate per UTC day, value = minutes', () {
-      final day = DateTime.utc(2026, 5, 25);
-      final pts = healthTrendProject(
-        rows: [
-          // Two sessions same day = 30min + 20min = 50min
-          _row(
-            id: 'w1',
-            kind: HealthMetricKind.workoutSession,
-            at: day.add(const Duration(hours: 7)),
-            value: 30 * 60,
-          ),
-          _row(
-            id: 'w2',
-            kind: HealthMetricKind.workoutSession,
-            at: day.add(const Duration(hours: 18)),
-            value: 20 * 60,
-          ),
-        ],
+  test('workout durations use units and sum distinct sessions', () {
+    final series = project(HealthMetricKind.workoutSession, [
+      _row(
+        id: 'w1',
         kind: HealthMetricKind.workoutSession,
-        cutoff: cutoff,
-      );
-      expect(pts, hasLength(1));
-      expect(pts.single.y, closeTo(50.0, 1e-6));
-    });
+        at: now,
+        value: 30,
+        unit: 'min',
+      ),
+      _row(
+        id: 'w2',
+        kind: HealthMetricKind.workoutSession,
+        at: now.add(const Duration(hours: 1)),
+        value: 1200,
+      ),
+    ]);
+    expect(series.samples.single.value, 50);
+  });
 
-    test('rows before cutoff are dropped', () {
-      final pts = healthTrendProject(
-        rows: [
-          _row(
-            id: 'old',
-            kind: HealthMetricKind.hrvDaily,
-            at: now.subtract(const Duration(days: 60)), // before cutoff
-            value: 70,
-          ),
-          _row(
-            id: 'new',
-            kind: HealthMetricKind.hrvDaily,
-            at: now.subtract(const Duration(days: 2)),
-            value: 50,
-          ),
-        ],
+  test('unfinished activity day is excluded from equal-period comparison', () {
+    final series = project(HealthMetricKind.stepsDaily, [
+      for (var i = 0; i < 14; i++)
+        _row(
+          id: 'steps-$i',
+          kind: HealthMetricKind.stepsDaily,
+          at: now.subtract(Duration(days: i)),
+          value: i == 0
+              ? 10
+              : i < 7
+              ? 200
+              : 100,
+        ),
+    ]);
+    expect(series.changePercent, 100);
+    expect(series.total, 1210);
+  });
+
+  test(
+    'single observation remains visible without a fabricated comparison',
+    () {
+      final series = project(HealthMetricKind.weight, [
+        _row(id: 'weight', kind: HealthMetricKind.weight, at: now, value: 72.5),
+      ]);
+      expect(series.latest!.value, 72.5);
+      expect(series.changePercent, isNull);
+      expect(series.segments.single.length, 1);
+    },
+  );
+
+  test('outside windows and invalid values never reach charts', () {
+    final series = project(HealthMetricKind.hrvDaily, [
+      _row(
+        id: 'old',
         kind: HealthMetricKind.hrvDaily,
-        cutoff: cutoff,
-      );
-      expect(pts, hasLength(1));
-      expect(pts.single.y, 50);
-    });
-
-    test('unknown kind → empty list', () {
-      final pts = healthTrendProject(
-        rows: [
-          _row(
-            id: 'x',
-            kind: HealthMetricKind.unknown,
-            at: now,
-            value: 1,
-            unit: 'foo',
-          ),
-        ],
-        kind: HealthMetricKind.unknown,
-        cutoff: cutoff,
-      );
-      expect(pts, isEmpty);
-    });
+        at: now.subtract(const Duration(days: 15)),
+        value: 30,
+      ),
+      _row(
+        id: 'future',
+        kind: HealthMetricKind.hrvDaily,
+        at: now.add(const Duration(days: 1)),
+        value: 30,
+      ),
+      _row(
+        id: 'bad',
+        kind: HealthMetricKind.hrvDaily,
+        at: now,
+        value: double.nan,
+      ),
+      _row(id: 'negative', kind: HealthMetricKind.hrvDaily, at: now, value: -1),
+    ]);
+    expect(series.samples, isEmpty);
+    expect(series.previousSamples, isEmpty);
   });
 }

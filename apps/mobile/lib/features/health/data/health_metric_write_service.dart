@@ -29,6 +29,7 @@ class HealthMetricWriteService {
     required DateTime capturedAt,
     String source = 'manual',
     String? note,
+    String? expectedRecordId,
   }) async {
     if (kind != HealthMetricKind.weight && kind != HealthMetricKind.bodyFat) {
       throw ArgumentError.value(kind, 'kind', 'Only weight/bodyFat supported.');
@@ -45,11 +46,22 @@ class HealthMetricWriteService {
 
     final stamp = await _stamper.stamp();
     final at = capturedAt.toUtc();
+    final id = _manualMetricId(kind, at, stamp.ownerUserId);
+    if (expectedRecordId != null) {
+      final existing = await _repository.findById(expectedRecordId);
+      if (existing == null ||
+          existing.sync.deletedAt != null ||
+          existing.sync.ownerUserId != stamp.ownerUserId ||
+          existing.kind != kind ||
+          expectedRecordId != id) {
+        throw StateError('Measurement changed or belongs to another owner');
+      }
+    }
     final payload = <String, Object?>{
       if (note != null && note.trim().isNotEmpty) 'note': note.trim(),
     };
     final metric = HealthMetric(
-      id: _manualMetricId(kind, at, stamp.ownerUserId),
+      id: id,
       capturedAt: at,
       kind: kind,
       value: normalizedValue,

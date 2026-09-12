@@ -21,7 +21,7 @@ import 'empty_chart_placeholder.dart';
 ///   (default) or stacked bars (`stacked: true`).
 ///
 /// Categories must align by index. Callers should pad missing categories
-/// with `value: 0` rather than relying on label matching.
+/// with a zero value (or `isMissing: true` for a gap).
 class NwBarChart extends StatefulWidget {
   const NwBarChart({
     super.key,
@@ -32,6 +32,7 @@ class NwBarChart extends StatefulWidget {
     this.stacked = false,
     this.barWidth = 16,
     this.semanticLabel,
+    this.onScrub,
   });
 
   final List<CategorySeries> series;
@@ -41,6 +42,9 @@ class NwBarChart extends StatefulWidget {
   final bool stacked;
   final double barWidth;
   final String? semanticLabel;
+
+  /// Optional external readout; suppresses the in-chart tooltip when supplied.
+  final ValueChanged<CategoryDatum?>? onScrub;
 
   @override
   State<NwBarChart> createState() => _NwBarChartState();
@@ -90,7 +94,7 @@ class _NwBarChartState extends State<NwBarChart> {
           final datum = ci < series[si].data.length
               ? series[si].data[ci]
               : null;
-          if (datum == null) continue;
+          if (datum == null || datum.isMissing) continue;
           final color = datum.colorOverride ?? colors[si];
           if (datum.value >= 0) {
             stackItems.add(
@@ -108,15 +112,19 @@ class _NwBarChartState extends State<NwBarChart> {
             stackBottom += datum.value;
           }
         }
-        rods.add(
-          BarChartRodData(
-            toY: stackTop,
-            fromY: stackBottom,
-            width: widget.barWidth,
-            rodStackItems: stackItems,
-            borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
-          ),
-        );
+        if (stackItems.isNotEmpty) {
+          rods.add(
+            BarChartRodData(
+              toY: stackTop,
+              fromY: stackBottom,
+              width: widget.barWidth,
+              rodStackItems: stackItems,
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppRadius.sm),
+              ),
+            ),
+          );
+        }
         if (stackTop > maxY) maxY = stackTop;
         if (stackBottom < minY) minY = stackBottom;
       } else {
@@ -124,7 +132,7 @@ class _NwBarChartState extends State<NwBarChart> {
           final datum = ci < series[si].data.length
               ? series[si].data[ci]
               : null;
-          if (datum == null) continue;
+          if (datum == null || datum.isMissing) continue;
           final color = datum.colorOverride ?? colors[si];
           rods.add(
             BarChartRodData(
@@ -225,8 +233,10 @@ class _NwBarChartState extends State<NwBarChart> {
               orElse: () => widget.series.first,
             );
             if (ci < 0 || ci >= source.data.length) return const SizedBox();
-            return Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s4),
+            return SideTitleWidget(
+              meta: meta,
+              fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+              space: AppSpacing.s4,
               child: Text(
                 source.data[ci].label,
                 style: labelStyle,
@@ -267,6 +277,17 @@ class _NwBarChartState extends State<NwBarChart> {
     );
   }
 
+  int _sourceIndex(int category, int visibleIndex) {
+    if (category < 0 || visibleIndex < 0) return -1;
+    var rod = 0;
+    for (var i = 0; i < widget.series.length; i++) {
+      final data = widget.series[i].data;
+      if (category >= data.length || data[category].isMissing) continue;
+      if (rod++ == visibleIndex) return i;
+    }
+    return -1;
+  }
+
   BarTouchData _buildTouchData(
     BuildContext context,
     ChartPalette palette,
@@ -284,12 +305,14 @@ class _NwBarChartState extends State<NwBarChart> {
           vertical: AppSpacing.s6,
         ),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
+          if (widget.onScrub != null) return null;
           final ci = group.x;
-          final si = widget.stacked ? rodIndex : rodIndex;
-          if (si >= series.length) return null;
+          final si = _sourceIndex(ci, rodIndex);
+          if (si < 0 || si >= series.length) return null;
           final source = series[si];
           if (ci >= source.data.length) return null;
           final datum = source.data[ci];
+          if (datum.isMissing) return null;
           return BarTooltipItem(
             '${source.name}\n${datum.tooltipLabel ?? datum.label} · '
             '${widget.yAxis.formatValue(datum.value)}',
@@ -300,6 +323,27 @@ class _NwBarChartState extends State<NwBarChart> {
         },
       ),
       touchCallback: (event, response) {
+        if (widget.onScrub != null) {
+          final spot = response?.spot;
+          if (!event.isInterestedForInteractions || spot == null) {
+            widget.onScrub!(null);
+          } else {
+            final index = spot.touchedBarGroup.x;
+            final sourceIndex = _sourceIndex(
+              index,
+              widget.stacked && spot.touchedStackItemIndex >= 0
+                  ? spot.touchedStackItemIndex
+                  : spot.touchedRodDataIndex,
+            );
+            if (sourceIndex >= 0 &&
+                sourceIndex < series.length &&
+                index >= 0 &&
+                index < series[sourceIndex].data.length) {
+              final datum = series[sourceIndex].data[index];
+              widget.onScrub!(datum.isMissing ? null : datum);
+            }
+          }
+        }
         if (dd is! BarDrillDown) return;
         if (event is! FlTapUpEvent) return;
         final spot = response?.spot;
@@ -308,10 +352,20 @@ class _NwBarChartState extends State<NwBarChart> {
         // For stacked, the touched stack item index identifies the series
         // that owns the segment under the finger; for grouped bars, the
         // rod index does the same.
-        final si = widget.stacked
-            ? (spot.touchedStackItemIndex >= 0 ? spot.touchedStackItemIndex : 0)
-            : spot.touchedRodDataIndex;
-        if (si >= series.length || ci >= series[si].data.length) return;
+        final si = _sourceIndex(
+          ci,
+          widget.stacked
+              ? (spot.touchedStackItemIndex >= 0
+                    ? spot.touchedStackItemIndex
+                    : 0)
+              : spot.touchedRodDataIndex,
+        );
+        if (si < 0 ||
+            si >= series.length ||
+            ci < 0 ||
+            ci >= series[si].data.length) {
+          return;
+        }
         final datum = series[si].data[ci];
         if (dd.haptic) HapticFeedback.selectionClick();
         dd.onTap(datum);

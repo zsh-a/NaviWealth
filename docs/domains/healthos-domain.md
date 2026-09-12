@@ -185,14 +185,52 @@ HealthOS is active only when the user enables it in Settings.
 
 | Tab | Purpose |
 |---|---|
-| Today | Source choice and freshness, sleep, HRV, explainable recovery confidence, workout cards, and latest Recovery Alert |
-| Trend | HRV, sleep hours, workout minutes line charts |
+| Today | Compact recovery summary, latest metric readings with seven-day mini charts, last-seven-day digest, and collapsed source status |
+| Trends | Recovery / Activity / Body overview; one focused metric chart with date, unit, coverage, and expandable source records |
+
+Presentation contract:
+
+- Today, Trends, and the seven-day digest use `data/health_series.dart` for
+  source-deduplicated calendar aggregation. Windows contain exactly 7, 30, or
+  90 dates including today. Range queries are time-bounded, not truncated by
+  an assumed number of rows per day.
+- Daily source rows retain their encoded calendar date. Workouts use local
+  start dates; sleep uses local wake dates (start plus recorded duration),
+  summing separate sessions/naps before computing a recorded-day average.
+  Date-only manual measurements do not shift when converted to local time.
+- Missing days remain absent, not zero, and split line segments. Daily totals
+  and sleep use bars; measurements use lines/points; training status uses
+  labels rather than a numeric curve. A single recorded day shows its reading
+  and records without an oversized empty chart.
+- Comparisons use recorded-day averages in equal calendar windows, requiring
+  at least two observations in each. Cumulative activity comparisons omit
+  today and the matching last date of the preceding window. Coverage remains
+  visible; percentage changes are neutral, not financial gain/loss signals.
+- The URL is the sole navigation state for group, metric, and time window.
+  Opening a metric shows its detail, rather than reordering overview cards.
+- Recovery retains the shared scorer used by the AI tool. Its evidence,
+  guidance, and disclaimer live behind one disclosure; the old unlabeled HRV
+  sparkline is removed. Users with manual measurements only see those readings
+  first and a quiet recovery-baseline hint.
+- Source warnings reflect current persisted/controller state, not a cached
+  result of the last pull-to-refresh. Source management is in Health settings;
+  platform connection/sync uses the shared refresh coordinator.
+- Manual body measurements can be corrected from their source record. Editing
+  preserves kind, date, and stable row identity; value/note are replaced and
+  synced normally. Capture keeps separate weight/body-fat drafts and an optional
+  note. Stored body fat remains a fraction; UI input/output is percentage.
+
+This presentation refactor does not migrate stored rows or alter native
+integration/background scheduling.
 
 Key files:
 
 - `features/health/ui/health_today_page.dart`
 - `features/health/ui/health_trend_page.dart`
-- `features/settings/ui/domains_settings_page.dart`
+- `features/health/ui/health_metric_presentation.dart`
+- `features/health/ui/health_metric_detail.dart`
+- `features/health/data/health_series.dart`
+- `features/health/ui/health_domain_settings_page.dart`
 
 ## AI Tools
 

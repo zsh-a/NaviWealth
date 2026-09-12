@@ -8,8 +8,6 @@ class _RecoveryHero extends ConsumerStatefulWidget {
 }
 
 class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
-  static const int _visibleActionCount = 1;
-  bool _showAllActions = false;
   bool _showEvidence = false;
 
   @override
@@ -71,19 +69,6 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                 ? colors.mutedForeground
                 : color;
             final actions = healthPlanActionsForVerdict(verdict, l10n);
-            final primaryActions = actions
-                .take(_visibleActionCount)
-                .toList(growable: false);
-            final overflowActions = actions.length > _visibleActionCount
-                ? actions.skip(_visibleActionCount).toList(growable: false)
-                : const <HealthPlanAction>[];
-            final hasMore = overflowActions.isNotEmpty;
-            final enabled =
-                ref
-                    .watch(core_auth.domainOptInsProvider)
-                    .value
-                    ?.contains(DomainScope.health) ??
-                false;
             if (score == null ||
                 confidence == 'insufficient' ||
                 verdict == 'insufficient_data') {
@@ -138,114 +123,67 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSpacing.s8),
-                AppBadge(
-                  label: l10n.healthRecoveryConfidence(
-                    _confidenceLabel(confidence, l10n),
-                    (coverage * 100).round(),
-                  ),
-                  size: AppBadgeSize.compact,
-                ),
-                if (freshnessHours != null) ...[
-                  const SizedBox(height: AppSpacing.s6),
-                  AppBadge(
-                    label: l10n.healthRecoveryFreshness(
-                      _ago(
-                        l10n,
-                        DateTime.now().toUtc().subtract(
-                          Duration(minutes: (freshnessHours * 60).round()),
-                        ),
+                Wrap(
+                  spacing: AppSpacing.s6,
+                  runSpacing: AppSpacing.s6,
+                  children: [
+                    AppBadge(
+                      label: l10n.healthRecoveryConfidence(
+                        _confidenceLabel(confidence, l10n),
+                        (coverage * 100).round(),
                       ),
+                      size: AppBadgeSize.compact,
                     ),
-                    tone: freshnessHours > 36
-                        ? AppBadgeTone.warning
-                        : AppBadgeTone.neutral,
-                    size: AppBadgeSize.compact,
-                  ),
-                ],
-                if (components.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s12),
-                  AppRevealControl(
-                    expanded: _showEvidence,
-                    collapsedLabel: l10n.healthRecoveryWhyTitle,
-                    expandedLabel: l10n.healthRecoveryWhyLess,
-                    onToggle: () =>
-                        setState(() => _showEvidence = !_showEvidence),
-                  ),
-                  AnimatedSizeFade(
-                    visible: _showEvidence,
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.s8),
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < components.length; i++) ...[
-                            if (i > 0) const SizedBox(height: AppSpacing.s6),
-                            _RecoveryEvidenceRow(component: components[i]),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-                if (!enabled) ...[
-                  const SizedBox(height: AppSpacing.s12),
-                  Text(
-                    l10n.healthPlanEnableHint,
-                    style: context.captionStyle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-                if (actions.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s16),
-                  Text(
-                    l10n.healthPlanTodayActions,
-                    style: context.microCaptionStyle,
-                  ),
-                  const SizedBox(height: AppSpacing.s8),
-                  for (var i = 0; i < primaryActions.length; i++) ...[
-                    if (i > 0) const SizedBox(height: AppSpacing.s8),
-                    _PlanActionRow(
-                      action: primaryActions[i],
-                      color: colors.primary,
-                    ),
-                  ],
-                  if (hasMore) ...[
-                    AnimatedSizeFade(
-                      visible: _showAllActions,
-                      alignment: Alignment.topCenter,
-                      child: Column(
-                        children: [
-                          for (final action in overflowActions) ...[
-                            const SizedBox(height: AppSpacing.s8),
-                            _PlanActionRow(
-                              action: action,
-                              color: colors.primary,
+                    if (freshnessHours != null && freshnessHours > 36)
+                      AppBadge(
+                        label: l10n.healthRecoveryFreshness(
+                          _ago(
+                            l10n,
+                            DateTime.now().toUtc().subtract(
+                              Duration(minutes: (freshnessHours * 60).round()),
                             ),
-                          ],
-                        ],
+                          ),
+                        ),
+                        tone: AppBadgeTone.warning,
+                        size: AppBadgeSize.compact,
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.s8),
-                    AppRevealControl(
-                      expanded: _showAllActions,
-                      collapsedLabel: l10n.commonRevealMore(
-                        overflowActions.length,
-                      ),
-                      expandedLabel: l10n.commonRevealLess,
-                      onToggle: () =>
-                          setState(() => _showAllActions = !_showAllActions),
-                    ),
                   ],
-                ],
-                const SizedBox(height: AppSpacing.s16),
-                const _RecoverySparkline(),
+                ),
                 const SizedBox(height: AppSpacing.s8),
-                Text(
-                  l10n.healthPlanDisclaimer,
-                  style: context.microCaptionStyle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                AppRevealControl(
+                  expanded: _showEvidence,
+                  collapsedLabel: l10n.healthRecoveryWhyTitle,
+                  expandedLabel: l10n.healthRecoveryWhyLess,
+                  onToggle: () =>
+                      setState(() => _showEvidence = !_showEvidence),
+                ),
+                AnimatedSizeFade(
+                  visible: _showEvidence,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final component in components) ...[
+                        const SizedBox(height: AppSpacing.s8),
+                        _RecoveryEvidenceRow(component: component),
+                      ],
+                      if (actions.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.s12),
+                        Text(
+                          l10n.healthPlanTodayActions,
+                          style: context.microCaptionStyle,
+                        ),
+                        for (final action in actions) ...[
+                          const SizedBox(height: AppSpacing.s8),
+                          _PlanActionRow(action: action, color: colors.primary),
+                        ],
+                      ],
+                      const SizedBox(height: AppSpacing.s12),
+                      Text(
+                        l10n.healthPlanDisclaimer,
+                        style: context.microCaptionStyle,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             );
@@ -441,97 +379,4 @@ class _PlanActionRow extends StatelessWidget {
       ],
     );
   }
-}
-
-/// 7-day HRV sparkline shown beneath the recovery card.
-class _RecoverySparkline extends ConsumerWidget {
-  const _RecoverySparkline();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(recoverySparklineProvider);
-    final colors = context.theme.colors;
-    return async.when(
-      // loading: intentionally empty — the sparkline only renders with >= 2
-      // points, so a placeholder would promise a chart that may never appear.
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
-      data: (values) {
-        if (values.length < 2) return const SizedBox.shrink();
-        final l10n = AppLocalizations.of(context);
-        return Semantics(
-          image: true,
-          label:
-              '${l10n.healthRecentHrvLabel}: ${values.map((v) => _round(v)).join(', ')}',
-          child: SizedBox(
-            height: AppChartHeights.sparkline,
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: _SparklinePainter(
-                values: values,
-                color: colors.primary.withValues(alpha: AppOpacity.prominent),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SparklinePainter extends CustomPainter {
-  _SparklinePainter({required this.values, required this.color});
-
-  final List<double> values;
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (values.isEmpty) return;
-    final min = values.reduce((a, b) => a < b ? a : b);
-    final max = values.reduce((a, b) => a > b ? a : b);
-    final range = max - min;
-    const inset = 3.0;
-
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = AppStroke.medium
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    if (range == 0) {
-      final y = size.height / 2;
-      canvas.drawLine(Offset(inset, y), Offset(size.width - inset, y), paint);
-      canvas.drawCircle(
-        Offset(size.width - inset, y),
-        2.5,
-        Paint()..color = color,
-      );
-      return;
-    }
-
-    final path = Path();
-    for (var i = 0; i < values.length; i++) {
-      final x = inset + (i / (values.length - 1)) * (size.width - inset * 2);
-      final y =
-          inset + (1 - (values[i] - min) / range) * (size.height - inset * 2);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    canvas.drawPath(path, paint);
-
-    // Draw a dot at the last point.
-    final lastX = size.width - inset;
-    final lastY =
-        inset + (1 - (values.last - min) / range) * (size.height - inset * 2);
-    canvas.drawCircle(Offset(lastX, lastY), 2.5, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(_SparklinePainter old) =>
-      old.values != values || old.color != color;
 }

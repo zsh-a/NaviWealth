@@ -1,4 +1,106 @@
 {
+  "healthWindowDays": "Last {days} days",
+  "@healthWindowDays": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthWindowShort": "{days}d",
+  "@healthWindowShort": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthAllMetrics": "All metrics",
+  "healthSingleDayHint": "One recorded day. More dates will reveal a trend.",
+  "healthDurationHours": "{hours}h",
+  "@healthDurationHours": {"placeholders": {"hours": {"type": "int"}}},
+  "healthNoRecordsInWindow": "No records in this period. Try a longer window or add a measurement.",
+  "healthMissingMetrics": "Metrics without records ({count})",
+  "@healthMissingMetrics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "healthSleepDailyDefinition": "Sleep duration by local wake date, including naps.",
+  "healthActiveEnergyDefinition": "Energy from activity, excluding resting energy.",
+  "healthRecordedDaysDefinition": "Based on recorded dates; missing dates are not zero.",
+  "healthTrainingImproving": "Improving",
+  "healthTrainingProductive": "Productive",
+  "healthTrainingMaintaining": "Maintaining",
+  "healthTrainingRecovery": "Recovery",
+  "healthTrainingStrained": "Strained",
+  "healthObservedDayAverage": "Recorded {recorded}/{days} days",
+  "@healthObservedDayAverage": {
+    "placeholders": {
+      "recorded": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthLatestRecordOn": "Latest record · {date}",
+  "@healthLatestRecordOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "healthComparisonNeedsHistory": "Your records are shown below. A previous period is needed to compare changes.",
+  "healthComparisonDefinition": "Recorded-day averages vs the previous {days} days; activity comparisons exclude the unfinished day.",
+  "@healthComparisonDefinition": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthTodaySoFar": "Today so far",
+  "healthPeriodAverage": "Daily average {value}",
+  "@healthPeriodAverage": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "healthPeriodTotal": "Total {value}",
+  "@healthPeriodTotal": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMissingDataDefinition": "Gaps mean unrecorded, not zero. Open a date below to inspect its records.",
+  "healthPeriodChange": "Daily average change {change} · vs previous {days} days",
+  "@healthPeriodChange": {
+    "placeholders": {
+      "change": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRecordsTitle": "Records & sources",
+  "healthManualSource": "Manual",
+  "healthUnknownSource": "Unknown source",
+  "healthMeasurementNoteOptional": "Add a note (optional)",
+  "healthRecoveryBuilding": "Building your recovery baseline",
+  "healthRecoveryBuildingHint": "Recovery needs more sleep or heart-rate history. Your measurements remain available.",
+  "healthEditMeasurement": "Edit measurement",
+  "healthAverageShort": "Daily average",
   "financeOverviewTitle": "Finance overview",
   "healthOverviewTitle": "Health overview",
   "executionTodayActionsTitle": "Today’s actions",
@@ -6879,8 +6981,6 @@
   "@healthSourcesTitle": { "description": "Collapsible Health Today sources section title" },
   "healthSourcesSubtitle": "HealthKit / Health Connect and Garmin",
   "@healthSourcesSubtitle": { "description": "Collapsible Health Today sources section subtitle" },
-  "healthNoDataSyncHint": "Open Sources below to sync or connect a device",
-  "@healthNoDataSyncHint": { "description": "Hint under empty metric values on Health Today" },
   "healthCommandToday": "Health · Today",
   "healthCommandTrend": "Health · Trends",
   "healthCommandPlan": "Health · Plan",
@@ -6888,7 +6988,6 @@
   "healthConfidenceLabel": "Confidence",
   "healthConfidenceLow": "Low",
   "healthConfidenceMedium": "Medium",
-  "healthRecentHrvLabel": "HRV (recent average)",
   "healthRecentSleepLabel": "Sleep (recent average)",
   "healthRecentRhrLabel": "Resting heart rate (recent average)",
   "healthRecentVo2MaxLabel": "VO₂max (recent average)",
@@ -6911,19 +7010,11 @@
   "healthTrendSleepSubtitle": "Nightly hours ",
   "healthTrendHeartRateSubtitle": "Daily average heart rate ",
   "healthTrendRespiratoryTitle": "Respiration",
-  "healthTrendRespiratorySubtitle": "Daily average respiratory rate ",
   "healthTrendRhrTitle": "Resting HR",
   "healthTrendRhrSubtitle": "Daily resting heart rate ",
-  "healthTrendWorkoutSubtitle": "Daily minutes ",
   "healthTrendStepsSubtitle": "Daily steps ",
   "healthTrendWalkingDistanceTitle": "Walking distance",
-  "healthTrendWalkingDistanceSubtitle": "Daily kilometers ",
   "healthTrendFlightsTitle": "Flights climbed",
-  "healthTrendFlightsSubtitle": "Daily flights climbed ",
-  "healthTrendWeightTitle": "Weight",
-  "healthTrendWeightSubtitle": "Weight records ",
-  "healthTrendBodyFatTitle": "Body fat",
-  "healthTrendBodyFatSubtitle": "Body fat percentage ",
   "healthTrendVo2MaxTitle": "VO₂max",
   "healthTrendVo2MaxSubtitle": "Max oxygen uptake ",
   "healthBodyBatteryMetricLabel": "Body Battery",
@@ -6936,17 +7027,14 @@
   "healthSleepAwakeLabel": "Awake",
   "healthTrendBodyBatteryTitle": "Body Battery",
   "healthTrendBodyBatterySubtitle": "Daily max level",
-  "healthTrendStressTitle": "Stress",
   "healthTrendStressSubtitle": "Daily average level ",
   "healthTrendTrainingLoadTitle": "Training load",
   "healthTrendTrainingLoadSubtitle": "Weekly training load",
   "healthTrendTrainingEffectTitle": "Training effect",
   "healthTrendTrainingEffectSubtitle": "Fitness improvement signal",
-  "healthWeeklySummaryTitle": "Weekly status",
-  "healthWeeklySummarySubtitle": "Key health signals from the last 7 days",
+  "healthWeeklySummaryTitle": "Last 7 days",
   "healthWeeklySummaryEmpty": "Sync a few days of data to summarize steps, sleep, training, and recovery here.",
   "healthSpo2MetricLabel": "SpO₂",
-  "healthTrendSpo2Title": "Blood oxygen",
   "healthTrendSpo2Subtitle": "Daily average SpO₂",
   "healthTrendTotalEnergyTitle": "Total energy",
   "healthTrendTotalEnergySubtitle": "Daily total calories burned",
@@ -6954,7 +7042,6 @@
   "healthSyncAction": "Sync",
   "healthSyncPermissionDenied": "Permission denied",
   "healthSyncingData": "Syncing health data…",
-  "healthSyncReady": "Sync last 30 days of health data",
   "healthSyncResult": "Synced {upserted} new · {unchanged} unchanged",
   "healthSyncFailed": "Sync failed",
   "healthSourceChecking": "Checking connection…",
@@ -6962,23 +7049,14 @@
   "healthSourcePermissionRequired": "Permission needed",
   "healthSourceUnavailable": "Unavailable",
   "healthSourceSyncFailed": "Sync failed",
-  "healthSourceLastSync": "Synced {time}",
-  "@healthSourceLastSync": {
-    "placeholders": { "time": { "type": "String" } }
-  },
   "healthSourceLastAttempt": "Tried {time}",
   "@healthSourceLastAttempt": {
-    "placeholders": { "time": { "type": "String" } }
-  },
-  "healthSourceLastSuccess": "Last success {time}",
-  "@healthSourceLastSuccess": {
     "placeholders": { "time": { "type": "String" } }
   },
   "healthSourceDataAt": "Data {time}",
   "@healthSourceDataAt": {
     "placeholders": { "time": { "type": "String" } }
   },
-  "healthSourceNoData": "No data imported yet",
   "healthSyncButton": "Sync",
   "healthSyncingButton": "Syncing",
   "healthRecoveryTitle": "Today's Recovery",
@@ -7023,7 +7101,6 @@
   "healthPlanAvoidPressure": "Avoid back-to-back high-pressure meetings and evening training.",
   "healthPlanSyncFirst": "Sync Health Connect data first.",
   "healthPlanTrackMore": "Track for a few more days before judging trends.",
-  "healthPlanEnableHint": "Enable HealthOS in Settings → Domains to see recovery advice.",
   "healthPlanDisclaimerTitle": "Health guidance only",
   "@healthPlanDisclaimerTitle": { "description": "Title for the collapsible Health Plan disclaimer banner." },
   "healthPlanDisclaimer": "Not a medical diagnosis. HealthOS does not auto-adjust your schedule.",
@@ -7231,7 +7308,6 @@
   "@tradeVerbBuy": { "description": "Trade narration verb: buy" },
   "tradeVerbSell": "Sell",
   "@tradeVerbSell": { "description": "Trade narration verb: sell" },
-  "healthNotEnabled": "HealthOS not enabled",
   "healthPlanLoadFailed": "Plan load failed: {message}",
   "@healthPlanLoadFailed": { "description": "Error message when recovery plan fails to load", "placeholders": { "message": { "type": "String" } } },
   "healthGarminTitle": "Garmin Connect",

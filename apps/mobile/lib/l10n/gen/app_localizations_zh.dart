@@ -10,6 +10,122 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String healthWindowDays(int days) {
+    return '最近 $days 天';
+  }
+
+  @override
+  String healthWindowShort(int days) {
+    return '$days天';
+  }
+
+  @override
+  String get healthAllMetrics => '所有指标';
+
+  @override
+  String get healthSingleDayHint => '已有 1 天的数据，继续记录即可查看变化。';
+
+  @override
+  String healthDurationHours(int hours) {
+    return '$hours 小时';
+  }
+
+  @override
+  String get healthNoRecordsInWindow => '这段时间还没有记录。可以切换更长周期，或添加记录。';
+
+  @override
+  String healthMissingMetrics(int count) {
+    return '暂无记录的指标（$count）';
+  }
+
+  @override
+  String get healthSleepDailyDefinition => '按醒来日期汇总睡眠时长，包含当天小睡。';
+
+  @override
+  String get healthActiveEnergyDefinition => '活动消耗，不包含基础代谢。';
+
+  @override
+  String get healthRecordedDaysDefinition => '按有记录的日期统计；缺失日期不计为零。';
+
+  @override
+  String get healthTrainingImproving => '提升';
+
+  @override
+  String get healthTrainingProductive => '有效训练';
+
+  @override
+  String get healthTrainingMaintaining => '维持';
+
+  @override
+  String get healthTrainingRecovery => '恢复';
+
+  @override
+  String get healthTrainingStrained => '负荷偏高';
+
+  @override
+  String healthObservedDayAverage(int recorded, int days) {
+    return '有记录 $recorded/$days 天';
+  }
+
+  @override
+  String healthLatestRecordOn(String date) {
+    return '最近记录 · $date';
+  }
+
+  @override
+  String get healthComparisonNeedsHistory => '已有记录会保留展示；积累上一周期的数据后可比较变化。';
+
+  @override
+  String healthComparisonDefinition(int days) {
+    return '有记录日均值，对比此前 $days 天；活动指标不比较未结束的当天。';
+  }
+
+  @override
+  String get healthTodaySoFar => '今日累计';
+
+  @override
+  String healthPeriodAverage(String value) {
+    return '日均 $value';
+  }
+
+  @override
+  String healthPeriodTotal(String value) {
+    return '合计 $value';
+  }
+
+  @override
+  String get healthMissingDataDefinition => '空白表示未记录，不代表 0。点击下方日期可核对具体记录。';
+
+  @override
+  String healthPeriodChange(String change, int days) {
+    return '日均变化 $change · 对比此前 $days 天';
+  }
+
+  @override
+  String get healthRecordsTitle => '记录与来源';
+
+  @override
+  String get healthManualSource => '手动记录';
+
+  @override
+  String get healthUnknownSource => '未知来源';
+
+  @override
+  String get healthMeasurementNoteOptional => '添加备注（可选）';
+
+  @override
+  String get healthRecoveryBuilding => '恢复基线积累中';
+
+  @override
+  String get healthRecoveryBuildingHint => '恢复判断需要更多睡眠或心率记录，已记录的体测数据不受影响。';
+
+  @override
+  String get healthEditMeasurement => '修改体测';
+
+  @override
+  String get healthAverageShort => '日均';
+
+  @override
   String get financeOverviewTitle => '财务概览';
 
   @override
@@ -12166,9 +12282,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthSourcesSubtitle => 'HealthKit / Health Connect 与 Garmin';
 
   @override
-  String get healthNoDataSyncHint => '展开下方「数据源」进行同步或连接设备';
-
-  @override
   String get healthCommandToday => '健康 · 今日';
 
   @override
@@ -12188,9 +12301,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthConfidenceMedium => '中';
-
-  @override
-  String get healthRecentHrvLabel => 'HRV（近期均值）';
 
   @override
   String get healthRecentSleepLabel => '睡眠（近期均值）';
@@ -12267,16 +12377,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendRespiratoryTitle => '呼吸';
 
   @override
-  String get healthTrendRespiratorySubtitle => '每日平均呼吸率';
-
-  @override
   String get healthTrendRhrTitle => '静息心率';
 
   @override
   String get healthTrendRhrSubtitle => '每日静息心率';
-
-  @override
-  String get healthTrendWorkoutSubtitle => '每天分钟数';
 
   @override
   String get healthTrendStepsSubtitle => '每天步数';
@@ -12285,25 +12389,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendWalkingDistanceTitle => '步行距离';
 
   @override
-  String get healthTrendWalkingDistanceSubtitle => '每天公里数';
-
-  @override
   String get healthTrendFlightsTitle => '楼层';
-
-  @override
-  String get healthTrendFlightsSubtitle => '每天爬楼层数';
-
-  @override
-  String get healthTrendWeightTitle => '体重';
-
-  @override
-  String get healthTrendWeightSubtitle => '体重记录';
-
-  @override
-  String get healthTrendBodyFatTitle => '体脂';
-
-  @override
-  String get healthTrendBodyFatSubtitle => '体脂比例';
 
   @override
   String get healthTrendVo2MaxTitle => 'VO₂max';
@@ -12342,9 +12428,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendBodyBatterySubtitle => '每日最高电量';
 
   @override
-  String get healthTrendStressTitle => '压力';
-
-  @override
   String get healthTrendStressSubtitle => '每日平均压力';
 
   @override
@@ -12360,19 +12443,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthTrendTrainingEffectSubtitle => '体能提升信号';
 
   @override
-  String get healthWeeklySummaryTitle => '本周状态';
-
-  @override
-  String get healthWeeklySummarySubtitle => '最近 7 天关键健康信号';
+  String get healthWeeklySummaryTitle => '近 7 天';
 
   @override
   String get healthWeeklySummaryEmpty => '同步几天数据后，这里会汇总步数、睡眠、训练和恢复指标。';
 
   @override
   String get healthSpo2MetricLabel => '血氧';
-
-  @override
-  String get healthTrendSpo2Title => '血氧';
 
   @override
   String get healthTrendSpo2Subtitle => '每日平均血氧饱和度';
@@ -12394,9 +12471,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthSyncingData => '正在同步健康数据…';
-
-  @override
-  String get healthSyncReady => '同步最近 30 天健康数据';
 
   @override
   String healthSyncResult(Object unchanged, Object upserted) {
@@ -12422,27 +12496,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthSourceSyncFailed => '同步失败';
 
   @override
-  String healthSourceLastSync(String time) {
-    return '同步于 $time';
-  }
-
-  @override
   String healthSourceLastAttempt(String time) {
     return '最近尝试于 $time';
-  }
-
-  @override
-  String healthSourceLastSuccess(String time) {
-    return '上次成功于 $time';
   }
 
   @override
   String healthSourceDataAt(String time) {
     return '数据于 $time';
   }
-
-  @override
-  String get healthSourceNoData => '还没有导入数据';
 
   @override
   String get healthSyncButton => '同步';
@@ -12531,9 +12592,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthPlanTrackMore => '连续记录几天后再判断趋势。';
-
-  @override
-  String get healthPlanEnableHint => '请在“设置 → 功能领域”中启用 HealthOS，才能查看恢复建议。';
 
   @override
   String get healthPlanDisclaimerTitle => '仅供健康参考';
@@ -13028,9 +13086,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tradeVerbSell => '卖出';
-
-  @override
-  String get healthNotEnabled => 'HealthOS 未启用';
 
   @override
   String healthPlanLoadFailed(String message) {

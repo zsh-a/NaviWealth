@@ -1,9 +1,4 @@
-/// HealthOS Trend surface (`docs/domains/healthos-domain.md` §5, D-2.7).
-///
-/// Three line charts (HRV / sleep hours / workout minutes) over the
-/// last 30 days. Each chart pulls from a dedicated provider that maps
-/// `health_metrics` rows into [ChartPoint]s; empty states fall back to
-/// a "not enough data" message rather than rendering an empty axis.
+/// Health analytics: a compact overview and one focused metric at a time.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -11,39 +6,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/auth/current_user.dart';
-import '../../../core/auth/domain_scope.dart';
-import '../../../core/auth/providers.dart' as core_auth;
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
+import '../composition/health_trend_location.dart';
+import '../data/health_series.dart';
+import '../data/health_series_providers.dart';
 import '../data/providers.dart';
-import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_foreground_refresh_scope.dart';
-import 'health_metric_colors.dart';
+import 'health_metric_detail.dart';
+import 'health_metric_presentation.dart';
+import 'health_series_chart.dart';
+import 'health_source_attention.dart';
 import 'health_today_providers.dart';
 
-part 'health_trend_card.dart';
-part 'health_trend_providers.dart';
-part 'health_trend_specs.dart';
-
-/// Default window covered by every chart on this page.
-const Duration kHealthTrendWindow = Duration(days: 30);
-
-enum TrendGroup { recovery, activity, body }
-
-enum _TrendWindow {
-  d7(7),
-  d30(30),
-  d90(90);
-
-  const _TrendWindow(this.days);
-  final int days;
-}
+part 'health_trend_overview.dart';
 
 class HealthTrendPage extends ConsumerStatefulWidget {
   const HealthTrendPage({
@@ -54,13 +35,16 @@ class HealthTrendPage extends ConsumerStatefulWidget {
   });
 
   factory HealthTrendPage.fromQuery(Map<String, String> query) {
-    final metricKind = _parseMetricKind(query['metric']);
+    final parsed = HealthMetricKindX.parse(query['metric'] ?? '');
+    final metric = parsed == HealthMetricKind.unknown ? null : parsed;
+    final group = TrendGroup.values
+        .where((g) => g.name == query['group'])
+        .firstOrNull;
+    final days = int.tryParse(query['window'] ?? '');
     return HealthTrendPage(
-      initialGroup: metricKind == null
-          ? _parseTrendGroup(query['group'])
-          : _trendGroupForMetric(metricKind),
-      initialWindowDays: _parseTrendWindow(query['window']).days,
-      initialMetricKind: metricKind,
+      initialGroup: metric?.group ?? group ?? TrendGroup.recovery,
+      initialWindowDays: const [7, 30, 90].contains(days) ? days! : 30,
+      initialMetricKind: metric,
     );
   }
 
@@ -73,189 +57,189 @@ class HealthTrendPage extends ConsumerStatefulWidget {
 }
 
 class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
-  static const int _previewMetricCount = 3;
-
-  late TrendGroup _group;
-  late _TrendWindow _window;
-  HealthMetricKind? _metricKind;
-  bool _showAllMetrics = false;
-  HealthRefreshResult? _lastRefresh;
-
-  @override
-  void initState() {
-    super.initState();
-    _group = widget.initialGroup;
-    _window = _trendWindowForDays(widget.initialWindowDays);
-    _metricKind = widget.initialMetricKind;
-  }
+  bool _showMissing = false;
 
   @override
   void didUpdateWidget(covariant HealthTrendPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialGroup != widget.initialGroup ||
-        oldWidget.initialWindowDays != widget.initialWindowDays ||
-        oldWidget.initialMetricKind != widget.initialMetricKind) {
-      _group = widget.initialGroup;
-      _window = _trendWindowForDays(widget.initialWindowDays);
-      _metricKind = widget.initialMetricKind;
-      _showAllMetrics = false;
-    }
+    if (oldWidget.initialGroup != widget.initialGroup) _showMissing = false;
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final groupData = ref.watch(
-      trendGroupChartProvider((group: _group, windowDays: _window.days)),
+    final l = AppLocalizations.of(context);
+    final group = widget.initialGroup;
+    final days = widget.initialWindowDays;
+    final metric = widget.initialMetricKind;
+    final data = ref.watch(
+      healthTrendSeriesProvider((group: group, windowDays: days)),
     );
-    final specs = _prioritizeMetric(
-      _trendSpecs(l10n, _group),
-      metricKind: _metricKind,
-    );
-    final visibleSpecs = groupData.maybeWhen(
-      data: (pointsByKind) {
-        final withData = specs
-            .where(
-              (spec) =>
-                  spec.kind == _metricKind ||
-                  (pointsByKind[spec.kind]?.length ?? 0) >= 2,
-            )
-            .toList();
-        return withData.isEmpty ? specs : withData;
-      },
-      orElse: () => specs,
-    );
-    final hasRenderableData = groupData.maybeWhen(
-      data: (pointsByKind) =>
-          pointsByKind.values.any((points) => points.length >= 2),
-      orElse: () => true,
-    );
-    final showEmptyState =
-        groupData.hasValue && !hasRenderableData && _metricKind == null;
-    final displayedSpecs = _showAllMetrics
-        ? visibleSpecs
-        : visibleSpecs.take(_previewMetricCount).toList(growable: false);
-    final canRevealMore = visibleSpecs.length > _previewMetricCount;
     return ShellTabScaffold(
-      title: l10n.healthTrendTitle,
-      actions: _group == TrendGroup.body
+      title: metric?.title(l) ?? l.healthTrendTitle,
+      actions: group == TrendGroup.body
           ? [
               ShellHeaderActionSpec(
                 icon: FLucideIcons.plus,
-                label: l10n.healthRecordBodyMetricAction,
-                onPress: () => _recordBodyMetric(context),
+                label: l.healthRecordBodyMetricAction,
+                onPress: () => showBodyMeasurementEntrySheet(
+                  context: context,
+                  initialKind: metric?.isMeasurement == true
+                      ? metric!
+                      : HealthMetricKind.weight,
+                ),
               ),
             ]
-          : const <ShellHeaderActionSpec>[],
+          : const [],
       child: ShellTabPause(
         routePath: HealthRoutes.trend,
         child: GarminForegroundRefreshScope(
           child: AppRefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
+              key: PageStorageKey(
+                'health-trends-${group.name}-${metric?.wire ?? 'overview'}',
+              ),
               padding: shellTabContentPadding(context),
               children: [
-                if (_lastRefresh?.hasFailures == true) ...[
-                  AppStatusBanner(
-                    message: l10n.healthRefreshPartialFailure(
-                      _lastRefresh!.failedCount,
+                const HealthSourceAttention(),
+                if (metric == null)
+                  SegmentedRow<TrendGroup>(
+                    options: TrendGroup.values,
+                    value: group,
+                    minSegmentWidth: 72,
+                    labelOf: (g) => healthGroupLabel(l, g),
+                    onChanged: (g) => _go(group: g),
+                  )
+                else
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: FButton(
+                      variant: FButtonVariant.ghost,
+                      mainAxisSize: MainAxisSize.min,
+                      prefix: const Icon(
+                        FLucideIcons.arrowLeft,
+                        size: AppIconSizes.sm,
+                      ),
+                      onPress: () => _go(group: group),
+                      child: Flexible(child: Text(l.healthAllMetrics)),
                     ),
-                    details: l10n.healthRefreshPullHint,
-                    kind: AppStatusKind.warning,
-                    icon: FLucideIcons.circleAlert,
-                    compact: true,
                   ),
-                  const SizedBox(height: AppSpacing.s12),
-                ],
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final groupPicker = AppAdaptiveChoice<TrendGroup>(
-                      title: l10n.healthTrendTitle,
-                      options: TrendGroup.values,
-                      value: _group,
-                      labelOf: (g) => _trendGroupLabel(l10n, g),
-                      inlineMaxOptions: 2,
-                      iconOf: (group) => switch (group) {
-                        TrendGroup.recovery => FLucideIcons.heartPulse,
-                        TrendGroup.activity => FLucideIcons.activity,
-                        TrendGroup.body => FLucideIcons.scale,
-                      },
-                      onChanged: (value) => _go(context, group: value),
-                    );
-                    final windowPicker = SegmentedRow<_TrendWindow>(
-                      options: _TrendWindow.values,
-                      value: _window,
-                      minSegmentWidth: 44,
-                      labelOf: (w) => '${w.days}d',
-                      onChanged: (value) => _go(context, window: value),
-                    );
-                    if (constraints.maxWidth < Breakpoints.dialogWide) {
-                      return Row(
-                        children: [
-                          Expanded(flex: 3, child: groupPicker),
-                          const SizedBox(width: AppSpacing.s8),
-                          Expanded(flex: 2, child: windowPicker),
-                        ],
-                      );
-                    }
-                    return Row(
+                const SizedBox(height: AppSpacing.s12),
+                SegmentedRow<int>(
+                  options: const [7, 30, 90],
+                  value: days,
+                  minSegmentWidth: 64,
+                  labelOf: (d) => l.healthWindowShort(d),
+                  semanticLabelOf: (d) => l.healthWindowDays(d),
+                  onChanged: (d) => _go(window: d, metric: metric),
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                data.when(
+                  skipLoadingOnRefresh: true,
+                  skipLoadingOnReload: true,
+                  loading: () => const SkeletonCard(
+                    child: Column(
                       children: [
-                        Expanded(child: groupPicker),
-                        const SizedBox(width: AppSpacing.s12),
-                        SizedBox(
-                          width: AppControlWidths.segmentedCompact,
-                          child: windowPicker,
-                        ),
+                        SkeletonBox(height: 22),
+                        SizedBox(height: AppSpacing.s16),
+                        SkeletonBox(height: 120),
+                      ],
+                    ),
+                  ),
+                  error: (error, stack) => kDefaultError(
+                    context,
+                    error,
+                    stack,
+                    onRetry: () => ref.invalidate(
+                      healthTrendSeriesProvider((
+                        group: group,
+                        windowDays: days,
+                      )),
+                    ),
+                  ),
+                  data: (series) {
+                    if (metric != null && series[metric] != null) {
+                      return HealthMetricDetail(series: series[metric]!);
+                    }
+                    final kinds = healthGroupKinds(group);
+                    final recorded = kinds
+                        .where((k) => series[k]?.samples.isNotEmpty == true)
+                        .toList();
+                    final missing = kinds
+                        .where((k) => !recorded.contains(k))
+                        .toList();
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (recorded.isEmpty)
+                          AppEmptyState(
+                            icon: group == TrendGroup.body
+                                ? FLucideIcons.scale
+                                : FLucideIcons.activity,
+                            title: l.healthNoData,
+                            message: l.healthNoRecordsInWindow,
+                            compact: true,
+                            action: FButton(
+                              variant: FButtonVariant.outline,
+                              onPress: () => group == TrendGroup.body
+                                  ? showBodyMeasurementEntrySheet(
+                                      context: context,
+                                      initialKind: HealthMetricKind.weight,
+                                    )
+                                  : context.go(HealthRoutes.today),
+                              child: Text(
+                                group == TrendGroup.body
+                                    ? l.healthRecordBodyMetricAction
+                                    : l.healthTodayTitle,
+                              ),
+                            ),
+                          )
+                        else ...[
+                          _TrendPeriodSummary(
+                            series: [for (final k in recorded) series[k]!],
+                          ),
+                          const SizedBox(height: AppSpacing.s16),
+                          AppGroupedSurface(
+                            padding: EdgeInsets.zero,
+                            child: Column(
+                              children: [
+                                for (var i = 0; i < recorded.length; i++) ...[
+                                  if (i > 0)
+                                    const AppGroupedDivider(
+                                      indent: AppSpacing.s16,
+                                      endIndent: AppSpacing.s16,
+                                    ),
+                                  _TrendOverviewRow(
+                                    series: series[recorded[i]]!,
+                                    onPress: () => _go(metric: recorded[i]),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+                        if (missing.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.s12),
+                          AppRevealControl(
+                            expanded: _showMissing,
+                            collapsedLabel: l.healthMissingMetrics(
+                              missing.length,
+                            ),
+                            expandedLabel: l.commonRevealLess,
+                            onToggle: () =>
+                                setState(() => _showMissing = !_showMissing),
+                          ),
+                          if (_showMissing)
+                            for (final k in missing)
+                              _MissingMetricRow(
+                                kind: k,
+                                onPress: () => _go(metric: k),
+                              ),
+                        ],
                       ],
                     );
                   },
                 ),
-                const SizedBox(height: AppSpacing.s16),
-                if (showEmptyState)
-                  SoftCard.raised(
-                    padding: AppPageRhythm.cardPadding,
-                    child: AppEmptyState(
-                      icon: FLucideIcons.activity,
-                      title: l10n.healthNoData,
-                      message: l10n.healthTrendNotEnoughData,
-                      compact: true,
-                      iconSize: AppIconSizes.lg,
-                      action: FButton(
-                        variant: FButtonVariant.ghost,
-                        prefix: const Icon(
-                          FLucideIcons.arrowRight,
-                          size: AppIconSizes.xs,
-                        ),
-                        onPress: () => context.go(HealthRoutes.today),
-                        child: Text(l10n.healthTodayTitle),
-                      ),
-                    ),
-                  )
-                else ...[
-                  AdaptiveSummaryGrid(
-                    items: [
-                      for (final spec in displayedSpecs)
-                        AdaptiveSummaryTile(
-                          child: _TrendCard(
-                            spec: spec,
-                            points: groupData.whenData((m) => m[spec.kind]),
-                          ),
-                        ),
-                    ],
-                  ),
-                  if (canRevealMore) ...[
-                    const SizedBox(height: AppSpacing.s8),
-                    AppRevealControl(
-                      expanded: _showAllMetrics,
-                      collapsedLabel: l10n.commonRevealMore(
-                        visibleSpecs.length - _previewMetricCount,
-                      ),
-                      expandedLabel: l10n.commonRevealLess,
-                      onToggle: () =>
-                          setState(() => _showAllMetrics = !_showAllMetrics),
-                    ),
-                  ],
-                ],
               ],
             ),
           ),
@@ -264,113 +248,29 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
     );
   }
 
-  void _go(BuildContext context, {TrendGroup? group, _TrendWindow? window}) {
-    context.go(
-      healthTrendPath(
-        group: group ?? _group,
-        metricKind: group == null ? _metricKind : null,
-        windowDays: (window ?? _window).days,
-      ),
-    );
-  }
-
-  Future<void> _recordBodyMetric(BuildContext context) async {
-    await showBodyMeasurementEntrySheet(
-      context: context,
-      initialKind: HealthMetricKind.weight,
-    );
-  }
+  void _go({TrendGroup? group, int? window, HealthMetricKind? metric}) =>
+      context.go(
+        healthTrendPath(
+          group: group ?? metric?.group ?? widget.initialGroup,
+          metricKind: metric,
+          windowDays: window ?? widget.initialWindowDays,
+        ),
+      );
 
   Future<void> _refresh() async {
     final coordinator = await ref.read(healthRefreshCoordinatorProvider.future);
-    final result = await coordinator.refreshConnectedSources();
+    await coordinator.refreshConnectedSources();
     if (!mounted) return;
-    setState(() => _lastRefresh = result);
     ref.invalidate(healthSyncStatusProvider);
     ref.invalidate(healthPlatformStatusProvider);
     ref.invalidate(healthSourceDataSummaryProvider);
     ref.invalidate(healthTodaySnapshotProvider);
-    final params = (group: _group, windowDays: _window.days);
-    ref.invalidate(trendGroupChartProvider(params));
-    await ref.read(trendGroupChartProvider(params).future);
+    ref.invalidate(healthTrendSeriesProvider);
+    await ref.read(
+      healthTrendSeriesProvider((
+        group: widget.initialGroup,
+        windowDays: widget.initialWindowDays,
+      )).future,
+    );
   }
-
-  static String _trendGroupLabel(AppLocalizations l10n, TrendGroup group) =>
-      switch (group) {
-        TrendGroup.recovery => l10n.healthTrendGroupRecovery,
-        TrendGroup.activity => l10n.healthTrendGroupActivity,
-        TrendGroup.body => l10n.healthTrendGroupBody,
-      };
-}
-
-String healthTrendPath({
-  TrendGroup? group,
-  HealthMetricKind? metricKind,
-  int windowDays = 30,
-}) {
-  final resolvedGroup =
-      group ??
-      switch (metricKind) {
-        null => TrendGroup.recovery,
-        final kind => _trendGroupForMetric(kind),
-      };
-  final query = <String, String>{};
-  if (resolvedGroup != TrendGroup.recovery) query['group'] = resolvedGroup.name;
-  if (metricKind != null) query['metric'] = metricKind.wire;
-  if (windowDays != 30) query['window'] = windowDays.toString();
-  return Uri(
-    path: HealthRoutes.trend,
-    queryParameters: query.isEmpty ? null : query,
-  ).toString();
-}
-
-HealthMetricKind? _parseMetricKind(String? raw) {
-  if (raw == null || raw.isEmpty) return null;
-  final kind = HealthMetricKindX.parse(raw);
-  if (kind == HealthMetricKind.unknown) return null;
-  return kind;
-}
-
-TrendGroup _trendGroupForMetric(HealthMetricKind kind) => switch (kind) {
-  HealthMetricKind.workoutSession ||
-  HealthMetricKind.stepsDaily ||
-  HealthMetricKind.distanceWalkingRunningDaily ||
-  HealthMetricKind.activeEnergyDaily ||
-  HealthMetricKind.floorsClimbedDaily ||
-  HealthMetricKind.trainingLoadDaily ||
-  HealthMetricKind.trainingEffectDaily ||
-  HealthMetricKind.totalEnergyDaily => TrendGroup.activity,
-  HealthMetricKind.weight ||
-  HealthMetricKind.bodyFat ||
-  HealthMetricKind.vo2Max => TrendGroup.body,
-  _ => TrendGroup.recovery,
-};
-
-List<_TrendSpec> _prioritizeMetric(
-  List<_TrendSpec> specs, {
-  required HealthMetricKind? metricKind,
-}) {
-  if (metricKind == null) return specs;
-  final index = specs.indexWhere((spec) => spec.kind == metricKind);
-  if (index <= 0) return specs;
-  return [specs[index], ...specs.take(index), ...specs.skip(index + 1)];
-}
-
-TrendGroup _parseTrendGroup(String? raw) {
-  for (final group in TrendGroup.values) {
-    if (group.name == raw) return group;
-  }
-  return TrendGroup.recovery;
-}
-
-_TrendWindow _parseTrendWindow(String? raw) {
-  final days = int.tryParse(raw ?? '');
-  return _trendWindowForDays(days);
-}
-
-_TrendWindow _trendWindowForDays(int? days) {
-  for (final window in _TrendWindow.values) {
-    if (window.days == days) return window;
-  }
-  return _TrendWindow.d30;
 }

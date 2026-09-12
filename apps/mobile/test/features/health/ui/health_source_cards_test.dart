@@ -124,6 +124,7 @@ void main() {
           appDatabaseProvider.overrideWith((ref) async => db),
           currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           healthHasAnyDataProvider.overrideWith((ref) async => true),
+          healthHasRecoveryInputsProvider.overrideWith((ref) async => true),
           healthTodayMetricGridProvider.overrideWith(
             (ref) async => HealthTodayMetricGridModel.empty(),
           ),
@@ -135,9 +136,7 @@ void main() {
               'coverage': 1.0,
             },
           ),
-          recoverySparklineProvider.overrideWith(
-            (ref) async => const <double>[],
-          ),
+
           weeklySummaryProvider.overrideWith((ref) async => null),
           health_data.garminSyncControllerProvider.overrideWithBuild(
             (ref, build) => const GarminInitial(),

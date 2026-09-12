@@ -98,6 +98,198 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @healthWindowDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Last {days} days'**
+  String healthWindowDays(int days);
+
+  /// No description provided for @healthWindowShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d'**
+  String healthWindowShort(int days);
+
+  /// No description provided for @healthAllMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'All metrics'**
+  String get healthAllMetrics;
+
+  /// No description provided for @healthSingleDayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One recorded day. More dates will reveal a trend.'**
+  String get healthSingleDayHint;
+
+  /// No description provided for @healthDurationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h'**
+  String healthDurationHours(int hours);
+
+  /// No description provided for @healthNoRecordsInWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'No records in this period. Try a longer window or add a measurement.'**
+  String get healthNoRecordsInWindow;
+
+  /// No description provided for @healthMissingMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Metrics without records ({count})'**
+  String healthMissingMetrics(int count);
+
+  /// No description provided for @healthSleepDailyDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep duration by local wake date, including naps.'**
+  String get healthSleepDailyDefinition;
+
+  /// No description provided for @healthActiveEnergyDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy from activity, excluding resting energy.'**
+  String get healthActiveEnergyDefinition;
+
+  /// No description provided for @healthRecordedDaysDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on recorded dates; missing dates are not zero.'**
+  String get healthRecordedDaysDefinition;
+
+  /// No description provided for @healthTrainingImproving.
+  ///
+  /// In en, this message translates to:
+  /// **'Improving'**
+  String get healthTrainingImproving;
+
+  /// No description provided for @healthTrainingProductive.
+  ///
+  /// In en, this message translates to:
+  /// **'Productive'**
+  String get healthTrainingProductive;
+
+  /// No description provided for @healthTrainingMaintaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintaining'**
+  String get healthTrainingMaintaining;
+
+  /// No description provided for @healthTrainingRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get healthTrainingRecovery;
+
+  /// No description provided for @healthTrainingStrained.
+  ///
+  /// In en, this message translates to:
+  /// **'Strained'**
+  String get healthTrainingStrained;
+
+  /// No description provided for @healthObservedDayAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded {recorded}/{days} days'**
+  String healthObservedDayAverage(int recorded, int days);
+
+  /// No description provided for @healthLatestRecordOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest record · {date}'**
+  String healthLatestRecordOn(String date);
+
+  /// No description provided for @healthComparisonNeedsHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Your records are shown below. A previous period is needed to compare changes.'**
+  String get healthComparisonNeedsHistory;
+
+  /// No description provided for @healthComparisonDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded-day averages vs the previous {days} days; activity comparisons exclude the unfinished day.'**
+  String healthComparisonDefinition(int days);
+
+  /// No description provided for @healthTodaySoFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Today so far'**
+  String get healthTodaySoFar;
+
+  /// No description provided for @healthPeriodAverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average {value}'**
+  String healthPeriodAverage(String value);
+
+  /// No description provided for @healthPeriodTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total {value}'**
+  String healthPeriodTotal(String value);
+
+  /// No description provided for @healthMissingDataDefinition.
+  ///
+  /// In en, this message translates to:
+  /// **'Gaps mean unrecorded, not zero. Open a date below to inspect its records.'**
+  String get healthMissingDataDefinition;
+
+  /// No description provided for @healthPeriodChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average change {change} · vs previous {days} days'**
+  String healthPeriodChange(String change, int days);
+
+  /// No description provided for @healthRecordsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Records & sources'**
+  String get healthRecordsTitle;
+
+  /// No description provided for @healthManualSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get healthManualSource;
+
+  /// No description provided for @healthUnknownSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown source'**
+  String get healthUnknownSource;
+
+  /// No description provided for @healthMeasurementNoteOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note (optional)'**
+  String get healthMeasurementNoteOptional;
+
+  /// No description provided for @healthRecoveryBuilding.
+  ///
+  /// In en, this message translates to:
+  /// **'Building your recovery baseline'**
+  String get healthRecoveryBuilding;
+
+  /// No description provided for @healthRecoveryBuildingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery needs more sleep or heart-rate history. Your measurements remain available.'**
+  String get healthRecoveryBuildingHint;
+
+  /// No description provided for @healthEditMeasurement.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit measurement'**
+  String get healthEditMeasurement;
+
+  /// No description provided for @healthAverageShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily average'**
+  String get healthAverageShort;
+
   /// No description provided for @financeOverviewTitle.
   ///
   /// In en, this message translates to:
@@ -21562,12 +21754,6 @@ abstract class AppLocalizations {
   /// **'HealthKit / Health Connect and Garmin'**
   String get healthSourcesSubtitle;
 
-  /// Hint under empty metric values on Health Today
-  ///
-  /// In en, this message translates to:
-  /// **'Open Sources below to sync or connect a device'**
-  String get healthNoDataSyncHint;
-
   /// No description provided for @healthCommandToday.
   ///
   /// In en, this message translates to:
@@ -21609,12 +21795,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Medium'**
   String get healthConfidenceMedium;
-
-  /// No description provided for @healthRecentHrvLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'HRV (recent average)'**
-  String get healthRecentHrvLabel;
 
   /// No description provided for @healthRecentSleepLabel.
   ///
@@ -21748,12 +21928,6 @@ abstract class AppLocalizations {
   /// **'Respiration'**
   String get healthTrendRespiratoryTitle;
 
-  /// No description provided for @healthTrendRespiratorySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily average respiratory rate '**
-  String get healthTrendRespiratorySubtitle;
-
   /// No description provided for @healthTrendRhrTitle.
   ///
   /// In en, this message translates to:
@@ -21765,12 +21939,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Daily resting heart rate '**
   String get healthTrendRhrSubtitle;
-
-  /// No description provided for @healthTrendWorkoutSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily minutes '**
-  String get healthTrendWorkoutSubtitle;
 
   /// No description provided for @healthTrendStepsSubtitle.
   ///
@@ -21784,47 +21952,11 @@ abstract class AppLocalizations {
   /// **'Walking distance'**
   String get healthTrendWalkingDistanceTitle;
 
-  /// No description provided for @healthTrendWalkingDistanceSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily kilometers '**
-  String get healthTrendWalkingDistanceSubtitle;
-
   /// No description provided for @healthTrendFlightsTitle.
   ///
   /// In en, this message translates to:
   /// **'Flights climbed'**
   String get healthTrendFlightsTitle;
-
-  /// No description provided for @healthTrendFlightsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Daily flights climbed '**
-  String get healthTrendFlightsSubtitle;
-
-  /// No description provided for @healthTrendWeightTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Weight'**
-  String get healthTrendWeightTitle;
-
-  /// No description provided for @healthTrendWeightSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Weight records '**
-  String get healthTrendWeightSubtitle;
-
-  /// No description provided for @healthTrendBodyFatTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Body fat'**
-  String get healthTrendBodyFatTitle;
-
-  /// No description provided for @healthTrendBodyFatSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Body fat percentage '**
-  String get healthTrendBodyFatSubtitle;
 
   /// No description provided for @healthTrendVo2MaxTitle.
   ///
@@ -21898,12 +22030,6 @@ abstract class AppLocalizations {
   /// **'Daily max level'**
   String get healthTrendBodyBatterySubtitle;
 
-  /// No description provided for @healthTrendStressTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Stress'**
-  String get healthTrendStressTitle;
-
   /// No description provided for @healthTrendStressSubtitle.
   ///
   /// In en, this message translates to:
@@ -21937,14 +22063,8 @@ abstract class AppLocalizations {
   /// No description provided for @healthWeeklySummaryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Weekly status'**
+  /// **'Last 7 days'**
   String get healthWeeklySummaryTitle;
-
-  /// No description provided for @healthWeeklySummarySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Key health signals from the last 7 days'**
-  String get healthWeeklySummarySubtitle;
 
   /// No description provided for @healthWeeklySummaryEmpty.
   ///
@@ -21957,12 +22077,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SpO₂'**
   String get healthSpo2MetricLabel;
-
-  /// No description provided for @healthTrendSpo2Title.
-  ///
-  /// In en, this message translates to:
-  /// **'Blood oxygen'**
-  String get healthTrendSpo2Title;
 
   /// No description provided for @healthTrendSpo2Subtitle.
   ///
@@ -22006,12 +22120,6 @@ abstract class AppLocalizations {
   /// **'Syncing health data…'**
   String get healthSyncingData;
 
-  /// No description provided for @healthSyncReady.
-  ///
-  /// In en, this message translates to:
-  /// **'Sync last 30 days of health data'**
-  String get healthSyncReady;
-
   /// No description provided for @healthSyncResult.
   ///
   /// In en, this message translates to:
@@ -22054,35 +22162,17 @@ abstract class AppLocalizations {
   /// **'Sync failed'**
   String get healthSourceSyncFailed;
 
-  /// No description provided for @healthSourceLastSync.
-  ///
-  /// In en, this message translates to:
-  /// **'Synced {time}'**
-  String healthSourceLastSync(String time);
-
   /// No description provided for @healthSourceLastAttempt.
   ///
   /// In en, this message translates to:
   /// **'Tried {time}'**
   String healthSourceLastAttempt(String time);
 
-  /// No description provided for @healthSourceLastSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Last success {time}'**
-  String healthSourceLastSuccess(String time);
-
   /// No description provided for @healthSourceDataAt.
   ///
   /// In en, this message translates to:
   /// **'Data {time}'**
   String healthSourceDataAt(String time);
-
-  /// No description provided for @healthSourceNoData.
-  ///
-  /// In en, this message translates to:
-  /// **'No data imported yet'**
-  String get healthSourceNoData;
 
   /// No description provided for @healthSyncButton.
   ///
@@ -22251,12 +22341,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Track for a few more days before judging trends.'**
   String get healthPlanTrackMore;
-
-  /// No description provided for @healthPlanEnableHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Enable HealthOS in Settings → Domains to see recovery advice.'**
-  String get healthPlanEnableHint;
 
   /// Title for the collapsible Health Plan disclaimer banner.
   ///
@@ -23199,12 +23283,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sell'**
   String get tradeVerbSell;
-
-  /// No description provided for @healthNotEnabled.
-  ///
-  /// In en, this message translates to:
-  /// **'HealthOS not enabled'**
-  String get healthNotEnabled;
 
   /// Error message when recovery plan fails to load
   ///

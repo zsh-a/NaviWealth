@@ -43,8 +43,10 @@ extension _NwLineChartAxes on _NwLineChartState {
             )) {
               return const SizedBox.shrink();
             }
-            return Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s4),
+            return SideTitleWidget(
+              meta: meta,
+              fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+              space: AppSpacing.s4,
               child: Text(
                 widget.xAxis.formatTimestamp(value),
                 style: labelStyle,

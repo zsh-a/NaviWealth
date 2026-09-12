@@ -79,7 +79,10 @@ void main() {
         await tester.tap(find.text(l10n.commonSave));
         await tester.pumpAndSettle();
         expect(find.text(l10n.healthActivationTitle), findsNothing);
-        expect(find.text(value), findsOneWidget);
+        expect(
+          find.text('$value ${kind == HealthMetricKind.weight ? 'kg' : '%'}'),
+          findsOneWidget,
+        );
         expect(find.text(l10n.healthNoData), findsNothing);
         final container = ProviderScope.containerOf(context);
         expect(await container.read(healthHasAnyDataProvider.future), isTrue);
@@ -126,7 +129,7 @@ void main() {
     expect(find.byType(AdaptiveSummaryGrid), findsOneWidget);
     expect(find.text("Today's Recovery"), findsOneWidget);
     expect(find.text('74'), findsWidgets);
-    expect(find.text('Weekly status'), findsOneWidget);
+    expect(find.text('Last 7 days'), findsOneWidget);
     expect(find.text('Steps'), findsOneWidget);
     expect(find.textContaining('Agent'), findsNothing);
 
@@ -236,6 +239,7 @@ List<Override> _todayOverrides({
         health_data.HealthSourceDataSummary(platformLatestAt: latestDataAt),
   ),
   healthHasAnyDataProvider.overrideWith((ref) async => true),
+  healthHasRecoveryInputsProvider.overrideWith((ref) async => true),
   healthTodayMetricGridProvider.overrideWith(
     (ref) async => HealthTodayMetricGridModel.empty(),
   ),
@@ -259,7 +263,7 @@ List<Override> _todayOverrides({
       ],
     },
   ),
-  recoverySparklineProvider.overrideWith((ref) async => const <double>[]),
+
   weeklySummaryProvider.overrideWith(
     (ref) async => const WeeklySummary(
       totalSteps: 70000,

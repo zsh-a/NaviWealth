@@ -50,7 +50,10 @@ class AppRevealControl extends StatelessWidget {
             }
             onToggle();
           },
-          child: Padding(
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: AppControlHeights.touchTarget,
+            ),
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.s12,
               vertical: AppSpacing.s8,
@@ -58,10 +61,13 @@ class AppRevealControl extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  label,
-                  style: context.captionLabelStyle.copyWith(
-                    color: colors.mutedForeground,
+                Flexible(
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.center,
+                    style: context.captionLabelStyle.copyWith(
+                      color: colors.mutedForeground,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s4),

@@ -8,6 +8,8 @@
 /// without a migration.
 library;
 
+enum TrendGroup { recovery, activity, body }
+
 enum HealthMetricKind {
   /// One sleep session (capturedAt = session start, value = duration
   /// in seconds, payloadJson holds the per-stage histogram).
@@ -96,6 +98,21 @@ enum HealthMetricKind {
 }
 
 extension HealthMetricKindX on HealthMetricKind {
+  TrendGroup get group => switch (this) {
+    HealthMetricKind.workoutSession ||
+    HealthMetricKind.stepsDaily ||
+    HealthMetricKind.activeEnergyDaily ||
+    HealthMetricKind.totalEnergyDaily ||
+    HealthMetricKind.distanceWalkingRunningDaily ||
+    HealthMetricKind.floorsClimbedDaily ||
+    HealthMetricKind.trainingLoadDaily ||
+    HealthMetricKind.trainingEffectDaily => TrendGroup.activity,
+    HealthMetricKind.weight ||
+    HealthMetricKind.bodyFat ||
+    HealthMetricKind.vo2Max => TrendGroup.body,
+    _ => TrendGroup.recovery,
+  };
+
   /// Directional meaning for trend presentation. Null means a change is
   /// contextual and must not be colored as intrinsically good or bad.
   bool? get higherIsBetter => switch (this) {

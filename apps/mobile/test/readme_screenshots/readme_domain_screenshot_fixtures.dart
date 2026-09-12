@@ -98,9 +98,7 @@ List<Override> readmeDomainShowcaseOverrides() => <Override>[
   recoverySignalProvider.overrideWith(
     (_) async => <String, Object?>{'score': 82, 'verdict': 'rested'},
   ),
-  recoverySparklineProvider.overrideWith(
-    (_) async => const <double>[48, 52, 50, 55, 57, 54, 59],
-  ),
+
   weeklySummaryProvider.overrideWith((_) async => null),
   health_agent_providers.latestRecoveryAlertArtifactProvider.overrideWith(
     (_) async => null,

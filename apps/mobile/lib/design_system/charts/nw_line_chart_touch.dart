@@ -112,6 +112,9 @@ extension _NwLineChartInteraction on _NwLineChartState {
   TouchLineBarSpot? _primaryTouchedSpot(LineTouchResponse? response) {
     final touched = response?.lineBarSpots;
     if (touched == null || touched.isEmpty) return null;
+    if (widget.touchSelection == ChartTouchSelection.nearest) {
+      return touched.first;
+    }
     return touched.firstWhere(
       (spot) => spot.barIndex == 0,
       orElse: () => touched.first,

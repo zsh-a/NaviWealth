@@ -83,6 +83,7 @@ class CategoryDatum {
     this.tooltipLabel,
     this.colorOverride,
     this.meta,
+    this.isMissing = false,
   });
 
   final String label;
@@ -90,6 +91,9 @@ class CategoryDatum {
   final String? tooltipLabel;
   final Color? colorOverride;
   final Object? meta;
+
+  /// Retain a category's position without fabricating a zero observation.
+  final bool isMissing;
 }
 
 /// One series on a bar chart. Multiple series → grouped or stacked bars.

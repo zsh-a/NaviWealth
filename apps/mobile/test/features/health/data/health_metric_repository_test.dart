@@ -55,6 +55,94 @@ void main() {
 
   tearDown(() => db.close());
 
+  test(
+    'per-kind limit cannot starve an older low-frequency measurement',
+    () async {
+      final day = DateTime.utc(2026, 9, 12);
+      await repo.upsertAll([
+        for (var i = 0; i < 100; i++)
+          _metric(
+            id: 'dense-$i',
+            kind: HealthMetricKind.hrvDaily,
+            value: 50,
+            capturedAt: day.subtract(Duration(hours: i)),
+          ),
+        _metric(
+          id: 'old-weight',
+          kind: HealthMetricKind.weight,
+          value: 70,
+          capturedAt: day.subtract(const Duration(days: 200)),
+        ),
+        _metric(
+          id: 'other-owner',
+          kind: HealthMetricKind.weight,
+          value: 99,
+          capturedAt: day,
+          ownerUserId: _userB,
+        ),
+        _metric(
+          id: 'deleted',
+          kind: HealthMetricKind.weight,
+          value: 99,
+          capturedAt: day,
+          deletedAt: day,
+        ),
+      ]);
+      final rows = await repo.listByKinds(
+        ownerUserId: _userA,
+        kinds: {HealthMetricKind.hrvDaily, HealthMetricKind.weight},
+        limit: 1,
+      );
+      expect(rows[HealthMetricKind.hrvDaily]!.single.id, 'dense-0');
+      expect(rows[HealthMetricKind.weight]!.single.id, 'old-weight');
+    },
+  );
+
+  test(
+    'range is start-inclusive/end-exclusive, owner-scoped and untruncated',
+    () async {
+      final start = DateTime.utc(2026, 9, 1);
+      final end = DateTime.utc(2026, 10, 1);
+      await repo.upsertAll([
+        for (var i = 0; i < 150; i++)
+          _metric(
+            id: 'dense-$i',
+            kind: HealthMetricKind.workoutSession,
+            value: 600,
+            capturedAt: start.add(Duration(hours: i)),
+          ),
+        _metric(
+          id: 'end',
+          kind: HealthMetricKind.workoutSession,
+          value: 600,
+          capturedAt: end,
+        ),
+        _metric(
+          id: 'other',
+          kind: HealthMetricKind.workoutSession,
+          value: 600,
+          capturedAt: start,
+          ownerUserId: _userB,
+        ),
+        _metric(
+          id: 'deleted',
+          kind: HealthMetricKind.workoutSession,
+          value: 600,
+          capturedAt: start,
+          deletedAt: start,
+        ),
+      ]);
+      final rows = await repo.listInRange(
+        ownerUserId: _userA,
+        kinds: {HealthMetricKind.workoutSession},
+        from: start,
+        to: end,
+      );
+      expect(rows[HealthMetricKind.workoutSession], hasLength(150));
+      expect(rows[HealthMetricKind.workoutSession]!.last.id, 'dense-0');
+    },
+  );
+
   test('upsert persists a metric and enqueues a sync dirty pointer', () async {
     final metric = _metric(
       id: 'm-1',

@@ -63,6 +63,8 @@ class NwLineChart extends StatefulWidget {
     this.onScrubChanged,
     this.minX,
     this.maxX,
+    this.touchSelection = ChartTouchSelection.primarySeries,
+    this.uniformSeriesStyle = false,
   });
 
   final List<ChartSeries> series;
@@ -88,6 +90,13 @@ class NwLineChart extends StatefulWidget {
   /// history leaves a calm empty lead-in instead of stretching the line).
   final double? minX;
   final double? maxX;
+
+  /// Disjoint segments of one measure select the nearest touched segment.
+  /// Multi-measure comparisons may keep a stable primary-series readout.
+  final ChartTouchSelection touchSelection;
+
+  /// Keep disjoint segments of one measure solid and equally emphasized.
+  final bool uniformSeriesStyle;
 
   /// Auto-apply [downsampleLttb] when a series exceeds [downsampleTarget].
   /// Set to `false` to opt out (e.g. an audit view that must show every tick).
@@ -148,6 +157,8 @@ class NwLineChart extends StatefulWidget {
 
 enum ChartInterpolation { linear, curved }
 
+enum ChartTouchSelection { primarySeries, nearest }
+
 class _NwLineChartState extends State<NwLineChart> {
   // Touch state is isolated in a ValueNotifier so that touch events
   // (pan/drag at 120fps) only rebuild the lightweight touch overlay,
@@ -185,15 +196,21 @@ class _NwLineChartState extends State<NwLineChart> {
     if (processed.isEmpty || processed.first.points.isEmpty || spots.isEmpty) {
       return;
     }
-    final lastIndex = processed.first.points.length - 1;
+    final candidates = [
+      for (final (si, series) in processed.indexed)
+        if (si == 0 || widget.touchSelection == ChartTouchSelection.nearest)
+          for (final point in series.points) (seriesIndex: si, point: point),
+    ]..sort((a, b) => a.point.x.compareTo(b.point.x));
+    final lastIndex = candidates.length - 1;
     final base = _keyboardSpotIndex < 0
         ? (delta < 0 ? lastIndex : 0)
         : _keyboardSpotIndex;
     final next = (base + delta).clamp(0, lastIndex);
     _keyboardSpotIndex = next;
-    final point = processed.first.points[next];
+    final selected = candidates[next];
+    final point = selected.point;
     _touchNotifier.value = _TouchState(
-      spot: spots[next],
+      spot: FlSpot(point.x, point.y),
       spotIndex: next,
       touchStartPoint: point,
     );
@@ -201,8 +218,8 @@ class _NwLineChartState extends State<NwLineChart> {
     widget.onScrubChanged?.call(
       NwScrubState(
         point: point,
-        seriesName: processed.first.name,
-        seriesIndex: 0,
+        seriesName: processed[selected.seriesIndex].name,
+        seriesIndex: selected.seriesIndex,
       ),
     );
   }
@@ -284,6 +301,7 @@ class _NwLineChartState extends State<NwLineChart> {
       showXAxis: widget.showXAxis,
       showYAxis: widget.showYAxis,
       minimal: widget.minimal,
+      uniformSeriesStyle: widget.uniformSeriesStyle,
     );
 
     // Cache chart data — only rebuild when data/palette/privacy changes.
@@ -311,7 +329,7 @@ class _NwLineChartState extends State<NwLineChart> {
             prepared.spots[i],
             color,
             palette,
-            i,
+            widget.uniformSeriesStyle ? 0 : i,
             processed.length,
           ),
         );

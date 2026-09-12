@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/services.dart' show TextInputAction;
 import 'package:flutter/widgets.dart';
@@ -8,22 +10,26 @@ import '../../../core/format/providers.dart';
 import '../../../core/forms/forms.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/health_series_providers.dart';
 import '../data/providers.dart';
+import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'health_today_providers.dart';
-import 'health_trend_page.dart'
-    show trendChartProvider, trendGroupChartProvider;
 
 Future<bool?> showBodyMeasurementEntrySheet({
   required BuildContext context,
   required HealthMetricKind initialKind,
+  HealthMetric? initialMetric,
 }) {
   final dirty = FormDirtyController();
   return showAppFormSheet<bool>(
     context: context,
     dirtyGuard: dirty,
-    builder: (_) =>
-        BodyMeasurementEntrySheet(initialKind: initialKind, dirty: dirty),
+    builder: (_) => BodyMeasurementEntrySheet(
+      initialKind: initialKind,
+      dirty: dirty,
+      initialMetric: initialMetric,
+    ),
   ).whenComplete(dirty.dispose);
 }
 
@@ -32,6 +38,7 @@ class BodyMeasurementEntrySheet extends ConsumerStatefulWidget {
     super.key,
     required this.initialKind,
     required this.dirty,
+    this.initialMetric,
   }) : assert(
          initialKind == HealthMetricKind.weight ||
              initialKind == HealthMetricKind.bodyFat,
@@ -40,6 +47,7 @@ class BodyMeasurementEntrySheet extends ConsumerStatefulWidget {
 
   final HealthMetricKind initialKind;
   final FormDirtyController dirty;
+  final HealthMetric? initialMetric;
 
   @override
   ConsumerState<BodyMeasurementEntrySheet> createState() =>
@@ -55,6 +63,8 @@ class _BodyMeasurementEntrySheetState
   late DateTime _capturedAt;
   bool _saving = false;
   String? _valueError;
+  bool _showNote = false;
+  final _drafts = <HealthMetricKind, String>{};
 
   static final DateTime _firstCapturedAt = DateTime.utc(1970);
 
@@ -62,7 +72,21 @@ class _BodyMeasurementEntrySheetState
   void initState() {
     super.initState();
     _kind = widget.initialKind;
-    _capturedAt = _dayAnchor(DateTime.now());
+    _capturedAt =
+        widget.initialMetric?.capturedAt ?? _dayAnchor(DateTime.now());
+    if (widget.initialMetric case final metric?) {
+      _valueCtrl.text =
+          '${metric.kind == HealthMetricKind.bodyFat && metric.unit == 'fraction' ? metric.value * 100 : metric.value}';
+      try {
+        final payload = jsonDecode(metric.payloadJson ?? '{}');
+        if (payload is Map<String, dynamic>) {
+          _noteCtrl.text = payload['note']?.toString() ?? '';
+        }
+      } on Object {
+        /* Notes are optional. */
+      }
+      _showNote = _noteCtrl.text.isNotEmpty;
+    }
     widget.dirty.bindTextControllers([_valueCtrl, _noteCtrl]);
   }
 
@@ -80,7 +104,9 @@ class _BodyMeasurementEntrySheetState
     final now = DateTime.now();
     final today = _calendarDay(now);
     return AppSheet(
-      title: l10n.healthBodyMeasurementTitle,
+      title: widget.initialMetric == null
+          ? l10n.healthBodyMeasurementTitle
+          : l10n.healthEditMeasurement,
       subtitle: l10n.healthBodyMeasurementSubtitle,
       footer: AppSheetFooter(
         submitLabel: l10n.commonSave,
@@ -94,23 +120,26 @@ class _BodyMeasurementEntrySheetState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SegmentedRow<HealthMetricKind>(
-              options: const [
-                HealthMetricKind.weight,
-                HealthMetricKind.bodyFat,
-              ],
-              value: _kind,
-              labelOf: (kind) => _labelOf(l10n, kind),
-              onChanged: _saving
-                  ? (_) {}
-                  : (kind) {
-                      setState(() {
-                        _kind = kind;
-                        _valueError = null;
-                      });
-                      widget.dirty.markDirty();
-                    },
-            ),
+            if (widget.initialMetric == null)
+              SegmentedRow<HealthMetricKind>(
+                options: const [
+                  HealthMetricKind.weight,
+                  HealthMetricKind.bodyFat,
+                ],
+                value: _kind,
+                labelOf: (kind) => _labelOf(l10n, kind),
+                onChanged: _saving
+                    ? (_) {}
+                    : (kind) {
+                        setState(() {
+                          _drafts[_kind] = _valueCtrl.text;
+                          _kind = kind;
+                          _valueCtrl.text = _drafts[kind] ?? '';
+                          _valueError = null;
+                        });
+                        widget.dirty.markDirty();
+                      },
+              ),
             const SizedBox(height: AppSpacing.s12),
             AmountField(
               label: _labelOf(l10n, _kind),
@@ -146,7 +175,7 @@ class _BodyMeasurementEntrySheetState
                         widget.dirty.markDirty();
                       },
               ),
-              enabled: !_saving,
+              enabled: !_saving && widget.initialMetric == null,
               clearable: false,
               calendar: FDateFieldGridCalendarProperties(
                 control: FGridCalendarControl(
@@ -160,12 +189,20 @@ class _BodyMeasurementEntrySheetState
                   date == null ? l10n.formDateFieldRequired : null,
             ),
             const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _noteCtrl),
-              label: Text(l10n.commonNote),
-              maxLines: 3,
-              minLines: 1,
-            ),
+            if (!_showNote)
+              FButton(
+                variant: FButtonVariant.ghost,
+                mainAxisSize: MainAxisSize.min,
+                onPress: () => setState(() => _showNote = true),
+                child: Text(l10n.healthMeasurementNoteOptional),
+              ),
+            if (_showNote)
+              FTextFormField(
+                control: FTextFieldControl.managed(controller: _noteCtrl),
+                label: Text(l10n.commonNote),
+                maxLines: 3,
+                minLines: 1,
+              ),
           ],
         ),
       ),
@@ -190,15 +227,15 @@ class _BodyMeasurementEntrySheetState
       final service = await ref.read(healthMetricWriteServiceProvider.future);
       await service.recordBodyMeasurement(
         kind: _kind,
-        value: value,
+        value: _kind == HealthMetricKind.bodyFat ? value / 100 : value,
         capturedAt: _capturedAt,
         source: 'manual',
         note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
+        expectedRecordId: widget.initialMetric?.id,
       );
       ref
         ..invalidate(healthTodaySnapshotProvider)
-        ..invalidate(trendChartProvider)
-        ..invalidate(trendGroupChartProvider);
+        ..invalidate(healthTrendSeriesProvider);
       widget.dirty.markPristine();
       if (!mounted) return;
       AppInteraction.signal(AppInteractionIntent.success);

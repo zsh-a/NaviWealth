@@ -40,6 +40,56 @@ void main() {
 
   tearDown(() => db.close());
 
+  test('explicit edit preserves record identity and replaces note', () async {
+    final at = DateTime.utc(2026, 5, 30, 12);
+    final original = await service.recordBodyMeasurement(
+      kind: HealthMetricKind.weight,
+      value: 72.5,
+      capturedAt: at,
+      note: 'typo',
+    );
+    final edited = await service.recordBodyMeasurement(
+      kind: HealthMetricKind.weight,
+      value: 71.5,
+      capturedAt: at,
+      expectedRecordId: original.id,
+      note: 'corrected',
+    );
+    expect(edited.id, original.id);
+    expect((await repo.findById(original.id))!.value, 71.5);
+    expect(edited.payloadJson, contains('corrected'));
+    expect(await outbox.depth(), 2);
+  });
+
+  test('edit rejects a missing id or date change without writing', () async {
+    final at = DateTime.utc(2026, 5, 30, 12);
+    final original = await service.recordBodyMeasurement(
+      kind: HealthMetricKind.weight,
+      value: 72.5,
+      capturedAt: at,
+    );
+    await expectLater(
+      service.recordBodyMeasurement(
+        kind: HealthMetricKind.weight,
+        value: 71.5,
+        capturedAt: at.add(const Duration(days: 1)),
+        expectedRecordId: original.id,
+      ),
+      throwsStateError,
+    );
+    await expectLater(
+      service.recordBodyMeasurement(
+        kind: HealthMetricKind.weight,
+        value: 71.5,
+        capturedAt: at,
+        expectedRecordId: 'missing',
+      ),
+      throwsStateError,
+    );
+    expect((await repo.findById(original.id))!.value, 72.5);
+    expect(await outbox.depth(), 1);
+  });
+
   test('records manual weight with stable same-day id', () async {
     final row = await service.recordBodyMeasurement(
       kind: HealthMetricKind.weight,

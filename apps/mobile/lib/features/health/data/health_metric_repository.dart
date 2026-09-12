@@ -90,18 +90,30 @@ class HealthMetricRepository {
     required Set<HealthMetricKind> kinds,
     int limit = 90,
   }) async {
-    if (kinds.isEmpty) return const {};
+    if (kinds.isEmpty || limit <= 0) return const {};
     final kindWires = kinds.map((k) => k.wire).toList();
-    final query = _db.select(_db.healthMetrics)
-      ..where((t) => t.ownerUserId.equals(ownerUserId))
-      ..where((t) => t.kind.isIn(kindWires))
-      ..where((t) => t.deletedAt.isNull())
-      ..orderBy([
-        (t) => OrderingTerm(expression: t.capturedAt, mode: OrderingMode.desc),
-      ])
-      ..limit(limit * kinds.length);
-    final rows = await query.get();
-    final metrics = rows.map(_fromRow).toList();
+    // A global LIMIT can let a dense source starve other metric kinds. Rank
+    // within each kind before limiting, while retaining a single DB query.
+    final rows = await _db
+        .customSelect(
+          '''SELECT * FROM (
+        SELECT *, ROW_NUMBER() OVER (
+          PARTITION BY kind ORDER BY captured_at DESC, id
+        ) AS metric_rank FROM health_metrics
+        WHERE owner_user_id = ? AND deleted_at IS NULL
+          AND kind IN (${List.filled(kindWires.length, '?').join(',')})
+      ) WHERE metric_rank <= ? ORDER BY captured_at DESC''',
+          variables: [
+            Variable<String>(ownerUserId),
+            ...kindWires.map(Variable<String>.new),
+            Variable<int>(limit),
+          ],
+          readsFrom: {_db.healthMetrics},
+        )
+        .get();
+    final metrics = rows
+        .map((row) => _fromRow(_db.healthMetrics.map(row.data)))
+        .toList();
 
     // Group by kind, preserving newest-first order, cap per kind.
     final result = <HealthMetricKind, List<HealthMetric>>{};
@@ -113,6 +125,34 @@ class HealthMetricRepository {
       if (list != null && list.length < limit) {
         list.add(m);
       }
+    }
+    return result;
+  }
+
+  /// Calendar-window reads must not truncate days according to a row-count
+  /// guess: multiple sources and sessions can legitimately share a date.
+  Future<Map<HealthMetricKind, List<HealthMetric>>> listInRange({
+    required String ownerUserId,
+    required Set<HealthMetricKind> kinds,
+    required DateTime from,
+    required DateTime to,
+  }) async {
+    if (kinds.isEmpty) return const {};
+    final query = _db.select(_db.healthMetrics)
+      ..where((t) => t.ownerUserId.equals(ownerUserId))
+      ..where((t) => t.kind.isIn(kinds.map((k) => k.wire)))
+      ..where((t) => t.deletedAt.isNull())
+      ..where((t) => t.capturedAt.isBiggerOrEqualValue(from))
+      ..where((t) => t.capturedAt.isSmallerThanValue(to))
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.capturedAt, mode: OrderingMode.desc),
+      ]);
+    final result = <HealthMetricKind, List<HealthMetric>>{
+      for (final kind in kinds) kind: [],
+    };
+    for (final row in await query.get()) {
+      final metric = _fromRow(row);
+      result[metric.kind]!.add(metric);
     }
     return result;
   }
