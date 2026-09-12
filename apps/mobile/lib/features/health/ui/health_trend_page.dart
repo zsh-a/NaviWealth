@@ -27,6 +27,12 @@ import 'health_today_providers.dart';
 
 part 'health_trend_overview.dart';
 
+String _healthSignedPercent(BuildContext context, num value) =>
+    AppFormatters(locale: Localizations.localeOf(context)).signedPercent(
+      value,
+      decimalDigits: 1,
+    );
+
 class HealthTrendPage extends ConsumerStatefulWidget {
   const HealthTrendPage({
     super.key,

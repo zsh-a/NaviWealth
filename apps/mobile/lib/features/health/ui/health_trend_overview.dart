@@ -113,7 +113,7 @@ class _TrendPeriodSummary extends StatelessWidget {
             children: [
               for (final item in comparable.take(2))
                 Text(
-                  '${item.kind.title(l)} ${_signedChange(item.changePercent!)}',
+                  '${item.kind.title(l)} ${_signedChange(context, item.changePercent!)}',
                   style: context.labelStyle,
                 ),
             ],
@@ -129,8 +129,8 @@ class _TrendPeriodSummary extends StatelessWidget {
   }
 }
 
-String _signedChange(double delta) =>
-    '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%';
+String _signedChange(BuildContext context, double delta) =>
+    _healthSignedPercent(context, delta);
 
 class _MissingMetricRow extends StatelessWidget {
   const _MissingMetricRow({required this.kind, required this.onPress});
