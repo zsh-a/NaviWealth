@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/health_metric_source.dart';
@@ -34,6 +35,7 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final series = widget.series;
     final kind = series.kind;
     final sample = _focused ?? series.latest;
@@ -127,7 +129,7 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
                 const SizedBox(height: AppSpacing.s8),
                 Text(
                   l.healthPeriodChange(
-                    '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}%',
+                    formatters.signedPercent(delta, decimalDigits: 1),
                     series.window.days,
                   ),
                   style: context.captionStyle,
