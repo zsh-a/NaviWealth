@@ -59,6 +59,7 @@ final _snapshots = [
       source: 'golden-cache',
       fetchedAt: DateTime.utc(2026, 5, 18, 2),
     ),
+    sparkline: const <double>[192.5, 194, 193.25, 197, 198.5, 196.75, 201.25],
   ),
   WatchlistQuoteSnapshot(
     item: _items[1],
@@ -74,6 +75,7 @@ final _snapshots = [
       source: 'golden-cache',
       fetchedAt: DateTime.utc(2026, 5, 18, 2),
     ),
+    sparkline: const <double>[19.4, 19.2, 19.1, 18.9, 19.05, 18.6, 18.42],
   ),
 ];
 

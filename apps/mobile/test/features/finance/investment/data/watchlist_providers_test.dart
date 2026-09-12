@@ -13,6 +13,76 @@ import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 void main() {
+  test('resolves watchlist identity by market and symbol, not the row id', () {
+    expect(_item('legacy-row', 'aapl').assetId, 'us_stock:AAPL');
+    expect(
+      _item('legacy-row', 'aapl', market: AssetMarket.hkStock).assetId,
+      'hk_stock:AAPL',
+    );
+  });
+
+  test(
+    'quotes do not wait for history, including lists over 24 symbols',
+    () async {
+      final service = _FakeMarketDataService();
+      final container = ProviderContainer(
+        overrides: [
+          watchlistItemsProvider.overrideWith(
+            (_) => Stream.value([
+              for (var i = 0; i < 25; i++) _item('us_stock:S$i', 'S$i'),
+            ]),
+          ),
+          marketDataServiceProvider.overrideWith((_) async => service),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        watchlistQuoteSnapshotsProvider,
+        (_, _) {},
+      );
+      addTearDown(subscription.close);
+      final snapshots = await container.read(
+        watchlistQuoteSnapshotsProvider.future,
+      );
+      expect(snapshots, hasLength(25));
+      expect(snapshots.every((snapshot) => snapshot.quote != null), isTrue);
+      expect(service.historyRequests, 0);
+    },
+  );
+
+  test('sorts recent history and omits wrong-symbol or future bars', () async {
+    final service = _FakeMarketDataService();
+    final now = DateTime.now().toUtc();
+    HistoricalBar bar(String symbol, int daysAgo, int price) => HistoricalBar(
+      symbol: symbol,
+      asOf: now.subtract(Duration(days: daysAgo)),
+      open: Decimal.fromInt(price),
+      high: Decimal.fromInt(price),
+      low: Decimal.fromInt(price),
+      close: Decimal.fromInt(price),
+    );
+    service.history = [
+      bar('AAPL', 1, 201),
+      bar('AAPL', 2, 200),
+      bar('MSFT', 1, 500),
+      bar('AAPL', -2, 900),
+      bar('AAPL', 100, 100),
+    ];
+    final container = ProviderContainer(
+      overrides: [marketDataServiceProvider.overrideWith((_) async => service)],
+    );
+    addTearDown(container.dispose);
+    expect(
+      await container.read(
+        watchlistSparklineProvider((
+          market: AssetMarket.usStock,
+          symbol: 'AAPL',
+        )).future,
+      ),
+      [200, 201],
+    );
+  });
+
   test('loads quote snapshots from overridden watchlist data source', () async {
     final item = WatchlistItem(
       id: 'us_stock:AAPL',
@@ -354,6 +424,8 @@ WatchlistQuoteSnapshot _snapshot(
 );
 
 class _FakeMarketDataService implements MarketDataService {
+  int historyRequests = 0;
+  List<HistoricalBar> history = const [];
   @override
   Future<MarketResponse<Quote>> getQuote(
     String symbol, {
@@ -379,8 +451,14 @@ class _FakeMarketDataService implements MarketDataService {
     required DateTime to,
     BarInterval interval = BarInterval.day,
     AssetMarket? market,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    historyRequests++;
+    return MarketResponse(
+      data: history,
+      freshness: DataFreshness.cachedFresh,
+      source: 'test-cache',
+      fetchedAt: DateTime.now().toUtc(),
+    );
   }
 
   @override

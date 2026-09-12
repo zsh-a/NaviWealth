@@ -8,12 +8,17 @@ import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/assets/ui/asset_detail_page.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
-import 'package:naviwealth/features/finance/investment/data/watchlist_view_preferences.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_view_state.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_sections.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
@@ -99,6 +104,7 @@ final _advancingSnapshot = WatchlistQuoteSnapshot(
     source: 'test-cache',
     fetchedAt: DateTime.utc(2026, 7, 19, 2),
   ),
+  sparkline: const <double>[198, 199.5, 200, 201.25],
 );
 
 final _decliningSnapshot = WatchlistQuoteSnapshot(
@@ -119,17 +125,21 @@ final _decliningSnapshot = WatchlistQuoteSnapshot(
 
 late SharedPreferences _preferences;
 
-Widget _wrap(
-  TargetPlatform platform, {
+/// Builds the scoped harness. `Override` is not part of Riverpod's public
+/// surface, so the overrides are applied here instead of being handed around.
+Widget _scope(
+  Widget child, {
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
+  List<WatchlistQuoteSnapshot>? scopedSnapshots,
   List<WatchlistCollection> collections = const [],
   List<WatchlistCollectionMember> members = const [],
 }) {
-  final touch = platform == TargetPlatform.android;
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(_preferences),
+      manualAssetRepositoryProvider.overrideWith((_) async => _EmptyAssets()),
+      watchlistSparklineProvider.overrideWith((_, _) async => const []),
       watchlistItemsProvider.overrideWith(
         (_) => Stream.value(items ?? [_item]),
       ),
@@ -139,9 +149,28 @@ Widget _wrap(
       watchlistCollectionMembersProvider.overrideWith(
         (_) => Stream.value(members),
       ),
+      watchlistSimulationsProvider.overrideWith((_) => Stream.value(const [])),
       watchlistQuoteSnapshotsProvider.overrideWith((_) async => snapshots),
+      watchlistQuoteSnapshotsForScopeProvider.overrideWith(
+        (_, _) async => scopedSnapshots ?? snapshots,
+      ),
     ],
-    child: MaterialApp(
+    child: child,
+  );
+}
+
+/// Router-less host. Tapping a row must not need a router to have somewhere
+/// to go, which is exactly the mobile dead end this page used to have.
+Widget _wrap(
+  TargetPlatform platform, {
+  List<WatchlistItem>? items,
+  List<WatchlistQuoteSnapshot> snapshots = const [],
+  List<WatchlistCollection> collections = const [],
+  List<WatchlistCollectionMember> members = const [],
+}) {
+  final touch = platform == TargetPlatform.android;
+  return _scope(
+    MaterialApp(
       theme: AppTheme.light().copyWith(platform: platform),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -151,7 +180,73 @@ Widget _wrap(
         child: const WatchlistPage(),
       ),
     ),
+    items: items,
+    snapshots: snapshots,
+    collections: collections,
+    members: members,
   );
+}
+
+Widget _routerWrap({
+  required GoRouter router,
+  List<WatchlistItem>? items,
+  List<WatchlistQuoteSnapshot> snapshots = const [],
+  List<WatchlistQuoteSnapshot>? scopedSnapshots,
+  List<WatchlistCollection> collections = const [],
+  List<WatchlistCollectionMember> members = const [],
+}) {
+  return _scope(
+    MaterialApp.router(
+      routerConfig: router,
+      theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('en', 'US'),
+    ),
+    items: items,
+    snapshots: snapshots,
+    scopedSnapshots: scopedSnapshots,
+    collections: collections,
+    members: members,
+  );
+}
+
+GoRouter _watchlistRouter({String? initialLocation}) {
+  return GoRouter(
+    initialLocation: initialLocation ?? FinanceRoutes.wealthWatchlist,
+    routes: [
+      GoRoute(
+        path: '/wealth/assets/:assetId',
+        builder: (_, state) => FTheme(
+          data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+          child: AssetDetailPage(assetId: state.pathParameters['assetId']!),
+        ),
+      ),
+      GoRoute(
+        path: FinanceRoutes.wealthWatchlist,
+        builder: (_, _) => FTheme(
+          data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+          child: const WatchlistPage(),
+        ),
+      ),
+    ],
+  );
+}
+
+/// Opens the toolbar overflow menu, which is where every secondary action
+/// lives now that the scope chips no longer share a scroller with them.
+Future<void> _openToolbarMenu(WidgetTester tester) async {
+  await tester.tap(find.byKey(WatchlistToolbar.menuTriggerKey));
+  await tester.pumpAndSettle();
+}
+
+/// Settles a sheet that contains a focused text field.
+///
+/// `pumpAndSettle` never returns while a caret is blinking, so the add sheet
+/// is stepped instead.
+Future<void> _pumpSheet(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(seconds: 1));
 }
 
 void main() {
@@ -205,6 +300,33 @@ void main() {
     );
   });
 
+  testWidgets('keeps optional alert rules out of the way when adding', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(TargetPlatform.android));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(FLucideIcons.plus));
+    await _pumpSheet(tester);
+
+    // The bound inputs used to sit in the open, which made an optional
+    // follow-up look like a required step.
+    expect(
+      find.byKey(const ValueKey<String>('watchlist-alert-above')),
+      findsNothing,
+    );
+    await tester.tap(find.text('Price reminder (optional)'));
+    await _pumpSheet(tester);
+    expect(
+      find.byKey(const ValueKey<String>('watchlist-alert-above')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('watchlist-alert-below')),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('shows the localized stock name with its symbol', (tester) async {
     await tester.pumpWidget(_wrap(TargetPlatform.android, items: [_namedItem]));
     await tester.pumpAndSettle();
@@ -219,12 +341,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final trigger = find.byKey(
-      const ValueKey<String>('watchlist-bulk-manage-trigger'),
-    );
-    await tester.ensureVisible(trigger);
-    await tester.pumpAndSettle();
-    await tester.tap(trigger);
+    await _openToolbarMenu(tester);
+    await tester.tap(find.text('Organize symbols'));
     await tester.pumpAndSettle();
 
     expect(find.text('Organize symbols'), findsOneWidget);
@@ -244,24 +362,24 @@ void main() {
     );
   });
 
-  testWidgets('shows a summary of the loaded quote snapshots', (tester) async {
+  testWidgets('summarizes the collection in a single overview card', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _wrap(TargetPlatform.android, snapshots: [_advancingSnapshot]),
     );
     await tester.pumpAndSettle();
 
-    final summary = find.byKey(
-      const ValueKey<String>('watchlist-quote-summary'),
-    );
-    expect(summary, findsOneWidget);
+    final overview = find.byKey(WatchlistOverviewCard.cardKey);
+    expect(overview, findsOneWidget);
     final metrics = tester.widget<AppMetricCluster>(
-      find.descendant(of: summary, matching: find.byType(AppMetricCluster)),
+      find.descendant(of: overview, matching: find.byType(AppMetricCluster)),
     );
     expect(metrics.items.map((item) => '${item.label}:${item.value}'), [
       'Symbols:1',
       'Quotes:1 / 1',
-      'Advancing:1',
-      'Declining:0',
+      'Up / down:1 / 0',
+      'Median:+0.63%',
     ]);
     final rowChange = tester.widget<DeltaText>(
       find.byKey(const ValueKey<String>('watchlist-row-change-us_stock:AAPL')),
@@ -269,36 +387,101 @@ void main() {
     expect(rowChange.format, DeltaFormat.percent);
     expect(rowChange.value, closeTo(0.625, 0.000001));
 
-    final analysis = find.byKey(
-      const ValueKey<String>('watchlist-collection-analysis'),
-    );
-    expect(analysis, findsOneWidget);
-    final analysisMetrics = tester.widgetList<AppMetricCluster>(
-      find.descendant(of: analysis, matching: find.byType(AppMetricCluster)),
-    );
-    expect(
-      analysisMetrics
-          .expand((cluster) => cluster.items)
-          .map((item) => '${item.label}:${item.value}'),
-      [
-        'Quote coverage:100%',
-        'Median move:+0.63%',
-        'Alert coverage:0 / 1',
-        'Triggered:0',
-      ],
-    );
-    expect(
-      find.descendant(
-        of: analysis,
-        matching: find.text('Live 0 · Cached 1 · Stale 0 · No price 0'),
+    // One market needs no per-market breakdown — Up / down already says it.
+    expect(find.textContaining('Up ·'), findsNothing);
+  });
+
+  testWidgets('presents quote recency in compact statistic pills', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        items: [_item, _otherItem],
+        snapshots: [_advancingSnapshot, _decliningSnapshot],
       ),
+    );
+    await tester.pumpAndSettle();
+
+    final overview = find.byKey(WatchlistOverviewCard.cardKey);
+    expect(
+      find.descendant(of: overview, matching: find.text('2 cached')),
       findsOneWidget,
     );
     expect(
-      find.descendant(
-        of: analysis,
-        matching: find.text('Largest gain: AAPL +0.63%'),
+      find.descendant(of: overview, matching: find.byType(AppBadge)),
+      findsOneWidget,
+    );
+    // The raw pipeline counters are gone.
+    expect(find.textContaining('No price 0'), findsNothing);
+    expect(find.textContaining('Live 0'), findsNothing);
+  });
+
+  testWidgets('draws a trend line per row without a per-row freshness chip', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(TargetPlatform.android, snapshots: [_advancingSnapshot]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(NwSparkline), findsOneWidget);
+    // "Cached" belongs to the overview card, not to every single row.
+    expect(find.text('Cached'), findsNothing);
+  });
+
+  testWidgets('keeps the overview compact and market breakdown collapsed', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final hk = WatchlistItem(
+      id: 'hk_stock:0700.HK',
+      symbol: '0700.HK',
+      market: AssetMarket.hkStock,
+      addedAt: _item.addedAt,
+      alertRules: const PriceAlertRules(),
+      sync: _item.sync,
+    );
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        items: [_item, hk],
+        snapshots: [_advancingSnapshot],
       ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('By market'), findsOneWidget);
+    expect(find.textContaining('Hong Kong ·'), findsNothing);
+    expect(
+      tester.getSize(find.byKey(WatchlistOverviewCard.cardKey)).height,
+      lessThanOrEqualTo(844 * .25),
+    );
+    await tester.tap(find.text('By market'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Hong Kong ·'), findsOneWidget);
+    await tester.tap(find.text('By market'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Hong Kong ·'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('warns on the row only when its quote is actually stale', (
+    tester,
+  ) async {
+    final stale = WatchlistQuoteSnapshot(
+      item: _item,
+      response: MarketResponse(
+        data: _advancingSnapshot.quote!,
+        freshness: DataFreshness.stale,
+        source: 'test-cache',
+        fetchedAt: _advancingSnapshot.response!.fetchedAt,
+      ),
+    );
+    await tester.pumpWidget(_wrap(TargetPlatform.android, snapshots: [stale]));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(ValueKey<String>('watchlist-row-stale-${_item.id}')),
       findsOneWidget,
     );
   });
@@ -310,7 +493,7 @@ void main() {
     await tester.pumpWidget(_wrap(TargetPlatform.android));
     await tester.pumpAndSettle();
 
-    expect(find.text('Alerts'), findsNothing);
+    expect(find.text('Reminders (while app is open)'), findsNothing);
     expect(find.text('Remove'), findsNothing);
     expect(find.semantics.byLabel('Actions for AAPL'), findsOneWidget);
     final action = find.widgetWithIcon(
@@ -324,12 +507,12 @@ void main() {
 
     expect(find.byType(AppSheet), findsOneWidget);
     expect(find.byType(AppActionSheetList), findsOneWidget);
-    expect(find.text('Alerts'), findsOneWidget);
+    expect(find.text('Reminders (while app is open)'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);
 
-    await tester.tap(find.text('Alerts'));
+    await tester.tap(find.text('Reminders (while app is open)'));
     await tester.pumpAndSettle();
-    expect(find.text('Alerts for AAPL'), findsOneWidget);
+    expect(find.text('Reminders for AAPL'), findsOneWidget);
     semantics.dispose();
   });
 
@@ -354,116 +537,93 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(AppSheet), findsNothing);
-    expect(find.text('Alerts'), findsOneWidget);
+    expect(find.text('Reminders (while app is open)'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);
     semantics.dispose();
   });
 
-  testWidgets('uses a persistent quote detail pane on desktop', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
+  testWidgets('opens unowned symbol details through the existing asset route', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final preferences = await SharedPreferences.getInstance();
-    final router = GoRouter(
-      initialLocation: FinanceRoutes.wealthWatchlist,
-      routes: [
-        GoRoute(
-          path: FinanceRoutes.wealthWatchlist,
-          builder: (_, _) => FTheme(
-            data: buildAppForuiTheme(
-              brightness: Brightness.light,
-              touch: false,
-            ),
-            child: const WatchlistPage(),
-          ),
-        ),
-      ],
-    );
+    final router = _watchlistRouter();
     addTearDown(router.dispose);
-
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(preferences),
-          watchlistItemsProvider.overrideWith((_) => Stream.value([_item])),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsProvider.overrideWith(
-            (_) async => [_advancingSnapshot],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.macOS),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
-      ),
+      _routerWrap(router: router, snapshots: [_advancingSnapshot]),
     );
     await tester.pumpAndSettle();
 
-    expect(find.byType(MasterDetailLayout), findsOneWidget);
-    expect(find.textContaining('Select a symbol'), findsOneWidget);
-    await tester.tap(find.text('AAPL').first);
+    // Below the master/detail breakpoint the row used to be inert: the tap
+    // target was the symbol text and had nowhere to go.
+    await tester.tap(find.text('AAPL'));
     await tester.pumpAndSettle();
 
-    expect(find.text('AAPL'), findsNWidgets(2));
-    expect(find.text('Alerts'), findsOneWidget);
+    expect(find.byType(AppSheet), findsNothing);
     expect(
       find.byKey(
         const ValueKey<String>('watchlist-detail-change-us_stock:AAPL'),
       ),
       findsOneWidget,
     );
+    expect(find.text('No price reminder'), findsOneWidget);
+    expect(
+      tester.widget<AssetDetailPage>(find.byType(AssetDetailPage)).assetId,
+      _item.assetId,
+    );
+    expect(router.canPop(), isTrue);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      FinanceRoutes.wealthWatchlist,
+    );
   });
 
-  testWidgets('sorts the current scope through the URL', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
+  testWidgets('uses a persistent quote detail pane on desktop', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await _preferences.setString(kWatchlistSortPreferenceKey, 'gainers');
-    final router = GoRouter(
-      initialLocation: '${FinanceRoutes.wealthWatchlist}?sort=change-asc',
-      routes: [
-        GoRoute(
-          path: FinanceRoutes.wealthWatchlist,
-          builder: (_, _) => FTheme(
-            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
-            child: const WatchlistPage(),
-          ),
-        ),
-      ],
-    );
+    final router = _watchlistRouter();
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(_preferences),
-          watchlistItemsProvider.overrideWith(
-            (_) => Stream.value([_item, _otherItem]),
-          ),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsProvider.overrideWith(
-            (_) async => [_advancingSnapshot, _decliningSnapshot],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
+      _routerWrap(router: router, snapshots: [_advancingSnapshot]),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    expect(find.textContaining('Select a symbol'), findsOneWidget);
+
+    await tester.tap(find.text('AAPL').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsNWidgets(2));
+    expect(find.text('Reminders (while app is open)'), findsOneWidget);
+    expect(
+      find.byKey(
+        const ValueKey<String>('watchlist-detail-change-us_stock:AAPL'),
+      ),
+      findsOneWidget,
+    );
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'selected': 'us_stock:AAPL',
+    });
+  });
+
+  testWidgets('sorts through the view state without rewriting the URL', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await _preferences.setString(kWatchlistSortPreferenceKey, 'decliners');
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        snapshots: [_advancingSnapshot, _decliningSnapshot],
       ),
     );
     await tester.pumpAndSettle();
@@ -473,14 +633,11 @@ void main() {
       lessThan(tester.getTopLeft(find.text('AAPL')).dy),
     );
 
-    final sortTrigger = find.byKey(
-      const ValueKey<String>('watchlist-sort-trigger'),
-    );
-    await tester.ensureVisible(sortTrigger);
+    await _openToolbarMenu(tester);
+    // The menu carries the current order as the action's subtitle.
+    expect(find.text('Decliners first'), findsOneWidget);
+    await tester.tap(find.text('Sort symbols'));
     await tester.pumpAndSettle();
-    await tester.tap(sortTrigger);
-    await tester.pumpAndSettle();
-    expect(find.byType(AppSheet), findsOneWidget);
     await tester.tap(find.text('Gainers first'));
     await tester.pumpAndSettle();
 
@@ -488,10 +645,284 @@ void main() {
       tester.getTopLeft(find.text('AAPL')).dy,
       lessThan(tester.getTopLeft(find.text('MSFT')).dy),
     );
-    expect(router.routeInformationProvider.value.uri.queryParameters, {
-      'sort': 'change-desc',
-    });
     expect(_preferences.getString(kWatchlistSortPreferenceKey), 'gainers');
+    // Sort order is presentation state, not a location.
+    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
+  });
+
+  testWidgets('switches collection scope from the toolbar chips', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        collections: [_collection],
+        members: [_membership],
+        snapshots: const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Starts unscoped: every symbol shows, and picking a chip narrows.
+    expect(find.text('All (2)'), findsOneWidget);
+    expect(find.text('Growth (1)'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsOneWidget);
+
+    // The chip row scrolls horizontally; later chips need scrolling in.
+    final growthChip = find.text('Growth (1)');
+    await tester.ensureVisible(growthChip);
+    await tester.pumpAndSettle();
+    await tester.tap(growthChip);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsNothing);
+    expect(
+      _preferences.getString(kWatchlistCollectionPreferenceKey),
+      'collection:${_collection.id}',
+    );
+
+    final ungroupedChip = find.text('Ungrouped (1)');
+    await tester.ensureVisible(ungroupedChip);
+    await tester.pumpAndSettle();
+    await tester.tap(ungroupedChip);
+    await tester.pumpAndSettle();
+
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(find.text('AAPL'), findsNothing);
+    expect(
+      _preferences.getString(kWatchlistCollectionPreferenceKey),
+      'ungrouped',
+    );
+    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
+  });
+
+  testWidgets('restores the last valid collection without any URL state', (
+    tester,
+  ) async {
+    await _preferences.setString(
+      kWatchlistCollectionPreferenceKey,
+      'collection:${_collection.id}',
+    );
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        collections: [_collection],
+        members: [_membership],
+        snapshots: const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Growth (1)'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsNothing);
+    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
+  });
+
+  testWidgets('falls back to all symbols when the scoped collection is gone', (
+    tester,
+  ) async {
+    // A collection deleted on another device leaves a scope pointing at
+    // nothing. Rendering an unreachable filter would show an empty list.
+    await _preferences.setString(
+      kWatchlistCollectionPreferenceKey,
+      'collection:collection-deleted-elsewhere',
+    );
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        collections: [_collection],
+        members: [_membership],
+        snapshots: const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(_preferences.getString(kWatchlistCollectionPreferenceKey), 'all');
+  });
+
+  testWidgets('applies and clears quote freshness filters from the menu', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        snapshots: [_advancingSnapshot],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _openToolbarMenu(tester);
+    await tester.tap(find.text('Filter symbols'));
+    await tester.pumpAndSettle();
+    var sheet = find.byType(AppSheet);
+    final noPrice = find.descendant(of: sheet, matching: find.text('No price'));
+    var applyFilters = find.descendant(
+      of: sheet,
+      matching: find.text('Apply filters'),
+    );
+    await tester.ensureVisible(noPrice);
+    await tester.tap(noPrice);
+    await tester.ensureVisible(applyFilters);
+    await tester.tap(applyFilters);
+    await tester.pumpAndSettle();
+
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(find.text('AAPL'), findsNothing);
+    // A narrowing is visible in the toolbar without opening the menu.
+    final activeChip = find.byKey(
+      const ValueKey<String>('watchlist-active-filter-chip'),
+    );
+    expect(activeChip, findsOneWidget);
+    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
+
+    // The chip is itself the shortcut back into the filter sheet. It sits at
+    // the end of the chip scroller, so it has to be scrolled in first.
+    await tester.ensureVisible(activeChip);
+    await tester.pumpAndSettle();
+    await tester.tap(activeChip);
+    await tester.pumpAndSettle();
+    sheet = find.byType(AppSheet);
+    final clearFilters = find.descendant(
+      of: sheet,
+      matching: find.text('Clear filters'),
+    );
+    applyFilters = find.descendant(
+      of: sheet,
+      matching: find.text('Apply filters'),
+    );
+    await tester.ensureVisible(clearFilters);
+    await tester.tap(clearFilters);
+    await tester.ensureVisible(applyFilters);
+    await tester.tap(applyFilters);
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('watchlist-active-filter-chip')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('opens collection ordering from the toolbar menu', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        collections: [_collection, _otherCollection],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _openToolbarMenu(tester);
+    await tester.tap(find.text('Reorder collections'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reorder collections'), findsOneWidget);
+    expect(find.byType(ReorderableListView), findsOneWidget);
+    expect(find.text('Growth'), findsOneWidget);
+    expect(find.text('Income'), findsOneWidget);
+  });
+
+  testWidgets('opens symbol ordering for a selected collection', (
+    tester,
+  ) async {
+    await _preferences.setString(
+      kWatchlistCollectionPreferenceKey,
+      'collection:${_collection.id}',
+    );
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        collections: [_collection],
+        members: [_membership, _otherMembership],
+        snapshots: const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await _openToolbarMenu(tester);
+    await tester.tap(find.text('Reorder symbols'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reorder symbols'), findsOneWidget);
+    expect(find.byType(ReorderableListView), findsOneWidget);
+    final sheet = find.byType(AppSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('AAPL')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.text('MSFT')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('guides an empty watchlist towards adding a symbol', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(TargetPlatform.android, items: const []));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No watchlist symbols'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FButton, 'Add symbol'));
+    await _pumpSheet(tester);
+    expect(find.text('Add to watchlist'), findsOneWidget);
+  });
+
+  testWidgets('offers a way out when a filter matches nothing', (tester) async {
+    await _preferences.setString(
+      kWatchlistFreshnessFilterPreferenceKey,
+      'live',
+    );
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        snapshots: [_advancingSnapshot],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('No matching symbols'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FButton, 'Clear filters'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(find.text('MSFT'), findsOneWidget);
   });
 
   testWidgets('query changes preserve the route pushed below watchlist', (
@@ -518,35 +949,13 @@ void main() {
     addTearDown(router.dispose);
 
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(_preferences),
-          watchlistItemsProvider.overrideWith(
-            (_) => Stream.value([_item, _otherItem]),
-          ),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value([_collection]),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value([_membership]),
-          ),
-          watchlistSimulationsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsProvider.overrideWith(
-            (_) async => [_advancingSnapshot, _decliningSnapshot],
-          ),
-          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
-            (_, _) async => [_advancingSnapshot],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
+      _routerWrap(
+        router: router,
+        items: [_item, _otherItem],
+        collections: [_collection],
+        members: [_membership],
+        snapshots: [_advancingSnapshot, _decliningSnapshot],
+        scopedSnapshots: [_advancingSnapshot],
       ),
     );
     await tester.pumpAndSettle();
@@ -568,324 +977,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Portfolio hub'), findsOneWidget);
   });
+}
 
-  testWidgets('filters collection and ungrouped scopes through the URL', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final router = GoRouter(
-      initialLocation:
-          '${FinanceRoutes.wealthWatchlist}?collection=${_collection.id}',
-      routes: [
-        GoRoute(
-          path: FinanceRoutes.wealthWatchlist,
-          builder: (_, _) => FTheme(
-            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
-            child: const WatchlistPage(),
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
+/// Opening an unowned symbol must not create an asset as a navigation side effect.
+class _EmptyAssets implements ManualAssetRepository {
+  @override
+  Future<Asset?> findById(String id) async => null;
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(_preferences),
-          watchlistItemsProvider.overrideWith(
-            (_) => Stream.value([_item, _otherItem]),
-          ),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value([_collection]),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value([_membership]),
-          ),
-          watchlistSimulationsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsProvider.overrideWith((_) async => const []),
-          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
-            (_, _) async => const [],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Growth (1)'), findsOneWidget);
-    expect(find.text('AAPL'), findsOneWidget);
-    expect(find.text('MSFT'), findsNothing);
-
-    await tester.tap(find.text('Ungrouped (1)'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('MSFT'), findsOneWidget);
-    expect(find.text('AAPL'), findsNothing);
-    expect(router.routeInformationProvider.value.uri.queryParameters, {
-      'collection': 'ungrouped',
-    });
-    expect(
-      _preferences.getString(kWatchlistCollectionPreferenceKey),
-      'ungrouped',
-    );
-  });
-
-  testWidgets('restores the last valid collection without URL state', (
-    tester,
-  ) async {
-    await _preferences.setString(
-      kWatchlistCollectionPreferenceKey,
-      'collection:${_collection.id}',
-    );
-    final router = GoRouter(
-      initialLocation: FinanceRoutes.wealthWatchlist,
-      routes: [
-        GoRoute(
-          path: FinanceRoutes.wealthWatchlist,
-          builder: (_, _) => FTheme(
-            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
-            child: const WatchlistPage(),
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(_preferences),
-          watchlistItemsProvider.overrideWith(
-            (_) => Stream.value([_item, _otherItem]),
-          ),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value([_collection]),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value([_membership]),
-          ),
-          watchlistSimulationsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
-            (_, _) async => const [],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Growth (1)'), findsOneWidget);
-    expect(find.text('AAPL'), findsOneWidget);
-    expect(find.text('MSFT'), findsNothing);
-    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
-  });
-
-  testWidgets('applies and clears quote freshness filters through the URL', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final router = GoRouter(
-      initialLocation: FinanceRoutes.wealthWatchlist,
-      routes: [
-        GoRoute(
-          path: FinanceRoutes.wealthWatchlist,
-          builder: (_, _) => FTheme(
-            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
-            child: const WatchlistPage(),
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(_preferences),
-          watchlistItemsProvider.overrideWith(
-            (_) => Stream.value([_item, _otherItem]),
-          ),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsProvider.overrideWith(
-            (_) async => [_advancingSnapshot],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final filterTrigger = find.byKey(
-      const ValueKey<String>('watchlist-filter-trigger'),
-    );
-    await tester.ensureVisible(filterTrigger);
-    await tester.tap(filterTrigger);
-    await tester.pumpAndSettle();
-    var sheet = find.byType(AppSheet);
-    var noPrice = find.descendant(of: sheet, matching: find.text('No price'));
-    var applyFilters = find.descendant(
-      of: sheet,
-      matching: find.text('Apply filters'),
-    );
-    await tester.ensureVisible(noPrice);
-    await tester.tap(noPrice);
-    await tester.ensureVisible(applyFilters);
-    await tester.tap(applyFilters);
-    await tester.pumpAndSettle();
-
-    expect(find.text('MSFT'), findsOneWidget);
-    expect(find.text('AAPL'), findsNothing);
-    expect(router.routeInformationProvider.value.uri.queryParameters, {
-      'freshness': 'unavailable',
-    });
-
-    await tester.ensureVisible(filterTrigger);
-    await tester.tap(filterTrigger);
-    await tester.pumpAndSettle();
-    sheet = find.byType(AppSheet);
-    final clearFilters = find.descendant(
-      of: sheet,
-      matching: find.text('Clear filters'),
-    );
-    applyFilters = find.descendant(
-      of: sheet,
-      matching: find.text('Apply filters'),
-    );
-    await tester.ensureVisible(clearFilters);
-    await tester.tap(clearFilters);
-    await tester.ensureVisible(applyFilters);
-    await tester.tap(applyFilters);
-    await tester.pumpAndSettle();
-
-    expect(find.text('AAPL'), findsOneWidget);
-    expect(find.text('MSFT'), findsOneWidget);
-    expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
-  });
-
-  testWidgets('opens collection ordering from the watchlist toolbar', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _wrap(
-        TargetPlatform.android,
-        collections: [_collection, _otherCollection],
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final trigger = find.byKey(
-      const ValueKey<String>('watchlist-reorder-collections'),
-    );
-    await tester.ensureVisible(trigger);
-    await tester.tap(trigger);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Reorder collections'), findsOneWidget);
-    expect(find.byType(ReorderableListView), findsOneWidget);
-    expect(find.text('Growth'), findsOneWidget);
-    expect(find.text('Income'), findsOneWidget);
-  });
-
-  testWidgets('opens symbol ordering for a selected collection', (
-    tester,
-  ) async {
-    await _preferences.setString(
-      kWatchlistCollectionPreferenceKey,
-      'collection:${_collection.id}',
-    );
-    final router = GoRouter(
-      initialLocation: FinanceRoutes.wealthWatchlist,
-      routes: [
-        GoRoute(
-          path: FinanceRoutes.wealthWatchlist,
-          builder: (_, _) => FTheme(
-            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
-            child: const WatchlistPage(),
-          ),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(_preferences),
-          watchlistItemsProvider.overrideWith(
-            (_) => Stream.value([_item, _otherItem]),
-          ),
-          watchlistCollectionsProvider.overrideWith(
-            (_) => Stream.value([_collection]),
-          ),
-          watchlistCollectionMembersProvider.overrideWith(
-            (_) => Stream.value([_membership, _otherMembership]),
-          ),
-          watchlistSimulationsProvider.overrideWith(
-            (_) => Stream.value(const []),
-          ),
-          watchlistQuoteSnapshotsForScopeProvider.overrideWith(
-            (_, _) async => const [],
-          ),
-        ],
-        child: MaterialApp.router(
-          routerConfig: router,
-          theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          locale: const Locale('en', 'US'),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    final trigger = find.byKey(
-      const ValueKey<String>('watchlist-reorder-symbols'),
-    );
-    await tester.ensureVisible(trigger);
-    await tester.tap(trigger);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Reorder symbols'), findsOneWidget);
-    expect(find.byType(ReorderableListView), findsOneWidget);
-    final sheet = find.byType(AppSheet);
-    expect(
-      find.descendant(of: sheet, matching: find.text('AAPL')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('MSFT')),
-      findsOneWidget,
-    );
-  });
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 class _WatchlistPushHost extends StatelessWidget {

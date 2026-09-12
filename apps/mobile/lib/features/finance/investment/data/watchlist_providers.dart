@@ -156,14 +156,25 @@ final watchlistQuoteSnapshotsForScopeProvider = FutureProvider.autoDispose
     });
 
 class WatchlistQuoteSnapshot {
-  const WatchlistQuoteSnapshot({required this.item, this.response, this.error});
+  const WatchlistQuoteSnapshot({
+    required this.item,
+    this.response,
+    this.error,
+    this.sparkline = const <double>[],
+  });
 
   final WatchlistItem item;
   final MarketResponse<Quote>? response;
   final Object? error;
 
+  /// Closing prices for the trailing window, oldest first. Empty when the
+  /// history provider had nothing (or the symbol is unpriced), in which case
+  /// the row simply omits its trend line instead of inventing one.
+  final List<double> sparkline;
+
   Quote? get quote => response?.data;
   bool get hasError => error != null;
+  bool get hasSparkline => sparkline.length > 1;
 }
 
 class WatchlistQuoteSummary {
@@ -228,6 +239,23 @@ class WatchlistFilter {
       market == null &&
       alerts == WatchlistAlertFilter.all &&
       freshness == WatchlistFreshnessFilter.all;
+
+  /// Number of narrowings currently applied — drives the toolbar's
+  /// "filtered" affordance without re-deriving the individual fields.
+  int get activeCount =>
+      (market == null ? 0 : 1) +
+      (alerts == WatchlistAlertFilter.all ? 0 : 1) +
+      (freshness == WatchlistFreshnessFilter.all ? 0 : 1);
+
+  @override
+  bool operator ==(Object other) =>
+      other is WatchlistFilter &&
+      other.market == market &&
+      other.alerts == alerts &&
+      other.freshness == freshness;
+
+  @override
+  int get hashCode => Object.hash(market, alerts, freshness);
 }
 
 List<WatchlistItem> filterWatchlistItems({
@@ -373,3 +401,37 @@ Future<WatchlistQuoteSnapshot> _fetchSnapshot(
     return WatchlistQuoteSnapshot(item: item, error: error);
   }
 }
+
+typedef WatchlistSymbolKey = ({AssetMarket market, String symbol});
+
+/// History loads independently of quotes and reminder checks. Each row can
+/// display its price immediately; a slow history request cannot block it.
+final watchlistSparklineProvider = FutureProvider.autoDispose
+    .family<List<double>, WatchlistSymbolKey>((ref, key) async {
+      try {
+        final service = await ref.watch(marketDataServiceProvider.future);
+        final now = DateTime.now().toUtc();
+        final to = DateTime.utc(now.year, now.month, now.day + 1);
+        final from = to.subtract(const Duration(days: 31));
+        final response = await service.getHistorical(
+          key.symbol,
+          from: from,
+          to: to,
+          market: key.market,
+        );
+        final bars =
+            response.data
+                .where(
+                  (bar) =>
+                      bar.symbol.toUpperCase() == key.symbol.toUpperCase() &&
+                      !bar.asOf.isBefore(from) &&
+                      !bar.asOf.isAfter(now) &&
+                      bar.close > Decimal.zero,
+                )
+                .toList()
+              ..sort((a, b) => a.asOf.compareTo(b.asOf));
+        return [for (final bar in bars) bar.close.toDouble()];
+      } on Object {
+        return const [];
+      }
+    });

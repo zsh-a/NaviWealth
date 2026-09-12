@@ -464,7 +464,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wealthWatchlistSectionTitle => '自选';
 
   @override
-  String get wealthWatchlistSectionSubtitle => '你在跟踪的标的';
+  String get wealthWatchlistSectionSubtitle => '关注的标的与价格提醒';
 
   @override
   String get wealthLiabilitiesSectionTitle => '负债';
@@ -10359,7 +10359,105 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSelectItem => '选择标的，查看行情与提醒规则';
 
   @override
-  String get watchlistAccountsEntrySubtitle => '跟踪标的并设置本地价格告警';
+  String get watchlistOverviewTitle => '概览';
+
+  @override
+  String get watchlistOverviewByMarket => '按市场';
+
+  @override
+  String get watchlistSummaryAdvancingDeclining => '涨 / 跌';
+
+  @override
+  String get watchlistOverviewTypicalMove => '中位涨跌';
+
+  @override
+  String watchlistOverviewFreshnessLive(int count) {
+    return '$count 项实时';
+  }
+
+  @override
+  String watchlistOverviewFreshnessCached(int count) {
+    return '$count 项缓存价';
+  }
+
+  @override
+  String watchlistOverviewFreshnessStale(int count) {
+    return '$count 项已延迟';
+  }
+
+  @override
+  String watchlistOverviewFreshnessUnavailable(int count) {
+    return '$count 项暂无报价';
+  }
+
+  @override
+  String get watchlistOverviewFreshnessNone => '等待首次报价';
+
+  @override
+  String watchlistOverviewAlertsSummary(int configured, int triggered) {
+    return '$configured 项提醒 · $triggered 项达阈值';
+  }
+
+  @override
+  String watchlistOverviewMarketLine(
+    String market,
+    int up,
+    int down,
+    int flat,
+  ) {
+    return '$market · $up 涨 · $down 跌 · $flat 平';
+  }
+
+  @override
+  String get watchlistMoreActions => '更多';
+
+  @override
+  String get watchlistFilterActiveChip => '已筛选';
+
+  @override
+  String get watchlistAlertSetBadge => '已设置价格提醒（仅打开 App 时）';
+
+  @override
+  String get watchlistAlertNotSet => '未设置价格提醒';
+
+  @override
+  String watchlistSymbolDetailTitle(String symbol) {
+    return '$symbol 详情';
+  }
+
+  @override
+  String get watchlistDetailTrendTitle => '近 30 天';
+
+  @override
+  String get watchlistDetailOpen => '开盘';
+
+  @override
+  String get watchlistDetailHigh => '最高';
+
+  @override
+  String get watchlistDetailLow => '最低';
+
+  @override
+  String get watchlistDetailPreviousClose => '昨收';
+
+  @override
+  String get watchlistDetailVolume => '成交量';
+
+  @override
+  String get watchlistDetailExchange => '交易所';
+
+  @override
+  String get watchlistDetailUpdatedAt => '更新于';
+
+  @override
+  String get watchlistAlertOptionalSection => '价格提醒（可选）';
+
+  @override
+  String get watchlistAlertOptionalHint => '提醒仅在打开 App 时生效';
+
+  @override
+  String get watchlistAlertNotificationNote =>
+      '打开 App 时每 15 分钟及手动刷新时检查价格。已授权时发送系统通知，否则在自选页内提示。关闭 App 或进入后台后不检查价格。';
 
   @override
   String get watchlistAddAction => '添加标的';
@@ -10411,7 +10509,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get watchlistDeleteCollectionBody => '标的和告警规则仍会保留在“全部”中。';
+  String get watchlistDeleteCollectionBody => '标的和提醒规则仍会保留在“全部”中。';
 
   @override
   String get watchlistManageCollectionsAction => '所属组合';
@@ -10465,7 +10563,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistFilterMarketSection => '市场';
 
   @override
-  String get watchlistFilterAlertsSection => '告警';
+  String get watchlistFilterAlertsSection => '提醒';
 
   @override
   String get watchlistFilterFreshnessSection => '行情新鲜度';
@@ -10490,66 +10588,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistFilterEmptyBody => '调整或清除筛选条件以查看更多标的。';
-
-  @override
-  String get watchlistAnalysisTitle => '自选分析';
-
-  @override
-  String get watchlistAnalysisMarketTimingNote =>
-      '涨跌为当前时点快照；不同市场交易时段可能不同，因此按市场拆分。';
-
-  @override
-  String get watchlistAnalysisCoverage => '行情覆盖';
-
-  @override
-  String get watchlistAnalysisMedianChange => '涨跌中位数';
-
-  @override
-  String get watchlistAnalysisAlertCoverage => '告警覆盖';
-
-  @override
-  String get watchlistAnalysisTriggeredAlerts => '已触发';
-
-  @override
-  String watchlistAnalysisCoverageValue(int configured, int total) {
-    return '$configured / $total';
-  }
-
-  @override
-  String watchlistAnalysisFreshnessSummary(
-    int live,
-    int cached,
-    int stale,
-    int unavailable,
-  ) {
-    return '实时 $live · 缓存 $cached · 过期 $stale · 无行情 $unavailable';
-  }
-
-  @override
-  String watchlistAnalysisTopGainer(String symbol, String change) {
-    return '最大上涨：$symbol $change';
-  }
-
-  @override
-  String watchlistAnalysisTopDecliner(String symbol, String change) {
-    return '最大下跌：$symbol $change';
-  }
-
-  @override
-  String get watchlistAnalysisMarketsTitle => '按市场';
-
-  @override
-  String watchlistAnalysisMarketSummary(
-    String market,
-    int quotes,
-    int total,
-    int advancing,
-    int declining,
-    int unchanged,
-    int unknown,
-  ) {
-    return '$market：$quotes/$total 个有行情 · 上涨 $advancing · 下跌 $declining · 平盘 $unchanged · 无昨收 $unknown';
-  }
 
   @override
   String get watchlistSimulationSectionTitle => '模拟组合';
@@ -10577,9 +10615,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSimulationDeleteAction => '删除模拟';
 
   @override
-  String get watchlistSimulationVirtualCapital => '虚拟本金';
-
-  @override
   String get watchlistSimulationDailyMove => '加权当日涨跌';
 
   @override
@@ -10596,9 +10631,6 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get watchlistSimulationMethodNote =>
       '仅使用各标的当前可用的当日涨跌幅；缺失行情按不变处理，且不会推断历史净值、汇率序列或公司行动调整。';
-
-  @override
-  String get watchlistSimulationHistoryTitle => '模拟观察历史';
 
   @override
   String get watchlistSimulationObservedValue => '最新观察值';
@@ -10679,11 +10711,6 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String watchlistSimulationEqualWeightNote(int count) {
-    return '初始为 $count 个标的等权配置，创建后可继续调整。';
-  }
-
-  @override
   String watchlistSimulationDefaultName(String collection) {
     return '$collection模拟';
   }
@@ -10692,21 +10719,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSimulationAdjustTitle => '调整模拟配置';
 
   @override
-  String get watchlistSimulationAllocationNote =>
-      '设置各标的与虚拟现金的目标百分比，合计必须为 100%。';
-
-  @override
   String get watchlistSimulationAllocationSyncing =>
       '配置快照仍在同步中。选中的快照完整前不会显示相关数值。';
 
   @override
   String get watchlistSimulationAllocationInvalid =>
       '此配置无效。请编辑模拟组合，使权重合计恢复为 100%。';
-
-  @override
-  String watchlistSimulationWeightField(String symbol) {
-    return '$symbol 目标权重（%）';
-  }
 
   @override
   String get watchlistSimulationCashField => '虚拟现金（%）';
@@ -10870,32 +10888,26 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String watchlistEditAlertTitle(String symbol) {
-    return '$symbol 告警';
+    return '$symbol 提醒';
   }
 
   @override
   String get watchlistEmptyTitle => '暂无自选标的';
 
   @override
-  String get watchlistEmptyBody => '添加代码后会优先读取缓存价格，并在当前页打开时轮询触发阈值告警。';
+  String get watchlistEmptyBody => '添加标的，关注价格与近期走势。价格提醒为可选项，仅在打开 App 时生效。';
 
   @override
-  String get watchlistSymbolField => '代码';
+  String get watchlistAlertAboveField => '高于此价提醒';
 
   @override
-  String get watchlistMarketField => '市场';
+  String get watchlistAlertBelowField => '低于此价提醒';
 
   @override
-  String get watchlistAlertAboveField => '高于此价告警';
+  String get watchlistSaveAlertsAction => '保存提醒';
 
   @override
-  String get watchlistAlertBelowField => '低于此价告警';
-
-  @override
-  String get watchlistSaveAlertsAction => '保存告警';
-
-  @override
-  String get watchlistEditAlertsAction => '告警';
+  String get watchlistEditAlertsAction => '提醒（仅打开 App 时）';
 
   @override
   String get watchlistRemoveAction => '移除';
@@ -10908,12 +10920,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistSummaryQuotes => '行情';
-
-  @override
-  String get watchlistSummaryAdvancing => '上涨';
-
-  @override
-  String get watchlistSummaryDeclining => '下跌';
 
   @override
   String get watchlistFreshnessLive => '实时';
@@ -10936,16 +10942,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String watchlistAlertTriggeredAbove(String symbol, String price) {
-    return '$symbol 当前 $price，已高于告警价';
+    return '$symbol 当前 $price，已高于提醒价';
   }
 
   @override
   String watchlistAlertTriggeredBelow(String symbol, String price) {
-    return '$symbol 当前 $price，已低于告警价';
+    return '$symbol 当前 $price，已低于提醒价';
   }
-
-  @override
-  String get watchlistSymbolRequired => '请输入代码';
 
   @override
   String get watchlistInvalidNumber => '请输入大于 0 的价格';

@@ -5,6 +5,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/assets/data/asset_detail_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'equity_asset_detail_page.dart';
@@ -66,19 +67,7 @@ class AssetDetailPage extends ConsumerWidget {
         },
         data: (asset) {
           if (asset == null) {
-            return AppPageScaffold(
-              title: l10n.assetDetailUnknown,
-              childPad: false,
-              child: AppEmptyState(
-                icon: FLucideIcons.box,
-                title: l10n.assetDetailNotFound,
-                action: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => smartPop(context),
-                  child: Text(l10n.commonClose),
-                ),
-              ),
-            );
+            return WatchlistAssetDetailPage(assetId: assetId);
           }
           return switch (asset.type) {
             AssetType.cash ||

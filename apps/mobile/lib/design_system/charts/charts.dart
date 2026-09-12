@@ -18,4 +18,5 @@ export 'nw_area_chart.dart';
 export 'nw_bar_chart.dart';
 export 'nw_line_chart.dart';
 export 'nw_pie_chart.dart';
+export 'nw_sparkline.dart';
 export 'stage_chart.dart';

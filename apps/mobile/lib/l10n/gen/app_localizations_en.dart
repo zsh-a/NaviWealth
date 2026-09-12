@@ -481,7 +481,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wealthWatchlistSectionTitle => 'Watchlist';
 
   @override
-  String get wealthWatchlistSectionSubtitle => 'Symbols you\'re tracking';
+  String get wealthWatchlistSectionSubtitle =>
+      'Symbols you track and their price alerts';
 
   @override
   String get wealthLiabilitiesSectionTitle => 'Liabilities';
@@ -10941,11 +10942,109 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSelectItem =>
-      'Select a symbol to inspect its quote and alert rules';
+      'Select a symbol to inspect its quote and reminders';
 
   @override
-  String get watchlistAccountsEntrySubtitle =>
-      'Track symbols and local price alerts';
+  String get watchlistOverviewTitle => 'Overview';
+
+  @override
+  String get watchlistOverviewByMarket => 'By market';
+
+  @override
+  String get watchlistSummaryAdvancingDeclining => 'Up / down';
+
+  @override
+  String get watchlistOverviewTypicalMove => 'Median';
+
+  @override
+  String watchlistOverviewFreshnessLive(int count) {
+    return '$count live';
+  }
+
+  @override
+  String watchlistOverviewFreshnessCached(int count) {
+    return '$count cached';
+  }
+
+  @override
+  String watchlistOverviewFreshnessStale(int count) {
+    return '$count delayed';
+  }
+
+  @override
+  String watchlistOverviewFreshnessUnavailable(int count) {
+    return '$count without a price';
+  }
+
+  @override
+  String get watchlistOverviewFreshnessNone => 'Waiting for the first quotes';
+
+  @override
+  String watchlistOverviewAlertsSummary(int configured, int triggered) {
+    return '$configured reminders · $triggered matched';
+  }
+
+  @override
+  String watchlistOverviewMarketLine(
+    String market,
+    int up,
+    int down,
+    int flat,
+  ) {
+    return '$market · $up up · $down down · $flat flat';
+  }
+
+  @override
+  String get watchlistMoreActions => 'More';
+
+  @override
+  String get watchlistFilterActiveChip => 'Filtered';
+
+  @override
+  String get watchlistAlertSetBadge => 'Price reminder set (while app is open)';
+
+  @override
+  String get watchlistAlertNotSet => 'No price reminder';
+
+  @override
+  String watchlistSymbolDetailTitle(String symbol) {
+    return '$symbol details';
+  }
+
+  @override
+  String get watchlistDetailTrendTitle => 'Last 30 days';
+
+  @override
+  String get watchlistDetailOpen => 'Open';
+
+  @override
+  String get watchlistDetailHigh => 'High';
+
+  @override
+  String get watchlistDetailLow => 'Low';
+
+  @override
+  String get watchlistDetailPreviousClose => 'Prev close';
+
+  @override
+  String get watchlistDetailVolume => 'Volume';
+
+  @override
+  String get watchlistDetailExchange => 'Exchange';
+
+  @override
+  String get watchlistDetailUpdatedAt => 'Updated';
+
+  @override
+  String get watchlistAlertOptionalSection => 'Price reminder (optional)';
+
+  @override
+  String get watchlistAlertOptionalHint =>
+      'Reminders only while the app is open';
+
+  @override
+  String get watchlistAlertNotificationNote =>
+      'Prices are checked every 15 minutes while the app is open, and when you refresh. System notifications require permission; otherwise reminders appear on the Watchlist page. No checks run when the app is closed or in the background.';
 
   @override
   String get watchlistAddAction => 'Add symbol';
@@ -10998,7 +11097,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistDeleteCollectionBody =>
-      'Symbols and alert rules will remain in All.';
+      'Symbols and reminder rules will remain in All.';
 
   @override
   String get watchlistManageCollectionsAction => 'Collections';
@@ -11053,7 +11152,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistFilterMarketSection => 'Market';
 
   @override
-  String get watchlistFilterAlertsSection => 'Alerts';
+  String get watchlistFilterAlertsSection => 'Reminders';
 
   @override
   String get watchlistFilterFreshnessSection => 'Price freshness';
@@ -11065,7 +11164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistFilterAlertsConfigured => 'Configured';
 
   @override
-  String get watchlistFilterAlertsNone => 'No alert';
+  String get watchlistFilterAlertsNone => 'No reminder';
 
   @override
   String get watchlistFilterClearAction => 'Clear filters';
@@ -11079,66 +11178,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get watchlistFilterEmptyBody =>
       'Adjust or clear the filters to see more symbols.';
-
-  @override
-  String get watchlistAnalysisTitle => 'Watchlist analysis';
-
-  @override
-  String get watchlistAnalysisMarketTimingNote =>
-      'Point-in-time moves are split by market because trading sessions may differ.';
-
-  @override
-  String get watchlistAnalysisCoverage => 'Quote coverage';
-
-  @override
-  String get watchlistAnalysisMedianChange => 'Median move';
-
-  @override
-  String get watchlistAnalysisAlertCoverage => 'Alert coverage';
-
-  @override
-  String get watchlistAnalysisTriggeredAlerts => 'Triggered';
-
-  @override
-  String watchlistAnalysisCoverageValue(int configured, int total) {
-    return '$configured / $total';
-  }
-
-  @override
-  String watchlistAnalysisFreshnessSummary(
-    int live,
-    int cached,
-    int stale,
-    int unavailable,
-  ) {
-    return 'Live $live · Cached $cached · Stale $stale · No price $unavailable';
-  }
-
-  @override
-  String watchlistAnalysisTopGainer(String symbol, String change) {
-    return 'Largest gain: $symbol $change';
-  }
-
-  @override
-  String watchlistAnalysisTopDecliner(String symbol, String change) {
-    return 'Largest decline: $symbol $change';
-  }
-
-  @override
-  String get watchlistAnalysisMarketsTitle => 'By market';
-
-  @override
-  String watchlistAnalysisMarketSummary(
-    String market,
-    int quotes,
-    int total,
-    int advancing,
-    int declining,
-    int unchanged,
-    int unknown,
-  ) {
-    return '$market: $quotes/$total quotes · $advancing up · $declining down · $unchanged flat · $unknown no prior close';
-  }
 
   @override
   String get watchlistSimulationSectionTitle => 'Paper simulations';
@@ -11169,9 +11208,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSimulationDeleteAction => 'Delete simulation';
 
   @override
-  String get watchlistSimulationVirtualCapital => 'Virtual capital';
-
-  @override
   String get watchlistSimulationDailyMove => 'Weighted daily move';
 
   @override
@@ -11188,9 +11224,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get watchlistSimulationMethodNote =>
       'Uses each available symbol\'s current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.';
-
-  @override
-  String get watchlistSimulationHistoryTitle => 'Observed simulation history';
 
   @override
   String get watchlistSimulationObservedValue => 'Latest observed value';
@@ -11274,17 +11307,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String watchlistSimulationEqualWeightNote(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Starts with equal target weights across $count symbols.',
-      one: 'Starts with one target weight.',
-    );
-    return '$_temp0 You can adjust them after creation.';
-  }
-
-  @override
   String watchlistSimulationDefaultName(String collection) {
     return '$collection simulation';
   }
@@ -11293,21 +11315,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSimulationAdjustTitle => 'Adjust paper allocation';
 
   @override
-  String get watchlistSimulationAllocationNote =>
-      'Set target percentages for symbols and virtual cash. The total must equal 100%.';
-
-  @override
   String get watchlistSimulationAllocationSyncing =>
       'This allocation snapshot is still syncing. Values remain hidden until the selected snapshot is complete.';
 
   @override
   String get watchlistSimulationAllocationInvalid =>
       'This allocation is invalid. Edit the simulation to restore weights totaling 100%.';
-
-  @override
-  String watchlistSimulationWeightField(String symbol) {
-    return '$symbol target (%)';
-  }
 
   @override
   String get watchlistSimulationCashField => 'Virtual cash (%)';
@@ -11481,7 +11494,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String watchlistEditAlertTitle(String symbol) {
-    return 'Alerts for $symbol';
+    return 'Reminders for $symbol';
   }
 
   @override
@@ -11489,25 +11502,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistEmptyBody =>
-      'Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.';
+      'Add symbols to follow prices and recent trends. Optional price reminders work only while the app is open.';
 
   @override
-  String get watchlistSymbolField => 'Symbol';
+  String get watchlistAlertAboveField => 'Remind above';
 
   @override
-  String get watchlistMarketField => 'Market';
+  String get watchlistAlertBelowField => 'Remind below';
 
   @override
-  String get watchlistAlertAboveField => 'Alert above';
+  String get watchlistSaveAlertsAction => 'Save reminders';
 
   @override
-  String get watchlistAlertBelowField => 'Alert below';
-
-  @override
-  String get watchlistSaveAlertsAction => 'Save alerts';
-
-  @override
-  String get watchlistEditAlertsAction => 'Alerts';
+  String get watchlistEditAlertsAction => 'Reminders (while app is open)';
 
   @override
   String get watchlistRemoveAction => 'Remove';
@@ -11520,12 +11527,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSummaryQuotes => 'Quotes';
-
-  @override
-  String get watchlistSummaryAdvancing => 'Advancing';
-
-  @override
-  String get watchlistSummaryDeclining => 'Declining';
 
   @override
   String get watchlistFreshnessLive => 'Live';
@@ -11548,16 +11549,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String watchlistAlertTriggeredAbove(String symbol, String price) {
-    return '$symbol is at $price, above your alert';
+    return '$symbol is at $price, above your reminder price';
   }
 
   @override
   String watchlistAlertTriggeredBelow(String symbol, String price) {
-    return '$symbol is at $price, below your alert';
+    return '$symbol is at $price, below your reminder price';
   }
-
-  @override
-  String get watchlistSymbolRequired => 'Enter a symbol';
 
   @override
   String get watchlistInvalidNumber => 'Enter a positive price';

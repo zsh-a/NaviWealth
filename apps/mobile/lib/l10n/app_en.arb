@@ -15,7 +15,6 @@
   "@appTitle": {
     "description": "Application name shown in title bar and launchers"
   },
-
   "navHome": "Today",
   "@navHome": { "description": "Bottom nav: today / driver's-seat tab. Renamed from 'Overview' under the IA contract — Today is read-only operating dashboard." },
   "navToday": "Today",
@@ -42,7 +41,6 @@
   "@shellExpandSidebarShortcut": { "description": "Desktop sidebar tooltip when the sidebar is collapsed" },
   "shellCollapseSidebarShortcut": "Collapse sidebar  (⌘B)",
   "@shellCollapseSidebarShortcut": { "description": "Desktop sidebar tooltip when the sidebar is expanded" },
-
   "planHubTitle": "Plan",
   "@planHubTitle": { "description": "Plan hub page title (IA contract §1: decisions + future state)" },
   "planRebalanceSectionTitle": "Rebalance",
@@ -193,7 +191,6 @@
   "@planHeroNextRebalance": { "description": "Plan hero — secondary CTA hint when drift is detected" },
   "planHeroSeePlan": "See plan",
   "@planHeroSeePlan": { "description": "Plan hero primary CTA: deep-link to /plan/fire" },
-
   "wealthHubTitle": "Wealth",
   "@wealthHubTitle": { "description": "Wealth hub page title (IA contract §1: owned objects + current state)" },
   "wealthHubSubtitle": "What you own, what you owe.",
@@ -215,7 +212,7 @@
   "@wealthDividendSectionSubtitle": { "description": "Wealth hub: dividend center destination subtitle" },
   "wealthWatchlistSectionTitle": "Watchlist",
   "@wealthWatchlistSectionTitle": { "description": "Wealth hub: watchlist section title" },
-  "wealthWatchlistSectionSubtitle": "Symbols you're tracking",
+  "wealthWatchlistSectionSubtitle": "Symbols you track and their price alerts",
   "@wealthWatchlistSectionSubtitle": { "description": "Wealth hub: watchlist section subtitle" },
   "wealthLiabilitiesSectionTitle": "Liabilities",
   "@wealthLiabilitiesSectionTitle": { "description": "Wealth hub: liabilities section title" },
@@ -1326,7 +1323,6 @@
   "superFabLiability": "Liability",
   "transferConvertModeBanner": "Choose two accounts with different currencies, then confirm the amount sent and received.",
   "@transferConvertModeBanner": { "description": "Hint shown at the top of the Transfer form when the user enters via the Convert action" },
-
   "homeAppBarTitle": "Overview",
   "homeAiAssistantTooltip": "AI assistant",
   "@homeAiAssistantTooltip": { "description": "Tooltip for the home AppBar action that opens the AI chat surface." },
@@ -1421,7 +1417,6 @@
   "assetTypeMutualFund": "Mutual fund",
   "assetTypeBond": "Bond",
   "assetTypeCrypto": "Crypto",
-
   "securitiesHoldingQuantity": "Qty {quantity}",
   "@securitiesHoldingQuantity": {
     "description": "Compact quantity badge in the securities list — e.g. 'Qty 100'.",
@@ -1429,7 +1424,6 @@
   },
   "securitiesHoldingFlat": "Not held",
   "@securitiesHoldingFlat": { "description": "Subtitle when the user has zero shares of a known securities asset." },
-
   "corpActionTitle": "Corporate Action",
   "corpActionSelectAsset": "Asset",
   "corpActionSelectAssetHint": "Choose which holding the action applies to.",
@@ -1477,10 +1471,8 @@
   "corpActionSubmitted": "Recorded.",
   "corpActionInvalidNumber": "Enter a positive number",
   "corpActionInvalidNumberNonNegative": "Enter a non-negative number",
-
   "assetsLiabilitiesLink": "Liabilities & repayment plans",
   "@assetsLiabilitiesLink": { "description": "Tile on the Assets page that opens the liabilities subscreen" },
-
   "liabilitiesAppBarTitle": "Liabilities",
   "liabilitiesEmptyHint": "No liabilities yet. Add a mortgage, car loan, credit card or consumer loan to track repayment.",
   "liabilitiesAddAction": "Add liability",
@@ -1581,7 +1573,6 @@
   "@liabilityScheduleUndoConfirmBody": { "description": "Confirmation body before undoing a liability payment" },
   "liabilityNotFound": "Liability not found",
   "liabilityRevolvingNoSchedule": "Credit-card / revolving lines have no fixed amortization schedule.",
-
   "physicalAssetsSectionTitle": "Real estate & vehicles",
   "physicalAssetsEmpty": "No real estate or vehicles yet. Tap + to add one.",
   "physicalAssetTypeRealEstate": "Real estate",
@@ -1626,7 +1617,6 @@
   "physicalAssetValidationPositive": "Must be greater than 0",
   "physicalAssetValidationResidualRange": "Must be between 0 and 1",
   "physicalAssetNotFound": "Asset not found",
-
   "settingsAppBarTitle": "Settings",
   "settingsBaseCurrencyTitle": "Base currency",
   "settingsBaseCurrencySubtitle": "{currency} (default)",
@@ -1741,7 +1731,6 @@
       "version": { "type": "String", "example": "0.1.0" }
     }
   },
-
   "settingsAppearanceSection": "Appearance",
   "settingsAccentSeedTitle": "Accent color",
   "accentSeedCyan": "Turquoise",
@@ -1763,7 +1752,6 @@
   "langSystem": "System default",
   "langEnglish": "English",
   "langChinese": "中文",
-
   "commonRetry": "Retry",
   "commonRefresh": "Refresh",
   "@commonRefresh": { "description": "Generic refresh/reload action label" },
@@ -1808,13 +1796,11 @@
   "@commonUndo": { "description": "Generic undo affordance label." },
   "commonUndoSucceeded": "Change undone",
   "commonUndoFailed": "Couldn't undo the change. Try again.",
-
   "deferredLoadFailedTitle": "Couldn't load this section",
   "@deferredLoadFailedTitle": {
     "description": "Shown when a route's deferred bundle fails to download (offline, bad CDN cache, etc.)."
   },
   "deferredLoadRetry": "Retry",
-
   "routeNotFoundTitle": "Page not found",
   "@routeNotFoundTitle": { "description": "Title shown when go_router can't match a URL to any registered route (404)." },
   "routeNotFoundMessage": "We couldn't find {path}. It may have been moved or never existed.",
@@ -1830,7 +1816,6 @@
   "@routeGoHome": { "description": "Action that navigates back to the home tab from an error / not-found page." },
   "routeGoBack": "Go back",
   "@routeGoBack": { "description": "Secondary action on the error / not-found page that pops the previous route when one exists." },
-
   "shortcutsHelpTitle": "Keyboard shortcuts",
   "@shortcutsHelpTitle": { "description": "Title of the shortcut help dialog (Cmd/Ctrl+/)" },
   "shortcutCommandPalette": "Open command palette",
@@ -1858,7 +1843,6 @@
   "@shortcutListNext": { "description": "Help-dialog label for j key to select next list item in master-detail" },
   "shortcutListPrevious": "Select previous item",
   "@shortcutListPrevious": { "description": "Help-dialog label for k key to select previous list item in master-detail" },
-
   "commandPaletteSearchHint": "Search commands…",
   "@commandPaletteSearchHint": { "description": "Placeholder for the command palette search box" },
   "commandPaletteMobileEntryHint": "Search, jump, ask…",
@@ -1929,7 +1913,6 @@
   "@commandPaletteToggleLanguage": { "description": "Command palette: cycle between supported languages" },
   "commandPaletteShortcutHelp": "Show keyboard shortcuts",
   "@commandPaletteShortcutHelp": { "description": "Command palette: open the shortcut help dialog" },
-
   "pwaUpdateAvailable": "A new version of NaviWealth is ready.",
   "@pwaUpdateAvailable": { "description": "Banner shown when the PWA service worker has a new version waiting to activate" },
   "pwaUpdateApply": "Refresh",
@@ -1985,7 +1968,6 @@
   "@nativeUpdateDownloadFailed": { "description": "Toast shown when a GitHub update download fails" },
   "nativeUpdateInstallStarted": "Update downloaded. Confirm installation in Android.",
   "@nativeUpdateInstallStarted": { "description": "Toast shown after the Android package installer is launched" },
-
   "authLoginTitle": "Welcome back",
   "@authLoginTitle": { "description": "Subtitle on the login screen, sits below the app name." },
   "authRegisterTitle": "Create account",
@@ -2002,21 +1984,17 @@
   "authPasswordLabel": "Password",
   "authPasswordShowTooltip": "Show password",
   "authPasswordHideTooltip": "Hide password",
-
   "authEmailErrorEmpty": "Enter your email address.",
   "authEmailErrorInvalid": "That doesn't look like a valid email.",
   "authPasswordErrorEmpty": "Enter your password.",
   "authPasswordErrorTooShort": "Password must be at least 8 characters.",
-
   "authLoginErrorInvalidCredentials": "Email or password is incorrect.",
   "authLoginErrorNetwork": "Couldn't reach the server. Check your connection and try again.",
   "authLoginErrorServer": "The server is having trouble. Please try again in a minute.",
   "authLoginErrorGeneric": "Sign-in failed. Please try again.",
   "authRegisterErrorAccountExists": "An account already exists. Sign in instead.",
-
   "authLoginNoticeSessionExpired": "Your session expired. Please sign in again.",
   "@authLoginNoticeSessionExpired": { "description": "Inline banner shown on the login screen after the auth controller dropped an expired session." },
-
   "authUpgradeRegisterHint": "Create a new cloud account and sync your existing data",
   "@authUpgradeRegisterHint": { "description": "Subtitle on the login page when a local-only user is registering for cloud sync." },
   "authUpgradeConnectHint": "Sign in to an existing account (local data is kept separately)",
@@ -2025,7 +2003,6 @@
   "@authUpgradeRegisterSubmit": { "description": "Submit button when a local-only user registers to upgrade to cloud." },
   "authUpgradeConnectSubmit": "Sign In & Sync",
   "@authUpgradeConnectSubmit": { "description": "Submit button when a local-only user signs in to connect to cloud." },
-
   "settingsDevicesTitle": "Devices",
   "@settingsDevicesTitle": { "description": "Settings row that opens the device list." },
   "settingsDevicesSubtitle": "View signed-in devices and revoke access",
@@ -2033,7 +2010,6 @@
   "@settingsSwitchToLocalTitle": { "description": "Settings row title for disabling cloud sync while keeping this device local." },
   "settingsSwitchToLocalSubtitle": "Disable cloud sync while keeping data on this device",
   "@settingsSwitchToLocalSubtitle": { "description": "Settings row subtitle for switching a cloud account to local-only mode." },
-
   "authDevicesTitle": "Signed-in devices",
   "@authDevicesTitle": { "description": "AppBar title on the devices list page." },
   "authDeviceUnnamed": "Unnamed device",
@@ -2058,12 +2034,10 @@
   "authDeviceRevokeConfirm": "Sign out",
   "authDeviceRevokeError": "Couldn't revoke that device. Please try again.",
   "authDevicesLoadError": "Couldn't load your devices.",
-
   "authLogoutCurrentTooltip": "Sign out",
   "authLogoutDialogTitle": "Sign out?",
   "authLogoutDialogBody": "You'll need to sign in again on this device.",
   "authLogoutDialogConfirm": "Sign out",
-
   "dashboardAllocationTitle": "Asset allocation",
   "dashboardCategoryStock": "Stocks",
   "dashboardCategoryEtf": "ETFs",
@@ -2119,7 +2093,6 @@
   "@dashboardHeaderDeltaMonthLabel": { "description": "Label for the month-to-date net-worth change cell on the dashboard header." },
   "dashboardHeaderDeltaYtdLabel": "YTD",
   "@dashboardHeaderDeltaYtdLabel": { "description": "Label for the year-to-date return cell on the dashboard header." },
-
   "analyticsAppBarTitle": "Analytics",
   "@analyticsAppBarTitle": { "description": "AppBar title for the analytics tab." },
   "analyticsOverviewNetWorth": "Net worth",
@@ -2189,7 +2162,6 @@
   "@analyticsFireProgressNotConfiguredBody": { "description": "FIRE progress card empty-state body." },
   "analyticsFireProgressLoadError": "Couldn't load FIRE progress.",
   "@analyticsFireProgressLoadError": { "description": "Analytics FIRE progress card error title." },
-
   "analyticsEquityTitle": "Equity Allocation",
   "analyticsEquitySubtitle": "Slice your stock & ETF holdings by sector, region, or market cap.",
   "analyticsDimensionSector": "Sector",
@@ -2201,7 +2173,6 @@
       "currency": { "type": "String", "example": "CNY" }
     }
   },
-
   "analyticsBucketUnclassified": "Unclassified",
   "analyticsBucketRegionCnA": "A-shares",
   "analyticsBucketRegionHk": "Hong Kong",
@@ -2212,14 +2183,12 @@
   "analyticsBucketMarketCapLarge": "Large cap",
   "analyticsBucketMarketCapMid": "Mid cap",
   "analyticsBucketMarketCapSmall": "Small cap",
-
   "analyticsHoldingsCount": "{count, plural, =1 {{count} holding} other {{count} holdings}}",
   "@analyticsHoldingsCount": {
     "placeholders": {
       "count": { "type": "int", "example": "3" }
     }
   },
-
   "analyticsUnclassifiedHint": "{count, plural, =1 {1 holding is missing classification metadata.} other {{count} holdings are missing classification metadata.}}",
   "@analyticsUnclassifiedHint": {
     "placeholders": {
@@ -2228,13 +2197,10 @@
   },
   "analyticsUnclassifiedAction": "Complete",
   "analyticsUnclassifiedRowCta": "Tap a holding to fill in its metadata.",
-
   "analyticsEmptyTitle": "No equity holdings yet",
   "analyticsEmptyHint": "Once you record stock or ETF trades, the breakdown will show up here.",
-
   "analyticsLoadError": "Couldn't load the allocation view.",
   "analyticsRetry": "Retry",
-
   "analyticsBucketSheetTitle": "Holdings in {label}",
   "@analyticsBucketSheetTitle": {
     "placeholders": {
@@ -2249,15 +2215,12 @@
       "weight": { "type": "String", "example": "12.3%" }
     }
   },
-
-
   "fireAppBarTitle": "FIRE",
   "fireLoadError": "Could not load FIRE dashboard. {detail}",
   "@fireLoadError": {
     "placeholders": { "detail": { "type": "String" } }
   },
   "fireRetry": "Retry",
-
   "fireEmptyTitle": "Set your FIRE goal",
   "fireEmptyHint": "Enter your target net worth, monthly expenses and savings to see how far you are from financial independence.",
   "fireEmptySetGoalCta": "Set goal",
@@ -2277,7 +2240,6 @@
   },
   "fireHeroNextStepLabel": "Next step",
   "@fireHeroNextStepLabel": { "description": "Label above the single suggested FIRE action" },
-
   "fireGoalSheetTitle": "FIRE goal",
   "fireGoalSheetSubtitle": "Inputs are stored on this device only and are inflation-adjusted with the rate below.",
   "fireGoalSheetCancel": "Cancel",
@@ -2296,13 +2258,11 @@
   "fireGoalValidationInvalidNumber": "Enter a valid number",
   "fireGoalValidationNonNegative": "Must be zero or positive",
   "fireGoalValidationPositive": "Must be greater than zero",
-
   "fireProgressTitle": "Progress to FIRE",
   "fireProgressGaugeCaption": "of FIRE target",
   "fireProgressCurrent": "Current net worth",
   "fireProgressTarget": "Target",
   "fireProgressGap": "Gap to FIRE",
-
   "fireCountdownTitle": "Time to FIRE · {scenario}",
   "@fireCountdownTitle": {
     "placeholders": { "scenario": { "type": "String", "example": "Neutral" } }
@@ -2330,7 +2290,6 @@
   "@fireCountdownDaysAprox": {
     "placeholders": { "days": { "type": "int" } }
   },
-
   "fireProjectionTitle": "Projection",
   "fireBudgetNoDataTitle": "Budget signal not available",
   "fireBudgetNoDataDetail": "Set a monthly budget to connect current spending pressure to this FIRE plan.",
@@ -2342,7 +2301,6 @@
   "fireBudgetOverDetail": "Current spending pressure may reduce the surplus assumed by this FIRE plan.",
   "fireProjectionSubtitle": "Net worth path under each return scenario; dashed line is the inflation-adjusted target.",
   "fireProjectionTargetLineLegend": "Target (inflation-adjusted)",
-
   "fireScenariosTableTitle": "Scenarios",
   "fireScenarioConservative": "Conservative",
   "fireScenarioNeutral": "Neutral",
@@ -2353,7 +2311,6 @@
     "placeholders": { "rate": { "type": "String", "example": "6.0" } }
   },
   "fireScenarioReachedNow": "Now",
-
   "fireSafeWithdrawalTitle": "4% rule",
   "fireSafeWithdrawalSubtitle": "Trinity-study safe withdrawal: 4% of the target each year, in today's purchasing power.",
   "fireSafeWithdrawalMonthly": "Safe monthly withdrawal",
@@ -2367,13 +2324,11 @@
   "@fireSafeWithdrawalShortfall": {
     "placeholders": { "amount": { "type": "String" } }
   },
-
   "fireSensitivityTitle": "Sensitivity",
   "fireSensitivitySubtitle": "How time-to-FIRE shifts when monthly surplus changes by ±20%.",
   "fireSensitivityHigherSurplus": "+20% surplus",
   "fireSensitivityBaseline": "Current surplus",
   "fireSensitivityLowerSurplus": "-20% surplus",
-
   "fireOsHeroTitle": "Freedom status",
   "fireOsHeroSubtitle": "Whether today's portfolio still supports the lifestyle you planned for.",
   "fireOsHeroNetWorthLabel": "Net worth",
@@ -2621,7 +2576,6 @@
     "placeholders": { "scenario": { "type": "String", "example": "expense_surge" } }
   },
   "fireOsReviewFindingStressSafe": "All stress tests are safe under current assumptions.",
-
   "benchmarkComparisonTitle": "Benchmark comparison",
   "benchmarkComparisonSubtitle": "Pin major indices against your net worth and read off the excess return.",
   "benchmarkComparisonError": "Couldn't load the benchmark comparison: {error}",
@@ -2642,7 +2596,6 @@
   "benchmarkIndexSp500": "S&P 500",
   "benchmarkIndexNasdaq": "NASDAQ",
   "benchmarkIndexHsi": "Hang Seng",
-
   "rebalanceTitle": "Rebalance",
   "@rebalanceTitle": { "description": "AppBar title for the rebalance page." },
   "rebalanceSchemeTitle": "Target scheme",
@@ -2752,7 +2705,6 @@
   "targetAllocationEditorPreviewTitle": "Target mix",
   "riskAlertTitle": "Concentration Alerts",
   "@riskAlertTitle": { "description": "Header for the risk concentration alert panel on the analytics page." },
-
   "riskAlertAssetTitle": "{name} overweight",
   "@riskAlertAssetTitle": {
     "description": "Alert title for a single asset exceeding its concentration threshold.",
@@ -2781,12 +2733,10 @@
       "threshold": { "type": "String", "example": "20%" }
     }
   },
-
   "riskDimensionAsset": "Asset",
   "riskDimensionSector": "Sector",
   "riskDimensionRegion": "Region",
   "riskDimensionCurrency": "Currency",
-
   "settingsRiskSection": "Investment Preferences",
   "@settingsRiskSection": { "description": "Header for the section that groups every investment-related preference (risk appetite, target allocation, alert thresholds)." },
   "settingsRiskAssetLabel": "Single asset limit",
@@ -2863,7 +2813,6 @@
   "settingsMonthlyExpenseOverrideSubtitle": "Bypass the auto-derivation. Leave blank to use the rolling average.",
   "settingsMonthlyExpenseOverrideHint": "Leave blank for auto",
   "settingsMonthlyExpenseResetDefaults": "Reset to defaults",
-
   "tradeEntryAppBarTitle": "Record trade",
   "tradeEntrySuccess": "Trade recorded",
   "tradeEntryFailure": "Couldn't record trade: {error}",
@@ -2936,10 +2885,8 @@
   "tradeTypeSplit": "Split",
   "tradeTypeLiabilityPayment": "Loan payment",
   "tradeTypeExpense": "Expense",
-
   "expensesReportTooltip": "Monthly report",
   "@expensesReportTooltip": { "description": "Tooltip for the expenses list AppBar action that opens the monthly report." },
-
   "expenseFormCreateTitle": "New expense",
   "expenseFormEditTitle": "Edit expense",
   "expenseFormDeleteTooltip": "Delete",
@@ -2974,7 +2921,6 @@
   "expenseFormNoAccountsTitle": "Create an account first",
   "expenseFormNoAccountsBody": "Expenses need a funding account. Create one under Accounts, then come back here.",
   "expenseFormNoAccountsCta": "Create account",
-
   "incomeFormCreateTitle": "Record income",
   "incomeFormAmountLabel": "Amount",
   "incomeFormAmountInvalid": "Amount must be greater than 0",
@@ -2987,7 +2933,6 @@
   "incomeFormNoAccountsTitle": "Create an account first",
   "incomeFormNoAccountsBody": "Income needs a deposit account. Create one under Accounts, then come back here.",
   "incomeFormNoAccountsCta": "Create account",
-
   "expenseHistorySectionTitle": "Change history",
   "expenseHistoryEmpty": "No changes recorded yet.",
   "expenseHistoryLoadError": "Couldn't load history: {error}",
@@ -3014,7 +2959,6 @@
   "@expenseHistoryReasonLabel": {
     "placeholders": { "reason": { "type": "String" } }
   },
-
   "aiChatAppBarTitle": "AI assistant",
   "aiChatHistoryTooltip": "Conversation history",
   "aiChatNewSessionTooltip": "New conversation",
@@ -3153,7 +3097,6 @@
   "aiIntentExplainStressTestPrompt": "Use get_fire_stress_tests to explain how market drawdown, higher expenses, one-off shocks, FX shocks, and cash-bucket depletion affect {objectLabel}. Emphasize that this is a resilience check, not a forecast.",
   "aiIntentSuggestFireActionsLabel": "Next steps",
   "aiIntentSuggestFireActionsPrompt": "Use get_fire_state suggested_actions to give the three highest-value next steps. If a plan change is involved, use propose_fire_plan_update so I can confirm.",
-
   "aiChatSessionsHeader": "Conversations",
   "aiChatSessionsEmpty": "Tap the + button to start your first conversation.",
   "aiChatSessionMoreTooltip": "More",
@@ -3178,7 +3121,6 @@
   "@aiChatRelativeDaysAgo": {
     "placeholders": { "days": { "type": "int" } }
   },
-
   "aiChatComposerHintIdle": "Ask NaviWealth about finance, knowledge, health, or plans",
   "aiChatComposerSendTooltip": "Send (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "Stop generating",
@@ -3369,7 +3311,6 @@
   "@aiChatSessionsGroupThisMonth": { "description": "Section header — conversations within the past 30 days but not in the more recent buckets." },
   "aiChatSessionsGroupOlder": "Older",
   "@aiChatSessionsGroupOlder": { "description": "Section header — conversations older than 30 days." },
-
   "aiChatTruncatedMaxTokens": "Reply was cut off — output length limit reached",
   "@aiChatTruncatedMaxTokens": { "description": "Footer shown when the model hit max_tokens and the visible reply is incomplete" },
   "aiChatTruncatedToolBudget": "Stopped — tool-call budget exhausted",
@@ -3384,7 +3325,6 @@
   "@aiChatTruncatedContinue": { "description": "Inline button next to the truncation footer that asks the model to continue" },
   "aiChatTruncatedContinuePrompt": "Please continue.",
   "@aiChatTruncatedContinuePrompt": { "description": "Hidden user message sent to the model when the user taps the Continue affordance" },
-
   "aiChatProposalKindTrade": "Trade",
   "aiChatProposalKindExpense": "Expense",
   "aiChatProposalKindIncome": "Income",
@@ -3397,7 +3337,6 @@
   "aiChatProposalKindOptionsProfileUpdate": "Income Planner preferences",
   "aiChatProposalKindOptionsJournalEntry": "Options journal entry",
   "aiChatProposalKindUnknown": "Unknown",
-
   "aiChatProposalPendingHeader": "Awaiting confirmation · {kind}",
   "@aiChatProposalPendingHeader": {
     "placeholders": { "kind": { "type": "String" } }
@@ -3479,7 +3418,6 @@
     "description": "Snackbar shown after batch confirm when every eligible item errored.",
     "placeholders": { "count": { "type": "int" } }
   },
-
   "aiChatProposalConfirmTokenWarning": "High-risk action. Type \"{token}\" to enable Confirm.",
   "@aiChatProposalConfirmTokenWarning": {
     "description": "Warning above the typed-confirm field for high-risk proposals (broker_order, bulk_delete). {token} is the literal string the user must type.",
@@ -3494,7 +3432,6 @@
   "@aiChatProposalConfirmToken": {
     "description": "Default token the user must type to enable Confirm for typed-confirm proposals when the tool did not specify a required_text."
   },
-
   "aiChatFieldQuantity": "Quantity",
   "aiChatFieldPrice": "Price (leave blank to backfill from market)",
   "aiChatFieldFee": "Fee",
@@ -3510,7 +3447,6 @@
   "aiChatFieldAccountName": "Account name",
   "aiChatFieldInstitution": "Institution (optional)",
   "aiChatFieldNewValuation": "New valuation",
-
   "aiChatRowOperation": "Operation",
   "aiChatRowAsset": "Asset",
   "aiChatRowAccount": "Account",
@@ -3533,7 +3469,6 @@
   "aiChatRowCurrency": "Currency",
   "aiChatRowInstitution": "Institution",
   "aiChatRowNewValue": "New valuation",
-
   "aiChatToolGetHoldings": "Query holdings",
   "aiChatToolComputeXirr": "Compute XIRR",
   "aiChatToolComputeNetWorth": "Compute net worth",
@@ -3570,16 +3505,13 @@
   "@aiChatToolEvidenceLabel": { "description": "Section header above the evidence chip strip in a tool invocation card" },
   "aiChatToolShowRawJson": "View raw data",
   "aiChatToolShowCompactView": "Back to compact view",
-
   "aiFloatingPillLabel": "Open assistant",
   "aiChatSheetTitle": "AI assistant",
   "aiChatSheetEmpty": "Ask anything about your Life OS.",
   "aiChatSheetExpandTooltip": "Expand to full screen",
   "aiChatSheetNewTooltip": "New conversation",
-
   "chartEmptyDefault": "No data yet",
   "chartTotalLabel": "Total",
-
   "formAmountFieldLabelDefault": "Amount",
   "@formAmountFieldLabelDefault": { "description": "Default label for the shared AmountField when no caller-provided label is supplied." },
   "formAmountFieldRequired": "Enter an amount",
@@ -3590,22 +3522,18 @@
   "@formAmountFieldNegativeNotAllowed": { "description": "AmountField validator: negative value where the caller forbids them." },
   "formAmountFieldZeroNotAllowed": "Amount must be greater than zero",
   "@formAmountFieldZeroNotAllowed": { "description": "AmountField validator: zero where the caller requires a positive value." },
-
   "formNoteFieldLabelDefault": "Notes",
   "@formNoteFieldLabelDefault": { "description": "Default label for the shared NoteField." },
-
   "formDateFieldClearTooltip": "Clear",
   "@formDateFieldClearTooltip": { "description": "Tooltip on the icon that clears a tap-to-pick DateField." },
   "formDateFieldTimeLabel": "Time",
   "@formDateFieldTimeLabel": { "description": "Generic time field label used next to DateField when editing date-time values." },
   "formDateFieldRequired": "Pick a date",
   "@formDateFieldRequired": { "description": "DateField validator when the field is required and empty." },
-
   "formAccountPickerLabelDefault": "Account",
   "@formAccountPickerLabelDefault": { "description": "Default label for the shared AccountPicker." },
   "formAccountPickerRequired": "Pick an account",
   "@formAccountPickerRequired": { "description": "AccountPicker validator when no account is selected." },
-
   "formCurrencyPickerLabelDefault": "Currency",
   "@formCurrencyPickerLabelDefault": { "description": "Default label for the shared CurrencyPicker." },
   "formCurrencyPickerRequired": "Pick a currency",
@@ -3628,7 +3556,6 @@
   "currencyNameAUD": "Australian Dollar",
   "currencyNameCAD": "Canadian Dollar",
   "currencyNameTWD": "New Taiwan Dollar",
-
   "expenseCategoryPickerLabelDefault": "Category",
   "@expenseCategoryPickerLabelDefault": { "description": "Default label for the expense-form category picker." },
   "expenseCategoryPickerRequired": "Pick a category",
@@ -3670,14 +3597,12 @@
   "systemAccountEquityOpeningBalance": "Opening Balance",
   "systemAccountEquitySplits": "Stock Splits",
   "systemAccountEquityAdjustments": "Adjustments",
-
   "physicalAssetValuationProjected": "Projected valuation",
   "@physicalAssetValuationProjected": { "description": "Legend label for the projected-valuation curve on a physical asset's trend chart." },
   "physicalAssetValuationHistorical": "Historical valuation",
   "@physicalAssetValuationHistorical": { "description": "Legend label for the historical-valuation curve on a physical asset's trend chart." },
   "physicalAssetValuationTrendSemanticLabel": "Valuation trend",
   "@physicalAssetValuationTrendSemanticLabel": { "description": "Accessibility label for the physical asset valuation-trend chart." },
-
   "accountsDetailEmpty": "Select an account on the left to see its balance and activity.",
   "@accountsDetailEmpty": { "description": "Master-detail empty state for /activity/accounts at desktop width" },
   "accountsCreateAction": "New account",
@@ -3708,7 +3633,6 @@
   "accountDetailInstitutionLabel": "Institution",
   "accountDetailNumberLabel": "Account number",
   "accountDetailNotesLabel": "Notes",
-
   "accountCategoryCash": "Cash",
   "@accountCategoryCash": { "description": "Wealth container category — physical cash, e-wallets (Alipay, Wechat Pay, etc.)" },
   "accountCategoryBank": "Bank",
@@ -3725,7 +3649,6 @@
   "@accountCategoryAsset": { "description": "Wealth container category — fallback for tangible / illiquid assets (real estate, vehicle, art)" },
   "accountCategoryLiability": "Other liability",
   "@accountCategoryLiability": { "description": "Wealth container category — fallback for obligations not credit / loan" },
-
   "accountCategoryCashHint": "Wallets, e-wallets, physical bills",
   "@accountCategoryCashHint": { "description": "One-line affordance shown under the Cash card in the account category picker" },
   "accountCategoryBankHint": "Checking, savings, deposits",
@@ -3742,7 +3665,6 @@
   "@accountCategoryAssetHint": { "description": "Affordance for the Other asset card" },
   "accountCategoryLiabilityHint": "Anything you owe that isn't credit or loan",
   "@accountCategoryLiabilityHint": { "description": "Affordance for the Other liability card" },
-
   "accountSideAsset": "Asset",
   "@accountSideAsset": { "description": "Accounting side — asset (debit-balance). Auto-derived; only shown in debug / ledger surfaces." },
   "accountSideLiability": "Liability",
@@ -3753,7 +3675,6 @@
   "@accountSideExpense": { "description": "Accounting side — expense (system account)." },
   "accountSideEquity": "Equity",
   "@accountSideEquity": { "description": "Accounting side — equity (system account, opening balance counter-postings)." },
-
   "accountFormCreateTitle": "New account",
   "accountFormEditTitle": "Edit account",
   "accountFormDeleteTooltip": "Delete",
@@ -3777,7 +3698,6 @@
   "accountFormArchivedSubtitle": "Archived accounts are hidden from the main list.",
   "accountFormSaving": "Saving…",
   "accountFormSave": "Save",
-
   "cashFormCreateTitle": "Record cash balance",
   "cashFormEditTitle": "Edit cash balance",
   "cashFormDeleteTooltip": "Delete",
@@ -3802,12 +3722,10 @@
   "cashFormNicknameHelper": "e.g. CMB HKD demand, Yu’e Bao",
   "cashFormSaving": "Saving…",
   "cashFormSave": "Save",
-
   "manualAssetDeleteTitle": "Delete asset",
   "manualAssetDeleteContent": "Delete this asset record?",
   "manualAssetDeleteCancel": "Cancel",
   "manualAssetDeleteConfirm": "Delete",
-
   "activityFeedTab": "Activity",
   "@activityFeedTab": { "description": "Activity page segmented control: activity feed tab" },
   "activityFeedEmpty": "No activity yet — record a transfer, expense, or trade and it will appear here.",
@@ -3928,7 +3846,6 @@
     "description": "Plan page rebalance summary chip for suggested trade count.",
     "placeholders": { "count": { "type": "int" } }
   },
-
   "settingsAccountSection": "Account",
   "@settingsAccountSection": { "description": "Settings section header for account-level preferences" },
   "settingsAiHubTitle": "AI assistant",
@@ -4793,24 +4710,19 @@
   "@backupFilePickerError": { "description": "Backup error: file picker failure" },
   "backupRestorePassphraseHint": "Enter the backup passphrase",
   "@backupRestorePassphraseHint": { "description": "Backup dialog: restore passphrase hint" },
-
   "logViewerClearTooltip": "Clear",
   "@logViewerClearTooltip": { "description": "Log viewer page: clear logs tooltip" },
-
   "activityFeedLoadError": "Failed to load feed: {error}",
   "@activityFeedLoadError": {
     "description": "Activity feed: error loading journal entries",
     "placeholders": { "error": { "type": "String" } }
   },
-
   "expenseFormLoadError": "Couldn't load expense. Create a new entry instead.",
   "@expenseFormLoadError": { "description": "Expense form: toast when existing expense fails to load" },
-
   "accountsJournalTooltip": "Journal",
   "@accountsJournalTooltip": { "description": "Accounts page AppBar: journal history tooltip" },
   "accountsTransferTooltip": "New transfer",
   "@accountsTransferTooltip": { "description": "Accounts page AppBar: new transfer tooltip" },
-
   "accountFormParentLabel": "Parent account (optional)",
   "@accountFormParentLabel": { "description": "Account form: parent account tree picker label" },
   "accountFormParentHelper": "Group this account under another in the tree.",
@@ -4825,7 +4737,6 @@
   "@accountFormColorHeading": { "description": "Account form: color picker section heading" },
   "accountFormNoColorTooltip": "No color",
   "@accountFormNoColorTooltip": { "description": "Account form: tooltip for the no-color swatch" },
-
   "transferTitle": "New transfer",
   "@transferTitle": { "description": "Transfer form page: AppBar title" },
   "transferLoadError": "Failed to load accounts: {error}",
@@ -4888,7 +4799,6 @@
   },
   "transferRetryLabel": "Retry",
   "@transferRetryLabel": { "description": "Transfer form: retry button label" },
-
   "journalTitle": "Journal",
   "@journalTitle": { "description": "Journal list page: AppBar title" },
   "journalLoadError": "Failed to load journal: {error}",
@@ -4898,7 +4808,6 @@
   },
   "journalEmptyHint": "No journal entries yet — record a transfer, expense, or trade and it will land here.",
   "@journalEmptyHint": { "description": "Journal list page: empty state message" },
-
   "entryKindTrade": "Trade",
   "@entryKindTrade": { "description": "Entry kind badge: trade label" },
   "entryKindTransfer": "Transfer",
@@ -4922,7 +4831,6 @@
     "description": "Entry kind badge: accessibility semantic label",
     "placeholders": { "kind": { "type": "String" } }
   },
-
   "chatCancelled": "Cancelled",
   "@chatCancelled": { "description": "AI chat: error message when request is cancelled" },
   "chatNewSession": "New conversation",
@@ -4932,7 +4840,6 @@
     "description": "AI chat: system notice about context truncation",
     "placeholders": { "count": { "type": "int" } }
   },
-
   "spendingTitle": "Spending",
   "@spendingTitle": { "description": "Spending analysis page title" },
   "expenseReportRangeThisMonth": "This month",
@@ -5088,7 +4995,6 @@
   "@assetDetailStaleBadge": { "description": "Asset detail: stale quote badge text" },
   "assetDetailCategoryShareSemantic": "Category share",
   "@assetDetailCategoryShareSemantic": { "description": "Expense report: pie chart accessibility label" },
-
   "depositMaturityRequired": "Term deposits require a maturity date",
   "@depositMaturityRequired": { "description": "Deposit form: validation — maturity date required" },
   "depositDeleteTitle": "Delete deposit",
@@ -5145,7 +5051,6 @@
   "@depositNoAccountHint": { "description": "Deposit form: empty state when no bank account exists" },
   "depositCreateAccountAction": "New account",
   "@depositCreateAccountAction": { "description": "Deposit form: create account button" },
-
   "wealthProductDeleteTitle": "Delete wealth product",
   "@wealthProductDeleteTitle": { "description": "Wealth product form: delete dialog title" },
   "wealthProductDeleteBody": "Delete this wealth product record?",
@@ -5190,7 +5095,6 @@
   "@wealthProductValuationLabel": { "description": "Wealth product form: valuation field label" },
   "wealthProductValuationHelper": "Leave blank to use subscription amount as current valuation",
   "@wealthProductValuationHelper": { "description": "Wealth product form: valuation field helper" },
-
   "manualSecurityMarketCnA": "A-shares",
   "@manualSecurityMarketCnA": { "description": "Manual security: CN A-shares market label" },
   "manualSecurityMarketHk": "HK stocks",
@@ -5243,7 +5147,6 @@
   "@manualSecurityIsinLabel": { "description": "Manual security: ISIN field label" },
   "manualSecurityAddAction": "Add",
   "@manualSecurityAddAction": { "description": "Manual security: add button label" },
-
   "localSecuritiesSearchLabel": "Asset search",
   "@localSecuritiesSearchLabel": { "description": "Local securities picker: default search label" },
   "localSecuritiesSearchHint": "Enter code, name, or pinyin",
@@ -5263,7 +5166,6 @@
   },
   "localSecuritiesMarketLabel": "Market",
   "@localSecuritiesMarketLabel": { "description": "Symbol field: market selector label" },
-
   "portfolioViewAssets": "Assets",
   "@portfolioViewAssets": { "description": "Portfolio view switcher: assets list" },
   "portfolioViewAccount": "Account",
@@ -5334,12 +5236,10 @@
   "@activityFeedAllLoaded": { "description": "Activity feed pagination complete text" },
   "backupWebSecurityWarning": "Web local storage is not SQLCipher-encrypted. Backup files are encrypted with your password; avoid long-term storage of sensitive accounts in the web app.",
   "@backupWebSecurityWarning": { "description": "Web-only backup and restore security warning banner" },
-
   "formSaving": "Saving…",
   "@formSaving": { "description": "Shared form: saving button label" },
   "formSave": "Save",
   "@formSave": { "description": "Shared form: save button label" },
-
   "settingsSyncTitle": "Sync",
   "@settingsSyncTitle": { "description": "Settings tile that opens the sync status page" },
   "settingsSyncSubtitle": "View sync state and last activity",
@@ -5434,7 +5334,6 @@
   "@syncStatusDetailRemoteRows": { "description": "Diagnostics row label for applied remote rows over total remote rows received in the last sync cycle" },
   "syncStatusDetailEndpoint": "Endpoint",
   "@syncStatusDetailEndpoint": { "description": "Diagnostics row label for the API base URL (debug only)" },
-
   "syncStatusLocalCountsHeader": "Local row counts (debug)",
   "@syncStatusLocalCountsHeader": { "description": "Section header for the per-table row counters (debug builds only)" },
   "syncStatusLocalAccountsUser": "Accounts (user)",
@@ -5453,7 +5352,6 @@
   "@syncStatusLocalLiabilities": { "description": "Diagnostic counter" },
   "syncStatusLocalTags": "Tags",
   "@syncStatusLocalTags": { "description": "Diagnostic counter" },
-
   "syncStatusHeroSyncing": "Syncing changes…",
   "@syncStatusHeroSyncing": { "description": "Hero card subtitle while a cycle is in flight" },
   "syncStatusStatPending": "Pending",
@@ -5553,7 +5451,6 @@
   "aiReplyChipActionPlanGeneric": "Give an action plan",
   "aiReplyChipVsLastMonth": "Compare with last month",
   "aiCapsuleExpandFallback": "Expand",
-
   "ingestReviewTitle": "Review entries",
   "ingestCopyDiagnostics": "Copy privacy-safe import diagnostics",
   "ingestDiagnosticsCopied": "Import diagnostics copied",
@@ -5764,7 +5661,6 @@
   "@ingestCameraAction": { "description": "Ingest review: snap a receipt with the camera" },
   "ingestCaptureMenuAction": "Add source",
   "@ingestCaptureMenuAction": { "description": "Ingest review: open the compact capture options menu" },
-
   "settingsAiTransparencyTitle": "AI transparency",
   "@settingsAiTransparencyTitle": { "description": "Settings tile and page title for AI trace transparency" },
   "settingsAiTransparencySubtitle": "View detailed traces from recent AI calls",
@@ -5773,7 +5669,6 @@
   "@settingsAiLlmTitle": { "description": "Settings tile and page title for on-device LLM credentials" },
   "settingsAiLlmSubtitle": "Manage multiple provider keys and switch local direct connections",
   "@settingsAiLlmSubtitle": { "description": "Settings tile subtitle for on-device LLM credentials" },
-
   "aiLlmMissingApiKey": "Enter an API key first",
   "@aiLlmMissingApiKey": { "description": "Toast shown when saving an LLM profile without a usable key" },
   "aiLlmSaved": "Saved to secure device storage",
@@ -5844,7 +5739,6 @@
     "description": "Provider picker label for OpenAI protocol",
     "placeholders": { "provider": { "type": "String" } }
   },
-
   "aiTransparencyFilteredEmpty": "No records match the current filter",
   "@aiTransparencyFilteredEmpty": { "description": "AI transparency list empty state after applying the error filter" },
   "aiTransparencyLoadError": "Failed to load: {error}",
@@ -5924,10 +5818,87 @@
   "pressBackAgainToExit": "Press back again to exit",
   "@pressBackAgainToExit": { "description": "Transient hint shown on the first back press at the Home tab root" },
   "watchlistTitle": "Watchlist",
-  "watchlistSelectItem": "Select a symbol to inspect its quote and alert rules",
+  "watchlistSelectItem": "Select a symbol to inspect its quote and reminders",
   "@watchlistTitle": { "description": "Investment watchlist page title" },
-  "watchlistAccountsEntrySubtitle": "Track symbols and local price alerts",
-  "@watchlistAccountsEntrySubtitle": { "description": "Accounts hub entry subtitle for watchlist" },
+  "watchlistOverviewTitle": "Overview",
+  "watchlistOverviewByMarket": "By market",
+  "@watchlistOverviewTitle": { "description": "Watchlist overview card title" },
+  "watchlistSummaryAdvancingDeclining": "Up / down",
+  "@watchlistSummaryAdvancingDeclining": { "description": "Watchlist metric: advancing / declining counts" },
+  "watchlistOverviewTypicalMove": "Median",
+  "@watchlistOverviewTypicalMove": { "description": "Watchlist metric: median change" },
+  "watchlistOverviewFreshnessLive": "{count} live",
+  "@watchlistOverviewFreshnessLive": {
+    "description": "Watchlist overview: live quote count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "watchlistOverviewFreshnessCached": "{count} cached",
+  "@watchlistOverviewFreshnessCached": {
+    "description": "Watchlist overview: cached quote count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "watchlistOverviewFreshnessStale": "{count} delayed",
+  "@watchlistOverviewFreshnessStale": {
+    "description": "Watchlist overview: stale quote count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "watchlistOverviewFreshnessUnavailable": "{count} without a price",
+  "@watchlistOverviewFreshnessUnavailable": {
+    "description": "Watchlist overview: unpriced symbol count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "watchlistOverviewFreshnessNone": "Waiting for the first quotes",
+  "@watchlistOverviewFreshnessNone": { "description": "Watchlist overview: no quote data at all" },
+  "watchlistOverviewAlertsSummary": "{configured} reminders · {triggered} matched",
+  "@watchlistOverviewAlertsSummary": {
+    "description": "Watchlist overview: configured and triggered alert counts",
+    "placeholders": { "configured": { "type": "int" }, "triggered": { "type": "int" } }
+  },
+  "watchlistOverviewMarketLine": "{market} · {up} up · {down} down · {flat} flat",
+  "@watchlistOverviewMarketLine": {
+    "description": "Watchlist overview: per-market advance/decline line",
+    "placeholders": {
+      "market": { "type": "String" },
+      "up": { "type": "int" },
+      "down": { "type": "int" },
+      "flat": { "type": "int" }
+    }
+  },
+  "watchlistMoreActions": "More",
+  "@watchlistMoreActions": { "description": "Watchlist toolbar overflow menu label" },
+  "watchlistFilterActiveChip": "Filtered",
+  "@watchlistFilterActiveChip": { "description": "Watchlist chip shown while any filter is narrowing the list" },
+  "watchlistAlertSetBadge": "Price reminder set (while app is open)",
+  "@watchlistAlertSetBadge": { "description": "Watchlist row: alert configured indicator" },
+  "watchlistAlertNotSet": "No price reminder",
+  "@watchlistAlertNotSet": { "description": "Watchlist detail: no alert configured" },
+  "watchlistSymbolDetailTitle": "{symbol} details",
+  "@watchlistSymbolDetailTitle": {
+    "description": "Watchlist symbol detail sheet title",
+    "placeholders": { "symbol": { "type": "String" } }
+  },
+  "watchlistDetailTrendTitle": "Last 30 days",
+  "@watchlistDetailTrendTitle": { "description": "Watchlist detail: trend line caption" },
+  "watchlistDetailOpen": "Open",
+  "@watchlistDetailOpen": { "description": "Watchlist detail: opening price" },
+  "watchlistDetailHigh": "High",
+  "@watchlistDetailHigh": { "description": "Watchlist detail: session high" },
+  "watchlistDetailLow": "Low",
+  "@watchlistDetailLow": { "description": "Watchlist detail: session low" },
+  "watchlistDetailPreviousClose": "Prev close",
+  "@watchlistDetailPreviousClose": { "description": "Watchlist detail: previous close" },
+  "watchlistDetailVolume": "Volume",
+  "@watchlistDetailVolume": { "description": "Watchlist detail: traded volume" },
+  "watchlistDetailExchange": "Exchange",
+  "@watchlistDetailExchange": { "description": "Watchlist detail: listing venue" },
+  "watchlistDetailUpdatedAt": "Updated",
+  "@watchlistDetailUpdatedAt": { "description": "Watchlist detail: quote timestamp" },
+  "watchlistAlertOptionalSection": "Price reminder (optional)",
+  "@watchlistAlertOptionalSection": { "description": "Watchlist form: collapsible alert section" },
+  "watchlistAlertOptionalHint": "Reminders only while the app is open",
+  "@watchlistAlertOptionalHint": { "description": "Watchlist form: collapsible alert section hint" },
+  "watchlistAlertNotificationNote": "Prices are checked every 15 minutes while the app is open, and when you refresh. System notifications require permission; otherwise reminders appear on the Watchlist page. No checks run when the app is closed or in the background.",
+  "@watchlistAlertNotificationNote": { "description": "Watchlist form: how alerts are delivered" },
   "watchlistAddAction": "Add symbol",
   "@watchlistAddAction": { "description": "Add a symbol to the watchlist" },
   "watchlistAllCollection": "All",
@@ -5964,7 +5935,7 @@
     "description": "Watchlist collection deletion confirmation title",
     "placeholders": { "name": { "type": "String" } }
   },
-  "watchlistDeleteCollectionBody": "Symbols and alert rules will remain in All.",
+  "watchlistDeleteCollectionBody": "Symbols and reminder rules will remain in All.",
   "@watchlistDeleteCollectionBody": { "description": "Watchlist collection deletion confirmation body" },
   "watchlistManageCollectionsAction": "Collections",
   "@watchlistManageCollectionsAction": { "description": "Manage collection membership for one symbol" },
@@ -6005,7 +5976,7 @@
   "@watchlistFilterAction": { "description": "Filter watchlist symbols" },
   "watchlistFilterMarketSection": "Market",
   "@watchlistFilterMarketSection": { "description": "Market section in the watchlist filter sheet" },
-  "watchlistFilterAlertsSection": "Alerts",
+  "watchlistFilterAlertsSection": "Reminders",
   "@watchlistFilterAlertsSection": { "description": "Alert section in the watchlist filter sheet" },
   "watchlistFilterFreshnessSection": "Price freshness",
   "@watchlistFilterFreshnessSection": { "description": "Price freshness section in the watchlist filter sheet" },
@@ -6013,7 +5984,7 @@
   "@watchlistFilterAllOption": { "description": "Show all values for one watchlist filter" },
   "watchlistFilterAlertsConfigured": "Configured",
   "@watchlistFilterAlertsConfigured": { "description": "Watchlist symbols with configured alerts" },
-  "watchlistFilterAlertsNone": "No alert",
+  "watchlistFilterAlertsNone": "No reminder",
   "@watchlistFilterAlertsNone": { "description": "Watchlist symbols without configured alerts" },
   "watchlistFilterClearAction": "Clear filters",
   "@watchlistFilterClearAction": { "description": "Clear all watchlist filters" },
@@ -6023,67 +5994,6 @@
   "@watchlistFilterEmptyTitle": { "description": "Title when watchlist filters have no matches" },
   "watchlistFilterEmptyBody": "Adjust or clear the filters to see more symbols.",
   "@watchlistFilterEmptyBody": { "description": "Body when watchlist filters have no matches" },
-  "watchlistAnalysisTitle": "Watchlist analysis",
-  "@watchlistAnalysisTitle": { "description": "Title for point-in-time watchlist analysis" },
-  "watchlistAnalysisMarketTimingNote": "Point-in-time moves are split by market because trading sessions may differ.",
-  "@watchlistAnalysisMarketTimingNote": { "description": "Caveat for comparing watchlist price changes across markets" },
-  "watchlistAnalysisCoverage": "Quote coverage",
-  "@watchlistAnalysisCoverage": { "description": "Available quote coverage metric" },
-  "watchlistAnalysisMedianChange": "Median move",
-  "@watchlistAnalysisMedianChange": { "description": "Median point-in-time price change metric" },
-  "watchlistAnalysisAlertCoverage": "Alert coverage",
-  "@watchlistAnalysisAlertCoverage": { "description": "Configured alert coverage metric" },
-  "watchlistAnalysisTriggeredAlerts": "Triggered",
-  "@watchlistAnalysisTriggeredAlerts": { "description": "Number of currently triggered watchlist alerts" },
-  "watchlistAnalysisCoverageValue": "{configured} / {total}",
-  "@watchlistAnalysisCoverageValue": {
-    "description": "Configured alerts out of total symbols",
-    "placeholders": {
-      "configured": { "type": "int" },
-      "total": { "type": "int" }
-    }
-  },
-  "watchlistAnalysisFreshnessSummary": "Live {live} · Cached {cached} · Stale {stale} · No price {unavailable}",
-  "@watchlistAnalysisFreshnessSummary": {
-    "description": "Watchlist quote freshness distribution",
-    "placeholders": {
-      "live": { "type": "int" },
-      "cached": { "type": "int" },
-      "stale": { "type": "int" },
-      "unavailable": { "type": "int" }
-    }
-  },
-  "watchlistAnalysisTopGainer": "Largest gain: {symbol} {change}",
-  "@watchlistAnalysisTopGainer": {
-    "description": "Largest positive watchlist move",
-    "placeholders": {
-      "symbol": { "type": "String" },
-      "change": { "type": "String" }
-    }
-  },
-  "watchlistAnalysisTopDecliner": "Largest decline: {symbol} {change}",
-  "@watchlistAnalysisTopDecliner": {
-    "description": "Largest negative watchlist move",
-    "placeholders": {
-      "symbol": { "type": "String" },
-      "change": { "type": "String" }
-    }
-  },
-  "watchlistAnalysisMarketsTitle": "By market",
-  "@watchlistAnalysisMarketsTitle": { "description": "Heading for watchlist analysis grouped by market" },
-  "watchlistAnalysisMarketSummary": "{market}: {quotes}/{total} quotes · {advancing} up · {declining} down · {unchanged} flat · {unknown} no prior close",
-  "@watchlistAnalysisMarketSummary": {
-    "description": "Point-in-time watchlist analysis for one market",
-    "placeholders": {
-      "market": { "type": "String" },
-      "quotes": { "type": "int" },
-      "total": { "type": "int" },
-      "advancing": { "type": "int" },
-      "declining": { "type": "int" },
-      "unchanged": { "type": "int" },
-      "unknown": { "type": "int" }
-    }
-  },
   "watchlistSimulationSectionTitle": "Paper simulations",
   "@watchlistSimulationSectionTitle": { "description": "Title for watchlist paper simulations" },
   "watchlistSimulationCreateAction": "New simulation",
@@ -6100,8 +6010,6 @@
   "@watchlistSimulationAdjustAction": { "description": "Edit watchlist simulation target weights" },
   "watchlistSimulationDeleteAction": "Delete simulation",
   "@watchlistSimulationDeleteAction": { "description": "Delete a paper simulation" },
-  "watchlistSimulationVirtualCapital": "Virtual capital",
-  "@watchlistSimulationVirtualCapital": { "description": "Starting capital in a paper simulation" },
   "watchlistSimulationDailyMove": "Weighted daily move",
   "@watchlistSimulationDailyMove": { "description": "Weighted point-in-time daily move for a paper simulation" },
   "watchlistSimulationPricedWeight": "Priced allocation",
@@ -6115,8 +6023,6 @@
   },
   "watchlistSimulationMethodNote": "Uses each available symbol's current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.",
   "@watchlistSimulationMethodNote": { "description": "Paper simulation calculation scope and limitations" },
-  "watchlistSimulationHistoryTitle": "Observed simulation history",
-  "@watchlistSimulationHistoryTitle": { "description": "Title for the locally observed paper simulation curve" },
   "watchlistSimulationObservedValue": "Latest observed value",
   "@watchlistSimulationObservedValue": { "description": "Latest locally observed paper simulation value" },
   "watchlistSimulationHistorySeries": "Observed value",
@@ -6177,11 +6083,6 @@
     "description": "Virtual starting capital field",
     "placeholders": { "currency": { "type": "String" } }
   },
-  "watchlistSimulationEqualWeightNote": "{count, plural, =1{Starts with one target weight.} other{Starts with equal target weights across {count} symbols.}} You can adjust them after creation.",
-  "@watchlistSimulationEqualWeightNote": {
-    "description": "Initial equal-weight simulation disclosure",
-    "placeholders": { "count": { "type": "int" } }
-  },
   "watchlistSimulationDefaultName": "{collection} simulation",
   "@watchlistSimulationDefaultName": {
     "description": "Default paper simulation name",
@@ -6189,17 +6090,10 @@
   },
   "watchlistSimulationAdjustTitle": "Adjust paper allocation",
   "@watchlistSimulationAdjustTitle": { "description": "Paper allocation edit sheet title" },
-  "watchlistSimulationAllocationNote": "Set target percentages for symbols and virtual cash. The total must equal 100%.",
-  "@watchlistSimulationAllocationNote": { "description": "Paper allocation edit guidance" },
   "watchlistSimulationAllocationSyncing": "This allocation snapshot is still syncing. Values remain hidden until the selected snapshot is complete.",
   "@watchlistSimulationAllocationSyncing": { "description": "Paper allocation pending atomic snapshot state" },
   "watchlistSimulationAllocationInvalid": "This allocation is invalid. Edit the simulation to restore weights totaling 100%.",
   "@watchlistSimulationAllocationInvalid": { "description": "Paper allocation integrity error state" },
-  "watchlistSimulationWeightField": "{symbol} target (%)",
-  "@watchlistSimulationWeightField": {
-    "description": "Target weight field for one simulated symbol",
-    "placeholders": { "symbol": { "type": "String" } }
-  },
   "watchlistSimulationCashField": "Virtual cash (%)",
   "@watchlistSimulationCashField": { "description": "Virtual cash target weight field" },
   "watchlistSimulationInvalidWeight": "Enter a percentage from 0 to 100",
@@ -6323,26 +6217,22 @@
   "@watchlistAddTitle": { "description": "Watchlist add sheet title" },
   "watchlistAddToCollectionsField": "Add to collections",
   "@watchlistAddToCollectionsField": { "description": "Optional multi-collection selection section in the add-symbol sheet" },
-  "watchlistEditAlertTitle": "Alerts for {symbol}",
+  "watchlistEditAlertTitle": "Reminders for {symbol}",
   "@watchlistEditAlertTitle": {
     "description": "Watchlist alert edit sheet title",
     "placeholders": { "symbol": { "type": "String" } }
   },
   "watchlistEmptyTitle": "No watchlist symbols",
   "@watchlistEmptyTitle": { "description": "Watchlist empty state title" },
-  "watchlistEmptyBody": "Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.",
+  "watchlistEmptyBody": "Add symbols to follow prices and recent trends. Optional price reminders work only while the app is open.",
   "@watchlistEmptyBody": { "description": "Watchlist empty state body" },
-  "watchlistSymbolField": "Symbol",
-  "@watchlistSymbolField": { "description": "Watchlist symbol input label" },
-  "watchlistMarketField": "Market",
-  "@watchlistMarketField": { "description": "Watchlist market picker label" },
-  "watchlistAlertAboveField": "Alert above",
+  "watchlistAlertAboveField": "Remind above",
   "@watchlistAlertAboveField": { "description": "Watchlist upper price alert input" },
-  "watchlistAlertBelowField": "Alert below",
+  "watchlistAlertBelowField": "Remind below",
   "@watchlistAlertBelowField": { "description": "Watchlist lower price alert input" },
-  "watchlistSaveAlertsAction": "Save alerts",
+  "watchlistSaveAlertsAction": "Save reminders",
   "@watchlistSaveAlertsAction": { "description": "Save watchlist alert rules" },
-  "watchlistEditAlertsAction": "Alerts",
+  "watchlistEditAlertsAction": "Reminders (while app is open)",
   "@watchlistEditAlertsAction": { "description": "Edit watchlist alert rules action" },
   "watchlistRemoveAction": "Remove",
   "@watchlistRemoveAction": { "description": "Remove watchlist item action" },
@@ -6352,10 +6242,6 @@
   "@watchlistSummarySymbols": { "description": "Watchlist collection summary symbol count label" },
   "watchlistSummaryQuotes": "Quotes",
   "@watchlistSummaryQuotes": { "description": "Watchlist collection summary available quote count label" },
-  "watchlistSummaryAdvancing": "Advancing",
-  "@watchlistSummaryAdvancing": { "description": "Watchlist collection summary advancing symbol count label" },
-  "watchlistSummaryDeclining": "Declining",
-  "@watchlistSummaryDeclining": { "description": "Watchlist collection summary declining symbol count label" },
   "watchlistFreshnessLive": "Live",
   "@watchlistFreshnessLive": { "description": "Market data freshness live label" },
   "watchlistFreshnessCache": "Cached",
@@ -6372,18 +6258,16 @@
     "description": "Watchlist lower alert chip",
     "placeholders": { "price": { "type": "String" } }
   },
-  "watchlistAlertTriggeredAbove": "{symbol} is at {price}, above your alert",
+  "watchlistAlertTriggeredAbove": "{symbol} is at {price}, above your reminder price",
   "@watchlistAlertTriggeredAbove": {
     "description": "Watchlist upper alert notification",
     "placeholders": { "symbol": { "type": "String" }, "price": { "type": "String" } }
   },
-  "watchlistAlertTriggeredBelow": "{symbol} is at {price}, below your alert",
+  "watchlistAlertTriggeredBelow": "{symbol} is at {price}, below your reminder price",
   "@watchlistAlertTriggeredBelow": {
     "description": "Watchlist lower alert notification",
     "placeholders": { "symbol": { "type": "String" }, "price": { "type": "String" } }
   },
-  "watchlistSymbolRequired": "Enter a symbol",
-  "@watchlistSymbolRequired": { "description": "Watchlist symbol required validation" },
   "watchlistInvalidNumber": "Enter a positive price",
   "@watchlistInvalidNumber": { "description": "Watchlist alert price validation" },
   "watchlistMarketCnA": "A-share",
@@ -6410,7 +6294,6 @@
   "@commandKeywordSellPutCn": { "description": "Chinese command-palette search keyword for sell put; intentionally present in every locale" },
   "commandKeywordCoveredCallCn": "备兑",
   "@commandKeywordCoveredCallCn": { "description": "Chinese command-palette search keyword for covered call; intentionally present in every locale" },
-
   "incomePlannerUnsupportedOnWeb": "Income Planner is only available on mobile.",
   "@incomePlannerUnsupportedOnWeb": { "description": "Empty-state body shown when Income Planner is opened on the web build" },
   "incomePlannerOccTitle": "Options risk disclosure",
@@ -6960,7 +6843,6 @@
   "incomePlannerWheelNextWaitCall": "Monitor the covered call and record whether it expires, closes, or is assigned.",
   "incomePlannerWheelNextRecordCall": "Record the call-away outcome and verify shares and cash.",
   "incomePlannerWheelNextStartPut": "Cash is available; start a new put only for an approved underlying.",
-
   "onboardingTitle": "Welcome to NaviWealth",
   "@onboardingTitle": { "description": "Onboarding heading shown at first launch" },
   "onboardingSubtitle": "Choose how you want to use the app",

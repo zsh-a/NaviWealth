@@ -67,6 +67,28 @@ minor units and must route decimal parsing and formatting through
 `features/finance/ingest/domain/minor_unit_amount.dart` without floating-point
 rounding.
 
+### Watchlist Navigation And Reminders
+
+Watchlist is available from Wealth's object navigation and the command palette.
+Phone rows open the existing asset detail route using the canonical market and
+symbol identity. Unowned watched symbols have a read-only quote detail fallback;
+opening them must not create assets, holdings, or trades. Desktop retains the
+master/detail layout.
+
+Collection, sorting, and filtering use one local preferences-backed view state;
+only desktop row selection is encoded in the URL. Deleted collections reset the
+scope in the view-state controller. Overview statistics share one compact
+surface with a collapsed market breakdown. Recent close-price sparklines load
+independently of quotes; missing history never invents a trend or blocks a price.
+
+Price reminders are foreground-only: check on quote refresh, app resume, and
+every 15 minutes while the app is open. There is no background price evaluator.
+The UI must state this limit explicitly. Supported, permitted system
+notifications use the shared notification service; otherwise the Watchlist page
+presents the reminder. Only confirmed delivery consumes a rule revision, and
+deduplication is owner-scoped. Stale, future-dated, erroneous, or mismatched quotes
+cannot trigger a reminder.
+
 ### Watchlist Paper Simulations
 
 Watchlist simulations are a separate paper-only aggregate backed by

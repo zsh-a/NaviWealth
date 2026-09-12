@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -596,6 +597,80 @@ void main() {
       expect(leftTitles.showTitles, isFalse);
       expect(leftTitles.reservedSize, 0);
       expect(find.text(AmountPrivacyScope.mask), findsNothing);
+    });
+  });
+
+  group('NwSparkline', () {
+    Finder sparklinePaint() => find.descendant(
+      of: find.byType(NwSparkline),
+      matching: find.byType(CustomPaint),
+    );
+
+    testWidgets('renders nothing until there are two points to join', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_wrap(const NwSparkline(values: <double>[201])));
+      expect(find.byType(NwSparkline), findsOneWidget);
+      expect(sparklinePaint(), findsNothing);
+
+      await tester.pumpWidget(_wrap(const NwSparkline(values: <double>[])));
+      expect(sparklinePaint(), findsNothing);
+    });
+
+    testWidgets('honours the requested box so rows keep a stable rhythm', (
+      tester,
+    ) async {
+      // Centred, because the harness forces a tight 400x250 on whatever it
+      // hosts while a list row hands down loose constraints.
+      await tester.pumpWidget(
+        _wrap(const Center(child: NwSparkline(values: <double>[1, 2, 3]))),
+      );
+      expect(tester.getSize(sparklinePaint()), const Size(52, 26));
+
+      await tester.pumpWidget(
+        _wrap(
+          const Center(
+            child: NwSparkline(
+              values: <double>[1, 2, 3],
+              width: 132,
+              height: 40,
+            ),
+          ),
+        ),
+      );
+      expect(tester.getSize(sparklinePaint()), const Size(132, 40));
+    });
+
+    testWidgets('draws a different line for a rising and a falling window', (
+      tester,
+    ) async {
+      Future<List<int>> painted(List<double> values) async {
+        await tester.pumpWidget(
+          _wrap(
+            RepaintBoundary(
+              child: NwSparkline(values: values, showBaseline: false),
+            ),
+          ),
+        );
+        final boundary = tester.renderObject<RenderRepaintBoundary>(
+          find.byType(RepaintBoundary).first,
+        );
+        late List<int> bytes;
+        await tester.runAsync(() async {
+          final image = await boundary.toImage();
+          final data = await image.toByteData();
+          bytes = data!.buffer.asUint8List().toList(growable: false);
+          image.dispose();
+        });
+        return bytes;
+      }
+
+      final rising = await painted(const <double>[190, 195, 201]);
+      final falling = await painted(const <double>[201, 195, 190]);
+
+      // A flat grid of identical pixels would mean nothing was drawn.
+      expect(rising.toSet().length, greaterThan(1));
+      expect(falling, isNot(rising));
     });
   });
 

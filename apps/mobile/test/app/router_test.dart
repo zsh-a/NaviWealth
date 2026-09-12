@@ -56,9 +56,11 @@ import 'package:naviwealth/features/finance/fire/ui/fire_page.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_execution_codecs.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
@@ -142,6 +144,11 @@ Future<ProviderContainer> _pumpAt(
     overrides: [
       currentTimeProvider.overrideWith(_RoutingTime.new),
       sharedPreferencesProvider.overrideWithValue(prefs),
+      watchlistItemsProvider.overrideWith((_) => Stream.value(const [])),
+      watchlistCollectionsProvider.overrideWith((_) => Stream.value(const [])),
+      watchlistCollectionMembersProvider.overrideWith(
+        (_) => Stream.value(const []),
+      ),
       appDatabaseProvider.overrideWith((_) async => db),
       mutationStamperProvider.overrideWith((_) async => makeStubStamper()),
       // Match production bootstrap: the DomainPack inventory, router
@@ -326,6 +333,29 @@ void main() {
   });
 
   group('deep-link arrival', () {
+    testWidgets('Wealth object navigation opens Watchlist', (tester) async {
+      final container = await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.wealth,
+      );
+      final destination = find.descendant(
+        of: find.byKey(const ValueKey('wealth-destinations')),
+        matching: find.text('Watchlist'),
+      );
+      expect(destination, findsOneWidget);
+      await tester.ensureVisible(destination);
+      await tester.tap(destination);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(WatchlistPage), findsOneWidget);
+      expect(container.read(appRouterProvider).canPop(), isTrue);
+      container.read(appRouterProvider).pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(WealthHubPage), findsOneWidget);
+      await _drainTimers(tester);
+    });
+
     testWidgets('/ renders Home', (tester) async {
       await _pumpAt(tester);
       expect(find.byType(HomePage), findsOneWidget);

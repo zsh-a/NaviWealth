@@ -36,6 +36,7 @@ import 'investment/ai_tools/breakdown_tools.dart';
 import 'investment/ai_tools/get_asset_allocation_tool.dart';
 import 'investment/ai_tools/get_holdings_tool.dart';
 import 'investment/ai_tools/get_investment_performance_tool.dart';
+import 'investment/ai_tools/get_watchlist_tool.dart';
 import 'investment/ai_tools/propose_asset_valuation_tool.dart';
 import 'investment/ai_tools/propose_trade_tool.dart';
 import 'investment/ai_tools/read_asset_window_tool.dart';
@@ -108,6 +109,9 @@ kFinanceToolRegistrations = <RegisteredDeviceTool>[
   _financeTool.read(const GetHoldingsTool()),
   _financeTool.read(const GetAssetAllocationTool()),
   _financeTool.read(const GetInvestmentPerformanceTool()),
+  // The watchlist is intent data rather than holdings: the assistant needs to
+  // see what the user is watching to answer anything about it.
+  _financeTool.read(const GetWatchlistTool(), tier: BudgetTier.standard),
   _financeTool.read(
     const GetIndustryBreakdownTool(),
     tier: BudgetTier.standard,

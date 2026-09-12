@@ -12,7 +12,6 @@
   "rebalanceExecutionResumeInterruptedAction": "继续中断的操作",
   "@@locale": "zh",
   "appTitle": "NaviWealth",
-
   "navHome": "今日",
   "navToday": "今日",
   "navExpenses": "支出",
@@ -26,7 +25,6 @@
   "shellSwitchDomainTitle": "切换域",
   "shellExpandSidebarShortcut": "展开侧边栏  (⌘B)",
   "shellCollapseSidebarShortcut": "收起侧边栏  (⌘B)",
-
   "planHubTitle": "规划",
   "planRebalanceSectionTitle": "再平衡",
   "planIncomeSectionSubtitle": "股息、Wheel 与 LEAPS",
@@ -138,7 +136,6 @@
   "planHeroProgressLabel": "进度",
   "planHeroNextRebalance": "下一步：复盘再平衡",
   "planHeroSeePlan": "查看规划",
-
   "wealthHubTitle": "资产",
   "wealthHubSubtitle": "你拥有什么，欠了什么。",
   "wealthEmptyTitle": "从一个账户开始",
@@ -151,7 +148,7 @@
   "wealthHoldingsSectionSubtitle": "所有账户的持仓汇总",
   "wealthDividendSectionSubtitle": "预测、到账记录与预扣税",
   "wealthWatchlistSectionTitle": "自选",
-  "wealthWatchlistSectionSubtitle": "你在跟踪的标的",
+  "wealthWatchlistSectionSubtitle": "关注的标的与价格提醒",
   "wealthLiabilitiesSectionTitle": "负债",
   "wealthLiabilitiesSectionSubtitle": "贷款、按揭、信用",
   "wealthTrendTitle": "资产趋势",
@@ -797,7 +794,6 @@
   "superFabConvertSubtitle": "在同一账户内兑换币种",
   "superFabLiability": "负债",
   "transferConvertModeBanner": "请选择两个不同币种的账户，并确认转出与转入金额。",
-
   "homeAppBarTitle": "总览",
   "homeAiAssistantTooltip": "AI 助手",
   "homeNetWorthTitle": "净资产",
@@ -844,10 +840,8 @@
   "assetTypeMutualFund": "基金",
   "assetTypeBond": "债券",
   "assetTypeCrypto": "加密货币",
-
   "securitiesHoldingQuantity": "持仓 {quantity}",
   "securitiesHoldingFlat": "暂无持仓",
-
   "corpActionTitle": "公司行动",
   "corpActionSelectAsset": "资产",
   "corpActionSelectAssetHint": "选择本次事件所影响的持仓。",
@@ -880,9 +874,7 @@
   "corpActionSubmitted": "已记录。",
   "corpActionInvalidNumber": "请输入正数",
   "corpActionInvalidNumberNonNegative": "请输入非负数",
-
   "assetsLiabilitiesLink": "负债与还款计划",
-
   "liabilitiesAppBarTitle": "负债",
   "liabilitiesEmptyHint": "尚未录入负债。添加房贷、车贷、信用卡或消费贷以跟踪还款。",
   "liabilitiesAddAction": "添加负债",
@@ -948,7 +940,6 @@
   "liabilityScheduleUndoConfirmBody": "这将移除关联的账本交易，并把该期恢复为待还状态。",
   "liabilityNotFound": "未找到该负债",
   "liabilityRevolvingNoSchedule": "信用卡和循环授信没有固定还款计划。",
-
   "physicalAssetsSectionTitle": "房产与车辆",
   "physicalAssetsEmpty": "暂无房产或车辆。点击 + 添加。",
   "physicalAssetTypeRealEstate": "房产",
@@ -988,7 +979,6 @@
   "physicalAssetValidationPositive": "必须大于 0",
   "physicalAssetValidationResidualRange": "必须在 0 与 1 之间",
   "physicalAssetNotFound": "资产不存在",
-
   "settingsAppBarTitle": "设置",
   "settingsBaseCurrencyTitle": "基础货币",
   "settingsBaseCurrencySubtitle": "{currency} (默认)",
@@ -1087,7 +1077,6 @@
   "dashboardValuationQualityStale": "陈旧",
   "settingsAboutTitle": "关于 NaviWealth",
   "settingsAboutSubtitle": "v{version}",
-
   "settingsAppearanceSection": "外观",
   "settingsAccentSeedTitle": "强调色",
   "accentSeedCyan": "青蓝",
@@ -1109,7 +1098,6 @@
   "langSystem": "跟随系统",
   "langEnglish": "英文",
   "langChinese": "中文",
-
   "commonRetry": "重试",
   "commonRefresh": "刷新",
   "@commonRefresh": { "description": "Generic refresh/reload action label" },
@@ -1144,16 +1132,13 @@
   "commonUndo": "撤销",
   "commonUndoSucceeded": "已撤销更改",
   "commonUndoFailed": "撤销失败，请重试",
-
   "deferredLoadFailedTitle": "该页面加载失败",
   "deferredLoadRetry": "重试",
-
   "routeNotFoundTitle": "页面不存在",
   "routeNotFoundMessage": "找不到 {path}。链接可能已失效或从未存在。",
   "routeErrorTitle": "出错了",
   "routeGoHome": "返回总览",
   "routeGoBack": "返回上一页",
-
   "shortcutsHelpTitle": "键盘快捷键",
   "shortcutCommandPalette": "打开命令面板",
   "shortcutShowHelp": "显示快捷键帮助",
@@ -1165,7 +1150,6 @@
   "shortcutListSearch": "聚焦列表搜索",
   "shortcutListNext": "选择下一项",
   "shortcutListPrevious": "选择上一项",
-
   "commandPaletteSearchHint": "搜索命令…",
   "commandPaletteMobileEntryHint": "搜索、跳转、提问…",
   "commandPaletteEmpty": "没有匹配的命令",
@@ -1195,7 +1179,6 @@
   "commandPaletteToggleColorMode": "切换涨跌颜色模式",
   "commandPaletteToggleLanguage": "切换语言",
   "commandPaletteShortcutHelp": "显示键盘快捷键",
-
   "pwaUpdateAvailable": "NaviWealth 有新版本可用。",
   "pwaUpdateApply": "立即刷新",
   "pwaUpdateDismiss": "稍后",
@@ -1228,7 +1211,6 @@
   "nativeUpdateInstallFailed": "Android 无法启动更新安装器。",
   "nativeUpdateDownloadFailed": "更新下载失败，请稍后重试。",
   "nativeUpdateInstallStarted": "更新已下载，请在 Android 中确认安装。",
-
   "authLoginTitle": "欢迎回来",
   "authRegisterTitle": "创建账号",
   "authLoginSubmit": "登录",
@@ -1239,30 +1221,24 @@
   "authPasswordLabel": "密码",
   "authPasswordShowTooltip": "显示密码",
   "authPasswordHideTooltip": "隐藏密码",
-
   "authEmailErrorEmpty": "请输入邮箱地址。",
   "authEmailErrorInvalid": "邮箱格式不正确。",
   "authPasswordErrorEmpty": "请输入密码。",
   "authPasswordErrorTooShort": "密码至少需要 8 位。",
-
   "authLoginErrorInvalidCredentials": "邮箱或密码不正确。",
   "authLoginErrorNetwork": "无法连接服务器，请检查网络后重试。",
   "authLoginErrorServer": "服务器暂时无响应，请稍后重试。",
   "authLoginErrorGeneric": "登录失败，请重试。",
   "authRegisterErrorAccountExists": "账号已存在，请直接登录。",
-
   "authLoginNoticeSessionExpired": "登录已过期，请重新登录。",
-
   "authUpgradeRegisterHint": "创建新账号并同步已有数据",
   "authUpgradeConnectHint": "登录已有账号（本地数据将单独保留）",
   "authUpgradeRegisterSubmit": "创建并同步",
   "authUpgradeConnectSubmit": "登录并同步",
-
   "settingsDevicesTitle": "已登录设备",
   "settingsDevicesSubtitle": "查看已登录的设备并远程登出",
   "settingsSwitchToLocalTitle": "切换到本地模式",
   "settingsSwitchToLocalSubtitle": "关闭云同步，但保留本机数据",
-
   "authDevicesTitle": "已登录设备",
   "authDeviceUnnamed": "未命名设备",
   "authDeviceCurrent": "当前设备",
@@ -1273,12 +1249,10 @@
   "authDeviceRevokeConfirm": "登出",
   "authDeviceRevokeError": "登出失败，请重试。",
   "authDevicesLoadError": "无法加载设备列表。",
-
   "authLogoutCurrentTooltip": "登出",
   "authLogoutDialogTitle": "确定要登出？",
   "authLogoutDialogBody": "登出后需要在此设备上重新登录。",
   "authLogoutDialogConfirm": "登出",
-
   "dashboardAllocationTitle": "大类资产分布",
   "dashboardCategoryStock": "股票",
   "dashboardCategoryEtf": "ETF",
@@ -1306,7 +1280,6 @@
   "dashboardHeaderDeltaTodayLabel": "今日",
   "dashboardHeaderDeltaMonthLabel": "本月",
   "dashboardHeaderDeltaYtdLabel": "年初至今",
-
   "analyticsAppBarTitle": "组合分析",
   "analyticsOverviewNetWorth": "净值",
   "analyticsOverviewMonthlyChange": "本月变化",
@@ -1336,14 +1309,12 @@
   "analyticsFireProgressNotConfiguredTitle": "尚未设置 FIRE 计划",
   "analyticsFireProgressNotConfiguredBody": "设置 FIRE 目标后，这里会跟踪进度和现金跑道。",
   "analyticsFireProgressLoadError": "无法加载 FIRE 进度。",
-
   "analyticsEquityTitle": "股票透视",
   "analyticsEquitySubtitle": "按行业、地区或市值查看股票和 ETF 持仓。",
   "analyticsDimensionSector": "行业",
   "analyticsDimensionRegion": "地域",
   "analyticsDimensionMarketCap": "市值",
   "analyticsTotalValueLabel": "总持仓 {currency}",
-
   "analyticsBucketUnclassified": "未分类",
   "analyticsBucketRegionCnA": "A 股",
   "analyticsBucketRegionHk": "港股",
@@ -1354,27 +1325,19 @@
   "analyticsBucketMarketCapLarge": "大盘",
   "analyticsBucketMarketCapMid": "中盘",
   "analyticsBucketMarketCapSmall": "小盘",
-
   "analyticsHoldingsCount": "{count, plural, other {{count} 只持仓}}",
-
   "analyticsUnclassifiedHint": "{count, plural, other {还有 {count} 只持仓缺少分类元数据。}}",
   "analyticsUnclassifiedAction": "去补全",
   "analyticsUnclassifiedRowCta": "点击持仓即可补全其分类信息。",
-
   "analyticsEmptyTitle": "暂无股票持仓",
   "analyticsEmptyHint": "录入股票或 ETF 交易后，此处将展示分布。",
-
   "analyticsLoadError": "无法加载持仓分布。",
   "analyticsRetry": "重试",
-
   "analyticsBucketSheetTitle": "「{label}」持仓",
   "analyticsHoldingTooltip": "{symbol} · {value} · {weight}",
-
-
   "fireAppBarTitle": "FIRE 仪表盘",
   "fireLoadError": "FIRE 仪表盘加载失败。{detail}",
   "fireRetry": "重试",
-
   "fireEmptyTitle": "设定 FIRE 目标",
   "fireEmptyHint": "填写目标净资产、月支出与月结余，量化追踪距离财务自由还有多远。",
   "fireEmptySetGoalCta": "设定目标",
@@ -1390,7 +1353,6 @@
     }
   },
   "fireHeroNextStepLabel": "下一步",
-
   "fireGoalSheetTitle": "FIRE 目标",
   "fireGoalSheetSubtitle": "数据仅保存在本地，目标按下方通胀率折算购买力。",
   "fireGoalSheetCancel": "取消",
@@ -1406,13 +1368,11 @@
   "fireGoalValidationInvalidNumber": "请输入有效数字",
   "fireGoalValidationNonNegative": "不能为负数",
   "fireGoalValidationPositive": "请输入大于 0 的数字",
-
   "fireProgressTitle": "进度",
   "fireProgressGaugeCaption": "已达成目标比例",
   "fireProgressCurrent": "当前净资产",
   "fireProgressTarget": "目标",
   "fireProgressGap": "距 FIRE 差额",
-
   "fireCountdownTitle": "倒计时 · {scenario}",
   "fireCountdownReachedTitle": "已达成 FIRE",
   "fireCountdownReachedSubtitle": "净资产已超过目标，可关注 4% 安全提取下的可持续支出。",
@@ -1422,7 +1382,6 @@
   "fireCountdownMonthsOnly": "{months, plural, other {{months} 个月}}",
   "fireCountdownYearsMonths": "{years} 年 {months} 个月",
   "fireCountdownDaysAprox": "约 {days} 天",
-
   "fireProjectionTitle": "多场景模拟",
   "fireBudgetNoDataTitle": "暂无预算信号",
   "fireBudgetNoDataDetail": "设置月度预算后，可将当前支出压力联动到 FIRE 计划。",
@@ -1434,7 +1393,6 @@
   "fireBudgetOverDetail": "当前支出压力可能降低 FIRE 计划所依赖的月度结余。",
   "fireProjectionSubtitle": "各收益场景下的净资产路径；虚线为通胀调整后的目标。",
   "fireProjectionTargetLineLegend": "目标（通胀调整）",
-
   "fireScenariosTableTitle": "场景对比",
   "fireScenarioConservative": "保守",
   "fireScenarioNeutral": "中性",
@@ -1442,7 +1400,6 @@
   "fireScenarioLive": "实际（XIRR）",
   "fireScenarioRateLabel": "年化 {rate}%",
   "fireScenarioReachedNow": "现在",
-
   "fireSafeWithdrawalTitle": "4% 提取规则",
   "fireSafeWithdrawalSubtitle": "Trinity 研究安全提取率：每年取目标的 4%，按今日购买力计。",
   "fireSafeWithdrawalMonthly": "安全月提取",
@@ -1450,13 +1407,11 @@
   "fireSafeWithdrawalNoExpenses": "填写月支出后可与提取额对比。",
   "fireSafeWithdrawalCovers": "覆盖计划支出，每月剩余 {amount}。",
   "fireSafeWithdrawalShortfall": "每月仍缺口 {amount}。",
-
   "fireSensitivityTitle": "结余敏感度",
   "fireSensitivitySubtitle": "月结余 ±20% 对达成时间的影响。",
   "fireSensitivityHigherSurplus": "结余 +20%",
   "fireSensitivityBaseline": "当前结余",
   "fireSensitivityLowerSurplus": "结余 -20%",
-
   "fireOsHeroTitle": "自由状态",
   "fireOsHeroSubtitle": "当前资产是否还能支撑你想要的生活方式。",
   "fireOsHeroNetWorthLabel": "净资产",
@@ -1581,7 +1536,6 @@
   "fireOsReviewFindingStressDanger": "压力测试 \"{scenario}\" 触发危险等级。",
   "fireOsReviewFindingStressCautious": "压力测试 \"{scenario}\" 触发谨慎等级。",
   "fireOsReviewFindingStressSafe": "所有压力测试在当前假设下均为安全。",
-
   "benchmarkComparisonTitle": "基准指数对比",
   "benchmarkComparisonSubtitle": "选定主流指数，与组合走势对照并查看超额收益。",
   "benchmarkComparisonError": "无法加载基准对比：{error}",
@@ -1592,7 +1546,6 @@
   "benchmarkIndexSp500": "标普 500",
   "benchmarkIndexNasdaq": "纳指",
   "benchmarkIndexHsi": "恒生",
-
   "rebalanceTitle": "再平衡",
   "rebalanceSchemeTitle": "目标方案",
   "rebalanceSchemeConservative": "保守",
@@ -1693,12 +1646,10 @@
   "riskAlertRegionTitle": "{region} 地域过重",
   "riskAlertCurrencyTitle": "{currency} 敞口过大",
   "riskAlertThresholdBreached": "{dimension} 阈值：{threshold}",
-
   "riskDimensionAsset": "资产",
   "riskDimensionSector": "行业",
   "riskDimensionRegion": "地域",
   "riskDimensionCurrency": "币种",
-
   "settingsRiskSection": "投资偏好",
   "settingsRiskAssetLabel": "单一资产上限",
   "settingsRiskAssetSubtitle": "单只资产占总资产比例超过此值时预警。",
@@ -1752,7 +1703,6 @@
   "settingsMonthlyExpenseOverrideSubtitle": "跳过自动派生。留空则继续用滚动均值。",
   "settingsMonthlyExpenseOverrideHint": "留空则使用自动",
   "settingsMonthlyExpenseResetDefaults": "恢复默认",
-
   "tradeEntryAppBarTitle": "录入交易",
   "tradeEntrySuccess": "交易录入成功",
   "tradeEntryFailure": "录入失败：{error}",
@@ -1797,9 +1747,7 @@
   "tradeTypeSplit": "拆股",
   "tradeTypeLiabilityPayment": "还款",
   "tradeTypeExpense": "支出",
-
   "expensesReportTooltip": "月度报表",
-
   "expenseFormCreateTitle": "新建支出",
   "expenseFormEditTitle": "编辑支出",
   "expenseFormDeleteTooltip": "删除",
@@ -1828,7 +1776,6 @@
   "expenseFormNoAccountsTitle": "先创建一个账户",
   "expenseFormNoAccountsBody": "支出需要选择资金账户。前往「账户」新建后再来录入。",
   "expenseFormNoAccountsCta": "去创建",
-
   "incomeFormCreateTitle": "记录收入",
   "incomeFormAmountLabel": "金额",
   "incomeFormAmountInvalid": "金额必须大于 0",
@@ -1841,7 +1788,6 @@
   "incomeFormNoAccountsTitle": "先创建一个账户",
   "incomeFormNoAccountsBody": "收入需要选择入账账户。前往「账户」新建后再来录入。",
   "incomeFormNoAccountsCta": "去创建",
-
   "expenseHistorySectionTitle": "变更历史",
   "expenseHistoryEmpty": "暂无变更记录。",
   "expenseHistoryLoadError": "变更历史加载失败：{error}",
@@ -1862,7 +1808,6 @@
   "expenseHistoryEmptyValue": "—",
   "expenseHistoryUnknownReference": "（未知）",
   "expenseHistoryReasonLabel": "原因：{reason}",
-
   "aiChatAppBarTitle": "AI 助手",
   "aiChatHistoryTooltip": "历史对话",
   "aiChatNewSessionTooltip": "新建对话",
@@ -1939,7 +1884,6 @@
   "aiIntentExplainStressTestPrompt": "请基于 get_fire_stress_tests 的结果逐条解释市场回撤、支出上升、一次性冲击、汇率冲击和现金桶耗尽对 {objectLabel} 的影响。强调这是韧性检验，不是预测。",
   "aiIntentSuggestFireActionsLabel": "下一步怎么办",
   "aiIntentSuggestFireActionsPrompt": "请基于 get_fire_state 的 suggested_actions 给出三件最值得做的事；若涉及计划改动，请用 propose_fire_plan_update 让我确认。",
-
   "aiChatSessionsHeader": "对话",
   "aiChatSessionsEmpty": "点击右上角的 + 开始第一个对话。",
   "aiChatSessionMoreTooltip": "更多",
@@ -1952,7 +1896,6 @@
   "aiChatRelativeMinutesAgo": "{minutes} 分钟前",
   "aiChatRelativeHoursAgo": "{hours} 小时前",
   "aiChatRelativeDaysAgo": "{days} 天前",
-
   "aiChatComposerHintIdle": "问问 NaviWealth：财务、知识、健康或计划都可以",
   "aiChatComposerSendTooltip": "发送 (⌘/Ctrl + Enter)",
   "aiChatComposerStopTooltip": "停止生成",
@@ -2046,7 +1989,6 @@
   "aiChatSessionsGroupThisWeek": "本周",
   "aiChatSessionsGroupThisMonth": "本月",
   "aiChatSessionsGroupOlder": "更早",
-
   "aiChatTruncatedMaxTokens": "回复因长度上限被截断",
   "aiChatTruncatedToolBudget": "工具调用次数用尽，已提前结束",
   "aiChatTruncatedRefusal": "模型拒绝回答此问题",
@@ -2054,7 +1996,6 @@
   "aiChatTruncatedUnknown": "回复异常结束",
   "aiChatTruncatedContinue": "继续",
   "aiChatTruncatedContinuePrompt": "请继续。",
-
   "aiChatProposalKindTrade": "交易",
   "aiChatProposalKindExpense": "支出",
   "aiChatProposalKindIncome": "收入",
@@ -2067,7 +2008,6 @@
   "aiChatProposalKindOptionsProfileUpdate": "Income Planner 偏好",
   "aiChatProposalKindOptionsJournalEntry": "期权流水",
   "aiChatProposalKindUnknown": "未知",
-
   "aiChatProposalPendingHeader": "待确认 · {kind}",
   "aiChatProposalNeedsClarificationHeader": "需要澄清 · {kind}",
   "aiChatProposalCandidatesHeading": "候选：",
@@ -2092,11 +2032,9 @@
   "aiChatProposalBatchResultAllOk": "{count, plural, other{已记录 {count} 项}}",
   "aiChatProposalBatchResultMixed": "已记录 {applied} 项 · {failed} 项失败",
   "aiChatProposalBatchResultAllFailed": "{count, plural, other{{count} 项全部失败}}",
-
   "aiChatProposalConfirmTokenWarning": "此操作高风险。请输入「{token}」启用确认。",
   "aiChatProposalConfirmTokenPending": "输入「{token}」后即可点击确认。",
   "aiChatProposalConfirmToken": "确认",
-
   "aiChatFieldQuantity": "数量",
   "aiChatFieldPrice": "价格 (留空则市场回填)",
   "aiChatFieldFee": "手续费",
@@ -2112,7 +2050,6 @@
   "aiChatFieldAccountName": "账户名",
   "aiChatFieldInstitution": "机构 (可选)",
   "aiChatFieldNewValuation": "新估值",
-
   "aiChatRowOperation": "操作",
   "aiChatRowAsset": "资产",
   "aiChatRowAccount": "账户",
@@ -2135,7 +2072,6 @@
   "aiChatRowCurrency": "币种",
   "aiChatRowInstitution": "机构",
   "aiChatRowNewValue": "新估值",
-
   "aiChatToolGetHoldings": "查询持仓",
   "aiChatToolComputeXirr": "计算 XIRR",
   "aiChatToolComputeNetWorth": "计算净资产",
@@ -2154,31 +2090,24 @@
   "aiChatToolEvidenceLabel": "依据",
   "aiChatToolShowRawJson": "查看原始数据",
   "aiChatToolShowCompactView": "返回精简视图",
-
   "aiFloatingPillLabel": "打开助理",
   "aiChatSheetTitle": "AI 助手",
   "aiChatSheetEmpty": "随便问问你的 Life OS 状态。",
   "aiChatSheetExpandTooltip": "展开全屏",
   "aiChatSheetNewTooltip": "新对话",
-
   "chartEmptyDefault": "暂无数据",
   "chartTotalLabel": "合计",
-
   "formAmountFieldLabelDefault": "金额",
   "formAmountFieldRequired": "请输入金额",
   "formAmountFieldInvalid": "金额格式不正确",
   "formAmountFieldNegativeNotAllowed": "金额不能为负",
   "formAmountFieldZeroNotAllowed": "金额必须大于零",
-
   "formNoteFieldLabelDefault": "备注",
-
   "formDateFieldClearTooltip": "清除",
   "formDateFieldTimeLabel": "时间",
   "formDateFieldRequired": "请选择日期",
-
   "formAccountPickerLabelDefault": "账户",
   "formAccountPickerRequired": "请选择账户",
-
   "formCurrencyPickerLabelDefault": "币种",
   "formCurrencyPickerRequired": "请选择币种",
   "currencyOptionLabel": "{code} · {name}",
@@ -2192,7 +2121,6 @@
   "currencyNameAUD": "澳大利亚元",
   "currencyNameCAD": "加拿大元",
   "currencyNameTWD": "新台币",
-
   "expenseCategoryPickerLabelDefault": "类目",
   "expenseCategoryPickerRequired": "请选择类目",
   "systemAccountIncome": "收入",
@@ -2232,11 +2160,9 @@
   "systemAccountEquityOpeningBalance": "期初余额",
   "systemAccountEquitySplits": "拆股",
   "systemAccountEquityAdjustments": "调整",
-
   "physicalAssetValuationProjected": "预计估值",
   "physicalAssetValuationHistorical": "历史估值",
   "physicalAssetValuationTrendSemanticLabel": "估值走势",
-
   "accountsDetailEmpty": "请在左侧选择账户，查看余额与活动。",
   "accountsCreateAction": "新建账户",
   "accountsLoadError": "加载失败：{error}",
@@ -2259,7 +2185,6 @@
   "accountDetailInstitutionLabel": "机构",
   "accountDetailNumberLabel": "账号",
   "accountDetailNotesLabel": "备注",
-
   "accountCategoryCash": "现金",
   "accountCategoryBank": "银行",
   "accountCategoryBroker": "券商",
@@ -2268,7 +2193,6 @@
   "accountCategoryLoan": "贷款",
   "accountCategoryAsset": "其他资产",
   "accountCategoryLiability": "其他负债",
-
   "accountCategoryCashHint": "现金、电子钱包（支付宝/微信）",
   "accountCategoryBankHint": "活期、储蓄、定期存款",
   "accountCategoryBrokerHint": "股票、ETF、基金",
@@ -2277,13 +2201,11 @@
   "accountCategoryLoanHint": "房贷、车贷、学生贷",
   "accountCategoryAssetHint": "不动产、车辆、收藏品",
   "accountCategoryLiabilityHint": "信用卡和贷款以外的其他负债",
-
   "accountSideAsset": "资产",
   "accountSideLiability": "负债",
   "accountSideIncome": "收入",
   "accountSideExpense": "支出",
   "accountSideEquity": "权益",
-
   "accountFormCreateTitle": "新建账户",
   "accountFormEditTitle": "编辑账户",
   "accountFormDeleteTooltip": "删除",
@@ -2304,7 +2226,6 @@
   "accountFormArchivedSubtitle": "归档后不会出现在主列表中。",
   "accountFormSaving": "保存中…",
   "accountFormSave": "保存",
-
   "cashFormCreateTitle": "录入现金余额",
   "cashFormEditTitle": "编辑现金余额",
   "cashFormDeleteTooltip": "删除",
@@ -2321,12 +2242,10 @@
   "cashFormNicknameHelper": "例如：招行港币活期、零钱通",
   "cashFormSaving": "保存中…",
   "cashFormSave": "保存",
-
   "manualAssetDeleteTitle": "删除资产",
   "manualAssetDeleteContent": "确认删除该资产记录？",
   "manualAssetDeleteCancel": "取消",
   "manualAssetDeleteConfirm": "删除",
-
   "activityFeedTab": "动态",
   "activityFeedEmpty": "暂无动态 — 记录一笔转账、支出或交易即可在此查看。",
   "activitySelectEntry": "选择一条流水，在不离开时间线的情况下查看详情",
@@ -2386,7 +2305,6 @@
   "planSummaryBalanced": "已平衡",
   "planSummaryDrift": "偏离 {value}",
   "planSummaryTrades": "{count, plural, other {{count} 笔建议交易}}",
-
   "settingsAccountSection": "账户",
   "settingsAiHubTitle": "AI 助手",
   "settingsAiHubSubtitle": "服务、记忆与隐私",
@@ -2804,16 +2722,11 @@
   "backupInvalidFile": "无效的备份文件",
   "backupFilePickerError": "无法读取所选文件",
   "backupRestorePassphraseHint": "输入备份密码",
-
   "logViewerClearTooltip": "清除",
-
   "activityFeedLoadError": "加载失败：{error}",
-
   "expenseFormLoadError": "无法加载支出，请新建一条记录。",
-
   "accountsJournalTooltip": "日记账",
   "accountsTransferTooltip": "新转账",
-
   "accountFormParentLabel": "父账户（可选）",
   "accountFormParentHelper": "将此账户归入另一个账户之下。",
   "accountFormMakeTopLevelTooltip": "设为顶级",
@@ -2821,7 +2734,6 @@
   "accountFormNoIconTooltip": "无图标",
   "accountFormColorHeading": "颜色",
   "accountFormNoColorTooltip": "无颜色",
-
   "transferTitle": "新转账",
   "transferLoadError": "加载账户失败：{error}",
   "transferFromLabel": "转出账户",
@@ -2842,11 +2754,9 @@
   "transferRejectedError": "转账被拒绝：{message}",
   "transferFailedError": "转账失败：{error}",
   "transferRetryLabel": "重试",
-
   "journalTitle": "日记账",
   "journalLoadError": "加载日记账失败：{error}",
   "journalEmptyHint": "暂无日记账记录 — 记录一笔转账、支出或交易即可在此查看。",
-
   "entryKindTrade": "交易",
   "entryKindTransfer": "转账",
   "entryKindIncome": "收入",
@@ -2857,11 +2767,9 @@
   "entryKindOther": "其他",
   "entryKindEntry": "记录",
   "entryKindSemanticLabel": "日记账 · {kind}",
-
   "chatCancelled": "已取消",
   "chatNewSession": "新对话",
   "chatContextTruncated": "已折叠 {count} 条更早的历史以控制上下文长度。",
-
   "spendingTitle": "支出分析",
   "expenseReportRangeThisMonth": "本月",
   "expenseReportRangeThisMonthCompact": "本月",
@@ -2932,7 +2840,6 @@
   "assetDetailTrendSemanticLabel": "近 30 日收盘价走势",
   "assetDetailStaleBadge": "行情滞后",
   "assetDetailCategoryShareSemantic": "类目占比",
-
   "depositMaturityRequired": "定期存款必须填写到期日",
   "depositDeleteTitle": "删除存款",
   "depositDeleteBody": "确认删除该存款记录？",
@@ -2961,7 +2868,6 @@
   "depositAutoRenewSubtitle": "到期后系统提示重新登记，不会自动创建新存款",
   "depositNoAccountHint": "请先创建一个银行账户。",
   "depositCreateAccountAction": "新建账户",
-
   "wealthProductDeleteTitle": "删除理财产品",
   "wealthProductDeleteBody": "确认删除该理财产品记录？",
   "wealthProductCreateTitle": "录入理财产品",
@@ -2984,7 +2890,6 @@
   "wealthProductMaturityDateLabel": "到期日（可选）",
   "wealthProductValuationLabel": "当前估值（手动维护）",
   "wealthProductValuationHelper": "不填则以认购金额作为当前估值",
-
   "manualSecurityMarketCnA": "A 股",
   "manualSecurityMarketHk": "港股",
   "manualSecurityMarketUs": "美股",
@@ -3011,7 +2916,6 @@
   "manualSecurityTypeLabel": "类型",
   "manualSecurityIsinLabel": "ISIN（可选）",
   "manualSecurityAddAction": "添加",
-
   "localSecuritiesSearchLabel": "资产搜索",
   "localSecuritiesSearchHint": "输入代码、名称或拼音",
   "localSecuritiesValidationRequired": "请选择一个资产",
@@ -3020,7 +2924,6 @@
   "localSecuritiesManualAdd": "未找到？手动添加",
   "localSecuritiesUseQueryAsCode": "使用 \"{query}\" 作为代码",
   "localSecuritiesMarketLabel": "市场",
-
   "portfolioViewAssets": "资产",
   "portfolioViewAccount": "账户",
   "portfolioViewCurrency": "币种",
@@ -3056,10 +2959,8 @@
   "activityFeedLoadMore": "加载更多",
   "activityFeedAllLoaded": "已加载全部动态",
   "backupWebSecurityWarning": "Web 端本地数据库未启用 SQLCipher。备份文件会使用你的密码加密；不建议在 Web 端长期保存敏感账户。",
-
   "formSaving": "保存中…",
   "formSave": "保存",
-
   "settingsSyncTitle": "同步",
   "settingsSyncSubtitle": "查看同步状态与最近活动",
   "syncStatusTitle": "同步状态",
@@ -3095,7 +2996,6 @@
   "syncStatusDetailCursorUnset": "未设置",
   "syncStatusDetailRemoteRows": "远端行",
   "syncStatusDetailEndpoint": "服务端地址",
-
   "syncStatusLocalCountsHeader": "本地行数（调试）",
   "syncStatusLocalAccountsUser": "账户（用户）",
   "syncStatusLocalAccountsSystem": "账户（系统）",
@@ -3105,7 +3005,6 @@
   "syncStatusLocalPrices": "价格",
   "syncStatusLocalLiabilities": "负债",
   "syncStatusLocalTags": "标签",
-
   "syncStatusHeroSyncing": "正在同步…",
   "syncStatusStatPending": "待推送",
   "syncStatusStatLocal": "本地行",
@@ -3154,7 +3053,6 @@
   "aiReplyChipActionPlanGeneric": "给出行动方案",
   "aiReplyChipVsLastMonth": "与上月对比",
   "aiCapsuleExpandFallback": "展开",
-
   "ingestReviewTitle": "录入待确认",
   "ingestCopyDiagnostics": "复制隐私安全的导入诊断",
   "ingestDiagnosticsCopied": "导入诊断已复制",
@@ -3244,12 +3142,10 @@
   "ingestImportFileAction": "导入文件",
   "ingestCameraAction": "拍照",
   "ingestCaptureMenuAction": "添加来源",
-
   "settingsAiTransparencyTitle": "AI 透明度",
   "settingsAiTransparencySubtitle": "查看最近 AI 调用的详细轨迹",
   "settingsAiLlmTitle": "AI 服务 · 自带 API Key",
   "settingsAiLlmSubtitle": "管理多个模型服务商，并切换本机直连配置",
-
   "aiLlmMissingApiKey": "请先填入 API Key",
   "aiLlmSaved": "已保存到设备安全存储",
   "aiLlmSwitched": "已切换",
@@ -3279,7 +3175,6 @@
   "aiLlmStatusNotConfigured": "未配置 · 当前无可用 AI 服务",
   "aiLlmAnthropicProtocol": "{provider}（Anthropic Messages 协议）",
   "aiLlmOpenAiProtocol": "{provider}（Chat Completions 协议）",
-
   "aiTransparencyFilteredEmpty": "当前筛选下没有记录",
   "aiTransparencyLoadError": "加载失败: {error}",
   "aiTransparencyVerboseTitle": "详细采集",
@@ -3312,7 +3207,33 @@
   "pressBackAgainToExit": "再按一次返回退出",
   "watchlistTitle": "自选清单",
   "watchlistSelectItem": "选择标的，查看行情与提醒规则",
-  "watchlistAccountsEntrySubtitle": "跟踪标的并设置本地价格告警",
+  "watchlistOverviewTitle": "概览",
+  "watchlistOverviewByMarket": "按市场",
+  "watchlistSummaryAdvancingDeclining": "涨 / 跌",
+  "watchlistOverviewTypicalMove": "中位涨跌",
+  "watchlistOverviewFreshnessLive": "{count} 项实时",
+  "watchlistOverviewFreshnessCached": "{count} 项缓存价",
+  "watchlistOverviewFreshnessStale": "{count} 项已延迟",
+  "watchlistOverviewFreshnessUnavailable": "{count} 项暂无报价",
+  "watchlistOverviewFreshnessNone": "等待首次报价",
+  "watchlistOverviewAlertsSummary": "{configured} 项提醒 · {triggered} 项达阈值",
+  "watchlistOverviewMarketLine": "{market} · {up} 涨 · {down} 跌 · {flat} 平",
+  "watchlistMoreActions": "更多",
+  "watchlistFilterActiveChip": "已筛选",
+  "watchlistAlertSetBadge": "已设置价格提醒（仅打开 App 时）",
+  "watchlistAlertNotSet": "未设置价格提醒",
+  "watchlistSymbolDetailTitle": "{symbol} 详情",
+  "watchlistDetailTrendTitle": "近 30 天",
+  "watchlistDetailOpen": "开盘",
+  "watchlistDetailHigh": "最高",
+  "watchlistDetailLow": "最低",
+  "watchlistDetailPreviousClose": "昨收",
+  "watchlistDetailVolume": "成交量",
+  "watchlistDetailExchange": "交易所",
+  "watchlistDetailUpdatedAt": "更新于",
+  "watchlistAlertOptionalSection": "价格提醒（可选）",
+  "watchlistAlertOptionalHint": "提醒仅在打开 App 时生效",
+  "watchlistAlertNotificationNote": "打开 App 时每 15 分钟及手动刷新时检查价格。已授权时发送系统通知，否则在自选页内提示。关闭 App 或进入后台后不检查价格。",
   "watchlistAddAction": "添加标的",
   "watchlistAllCollection": "全部",
   "watchlistUngroupedCollection": "未分组",
@@ -3328,7 +3249,7 @@
   "watchlistCollectionNameRequired": "请输入组合名称",
   "watchlistDeleteCollectionAction": "删除组合",
   "watchlistDeleteCollectionTitle": "删除“{name}”？",
-  "watchlistDeleteCollectionBody": "标的和告警规则仍会保留在“全部”中。",
+  "watchlistDeleteCollectionBody": "标的和提醒规则仍会保留在“全部”中。",
   "watchlistManageCollectionsAction": "所属组合",
   "watchlistManageCollectionsTitle": "{symbol} 所属组合",
   "watchlistNoCollectionsBody": "请先新建组合，再整理这个标的。",
@@ -3344,7 +3265,7 @@
   "watchlistReorderSymbolsAction": "调整标的顺序",
   "watchlistFilterAction": "筛选标的",
   "watchlistFilterMarketSection": "市场",
-  "watchlistFilterAlertsSection": "告警",
+  "watchlistFilterAlertsSection": "提醒",
   "watchlistFilterFreshnessSection": "行情新鲜度",
   "watchlistFilterAllOption": "全部",
   "watchlistFilterAlertsConfigured": "已配置",
@@ -3353,18 +3274,6 @@
   "watchlistFilterApplyAction": "应用筛选",
   "watchlistFilterEmptyTitle": "没有匹配的标的",
   "watchlistFilterEmptyBody": "调整或清除筛选条件以查看更多标的。",
-  "watchlistAnalysisTitle": "自选分析",
-  "watchlistAnalysisMarketTimingNote": "涨跌为当前时点快照；不同市场交易时段可能不同，因此按市场拆分。",
-  "watchlistAnalysisCoverage": "行情覆盖",
-  "watchlistAnalysisMedianChange": "涨跌中位数",
-  "watchlistAnalysisAlertCoverage": "告警覆盖",
-  "watchlistAnalysisTriggeredAlerts": "已触发",
-  "watchlistAnalysisCoverageValue": "{configured} / {total}",
-  "watchlistAnalysisFreshnessSummary": "实时 {live} · 缓存 {cached} · 过期 {stale} · 无行情 {unavailable}",
-  "watchlistAnalysisTopGainer": "最大上涨：{symbol} {change}",
-  "watchlistAnalysisTopDecliner": "最大下跌：{symbol} {change}",
-  "watchlistAnalysisMarketsTitle": "按市场",
-  "watchlistAnalysisMarketSummary": "{market}：{quotes}/{total} 个有行情 · 上涨 {advancing} · 下跌 {declining} · 平盘 {unchanged} · 无昨收 {unknown}",
   "watchlistSimulationSectionTitle": "模拟组合",
   "watchlistSimulationCreateAction": "新建模拟",
   "watchlistSimulationNeedsSymbols": "请先向当前组合添加标的，再创建模拟组合。",
@@ -3373,13 +3282,11 @@
   "watchlistSimulationPaperBadge": "模拟配置 · 非真实业绩",
   "watchlistSimulationAdjustAction": "调整模拟配置",
   "watchlistSimulationDeleteAction": "删除模拟",
-  "watchlistSimulationVirtualCapital": "虚拟本金",
   "watchlistSimulationDailyMove": "加权当日涨跌",
   "watchlistSimulationPricedWeight": "有行情权重",
   "watchlistSimulationCashWeight": "虚拟现金",
   "watchlistSimulationDailyMoveAmount": "情景变动金额：{amount}",
   "watchlistSimulationMethodNote": "仅使用各标的当前可用的当日涨跌幅；缺失行情按不变处理，且不会推断历史净值、汇率序列或公司行动调整。",
-  "watchlistSimulationHistoryTitle": "模拟观察历史",
   "watchlistSimulationObservedValue": "最新观察值",
   "watchlistSimulationHistorySeries": "观察值",
   "watchlistSimulationHistoryChartLabel": "模拟组合观察值历史曲线",
@@ -3400,13 +3307,10 @@
   "watchlistSimulationNameField": "模拟名称",
   "watchlistSimulationNameRequired": "请输入模拟名称",
   "watchlistSimulationCapitalField": "虚拟本金（{currency}）",
-  "watchlistSimulationEqualWeightNote": "初始为 {count} 个标的等权配置，创建后可继续调整。",
   "watchlistSimulationDefaultName": "{collection}模拟",
   "watchlistSimulationAdjustTitle": "调整模拟配置",
-  "watchlistSimulationAllocationNote": "设置各标的与虚拟现金的目标百分比，合计必须为 100%。",
   "watchlistSimulationAllocationSyncing": "配置快照仍在同步中。选中的快照完整前不会显示相关数值。",
   "watchlistSimulationAllocationInvalid": "此配置无效。请编辑模拟组合，使权重合计恢复为 100%。",
-  "watchlistSimulationWeightField": "{symbol} 目标权重（%）",
   "watchlistSimulationCashField": "虚拟现金（%）",
   "watchlistSimulationInvalidWeight": "请输入 0 到 100 之间的百分比",
   "watchlistSimulationWeightTotalError": "当前目标权重合计为 {total}%，必须合计为 100%。",
@@ -3455,29 +3359,24 @@
   "watchlistRowActionsTitle": "{symbol} 操作",
   "watchlistAddTitle": "添加到自选",
   "watchlistAddToCollectionsField": "加入组合",
-  "watchlistEditAlertTitle": "{symbol} 告警",
+  "watchlistEditAlertTitle": "{symbol} 提醒",
   "watchlistEmptyTitle": "暂无自选标的",
-  "watchlistEmptyBody": "添加代码后会优先读取缓存价格，并在当前页打开时轮询触发阈值告警。",
-  "watchlistSymbolField": "代码",
-  "watchlistMarketField": "市场",
-  "watchlistAlertAboveField": "高于此价告警",
-  "watchlistAlertBelowField": "低于此价告警",
-  "watchlistSaveAlertsAction": "保存告警",
-  "watchlistEditAlertsAction": "告警",
+  "watchlistEmptyBody": "添加标的，关注价格与近期走势。价格提醒为可选项，仅在打开 App 时生效。",
+  "watchlistAlertAboveField": "高于此价提醒",
+  "watchlistAlertBelowField": "低于此价提醒",
+  "watchlistSaveAlertsAction": "保存提醒",
+  "watchlistEditAlertsAction": "提醒（仅打开 App 时）",
   "watchlistRemoveAction": "移除",
   "watchlistPriceUnavailable": "暂无价格",
   "watchlistSummarySymbols": "标的",
   "watchlistSummaryQuotes": "行情",
-  "watchlistSummaryAdvancing": "上涨",
-  "watchlistSummaryDeclining": "下跌",
   "watchlistFreshnessLive": "实时",
   "watchlistFreshnessCache": "缓存",
   "watchlistFreshnessStale": "旧缓存",
   "watchlistAlertAboveChip": "高于 {price}",
   "watchlistAlertBelowChip": "低于 {price}",
-  "watchlistAlertTriggeredAbove": "{symbol} 当前 {price}，已高于告警价",
-  "watchlistAlertTriggeredBelow": "{symbol} 当前 {price}，已低于告警价",
-  "watchlistSymbolRequired": "请输入代码",
+  "watchlistAlertTriggeredAbove": "{symbol} 当前 {price}，已高于提醒价",
+  "watchlistAlertTriggeredBelow": "{symbol} 当前 {price}，已低于提醒价",
   "watchlistInvalidNumber": "请输入大于 0 的价格",
   "watchlistMarketCnA": "A 股",
   "watchlistMarketHkStock": "港股",
@@ -3491,7 +3390,6 @@
   "commandKeywordOptionsCn": "期权",
   "commandKeywordSellPutCn": "卖看跌",
   "commandKeywordCoveredCallCn": "备兑",
-
   "incomePlannerUnsupportedOnWeb": "期权现金流仅在移动端可用。",
   "incomePlannerOccTitle": "期权风险披露",
   "incomePlannerOccSubtitle": "使用前请阅读",
@@ -3788,7 +3686,6 @@
   "incomePlannerWheelNextWaitCall": "关注备兑 Call，并记录到期、平仓或行权结果。",
   "incomePlannerWheelNextRecordCall": "记录正股被行权卖出的结果，并核对持仓与现金。",
   "incomePlannerWheelNextStartPut": "现金待命；仅对已批准且愿意持有的标的开始新 Put。",
-
   "onboardingTitle": "欢迎使用 NaviWealth",
   "onboardingSubtitle": "选择你的使用方式",
   "onboardingCloudTitle": "云账号",

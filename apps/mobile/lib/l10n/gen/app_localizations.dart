@@ -881,7 +881,7 @@ abstract class AppLocalizations {
   /// Wealth hub: watchlist section subtitle
   ///
   /// In en, this message translates to:
-  /// **'Symbols you\'re tracking'**
+  /// **'Symbols you track and their price alerts'**
   String get wealthWatchlistSectionSubtitle;
 
   /// Wealth hub: liabilities section title
@@ -18443,14 +18443,170 @@ abstract class AppLocalizations {
   /// No description provided for @watchlistSelectItem.
   ///
   /// In en, this message translates to:
-  /// **'Select a symbol to inspect its quote and alert rules'**
+  /// **'Select a symbol to inspect its quote and reminders'**
   String get watchlistSelectItem;
 
-  /// Accounts hub entry subtitle for watchlist
+  /// Watchlist overview card title
   ///
   /// In en, this message translates to:
-  /// **'Track symbols and local price alerts'**
-  String get watchlistAccountsEntrySubtitle;
+  /// **'Overview'**
+  String get watchlistOverviewTitle;
+
+  /// No description provided for @watchlistOverviewByMarket.
+  ///
+  /// In en, this message translates to:
+  /// **'By market'**
+  String get watchlistOverviewByMarket;
+
+  /// Watchlist metric: advancing / declining counts
+  ///
+  /// In en, this message translates to:
+  /// **'Up / down'**
+  String get watchlistSummaryAdvancingDeclining;
+
+  /// Watchlist metric: median change
+  ///
+  /// In en, this message translates to:
+  /// **'Median'**
+  String get watchlistOverviewTypicalMove;
+
+  /// Watchlist overview: live quote count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} live'**
+  String watchlistOverviewFreshnessLive(int count);
+
+  /// Watchlist overview: cached quote count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cached'**
+  String watchlistOverviewFreshnessCached(int count);
+
+  /// Watchlist overview: stale quote count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} delayed'**
+  String watchlistOverviewFreshnessStale(int count);
+
+  /// Watchlist overview: unpriced symbol count
+  ///
+  /// In en, this message translates to:
+  /// **'{count} without a price'**
+  String watchlistOverviewFreshnessUnavailable(int count);
+
+  /// Watchlist overview: no quote data at all
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the first quotes'**
+  String get watchlistOverviewFreshnessNone;
+
+  /// Watchlist overview: configured and triggered alert counts
+  ///
+  /// In en, this message translates to:
+  /// **'{configured} reminders · {triggered} matched'**
+  String watchlistOverviewAlertsSummary(int configured, int triggered);
+
+  /// Watchlist overview: per-market advance/decline line
+  ///
+  /// In en, this message translates to:
+  /// **'{market} · {up} up · {down} down · {flat} flat'**
+  String watchlistOverviewMarketLine(String market, int up, int down, int flat);
+
+  /// Watchlist toolbar overflow menu label
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get watchlistMoreActions;
+
+  /// Watchlist chip shown while any filter is narrowing the list
+  ///
+  /// In en, this message translates to:
+  /// **'Filtered'**
+  String get watchlistFilterActiveChip;
+
+  /// Watchlist row: alert configured indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Price reminder set (while app is open)'**
+  String get watchlistAlertSetBadge;
+
+  /// Watchlist detail: no alert configured
+  ///
+  /// In en, this message translates to:
+  /// **'No price reminder'**
+  String get watchlistAlertNotSet;
+
+  /// Watchlist symbol detail sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} details'**
+  String watchlistSymbolDetailTitle(String symbol);
+
+  /// Watchlist detail: trend line caption
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get watchlistDetailTrendTitle;
+
+  /// Watchlist detail: opening price
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get watchlistDetailOpen;
+
+  /// Watchlist detail: session high
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get watchlistDetailHigh;
+
+  /// Watchlist detail: session low
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get watchlistDetailLow;
+
+  /// Watchlist detail: previous close
+  ///
+  /// In en, this message translates to:
+  /// **'Prev close'**
+  String get watchlistDetailPreviousClose;
+
+  /// Watchlist detail: traded volume
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get watchlistDetailVolume;
+
+  /// Watchlist detail: listing venue
+  ///
+  /// In en, this message translates to:
+  /// **'Exchange'**
+  String get watchlistDetailExchange;
+
+  /// Watchlist detail: quote timestamp
+  ///
+  /// In en, this message translates to:
+  /// **'Updated'**
+  String get watchlistDetailUpdatedAt;
+
+  /// Watchlist form: collapsible alert section
+  ///
+  /// In en, this message translates to:
+  /// **'Price reminder (optional)'**
+  String get watchlistAlertOptionalSection;
+
+  /// Watchlist form: collapsible alert section hint
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders only while the app is open'**
+  String get watchlistAlertOptionalHint;
+
+  /// Watchlist form: how alerts are delivered
+  ///
+  /// In en, this message translates to:
+  /// **'Prices are checked every 15 minutes while the app is open, and when you refresh. System notifications require permission; otherwise reminders appear on the Watchlist page. No checks run when the app is closed or in the background.'**
+  String get watchlistAlertNotificationNote;
 
   /// Add a symbol to the watchlist
   ///
@@ -18545,7 +18701,7 @@ abstract class AppLocalizations {
   /// Watchlist collection deletion confirmation body
   ///
   /// In en, this message translates to:
-  /// **'Symbols and alert rules will remain in All.'**
+  /// **'Symbols and reminder rules will remain in All.'**
   String get watchlistDeleteCollectionBody;
 
   /// Manage collection membership for one symbol
@@ -18641,7 +18797,7 @@ abstract class AppLocalizations {
   /// Alert section in the watchlist filter sheet
   ///
   /// In en, this message translates to:
-  /// **'Alerts'**
+  /// **'Reminders'**
   String get watchlistFilterAlertsSection;
 
   /// Price freshness section in the watchlist filter sheet
@@ -18665,7 +18821,7 @@ abstract class AppLocalizations {
   /// Watchlist symbols without configured alerts
   ///
   /// In en, this message translates to:
-  /// **'No alert'**
+  /// **'No reminder'**
   String get watchlistFilterAlertsNone;
 
   /// Clear all watchlist filters
@@ -18691,91 +18847,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Adjust or clear the filters to see more symbols.'**
   String get watchlistFilterEmptyBody;
-
-  /// Title for point-in-time watchlist analysis
-  ///
-  /// In en, this message translates to:
-  /// **'Watchlist analysis'**
-  String get watchlistAnalysisTitle;
-
-  /// Caveat for comparing watchlist price changes across markets
-  ///
-  /// In en, this message translates to:
-  /// **'Point-in-time moves are split by market because trading sessions may differ.'**
-  String get watchlistAnalysisMarketTimingNote;
-
-  /// Available quote coverage metric
-  ///
-  /// In en, this message translates to:
-  /// **'Quote coverage'**
-  String get watchlistAnalysisCoverage;
-
-  /// Median point-in-time price change metric
-  ///
-  /// In en, this message translates to:
-  /// **'Median move'**
-  String get watchlistAnalysisMedianChange;
-
-  /// Configured alert coverage metric
-  ///
-  /// In en, this message translates to:
-  /// **'Alert coverage'**
-  String get watchlistAnalysisAlertCoverage;
-
-  /// Number of currently triggered watchlist alerts
-  ///
-  /// In en, this message translates to:
-  /// **'Triggered'**
-  String get watchlistAnalysisTriggeredAlerts;
-
-  /// Configured alerts out of total symbols
-  ///
-  /// In en, this message translates to:
-  /// **'{configured} / {total}'**
-  String watchlistAnalysisCoverageValue(int configured, int total);
-
-  /// Watchlist quote freshness distribution
-  ///
-  /// In en, this message translates to:
-  /// **'Live {live} · Cached {cached} · Stale {stale} · No price {unavailable}'**
-  String watchlistAnalysisFreshnessSummary(
-    int live,
-    int cached,
-    int stale,
-    int unavailable,
-  );
-
-  /// Largest positive watchlist move
-  ///
-  /// In en, this message translates to:
-  /// **'Largest gain: {symbol} {change}'**
-  String watchlistAnalysisTopGainer(String symbol, String change);
-
-  /// Largest negative watchlist move
-  ///
-  /// In en, this message translates to:
-  /// **'Largest decline: {symbol} {change}'**
-  String watchlistAnalysisTopDecliner(String symbol, String change);
-
-  /// Heading for watchlist analysis grouped by market
-  ///
-  /// In en, this message translates to:
-  /// **'By market'**
-  String get watchlistAnalysisMarketsTitle;
-
-  /// Point-in-time watchlist analysis for one market
-  ///
-  /// In en, this message translates to:
-  /// **'{market}: {quotes}/{total} quotes · {advancing} up · {declining} down · {unchanged} flat · {unknown} no prior close'**
-  String watchlistAnalysisMarketSummary(
-    String market,
-    int quotes,
-    int total,
-    int advancing,
-    int declining,
-    int unchanged,
-    int unknown,
-  );
 
   /// Title for watchlist paper simulations
   ///
@@ -18825,12 +18896,6 @@ abstract class AppLocalizations {
   /// **'Delete simulation'**
   String get watchlistSimulationDeleteAction;
 
-  /// Starting capital in a paper simulation
-  ///
-  /// In en, this message translates to:
-  /// **'Virtual capital'**
-  String get watchlistSimulationVirtualCapital;
-
   /// Weighted point-in-time daily move for a paper simulation
   ///
   /// In en, this message translates to:
@@ -18860,12 +18925,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Uses each available symbol\'s current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.'**
   String get watchlistSimulationMethodNote;
-
-  /// Title for the locally observed paper simulation curve
-  ///
-  /// In en, this message translates to:
-  /// **'Observed simulation history'**
-  String get watchlistSimulationHistoryTitle;
 
   /// Latest locally observed paper simulation value
   ///
@@ -18992,12 +19051,6 @@ abstract class AppLocalizations {
   /// **'Virtual capital ({currency})'**
   String watchlistSimulationCapitalField(String currency);
 
-  /// Initial equal-weight simulation disclosure
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Starts with one target weight.} other{Starts with equal target weights across {count} symbols.}} You can adjust them after creation.'**
-  String watchlistSimulationEqualWeightNote(int count);
-
   /// Default paper simulation name
   ///
   /// In en, this message translates to:
@@ -19010,12 +19063,6 @@ abstract class AppLocalizations {
   /// **'Adjust paper allocation'**
   String get watchlistSimulationAdjustTitle;
 
-  /// Paper allocation edit guidance
-  ///
-  /// In en, this message translates to:
-  /// **'Set target percentages for symbols and virtual cash. The total must equal 100%.'**
-  String get watchlistSimulationAllocationNote;
-
   /// Paper allocation pending atomic snapshot state
   ///
   /// In en, this message translates to:
@@ -19027,12 +19074,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This allocation is invalid. Edit the simulation to restore weights totaling 100%.'**
   String get watchlistSimulationAllocationInvalid;
-
-  /// Target weight field for one simulated symbol
-  ///
-  /// In en, this message translates to:
-  /// **'{symbol} target (%)'**
-  String watchlistSimulationWeightField(String symbol);
 
   /// Virtual cash target weight field
   ///
@@ -19310,7 +19351,7 @@ abstract class AppLocalizations {
   /// Watchlist alert edit sheet title
   ///
   /// In en, this message translates to:
-  /// **'Alerts for {symbol}'**
+  /// **'Reminders for {symbol}'**
   String watchlistEditAlertTitle(String symbol);
 
   /// Watchlist empty state title
@@ -19322,43 +19363,31 @@ abstract class AppLocalizations {
   /// Watchlist empty state body
   ///
   /// In en, this message translates to:
-  /// **'Add a ticker to poll prices cache-first and trigger threshold alerts while the page is open.'**
+  /// **'Add symbols to follow prices and recent trends. Optional price reminders work only while the app is open.'**
   String get watchlistEmptyBody;
-
-  /// Watchlist symbol input label
-  ///
-  /// In en, this message translates to:
-  /// **'Symbol'**
-  String get watchlistSymbolField;
-
-  /// Watchlist market picker label
-  ///
-  /// In en, this message translates to:
-  /// **'Market'**
-  String get watchlistMarketField;
 
   /// Watchlist upper price alert input
   ///
   /// In en, this message translates to:
-  /// **'Alert above'**
+  /// **'Remind above'**
   String get watchlistAlertAboveField;
 
   /// Watchlist lower price alert input
   ///
   /// In en, this message translates to:
-  /// **'Alert below'**
+  /// **'Remind below'**
   String get watchlistAlertBelowField;
 
   /// Save watchlist alert rules
   ///
   /// In en, this message translates to:
-  /// **'Save alerts'**
+  /// **'Save reminders'**
   String get watchlistSaveAlertsAction;
 
   /// Edit watchlist alert rules action
   ///
   /// In en, this message translates to:
-  /// **'Alerts'**
+  /// **'Reminders (while app is open)'**
   String get watchlistEditAlertsAction;
 
   /// Remove watchlist item action
@@ -19384,18 +19413,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quotes'**
   String get watchlistSummaryQuotes;
-
-  /// Watchlist collection summary advancing symbol count label
-  ///
-  /// In en, this message translates to:
-  /// **'Advancing'**
-  String get watchlistSummaryAdvancing;
-
-  /// Watchlist collection summary declining symbol count label
-  ///
-  /// In en, this message translates to:
-  /// **'Declining'**
-  String get watchlistSummaryDeclining;
 
   /// Market data freshness live label
   ///
@@ -19430,20 +19447,14 @@ abstract class AppLocalizations {
   /// Watchlist upper alert notification
   ///
   /// In en, this message translates to:
-  /// **'{symbol} is at {price}, above your alert'**
+  /// **'{symbol} is at {price}, above your reminder price'**
   String watchlistAlertTriggeredAbove(String symbol, String price);
 
   /// Watchlist lower alert notification
   ///
   /// In en, this message translates to:
-  /// **'{symbol} is at {price}, below your alert'**
+  /// **'{symbol} is at {price}, below your reminder price'**
   String watchlistAlertTriggeredBelow(String symbol, String price);
-
-  /// Watchlist symbol required validation
-  ///
-  /// In en, this message translates to:
-  /// **'Enter a symbol'**
-  String get watchlistSymbolRequired;
 
   /// Watchlist alert price validation
   ///
