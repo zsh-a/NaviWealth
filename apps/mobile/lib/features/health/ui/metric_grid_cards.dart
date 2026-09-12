@@ -3,6 +3,36 @@ part of 'health_today_page.dart';
 // Primary metric cards (dense hero tiles on Today). Secondary metrics render
 // as compact rows in metric_grid.dart — full secondary SoftCards are gone.
 
+/// Manual-only users get their saved measurement, not another empty cluster.
+class _BodyMeasurementCard extends StatelessWidget {
+  const _BodyMeasurementCard({required this.metric});
+
+  final HealthMetric metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _MetricCard(
+      icon: FLucideIcons.scale,
+      label: metric.kind == HealthMetricKind.weight
+          ? l10n.healthMetricWeight
+          : l10n.healthMetricBodyFat,
+      trendKind: metric.kind,
+      accent: context.theme.colors.primary,
+      child: _ValueBig(
+        value:
+            metric.kind == HealthMetricKind.bodyFat && metric.unit == 'fraction'
+            ? metric.value * 100
+            : metric.value,
+        format: (v) => '${_round(v.toDouble())}',
+        unit: metric.kind == HealthMetricKind.bodyFat ? '%' : metric.unit,
+        sub: _ago(l10n, metric.capturedAt),
+        metric: metric,
+      ),
+    );
+  }
+}
+
 class _SleepCard extends StatelessWidget {
   const _SleepCard({required this.async, this.trend});
   final AsyncValue<HealthMetric?> async;

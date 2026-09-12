@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
@@ -282,7 +283,13 @@ void main() {
     expect(netTop, greaterThan(inflowTop));
     expect(find.text('25-06'), findsNothing);
     expect(find.text('06'), findsOneWidget);
-    expect(find.text('Inflow / Cash spending'), findsOneWidget);
+    expect(find.text('In / out'), findsOneWidget);
+    expect(
+      tester
+          .renderObject<RenderParagraph>(find.text('Monthly'))
+          .didExceedMaxLines,
+      isFalse,
+    );
     expect(find.text('Income vs expense'), findsNothing);
     expect(find.text('Income sources'), findsOneWidget);
   });
@@ -319,7 +326,13 @@ void main() {
       overrides: _cashflowOverrides(prefs),
       child: const CashFlowPage(),
     );
-    expect(find.text('Inflow / Cash spending'), findsOneWidget);
+    expect(find.text('In / out'), findsOneWidget);
+    expect(
+      tester
+          .renderObject<RenderParagraph>(find.text('Monthly'))
+          .didExceedMaxLines,
+      isFalse,
+    );
     expect(find.text('Income sources'), findsOneWidget);
   });
 

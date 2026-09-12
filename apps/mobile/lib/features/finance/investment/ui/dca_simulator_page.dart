@@ -35,13 +35,49 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   DcaFrequency _frequency = DcaFrequency.monthly;
   int _years = 5;
   bool? _builderOpen;
+  bool? _parametersOpen;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _symbols = TextEditingController(text: 'VOO');
-    _amount = TextEditingController(text: '500');
-    _currency = TextEditingController(text: 'USD');
+    final request = ref.read(dcaSimulationProvider).value?.request;
+    _symbols = TextEditingController(
+      text: request == null
+          ? 'VOO'
+          : [
+              for (final allocation in request.allocations)
+                '${allocation.symbol}:${allocation.weight}',
+            ].join(', '),
+    );
+    _amount = TextEditingController(
+      text: request?.amountPerContribution.toString() ?? '500',
+    );
+    _currency = TextEditingController(text: request?.currency ?? 'USD');
+    _market = request?.market ?? _market;
+    _frequency = request?.frequency ?? _frequency;
+    _years = request?.years ?? _years;
+    for (final controller in [_symbols, _amount, _currency]) {
+      controller.addListener(_onParametersChanged);
+    }
+  }
+
+  void _onParametersChanged() => setState(() {});
+
+  bool _matchesRequest(DcaSimulationRequest request) {
+    final allocations = _parseAllocations(_symbols.text);
+    return Decimal.tryParse(_amount.text.trim()) ==
+            request.amountPerContribution &&
+        _currency.text.trim().toUpperCase() == request.currency &&
+        _market == request.market &&
+        _frequency == request.frequency &&
+        _years == request.years &&
+        allocations.length == request.allocations.length &&
+        allocations.indexed.every(
+          (entry) =>
+              entry.$2.symbol == request.allocations[entry.$1].symbol &&
+              entry.$2.weight == request.allocations[entry.$1].weight,
+        );
   }
 
   @override
@@ -58,6 +94,9 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     final state = ref.watch(dcaSimulationProvider);
     final plans = ref.watch(dcaPlansProvider);
     final builderOpen = _builderOpen ?? (plans.value?.isEmpty ?? false);
+    final parametersOpen = _parametersOpen ?? !state.hasValue;
+    final changed =
+        state.hasValue && !_matchesRequest(state.requireValue.request);
     return AppPageScaffold(
       title: l10n.planDcaPlanTitle,
       actions: builderOpen
@@ -92,33 +131,47 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
               if (builderOpen) ...[
                 const SizedBox(height: AppSpacing.s16),
                 AppDisclosureHeader(
-                  title: l10n.dcaSimulatorTitle,
-                  expanded: true,
-                  onToggle: () => setState(() => _builderOpen = false),
+                  title: l10n.dcaSimulatorParametersTitle,
+                  subtitle:
+                      '${_symbols.text} · ${_amount.text} ${_currency.text}',
+                  expanded: parametersOpen,
+                  onToggle: () =>
+                      setState(() => _parametersOpen = !parametersOpen),
                 ),
                 const SizedBox(height: AppSpacing.s8),
-                _DcaControls(
-                  formKey: _formKey,
-                  symbols: _symbols,
-                  amount: _amount,
-                  currency: _currency,
-                  market: _market,
-                  frequency: _frequency,
-                  years: _years,
-                  busy: state.isLoading,
-                  onMarketChanged: (value) => setState(() => _market = value),
-                  onFrequencyChanged: (value) =>
-                      setState(() => _frequency = value),
-                  onYearsChanged: (value) => setState(() => _years = value),
-                  onRun: _run,
-                ),
+                if (parametersOpen)
+                  _DcaControls(
+                    formKey: _formKey,
+                    symbols: _symbols,
+                    amount: _amount,
+                    currency: _currency,
+                    market: _market,
+                    frequency: _frequency,
+                    years: _years,
+                    busy: state.isLoading || _saving,
+                    onMarketChanged: (value) => setState(() => _market = value),
+                    onFrequencyChanged: (value) =>
+                        setState(() => _frequency = value),
+                    onYearsChanged: (value) => setState(() => _years = value),
+                    onRun: _run,
+                  ),
                 const SizedBox(height: AppSpacing.s16),
+                if (changed) ...[
+                  AppStatusBanner(
+                    message: l10n.dcaSimulatorParametersChanged,
+                    kind: AppStatusKind.warning,
+                    compact: true,
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                ],
                 state.when(
                   loading: () => const SkeletonBox(height: 360, radius: 8),
                   error: (error, stackTrace) =>
                       kDefaultError(context, error, stackTrace),
-                  data: (data) =>
-                      _DcaResults(state: data, onDraft: () => _savePlan(data)),
+                  data: (data) => _DcaResults(
+                    state: data,
+                    onDraft: changed || _saving ? null : () => _savePlan(data),
+                  ),
                 ),
               ],
             ],
@@ -129,9 +182,10 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   }
 
   Future<void> _run() async {
+    if (ref.read(dcaSimulationProvider).isLoading || _saving) return;
     if (!_formKey.currentState!.validate()) return;
     final request = DcaSimulationRequest(
-      symbols: _parseSymbols(_symbols.text),
+      allocations: List.unmodifiable(_parseAllocations(_symbols.text)),
       market: _market,
       amountPerContribution: Decimal.parse(_amount.text.trim()),
       currency: _currency.text.trim().toUpperCase(),
@@ -139,11 +193,19 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
       frequency: _frequency,
     );
     await ref.read(dcaSimulationProvider.notifier).run(request);
+    if (mounted &&
+        ref.read(dcaSimulationProvider).hasValue &&
+        _matchesRequest(request)) {
+      FocusScope.of(context).unfocus();
+      setState(() => _parametersOpen = false);
+    }
   }
 
   Future<void> _savePlan(DcaSimulationState state) async {
-    final allocations = _parseAllocations(_symbols.text);
+    if (_saving || !_matchesRequest(state.request)) return;
+    final allocations = state.request.allocations;
     if (allocations.isEmpty) return;
+    setState(() => _saving = true);
     final now = DateTime.now().toUtc();
     try {
       final repository = await ref.read(dcaPlanRepositoryProvider.future);
@@ -172,6 +234,8 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
           AppLocalizations.of(context).commonSaveFailed,
         );
       }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -452,6 +516,7 @@ class _DcaControls extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             FTextFormField(
+              key: const ValueKey('dca-symbols'),
               control: FTextFieldControl.managed(controller: symbols),
               label: Text(l10n.dcaSimulatorSymbolField),
               hint: l10n.dcaSimulatorSymbolHint,
@@ -467,6 +532,7 @@ class _DcaControls extends StatelessWidget {
                 Expanded(
                   flex: 2,
                   child: FTextFormField(
+                    key: const ValueKey('dca-amount'),
                     control: FTextFieldControl.managed(controller: amount),
                     label: Text(l10n.dcaSimulatorAmountField),
                     keyboardType: const TextInputType.numberWithOptions(
@@ -578,7 +644,7 @@ class _DcaResults extends StatelessWidget {
   const _DcaResults({required this.state, required this.onDraft});
 
   final DcaSimulationState state;
-  final VoidCallback onDraft;
+  final VoidCallback? onDraft;
 
   @override
   Widget build(BuildContext context) {
@@ -686,11 +752,6 @@ class _MetricGrid extends StatelessWidget {
             decimalDigits: 1,
           ),
         ),
-        _MoneyMetric(
-          label: l10n.dcaSimulatorAverageCost,
-          amount: result.averageCost,
-          currency: result.currency,
-        ),
         _TextMetric(
           label: l10n.dcaSimulatorMaxDrawdown,
           value: formatters.percent(
@@ -752,23 +813,15 @@ class _MetricShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: context.appTheme.metricTile.minWidth,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: context.theme.colors.foreground.withValues(
-            alpha: AppOpacity.whisper,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: context.captionStyle),
-              const SizedBox(height: AppSpacing.s4),
-              child,
-            ],
-          ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: context.captionStyle),
+            const SizedBox(height: AppSpacing.s4),
+            child,
+          ],
         ),
       ),
     );
@@ -863,9 +916,11 @@ List<DcaAllocation> _parseAllocations(String raw) {
   final weighted = <({String symbol, Decimal? weight})>[];
   for (final token in tokens) {
     final parts = token.split(':');
+    if (parts.length > 2) return const [];
     final symbol = parts.first.trim().toUpperCase();
     if (symbol.isEmpty) continue;
     var weight = parts.length == 1 ? null : Decimal.tryParse(parts.last.trim());
+    if (parts.length == 2 && weight == null) return const [];
     if (weight != null && weight > Decimal.one) {
       weight = (weight / Decimal.fromInt(100)).toDecimal(
         scaleOnInfinitePrecision: 16,
@@ -881,11 +936,19 @@ List<DcaAllocation> _parseAllocations(String raw) {
   final rawWeights = [for (final item in weighted) item.weight ?? fallback];
   final total = rawWeights.fold(Decimal.zero, (sum, weight) => sum + weight);
   if (total <= Decimal.zero) return const [];
+  final combined = <String, Decimal>{};
+  for (var i = 0; i < weighted.length; i++) {
+    combined.update(
+      weighted[i].symbol,
+      (weight) => weight + rawWeights[i],
+      ifAbsent: () => rawWeights[i],
+    );
+  }
   return [
-    for (var i = 0; i < weighted.length; i++)
+    for (final entry in combined.entries)
       DcaAllocation(
-        symbol: weighted[i].symbol,
-        weight: (rawWeights[i] / total).toDecimal(scaleOnInfinitePrecision: 16),
+        symbol: entry.key,
+        weight: (entry.value / total).toDecimal(scaleOnInfinitePrecision: 16),
       ),
   ];
 }

@@ -20,38 +20,17 @@ import 'widgets/knowledge_tag_chips.dart';
 enum _CaptureType { note, decision }
 
 Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
-  final l10n = AppLocalizations.of(context);
-  final type = await showAppSheet<_CaptureType>(
+  await showGuardedFormSheet<void>(
     context: context,
-    title: l10n.knowledgeCaptureAction,
-    builder: (sheetContext) => AppActionSheetList(
-      children: [
-        AppActionSheetTile(
-          icon: FLucideIcons.fileText,
-          title: l10n.knowledgeNewNote,
-          onPress: () => Navigator.pop(sheetContext, _CaptureType.note),
-        ),
-        AppActionSheetTile(
-          icon: FLucideIcons.circleCheck,
-          title: l10n.knowledgeNewDecision,
-          onPress: () => Navigator.pop(sheetContext, _CaptureType.decision),
-        ),
-      ],
-    ),
+    builder: (_, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
   );
-  if (type == null) return;
-  await Future<void>.delayed(Motion.medium);
-  if (!context.mounted) return;
-  if (type == _CaptureType.decision) {
-    await Navigator.of(context, rootNavigator: true).push<bool>(
-      MaterialPageRoute(builder: (_) => const _DecisionCapturePage()),
-    );
-  } else {
-    await showGuardedFormSheet<void>(
-      context: context,
-      builder: (_, dirty) => _KnowledgeCaptureSheet(dirty: dirty),
-    );
-  }
+}
+
+Future<void> showKnowledgeDecisionCapturePage(BuildContext context) async {
+  await Navigator.of(
+    context,
+    rootNavigator: true,
+  ).push<bool>(MaterialPageRoute(builder: (_) => const _DecisionCapturePage()));
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {

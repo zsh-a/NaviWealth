@@ -54,9 +54,9 @@ void main() {
         liveData: data,
         initialLocation: KnowledgeRoutes.inbox,
       );
-      await tester.tap(find.bySemanticsLabel('New capture').first);
+      await tester.tap(find.byKey(const ValueKey('knowledge-create-more')));
       await tester.pumpAndSettle();
-      expect(find.text('New note'), findsOneWidget);
+      expect(find.text('New note'), findsNothing);
       await tester.tap(find.text('New decision'));
       await tester.pumpAndSettle();
       expect(find.byType(AppFormPageScaffold), findsOneWidget);
@@ -71,7 +71,7 @@ void main() {
       await tester.tap(find.text('Discard'));
       await tester.pumpAndSettle();
       expect(find.byType(AppFormPageScaffold), findsNothing);
-      await tester.tap(find.bySemanticsLabel('New capture').first);
+      await tester.tap(find.byKey(const ValueKey('knowledge-create-more')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('New decision'));
       await tester.pumpAndSettle();

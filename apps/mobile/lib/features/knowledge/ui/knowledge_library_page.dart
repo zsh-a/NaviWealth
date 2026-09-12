@@ -87,6 +87,11 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           label: l10n.knowledgeCaptureAction,
           onPress: () => showKnowledgeCaptureSheet(context),
         ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.circleCheck,
+          label: l10n.knowledgeNewDecision,
+          onPress: () => showKnowledgeDecisionCapturePage(context),
+        ),
       ],
       child: ShellTabPause(
         routePath: KnowledgeRoutes.library,

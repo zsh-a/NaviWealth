@@ -2,11 +2,20 @@ part of 'portfolio_hub_page.dart';
 
 /// Surfaces user-threshold concentration breaches on the Allocation tab so
 /// Financial Inbox deep links to `/wealth/portfolio` land on a real review UI.
-class _ConcentrationRiskSection extends ConsumerWidget {
+class _ConcentrationRiskSection extends ConsumerStatefulWidget {
   const _ConcentrationRiskSection();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ConcentrationRiskSection> createState() =>
+      _ConcentrationRiskSectionState();
+}
+
+class _ConcentrationRiskSectionState
+    extends ConsumerState<_ConcentrationRiskSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final async = ref.watch(concentrationAlertsProvider);
     return async.when(
@@ -21,52 +30,61 @@ class _ConcentrationRiskSection extends ConsumerWidget {
         final criticalCount = alerts
             .where((a) => a.severity == RiskSeverity.critical)
             .length;
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+        final ordered = [...alerts]
+          ..sort((a, b) {
+            final severity = (b.severity == RiskSeverity.critical ? 1 : 0)
+                .compareTo(a.severity == RiskSeverity.critical ? 1 : 0);
+            return severity != 0
+                ? severity
+                : (b.weight - b.threshold).compareTo(a.weight - a.threshold);
+          });
+        final visible = _expanded ? ordered : ordered.take(1).toList();
+        return SoftCard.raised(
+          padding: const EdgeInsets.all(AppSpacing.s12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _PortfolioSectionTitle(
-                title: l10n.portfolioHubConcentrationTitle,
+              Row(
+                children: [
+                  Icon(
+                    FLucideIcons.chartPie,
+                    size: AppIconSizes.h18,
+                    color: criticalCount > 0
+                        ? context.theme.colors.destructive
+                        : context.theme.colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      l10n.portfolioHubConcentrationTitle,
+                      style: context.labelStyle,
+                    ),
+                  ),
+                  Semantics(
+                    label: l10n.portfolioHubConcentrationSummary(alerts.length),
+                    child: AppBadge(
+                      label: '${alerts.length}',
+                      size: AppBadgeSize.compact,
+                    ),
+                  ),
+                ],
               ),
-              SoftCard.raised(
-                padding: const EdgeInsets.all(AppSpacing.s12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          FLucideIcons.chartPie,
-                          size: AppIconSizes.h18,
-                          color: criticalCount > 0
-                              ? context.theme.colors.destructive
-                              : context.theme.colors.primary,
-                        ),
-                        const SizedBox(width: AppSpacing.s8),
-                        Expanded(
-                          child: Text(
-                            l10n.portfolioHubConcentrationSummary(
-                              alerts.length,
-                            ),
-                            style: context.labelStyle,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.s10),
-                    for (var i = 0; i < alerts.length; i++) ...[
-                      if (i != 0) const SizedBox(height: AppSpacing.s8),
-                      _ConcentrationAlertRow(alert: alerts[i]),
-                    ],
-                    const SizedBox(height: AppSpacing.s12),
-                    FButton(
-                      variant: FButtonVariant.secondary,
-                      onPress: () => context.push(FinanceRoutes.planRebalance),
-                      child: Text(l10n.portfolioHubConcentrationRebalanceCta),
-                    ),
-                  ],
+              const SizedBox(height: AppSpacing.s10),
+              for (var i = 0; i < visible.length; i++) ...[
+                if (i != 0) const SizedBox(height: AppSpacing.s8),
+                _ConcentrationAlertRow(alert: visible[i]),
+              ],
+              if (alerts.length > 1)
+                AppRevealControl(
+                  expanded: _expanded,
+                  collapsedLabel: l10n.commonRevealMore(alerts.length - 1),
+                  expandedLabel: l10n.commonRevealLess,
+                  onToggle: () => setState(() => _expanded = !_expanded),
                 ),
+              FButton(
+                variant: FButtonVariant.ghost,
+                onPress: () => context.push(FinanceRoutes.planRebalance),
+                child: Text(l10n.portfolioHubConcentrationRebalanceCta),
               ),
             ],
           ),

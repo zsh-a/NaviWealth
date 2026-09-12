@@ -125,12 +125,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planInvestmentPlanTitle => '进阶投资';
 
   @override
-  String get planInvestmentToolsTitle => '查看投资工具';
-
-  @override
-  String get planInvestmentToolsSummary => '定投、再平衡与收益策略';
-
-  @override
   String planExploreActiveOptions(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -1943,6 +1937,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dcaSimulatorTitle => '定投模拟器';
+
+  @override
+  String get dcaSimulatorParametersTitle => '模拟参数';
+
+  @override
+  String get dcaSimulatorParametersChanged => '参数已变更，请重新计算后再保存计划。';
+
+  @override
+  String get cashFlowTrendIncomeExpenseShort => '收支';
+
+  @override
+  String get cashFlowTrendNetShort => '净额';
+
+  @override
+  String get planReviewRunwayAction => '检查现金储备';
+
+  @override
+  String get planReviewBudgetAction => '调整支出预算';
+
+  @override
+  String get planReviewScenariosAction => '复核到期方案';
+
+  @override
+  String get planRecordContributionAction => '记录本期定投';
+
+  @override
+  String get planReviewRebalanceAction => '检查配置偏离';
+
+  @override
+  String get planNeedsAttentionShort => '待处理';
+
+  @override
+  String get settingsPreferencesSection => '偏好设置';
+
+  @override
+  String get settingsDataManagementOverviewSummary => '备份、导出与重置';
 
   @override
   String get dcaSimulatorAccountsEntrySubtitle => '用月度缓存价格回测定期买入';
@@ -12597,7 +12627,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeCaptureAction => '新建捕获';
+  String get knowledgeCaptureAction => '记一条';
 
   @override
   String get knowledgeCaptureTitle => '写一条想法';

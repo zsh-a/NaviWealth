@@ -1,5 +1,6 @@
 import 'dart:ui' as ui show lerpDouble;
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 import '../theme/component_specs.dart';
@@ -122,6 +123,8 @@ class AppCollapsingScrollHost extends StatefulWidget {
 
 class _AppCollapsingScrollHostState extends State<AppCollapsingScrollHost> {
   double _progress = 0;
+  double? _pendingProgress;
+  bool _progressScheduled = false;
 
   @override
   void initState() {
@@ -154,6 +157,28 @@ class _AppCollapsingScrollHostState extends State<AppCollapsingScrollHost> {
       pixels: pixels,
       extent: widget.collapseExtent,
     );
+    // Filtering can shorten a scrolled list and clamp its offset during
+    // layout. Coalesce that notification until the frame has completed;
+    // normal pointer/controller updates still apply immediately.
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      _pendingProgress = next;
+      if (_progressScheduled) return;
+      _progressScheduled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _progressScheduled = false;
+        final pending = _pendingProgress;
+        _pendingProgress = null;
+        if (!mounted ||
+            pending == null ||
+            (pending - _progress).abs() < 0.008) {
+          return;
+        }
+        setState(() => _progress = pending);
+      });
+      return;
+    }
+    _pendingProgress = null;
     if ((next - _progress).abs() < 0.008) return;
     setState(() => _progress = next);
   }
@@ -168,28 +193,43 @@ class _AppCollapsingScrollHostState extends State<AppCollapsingScrollHost> {
     return false;
   }
 
+  bool _onMetrics(ScrollMetricsNotification notification) {
+    if (notification.depth > 1 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (widget.primaryController != null) {
+      _onPrimaryScroll();
+    } else {
+      _updateProgress(notification.metrics.pixels);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final sticky = widget.stickyBuilder;
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onScroll,
-      child: sticky == null
-          ? widget.body
-          : Stack(
-              clipBehavior: Clip.none,
-              children: [
-                widget.body,
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Padding(
-                    padding: widget.padding,
-                    child: sticky(context, _progress),
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: _onMetrics,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: sticky == null
+            ? widget.body
+            : Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  widget.body,
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: Padding(
+                      padding: widget.padding,
+                      child: sticky(context, _progress),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 }

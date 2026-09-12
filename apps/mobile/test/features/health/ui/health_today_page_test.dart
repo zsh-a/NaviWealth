@@ -3,23 +3,99 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
 import 'package:naviwealth/features/health/data/health_sync_status.dart';
 import 'package:naviwealth/features/health/data/providers.dart' as health_data;
+import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  for (final kind in [HealthMetricKind.weight, HealthMetricKind.bodyFat]) {
+    testWidgets(
+      'manual ${kind.name} exits activation and shows the saved value',
+      (tester) async {
+        tester.view.physicalSize = const Size(1000, 1600);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await DomainOptInStore(db)
+            .write(DomainOptIns(const {DomainScope.health}));
+        await tester.pumpWidget(
+          _wrap(
+            const HealthTodayPage(),
+            overrides: [
+              appDatabaseProvider.overrideWith((_) async => db),
+              currentUserIdProvider.overrideWithValue(() async => 'user-1'),
+              outboxStoreProvider.overrideWith(
+                (_) async => InMemoryOutboxStore(),
+              ),
+              mutationStamperProvider.overrideWith(
+                (_) async => makeStubStamper(userId: 'user-1'),
+              ),
+              health_data.garminSyncControllerProvider.overrideWithBuild(
+                (_, _) => const GarminInitial(),
+              ),
+              health_data.healthSyncStatusProvider.overrideWithValue(null),
+              health_data.healthPlatformStatusProvider.overrideWith(
+                (_) async => const health_data.HealthPlatformStatus(
+                  available: false,
+                  permissionsGranted: false,
+                ),
+              ),
+              health_data.healthSourceDataSummaryProvider.overrideWith(
+                (_) async => const health_data.HealthSourceDataSummary(),
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+        final context = tester.element(find.byType(HealthTodayPage));
+        final l10n = AppLocalizations.of(context);
+        expect(find.text(l10n.healthActivationTitle), findsOneWidget);
+        await tester.tap(find.text(l10n.healthActivationManualAction));
+        await tester.pumpAndSettle();
+        if (kind == HealthMetricKind.bodyFat) {
+          await tester.tap(find.text(l10n.healthMetricBodyFat));
+          await tester.pumpAndSettle();
+        }
+        final value = kind == HealthMetricKind.weight ? '72.5' : '18.5';
+        await tester.enterText(find.byType(EditableText).first, value);
+        await tester.tap(find.text(l10n.commonSave));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.healthActivationTitle), findsNothing);
+        expect(find.text(value), findsOneWidget);
+        expect(find.text(l10n.healthNoData), findsNothing);
+        final container = ProviderScope.containerOf(context);
+        expect(await container.read(healthHasAnyDataProvider.future), isTrue);
+        final model = await container.read(
+          healthTodayMetricGridProvider.future,
+        );
+        expect(
+          (kind == HealthMetricKind.weight ? model.weight : model.bodyFat)
+              ?.value,
+          kind == HealthMetricKind.weight ? 72.5 : 0.185,
+        );
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      },
+    );
+  }
 
   testWidgets('today page uses recovery and weekly domain data once', (
     tester,

@@ -41,9 +41,12 @@ class _ChartsPanelState extends State<_ChartsPanel> {
             labelOf: (mode) => switch (mode) {
               _CashFlowTrendMode.incomeExpense =>
                 compactLabels
-                    ? '${l10n.cashFlowKpiInflow} / ${l10n.cashFlowKpiOutflow}'
+                    ? l10n.cashFlowTrendIncomeExpenseShort
                     : l10n.cashFlowIncomeExpenseTitle,
-              _CashFlowTrendMode.net => l10n.cashFlowKpiNet,
+              _CashFlowTrendMode.net =>
+                compactLabels
+                    ? l10n.cashFlowTrendNetShort
+                    : l10n.cashFlowKpiNet,
             },
             semanticLabelOf: (mode) => switch (mode) {
               _CashFlowTrendMode.incomeExpense =>

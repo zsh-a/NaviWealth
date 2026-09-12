@@ -102,6 +102,8 @@ Focus ordering and removal are shown only in the explicit Edit focus mode.
 Focus rows complete actions directly through the shared status/undo controller.
 Foreground time refreshes on resume and minute ticks; local-day changes refresh
 Today and reset the device-local focus selection without restarting the app.
+The collapsed Today header preserves the selected Today/Blocked lens, its count,
+and the ability to change that lens without scrolling back to the top.
 Unscheduled backlog stays in Plans; priority alone never promotes an Action to
 Today.
 

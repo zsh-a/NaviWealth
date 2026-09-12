@@ -14,16 +14,19 @@ final dcaSimulationProvider =
     );
 
 class DcaSimulationRequest {
-  const DcaSimulationRequest({
-    required this.symbols,
+  DcaSimulationRequest({
+    required List<DcaAllocation> allocations,
     required this.market,
     required this.amountPerContribution,
     required this.currency,
     required this.years,
     required this.frequency,
-  });
+  }) : allocations = List.unmodifiable(allocations);
 
-  final List<String> symbols;
+  final List<DcaAllocation> allocations;
+  List<String> get symbols => [
+    for (final allocation in allocations) allocation.symbol,
+  ];
   final AssetMarket market;
   final Decimal amountPerContribution;
   final String currency;
@@ -31,7 +34,7 @@ class DcaSimulationRequest {
   final DcaFrequency frequency;
 
   DcaSimulationRequest copyWith({
-    List<String>? symbols,
+    List<DcaAllocation>? allocations,
     AssetMarket? market,
     Decimal? amountPerContribution,
     String? currency,
@@ -39,7 +42,7 @@ class DcaSimulationRequest {
     DcaFrequency? frequency,
   }) {
     return DcaSimulationRequest(
-      symbols: symbols ?? this.symbols,
+      allocations: allocations ?? this.allocations,
       market: market ?? this.market,
       amountPerContribution:
           amountPerContribution ?? this.amountPerContribution,
@@ -67,7 +70,7 @@ class DcaSimulationState {
 class DcaSimulationNotifier
     extends ConventionalAsyncNotifier<DcaSimulationState> {
   DcaSimulationRequest _request = DcaSimulationRequest(
-    symbols: ['VOO'],
+    allocations: [DcaAllocation(symbol: 'VOO', weight: Decimal.one)],
     market: AssetMarket.usStock,
     amountPerContribution: Decimal.fromInt(500),
     currency: 'USD',
@@ -89,16 +92,10 @@ class DcaSimulationNotifier
     final now = ref.watch(clockProvider).now().toUtc();
     final to = DateTime.utc(now.year, now.month);
     final from = DateTime.utc(to.year - request.years, to.month);
-    final symbols = _normalizedSymbols(request.symbols);
-    final perSymbolWeight = symbols.isEmpty
-        ? Decimal.zero
-        : (Decimal.one / Decimal.fromInt(symbols.length)).toDecimal(
-            scaleOnInfinitePrecision: 16,
-          );
 
     var combinedFreshness = DataFreshness.cachedFresh;
     final priceSeries = <String, List<DcaPricePoint>>{};
-    for (final symbol in symbols) {
+    for (final symbol in request.symbols) {
       final response = await market.getHistorical(
         symbol,
         from: from,
@@ -116,10 +113,7 @@ class DcaSimulationNotifier
 
     final result = const DcaSimulator().simulate(
       DcaSimulationInput(
-        allocations: [
-          for (final symbol in symbols)
-            DcaAllocation(symbol: symbol, weight: perSymbolWeight),
-        ],
+        allocations: request.allocations,
         amountPerContribution: request.amountPerContribution,
         currency: request.currency,
         from: from,
@@ -129,20 +123,11 @@ class DcaSimulationNotifier
       ),
     );
     return DcaSimulationState(
-      request: request.copyWith(symbols: symbols),
+      request: request,
       result: result,
       freshness: combinedFreshness,
     );
   }
-}
-
-List<String> _normalizedSymbols(List<String> symbols) {
-  final seen = <String>{};
-  return [
-    for (final symbol in symbols)
-      if (symbol.trim().isNotEmpty)
-        if (seen.add(symbol.trim().toUpperCase())) symbol.trim().toUpperCase(),
-  ];
 }
 
 DataFreshness _leastFresh(DataFreshness a, DataFreshness b) {

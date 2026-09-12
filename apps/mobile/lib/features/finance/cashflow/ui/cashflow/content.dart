@@ -136,38 +136,59 @@ class _PeriodSelector extends StatelessWidget {
     final previous = _shiftPeriod(anchor, period, -1);
     final next = _shiftPeriod(anchor, period, 1);
     final canMoveForward = !_isAfterPeriod(next, now, period);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    final dateControl = Row(
       children: [
-        Row(
-          children: [
-            AppIconButton(
-              tooltip: l10n.cashFlowPreviousPeriod,
-              icon: FLucideIcons.chevronLeft,
-              onPress: () => onAnchorChanged(previous),
-            ),
-            Expanded(
-              child: Text(
-                _anchorLabel(l10n, formatter, anchor, period),
-                style: context.labelStyle,
-                textAlign: TextAlign.center,
-              ),
-            ),
-            AppIconButton(
-              tooltip: l10n.cashFlowNextPeriod,
-              icon: FLucideIcons.chevronRight,
-              onPress: canMoveForward ? () => onAnchorChanged(next) : null,
-            ),
-          ],
+        AppIconButton(
+          tooltip: l10n.cashFlowPreviousPeriod,
+          icon: FLucideIcons.chevronLeft,
+          onPress: () => onAnchorChanged(previous),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        SegmentedRow<CashFlowPeriod>(
-          options: CashFlowPeriod.values,
-          value: period,
-          labelOf: (candidate) => _periodLabel(l10n, candidate),
-          onChanged: onChanged,
+        Expanded(
+          child: Text(
+            _anchorLabel(l10n, formatter, anchor, period),
+            style: context.labelStyle,
+            textAlign: TextAlign.center,
+          ),
+        ),
+        AppIconButton(
+          tooltip: l10n.cashFlowNextPeriod,
+          icon: FLucideIcons.chevronRight,
+          onPress: canMoveForward ? () => onAnchorChanged(next) : null,
         ),
       ],
+    );
+    final periodControl = AppAdaptiveChoice<CashFlowPeriod>(
+      title: l10n.cashFlowTitle,
+      options: CashFlowPeriod.values,
+      value: period,
+      inlineMaxOptions: 1,
+      labelOf: (candidate) => _periodLabel(l10n, candidate),
+      onChanged: onChanged,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stack =
+            constraints.maxWidth < 340 ||
+            (constraints.maxWidth < 600 &&
+                MediaQuery.textScalerOf(context).scale(1) > 1.3);
+        if (stack) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              dateControl,
+              const SizedBox(height: AppSpacing.s8),
+              periodControl,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(flex: 2, child: dateControl),
+            const SizedBox(width: AppSpacing.s8),
+            Flexible(child: periodControl),
+          ],
+        );
+      },
     );
   }
 }

@@ -257,25 +257,14 @@ class _TodayListState extends ConsumerState<_TodayList> {
               ),
             ),
             stickyBuilder: (context, progress) {
-              final subtitle = snapshot.blockedCount > 0
-                  ? '${l10n.executionOverviewBlocked} ${snapshot.blockedCount}'
-                  : l10n.executionOverviewFocus;
               return AppCollapsedSummaryBar(
                 progress: progress,
-                child: AppCollapsedSummaryContent(
-                  label: l10n.executionOverviewFocus,
-                  value: AnimatedValueText(
-                    value: snapshot.todayCount,
-                    format: (v) => '${v.round()}',
-                    style: TypographyTokens.numericTitleStrong,
-                  ),
-                  trailing: snapshot.blockedCount > 0
-                      ? AppBadge(
-                          label: subtitle,
-                          size: AppBadgeSize.compact,
-                          tone: AppBadgeTone.warning,
-                        )
-                      : null,
+                child: ExecutionOverviewStrip(
+                  key: const ValueKey('execution-sticky-filter'),
+                  snapshot: snapshot,
+                  inventoryAvailable: inventory.hasValue,
+                  selectedFilter: _filter,
+                  onFilterChanged: (filter) => setState(() => _filter = filter),
                 ),
               );
             },

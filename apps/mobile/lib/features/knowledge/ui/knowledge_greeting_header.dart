@@ -40,6 +40,25 @@ class KnowledgeGreetingHeader extends StatelessWidget {
             ),
             onPress: () => showKnowledgeCaptureSheet(context),
           ),
+          AppAdaptiveActionMenu(
+            title: l10n.shellMoreActions,
+            actions: [
+              AppAdaptiveAction(
+                icon: FLucideIcons.circleCheck,
+                title: l10n.knowledgeNewDecision,
+                onPress: () => showKnowledgeDecisionCapturePage(context),
+              ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => Focus(
+              focusNode: focusNode,
+              child: AppIconButton(
+                key: const ValueKey('knowledge-create-more'),
+                tooltip: l10n.shellMoreActions,
+                icon: FLucideIcons.ellipsis,
+                onPress: openMenu,
+              ),
+            ),
+          ),
           const ShellActionRow(),
         ],
       ),

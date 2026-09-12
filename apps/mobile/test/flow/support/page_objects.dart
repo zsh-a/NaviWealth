@@ -519,12 +519,11 @@ class KnowledgeInboxPageObject {
   }) async {
     // An empty inbox exposes two capture entry points by design: the header
     // action and the empty-state CTA. Either one opens the capture sheet.
-    final add = find.bySemanticsLabel('New capture');
+    final add = find.bySemanticsLabel('Quick note');
     expect(add, findsWidgets, reason: 'knowledge capture action missing');
     await tester.tap(add.first);
     await _settleKnowledgeCapture(tester);
-    await tester.tap(find.text('New note'));
-    await _settleKnowledgeCapture(tester);
+    expect(find.byType(AppActionSheetList), findsNothing);
 
     await tester.enterText(
       find.widgetWithText(FTextField, 'Content (Markdown)'),

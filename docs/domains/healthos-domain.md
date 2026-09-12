@@ -57,6 +57,11 @@ connecting a source. It offers system Health, Garmin Connect, and manual body
 measurement as peer entry paths. Connecting a source performs the first sync
 in one action.
 
+Manual weight and body-fat records count as existing Health data. Today shows
+the latest measurement with its capture time and metric-specific Trends entry;
+body fat is displayed as a percentage, not the stored fraction. Missing recovery
+inputs degrade the recovery summary rather than returning the user to activation.
+
 Pull-to-refresh is a real source refresh, not a local-query reload:
 
 - Every connected source is refreshed once through

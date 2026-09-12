@@ -256,7 +256,7 @@ class _AttentionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppNavRow(
       icon: spec.icon,
-      title: spec.title,
+      title: spec.attentionTitle ?? spec.title,
       subtitle: spec.subtitle,
       tone: spec.tone,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -330,18 +330,15 @@ class _CollapsiblePlanSectionState extends State<_CollapsiblePlanSection> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SectionHeader(title: widget.title),
         Semantics(
           expanded: _expanded,
           child: AppNavRow(
             key: const ValueKey('plan-investment-tools-disclosure'),
             icon: FLucideIcons.layers,
-            title: l10n.planInvestmentToolsTitle,
-            subtitle: l10n.planInvestmentToolsSummary,
+            title: widget.title,
             titleMaxLines: 2,
             subtitleMaxLines: 2,
             showChevron: false,
@@ -373,7 +370,14 @@ class _PlanRow extends StatelessWidget {
     return AppNavRow(
       icon: spec.icon,
       title: spec.title,
-      subtitle: spec.subtitle,
+      subtitle: spec.requiresAttention ? null : spec.subtitle,
+      trailing: spec.requiresAttention
+          ? AppBadge(
+              label: AppLocalizations.of(context).planNeedsAttentionShort,
+              tone: spec.tone,
+              size: AppBadgeSize.compact,
+            )
+          : null,
       titleMaxLines: 2,
       subtitleMaxLines: 2,
       onTap: () => context.push(spec.path),

@@ -32,6 +32,8 @@ const Set<HealthMetricKind> _kHealthTodayMetricKinds = <HealthMetricKind>{
   HealthMetricKind.trainingLoadDaily,
   HealthMetricKind.spo2Daily,
   HealthMetricKind.vo2Max,
+  HealthMetricKind.weight,
+  HealthMetricKind.bodyFat,
 };
 
 class _HealthTodaySnapshot {
@@ -88,6 +90,8 @@ class HealthTodayMetricGridModel {
     this.rhr,
     this.trainingLoad,
     this.spo2,
+    this.weight,
+    this.bodyFat,
     this.sleepTrend,
     this.bodyBatteryTrend,
     this.stressTrend,
@@ -114,6 +118,8 @@ class HealthTodayMetricGridModel {
       rhr: s.latest(HealthMetricKind.rhrDaily),
       trainingLoad: s.latest(HealthMetricKind.trainingLoadDaily),
       spo2: s.latest(HealthMetricKind.spo2Daily),
+      weight: s.latest(HealthMetricKind.weight),
+      bodyFat: s.latest(HealthMetricKind.bodyFat),
       sleepTrend: _metricTrendFromSnapshot(s, HealthMetricKind.sleepSession),
       bodyBatteryTrend: _metricTrendFromSnapshot(
         s,
@@ -145,6 +151,8 @@ class HealthTodayMetricGridModel {
   final HealthMetric? rhr;
   final HealthMetric? trainingLoad;
   final HealthMetric? spo2;
+  final HealthMetric? weight;
+  final HealthMetric? bodyFat;
 
   final MetricTrend? sleepTrend;
   final MetricTrend? bodyBatteryTrend;

@@ -128,13 +128,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planInvestmentPlanTitle => 'Advanced investing';
 
   @override
-  String get planInvestmentToolsTitle => 'Explore investment tools';
-
-  @override
-  String get planInvestmentToolsSummary =>
-      'Recurring plans, rebalancing, and income strategies';
-
-  @override
   String planExploreActiveOptions(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
@@ -2032,6 +2025,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dcaSimulatorTitle => 'DCA simulator';
+
+  @override
+  String get dcaSimulatorParametersTitle => 'Simulation parameters';
+
+  @override
+  String get dcaSimulatorParametersChanged =>
+      'Parameters changed. Run again before saving this plan.';
+
+  @override
+  String get cashFlowTrendIncomeExpenseShort => 'In / out';
+
+  @override
+  String get cashFlowTrendNetShort => 'Net';
+
+  @override
+  String get planReviewRunwayAction => 'Review cash buffer';
+
+  @override
+  String get planReviewBudgetAction => 'Adjust spending budget';
+
+  @override
+  String get planReviewScenariosAction => 'Review due scenarios';
+
+  @override
+  String get planRecordContributionAction => 'Record due contribution';
+
+  @override
+  String get planReviewRebalanceAction => 'Review allocation drift';
+
+  @override
+  String get planNeedsAttentionShort => 'Review';
+
+  @override
+  String get settingsPreferencesSection => 'Preferences';
+
+  @override
+  String get settingsDataManagementOverviewSummary =>
+      'Backup, export and reset';
 
   @override
   String get dcaSimulatorAccountsEntrySubtitle =>
@@ -13299,7 +13330,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get knowledgeCaptureAction => 'New capture';
+  String get knowledgeCaptureAction => 'Quick note';
 
   @override
   String get knowledgeCaptureTitle => 'Capture a thought';

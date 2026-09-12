@@ -24,12 +24,62 @@ import 'package:naviwealth/features/execution/ui/execution_lifecycle_card_contro
 import 'package:naviwealth/features/execution/ui/execution_plans_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_progress_sheet.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
+import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
+  testWidgets(
+    'scrolled Today keeps the selected lens and can switch in place',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final today = _action(id: 'today', title: 'Today action');
+      final blocked = [
+        for (var i = 0; i < 12; i++)
+          _action(id: 'blocked-$i', title: 'Blocked action $i').copyWith(
+            status: ExecutionActionStatus.blocked,
+            sync: _sync(ownerUserId: 'user'),
+          ),
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          const ExecutionTodayPage(),
+          overrides: _executionOverrides(
+            todayActions: [today],
+            openActions: [today, ...blocked],
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Blocked').first);
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(Scrollable).last, const Offset(0, -600));
+      await tester.pumpAndSettle();
+      final sticky = find.byKey(const ValueKey('execution-sticky-filter'));
+      expect(sticky.hitTestable(), findsOneWidget);
+      expect(
+        tester.widget<ExecutionOverviewStrip>(sticky).selectedFilter,
+        ExecutionTodayFilter.blocked,
+      );
+      expect(
+        find.descendant(of: sticky, matching: find.text('Blocked 12')),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.descendant(of: sticky, matching: find.bySemanticsLabel('Today')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<ExecutionOverviewStrip>(sticky).selectedFilter,
+        ExecutionTodayFilter.today,
+      );
+    },
+  );
+
   testWidgets('Today retains known actions while inventory fails and retries', (
     tester,
   ) async {
@@ -118,7 +168,7 @@ void main() {
     expect(find.textContaining('Backlog 1'), findsNothing);
     expect(find.text('Plan the next release'), findsNothing);
 
-    expect(find.text('Today 0'), findsOneWidget);
+    expect(find.text('Today 0'), findsWidgets);
     expect(find.textContaining('Backlog'), findsNothing);
   });
 

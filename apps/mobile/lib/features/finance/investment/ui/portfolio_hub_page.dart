@@ -233,6 +233,17 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
         slivers: [
           SliverToBoxAdapter(
             child: Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+              child: _PortfolioSelector(
+                portfolios: widget.portfolios,
+                value: widget.selectedPortfolioId,
+                holdingCount: data.holdings.length,
+                onChanged: widget.onPortfolioChanged,
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s20),
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -243,50 +254,10 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                         role: AdaptiveSummaryTileRole.continuous,
                         child: _PortfolioSummary(data: data),
                       ),
-                      if (widget.allocationTree case final tree?)
-                        AdaptiveSummaryTile(
-                          role: AdaptiveSummaryTileRole.featured,
-                          child: _PortfolioPlanStrip(
-                            portfolios: widget.portfolios,
-                            tree: tree,
-                            actualWeights: widget.actualPortfolioWeights,
-                          ),
-                        ),
-                      AdaptiveSummaryTile(
+                      const AdaptiveSummaryTile(
                         role: AdaptiveSummaryTileRole.supporting,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const _ConcentrationRiskSection(),
-                            const SizedBox(height: AppSpacing.s16),
-                            _PortfolioSelector(
-                              portfolios: widget.portfolios,
-                              value: widget.selectedPortfolioId,
-                              holdingCount: data.holdings.length,
-                              onChanged: widget.onPortfolioChanged,
-                            ),
-                          ],
-                        ),
+                        child: _ConcentrationRiskSection(),
                       ),
-                      if (_showInsights)
-                        AdaptiveSummaryTile(
-                          role: AdaptiveSummaryTileRole.continuous,
-                          child: _EngineExposureSection(
-                            baseCurrency: data.baseCurrency,
-                          ),
-                        )
-                      else
-                        AdaptiveSummaryTile(
-                          role: AdaptiveSummaryTileRole.continuous,
-                          child: FButton(
-                            variant: FButtonVariant.ghost,
-                            onPress: () => setState(() {
-                              _showInsights = true;
-                            }),
-                            prefix: const Icon(FLucideIcons.sparkles),
-                            child: Text(l10n.portfolioHubSectionInsights),
-                          ),
-                        ),
                     ],
                   );
                 },
@@ -299,6 +270,31 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
             empty: holdings.isEmpty,
             showReveal: showReveal,
             overflowCount: overflowHoldings.length,
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppDisclosureHeader(
+                    title: l10n.portfolioHubSectionInsights,
+                    expanded: _showInsights,
+                    onToggle: () =>
+                        setState(() => _showInsights = !_showInsights),
+                  ),
+                  if (_showInsights) ...[
+                    if (widget.allocationTree case final tree?)
+                      _PortfolioPlanStrip(
+                        portfolios: widget.portfolios,
+                        tree: tree,
+                        actualWeights: widget.actualPortfolioWeights,
+                      ),
+                    _EngineExposureSection(baseCurrency: data.baseCurrency),
+                  ],
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -534,7 +530,7 @@ class _PortfolioSummaryCard extends StatelessWidget {
         ? null
         : (slice.unrealizedPnlInBase / slice.costBasisInBase).toDouble() * 100;
     return SoftCard.hero(
-      padding: AppPageRhythm.heroPadding,
+      padding: AppPageRhythm.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -595,9 +591,15 @@ class _PortfolioSummaryMetrics extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (Breakpoints.isMobile(constraints.maxWidth)) {
-          final itemWidth = (constraints.maxWidth - AppSpacing.s12) / 2;
+          final columns =
+              constraints.maxWidth >= 320 &&
+                  MediaQuery.textScalerOf(context).scale(1) <= 1.3
+              ? 3
+              : 2;
+          final itemWidth =
+              (constraints.maxWidth - AppSpacing.s8 * (columns - 1)) / columns;
           return Wrap(
-            spacing: AppSpacing.s12,
+            spacing: AppSpacing.s8,
             runSpacing: AppSpacing.s14,
             children: [
               for (final metric in metrics)

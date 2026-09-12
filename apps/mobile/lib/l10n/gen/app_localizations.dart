@@ -302,18 +302,6 @@ abstract class AppLocalizations {
   /// **'Advanced investing'**
   String get planInvestmentPlanTitle;
 
-  /// Plan hub disclosure for optional investment workflows
-  ///
-  /// In en, this message translates to:
-  /// **'Explore investment tools'**
-  String get planInvestmentToolsTitle;
-
-  /// Summary of the investment tools hidden behind progressive disclosure
-  ///
-  /// In en, this message translates to:
-  /// **'Recurring plans, rebalancing, and income strategies'**
-  String get planInvestmentToolsSummary;
-
   /// No description provided for @planExploreActiveOptions.
   ///
   /// In en, this message translates to:
@@ -3478,6 +3466,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DCA simulator'**
   String get dcaSimulatorTitle;
+
+  /// No description provided for @dcaSimulatorParametersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation parameters'**
+  String get dcaSimulatorParametersTitle;
+
+  /// No description provided for @dcaSimulatorParametersChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Parameters changed. Run again before saving this plan.'**
+  String get dcaSimulatorParametersChanged;
+
+  /// No description provided for @cashFlowTrendIncomeExpenseShort.
+  ///
+  /// In en, this message translates to:
+  /// **'In / out'**
+  String get cashFlowTrendIncomeExpenseShort;
+
+  /// No description provided for @cashFlowTrendNetShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get cashFlowTrendNetShort;
+
+  /// No description provided for @planReviewRunwayAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review cash buffer'**
+  String get planReviewRunwayAction;
+
+  /// No description provided for @planReviewBudgetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust spending budget'**
+  String get planReviewBudgetAction;
+
+  /// No description provided for @planReviewScenariosAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review due scenarios'**
+  String get planReviewScenariosAction;
+
+  /// No description provided for @planRecordContributionAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Record due contribution'**
+  String get planRecordContributionAction;
+
+  /// No description provided for @planReviewRebalanceAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Review allocation drift'**
+  String get planReviewRebalanceAction;
+
+  /// No description provided for @planNeedsAttentionShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Review'**
+  String get planNeedsAttentionShort;
+
+  /// No description provided for @settingsPreferencesSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get settingsPreferencesSection;
+
+  /// No description provided for @settingsDataManagementOverviewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup, export and reset'**
+  String get settingsDataManagementOverviewSummary;
 
   /// No description provided for @dcaSimulatorAccountsEntrySubtitle.
   ///
@@ -22375,7 +22435,7 @@ abstract class AppLocalizations {
   /// Button label for creating a knowledge capture
   ///
   /// In en, this message translates to:
-  /// **'New capture'**
+  /// **'Quick note'**
   String get knowledgeCaptureAction;
 
   /// No description provided for @knowledgeCaptureTitle.

@@ -1,14 +1,20 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
 import 'package:naviwealth/features/health/agents/providers.dart'
     as health_agent_providers;
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
+import 'package:naviwealth/features/health/data/health_metric_repository.dart';
+import 'package:naviwealth/features/health/data/health_metric_write_service.dart';
 import 'package:naviwealth/features/health/data/providers.dart' as health_data;
+import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
@@ -16,10 +22,63 @@ import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_inbox_page.dart';
 
 import '../core/persistence/test_database.dart';
+import '../features/finance/data/repositories/_stub_stamper.dart';
 import '_golden_setup.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  runAllVariants('health_manual_today_page', (tester, variant) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await DomainOptInStore(db).write(DomainOptIns(const {DomainScope.health}));
+    final repository = HealthMetricRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+    );
+    final writer = HealthMetricWriteService(
+      repository: repository,
+      stamper: makeStubStamper(userId: 'golden-user'),
+    );
+    final at = DateTime.now().toUtc().subtract(const Duration(minutes: 20));
+    await writer.recordBodyMeasurement(
+      kind: HealthMetricKind.weight,
+      value: 72.5,
+      capturedAt: at,
+    );
+    await writer.recordBodyMeasurement(
+      kind: HealthMetricKind.bodyFat,
+      value: 18.5,
+      capturedAt: at,
+    );
+    await pumpAndSnapshotMobile(
+      tester,
+      name: 'health_manual_today_page',
+      routePath: '/health',
+      variant: variant,
+      child: const HealthTodayPage(),
+      overrides: [
+        appDatabaseProvider.overrideWith((_) async => db),
+        currentUserIdProvider.overrideWithValue(() async => 'golden-user'),
+        health_data.healthMetricRepositoryProvider.overrideWith(
+          (_) async => repository,
+        ),
+        health_data.garminSyncControllerProvider.overrideWithBuild(
+          (_, _) => const GarminInitial(),
+        ),
+        health_data.healthSyncStatusProvider.overrideWithValue(null),
+        health_data.healthPlatformStatusProvider.overrideWith(
+          (_) async => const health_data.HealthPlatformStatus(
+            available: false,
+            permissionsGranted: false,
+          ),
+        ),
+      ],
+    );
+    expect(find.text('72.5'), findsOneWidget);
+    expect(find.text('18.5'), findsOneWidget);
+    expect(find.text('Connect your health data'), findsNothing);
+  });
 
   runAllVariants('health_today_page', (tester, variant) async {
     final db = makeTestDatabase();

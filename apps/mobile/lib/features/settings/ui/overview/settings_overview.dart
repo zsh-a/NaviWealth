@@ -41,25 +41,35 @@ class SettingsOverview extends ConsumerWidget {
         child: _AccountSection(),
       ),
     );
-    final appearanceGroup = AppEntrance(
+    final preferencesGroup = AppEntrance(
       role: AppMotionRole.decorative,
       child: _Section(
-        child: InlineLinkRow(
-          icon: FLucideIcons.palette,
-          label: l10n.settingsAppearanceSection,
-          subtitle: l10n.settingsAppearanceSummary,
-          onTap: () => context.pushNamed(SettingsRouteNames.appearance),
-        ),
-      ),
-    );
-    final aiGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        child: InlineLinkRow(
-          icon: FLucideIcons.sparkles,
-          label: l10n.settingsAiHubTitle,
-          subtitle: l10n.settingsAiHubSubtitle,
-          onTap: () => context.pushNamed(SettingsRouteNames.ai),
+        title: l10n.settingsPreferencesSection,
+        child: Column(
+          children: [
+            InlineLinkRow(
+              icon: FLucideIcons.palette,
+              label: l10n.settingsAppearanceSection,
+              trailingValue: switch (ref.watch(themeModeProvider)) {
+                ThemeMode.system => l10n.themeModeSystem,
+                ThemeMode.light => l10n.themeModeLight,
+                ThemeMode.dark => l10n.themeModeDark,
+              },
+              onTap: () => context.pushNamed(SettingsRouteNames.appearance),
+            ),
+            const AppGroupedDivider(),
+            InlineLinkRow(
+              icon: FLucideIcons.blocks,
+              label: l10n.settingsDomainsTitle,
+              onTap: () => context.pushNamed(SettingsRouteNames.domains),
+            ),
+            const AppGroupedDivider(),
+            InlineLinkRow(
+              icon: FLucideIcons.sparkles,
+              label: l10n.settingsAiHubTitle,
+              onTap: () => context.pushNamed(SettingsRouteNames.ai),
+            ),
+          ],
         ),
       ),
     );
@@ -75,7 +85,6 @@ class SettingsOverview extends ConsumerWidget {
               InlineLinkRow(
                 icon: FLucideIcons.refreshCw,
                 label: l10n.settingsSyncTitle,
-                subtitle: l10n.settingsSyncSubtitle,
                 onTap: () => context.pushNamed(SettingsRouteNames.sync),
               ),
               const AppGroupedDivider(),
@@ -83,15 +92,8 @@ class SettingsOverview extends ConsumerWidget {
             InlineLinkRow(
               icon: FLucideIcons.database,
               label: l10n.settingsDataManagementTitle,
-              subtitle: l10n.settingsDataManagementSubtitle,
+              subtitle: l10n.settingsDataManagementOverviewSummary,
               onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
-            ),
-            const AppGroupedDivider(),
-            InlineLinkRow(
-              icon: FLucideIcons.cloudUpload,
-              label: l10n.settingsDataTitle,
-              subtitle: l10n.settingsDataSubtitle,
-              onTap: () => context.pushNamed(SettingsRouteNames.backup),
             ),
           ],
         ),
@@ -106,7 +108,6 @@ class SettingsOverview extends ConsumerWidget {
             InlineLinkRow(
               icon: FLucideIcons.bell,
               label: l10n.settingsNotificationsTitle,
-              subtitle: l10n.settingsNotificationsSubtitle,
               onTap: () => context.pushNamed(SettingsRouteNames.notifications),
             ),
             const AppGroupedDivider(),
@@ -116,19 +117,6 @@ class SettingsOverview extends ConsumerWidget {
             const AppGroupedDivider(),
             const _ProductMetricsRow(),
           ],
-        ),
-      ),
-    );
-    // Domain-specific settings live one level down so the overview stays
-    // focused on global preference categories.
-    final domainsGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        child: InlineLinkRow(
-          icon: FLucideIcons.blocks,
-          label: l10n.settingsDomainsTitle,
-          subtitle: l10n.settingsDomainsSubtitle,
-          onTap: () => context.pushNamed(SettingsRouteNames.domains),
         ),
       ),
     );
@@ -158,9 +146,7 @@ class SettingsOverview extends ConsumerWidget {
     final groups = <Widget>[
       accountGroup,
       dataGroup,
-      domainsGroup,
-      aiGroup,
-      appearanceGroup,
+      preferencesGroup,
       notificationsPrivacyGroup,
       advancedGroup,
     ];

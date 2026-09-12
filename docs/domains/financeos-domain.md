@@ -67,6 +67,16 @@ minor units and must route decimal parsing and formatting through
 `features/finance/ingest/domain/minor_unit_amount.dart` without floating-point
 rounding.
 
+### Investment Interaction
+
+Portfolio scope precedes its summary; holdings precede optional insights.
+Concentration risk keeps the highest-severity breach visible and reveals the
+remaining breaches on demand without removing the rebalance entry.
+
+DCA simulation and plan creation share one parameter snapshot, including symbol
+weights. Editing parameters marks the displayed result outdated and prevents
+saving until recalculation. Parameters collapse independently of the result.
+
 ### Watchlist Navigation And Reminders
 
 Watchlist is available from Wealth's object navigation and the command palette.

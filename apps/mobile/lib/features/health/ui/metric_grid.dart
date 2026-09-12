@@ -55,7 +55,13 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
             model.hrv != null ||
             model.rhr != null ||
             model.steps != null);
-    final showEmptyCluster = !isLoading && metrics.hasValue && !primaryHasData;
+    final hasBodyData = model?.weight != null || model?.bodyFat != null;
+    final showEmptyCluster =
+        !isLoading &&
+        metrics.hasValue &&
+        !primaryHasData &&
+        !hasBodyData &&
+        secondaryRows.isEmpty;
 
     if (showEmptyCluster) {
       return SoftCard.raised(
@@ -86,6 +92,12 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
           async: metric((m) => m.steps),
           trend: trend((m) => m.stepsTrend),
         ),
+      if (!primaryHasData) ...[
+        if (model?.weight case final measurement?)
+          _BodyMeasurementCard(metric: measurement),
+        if (model?.bodyFat case final measurement?)
+          _BodyMeasurementCard(metric: measurement),
+      ],
     ];
 
     // While loading with no cards yet, keep a compact skeleton grid.
@@ -126,14 +138,15 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
               ),
             if (secondaryRows.isNotEmpty) ...[
               const SizedBox(height: AppPageRhythm.module),
-              AppRevealControl(
-                expanded: _expanded,
-                collapsedLabel: l10n.commonRevealMore(secondaryRows.length),
-                expandedLabel: l10n.commonRevealLess,
-                onToggle: () => setState(() => _expanded = !_expanded),
-              ),
+              if (displayPrimary.isNotEmpty)
+                AppRevealControl(
+                  expanded: _expanded,
+                  collapsedLabel: l10n.commonRevealMore(secondaryRows.length),
+                  expandedLabel: l10n.commonRevealLess,
+                  onToggle: () => setState(() => _expanded = !_expanded),
+                ),
               AnimatedSizeFade(
-                visible: _expanded,
+                visible: displayPrimary.isEmpty || _expanded,
                 alignment: Alignment.topCenter,
                 child: Padding(
                   padding: const EdgeInsets.only(top: AppPageRhythm.row),
@@ -264,6 +277,27 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
       valueOf: (m) => '${_round(m.value)}',
       unitOf: (_) => '%',
     );
+    if (model.sleep != null ||
+        model.hrv != null ||
+        model.rhr != null ||
+        model.steps != null) {
+      for (final (metric, label, kind) in [
+        (model.weight, l10n.healthMetricWeight, HealthMetricKind.weight),
+        (model.bodyFat, l10n.healthMetricBodyFat, HealthMetricKind.bodyFat),
+      ]) {
+        add(
+          metric: metric,
+          trend: null,
+          icon: FLucideIcons.scale,
+          label: label,
+          accent: context.theme.colors.primary,
+          kind: kind,
+          valueOf: (m) =>
+              '${_round(m.kind == HealthMetricKind.bodyFat && m.unit == 'fraction' ? m.value * 100 : m.value)}',
+          unitOf: (m) => m.kind == HealthMetricKind.bodyFat ? '%' : m.unit,
+        );
+      }
+    }
 
     return rows;
   }

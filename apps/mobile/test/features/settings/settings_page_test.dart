@@ -56,6 +56,11 @@ GoRouter _router({
         builder: (_, _) => const SettingsPage(),
         routes: [
           GoRoute(
+            path: 'backup',
+            name: SettingsRouteNames.backup,
+            builder: (_, _) => const Text('backup-route'),
+          ),
+          GoRoute(
             path: 'appearance',
             name: SettingsRouteNames.appearance,
             builder: (_, _) => const AppearanceSettingsPage(),
@@ -388,6 +393,26 @@ void main() {
 
   group('Settings → hierarchy', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    _testWidgets('backup has one home under data management', (tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: AppRoutes.settings),
+      );
+      await tester.pumpAndSettle();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(SettingsPage)),
+      );
+      expect(find.text(l10n.settingsDataTitle), findsNothing);
+      expect(find.text(l10n.settingsPreferencesSection), findsOneWidget);
+      await tester.ensureVisible(find.text(l10n.settingsDataManagementTitle));
+      await tester.tap(find.text(l10n.settingsDataManagementTitle));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(l10n.dataManagementBackupTitle));
+      await tester.tap(find.text(l10n.dataManagementBackupTitle));
+      await tester.pumpAndSettle();
+      expect(find.text('backup-route'), findsOneWidget);
+    });
 
     _testWidgets('appearance opens separately and preserves theme controls', (
       tester,

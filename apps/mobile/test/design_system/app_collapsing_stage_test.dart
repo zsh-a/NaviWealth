@@ -3,6 +3,47 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 void main() {
+  testWidgets('sticky summary safely resets when filtered content shrinks', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    var count = 20;
+    late VoidCallback shrink;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) {
+              shrink = () => setState(() => count = 1);
+              return AppCollapsingScrollHost(
+                stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
+                  progress: progress,
+                  child: const Text('filter summary'),
+                ),
+                body: ListView.builder(
+                  controller: controller,
+                  itemCount: count,
+                  itemBuilder: (_, index) =>
+                      SizedBox(height: 100, child: Text('Row $index')),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    controller.jumpTo(600);
+    await tester.pumpAndSettle();
+    expect(find.text('filter summary').hitTestable(), findsOneWidget);
+    shrink();
+    await tester.pumpAndSettle();
+    expect(controller.offset, 0);
+    expect(find.text('filter summary').hitTestable(), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('AppCollapsingStage scales down as the scroll view moves', (
     tester,
   ) async {

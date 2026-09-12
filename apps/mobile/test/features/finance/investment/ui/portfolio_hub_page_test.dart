@@ -616,7 +616,7 @@ void main() {
   testWidgets('portfolio flow shows concentration breaches contextually', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(430, 1400);
+    tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -679,6 +679,15 @@ void main() {
                 valueInBase: _d('42'),
                 assetIds: const ['us:AAPL'],
               ),
+              ConcentrationAlert(
+                dimension: RiskDimension.currency,
+                severity: RiskSeverity.warning,
+                label: 'EUR',
+                weight: 0.25,
+                threshold: 0.20,
+                valueInBase: _d('25'),
+                assetIds: const [],
+              ),
             ],
           ),
         ],
@@ -701,6 +710,17 @@ void main() {
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.textContaining('42.0%'), findsOneWidget);
     expect(find.text('Review rebalance plan'), findsOneWidget);
+    expect(find.text('EUR'), findsNothing);
+    expect(tester.getTopLeft(find.text('us:AAPL').first).dy, lessThan(760));
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(PortfolioHubPage)),
+    );
+    await tester.tap(find.text(l10n.commonRevealMore(1)));
+    await tester.pumpAndSettle();
+    expect(find.text('EUR'), findsOneWidget);
+    await tester.tap(find.text(l10n.commonRevealLess));
+    await tester.pumpAndSettle();
+    expect(find.text('EUR'), findsNothing);
   });
 
   test('aggregates holdings by account, currency, and asset class', () {

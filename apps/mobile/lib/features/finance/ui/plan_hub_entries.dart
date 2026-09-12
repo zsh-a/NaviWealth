@@ -18,6 +18,7 @@ class _PlanEntrySpec {
     required this.tone,
     this.requiresAttention = false,
     this.priority = 100,
+    this.attentionTitle,
   });
 
   final _PlanEntryGroup group;
@@ -28,6 +29,7 @@ class _PlanEntrySpec {
   final AppBadgeTone tone;
   final bool requiresAttention;
   final int priority;
+  final String? attentionTitle;
 }
 
 List<_PlanEntrySpec> _planningEntries(
@@ -53,6 +55,7 @@ _PlanEntrySpec _runwayEntry(AppLocalizations l10n, PlanningHubStatus status) {
     group: _PlanEntryGroup.cashSafety,
     icon: FLucideIcons.calendarRange,
     title: l10n.moneyRunwayTitle,
+    attentionTitle: l10n.planReviewRunwayAction,
     subtitle: status.unavailableSources.contains(PlanningSource.runway)
         ? l10n.planStatusUnavailable
         : _runwayStatusLabel(l10n, runway),
@@ -91,6 +94,7 @@ _PlanEntrySpec _budgetEntry(AppLocalizations l10n, PlanningHubStatus status) {
     group: _PlanEntryGroup.cashSafety,
     icon: FLucideIcons.piggyBank,
     title: l10n.planBudgetSectionTitle,
+    attentionTitle: l10n.planReviewBudgetAction,
     subtitle: status.unavailableSources.contains(PlanningSource.budget)
         ? l10n.planStatusUnavailable
         : subtitle,
@@ -116,6 +120,7 @@ _PlanEntrySpec _lifeEventsEntry(
     group: _PlanEntryGroup.longTermGoals,
     icon: FLucideIcons.waypoints,
     title: l10n.lifeEventScenariosTitle,
+    attentionTitle: l10n.planReviewScenariosAction,
     subtitle: status.unavailableSources.contains(PlanningSource.reviews)
         ? l10n.planStatusUnavailable
         : pending == null
@@ -178,6 +183,7 @@ _PlanEntrySpec _dcaEntry(
   group: _PlanEntryGroup.investmentPlan,
   icon: FLucideIcons.calendarClock,
   title: l10n.planDcaPlanTitle,
+  attentionTitle: l10n.planRecordContributionAction,
   subtitle: status.unavailableSources.contains(PlanningSource.dca)
       ? l10n.planStatusUnavailable
       : _dcaStatusLabel(context, l10n, status),
@@ -217,6 +223,7 @@ _PlanEntrySpec _rebalanceEntry(
   group: _PlanEntryGroup.investmentPlan,
   icon: FLucideIcons.scale,
   title: l10n.planRebalanceSectionTitle,
+  attentionTitle: l10n.planReviewRebalanceAction,
   subtitle: status.unavailableSources.contains(PlanningSource.rebalance)
       ? l10n.planStatusUnavailable
       : _rebalanceStatusLabel(l10n, status),
