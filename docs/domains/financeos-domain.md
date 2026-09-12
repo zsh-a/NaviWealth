@@ -77,9 +77,17 @@ master/detail layout.
 
 Collection, sorting, and filtering use one local preferences-backed view state;
 only desktop row selection is encoded in the URL. Deleted collections reset the
-scope in the view-state controller. Overview statistics share one compact
-surface with a collapsed market breakdown. Recent close-price sparklines load
-independently of quotes; missing history never invents a trend or blocks a price.
+scope in the view-state controller. The pinned scope toolbar exposes active
+filters and non-default sorting; overview statistics use an expandable daily
+breadth summary with abnormal quote states only. Quote rows are lazy-built and
+reserve their trend columns even when history is unavailable. Recent daily
+close history is shared by row sparklines and the dated detail chart.
+
+The list publishes quote updates incrementally, reusing per-symbol in-flight
+requests and previous prices during refresh. Detail quotes do not wait for the
+whole list. Sequential list prefetch and the market service's cache/rate limits
+remain in place. Tool results and paper simulations consume completed quote
+batches; intermediate UI emissions must not create simulation observations.
 
 Price reminders are foreground-only: check on quote refresh, app resume, and
 every 15 minutes while the app is open. There is no background price evaluator.

@@ -6,6 +6,7 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
 
@@ -144,7 +145,7 @@ final watchlistItemsForScopeProvider = FutureProvider.autoDispose
 final watchlistQuoteSnapshotsProvider =
     FutureProvider.autoDispose<List<WatchlistQuoteSnapshot>>((ref) async {
       final items = await ref.watch(watchlistItemsProvider.future);
-      return _loadQuoteSnapshots(ref, items);
+      return _loadQuoteSnapshotUpdates(ref, items).last;
     });
 
 final watchlistQuoteSnapshotsForScopeProvider = FutureProvider.autoDispose
@@ -152,7 +153,30 @@ final watchlistQuoteSnapshotsForScopeProvider = FutureProvider.autoDispose
       final items = await ref.watch(
         watchlistItemsForScopeProvider(scope).future,
       );
-      return _loadQuoteSnapshots(ref, items);
+      return _loadQuoteSnapshotUpdates(ref, items).last;
+    });
+
+/// UI updates incrementally; completed-batch callers retain the Future API.
+final watchlistQuoteUpdatesProvider = StreamProvider.autoDispose
+    .family<List<WatchlistQuoteSnapshot>, WatchlistScope>((ref, scope) async* {
+      final items = await ref.watch(
+        watchlistItemsForScopeProvider(scope).future,
+      );
+      yield* _loadQuoteSnapshotUpdates(ref, items);
+    });
+
+typedef WatchlistSymbolKey = ({AssetMarket market, String symbol});
+
+WatchlistSymbolKey watchlistSymbolKey(WatchlistItem item) =>
+    (market: item.market, symbol: item.displaySymbol);
+
+/// A detail request need not wait for the list's sequential prefetch. All
+/// consumers of a symbol share its in-flight request and the service's cache
+/// and provider rate limits still apply.
+final watchlistSymbolQuoteProvider = FutureProvider.autoDispose
+    .family<MarketResponse<Quote>, WatchlistSymbolKey>((ref, key) async {
+      final service = await ref.watch(marketDataServiceProvider.future);
+      return service.getQuote(key.symbol, market: key.market);
     });
 
 class WatchlistQuoteSnapshot {
@@ -160,21 +184,17 @@ class WatchlistQuoteSnapshot {
     required this.item,
     this.response,
     this.error,
-    this.sparkline = const <double>[],
+    this.isLoading = false,
   });
 
   final WatchlistItem item;
   final MarketResponse<Quote>? response;
   final Object? error;
 
-  /// Closing prices for the trailing window, oldest first. Empty when the
-  /// history provider had nothing (or the symbol is unpriced), in which case
-  /// the row simply omits its trend line instead of inventing one.
-  final List<double> sparkline;
+  final bool isLoading;
 
   Quote? get quote => response?.data;
   bool get hasError => error != null;
-  bool get hasSparkline => sparkline.length > 1;
 }
 
 class WatchlistQuoteSummary {
@@ -291,7 +311,8 @@ List<WatchlistItem> filterWatchlistItems({
           WatchlistFreshnessFilter.stale =>
             snapshot?.quote != null &&
                 snapshot?.response?.freshness == DataFreshness.stale,
-          WatchlistFreshnessFilter.unavailable => snapshot?.quote == null,
+          WatchlistFreshnessFilter.unavailable =>
+            snapshot?.quote == null && snapshot?.isLoading != true,
         };
         return matchesFreshness;
       })
@@ -375,39 +396,53 @@ List<WatchlistItem> sortWatchlistItems({
   return sorted;
 }
 
-Future<List<WatchlistQuoteSnapshot>> _loadQuoteSnapshots(
+Stream<List<WatchlistQuoteSnapshot>> _loadQuoteSnapshotUpdates(
   Ref ref,
   List<WatchlistItem> items,
-) async {
-  if (items.isEmpty) return const [];
-  final service = await ref.watch(marketDataServiceProvider.future);
-  final snapshots = <WatchlistQuoteSnapshot>[];
-  // Keep requests sequential: some configured providers have strict
-  // per-minute limits and MarketDataService already handles cache fallback.
-  for (final item in items) {
-    snapshots.add(await _fetchSnapshot(service, item));
+) async* {
+  // Seed from already loaded symbols without starting every request at once.
+  // On refresh Riverpod retains the previous value until its replacement is
+  // ready, so prices do not disappear while another symbol is slow.
+  final snapshots = [
+    for (final item in items)
+      WatchlistQuoteSnapshot(
+        item: item,
+        response:
+            ref.exists(watchlistSymbolQuoteProvider(watchlistSymbolKey(item)))
+            ? ref
+                  .read(watchlistSymbolQuoteProvider(watchlistSymbolKey(item)))
+                  .value
+            : null,
+        isLoading: true,
+      ),
+  ];
+  yield List.unmodifiable(snapshots);
+  for (var index = 0; index < items.length; index++) {
+    if (!ref.mounted) return;
+    snapshots[index] = await _fetchSnapshot(ref, items[index]);
+    if (!ref.mounted) return;
+    yield List.unmodifiable(snapshots);
   }
-  return snapshots;
 }
 
 Future<WatchlistQuoteSnapshot> _fetchSnapshot(
-  MarketDataService service,
+  Ref ref,
   WatchlistItem item,
 ) async {
   try {
-    final response = await service.getQuote(item.symbol, market: item.market);
+    final response = await ref.watch(
+      watchlistSymbolQuoteProvider(watchlistSymbolKey(item)).future,
+    );
     return WatchlistQuoteSnapshot(item: item, response: response);
   } catch (error) {
     return WatchlistQuoteSnapshot(item: item, error: error);
   }
 }
 
-typedef WatchlistSymbolKey = ({AssetMarket market, String symbol});
-
 /// History loads independently of quotes and reminder checks. Each row can
 /// display its price immediately; a slow history request cannot block it.
-final watchlistSparklineProvider = FutureProvider.autoDispose
-    .family<List<double>, WatchlistSymbolKey>((ref, key) async {
+final watchlistHistoryProvider = FutureProvider.autoDispose
+    .family<List<HistoricalBar>, WatchlistSymbolKey>((ref, key) async {
       try {
         final service = await ref.watch(marketDataServiceProvider.future);
         final now = DateTime.now().toUtc();
@@ -430,8 +465,14 @@ final watchlistSparklineProvider = FutureProvider.autoDispose
                 )
                 .toList()
               ..sort((a, b) => a.asOf.compareTo(b.asOf));
-        return [for (final bar in bars) bar.close.toDouble()];
+        return bars;
       } on Object {
         return const [];
       }
+    });
+
+final watchlistSparklineProvider = FutureProvider.autoDispose
+    .family<List<double>, WatchlistSymbolKey>((ref, key) async {
+      final bars = await ref.watch(watchlistHistoryProvider(key).future);
+      return [for (final bar in bars) bar.close.toDouble()];
     });

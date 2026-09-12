@@ -11,6 +11,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
+import '../notifications/watchlist_alerts.dart';
 import 'watchlist_labels.dart';
 import 'watchlist_rows.dart';
 
@@ -24,14 +25,10 @@ Future<void> showWatchlistItemSheet({
   WatchlistItem? item,
   String? initialCollectionId,
 }) async {
-  final l10n = AppLocalizations.of(context);
   final dirty = FormDirtyController();
   try {
-    await showAppSheet<void>(
+    await showAppFormSheet<void>(
       context: context,
-      title: item == null
-          ? l10n.watchlistAddTitle
-          : l10n.watchlistEditAlertTitle(item.displaySymbol),
       maxHeightFactor: 0.9,
       dirtyGuard: dirty,
       confirmDismiss: () => confirmDiscardIfDirty(context, dirty),
@@ -100,6 +97,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   late final Set<String> _selectedCollectionIds;
   LocalSecurityChoice? _choice;
   bool _saving = false;
+  bool _collectionsExpanded = false;
 
   /// Alerts are optional, so they start folded away when adding a symbol and
   /// open when the user came here specifically to change them.
@@ -130,137 +128,180 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
     final collections = widget.item == null
         ? ref.watch(watchlistCollectionsProvider)
         : null;
-    return Form(
-      key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (widget.item == null) ...[
-            SymbolField(
-              markets: watchlistEditableMarkets,
-              onChanged: (choice) {
-                setState(() => _choice = choice);
-                widget.dirty.markDirty();
-              },
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            AppSheetSectionLabel(l10n.watchlistAddToCollectionsField),
-            if (collections!.isLoading)
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: FCircularProgress(),
-              )
-            else if (collections.hasError)
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: () => ref.invalidate(watchlistCollectionsProvider),
-                child: Text(l10n.commonRetry),
-              )
-            else if ((collections.value ?? const <WatchlistCollection>[])
-                .isEmpty)
-              Text(l10n.watchlistNoCollectionsBody, style: context.captionStyle)
-            else
-              AppGroupedSurface(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    for (
-                      var index = 0;
-                      index < collections.value!.length;
-                      index++
-                    ) ...[
-                      _WatchlistCollectionCheckboxRow(
-                        key: ValueKey<String>(
-                          'watchlist-add-collection-${collections.value![index].id}',
+    final currency =
+        _choice?.currency ??
+        (widget.item == null || !_alertsExpanded
+            ? null
+            : ref
+                  .watch(
+                    watchlistSymbolQuoteProvider(
+                      watchlistSymbolKey(widget.item!),
+                    ),
+                  )
+                  .value
+                  ?.data
+                  .currency);
+    final delivery = _alertsExpanded
+        ? ref.watch(watchlistSystemRemindersProvider)
+        : null;
+    return AppSheet(
+      title: widget.item == null
+          ? l10n.watchlistAddTitle
+          : l10n.watchlistEditAlertTitle(widget.item!.displaySymbol),
+      footer: AppSheetFooter(
+        cancelLabel: l10n.commonCancel,
+        submitLabel: widget.item == null
+            ? l10n.watchlistAddAction
+            : l10n.watchlistSaveAlertsAction,
+        busy: _saving,
+        enabled: widget.item != null || _choice != null,
+        onSubmit: _save,
+      ),
+      child: Form(
+        key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.item == null) ...[
+              SymbolField(
+                markets: watchlistEditableMarkets,
+                onChanged: (choice) {
+                  setState(() => _choice = choice);
+                  widget.dirty.markDirty();
+                },
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              if (collections!.hasError)
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: () => ref.invalidate(watchlistCollectionsProvider),
+                  child: Text(l10n.commonRetry),
+                )
+              else if ((collections.value ?? const <WatchlistCollection>[])
+                  .isNotEmpty) ...[
+                AppTappable(
+                  key: const ValueKey('watchlist-collections-expand'),
+                  onPress: () => setState(
+                    () => _collectionsExpanded = !_collectionsExpanded,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: appActionTargetSize(context),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${l10n.watchlistAddToCollectionsField} · ${_selectedCollectionIds.isEmpty ? l10n.watchlistUngroupedCollection : collections.value!.where((entry) => _selectedCollectionIds.contains(entry.id)).map((entry) => entry.name).join(', ')}',
+                            style: context.captionLabelStyle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        collection: collections.value![index],
-                        selected: _selectedCollectionIds.contains(
-                          collections.value![index].id,
+                        Icon(
+                          _collectionsExpanded
+                              ? FLucideIcons.chevronUp
+                              : FLucideIcons.chevronDown,
+                          size: AppIconSizes.sm,
                         ),
-                        onToggle: () =>
-                            _toggleCollection(collections.value![index].id),
-                      ),
-                      if (index != collections.value!.length - 1)
-                        const AppGroupedDivider(
-                          indent: AppSpacing.s12,
-                          endIndent: AppSpacing.s12,
+                      ],
+                    ),
+                  ),
+                ),
+                AnimatedSizeFade(
+                  visible: _collectionsExpanded,
+                  child: Column(
+                    children: [
+                      for (final collection in collections.value!)
+                        _WatchlistCollectionCheckboxRow(
+                          key: ValueKey(
+                            'watchlist-add-collection-${collection.id}',
+                          ),
+                          collection: collection,
+                          selected: _selectedCollectionIds.contains(
+                            collection.id,
+                          ),
+                          onToggle: () => _toggleCollection(collection.id),
                         ),
                     ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s16),
+            ],
+            AppDisclosureHeader(
+              title: l10n.watchlistAlertOptionalSection,
+              subtitle: l10n.watchlistAlertOptionalHint,
+              expanded: _alertsExpanded,
+              onToggle: () =>
+                  setState(() => _alertsExpanded = !_alertsExpanded),
+            ),
+            AnimatedSizeFade(
+              visible: _alertsExpanded,
+              child: Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        currency == null
+                            ? l10n.watchlistAlertCurrencyUnknown
+                            : l10n.watchlistAlertCurrency(currency),
+                        style: context.captionStyle,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.s8),
+                    FTextFormField(
+                      key: const ValueKey<String>('watchlist-alert-above'),
+                      control: FTextFieldControl.managed(controller: _above),
+                      label: Text(l10n.watchlistAlertAboveField),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
+                      validator: _validateDecimal,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    FTextFormField(
+                      key: const ValueKey<String>('watchlist-alert-below'),
+                      control: FTextFieldControl.managed(controller: _below),
+                      label: Text(l10n.watchlistAlertBelowField),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                      ],
+                      validator: _validateDecimal,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    Row(
+                      children: [
+                        Icon(
+                          FLucideIcons.bellRing,
+                          size: AppIconSizes.sm,
+                          color: context.theme.colors.mutedForeground,
+                        ),
+                        const SizedBox(width: AppSpacing.s8),
+                        Expanded(
+                          child: Text(
+                            '${l10n.watchlistAlertNotificationNote}\n${delivery?.value == true ? l10n.watchlistReminderSystem : l10n.watchlistReminderInApp}',
+                            style: context.captionStyle,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-            const SizedBox(height: AppSpacing.s16),
-          ],
-          AppDisclosureHeader(
-            title: l10n.watchlistAlertOptionalSection,
-            subtitle: l10n.watchlistAlertOptionalHint,
-            expanded: _alertsExpanded,
-            onToggle: () => setState(() => _alertsExpanded = !_alertsExpanded),
-          ),
-          AnimatedSizeFade(
-            visible: _alertsExpanded,
-            child: Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FTextFormField(
-                    key: const ValueKey<String>('watchlist-alert-above'),
-                    control: FTextFieldControl.managed(controller: _above),
-                    label: Text(l10n.watchlistAlertAboveField),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    validator: _validateDecimal,
-                  ),
-                  const SizedBox(height: AppSpacing.s12),
-                  FTextFormField(
-                    key: const ValueKey<String>('watchlist-alert-below'),
-                    control: FTextFieldControl.managed(controller: _below),
-                    label: Text(l10n.watchlistAlertBelowField),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                    ],
-                    validator: _validateDecimal,
-                  ),
-                  const SizedBox(height: AppSpacing.s12),
-                  Row(
-                    children: [
-                      Icon(
-                        FLucideIcons.bellRing,
-                        size: AppIconSizes.sm,
-                        color: context.theme.colors.mutedForeground,
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      Expanded(
-                        child: Text(
-                          l10n.watchlistAlertNotificationNote,
-                          style: context.captionStyle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          AppSheetFooter(
-            cancelLabel: l10n.commonCancel,
-            submitLabel: widget.item == null
-                ? l10n.watchlistAddAction
-                : l10n.watchlistSaveAlertsAction,
-            busy: _saving,
-            onSubmit: _save,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

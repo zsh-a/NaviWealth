@@ -49,6 +49,19 @@ const int _maxLedgerEntries = 128;
 /// one rule is configured.
 const Duration _alertPollInterval = Duration(minutes: 15);
 
+/// Read-only capability probe. Opening a form never requests OS permission.
+final watchlistSystemRemindersProvider = FutureProvider.autoDispose<bool>((
+  ref,
+) async {
+  if (!ref.watch(notificationsEnabledProvider)) return false;
+  final service = ref.watch(notificationServiceProvider);
+  try {
+    return await service.isAvailable() && await service.hasPermissions();
+  } on Object {
+    return false;
+  }
+});
+
 /// One triggered rule, ready to be shown.
 class WatchlistAlertEvent {
   const WatchlistAlertEvent({required this.signature, required this.message});
@@ -206,6 +219,8 @@ class WatchlistAlertMonitor with WidgetsBindingObserver {
 
   void refresh() {
     if (!_disposed && _foreground && _quotesSubscription != null) {
+      _ref.invalidate(watchlistSymbolQuoteProvider);
+      _ref.invalidate(watchlistQuoteUpdatesProvider);
       _ref.invalidate(watchlistQuoteSnapshotsProvider);
     }
   }
@@ -234,7 +249,7 @@ class WatchlistAlertMonitor with WidgetsBindingObserver {
     }
     if (_quotesSubscription != null) return;
     _quotesSubscription = _ref.listen<AsyncValue<List<WatchlistQuoteSnapshot>>>(
-      watchlistQuoteSnapshotsProvider,
+      watchlistQuoteUpdatesProvider(const WatchlistScope.all()),
       (_, next) => next.whenData((snapshots) => unawaited(dispatch(snapshots))),
       fireImmediately: true,
     );

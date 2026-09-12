@@ -3,21 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
-import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
 import 'watchlist_labels.dart';
 
-/// One symbol in the list.
-///
-/// Two rows of chrome became none: the 40dp leading tile was the *same*
-/// line-chart glyph on every market, and the trailing freshness chip published
-/// the quote pipeline's state to the user, redundantly with the overview card.
-/// The freed width went to a trend line, which is the thing a watchlist is
-/// actually for, and the whole row is now a single tap target instead of only
-/// the symbol text.
+/// Stable quote grid: identity/price, then name/trend/daily change.
 class WatchlistRow extends StatelessWidget {
   const WatchlistRow({
     super.key,
@@ -29,8 +21,8 @@ class WatchlistRow extends StatelessWidget {
     required this.onManageCollections,
     required this.onRemoveFromCollection,
     required this.onRemove,
+    this.selected = false,
   });
-
   final WatchlistItem item;
   final WatchlistQuoteSnapshot? snapshot;
   final bool loadingQuote;
@@ -39,201 +31,247 @@ class WatchlistRow extends StatelessWidget {
   final VoidCallback onManageCollections;
   final VoidCallback? onRemoveFromCollection;
   final VoidCallback onRemove;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final quote = snapshot?.quote;
-    final itemName = item.localizedName(
+    final name = item.localizedName(
       Localizations.localeOf(context).languageCode,
     );
-    final hasAlert = item.alertRules.enabled && item.alertRules.hasRule;
-    final actionsTitle = l10n.watchlistRowActionsTitle(item.displaySymbol);
-    return AppTappable(
-      onPress: onOpen,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s10,
+    final stale = watchlistStaleFreshnessLabel(
+      l10n,
+      snapshot?.response?.freshness,
+    );
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+    final price = quote != null
+        ? MoneyText(
+            amount: quote.price.toDouble(),
+            currencyCode: quote.currency,
+            style: TypographyTokens.numericBodyStrong,
+          )
+        : Text(loadingQuote ? '…' : '—', style: context.labelStyle);
+    final change = quote?.changePercent;
+    final nameLabel = Text(
+      name ?? watchlistMarketLabel(l10n, item.market),
+      style: context.captionStyle,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+    final changeLabel = change == null
+        ? const Text('—')
+        : DeltaText.percentFromRatio(
+            key: ValueKey('watchlist-row-change-${item.id}'),
+            ratio: change.toDouble(),
+            style: TypographyTokens.numericCaptionStrong,
+          );
+    return Semantics(
+      selected: selected,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: selected
+              ? context.theme.colors.secondary
+              : context.theme.colors.background,
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
+        child: AppTappable(
+          selected: selected,
+          onPress: onOpen,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              AppSpacing.s12,
+              0,
+              AppSpacing.s12,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Flexible(
-                        child: Text(
-                          itemName ?? item.displaySymbol,
-                          style: context.labelStyle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (hasAlert)
-                        Padding(
-                          padding: const EdgeInsets.only(left: AppSpacing.s6),
-                          child: Semantics(
-                            label: l10n.watchlistAlertSetBadge,
-                            child: Icon(
-                              FLucideIcons.bellRing,
-                              size: AppIconSizes.sm,
-                              color: context.theme.colors.mutedForeground,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    item.displaySymbol,
+                                    key: ValueKey(
+                                      'watchlist-symbol-${item.id}',
+                                    ),
+                                    style: context.labelStyle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (item.alertRules.enabled &&
+                                    item.alertRules.hasRule) ...[
+                                  const SizedBox(width: AppSpacing.s6),
+                                  Tooltip(
+                                    message: l10n.watchlistAlertSetBadge,
+                                    child: Icon(
+                                      FLucideIcons.bellRing,
+                                      size: AppIconSizes.sm,
+                                      color:
+                                          context.theme.colors.mutedForeground,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
+                          const SizedBox(width: AppSpacing.s8),
+                          if (!largeText) price,
+                        ],
+                      ),
+                      if (largeText) ...[
+                        const SizedBox(height: AppSpacing.s4),
+                        nameLabel,
+                        price,
+                        Wrap(
+                          spacing: AppSpacing.s12,
+                          runSpacing: AppSpacing.s4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            WatchlistTrend(item: item),
+                            changeLabel,
+                          ],
+                        ),
+                      ] else ...[
+                        const SizedBox(height: AppSpacing.s4),
+                        Row(
+                          children: [
+                            Expanded(child: nameLabel),
+                            const SizedBox(width: AppSpacing.s8),
+                            WatchlistTrend(item: item),
+                            const SizedBox(width: AppSpacing.s8),
+                            SizedBox(
+                              width: MediaQuery.textScalerOf(context).scale(96),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: changeLabel,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      if (stale != null)
+                        AppBadge(
+                          key: ValueKey('watchlist-row-stale-${item.id}'),
+                          label: stale,
+                          tone: AppBadgeTone.warning,
+                          size: AppBadgeSize.compact,
                         ),
                     ],
                   ),
-                  Text(
-                    itemName == null
-                        ? watchlistMarketLabel(l10n, item.market)
-                        : '${item.displaySymbol} · '
-                              '${watchlistMarketLabel(l10n, item.market)}',
-                    style: context.captionStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (watchlistStaleFreshnessLabel(
-                        l10n,
-                        snapshot?.response?.freshness,
-                      )
-                      case final stale?)
-                    AppBadge(
-                      key: ValueKey<String>('watchlist-row-stale-${item.id}'),
-                      label: stale,
-                      tone: AppBadgeTone.warning,
-                      size: AppBadgeSize.compact,
-                    ),
-                ],
-              ),
-            ),
-            WatchlistTrend(item: item, snapshot: snapshot),
-            const SizedBox(width: AppSpacing.s12),
-            if (loadingQuote)
-              const SizedBox(
-                width: AppIconSizes.h18,
-                height: AppIconSizes.h18,
-                child: FCircularProgress(),
-              )
-            else if (quote == null)
-              Text(
-                l10n.watchlistPriceUnavailable,
-                style: context.theme.typography.body.sm,
-              )
-            else
-              _PriceCell(item: item, quote: quote),
-            const SizedBox(width: AppSpacing.s4),
-            AppAdaptiveActionMenu(
-              title: actionsTitle,
-              actions: <AppAdaptiveAction>[
-                AppAdaptiveAction(
-                  icon: FLucideIcons.layers,
-                  title: l10n.watchlistManageCollectionsAction,
-                  onPress: onManageCollections,
                 ),
-                AppAdaptiveAction(
-                  icon: FLucideIcons.bell,
-                  title: l10n.watchlistEditAlertsAction,
-                  onPress: onEdit,
-                ),
-                if (onRemoveFromCollection != null)
-                  AppAdaptiveAction(
-                    icon: FLucideIcons.folderMinus,
-                    title: l10n.watchlistRemoveFromCollectionAction,
-                    onPress: onRemoveFromCollection!,
-                  ),
-                AppAdaptiveAction(
-                  icon: FLucideIcons.trash2,
-                  title: l10n.watchlistRemoveAction,
-                  destructive: true,
-                  onPress: onRemove,
+                WatchlistRowActions(
+                  item: item,
+                  onEdit: onEdit,
+                  onManageCollections: onManageCollections,
+                  onRemoveFromCollection: onRemoveFromCollection,
+                  onRemove: onRemove,
                 ),
               ],
-              triggerBuilder: (context, openMenu, focusNode) => Focus(
-                focusNode: focusNode,
-                child: AppIconButton(
-                  icon: FLucideIcons.ellipsisVertical,
-                  tooltip: actionsTitle,
-                  onPress: openMenu,
-                  size: appActionTargetSize(context),
-                  iconSize: AppIconSizes.sm,
-                  surface: AppIconButtonSurface.softMuted,
-                ),
-              ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-class WatchlistTrend extends ConsumerWidget {
-  const WatchlistTrend({super.key, required this.item, required this.snapshot});
-
+class WatchlistRowActions extends StatelessWidget {
+  const WatchlistRowActions({
+    super.key,
+    required this.item,
+    required this.onEdit,
+    required this.onManageCollections,
+    required this.onRemoveFromCollection,
+    required this.onRemove,
+  });
   final WatchlistItem item;
-  final WatchlistQuoteSnapshot? snapshot;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final values = snapshot?.hasSparkline == true
-        ? snapshot!.sparkline
-        : ref
-                  .watch(
-                    watchlistSparklineProvider((
-                      market: item.market,
-                      symbol: item.symbol,
-                    )),
-                  )
-                  .value ??
-              const <double>[];
-    if (values.length < 2) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.s8),
-      child: NwSparkline(values: values),
-    );
-  }
-}
-
-class _PriceCell extends StatelessWidget {
-  const _PriceCell({required this.item, required this.quote});
-
-  final WatchlistItem item;
-  final Quote quote;
+  final VoidCallback onEdit;
+  final VoidCallback onManageCollections;
+  final VoidCallback? onRemoveFromCollection;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
-    final changePercent = quote.changePercent;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        MoneyText(
-          amount: quote.price.toDouble(),
-          currencyCode: quote.currency,
-          style: context.theme.typography.body.md,
+    final l10n = AppLocalizations.of(context);
+    final title = l10n.watchlistRowActionsTitle(item.displaySymbol);
+    return AppAdaptiveActionMenu(
+      title: title,
+      actions: [
+        AppAdaptiveAction(
+          icon: FLucideIcons.bell,
+          title: l10n.watchlistEditAlertsAction,
+          subtitle: l10n.watchlistReminderForeground,
+          onPress: onEdit,
         ),
-        if (changePercent != null) ...[
-          const SizedBox(height: AppSpacing.s2),
-          DeltaText.percentFromRatio(
-            key: ValueKey<String>('watchlist-row-change-${item.id}'),
-            ratio: changePercent.toDouble(),
-            style: TypographyTokens.numericCaptionStrong,
+        AppAdaptiveAction(
+          icon: FLucideIcons.layers,
+          title: l10n.watchlistManageCollectionsAction,
+          onPress: onManageCollections,
+        ),
+        if (onRemoveFromCollection != null)
+          AppAdaptiveAction(
+            icon: FLucideIcons.folderMinus,
+            title: l10n.watchlistRemoveFromCollectionAction,
+            onPress: onRemoveFromCollection!,
           ),
-        ],
+        AppAdaptiveAction(
+          icon: FLucideIcons.trash2,
+          title: l10n.watchlistRemoveAction,
+          destructive: true,
+          onPress: onRemove,
+        ),
       ],
+      triggerBuilder: (context, openMenu, focusNode) => Focus(
+        focusNode: focusNode,
+        child: AppIconButton(
+          icon: FLucideIcons.ellipsisVertical,
+          tooltip: title,
+          onPress: openMenu,
+          size: appActionTargetSize(context),
+          iconSize: AppIconSizes.sm,
+        ),
+      ),
     );
   }
 }
 
-/// Everything known about one watched symbol.
-///
-/// Shared by the mobile sheet and the desktop detail pane so the two can never
-/// disagree, and so the phone finally has somewhere to go: tapping a row used
-/// to be a dead end below the master/detail breakpoint.
+/// Reserved even without history, so asynchronous data never shifts columns.
+class WatchlistTrend extends ConsumerWidget {
+  const WatchlistTrend({super.key, required this.item});
+  final WatchlistItem item;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final values =
+        ref.watch(watchlistSparklineProvider(watchlistSymbolKey(item))).value ??
+        const <double>[];
+    final l10n = AppLocalizations.of(context);
+    return Tooltip(
+      message: values.length < 2
+          ? l10n.watchlistHistoryUnavailable
+          : l10n.watchlistDetailTrendTitle,
+      child: SizedBox(
+        key: ValueKey('watchlist-trend-${item.id}'),
+        width: 52,
+        height: 26,
+        child: values.length < 2 ? null : NwSparkline(values: values),
+      ),
+    );
+  }
+}
+
 class WatchlistSymbolView extends StatelessWidget {
   const WatchlistSymbolView({
     super.key,
@@ -246,7 +284,6 @@ class WatchlistSymbolView extends StatelessWidget {
     required this.onRemove,
     this.showActions = true,
   });
-
   final WatchlistItem item;
   final WatchlistQuoteSnapshot? snapshot;
   final bool loadingQuote;
@@ -261,147 +298,150 @@ class WatchlistSymbolView extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final quote = snapshot?.quote;
-    final itemName = item.localizedName(
+    final name = item.localizedName(
       Localizations.localeOf(context).languageCode,
     );
+    final metrics = <AppMetricItem>[
+      if (quote?.open case final open?)
+        AppMetricItem(
+          label: l10n.watchlistDetailOpen,
+          value: formatters.currency(open, code: quote!.currency),
+        ),
+      if (quote?.dayHigh case final high?)
+        AppMetricItem(
+          label: l10n.watchlistDetailHigh,
+          value: formatters.currency(high, code: quote!.currency),
+        ),
+      if (quote?.dayLow case final low?)
+        AppMetricItem(
+          label: l10n.watchlistDetailLow,
+          value: formatters.currency(low, code: quote!.currency),
+        ),
+      if (quote?.previousClose case final close?)
+        AppMetricItem(
+          label: l10n.watchlistDetailPreviousClose,
+          value: formatters.currency(close, code: quote!.currency),
+        ),
+      if (quote?.volume case final volume?)
+        AppMetricItem(
+          label: l10n.watchlistDetailVolume,
+          value: formatters.compact(volume),
+        ),
+      if (quote?.exchange case final exchange?)
+        AppMetricItem(label: l10n.watchlistDetailExchange, value: exchange),
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          itemName ?? item.displaySymbol,
-          style: context.theme.typography.body.xl,
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name ?? item.displaySymbol,
+                    style: context.titleLabelStyle,
+                  ),
+                  Text(
+                    '${item.displaySymbol} · ${watchlistMarketLabel(l10n, item.market)}',
+                    style: context.captionStyle,
+                  ),
+                ],
+              ),
+            ),
+            if (showActions)
+              WatchlistRowActions(
+                item: item,
+                onEdit: onEdit,
+                onManageCollections: onManageCollections,
+                onRemoveFromCollection: onRemoveFromCollection,
+                onRemove: onRemove,
+              ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          itemName == null
-              ? watchlistMarketLabel(l10n, item.market)
-              : '${item.displaySymbol} · '
-                    '${watchlistMarketLabel(l10n, item.market)}',
-          style: context.captionStyle,
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        if (loadingQuote)
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: FCircularProgress(),
-          )
-        else if (quote == null)
-          Text(
-            l10n.watchlistPriceUnavailable,
-            style: context.theme.typography.body.md,
-          )
-        else ...[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        const SizedBox(height: AppSpacing.s20),
+        if (quote != null) ...[
+          Wrap(
+            spacing: AppSpacing.s12,
+            runSpacing: AppSpacing.s4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               MoneyText(
                 amount: quote.price.toDouble(),
                 currencyCode: quote.currency,
                 style: context.theme.typography.body.xl,
               ),
-              if (quote.changePercent case final changePercent?) ...[
-                const SizedBox(width: AppSpacing.s12),
+              if (quote.changePercent case final change?)
                 DeltaChip(
-                  key: ValueKey<String>('watchlist-detail-change-${item.id}'),
-                  value: changePercent.toDouble() * 100,
+                  key: ValueKey('watchlist-detail-change-${item.id}'),
+                  value: change.toDouble() * 100,
                   fractionDigits: 2,
                 ),
-              ],
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: WatchlistTrend(item: item, snapshot: snapshot),
-          ),
-          Text(l10n.watchlistDetailTrendTitle, style: context.captionStyle),
-          const SizedBox(height: AppSpacing.s16),
-          AppMetricCluster(
-            axis: Axis.vertical,
-            dense: true,
-            items: [
-              if (quote.open case final open?)
-                AppMetricItem(
-                  label: l10n.watchlistDetailOpen,
-                  value: formatters.currency(open, code: quote.currency),
-                ),
-              if (quote.dayHigh case final high?)
-                AppMetricItem(
-                  label: l10n.watchlistDetailHigh,
-                  value: formatters.currency(high, code: quote.currency),
-                ),
-              if (quote.dayLow case final low?)
-                AppMetricItem(
-                  label: l10n.watchlistDetailLow,
-                  value: formatters.currency(low, code: quote.currency),
-                ),
-              if (quote.previousClose case final previousClose?)
-                AppMetricItem(
-                  label: l10n.watchlistDetailPreviousClose,
-                  value: formatters.currency(
-                    previousClose,
-                    code: quote.currency,
-                  ),
-                ),
-              if (quote.volume case final volume?)
-                AppMetricItem(
-                  label: l10n.watchlistDetailVolume,
-                  value: formatters.compact(volume),
-                ),
-              if (quote.exchange case final exchange?)
-                AppMetricItem(
-                  label: l10n.watchlistDetailExchange,
-                  value: exchange,
-                ),
-              AppMetricItem(
-                label: l10n.watchlistDetailUpdatedAt,
-                value: formatters.time(quote.asOf.toLocal()),
-              ),
-            ],
+          Text(
+            '${l10n.watchlistDetailUpdatedAt} · ${formatters.dateTime(quote.asOf.toLocal())}',
+            style: context.captionStyle,
           ),
           if (watchlistStaleFreshnessLabel(l10n, snapshot?.response?.freshness)
-              case final freshness?) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Text(freshness, style: context.captionStyle),
-          ],
-        ],
-        const SizedBox(height: AppSpacing.s16),
-        Text(_alertSummary(l10n), style: context.captionStyle),
+              case final stale?)
+            Text(stale, style: context.captionStyle),
+        ] else
+          Text(
+            loadingQuote
+                ? l10n.watchlistOverviewFreshnessNone
+                : l10n.watchlistPriceUnavailable,
+            style: context.captionStyle,
+          ),
+        const SizedBox(height: AppSpacing.s20),
+        _WatchlistPriceChart(item: item),
+        const SizedBox(height: AppSpacing.s20),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns =
+                constraints.maxWidth >= 420 &&
+                    MediaQuery.textScalerOf(context).scale(1) <= 1.3
+                ? 3
+                : 2;
+            return Column(
+              children: [
+                for (var i = 0; i < metrics.length; i += columns)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+                    child: AppMetricCluster(
+                      dense: true,
+                      items: metrics.skip(i).take(columns).toList(),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         if (showActions) ...[
-          const SizedBox(height: AppSpacing.s16),
-          FButton(
-            variant: FButtonVariant.outline,
-            onPress: onManageCollections,
-            prefix: const Icon(FLucideIcons.layers),
-            child: Text(l10n.watchlistManageCollectionsAction),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            onPress: onEdit,
-            prefix: const Icon(FLucideIcons.bell),
-            child: Flexible(
-              child: Text(
-                l10n.watchlistEditAlertsAction,
-                textAlign: TextAlign.center,
+          const AppDivider(horizontalPadding: 0),
+          const SizedBox(height: AppSpacing.s12),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(_alertSummary(l10n), style: context.captionLabelStyle),
+                    Text(
+                      l10n.watchlistReminderForeground,
+                      style: context.captionStyle,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-          if (onRemoveFromCollection != null) ...[
-            const SizedBox(height: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.outline,
-              onPress: onRemoveFromCollection,
-              prefix: const Icon(FLucideIcons.folderMinus),
-              child: Text(l10n.watchlistRemoveFromCollectionAction),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: onRemove,
-            prefix: const Icon(FLucideIcons.trash2),
-            child: Text(l10n.watchlistRemoveAction),
+              FButton(
+                variant: FButtonVariant.outline,
+                onPress: onEdit,
+                child: Text(l10n.watchlistEditAlertsAction),
+              ),
+            ],
           ),
         ],
       ],
@@ -411,10 +451,89 @@ class WatchlistSymbolView extends StatelessWidget {
   String _alertSummary(AppLocalizations l10n) {
     final rules = item.alertRules;
     if (!rules.enabled || !rules.hasRule) return l10n.watchlistAlertNotSet;
-    final parts = <String>[
+    return [
       if (rules.above case final above?) l10n.watchlistAlertAboveChip('$above'),
       if (rules.below case final below?) l10n.watchlistAlertBelowChip('$below'),
-    ];
-    return parts.join(' · ');
+    ].join(' · ');
+  }
+}
+
+class _WatchlistPriceChart extends ConsumerWidget {
+  const _WatchlistPriceChart({required this.item});
+  final WatchlistItem item;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final history = ref.watch(
+      watchlistHistoryProvider(watchlistSymbolKey(item)),
+    );
+    final bars = history.value ?? const [];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.watchlistDetailTrendTitle, style: context.captionLabelStyle),
+        const SizedBox(height: AppSpacing.s12),
+        SizedBox(
+          height: 180,
+          child: history.isLoading && bars.isEmpty
+              ? const Center(child: FCircularProgress())
+              : bars.length < 2
+              ? Center(
+                  child: Text(
+                    l10n.watchlistHistoryUnavailable,
+                    style: context.captionStyle,
+                  ),
+                )
+              : NwLineChart(
+                  key: const ValueKey('watchlist-detail-chart'),
+                  semanticLabel: l10n.watchlistDetailTrendTitle,
+                  interpolation: ChartInterpolation.linear,
+                  showDots: false,
+                  showXAxis: false,
+                  showYAxis: false,
+                  showTouchXAxisLabel: true,
+                  xAxis: TimeAxis(
+                    format: AxisDateFormat.dayMonth,
+                    locale: Localizations.localeOf(context).toLanguageTag(),
+                    maxLabels: 3,
+                  ),
+                  series: [
+                    ChartSeries(
+                      name: item.displaySymbol,
+                      points: [
+                        for (final bar in bars)
+                          ChartPoint(
+                            x: bar.asOf.millisecondsSinceEpoch.toDouble(),
+                            y: bar.close.toDouble(),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+        if (bars.length >= 2) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  AppFormatters(locale: Localizations.localeOf(context))
+                      .date(bars.first.asOf.toLocal()),
+                  style: context.captionStyle,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  AppFormatters(locale: Localizations.localeOf(context))
+                      .date(bars.last.asOf.toLocal()),
+                  style: context.captionStyle,
+                  textAlign: TextAlign.end,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
   }
 }

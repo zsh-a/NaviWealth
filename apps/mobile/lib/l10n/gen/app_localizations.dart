@@ -18446,41 +18446,17 @@ abstract class AppLocalizations {
   /// **'Select a symbol to inspect its quote and reminders'**
   String get watchlistSelectItem;
 
-  /// Watchlist overview card title
-  ///
-  /// In en, this message translates to:
-  /// **'Overview'**
-  String get watchlistOverviewTitle;
-
   /// No description provided for @watchlistOverviewByMarket.
   ///
   /// In en, this message translates to:
   /// **'By market'**
   String get watchlistOverviewByMarket;
 
-  /// Watchlist metric: advancing / declining counts
-  ///
-  /// In en, this message translates to:
-  /// **'Up / down'**
-  String get watchlistSummaryAdvancingDeclining;
-
   /// Watchlist metric: median change
   ///
   /// In en, this message translates to:
   /// **'Median'**
   String get watchlistOverviewTypicalMove;
-
-  /// Watchlist overview: live quote count
-  ///
-  /// In en, this message translates to:
-  /// **'{count} live'**
-  String watchlistOverviewFreshnessLive(int count);
-
-  /// Watchlist overview: cached quote count
-  ///
-  /// In en, this message translates to:
-  /// **'{count} cached'**
-  String watchlistOverviewFreshnessCached(int count);
 
   /// Watchlist overview: stale quote count
   ///
@@ -18545,8 +18521,50 @@ abstract class AppLocalizations {
   /// Watchlist detail: trend line caption
   ///
   /// In en, this message translates to:
-  /// **'Last 30 days'**
+  /// **'Daily closes · last 30 days'**
   String get watchlistDetailTrendTitle;
+
+  /// No description provided for @watchlistHistoryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough price history'**
+  String get watchlistHistoryUnavailable;
+
+  /// No description provided for @watchlistToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get watchlistToday;
+
+  /// No description provided for @watchlistReminderForeground.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked only while the app is open'**
+  String get watchlistReminderForeground;
+
+  /// No description provided for @watchlistReminderSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery: system notifications'**
+  String get watchlistReminderSystem;
+
+  /// No description provided for @watchlistReminderInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery: on the Watchlist page (system notifications unavailable or off)'**
+  String get watchlistReminderInApp;
+
+  /// No description provided for @watchlistAlertCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Price in {currency}'**
+  String watchlistAlertCurrency(String currency);
+
+  /// No description provided for @watchlistAlertCurrencyUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Prices use the symbol’s quote currency'**
+  String get watchlistAlertCurrencyUnknown;
 
   /// Watchlist detail: opening price
   ///
@@ -18605,7 +18623,7 @@ abstract class AppLocalizations {
   /// Watchlist form: how alerts are delivered
   ///
   /// In en, this message translates to:
-  /// **'Prices are checked every 15 minutes while the app is open, and when you refresh. System notifications require permission; otherwise reminders appear on the Watchlist page. No checks run when the app is closed or in the background.'**
+  /// **'Checks run on refresh and every 15 minutes while the app is open. No background checks.'**
   String get watchlistAlertNotificationNote;
 
   /// Add a symbol to the watchlist
@@ -19387,7 +19405,7 @@ abstract class AppLocalizations {
   /// Edit watchlist alert rules action
   ///
   /// In en, this message translates to:
-  /// **'Reminders (while app is open)'**
+  /// **'Price reminder'**
   String get watchlistEditAlertsAction;
 
   /// Remove watchlist item action
@@ -19401,18 +19419,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No price'**
   String get watchlistPriceUnavailable;
-
-  /// Watchlist collection summary symbol count label
-  ///
-  /// In en, this message translates to:
-  /// **'Symbols'**
-  String get watchlistSummarySymbols;
-
-  /// Watchlist collection summary available quote count label
-  ///
-  /// In en, this message translates to:
-  /// **'Quotes'**
-  String get watchlistSummaryQuotes;
 
   /// Market data freshness live label
   ///

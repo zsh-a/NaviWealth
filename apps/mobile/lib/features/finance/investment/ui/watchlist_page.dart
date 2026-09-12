@@ -50,9 +50,7 @@ class WatchlistPage extends ConsumerWidget {
     final items = scope.isAll
         ? allItemsAsync
         : ref.watch(watchlistItemsForScopeProvider(scope));
-    final quotes = scope.isAll
-        ? ref.watch(watchlistQuoteSnapshotsProvider)
-        : ref.watch(watchlistQuoteSnapshotsForScopeProvider(scope));
+    final quotes = ref.watch(watchlistQuoteUpdatesProvider(scope));
     final collectionCounts = WatchlistCollectionCounts.from(
       items: allItemsAsync.value ?? const <WatchlistItem>[],
       members: membersAsync.value ?? const <WatchlistCollectionMember>[],
@@ -75,9 +73,7 @@ class WatchlistPage extends ConsumerWidget {
           icon: const Icon(FLucideIcons.refreshCw),
           semanticsLabel: l10n.commonRefresh,
           onPress: () {
-            ref.invalidate(watchlistQuoteSnapshotsProvider);
-            ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
-            ref.invalidate(watchlistSparklineProvider);
+            _invalidateQuotes(ref);
           },
         ),
         if (selectedCollection != null)
@@ -106,7 +102,9 @@ class WatchlistPage extends ConsumerWidget {
           scope: scope,
           viewState: viewState,
           snapshots: quotes.value ?? const [],
-          loadingQuotes: quotes.isLoading,
+          loadingQuotes:
+              quotes.isLoading ||
+              (quotes.value?.any((snapshot) => snapshot.isLoading) ?? false),
           onScopeSelected: (next) =>
               ref.read(watchlistViewStateProvider.notifier).selectScope(next),
           onSortSelected: (next) => ref
@@ -240,51 +238,15 @@ class _WatchlistBody extends StatelessWidget {
       order: viewState.sortOrder,
     );
 
-    Widget rows({required ValueChanged<WatchlistItem> onOpen}) =>
-        AppGroupedSurface(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (var i = 0; i < sortedItems.length; i++) ...[
-                WatchlistRow(
-                  item: sortedItems[i],
-                  snapshot: byId[sortedItems[i].id],
-                  loadingQuote:
-                      loadingQuotes && byId[sortedItems[i].id] == null,
-                  onOpen: () => onOpen(sortedItems[i]),
-                  onEdit: () => onEdit(sortedItems[i]),
-                  onManageCollections: () =>
-                      onManageCollections(sortedItems[i]),
-                  onRemoveFromCollection: onRemoveFromCollection == null
-                      ? null
-                      : () => onRemoveFromCollection!(sortedItems[i]),
-                  onRemove: () => onRemove(sortedItems[i]),
-                ),
-                if (i != sortedItems.length - 1)
-                  const AppGroupedDivider(
-                    indent: AppSpacing.s12,
-                    endIndent: AppSpacing.s12,
-                  ),
-              ],
-            ],
-          ),
-        );
-
     Widget list({
       required ValueChanged<WatchlistItem> onOpen,
+      String? selectedId,
     }) => AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.narrow,
       expandSinglePrimary: true,
-      primary: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: shellTabContentPadding(
-          context,
-          left: AppSpacing.s0,
-          top: AppSpacing.s0,
-          right: AppSpacing.s0,
-          bottom: AppSpacing.s16,
-        ),
+      primary: Column(
         children: [
+          // Scope and active filters stay reachable even in a long list.
           WatchlistToolbar(
             collections: collections,
             counts: collectionCounts,
@@ -298,42 +260,92 @@ class _WatchlistBody extends StatelessWidget {
             onReorderCollections: onReorderCollections,
             onReorderItems: onReorderItems,
           ),
-          const SizedBox(height: AppSpacing.s8),
-          if (items.isEmpty)
-            WatchlistEmptyState(onAdd: onAdd)
-          else ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-              child: WatchlistOverviewCard(
-                analysis: analysis,
-                loadingQuotes: loadingQuotes,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            if (filteredItems.isEmpty)
-              WatchlistFilteredEmptyState(onClear: onClearFilter)
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-                child: rows(onOpen: onOpen),
-              ),
-            // The paper scenario belongs to the collection, so it renders
-            // for every selected collection — including one whose symbols
-            // are all filtered out, which is when it used to vanish. It
-            // stays below the symbols: the watchlist itself is the primary
-            // content and keeps the first screen.
-            if (selectedCollection != null) ...[
-              const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-                child: WatchlistSimulationSection(
-                  collection: selectedCollection!,
-                  items: items,
-                  snapshots: snapshots,
+          Expanded(
+            child: CustomScrollView(
+              key: const ValueKey('watchlist-scroll'),
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(AppSpacing.s12),
+                  sliver: SliverToBoxAdapter(
+                    child: items.isEmpty
+                        ? WatchlistEmptyState(onAdd: onAdd)
+                        : WatchlistOverviewCard(
+                            analysis: analysis,
+                            loadingQuotes: loadingQuotes,
+                          ),
+                  ),
                 ),
-              ),
-            ],
-          ],
+                if (items.isNotEmpty && filteredItems.isEmpty)
+                  SliverToBoxAdapter(
+                    child: WatchlistFilteredEmptyState(onClear: onClearFilter),
+                  ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s12,
+                  ),
+                  sliver: SliverList.builder(
+                    itemCount: sortedItems.length,
+                    findChildIndexCallback: (key) {
+                      final index = sortedItems.indexWhere(
+                        (item) => ValueKey(item.id) == key,
+                      );
+                      return index < 0 ? null : index;
+                    },
+                    itemBuilder: (context, index) {
+                      final item = sortedItems[index];
+                      return Column(
+                        key: ValueKey(item.id),
+                        children: [
+                          WatchlistRow(
+                            item: item,
+                            snapshot: byId[item.id],
+                            selected: item.id == selectedId,
+                            loadingQuote:
+                                (byId[item.id]?.isLoading ?? loadingQuotes) &&
+                                byId[item.id]?.quote == null,
+                            onOpen: () => onOpen(item),
+                            onEdit: () => onEdit(item),
+                            onManageCollections: () =>
+                                onManageCollections(item),
+                            onRemoveFromCollection:
+                                onRemoveFromCollection == null
+                                ? null
+                                : () => onRemoveFromCollection!(item),
+                            onRemove: () => onRemove(item),
+                          ),
+                          if (index < sortedItems.length - 1)
+                            const AppGroupedDivider(
+                              indent: AppSpacing.s12,
+                              endIndent: AppSpacing.s12,
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                if (items.isNotEmpty && selectedCollection != null)
+                  SliverPadding(
+                    padding: const EdgeInsets.all(AppSpacing.s12),
+                    sliver: SliverToBoxAdapter(
+                      child: _WatchlistSimulationBatch(
+                        collection: selectedCollection!,
+                        items: items,
+                      ),
+                    ),
+                  ),
+                SliverPadding(
+                  padding: shellTabContentPadding(
+                    context,
+                    left: 0,
+                    top: 0,
+                    right: 0,
+                    bottom: AppSpacing.s16,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -355,6 +367,7 @@ class _WatchlistBody extends StatelessWidget {
             .firstOrNull;
         return MasterDetailLayout(
           master: list(
+            selectedId: selectedId,
             onOpen: (item) => replaceSelectedQuery(
               context,
               path: FinanceRoutes.wealthWatchlist,
@@ -369,7 +382,9 @@ class _WatchlistBody extends StatelessWidget {
               : _WatchlistDetailPane(
                   item: selectedItem,
                   snapshot: byId[selectedItem.id],
-                  loadingQuote: loadingQuotes && byId[selectedItem.id] == null,
+                  loadingQuote:
+                      (byId[selectedItem.id]?.isLoading ?? loadingQuotes) &&
+                      byId[selectedItem.id]?.quote == null,
                   onEdit: () => onEdit(selectedItem),
                   onManageCollections: () => onManageCollections(selectedItem),
                   onRemoveFromCollection: onRemoveFromCollection == null
@@ -404,6 +419,40 @@ class _WatchlistBody extends StatelessWidget {
             ? null
             : () => onRemoveFromCollection!(item),
         onRemove: () => onRemove(item),
+      ),
+    );
+  }
+}
+
+/// Simulations must not materialize observations from intermediate UI batches.
+class _WatchlistSimulationBatch extends ConsumerWidget {
+  const _WatchlistSimulationBatch({
+    required this.collection,
+    required this.items,
+  });
+  final WatchlistCollection collection;
+  final List<WatchlistItem> items;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scope = WatchlistScope.collection(collection.id);
+    final quotes = ref.watch(watchlistQuoteSnapshotsForScopeProvider(scope));
+    return quotes.when(
+      error: (error, _) => AppEmptyState.error(
+        title: AppLocalizations.of(context).commonLoadFailed,
+        message: userSafeErrorMessage(context, error),
+        retryLabel: AppLocalizations.of(context).commonRetry,
+        onRetry: () =>
+            ref.invalidate(watchlistQuoteSnapshotsForScopeProvider(scope)),
+      ),
+      loading: () => Text(
+        AppLocalizations.of(context).watchlistOverviewFreshnessNone,
+        style: context.captionStyle,
+      ),
+      data: (snapshots) => WatchlistSimulationSection(
+        collection: collection,
+        items: items,
+        snapshots: snapshots,
       ),
     );
   }
@@ -446,24 +495,37 @@ class WatchlistAssetDetailPage extends ConsumerWidget {
             ),
           );
         }
-        final quotes = ref.watch(watchlistQuoteSnapshotsProvider);
-        final snapshot = quotes.value
-            ?.where((entry) => entry.item.id == item.id)
-            .firstOrNull;
+        final quotes = ref.watch(
+          watchlistSymbolQuoteProvider(watchlistSymbolKey(item)),
+        );
+        final snapshot = WatchlistQuoteSnapshot(
+          item: item,
+          response: quotes.value,
+          error: quotes.error,
+          isLoading: quotes.isLoading,
+        );
         return ObjectDetailScaffold(
           title: l10n.watchlistSymbolDetailTitle(item.displaySymbol),
           actions: [
             AppHeaderAction(
               icon: const Icon(FLucideIcons.refreshCw),
               semanticsLabel: l10n.commonRefresh,
-              onPress: () => _invalidateQuotes(ref),
+              onPress: () {
+                ref.invalidate(
+                  watchlistSymbolQuoteProvider(watchlistSymbolKey(item)),
+                );
+                ref.invalidate(
+                  watchlistHistoryProvider(watchlistSymbolKey(item)),
+                );
+              },
             ),
           ],
           child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.s16),
             child: WatchlistSymbolView(
               item: item,
               snapshot: snapshot,
-              loadingQuote: quotes.isLoading && snapshot == null,
+              loadingQuote: quotes.isLoading && snapshot.quote == null,
               onEdit: () =>
                   showWatchlistItemSheet(context: context, item: item),
               onManageCollections: () =>
@@ -652,6 +714,9 @@ Future<void> _removeFromCollection(
 }
 
 void _invalidateQuotes(WidgetRef ref) {
+  ref.invalidate(watchlistSymbolQuoteProvider);
+  ref.invalidate(watchlistQuoteUpdatesProvider);
+  ref.invalidate(watchlistHistoryProvider);
   ref.invalidate(watchlistQuoteSnapshotsProvider);
   ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
   ref.invalidate(watchlistSparklineProvider);

@@ -10359,26 +10359,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSelectItem => '选择标的，查看行情与提醒规则';
 
   @override
-  String get watchlistOverviewTitle => '概览';
-
-  @override
   String get watchlistOverviewByMarket => '按市场';
 
   @override
-  String get watchlistSummaryAdvancingDeclining => '涨 / 跌';
-
-  @override
   String get watchlistOverviewTypicalMove => '中位涨跌';
-
-  @override
-  String watchlistOverviewFreshnessLive(int count) {
-    return '$count 项实时';
-  }
-
-  @override
-  String watchlistOverviewFreshnessCached(int count) {
-    return '$count 项缓存价';
-  }
 
   @override
   String watchlistOverviewFreshnessStale(int count) {
@@ -10426,7 +10410,30 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get watchlistDetailTrendTitle => '近 30 天';
+  String get watchlistDetailTrendTitle => '近 30 天 · 每日收盘价';
+
+  @override
+  String get watchlistHistoryUnavailable => '暂无足够历史行情';
+
+  @override
+  String get watchlistToday => '今日';
+
+  @override
+  String get watchlistReminderForeground => '仅打开 App 时检查';
+
+  @override
+  String get watchlistReminderSystem => '提示方式：系统通知';
+
+  @override
+  String get watchlistReminderInApp => '提示方式：自选页内提示（系统通知不可用或未开启）';
+
+  @override
+  String watchlistAlertCurrency(String currency) {
+    return '价格币种：$currency';
+  }
+
+  @override
+  String get watchlistAlertCurrencyUnknown => '价格以标的报价币种计价';
 
   @override
   String get watchlistDetailOpen => '开盘';
@@ -10456,8 +10463,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistAlertOptionalHint => '提醒仅在打开 App 时生效';
 
   @override
-  String get watchlistAlertNotificationNote =>
-      '打开 App 时每 15 分钟及手动刷新时检查价格。已授权时发送系统通知，否则在自选页内提示。关闭 App 或进入后台后不检查价格。';
+  String get watchlistAlertNotificationNote => '打开 App 时每 15 分钟及刷新时检查，后台不检查。';
 
   @override
   String get watchlistAddAction => '添加标的';
@@ -10907,19 +10913,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSaveAlertsAction => '保存提醒';
 
   @override
-  String get watchlistEditAlertsAction => '提醒（仅打开 App 时）';
+  String get watchlistEditAlertsAction => '价格提醒';
 
   @override
   String get watchlistRemoveAction => '移除';
 
   @override
   String get watchlistPriceUnavailable => '暂无价格';
-
-  @override
-  String get watchlistSummarySymbols => '标的';
-
-  @override
-  String get watchlistSummaryQuotes => '行情';
 
   @override
   String get watchlistFreshnessLive => '实时';

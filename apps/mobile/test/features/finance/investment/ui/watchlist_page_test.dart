@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,9 +19,12 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_providers.
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_view_state.dart';
+import 'package:naviwealth/features/finance/investment/notifications/watchlist_alerts.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_rows.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_sections.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -104,7 +109,6 @@ final _advancingSnapshot = WatchlistQuoteSnapshot(
     source: 'test-cache',
     fetchedAt: DateTime.utc(2026, 7, 19, 2),
   ),
-  sparkline: const <double>[198, 199.5, 200, 201.25],
 );
 
 final _decliningSnapshot = WatchlistQuoteSnapshot(
@@ -129,6 +133,7 @@ late SharedPreferences _preferences;
 /// surface, so the overrides are applied here instead of being handed around.
 Widget _scope(
   Widget child, {
+  Future<List<HistoricalBar>>? history,
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistQuoteSnapshot>? scopedSnapshots,
@@ -139,7 +144,35 @@ Widget _scope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(_preferences),
       manualAssetRepositoryProvider.overrideWith((_) async => _EmptyAssets()),
-      watchlistSparklineProvider.overrideWith((_, _) async => const []),
+      watchlistHistoryProvider.overrideWith(
+        (_, key) async => history != null
+            ? await history
+            : [
+                for (var i = 0; i < 4; i++)
+                  HistoricalBar(
+                    symbol: key.symbol,
+                    asOf: DateTime.utc(2026, 7, 16 + i),
+                    open: Decimal.fromInt(198 + i),
+                    high: Decimal.fromInt(198 + i),
+                    low: Decimal.fromInt(198 + i),
+                    close: Decimal.fromInt(198 + i),
+                  ),
+              ],
+      ),
+      watchlistSystemRemindersProvider.overrideWith((_) async => false),
+      watchlistSymbolQuoteProvider.overrideWith(
+        (_, key) async =>
+            snapshots
+                .where((entry) => entry.item.displaySymbol == key.symbol)
+                .firstOrNull
+                ?.response ??
+            _advancingSnapshot.response!,
+      ),
+      watchlistQuoteUpdatesProvider.overrideWith(
+        (_, scope) => Stream.value(
+          scope.isAll ? snapshots : scopedSnapshots ?? snapshots,
+        ),
+      ),
       watchlistItemsProvider.overrideWith(
         (_) => Stream.value(items ?? [_item]),
       ),
@@ -163,6 +196,7 @@ Widget _scope(
 /// to go, which is exactly the mobile dead end this page used to have.
 Widget _wrap(
   TargetPlatform platform, {
+  Future<List<HistoricalBar>>? history,
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistCollection> collections = const [],
@@ -180,6 +214,7 @@ Widget _wrap(
         child: const WatchlistPage(),
       ),
     ),
+    history: history,
     items: items,
     snapshots: snapshots,
     collections: collections,
@@ -255,6 +290,83 @@ void main() {
     _preferences = await SharedPreferences.getInstance();
   });
 
+  testWidgets(
+    'does not duplicate an ungrouped list and disables incomplete submission',
+    (tester) async {
+      await tester.pumpWidget(_wrap(TargetPlatform.android));
+      await tester.pumpAndSettle();
+      expect(find.text('All (1)'), findsOneWidget);
+      expect(find.text('Ungrouped (1)'), findsNothing);
+      await tester.tap(find.byIcon(FLucideIcons.plus));
+      await _pumpSheet(tester);
+      expect(find.textContaining('Add to collections'), findsNothing);
+      final sheet = tester.widget<AppSheet>(find.byType(AppSheet));
+      expect((sheet.footer! as AppSheetFooter).enabled, isFalse);
+      await tester.tap(find.text('Price reminder (optional)'));
+      await _pumpSheet(tester);
+      expect(find.textContaining('No background checks.'), findsOneWidget);
+      expect(
+        find.textContaining('Delivery: on the Watchlist page'),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets('builds long lists lazily and keeps the toolbar reachable', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final items = [
+      for (var i = 0; i < 120; i++)
+        WatchlistItem(
+          id: 'us_stock:S$i',
+          symbol: 'S$i',
+          market: AssetMarket.usStock,
+          addedAt: _item.addedAt,
+          alertRules: const PriceAlertRules(),
+          sync: _item.sync,
+        ),
+    ];
+    await tester.pumpWidget(_wrap(TargetPlatform.android, items: items));
+    await tester.pumpAndSettle();
+    expect(find.byType(WatchlistRow).evaluate().length, lessThan(30));
+    final toolbarY = tester.getTopLeft(find.byType(WatchlistToolbar)).dy;
+    await tester.drag(
+      find.byKey(const ValueKey('watchlist-scroll')),
+      const Offset(0, -1500),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byType(WatchlistToolbar)).dy, toolbarY);
+    expect(find.byType(WatchlistRow).evaluate().length, lessThan(30));
+    await _openToolbarMenu(tester);
+    expect(find.text('Sort symbols'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('keeps quote rows readable on a small phone with large text', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 740));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        items: [_namedItem],
+        snapshots: [_advancingSnapshot],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('AAPL'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('watchlist-row-change-us_stock:AAPL')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('selects multiple collections while adding a symbol', (
     tester,
   ) async {
@@ -268,7 +380,15 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Add to watchlist'), findsOneWidget);
-    expect(find.text('Add to collections'), findsOneWidget);
+    expect(find.textContaining('Add to collections'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('watchlist-add-collection-collection-growth')),
+      findsNothing,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('watchlist-collections-expand')),
+    );
+    await _pumpSheet(tester);
     final collectionRow = find.byKey(
       const ValueKey<String>('watchlist-add-collection-collection-growth'),
     );
@@ -332,8 +452,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Apple Inc.'), findsOneWidget);
-    expect(find.textContaining('AAPL ·'), findsOneWidget);
+    expect(find.text('AAPL'), findsOneWidget);
   });
+
+  testWidgets(
+    'history arriving does not shift identity, price or change columns',
+    (tester) async {
+      final history = Completer<List<HistoricalBar>>();
+      await tester.pumpWidget(
+        _wrap(
+          TargetPlatform.android,
+          history: history.future,
+          items: [_namedItem],
+          snapshots: [_advancingSnapshot],
+        ),
+      );
+      await tester.pumpAndSettle();
+      final symbol = find.byKey(
+        const ValueKey('watchlist-symbol-us_stock:AAPL'),
+      );
+      final trend = find.byKey(const ValueKey('watchlist-trend-us_stock:AAPL'));
+      final change = find.byKey(
+        const ValueKey('watchlist-row-change-us_stock:AAPL'),
+      );
+      final before = [
+        tester.getRect(symbol),
+        tester.getRect(trend),
+        tester.getRect(change),
+        tester.getRect(find.byType(MoneyText)),
+      ];
+      expect(find.byType(NwSparkline), findsNothing);
+      history.complete([
+        for (var i = 0; i < 3; i++)
+          HistoricalBar(
+            symbol: 'AAPL',
+            asOf: DateTime.utc(2026, 7, 17 + i),
+            open: Decimal.fromInt(200),
+            high: Decimal.fromInt(202),
+            low: Decimal.fromInt(199),
+            close: Decimal.fromInt(200 + i),
+          ),
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.byType(NwSparkline), findsOneWidget);
+      expect([
+        tester.getRect(symbol),
+        tester.getRect(trend),
+        tester.getRect(change),
+        tester.getRect(find.byType(MoneyText)),
+      ], before);
+    },
+  );
 
   testWidgets('opens bulk add and collection target selection', (tester) async {
     await tester.pumpWidget(
@@ -372,15 +541,12 @@ void main() {
 
     final overview = find.byKey(WatchlistOverviewCard.cardKey);
     expect(overview, findsOneWidget);
-    final metrics = tester.widget<AppMetricCluster>(
-      find.descendant(of: overview, matching: find.byType(AppMetricCluster)),
-    );
-    expect(metrics.items.map((item) => '${item.label}:${item.value}'), [
-      'Symbols:1',
-      'Quotes:1 / 1',
-      'Up / down:1 / 0',
-      'Median:+0.63%',
-    ]);
+    expect(find.text('Today · 1 up · 0 down · 0 flat'), findsOneWidget);
+    expect(find.byType(AppMetricCluster), findsNothing);
+    expect(find.textContaining('Median'), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('watchlist-overview-expand')));
+    await tester.pumpAndSettle();
+    expect(find.text('Median · +0.63%'), findsOneWidget);
     final rowChange = tester.widget<DeltaText>(
       find.byKey(const ValueKey<String>('watchlist-row-change-us_stock:AAPL')),
     );
@@ -391,7 +557,7 @@ void main() {
     expect(find.textContaining('Up ·'), findsNothing);
   });
 
-  testWidgets('presents quote recency in compact statistic pills', (
+  testWidgets('keeps healthy quote telemetry out of the summary', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -406,11 +572,11 @@ void main() {
     final overview = find.byKey(WatchlistOverviewCard.cardKey);
     expect(
       find.descendant(of: overview, matching: find.text('2 cached')),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.descendant(of: overview, matching: find.byType(AppBadge)),
-      findsOneWidget,
+      findsNothing,
     );
     // The raw pipeline counters are gone.
     expect(find.textContaining('No price 0'), findsNothing);
@@ -451,16 +617,16 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('By market'), findsOneWidget);
+    expect(find.text('By market'), findsNothing);
     expect(find.textContaining('Hong Kong ·'), findsNothing);
     expect(
       tester.getSize(find.byKey(WatchlistOverviewCard.cardKey)).height,
       lessThanOrEqualTo(844 * .25),
     );
-    await tester.tap(find.text('By market'));
+    await tester.tap(find.byKey(const ValueKey('watchlist-overview-expand')));
     await tester.pumpAndSettle();
     expect(find.textContaining('Hong Kong ·'), findsOneWidget);
-    await tester.tap(find.text('By market'));
+    await tester.tap(find.byKey(const ValueKey('watchlist-overview-expand')));
     await tester.pumpAndSettle();
     expect(find.textContaining('Hong Kong ·'), findsNothing);
     expect(tester.takeException(), isNull);
@@ -493,7 +659,7 @@ void main() {
     await tester.pumpWidget(_wrap(TargetPlatform.android));
     await tester.pumpAndSettle();
 
-    expect(find.text('Reminders (while app is open)'), findsNothing);
+    expect(find.text('Price reminder'), findsNothing);
     expect(find.text('Remove'), findsNothing);
     expect(find.semantics.byLabel('Actions for AAPL'), findsOneWidget);
     final action = find.widgetWithIcon(
@@ -507,10 +673,10 @@ void main() {
 
     expect(find.byType(AppSheet), findsOneWidget);
     expect(find.byType(AppActionSheetList), findsOneWidget);
-    expect(find.text('Reminders (while app is open)'), findsOneWidget);
+    expect(find.text('Price reminder'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);
 
-    await tester.tap(find.text('Reminders (while app is open)'));
+    await tester.tap(find.text('Price reminder'));
     await tester.pumpAndSettle();
     expect(find.text('Reminders for AAPL'), findsOneWidget);
     semantics.dispose();
@@ -537,7 +703,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byType(AppSheet), findsNothing);
-    expect(find.text('Reminders (while app is open)'), findsOneWidget);
+    expect(find.text('Price reminder'), findsOneWidget);
     expect(find.text('Remove'), findsOneWidget);
     semantics.dispose();
   });
@@ -598,7 +764,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('AAPL'), findsNWidgets(2));
-    expect(find.text('Reminders (while app is open)'), findsOneWidget);
+    expect(find.text('Price reminder'), findsOneWidget);
     expect(
       find.byKey(
         const ValueKey<String>('watchlist-detail-change-us_stock:AAPL'),
@@ -608,6 +774,17 @@ void main() {
     expect(router.routeInformationProvider.value.uri.queryParameters, {
       'selected': 'us_stock:AAPL',
     });
+    expect(
+      tester.widget<WatchlistRow>(find.byType(WatchlistRow)).selected,
+      isTrue,
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('watchlist-detail-chart')))
+          .width,
+      greaterThan(200),
+    );
+    expect(find.textContaining('2026'), findsWidgets);
   });
 
   testWidgets('sorts through the view state without rewriting the URL', (
@@ -635,7 +812,7 @@ void main() {
 
     await _openToolbarMenu(tester);
     // The menu carries the current order as the action's subtitle.
-    expect(find.text('Decliners first'), findsOneWidget);
+    expect(find.text('Decliners first'), findsNWidgets(2));
     await tester.tap(find.text('Sort symbols'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Gainers first'));
@@ -794,37 +971,21 @@ void main() {
     expect(find.text('MSFT'), findsOneWidget);
     expect(find.text('AAPL'), findsNothing);
     // A narrowing is visible in the toolbar without opening the menu.
-    final activeChip = find.byKey(
-      const ValueKey<String>('watchlist-active-filter-chip'),
+    final activeChip = find.descendant(
+      of: find.byKey(const ValueKey('watchlist-view-state')),
+      matching: find.text('No price'),
     );
     expect(activeChip, findsOneWidget);
     expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
 
-    // The chip is itself the shortcut back into the filter sheet. It sits at
-    // the end of the chip scroller, so it has to be scrolled in first.
-    await tester.ensureVisible(activeChip);
-    await tester.pumpAndSettle();
-    await tester.tap(activeChip);
-    await tester.pumpAndSettle();
-    sheet = find.byType(AppSheet);
-    final clearFilters = find.descendant(
-      of: sheet,
-      matching: find.text('Clear filters'),
-    );
-    applyFilters = find.descendant(
-      of: sheet,
-      matching: find.text('Apply filters'),
-    );
-    await tester.ensureVisible(clearFilters);
-    await tester.tap(clearFilters);
-    await tester.ensureVisible(applyFilters);
-    await tester.tap(applyFilters);
+    // Clear is reachable directly, without another sheet or horizontal scroll.
+    await tester.tap(find.byKey(const ValueKey('watchlist-clear-filter')));
     await tester.pumpAndSettle();
 
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.text('MSFT'), findsOneWidget);
     expect(
-      find.byKey(const ValueKey<String>('watchlist-active-filter-chip')),
+      find.byKey(const ValueKey<String>('watchlist-view-state')),
       findsNothing,
     );
   });

@@ -55,128 +55,160 @@ class WatchlistToolbar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final filter = viewState.filter;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s12,
-              AppSpacing.s8,
-              0,
-              AppSpacing.s4,
-            ),
-            child: Row(
-              children: [
-                AppFilterChip(
-                  label: l10n.watchlistCollectionCountLabel(
-                    l10n.watchlistAllCollection,
-                    counts.all,
-                  ),
-                  active: scope.isAll,
-                  onPress: () => onScopeSelected(const WatchlistScope.all()),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s12,
+                  AppSpacing.s8,
+                  0,
+                  AppSpacing.s4,
                 ),
-                for (final entry
-                    in <({String label, bool active, WatchlistScope scope})>[
-                      (
-                        label: l10n.watchlistCollectionCountLabel(
-                          l10n.watchlistUngroupedCollection,
-                          counts.ungrouped,
-                        ),
-                        active: scope.ungrouped,
-                        scope: const WatchlistScope.ungrouped(),
+                child: Row(
+                  children: [
+                    AppFilterChip(
+                      label: l10n.watchlistCollectionCountLabel(
+                        l10n.watchlistAllCollection,
+                        counts.all,
                       ),
-                      for (final collection in collections)
-                        (
-                          label: l10n.watchlistCollectionCountLabel(
-                            collection.name,
-                            counts.forCollection(collection.id),
-                          ),
-                          active: scope.collectionId == collection.id,
-                          scope: WatchlistScope.collection(collection.id),
-                        ),
-                    ]) ...[
-                  const SizedBox(width: AppSpacing.s8),
-                  AppFilterChip(
-                    label: entry.label,
-                    active: entry.active,
-                    onPress: () => onScopeSelected(entry.scope),
+                      active: scope.isAll,
+                      onPress: () =>
+                          onScopeSelected(const WatchlistScope.all()),
+                    ),
+                    for (final entry
+                        in <
+                          ({String label, bool active, WatchlistScope scope})
+                        >[
+                          if (collections.isNotEmpty || scope.ungrouped)
+                            (
+                              label: l10n.watchlistCollectionCountLabel(
+                                l10n.watchlistUngroupedCollection,
+                                counts.ungrouped,
+                              ),
+                              active: scope.ungrouped,
+                              scope: const WatchlistScope.ungrouped(),
+                            ),
+                          for (final collection in collections)
+                            (
+                              label: l10n.watchlistCollectionCountLabel(
+                                collection.name,
+                                counts.forCollection(collection.id),
+                              ),
+                              active: scope.collectionId == collection.id,
+                              scope: WatchlistScope.collection(collection.id),
+                            ),
+                        ]) ...[
+                      const SizedBox(width: AppSpacing.s8),
+                      AppFilterChip(
+                        label: entry.label,
+                        active: entry.active,
+                        onPress: () => onScopeSelected(entry.scope),
+                      ),
+                    ],
+                    const SizedBox(width: AppSpacing.s12),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: AppSpacing.s12),
+              child: AppAdaptiveActionMenu(
+                title: l10n.watchlistMoreActions,
+                actions: <AppAdaptiveAction>[
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.arrowUpDown,
+                    title: l10n.watchlistSortAction,
+                    subtitle: _sortLabel(l10n, viewState.sortOrder),
+                    onPress: () => _openSort(context),
                   ),
+                  AppAdaptiveAction(
+                    icon: filter.isDefault
+                        ? FLucideIcons.listFilter
+                        : FLucideIcons.listFilterPlus,
+                    title: l10n.watchlistFilterAction,
+                    subtitle: filter.isDefault
+                        ? null
+                        : l10n.watchlistFilterActiveChip,
+                    onPress: () => _openFilter(context),
+                  ),
+                  AppAdaptiveAction(
+                    icon: FLucideIcons.folderPlus,
+                    title: l10n.watchlistCreateCollectionAction,
+                    onPress: onCreateCollection,
+                  ),
+                  if (onBulkManage != null)
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.listChecks,
+                      title: l10n.watchlistBulkManageAction,
+                      onPress: onBulkManage!,
+                    ),
+                  if (onReorderCollections != null)
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.listRestart,
+                      title: l10n.watchlistReorderCollectionsAction,
+                      onPress: onReorderCollections!,
+                    ),
+                  if (onReorderItems != null)
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.gripVertical,
+                      title: l10n.watchlistReorderSymbolsAction,
+                      onPress: onReorderItems!,
+                    ),
                 ],
-                if (!filter.isDefault) ...[
-                  const SizedBox(width: AppSpacing.s8),
+                triggerBuilder: (context, openMenu, focusNode) => Focus(
+                  focusNode: focusNode,
+                  child: AppIconButton(
+                    key: menuTriggerKey,
+                    icon: FLucideIcons.ellipsis,
+                    tooltip: l10n.watchlistMoreActions,
+                    onPress: openMenu,
+                    size: appActionTargetSize(context),
+                    iconSize: AppIconSizes.sm,
+                    surface: AppIconButtonSurface.softMuted,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (viewState.sortOrder != WatchlistSortOrder.defaultOrder ||
+            !filter.isDefault)
+          Padding(
+            key: const ValueKey('watchlist-view-state'),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+            child: Wrap(
+              spacing: AppSpacing.s6,
+              runSpacing: AppSpacing.s4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (viewState.sortOrder != WatchlistSortOrder.defaultOrder)
                   AppFilterChip(
-                    key: const ValueKey<String>('watchlist-active-filter-chip'),
-                    label: l10n.watchlistFilterActiveChip,
+                    label: _sortLabel(l10n, viewState.sortOrder),
+                    active: true,
+                    onPress: () => _openSort(context),
+                  ),
+                for (final label in _filterLabels(l10n, filter))
+                  AppFilterChip(
+                    label: label,
                     active: true,
                     onPress: () => _openFilter(context),
                   ),
-                ],
-                const SizedBox(width: AppSpacing.s12),
+                if (!filter.isDefault)
+                  AppIconButton(
+                    key: const ValueKey('watchlist-clear-filter'),
+                    icon: FLucideIcons.x,
+                    tooltip: l10n.watchlistFilterClearAction,
+                    onPress: () => onFilterChanged(const WatchlistFilter()),
+                  ),
               ],
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsetsDirectional.only(end: AppSpacing.s12),
-          child: AppAdaptiveActionMenu(
-            title: l10n.watchlistMoreActions,
-            actions: <AppAdaptiveAction>[
-              AppAdaptiveAction(
-                icon: FLucideIcons.arrowUpDown,
-                title: l10n.watchlistSortAction,
-                subtitle: _sortLabel(l10n, viewState.sortOrder),
-                onPress: () => _openSort(context),
-              ),
-              AppAdaptiveAction(
-                icon: filter.isDefault
-                    ? FLucideIcons.listFilter
-                    : FLucideIcons.listFilterPlus,
-                title: l10n.watchlistFilterAction,
-                subtitle: filter.isDefault
-                    ? null
-                    : l10n.watchlistFilterActiveChip,
-                onPress: () => _openFilter(context),
-              ),
-              AppAdaptiveAction(
-                icon: FLucideIcons.folderPlus,
-                title: l10n.watchlistCreateCollectionAction,
-                onPress: onCreateCollection,
-              ),
-              if (onBulkManage != null)
-                AppAdaptiveAction(
-                  icon: FLucideIcons.listChecks,
-                  title: l10n.watchlistBulkManageAction,
-                  onPress: onBulkManage!,
-                ),
-              if (onReorderCollections != null)
-                AppAdaptiveAction(
-                  icon: FLucideIcons.listRestart,
-                  title: l10n.watchlistReorderCollectionsAction,
-                  onPress: onReorderCollections!,
-                ),
-              if (onReorderItems != null)
-                AppAdaptiveAction(
-                  icon: FLucideIcons.gripVertical,
-                  title: l10n.watchlistReorderSymbolsAction,
-                  onPress: onReorderItems!,
-                ),
-            ],
-            triggerBuilder: (context, openMenu, focusNode) => Focus(
-              focusNode: focusNode,
-              child: AppIconButton(
-                key: menuTriggerKey,
-                icon: FLucideIcons.ellipsis,
-                tooltip: l10n.watchlistMoreActions,
-                onPress: openMenu,
-                size: appActionTargetSize(context),
-                iconSize: AppIconSizes.sm,
-                surface: AppIconButtonSurface.softMuted,
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -206,14 +238,8 @@ String _sortLabel(AppLocalizations l10n, WatchlistSortOrder order) =>
       WatchlistSortOrder.symbol => l10n.watchlistSortSymbol,
     };
 
-/// One card for everything that describes the collection as a whole.
-///
-/// The page used to render two stacked cards — a four-metric summary and a
-/// four-metric analysis — that between them said `Quotes 2/2` and
-/// `Quote coverage 100%`, `Advancing 1 / Declining 1` and `1 up · 1 down`, on
-/// top of a paragraph of pipeline telemetry ("Live 0 · Cached 1 · Stale 1").
-/// They now answer four distinct questions once, and the per-market breakdown
-/// folds away until asked for.
+/// Daily breadth and exceptional quote states. Secondary statistics unfold
+/// on demand, without imposing a full card on a small watchlist.
 class WatchlistOverviewCard extends StatefulWidget {
   const WatchlistOverviewCard({
     super.key,
@@ -242,148 +268,133 @@ class _WatchlistOverviewCardState extends State<WatchlistOverviewCard> {
     final overall = widget.analysis.overall;
     final pending = widget.loadingQuotes && overall.availableQuoteCount == 0;
     final median = overall.medianChangePercent;
-    return AppGroupedSurface(
+    return Column(
       key: WatchlistOverviewCard.cardKey,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s12,
-        vertical: AppSpacing.s8,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(l10n.watchlistOverviewTitle, style: context.labelStyle),
-          const SizedBox(height: AppSpacing.s8),
-          AppMetricCluster(
-            dense: true,
-            items: [
-              AppMetricItem(
-                label: l10n.watchlistSummarySymbols,
-                value: '${overall.symbolCount}',
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          button: true,
+          expanded: _marketsExpanded,
+          child: AppTappable(
+            key: const ValueKey('watchlist-overview-expand'),
+            onPress: () => setState(() => _marketsExpanded = !_marketsExpanded),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: appActionTargetSize(context),
               ),
-              AppMetricItem(
-                label: l10n.watchlistSummaryQuotes,
-                value: pending
-                    ? '…'
-                    : '${overall.availableQuoteCount} / ${overall.symbolCount}',
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      pending
+                          ? l10n.watchlistOverviewFreshnessNone
+                          : l10n.watchlistOverviewMarketLine(
+                              l10n.watchlistToday,
+                              overall.advancingCount,
+                              overall.decliningCount,
+                              overall.unchangedCount,
+                            ),
+                      style: context.captionLabelStyle,
+                    ),
+                  ),
+                  Icon(
+                    _marketsExpanded
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.chevronDown,
+                    size: AppIconSizes.sm,
+                  ),
+                ],
               ),
-              AppMetricItem(
-                label: l10n.watchlistSummaryAdvancingDeclining,
-                value: pending
-                    ? '…'
-                    : '${overall.advancingCount} / ${overall.decliningCount}',
-              ),
-              AppMetricItem(
-                label: l10n.watchlistOverviewTypicalMove,
-                value: pending
-                    ? '…'
-                    : median == null
-                    ? '—'
-                    : formatters.signedPercent(
-                        median.toDouble(),
-                        decimalDigits: 2,
-                      ),
-              ),
+            ),
+          ),
+        ),
+        if (overall.staleQuoteCount > 0 ||
+            (!widget.loadingQuotes && overall.unavailableQuoteCount > 0))
+          Wrap(
+            spacing: AppSpacing.s6,
+            runSpacing: AppSpacing.s4,
+            children: [
+              if (overall.staleQuoteCount > 0)
+                AppBadge(
+                  label: l10n.watchlistOverviewFreshnessStale(
+                    overall.staleQuoteCount,
+                  ),
+                  tone: AppBadgeTone.warning,
+                  size: AppBadgeSize.compact,
+                ),
+              if (!widget.loadingQuotes && overall.unavailableQuoteCount > 0)
+                AppBadge(
+                  label: l10n.watchlistOverviewFreshnessUnavailable(
+                    overall.unavailableQuoteCount,
+                  ),
+                  size: AppBadgeSize.compact,
+                ),
             ],
           ),
-          if (!pending) ...[
-            const SizedBox(height: AppSpacing.s12),
-            Wrap(
-              spacing: AppSpacing.s6,
-              runSpacing: AppSpacing.s6,
+        AnimatedSizeFade(
+          visible: _marketsExpanded,
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.s8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (final label in _freshnessLabels(l10n, overall))
-                  AppBadge(label: label, size: AppBadgeSize.compact),
-                if (_alertSummary(l10n, overall) case final label?)
-                  AppBadge(
-                    label: label,
-                    icon: FLucideIcons.bellRing,
-                    size: AppBadgeSize.compact,
+                Text(
+                  '${l10n.watchlistOverviewTypicalMove} · ${median == null ? '—' : formatters.signedPercent(median.toDouble(), decimalDigits: 2)}',
+                  style: context.captionStyle,
+                ),
+                if (overall.alertConfiguredCount > 0)
+                  Text(
+                    l10n.watchlistOverviewAlertsSummary(
+                      overall.alertConfiguredCount,
+                      overall.triggeredAlertCount,
+                    ),
+                    style: context.captionStyle,
                   ),
+                if (widget.analysis.byMarket.length > 1) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    l10n.watchlistOverviewByMarket,
+                    style: context.captionLabelStyle,
+                  ),
+                  for (final market in widget.analysis.byMarket)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.s4),
+                      child: Text(
+                        l10n.watchlistOverviewMarketLine(
+                          watchlistMarketLabel(
+                            l10n,
+                            market.market ?? AssetMarket.unknown,
+                          ),
+                          market.advancingCount,
+                          market.decliningCount,
+                          market.unchangedCount,
+                        ),
+                        style: context.captionStyle,
+                      ),
+                    ),
+                ],
               ],
             ),
-            if (widget.analysis.byMarket.length > 1) ...[
-              const SizedBox(height: AppSpacing.s4),
-              Semantics(
-                button: true,
-                expanded: _marketsExpanded,
-                child: AppTappable(
-                  onPress: () =>
-                      setState(() => _marketsExpanded = !_marketsExpanded),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: appActionTargetSize(context),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.watchlistOverviewByMarket,
-                            style: context.captionLabelStyle,
-                          ),
-                        ),
-                        Icon(
-                          _marketsExpanded
-                              ? FLucideIcons.chevronUp
-                              : FLucideIcons.chevronDown,
-                          size: AppIconSizes.sm,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              if (_marketsExpanded)
-                Wrap(
-                  spacing: AppSpacing.s6,
-                  runSpacing: AppSpacing.s6,
-                  children: [
-                    for (final market in widget.analysis.byMarket)
-                      AppBadge(
-                        label: _marketLine(l10n, market),
-                        size: AppBadgeSize.compact,
-                      ),
-                  ],
-                ),
-            ],
-          ],
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 }
 
-List<String> _freshnessLabels(
-  AppLocalizations l10n,
-  WatchlistAnalysisSlice overall,
-) {
-  final parts = <String>[
-    if (overall.liveQuoteCount > 0)
-      l10n.watchlistOverviewFreshnessLive(overall.liveQuoteCount),
-    if (overall.cachedQuoteCount > 0)
-      l10n.watchlistOverviewFreshnessCached(overall.cachedQuoteCount),
-    if (overall.staleQuoteCount > 0)
-      l10n.watchlistOverviewFreshnessStale(overall.staleQuoteCount),
-    if (overall.unavailableQuoteCount > 0)
-      l10n.watchlistOverviewFreshnessUnavailable(overall.unavailableQuoteCount),
-  ];
-  return parts.isEmpty ? [l10n.watchlistOverviewFreshnessNone] : parts;
-}
-
-String? _alertSummary(AppLocalizations l10n, WatchlistAnalysisSlice overall) {
-  if (overall.alertConfiguredCount == 0) return null;
-  return l10n.watchlistOverviewAlertsSummary(
-    overall.alertConfiguredCount,
-    overall.triggeredAlertCount,
-  );
-}
-
-String _marketLine(AppLocalizations l10n, WatchlistAnalysisSlice market) =>
-    l10n.watchlistOverviewMarketLine(
-      watchlistMarketLabel(l10n, market.market ?? AssetMarket.unknown),
-      market.advancingCount,
-      market.decliningCount,
-      market.unchangedCount,
-    );
+List<String> _filterLabels(AppLocalizations l10n, WatchlistFilter filter) => [
+  if (filter.market case final market?) watchlistMarketLabel(l10n, market),
+  if (filter.alerts != WatchlistAlertFilter.all)
+    '${l10n.watchlistFilterAlertsSection}: ${filter.alerts == WatchlistAlertFilter.configured ? l10n.watchlistFilterAlertsConfigured : l10n.watchlistFilterAlertsNone}',
+  if (filter.freshness != WatchlistFreshnessFilter.all)
+    switch (filter.freshness) {
+      WatchlistFreshnessFilter.live => l10n.watchlistFreshnessLive,
+      WatchlistFreshnessFilter.cached => l10n.watchlistFreshnessCache,
+      WatchlistFreshnessFilter.stale => l10n.watchlistFreshnessStale,
+      WatchlistFreshnessFilter.unavailable => l10n.watchlistPriceUnavailable,
+      WatchlistFreshnessFilter.all => '',
+    },
+];
 
 class WatchlistEmptyState extends StatelessWidget {
   const WatchlistEmptyState({super.key, required this.onAdd});

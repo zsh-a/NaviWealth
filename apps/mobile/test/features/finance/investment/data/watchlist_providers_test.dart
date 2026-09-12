@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +15,106 @@ import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 void main() {
+  test('publishes partial quotes, shares requests and lets detail bypass the batch', () async {
+    final first = _item('us_stock:AAPL', 'AAPL');
+    final slow = _item('us_stock:MSFT', 'MSFT');
+    final last = _item('us_stock:NVDA', 'NVDA');
+    final service = _FakeMarketDataService();
+    final gate = Completer<MarketResponse<Quote>>();
+    service.pending['MSFT'] = gate;
+    final container = ProviderContainer(
+      overrides: [
+        watchlistItemsProvider.overrideWith(
+          (_) => Stream.value([first, slow, last]),
+        ),
+        marketDataServiceProvider.overrideWith((_) async => service),
+      ],
+    );
+    addTearDown(container.dispose);
+    final events = <List<WatchlistQuoteSnapshot>>[];
+    final sub = container.listen(
+      watchlistQuoteUpdatesProvider(const WatchlistScope.all()),
+      (_, next) {
+        if (next.value case final values?) events.add(values);
+      },
+    );
+    addTearDown(sub.close);
+    var completed = false;
+    final batch = container.read(watchlistQuoteSnapshotsProvider.future).then((
+      values,
+    ) {
+      completed = true;
+      return values;
+    });
+    await pumpEventQueue();
+    expect(events.last.first.quote, isNotNull);
+    expect(events.last[1].isLoading, isTrue);
+    expect(events.last[2].isLoading, isTrue);
+    expect(completed, isFalse);
+    expect(service.quoteRequests, ['AAPL', 'MSFT']);
+
+    final detail = await container.read(
+      watchlistSymbolQuoteProvider(watchlistSymbolKey(last)).future,
+    );
+    expect(detail.data.symbol, 'NVDA');
+    expect(completed, isFalse);
+    gate.complete(
+      _snapshot(slow, price: '200', previousClose: '199').response!,
+    );
+    expect(await batch, hasLength(3));
+    await pumpEventQueue();
+    expect(events.last.every((entry) => !entry.isLoading), isTrue);
+    expect(service.quoteRequests, ['AAPL', 'MSFT', 'NVDA']);
+  });
+
+  test('keeps a previous quote visible during refresh', () async {
+    final item = _item('us_stock:AAPL', 'AAPL');
+    final service = _FakeMarketDataService();
+    final container = ProviderContainer(
+      overrides: [
+        watchlistItemsProvider.overrideWith((_) => Stream.value([item])),
+        marketDataServiceProvider.overrideWith((_) async => service),
+      ],
+    );
+    addTearDown(container.dispose);
+    final provider = watchlistQuoteUpdatesProvider(const WatchlistScope.all());
+    final sub = container.listen(provider, (_, _) {});
+    addTearDown(sub.close);
+    await pumpEventQueue();
+    expect(container.read(provider).value!.single.quote, isNotNull);
+    final gate = Completer<MarketResponse<Quote>>();
+    service.pending['AAPL'] = gate;
+    container.invalidate(
+      watchlistSymbolQuoteProvider(watchlistSymbolKey(item)),
+    );
+    container.invalidate(provider);
+    await pumpEventQueue();
+    expect(container.read(provider).value!.single.quote, isNotNull);
+    expect(container.read(provider).value!.single.isLoading, isTrue);
+    gate.complete(
+      _snapshot(item, price: '202', previousClose: '200').response!,
+    );
+    await pumpEventQueue();
+    expect(
+      container.read(provider).value!.single.quote!.price,
+      Decimal.fromInt(202),
+    );
+  });
+
+  test('pending quotes are not reported as unavailable', () {
+    final item = _item('us_stock:AAPL', 'AAPL');
+    expect(
+      filterWatchlistItems(
+        items: [item],
+        snapshots: [WatchlistQuoteSnapshot(item: item, isLoading: true)],
+        filter: const WatchlistFilter(
+          freshness: WatchlistFreshnessFilter.unavailable,
+        ),
+      ),
+      isEmpty,
+    );
+  });
+
   test('resolves watchlist identity by market and symbol, not the row id', () {
     expect(_item('legacy-row', 'aapl').assetId, 'us_stock:AAPL');
     expect(
@@ -425,12 +527,16 @@ WatchlistQuoteSnapshot _snapshot(
 
 class _FakeMarketDataService implements MarketDataService {
   int historyRequests = 0;
+  final quoteRequests = <String>[];
+  final pending = <String, Completer<MarketResponse<Quote>>>{};
   List<HistoricalBar> history = const [];
   @override
   Future<MarketResponse<Quote>> getQuote(
     String symbol, {
     AssetMarket? market,
   }) async {
+    quoteRequests.add(symbol);
+    if (pending[symbol] case final gate?) return gate.future;
     return MarketResponse(
       data: Quote(
         symbol: symbol,

@@ -10945,26 +10945,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Select a symbol to inspect its quote and reminders';
 
   @override
-  String get watchlistOverviewTitle => 'Overview';
-
-  @override
   String get watchlistOverviewByMarket => 'By market';
 
   @override
-  String get watchlistSummaryAdvancingDeclining => 'Up / down';
-
-  @override
   String get watchlistOverviewTypicalMove => 'Median';
-
-  @override
-  String watchlistOverviewFreshnessLive(int count) {
-    return '$count live';
-  }
-
-  @override
-  String watchlistOverviewFreshnessCached(int count) {
-    return '$count cached';
-  }
 
   @override
   String watchlistOverviewFreshnessStale(int count) {
@@ -11012,7 +10996,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get watchlistDetailTrendTitle => 'Last 30 days';
+  String get watchlistDetailTrendTitle => 'Daily closes · last 30 days';
+
+  @override
+  String get watchlistHistoryUnavailable => 'Not enough price history';
+
+  @override
+  String get watchlistToday => 'Today';
+
+  @override
+  String get watchlistReminderForeground =>
+      'Checked only while the app is open';
+
+  @override
+  String get watchlistReminderSystem => 'Delivery: system notifications';
+
+  @override
+  String get watchlistReminderInApp =>
+      'Delivery: on the Watchlist page (system notifications unavailable or off)';
+
+  @override
+  String watchlistAlertCurrency(String currency) {
+    return 'Price in $currency';
+  }
+
+  @override
+  String get watchlistAlertCurrencyUnknown =>
+      'Prices use the symbol’s quote currency';
 
   @override
   String get watchlistDetailOpen => 'Open';
@@ -11044,7 +11054,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistAlertNotificationNote =>
-      'Prices are checked every 15 minutes while the app is open, and when you refresh. System notifications require permission; otherwise reminders appear on the Watchlist page. No checks run when the app is closed or in the background.';
+      'Checks run on refresh and every 15 minutes while the app is open. No background checks.';
 
   @override
   String get watchlistAddAction => 'Add symbol';
@@ -11514,19 +11524,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSaveAlertsAction => 'Save reminders';
 
   @override
-  String get watchlistEditAlertsAction => 'Reminders (while app is open)';
+  String get watchlistEditAlertsAction => 'Price reminder';
 
   @override
   String get watchlistRemoveAction => 'Remove';
 
   @override
   String get watchlistPriceUnavailable => 'No price';
-
-  @override
-  String get watchlistSummarySymbols => 'Symbols';
-
-  @override
-  String get watchlistSummaryQuotes => 'Quotes';
 
   @override
   String get watchlistFreshnessLive => 'Live';
