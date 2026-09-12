@@ -382,6 +382,136 @@ void main() {
   );
 
   test(
+    'preserves pre-lineage observations when a legacy allocation is headed',
+    () async {
+      final db = makeTestDatabase();
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      addTearDown(db.close);
+      final simulation = await repository.create(
+        collectionId: 'collection-growth',
+        name: 'Legacy observed mix',
+        baseCurrency: 'USD',
+        startingCapital: Decimal.parse('1000'),
+        targetWeights: {'us_stock:AAPL': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+
+      // Recreate a pre-v91 simulation: it has compatibility positions but no
+      // allocation head/version and its observations have no basis key.
+      await (db.delete(
+        db.watchlistSimulationAllocationHeads,
+      )..where((t) => t.simulationId.equals(simulation.id))).go();
+      await (db.delete(
+        db.watchlistSimulationHoldingVersions,
+      )..where((t) => t.simulationId.equals(simulation.id))).go();
+      await (db.delete(
+        db.watchlistSimulationAllocationVersions,
+      )..where((t) => t.simulationId.equals(simulation.id))).go();
+      await (db.update(
+        db.watchlistSimulations,
+      )..where((t) => t.id.equals(simulation.id))).write(
+        const WatchlistSimulationsCompanion(
+          allocationProtocolVersion: Value(0),
+        ),
+      );
+      await (db.update(
+        db.watchlistSimulationPositions,
+      )..where((t) => t.simulationId.equals(simulation.id))).write(
+        const WatchlistSimulationPositionsCompanion(
+          requiresExplicitHead: Value(false),
+        ),
+      );
+
+      final historicalAt = simulation.baselineAt.add(const Duration(days: 1));
+      await db
+          .into(db.watchlistSimulationObservations)
+          .insert(
+            WatchlistSimulationObservationsCompanion.insert(
+              id: 'legacy-observation',
+              ownerUserId: 'u-test',
+              simulationId: simulation.id,
+              observationDay: historicalAt
+                  .toUtc()
+                  .toIso8601String()
+                  .substring(0, 10),
+              observedAt: historicalAt,
+              projectedValue: Decimal.parse('1100'),
+              weightedDailyChange: Decimal.parse('0.1'),
+              pricedWeight: Decimal.one,
+              missingQuoteWeight: Decimal.zero,
+              createdAt: historicalAt,
+              updatedAt: historicalAt,
+            ),
+          );
+
+      final legacy = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      expect(
+        legacy.status,
+        WatchlistSimulationAllocationStatus.legacyFallback,
+      );
+      expect(legacy.allocationVersionId, isNull);
+
+      await repository.replaceAllocation(
+        simulation: simulation,
+        targetWeights: {'us_stock:AAPL': Decimal.parse('0.5')},
+        cashWeight: Decimal.parse('0.5'),
+      );
+
+      final versions = await (db.select(
+        db.watchlistSimulationAllocationVersions,
+      )..where((t) => t.simulationId.equals(simulation.id))).get();
+      expect(versions, hasLength(2));
+      final headed = versions.singleWhere(
+        (version) => version.requiresExplicitHead,
+      );
+      final predecessor = versions.singleWhere(
+        (version) => !version.requiresExplicitHead,
+      );
+      expect(headed.previousAllocationVersionId, predecessor.id);
+
+      final observations = await repository
+          .watchObservations(
+            ownerUserId: 'u-test',
+            simulationId: simulation.id,
+          )
+          .first;
+      expect(observations, hasLength(2));
+      expect(
+        observations.last.allocationBasisKey,
+        'version:${predecessor.id}',
+      );
+
+      final current = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      await repository.recordObservation(
+        simulation: simulation,
+        observedAt: simulation.baselineAt.add(const Duration(days: 2)),
+        weightedDailyChange: Decimal.parse('0.1'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: current.allocationBasisKey!,
+      );
+      final continued = await repository
+          .watchObservations(
+            ownerUserId: 'u-test',
+            simulationId: simulation.id,
+          )
+          .first;
+      expect(continued, hasLength(3));
+      expect(continued.last.projectedValue, Decimal.parse('1210.0'));
+    },
+  );
+
+  test(
     'materializes implemented dividends idempotently and applies revisions',
     () async {
       final db = makeTestDatabase();

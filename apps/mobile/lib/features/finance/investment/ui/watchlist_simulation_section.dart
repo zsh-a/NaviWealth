@@ -211,7 +211,6 @@ class _WatchlistSimulationCard extends ConsumerWidget {
             positions: allocation.positions,
             resolvedCashWeight: allocation.cashWeight!,
             allocationBasisKey: allocation.allocationBasisKey!,
-            validAllocationBasisKeys: allocation.validAllocationBasisKeys,
             items: items,
             snapshots: snapshots,
           );
@@ -302,7 +301,6 @@ class _WatchlistSimulationBody extends ConsumerWidget {
     required this.positions,
     required this.resolvedCashWeight,
     required this.allocationBasisKey,
-    required this.validAllocationBasisKeys,
     required this.items,
     required this.snapshots,
   });
@@ -311,7 +309,6 @@ class _WatchlistSimulationBody extends ConsumerWidget {
   final List<WatchlistSimulationPosition> positions;
   final Decimal resolvedCashWeight;
   final String allocationBasisKey;
-  final Set<String> validAllocationBasisKeys;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
 
@@ -336,11 +333,9 @@ class _WatchlistSimulationBody extends ConsumerWidget {
     final observationsAsync = ref.watch(
       watchlistSimulationObservationsProvider(simulation.id),
     );
-    final observations = _validObservations(
-      observationsAsync.asData?.value,
-      simulation: simulation,
-      validAllocationBasisKeys: validAllocationBasisKeys,
-    );
+    final observations =
+        observationsAsync.asData?.value ??
+        const <WatchlistSimulationObservation>[];
     final performance = WatchlistSimulationPerformance.fromSeries(
       projectedValues: observations.map(
         (observation) => observation.projectedValue,
@@ -406,13 +401,9 @@ class _WatchlistSimulationBody extends ConsumerWidget {
                 child: Text(l10n.commonRetry),
               ),
             ),
-            data: (raw) => _WatchlistSimulationHistoryChart(
+            data: (observations) => _WatchlistSimulationHistoryChart(
               simulation: simulation,
-              observations: _validObservations(
-                raw,
-                simulation: simulation,
-                validAllocationBasisKeys: validAllocationBasisKeys,
-              ),
+              observations: observations,
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -537,26 +528,6 @@ _WatchlistSimulationQuoteInputs _resolveQuoteInputs(
     changeByItemId: changeByItemId,
     latestQuoteAt: latestQuoteAt,
   );
-}
-
-List<WatchlistSimulationObservation> _validObservations(
-  List<WatchlistSimulationObservation>? observations, {
-  required WatchlistSimulation simulation,
-  required Set<String> validAllocationBasisKeys,
-}) {
-  if (observations == null) return const <WatchlistSimulationObservation>[];
-  final baselineDay = watchlistSimulationUtcDay(simulation.baselineAt)
-      .toIso8601String()
-      .substring(0, 10);
-  return observations
-      .where((observation) {
-        final basisKey = observation.allocationBasisKey;
-        if (basisKey != null) {
-          return validAllocationBasisKeys.contains(basisKey);
-        }
-        return observation.observationDay == baselineDay;
-      })
-      .toList(growable: false);
 }
 
 class _WatchlistSimulationCardHeader extends StatelessWidget {

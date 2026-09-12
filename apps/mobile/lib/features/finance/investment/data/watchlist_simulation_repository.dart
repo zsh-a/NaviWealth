@@ -112,6 +112,10 @@ class ResolvedWatchlistSimulationAllocation {
   bool get isUsable =>
       status == WatchlistSimulationAllocationStatus.selected ||
       status == WatchlistSimulationAllocationStatus.legacyFallback;
+
+  bool get usesLegacyPositions =>
+      status == WatchlistSimulationAllocationStatus.legacyFallback &&
+      allocationVersionId == null;
 }
 
 class WatchlistSimulationPosition {
@@ -250,6 +254,20 @@ class WatchlistSimulationObservation {
   final Decimal missingQuoteWeight;
   final String? allocationBasisKey;
 }
+
+/// Returns whether an observation belongs to the currently selected
+/// allocation lineage.
+///
+/// Observations written before allocation lineage was introduced have a null
+/// basis key. They are the virtual pre-head history of a simulation and must
+/// remain visible when a later allocation version becomes the head. The
+/// creation baseline also has a null basis key.
+bool watchlistSimulationObservationIsInAllocationLineage({
+  required String? allocationBasisKey,
+  required Set<String> validAllocationBasisKeys,
+}) =>
+    allocationBasisKey == null ||
+    validAllocationBasisKeys.contains(allocationBasisKey);
 
 /// Paper-only repository for watchlist allocation scenarios.
 ///
@@ -412,12 +430,13 @@ class WatchlistSimulationRepository {
       );
     }
 
-    final hasExplicitProtocolEvidence =
-        simulation.allocationProtocolVersion > 0 ||
-        heads.values.isNotEmpty ||
-        versions.values.any((version) => version.requiresExplicitHead) ||
-        positionRows.values.any((position) => position.requiresExplicitHead);
-    if (hasExplicitProtocolEvidence) return _pendingAllocation;
+    final hasExplicitEvidence = _hasExplicitAllocationEvidence(
+      simulation: simulation,
+      hasHead: heads.isNotEmpty,
+      versions: versions.values,
+      positions: positionRows.values,
+    );
+    if (hasExplicitEvidence) return _pendingAllocation;
 
     final legacyVersions = activeVersions.values.toList(growable: false)
       ..sort(_compareAllocationVersionsNewestFirst);
@@ -451,19 +470,15 @@ class WatchlistSimulationRepository {
     if (!_validAllocation(positions, simulation.cashWeight)) {
       return _invalidAllocation;
     }
+    final basisKey = _legacyAllocationBasisKey(
+      cashWeight: simulation.cashWeight,
+      positions: positions,
+    );
     return ResolvedWatchlistSimulationAllocation(
       status: WatchlistSimulationAllocationStatus.legacyFallback,
       allocationVersionId: null,
-      allocationBasisKey: _legacyAllocationBasisKey(
-        cashWeight: simulation.cashWeight,
-        positions: positions,
-      ),
-      validAllocationBasisKeys: {
-        _legacyAllocationBasisKey(
-          cashWeight: simulation.cashWeight,
-          positions: positions,
-        ),
-      },
+      allocationBasisKey: basisKey,
+      validAllocationBasisKeys: {basisKey},
       cashWeight: simulation.cashWeight,
       positions: List<WatchlistSimulationPosition>.unmodifiable(positions),
     );
@@ -651,23 +666,14 @@ class WatchlistSimulationRepository {
             .getSingleOrNull();
     final head = headEvidence?.deletedAt == null ? headEvidence : null;
     if (head != null) {
-      final ids = <String>{};
-      final visited = <String>{};
-      var current = activeVersions[head.allocationVersionId];
-      while (current != null && visited.add(current.id)) {
-        ids.add(current.id);
-        final previousId = current.previousAllocationVersionId;
-        if (previousId != null) {
-          current = activeVersions[previousId];
-        } else if (!current.requiresExplicitHead) {
-          current = _legacyAllocationPredecessor(
-            current: current,
-            versions: activeVersions.values,
-          );
-        } else {
-          current = null;
-        }
+      final current = activeVersions[head.allocationVersionId];
+      if (current == null) {
+        return const _SelectedAllocationLineage.pending();
       }
+      final ids = _allocationLineageVersionIds(
+        current: current,
+        versions: activeVersions.values,
+      );
       if (ids.isEmpty) return const _SelectedAllocationLineage.pending();
       return _SelectedAllocationLineage(versionIds: ids);
     }
@@ -678,11 +684,12 @@ class WatchlistSimulationRepository {
                   t.simulationId.equals(simulationId),
             ))
             .get();
-    final hasExplicitEvidence =
-        simulation.allocationProtocolVersion > 0 ||
-        headEvidence != null ||
-        versions.any((version) => version.requiresExplicitHead) ||
-        positions.any((position) => position.requiresExplicitHead);
+    final hasExplicitEvidence = _hasExplicitAllocationEvidence(
+      simulation: simulation,
+      hasHead: headEvidence != null,
+      versions: versions,
+      positions: positions,
+    );
     if (hasExplicitEvidence) {
       return const _SelectedAllocationLineage.pending();
     }
@@ -937,15 +944,12 @@ class WatchlistSimulationRepository {
         ..where((t) => t.simulationId.equals(simulation.id))
         ..orderBy([(t) => OrderingTerm.asc(t.observationDay)]);
       final allRows = await observationQuery.get();
-      final baselineDay = _observationDay(activeSimulation.baselineAt);
       final validRows = <WatchlistSimulationObservationRow>[];
       for (final row in allRows) {
-        final isBaseline =
-            row.allocationBasisKey == null && row.observationDay == baselineDay;
-        final isValidBasis =
-            row.allocationBasisKey != null &&
-            validBasisKeys.contains(row.allocationBasisKey);
-        if (isBaseline || isValidBasis) {
+        if (watchlistSimulationObservationIsInAllocationLineage(
+          allocationBasisKey: row.allocationBasisKey,
+          validAllocationBasisKeys: validBasisKeys,
+        )) {
           validRows.add(row);
         } else {
           await (_db.delete(
@@ -1569,6 +1573,15 @@ class WatchlistSimulationRepository {
           );
       await _outbox.enqueue(table: simulationsTable, rowId: simulation.id);
 
+      final previousAllocationVersionId = resolved.usesLegacyPositions
+          ? await _materializeLegacyPredecessor(
+              simulation: simulation,
+              allocation: resolved,
+              baselineAt: activeSimulation.baselineAt,
+              stamp: stamp,
+            )
+          : resolved.allocationVersionId;
+
       final existingByItemId = <String, WatchlistSimulationPositionRow>{
         for (final row in existingRows) row.watchlistItemId: row,
       };
@@ -1606,7 +1619,7 @@ class WatchlistSimulationRepository {
         holdingInputs: holdingInputs ?? const {},
         reason: WatchlistSimulationAllocationReason.reallocation,
         capitalBase: null,
-        previousAllocationVersionId: resolved.allocationVersionId,
+        previousAllocationVersionId: previousAllocationVersionId,
         stamp: stamp,
       );
       await _writeAllocationHead(
@@ -1963,14 +1976,10 @@ class WatchlistSimulationRepository {
           return _RecordDateAllocationResolution.usable(selected);
         }
         final previousId = selected.previousAllocationVersionId;
-        final previous = previousId == null
-            ? (!selected.requiresExplicitHead
-                  ? _legacyAllocationPredecessor(
-                      current: selected,
-                      versions: activeVersions.values,
-                    )
-                  : null)
-            : activeVersions[previousId];
+        final previous = _previousAllocationVersion(
+          current: selected,
+          versionsById: activeVersions,
+        );
         if (previousId != null && previous == null) {
           return const _RecordDateAllocationResolution.pending();
         }
@@ -1988,11 +1997,12 @@ class WatchlistSimulationRepository {
                   t.simulationId.equals(simulationId),
             ))
             .get();
-    final hasExplicitEvidence =
-        simulation.allocationProtocolVersion > 0 ||
-        headEvidence != null ||
-        versions.any((version) => version.requiresExplicitHead) ||
-        positions.any((position) => position.requiresExplicitHead);
+    final hasExplicitEvidence = _hasExplicitAllocationEvidence(
+      simulation: simulation,
+      hasHead: headEvidence != null,
+      versions: versions,
+      positions: positions,
+    );
     if (hasExplicitEvidence) {
       return const _RecordDateAllocationResolution.pending();
     }
@@ -2073,6 +2083,7 @@ class WatchlistSimulationRepository {
     required WatchlistSimulationAllocationReason reason,
     required Decimal? capitalBase,
     required String? previousAllocationVersionId,
+    bool requiresExplicitHead = true,
     required MutationStamp stamp,
   }) async {
     final versionId = _uuid.v4();
@@ -2163,7 +2174,7 @@ class WatchlistSimulationRepository {
             effectiveAt: effectiveAt,
             reason: reason.name,
             previousAllocationVersionId: Value(previousAllocationVersionId),
-            requiresExplicitHead: const Value(true),
+            requiresExplicitHead: Value(requiresExplicitHead),
             cashWeight: cashWeight,
             isComplete: Value(isComplete),
             createdAt: stamp.now,
@@ -2208,6 +2219,67 @@ class WatchlistSimulationRepository {
       await _outbox.enqueue(table: holdingVersionsTable, rowId: id);
     }
     return versionId;
+  }
+
+  Future<String> _materializeLegacyPredecessor({
+    required WatchlistSimulation simulation,
+    required ResolvedWatchlistSimulationAllocation allocation,
+    required DateTime baselineAt,
+    required MutationStamp stamp,
+  }) async {
+    final cashWeight = allocation.cashWeight;
+    final legacyBasisKey = allocation.allocationBasisKey;
+    if (cashWeight == null || legacyBasisKey == null) {
+      throw StateError('Legacy watchlist simulation allocation is invalid.');
+    }
+    final predecessorId = await _writeAllocationVersion(
+      simulation: simulation,
+      targetWeights: {
+        for (final position in allocation.positions)
+          position.watchlistItemId: position.targetWeight,
+      },
+      cashWeight: cashWeight,
+      holdingInputs: const <String, WatchlistSimulationHoldingInput>{},
+      reason: WatchlistSimulationAllocationReason.reallocation,
+      capitalBase: null,
+      previousAllocationVersionId: null,
+      requiresExplicitHead: false,
+      stamp: stamp,
+    );
+    await _rebindLegacyObservationBasis(
+      ownerUserId: stamp.ownerUserId,
+      simulationId: simulation.id,
+      baselineAt: baselineAt,
+      legacyBasisKey: legacyBasisKey,
+      predecessorBasisKey: _versionAllocationBasisKey(predecessorId),
+      updatedAt: stamp.now,
+    );
+    return predecessorId;
+  }
+
+  Future<void> _rebindLegacyObservationBasis({
+    required String ownerUserId,
+    required String simulationId,
+    required DateTime baselineAt,
+    required String legacyBasisKey,
+    required String predecessorBasisKey,
+    required DateTime updatedAt,
+  }) async {
+    final baselineDay = _observationDay(baselineAt);
+    final update = WatchlistSimulationObservationsCompanion(
+      allocationBasisKey: Value(predecessorBasisKey),
+      updatedAt: Value(updatedAt),
+    );
+    await (_db.update(_db.watchlistSimulationObservations)
+          ..where((t) => t.ownerUserId.equals(ownerUserId))
+          ..where((t) => t.simulationId.equals(simulationId))
+          ..where((t) => t.observationDay.equals(baselineDay).not())
+          ..where(
+            (t) =>
+                t.allocationBasisKey.isNull() |
+                t.allocationBasisKey.equals(legacyBasisKey),
+          ))
+        .write(update);
   }
 
   Future<void> _writeAllocationHead({
@@ -2413,6 +2485,17 @@ int _compareAllocationVersionsNewestFirst(
   return right.id.compareTo(left.id);
 }
 
+bool _hasExplicitAllocationEvidence({
+  required WatchlistSimulationRow simulation,
+  required bool hasHead,
+  required Iterable<WatchlistSimulationAllocationVersionRow> versions,
+  required Iterable<WatchlistSimulationPositionRow> positions,
+}) =>
+    simulation.allocationProtocolVersion > 0 ||
+    hasHead ||
+    versions.any((version) => version.requiresExplicitHead) ||
+    positions.any((position) => position.requiresExplicitHead);
+
 WatchlistSimulationAllocationVersionRow? _legacyAllocationPredecessor({
   required WatchlistSimulationAllocationVersionRow current,
   required Iterable<WatchlistSimulationAllocationVersionRow> versions,
@@ -2426,6 +2509,19 @@ WatchlistSimulationAllocationVersionRow? _legacyAllocationPredecessor({
   return index >= 0 && index + 1 < legacy.length ? legacy[index + 1] : null;
 }
 
+WatchlistSimulationAllocationVersionRow? _previousAllocationVersion({
+  required WatchlistSimulationAllocationVersionRow current,
+  required Map<String, WatchlistSimulationAllocationVersionRow> versionsById,
+}) {
+  final previousId = current.previousAllocationVersionId;
+  if (previousId != null) return versionsById[previousId];
+  if (current.requiresExplicitHead) return null;
+  return _legacyAllocationPredecessor(
+    current: current,
+    versions: versionsById.values,
+  );
+}
+
 Set<String> _allocationLineageVersionIds({
   required WatchlistSimulationAllocationVersionRow current,
   required Iterable<WatchlistSimulationAllocationVersionRow> versions,
@@ -2434,15 +2530,10 @@ Set<String> _allocationLineageVersionIds({
   final ids = <String>{};
   var candidate = current;
   while (ids.add(candidate.id)) {
-    final previousId = candidate.previousAllocationVersionId;
-    final previous = previousId == null
-        ? (!candidate.requiresExplicitHead
-              ? _legacyAllocationPredecessor(
-                  current: candidate,
-                  versions: byId.values,
-                )
-              : null)
-        : byId[previousId];
+    final previous = _previousAllocationVersion(
+      current: candidate,
+      versionsById: byId,
+    );
     if (previous == null) break;
     candidate = previous;
   }

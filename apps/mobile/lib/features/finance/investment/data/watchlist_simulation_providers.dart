@@ -85,6 +85,8 @@ final watchlistSimulationActionEntriesProvider = StreamProvider.autoDispose
           )
           .map(
             (entries) => entries
+                // Reference-only rows may predate allocation lineage; a
+                // paper-valued row must be tied to a concrete lineage.
                 .where(
                   (entry) =>
                       (entry.allocationBasisKey == null &&
@@ -246,19 +248,10 @@ final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
           .watch(watchlistSimulationAllocationProvider(simulationId))
           .asData
           ?.value;
-      final simulations = ref.watch(watchlistSimulationsProvider).asData?.value;
-      final simulation = simulations
-          ?.where((candidate) => candidate.id == simulationId)
-          .firstOrNull;
-      if (allocation == null || !allocation.isUsable || simulation == null) {
+      if (allocation == null || !allocation.isUsable) {
         yield const <WatchlistSimulationObservation>[];
         return;
       }
-      final baselineUtc = simulation.baselineAt.toUtc();
-      String twoDigits(int part) => part.toString().padLeft(2, '0');
-      final baselineDay =
-          '${baselineUtc.year.toString().padLeft(4, '0')}-'
-          '${twoDigits(baselineUtc.month)}-${twoDigits(baselineUtc.day)}';
       final repository = await ref.watch(
         watchlistSimulationRepositoryProvider.future,
       );
@@ -272,11 +265,11 @@ final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
             (observations) => observations
                 .where(
                   (observation) =>
-                      allocation.validAllocationBasisKeys.contains(
-                        observation.allocationBasisKey,
-                      ) ||
-                      (observation.allocationBasisKey == null &&
-                          observation.observationDay == baselineDay),
+                      watchlistSimulationObservationIsInAllocationLineage(
+                        allocationBasisKey: observation.allocationBasisKey,
+                        validAllocationBasisKeys:
+                            allocation.validAllocationBasisKeys,
+                      ),
                 )
                 .toList(growable: false),
           );

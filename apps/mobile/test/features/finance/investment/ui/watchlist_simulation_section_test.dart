@@ -284,6 +284,53 @@ void main() {
     expect(find.byIcon(FLucideIcons.trash2), findsOneWidget);
   });
 
+  testWidgets('keeps pre-lineage observations in the history chart', (
+    tester,
+  ) async {
+    final observations = [
+      _observations[0],
+      WatchlistSimulationObservation(
+        id: 'observation-legacy',
+        simulationId: _simulation.id,
+        observationDay: '2026-09-01',
+        observedAt: DateTime.utc(2026, 9, 1),
+        projectedValue: Decimal.parse('100500'),
+        weightedDailyChange: Decimal.parse('0.005'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+      ),
+      WatchlistSimulationObservation(
+        id: 'observation-current',
+        simulationId: _simulation.id,
+        observationDay: '2026-09-02',
+        observedAt: DateTime.utc(2026, 9, 2),
+        projectedValue: Decimal.parse('101000'),
+        weightedDailyChange: Decimal.parse('0.005'),
+        pricedWeight: Decimal.one,
+        missingQuoteWeight: Decimal.zero,
+        allocationBasisKey: 'basis-test',
+      ),
+    ];
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        observations: observations,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final chart = tester.widget<NwLineChart>(
+      find.byKey(
+        const ValueKey<String>(
+          'watchlist-simulation-history-chart-simulation-growth',
+        ),
+      ),
+    );
+    expect(chart.series.single.points, hasLength(3));
+  });
+
   testWidgets('shows automatically recorded dividend references', (
     tester,
   ) async {
@@ -435,6 +482,7 @@ Widget _wrap({
   required SharedPreferences preferences,
   required List<WatchlistSimulation> simulations,
   required List<WatchlistSimulationPosition> positions,
+  List<WatchlistSimulationObservation>? observations,
   WatchlistItem? item,
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot>? snapshots,
@@ -472,7 +520,7 @@ Widget _wrap({
         );
       }),
       watchlistSimulationObservationsProvider.overrideWith(
-        (_, _) => Stream.value(_observations),
+        (_, _) => Stream.value(observations ?? _observations),
       ),
       watchlistSimulationActionEntriesProvider.overrideWith(
         (_, _) => Stream.value(actionEntries),
