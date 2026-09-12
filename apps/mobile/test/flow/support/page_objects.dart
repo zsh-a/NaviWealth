@@ -461,7 +461,14 @@ class SettingsPageObject {
   }
 
   Future<void> openBackupAndRestore() async {
-    final action = find.text('Backup & Restore');
+    final data = find.text('Data & storage');
+    expect(data, findsWidgets, reason: 'data settings row missing');
+    await tester.ensureVisible(data.first);
+    await settle(tester);
+    await tester.tap(data.first);
+    await settle(tester);
+
+    final action = find.text('Encrypted backup & restore');
     expect(action, findsWidgets, reason: 'backup settings row missing');
     await tester.ensureVisible(action.first);
     await settle(tester);

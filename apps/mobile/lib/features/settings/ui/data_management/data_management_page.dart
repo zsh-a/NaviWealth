@@ -568,23 +568,33 @@ class _SharedDataCard extends StatelessWidget {
               if (showMaintenanceDetails)
                 FButton(
                   variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
                   onPress: compacting ? null : () => onCompact(),
-                  child: Text(
-                    compacting
-                        ? l10n.dataManagementCompacting
-                        : l10n.dataManagementCompactAction,
+                  child: Flexible(
+                    child: Text(
+                      compacting
+                          ? l10n.dataManagementCompacting
+                          : l10n.dataManagementCompactAction,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               if (showDataActions)
                 FButton(
                   variant: FButtonVariant.destructive,
+                  mainAxisSize: MainAxisSize.min,
                   onPress: clearing || snapshot.historyRows == 0
                       ? null
                       : () => onClear(),
-                  child: Text(
-                    clearing
-                        ? l10n.dataManagementClearing
-                        : l10n.dataManagementClearSharedAction,
+                  child: Flexible(
+                    child: Text(
+                      clearing
+                          ? l10n.dataManagementClearing
+                          : l10n.dataManagementClearSharedAction,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
             ],
@@ -634,21 +644,33 @@ class _GlobalResetCard extends StatelessWidget {
             children: <Widget>[
               FButton(
                 variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
                 onPress: resetting || !actionsEnabled
                     ? null
                     : () => onResetDevice(),
-                child: Text(l10n.dataManagementResetAllDeviceAction),
+                child: Flexible(
+                  child: Text(
+                    l10n.dataManagementResetAllDeviceAction,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
               if (cloudEnabled)
                 FButton(
                   variant: FButtonVariant.destructive,
+                  mainAxisSize: MainAxisSize.min,
                   onPress: resetting || !actionsEnabled
                       ? null
                       : () => onResetEverywhere(),
-                  child: Text(
-                    resetting
-                        ? l10n.dataManagementResetting
-                        : l10n.dataManagementResetAllEverywhereAction,
+                  child: Flexible(
+                    child: Text(
+                      resetting
+                          ? l10n.dataManagementResetting
+                          : l10n.dataManagementResetAllEverywhereAction,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
             ],
@@ -780,6 +802,7 @@ class _DomainDataCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.s12),
                   FButton(
                     variant: FButtonVariant.outline,
+                    mainAxisSize: MainAxisSize.min,
                     onPress: snapshot.cacheRows == 0 || clearing
                         ? null
                         : () => onClearCache(),
@@ -803,6 +826,7 @@ class _DomainDataCard extends StatelessWidget {
               children: <Widget>[
                 FButton(
                   variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
                   onPress: resetting || !actionsEnabled
                       ? null
                       : () => context.pushNamed(
@@ -811,25 +835,43 @@ class _DomainDataCard extends StatelessWidget {
                             'domain': snapshot.scope.wire,
                           },
                         ),
-                  child: Text(l10n.dataManagementExportDomainAction),
+                  child: Flexible(
+                    child: Text(
+                      l10n.dataManagementExportDomainAction,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
                 FButton(
                   variant: FButtonVariant.outline,
+                  mainAxisSize: MainAxisSize.min,
                   onPress: resetting || !actionsEnabled
                       ? null
                       : () => onResetDevice(),
-                  child: Text(l10n.dataManagementResetDeviceAction),
+                  child: Flexible(
+                    child: Text(
+                      l10n.dataManagementResetDeviceAction,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ),
                 if (cloudEnabled)
                   FButton(
                     variant: FButtonVariant.destructive,
+                    mainAxisSize: MainAxisSize.min,
                     onPress: resetting || !actionsEnabled
                         ? null
                         : () => onResetEverywhere(),
-                    child: Text(
-                      resetting
-                          ? l10n.dataManagementResetting
-                          : l10n.dataManagementResetEverywhereAction,
+                    child: Flexible(
+                      child: Text(
+                        resetting
+                            ? l10n.dataManagementResetting
+                            : l10n.dataManagementResetEverywhereAction,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
               ],

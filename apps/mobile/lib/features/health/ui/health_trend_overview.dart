@@ -62,8 +62,8 @@ class _TrendOverviewRow extends StatelessWidget {
                     kind.chartStyle != HealthChartStyle.states) ...[
                   const SizedBox(width: AppSpacing.s12),
                   SizedBox(
-                    width: 88,
-                    height: 40,
+                    width: AppControlWidths.aiDonut,
+                    height: AppSpacing.s40,
                     child: ExcludeSemantics(
                       child: HealthSeriesChart(series: series, compact: true),
                     ),

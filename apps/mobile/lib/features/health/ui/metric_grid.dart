@@ -176,7 +176,7 @@ class _TodayMetricCard extends StatelessWidget {
               kind != HealthMetricKind.trainingEffectDaily) ...[
             const SizedBox(height: AppSpacing.s8),
             SizedBox(
-              height: 32,
+              height: AppSpacing.s32,
               child: HealthSeriesChart(series: series, compact: true),
             ),
           ],

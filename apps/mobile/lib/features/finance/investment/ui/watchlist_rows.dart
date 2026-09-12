@@ -150,7 +150,8 @@ class WatchlistRow extends StatelessWidget {
                             WatchlistTrend(item: item),
                             const SizedBox(width: AppSpacing.s8),
                             SizedBox(
-                              width: MediaQuery.textScalerOf(context).scale(96),
+                              width: MediaQuery.textScalerOf(context)
+                                  .scale(AppControlWidths.detailLabel),
                               child: Align(
                                 alignment: Alignment.centerRight,
                                 child: FittedBox(
@@ -474,7 +475,7 @@ class _WatchlistPriceChart extends ConsumerWidget {
         Text(l10n.watchlistDetailTrendTitle, style: context.captionLabelStyle),
         const SizedBox(height: AppSpacing.s12),
         SizedBox(
-          height: 180,
+          height: AppChartHeights.standard,
           child: history.isLoading && bars.isEmpty
               ? const Center(child: FCircularProgress())
               : bars.length < 2

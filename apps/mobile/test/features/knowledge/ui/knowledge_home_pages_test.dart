@@ -194,8 +194,14 @@ void main() {
     await _settlePaint(tester);
     await tester.scrollUntilVisible(find.text('Review 4'), 100);
     expect(find.text('Review 4'), findsOneWidget);
-    await tester.scrollUntilVisible(find.text('Show fewer reviews'), 100);
-    await tester.tap(find.text('Show fewer reviews'));
+    final showFewer = find.byType(AppRevealControl);
+    expect(showFewer, findsOneWidget);
+    await tester.ensureVisible(showFewer);
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -96));
+    await _settlePaint(tester);
+    final showFewerTarget = showFewer.hitTestable();
+    expect(showFewerTarget, findsOneWidget);
+    await tester.tap(showFewerTarget);
     await _settlePaint(tester);
     expect(find.text('Review 4'), findsNothing);
     expect(tester.takeException(), isNull);
