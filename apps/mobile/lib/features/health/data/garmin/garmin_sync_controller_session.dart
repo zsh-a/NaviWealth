@@ -1,355 +1,221 @@
 part of 'garmin_sync_controller.dart';
 
-mixin GarminSyncControllerSessionMixin on Notifier<GarminSyncState> {
-  GarminBridge get _bridge;
-  GarminTokenStore get _tokenStore;
-  bool get _initialized;
-  set _initialized(bool value);
-  GarminRegion? get _initializedRegion;
-  set _initializedRegion(GarminRegion? value);
-  StreamSubscription<GarminSyncProgress>? get _syncSub;
-  set _syncSub(StreamSubscription<GarminSyncProgress>? value);
-  GarminSavedCredentials? get _pendingCredentials;
-  set _pendingCredentials(GarminSavedCredentials? value);
-  bool get _pendingRememberPassword;
-  set _pendingRememberPassword(bool value);
-
-  /// Try to restore a persisted Garmin session on startup.
-  Future<void> _restoreSession() async {
+extension _GarminSessionAuth on _GarminSession {
+  Future<void> restore() => restoreFuture ??= queue.run(() async {
+    if (!active) return;
     try {
-      final ownerUserId = await _ownerUserId();
-      final region = ref.read(garminRegionProvider);
-      final stored = await _tokenStore.loadSession(
-        ownerUserId: ownerUserId,
-        region: region,
+      final stored = await guarded(
+        tokenStore.loadSession(ownerUserId: owner, region: region),
       );
-      if (stored == null) {
-        final credentials = await _tokenStore.loadCredentials(
-          ownerUserId: ownerUserId,
-        );
-        if (credentials == null) return;
-        state = const GarminRestoring();
-        final recovered = await _recoverWithSavedCredentials();
-        if (!recovered && state is! GarminPendingMfa && state is! GarminError) {
-          state = GarminError(
-            GarminSyncIssue.fromLegacyMessage('Garmin token expired'),
-          );
-        }
+      final credentials = await guarded(
+        tokenStore.loadCredentials(ownerUserId: owner),
+      );
+      if (stored == null &&
+          (credentials == null || credentials.region != region)) {
         return;
       }
-
       state = const GarminRestoring();
-      final authState = await _ensureInit(storedTokenJson: stored);
-      if (authState.canMakeRequests) {
-        await _persistSession();
-        state = _restoredConnectedState(ownerUserId);
-      } else {
-        final issue = garminRestoreAuthIssue(authState);
-        await _clearStaleSession();
-        final recovered = await _recoverWithSavedCredentials();
-        if (!recovered && state is! GarminPendingMfa && state is! GarminError) {
-          state = GarminError(issue);
-        }
-      }
-    } catch (e) {
-      await _clearStaleSession();
-      final recovered = await _recoverWithSavedCredentials();
-      if (!recovered && state is! GarminPendingMfa && state is! GarminError) {
-        state = GarminError(GarminSyncIssue.fromLegacyMessage(e.toString()));
-      }
+      if (await ensureSession()) state = restoredState();
+    } on _GarminCancelled {
+      // An old owner/region must never publish into the replacement session.
+    } on Object catch (error) {
+      state = GarminError(GarminSyncIssue.fromLegacyMessage(error.toString()));
     }
+  });
+
+  Future<bool> ensureSession() async {
+    checkActive();
+    final stored = initialized
+        ? null
+        : await guarded(
+            tokenStore.loadSession(ownerUserId: owner, region: region),
+          );
+    if (!initialized && stored == null) return recoverCredentials();
+    final authState = initialized
+        ? await guarded(bridge.authState())
+        : await guarded(
+            bridge.init(storedTokenJson: stored, isCn: region.isCn),
+          );
+    initialized = true;
+    if (authState.canMakeRequests) {
+      await persistSession();
+      return true;
+    }
+    if (authState.needsMfa) {
+      state = const GarminPendingMfa();
+      return false;
+    }
+    final issue = garminRestoreAuthIssue(authState);
+    await guarded(tokenStore.clearSession(ownerUserId: owner, region: region));
+    initialized = false;
+    if (await recoverCredentials()) return true;
+    if (state is! GarminPendingMfa && state is! GarminError) {
+      state = GarminError(issue);
+    }
+    return false;
   }
 
-  /// Ensure the Rust-side Garmin client is initialized.
-  /// Must be called before any other bridge method.
-  Future<GarminAuthState> _ensureInit({String? storedTokenJson}) async {
-    final region = ref.read(garminRegionProvider);
-    if (_initialized && _initializedRegion == region) {
-      return _bridge.authState();
-    }
-    final authState = await _bridge.init(
-      storedTokenJson: storedTokenJson,
-      isCn: region.isCn,
-    );
-    _initialized = true;
-    _initializedRegion = region;
-    return authState;
-  }
-
-  /// Connect with email/password.
   Future<void> connect(
     String email,
     String password, {
     required bool rememberPassword,
   }) async {
-    state = GarminSyncing(startedAt: DateTime.now().toUtc());
-    final credentials = GarminSavedCredentials(
-      email: email,
-      password: password,
-      region: ref.read(garminRegionProvider),
-    );
-    _pendingCredentials = credentials;
-    _pendingRememberPassword = rememberPassword;
+    if (authenticating) return;
+    authenticating = true;
     try {
-      await _ensureInit();
-      final result = await _bridge.authenticate(
-        credentials.email,
-        credentials.password,
-      );
-      switch (result.type) {
-        case GarminAuthResultType.authenticated:
-          await _persistSession();
-          await _commitCredentialPreference();
-          await _clearSyncStatus();
-          state = const GarminConnected();
-        case GarminAuthResultType.mfaRequired:
-          state = const GarminPendingMfa();
-        case GarminAuthResultType.failed:
-          _clearPendingCredentials();
-          state = GarminError(
-            GarminSyncIssue.fromLegacyMessage(
-              result.errorMessage ?? 'auth failed',
-            ),
-          );
-      }
-    } catch (e) {
-      _clearPendingCredentials();
-      state = GarminError(GarminSyncIssue.fromLegacyMessage(e.toString()));
-    }
-  }
-
-  /// Submit MFA code.
-  Future<void> submitMfa(String code) async {
-    try {
-      await _ensureInit();
-      final result = await _bridge.submitMfa(code);
-      switch (result.type) {
-        case GarminAuthResultType.authenticated:
-          await _persistSession();
-          await _commitCredentialPreference();
-          state = await _restoredConnectedStateForCurrentOwner();
-        case GarminAuthResultType.mfaRequired:
-          state = const GarminPendingMfa();
-        case GarminAuthResultType.failed:
-          _clearPendingCredentials();
-          state = GarminError(
-            GarminSyncIssue.fromLegacyMessage(
-              result.errorMessage ?? 'MFA failed',
-            ),
-          );
-      }
-    } catch (e) {
-      _clearPendingCredentials();
-      state = GarminError(GarminSyncIssue.fromLegacyMessage(e.toString()));
-    }
-  }
-
-  Future<bool> _ensureSessionForSync(AppLogger logger) async {
-    final ownerUserId = await _ownerUserId();
-    final region = ref.read(garminRegionProvider);
-    final stored = _initialized
-        ? null
-        : await _tokenStore.loadSession(
-            ownerUserId: ownerUserId,
+      await cancel();
+      await restore();
+      await queue.run(() async {
+        if (!active) return;
+        try {
+          state = GarminSyncing(startedAt: clock().toUtc(), phase: 'auth');
+          pendingCredentials = GarminSavedCredentials(
+            email: email,
+            password: password,
             region: region,
           );
-    if (!_initialized && stored == null) {
-      logger.i('HealthOS Garmin sync: no persisted session, trying recovery');
-      return _recoverWithSavedCredentials(logger: logger);
+          this.rememberPassword = rememberPassword;
+          await guarded(bridge.init(isCn: region.isCn));
+          initialized = true;
+          final result = await guarded(bridge.authenticate(email, password));
+          await acceptAuth(result, newConnection: true);
+        } on _GarminCancelled {
+          // Cancelled by an owner/region transition.
+        } on Object catch (error) {
+          pendingCredentials = null;
+          state = GarminError(
+            GarminSyncIssue.fromLegacyMessage(error.toString()),
+          );
+        }
+      });
+    } finally {
+      authenticating = false;
     }
-    final authState = await _ensureInit(storedTokenJson: stored);
-    if (authState.canMakeRequests) {
-      await _persistSession();
-      return true;
-    }
-
-    final issue = garminRestoreAuthIssue(authState);
-    if (issue.requiresReconnect) {
-      await _clearStaleSession();
-      logger.w('HealthOS Garmin stale session cleared before sync');
-    }
-    final recovered = await _recoverWithSavedCredentials(logger: logger);
-    if (!recovered && state is! GarminPendingMfa && state is! GarminError) {
-      state = GarminError(issue);
-    }
-    return recovered;
   }
 
-  Future<void> _clearStaleSession() async {
-    final ownerUserId = await _ownerUserId();
-    await _tokenStore.clearSession(
-      ownerUserId: ownerUserId,
-      region: ref.read(garminRegionProvider),
-    );
-    _initialized = false;
-    _initializedRegion = null;
-  }
-
-  /// Cancel an in-progress sync.
-  Future<void> cancelSync() async {
-    await _bridge.cancelSync();
-    await _syncSub?.cancel();
-    _syncSub = null;
-    state = await _restoredConnectedStateForCurrentOwner();
-  }
-
-  /// Disconnect and clear credentials.
-  Future<void> disconnect() async {
+  Future<void> submitMfa(String code) async {
+    if (authenticating || state is! GarminPendingMfa) return;
+    authenticating = true;
     try {
-      final ownerUserId = await _ownerUserId();
-      if (_initialized) await _bridge.logout();
-      await _tokenStore.clearAll(ownerUserId: ownerUserId);
-      await GarminSyncStatusStore(ref.read(sharedPreferencesProvider))
-          .clear(ownerUserId);
-      _initialized = false;
-      _initializedRegion = null;
-      _clearPendingCredentials();
-      state = const GarminInitial();
-    } catch (e) {
-      state = GarminError(GarminSyncIssue.fromLegacyMessage(e.toString()));
+      await queue.run(() async {
+        if (!active) return;
+        try {
+          state = const GarminPendingMfa(submitting: true);
+          final result = await guarded(bridge.submitMfa(code));
+          await acceptAuth(result, newConnection: false);
+        } on _GarminCancelled {
+          // Cancelled by an owner/region transition.
+        } on Object catch (error) {
+          state = GarminError(
+            GarminSyncIssue.fromLegacyMessage(error.toString()),
+          );
+        }
+      });
+    } finally {
+      authenticating = false;
     }
   }
 
-  /// Export session from Rust and persist to secure storage.
-  Future<void> _persistSession() async {
-    try {
-      final json = await _bridge.exportSession();
-      if (json == null) return;
-      await _tokenStore.saveSession(
-        ownerUserId: await _ownerUserId(),
-        region: ref.read(garminRegionProvider),
-        sessionJson: json,
-      );
-    } catch (_) {
-      // Non-fatal: user can still use the session this launch.
-    }
-  }
-
-  /// Load saved credentials for secure form prefill.
-  Future<GarminSavedCredentials?> loadSavedCredentials() async {
-    return _tokenStore.loadCredentials(ownerUserId: await _ownerUserId());
-  }
-
-  Future<String> _ownerUserId() async {
-    return ref.read(currentUserIdProvider)();
-  }
-
-  GarminConnected _restoredConnectedState(String ownerUserId) {
-    final status = GarminSyncStatusStore(ref.read(sharedPreferencesProvider))
-        .read(ownerUserId);
-    return GarminConnected(
-      lastSyncAt: status?.lastSuccessAt,
-      totalMetrics: status?.totalMetrics ?? 0,
-      lastAttemptAt: status?.lastAttemptAt,
-      lastErrorCode: status?.errorCode,
-    );
-  }
-
-  Future<GarminConnected> _restoredConnectedStateForCurrentOwner() async {
-    return _restoredConnectedState(await _ownerUserId());
-  }
-
-  Future<GarminConnected> _recordSuccessfulSync({
-    required DateTime attemptedAt,
-    required int totalMetrics,
+  Future<void> acceptAuth(
+    GarminAuthResult result, {
+    required bool newConnection,
   }) async {
-    final ownerUserId = await _ownerUserId();
-    final completedAt = DateTime.now().toUtc();
-    await GarminSyncStatusStore(ref.read(sharedPreferencesProvider)).write(
-      ownerUserId: ownerUserId,
-      lastAttemptAt: attemptedAt,
-      lastSuccessAt: completedAt,
-      totalMetrics: totalMetrics,
-      errorCode: null,
-    );
-    return GarminConnected(lastSyncAt: completedAt, totalMetrics: totalMetrics);
-  }
-
-  Future<void> _recordFailedSync({
-    required DateTime attemptedAt,
-    required GarminSyncIssue issue,
-  }) async {
-    final ownerUserId = await _ownerUserId();
-    final store = GarminSyncStatusStore(ref.read(sharedPreferencesProvider));
-    final previous = store.read(ownerUserId);
-    await store.write(
-      ownerUserId: ownerUserId,
-      lastAttemptAt: attemptedAt,
-      lastSuccessAt: previous?.lastSuccessAt,
-      totalMetrics: previous?.totalMetrics ?? 0,
-      errorCode: issue.code,
-    );
-  }
-
-  Future<void> _clearSyncStatus() async {
-    await GarminSyncStatusStore(ref.read(sharedPreferencesProvider))
-        .clear(await _ownerUserId());
-  }
-
-  Future<bool> _recoverWithSavedCredentials({AppLogger? logger}) async {
-    final credentials = await loadSavedCredentials();
-    if (credentials == null) return false;
-    logger?.i('HealthOS Garmin attempting secure credential session recovery');
-    if (ref.read(garminRegionProvider) != credentials.region) {
-      await ref.read(garminRegionProvider.notifier).set(credentials.region);
-      _initialized = false;
-      _initializedRegion = null;
-    }
-    _pendingCredentials = credentials;
-    _pendingRememberPassword = true;
-    try {
-      await _ensureInit();
-      final result = await _bridge.authenticate(
-        credentials.email,
-        credentials.password,
-      );
-      switch (result.type) {
-        case GarminAuthResultType.authenticated:
-          await _persistSession();
-          await _commitCredentialPreference();
-          state = await _restoredConnectedStateForCurrentOwner();
-          logger?.i('HealthOS Garmin secure credential recovery succeeded');
-          return true;
-        case GarminAuthResultType.mfaRequired:
-          state = const GarminPendingMfa();
-          logger?.i('HealthOS Garmin recovery requires MFA');
-          return false;
-        case GarminAuthResultType.failed:
-          _clearPendingCredentials();
-          await _tokenStore.clearCredentials(ownerUserId: await _ownerUserId());
-          state = const GarminError(
-            GarminSyncIssue(
-              code: 'credentials_invalid',
-              severity: GarminSyncIssueSeverity.error,
-              message: 'Saved Garmin credentials are no longer valid',
-              action: GarminSyncIssueAction.reconnect,
+    switch (result.type) {
+      case GarminAuthResultType.authenticated:
+        await persistSession();
+        if (rememberPassword && pendingCredentials != null) {
+          await guarded(
+            tokenStore.saveCredentials(
+              ownerUserId: owner,
+              credentials: pendingCredentials!,
             ),
           );
-          logger?.w('HealthOS Garmin saved credentials are no longer valid');
-          return false;
+        } else {
+          await guarded(tokenStore.clearCredentials(ownerUserId: owner));
+        }
+        pendingCredentials = null;
+        // A new account binding must not inherit historical completion markers.
+        if (newConnection) await guarded(statusStore.clear(owner));
+        state = restoredState();
+      case GarminAuthResultType.mfaRequired:
+        if (newConnection) await guarded(statusStore.clear(owner));
+        state = const GarminPendingMfa();
+      case GarminAuthResultType.failed:
+        pendingCredentials = null;
+        // A rejected login needs user intervention, not automatic password
+        // retries every time the foreground timer wakes.
+        state = const GarminError(
+          GarminSyncIssue(
+            code: 'credentials_invalid',
+            severity: GarminSyncIssueSeverity.error,
+            message: 'Garmin credentials were rejected',
+            action: GarminSyncIssueAction.reconnect,
+          ),
+        );
+    }
+  }
+
+  Future<bool> recoverCredentials() async {
+    final credentials = await guarded(
+      tokenStore.loadCredentials(ownerUserId: owner),
+    );
+    if (credentials == null || credentials.region != region) return false;
+    pendingCredentials = credentials;
+    rememberPassword = true;
+    if (!initialized) {
+      await guarded(bridge.init(isCn: region.isCn));
+      initialized = true;
+    }
+    final result = await guarded(
+      bridge.authenticate(credentials.email, credentials.password),
+    );
+    await acceptAuth(result, newConnection: false);
+    return result.type == GarminAuthResultType.authenticated;
+  }
+
+  Future<void> persistSession() async {
+    final json = await guarded(bridge.exportSession());
+    if (json == null) return;
+    await guarded(
+      tokenStore.saveSession(
+        ownerUserId: owner,
+        region: region,
+        sessionJson: json,
+      ),
+    );
+  }
+
+  GarminConnected restoredState() {
+    final saved = status;
+    return GarminConnected(
+      lastSyncAt: saved?.lastSuccessAt,
+      totalMetrics: saved?.totalMetrics ?? 0,
+      lastAttemptAt: saved?.lastAttemptAt,
+      lastErrorCode: saved?.errorCode,
+      lastCheckedAt: saved?.lastCheckedAt,
+      unchanged: saved?.unchanged ?? 0,
+      partial: saved?.partial ?? false,
+    );
+  }
+
+  Future<void> disconnect() async {
+    await cancel();
+    await queue.run(() async {
+      if (!active) return;
+      try {
+        if (initialized) await guarded(bridge.logout());
+        await guarded(tokenStore.clearAll(ownerUserId: owner));
+        await guarded(statusStore.clear(owner));
+        initialized = false;
+        pendingCredentials = null;
+        state = const GarminInitial();
+      } on _GarminCancelled {
+        // The queued replacement session owns further native work.
+      } on Object catch (error) {
+        state = GarminError(
+          GarminSyncIssue.fromLegacyMessage(error.toString()),
+        );
       }
-    } catch (_) {
-      _clearPendingCredentials();
-      return false;
-    }
-  }
-
-  Future<void> _commitCredentialPreference() async {
-    final credentials = _pendingCredentials;
-    final ownerUserId = await _ownerUserId();
-    if (_pendingRememberPassword && credentials != null) {
-      await _tokenStore.saveCredentials(
-        ownerUserId: ownerUserId,
-        credentials: credentials,
-      );
-    } else {
-      await _tokenStore.clearCredentials(ownerUserId: ownerUserId);
-    }
-    _clearPendingCredentials();
-  }
-
-  void _clearPendingCredentials() {
-    _pendingCredentials = null;
-    _pendingRememberPassword = false;
+    });
   }
 }

@@ -91,6 +91,19 @@ sync. Source cards derive the latest imported data time from local Health
 rows, so a successful refresh that only returns old data can still be marked
 stale.
 
+Garmin also refreshes silently while the app is in the foreground: at launch,
+on resume, and when returning to a Health tab if the last check is older than
+30 minutes. The newest three local-calendar days are always rechecked before
+bounded historical reconciliation. Existing rows never imply that a day's
+sleep, steps or other endpoints are complete. Temporary failures back off;
+rate-limit cooldowns also apply to manual refresh. Pausing the app stops this
+foreground driver; no background freshness guarantee is implied.
+
+Garmin source cards retain their previous content during automatic refresh,
+distinguish "last checked" from data capture time, and retain partial failures.
+Settings owns detailed actions. Binding or completing MFA through the shared
+sheet initiates the first import without a second Sync tap.
+
 ### Garmin session lifecycle
 
 - Garmin access tokens are refreshed by the native runtime shortly before

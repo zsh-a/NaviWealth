@@ -44,15 +44,25 @@ class GarminSnapshotWriter {
   final AppLogger _logger;
   final GarminSnapshotNormalizer _normalizer;
 
-  Future<GarminWriteResult> writeSnapshotJson(String snapshotJson) async {
+  Future<GarminWriteResult> writeSnapshotJson(
+    String snapshotJson, {
+    void Function()? beforeCommit,
+    String? expectedOwnerUserId,
+  }) async {
     _logger.i('HealthOS Garmin snapshot decode: bytes=${snapshotJson.length}');
     final json = jsonDecode(snapshotJson) as Map<String, dynamic>;
-    return writeSnapshotMap(json);
+    return writeSnapshotMap(
+      json,
+      beforeCommit: beforeCommit,
+      expectedOwnerUserId: expectedOwnerUserId,
+    );
   }
 
   Future<GarminWriteResult> writeSnapshotMap(
-    Map<String, dynamic> snapshot,
-  ) async {
+    Map<String, dynamic> snapshot, {
+    void Function()? beforeCommit,
+    String? expectedOwnerUserId,
+  }) async {
     _logger.i(
       'HealthOS Garmin snapshot normalize: keys=${snapshot.keys.toList()}',
     );
@@ -61,7 +71,11 @@ class GarminSnapshotWriter {
       'HealthOS Garmin snapshot normalized: rows=${batch.rows.length} '
       'counts=${_formatCounts(batch.countsByKind)} errors=${batch.errors}',
     );
-    final result = await _ingestor.ingestRaw(batch.rows);
+    final result = await _ingestor.ingestRaw(
+      batch.rows,
+      beforeCommit: beforeCommit,
+      expectedOwnerUserId: expectedOwnerUserId,
+    );
     _logger.i(
       'HealthOS Garmin snapshot persisted: total=${result.total} '
       'upserted=${result.upserted} unchanged=${result.unchanged}',

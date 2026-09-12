@@ -17,6 +17,7 @@ import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 import 'package:naviwealth/features/health/composition/health_command_palette.dart';
 import 'package:naviwealth/features/health/composition/health_domain_shell.dart';
 import 'package:naviwealth/features/health/composition/health_routes.dart';
+import 'package:naviwealth/features/health/data/garmin/garmin_foreground_refresh.dart';
 import 'package:naviwealth/features/health/data/health_metric_memory_indexer.dart';
 import 'package:naviwealth/features/health/data_management/health_data_management.dart';
 import 'package:naviwealth/features/health/health_ai_tools.dart';
@@ -89,6 +90,7 @@ void _healthMemoryBootstrap(Ref ref) {
 }
 
 void _healthBackgroundBootstrap(Ref ref) {
+  ref.watch(garminForegroundRefreshProvider);
   ref.watch(health_agent_providers.garminSyncCronProvider);
   ref.watch(health_agent_providers.healthPlatformSyncCronProvider);
   unawaited(

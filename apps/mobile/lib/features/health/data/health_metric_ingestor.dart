@@ -65,7 +65,11 @@ class HealthMetricIngestor {
   final HealthMetricRepository _repo;
   final MutationStamper _stamper;
 
-  Future<HealthIngestResult> ingestRaw(Iterable<RawHealthMetric> rows) async {
+  Future<HealthIngestResult> ingestRaw(
+    Iterable<RawHealthMetric> rows, {
+    void Function()? beforeCommit,
+    String? expectedOwnerUserId,
+  }) async {
     final batch = rows.toList(growable: false);
     if (batch.isEmpty) {
       return const HealthIngestResult(total: 0, upserted: 0, unchanged: 0);
@@ -82,10 +86,15 @@ class HealthMetricIngestor {
         continue;
       }
       final stamped = row.toMetric(sync: await _stampMeta());
+      if (expectedOwnerUserId != null &&
+          stamped.sync.ownerUserId != expectedOwnerUserId) {
+        throw StateError('Health import owner changed before commit');
+      }
       writes.add(stamped);
       existingById[row.id] = stamped;
     }
 
+    beforeCommit?.call();
     await _repo.upsertAll(writes);
     return HealthIngestResult(
       total: batch.length,

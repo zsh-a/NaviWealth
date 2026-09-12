@@ -26,6 +26,35 @@ void main() {
     expect(issue.isFatal, isFalse);
   });
 
+  test('rate limiting takes priority over optional endpoint warnings', () {
+    final unavailable = GarminSyncIssue.fromLegacyMessage(
+      'activities fetch failed: Garmin API error: 404 Not Found',
+    );
+    const limited = GarminSyncIssue(
+      code: 'rate_limited',
+      severity: GarminSyncIssueSeverity.warning,
+      message: 'Garmin temporarily limited requests',
+      action: GarminSyncIssueAction.retryLater,
+    );
+    expect([unavailable, limited].primary?.code, 'rate_limited');
+    expect(
+      [unavailable, limited, GarminSyncIssue.noSnapshot()].primary?.code,
+      'snapshot_missing',
+    );
+  });
+
+  test(
+    'rate limiting during startup preserves its cooldown classification',
+    () {
+      final issue = GarminSyncIssue.fromLegacyMessage(
+        'Garmin profile fetch failed: HTTP 429 Too Many Requests',
+      );
+      expect(issue.code, 'rate_limited');
+      expect(issue.isFatal, isTrue);
+      expect(issue.action, GarminSyncIssueAction.retryLater);
+    },
+  );
+
   test('maps restored expired auth failure to reconnect error', () {
     final issue = garminRestoreAuthIssue(
       GarminAuthState.fromJson({

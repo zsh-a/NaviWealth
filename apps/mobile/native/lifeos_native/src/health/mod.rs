@@ -23,7 +23,7 @@ pub(crate) mod sync_engine;
 use anyhow::{Result, anyhow};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Notify};
 
 use crate::frb_generated::StreamSink;
 
@@ -58,6 +58,7 @@ static SYNC_ENGINE: once_cell::sync::Lazy<Mutex<HealthSyncEngine>> =
 
 /// Cancellation flag for in-progress sync.
 static SYNC_CANCEL: AtomicBool = AtomicBool::new(false);
+static SYNC_CANCEL_NOTIFY: Notify = Notify::const_new();
 
 /// Called internally after a session is saved to the token store.
 /// Caches the JSON so `garmin_export_session` can return it to Dart.
@@ -208,7 +209,32 @@ pub async fn garmin_sync_range_stream(
     let to_date = chrono::NaiveDate::parse_from_str(&to, "%Y-%m-%d")?;
     let total_days = (to_date - from_date).num_days() + 1;
 
-    let result = run_streaming_sync(&sink, from_date, to_date, total_days).await;
+    // Acknowledge the reset before any network work. Dart may have requested
+    // cancellation before this task was scheduled, and can now re-send it.
+    let _ = sink.add(GarminSyncProgress {
+        phase: "starting".to_string(),
+        current: 0,
+        total: total_days as i32,
+        metrics_count: 0,
+        errors: vec![],
+        snapshot_json: None,
+    });
+
+    // Cancellation must interrupt HTTP waits and 429 backoff, not just the
+    // boundary between days. Dropping this future stops the current request;
+    // Dart drains the terminal event before allowing another native operation.
+    let result = tokio::select! {
+        biased;
+        _ = wait_for_sync_cancel() => {
+            let _ = sink.add(GarminSyncProgress {
+                phase: "cancelled".to_string(),
+                current: 0, total: total_days as i32, metrics_count: 0,
+                errors: vec![], snapshot_json: None,
+            });
+            return Ok(());
+        }
+        result = run_streaming_sync(&sink, from_date, to_date, total_days) => result,
+    };
 
     // Emit final events: snapshot data + "done".
     match result {
@@ -239,27 +265,7 @@ pub async fn garmin_sync_range_stream(
             });
         }
         Err(e) => {
-            let issue = if is_auth_error(&e) {
-                garmin_sync_issue(
-                    "auth_expired",
-                    "error",
-                    None,
-                    "Garmin session expired",
-                    Some(e.to_string()),
-                    false,
-                    "reconnect",
-                )
-            } else {
-                garmin_sync_issue(
-                    "sync_failed",
-                    "error",
-                    None,
-                    "Garmin sync failed",
-                    Some(e.to_string()),
-                    true,
-                    "retry",
-                )
-            };
+            let issue = fatal_sync_issue(&e);
             let _ = sink.add(GarminSyncProgress {
                 phase: "done".to_string(),
                 current: 0,
@@ -277,6 +283,19 @@ pub async fn garmin_sync_range_stream(
 /// Cancel an in-progress sync.
 pub fn garmin_sync_cancel() {
     SYNC_CANCEL.store(true, Ordering::Relaxed);
+    SYNC_CANCEL_NOTIFY.notify_waiters();
+}
+
+async fn wait_for_sync_cancel() {
+    loop {
+        let notified = SYNC_CANCEL_NOTIFY.notified();
+        tokio::pin!(notified);
+        notified.as_mut().enable();
+        if SYNC_CANCEL.load(Ordering::Relaxed) {
+            return;
+        }
+        notified.await;
+    }
 }
 
 /// Core streaming sync logic.
@@ -761,13 +780,39 @@ async fn run_streaming_sync(
     Ok((metrics_count, errors, snapshot_json))
 }
 
+fn fatal_sync_issue(error: &anyhow::Error) -> String {
+    // Include nested causes: profile/transport context must not hide 401/429.
+    let detail = format!("{error:#}");
+    let (code, message, retryable, action) = if is_auth_error(error) {
+        ("auth_expired", "Garmin session expired", false, "reconnect")
+    } else if detail.contains("429") {
+        (
+            "rate_limited",
+            "Garmin temporarily limited requests",
+            true,
+            "retry_later",
+        )
+    } else {
+        ("sync_failed", "Garmin sync failed", true, "retry")
+    };
+    garmin_sync_issue(
+        code,
+        "error",
+        None,
+        message,
+        Some(detail),
+        retryable,
+        action,
+    )
+}
+
 fn record_endpoint_error(errors: &mut Vec<String>, endpoint: &str, error: &anyhow::Error) {
     let endpoint_key = endpoint
         .split_whitespace()
         .next()
         .filter(|value| !value.is_empty())
         .unwrap_or(endpoint);
-    let detail = error.to_string();
+    let detail = format!("{error:#}");
     let (code, severity, message, retryable, action) = if is_auth_error(error) {
         (
             "auth_expired",
@@ -818,7 +863,7 @@ fn record_endpoint_error(errors: &mut Vec<String>, endpoint: &str, error: &anyho
 }
 
 fn is_auth_error(error: &anyhow::Error) -> bool {
-    let msg = error.to_string().to_lowercase();
+    let msg = format!("{error:#}").to_lowercase();
     msg.contains("401 unauthorized")
         || msg.contains("token may be expired")
         || msg.contains("token expired")
@@ -828,7 +873,7 @@ fn is_auth_error(error: &anyhow::Error) -> bool {
 }
 
 fn is_not_found_error(error: &anyhow::Error) -> bool {
-    let msg = error.to_string().to_lowercase();
+    let msg = format!("{error:#}").to_lowercase();
     msg.contains("404 not found") || msg.contains("garmin api error: 404")
 }
 
@@ -891,4 +936,41 @@ pub async fn garmin_logout() -> Result<()> {
     }
     *LAST_SESSION_JSON.lock().await = None;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nested_startup_errors_preserve_auth_and_rate_limit_actions() {
+        for (cause, code, action) in [
+            ("HTTP 429 Too Many Requests", "rate_limited", "retry_later"),
+            ("401 Unauthorized", "auth_expired", "reconnect"),
+        ] {
+            let error = anyhow!(cause).context("Garmin profile fetch failed");
+            let issue: serde_json::Value = serde_json::from_str(&fatal_sync_issue(&error)).unwrap();
+            assert_eq!(issue["code"], code);
+            assert_eq!(issue["action"], action);
+            assert_eq!(issue["severity"], "error");
+        }
+    }
+
+    #[tokio::test]
+    async fn cancellation_wakes_pending_work_without_leaking_into_next_sync() {
+        SYNC_CANCEL.store(false, Ordering::Relaxed);
+        let pending = tokio::spawn(wait_for_sync_cancel());
+        tokio::task::yield_now().await;
+        garmin_sync_cancel();
+        tokio::time::timeout(std::time::Duration::from_secs(1), pending)
+            .await
+            .expect("cancellation should wake a blocked request")
+            .unwrap();
+        SYNC_CANCEL.store(false, Ordering::Relaxed);
+        assert!(
+            tokio::time::timeout(std::time::Duration::from_millis(5), wait_for_sync_cancel())
+                .await
+                .is_err()
+        );
+    }
 }

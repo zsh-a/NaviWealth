@@ -13817,7 +13817,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'Encrypted in this device’s Keychain or Keystore. Never synced.';
 
   @override
-  String get healthGarminAutoRenewEnabled => 'Session auto-renewal is on';
+  String get healthGarminForegroundRefreshHint =>
+      'Updates automatically while the app is open';
+
+  @override
+  String get healthGarminPartialSync => 'Some data pending';
+
+  @override
+  String healthGarminLastChecked(String count, String time) {
+    return 'Checked $time · $count updated';
+  }
 
   @override
   String get healthGarminRegionLabel => 'Region';
@@ -13861,11 +13870,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthGarminCancel => 'Cancel';
-
-  @override
-  String healthGarminLastSync(String time, String count) {
-    return 'Last sync $time · $count metrics';
-  }
 
   @override
   String healthGarminSyncProgress(String current, String total, String count) {

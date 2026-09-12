@@ -46,6 +46,8 @@ class GarminSyncStatusCard extends ConsumerWidget {
           :final totalMetrics,
           :final lastAttemptAt,
           :final lastErrorCode,
+          :final lastCheckedAt,
+          :final partial,
         ) =>
           _Connected(
             ref: ref,
@@ -55,6 +57,24 @@ class GarminSyncStatusCard extends ConsumerWidget {
             lastAttemptAt: lastAttemptAt,
             lastErrorCode: lastErrorCode,
             showActions: showActions,
+            lastCheckedAt: lastCheckedAt,
+            partial: partial,
+          ),
+        GarminSyncing(
+          automatic: true,
+          previous: final GarminConnected previous,
+        ) =>
+          _Connected(
+            ref: ref,
+            lastSyncAt: previous.lastSyncAt,
+            totalMetrics: previous.totalMetrics,
+            latestDataAt: latestDataAt,
+            lastAttemptAt: previous.lastAttemptAt,
+            lastErrorCode: previous.lastErrorCode,
+            showActions: showActions,
+            lastCheckedAt: previous.lastCheckedAt,
+            partial: previous.partial,
+            refreshing: true,
           ),
         GarminSyncing() => _Syncing(showActions: showActions),
         GarminError(:final issue) => _Error(
@@ -215,6 +235,9 @@ class _Connected extends StatelessWidget {
     required this.lastAttemptAt,
     required this.lastErrorCode,
     required this.showActions,
+    this.lastCheckedAt,
+    this.partial = false,
+    this.refreshing = false,
   });
   final WidgetRef ref;
   final DateTime? lastSyncAt;
@@ -223,6 +246,9 @@ class _Connected extends StatelessWidget {
   final DateTime? lastAttemptAt;
   final String? lastErrorCode;
   final bool showActions;
+  final DateTime? lastCheckedAt;
+  final bool partial;
+  final bool refreshing;
 
   @override
   Widget build(BuildContext context) {
@@ -236,21 +262,29 @@ class _Connected extends StatelessWidget {
           icon: FLucideIcons.watch,
           title: l10n.healthGarminTitle,
           badge: AppBadge(
-            label: lastErrorCode == null
+            label: refreshing
+                ? l10n.healthGarminSyncingBadge
+                : partial
+                ? l10n.healthGarminPartialSync
+                : lastErrorCode == null
                 ? l10n.healthGarminConnected
                 : l10n.healthGarminErrorBadge,
-            tone: lastErrorCode == null
+            tone: refreshing
+                ? AppBadgeTone.info
+                : partial
+                ? AppBadgeTone.warning
+                : lastErrorCode == null
                 ? AppBadgeTone.success
                 : AppBadgeTone.error,
             size: AppBadgeSize.compact,
           ),
         ),
-        if (lastSyncAt != null) ...[
+        if (lastCheckedAt != null || lastSyncAt != null) ...[
           const SizedBox(height: AppSpacing.s4),
           Text(
-            l10n.healthGarminLastSync(
+            l10n.healthGarminLastChecked(
               '$totalMetrics',
-              _formatRelative(l10n, lastSyncAt!),
+              _formatRelative(l10n, (lastCheckedAt ?? lastSyncAt)!),
             ),
             style: context.captionStyle,
             maxLines: 1,
@@ -295,7 +329,7 @@ class _Connected extends StatelessWidget {
             const SizedBox(width: AppSpacing.s6),
             Expanded(
               child: Text(
-                l10n.healthGarminAutoRenewEnabled,
+                l10n.healthGarminForegroundRefreshHint,
                 style: context.captionStyle,
               ),
             ),
@@ -308,8 +342,18 @@ class _Connected extends StatelessWidget {
               Expanded(
                 child: FButton(
                   variant: FButtonVariant.outline,
-                  onPress: () => _syncGarmin(context),
-                  child: Text(l10n.healthGarminSync),
+                  onPress: () => refreshing
+                      ? ref
+                            .read(
+                              health_data.garminSyncControllerProvider.notifier,
+                            )
+                            .cancelSync()
+                      : _syncGarmin(context),
+                  child: Text(
+                    refreshing
+                        ? l10n.healthGarminCancel
+                        : l10n.healthGarminSync,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpacing.s8),

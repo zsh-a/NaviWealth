@@ -35,6 +35,7 @@ import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_account_bind_sheet.dart';
+import 'garmin_foreground_refresh_scope.dart';
 import 'garmin_sync_status_card.dart';
 import 'health_greeting_header.dart';
 import 'health_metric_colors.dart';
@@ -94,41 +95,43 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
       childPad: false,
       child: ShellTabPause(
         routePath: HealthRoutes.today,
-        child: BriefScaffold(
-          padding: shellTabContentPadding(context),
-          onRefresh: _refresh,
-          greeting: const HealthGreetingHeader(),
-          stage: stage,
-          stickyBuilder: dataReady
-              ? (context, progress) =>
-                    _HealthRecoveryStickyBar(progress: progress)
-              : null,
-          summaryTiles: dataReady
-              ? staggeredSummaryTiles([
-                  AdaptiveSummaryTile(
-                    role: AdaptiveSummaryTileRole.continuous,
-                    child: _HealthDataFreshnessBanner(
-                      lastRefresh: _lastRefresh,
+        child: GarminForegroundRefreshScope(
+          child: BriefScaffold(
+            padding: shellTabContentPadding(context),
+            onRefresh: _refresh,
+            greeting: const HealthGreetingHeader(),
+            stage: stage,
+            stickyBuilder: dataReady
+                ? (context, progress) =>
+                      _HealthRecoveryStickyBar(progress: progress)
+                : null,
+            summaryTiles: dataReady
+                ? staggeredSummaryTiles([
+                    AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
+                      child: _HealthDataFreshnessBanner(
+                        lastRefresh: _lastRefresh,
+                      ),
                     ),
-                  ),
-                  const AdaptiveSummaryTile(
-                    role: AdaptiveSummaryTileRole.featured,
-                    child: _MetricGrid(),
-                  ),
-                  const AdaptiveSummaryTile(
-                    role: AdaptiveSummaryTileRole.supporting,
-                    child: _SourcesSection(),
-                  ),
-                  const AdaptiveSummaryTile(
-                    role: AdaptiveSummaryTileRole.continuous,
-                    child: _WeeklySummaryPanel(),
-                  ),
-                ])
-              // The activation card already exposes the three first-run
-              // source actions. Repeating the same collapsed source section
-              // below it makes the empty state feel like two onboarding
-              // surfaces instead of one clear next step.
-              : const <AdaptiveSummaryTile>[],
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.featured,
+                      child: _MetricGrid(),
+                    ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.supporting,
+                      child: _SourcesSection(),
+                    ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
+                      child: _WeeklySummaryPanel(),
+                    ),
+                  ])
+                // The activation card already exposes the three first-run
+                // source actions. Repeating the same collapsed source section
+                // below it makes the empty state feel like two onboarding
+                // surfaces instead of one clear next step.
+                : const <AdaptiveSummaryTile>[],
+          ),
         ),
       ),
     );
@@ -218,9 +221,6 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
     }
     setState(() => _running = true);
     try {
-      await ref
-          .read(health_data.garminSyncControllerProvider.notifier)
-          .syncNow();
       _invalidateHealthSurfaces(ref);
       await ref.read(healthTodaySnapshotProvider.future);
     } finally {

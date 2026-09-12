@@ -4,7 +4,7 @@ import 'health_sync_service.dart';
 
 enum HealthRefreshSource { platform, garmin }
 
-enum HealthRefreshOutcome { synced, skipped, failed }
+enum HealthRefreshOutcome { synced, partial, skipped, failed }
 
 class HealthRefreshSourceResult {
   const HealthRefreshSourceResult({
@@ -21,8 +21,12 @@ class HealthRefreshSourceResult {
   final int unchanged;
   final String? errorCode;
 
-  bool get failed => outcome == HealthRefreshOutcome.failed;
-  bool get synced => outcome == HealthRefreshOutcome.synced;
+  bool get failed =>
+      outcome == HealthRefreshOutcome.failed ||
+      outcome == HealthRefreshOutcome.partial;
+  bool get synced =>
+      outcome == HealthRefreshOutcome.synced ||
+      outcome == HealthRefreshOutcome.partial;
 }
 
 class HealthRefreshResult {

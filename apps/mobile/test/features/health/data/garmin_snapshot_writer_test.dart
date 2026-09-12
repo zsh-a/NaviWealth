@@ -44,6 +44,33 @@ void main() {
 
   tearDown(() => db.close());
 
+  test('owner and cancellation guards reject writes before commit', () async {
+    final snapshot = {
+      'steps': [
+        {
+          'id': 'garmin:steps:2026-09-12',
+          'date': '2026-09-12',
+          'value': 100,
+          'source_device': 'garmin',
+        },
+      ],
+    };
+    await expectLater(
+      writer.writeSnapshotMap(snapshot, expectedOwnerUserId: 'different-owner'),
+      throwsStateError,
+    );
+    expect(await repo.findById('garmin:steps:2026-09-12'), isNull);
+    await expectLater(
+      writer.writeSnapshotMap(
+        snapshot,
+        beforeCommit: () => throw StateError('cancelled'),
+      ),
+      throwsStateError,
+    );
+    expect(await repo.findById('garmin:steps:2026-09-12'), isNull);
+    expect(await outbox.depth(), 0);
+  });
+
   test('writes normalized Rust HealthSnapshot rows idempotently', () async {
     final snapshot = {
       'hrv': [

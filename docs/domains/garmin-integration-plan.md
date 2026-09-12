@@ -2,7 +2,7 @@
 
 Status: implemented HealthOS provider.
 
-Last reviewed: 2026-08-01.
+Last reviewed: 2026-09-12.
 
 This document records the current Garmin integration and its maintenance
 boundaries. Delivery phases, dependency snapshots, proposed APIs, and completed
@@ -15,10 +15,10 @@ Garmin Connect is an optional, read-only HealthOS source on native platforms.
 It imports normalized health metrics into the same `health_metrics` repository
 used by HealthKit, Health Connect, and manual measurements.
 
-- Garmin network protocol, authentication state, rate limiting, endpoint
-  mapping, and incremental cursors live in the Rust native runtime.
+- Garmin network protocol, authentication state, rate limiting, and endpoint
+  mapping live in the Rust native runtime.
 - Flutter owns connection/MFA UI, per-user secure credential persistence,
-  refresh orchestration, status display, and Drift writes.
+  refresh planning, committed-range checkpoints, status display, and Drift writes.
 - Imported metrics use the existing HealthOS sync path and the `health:` wire
   prefix; Garmin sessions and operational status remain device-local.
 - Web uses the unsupported Health adapter and never loads this runtime.
@@ -35,7 +35,7 @@ Health Today / Health Settings / background due flag
   -> GarminSyncController
   -> GarminBridge
   -> flutter_rust_bridge primitive API
-  -> Rust GarminClient + HealthSyncEngine
+  -> Rust GarminClient streaming range fetch
   -> normalized snapshot/progress
   -> GarminSnapshotWriter
   -> HealthMetricRepository
@@ -46,6 +46,13 @@ Pull-to-refresh uses `health_refresh_coordinator.dart`, which coalesces
 concurrent refreshes and reports partial source failures. Background callbacks
 only record due work; `pendingGarminSyncRunProvider` performs the real sync
 after the foreground provider graph is available.
+
+Foreground refresh does not depend on a background due flag. The Health pack
+mounts a foreground-only driver: launch, resume and entering a retained Health
+tab are refresh opportunities. A five-minute foreground timer supplies retry
+opportunities; successful checks have a 30-minute freshness window. Pausing the
+app stops the timer and cancels the active import. This is not an OS background
+sync guarantee, and does not change the existing native background scheduler.
 
 ## Code Map
 
@@ -101,12 +108,33 @@ be edited by hand.
 
 ## Sync Semantics
 
-- Date ranges are bounded and cursor-aware; progress is streamed per day and
-  an active operation can be cancelled.
+- The production streaming path always rechecks the latest three local-calendar
+  dates. It then reconciles the remainder of an exact 30-day default window in
+  batches of at most seven days, newest batches first. Completed batches are
+  persisted immediately so Today need not wait for historical backfill.
+- Historical completion is recorded only after snapshot persistence, including
+  successful empty responses, and expires after seven days. It is never inferred
+  from the existence of a metric. Failed daily-data batches remain due; optional
+  unsupported activity/weight/training endpoints are revisited at the weekly
+  cadence. Checkpoints are bounded to 90 days, local-only, owner/region-scoped,
+  and cleared on a new binding or disconnect.
+- The older non-streaming HealthSyncEngine cursor API is not used to plan or
+  suppress production streaming refreshes. Dart's committed-range checks are
+  the production progress authority.
+- All Garmin entry points share an in-flight result. Native auth and import work
+  is serialized across owner/region changes; obsolete sessions cannot publish
+  state or commit snapshots. Cancellation interrupts native HTTP/backoff waits
+  and the terminal stream event completes all Dart waiters.
 - Snapshot rows use stable Garmin-derived ids. The writer upserts changed rows
   and does not enqueue unchanged rows.
 - Import can preserve successful endpoint results while surfacing structured,
   retryable issues for failed endpoints.
+- Partial results persist their warning code without advancing the last fully
+  successful check. Changed and unchanged counts are reported separately.
+  Transient failures back off from five minutes to one hour; unsupported optional
+  endpoints keep the normal 30-minute checking cadence. Rate limits enforce a
+  30-minute cooldown even for manual refresh. Manual refresh otherwise bypasses
+  the freshness window. MFA and rejected credentials require user interaction.
 - Garmin refresh state and counts are local diagnostics. Imported
   `health_metrics` are normal HealthOS source rows and sync across devices.
 - Source precedence and sleep-session deduplication follow the canonical rules

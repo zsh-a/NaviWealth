@@ -23302,11 +23302,23 @@ abstract class AppLocalizations {
   /// **'Encrypted in this device’s Keychain or Keystore. Never synced.'**
   String get healthGarminRememberPasswordHint;
 
-  /// No description provided for @healthGarminAutoRenewEnabled.
+  /// No description provided for @healthGarminForegroundRefreshHint.
   ///
   /// In en, this message translates to:
-  /// **'Session auto-renewal is on'**
-  String get healthGarminAutoRenewEnabled;
+  /// **'Updates automatically while the app is open'**
+  String get healthGarminForegroundRefreshHint;
+
+  /// No description provided for @healthGarminPartialSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Some data pending'**
+  String get healthGarminPartialSync;
+
+  /// No description provided for @healthGarminLastChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Checked {time} · {count} updated'**
+  String healthGarminLastChecked(String count, String time);
 
   /// No description provided for @healthGarminRegionLabel.
   ///
@@ -23391,12 +23403,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get healthGarminCancel;
-
-  /// Garmin connected status line
-  ///
-  /// In en, this message translates to:
-  /// **'Last sync {time} · {count} metrics'**
-  String healthGarminLastSync(String time, String count);
 
   /// Garmin sync progress indicator
   ///

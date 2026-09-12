@@ -1,16 +1,5 @@
 part of 'garmin_sync_controller.dart';
 
-const Set<HealthMetricKind> _kGarminCoverageKinds = <HealthMetricKind>{
-  HealthMetricKind.stepsDaily,
-  HealthMetricKind.hrvDaily,
-  HealthMetricKind.rhrDaily,
-  HealthMetricKind.stressDaily,
-  HealthMetricKind.bodyBatteryDaily,
-  HealthMetricKind.spo2Daily,
-  HealthMetricKind.respiratoryRateDaily,
-  HealthMetricKind.distanceWalkingRunningDaily,
-};
-
 /// Garmin sync states (sealed, not freezed - avoids build_runner dep).
 sealed class GarminSyncState {
   const GarminSyncState();
@@ -28,7 +17,8 @@ class GarminRestoring extends GarminSyncState {
 
 /// MFA code required.
 class GarminPendingMfa extends GarminSyncState {
-  const GarminPendingMfa();
+  const GarminPendingMfa({this.submitting = false});
+  final bool submitting;
 }
 
 /// Connected and idle.
@@ -38,11 +28,17 @@ class GarminConnected extends GarminSyncState {
     this.totalMetrics = 0,
     this.lastAttemptAt,
     this.lastErrorCode,
+    this.lastCheckedAt,
+    this.unchanged = 0,
+    this.partial = false,
   });
   final DateTime? lastSyncAt;
   final int totalMetrics;
   final DateTime? lastAttemptAt;
   final String? lastErrorCode;
+  final DateTime? lastCheckedAt;
+  final int unchanged;
+  final bool partial;
 }
 
 /// Sync in progress.
@@ -55,6 +51,8 @@ class GarminSyncing extends GarminSyncState {
     this.phase = '',
     this.issues = const [],
     this.snapshotJson,
+    this.automatic = false,
+    this.previous,
   });
   final DateTime startedAt;
   final int currentDay;
@@ -66,6 +64,8 @@ class GarminSyncing extends GarminSyncState {
   /// HealthSnapshot JSON from Rust; set on the "snapshot" phase event.
   /// Null until the final snapshot arrives.
   final String? snapshotJson;
+  final bool automatic;
+  final GarminConnected? previous;
 }
 
 /// Error state.

@@ -199,53 +199,8 @@ final healthRefreshCoordinatorProvider =
       final platform = await ref.watch(healthSyncServiceProvider.future);
       return HealthRefreshCoordinator(
         platform: platform,
-        refreshGarmin: () async {
-          final before = ref.read(garminSyncControllerProvider);
-          if (before is GarminRestoring || before is GarminSyncing) {
-            return const HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.skipped,
-            );
-          }
-          if (before case GarminError(:final issue)
-              when issue.requiresReconnect) {
-            return HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.failed,
-              errorCode: issue.code,
-            );
-          }
-          if (before is GarminPendingMfa) {
-            return const HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.failed,
-              errorCode: 'mfa_required',
-            );
-          }
-
-          await ref.read(garminSyncControllerProvider.notifier).syncNow();
-          return switch (ref.read(garminSyncControllerProvider)) {
-            GarminConnected(:final totalMetrics) => HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.synced,
-              imported: totalMetrics,
-            ),
-            GarminError(:final issue) => HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.failed,
-              errorCode: issue.code,
-            ),
-            GarminPendingMfa() => const HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.failed,
-              errorCode: 'mfa_required',
-            ),
-            _ => const HealthRefreshSourceResult(
-              source: HealthRefreshSource.garmin,
-              outcome: HealthRefreshOutcome.skipped,
-            ),
-          };
-        },
+        refreshGarmin: () =>
+            ref.read(garminSyncControllerProvider.notifier).syncNow(),
       );
     });
 

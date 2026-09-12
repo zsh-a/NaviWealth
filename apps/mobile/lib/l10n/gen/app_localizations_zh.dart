@@ -13084,7 +13084,15 @@ class AppLocalizationsZh extends AppLocalizations {
       '仅加密保存在本机 Keychain 或 Keystore，不会同步。';
 
   @override
-  String get healthGarminAutoRenewEnabled => '会话自动续期已开启';
+  String get healthGarminForegroundRefreshHint => '打开 App 时自动更新';
+
+  @override
+  String get healthGarminPartialSync => '部分数据待补齐';
+
+  @override
+  String healthGarminLastChecked(String count, String time) {
+    return '上次检查 $time · 更新 $count 条';
+  }
 
   @override
   String get healthGarminRegionLabel => '地区';
@@ -13127,11 +13135,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthGarminCancel => '取消';
-
-  @override
-  String healthGarminLastSync(String time, String count) {
-    return '上次同步 $time · $count 条数据';
-  }
 
   @override
   String healthGarminSyncProgress(String current, String total, String count) {

@@ -23,6 +23,7 @@ import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
+import 'garmin_foreground_refresh_scope.dart';
 import 'health_metric_colors.dart';
 import 'health_today_providers.dart';
 
@@ -148,113 +149,115 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
           : const <ShellHeaderActionSpec>[],
       child: ShellTabPause(
         routePath: HealthRoutes.trend,
-        child: AppRefreshIndicator(
-          onRefresh: _refresh,
-          child: ListView(
-            padding: shellTabContentPadding(context),
-            children: [
-              if (_lastRefresh?.hasFailures == true) ...[
-                AppStatusBanner(
-                  message: l10n.healthRefreshPartialFailure(
-                    _lastRefresh!.failedCount,
+        child: GarminForegroundRefreshScope(
+          child: AppRefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              padding: shellTabContentPadding(context),
+              children: [
+                if (_lastRefresh?.hasFailures == true) ...[
+                  AppStatusBanner(
+                    message: l10n.healthRefreshPartialFailure(
+                      _lastRefresh!.failedCount,
+                    ),
+                    details: l10n.healthRefreshPullHint,
+                    kind: AppStatusKind.warning,
+                    icon: FLucideIcons.circleAlert,
+                    compact: true,
                   ),
-                  details: l10n.healthRefreshPullHint,
-                  kind: AppStatusKind.warning,
-                  icon: FLucideIcons.circleAlert,
-                  compact: true,
-                ),
-                const SizedBox(height: AppSpacing.s12),
-              ],
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final groupPicker = AppAdaptiveChoice<TrendGroup>(
-                    title: l10n.healthTrendTitle,
-                    options: TrendGroup.values,
-                    value: _group,
-                    labelOf: (g) => _trendGroupLabel(l10n, g),
-                    inlineMaxOptions: 2,
-                    iconOf: (group) => switch (group) {
-                      TrendGroup.recovery => FLucideIcons.heartPulse,
-                      TrendGroup.activity => FLucideIcons.activity,
-                      TrendGroup.body => FLucideIcons.scale,
-                    },
-                    onChanged: (value) => _go(context, group: value),
-                  );
-                  final windowPicker = SegmentedRow<_TrendWindow>(
-                    options: _TrendWindow.values,
-                    value: _window,
-                    minSegmentWidth: 44,
-                    labelOf: (w) => '${w.days}d',
-                    onChanged: (value) => _go(context, window: value),
-                  );
-                  if (constraints.maxWidth < Breakpoints.dialogWide) {
+                  const SizedBox(height: AppSpacing.s12),
+                ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final groupPicker = AppAdaptiveChoice<TrendGroup>(
+                      title: l10n.healthTrendTitle,
+                      options: TrendGroup.values,
+                      value: _group,
+                      labelOf: (g) => _trendGroupLabel(l10n, g),
+                      inlineMaxOptions: 2,
+                      iconOf: (group) => switch (group) {
+                        TrendGroup.recovery => FLucideIcons.heartPulse,
+                        TrendGroup.activity => FLucideIcons.activity,
+                        TrendGroup.body => FLucideIcons.scale,
+                      },
+                      onChanged: (value) => _go(context, group: value),
+                    );
+                    final windowPicker = SegmentedRow<_TrendWindow>(
+                      options: _TrendWindow.values,
+                      value: _window,
+                      minSegmentWidth: 44,
+                      labelOf: (w) => '${w.days}d',
+                      onChanged: (value) => _go(context, window: value),
+                    );
+                    if (constraints.maxWidth < Breakpoints.dialogWide) {
+                      return Row(
+                        children: [
+                          Expanded(flex: 3, child: groupPicker),
+                          const SizedBox(width: AppSpacing.s8),
+                          Expanded(flex: 2, child: windowPicker),
+                        ],
+                      );
+                    }
                     return Row(
                       children: [
-                        Expanded(flex: 3, child: groupPicker),
-                        const SizedBox(width: AppSpacing.s8),
-                        Expanded(flex: 2, child: windowPicker),
+                        Expanded(child: groupPicker),
+                        const SizedBox(width: AppSpacing.s12),
+                        SizedBox(
+                          width: AppControlWidths.segmentedCompact,
+                          child: windowPicker,
+                        ),
                       ],
                     );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(child: groupPicker),
-                      const SizedBox(width: AppSpacing.s12),
-                      SizedBox(
-                        width: AppControlWidths.segmentedCompact,
-                        child: windowPicker,
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpacing.s16),
-              if (showEmptyState)
-                SoftCard.raised(
-                  padding: AppPageRhythm.cardPadding,
-                  child: AppEmptyState(
-                    icon: FLucideIcons.activity,
-                    title: l10n.healthNoData,
-                    message: l10n.healthTrendNotEnoughData,
-                    compact: true,
-                    iconSize: AppIconSizes.lg,
-                    action: FButton(
-                      variant: FButtonVariant.ghost,
-                      prefix: const Icon(
-                        FLucideIcons.arrowRight,
-                        size: AppIconSizes.xs,
-                      ),
-                      onPress: () => context.go(HealthRoutes.today),
-                      child: Text(l10n.healthTodayTitle),
-                    ),
-                  ),
-                )
-              else ...[
-                AdaptiveSummaryGrid(
-                  items: [
-                    for (final spec in displayedSpecs)
-                      AdaptiveSummaryTile(
-                        child: _TrendCard(
-                          spec: spec,
-                          points: groupData.whenData((m) => m[spec.kind]),
-                        ),
-                      ),
-                  ],
+                  },
                 ),
-                if (canRevealMore) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  AppRevealControl(
-                    expanded: _showAllMetrics,
-                    collapsedLabel: l10n.commonRevealMore(
-                      visibleSpecs.length - _previewMetricCount,
+                const SizedBox(height: AppSpacing.s16),
+                if (showEmptyState)
+                  SoftCard.raised(
+                    padding: AppPageRhythm.cardPadding,
+                    child: AppEmptyState(
+                      icon: FLucideIcons.activity,
+                      title: l10n.healthNoData,
+                      message: l10n.healthTrendNotEnoughData,
+                      compact: true,
+                      iconSize: AppIconSizes.lg,
+                      action: FButton(
+                        variant: FButtonVariant.ghost,
+                        prefix: const Icon(
+                          FLucideIcons.arrowRight,
+                          size: AppIconSizes.xs,
+                        ),
+                        onPress: () => context.go(HealthRoutes.today),
+                        child: Text(l10n.healthTodayTitle),
+                      ),
                     ),
-                    expandedLabel: l10n.commonRevealLess,
-                    onToggle: () =>
-                        setState(() => _showAllMetrics = !_showAllMetrics),
+                  )
+                else ...[
+                  AdaptiveSummaryGrid(
+                    items: [
+                      for (final spec in displayedSpecs)
+                        AdaptiveSummaryTile(
+                          child: _TrendCard(
+                            spec: spec,
+                            points: groupData.whenData((m) => m[spec.kind]),
+                          ),
+                        ),
+                    ],
                   ),
+                  if (canRevealMore) ...[
+                    const SizedBox(height: AppSpacing.s8),
+                    AppRevealControl(
+                      expanded: _showAllMetrics,
+                      collapsedLabel: l10n.commonRevealMore(
+                        visibleSpecs.length - _previewMetricCount,
+                      ),
+                      expandedLabel: l10n.commonRevealLess,
+                      onToggle: () =>
+                          setState(() => _showAllMetrics = !_showAllMetrics),
+                    ),
+                  ],
                 ],
               ],
-            ],
+            ),
           ),
         ),
       ),

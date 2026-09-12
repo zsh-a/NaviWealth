@@ -104,6 +104,16 @@ class GarminSyncIssue {
         action: GarminSyncIssueAction.reconnect,
       );
     }
+    if (lower.contains('429')) {
+      return GarminSyncIssue(
+        code: 'rate_limited',
+        severity: GarminSyncIssueSeverity.error,
+        message: 'Garmin temporarily limited requests',
+        detail: message,
+        retryable: true,
+        action: GarminSyncIssueAction.retryLater,
+      );
+    }
     if (lower.contains('404 not found') ||
         lower.contains('garmin api error: 404')) {
       return GarminSyncIssue(
@@ -147,7 +157,14 @@ extension GarminSyncIssueListX on Iterable<GarminSyncIssue> {
     final fatalIssues = fatal;
     if (fatalIssues.isNotEmpty) return fatalIssues.first;
     final warningIssues = warnings;
-    if (warningIssues.isNotEmpty) return warningIssues.first;
+    if (warningIssues.isNotEmpty) {
+      // A less important unsupported endpoint must not mask the cooldown that
+      // prevents both automatic and manual requests from amplifying a 429.
+      return warningIssues
+              .where((issue) => issue.code == 'rate_limited')
+              .firstOrNull ??
+          warningIssues.first;
+    }
     return null;
   }
 }

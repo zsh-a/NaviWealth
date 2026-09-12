@@ -16,11 +16,17 @@ import '../data/garmin/garmin_sync_controller.dart';
 import '../data/providers.dart' as health_data;
 
 /// Show the Garmin account binding sheet.
-Future<void> showGarminAccountBindSheet({required BuildContext context}) {
-  return showAppFormSheet<void>(
+Future<void> showGarminAccountBindSheet({required BuildContext context}) async {
+  final container = ProviderScope.containerOf(context, listen: false);
+  final connected = await showAppFormSheet<bool>(
     context: context,
     builder: (context) => const _GarminAccountBindSheet(),
   );
+  if (connected == true && context.mounted) {
+    await container
+        .read(health_data.garminSyncControllerProvider.notifier)
+        .syncNow();
+  }
 }
 
 class _GarminAccountBindSheet extends ConsumerStatefulWidget {
@@ -57,7 +63,10 @@ class _GarminAccountBindSheetState
     final state = ref.watch(health_data.garminSyncControllerProvider);
     final region = ref.watch(health_data.garminRegionProvider);
     final l10n = AppLocalizations.of(context);
-    final busy = state is GarminSyncing;
+    final busy =
+        state is GarminSyncing ||
+        state is GarminRestoring ||
+        (state is GarminPendingMfa && state.submitting);
 
     return AppSheet(
       title: state is GarminPendingMfa
@@ -90,9 +99,12 @@ class _GarminAccountBindSheetState
             ] else ...[
               _GarminRegionPicker(
                 selected: region,
-                onChanged: (value) => ref
-                    .read(health_data.garminRegionProvider.notifier)
-                    .set(value),
+                onChanged: (value) {
+                  if (busy) return;
+                  ref
+                      .read(health_data.garminRegionProvider.notifier)
+                      .set(value);
+                },
               ),
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
@@ -185,7 +197,7 @@ class _GarminAccountBindSheetState
         .connect(email, password, rememberPassword: _rememberPassword);
     if (mounted &&
         ref.read(health_data.garminSyncControllerProvider) is GarminConnected) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     }
   }
 
@@ -197,7 +209,7 @@ class _GarminAccountBindSheetState
         .submitMfa(code);
     if (mounted &&
         ref.read(health_data.garminSyncControllerProvider) is GarminConnected) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     }
   }
 
