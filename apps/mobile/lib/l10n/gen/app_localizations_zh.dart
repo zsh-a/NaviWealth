@@ -10731,6 +10731,127 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistSimulationSaveFailed => '无法保存模拟组合';
 
   @override
+  String get watchlistSimulationSectionSubtitle => '纸面情景 · 不影响真实组合';
+
+  @override
+  String get watchlistSimulationCumulativeReturn => '距基线累计';
+
+  @override
+  String get watchlistSimulationPositionsTitle => '虚拟持仓';
+
+  @override
+  String watchlistSimulationPositionCount(int count) {
+    return '持仓 $count';
+  }
+
+  @override
+  String get watchlistSimulationPositionUnpriced => '缺行情';
+
+  @override
+  String watchlistSimulationMissingQuotes(String symbols) {
+    return '缺行情标的：$symbols';
+  }
+
+  @override
+  String get watchlistSimulationMethodDisclosure => '方法说明';
+
+  @override
+  String get watchlistSimulationMethodDisclosureHint => '计算口径、隔离范围与免责';
+
+  @override
+  String watchlistSimulationDeleteUndo(String name) {
+    return '已删除「$name」';
+  }
+
+  @override
+  String get watchlistSimulationUndoAction => '撤销';
+
+  @override
+  String get watchlistSimulationDeleteFailed => '无法删除模拟组合';
+
+  @override
+  String get watchlistSimulationRestoreFailed => '无法恢复模拟组合';
+
+  @override
+  String get watchlistSimulationUniverseSection => '模拟标的';
+
+  @override
+  String get watchlistSimulationUniverseAll => '全选';
+
+  @override
+  String get watchlistSimulationUniverseNone => '清空';
+
+  @override
+  String watchlistSimulationUniverseSummary(int selected, int total) {
+    return '已选 $selected/$total';
+  }
+
+  @override
+  String get watchlistSimulationUniverseRequired => '请至少选择一个标的';
+
+  @override
+  String get watchlistSimulationSearchSymbols => '搜索标的';
+
+  @override
+  String get watchlistSimulationNoSearchResults => '没有匹配的标的';
+
+  @override
+  String get watchlistSimulationAllSymbolsAdded => '当前集合的标的都已加入。';
+
+  @override
+  String get watchlistSimulationPickSymbolsTitle => '添加标的';
+
+  @override
+  String get watchlistSimulationCashPercentField => '虚拟现金（%）';
+
+  @override
+  String get watchlistSimulationBasicsSection => '基本信息';
+
+  @override
+  String get watchlistSimulationHoldingsSection => '标的与权重';
+
+  @override
+  String watchlistSimulationAllocatedSummary(
+    String allocated,
+    String remaining,
+  ) {
+    return '已分配 $allocated% · 剩余 $remaining%';
+  }
+
+  @override
+  String get watchlistSimulationTotalReady => '已分配 100%';
+
+  @override
+  String get watchlistSimulationEqualizeAction => '自动均分';
+
+  @override
+  String get watchlistSimulationFillCashAction => '补齐现金';
+
+  @override
+  String get watchlistSimulationAddPositionAction => '添加标的';
+
+  @override
+  String watchlistSimulationRemovePositionAction(String symbol) {
+    return '移除 $symbol';
+  }
+
+  @override
+  String get watchlistSimulationNoPositions => '还没有配置标的，先添加一个。';
+
+  @override
+  String watchlistSimulationHoldingWeightField(String symbol) {
+    return '$symbol 权重（%）';
+  }
+
+  @override
+  String watchlistSimulationNameTooLong(int max) {
+    return '名称不能超过 $max 个字符';
+  }
+
+  @override
+  String get watchlistSimulationCapitalRequired => '请输入大于 0 的虚拟本金';
+
+  @override
   String get watchlistRemoveFromCollectionAction => '移出当前组合';
 
   @override

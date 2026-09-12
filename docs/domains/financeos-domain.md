@@ -141,8 +141,10 @@ baseline and at most one observation per UTC day. A synced/restored simulation
 rehydrates that baseline locally before recording a later observation.
 Same-day refreshes replace that day's projection from the prior observation,
 while allocation changes affect only future observations. These derived rows
-do not sync, are FinanceOS cache data, and are deleted when a simulation is
-tombstoned locally or through Sync v3.
+do not sync and are FinanceOS cache data. They survive a tombstone because
+deleting a simulation is undoable and a newer write can revive the definition
+through last-writer-wins; dropping them on the tombstone would silently restart
+the observed curve. They are removed once the definition row itself is gone.
 
 The observation curve is not historical NAV or actual return: it begins only
 when the simulation exists, treats missing quotes as flat, and does not infer FX

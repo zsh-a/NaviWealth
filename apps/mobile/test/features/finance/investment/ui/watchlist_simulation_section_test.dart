@@ -165,6 +165,7 @@ final _observations = [
     weightedDailyChange: Decimal.parse('0.009'),
     pricedWeight: Decimal.parse('0.9'),
     missingQuoteWeight: Decimal.zero,
+    allocationBasisKey: 'basis-test',
   ),
 ];
 
@@ -224,7 +225,6 @@ void main() {
         .expand((cluster) => cluster.items)
         .map((item) => '${item.label}:${item.value}');
     expect(metrics, [
-      'Virtual capital:\$100K',
       'Weighted daily move:+0.90%',
       'Priced allocation:90%',
       'Virtual cash:10%',
@@ -242,10 +242,40 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Latest observed value'), findsOneWidget);
+    // Headline cumulative paper return: 100,900 against 100,000 capital.
+    expect(find.text('Since baseline'), findsOneWidget);
+    expect(
+      find.descendant(of: card, matching: find.text('+0.90%')),
+      findsWidgets,
+    );
+    // Method and isolation notes live behind a disclosure so the card leads
+    // with numbers and keeps the caveats one tap away.
     expect(
       find.descendant(
         of: card,
         matching: find.textContaining('no historical NAV'),
+      ),
+      findsNothing,
+    );
+    await tester.tap(
+      find.byKey(
+        const ValueKey<String>(
+          'watchlist-simulation-method-simulation-growth',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: card,
+        matching: find.textContaining('no historical NAV'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: card,
+        matching: find.textContaining('never changes real portfolios'),
       ),
       findsOneWidget,
     );
@@ -434,6 +464,8 @@ Widget _wrap({
           ResolvedWatchlistSimulationAllocation(
             status: WatchlistSimulationAllocationStatus.selected,
             allocationVersionId: 'allocation-test',
+            allocationBasisKey: 'basis-test',
+            validAllocationBasisKeys: const {'basis-test'},
             cashWeight: simulation.cashWeight,
             positions: positions,
           ),

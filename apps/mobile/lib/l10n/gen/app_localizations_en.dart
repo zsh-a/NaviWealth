@@ -11334,6 +11334,135 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistSimulationSaveFailed => 'Could not save the simulation';
 
   @override
+  String get watchlistSimulationSectionSubtitle =>
+      'Paper scenarios · real portfolio untouched';
+
+  @override
+  String get watchlistSimulationCumulativeReturn => 'Since baseline';
+
+  @override
+  String get watchlistSimulationPositionsTitle => 'Virtual holdings';
+
+  @override
+  String watchlistSimulationPositionCount(int count) {
+    return '$count holdings';
+  }
+
+  @override
+  String get watchlistSimulationPositionUnpriced => 'No quote';
+
+  @override
+  String watchlistSimulationMissingQuotes(String symbols) {
+    return 'Missing quotes: $symbols';
+  }
+
+  @override
+  String get watchlistSimulationMethodDisclosure => 'How this is calculated';
+
+  @override
+  String get watchlistSimulationMethodDisclosureHint =>
+      'Method, isolation and limits';
+
+  @override
+  String watchlistSimulationDeleteUndo(String name) {
+    return 'Deleted “$name”';
+  }
+
+  @override
+  String get watchlistSimulationUndoAction => 'Undo';
+
+  @override
+  String get watchlistSimulationDeleteFailed =>
+      'Could not delete the simulation';
+
+  @override
+  String get watchlistSimulationRestoreFailed =>
+      'Could not restore the simulation';
+
+  @override
+  String get watchlistSimulationUniverseSection => 'Simulated symbols';
+
+  @override
+  String get watchlistSimulationUniverseAll => 'Select all';
+
+  @override
+  String get watchlistSimulationUniverseNone => 'Clear';
+
+  @override
+  String watchlistSimulationUniverseSummary(int selected, int total) {
+    return '$selected/$total selected';
+  }
+
+  @override
+  String get watchlistSimulationUniverseRequired =>
+      'Select at least one symbol';
+
+  @override
+  String get watchlistSimulationSearchSymbols => 'Search symbols';
+
+  @override
+  String get watchlistSimulationNoSearchResults => 'No matching symbols';
+
+  @override
+  String get watchlistSimulationAllSymbolsAdded =>
+      'Every symbol in this collection is already added.';
+
+  @override
+  String get watchlistSimulationPickSymbolsTitle => 'Add symbols';
+
+  @override
+  String get watchlistSimulationCashPercentField => 'Virtual cash (%)';
+
+  @override
+  String get watchlistSimulationBasicsSection => 'Basics';
+
+  @override
+  String get watchlistSimulationHoldingsSection => 'Symbols and weights';
+
+  @override
+  String watchlistSimulationAllocatedSummary(
+    String allocated,
+    String remaining,
+  ) {
+    return '$allocated% allocated · $remaining% left';
+  }
+
+  @override
+  String get watchlistSimulationTotalReady => '100% allocated';
+
+  @override
+  String get watchlistSimulationEqualizeAction => 'Split equally';
+
+  @override
+  String get watchlistSimulationFillCashAction => 'Fill with cash';
+
+  @override
+  String get watchlistSimulationAddPositionAction => 'Add symbol';
+
+  @override
+  String watchlistSimulationRemovePositionAction(String symbol) {
+    return 'Remove $symbol';
+  }
+
+  @override
+  String get watchlistSimulationNoPositions =>
+      'No symbols configured yet — add one to start.';
+
+  @override
+  String watchlistSimulationHoldingWeightField(String symbol) {
+    return '$symbol weight (%)';
+  }
+
+  @override
+  String watchlistSimulationNameTooLong(int max) {
+    return 'Name cannot exceed $max characters';
+  }
+
+  @override
+  String get watchlistSimulationCapitalRequired =>
+      'Enter a virtual capital greater than 0';
+
+  @override
   String get watchlistRemoveFromCollectionAction => 'Remove from collection';
 
   @override

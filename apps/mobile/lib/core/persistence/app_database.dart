@@ -157,7 +157,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 91;
+  int get schemaVersion => 92;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1129,9 +1129,7 @@ class AppDatabase extends _$AppDatabase {
         );
       }
       // v89 -> v90: upgraded databases receive the same gross lifecycle
-      // invariant as fresh schemas, and simulation tombstones clean up their
-      // device-local observation rows regardless of whether deletion was
-      // initiated locally or arrived through Sync v3.
+      // invariant as fresh schemas.
       if (from < 90) {
         await _createWatchlistSimulationLocalInvariants(this);
       }
@@ -1183,6 +1181,14 @@ class AppDatabase extends _$AppDatabase {
         }
         await _createWatchlistAtomicAllocationIndexes(this);
       }
+      // v91 -> v92: a paper simulation delete is an undoable tombstone, so the
+      // device-local observation rows must outlive it. The v90 tombstone
+      // triggers purged them on every soft delete and are dropped here; the
+      // hard-delete trigger still cleans up, and [AppDatabase.onCreate] no
+      // longer installs the tombstone pair.
+      if (from < 92) {
+        await _createWatchlistSimulationLocalInvariants(this);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -1226,26 +1232,16 @@ Future<void> _createWatchlistSimulationLocalInvariants(AppDatabase db) async {
 
   if (await hasTable('watchlist_simulations') &&
       await hasTable('watchlist_simulation_observations')) {
-    await db.customStatement('''
-      CREATE TRIGGER IF NOT EXISTS trg_watchlist_simulation_tombstone_insert
-      AFTER INSERT ON watchlist_simulations
-      WHEN NEW.deleted_at IS NOT NULL
-      BEGIN
-        DELETE FROM watchlist_simulation_observations
-        WHERE owner_user_id = NEW.owner_user_id
-          AND simulation_id = NEW.id;
-      END
-    ''');
-    await db.customStatement('''
-      CREATE TRIGGER IF NOT EXISTS trg_watchlist_simulation_tombstone_cleanup
-      AFTER UPDATE OF deleted_at ON watchlist_simulations
-      WHEN NEW.deleted_at IS NOT NULL
-      BEGIN
-        DELETE FROM watchlist_simulation_observations
-        WHERE owner_user_id = NEW.owner_user_id
-          AND simulation_id = NEW.id;
-      END
-    ''');
+    // Tombstones keep their device-local observation rows: the delete path is
+    // an undoable tombstone, and purging here would silently reset a
+    // months-long observed curve the moment the user taps undo. Rows are still
+    // cleaned up when the definition row is really removed.
+    await db.customStatement(
+      'DROP TRIGGER IF EXISTS trg_watchlist_simulation_tombstone_insert',
+    );
+    await db.customStatement(
+      'DROP TRIGGER IF EXISTS trg_watchlist_simulation_tombstone_cleanup',
+    );
     await db.customStatement('''
       CREATE TRIGGER IF NOT EXISTS trg_watchlist_simulation_delete_cleanup
       AFTER DELETE ON watchlist_simulations

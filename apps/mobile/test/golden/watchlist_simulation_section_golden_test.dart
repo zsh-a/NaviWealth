@@ -121,6 +121,7 @@ final _observations = [
     weightedDailyChange: Decimal.parse('0.003'),
     pricedWeight: Decimal.parse('0.6'),
     missingQuoteWeight: Decimal.parse('0.3'),
+    allocationBasisKey: 'basis-test',
   ),
 ];
 
@@ -145,6 +146,8 @@ void main() {
             ResolvedWatchlistSimulationAllocation(
               status: WatchlistSimulationAllocationStatus.selected,
               allocationVersionId: 'allocation-test',
+              allocationBasisKey: 'basis-test',
+              validAllocationBasisKeys: const {'basis-test'},
               cashWeight: _simulation.cashWeight,
               positions: _positions,
             ),

@@ -19070,6 +19070,213 @@ abstract class AppLocalizations {
   /// **'Could not save the simulation'**
   String get watchlistSimulationSaveFailed;
 
+  /// Subtitle under the paper simulation section title
+  ///
+  /// In en, this message translates to:
+  /// **'Paper scenarios · real portfolio untouched'**
+  String get watchlistSimulationSectionSubtitle;
+
+  /// Cumulative paper return since the simulation baseline
+  ///
+  /// In en, this message translates to:
+  /// **'Since baseline'**
+  String get watchlistSimulationCumulativeReturn;
+
+  /// Title for the paper simulation target weights list
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual holdings'**
+  String get watchlistSimulationPositionsTitle;
+
+  /// Number of configured paper simulation holdings
+  ///
+  /// In en, this message translates to:
+  /// **'{count} holdings'**
+  String watchlistSimulationPositionCount(int count);
+
+  /// Marks a paper holding without a usable quote
+  ///
+  /// In en, this message translates to:
+  /// **'No quote'**
+  String get watchlistSimulationPositionUnpriced;
+
+  /// Lists paper holdings without a usable quote
+  ///
+  /// In en, this message translates to:
+  /// **'Missing quotes: {symbols}'**
+  String watchlistSimulationMissingQuotes(String symbols);
+
+  /// Collapsible disclosure containing paper simulation method and isolation notes
+  ///
+  /// In en, this message translates to:
+  /// **'How this is calculated'**
+  String get watchlistSimulationMethodDisclosure;
+
+  /// Subtitle for the paper simulation method disclosure
+  ///
+  /// In en, this message translates to:
+  /// **'Method, isolation and limits'**
+  String get watchlistSimulationMethodDisclosureHint;
+
+  /// Snackbar shown after deleting a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted “{name}”'**
+  String watchlistSimulationDeleteUndo(String name);
+
+  /// Undo a paper simulation delete
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get watchlistSimulationUndoAction;
+
+  /// Paper simulation delete failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not delete the simulation'**
+  String get watchlistSimulationDeleteFailed;
+
+  /// Paper simulation restore failure
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore the simulation'**
+  String get watchlistSimulationRestoreFailed;
+
+  /// Section label for choosing which symbols a paper simulation covers
+  ///
+  /// In en, this message translates to:
+  /// **'Simulated symbols'**
+  String get watchlistSimulationUniverseSection;
+
+  /// Select every watchlist symbol for the paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get watchlistSimulationUniverseAll;
+
+  /// Clear the paper simulation symbol selection
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get watchlistSimulationUniverseNone;
+
+  /// Selected symbol count for a paper simulation
+  ///
+  /// In en, this message translates to:
+  /// **'{selected}/{total} selected'**
+  String watchlistSimulationUniverseSummary(int selected, int total);
+
+  /// Validation when a paper simulation has no symbols
+  ///
+  /// In en, this message translates to:
+  /// **'Select at least one symbol'**
+  String get watchlistSimulationUniverseRequired;
+
+  /// Search field inside the paper simulation symbol picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search symbols'**
+  String get watchlistSimulationSearchSymbols;
+
+  /// Empty state for the paper simulation symbol search
+  ///
+  /// In en, this message translates to:
+  /// **'No matching symbols'**
+  String get watchlistSimulationNoSearchResults;
+
+  /// Empty state when a paper simulation already covers the whole collection
+  ///
+  /// In en, this message translates to:
+  /// **'Every symbol in this collection is already added.'**
+  String get watchlistSimulationAllSymbolsAdded;
+
+  /// Title for the paper simulation add-symbol sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Add symbols'**
+  String get watchlistSimulationPickSymbolsTitle;
+
+  /// Virtual cash weight field in the create sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual cash (%)'**
+  String get watchlistSimulationCashPercentField;
+
+  /// Section label for a paper simulation name and virtual capital
+  ///
+  /// In en, this message translates to:
+  /// **'Basics'**
+  String get watchlistSimulationBasicsSection;
+
+  /// Section label for paper simulation target weights
+  ///
+  /// In en, this message translates to:
+  /// **'Symbols and weights'**
+  String get watchlistSimulationHoldingsSection;
+
+  /// Live allocation total while editing paper simulation weights
+  ///
+  /// In en, this message translates to:
+  /// **'{allocated}% allocated · {remaining}% left'**
+  String watchlistSimulationAllocatedSummary(
+    String allocated,
+    String remaining,
+  );
+
+  /// Live allocation total when paper simulation weights sum to 100%
+  ///
+  /// In en, this message translates to:
+  /// **'100% allocated'**
+  String get watchlistSimulationTotalReady;
+
+  /// Distribute paper simulation weights equally
+  ///
+  /// In en, this message translates to:
+  /// **'Split equally'**
+  String get watchlistSimulationEqualizeAction;
+
+  /// Put the remaining paper simulation weight into virtual cash
+  ///
+  /// In en, this message translates to:
+  /// **'Fill with cash'**
+  String get watchlistSimulationFillCashAction;
+
+  /// Add a symbol to the paper simulation allocation
+  ///
+  /// In en, this message translates to:
+  /// **'Add symbol'**
+  String get watchlistSimulationAddPositionAction;
+
+  /// Remove a symbol from the paper simulation allocation
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {symbol}'**
+  String watchlistSimulationRemovePositionAction(String symbol);
+
+  /// Empty state for paper simulation target weights
+  ///
+  /// In en, this message translates to:
+  /// **'No symbols configured yet — add one to start.'**
+  String get watchlistSimulationNoPositions;
+
+  /// Target weight field for one paper simulation holding
+  ///
+  /// In en, this message translates to:
+  /// **'{symbol} weight (%)'**
+  String watchlistSimulationHoldingWeightField(String symbol);
+
+  /// Validation for an over-long paper simulation name
+  ///
+  /// In en, this message translates to:
+  /// **'Name cannot exceed {max} characters'**
+  String watchlistSimulationNameTooLong(int max);
+
+  /// Validation for the paper simulation virtual capital field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a virtual capital greater than 0'**
+  String get watchlistSimulationCapitalRequired;
+
   /// Remove a symbol from only the selected collection
   ///
   /// In en, this message translates to:

@@ -503,8 +503,6 @@ class _WatchlistBody extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           if (items.isEmpty)
             _WatchlistEmpty(onAdd: onAdd)
-          else if (filteredItems.isEmpty)
-            _WatchlistFilteredEmpty(onClear: onClearFilter)
           else ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
@@ -522,36 +520,44 @@ class _WatchlistBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.s8),
-            AppGroupedSurface(
-              padding: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  for (var i = 0; i < sortedItems.length; i++) ...[
-                    _WatchlistRow(
-                      item: sortedItems[i],
-                      snapshot: byId[sortedItems[i].id],
-                      loadingQuote:
-                          loadingQuotes && byId[sortedItems[i].id] == null,
-                      onEdit: () => onEdit(sortedItems[i]),
-                      onManageCollections: () =>
-                          onManageCollections(sortedItems[i]),
-                      onRemoveFromCollection: onRemoveFromCollection == null
-                          ? null
-                          : () => onRemoveFromCollection!(sortedItems[i]),
-                      onRemove: () => onRemove(sortedItems[i]),
-                      onSelect: onSelect == null
-                          ? null
-                          : () => onSelect(sortedItems[i].id),
-                    ),
-                    if (i != sortedItems.length - 1)
-                      const AppGroupedDivider(
-                        indent: AppSpacing.s12,
-                        endIndent: AppSpacing.s12,
+            if (filteredItems.isEmpty)
+              _WatchlistFilteredEmpty(onClear: onClearFilter)
+            else
+              AppGroupedSurface(
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    for (var i = 0; i < sortedItems.length; i++) ...[
+                      _WatchlistRow(
+                        item: sortedItems[i],
+                        snapshot: byId[sortedItems[i].id],
+                        loadingQuote:
+                            loadingQuotes && byId[sortedItems[i].id] == null,
+                        onEdit: () => onEdit(sortedItems[i]),
+                        onManageCollections: () =>
+                            onManageCollections(sortedItems[i]),
+                        onRemoveFromCollection: onRemoveFromCollection == null
+                            ? null
+                            : () => onRemoveFromCollection!(sortedItems[i]),
+                        onRemove: () => onRemove(sortedItems[i]),
+                        onSelect: onSelect == null
+                            ? null
+                            : () => onSelect(sortedItems[i].id),
                       ),
+                      if (i != sortedItems.length - 1)
+                        const AppGroupedDivider(
+                          indent: AppSpacing.s12,
+                          endIndent: AppSpacing.s12,
+                        ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            // The paper scenario belongs to the collection, so it renders for
+            // every selected collection — including one whose items are all
+            // filtered out, which is when the entry used to vanish entirely.
+            // It stays below the symbols: the watchlist itself is the primary
+            // content and must keep the first screen.
             if (selectedCollection != null) ...[
               const SizedBox(height: AppSpacing.s8),
               Padding(

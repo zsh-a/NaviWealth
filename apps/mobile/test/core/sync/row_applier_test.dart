@@ -387,12 +387,20 @@ void main() {
       ]),
       1,
     );
+    // The tombstone hides the definition but keeps this device's observation
+    // rows. A delete is undoable, and a newer remote change can revive the
+    // definition through last-writer-wins; purging here would silently restart
+    // the observed curve on the device that never asked for the delete.
+    final tombstoned = await (db.select(
+      db.watchlistSimulations,
+    )..where((t) => t.id.equals('simulation-1'))).getSingle();
+    expect(tombstoned.deletedAt, isNotNull);
     final observationCount = await db
         .customSelect(
           'SELECT COUNT(*) AS count FROM watchlist_simulation_observations',
         )
         .getSingle();
-    expect(observationCount.read<int>('count'), 0);
+    expect(observationCount.read<int>('count'), 1);
   });
 
   test('skips rows that are not syncable tables', () async {

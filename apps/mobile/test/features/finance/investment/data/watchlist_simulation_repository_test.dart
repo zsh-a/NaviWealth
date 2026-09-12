@@ -144,6 +144,8 @@ void main() {
         db.watchlistSimulations,
       )..where((table) => table.id.equals(simulation.id))).getSingle();
       expect(deletedSimulation.deletedAt, isNotNull);
+      // Observations survive the tombstone so undo can restore the whole
+      // observed curve instead of resetting it to the baseline.
       final rawObservationCount = await db
           .customSelect(
             'SELECT COUNT(*) AS count FROM watchlist_simulation_observations '
@@ -151,7 +153,7 @@ void main() {
             variables: [Variable<String>(simulation.id)],
           )
           .getSingle();
-      expect(rawObservationCount.read<int>('count'), 0);
+      expect(rawObservationCount.read<int>('count'), 1);
       expect(
         await repository
             .watchPositions(ownerUserId: 'u-test', simulationId: simulation.id)
@@ -168,8 +170,32 @@ void main() {
             variables: [Variable<String>(simulation.id)],
           )
           .getSingle();
-      expect(countAfterWatch.read<int>('count'), 0);
+      expect(countAfterWatch.read<int>('count'), 1);
       expect(watchedAfterDelete, isEmpty);
+
+      outbox.clearQueued();
+      await repository.restore(simulation);
+      expect(
+        (await repository.watchActive('u-test').first).single.id,
+        simulation.id,
+      );
+      expect(
+        await repository
+            .watchPositions(ownerUserId: 'u-test', simulationId: simulation.id)
+            .first,
+        hasLength(1),
+      );
+      expect(
+        (await repository
+                .watchObservations(
+                  ownerUserId: 'u-test',
+                  simulationId: simulation.id,
+                )
+                .first)
+            .single
+            .projectedValue,
+        simulation.startingCapital,
+      );
 
       for (final table in const [
         'investment_portfolios',
@@ -183,6 +209,66 @@ void main() {
       }
     },
   );
+
+  test('renames and re-bases virtual capital without touching history', () async {
+    final db = makeTestDatabase();
+    final outbox = InMemoryOutboxStore();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-growth',
+      name: 'First name',
+      baseCurrency: 'USD',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'us_stock:AAPL': Decimal.one},
+      cashWeight: Decimal.zero,
+    );
+    outbox.clearQueued();
+
+    final updated = await repository.updateDefinition(
+      simulation: simulation,
+      name: '  Renamed mix  ',
+      startingCapital: Decimal.parse('2500'),
+    );
+
+    expect(updated.id, simulation.id);
+    expect(updated.name, 'Renamed mix');
+    expect(updated.startingCapital, Decimal.parse('2500'));
+    expect(updated.baselineAt, simulation.baselineAt);
+    expect(outbox.queued.map((item) => item.table), [
+      WatchlistSimulationRepository.simulationsTable,
+    ]);
+    final stored = (await repository.watchActive('u-test').first).single;
+    expect(stored.name, 'Renamed mix');
+    expect(stored.startingCapital, Decimal.parse('2500'));
+    expect(
+      await repository
+          .watchPositions(ownerUserId: 'u-test', simulationId: simulation.id)
+          .first,
+      hasLength(1),
+    );
+
+    expect(
+      () => repository.updateDefinition(
+        simulation: updated,
+        name: 'x' * 81,
+        startingCapital: Decimal.parse('10'),
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => repository.updateDefinition(
+        simulation: updated,
+        name: 'Valid',
+        startingCapital: Decimal.zero,
+      ),
+      throwsArgumentError,
+    );
+  });
 
   test(
     'compounds once per observed day and replaces same-day refreshes',

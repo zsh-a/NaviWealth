@@ -820,6 +820,63 @@ class WatchlistSimulationRepository {
     return simulation;
   }
 
+  /// Renames a simulation and/or changes its virtual capital.
+  ///
+  /// Only the definition row changes: target weights, observations and paper
+  /// dividend references are untouched, so editing a name or the notional
+  /// amount never rewrites history.
+  Future<WatchlistSimulation> updateDefinition({
+    required WatchlistSimulation simulation,
+    required String name,
+    required Decimal startingCapital,
+  }) async {
+    final normalizedName = _requireName(name);
+    if (startingCapital <= Decimal.zero) {
+      throw ArgumentError.value(startingCapital, 'startingCapital');
+    }
+    if (normalizedName == simulation.name &&
+        startingCapital == simulation.startingCapital) {
+      return simulation;
+    }
+    final stamp = await _stamper.stamp();
+    final updated = WatchlistSimulation(
+      id: simulation.id,
+      collectionId: simulation.collectionId,
+      name: normalizedName,
+      baseCurrency: simulation.baseCurrency,
+      startingCapital: startingCapital,
+      cashWeight: simulation.cashWeight,
+      calculationMode: simulation.calculationMode,
+      allocationProtocolVersion: simulation.allocationProtocolVersion,
+      baselineAt: simulation.baselineAt,
+      createdAt: simulation.createdAt,
+      sync: simulation.sync,
+    );
+    await _db.transaction(() async {
+      final changed =
+          await (_db.update(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .write(
+                WatchlistSimulationsCompanion(
+                  name: Value(normalizedName),
+                  startingCapital: Value(startingCapital),
+                  updatedAt: Value(stamp.now),
+                  updatedByDevice: Value(stamp.deviceId),
+                  hlc: Value(stamp.hlc),
+                ),
+              );
+      if (changed == 0) {
+        throw StateError('Watchlist simulation is not active.');
+      }
+      await _outbox.enqueue(table: simulationsTable, rowId: simulation.id);
+    });
+    return updated;
+  }
+
   /// Records one derived observation per UTC calendar day.
   ///
   /// Repeated quotes for the same day replace that day's projection using
@@ -1560,6 +1617,11 @@ class WatchlistSimulationRepository {
     });
   }
 
+  /// Tombstones the scenario so the delete can be undone by [restore].
+  ///
+  /// Every syncable child row is soft-deleted with the same stamp; the
+  /// device-local observation rows are left untouched so an undo brings the
+  /// whole observed curve back instead of restarting it at the baseline.
   Future<void> delete(WatchlistSimulation simulation) async {
     final stamp = await _stamper.stamp();
     await _db.transaction(() async {
@@ -1688,12 +1750,158 @@ class WatchlistSimulationRepository {
         );
         await _outbox.enqueue(table: actionEntriesTable, rowId: row.id);
       }
-      await (_db.delete(_db.watchlistSimulationObservations)..where(
+      // Observation rows are deliberately kept: they carry no SyncMeta and
+      // are hidden while the definition is tombstoned, so keeping them lets
+      // [restore] bring back the whole observed curve instead of resetting a
+      // months-long series to the baseline.
+    });
+  }
+
+  /// Reverts [delete] for a simulation that is still tombstoned.
+  ///
+  /// Only rows tombstoned by the same delete stamp are revived, so positions
+  /// removed through a normal reallocation (those carry an older `deletedAt`)
+  /// stay removed and the restored weights still add up to 100%.
+  Future<void> restore(WatchlistSimulation simulation) async {
+    final stamp = await _stamper.stamp();
+    await _db.transaction(() async {
+      final row =
+          await (_db.select(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(stamp.ownerUserId),
+              ))
+              .getSingleOrNull();
+      final deletedAt = row?.deletedAt;
+      if (row == null || deletedAt == null) return;
+
+      await (_db.update(_db.watchlistSimulations)..where(
             (t) =>
-                t.ownerUserId.equals(stamp.ownerUserId) &
-                t.simulationId.equals(simulation.id),
+                t.id.equals(simulation.id) &
+                t.ownerUserId.equals(stamp.ownerUserId),
           ))
-          .go();
+          .write(
+            WatchlistSimulationsCompanion(
+              updatedAt: Value(stamp.now),
+              updatedByDevice: Value(stamp.deviceId),
+              hlc: Value(stamp.hlc),
+              deletedAt: const Value(null),
+            ),
+          );
+      await _outbox.enqueue(table: simulationsTable, rowId: simulation.id);
+
+      final heads =
+          await (_db.select(_db.watchlistSimulationAllocationHeads)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.equals(deletedAt),
+              ))
+              .get();
+      for (final head in heads) {
+        await (_db.update(
+          _db.watchlistSimulationAllocationHeads,
+        )..where((t) => t.id.equals(head.id))).write(
+          WatchlistSimulationAllocationHeadsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: const Value(null),
+          ),
+        );
+        await _outbox.enqueue(table: allocationHeadsTable, rowId: head.id);
+      }
+
+      final positions =
+          await (_db.select(_db.watchlistSimulationPositions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.equals(deletedAt),
+              ))
+              .get();
+      for (final position in positions) {
+        await (_db.update(
+          _db.watchlistSimulationPositions,
+        )..where((t) => t.id.equals(position.id))).write(
+          WatchlistSimulationPositionsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: const Value(null),
+          ),
+        );
+        await _outbox.enqueue(table: positionsTable, rowId: position.id);
+      }
+
+      final allocationVersions =
+          await (_db.select(_db.watchlistSimulationAllocationVersions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.equals(deletedAt),
+              ))
+              .get();
+      for (final version in allocationVersions) {
+        await (_db.update(
+          _db.watchlistSimulationAllocationVersions,
+        )..where((t) => t.id.equals(version.id))).write(
+          WatchlistSimulationAllocationVersionsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: const Value(null),
+          ),
+        );
+        await _outbox.enqueue(
+          table: allocationVersionsTable,
+          rowId: version.id,
+        );
+      }
+
+      final holdingVersions =
+          await (_db.select(_db.watchlistSimulationHoldingVersions)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.equals(deletedAt),
+              ))
+              .get();
+      for (final version in holdingVersions) {
+        await (_db.update(
+          _db.watchlistSimulationHoldingVersions,
+        )..where((t) => t.id.equals(version.id))).write(
+          WatchlistSimulationHoldingVersionsCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: const Value(null),
+          ),
+        );
+        await _outbox.enqueue(table: holdingVersionsTable, rowId: version.id);
+      }
+
+      final actionEntries =
+          await (_db.select(_db.watchlistSimulationActionEntries)..where(
+                (t) =>
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.simulationId.equals(simulation.id) &
+                    t.deletedAt.equals(deletedAt),
+              ))
+              .get();
+      for (final entry in actionEntries) {
+        await (_db.update(
+          _db.watchlistSimulationActionEntries,
+        )..where((t) => t.id.equals(entry.id))).write(
+          WatchlistSimulationActionEntriesCompanion(
+            updatedAt: Value(stamp.now),
+            updatedByDevice: Value(stamp.deviceId),
+            hlc: Value(stamp.hlc),
+            deletedAt: const Value(null),
+          ),
+        );
+        await _outbox.enqueue(table: actionEntriesTable, rowId: entry.id);
+      }
     });
   }
 
