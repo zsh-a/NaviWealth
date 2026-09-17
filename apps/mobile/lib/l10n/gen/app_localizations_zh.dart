@@ -10,6 +10,45 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get watchlistSearchHint => '搜索代码或名称';
+
+  @override
+  String get watchlistExistingNotice => '已在自选中，将保留原有提醒和排序。';
+
+  @override
+  String get watchlistAlertRangeError => '下限价格必须低于上限价格。';
+
+  @override
+  String get watchlistAlertEnabled => '启用提醒';
+
+  @override
+  String get watchlistAlertPaused => '已暂停';
+
+  @override
+  String get watchlistAlertWaiting => '等待价格条件';
+
+  @override
+  String get watchlistAlertDelivered => '本设备已发送全部已配置提醒';
+
+  @override
+  String get watchlistAlertRearm => '重新启用提醒';
+
+  @override
+  String get watchlistSimulationScopeNote => '基于整个分组，不受列表筛选影响。';
+
+  @override
+  String get watchlistBulkVisibleOnly => '仅包含当前搜索与筛选结果。';
+
+  @override
+  String get watchlistAlertOnceNote => '每个价格条件在本设备每个规则版本仅提醒一次，可重新启用。';
+
+  @override
+  String get watchlistHistoryPeriod => '近一个月 · 每日收盘';
+
+  @override
+  String get watchlistManageScope => '分组管理';
+
+  @override
   String get journalContractSection => '合约信息';
 
   @override

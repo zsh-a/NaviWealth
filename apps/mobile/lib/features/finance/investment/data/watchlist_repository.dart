@@ -22,6 +22,14 @@ class PriceAlertRules {
 
   bool get hasRule => above != null || below != null;
 
+  bool get isValid =>
+      (above == null || above! > Decimal.zero) &&
+      (below == null || below! > Decimal.zero) &&
+      (above == null || below == null || below! < above!);
+
+  bool sameAs(PriceAlertRules other) =>
+      above == other.above && below == other.below && enabled == other.enabled;
+
   Map<String, Object?> toJson() => {
     'enabled': enabled,
     if (above != null) 'above': above.toString(),
@@ -218,6 +226,7 @@ class WatchlistRepository {
     final stamp = await _stamper.stamp();
     final normalizedSymbol = symbol.trim().toUpperCase();
     final id = idFor(market: market, symbol: normalizedSymbol);
+    WatchlistItem? preserved;
     final alertJson = jsonEncode(rules.toJson());
     final row = WatchlistItemsCompanion.insert(
       id: id,
@@ -232,8 +241,19 @@ class WatchlistRepository {
       deletedAt: const Value(null),
     );
     await _db.transaction(() async {
-      await _db.into(_db.watchlistItems).insertOnConflictUpdate(row);
-      await _outbox.enqueue(table: _tableName, rowId: id);
+      final existing = await (_db.select(
+        _db.watchlistItems,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (existing != null && existing.ownerUserId != stamp.ownerUserId) {
+        throw StateError('Watchlist item belongs to a different owner.');
+      }
+      if (existing != null && existing.deletedAt == null) {
+        preserved = _rowToDomain(existing);
+      } else {
+        if (!rules.isValid) throw ArgumentError('Invalid price alert range.');
+        await _db.into(_db.watchlistItems).insertOnConflictUpdate(row);
+        await _outbox.enqueue(table: _tableName, rowId: id);
+      }
       final requestedCollectionIds = collectionIds.toSet();
       final activeCollectionIds = requestedCollectionIds.isEmpty
           ? const <String>{}
@@ -255,19 +275,20 @@ class WatchlistRepository {
         );
       }
     });
-    return WatchlistItem(
-      id: id,
-      symbol: normalizedSymbol,
-      market: market,
-      addedAt: stamp.now,
-      alertRules: rules,
-      sync: SyncMeta(
-        ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
-      ),
-    );
+    return preserved ??
+        WatchlistItem(
+          id: id,
+          symbol: normalizedSymbol,
+          market: market,
+          addedAt: stamp.now,
+          alertRules: rules,
+          sync: SyncMeta(
+            ownerUserId: stamp.ownerUserId,
+            updatedAt: stamp.now,
+            updatedByDevice: stamp.deviceId,
+            hlc: stamp.hlc,
+          ),
+        );
   }
 
   Future<WatchlistCollection> createCollection(String name) async {
@@ -578,10 +599,25 @@ class WatchlistRepository {
   Future<void> updateAlertRules({
     required WatchlistItem item,
     required PriceAlertRules rules,
+    bool rearm = false,
   }) async {
+    if (!rules.isValid) throw ArgumentError('Invalid price alert range.');
     final stamp = await _stamper.stamp();
     final alertJson = jsonEncode(rules.toJson());
     await _db.transaction(() async {
+      final current =
+          await (_db.select(_db.watchlistItems)..where(
+                (t) =>
+                    t.id.equals(item.id) &
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (current == null) throw StateError('Watchlist item is inactive.');
+      if (!rearm &&
+          PriceAlertRules.fromJson(current.alertRulesJson).sameAs(rules)) {
+        return;
+      }
       await (_db.update(
         _db.watchlistItems,
       )..where((t) => t.id.equals(item.id))).write(
@@ -650,6 +686,7 @@ class WatchlistRepository {
           ownerUserId: stamp.ownerUserId,
           collectionId: collectionId,
         );
+    if (existing != null && existing.deletedAt == null) return;
     await _db
         .into(_db.watchlistCollectionMembers)
         .insertOnConflictUpdate(

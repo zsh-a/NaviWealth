@@ -93,6 +93,20 @@ breadth summary with abnormal quote states only. Quote rows are lazy-built and
 reserve their trend columns even when history is unavailable. Recent daily
 close history is shared by row sparklines and the dated detail chart.
 
+Watchlist search is transient and matches symbols and both catalog languages;
+it composes with the persisted scope and facets. Bulk organization uses that
+same visible result set, with explicit add/remove actions and a pinned footer.
+Large collection inventories use a searchable picker. Collection simulations
+open from the fixed toolbar, use the entire collection rather than filtered
+rows, and remain reachable after its last watched item is removed.
+
+Adding an already-active symbol preserves its original timestamp, alert rules,
+and rule revision while adding only missing memberships. Unchanged reminder
+saves are no-ops; pause/resume and explicit re-arming are distinct actions.
+The editor validates a positive, non-overlapping lower/upper price band and
+shows device-local delivery state. History-load failures remain retryable and
+are not presented as a successful empty history.
+
 The list publishes quote updates incrementally, reusing per-symbol in-flight
 requests and previous prices during refresh. Detail quotes do not wait for the
 whole list. Sequential list prefetch and the market service's cache/rate limits

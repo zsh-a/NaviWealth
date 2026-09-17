@@ -15,6 +15,41 @@ import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 void main() {
+  test(
+    'search matches code and both localized names while preserving facets',
+    () {
+      final item = WatchlistItem(
+        id: 'us_stock:AAPL',
+        symbol: 'AAPL',
+        market: AssetMarket.usStock,
+        addedAt: DateTime.utc(2026),
+        alertRules: const PriceAlertRules(),
+        sync: _item('us_stock:AAPL', 'AAPL').sync,
+        nameEn: 'Apple Inc.',
+        nameCn: '苹果公司',
+      );
+      for (final query in ['aapl', 'Apple', '苹果']) {
+        expect(
+          filterWatchlistItems(
+            items: [item],
+            snapshots: [],
+            filter: const WatchlistFilter(),
+            query: query,
+          ),
+          [item],
+        );
+      }
+      expect(
+        filterWatchlistItems(
+          items: [item],
+          snapshots: [],
+          filter: const WatchlistFilter(market: AssetMarket.hkStock),
+          query: 'Apple',
+        ),
+        isEmpty,
+      );
+    },
+  );
   test('publishes partial quotes, shares requests and lets detail bypass the batch', () async {
     final first = _item('us_stock:AAPL', 'AAPL');
     final slow = _item('us_stock:MSFT', 'MSFT');

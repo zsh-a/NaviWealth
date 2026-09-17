@@ -18,6 +18,63 @@ import '../../data/repositories/_stub_stamper.dart';
 
 void main() {
   test(
+    'duplicate add preserves reminder revision, added time and memberships',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final outbox = InMemoryOutboxStore();
+      final repo = WatchlistRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      final collection = await repo.createCollection('Core');
+      final first = await repo.add(
+        symbol: 'AAPL',
+        market: AssetMarket.usStock,
+        rules: PriceAlertRules(above: Decimal.parse('200')),
+      );
+      final persisted = (await repo.listActive('u-test')).single;
+      final duplicate = await repo.add(
+        symbol: 'aapl',
+        market: AssetMarket.usStock,
+        collectionIds: [collection.id],
+      );
+      expect(duplicate.alertRules.above, first.alertRules.above);
+      expect(duplicate.addedAt, persisted.addedAt);
+      expect(duplicate.sync.hlc, first.sync.hlc);
+      expect(await repo.watchCollectionMembers('u-test').first, hasLength(1));
+      final count = outbox.queued.length;
+      await repo.add(
+        symbol: 'AAPL',
+        market: AssetMarket.usStock,
+        collectionIds: [collection.id],
+      );
+      await repo.updateAlertRules(item: duplicate, rules: first.alertRules);
+      expect(outbox.queued, hasLength(count));
+      await repo.updateAlertRules(
+        item: duplicate,
+        rules: first.alertRules,
+        rearm: true,
+      );
+      expect(outbox.queued, hasLength(count + 1));
+      expect(
+        (await repo.listActive('u-test')).single.sync.hlc,
+        isNot(first.sync.hlc),
+      );
+      await expectLater(
+        repo.updateAlertRules(
+          item: duplicate,
+          rules: PriceAlertRules(
+            above: Decimal.parse('100'),
+            below: Decimal.parse('120'),
+          ),
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
+  test(
     'writes watchlist items through ProviderContainer and sync outbox',
     () async {
       final db = makeTestDatabase();

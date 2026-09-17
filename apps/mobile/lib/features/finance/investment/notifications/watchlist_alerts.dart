@@ -42,6 +42,20 @@ const NotificationChannelSpec kWatchlistAlertNotificationChannel =
 
 const String _firedSignaturesKey = 'naviwealth.finance.watchlist.alerts.fired';
 
+final watchlistAlertDeliveredProvider = Provider.autoDispose
+    .family<bool, WatchlistItem>((ref, item) {
+      final fired = WatchlistAlertLedger(ref.watch(sharedPreferencesProvider))
+          .read();
+      final rules = item.alertRules;
+      return rules.hasRule &&
+          (rules.above == null ||
+              fired.contains(
+                _ruleSignature(item, 'above', '${rules.above}'),
+              )) &&
+          (rules.below == null ||
+              fired.contains(_ruleSignature(item, 'below', '${rules.below}')));
+    });
+
 /// Keeps the ledger from growing without bound on a long-lived install.
 const int _maxLedgerEntries = 128;
 
@@ -215,6 +229,7 @@ class WatchlistAlertMonitor with WidgetsBindingObserver {
     if (_disposed) return;
     (_fired ??= _ledger.read()).add(event.signature);
     await _ledger.remember({event.signature});
+    if (!_disposed) _ref.invalidate(watchlistAlertDeliveredProvider);
   }
 
   void refresh() {

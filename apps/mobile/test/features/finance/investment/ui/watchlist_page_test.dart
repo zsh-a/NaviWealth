@@ -324,6 +324,86 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('search and bulk selection use the same visible items', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        items: [_namedItem, _otherItem],
+        collections: [_collection],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText), '苹果');
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(ValueKey('watchlist-symbol-${_otherItem.id}')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(ValueKey('watchlist-symbol-${_namedItem.id}')),
+      findsOneWidget,
+    );
+    await _openToolbarMenu(tester);
+    await tester.tap(find.text('Organize symbols'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(ValueKey('watchlist-bulk-item-${_otherItem.id}')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(ValueKey('watchlist-bulk-item-${_namedItem.id}')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('empty collections retain the simulation entry', (tester) async {
+    await _preferences.setString(
+      kWatchlistCollectionPreferenceKey,
+      'collection:${_collection.id}',
+    );
+    await tester.pumpWidget(
+      _wrap(TargetPlatform.android, items: [], collections: [_collection]),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(FLucideIcons.chartLine));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Based on the entire collection, independent of list filters.'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('watchlist-simulation-section')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('many collections use a searchable picker', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        collections: [
+          for (var i = 0; i < 6; i++)
+            WatchlistCollection(
+              id: 'group-$i',
+              name: 'Group $i',
+              createdAt: _collection.createdAt,
+              sync: _collection.sync,
+            ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(FLucideIcons.layers).first);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText).last, 'Group 5');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Group 0'), findsNothing);
+    expect(find.textContaining('Group 5'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'does not duplicate an ungrouped list and disables incomplete submission',
     (tester) async {

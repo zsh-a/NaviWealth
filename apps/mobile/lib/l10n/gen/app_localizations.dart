@@ -98,6 +98,84 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @watchlistSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search symbol or name'**
+  String get watchlistSearchHint;
+
+  /// No description provided for @watchlistExistingNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Already watched. Existing alerts and order will be kept.'**
+  String get watchlistExistingNotice;
+
+  /// No description provided for @watchlistAlertRangeError.
+  ///
+  /// In en, this message translates to:
+  /// **'The lower price must be below the upper price.'**
+  String get watchlistAlertRangeError;
+
+  /// No description provided for @watchlistAlertEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable reminders'**
+  String get watchlistAlertEnabled;
+
+  /// No description provided for @watchlistAlertPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get watchlistAlertPaused;
+
+  /// No description provided for @watchlistAlertWaiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for price condition'**
+  String get watchlistAlertWaiting;
+
+  /// No description provided for @watchlistAlertDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'All configured reminders delivered on this device'**
+  String get watchlistAlertDelivered;
+
+  /// No description provided for @watchlistAlertRearm.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-enable reminders'**
+  String get watchlistAlertRearm;
+
+  /// No description provided for @watchlistSimulationScopeNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Based on the entire collection, independent of list filters.'**
+  String get watchlistSimulationScopeNote;
+
+  /// No description provided for @watchlistBulkVisibleOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only items matching the current search and filters are included.'**
+  String get watchlistBulkVisibleOnly;
+
+  /// No description provided for @watchlistAlertOnceNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Each price condition notifies once per rule version on this device. Re-enable to notify again.'**
+  String get watchlistAlertOnceNote;
+
+  /// No description provided for @watchlistHistoryPeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent month · daily close'**
+  String get watchlistHistoryPeriod;
+
+  /// No description provided for @watchlistManageScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Collections'**
+  String get watchlistManageScope;
+
   /// No description provided for @journalContractSection.
   ///
   /// In en, this message translates to:

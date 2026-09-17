@@ -10,6 +10,51 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get watchlistSearchHint => 'Search symbol or name';
+
+  @override
+  String get watchlistExistingNotice =>
+      'Already watched. Existing alerts and order will be kept.';
+
+  @override
+  String get watchlistAlertRangeError =>
+      'The lower price must be below the upper price.';
+
+  @override
+  String get watchlistAlertEnabled => 'Enable reminders';
+
+  @override
+  String get watchlistAlertPaused => 'Paused';
+
+  @override
+  String get watchlistAlertWaiting => 'Waiting for price condition';
+
+  @override
+  String get watchlistAlertDelivered =>
+      'All configured reminders delivered on this device';
+
+  @override
+  String get watchlistAlertRearm => 'Re-enable reminders';
+
+  @override
+  String get watchlistSimulationScopeNote =>
+      'Based on the entire collection, independent of list filters.';
+
+  @override
+  String get watchlistBulkVisibleOnly =>
+      'Only items matching the current search and filters are included.';
+
+  @override
+  String get watchlistAlertOnceNote =>
+      'Each price condition notifies once per rule version on this device. Re-enable to notify again.';
+
+  @override
+  String get watchlistHistoryPeriod => 'Recent month · daily close';
+
+  @override
+  String get watchlistManageScope => 'Collections';
+
+  @override
   String get journalContractSection => 'Contract';
 
   @override

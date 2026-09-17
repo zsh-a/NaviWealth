@@ -87,11 +87,14 @@ final _snapshots = [
 
 void main() {
   runAllVariants('watchlist_symbol_detail', (tester, variant) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
     await pumpAndSnapshotMobile(
       tester,
       name: 'watchlist_symbol_detail',
       variant: variant,
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
         watchlistHistoryProvider.overrideWith(
           (_, key) async => [
             for (var i = 0; i < 15; i++)

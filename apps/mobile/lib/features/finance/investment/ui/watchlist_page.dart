@@ -72,16 +72,14 @@ class WatchlistPage extends ConsumerWidget {
         AppHeaderAction(
           icon: const Icon(FLucideIcons.refreshCw),
           semanticsLabel: l10n.commonRefresh,
-          onPress: () {
-            _invalidateQuotes(ref);
-          },
+          onPress:
+              quotes.isLoading ||
+                  (quotes.value?.any((snapshot) => snapshot.isLoading) ?? false)
+              ? null
+              : () {
+                  _invalidateQuotes(ref);
+                },
         ),
-        if (selectedCollection != null)
-          AppHeaderAction(
-            icon: const Icon(FLucideIcons.folderCog),
-            semanticsLabel: l10n.watchlistEditCollectionAction,
-            onPress: () => _editCollection(context, ref, selectedCollection),
-          ),
         AppHeaderAction(
           icon: const Icon(FLucideIcons.plus),
           semanticsLabel: l10n.watchlistAddAction,
@@ -130,15 +128,25 @@ class WatchlistPage extends ConsumerWidget {
             onFilterChanged: (next) => ref
                 .read(watchlistViewStateProvider.notifier)
                 .selectFilter(next),
-            onClearFilter: () =>
-                ref.read(watchlistViewStateProvider.notifier).clearFilter(),
+            onClearFilter: () {
+              ref.read(watchlistViewStateProvider.notifier).clearFilter();
+              ref.read(watchlistViewStateProvider.notifier).search('');
+            },
+            onEditCollection: selectedCollection == null
+                ? null
+                : () => _editCollection(context, ref, selectedCollection),
             onCreateCollection: () =>
                 showWatchlistCollectionSheet(context: context),
             onBulkManage: items.isEmpty || collections.isEmpty
                 ? null
                 : () => showWatchlistBulkMembershipSheet(
                     context: context,
-                    items: items,
+                    items: filterWatchlistItems(
+                      items: items,
+                      snapshots: quotes.value ?? const [],
+                      filter: viewState.filter,
+                      query: viewState.query,
+                    ),
                     collections: collections,
                     removalCollectionId: scope.collectionId,
                   ),
@@ -211,6 +219,7 @@ class _WatchlistBody extends StatelessWidget {
     required this.onManageCollections,
     required this.onRemoveFromCollection,
     required this.onRemove,
+    this.onEditCollection,
   });
 
   final List<WatchlistItem> items;
@@ -234,6 +243,7 @@ class _WatchlistBody extends StatelessWidget {
   final ValueChanged<WatchlistItem> onManageCollections;
   final ValueChanged<WatchlistItem>? onRemoveFromCollection;
   final ValueChanged<WatchlistItem> onRemove;
+  final VoidCallback? onEditCollection;
 
   @override
   Widget build(BuildContext context) {
@@ -242,6 +252,7 @@ class _WatchlistBody extends StatelessWidget {
       items: items,
       snapshots: snapshots,
       filter: viewState.filter,
+      query: viewState.query,
     );
     final filteredItemIds = filteredItems.map((item) => item.id).toSet();
     final filteredSnapshots = snapshots
@@ -278,6 +289,19 @@ class _WatchlistBody extends StatelessWidget {
             onBulkManage: onBulkManage,
             onReorderCollections: onReorderCollections,
             onReorderItems: onReorderItems,
+            onEditCollection: onEditCollection,
+            onOpenSimulation: selectedCollection == null
+                ? null
+                : () => showAppSheet<void>(
+                    context: context,
+                    title: selectedCollection!.name,
+                    subtitle: AppLocalizations.of(context)
+                        .watchlistSimulationScopeNote,
+                    builder: (_) => _WatchlistSimulationBatch(
+                      collection: selectedCollection!,
+                      items: items,
+                    ),
+                  ),
           ),
           Expanded(
             child: CustomScrollView(
@@ -346,16 +370,6 @@ class _WatchlistBody extends StatelessWidget {
                     },
                   ),
                 ),
-                if (items.isNotEmpty && selectedCollection != null)
-                  SliverPadding(
-                    padding: const EdgeInsets.all(AppSpacing.s12),
-                    sliver: SliverToBoxAdapter(
-                      child: _WatchlistSimulationBatch(
-                        collection: selectedCollection!,
-                        items: items,
-                      ),
-                    ),
-                  ),
                 SliverPadding(
                   padding: shellTabContentPadding(
                     context,
@@ -662,37 +676,47 @@ Future<void> _removeItem(
   WidgetRef ref,
   WatchlistItem item,
 ) async {
-  final l10n = AppLocalizations.of(context);
-  final repo = await ref.read(watchlistRepositoryProvider.future);
-  final collectionIds = await repo.remove(item);
-  _invalidateQuotes(ref);
-  if (!context.mounted) return;
-  final undo = FormUndoAction(() async {
-    await repo.add(
-      symbol: item.symbol,
-      market: item.market,
-      rules: item.alertRules,
-      collectionIds: collectionIds,
-    );
+  try {
+    final l10n = AppLocalizations.of(context);
+    final repo = await ref.read(watchlistRepositoryProvider.future);
+    final collectionIds = await repo.remove(item);
     _invalidateQuotes(ref);
-  });
-  AppMessenger.show(
-    context,
-    ToastKind.success,
-    l10n.commonDeleted,
-    actionLabel: l10n.commonUndo,
-    onAction: () => unawaited(
-      runFormUndoWithFeedback(
-        context: context,
-        action: undo,
-        logger: ref.read(loggerProvider),
-        successMessage: l10n.commonUndoSucceeded,
-        failureMessage: (_) => l10n.commonUndoFailed,
-        retryLabel: l10n.commonRetry,
-        tag: 'watchlist-remove',
+    if (!context.mounted) return;
+    final undo = FormUndoAction(() async {
+      await repo.add(
+        symbol: item.symbol,
+        market: item.market,
+        rules: item.alertRules,
+        collectionIds: collectionIds,
+      );
+      _invalidateQuotes(ref);
+    });
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      l10n.commonDeleted,
+      actionLabel: l10n.commonUndo,
+      onAction: () => unawaited(
+        runFormUndoWithFeedback(
+          context: context,
+          action: undo,
+          logger: ref.read(loggerProvider),
+          successMessage: l10n.commonUndoSucceeded,
+          failureMessage: (_) => l10n.commonUndoFailed,
+          retryLabel: l10n.commonRetry,
+          tag: 'watchlist-remove',
+        ),
       ),
-    ),
-  );
+    );
+  } catch (error) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error),
+      );
+    }
+  }
 }
 
 Future<void> _removeFromCollection(
@@ -702,37 +726,48 @@ Future<void> _removeFromCollection(
   String collectionId,
   List<WatchlistCollectionMember> members,
 ) async {
-  final previousIds = members
-      .where((entry) => entry.watchlistItemId == item.id)
-      .map((entry) => entry.collectionId)
-      .toSet();
-  final remainingIds = Set<String>.from(previousIds)..remove(collectionId);
-  final repo = await ref.read(watchlistRepositoryProvider.future);
-  await repo.setCollectionsForItem(item: item, collectionIds: remainingIds);
-  ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
-  if (!context.mounted) return;
-  final l10n = AppLocalizations.of(context);
-  final undo = FormUndoAction(() async {
-    await repo.setCollectionsForItem(item: item, collectionIds: previousIds);
+  try {
+    final repo = await ref.read(watchlistRepositoryProvider.future);
+    await repo.removeItemsFromCollection(
+      items: [item],
+      collectionId: collectionId,
+    );
     ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
-  });
-  AppMessenger.show(
-    context,
-    ToastKind.success,
-    l10n.watchlistRemovedFromCollection,
-    actionLabel: l10n.commonUndo,
-    onAction: () => unawaited(
-      runFormUndoWithFeedback(
-        context: context,
-        action: undo,
-        logger: ref.read(loggerProvider),
-        successMessage: l10n.commonUndoSucceeded,
-        failureMessage: (_) => l10n.commonUndoFailed,
-        retryLabel: l10n.commonRetry,
-        tag: 'watchlist-remove-from-collection',
+    if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context);
+    final undo = FormUndoAction(() async {
+      await repo.addItemsToCollection(
+        items: [item],
+        collectionId: collectionId,
+      );
+      ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
+    });
+    AppMessenger.show(
+      context,
+      ToastKind.success,
+      l10n.watchlistRemovedFromCollection,
+      actionLabel: l10n.commonUndo,
+      onAction: () => unawaited(
+        runFormUndoWithFeedback(
+          context: context,
+          action: undo,
+          logger: ref.read(loggerProvider),
+          successMessage: l10n.commonUndoSucceeded,
+          failureMessage: (_) => l10n.commonUndoFailed,
+          retryLabel: l10n.commonRetry,
+          tag: 'watchlist-remove-from-collection',
+        ),
       ),
-    ),
-  );
+    );
+  } catch (error) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error),
+      );
+    }
+  }
 }
 
 void _invalidateQuotes(WidgetRef ref) {

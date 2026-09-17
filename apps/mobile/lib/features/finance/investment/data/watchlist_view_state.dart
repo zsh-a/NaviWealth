@@ -41,11 +41,13 @@ class WatchlistViewState {
     this.scope = const WatchlistScope.all(),
     this.sortOrder = WatchlistSortOrder.defaultOrder,
     this.filter = const WatchlistFilter(),
+    this.query = '',
   });
 
   final WatchlistScope scope;
   final WatchlistSortOrder sortOrder;
   final WatchlistFilter filter;
+  final String query;
 
   bool get hasFilter => !filter.isDefault;
 
@@ -53,10 +55,12 @@ class WatchlistViewState {
     WatchlistScope? scope,
     WatchlistSortOrder? sortOrder,
     WatchlistFilter? filter,
+    String? query,
   }) => WatchlistViewState(
     scope: scope ?? this.scope,
     sortOrder: sortOrder ?? this.sortOrder,
     filter: filter ?? this.filter,
+    query: query ?? this.query,
   );
 
   @override
@@ -64,10 +68,11 @@ class WatchlistViewState {
       other is WatchlistViewState &&
       other.scope == scope &&
       other.sortOrder == sortOrder &&
-      other.filter == filter;
+      other.filter == filter &&
+      other.query == query;
 
   @override
-  int get hashCode => Object.hash(scope, sortOrder, filter);
+  int get hashCode => Object.hash(scope, sortOrder, filter, query);
 }
 
 final watchlistViewStateProvider =
@@ -122,6 +127,8 @@ class WatchlistViewStateController extends Notifier<WatchlistViewState> {
   }
 
   Future<void> clearFilter() => selectFilter(const WatchlistFilter());
+
+  void search(String query) => state = state.copyWith(query: query);
 
   /// Drops a scope whose collection no longer exists (deleted, or tombstoned
   /// by another device) so the list never renders an unreachable filter.

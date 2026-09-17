@@ -282,13 +282,21 @@ List<WatchlistItem> filterWatchlistItems({
   required List<WatchlistItem> items,
   required Iterable<WatchlistQuoteSnapshot> snapshots,
   required WatchlistFilter filter,
+  String query = '',
 }) {
-  if (filter.isDefault) return List<WatchlistItem>.of(items);
+  final search = query.trim().toLowerCase();
+  if (filter.isDefault && search.isEmpty) return List<WatchlistItem>.of(items);
   final snapshotsByItemId = <String, WatchlistQuoteSnapshot>{
     for (final snapshot in snapshots) snapshot.item.id: snapshot,
   };
   return items
       .where((item) {
+        if (search.isNotEmpty &&
+            ![item.symbol, item.assetName, item.nameEn, item.nameCn]
+                .whereType<String>()
+                .any((value) => value.toLowerCase().contains(search))) {
+          return false;
+        }
         if (filter.market != null && item.market != filter.market) return false;
         final hasConfiguredAlert =
             item.alertRules.enabled && item.alertRules.hasRule;
@@ -467,7 +475,7 @@ final watchlistHistoryProvider = FutureProvider.autoDispose
               ..sort((a, b) => a.asOf.compareTo(b.asOf));
         return bars;
       } on Object {
-        return const [];
+        rethrow;
       }
     });
 

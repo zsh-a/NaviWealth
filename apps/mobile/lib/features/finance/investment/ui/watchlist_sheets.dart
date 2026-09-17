@@ -98,6 +98,9 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   LocalSecurityChoice? _choice;
   bool _saving = false;
   bool _collectionsExpanded = false;
+  bool _enabled = true;
+  bool _rearm = false;
+  String? _error;
 
   /// Alerts are optional, so they start folded away when adding a symbol and
   /// open when the user came here specifically to change them.
@@ -107,6 +110,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   void initState() {
     super.initState();
     final item = widget.item;
+    _enabled = item?.alertRules.enabled ?? true;
     _above = TextEditingController(text: item?.alertRules.above?.toString());
     _below = TextEditingController(text: item?.alertRules.below?.toString());
     _selectedCollectionIds = <String>{?widget.initialCollectionId};
@@ -163,6 +167,8 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_error != null)
+              AppStatusBanner(kind: AppStatusKind.error, message: _error!),
             if (widget.item == null) ...[
               SymbolField(
                 markets: watchlistEditableMarkets,
@@ -171,6 +177,18 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                   widget.dirty.markDirty();
                 },
               ),
+              if (_choice != null &&
+                  (ref.watch(watchlistItemsProvider).value ??
+                          const <WatchlistItem>[])
+                      .any(
+                        (item) =>
+                            item.id ==
+                            WatchlistRepository.idFor(
+                              symbol: _choice!.symbol,
+                              market: _choice!.market,
+                            ),
+                      ))
+                Text(l10n.watchlistExistingNotice, style: context.captionStyle),
               const SizedBox(height: AppSpacing.s12),
               if (collections!.hasError)
                 FButton(
@@ -244,6 +262,49 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(l10n.watchlistAlertEnabled)),
+                        FSwitch(
+                          value: _enabled,
+                          onChange: _saving
+                              ? null
+                              : (value) {
+                                  setState(() => _enabled = value);
+                                  widget.dirty.markDirty();
+                                },
+                        ),
+                      ],
+                    ),
+                    if (widget.item != null) ...[
+                      Text(
+                        !_enabled
+                            ? l10n.watchlistAlertPaused
+                            : ref.watch(
+                                watchlistAlertDeliveredProvider(widget.item!),
+                              )
+                            ? l10n.watchlistAlertDelivered
+                            : l10n.watchlistAlertWaiting,
+                        style: context.captionStyle,
+                      ),
+                      if (ref.watch(
+                        watchlistAlertDeliveredProvider(widget.item!),
+                      ))
+                        FButton(
+                          variant: FButtonVariant.outline,
+                          onPress: _saving
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _enabled = true;
+                                    _rearm = true;
+                                  });
+                                  widget.dirty.markDirty();
+                                  _save();
+                                },
+                          child: Text(l10n.watchlistAlertRearm),
+                        ),
+                    ],
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -292,7 +353,7 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                         const SizedBox(width: AppSpacing.s8),
                         Expanded(
                           child: Text(
-                            '${l10n.watchlistAlertNotificationNote}\n${delivery?.value == true ? l10n.watchlistReminderSystem : l10n.watchlistReminderInApp}',
+                            '${l10n.watchlistAlertNotificationNote}\n${l10n.watchlistAlertOnceNote}\n${delivery?.value == true ? l10n.watchlistReminderSystem : l10n.watchlistReminderInApp}',
                             style: context.captionStyle,
                           ),
                         ),
@@ -328,7 +389,20 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     if (!_formKey.currentState!.validate()) return;
+    final rules = PriceAlertRules(
+      above: Decimal.tryParse(_above.text.trim()),
+      below: Decimal.tryParse(_below.text.trim()),
+      enabled: _enabled,
+    );
+    if (!rules.isValid) {
+      setState(
+        () => _error = AppLocalizations.of(context).watchlistAlertRangeError,
+      );
+      return;
+    }
+    setState(() => _error = null);
     final item = widget.item;
     final choice = _choice;
     if (item == null && choice == null) return; // add path requires a pick
@@ -336,10 +410,6 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
     widget.dirty.busy = true;
     try {
       final repo = await ref.read(watchlistRepositoryProvider.future);
-      final rules = PriceAlertRules(
-        above: Decimal.tryParse(_above.text.trim()),
-        below: Decimal.tryParse(_below.text.trim()),
-      );
       if (item == null) {
         await repo.add(
           symbol: choice!.symbol,
@@ -348,12 +418,16 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
           collectionIds: _selectedCollectionIds,
         );
       } else {
-        await repo.updateAlertRules(item: item, rules: rules);
+        await repo.updateAlertRules(item: item, rules: rules, rearm: _rearm);
       }
       ref.invalidate(watchlistQuoteSnapshotsProvider);
       ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (mounted) {
+        setState(() => _error = userSafeErrorMessage(context, error));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
       widget.dirty.busy = false;
@@ -644,6 +718,14 @@ class _WatchlistCollectionSheetState
       }
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop(false);
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
       widget.dirty.busy = false;
@@ -670,6 +752,14 @@ class _WatchlistCollectionSheetState
       await repo.deleteCollection(collection);
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
       widget.dirty.busy = false;
@@ -810,6 +900,14 @@ class _WatchlistOrderSheetState<T> extends State<_WatchlistOrderSheet<T>> {
       await widget.onSave(List<T>.unmodifiable(_entries));
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
       widget.dirty.busy = false;
@@ -822,11 +920,11 @@ Future<void> showWatchlistBulkMembershipSheet({
   required List<WatchlistItem> items,
   required List<WatchlistCollection> collections,
   String? removalCollectionId,
-}) => showAppSheet<void>(
+}) => showGuardedFormSheet<void>(
   context: context,
-  title: AppLocalizations.of(context).watchlistBulkManageAction,
   maxHeightFactor: 0.9,
-  builder: (_) => _WatchlistBulkMembershipSheet(
+  builder: (_, dirty) => _WatchlistBulkMembershipSheet(
+    dirty: dirty,
     items: items,
     collections: collections,
     removalCollectionId: removalCollectionId,
@@ -835,6 +933,7 @@ Future<void> showWatchlistBulkMembershipSheet({
 
 class _WatchlistBulkMembershipSheet extends ConsumerStatefulWidget {
   const _WatchlistBulkMembershipSheet({
+    required this.dirty,
     required this.items,
     required this.collections,
     required this.removalCollectionId,
@@ -843,6 +942,7 @@ class _WatchlistBulkMembershipSheet extends ConsumerStatefulWidget {
   final List<WatchlistItem> items;
   final List<WatchlistCollection> collections;
   final String? removalCollectionId;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_WatchlistBulkMembershipSheet> createState() =>
@@ -852,71 +952,75 @@ class _WatchlistBulkMembershipSheet extends ConsumerStatefulWidget {
 class _WatchlistBulkMembershipSheetState
     extends ConsumerState<_WatchlistBulkMembershipSheet> {
   final Set<String> _selectedItemIds = <String>{};
+  late bool _removing = widget.removalCollectionId != null;
   bool _saving = false;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final allSelected = _selectedItemIds.length == widget.items.length;
-    final removing = widget.removalCollectionId != null;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          l10n.watchlistBulkSelectedCount(_selectedItemIds.length),
-          style: context.captionStyle,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        AppGroupedSurface(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              _WatchlistBulkSelectRow(
-                key: const ValueKey<String>('watchlist-bulk-select-all'),
-                title: l10n.watchlistBulkSelectAll,
-                selected: allSelected,
-                enabled: !_saving,
-                onToggle: _toggleAll,
-              ),
-              const AppGroupedDivider(
-                indent: AppSpacing.s12,
-                endIndent: AppSpacing.s12,
-              ),
-              for (var index = 0; index < widget.items.length; index++) ...[
-                _WatchlistBulkSelectRow(
-                  key: ValueKey<String>(
-                    'watchlist-bulk-item-${widget.items[index].id}',
-                  ),
-                  title: watchlistItemLabel(context, widget.items[index]),
-                  subtitle: watchlistMarketLabel(
-                    l10n,
-                    widget.items[index].market,
-                  ),
-                  selected: _selectedItemIds.contains(widget.items[index].id),
-                  enabled: !_saving,
-                  onToggle: () => _toggleItem(widget.items[index].id),
-                ),
-                if (index != widget.items.length - 1)
-                  const AppGroupedDivider(
-                    indent: AppSpacing.s12,
-                    endIndent: AppSpacing.s12,
-                  ),
-              ],
-            ],
+    final removing = _removing;
+    return AppSheet(
+      title: l10n.watchlistBulkManageAction,
+      footer: AppSheetFooter(
+        cancelLabel: l10n.commonCancel,
+        submitLabel: removing
+            ? l10n.watchlistBulkRemoveAction
+            : l10n.watchlistBulkAddAction,
+        enabled: _selectedItemIds.isNotEmpty,
+        busy: _saving,
+        onSubmit: _apply,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.watchlistBulkSelectedCount(_selectedItemIds.length),
+            style: context.captionLabelStyle,
           ),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        AppSheetFooter(
-          cancelLabel: l10n.commonCancel,
-          submitLabel: removing
-              ? l10n.watchlistBulkRemoveAction
-              : l10n.watchlistBulkAddAction,
-          enabled: _selectedItemIds.isNotEmpty,
-          busy: _saving,
-          onSubmit: _apply,
-        ),
-      ],
+          Text(l10n.watchlistBulkVisibleOnly, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s8),
+          if (widget.removalCollectionId != null) ...[
+            SegmentedRow<bool>(
+              options: const [false, true],
+              value: _removing,
+              labelOf: (value) => value
+                  ? l10n.watchlistBulkRemoveAction
+                  : l10n.watchlistBulkAddAction,
+              onChanged: (value) {
+                if (!_saving) setState(() => _removing = value);
+              },
+            ),
+            const SizedBox(height: AppSpacing.s8),
+          ],
+          _WatchlistBulkSelectRow(
+            key: const ValueKey('watchlist-bulk-select-all'),
+            title: l10n.watchlistBulkSelectAll,
+            selected: allSelected,
+            enabled: !_saving,
+            onToggle: _toggleAll,
+          ),
+          SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.35,
+            child: ListView.separated(
+              itemCount: widget.items.length,
+              separatorBuilder: (_, _) => const AppGroupedDivider(),
+              itemBuilder: (context, index) {
+                final item = widget.items[index];
+                return _WatchlistBulkSelectRow(
+                  key: ValueKey('watchlist-bulk-item-${item.id}'),
+                  title: watchlistItemLabel(context, item),
+                  subtitle: watchlistMarketLabel(l10n, item.market),
+                  selected: _selectedItemIds.contains(item.id),
+                  enabled: !_saving,
+                  onToggle: () => _toggleItem(item.id),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -939,9 +1043,11 @@ class _WatchlistBulkMembershipSheetState
   }
 
   Future<void> _apply() async {
-    final removalCollectionId = widget.removalCollectionId;
+    if (_saving) return;
+    final removalCollectionId = _removing ? widget.removalCollectionId : null;
     final targetCollectionId = removalCollectionId ?? await _chooseCollection();
     if (targetCollectionId == null || !mounted) return;
+    widget.dirty.busy = true;
     setState(() => _saving = true);
     try {
       final selectedItems = widget.items
@@ -967,7 +1073,16 @@ class _WatchlistBulkMembershipSheetState
         AppLocalizations.of(context).watchlistBulkUpdated(selectedItems.length),
       );
       Navigator.of(context).pop();
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -1233,7 +1348,16 @@ class _WatchlistMembershipSheetState
       ref.invalidate(watchlistQuoteSnapshotsForScopeProvider);
       widget.dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }

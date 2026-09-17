@@ -7,6 +7,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/watchlist_providers.dart';
 import '../data/watchlist_repository.dart';
+import '../notifications/watchlist_alerts.dart';
 import 'watchlist_labels.dart';
 
 /// Stable quote grid: identity/price, then name/trend/daily change.
@@ -108,13 +109,16 @@ class WatchlistRow extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                if (item.alertRules.enabled &&
-                                    item.alertRules.hasRule) ...[
+                                if (item.alertRules.hasRule) ...[
                                   const SizedBox(width: AppSpacing.s6),
                                   Tooltip(
-                                    message: l10n.watchlistAlertSetBadge,
+                                    message: item.alertRules.enabled
+                                        ? l10n.watchlistAlertSetBadge
+                                        : l10n.watchlistAlertPaused,
                                     child: Icon(
-                                      FLucideIcons.bellRing,
+                                      item.alertRules.enabled
+                                          ? FLucideIcons.bellRing
+                                          : FLucideIcons.bellOff,
                                       size: AppIconSizes.sm,
                                       color:
                                           context.theme.colors.mutedForeground,
@@ -275,7 +279,7 @@ class WatchlistTrend extends ConsumerWidget {
   }
 }
 
-class WatchlistSymbolView extends StatelessWidget {
+class WatchlistSymbolView extends ConsumerWidget {
   const WatchlistSymbolView({
     super.key,
     required this.item,
@@ -297,7 +301,7 @@ class WatchlistSymbolView extends StatelessWidget {
   final bool showActions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final quote = snapshot?.quote;
@@ -432,6 +436,15 @@ class WatchlistSymbolView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(_alertSummary(l10n), style: context.captionLabelStyle),
+                    if (item.alertRules.hasRule)
+                      Text(
+                        !item.alertRules.enabled
+                            ? l10n.watchlistAlertPaused
+                            : ref.watch(watchlistAlertDeliveredProvider(item))
+                            ? l10n.watchlistAlertDelivered
+                            : l10n.watchlistAlertWaiting,
+                        style: context.captionStyle,
+                      ),
                     Text(
                       l10n.watchlistReminderForeground,
                       style: context.captionStyle,
@@ -474,12 +487,20 @@ class _WatchlistPriceChart extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.watchlistDetailTrendTitle, style: context.captionLabelStyle),
+        Text(l10n.watchlistHistoryPeriod, style: context.captionLabelStyle),
         const SizedBox(height: AppSpacing.s12),
         SizedBox(
           height: AppChartHeights.standard,
           child: history.isLoading && bars.isEmpty
               ? const Center(child: FCircularProgress())
+              : history.hasError
+              ? AppEmptyState.error(
+                  title: l10n.commonLoadFailed,
+                  retryLabel: l10n.commonRetry,
+                  onRetry: () => ref.invalidate(
+                    watchlistHistoryProvider(watchlistSymbolKey(item)),
+                  ),
+                )
               : bars.length < 2
               ? Center(
                   child: Text(
