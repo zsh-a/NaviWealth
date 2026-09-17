@@ -420,7 +420,8 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             onFieldSubmitted: (_) => _returnFocus.requestFocus(),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
+            unit: '%',
             key: const Key('wealth-product-return-field'),
             control: FTextFieldControl.managed(
               controller: _expectedReturnPctController,
@@ -428,7 +429,10 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             label: RequiredLabel(l10n.wealthProductExpectedReturnLabel),
             description: Text(l10n.wealthProductExpectedReturnHelper),
             focusNode: _returnFocus,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(
+              decimal: true,
+              signed: true,
+            ),
             textInputAction: TextInputAction.next,
             validator: (v) {
               final trimmed = v?.trim() ?? '';

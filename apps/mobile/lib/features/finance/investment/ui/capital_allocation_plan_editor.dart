@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
-import 'package:naviwealth/core/forms/percent_input_formatter.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/percent_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 class CapitalAllocationDraft {
@@ -328,16 +328,12 @@ class _CapitalAllocationPlanEditorState
             ),
             if (advancedExpanded) ...[
               const SizedBox(height: AppSpacing.s12),
-              FTextFormField(
+              PercentField(
                 control: FTextFieldControl.managed(
                   controller: _bandControllers[draft.id]!,
                 ),
                 enabled: !_busy,
                 label: Text(l10n.capitalAllocationToleranceLabel),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                inputFormatters: const [percentInputFormatter],
                 forceErrorText: _errors['band:${draft.id}'],
               ),
               const SizedBox(height: AppSpacing.s12),

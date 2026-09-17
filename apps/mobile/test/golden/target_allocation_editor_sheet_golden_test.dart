@@ -41,7 +41,13 @@ void main() {
             child: AppSheet(
               title: AppLocalizationsEn().targetAllocationEditorTitle,
               subtitle: AppLocalizationsEn().targetAllocationEditorSubtitle,
-              child: TargetAllocationEditorSheet(dirty: dirty),
+              child: Builder(
+                builder: (context) => MediaQuery(
+                  data: MediaQuery.of(context)
+                      .copyWith(size: kGoldenLogicalSize),
+                  child: TargetAllocationEditorSheet(dirty: dirty),
+                ),
+              ),
             ),
           ),
         ),

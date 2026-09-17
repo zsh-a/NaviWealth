@@ -778,28 +778,32 @@ class _CustomRunwayScenarioSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _purchase),
+            unit: widget.snapshot.currency,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             label: Text(
               l10n.moneyRunwayCustomPurchase(widget.snapshot.currency),
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _delay),
+            unit: l10n.numberUnitDays,
             keyboardType: TextInputType.number,
             label: Text(l10n.moneyRunwayCustomDelayDays),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _reduction),
+            unit: '%',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             label: Text(l10n.moneyRunwayCustomReductionPercent),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _duration),
+            unit: l10n.numberUnitDays,
             keyboardType: TextInputType.number,
             label: Text(l10n.moneyRunwayCustomDurationDays),
           ),

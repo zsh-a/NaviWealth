@@ -530,7 +530,7 @@ class _IntegerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FTextFormField(
+    return AppNumberField(
       control: FTextFieldControl.managed(controller: controller),
       label: Text(label),
       keyboardType: TextInputType.number,
@@ -559,9 +559,10 @@ class _PercentField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FTextFormField(
+    return AppNumberField(
       control: FTextFieldControl.managed(controller: controller),
       label: Text(label),
+      unit: '%',
       description: Text(l10n.incomePlannerProfilePercentHelper),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
@@ -630,7 +631,7 @@ class _DecimalField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FTextFormField(
+    return AppNumberField(
       control: FTextFieldControl.managed(controller: controller),
       label: Text(label),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),

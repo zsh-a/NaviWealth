@@ -214,6 +214,7 @@ class _OverrideField extends StatefulWidget {
 }
 
 class _OverrideFieldState extends State<_OverrideField> {
+  String? _error;
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
 
@@ -245,17 +246,19 @@ class _OverrideFieldState extends State<_OverrideField> {
     if (_focusNode.hasFocus) return;
     final text = _controller.text.trim();
     if (text.isEmpty) {
+      setState(() => _error = null);
       if (widget.value != null) widget.onChanged(null);
       return;
     }
     final parsed = Decimal.tryParse(text);
     if (parsed == null || parsed <= Decimal.zero) {
-      // Reject negatives / garbage by reverting the display.
-      _controller.text = _format(widget.value);
+      setState(
+        () => _error = AppLocalizations.of(context).formAmountFieldInvalid,
+      );
       return;
     }
-    if (widget.value == parsed) return;
-    widget.onChanged(parsed);
+    setState(() => _error = null);
+    if (widget.value != parsed) widget.onChanged(parsed);
   }
 
   static String _format(Decimal? v) => v == null ? '' : v.toString();
@@ -286,7 +289,10 @@ class _OverrideFieldState extends State<_OverrideField> {
           Row(
             children: [
               Expanded(
-                child: FTextField(
+                child: AppNumberField(
+                  unit: widget.baseCurrency,
+                  forceErrorText: _error,
+                  onSubmit: (_) => _focusNode.unfocus(),
                   control: FTextFieldControl.managed(controller: _controller),
                   focusNode: _focusNode,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -295,8 +301,6 @@ class _OverrideFieldState extends State<_OverrideField> {
                   hint: l10n.settingsMonthlyExpenseOverrideHint,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s8),
-              Text(widget.baseCurrency, style: context.bodyCaptionStyle),
             ],
           ),
         ],

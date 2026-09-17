@@ -24,6 +24,27 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  testWidgets('currency remains visible after entering a precise amount', (
+    tester,
+  ) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      _wrap(
+        AmountField(
+          label: 'Amount',
+          controller: controller,
+          currencyCode: 'USD',
+          allowNegative: true,
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(EditableText), '-12.3456');
+    await tester.pump();
+    expect(find.text('USD'), findsOneWidget);
+    expect(controller.text, '-12.3456');
+  });
+
   testWidgets('rejects empty input when required', (tester) async {
     final formKey = GlobalKey<FormState>();
     await tester.pumpWidget(

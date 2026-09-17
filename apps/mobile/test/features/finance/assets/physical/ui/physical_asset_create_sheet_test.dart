@@ -1,16 +1,37 @@
 import 'dart:async';
 
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/assets/physical/data/physical_asset.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/physical_asset_repository.dart';
 import 'package:naviwealth/features/finance/assets/physical/data/providers.dart';
 import 'package:naviwealth/features/finance/assets/physical/ui/physical_asset_create_sheet.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _CreatedAsset extends Fake implements PhysicalAsset {}
+
+class _CapturingRepository extends Fake implements PhysicalAssetRepository {
+  Decimal? savedRate;
+  @override
+  Future<PhysicalAsset> createVehicle({
+    required String name,
+    required String currency,
+    required DateTime purchaseDate,
+    required Decimal purchasePrice,
+    Decimal? currentValuation,
+    Decimal? annualResidualRate,
+    bool autoDepreciation = true,
+  }) async {
+    savedRate = annualResidualRate;
+    return _CreatedAsset();
+  }
+}
 
 Future<Widget> _wrap({
   required AssetType type,
@@ -39,6 +60,43 @@ Future<Widget> _wrap({
 }
 
 void main() {
+  testWidgets('vehicle percentage is converted to a ratio exactly once', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final dirty = FormDirtyController();
+    addTearDown(dirty.dispose);
+    final repo = _CapturingRepository();
+    await tester.pumpWidget(
+      await _wrap(
+        type: AssetType.vehicle,
+        dirty: dirty,
+        repository: Future.value(repo),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('physical-asset-name-field')),
+      'Car',
+    );
+    await tester.enterText(
+      find.byKey(const Key('physical-asset-purchase-price-field')),
+      '180000',
+    );
+    final field = find.descendant(
+      of: find.byKey(
+        const Key('physical-asset-residual-rate-field'),
+        skipOffstage: false,
+      ),
+      matching: find.byType(EditableText, skipOffstage: false),
+    );
+    tester.widget<EditableText>(field).controller.text = '85.125';
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(repo.savedRate, Decimal.parse('0.85125'));
+  });
+
   testWidgets('vehicle setup is concise and stacks purchase fields on mobile', (
     tester,
   ) async {
@@ -104,7 +162,8 @@ void main() {
       ),
       matching: find.byType(EditableText, skipOffstage: false),
     );
-    tester.widget<EditableText>(residualInput).controller.text = '1.2';
+    expect(tester.widget<EditableText>(residualInput).controller.text, '85');
+    tester.widget<EditableText>(residualInput).controller.text = '120';
     await tester.pump();
 
     await tester.tap(find.widgetWithText(FButton, 'Save'));
@@ -127,7 +186,10 @@ void main() {
           .offstage,
       isFalse,
     );
-    expect(find.text('Must be between 0 and 1'), findsOneWidget);
+    expect(
+      find.text('Must be greater than 0% and less than 100%'),
+      findsOneWidget,
+    );
     await tester.pump(const Duration(milliseconds: 150));
   });
 

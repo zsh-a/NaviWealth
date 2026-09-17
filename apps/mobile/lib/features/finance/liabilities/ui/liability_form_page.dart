@@ -289,7 +289,7 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
                 : null,
             onSubmit: (_) => _principalFocus.requestFocus(),
           ),
-          FTextFormField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _principal),
             label: RequiredLabel(l10n.liabilityFieldPrincipal),
             focusNode: _principalFocus,
@@ -298,8 +298,9 @@ class _LiabilityFormPageState extends ConsumerState<LiabilityFormPage>
             validator: _validatePositive(l10n),
             onSubmit: (_) => _rateFocus.requestFocus(),
           ),
-          FTextFormField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _rate),
+            unit: '%',
             label: RequiredLabel(l10n.liabilityFieldInterestRate),
             focusNode: _rateFocus,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),

@@ -99,17 +99,18 @@ class _AmountFieldState extends State<AmountField> {
     final pattern = widget.allowNegative
         ? _signedDecimalPattern
         : _positiveDecimalPattern;
-    return FTextFormField(
+    return AppNumberField(
       control: FTextFieldControl.managed(controller: _effectiveController),
       focusNode: widget.focusNode,
       textInputAction: widget.textInputAction ?? TextInputAction.next,
       onSubmit: widget.onFieldSubmitted,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      autocorrect: false,
-      enableSuggestions: false,
+      keyboardType: TextInputType.numberWithOptions(
+        decimal: true,
+        signed: widget.allowNegative,
+      ),
       inputFormatters: [FilteringTextInputFormatter.allow(pattern)],
       label: RequiredLabel(widget.label, required: widget.required),
-      hint: widget.currencyCode == null ? null : '${widget.currencyCode} ',
+      unit: widget.currencyCode,
       description: widget.helperText == null ? null : Text(widget.helperText!),
       validator: (value) {
         final trimmed = value?.trim() ?? '';

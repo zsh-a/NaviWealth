@@ -102,6 +102,7 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
           children: [
             _MoneyField(
               controller: _targetCtrl,
+              currency: ref.watch(firePlanProvider).baseCurrency,
               label: l10n.fireGoalFieldTarget,
               helper: l10n.fireGoalFieldTargetHelper,
               required: true,
@@ -109,12 +110,14 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
             const SizedBox(height: AppSpacing.s12),
             _MoneyField(
               controller: _expensesCtrl,
+              currency: ref.watch(firePlanProvider).baseCurrency,
               label: l10n.fireGoalFieldMonthlyExpenses,
               helper: l10n.fireGoalFieldMonthlyExpensesHelper,
             ),
             const SizedBox(height: AppSpacing.s12),
             _MoneyField(
               controller: _surplusCtrl,
+              currency: ref.watch(firePlanProvider).baseCurrency,
               label: l10n.fireGoalFieldMonthlySurplus,
               helper: l10n.fireGoalFieldMonthlySurplusHelper,
             ),
@@ -166,7 +169,8 @@ class _FireGoalSheetState extends ConsumerState<_FireGoalSheet> {
                       style: context.captionStyle,
                     ),
                     const SizedBox(height: AppSpacing.s12),
-                    FTextFormField(
+                    AppNumberField(
+                      unit: l10n.numberUnitMonths,
                       control: FTextFieldControl.managed(
                         controller: _cashBucketCtrl,
                       ),
@@ -285,18 +289,21 @@ class _MoneyField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.helper,
+    required this.currency,
     this.required = false,
   });
 
   final TextEditingController controller;
   final String label;
   final String helper;
+  final String currency;
   final bool required;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return FTextFormField(
+    return AppNumberField(
+      unit: currency,
       control: FTextFieldControl.managed(controller: controller),
       label: Text(label),
       description: Text(helper),

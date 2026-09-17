@@ -74,6 +74,7 @@ export 'widgets/app_metric_cluster.dart';
 export 'widgets/app_metric_header.dart';
 export 'widgets/app_morphing_action.dart';
 export 'widgets/app_nav_row.dart';
+export 'widgets/app_number_field.dart';
 export 'widgets/app_once_entrance.dart';
 export 'widgets/app_overlay_surface.dart';
 export 'widgets/app_page_route.dart';

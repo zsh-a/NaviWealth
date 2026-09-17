@@ -5882,8 +5882,26 @@ abstract class AppLocalizations {
   /// No description provided for @physicalAssetValidationResidualRange.
   ///
   /// In en, this message translates to:
-  /// **'Must be between 0 and 1'**
+  /// **'Must be greater than 0% and less than 100%'**
   String get physicalAssetValidationResidualRange;
+
+  /// No description provided for @physicalAssetResidualRateHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Value retained each year; for example, 85% means 15% annual depreciation.'**
+  String get physicalAssetResidualRateHelper;
+
+  /// No description provided for @numberUnitMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'months'**
+  String get numberUnitMonths;
+
+  /// No description provided for @numberUnitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get numberUnitDays;
 
   /// No description provided for @physicalAssetNotFound.
   ///

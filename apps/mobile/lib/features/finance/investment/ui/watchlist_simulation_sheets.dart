@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/forms.dart';
-import 'package:naviwealth/core/forms/percent_input_formatter.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/percent_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import 'watchlist_simulation_support.dart';
@@ -265,11 +265,9 @@ class _WatchlistSimulationCreateSheetState
             onToggle: _toggleSymbol,
           ),
           const SizedBox(height: AppSpacing.s16),
-          FTextFormField(
+          PercentField(
             control: FTextFieldControl.managed(controller: _cash),
             label: Text(l10n.watchlistSimulationCashPercentField),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: const [percentInputFormatter],
             validator: (value) => _validatePercent(context, value),
           ),
           const SizedBox(height: AppSpacing.s20),
@@ -510,7 +508,7 @@ class _WatchlistSimulationAllocationSheetState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: FTextFormField(
+                    child: PercentField(
                       key: ValueKey<String>('watchlist-simulation-weight-$id'),
                       control: FTextFieldControl.managed(
                         controller: _weights[id]!,
@@ -524,10 +522,6 @@ class _WatchlistSimulationAllocationSheetState
                           ),
                         ),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      inputFormatters: const [percentInputFormatter],
                       validator: (value) => _validatePercent(context, value),
                     ),
                   ),
@@ -561,15 +555,13 @@ class _WatchlistSimulationAllocationSheetState
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          PercentField(
             key: const ValueKey<String>('watchlist-simulation-cash-weight'),
             control: FTextFieldControl.managed(
               controller: _cash,
               onChange: (_) => setState(() {}),
             ),
             label: Text(l10n.watchlistSimulationCashField),
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: const [percentInputFormatter],
             validator: (value) => _validatePercent(context, value),
           ),
           const SizedBox(height: AppSpacing.s8),

@@ -149,21 +149,13 @@ class _AllocationRow extends StatelessWidget {
                 ),
                 SizedBox(
                   width: AppControlWidths.detailLabel,
-                  child: FTextFormField(
+                  child: PercentField(
                     key: ValueKey('target-allocation-field-$rowKey'),
                     control: FTextFieldControl.managed(controller: controller),
                     label: Text(l10n.targetAllocationEditorPercentLabel),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: const [percentInputFormatter],
-                    suffixBuilder: (_, style, variants) => Padding(
-                      padding: const EdgeInsets.only(right: AppSpacing.s8),
-                      child: Text(
-                        '%',
-                        style: style.contentTextStyle.resolve(variants),
-                      ),
-                    ),
+                    compact: true,
+                    semanticLabel:
+                        '$label · ${l10n.targetAllocationEditorPercentLabel}',
                     forceErrorText: errorText,
                   ),
                 ),

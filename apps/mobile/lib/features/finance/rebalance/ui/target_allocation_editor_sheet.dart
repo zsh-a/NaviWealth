@@ -7,9 +7,9 @@ import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart'
 
 import '../../../../core/format/formatters.dart';
 import '../../../../core/forms/form_dirty_guard.dart';
-import '../../../../core/forms/percent_input_formatter.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../shared/ui/forms/percent_field.dart';
 import '../data/rebalance_providers.dart';
 import '../domain/rebalance_models.dart';
 import 'deviation_bar.dart';

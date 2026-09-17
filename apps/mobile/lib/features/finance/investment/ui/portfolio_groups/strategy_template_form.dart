@@ -126,13 +126,9 @@ class _CustomStrategyTemplateFormState
               ],
             ),
             const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
+            PercentField(
               control: FTextFieldControl.managed(controller: _band),
               label: Text(l10n.portfolioGroupDriftBandLabel),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              inputFormatters: const [percentInputFormatter],
               validator: (value) => _validatePercent(value, l10n),
             ),
             const SizedBox(height: AppSpacing.s12),

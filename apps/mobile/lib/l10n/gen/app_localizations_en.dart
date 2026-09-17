@@ -3413,7 +3413,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get physicalAssetValidationPositive => 'Must be greater than 0';
 
   @override
-  String get physicalAssetValidationResidualRange => 'Must be between 0 and 1';
+  String get physicalAssetValidationResidualRange =>
+      'Must be greater than 0% and less than 100%';
+
+  @override
+  String get physicalAssetResidualRateHelper =>
+      'Value retained each year; for example, 85% means 15% annual depreciation.';
+
+  @override
+  String get numberUnitMonths => 'months';
+
+  @override
+  String get numberUnitDays => 'days';
 
   @override
   String get physicalAssetNotFound => 'Asset not found';

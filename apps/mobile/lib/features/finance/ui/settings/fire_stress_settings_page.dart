@@ -235,6 +235,7 @@ class _LumpSumField extends StatefulWidget {
 }
 
 class _LumpSumFieldState extends State<_LumpSumField> {
+  String? _error;
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
 
@@ -264,14 +265,20 @@ class _LumpSumFieldState extends State<_LumpSumField> {
 
   void _onFocusChange() {
     if (_focusNode.hasFocus) return;
-    final parsed = Decimal.tryParse(_controller.text.trim());
-    final next = parsed?.toDouble() ?? 0;
-    if ((next - widget.value).abs() < 0.001) {
-      // Re-format so trailing zeros / weird whitespace are normalised.
-      _controller.text = _format(widget.value);
+    final text = _controller.text.trim();
+
+    final parsed = Decimal.tryParse(text);
+    if (parsed == null ||
+        parsed < Decimal.zero ||
+        !parsed.toDouble().isFinite) {
+      setState(
+        () => _error = AppLocalizations.of(context).formAmountFieldInvalid,
+      );
       return;
     }
-    widget.onChanged(next);
+    setState(() => _error = null);
+    final next = parsed.toDouble();
+    if (next != widget.value) widget.onChanged(next);
   }
 
   static String _format(double v) {
@@ -307,7 +314,10 @@ class _LumpSumFieldState extends State<_LumpSumField> {
           Row(
             children: [
               Expanded(
-                child: FTextField(
+                child: AppNumberField(
+                  unit: widget.baseCurrency,
+                  forceErrorText: _error,
+                  onSubmit: (_) => _focusNode.unfocus(),
                   control: FTextFieldControl.managed(controller: _controller),
                   focusNode: _focusNode,
                   keyboardType: const TextInputType.numberWithOptions(
@@ -316,8 +326,6 @@ class _LumpSumFieldState extends State<_LumpSumField> {
                   hint: l10n.settingsStressTestLumpSumHint,
                 ),
               ),
-              const SizedBox(width: AppSpacing.s8),
-              Text(widget.baseCurrency, style: context.bodyCaptionStyle),
             ],
           ),
         ],

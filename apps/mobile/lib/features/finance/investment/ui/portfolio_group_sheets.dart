@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/form_dirty_guard.dart';
-import 'package:naviwealth/core/forms/percent_input_formatter.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/home/ui/asset_category_visuals.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/rebalance_models.dart';
 import 'package:naviwealth/features/finance/rebalance/ui/target_allocation_editor_sheet.dart';
+import 'package:naviwealth/features/finance/shared/ui/forms/percent_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/investment_portfolio_providers.dart';

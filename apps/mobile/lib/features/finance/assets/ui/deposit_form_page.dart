@@ -428,7 +428,8 @@ class _DepositFormPageState extends ConsumerState<DepositFormPage>
             onFieldSubmitted: (_) => _rateFocus.requestFocus(),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
+            unit: '%',
             key: const Key('deposit-rate-field'),
             control: FTextFieldControl.managed(
               controller: _ratePercentController,

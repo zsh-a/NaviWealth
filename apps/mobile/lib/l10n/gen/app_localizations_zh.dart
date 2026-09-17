@@ -3264,7 +3264,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get physicalAssetValidationPositive => '必须大于 0';
 
   @override
-  String get physicalAssetValidationResidualRange => '必须在 0 与 1 之间';
+  String get physicalAssetValidationResidualRange => '必须大于 0% 且小于 100%';
+
+  @override
+  String get physicalAssetResidualRateHelper => '每年保留的价值比例，例如 85% 表示每年折旧 15%。';
+
+  @override
+  String get numberUnitMonths => '个月';
+
+  @override
+  String get numberUnitDays => '天';
 
   @override
   String get physicalAssetNotFound => '资产不存在';

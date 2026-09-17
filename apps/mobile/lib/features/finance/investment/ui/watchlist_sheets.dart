@@ -254,9 +254,10 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s8),
-                    FTextFormField(
+                    AppNumberField(
                       key: const ValueKey<String>('watchlist-alert-above'),
                       control: FTextFieldControl.managed(controller: _above),
+                      unit: currency,
                       label: Text(l10n.watchlistAlertAboveField),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
@@ -267,9 +268,10 @@ class _WatchlistItemSheetState extends ConsumerState<_WatchlistItemSheet> {
                       validator: _validateDecimal,
                     ),
                     const SizedBox(height: AppSpacing.s12),
-                    FTextFormField(
+                    AppNumberField(
                       key: const ValueKey<String>('watchlist-alert-below'),
                       control: FTextFieldControl.managed(controller: _below),
+                      unit: currency,
                       label: Text(l10n.watchlistAlertBelowField),
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,

@@ -337,6 +337,10 @@ class _IncomeStrategyPlanFormState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final modules = ref.watch(incomeStrategyModulesProvider);
+    final currency =
+        widget.existing?.currency ??
+        widget.asset?.currency ??
+        _choice?.currency;
     return AppSheet(
       title: widget.existing == null
           ? l10n.incomeStrategyPlanAdd
@@ -474,18 +478,21 @@ class _IncomeStrategyPlanFormState
                     const SizedBox(height: AppSpacing.s12),
                     _DecimalField(
                       controller: _capitalBudget,
+                      unit: currency,
                       label: l10n.incomeStrategyPlanCapitalBudget,
                       validator: (value) => _validateNonNegative(l10n, value),
                     ),
                     const SizedBox(height: AppSpacing.s12),
                     _DecimalField(
                       controller: _annualIncomeTarget,
+                      unit: currency,
                       label: l10n.incomeStrategyPlanAnnualTarget,
                       validator: (value) => _validateNonNegative(l10n, value),
                     ),
                     const SizedBox(height: AppSpacing.s12),
                     _DecimalField(
                       controller: _maxPositionWeight,
+                      unit: '%',
                       label: l10n.incomeStrategyPlanMaxWeight,
                       validator: (value) => _validateWeight(l10n, value),
                     ),
@@ -577,14 +584,17 @@ class _DecimalField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.validator,
+    this.unit,
   });
 
   final TextEditingController controller;
   final String label;
   final String? Function(String?)? validator;
+  final String? unit;
 
   @override
-  Widget build(BuildContext context) => FTextFormField(
+  Widget build(BuildContext context) => AppNumberField(
+    unit: unit,
     control: FTextFieldControl.managed(controller: controller),
     label: Text(label),
     keyboardType: const TextInputType.numberWithOptions(decimal: true),

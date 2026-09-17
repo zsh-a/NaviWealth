@@ -48,7 +48,7 @@ class _PhysicalAssetCreateSheetState
   final _addressCtrl = TextEditingController();
   final _purchasePriceCtrl = TextEditingController();
   final _currentValuationCtrl = TextEditingController();
-  final _residualRateCtrl = TextEditingController(text: '0.85');
+  final _residualRateCtrl = TextEditingController(text: '85');
   final _linkedLiabilityCtrl = TextEditingController();
   final _currencyCtrl = TextEditingController(text: 'CNY');
 
@@ -270,17 +270,20 @@ class _PhysicalAssetCreateSheetState
                             ),
                             if (_isVehicle) ...[
                               const SizedBox(height: AppSpacing.s12),
-                              FTextFormField(
+                              AppNumberField(
                                 key: const Key(
                                   'physical-asset-residual-rate-field',
                                 ),
+                                unit: '%',
                                 control: FTextFieldControl.managed(
                                   controller: _residualRateCtrl,
                                 ),
                                 label: RequiredLabel(
                                   l10n.physicalAssetFieldAnnualResidualRate,
                                 ),
-                                description: const Text('0.85'),
+                                description: Text(
+                                  l10n.physicalAssetResidualRateHelper,
+                                ),
                                 focusNode: _residualRateFocus,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
@@ -294,7 +297,7 @@ class _PhysicalAssetCreateSheetState
                                   final parsed = Decimal.tryParse(v);
                                   if (parsed == null ||
                                       parsed <= Decimal.zero ||
-                                      parsed >= Decimal.one) {
+                                      parsed >= Decimal.fromInt(100)) {
                                     return l10n
                                         .physicalAssetValidationResidualRange;
                                   }
@@ -371,7 +374,10 @@ class _PhysicalAssetCreateSheetState
               purchaseDate: _purchaseDate,
               purchasePrice: purchasePrice,
               currentValuation: currentValuation,
-              annualResidualRate: Decimal.parse(_residualRateCtrl.text.trim()),
+              annualResidualRate:
+                  (Decimal.parse(_residualRateCtrl.text.trim()) /
+                          Decimal.fromInt(100))
+                      .toDecimal(),
               autoDepreciation: _autoDepreciation,
             )
           : await repo.createRealEstate(
@@ -424,7 +430,7 @@ class _PhysicalAssetCreateSheetState
     final residualRate = Decimal.tryParse(_residualRateCtrl.text.trim());
     return residualRate != null &&
         residualRate > Decimal.zero &&
-        residualRate < Decimal.one;
+        residualRate < Decimal.fromInt(100);
   }
 
   FormFieldValidator<String> _positiveDecimal(AppLocalizations l10n) {

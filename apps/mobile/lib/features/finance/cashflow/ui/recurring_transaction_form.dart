@@ -206,8 +206,9 @@ class _RecurringTransactionSheetState
               }),
             ),
             const SizedBox(height: AppSpacing.s12),
-            FTextFormField(
+            AppNumberField(
               control: FTextFieldControl.managed(controller: _amountCtrl),
+              unit: _currency,
               label: RequiredLabel(l10n.recurringFieldAmount),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,

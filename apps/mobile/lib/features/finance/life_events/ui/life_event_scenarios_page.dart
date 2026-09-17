@@ -363,6 +363,7 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                     context,
                     l10n,
                     baseAssumptions,
+                    widget.baseline.currency,
                   );
                   if (edited != null && mounted) {
                     setState(() => _editedAssumptions = edited);
@@ -636,15 +637,26 @@ Future<LifeEventAssumptions?> _editAssumptions(
   BuildContext context,
   AppLocalizations l10n,
   LifeEventAssumptions current,
+  String currency,
 ) {
   return showAppFormSheet<LifeEventAssumptions>(
     context: context,
-    builder: (_) => _LifeEventAssumptionsSheet(l10n: l10n, current: current),
+    builder: (_) => _LifeEventAssumptionsSheet(
+      l10n: l10n,
+      current: current,
+      currency: currency,
+    ),
   );
 }
 
 class _LifeEventAssumptionsSheet extends StatefulWidget {
-  const _LifeEventAssumptionsSheet({required this.l10n, required this.current});
+  const _LifeEventAssumptionsSheet({
+    required this.l10n,
+    required this.current,
+    required this.currency,
+  });
+
+  final String currency;
 
   final AppLocalizations l10n;
   final LifeEventAssumptions current;
@@ -705,26 +717,30 @@ class _LifeEventAssumptionsSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _upfront),
+            unit: widget.currency,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             label: Text(l10n.lifeEventUpfrontCost),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _income),
+            unit: widget.currency,
             keyboardType: signedNumber,
             label: Text(l10n.lifeEventIncomeDelta),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _outflow),
+            unit: widget.currency,
             keyboardType: signedNumber,
             label: Text(l10n.lifeEventOutflowDelta),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _duration),
+            unit: l10n.numberUnitMonths,
             keyboardType: TextInputType.number,
             label: Text(l10n.lifeEventDurationMonths),
           ),
