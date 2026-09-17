@@ -118,7 +118,7 @@ class _HealthPlatformSourceRowState
         ? l.healthSourceUnavailable
         : platform.value?.needsPermission == true
         ? l.healthSourcePermissionRequired
-        : persisted?.ok == false
+        : persisted?.hasSyncFailure == true
         ? l.healthSourceSyncFailed
         : l.healthSourceReady;
     return _SourceRow(

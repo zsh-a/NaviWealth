@@ -63,9 +63,7 @@ final healthPlatformAdapterProvider = Provider<HealthPlatformAdapter>(
 
 /// A lightweight, UI-neutral snapshot of the platform connection state.
 ///
-/// Health Connect intentionally cannot report read permission state on
-/// Android. The adapter normalizes that platform limitation, so consumers can
-/// use this state for discovery without blocking a real sync attempt.
+/// An unavailable or unauthorized source is optional, not a sync failure.
 class HealthPlatformStatus {
   const HealthPlatformStatus({
     required this.available,

@@ -57,6 +57,12 @@ connecting a source. It offers system Health, Garmin Connect, and manual body
 measurement as peer entry paths. Connecting a source performs the first sync
 in one action.
 
+System Health is optional, including Android Health Connect. Unavailable or
+unauthorized platform sources skip automatic imports without writing a failed
+sync status. Connection prerequisites (including legacy persisted statuses)
+remain neutral source-row states, not refresh-failure banners. Actual import
+failures remain visible; Garmin and manual records work independently.
+
 Manual weight and body-fat records count as existing Health data. Today shows
 the latest measurement with its capture time and metric-specific Trends entry;
 body fat is displayed as a percentage, not the stored fraction. Missing recovery

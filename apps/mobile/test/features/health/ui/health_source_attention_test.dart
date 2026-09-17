@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/health/data/health_sync_status.dart';
 import 'package:naviwealth/features/health/data/providers.dart';
 import 'package:naviwealth/features/health/ui/health_source_attention.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -23,6 +24,56 @@ class _Status extends Notifier<GarminSyncState> {
 }
 
 void main() {
+  for (final code in [
+    'health-platform-unavailable',
+    'health-platform-permission-denied',
+    'health-platform-fetch-failed: offline',
+  ]) {
+    testWidgets(
+      'platform status banner distinguishes connection state: $code',
+      (tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              garminSyncControllerProvider.overrideWithBuild(
+                (ref, _) => const GarminInitial(),
+              ),
+              healthSyncStatusProvider.overrideWithValue(
+                HealthSyncStatus(
+                  attemptedAt: DateTime.utc(2026, 9, 1),
+                  completedAt: DateTime.utc(2026, 9, 1),
+                  ok: false,
+                  totalFetched: 0,
+                  upserted: 0,
+                  unchanged: 0,
+                  errorCode: code,
+                ),
+              ),
+              healthSourceDataSummaryProvider.overrideWith(
+                (_) async => const HealthSourceDataSummary(),
+              ),
+            ],
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              locale: const Locale('en'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: FTheme(
+                data: FTheme.neutral.light.desktop,
+                child: const HealthSourceAttention(),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byType(AppStatusBanner),
+          code.contains('fetch-failed') ? findsOneWidget : findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets(
     'automatic recovery clears the current warning without manual refresh',
     (tester) async {

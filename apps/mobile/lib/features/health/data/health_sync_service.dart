@@ -120,19 +120,17 @@ class HealthSyncService {
     final effectiveFrom = from ?? effectiveTo.subtract(window);
 
     if (!await _adapter.isAvailable()) {
-      return _record(
-        HealthSyncResult.skipped(
-          startedAt: startedAt,
-          errorMessage: 'health-platform-unavailable',
-        ),
+      return HealthSyncResult.skipped(
+        startedAt: startedAt,
+        errorMessage: 'health-platform-unavailable',
       );
     }
     if (!await _adapter.hasPermissions()) {
-      return _record(
-        HealthSyncResult.skipped(
-          startedAt: startedAt,
-          errorMessage: 'health-platform-permission-denied',
-        ),
+      // Not connecting system Health is a supported choice. Do not replace
+      // operational history with a failure (or a fake successful refresh).
+      return HealthSyncResult.skipped(
+        startedAt: startedAt,
+        errorMessage: 'health-platform-permission-denied',
       );
     }
 

@@ -30,7 +30,7 @@ class HealthSourceAttention extends ConsumerWidget {
       sourceData.value?.garminLatestAt,
     );
     final l10n = AppLocalizations.of(context);
-    final persistedPlatformFailure = platform?.ok == false;
+    final persistedPlatformFailure = platform?.hasSyncFailure == true;
     final garminFailure = switch (garmin) {
       health_data.GarminError() || health_data.GarminPendingMfa() => true,
       health_data.GarminConnected(:final lastErrorCode) =>

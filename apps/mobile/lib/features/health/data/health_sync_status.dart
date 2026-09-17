@@ -25,6 +25,13 @@ class HealthSyncStatus {
   final DateTime? lastSuccessAt;
   final String? errorCode;
 
+  /// Connection prerequisites are presented by the source row, not as import
+  /// failures. This also handles statuses persisted by older app versions.
+  bool get hasSyncFailure =>
+      !ok &&
+      errorCode != 'health-platform-unavailable' &&
+      errorCode != 'health-platform-permission-denied';
+
   factory HealthSyncStatus.fromJson(Map<String, Object?> json) {
     return HealthSyncStatus(
       attemptedAt: DateTime.parse(json['attempted_at']! as String).toUtc(),

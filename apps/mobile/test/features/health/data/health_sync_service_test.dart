@@ -13,7 +13,9 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/features/health/data/health_metric_repository.dart';
 import 'package:naviwealth/features/health/data/health_platform_adapter.dart';
 import 'package:naviwealth/features/health/data/health_sync_service.dart';
+import 'package:naviwealth/features/health/data/health_sync_status.dart';
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -75,6 +77,7 @@ MutationStamper _fakeStamper({int startMillis = 1_700_000_000_000}) {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
   late InMemoryOutboxStore outbox;
   late HealthMetricRepository repo;
@@ -86,6 +89,39 @@ void main() {
   });
 
   tearDown(() => db.close());
+
+  for (final available in [false, true]) {
+    test(
+      'unconnected source preserves sync history (available=$available)',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final store = HealthSyncStatusStore(prefs);
+        final adapter = _FakeAdapter(available: available, permissions: false);
+        final service = HealthSyncService(
+          adapter: adapter,
+          repository: repo,
+          stamper: _fakeStamper(),
+          statusStore: store,
+        );
+        await service.syncRange();
+        expect(store.read(), isNull);
+        await store.write(
+          attemptedAt: DateTime.utc(2026, 9, 1),
+          completedAt: DateTime.utc(2026, 9, 1),
+          ok: true,
+          totalFetched: 2,
+          upserted: 2,
+          unchanged: 0,
+        );
+        final previous = prefs.getString(kHealthSyncStatusKey);
+        await service.syncRange();
+        expect(prefs.getString(kHealthSyncStatusKey), previous);
+        expect(adapter.fetchCalls, 0);
+        expect(await outbox.depth(), 0);
+      },
+    );
+  }
 
   test('skips when platform unavailable', () async {
     final svc = HealthSyncService(

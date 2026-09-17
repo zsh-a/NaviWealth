@@ -140,13 +140,9 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       types,
       permissions: _readOnlyPermissions(types),
     );
-    // Health Connect (Android) refuses to report READ-permission status by
-    // design — querying it would leak whether the user has data of a given
-    // type — so `hasPermissions` always returns `null` there even after the
-    // user grants everything. Treat `null` as "unknown → assume granted" on
-    // Android so sync isn't permanently blocked; an empty fetch reveals the
-    // genuinely-unauthorized case. iOS reports a real value, so honour it.
-    if (Platform.isAndroid) return result ?? true;
+    // Android reports granted permissions. Unknown is not authorization:
+    // an optional, unconnected source must never trigger speculative reads.
+    // HealthKit may return null for read access for privacy reasons.
     return result ?? false;
   }
 
