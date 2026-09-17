@@ -152,6 +152,10 @@ void main() {
     );
 
     expect(json['proposal_kinds'], [
+      <String, Object?>{
+        'kind': 'scheduled_task',
+        'tool_name': 'propose_scheduled_task',
+      },
       <String, Object?>{'kind': 'memory_change', 'tool_name': 'propose_memory'},
       <String, Object?>{'kind': 'fake', 'tool_name': 'propose_fake'},
     ]);

@@ -544,6 +544,7 @@ Map<String, Object> _opacityGroup() => {
   'highlight': _number(AppOpacity.highlight),
   'halo': _number(AppOpacity.halo),
   'muted': _number(AppOpacity.muted),
+  'inputSurface': _number(AppOpacity.inputSurface),
   'glow': _number(AppOpacity.glow),
   'disabled': _number(AppOpacity.disabled),
   'scrim': _number(AppOpacity.scrim),

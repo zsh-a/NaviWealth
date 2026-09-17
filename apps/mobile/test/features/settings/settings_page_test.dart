@@ -317,7 +317,7 @@ void main() {
 
       expect(find.text('AI privacy'), findsOneWidget);
       expect(find.text('AI Models'), findsOneWidget);
-      expect(find.text('Agents'), findsNothing);
+      expect(find.text('Scheduled assistants'), findsNothing);
       expect(find.text('AI transparency'), findsNothing);
 
       await tester.tap(find.byKey(const ValueKey('app.back')));
@@ -329,7 +329,7 @@ void main() {
 
       expect(find.text('App Logs'), findsOneWidget);
       expect(find.text('Performance'), findsOneWidget);
-      expect(find.text('Agents'), findsOneWidget);
+      expect(find.text('Scheduled assistants'), findsOneWidget);
       expect(find.text('AI transparency'), findsOneWidget);
     });
   });

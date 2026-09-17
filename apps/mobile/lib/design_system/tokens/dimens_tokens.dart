@@ -128,6 +128,9 @@ class AppOpacity {
   /// Muted -- borders, muted backgrounds, secondary text. (~0.30)
   static const double muted = 0.30;
 
+  /// Low-emphasis numeric input surface. (~0.35)
+  static const double inputSurface = 0.35;
+
   /// Hero profit-glow base alpha. (~0.40)
   static const double glow = 0.40;
 

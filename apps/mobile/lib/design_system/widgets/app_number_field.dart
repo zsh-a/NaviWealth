@@ -60,7 +60,7 @@ class AppNumberField extends StatelessWidget {
       forceErrorText: forceErrorText,
       style: FTextFieldStyleDelta.delta(
         color: FVariants.from(
-          colors.secondary.withValues(alpha: 0.35),
+          colors.secondary.withValues(alpha: AppOpacity.inputSurface),
           variants: const {},
         ),
         contentTextStyle: FVariants.from(
