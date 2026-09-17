@@ -6,6 +6,13 @@ Last reviewed: 2026-08-01.
 
 ## Document Contract
 
+The production Weekly Wealth Review is a scheduled LLM assistant registered
+through the Finance pack and adapted by app composition. It reads authoritative
+Finance tools and generates evidence-backed analysis; deterministic financial
+calculations remain tool-owned. The task must not invent weekly returns from
+a current snapshot. No model means no generated review, not a rule-based
+replacement. Existing agent/report identities are retained.
+
 Owns FinanceOS scope, composition, data ownership, and routing to focused
 Finance SSOTs. It does not own cross-domain architecture, Sync v3 wire
 semantics, or roadmap sequencing.

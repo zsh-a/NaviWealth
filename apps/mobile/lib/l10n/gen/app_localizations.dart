@@ -14128,13 +14128,127 @@ abstract class AppLocalizations {
   /// Settings page title for LifeOS agent management.
   ///
   /// In en, this message translates to:
-  /// **'Agents'**
+  /// **'Scheduled assistants'**
   String get agentSettingsTitle;
+
+  /// No description provided for @scheduledTaskTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled task'**
+  String get scheduledTaskTitle;
+
+  /// No description provided for @scheduledTaskDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete task'**
+  String get scheduledTaskDelete;
+
+  /// No description provided for @scheduledTaskDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop future runs and remove this task from the list. Existing run records and reports are retained.'**
+  String get scheduledTaskDeleteBody;
+
+  /// No description provided for @scheduledTaskCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'New scheduled task'**
+  String get scheduledTaskCreate;
+
+  /// No description provided for @scheduledTaskEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit task and schedule'**
+  String get scheduledTaskEdit;
+
+  /// No description provided for @scheduledTaskName.
+  ///
+  /// In en, this message translates to:
+  /// **'Task name'**
+  String get scheduledTaskName;
+
+  /// No description provided for @scheduledTaskGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis goal'**
+  String get scheduledTaskGoal;
+
+  /// No description provided for @scheduledWealthGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Review my current wealth, asset allocation, concentration and data quality. Investigate material changes only when historical evidence is available. Explain uncertainties and useful next steps. Do not treat a current snapshot as weekly returns.'**
+  String get scheduledWealthGoal;
+
+  /// No description provided for @scheduledHealthGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Review my sleep, activity and recovery over the last seven days using all available health data. Compare with the prior seven days only when supported by evidence. Explain missing data and limitations; do not diagnose or treat.'**
+  String get scheduledHealthGoal;
+
+  /// No description provided for @scheduledTaskScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-only data scope'**
+  String get scheduledTaskScope;
+
+  /// No description provided for @scheduledTaskWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'Every week'**
+  String get scheduledTaskWeekday;
+
+  /// No description provided for @scheduledTaskHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Hour'**
+  String get scheduledTaskHour;
+
+  /// No description provided for @scheduledTaskMinute.
+  ///
+  /// In en, this message translates to:
+  /// **'Minute'**
+  String get scheduledTaskMinute;
+
+  /// No description provided for @scheduledTaskDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'Uses device local time and your current model profile. Reads only the selected domain and generates reports; never changes records. Data is sent to the configured model service and charges may apply. Due tasks catch up on app launch or resume; exact background execution is not guaranteed.'**
+  String get scheduledTaskDisclosure;
+
+  /// No description provided for @scheduledTaskNeedsModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure an available AI model first. No rule-based replacement report will be generated.'**
+  String get scheduledTaskNeedsModel;
+
+  /// No description provided for @scheduledTaskNoTools.
+  ///
+  /// In en, this message translates to:
+  /// **'No read-only analysis tools are available for this domain.'**
+  String get scheduledTaskNoTools;
+
+  /// No description provided for @scheduledTaskRunFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Model analysis did not complete. Check the model connection and retry.'**
+  String get scheduledTaskRunFailed;
+
+  /// No description provided for @scheduledTaskInvalidReport.
+  ///
+  /// In en, this message translates to:
+  /// **'The model report lacks valid evidence. Please retry.'**
+  String get scheduledTaskInvalidReport;
+
+  /// No description provided for @scheduledTaskSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save. Check the task name, goal, domain and schedule; reopen if the task has changed.'**
+  String get scheduledTaskSaveFailed;
 
   /// Hint text shown at the top of the Agents settings page.
   ///
   /// In en, this message translates to:
-  /// **'Control scheduled LifeOS agents for active domains on this device.'**
+  /// **'Manage automatic analysis and reviews, or create a scheduled task through chat.'**
   String get agentSettingsSubtitle;
 
   /// Empty state title when no active domain has registered agents.
@@ -14906,7 +15020,7 @@ abstract class AppLocalizations {
   /// Presentation label for the HealthOS weekly summary agent.
   ///
   /// In en, this message translates to:
-  /// **'Weekly Summary'**
+  /// **'Weekly Health Summary'**
   String get agentPresentationWeeklySummaryLabel;
 
   /// Presentation description for the HealthOS weekly summary agent.

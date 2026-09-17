@@ -1056,7 +1056,7 @@ void main() {
     expect(find.text('Latest summary'), findsOneWidget);
     expect(find.text('Older summary'), findsOneWidget);
     expect(find.textContaining('Manual'), findsOneWidget);
-    expect(find.textContaining('Scheduled'), findsOneWidget);
+    expect(find.textContaining('Scheduled ·'), findsOneWidget);
   });
 }
 

@@ -473,6 +473,15 @@ CREATE TABLE IF NOT EXISTS agent_preferences (
 )
 ''';
 
+const String createScheduledAgentTasks = '''
+CREATE TABLE IF NOT EXISTS scheduled_agent_tasks (
+ owner_user_id TEXT NOT NULL,
+ id TEXT NOT NULL,
+ definition_json TEXT NOT NULL,
+ PRIMARY KEY(owner_user_id, id)
+)
+''';
+
 const String createAgentPreferencesOwnerIndex = '''
 CREATE INDEX IF NOT EXISTS idx_agent_preferences_owner
   ON agent_preferences(owner_user_id, agent_id)

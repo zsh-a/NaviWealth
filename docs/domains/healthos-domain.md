@@ -293,6 +293,13 @@ Event examples:
 
 ## Agents
 
+Weekly Summary is presented as Weekly Health Summary and runs through the
+shared scheduled LLM executor. It reads available local Health data via tools,
+regardless of whether the source is Health Connect, HealthKit or Garmin.
+The model generates the analysis; absent models or failed runs do not fall back
+to template reports. It retains `weekly_summary` as its stable identity and
+defaults to Sunday 20:00 device-local time with an editable weekly plan.
+
 | Agent | Purpose |
 |---|---|
 | Recovery Alert | Surfaces material recovery-risk signals |

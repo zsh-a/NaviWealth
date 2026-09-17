@@ -25,6 +25,7 @@ import 'agent.dart';
 import 'agent_preference_store.dart';
 import 'agent_run_store.dart';
 import 'providers.dart' as agent_providers;
+import 'scheduled_agent_task.dart';
 
 /// Source label used for the `EventRecord` of every agent run.
 const String kAgentRunEventSource = 'agent_run';
@@ -123,10 +124,22 @@ class AgentRunner {
       // Manual runs are explicit previews and must not move the recurring
       // schedule. Automatic event/background/catch-up runs still suppress a
       // redundant scheduled pass through the same persisted cursor.
-      final last = await _runStore.lastAutomaticRunAt(
+      var last = await _runStore.lastAutomaticRunAt(
         ownerUserId: ownerUserId,
         agentId: agent.id,
       );
+      if (agent is ScheduledLlmAgent) {
+        last ??= agent.task.createdAt;
+        final latest = await _runStore.latestForAgent(
+          ownerUserId: ownerUserId,
+          agentId: agent.id,
+        );
+        if (latest?.status == AgentRunLifecycleStatus.failed &&
+            context.now.difference(latest!.startedAt) <
+                const Duration(hours: 1)) {
+          continue;
+        }
+      }
       if (!agent.schedule.shouldFire(now: context.now, lastRunAt: last)) {
         continue;
       }

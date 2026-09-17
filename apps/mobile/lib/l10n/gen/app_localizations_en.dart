@@ -8402,11 +8402,77 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get agentSettingsTitle => 'Agents';
+  String get agentSettingsTitle => 'Scheduled assistants';
+
+  @override
+  String get scheduledTaskTitle => 'Scheduled task';
+
+  @override
+  String get scheduledTaskDelete => 'Delete task';
+
+  @override
+  String get scheduledTaskDeleteBody =>
+      'Stop future runs and remove this task from the list. Existing run records and reports are retained.';
+
+  @override
+  String get scheduledTaskCreate => 'New scheduled task';
+
+  @override
+  String get scheduledTaskEdit => 'Edit task and schedule';
+
+  @override
+  String get scheduledTaskName => 'Task name';
+
+  @override
+  String get scheduledTaskGoal => 'Analysis goal';
+
+  @override
+  String get scheduledWealthGoal =>
+      'Review my current wealth, asset allocation, concentration and data quality. Investigate material changes only when historical evidence is available. Explain uncertainties and useful next steps. Do not treat a current snapshot as weekly returns.';
+
+  @override
+  String get scheduledHealthGoal =>
+      'Review my sleep, activity and recovery over the last seven days using all available health data. Compare with the prior seven days only when supported by evidence. Explain missing data and limitations; do not diagnose or treat.';
+
+  @override
+  String get scheduledTaskScope => 'Read-only data scope';
+
+  @override
+  String get scheduledTaskWeekday => 'Every week';
+
+  @override
+  String get scheduledTaskHour => 'Hour';
+
+  @override
+  String get scheduledTaskMinute => 'Minute';
+
+  @override
+  String get scheduledTaskDisclosure =>
+      'Uses device local time and your current model profile. Reads only the selected domain and generates reports; never changes records. Data is sent to the configured model service and charges may apply. Due tasks catch up on app launch or resume; exact background execution is not guaranteed.';
+
+  @override
+  String get scheduledTaskNeedsModel =>
+      'Configure an available AI model first. No rule-based replacement report will be generated.';
+
+  @override
+  String get scheduledTaskNoTools =>
+      'No read-only analysis tools are available for this domain.';
+
+  @override
+  String get scheduledTaskRunFailed =>
+      'Model analysis did not complete. Check the model connection and retry.';
+
+  @override
+  String get scheduledTaskInvalidReport =>
+      'The model report lacks valid evidence. Please retry.';
+
+  @override
+  String get scheduledTaskSaveFailed =>
+      'Could not save. Check the task name, goal, domain and schedule; reopen if the task has changed.';
 
   @override
   String get agentSettingsSubtitle =>
-      'Control scheduled LifeOS agents for active domains on this device.';
+      'Manage automatic analysis and reviews, or create a scheduled task through chat.';
 
   @override
   String get agentSettingsNoActiveTitle => 'No active agents';
@@ -8883,7 +8949,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Flags short sleep, low HRV, and recovery signals that need attention.';
 
   @override
-  String get agentPresentationWeeklySummaryLabel => 'Weekly Summary';
+  String get agentPresentationWeeklySummaryLabel => 'Weekly Health Summary';
 
   @override
   String get agentPresentationWeeklySummaryDescription =>

@@ -355,7 +355,19 @@ class DataManagementService {
     final sourceNames = spec.sourceTables
         .map((table) => table.table)
         .toList(growable: false);
-    final agentIds = _agentIdsByDomain[scope] ?? const <String>[];
+    final taskRows = await _database
+        .customSelect(
+          "SELECT id FROM scheduled_agent_tasks WHERE owner_user_id = ? AND json_extract(definition_json, '\$.domain') = ?",
+          variables: [
+            Variable.withString(_ownerUserId),
+            Variable.withString(scope.wire),
+          ],
+        )
+        .get();
+    final agentIds = <String>{
+      ...?_agentIdsByDomain[scope],
+      for (final row in taskRows) row.read<String>('id'),
+    }.toList();
     var affected = 0;
 
     await _database.transaction(() async {
@@ -399,6 +411,12 @@ class DataManagementService {
         <Object?>[_ownerUserId, scope.wire],
       );
       if (agentIds.isNotEmpty) {
+        affected += await _deleteIn(
+          table: 'scheduled_agent_tasks',
+          column: 'id',
+          values: agentIds,
+          ownerColumn: 'owner_user_id',
+        );
         affected += await _deleteIn(
           table: 'agent_runs',
           column: 'agent_id',

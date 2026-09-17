@@ -391,12 +391,21 @@ Current app-owned Agent:
 
 Rules:
 
-- Agents are named use cases, not a general automation platform.
+- Agents are named use cases or user-confirmed read-only LLM tasks, not an
+  arbitrary-code automation platform. Scheduled task definitions and local
+  calendar plans reuse Agent registration, execution, artifacts and history.
 - Domain Agents act as sensors/analysts: they read repositories, tools, or
   Memory Runtime and emit stable findings and temporary `AgentArtifact`s.
 - Agent Artifacts do not write durable Memory and domain Agents do not send
   notifications. Explicit proposal confirmation owns business writes; the
   global attention layer is the only proactive-notification policy owner.
+
+Weekly Wealth Review and Weekly Health Summary use the shared scheduled LLM
+executor. Their default plans are Sunday 18:00 and Sunday 20:00 device-local
+time, respectively; users may override plans and goals. Custom tasks are
+single-domain, read-only and settings-only results in the first version.
+There is no server scheduling or rule-report fallback. See Agent Experience
+for confirmation, tool allow-lists, budgets and failure behavior.
 - Cross-run diagnostics are stored as local-only stable findings. Agents
   reconcile open findings by stable identity; disappeared signals resolve, and
   ignored/snoozed findings reopen only when evidence changes or snooze expires.

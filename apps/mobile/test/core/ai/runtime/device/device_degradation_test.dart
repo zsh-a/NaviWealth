@@ -295,6 +295,7 @@ void main() {
         'propose_options_profile_update',
         'propose_plan',
         'propose_progress',
+        'propose_scheduled_task',
         'propose_trade',
         'propose_transfer',
         'query_memory',

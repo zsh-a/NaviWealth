@@ -16,6 +16,7 @@ import '../../../core/ai/agents/agent_run_controller.dart';
 import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/agents/agent_schedule.dart';
 import '../../../core/ai/agents/providers.dart' as agent_providers;
+import '../../../core/ai/agents/scheduled_agent_task.dart';
 import '../../../core/ai/agents/ui/agent_result_card.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
@@ -25,9 +26,11 @@ import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'scheduled_task_editor.dart';
 
 final _agentSettingsRowsProvider =
     FutureProvider.autoDispose<List<_AgentSettingsRow>>((ref) async {
+      await ref.watch(agentRegistryReadyProvider.future);
       final registrations = ref.watch(agentRegistrationProvider);
       final presentations = ref.watch(agentPresentationSpecsProvider);
       final agentIds = [
@@ -124,6 +127,10 @@ class AgentsSettingsPage extends ConsumerWidget {
       child: SettingsPageFrame(
         children: [
           SettingsHintText(l10n.agentSettingsSubtitle),
+          AppQuietButton(
+            label: l10n.scheduledTaskCreate,
+            onPress: () => showScheduledTaskEditor(context),
+          ),
           const SizedBox(height: AppSpacing.s12),
           rows.when(
             loading: () => const SkeletonCard(
@@ -657,6 +664,20 @@ class _AgentSettingsDetailSheetState
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
           child: Column(
             children: [
+              if (row.agent case ScheduledLlmAgent(:final task))
+                AppQuietButton(
+                  label: l10n.scheduledTaskEdit,
+                  onPress: () async {
+                    final changed = await showScheduledTaskEditor(
+                      context,
+                      initial: task,
+                    );
+                      if (changed == true && context.mounted) {
+                      widget.onRowsChanged();
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
               _AgentDetailActionRow(
                 icon: FLucideIcons.power,
                 title: l10n.agentSettingsEnabled,
@@ -994,6 +1015,9 @@ String _domainLabel(DomainScope domain) {
 }
 
 String _scheduleLabel(AppLocalizations l10n, AgentSchedule schedule) {
+  if (schedule.weekdayLocal case final day?) {
+    return '${scheduledWeekdayLabel(l10n.localeName, day)} · ${schedule.preferredHourLocal.toString().padLeft(2, '0')}:${schedule.minuteLocal.toString().padLeft(2, '0')}';
+  }
   final cadence = _intervalLabel(l10n, schedule.interval);
   final hour = schedule.preferredHourLocal;
   if (hour == null) return cadence;
@@ -1009,7 +1033,11 @@ String _nextRunLabel(
   final now = DateTime.now();
   final next = row.agent.schedule.nextRunAt(
     now: now,
-    lastRunAt: row.lastAutomaticRunAt,
+    lastRunAt:
+        row.lastAutomaticRunAt ??
+        (row.agent is ScheduledLlmAgent
+            ? (row.agent as ScheduledLlmAgent).task.createdAt
+            : null),
   );
   if (next == null || !next.isAfter(now)) {
     return l10n.agentSettingsNextRunOnOpen;

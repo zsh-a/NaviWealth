@@ -15,6 +15,7 @@ import 'agent_runner.dart';
 final agentRunControllerProvider = FutureProvider<AgentRunController>((
   ref,
 ) async {
+  await ref.watch(agentRegistryReadyProvider.future);
   final runner = await ref.watch(agentRunnerProvider.future);
   return AgentRunController(
     runner: runner,

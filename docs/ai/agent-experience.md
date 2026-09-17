@@ -58,6 +58,45 @@ output is already owned by a primary product surface.
 
 ## User-Visible States
 
+### Scheduled LLM assistants
+
+Weekly Wealth Review and Weekly Health Summary are production LLM tasks.
+`app/agents/scheduled_agent_composition.dart` adapts the existing domain
+registrations without changing their stable IDs. Legacy deterministic analysis
+helpers remain available to domain code/tests, but are not a report fallback.
+The shared executor uses the existing `FrbChatRunner` native tool loop, not an
+additional LLM loop. Model absence or execution failure never publishes a
+rule-based replacement report.
+
+Users can create weekly tasks in Settings or through `propose_scheduled_task`.
+Chat proposals require the existing confirmation path before activation.
+Tasks are owner-scoped, device-local `scheduled_agent_tasks` definitions;
+they are not synced or included in encrypted backups in this version. Task
+deletion archives the definition and retains reports/history. Domain reset
+removes that domain's definitions and associated run/preference rows.
+
+Each task grants read-only access to one enabled domain, using the currently
+configured model service. Both the advertised catalog and actual dispatch
+registry exclude writes, proposals, interactions, shell memory and other
+domains. Definitions contain instructions, not executable scripts. User
+instructions and retrieved evidence cannot expand these privileges. Task
+creation is never exposed inside a scheduled run.
+
+Weekly schedules use a local-calendar weekday/hour/minute; device timezone
+changes follow device local time. Missed periods coalesce into one latest run.
+Manual previews do not move automatic scheduling. A failed automatic attempt
+backs off for one hour. Foreground launch/resume performs catch-up; no exact
+background or server execution guarantee is made. Runs are limited to four
+tool rounds, twelve tool calls, 4096 output tokens per model round and two
+minutes. Current owner, active domain, task revision and enablement are checked
+again before tool dispatch and report persistence.
+
+LLM reports require structured JSON and references to actual successful tool
+results. Host-owned references contain the source tool, capture time and
+result, never model-invented routes. Statistics remain authoritative tool
+outputs; interpretation and report text come from the LLM. Evidence existence
+checks do not constitute semantic verification of every model claim.
+
 | State | Meaning | UI behavior |
 |---|---|---|
 | `idle` | Enabled and waiting | Show next/last run and allow manual run |
@@ -168,7 +207,8 @@ cover the behavior appropriate to each agent, including:
 
 - ready results with expected insights, evidence, severity, and action intent;
 - no-finding behavior;
-- missing LLM profile and deterministic fallback;
+- missing LLM profile and explicit failure for scheduled LLM tasks; existing
+  non-task agents retain only their documented fallback policies;
 - tool/runtime failure and budget exhaustion;
 - prompt injection in retrieved content;
 - domain opt-out and inactive-agent behavior;
@@ -224,7 +264,9 @@ creating Agent-specific reporting or attribution models.
 
 - A global agent inbox or full-screen agent dashboard.
 - A second chat destination.
-- An open-ended automation/workflow builder.
+- An open-ended automation/workflow builder, arbitrary scripts, automatic
+  business writes, or task-to-task recursion. Confirmed read-only scheduled
+  LLM analysis tasks are supported.
 - Agent-to-agent calls.
 - Silent modification of user-authored content or commitments.
 - Syncing ephemeral run/artifact lifecycle tables.

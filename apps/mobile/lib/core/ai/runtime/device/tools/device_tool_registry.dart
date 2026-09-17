@@ -30,6 +30,7 @@ import 'ask_user_tool.dart';
 import 'build_context_tool.dart';
 import 'device_tool.dart';
 import 'propose_memory_tool.dart';
+import 'propose_scheduled_task_tool.dart';
 import 'query_memory_tool.dart';
 
 /// Per-tool dispatch backstop. Most device tools are local Drift reads
@@ -46,6 +47,7 @@ const List<DeviceTool> kShellDeviceToolsCore = <DeviceTool>[
   QueryMemoryTool(),
   BuildContextTool(),
   ProposeMemoryTool(),
+  ProposeScheduledTaskTool(),
   AskUserTool(),
   GetAgentArtifactsTool(),
   GetAgentRunsTool(),
@@ -74,6 +76,15 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
       ),
       'propose_memory': ToolDescriptor(
         name: 'propose_memory',
+        access: Access.propose,
+        risk: RiskLevel.propose,
+        requiresConfirmation: Confirmation.oneTap,
+        allowedContextTier: BudgetTier.standard,
+        sideEffect: SideEffect.deviceLocalWrite,
+        domain: kDomainShell,
+      ),
+      'propose_scheduled_task': ToolDescriptor(
+        name: 'propose_scheduled_task',
         access: Access.propose,
         risk: RiskLevel.propose,
         requiresConfirmation: Confirmation.oneTap,

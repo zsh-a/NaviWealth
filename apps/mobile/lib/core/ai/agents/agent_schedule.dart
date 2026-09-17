@@ -15,7 +15,38 @@ class AgentSchedule {
     required this.interval,
     this.preferredHourLocal,
     this.jitter = const Duration(minutes: 5),
+    this.weekdayLocal,
+    this.minuteLocal = 0,
   });
+
+  const AgentSchedule.weekly({
+    required int weekday,
+    required int hour,
+    int minute = 0,
+  }) : interval = const Duration(days: 7),
+       preferredHourLocal = hour,
+       weekdayLocal = weekday,
+       minuteLocal = minute,
+       jitter = Duration.zero,
+       assert(weekday >= 1 && weekday <= 7),
+       assert(hour >= 0 && hour <= 23),
+       assert(minute >= 0 && minute <= 59);
+
+  final int? weekdayLocal;
+  final int minuteLocal;
+
+  DateTime _weeklySlot(DateTime now) {
+    final local = now.toLocal();
+    var slot = DateTime(
+      local.year,
+      local.month,
+      local.day - (local.weekday - weekdayLocal! + 7) % 7,
+      preferredHourLocal!,
+      minuteLocal,
+    );
+    if (slot.isAfter(local)) slot = _addLocalDays(slot, -7);
+    return slot;
+  }
 
   /// Build a daily schedule.
   factory AgentSchedule.daily({int hourLocal = 7}) => AgentSchedule(
@@ -52,6 +83,12 @@ class AgentSchedule {
   ///   have already run on the same local day, and must pass the
   ///   preferred-hour gate (if set)
   bool shouldFire({required DateTime now, DateTime? lastRunAt}) {
+    if (weekdayLocal != null) {
+      final slot = _weeklySlot(now);
+      // A new task starts on its next scheduled day, not with an old report.
+      if (lastRunAt == null) return _isSameLocalDay(slot, now.toLocal());
+      return lastRunAt.isBefore(slot);
+    }
     if (lastRunAt != null && now.difference(lastRunAt) < interval) {
       return false;
     }
@@ -78,6 +115,7 @@ class AgentSchedule {
   DateTime? nextRunAt({required DateTime now, DateTime? lastRunAt}) {
     final localNow = now.toLocal();
     if (shouldFire(now: now, lastRunAt: lastRunAt)) return localNow;
+    if (weekdayLocal != null) return _addLocalDays(_weeklySlot(now), 7);
 
     final hour = preferredHourLocal;
     if (hour == null) {
@@ -107,10 +145,18 @@ class AgentSchedule {
       other is AgentSchedule &&
       other.interval == interval &&
       other.preferredHourLocal == preferredHourLocal &&
+      other.weekdayLocal == weekdayLocal &&
+      other.minuteLocal == minuteLocal &&
       other.jitter == jitter;
 
   @override
-  int get hashCode => Object.hash(interval, preferredHourLocal, jitter);
+  int get hashCode => Object.hash(
+    interval,
+    preferredHourLocal,
+    jitter,
+    weekdayLocal,
+    minuteLocal,
+  );
 }
 
 bool _isSameLocalDay(DateTime a, DateTime b) =>

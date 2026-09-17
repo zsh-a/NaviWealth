@@ -9,11 +9,15 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:forui/forui.dart';
 
 import '../core/ai/agents/agent.dart';
 import '../core/ai/agents/agent_artifact_routes.dart';
 import '../core/ai/agents/agent_presentation.dart';
 import '../core/ai/agents/agent_registry.dart';
+import '../core/ai/agents/scheduled_agent_store.dart';
+import '../core/ai/agents/scheduled_agent_task.dart';
+import '../core/ai/agents/scheduled_task_applier.dart';
 import '../core/ai/composition/ai_context.dart';
 import '../core/ai/composition/ask_ai.dart';
 import '../core/ai/composition/batch_proposal_undo.dart';
@@ -60,6 +64,8 @@ import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
 import 'agents/providers.dart';
+import 'agents/scheduled_agent_composition.dart';
+import 'agents/scheduled_llm_executor.dart';
 import 'domain_packs.dart';
 import 'domain_packs/proposal_applier_route.dart';
 import 'life_action_outcomes.dart';
@@ -190,12 +196,31 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       (ref) =>
           domainAgentRegistrations(ref, ref.watch(activeDomainPacksProvider)),
     ),
+    agentRegistryReadyProvider.overrideWith((ref) async {
+      await ref.watch(scheduledAgentTasksProvider.future);
+    }),
     appAgentRegistryProvider.overrideWith(
       (ref) => <Agent>[ref.watch(dailyNavigatorAgentProvider)],
     ),
     agentPresentationSpecsProvider.overrideWith(
-      (ref) =>
-          domainAgentPresentationSpecs(ref.watch(activeDomainPacksProvider)),
+      (ref) => {
+        ...domainAgentPresentationSpecs(ref.watch(activeDomainPacksProvider)),
+        for (final task
+            in ref.watch(scheduledAgentTasksProvider).value ??
+                const <ScheduledAgentTask>[])
+          if (task.id.startsWith('user_task:') &&
+              ref
+                  .watch(activeDomainPacksProvider)
+                  .any((pack) => pack.scope == task.domain))
+            task.id: AgentPresentationSpec(
+              agentId: task.id,
+              domain: task.domain,
+              icon: FLucideIcons.calendarClock,
+              label: (_) => task.title,
+              description: (_) => task.instructions,
+              placement: AgentResultPlacement.settingsOnly,
+            ),
+      },
     ),
     activeDomainShellsProvider.overrideWith((ref) {
       final l10n = lookupAppLocalizations(
@@ -449,6 +474,13 @@ Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
   List<DomainPack> packs,
 ) async {
   final routes = <ProposalApplierRoute>[];
+  routes.add(
+    ProposalApplierRoute(
+      applier: ScheduledTaskApplier(ref),
+      kinds: const {'scheduled_task'},
+      tablePrefixes: const {'scheduled_agent_tasks'},
+    ),
+  );
   final ownerUserId = ref.read(auth_providers.authSessionProvider)?.userId;
   if (ownerUserId != null && ownerUserId.isNotEmpty) {
     routes.add(
@@ -497,11 +529,24 @@ List<DomainAgentRegistration> domainAgentRegistrations(
   Ref ref,
   List<DomainPack> packs,
 ) {
-  return [
+  final registrations = composeScheduledAgents(ref, [
     for (final p in packs)
       if (p.agentBuilder != null)
         for (final agent in p.agentBuilder!(ref))
           DomainAgentRegistration(agent: agent, domain: p.scope),
+  ]);
+  final active = packs.map((pack) => pack.scope).toSet();
+  final tasks =
+      ref.watch(scheduledAgentTasksProvider).value ??
+      const <ScheduledAgentTask>[];
+  return [
+    ...registrations,
+    for (final task in tasks)
+      if (task.id.startsWith('user_task:') && active.contains(task.domain))
+        DomainAgentRegistration(
+          agent: ScheduledLlmAgent(task, executeScheduledLlmTask),
+          domain: task.domain,
+        ),
   ];
 }
 

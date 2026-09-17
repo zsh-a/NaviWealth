@@ -7954,10 +7954,70 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get agentSettingsTitle => 'Agents';
+  String get agentSettingsTitle => '定时助手';
 
   @override
-  String get agentSettingsSubtitle => '管理当前已启用 LifeOS 域在本设备上的定时 Agent。';
+  String get scheduledTaskTitle => '定时任务';
+
+  @override
+  String get scheduledTaskDelete => '删除任务';
+
+  @override
+  String get scheduledTaskDeleteBody => '停止后续运行并从列表移除。已有运行记录和报告会保留。';
+
+  @override
+  String get scheduledTaskCreate => '新增定时任务';
+
+  @override
+  String get scheduledTaskEdit => '编辑任务与计划';
+
+  @override
+  String get scheduledTaskName => '任务名称';
+
+  @override
+  String get scheduledTaskGoal => '分析目标';
+
+  @override
+  String get scheduledWealthGoal =>
+      '复盘当前财富、资产配置、集中度和数据质量。仅在有历史证据时分析重要变化，说明不确定性及值得关注的下一步。不要把当前资产快照当作本周收益。';
+
+  @override
+  String get scheduledHealthGoal =>
+      '总结近七天的睡眠、活动和恢复情况，使用所有可用的健康数据。仅在有充分证据时与此前七天比较，说明缺失数据与分析局限，不提供医学诊断或治疗建议。';
+
+  @override
+  String get scheduledTaskScope => '只读数据范围';
+
+  @override
+  String get scheduledTaskWeekday => '每周';
+
+  @override
+  String get scheduledTaskHour => '时';
+
+  @override
+  String get scheduledTaskMinute => '分';
+
+  @override
+  String get scheduledTaskDisclosure =>
+      '使用设备本地时间和当前模型配置。只读取所选领域的数据并生成报告，不修改记录。数据会发送至配置的模型服务，可能产生费用。到期后在启动或回到前台时补跑，不保证后台准点执行。';
+
+  @override
+  String get scheduledTaskNeedsModel => '请先配置可用的 AI 模型；不会生成规则版替代报告。';
+
+  @override
+  String get scheduledTaskNoTools => '所选领域暂无可用的只读分析工具。';
+
+  @override
+  String get scheduledTaskRunFailed => '模型分析未完成，请检查模型连接后重试。';
+
+  @override
+  String get scheduledTaskInvalidReport => '模型报告缺少有效证据，请重试。';
+
+  @override
+  String get scheduledTaskSaveFailed => '无法保存任务，请检查名称、目标、领域和计划；如任务已变更，请重新打开。';
+
+  @override
+  String get agentSettingsSubtitle => '管理自动分析与复盘，也可以通过对话创建定时任务。';
 
   @override
   String get agentSettingsNoActiveTitle => '暂无可用 Agent';
@@ -8411,7 +8471,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '标记短睡眠、低 HRV 和需要关注的恢复信号。';
 
   @override
-  String get agentPresentationWeeklySummaryLabel => '每周总结';
+  String get agentPresentationWeeklySummaryLabel => '每周健康总结';
 
   @override
   String get agentPresentationWeeklySummaryDescription => '复盘本周睡眠、活动、恢复与趋势证据。';

@@ -272,6 +272,7 @@ void main() {
         contains('domain_tool'),
       );
       expect(c.read(proposalKindRegistryProvider).map((meta) => meta.kind), [
+        'scheduled_task',
         'memory_change',
         'fake_finance',
       ]);
@@ -299,7 +300,7 @@ void main() {
     expect(
       domainProposalKinds(const [_financePack, _healthPack])
           .map((meta) => meta.kind),
-      ['memory_change', 'fake_finance', 'fake_health'],
+      ['scheduled_task', 'memory_change', 'fake_finance', 'fake_health'],
     );
     expect(
       domainCommandPaletteEntries(const [

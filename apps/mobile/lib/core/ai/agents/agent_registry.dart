@@ -18,6 +18,9 @@ final agentRegistrationProvider = Provider<List<DomainAgentRegistration>>(
   (ref) => const <DomainAgentRegistration>[],
 );
 
+/// App composition waits for persisted user definitions before dispatching.
+final agentRegistryReadyProvider = FutureProvider<void>((ref) async {});
+
 /// App-owned orchestration agents that do not belong to an opt-in domain.
 final appAgentRegistryProvider = Provider<List<Agent>>(
   (ref) => const <Agent>[],
