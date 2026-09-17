@@ -253,21 +253,14 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
       _syncSearchText(query.searchText);
     }
 
-    Widget searchField() => FTextField(
-      control: FTextFieldControl.managed(
-        controller: _searchController,
-        onChange: (value) => _scheduleSearch(controller, value.text),
-      ),
+    Widget searchField() => AppSearchField(
+      controller: _searchController,
+      onChanged: (text) => text.isEmpty
+          ? _clearSearch(controller)
+          : _scheduleSearch(controller, text),
       focusNode: _searchFocus,
-      textInputAction: TextInputAction.search,
-      prefixBuilder: (_, _, _) => const Padding(
-        padding: EdgeInsetsDirectional.only(
-          start: AppSpacing.s12,
-          end: AppSpacing.s8,
-        ),
-        child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-      ),
       hint: l10n.activityFeedSearchHint,
+      clearLabel: l10n.aiChatSessionsSearchClear,
     );
 
     Widget filterButton() => ConstrainedBox(
@@ -300,29 +293,6 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
                   key: const ValueKey<String>('activity-wide-toolbar'),
                   children: [
                     Expanded(flex: 3, child: searchField()),
-                    const SizedBox(width: AppSpacing.s4),
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (context, value, child) {
-                        final hidden = value.text.isEmpty;
-                        return IgnorePointer(
-                          ignoring: hidden,
-                          child: AnimatedOpacity(
-                            opacity: hidden ? 0 : 1,
-                            duration: AppMotionPolicy.duration(
-                              context,
-                              Motion.fast,
-                              role: AppMotionRole.transition,
-                            ),
-                            child: AppIconButton(
-                              icon: FLucideIcons.x,
-                              tooltip: l10n.formDateFieldClearTooltip,
-                              onPress: () => _clearSearch(controller),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                     const SizedBox(width: AppSpacing.s8),
                     Expanded(flex: 2, child: filterButton()),
                   ],
@@ -335,16 +305,6 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
                     Row(
                       children: [
                         Expanded(child: searchField()),
-                        ValueListenableBuilder<TextEditingValue>(
-                          valueListenable: _searchController,
-                          builder: (_, value, _) => value.text.isEmpty
-                              ? const SizedBox.shrink()
-                              : AppIconButton(
-                                  icon: FLucideIcons.x,
-                                  tooltip: l10n.formDateFieldClearTooltip,
-                                  onPress: () => _clearSearch(controller),
-                                ),
-                        ),
                         AppIconButton(
                           icon: FLucideIcons.chevronUp,
                           tooltip: l10n.activitySearchCollapse,

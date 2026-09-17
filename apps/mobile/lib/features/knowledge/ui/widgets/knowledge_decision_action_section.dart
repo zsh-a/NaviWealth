@@ -26,7 +26,12 @@ class KnowledgeDecisionActionSection extends ConsumerWidget {
     if (availability.isLoading) {
       return _section(context, children: const [kDefaultLoading]);
     }
-    if (availability.hasError) return const SizedBox.shrink();
+    if (availability.hasError) {
+      return _failure(
+        context,
+        () => ref.invalidate(lifeOpenActionCountProvider),
+      );
+    }
     if (availability.asData?.value == null) {
       final l10n = AppLocalizations.of(context);
       return _section(
@@ -52,7 +57,10 @@ class KnowledgeDecisionActionSection extends ConsumerWidget {
     final linked = ref.watch(lifeLinkedActionProvider(_source));
     return linked.when(
       loading: () => _section(context, children: const [kDefaultLoading]),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => _failure(
+        context,
+        () => ref.invalidate(lifeLinkedActionProvider(_source)),
+      ),
       data: (action) =>
           _ActionContent(decision: decision, action: action, source: _source),
     );
@@ -64,6 +72,17 @@ class KnowledgeDecisionActionSection extends ConsumerWidget {
       children: children,
     );
   }
+
+  Widget _failure(BuildContext context, VoidCallback retry) => _section(
+    context,
+    children: [
+      AppEmptyState.error(
+        title: AppLocalizations.of(context).commonLoadFailed,
+        retryLabel: AppLocalizations.of(context).commonRetry,
+        onRetry: retry,
+      ),
+    ],
+  );
 }
 
 class _ActionContent extends ConsumerStatefulWidget {

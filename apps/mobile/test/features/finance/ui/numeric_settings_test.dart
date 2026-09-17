@@ -9,6 +9,7 @@ import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/domain/fire_plan.dart';
 import 'package:naviwealth/features/finance/ui/settings/fire_stress_settings_page.dart';
 import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings_page.dart';
+import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -42,6 +43,31 @@ Future<void> _enterAndBlur(WidgetTester tester, String text) async {
 }
 
 void main() {
+  testWidgets(
+    'risk percentage accepts precise whole values and rejects out of range',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'naviwealth.risk.threshold.asset': 0.3,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(_host(container, const RiskThresholdSettings()));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).first, '37');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(prefs.getDouble('naviwealth.risk.threshold.asset'), .37);
+      await tester.enterText(find.byType(EditableText).first, '99');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(prefs.getDouble('naviwealth.risk.threshold.asset'), .37);
+      expect(find.text('5–95%'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('invalid stress amounts never overwrite the saved amount', (
     tester,
   ) async {

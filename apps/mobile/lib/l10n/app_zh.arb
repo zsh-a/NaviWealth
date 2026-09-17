@@ -1,4 +1,7 @@
 {
+  "journalContractSection": "合约信息",
+  "journalFundingSection": "账户与金额",
+  "journalStatusSection": "状态与备注",
   "healthWindowDays": "最近 {days} 天",
   "@healthWindowDays": {
     "placeholders": {

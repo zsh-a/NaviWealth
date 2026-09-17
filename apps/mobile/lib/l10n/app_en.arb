@@ -1,4 +1,7 @@
 {
+  "journalContractSection": "Contract",
+  "journalFundingSection": "Funding & amounts",
+  "journalStatusSection": "Status & notes",
   "healthWindowDays": "Last {days} days",
   "@healthWindowDays": {
     "placeholders": {

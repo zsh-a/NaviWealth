@@ -14,13 +14,14 @@ import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../composition/finance_route_paths.dart';
 import '../data/providers.dart';
 import '../domain/options_opportunity.dart';
 import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';
 import 'income_planner_labels.dart';
 
-/// Open the trade-journal form sheet.
+/// Open the full-page trade-journal editor (legacy entry-point name).
 ///
 /// Pass [existingId] to edit a row, or [prefilled] to pre-populate the
 /// form from an opportunity card. The two are mutually exclusive.
@@ -29,32 +30,29 @@ Future<void> showTradeJournalSheet(
   String? existingId,
   OptionsOpportunity? prefilled,
 }) {
-  return showGuardedFormSheet(
-    context: context,
-    builder: (sheetCtx, dirty) => _TradeJournalForm(
-      existingId: existingId,
-      prefilled: prefilled,
-      dirty: dirty,
+  return Navigator.of(context).push<void>(
+    buildAppPageRoute<void>(
+      context: context,
+      pageBuilder: (_, _, _) =>
+          _TradeJournalForm(existingId: existingId, prefilled: prefilled),
     ),
   );
 }
 
 class _TradeJournalForm extends ConsumerStatefulWidget {
-  const _TradeJournalForm({
-    required this.dirty,
-    this.existingId,
-    this.prefilled,
-  });
+  const _TradeJournalForm({this.existingId, this.prefilled});
 
   final String? existingId;
   final OptionsOpportunity? prefilled;
-  final FormDirtyController dirty;
 
   @override
   ConsumerState<_TradeJournalForm> createState() => _TradeJournalFormState();
 }
 
-class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
+class _TradeJournalFormState extends ConsumerState<_TradeJournalForm>
+    with FormDirtyGuard<_TradeJournalForm> {
+  @override
+  String get leaveFallback => FinanceRoutes.planIncomeOptions;
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _symbolCtl;
   late final TextEditingController _optionSymbolCtl;
@@ -114,7 +112,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     final defaults = ref.read(formDefaultsProvider);
     _brokerageAccountId = defaults.tradeAccountId;
     _cashAccountId = defaults.tradeCashAccountId;
-    widget.dirty.bindTextControllers([
+    dirty.bindTextControllers([
       _symbolCtl,
       _optionSymbolCtl,
       _creditCtl,
@@ -162,7 +160,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       _brokerageAccountId = entry.brokerageAccountId;
       _cashAccountId = entry.cashAccountId;
     });
-    widget.dirty.snapshotBaseline();
+    dirty.snapshotBaseline();
   }
 
   @override
@@ -207,7 +205,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     final contractQuantity = int.parse(_contractQuantityCtl.text.trim());
     final fees = Decimal.parse(_feesCtl.text.trim());
     setState(() => _busy = true);
-    widget.dirty.busy = true;
+    dirty.busy = true;
     try {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
@@ -282,14 +280,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
       );
       await ledger.mirror(saved);
-      widget.dirty.markPristine();
+      dirty.markPristine();
       if (mounted) unawaited(Navigator.of(context).maybePop());
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonSaveFailed);
       }
     } finally {
-      widget.dirty.busy = false;
+      dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -309,20 +307,20 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     );
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
-    widget.dirty.busy = true;
+    dirty.busy = true;
     try {
       final repo = await ref.read(tradeJournalRepositoryProvider.future);
       final ledger = await ref.read(optionsJournalLedgerServiceProvider.future);
       await ledger.removeMirrors(existing.id);
       await repo.remove(existing);
-      widget.dirty.markPristine();
+      dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
         AppMessenger.show(context, ToastKind.error, l10n.commonDeleteFailed);
       }
     } finally {
-      widget.dirty.busy = false;
+      dirty.busy = false;
       if (mounted) setState(() => _busy = false);
     }
   }
@@ -332,25 +330,38 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
     final l10n = AppLocalizations.of(context);
     final isEdit = widget.existingId != null;
     final accountsAsync = ref.watch(accountsStreamProvider);
-    return AppSheet(
-      title: isEdit
-          ? l10n.incomePlannerJournalEditTitle
-          : l10n.incomePlannerJournalAddCta,
-      footer: AppSheetFooter(
-        submitLabel: l10n.incomePlannerSaveAction,
-        cancelLabel: l10n.commonCancel,
-        onSubmit: _save,
-        busy: _busy,
-      ),
-      child: accountsAsync.whenOrLoading(
-        context: context,
-        error: (e, _) => AppEmptyState.error(
-          title: l10n.commonLoadFailed,
-          message: userSafeErrorMessage(context, e),
-          retryLabel: l10n.commonRetry,
-          onRetry: () => ref.invalidate(accountsStreamProvider),
+    return guardedScope(
+      child: AppFormPageScaffold(
+        title: Text(
+          isEdit
+              ? l10n.incomePlannerJournalEditTitle
+              : l10n.incomePlannerJournalAddCta,
         ),
-        data: (accounts) => _buildForm(l10n, accounts),
+        confirmLeave: handleBackIntent,
+        child: AppFormScaffoldBody(
+          onSubmit: _busy || !accountsAsync.hasValue ? null : _save,
+          action: SizedBox(
+            width: double.infinity,
+            child: AppBusyButton(
+              label: l10n.incomePlannerSaveAction,
+              busyLabel: l10n.formSaving,
+              busy: _busy,
+              onPress: _busy || !accountsAsync.hasValue ? null : _save,
+            ),
+          ),
+          children: [
+            accountsAsync.whenOrLoading(
+              context: context,
+              error: (e, _) => AppEmptyState.error(
+                title: l10n.commonLoadFailed,
+                message: userSafeErrorMessage(context, e),
+                retryLabel: l10n.commonRetry,
+                onRetry: () => ref.invalidate(accountsStreamProvider),
+              ),
+              data: (accounts) => _buildForm(l10n, accounts),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -373,6 +384,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          SectionHeader(title: l10n.journalContractSection),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _symbolCtl),
             label: Text(l10n.incomePlannerSymbolLabel),
@@ -390,7 +402,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
           _StrategySelect(
             value: _strategy,
             onChanged: (v) {
-              widget.dirty.markDirty();
+              dirty.markDirty();
               setState(() => _strategy = v);
             },
           ),
@@ -401,7 +413,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             required: true,
             onChanged: (value) {
               if (value != null) {
-                widget.dirty.markDirty();
+                dirty.markDirty();
                 setState(() => _openedAt = value.toUtc());
               }
             },
@@ -413,11 +425,12 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             required: true,
             firstDate: _openedAt,
             onChanged: (value) {
-              widget.dirty.markDirty();
+              dirty.markDirty();
               setState(() => _expirationAt = value?.toUtc());
             },
           ),
           const SizedBox(height: AppSpacing.s12),
+          SectionHeader(title: l10n.journalFundingSection),
           if (accounts.isNotEmpty) ...[
             AccountPicker(
               label: l10n.incomePlannerJournalBrokerageAccountLabel,
@@ -426,7 +439,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
                   : brokerageAccounts,
               value: _brokerageAccountId,
               onChanged: (v) {
-                widget.dirty.markDirty();
+                dirty.markDirty();
                 setState(() => _brokerageAccountId = v);
               },
             ),
@@ -436,7 +449,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
               accounts: cashAccounts.isEmpty ? accounts : cashAccounts,
               value: _cashAccountId,
               onChanged: (v) {
-                widget.dirty.markDirty();
+                dirty.markDirty();
                 setState(() => _cashAccountId = v);
               },
             ),
@@ -447,13 +460,14 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             label: l10n.formCurrencyPickerLabelDefault,
             onChanged: (value) {
               if (value != null) {
-                widget.dirty.markDirty();
+                dirty.markDirty();
                 setState(() => _currency = value);
               }
             },
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
+            unit: _currency,
             control: FTextFieldControl.managed(controller: _creditCtl),
             label: Text(l10n.incomePlannerJournalCreditLabel),
             hint: l10n.incomePlannerJournalAmountHint,
@@ -472,7 +486,8 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             currency: _currency,
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
+            unit: _currency,
             control: FTextFieldControl.managed(controller: _debitCtl),
             label: Text(l10n.incomePlannerJournalDebitLabel),
             hint: l10n.incomePlannerJournalAmountHint,
@@ -485,7 +500,8 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
+            unit: _currency,
             control: FTextFieldControl.managed(controller: _strikeCtl),
             label: Text(l10n.incomePlannerJournalStrikeLabel),
             hint: l10n.incomePlannerJournalAmountHint,
@@ -498,7 +514,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
             control: FTextFieldControl.managed(controller: _contractSizeCtl),
             label: Text(l10n.incomePlannerJournalContractSizeLabel),
             hint: '100',
@@ -506,7 +522,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             validator: (value) => _validatePositiveInt(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
             control: FTextFieldControl.managed(
               controller: _contractQuantityCtl,
             ),
@@ -516,7 +532,8 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             validator: (value) => _validatePositiveInt(value, l10n),
           ),
           const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
+          AppNumberField(
+            unit: _currency,
             control: FTextFieldControl.managed(controller: _feesCtl),
             label: Text(l10n.incomePlannerJournalFeesLabel),
             hint: '0.00',
@@ -529,10 +546,11 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.s12),
+          SectionHeader(title: l10n.journalStatusSection),
           _StatusSelect(
             value: _status,
             onChanged: (v) {
-              widget.dirty.markDirty();
+              dirty.markDirty();
               setState(() {
                 _status = v;
                 _closedAt = v == TradeJournalStatus.open
@@ -551,7 +569,7 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm> {
                 required: _status != TradeJournalStatus.open,
                 firstDate: _openedAt,
                 onChanged: (value) {
-                  widget.dirty.markDirty();
+                  dirty.markDirty();
                   setState(() => _closedAt = value?.toUtc());
                 },
               ),

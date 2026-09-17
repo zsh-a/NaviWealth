@@ -102,7 +102,7 @@ class _FxRatesPageState extends ConsumerState<FxRatesPage> {
         AppMessenger.show(
           context,
           ToastKind.error,
-          l10n.fxRatesSyncFailed(e.toString()),
+          userSafeErrorMessage(context, e),
         );
       }
     } finally {
@@ -122,13 +122,24 @@ class _FxRatesPageState extends ConsumerState<FxRatesPage> {
       icon: FLucideIcons.trash2,
     );
     if (confirmed != true || !mounted) return false;
-    final repo = await ref.read(fxRateRepositoryProvider.future);
-    await repo.deleteByNaturalKey(
-      base: rate.base,
-      quote: rate.quote,
-      date: rate.date,
-    );
-    return true;
+    try {
+      final repo = await ref.read(fxRateRepositoryProvider.future);
+      await repo.deleteByNaturalKey(
+        base: rate.base,
+        quote: rate.quote,
+        date: rate.date,
+      );
+      return true;
+    } catch (error) {
+      if (mounted) {
+        AppMessenger.show(
+          context,
+          ToastKind.error,
+          userSafeErrorMessage(context, error),
+        );
+      }
+      return false;
+    }
   }
 }
 
@@ -333,7 +344,7 @@ Future<void> _showFxRateHistorySheet({
   );
 }
 
-class _FxRateHistorySheet extends StatelessWidget {
+class _FxRateHistorySheet extends StatefulWidget {
   const _FxRateHistorySheet({
     required this.history,
     required this.fullHistory,
@@ -349,8 +360,40 @@ class _FxRateHistorySheet extends StatelessWidget {
   final Future<bool> Function(dom.FxRate rate) onDelete;
 
   @override
+  State<_FxRateHistorySheet> createState() => _FxRateHistorySheetState();
+}
+
+class _FxRateHistorySheetState extends State<_FxRateHistorySheet> {
+  final _removed = <DateTime>{};
+  final _deleting = <DateTime>{};
+
+  Future<bool> _delete(dom.FxRate rate) async {
+    if (!_deleting.add(rate.date)) return false;
+    try {
+      final deleted = await widget.onDelete(rate);
+      if (deleted && mounted) setState(() => _removed.add(rate.date));
+      return deleted;
+    } finally {
+      _deleting.remove(rate.date);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final history = widget.history;
+    final fullHistory = widget.fullHistory;
+    final range = widget.range;
+    final rates = history.rates
+        .where((rate) => !_removed.contains(rate.date))
+        .toList();
+    if (rates.isEmpty) {
+      return AppEmptyState(
+        icon: FLucideIcons.history,
+        title: l10n.fxRatesEmpty,
+        compact: true,
+      );
+    }
     final precision = _fxRatePrecision(history.latest.rate);
     final hasHiddenHistory =
         range != _FxRange.all &&
@@ -365,12 +408,13 @@ class _FxRateHistorySheet extends StatelessWidget {
             child: Text(l10n.fxRatesRangeHint, style: context.captionStyle),
           ),
         ],
-        for (var i = history.rates.length - 1; i >= 0; i--)
+        for (var i = rates.length - 1; i >= 0; i--)
           _RateHistoryRow(
-            rate: history.rates[i],
+            key: ValueKey(rates[i].date),
+            rate: rates[i],
             precision: precision,
-            formatters: formatters,
-            onDelete: onDelete,
+            formatters: widget.formatters,
+            onDelete: _delete,
             isLast: i == 0,
           ),
       ],
@@ -662,6 +706,7 @@ class _FxPairCard extends StatelessWidget {
 
 class _RateHistoryRow extends StatelessWidget {
   const _RateHistoryRow({
+    super.key,
     required this.rate,
     required this.precision,
     required this.formatters,
@@ -678,6 +723,7 @@ class _RateHistoryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppDismissible(
+      removeRow: false,
       itemKey: ValueKey('${rate.base}-${rate.quote}-${rate.date}'),
       borderRadius: AppRadius.sm,
       confirm: () => onDelete(rate),
@@ -719,6 +765,27 @@ class _RateHistoryRow extends StatelessWidget {
                 Text(
                   rate.rate.toStringAsFixed(precision),
                   style: TypographyTokens.numericBodyStrong,
+                ),
+                AppAdaptiveActionMenu(
+                  title: formatters.date(rate.date),
+                  actions: [
+                    AppAdaptiveAction(
+                      icon: FLucideIcons.trash2,
+                      title: AppLocalizations.of(context).commonDelete,
+                      destructive: true,
+                      onPress: () async {
+                        await onDelete(rate);
+                      },
+                    ),
+                  ],
+                  triggerBuilder: (context, open, focus) => Focus(
+                    focusNode: focus,
+                    child: AppIconButton(
+                      icon: FLucideIcons.ellipsis,
+                      tooltip: AppLocalizations.of(context).shellMoreActions,
+                      onPress: open,
+                    ),
+                  ),
                 ),
               ],
             ),

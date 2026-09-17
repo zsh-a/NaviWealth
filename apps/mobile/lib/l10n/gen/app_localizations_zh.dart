@@ -10,6 +10,15 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get journalContractSection => '合约信息';
+
+  @override
+  String get journalFundingSection => '账户与金额';
+
+  @override
+  String get journalStatusSection => '状态与备注';
+
+  @override
   String healthWindowDays(int days) {
     return '最近 $days 天';
   }

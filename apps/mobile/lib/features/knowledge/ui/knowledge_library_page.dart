@@ -160,23 +160,14 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           ),
           child: Column(
             children: [
-              FTextField(
+              AppSearchField(
                 key: const Key('knowledge-library-search'),
-                control: FTextFieldControl.managed(
-                  controller: _searchController,
-                  onChange: _scheduleSearch,
-                ),
+                controller: _searchController,
+                onChanged: (text) =>
+                    _scheduleSearch(TextEditingValue(text: text)),
                 focusNode: _searchFocus,
-                textInputAction: TextInputAction.search,
-                maxLines: 1,
-                prefixBuilder: (_, _, _) => const Padding(
-                  padding: EdgeInsetsDirectional.only(
-                    start: AppSpacing.s12,
-                    end: AppSpacing.s8,
-                  ),
-                  child: Icon(FLucideIcons.search, size: AppIconSizes.h18),
-                ),
                 hint: l10n.knowledgeLibrarySearchHint,
+                clearLabel: l10n.aiChatSessionsSearchClear,
               ),
               const SizedBox(height: AppSpacing.s10),
               AppAdaptiveChoice<_LibraryScope>(

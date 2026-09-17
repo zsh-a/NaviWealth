@@ -98,6 +98,24 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @journalContractSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Contract'**
+  String get journalContractSection;
+
+  /// No description provided for @journalFundingSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Funding & amounts'**
+  String get journalFundingSection;
+
+  /// No description provided for @journalStatusSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Status & notes'**
+  String get journalStatusSection;
+
   /// No description provided for @healthWindowDays.
   ///
   /// In en, this message translates to:

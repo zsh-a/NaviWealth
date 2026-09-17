@@ -432,6 +432,9 @@ class AppControlWidths {
   /// Compact trailing percentage/value column in slider setting rows.
   static const double settingsShortValue = 44;
 
+  /// Editable percentage including its unit suffix.
+  static const double settingsPercentInput = 96;
+
   /// Narrow index column for dense tabular schedules.
   static const double scheduleIndex = AppSpacing.s48;
 

@@ -37,6 +37,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
   List<ExecutionSearchHit> _hits = const <ExecutionSearchHit>[];
   _ExecutionSearchScope _scope = _ExecutionSearchScope.all;
   bool _loading = false;
+  Object? _error;
   int _requestId = 0;
 
   @override
@@ -46,6 +47,8 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
       final next = _controller.text.trim();
       if (next == _query || !mounted) return;
       setState(() => _query = next);
+      _requestId++;
+      _error = null;
       _debounce?.cancel();
       if (next.isEmpty) {
         setState(() {
@@ -54,6 +57,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
         });
         return;
       }
+      setState(() => _loading = true);
       _debounce = Timer(const Duration(milliseconds: 250), _runSearch);
     });
   }
@@ -73,10 +77,11 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
       height: AppControlHeights.searchSheet,
       child: Column(
         children: [
-          FTextField(
-            control: FTextFieldControl.managed(controller: _controller),
+          AppSearchField(
+            controller: _controller,
             focusNode: _searchFocus,
             hint: l10n.executionSearchHint,
+            clearLabel: l10n.aiChatSessionsSearchClear,
           ),
           const SizedBox(height: AppSpacing.s8),
           AppAdaptiveChoice<_ExecutionSearchScope>(
@@ -110,6 +115,13 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
                   )
                 : _loading
                 ? kDefaultLoading
+                : _error != null
+                ? AppEmptyState.error(
+                    title: l10n.commonLoadFailed,
+                    message: userSafeErrorMessage(context, _error!),
+                    retryLabel: l10n.commonRetry,
+                    onRetry: _runSearch,
+                  )
                 : _visibleHits.isEmpty
                 ? AppEmptyState(
                     icon: FLucideIcons.searchX,
@@ -182,16 +194,25 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
   }
 
   Future<void> _runSearch() async {
+    if (!mounted || _query.isEmpty) return;
     final requestId = ++_requestId;
-    setState(() => _loading = true);
-    final owner = await ref.read(executionOwnerUserIdProvider.future);
-    final repository = await ref.read(executionRepositoryProvider.future);
-    final hits = await repository.search(ownerUserId: owner, query: _query);
-    if (!mounted || requestId != _requestId) return;
+    final query = _query;
     setState(() {
-      _hits = hits;
-      _loading = false;
+      _loading = true;
+      _error = null;
     });
+    try {
+      final owner = await ref.read(executionOwnerUserIdProvider.future);
+      final repository = await ref.read(executionRepositoryProvider.future);
+      final hits = await repository.search(ownerUserId: owner, query: query);
+      if (!mounted || requestId != _requestId) return;
+      setState(() => _hits = hits);
+    } catch (error) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() => _error = error);
+    } finally {
+      if (mounted && requestId == _requestId) setState(() => _loading = false);
+    }
   }
 
   void _open(ExecutionSearchHit hit) {

@@ -600,14 +600,17 @@ class _Field extends StatelessWidget {
     children: [
       Text(label, style: context.captionLabelStyle),
       const SizedBox(height: AppSpacing.s4),
-      FTextFormField(
-        control: FTextFieldControl.managed(controller: controller),
-        keyboardType: numeric
-            ? const TextInputType.numberWithOptions(decimal: true)
-            : null,
-        maxLines: maxLines,
-        validator: validator,
-      ),
+      if (numeric)
+        AppNumberField(
+          control: FTextFieldControl.managed(controller: controller),
+          validator: validator,
+        )
+      else
+        FTextFormField(
+          control: FTextFieldControl.managed(controller: controller),
+          maxLines: maxLines,
+          validator: validator,
+        ),
     ],
   );
 }

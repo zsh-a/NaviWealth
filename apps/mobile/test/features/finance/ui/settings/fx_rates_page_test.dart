@@ -7,11 +7,24 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_coordinator.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/fx_rate_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/ui/settings/fx_rates_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class _RatesRepository extends Fake implements FxRateRepository {
+  final deleted = <DateTime>[];
+  @override
+  Future<void> deleteByNaturalKey({
+    required String base,
+    required String quote,
+    required DateTime date,
+  }) async {
+    deleted.add(date);
+  }
+}
 
 void main() {
   testWidgets('groups historical rates into an overview and pair chart', (
@@ -21,6 +34,7 @@ void main() {
       'naviwealth.settings.base_currency': 'CNY',
     });
     final prefs = await SharedPreferences.getInstance();
+    final repository = _RatesRepository();
     final rates = [
       FxRate(
         base: 'USD',
@@ -44,6 +58,7 @@ void main() {
       ProviderScope(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
+          fxRateRepositoryProvider.overrideWith((_) async => repository),
           fxRatesStreamProvider.overrideWith((ref) => Stream.value(rates)),
           priceSyncStatusEventStreamProvider.overrideWith(
             (ref) => Stream.value(
@@ -87,5 +102,24 @@ void main() {
 
     expect(find.text('4/27/2026'), findsOneWidget);
     expect(find.text('4/28/2026'), findsOneWidget);
+    expect(repository.deleted, isEmpty);
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(repository.deleted, [DateTime.utc(2026, 4, 28)]);
+    expect(find.text('4/28/2026'), findsNothing);
+    expect(find.text('4/27/2026'), findsOneWidget);
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cancel'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text('4/27/2026'), findsOneWidget);
+    expect(repository.deleted, hasLength(1));
   });
 }

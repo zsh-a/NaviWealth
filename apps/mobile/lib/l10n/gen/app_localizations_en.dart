@@ -10,6 +10,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get journalContractSection => 'Contract';
+
+  @override
+  String get journalFundingSection => 'Funding & amounts';
+
+  @override
+  String get journalStatusSection => 'Status & notes';
+
+  @override
   String healthWindowDays(int days) {
     return 'Last $days days';
   }

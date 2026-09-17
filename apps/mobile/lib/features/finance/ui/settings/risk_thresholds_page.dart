@@ -11,6 +11,7 @@
 /// thresholds and reset to defaults at any time.
 library;
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -133,12 +134,19 @@ class _ThresholdSlider extends StatefulWidget {
 }
 
 class _ThresholdSliderState extends State<_ThresholdSlider> {
+  late final TextEditingController _text;
+  late final FocusNode _focus;
+  String? _error;
   late FContinuousSliderController _controller;
   bool _suppressOnChange = false;
 
   @override
   void initState() {
     super.initState();
+    _text = TextEditingController(
+      text: (widget.value * 100).round().toString(),
+    );
+    _focus = FocusNode()..addListener(_commit);
     _controller = FContinuousSliderController(
       value: FSliderValue(max: _toFraction(widget.value)),
     )..addListener(_onSliderChanged);
@@ -148,6 +156,10 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
   void didUpdateWidget(covariant _ThresholdSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.value == oldWidget.value) return;
+    if (!_focus.hasFocus) {
+      _text.text = (widget.value * 100).round().toString();
+      _error = null;
+    }
     final next = _toFraction(widget.value);
     if ((next - _controller.value.max).abs() < 0.0001) return;
     _suppressOnChange = true;
@@ -160,7 +172,7 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
 
   void _onSliderChanged() {
     if (_suppressOnChange) return;
-    final next = 0.05 + _controller.value.max * 0.90;
+    final next = ((0.05 + _controller.value.max * 0.90) * 100).round() / 100;
     if ((next - widget.value).abs() < 0.0001) return;
     Future.microtask(() {
       if (!mounted) return;
@@ -170,12 +182,27 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
 
   @override
   void dispose() {
+    _focus.removeListener(_commit);
+    _focus.dispose();
+    _text.dispose();
     _controller.removeListener(_onSliderChanged);
     _controller.dispose();
     super.dispose();
   }
 
   double _toFraction(double v) => ((v - 0.05) / 0.90).clamp(0.0, 1.0);
+
+  void _commit() {
+    if (_focus.hasFocus) return;
+    final value = int.tryParse(_text.text.trim());
+    if (value == null || value < 5 || value > 95) {
+      setState(() => _error = '5–95%');
+      return;
+    }
+    setState(() => _error = null);
+    _text.text = value.toString();
+    if (value / 100 != widget.value) widget.onChanged(value / 100);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -212,13 +239,18 @@ class _ThresholdSliderState extends State<_ThresholdSlider> {
             ),
           ),
           SizedBox(
-            width: AppControlWidths.settingsShortValue,
-            child: Text(
-              '${(widget.value * 100).round()}%',
-              style: context.bodyCaptionStyle.copyWith(
-                fontFeatures: const [FontFeature.tabularFigures()],
+            width: AppControlWidths.settingsPercentInput,
+            child: Semantics(
+              label: widget.label,
+              child: AppNumberField(
+                control: FTextFieldControl.managed(controller: _text),
+                focusNode: _focus,
+                unit: '%',
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                onSubmit: (_) => _focus.unfocus(),
+                forceErrorText: _error,
               ),
-              textAlign: TextAlign.end,
             ),
           ),
         ],
