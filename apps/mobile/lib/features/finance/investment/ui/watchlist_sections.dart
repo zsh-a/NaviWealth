@@ -12,13 +12,8 @@ import '../data/watchlist_view_state.dart';
 import 'watchlist_labels.dart';
 import 'watchlist_sheets.dart';
 
-/// Scope chips plus one overflow menu.
-///
-/// The bar used to lay every secondary action out in a single horizontal
-/// scroller, which meant the filter button fell outside the viewport on a
-/// 390dp phone with no scroll affordance at all. Chips scroll; everything that
-/// is not a scope lives behind [FLucideIcons.ellipsis], where it is always
-/// reachable and never competes with the scope for width.
+/// Scrollable scopes with fixed, directly reachable view controls.
+/// Collection administration stays in the overflow menu.
 class WatchlistToolbar extends StatelessWidget {
   const WatchlistToolbar({
     super.key,
@@ -116,27 +111,26 @@ class WatchlistToolbar extends StatelessWidget {
                 ),
               ),
             ),
+            AppIconButton(
+              key: const ValueKey('watchlist-sort-trigger'),
+              icon: FLucideIcons.arrowUpDown,
+              tooltip:
+                  '${l10n.watchlistSortAction} · ${_sortLabel(l10n, viewState.sortOrder)}',
+              onPress: () => _openSort(context),
+            ),
+            AppIconButton(
+              key: const ValueKey('watchlist-filter-trigger'),
+              icon: filter.isDefault
+                  ? FLucideIcons.listFilter
+                  : FLucideIcons.listFilterPlus,
+              tooltip: l10n.watchlistFilterAction,
+              onPress: () => _openFilter(context),
+            ),
             Padding(
               padding: const EdgeInsetsDirectional.only(end: AppSpacing.s12),
               child: AppAdaptiveActionMenu(
                 title: l10n.watchlistMoreActions,
                 actions: <AppAdaptiveAction>[
-                  AppAdaptiveAction(
-                    icon: FLucideIcons.arrowUpDown,
-                    title: l10n.watchlistSortAction,
-                    subtitle: _sortLabel(l10n, viewState.sortOrder),
-                    onPress: () => _openSort(context),
-                  ),
-                  AppAdaptiveAction(
-                    icon: filter.isDefault
-                        ? FLucideIcons.listFilter
-                        : FLucideIcons.listFilterPlus,
-                    title: l10n.watchlistFilterAction,
-                    subtitle: filter.isDefault
-                        ? null
-                        : l10n.watchlistFilterActiveChip,
-                    onPress: () => _openFilter(context),
-                  ),
                   AppAdaptiveAction(
                     icon: FLucideIcons.folderPlus,
                     title: l10n.watchlistCreateCollectionAction,
@@ -315,12 +309,9 @@ class _WatchlistOverviewCardState extends State<WatchlistOverviewCard> {
             runSpacing: AppSpacing.s4,
             children: [
               if (overall.staleQuoteCount > 0)
-                AppBadge(
-                  label: l10n.watchlistOverviewFreshnessStale(
-                    overall.staleQuoteCount,
-                  ),
-                  tone: AppBadgeTone.warning,
-                  size: AppBadgeSize.compact,
+                Text(
+                  l10n.watchlistOverviewFreshnessStale(overall.staleQuoteCount),
+                  style: context.captionStyle,
                 ),
               if (!widget.loadingQuotes && overall.unavailableQuoteCount > 0)
                 AppBadge(

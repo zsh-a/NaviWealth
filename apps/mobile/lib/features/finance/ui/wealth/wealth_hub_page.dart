@@ -294,7 +294,7 @@ class _WealthDestinations extends StatelessWidget {
         path: FinanceRoutes.wealthPortfolio,
       ),
       _WealthSectionSpec(
-        icon: FLucideIcons.bellRing,
+        icon: FLucideIcons.star,
         title: l10n.wealthWatchlistSectionTitle,
         subtitle: l10n.wealthWatchlistSectionSubtitle,
         path: FinanceRoutes.wealthWatchlist,
@@ -321,11 +321,18 @@ class _WealthDestinations extends StatelessWidget {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              for (var index = 0; index < sections.length; index++) ...[
-                _WealthDestinationRow(spec: sections[index]),
-                if (index != sections.length - 1)
-                  const AppGroupedDivider(indent: AppSpacing.s56),
-              ],
+              for (var index = 0; index < sections.length; index += 2)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _WealthDestinationRow(spec: sections[index]),
+                    ),
+                    Expanded(
+                      child: _WealthDestinationRow(spec: sections[index + 1]),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -341,10 +348,15 @@ class _WealthDestinationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppNavRow.tinted(
+    return AppNavRow(
       icon: spec.icon,
       title: spec.title,
-      subtitle: spec.subtitle,
+      semanticsLabel: '${spec.title}, ${spec.subtitle}',
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s8,
+      ),
+      showChevron: false,
       onTap: () => context.push(spec.path),
     );
   }

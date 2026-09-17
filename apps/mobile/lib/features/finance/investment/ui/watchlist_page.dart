@@ -94,63 +94,82 @@ class WatchlistPage extends ConsumerWidget {
       childPad: false,
       child: items.whenOrError(
         context: context,
-        data: (items) => _WatchlistBody(
-          items: items,
-          collections: collections,
-          selectedCollection: selectedCollection,
-          collectionCounts: collectionCounts,
-          scope: scope,
-          viewState: viewState,
-          snapshots: quotes.value ?? const [],
-          loadingQuotes:
-              quotes.isLoading ||
-              (quotes.value?.any((snapshot) => snapshot.isLoading) ?? false),
-          onScopeSelected: (next) =>
-              ref.read(watchlistViewStateProvider.notifier).selectScope(next),
-          onSortSelected: (next) => ref
-              .read(watchlistViewStateProvider.notifier)
-              .selectSortOrder(next),
-          onFilterChanged: (next) =>
-              ref.read(watchlistViewStateProvider.notifier).selectFilter(next),
-          onClearFilter: () =>
-              ref.read(watchlistViewStateProvider.notifier).clearFilter(),
-          onCreateCollection: () =>
-              showWatchlistCollectionSheet(context: context),
-          onBulkManage: items.isEmpty || collections.isEmpty
-              ? null
-              : () => showWatchlistBulkMembershipSheet(
-                  context: context,
-                  items: items,
-                  collections: collections,
-                  removalCollectionId: scope.collectionId,
-                ),
-          onReorderCollections: collections.length < 2
-              ? null
-              : () => _reorderCollections(context, ref, collections),
-          onReorderItems:
-              scope.collectionId == null ||
-                  items.length < 2 ||
-                  viewState.sortOrder != WatchlistSortOrder.defaultOrder
-              ? null
-              : () => _reorderItems(context, ref, scope.collectionId!, items),
-          onAdd: () => showWatchlistItemSheet(
-            context: context,
-            initialCollectionId: scope.collectionId,
-          ),
-          onEdit: (item) =>
-              showWatchlistItemSheet(context: context, item: item),
-          onManageCollections: (item) =>
-              showWatchlistMembershipSheet(context: context, item: item),
-          onRemoveFromCollection: scope.collectionId == null
-              ? null
-              : (item) => _removeFromCollection(
+        data: (items) => AppRefreshIndicator(
+          onRefresh: () async {
+            _invalidateQuotes(ref);
+            try {
+              await ref.read(
+                watchlistQuoteSnapshotsForScopeProvider(scope).future,
+              );
+            } catch (error) {
+              if (context.mounted) {
+                AppMessenger.show(
                   context,
-                  ref,
-                  item,
-                  scope.collectionId!,
-                  membersAsync.value ?? const <WatchlistCollectionMember>[],
-                ),
-          onRemove: (item) => _removeItem(context, ref, item),
+                  ToastKind.warning,
+                  userSafeErrorMessage(context, error),
+                );
+              }
+            }
+          },
+          child: _WatchlistBody(
+            items: items,
+            collections: collections,
+            selectedCollection: selectedCollection,
+            collectionCounts: collectionCounts,
+            scope: scope,
+            viewState: viewState,
+            snapshots: quotes.value ?? const [],
+            loadingQuotes:
+                quotes.isLoading ||
+                (quotes.value?.any((snapshot) => snapshot.isLoading) ?? false),
+            onScopeSelected: (next) =>
+                ref.read(watchlistViewStateProvider.notifier).selectScope(next),
+            onSortSelected: (next) => ref
+                .read(watchlistViewStateProvider.notifier)
+                .selectSortOrder(next),
+            onFilterChanged: (next) => ref
+                .read(watchlistViewStateProvider.notifier)
+                .selectFilter(next),
+            onClearFilter: () =>
+                ref.read(watchlistViewStateProvider.notifier).clearFilter(),
+            onCreateCollection: () =>
+                showWatchlistCollectionSheet(context: context),
+            onBulkManage: items.isEmpty || collections.isEmpty
+                ? null
+                : () => showWatchlistBulkMembershipSheet(
+                    context: context,
+                    items: items,
+                    collections: collections,
+                    removalCollectionId: scope.collectionId,
+                  ),
+            onReorderCollections: collections.length < 2
+                ? null
+                : () => _reorderCollections(context, ref, collections),
+            onReorderItems:
+                scope.collectionId == null ||
+                    items.length < 2 ||
+                    viewState.sortOrder != WatchlistSortOrder.defaultOrder
+                ? null
+                : () => _reorderItems(context, ref, scope.collectionId!, items),
+            onAdd: () => showWatchlistItemSheet(
+              context: context,
+              initialCollectionId: scope.collectionId,
+            ),
+            onEdit: (item) =>
+                showWatchlistItemSheet(context: context, item: item),
+            onManageCollections: (item) =>
+                showWatchlistMembershipSheet(context: context, item: item),
+            onRemoveFromCollection: scope.collectionId == null
+                ? null
+                : (item) => _removeFromCollection(
+                    context,
+                    ref,
+                    item,
+                    scope.collectionId!,
+                    membersAsync.value ?? const <WatchlistCollectionMember>[],
+                  ),
+            onRemove: (item) => _removeItem(context, ref, item),
+          ),
         ),
         error: (error, _) => AppEmptyState.error(
           title: l10n.commonLoadFailed,
@@ -266,7 +285,10 @@ class _WatchlistBody extends StatelessWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.all(AppSpacing.s12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s12,
+                    vertical: AppSpacing.s4,
+                  ),
                   sliver: SliverToBoxAdapter(
                     child: items.isEmpty
                         ? WatchlistEmptyState(onAdd: onAdd)

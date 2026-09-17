@@ -67,6 +67,20 @@ class _ConcentrationRiskSectionState
                       size: AppBadgeSize.compact,
                     ),
                   ),
+                  if (alerts.length > 1)
+                    Semantics(
+                      expanded: _expanded,
+                      child: AppIconButton(
+                        key: const ValueKey('portfolio-risk-expand'),
+                        icon: _expanded
+                            ? FLucideIcons.chevronUp
+                            : FLucideIcons.chevronDown,
+                        tooltip: _expanded
+                            ? l10n.commonRevealLess
+                            : l10n.commonRevealMore(alerts.length - 1),
+                        onPress: () => setState(() => _expanded = !_expanded),
+                      ),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.s10),
@@ -74,13 +88,6 @@ class _ConcentrationRiskSectionState
                 if (i != 0) const SizedBox(height: AppSpacing.s8),
                 _ConcentrationAlertRow(alert: visible[i]),
               ],
-              if (alerts.length > 1)
-                AppRevealControl(
-                  expanded: _expanded,
-                  collapsedLabel: l10n.commonRevealMore(alerts.length - 1),
-                  expandedLabel: l10n.commonRevealLess,
-                  onToggle: () => setState(() => _expanded = !_expanded),
-                ),
               FButton(
                 variant: FButtonVariant.ghost,
                 onPress: () => context.push(FinanceRoutes.planRebalance),

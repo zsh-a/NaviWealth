@@ -125,6 +125,10 @@ class WatchlistRow extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: AppSpacing.s8),
+                          if (!largeText) ...[
+                            WatchlistTrend(item: item),
+                            const SizedBox(width: AppSpacing.s8),
+                          ],
                           if (!largeText) price,
                         ],
                       ),
@@ -146,8 +150,6 @@ class WatchlistRow extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(child: nameLabel),
-                            const SizedBox(width: AppSpacing.s8),
-                            WatchlistTrend(item: item),
                             const SizedBox(width: AppSpacing.s8),
                             SizedBox(
                               width: MediaQuery.textScalerOf(context)

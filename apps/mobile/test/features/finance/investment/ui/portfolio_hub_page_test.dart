@@ -712,13 +712,10 @@ void main() {
     expect(find.text('Review rebalance plan'), findsOneWidget);
     expect(find.text('EUR'), findsNothing);
     expect(tester.getTopLeft(find.text('us:AAPL').first).dy, lessThan(760));
-    final l10n = AppLocalizations.of(
-      tester.element(find.byType(PortfolioHubPage)),
-    );
-    await tester.tap(find.text(l10n.commonRevealMore(1)));
+    await tester.tap(find.byKey(const ValueKey('portfolio-risk-expand')));
     await tester.pumpAndSettle();
     expect(find.text('EUR'), findsOneWidget);
-    await tester.tap(find.text(l10n.commonRevealLess));
+    await tester.tap(find.byKey(const ValueKey('portfolio-risk-expand')));
     await tester.pumpAndSettle();
     expect(find.text('EUR'), findsNothing);
   });

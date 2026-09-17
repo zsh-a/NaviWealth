@@ -137,6 +137,7 @@ Widget _scope(
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistQuoteSnapshot>? scopedSnapshots,
+  Future<List<WatchlistQuoteSnapshot>> Function()? loadRefresh,
   List<WatchlistCollection> collections = const [],
   List<WatchlistCollectionMember> members = const [],
 }) {
@@ -185,7 +186,9 @@ Widget _scope(
       watchlistSimulationsProvider.overrideWith((_) => Stream.value(const [])),
       watchlistQuoteSnapshotsProvider.overrideWith((_) async => snapshots),
       watchlistQuoteSnapshotsForScopeProvider.overrideWith(
-        (_, _) async => scopedSnapshots ?? snapshots,
+        (_, _) async => loadRefresh != null
+            ? await loadRefresh()
+            : scopedSnapshots ?? snapshots,
       ),
     ],
     child: child,
@@ -196,6 +199,7 @@ Widget _scope(
 /// to go, which is exactly the mobile dead end this page used to have.
 Widget _wrap(
   TargetPlatform platform, {
+  Future<List<WatchlistQuoteSnapshot>> Function()? loadRefresh,
   Future<List<HistoricalBar>>? history,
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
@@ -215,6 +219,7 @@ Widget _wrap(
       ),
     ),
     history: history,
+    loadRefresh: loadRefresh,
     items: items,
     snapshots: snapshots,
     collections: collections,
@@ -290,6 +295,35 @@ void main() {
     _preferences = await SharedPreferences.getInstance();
   });
 
+  testWidgets('pull refresh waits for the completed quote batch', (
+    tester,
+  ) async {
+    final batch = Completer<List<WatchlistQuoteSnapshot>>();
+    var requests = 0;
+    await tester.pumpWidget(
+      _wrap(
+        TargetPlatform.android,
+        loadRefresh: () {
+          requests++;
+          return batch.future;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const ValueKey('watchlist-scroll')),
+      const Offset(0, 400),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(requests, 1);
+    expect(find.byType(RefreshProgressIndicator), findsOneWidget);
+    batch.complete([_advancingSnapshot]);
+    await tester.pumpAndSettle();
+    expect(find.byType(RefreshProgressIndicator), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'does not duplicate an ungrouped list and disables incomplete submission',
     (tester) async {
@@ -340,7 +374,11 @@ void main() {
     expect(tester.getTopLeft(find.byType(WatchlistToolbar)).dy, toolbarY);
     expect(find.byType(WatchlistRow).evaluate().length, lessThan(30));
     await _openToolbarMenu(tester);
-    expect(find.text('Sort symbols'), findsOneWidget);
+    expect(find.text('Sort symbols'), findsNothing);
+    expect(
+      find.byKey(const ValueKey('watchlist-sort-trigger')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -810,10 +848,8 @@ void main() {
       lessThan(tester.getTopLeft(find.text('AAPL')).dy),
     );
 
-    await _openToolbarMenu(tester);
-    // The menu carries the current order as the action's subtitle.
-    expect(find.text('Decliners first'), findsNWidgets(2));
-    await tester.tap(find.text('Sort symbols'));
+    expect(find.text('Decliners first'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('watchlist-sort-trigger')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Gainers first'));
     await tester.pumpAndSettle();
@@ -953,8 +989,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await _openToolbarMenu(tester);
-    await tester.tap(find.text('Filter symbols'));
+    await tester.tap(find.byKey(const ValueKey('watchlist-filter-trigger')));
     await tester.pumpAndSettle();
     var sheet = find.byType(AppSheet);
     final noPrice = find.descendant(of: sheet, matching: find.text('No price'));
