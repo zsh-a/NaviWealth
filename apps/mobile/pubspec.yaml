@@ -64,15 +64,10 @@ dependencies:
   package_info_plus: ^10.2.1
   path: ^1.9.1
   path_provider: ^2.1.6
-  # Keep this pinned to the last CocoaPods-compatible release. 1.9.0 is
-  # SwiftPM-only on iOS, but this app's local lifeos_native FFI plugin still
-  # relies on Cargokit's CocoaPods build phase for Rust.
+  # Requires Swift Package Manager on iOS.
   receive_sharing_intent: 1.9.0
   record: ^7.1.1
-  # Sentry 9.25+ requires HybridSDK 8.58.4, but its macOS podspec still
-  # reports 10.14 while that SDK requires a higher deployment target.
-  # Keep the latest CocoaPods-compatible release until the plugin fixes its
-  # reported macOS target.
+  # Sentry 10 uses Swift Package Manager on Apple platforms.
   sentry_flutter: 10.0.0-alpha.5
   share_plus: ^13.2.1
   shared_preferences: ^2.5.5
@@ -131,11 +126,10 @@ flutter:
     - assets/catalog/securities.v1.ndjson
     - assets/svg/logo.svg
   config:
-    # Keep macOS/iOS plugin integration on CocoaPods for now. The local
-    # lifeos_native FFI plugin builds Rust through Cargokit's CocoaPods script
-    # phase, and enabling Flutter SPM makes Xcode wait on remote Swift package
-    # artifact resolution during `flutter build macos`.
-    enable-swift-package-manager: false
+    # Required by Sentry and receive_sharing_intent. Flutter keeps CocoaPods
+    # integration for plugins without a Swift package, including lifeos_native
+    # and its Cargokit Rust build phase.
+    enable-swift-package-manager: true
 
   fonts:
     # Inter — primary fontFamily for the entire app. Subset to Latin +

@@ -1,136 +1,27 @@
 PODS:
-  - desktop_drop (0.0.1):
-    - FlutterMacOS
-  - device_info_plus (0.0.1):
-    - FlutterMacOS
-  - file_picker_darwin (1.0.0):
-    - Flutter
-    - FlutterMacOS
-  - file_selector_macos (0.0.1):
-    - FlutterMacOS
-  - flutter_local_notifications (0.0.1):
-    - FlutterMacOS
-  - flutter_secure_storage_darwin (10.0.0):
-    - Flutter
-    - FlutterMacOS
   - flutter_tts (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
   - lifeos_native (0.0.1):
     - FlutterMacOS
-  - local_auth_darwin (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - package_info_plus (0.0.1):
-    - FlutterMacOS
-  - path_provider_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - record_macos (2.0.0):
-    - FlutterMacOS
-  - Sentry/HybridSDK (8.58.4)
-  - sentry_flutter (9.27.0):
-    - Flutter
-    - FlutterMacOS
-    - Sentry/HybridSDK (= 8.58.4)
-  - share_plus (0.0.1):
-    - FlutterMacOS
-  - shared_preferences_foundation (0.0.1):
-    - Flutter
-    - FlutterMacOS
-  - sherpa_onnx_macos (1.13.6):
-    - FlutterMacOS
-  - url_launcher_macos (0.0.1):
-    - FlutterMacOS
-  - workmanager_apple (0.0.1):
-    - FlutterMacOS
 
 DEPENDENCIES:
-  - desktop_drop (from `Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos`)
-  - device_info_plus (from `Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos`)
-  - file_picker_darwin (from `Flutter/ephemeral/.symlinks/plugins/file_picker_darwin/darwin`)
-  - file_selector_macos (from `Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos`)
-  - flutter_local_notifications (from `Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos`)
-  - flutter_secure_storage_darwin (from `Flutter/ephemeral/.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - flutter_tts (from `Flutter/ephemeral/.symlinks/plugins/flutter_tts/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - lifeos_native (from `Flutter/ephemeral/.symlinks/plugins/lifeos_native/macos`)
-  - local_auth_darwin (from `Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin`)
-  - package_info_plus (from `Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos`)
-  - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
-  - record_macos (from `Flutter/ephemeral/.symlinks/plugins/record_macos/macos`)
-  - sentry_flutter (from `Flutter/ephemeral/.symlinks/plugins/sentry_flutter/macos`)
-  - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
-  - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - sherpa_onnx_macos (from `Flutter/ephemeral/.symlinks/plugins/sherpa_onnx_macos/macos`)
-  - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
-  - workmanager_apple (from `Flutter/ephemeral/.symlinks/plugins/workmanager_apple/macos`)
-
-SPEC REPOS:
-  trunk:
-    - Sentry
 
 EXTERNAL SOURCES:
-  desktop_drop:
-    :path: Flutter/ephemeral/.symlinks/plugins/desktop_drop/macos
-  device_info_plus:
-    :path: Flutter/ephemeral/.symlinks/plugins/device_info_plus/macos
-  file_picker_darwin:
-    :path: Flutter/ephemeral/.symlinks/plugins/file_picker_darwin/darwin
-  file_selector_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos
-  flutter_local_notifications:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos
-  flutter_secure_storage_darwin:
-    :path: Flutter/ephemeral/.symlinks/plugins/flutter_secure_storage_darwin/darwin
   flutter_tts:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_tts/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   lifeos_native:
     :path: Flutter/ephemeral/.symlinks/plugins/lifeos_native/macos
-  local_auth_darwin:
-    :path: Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin
-  package_info_plus:
-    :path: Flutter/ephemeral/.symlinks/plugins/package_info_plus/macos
-  path_provider_foundation:
-    :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
-  record_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/record_macos/macos
-  sentry_flutter:
-    :path: Flutter/ephemeral/.symlinks/plugins/sentry_flutter/macos
-  share_plus:
-    :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
-  shared_preferences_foundation:
-    :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
-  sherpa_onnx_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/sherpa_onnx_macos/macos
-  url_launcher_macos:
-    :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
-  workmanager_apple:
-    :path: Flutter/ephemeral/.symlinks/plugins/workmanager_apple/macos
 
 SPEC CHECKSUMS:
-  desktop_drop: 10a3e6a7fa9dbe350541f2574092fecfa345a07b
-  device_info_plus: 4fb280989f669696856f8b129e4a5e3cd6c48f76
-  file_picker_darwin: 65c8ed1d70cc2ea0b81ae1840db93f8d9c051d19
-  file_selector_macos: 9e9e068e90ebee155097d00e89ae91edb2374db7
-  flutter_local_notifications: 1fc7ffb10a83d6a2eeeeddb152d43f1944b0aad0
-  flutter_secure_storage_darwin: 46e401699982ee74142909676535e0f6a7321e58
   flutter_tts: ae915565cc6948444b513acc8ee021993281e027
   FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
   lifeos_native: 7bd634264e01c4d815580768fbec94c09b232f38
-  local_auth_darwin: c3ee6cce0a8d56be34c8ccb66ba31f7f180aaebb
-  package_info_plus: f0052d280d17aa382b932f399edf32507174e870
-  path_provider_foundation: bb55f6dbba17d0dccd6737fe6f7f34fbd0376880
-  record_macos: 2e43c16b84ce188b8137754ee648322a2dcdf7fa
-  Sentry: 5321d74bdd28d6f6f8beaa1ca06f1fdc746bff49
-  sentry_flutter: b392decea911dcd74891cc4aef402c73abf065b1
-  share_plus: 510bf0af1a42cd602274b4629920c9649c52f4cc
-  shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  sherpa_onnx_macos: 659c0e11722f57fe72a2fbb1314c9aaed0a82835
-  url_launcher_macos: f87a979182d112f911de6820aefddaf56ee9fbfd
-  workmanager_apple: 573f1503f9752eadd70a35bb478dfd2a103c4d18
 
 PODFILE CHECKSUM: 561fd0563568131ed3f09843fee96c105133644a
 
