@@ -10,6 +10,59 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get capitalAllocationAutoBalanceHint =>
+      'Changing one target adjusts the others proportionally. Total allocation stays at 100%.';
+
+  @override
+  String capitalAllocationRuleSummary(String policy, String tolerance) {
+    return '$policy · Tolerance ±$tolerance pp';
+  }
+
+  @override
+  String get capitalAllocationApplyRules => 'Apply to draft';
+
+  @override
+  String get capitalAllocationRulesDraftHint =>
+      'These changes are saved when you save the allocation plan.';
+
+  @override
+  String portfolioPlanAboveTarget(String points) {
+    return '$points pp above target';
+  }
+
+  @override
+  String portfolioPlanBelowTarget(String points) {
+    return '$points pp below target';
+  }
+
+  @override
+  String get portfolioPlanActualUnavailable =>
+      'Actual allocation is unavailable until valuation data is ready.';
+
+  @override
+  String get portfolioPlanActualFailed =>
+      'Could not load actual allocations. Your targets are still shown.';
+
+  @override
+  String get portfolioPlanActualLoading => 'Loading actual allocations…';
+
+  @override
+  String get portfolioPlanAllocationHint =>
+      'Compare portfolio allocations. Select a portfolio to manage holdings and strategies.';
+
+  @override
+  String get portfolioPlanEditWeights => 'Adjust allocation';
+
+  @override
+  String get portfolioPlanActualWeightLabel => 'Actual allocation';
+
+  @override
+  String get portfolioPlanTargetWeightLabel => 'Target allocation';
+
+  @override
+  String get portfolioPlanNeedsRebalance => 'Outside target range';
+
+  @override
   String financeViewAllItems(int count) {
     return 'View all ($count)';
   }

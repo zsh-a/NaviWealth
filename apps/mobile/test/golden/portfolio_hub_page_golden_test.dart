@@ -18,16 +18,21 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
+import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
 import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/holding_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/corporate_actions.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/holding_snapshot.dart';
+import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/realized_pnl.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
 import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart';
 import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_universe.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_golden_setup.dart';
@@ -300,6 +305,86 @@ final _corporateActions = [
   ),
 ];
 
+final _planPortfolios = [
+  for (final (id, name) in [
+    ('core', '核心配置'),
+    ('income', '稳健收益'),
+    ('growth', '长期成长'),
+  ])
+    InvestmentPortfolio(
+      id: id,
+      name: name,
+      baseCurrency: 'USD',
+      goalId: null,
+      color: null,
+      createdAt: _now,
+      archived: false,
+      sync: _meta(),
+    ),
+];
+
+const _planRoot = AllocationNode(
+  id: 'plan',
+  parentId: null,
+  type: AllocationNodeType.plan,
+  name: 'Plan',
+  targetWeightBps: 10000,
+  driftBandBps: 0,
+  transferPolicy: GroupTransferPolicy.bidirectional,
+);
+
+final _planTree = PortfolioAllocationTree(
+  root: _planRoot,
+  nodes: [
+    _planRoot,
+    for (final (index, portfolio) in _planPortfolios.indexed)
+      AllocationNode(
+        id: portfolio.id,
+        parentId: 'plan',
+        type: AllocationNodeType.portfolio,
+        name: portfolio.name,
+        referenceId: portfolio.id,
+        targetWeightBps: [6000, 3000, 1000][index],
+        driftBandBps: 500,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+      ),
+  ],
+  attachments: [],
+  inclusions: [],
+);
+
+Future<void> _snapshotPlan(WidgetTester tester, String name) async {
+  final l10n = AppLocalizations.of(
+    tester.element(find.byType(PortfolioHubPage)),
+  );
+  await tester.tap(find.bySemanticsLabel(l10n.shellMoreActions));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(l10n.portfolioStudioPlanTitle));
+  await tester.pumpAndSettle();
+  expect(find.byType(AppSheet), findsOneWidget);
+  expect(find.text(l10n.portfolioStudioPlanTitle), findsOneWidget);
+  expect(find.text('60%'), findsOneWidget);
+  expect(find.text('30%'), findsOneWidget);
+  expect(find.text('10%'), findsOneWidget);
+  expect(
+    find.descendant(
+      of: find.byType(AppSheet),
+      matching: find.byType(NwLineChart),
+    ),
+    findsNothing,
+  );
+  await expectGoldenSurface('goldens/$name.png');
+  expect(tester.takeException(), isNull);
+  await tester.tap(find.byKey(const ValueKey('portfolio-plan-allocation')));
+  await tester.pumpAndSettle();
+  expect(find.byType(AppSheet), findsNothing);
+  expect(find.byType(AppFormPageScaffold), findsOneWidget);
+  await expectGoldenSurface('goldens/${name}_editor.png');
+  expect(tester.takeException(), isNull);
+  await tester.pumpWidget(const SizedBox.shrink());
+  await tester.pump(const Duration(seconds: 1));
+}
+
 List<Override> _portfolioOverrides(SharedPreferences prefs) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
   holdingBaseCurrencyProvider.overrideWithValue('USD'),
@@ -310,12 +395,31 @@ List<Override> _portfolioOverrides(SharedPreferences prefs) => [
   holdingServiceProvider.overrideWith(
     (_) async => _GoldenHoldingService(_lots),
   ),
-  investmentPortfoliosProvider.overrideWith((_) => Stream.value(const [])),
+  investmentPortfoliosProvider.overrideWith(
+    (_) => Stream.value(_planPortfolios),
+  ),
   portfolioCapitalAssignmentsProvider.overrideWith(
     (_) => Stream.value(const []),
   ),
-  portfolioAllocationTreeProvider.overrideWith((_) => const AsyncData(null)),
+  portfolioAllocationTreeProvider.overrideWith((_) => AsyncData(_planTree)),
   universeRebalancePlanProvider.overrideWith((_) => null),
+  activeRebalanceUniverseProvider.overrideWithValue(const AsyncData(null)),
+  activeUniversePortfolioTargetsProvider.overrideWithValue(
+    AsyncData([
+      for (final node in _planTree.childrenOf(_planRoot.id))
+        PortfolioAllocationTarget(
+          id: node.id,
+          universeId: 'plan',
+          portfolioId: node.referenceId!,
+          targetWeightBps: node.targetWeightBps,
+          driftBandBps: node.driftBandBps,
+          transferPolicy: node.transferPolicy,
+          sync: _meta(),
+        ),
+    ]),
+  ),
+  portfolioRebalanceGroupsProvider.overrideWith((_) => Stream.value([])),
+  allPortfolioGroupSnapshotsProvider.overrideWith((_) async => {}),
   portfolioReturnServiceProvider.overrideWith(
     (_) async => const _GoldenReturnService(),
   ),
@@ -347,6 +451,7 @@ void main() {
       tester.getTopLeft(find.text('Vanguard S&P 500 ETF')).dy,
       lessThan(520),
     );
+    await _snapshotPlan(tester, 'investment_plan_${variant.filenameSuffix}');
   });
 
   testVisualGolden('portfolio_hub_page — wide', (tester) async {
@@ -428,6 +533,7 @@ void main() {
       holdingPosition,
     );
     expect(tester.takeException(), isNull);
+    await _snapshotPlan(tester, 'investment_plan_wide');
   });
 
   testVisualGolden('portfolio_hub_page — small Chinese phone', (tester) async {
@@ -453,6 +559,7 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
     await tester.pumpAndSettle();
+    await _snapshotPlan(tester, 'investment_plan_small_zh');
   });
 
   testVisualGolden('portfolio_hub_page — enlarged text', (tester) async {
@@ -469,5 +576,6 @@ void main() {
     await tester.drag(find.byType(CustomScrollView), const Offset(0, -650));
     await tester.pump();
     expect(tester.takeException(), isNull);
+    await _snapshotPlan(tester, 'investment_plan_text_scale');
   });
 }

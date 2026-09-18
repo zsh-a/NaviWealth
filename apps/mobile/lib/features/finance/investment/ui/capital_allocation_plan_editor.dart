@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/forms/form_dirty_guard.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/percent_field.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -44,46 +47,56 @@ Future<void> showCapitalAllocationPlanEditor({
   required List<CapitalAllocationDraft> drafts,
   required Future<void> Function(List<CapitalAllocationDraft> drafts) onSave,
 }) {
-  return showAppSheet<void>(
-    context: context,
-    title: title,
-    subtitle: subtitle,
-    maxHeightFactor: 0.98,
-    builder: (_) => _CapitalAllocationPlanEditor(
-      weightLabel: weightLabel,
-      singleItemHint: singleItemHint,
-      initialDrafts: drafts,
-      onSave: onSave,
+  return Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => _CapitalAllocationPlanEditor(
+        title: title,
+        subtitle: subtitle,
+        weightLabel: weightLabel,
+        singleItemHint: singleItemHint,
+        initialDrafts: drafts,
+        onSave: onSave,
+      ),
     ),
   );
 }
 
-class _CapitalAllocationPlanEditor extends StatefulWidget {
+class _CapitalAllocationPlanEditor extends ConsumerStatefulWidget {
   const _CapitalAllocationPlanEditor({
+    required this.title,
+    required this.subtitle,
     required this.weightLabel,
     required this.singleItemHint,
     required this.initialDrafts,
     required this.onSave,
   });
 
+  final String title;
+  final String subtitle;
   final String weightLabel;
   final String singleItemHint;
   final List<CapitalAllocationDraft> initialDrafts;
   final Future<void> Function(List<CapitalAllocationDraft> drafts) onSave;
 
   @override
-  State<_CapitalAllocationPlanEditor> createState() =>
+  ConsumerState<_CapitalAllocationPlanEditor> createState() =>
       _CapitalAllocationPlanEditorState();
 }
 
 class _CapitalAllocationPlanEditorState
-    extends State<_CapitalAllocationPlanEditor> {
+    extends ConsumerState<_CapitalAllocationPlanEditor>
+    with FormDirtyGuard<_CapitalAllocationPlanEditor> {
   late List<CapitalAllocationDraft> _drafts;
-  late final Map<String, TextEditingController> _bandControllers;
+  late final Map<String, TextEditingController> _weightControllers;
+  late final Map<String, FocusNode> _weightFocus;
+  late final Map<String, GlobalKey> _fieldKeys;
   final _errors = <String, String>{};
-  String? _expandedAdvancedId;
   bool _busy = false;
+  bool _saveFailed = false;
   bool _writingControllers = false;
+
+  @override
+  String get leaveFallback => FinanceRoutes.wealthPortfolio;
 
   @override
   void initState() {
@@ -118,24 +131,30 @@ class _CapitalAllocationPlanEditorState
         _drafts = normalized;
       }
     }
-    _bandControllers = {
+    _weightControllers = {
       for (final draft in _drafts)
         draft.id: TextEditingController(
-          text: _percentFromBps(draft.driftBandBps),
+          text: _percentFromBps(draft.targetWeightBps),
         ),
     };
+    _weightFocus = {for (final draft in _drafts) draft.id: FocusNode()};
+    _fieldKeys = {for (final draft in _drafts) draft.id: GlobalKey()};
+    dirty.bindTextControllers(_weightControllers.values.toList());
     for (var index = 0; index < _drafts.length; index++) {
-      final draftId = _drafts[index].id;
-      _bandControllers[draftId]!.addListener(
-        () => _updateBand(index, _bandControllers[draftId]!.text),
+      final id = _drafts[index].id;
+      _weightControllers[id]!.addListener(
+        () => _updateWeight(index, _weightControllers[id]!.text),
       );
     }
   }
 
   @override
   void dispose() {
-    for (final controller in _bandControllers.values) {
+    for (final controller in _weightControllers.values) {
       controller.dispose();
+    }
+    for (final focus in _weightFocus.values) {
+      focus.dispose();
     }
     super.dispose();
   }
@@ -158,207 +177,69 @@ class _CapitalAllocationPlanEditorState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isMobile = Breakpoints.isMobile(MediaQuery.sizeOf(context).width);
-    final totalColor = context.theme.colors.primary;
-    return SizedBox(
-      height: MediaQuery.sizeOf(context).height * (isMobile ? 0.84 : 0.72),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SoftCard.flat(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          l10n.capitalAllocationTotalLabel,
-                          style: context.theme.typography.body.sm,
-                        ),
-                      ),
-                      Text(
-                        '${_percentFromBps(_totalBps)}%',
-                        style: context.theme.typography.body.sm.copyWith(
-                          color: totalColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.s10),
-                  _AllocationBar(drafts: _drafts, valid: _totalBps == 10000),
-                  if (_drafts.length > 1) ...[
-                    const SizedBox(height: AppSpacing.s8),
-                    Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: AppSpacing.s4,
-                      children: [
-                        FButton(
-                          variant: FButtonVariant.ghost,
-                          onPress: _busy ? null : _balanceEvenly,
-                          prefix: const Icon(
-                            FLucideIcons.columns3,
-                            size: AppIconSizes.sm,
-                          ),
-                          child: Text(
-                            l10n.capitalAllocationBalanceEvenlyAction,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          Expanded(
-            child: ListView.separated(
-              itemCount: _drafts.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: AppSpacing.s12),
-              itemBuilder: (context, index) => _buildRow(context, l10n, index),
-            ),
-          ),
-          if (_drafts.length == 1) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Text(widget.singleItemHint, style: context.captionStyle),
-          ],
-          const SizedBox(height: AppSpacing.s12),
-          if (isMobile)
-            AppBusyButton(onPress: _save, busy: _busy, label: l10n.commonSave)
-          else
-            AppSheetFooter(
-              cancelLabel: l10n.commonCancel,
-              submitLabel: l10n.commonSave,
-              busy: _busy,
-              onSubmit: _save,
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRow(BuildContext context, AppLocalizations l10n, int index) {
-    final draft = _drafts[index];
-    final advancedExpanded = _expandedAdvancedId == draft.id;
-    return SoftCard.raised(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        draft.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.theme.typography.body.sm,
-                      ),
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        advancedExpanded
-                            ? _policyLabel(l10n, draft.transferPolicy)
-                            : widget.weightLabel,
-                        style: context.microCaptionStyle,
-                      ),
-                    ],
-                  ),
-                ),
-                FButton.icon(
-                  variant: FButtonVariant.ghost,
-                  onPress: _busy
-                      ? null
-                      : () => setState(() {
-                          _expandedAdvancedId = advancedExpanded
-                              ? null
-                              : draft.id;
-                        }),
-                  child: Icon(
-                    advancedExpanded
-                        ? FLucideIcons.chevronUp
-                        : FLucideIcons.settings2,
-                    size: AppIconSizes.sm,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Row(
-              children: [
-                Expanded(
-                  child: Semantics(
-                    label: '${draft.name}, ${widget.weightLabel}',
-                    value: '${_percentFromBps(draft.targetWeightBps)} percent',
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: Slider(
-                        value: draft.targetWeightBps.toDouble(),
-                        min: 0,
-                        max: 10000,
-                        divisions: 200,
-                        semanticFormatterCallback: (value) =>
-                            '${_percentFromBps(value.round())}%',
-                        onChanged: _busy || _drafts.length == 1
-                            ? null
-                            : (value) => _setWeightLocked(
-                                index,
-                                (value / 50).round() * 50,
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                SizedBox(
-                  width: AppSpacing.s56,
+    return guardedScope(
+      child: AppFormPageScaffold(
+        title: Text(widget.title),
+        confirmLeave: handleBackIntent,
+        child: AppFormScaffoldBody(
+          onSubmit: _busy ? null : _save,
+          action: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_saveFailed) ...[
+                Semantics(
+                  liveRegion: true,
                   child: Text(
-                    '${_percentFromBps(draft.targetWeightBps)}%',
-                    textAlign: TextAlign.end,
-                    style: TypographyTokens.numericBodyStrong,
+                    l10n.capitalAllocationSaveFailed,
+                    style: context.captionStyle.copyWith(
+                      color: context.theme.colors.destructive,
+                    ),
                   ),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              AppBusyButton(
+                onPress: _save,
+                busy: _busy,
+                label: l10n.commonSave,
+              ),
+            ],
+          ),
+          children: [
+            Text(widget.subtitle, style: context.captionStyle),
+            const SizedBox(height: AppSpacing.s16),
+            Row(
+              children: [
+                Expanded(child: Text(l10n.capitalAllocationTotalLabel)),
+                Text(
+                  '${_percentFromBps(_totalBps)}%',
+                  style: TypographyTokens.numericBodyStrong,
                 ),
               ],
             ),
-            if (advancedExpanded) ...[
-              const SizedBox(height: AppSpacing.s12),
-              PercentField(
-                control: FTextFieldControl.managed(
-                  controller: _bandControllers[draft.id]!,
+            const SizedBox(height: AppSpacing.s8),
+            _AllocationBar(drafts: _drafts, valid: _totalBps == 10000),
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              _drafts.length == 1
+                  ? widget.singleItemHint
+                  : l10n.capitalAllocationAutoBalanceHint,
+              style: context.captionStyle,
+            ),
+            if (_drafts.length > 1)
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: _busy ? null : _balanceEvenly,
+                  child: Text(l10n.capitalAllocationBalanceEvenlyAction),
                 ),
-                enabled: !_busy,
-                label: Text(l10n.capitalAllocationToleranceLabel),
-                forceErrorText: _errors['band:${draft.id}'],
               ),
-              const SizedBox(height: AppSpacing.s12),
-              FSelect<GroupTransferPolicy>.rich(
-                enabled: !_busy,
-                format: (policy) => _policyLabel(l10n, policy),
-                control: FSelectControl<GroupTransferPolicy>.lifted(
-                  value: draft.transferPolicy,
-                  onChange: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _drafts[index] = draft.copyWith(transferPolicy: value);
-                    });
-                  },
-                ),
-                label: Text(l10n.capitalAllocationRuleLabel),
-                children: [
-                  for (final policy in GroupTransferPolicy.values)
-                    FSelectItem<GroupTransferPolicy>(
-                      value: policy,
-                      title: Text(_policyLabel(l10n, policy)),
-                      subtitle: Text(_policyDescription(l10n, policy)),
-                    ),
-                ],
-              ),
+            for (var index = 0; index < _drafts.length; index++) ...[
+              const SizedBox(height: AppSpacing.s16),
+              if (index > 0) const AppGroupedDivider(),
+              _buildRow(context, l10n, index),
             ],
           ],
         ),
@@ -366,37 +247,118 @@ class _CapitalAllocationPlanEditorState
     );
   }
 
-  void _updateBand(int index, String value) {
-    if (_writingControllers) return;
+  Widget _buildRow(BuildContext context, AppLocalizations l10n, int index) {
     final draft = _drafts[index];
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(draft.name, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s8),
+          PercentField(
+            key: _fieldKeys[draft.id],
+            control: FTextFieldControl.managed(
+              controller: _weightControllers[draft.id]!,
+            ),
+            focusNode: _weightFocus[draft.id],
+            semanticLabel: '${draft.name}, ${widget.weightLabel}',
+            label: Text(widget.weightLabel),
+            enabled: !_busy && _drafts.length > 1,
+            forceErrorText: _errors[draft.id],
+          ),
+          if (_drafts.length > 1)
+            Slider(
+              value: draft.targetWeightBps.toDouble(),
+              min: 0,
+              max: 10000,
+              divisions: 200,
+              semanticFormatterCallback: (value) =>
+                  '${_percentFromBps(value.round())}%',
+              onChanged: _busy
+                  ? null
+                  : (value) =>
+                        _setWeightLocked(index, (value / 50).round() * 50),
+            ),
+          FTile(
+            title: Text(l10n.capitalAllocationAdvancedAction, maxLines: 3),
+            subtitle: Text(
+              l10n.capitalAllocationRuleSummary(
+                _policyLabel(l10n, draft.transferPolicy),
+                _percentFromBps(draft.driftBandBps),
+              ),
+              maxLines: 4,
+            ),
+            suffix: const Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+            ),
+            onPress: _busy ? null : () => _editRules(index),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editRules(int index) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final updated = await showGuardedFormSheet<CapitalAllocationDraft>(
+      context: context,
+      builder: (_, guard) =>
+          _AllocationRuleForm(draft: _drafts[index], dirty: guard),
+    );
+    if (!mounted || updated == null) return;
+    setState(() => _drafts[index] = updated);
+    dirty.markDirty();
+  }
+
+  void _updateWeight(int index, String value) {
+    if (_writingControllers) return;
+    final id = _drafts[index].id;
     final parsed = double.tryParse(value.trim());
-    setState(() {
-      if (parsed == null || parsed < 0 || parsed > 100) {
-        _errors['band:${draft.id}'] = AppLocalizations.of(context)
-            .targetAllocationEditorRangeError;
-      } else {
-        _errors.remove('band:${draft.id}');
-        _drafts[index] = draft.copyWith(driftBandBps: (parsed * 100).round());
-      }
-    });
+    if (parsed == null || !parsed.isFinite || parsed < 0 || parsed > 100) {
+      setState(
+        () =>
+            _errors[id] = AppLocalizations.of(context)
+                .targetAllocationEditorRangeError,
+      );
+      return;
+    }
+    _errors.remove(id);
+    _setWeightLocked(index, (parsed * 100).round(), editingId: id);
   }
 
   Future<void> _save() async {
+    if (_busy) return;
     if (!_isValid) {
+      final invalidId = _drafts
+          .where((draft) => _errors.containsKey(draft.id))
+          .firstOrNull
+          ?.id;
+      if (invalidId != null) {
+        _weightFocus[invalidId]!.requestFocus();
+        final fieldContext = _fieldKeys[invalidId]!.currentContext;
+        if (fieldContext != null) await Scrollable.ensureVisible(fieldContext);
+      }
       return;
     }
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _saveFailed = false;
+    });
+    dirty.busy = true;
     try {
       await widget.onSave(List.unmodifiable(_drafts));
+      dirty.markPristine();
+      dirty.busy = false;
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (!mounted) return;
-      setState(() => _busy = false);
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        AppLocalizations.of(context).capitalAllocationSaveFailed,
-      );
+      setState(() {
+        _busy = false;
+        _saveFailed = true;
+      });
+      dirty.busy = false;
     }
   }
 
@@ -409,7 +371,11 @@ class _CapitalAllocationPlanEditorState
     ]);
   }
 
-  void _setWeightLocked(int selectedIndex, int selectedWeight) {
+  void _setWeightLocked(
+    int selectedIndex,
+    int selectedWeight, {
+    String? editingId,
+  }) {
     final clamped = selectedWeight.clamp(0, 10000);
     final remaining = 10000 - clamped;
     final otherIndexes = [
@@ -424,7 +390,7 @@ class _CapitalAllocationPlanEditorState
     weights[selectedIndex] = clamped;
     if (otherIndexes.isEmpty) {
       weights[selectedIndex] = 10000;
-      _setWeights(weights);
+      _setWeights(weights, editingId: editingId);
       return;
     }
     if (currentOtherTotal == 0) {
@@ -444,10 +410,11 @@ class _CapitalAllocationPlanEditorState
         assigned += next;
       }
     }
-    _setWeights(weights);
+    _setWeights(weights, editingId: editingId);
   }
 
-  void _setWeights(List<int> weights) {
+  void _setWeights(List<int> weights, {String? editingId}) {
+    dirty.markDirty();
     _writingControllers = true;
     try {
       setState(() {
@@ -455,10 +422,126 @@ class _CapitalAllocationPlanEditorState
           for (var index = 0; index < _drafts.length; index++)
             _drafts[index].copyWith(targetWeightBps: weights[index]),
         ];
+        for (final draft in _drafts) {
+          if (draft.id == editingId) continue;
+          // Preserve other invalid inputs so saving cannot silently discard them.
+          if (editingId != null && _errors.containsKey(draft.id)) continue;
+          _errors.remove(draft.id);
+          _weightControllers[draft.id]!.text = _percentFromBps(
+            draft.targetWeightBps,
+          );
+        }
       });
     } finally {
       _writingControllers = false;
     }
+  }
+}
+
+class _AllocationRuleForm extends StatefulWidget {
+  const _AllocationRuleForm({required this.draft, required this.dirty});
+
+  final CapitalAllocationDraft draft;
+  final FormDirtyController dirty;
+
+  @override
+  State<_AllocationRuleForm> createState() => _AllocationRuleFormState();
+}
+
+class _AllocationRuleFormState extends State<_AllocationRuleForm> {
+  final _formKey = GlobalKey<FormState>();
+  final _focus = FocusNode();
+  late final TextEditingController _band;
+  late GroupTransferPolicy _policy;
+
+  @override
+  void initState() {
+    super.initState();
+    _band = TextEditingController(
+      text: _percentFromBps(widget.draft.driftBandBps),
+    );
+    _policy = widget.draft.transferPolicy;
+    widget.dirty.bindTextControllers([_band]);
+  }
+
+  @override
+  void dispose() {
+    _band.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _apply() {
+    if (!_formKey.currentState!.validate()) {
+      _focus.requestFocus();
+      return;
+    }
+    widget.dirty.markPristine();
+    Navigator.of(context).pop(
+      widget.draft.copyWith(
+        driftBandBps: (double.parse(_band.text) * 100).round(),
+        transferPolicy: _policy,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppSheet(
+      title: l10n.capitalAllocationAdvancedAction,
+      subtitle: widget.draft.name,
+      footer: AppSheetFooter(
+        cancelLabel: l10n.commonCancel,
+        submitLabel: l10n.capitalAllocationApplyRules,
+        onSubmit: _apply,
+      ),
+      child: Form(
+        key: _formKey,
+        child: AppFormSection(
+          children: [
+            Text(
+              l10n.capitalAllocationRulesDraftHint,
+              style: context.captionStyle,
+            ),
+            PercentField(
+              control: FTextFieldControl.managed(controller: _band),
+              focusNode: _focus,
+              label: Text(l10n.capitalAllocationToleranceLabel),
+              validator: (value) {
+                final parsed = double.tryParse(value ?? '');
+                return parsed == null ||
+                        !parsed.isFinite ||
+                        parsed < 0 ||
+                        parsed > 100
+                    ? l10n.targetAllocationEditorRangeError
+                    : null;
+              },
+            ),
+            FSelect<GroupTransferPolicy>.rich(
+              format: (policy) => _policyLabel(l10n, policy),
+              control: FSelectControl<GroupTransferPolicy>.lifted(
+                value: _policy,
+                onChange: (value) {
+                  if (value == null) return;
+                  setState(() => _policy = value);
+                  widget.dirty.markDirty();
+                },
+              ),
+              label: Text(l10n.capitalAllocationRuleLabel),
+              children: [
+                for (final policy in GroupTransferPolicy.values)
+                  FSelectItem<GroupTransferPolicy>(
+                    value: policy,
+                    title: Text(_policyLabel(l10n, policy)),
+                    subtitle: Text(_policyDescription(l10n, policy)),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -490,6 +573,7 @@ class _AllocationBar extends StatelessWidget {
         child: SizedBox(
           height: AppSpacing.s8,
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var index = 0; index < positive.length; index++)
                 Expanded(

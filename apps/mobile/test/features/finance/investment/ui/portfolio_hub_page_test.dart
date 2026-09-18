@@ -11,6 +11,7 @@ import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
+import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
@@ -29,7 +30,12 @@ import 'package:naviwealth/features/finance/investment/domain/reporting/holding_
 import 'package:naviwealth/features/finance/investment/domain/returns/portfolio_return.dart';
 import 'package:naviwealth/features/finance/investment/domain/returns/xirr_engine.dart';
 import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart';
+import 'package:naviwealth/features/finance/rebalance/data/rebalance_providers.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/capital_allocation_engine.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/hierarchical_rebalance_engine.dart';
 import 'package:naviwealth/features/finance/rebalance/domain/portfolio_rebalance_group.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/rebalance_universe.dart';
+import 'package:naviwealth/features/finance/rebalance/domain/universe_rebalance_engine.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 
@@ -104,6 +110,16 @@ void main() {
         archived: false,
         sync: _meta(),
       );
+      final incomePortfolio = InvestmentPortfolio(
+        id: 'income',
+        name: 'Income',
+        baseCurrency: 'USD',
+        goalId: null,
+        color: null,
+        createdAt: DateTime.utc(2026),
+        archived: false,
+        sync: _meta(),
+      );
       const root = AllocationNode(
         id: 'plan',
         parentId: null,
@@ -119,10 +135,22 @@ void main() {
         type: AllocationNodeType.portfolio,
         name: 'Long term',
         referenceId: 'long-term',
-        targetWeightBps: 10000,
+        targetWeightBps: 6000,
         driftBandBps: 500,
         transferPolicy: GroupTransferPolicy.bidirectional,
       );
+      const incomeNode = AllocationNode(
+        id: 'portfolio:income',
+        parentId: 'plan',
+        type: AllocationNodeType.portfolio,
+        name: 'Income',
+        referenceId: 'income',
+        targetWeightBps: 4000,
+        driftBandBps: 500,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+      );
+      AsyncValue<RebalanceUniverse?> valuationState = const AsyncData(null);
+      UniverseRebalancePlan? valuationPlan;
       final state = PortfolioHubState(
         holdings: const [],
         lots: const [],
@@ -162,7 +190,27 @@ void main() {
               () => _StaticPortfolioHubNotifier(state),
             ),
             investmentPortfoliosProvider.overrideWith(
-              (_) => Stream.value([portfolio]),
+              (_) => Stream.value([portfolio, incomePortfolio]),
+            ),
+            activeRebalanceUniverseProvider.overrideWith((_) => valuationState),
+            universeRebalancePlanProvider.overrideWith((_) => valuationPlan),
+            portfolioRebalanceGroupsProvider.overrideWith(
+              (_) => Stream.value([]),
+            ),
+            allPortfolioGroupSnapshotsProvider.overrideWith((_) async => {}),
+            activeUniversePortfolioTargetsProvider.overrideWithValue(
+              AsyncData([
+                for (final node in [portfolioNode, incomeNode])
+                  PortfolioAllocationTarget(
+                    id: node.id,
+                    universeId: 'plan',
+                    portfolioId: node.referenceId!,
+                    targetWeightBps: node.targetWeightBps,
+                    driftBandBps: node.driftBandBps,
+                    transferPolicy: node.transferPolicy,
+                    sync: _meta(),
+                  ),
+              ]),
             ),
             portfolioHubInsightsProvider.overrideWith(
               _EmptyPortfolioInsightsNotifier.new,
@@ -171,7 +219,7 @@ void main() {
               AsyncData(
                 PortfolioAllocationTree(
                   root: root,
-                  nodes: [root, portfolioNode],
+                  nodes: [root, portfolioNode, incomeNode],
                   attachments: [],
                   inclusions: [],
                 ),
@@ -227,7 +275,10 @@ void main() {
           null;
       await tester.pumpAndSettle();
       await tester.tap(
-        find.bySemanticsLabel(AppLocalizationsEn().shellMoreActions),
+        find
+            .bySemanticsLabel(AppLocalizationsEn().shellMoreActions)
+            .hitTestable()
+            .first,
       );
       await tester.pumpAndSettle();
       await tester.tap(
@@ -235,6 +286,153 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(AppSheet), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().portfolioStudioPlanTitle),
+        findsOneWidget,
+      );
+      expect(find.text('Actual allocation'), findsNWidgets(2));
+      expect(find.text('Target allocation'), findsNWidgets(2));
+      expect(find.text('60%'), findsOneWidget);
+      expect(find.text('40%'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Long term')).dy,
+        lessThan(tester.getTopLeft(find.text('Income')).dy),
+      );
+      expect(
+        find.descendant(
+          of: find.byType(AppSheet),
+          matching: find.byType(NwLineChart),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanActualUnavailable),
+        findsOneWidget,
+      );
+      valuationState = const AsyncLoading();
+      container.invalidate(activeRebalanceUniverseProvider);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanActualLoading),
+        findsOneWidget,
+      );
+      valuationState = AsyncError(
+        StateError('unavailable'),
+        StackTrace.current,
+      );
+      container.invalidate(activeRebalanceUniverseProvider);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanActualFailed),
+        findsOneWidget,
+      );
+      expect(find.text('60%'), findsOneWidget);
+      valuationState = const AsyncData(null);
+      await tester.tap(find.text(AppLocalizationsEn().commonRetry));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanActualUnavailable),
+        findsOneWidget,
+      );
+
+      final targets = container
+          .read(activeUniversePortfolioTargetsProvider)
+          .requireValue;
+      final capitalPlan = const CapitalAllocationEngine().compute(
+        baseCurrency: 'USD',
+        nodes: [
+          for (final (index, node) in [portfolioNode, incomeNode].indexed)
+            CapitalAllocationNode(
+              id: node.referenceId!,
+              name: node.name,
+              targetWeightBps: node.targetWeightBps,
+              driftBandBps: node.driftBandBps,
+              transferPolicy: node.transferPolicy,
+              actualAmount: Decimal.fromInt(index == 0 ? 70 : 30),
+            ),
+        ],
+      );
+      valuationPlan = UniverseRebalancePlan(
+        universe: RebalanceUniverse(
+          id: 'plan',
+          name: 'Plan',
+          baseCurrency: 'USD',
+          createdAt: DateTime.utc(2026),
+          archived: false,
+          sync: _meta(),
+        ),
+        capitalPlan: capitalPlan,
+        portfolios: [
+          for (final (index, item) in [portfolio, incomePortfolio].indexed)
+            PortfolioCapitalPlan(
+              portfolio: item,
+              target: targets[index],
+              capitalDecision: capitalPlan.decisions[item.id]!,
+              strategyPlan: PortfolioRebalancePlan(
+                totalAssets: Money.fromInt(index == 0 ? 70 : 30, 'USD'),
+                groups: [],
+                transfers: [],
+              ),
+            ),
+        ],
+      );
+      container.invalidate(universeRebalancePlanProvider);
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanAboveTarget('10')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanBelowTarget('10')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(AppLocalizationsEn().portfolioPlanActualUnavailable),
+        findsNothing,
+      );
+
+      for (final action in [
+        'portfolio-plan-create',
+        'portfolio-plan-allocation',
+      ]) {
+        await tester.tap(find.byKey(ValueKey(action)));
+        await tester.pumpAndSettle();
+        expect(
+          find.byType(AppSheet),
+          action.endsWith('create') ? findsOneWidget : findsNothing,
+          reason: 'Editing replaces the overview sheet.',
+        );
+        expect(
+          find.byKey(const ValueKey('portfolio-plan-row-long-term')),
+          findsNothing,
+        );
+        expect(
+          find.text(
+            action.endsWith('create')
+                ? AppLocalizationsEn().portfolioCreateTitle
+                : AppLocalizationsEn().portfolioAllocationEditTitle,
+          ),
+          findsOneWidget,
+        );
+        if (action.endsWith('create')) {
+          await tester.tap(find.text(AppLocalizationsEn().commonCancel));
+        } else {
+          await tester.binding.handlePopRoute();
+        }
+        await tester.pumpAndSettle();
+        expect(find.byType(AppSheet), findsNothing);
+        await tester.tap(
+          find
+              .bySemanticsLabel(AppLocalizationsEn().shellMoreActions)
+              .hitTestable()
+              .first,
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.text(AppLocalizationsEn().portfolioStudioPlanTitle),
+        );
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.text('Long term'));
       await tester.pumpAndSettle();
       expect(find.text('Selected portfolio studio'), findsOneWidget);
@@ -337,6 +535,10 @@ void main() {
       await tester.tap(find.text('Structure'));
       await tester.pumpAndSettle();
       expect(find.text('Strategy sleeves'), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().portfolioStudioConfiguredStatus),
+        findsNothing,
+      );
       expect(find.text('Index core'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('app.back')));

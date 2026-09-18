@@ -10,6 +10,54 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get capitalAllocationAutoBalanceHint => '调整一个目标后，其余项目按比例联动，总计保持 100%。';
+
+  @override
+  String capitalAllocationRuleSummary(String policy, String tolerance) {
+    return '$policy · 容许偏离 ±$tolerance 个百分点';
+  }
+
+  @override
+  String get capitalAllocationApplyRules => '应用到草稿';
+
+  @override
+  String get capitalAllocationRulesDraftHint => '这些更改将在保存配置方案时一并保存。';
+
+  @override
+  String portfolioPlanAboveTarget(String points) {
+    return '高于目标 $points 个百分点';
+  }
+
+  @override
+  String portfolioPlanBelowTarget(String points) {
+    return '低于目标 $points 个百分点';
+  }
+
+  @override
+  String get portfolioPlanActualUnavailable => '估值数据尚未就绪，暂无法显示实际占比。';
+
+  @override
+  String get portfolioPlanActualFailed => '实际占比加载失败，仍可查看目标配置。';
+
+  @override
+  String get portfolioPlanActualLoading => '正在加载实际占比…';
+
+  @override
+  String get portfolioPlanAllocationHint => '查看各组合的配置比例，点击组合管理持仓与策略。';
+
+  @override
+  String get portfolioPlanEditWeights => '调整比例';
+
+  @override
+  String get portfolioPlanActualWeightLabel => '实际占比';
+
+  @override
+  String get portfolioPlanTargetWeightLabel => '目标占比';
+
+  @override
+  String get portfolioPlanNeedsRebalance => '偏离目标范围';
+
+  @override
   String financeViewAllItems(int count) {
     return '查看全部（$count）';
   }

@@ -150,14 +150,14 @@ class _PortfolioStudioBody extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
-          _StudioHero(
-            portfolio: portfolio,
-            portfolioNode: portfolioNode,
-            sleeves: sleeves,
-            tree: tree,
-          ),
-          const SizedBox(height: AppSpacing.s20),
           if (section == PortfolioStudioSection.overview) ...[
+            _StudioHero(
+              portfolio: portfolio,
+              portfolioNode: portfolioNode,
+              sleeves: sleeves,
+              tree: tree,
+            ),
+            const SizedBox(height: AppSpacing.s20),
             _StudioOverview(
               portfolio: portfolio,
               portfolioNode: portfolioNode,
@@ -631,7 +631,7 @@ String _studioPercentFromBps(int bps) {
   final value = bps / 100;
   return value == value.roundToDouble()
       ? value.toStringAsFixed(0)
-      : value.toStringAsFixed(1);
+      : value.toStringAsFixed(bps % 10 == 0 ? 1 : 2);
 }
 
 String _studioPercent(double value) {

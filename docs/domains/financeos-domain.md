@@ -92,6 +92,17 @@ rebalance entry. Returns, dividend forecasts, and events show compact summaries
 directly, with complete details in sheets. Portfolio configuration and capital
 allocation stay in the explicit investment-plan action and portfolio studio,
 not inside an insights accordion.
+The investment-plan sheet compares portfolios in vertical rows using actual
+and target weights, with explicit out-of-band labels. Trend charts and returns
+stay in portfolio details. Create and allocation-edit actions replace the
+overview sheet instead of stacking another sheet over it.
+Allocation editing uses the guarded full-page form pattern: precise percentage
+inputs and optional sliders share proportional redistribution with a 100% total.
+Funding rules use a separate guarded single-item form and apply to the allocation
+draft; only saving the parent persists changes. Valuation loading, failure and
+unavailable states remain explicit alongside targets, and drift labels state the
+direction and percentage-point difference. Studio setup views omit the overview
+summary so the current task stays near the page header.
 Portfolio-page concentration risk follows the selected capital assignments,
 including partial lots and the unassigned scope; global inbox risk remains
 independent of that selection. Authored portfolios expose a direct management

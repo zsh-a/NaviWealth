@@ -98,6 +98,90 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @capitalAllocationAutoBalanceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing one target adjusts the others proportionally. Total allocation stays at 100%.'**
+  String get capitalAllocationAutoBalanceHint;
+
+  /// No description provided for @capitalAllocationRuleSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{policy} · Tolerance ±{tolerance} pp'**
+  String capitalAllocationRuleSummary(String policy, String tolerance);
+
+  /// No description provided for @capitalAllocationApplyRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to draft'**
+  String get capitalAllocationApplyRules;
+
+  /// No description provided for @capitalAllocationRulesDraftHint.
+  ///
+  /// In en, this message translates to:
+  /// **'These changes are saved when you save the allocation plan.'**
+  String get capitalAllocationRulesDraftHint;
+
+  /// No description provided for @portfolioPlanAboveTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pp above target'**
+  String portfolioPlanAboveTarget(String points);
+
+  /// No description provided for @portfolioPlanBelowTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pp below target'**
+  String portfolioPlanBelowTarget(String points);
+
+  /// No description provided for @portfolioPlanActualUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual allocation is unavailable until valuation data is ready.'**
+  String get portfolioPlanActualUnavailable;
+
+  /// No description provided for @portfolioPlanActualFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load actual allocations. Your targets are still shown.'**
+  String get portfolioPlanActualFailed;
+
+  /// No description provided for @portfolioPlanActualLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading actual allocations…'**
+  String get portfolioPlanActualLoading;
+
+  /// No description provided for @portfolioPlanAllocationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare portfolio allocations. Select a portfolio to manage holdings and strategies.'**
+  String get portfolioPlanAllocationHint;
+
+  /// No description provided for @portfolioPlanEditWeights.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust allocation'**
+  String get portfolioPlanEditWeights;
+
+  /// No description provided for @portfolioPlanActualWeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual allocation'**
+  String get portfolioPlanActualWeightLabel;
+
+  /// No description provided for @portfolioPlanTargetWeightLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target allocation'**
+  String get portfolioPlanTargetWeightLabel;
+
+  /// No description provided for @portfolioPlanNeedsRebalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Outside target range'**
+  String get portfolioPlanNeedsRebalance;
+
   /// No description provided for @financeViewAllItems.
   ///
   /// In en, this message translates to:

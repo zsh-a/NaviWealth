@@ -1,276 +1,229 @@
 part of 'portfolio_hub_page.dart';
 
-class _PortfolioPlanStrip extends ConsumerWidget {
-  const _PortfolioPlanStrip({
+enum _PortfolioPlanAction { create, allocate }
+
+enum _PlanValuationStatus { ready, loading, failed, unavailable }
+
+/// Allocation is a comparison task: stable rows, not a horizontal chart rail.
+class _PortfolioPlanList extends StatelessWidget {
+  const _PortfolioPlanList({
     required this.portfolios,
     required this.tree,
     required this.actualWeights,
     required this.onPortfolioSelected,
+    required this.onCreate,
+    required this.onEditAllocation,
+    required this.valuationStatus,
+    required this.onRetry,
   });
 
   final List<InvestmentPortfolio> portfolios;
   final PortfolioAllocationTree tree;
   final Map<String, double> actualWeights;
   final ValueChanged<String> onPortfolioSelected;
+  final VoidCallback onCreate;
+  final VoidCallback onEditAllocation;
+  final _PlanValuationStatus valuationStatus;
+  final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final trends = ref.watch(portfolioMonthlyTrendSummariesProvider);
     final portfolioById = {for (final item in portfolios) item.id: item};
     final nodes = tree.childrenOf(tree.root.id);
-    if (nodes.isEmpty) {
-      return SoftCard.raised(
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.portfolioStudioPlanTitle,
-              style: context.theme.typography.body.sm,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              l10n.portfolioStudioPlanEmptyHint,
-              style: context.captionStyle,
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            FButton(
-              onPress: () => showInvestmentPortfolioFormSheet(context),
-              prefix: const Icon(FLucideIcons.plus),
-              child: Text(l10n.portfolioCreateTitle),
-            ),
-          ],
-        ),
-      );
-    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _StudioSectionHeader(
-          title: l10n.portfolioStudioPlanTitle,
-          subtitle: l10n.portfolioStudioPlanHint,
-          action: nodes.length > 1
-              ? FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: () async {
-                    final targets =
-                        ref
-                            .read(activeUniversePortfolioTargetsProvider)
-                            .value ??
-                        const <PortfolioAllocationTarget>[];
-                    if (targets.isEmpty) return;
-                    await showPortfolioAllocationEditor(
-                      context,
-                      ref,
-                      portfolios: portfolios,
-                      targets: targets,
-                    );
-                  },
-                  child: Text(l10n.capitalAllocationEditAction),
-                )
-              : null,
+        Text(
+          nodes.isEmpty
+              ? l10n.portfolioStudioPlanEmptyHint
+              : l10n.portfolioPlanAllocationHint,
+          style: context.captionStyle,
         ),
-        const SizedBox(height: AppSpacing.s8),
-        SizedBox(
-          height: AppControlHeights.portfolioOverviewRail,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: nodes.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
-            itemBuilder: (context, index) {
-              if (index == nodes.length) {
-                return SizedBox(
-                  width: AppControlWidths.portfolioCreateCard,
-                  child: FButton(
-                    variant: FButtonVariant.outline,
-                    onPress: () => showInvestmentPortfolioFormSheet(context),
-                    child: Flexible(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(FLucideIcons.plus),
-                          const SizedBox(height: AppSpacing.s6),
-                          Text(
-                            l10n.portfolioCreateTitle,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-              final node = nodes[index];
-              final portfolio = portfolioById[node.referenceId];
-              final actual = actualWeights[portfolio?.id];
-              final drift = actual == null
-                  ? null
-                  : (actual - node.targetWeight).abs();
-              final trend = portfolio == null
-                  ? null
-                  : trends.value?[portfolio.id];
-              final trendPending = trends.isLoading && !trends.hasValue;
-              return SizedBox(
-                width: AppControlWidths.portfolioOverviewCard,
-                child: AppTappable(
-                  onPress: portfolio == null
-                      ? null
-                      : () => onPortfolioSelected(portfolio.id),
-                  child: SoftCard.raised(
-                    padding: const EdgeInsets.all(AppSpacing.s12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                node.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.labelStyle,
-                              ),
-                            ),
-                            const Icon(
-                              FLucideIcons.chevronRight,
-                              size: AppIconSizes.sm,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.s8),
-                        if (trendPending)
-                          const Expanded(
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: SkeletonBox(height: AppSpacing.s40),
-                            ),
-                          )
-                        else if (trend == null)
-                          Expanded(
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                l10n.portfolioTrendAwaitingData,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.microCaptionStyle,
-                              ),
-                            ),
-                          )
-                        else
-                          Expanded(
-                            child: _PortfolioTrendSparkline(series: trend),
-                          ),
-                        const SizedBox(height: AppSpacing.s6),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (trend != null)
-                                    MoneyText(
-                                      amount: trend.currentValue.toDouble(),
-                                      currencyCode: trend.baseCurrency,
-                                      compact: true,
-                                      style: TypographyTokens.numericBodyStrong,
-                                    )
-                                  else
-                                    Text(
-                                      '${_studioPercentFromBps(node.targetWeightBps)}%',
-                                      style: context.theme.typography.body.lg,
-                                    ),
-                                  Text(
-                                    actual == null
-                                        ? l10n.portfolioStudioPlanTargetLabel
-                                        : l10n.rebalancePortfolioWeightPair(
-                                            _studioPercent(actual),
-                                            _studioPercent(node.targetWeight),
-                                          ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: context.captionStyle,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (trend?.periodPerformanceRatio case final ratio?)
-                              DeltaText.percentFromRatio(
-                                ratio: ratio,
-                                fractionDigits: 1,
-                                showIcon: false,
-                                style: context.microCaptionStyle,
-                              )
-                            else if (drift case final value?)
-                              Icon(
-                                value <= node.driftBandBps / 10000
-                                    ? FLucideIcons.circleCheck
-                                    : FLucideIcons.triangleAlert,
-                                size: AppIconSizes.sm,
-                                color: value <= node.driftBandBps / 10000
-                                    ? context.theme.colors.primary
-                                    : context.theme.colors.destructive,
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
+        if (nodes.isNotEmpty &&
+            valuationStatus != _PlanValuationStatus.ready) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Semantics(
+            liveRegion: true,
+            child: Text(switch (valuationStatus) {
+              _PlanValuationStatus.loading => l10n.portfolioPlanActualLoading,
+              _PlanValuationStatus.failed => l10n.portfolioPlanActualFailed,
+              _ => l10n.portfolioPlanActualUnavailable,
+            }, style: context.captionStyle),
           ),
+          if (valuationStatus == _PlanValuationStatus.failed)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FButton(
+                variant: FButtonVariant.ghost,
+                onPress: onRetry,
+                child: Text(l10n.commonRetry),
+              ),
+            ),
+        ],
+        const SizedBox(height: AppSpacing.s12),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final create = FButton(
+              key: const ValueKey('portfolio-plan-create'),
+              variant: nodes.isEmpty
+                  ? FButtonVariant.primary
+                  : FButtonVariant.outline,
+              onPress: onCreate,
+              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
+              child: Flexible(child: Text(l10n.portfolioCreateTitle)),
+            );
+            if (nodes.length <= 1) return create;
+            final edit = FButton(
+              key: const ValueKey('portfolio-plan-allocation'),
+              variant: FButtonVariant.outline,
+              onPress: onEditAllocation,
+              prefix: const Icon(
+                FLucideIcons.slidersHorizontal,
+                size: AppIconSizes.sm,
+              ),
+              child: Flexible(child: Text(l10n.portfolioPlanEditWeights)),
+            );
+            if (constraints.maxWidth <
+                320 * MediaQuery.textScalerOf(context).scale(1)) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  edit,
+                  const SizedBox(height: AppSpacing.s8),
+                  create,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: edit),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(child: create),
+              ],
+            );
+          },
         ),
+        if (nodes.isNotEmpty) const SizedBox(height: AppSpacing.s12),
+        for (final (index, node) in nodes.indexed) ...[
+          if (index > 0) const AppGroupedDivider(),
+          _PortfolioPlanRow(
+            node: node,
+            actual: actualWeights[node.referenceId],
+            onPress: portfolioById.containsKey(node.referenceId)
+                ? () => onPortfolioSelected(node.referenceId!)
+                : null,
+          ),
+        ],
       ],
     );
   }
 }
 
-class _PortfolioTrendSparkline extends StatelessWidget {
-  const _PortfolioTrendSparkline({required this.series});
+class _PortfolioPlanRow extends StatelessWidget {
+  const _PortfolioPlanRow({
+    required this.node,
+    required this.actual,
+    required this.onPress,
+  });
 
-  final PortfolioTrendSeries series;
+  final AllocationNode node;
+  final double? actual;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
-    final chart = PortfolioTrendChartProjection.fromSeries(
-      series: series,
-      metric: PortfolioTrendMetric.performance,
-    );
-    if (!chart.isRenderable) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          AppLocalizations.of(context).portfolioTrendAwaitingData,
-          style: context.microCaptionStyle,
+    final l10n = AppLocalizations.of(context);
+    final outsideBand =
+        actual != null &&
+        (actual! - node.targetWeight).abs() > node.driftBandBps / 10000;
+    return AppTappable(
+      key: ValueKey('portfolio-plan-row-${node.referenceId}'),
+      onPress: onPress,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s16,
+          horizontal: AppSpacing.s4,
         ),
-      );
-    }
-    final points = [
-      for (final datum in chart.data)
-        ChartPoint(
-          x: datum.asOf.millisecondsSinceEpoch.toDouble(),
-          y: datum.value,
-          meta: datum.source,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(child: Text(node.name, style: context.labelStyle)),
+                if (onPress != null) ...[
+                  const SizedBox(width: AppSpacing.s8),
+                  Icon(
+                    FLucideIcons.chevronRight,
+                    size: AppIconSizes.sm,
+                    color: context.theme.colors.mutedForeground,
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Row(
+              children: [
+                Expanded(
+                  child: _PlanWeight(
+                    label: l10n.portfolioPlanActualWeightLabel,
+                    value: actual == null ? '—' : _studioPercent(actual!),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: _PlanWeight(
+                    label: l10n.portfolioPlanTargetWeightLabel,
+                    value: '${_studioPercentFromBps(node.targetWeightBps)}%',
+                  ),
+                ),
+              ],
+            ),
+            if (outsideBand) ...[
+              const SizedBox(height: AppSpacing.s8),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppBadge(
+                  label: actual! > node.targetWeight
+                      ? l10n.portfolioPlanAboveTarget(
+                          _studioPercentFromBps(
+                            ((actual! - node.targetWeight) * 10000)
+                                .abs()
+                                .round(),
+                          ),
+                        )
+                      : l10n.portfolioPlanBelowTarget(
+                          _studioPercentFromBps(
+                            ((actual! - node.targetWeight) * 10000)
+                                .abs()
+                                .round(),
+                          ),
+                        ),
+                  icon: FLucideIcons.triangleAlert,
+                  tone: AppBadgeTone.warning,
+                  size: AppBadgeSize.compact,
+                ),
+              ),
+            ],
+          ],
         ),
-    ];
-    return NwLineChart(
-      series: [
-        ChartSeries(
-          name: AppLocalizations.of(context).portfolioTrendPerformance,
-          points: points,
-          intent: chart.isDown ? SeriesIntent.down : SeriesIntent.up,
-          fillOpacity: AppOpacity.light,
-        ),
-      ],
-      minimal: true,
-      filled: true,
-      curved: true,
-      showDots: false,
-      heroDots: true,
-      semanticLabel: AppLocalizations.of(context).portfolioTrendMonthSemantics,
+      ),
     );
   }
+}
+
+class _PlanWeight extends StatelessWidget {
+  const _PlanWeight({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(label, style: context.captionStyle),
+      const SizedBox(height: AppSpacing.s2),
+      Text(value, style: TypographyTokens.numericBodyStrong),
+    ],
+  );
 }

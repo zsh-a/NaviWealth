@@ -1,4 +1,42 @@
 {
+  "capitalAllocationAutoBalanceHint": "调整一个目标后，其余项目按比例联动，总计保持 100%。",
+  "capitalAllocationRuleSummary": "{policy} · 容许偏离 ±{tolerance} 个百分点",
+  "capitalAllocationApplyRules": "应用到草稿",
+  "capitalAllocationRulesDraftHint": "这些更改将在保存配置方案时一并保存。",
+  "portfolioPlanAboveTarget": "高于目标 {points} 个百分点",
+  "portfolioPlanBelowTarget": "低于目标 {points} 个百分点",
+  "portfolioPlanActualUnavailable": "估值数据尚未就绪，暂无法显示实际占比。",
+  "portfolioPlanActualFailed": "实际占比加载失败，仍可查看目标配置。",
+  "portfolioPlanActualLoading": "正在加载实际占比…",
+  "@capitalAllocationRuleSummary": {
+    "placeholders": {
+      "policy": {
+        "type": "String"
+      },
+      "tolerance": {
+        "type": "String"
+      }
+    }
+  },
+  "@portfolioPlanAboveTarget": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "@portfolioPlanBelowTarget": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPlanAllocationHint": "查看各组合的配置比例，点击组合管理持仓与策略。",
+  "portfolioPlanEditWeights": "调整比例",
+  "portfolioPlanActualWeightLabel": "实际占比",
+  "portfolioPlanTargetWeightLabel": "目标占比",
+  "portfolioPlanNeedsRebalance": "偏离目标范围",
   "financeViewAllItems": "查看全部（{count}）",
   "@financeViewAllItems": { "placeholders": { "count": { "type": "int" } } },
   "financeHistoryYear": "年份",

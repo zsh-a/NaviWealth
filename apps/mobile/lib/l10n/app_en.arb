@@ -1,4 +1,42 @@
 {
+  "capitalAllocationAutoBalanceHint": "Changing one target adjusts the others proportionally. Total allocation stays at 100%.",
+  "capitalAllocationRuleSummary": "{policy} · Tolerance ±{tolerance} pp",
+  "capitalAllocationApplyRules": "Apply to draft",
+  "capitalAllocationRulesDraftHint": "These changes are saved when you save the allocation plan.",
+  "portfolioPlanAboveTarget": "{points} pp above target",
+  "portfolioPlanBelowTarget": "{points} pp below target",
+  "portfolioPlanActualUnavailable": "Actual allocation is unavailable until valuation data is ready.",
+  "portfolioPlanActualFailed": "Could not load actual allocations. Your targets are still shown.",
+  "portfolioPlanActualLoading": "Loading actual allocations…",
+  "@capitalAllocationRuleSummary": {
+    "placeholders": {
+      "policy": {
+        "type": "String"
+      },
+      "tolerance": {
+        "type": "String"
+      }
+    }
+  },
+  "@portfolioPlanAboveTarget": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "@portfolioPlanBelowTarget": {
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "portfolioPlanAllocationHint": "Compare portfolio allocations. Select a portfolio to manage holdings and strategies.",
+  "portfolioPlanEditWeights": "Adjust allocation",
+  "portfolioPlanActualWeightLabel": "Actual allocation",
+  "portfolioPlanTargetWeightLabel": "Target allocation",
+  "portfolioPlanNeedsRebalance": "Outside target range",
   "financeViewAllItems": "View all ({count})",
   "@financeViewAllItems": { "placeholders": { "count": { "type": "int" } } },
   "financeHistoryYear": "Year",
