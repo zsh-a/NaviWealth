@@ -82,10 +82,10 @@ class GetCashflowBucketsTool implements DeviceTool {
         ? currencyRaw
         : null;
 
-    final entries = await ctx.ref.read(
+    final entries = await ctx.readFuture(
       journalEntriesWithPostingsStreamProvider.future,
     );
-    final assets = await ctx.ref.read(allAssetsStreamProvider.future);
+    final assets = await ctx.readFuture(allAssetsStreamProvider.future);
 
     return shape(
       [for (final entry in entries) entry.toCashFlowLedgerEntry()],

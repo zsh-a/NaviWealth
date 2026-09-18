@@ -3341,7 +3341,7 @@
   "aiTransparencyNoSpans": "该记录无执行链路（早于 span 模型，将在 30 天内自动清理）。",
   "aiTransparencyEventSummary": "{count} 个事件 · 始于 {time}",
   "aiTraceRoundsCount": "{count} 轮",
-  "aiTraceNoPayloadCaptured": "未采集 input/output（精简模式）。在「AI 透明度」页打开“详细采集”后，新的调用会记录每步的传参与返回，便于调试。",
+  "aiTraceNoPayloadCaptured": "此步骤没有输入输出记录。可能未启用详细采集，或该执行路径未提供数据。详细采集仅对开启后新发起的调用生效，历史记录无法补采。",
   "aiChatDeviceUnavailable": "AI 需要在设置中配置自带 API Key 后启用（本机直连模型，请求与数据不经我方服务器）。Web 端暂不支持设备侧 AI。",
   "aiChatErrorAuthentication": "模型服务商拒绝了访问，请检查 API Key 或权限。",
   "aiChatErrorEndpoint": "找不到模型服务端点，请检查服务商 Base URL。",
@@ -5202,5 +5202,16 @@
   "activityAccountsUnavailable": "账户加载失败，请重试。",
   "executionOpenActionsUnavailable": "行动列表尚未完整加载，请重试。",
   "knowledgeNewNote": "新建笔记",
-  "knowledgeNewDecision": "新建决策"
+  "knowledgeNewDecision": "新建决策",
+  "agentExecutionTitle": "执行过程",
+  "agentExecutionView": "查看执行过程",
+  "agentExecutionDiagnostics": "技术详情",
+  "agentExecutionModel": "模型",
+  "agentExecutionStop": "停止执行",
+  "agentExecutionHint": "离开此页面不会停止任务。移动端进入后台可能中断执行，可返回后手动重试。",
+  "agentExecutionMissing": "暂无详细执行记录。旧版运行记录仍保留在历史中。",
+  "agentExecutionStatus": "{status, select, preparing{准备中} model{模型分析中} tool{读取数据中} validating{校验报告中} running{执行中} completed{已完成} failed{执行失败} cancelled{已停止} interrupted{已中断} other{等待中}}",
+  "@agentExecutionStatus": {"placeholders": {"status": {"type": "String"}}},
+  "agentExecutionError": "{code, select, model_unavailable{请先配置模型，再运行此任务。} no_tools{当前领域没有可用的只读工具。} scheduled_task_timeout{执行已达到时限，请检查工具步骤及模型连接后重试。} tool_timeout{工具执行超时。} invalid_report{模型未返回有效且有证据支持的报告。} scheduled_task_user_cancelled{你已停止本次执行。} scheduled_task_backgrounded{应用离开前台，本次执行已中断。} scheduled_task_interrupted{上次执行已中断，不会自动重新运行。} scheduled_task_access_revoked{账号或领域访问权限已变化。} scheduled_task_disabled{此任务已停用。} scheduled_task_changed{执行过程中任务配置已变化。} other{本次执行未完成，请检查模型连接和执行详情后重试。}}",
+  "@agentExecutionError": {"placeholders": {"code": {"type": "String"}}}
 }

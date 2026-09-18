@@ -40,6 +40,7 @@ import '../../features/settings/ui/perf_diagnostics_page.dart';
 import '../../features/settings/ui/settings_page.dart' deferred as settings_lib;
 import '../../features/settings/ui/sync/sync_status_page.dart';
 import '../agent_artifact_page.dart';
+import '../agents/agent_execution_page.dart';
 import '../domain_packs.dart';
 import '../shell/app_dock_shell.dart';
 import 'route_analytics_observer.dart';
@@ -138,13 +139,6 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
               name: LifeRouteNames.home,
               builder: (context, state) => const LifePage(),
             ),
-            GoRoute(
-              path: AgentArtifactRoutes.detailPath,
-              name: AgentArtifactRoutes.detailName,
-              builder: (context, state) => AgentArtifactPage(
-                artifactId: state.pathParameters['artifactId'] ?? '',
-              ),
-            ),
             ...shellRoutes,
           ],
         ),
@@ -163,6 +157,22 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
 /// unrelated Settings overview.
 List<RouteBase> _aiSurfaceRoutes() {
   return [
+    // Results can be opened from either a domain or a root-level execution
+    // page. Keep them on the root navigator so a drill-down never pushes a
+    // second copy of the underlying dock shell with the same page key.
+    GoRoute(
+      path: AgentArtifactRoutes.detailPath,
+      name: AgentArtifactRoutes.detailName,
+      pageBuilder: (context, state) => _aiSurfacePage(
+        context,
+        state,
+        _backSafe(
+          AgentArtifactPage(
+            artifactId: state.pathParameters['artifactId'] ?? '',
+          ),
+        ),
+      ),
+    ),
     GoRoute(
       path: SettingsRoutes.ai,
       name: SettingsRouteNames.ai,
@@ -215,6 +225,19 @@ List<RouteBase> _aiSurfaceRoutes() {
       name: SettingsRouteNames.agents,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const AgentsSettingsPage())),
+    ),
+    GoRoute(
+      path: SettingsRoutes.agentExecutionPattern,
+      pageBuilder: (context, state) => _aiSurfacePage(
+        context,
+        state,
+        _backSafe(
+          AgentExecutionPage(
+            agentId: state.pathParameters['agentId']!,
+            runId: state.uri.queryParameters['run'],
+          ),
+        ),
+      ),
     ),
     GoRoute(
       path: SettingsRoutes.aiTransparency,

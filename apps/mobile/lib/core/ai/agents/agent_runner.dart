@@ -53,6 +53,7 @@ class AgentRunner {
     Agent agent,
     AgentContext ctx, {
     AgentRunTrigger trigger = AgentRunTrigger.manual,
+    void Function(AgentRunRecord record)? onStarted,
   }) async {
     final start = ctx.now;
     final enabled = await _preferenceStore.isEnabled(
@@ -74,6 +75,7 @@ class AgentRunner {
       trigger: trigger,
     );
     if (!acquire.acquired) {
+      if (acquire.activeRun != null) onStarted?.call(acquire.activeRun!);
       return AgentRunResult.busy(
         agentId: agent.id,
         startedAt: start,
@@ -83,7 +85,10 @@ class AgentRunner {
     }
     AgentRunResult result;
     try {
-      result = await agent.run(ctx);
+      onStarted?.call(acquire.record!);
+      result = await agent.run(
+        AgentContext(ref: ctx.ref, now: ctx.now, runId: acquire.record!.id),
+      );
     } catch (e) {
       result = AgentRunResult.failed(
         agentId: agent.id,

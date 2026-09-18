@@ -36,6 +36,68 @@ const _askUserTool = <String, Object?>{
 };
 
 void main() {
+  test('fast tool publishes before a blocked parallel tool finishes', () async {
+    final releaseSlow = Completer<void>();
+    final fastVisible = Completer<void>();
+    final bridge = _streamBridgeBatches(
+      _FakeLlmBridge(),
+      eventBatches: const [
+        [
+          '{"kind":"round_finished","response":{"content":"","finish_reason":"tool_call"},"metadata":{"status":"requires_tool_results","chat_state":{"round":1},"tool_calls":[{"id":"slow","name":"read_task","input":{"slow":true}},{"id":"fast","name":"read_task","input":{}}]}}',
+        ],
+        [
+          '{"kind":"round_finished","response":{"content":"done","finish_reason":"stop"},"metadata":{"status":"completed"}}',
+          '{"kind":"done","round":2,"metadata":{"stop_reason":"end_turn"}}',
+        ],
+      ],
+    );
+    final runner = FrbChatRunner(
+      streamBridge: bridge,
+      tools: const [_readTaskTool],
+      emitModelProgress: true,
+      toolLineHandler: (line) async {
+        final request = jsonDecode(line) as Map<String, Object?>;
+        if (request['id'] == 'slow') await releaseSlow.future;
+        return jsonEncode({
+          'id': request['id'],
+          'result': {'ok': true},
+        });
+      },
+    );
+    final events = <AiChatEvent>[];
+    final done = runner
+        .run(
+          messages: const [WireMessage(role: 'user', content: 'Read both')],
+        )
+        .forEach((event) {
+          events.add(event);
+          if (event is ToolResultEvent && event.id == 'fast') {
+            fastVisible.complete();
+          }
+        });
+    try {
+      await fastVisible.future.timeout(const Duration(seconds: 2));
+      expect(events.whereType<ToolResultEvent>().map((e) => e.id), ['fast']);
+      expect(
+        events.whereType<ProgressEvent>().any(
+          (e) => e.progress.label == 'model',
+        ),
+        isTrue,
+      );
+      expect(
+        events.whereType<SpanEvent>().any((e) => e.id == 'tool:fast'),
+        isTrue,
+      );
+    } finally {
+      releaseSlow.complete();
+      await done;
+    }
+    expect(events.whereType<ToolResultEvent>().map((e) => e.id), [
+      'fast',
+      'slow',
+    ]);
+  });
+
   test('maps FRB native stream events into chat events', () async {
     final bridge = _FakeLlmBridge();
     final streamBridge = _streamBridge(
@@ -167,6 +229,9 @@ void main() {
       expect(span.tokens?.input, 9);
       expect(span.tokens?.output, 4);
       expect(span.tokens?.total, 13);
+      expect(span.input, contains('initial_messages'));
+      expect(span.input, contains('Hello'));
+      expect(span.output, 'Hello');
     },
   );
 
@@ -1235,36 +1300,44 @@ void main() {
     expect((events.last as DoneEvent).stopReason, 'error');
   });
 
-  test('emits a cancelled span when the turn token is cancelled', () async {
-    late CancelToken cancelToken;
-    Stream<String> hangingStream() async* {
-      yield '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}';
-      cancelToken.cancel('user cancelled');
-      yield '{"kind":"delta","content":"late","metadata":{"stream":true}}';
-    }
+  for (final reason in <String>[
+    'user cancelled',
+    'scheduled_task_user_cancelled',
+    'scheduled_task_backgrounded',
+    'scheduled_task_interrupted',
+    'scheduled_task_timeout',
+  ]) {
+    test('emits a cancelled span with reason: $reason', () async {
+      late CancelToken cancelToken;
+      Stream<String> hangingStream() async* {
+        yield '{"kind":"started","metadata":{"provider":"openai","model":"gpt-test"}}';
+        cancelToken.cancel(reason);
+        yield '{"kind":"delta","content":"late","metadata":{"stream":true}}';
+      }
 
-    final streamBridge = _streamBridgeStreams(
-      _FakeLlmBridge(),
-      eventBatches: <Stream<String>>[hangingStream()],
-    );
-    final runner = FrbChatRunner(streamBridge: streamBridge);
-    cancelToken = CancelToken();
+      final streamBridge = _streamBridgeStreams(
+        _FakeLlmBridge(),
+        eventBatches: <Stream<String>>[hangingStream()],
+      );
+      final runner = FrbChatRunner(streamBridge: streamBridge);
+      cancelToken = CancelToken();
 
-    final events = await runner
-        .run(
-          messages: const <WireMessage>[
-            WireMessage(role: 'user', content: 'Hello'),
-          ],
-          cancelToken: cancelToken,
-        )
-        .toList();
+      final events = await runner
+          .run(
+            messages: const <WireMessage>[
+              WireMessage(role: 'user', content: 'Hello'),
+            ],
+            cancelToken: cancelToken,
+          )
+          .toList();
 
-    expect(events, hasLength(2));
-    final span = events[0] as SpanEvent;
-    expect(span.status, AiSpanStatus.cancelled);
-    expect(span.errorCode, 'cancelled');
-    expect((events[1] as DoneEvent).stopReason, 'error');
-  });
+      expect(events, hasLength(2));
+      final span = events[0] as SpanEvent;
+      expect(span.status, AiSpanStatus.cancelled);
+      expect(span.errorCode, reason == 'user cancelled' ? 'cancelled' : reason);
+      expect((events[1] as DoneEvent).stopReason, 'error');
+    });
+  }
 
   test(
     'cancelling a safe-retry tool dispatch returns without waiting',

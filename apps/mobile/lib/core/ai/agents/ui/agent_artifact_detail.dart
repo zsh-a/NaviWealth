@@ -27,16 +27,13 @@ class _AgentArtifactDetailBodyState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _ArtifactSummary(
-          summary: artifact.summary,
-          severity: artifact.severity,
-        ),
+        _ArtifactSummary(summary: artifact.summary),
         if (artifact.metrics.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.s12),
           _MetricStrip(metrics: artifact.metrics),
         ],
         if (artifact.insights.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s24),
           _DetailSection(
             title: l10n.agentResultInsightsSection,
             children: [
@@ -51,7 +48,7 @@ class _AgentArtifactDetailBodyState
         if (artifact.evidence.isNotEmpty ||
             artifact.methodology != null ||
             artifact.traceId != null) ...[
-          const SizedBox(height: AppSpacing.s16),
+          const SizedBox(height: AppSpacing.s24),
           _EvidenceMethodAccordion(
             evidence: artifact.evidence,
             methodology: artifact.methodology,
@@ -535,48 +532,13 @@ Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
 }
 
 class _ArtifactSummary extends StatelessWidget {
-  const _ArtifactSummary({required this.summary, required this.severity});
+  const _ArtifactSummary({required this.summary});
 
   final String summary;
-  final AgentArtifactSeverity severity;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
-    final accent = _accentColor(context, severity);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.whisper),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 3,
-              height: 44,
-              decoration: BoxDecoration(
-                color: accent,
-                borderRadius: BorderRadius.circular(AppRadius.full),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s10),
-            Expanded(
-              child: Text(
-                summary,
-                style: typography.body.sm.copyWith(
-                  height: 1.5,
-                  color: colors.foreground,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AiMarkdown(text: summary, baseStyle: AiType.readingBody(context));
   }
 }
 

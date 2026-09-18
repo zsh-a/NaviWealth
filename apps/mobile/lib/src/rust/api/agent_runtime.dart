@@ -82,6 +82,14 @@ Stream<String> agentRuntimeStreamChatTurn({required String requestJson}) =>
       requestJson: requestJson,
     );
 
+Future<String> agentRuntimePrepareChatStream() =>
+    RustLib.instance.api.crateApiAgentRuntimeAgentRuntimePrepareChatStream();
+
+Future<void> agentRuntimeCancelChatStream({required String streamId}) => RustLib
+    .instance
+    .api
+    .crateApiAgentRuntimeAgentRuntimeCancelChatStream(streamId: streamId);
+
 Future<String> agentRuntimeStartProfileTurnSnapshot({
   required String catalogJson,
   required String llmRequestJson,

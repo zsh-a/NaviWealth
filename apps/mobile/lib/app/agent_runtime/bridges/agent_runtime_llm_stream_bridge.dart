@@ -6,7 +6,9 @@
 /// construction.
 library;
 
+import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/agent_runtime_storage_policy.dart';
@@ -43,18 +45,32 @@ class AgentRuntimeLlmStreamBridge {
     AgentRuntimeStoragePolicy storagePolicy =
         const AgentRuntimeStoragePolicy.appOwned(),
     AgentRuntimeChatTurnJsonStream? streamChatTurnJson,
+    Future<String> Function()? prepareChatStream,
+    Future<void> Function(String)? cancelChatStream,
   }) : _llmBridge = llmBridge,
        _initRuntime = initRuntime,
        _libraryPath = libraryPath,
        _storagePolicy = storagePolicy,
        _streamChatTurnJson =
-           streamChatTurnJson ?? rust.agentRuntimeStreamChatTurn;
+           streamChatTurnJson ?? rust.agentRuntimeStreamChatTurn,
+       _prepareChatStream =
+           prepareChatStream ??
+           (streamChatTurnJson == null
+               ? rust.agentRuntimePrepareChatStream
+               : () async => ''),
+       _cancelChatStream =
+           cancelChatStream ??
+           (streamChatTurnJson == null
+               ? ((id) => rust.agentRuntimeCancelChatStream(streamId: id))
+               : (_) async {});
 
   final AgentRuntimeLlmBridge _llmBridge;
   final LifeosNativeRuntimeInitializer _initRuntime;
   final String? _libraryPath;
   final AgentRuntimeStoragePolicy _storagePolicy;
   final AgentRuntimeChatTurnJsonStream _streamChatTurnJson;
+  final Future<String> Function() _prepareChatStream;
+  final Future<void> Function(String) _cancelChatStream;
 
   Future<void>? _initFuture;
 
@@ -100,9 +116,7 @@ class AgentRuntimeLlmStreamBridge {
       suspendInteraction: suspendInteraction,
     );
     try {
-      await for (final eventJson in _streamChatTurnJson(
-        requestJson: jsonEncode(request),
-      )) {
+      await for (final eventJson in _managedChatStream(request)) {
         yield agentRuntimeDecodeObject(
           eventJson,
           label: 'agent runtime LLM stream event',
@@ -113,6 +127,92 @@ class AgentRuntimeLlmStreamBridge {
     } catch (error) {
       yield _streamErrorEvent(error);
     }
+  }
+
+  /// Keep the native receive port alive until Rust has dropped its request.
+  /// Merely cancelling the generated Dart subscription cannot stop native I/O.
+  Stream<String> _managedChatStream(Map<String, Object?> request) {
+    late final StreamController<String> controller;
+    StreamSubscription<String>? subscription;
+    final finished = Completer<void>();
+    String? id;
+    Future<void>? cancellation;
+    var cancelled = false;
+    Future<void> cancelNative() {
+      final streamId = id;
+      if (streamId == null || streamId.isEmpty) return Future<void>.value();
+      return cancellation ??=
+          Future<void>.sync(() => _cancelChatStream(streamId))
+              .timeout(const Duration(seconds: 5))
+              .catchError((Object error, StackTrace stack) {
+                developer.log(
+                  'Native chat cancellation failed',
+                  name: 'agent_runtime',
+                  error: error,
+                  stackTrace: stack,
+                );
+              });
+    }
+
+    void finish() {
+      if (!finished.isCompleted) finished.complete();
+    }
+
+    Future<void> start() async {
+      try {
+        id = await _prepareChatStream();
+        if (cancelled) {
+          await cancelNative();
+          finish();
+          return;
+        }
+        final metadata = Map<String, Object?>.from(request['metadata'] as Map);
+        if (id!.isNotEmpty) metadata['native_stream_id'] = id;
+        subscription =
+            _streamChatTurnJson(
+              requestJson: jsonEncode({...request, 'metadata': metadata}),
+            ).listen(
+              (event) {
+                if (!cancelled) controller.add(event);
+              },
+              onError: (Object error, StackTrace stack) {
+                if (!cancelled) controller.addError(error, stack);
+              },
+              onDone: () {
+                finish();
+                unawaited(controller.close());
+              },
+            );
+      } catch (error, stack) {
+        if (!cancelled) controller.addError(error, stack);
+        await cancelNative();
+        finish();
+        unawaited(controller.close());
+      }
+    }
+
+    controller = StreamController<String>(
+      onListen: () => unawaited(start()),
+      onCancel: () async {
+        cancelled = true;
+        if (id == '') {
+          await subscription?.cancel();
+          finish();
+          return;
+        }
+        if (!finished.isCompleted && id != null) {
+          await cancelNative();
+        }
+        // Bound cleanup if a broken/older native binary cannot acknowledge.
+        try {
+          await finished.future.timeout(const Duration(seconds: 5));
+        } on TimeoutException {
+          /* The native-side cancellation was still sent. */
+        }
+        await subscription?.cancel();
+      },
+    );
+    return controller.stream;
   }
 
   Future<void> _ensureInitialized() {

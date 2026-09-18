@@ -5,6 +5,7 @@
 //! the bridge.
 
 mod chat;
+mod chat_cancellation;
 mod contracts;
 mod llm;
 mod llm_provider;
@@ -142,12 +143,40 @@ pub async fn agent_runtime_stream_chat_turn(
     request_json: String,
 ) -> Result<()> {
     let mut request: ChatTurnRequest = serde_json::from_str(&request_json)?;
+    let cancellation_id = request
+        .metadata
+        .as_object_mut()
+        .and_then(|metadata| metadata.remove("native_stream_id"))
+        .and_then(|value| value.as_str().map(str::to_owned));
+    let cancellation = if let Some(id) = cancellation_id {
+        let Some(claimed) = chat_cancellation::claim(&id) else {
+            return Ok(());
+        };
+        Some(claimed)
+    } else {
+        None
+    };
     contracts::normalize_chat_turn_request_contract(&mut request)?;
     let mut state = chat::chat_turn_state_from_request(&request)?;
     let llm_request = chat_turn_prepare_llm_request(&mut state)
         .map_err(|error| anyhow::anyhow!(error.record.message.clone()))?;
     let provider = profile_llm_provider(&llm_request)?;
-    chat::stream_chat_turn_response(sink, provider, state).await
+    let work = chat::stream_chat_turn_response(sink, provider, state);
+    if let Some((registration, _guard)) = cancellation {
+        futures::future::Abortable::new(work, registration)
+            .await
+            .unwrap_or(Ok(()))
+    } else {
+        work.await
+    }
+}
+
+pub fn agent_runtime_prepare_chat_stream() -> String {
+    chat_cancellation::prepare()
+}
+
+pub fn agent_runtime_cancel_chat_stream(stream_id: String) {
+    chat_cancellation::cancel(&stream_id);
 }
 
 pub async fn agent_runtime_start_profile_turn_snapshot(

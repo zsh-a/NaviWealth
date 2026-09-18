@@ -17,7 +17,10 @@ import 'agent_schedule.dart';
 /// What an [Agent.run] gets: Riverpod access for the providers it
 /// reads from + an injectable wall clock so tests are deterministic.
 class AgentContext {
-  const AgentContext({required this.ref, required this.now});
+  const AgentContext({required this.ref, required this.now, this.runId});
+
+  /// Persistent run identity supplied by the runner, never by the model.
+  final String? runId;
 
   /// Caller's Ref. Use `ref.read` only — agents are one-shot runs, not
   /// stateful subscriptions. Holding a stream subscription past

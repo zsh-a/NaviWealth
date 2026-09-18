@@ -47,7 +47,9 @@ final optionsStrategyProfileProvider =
       final repo = await ref.watch(
         optionsStrategyProfileRepositoryProvider.future,
       );
+      if (!ref.mounted) return;
       final ownerUserId = await ref.watch(currentUserIdProvider)();
+      if (!ref.mounted) return;
       yield* repo.watch(ownerUserId);
     });
 
@@ -168,7 +170,9 @@ final leapsCallPositionRepositoryProvider =
 final leapsCallPositionsProvider =
     StreamProvider.autoDispose<List<LeapsCallPosition>>((ref) async* {
       final repo = await ref.watch(leapsCallPositionRepositoryProvider.future);
+      if (!ref.mounted) return;
       final ownerUserId = await ref.watch(currentUserIdProvider)();
+      if (!ref.mounted) return;
       yield* repo.watchActive(ownerUserId);
     });
 
@@ -199,7 +203,9 @@ final optionsJournalLedgerServiceProvider =
 final tradeJournalEntriesProvider =
     StreamProvider.autoDispose<List<TradeJournalEntry>>((ref) async* {
       final repo = await ref.watch(tradeJournalRepositoryProvider.future);
+      if (!ref.mounted) return;
       final ownerUserId = await ref.watch(currentUserIdProvider)();
+      if (!ref.mounted) return;
       yield* repo.watchActive(ownerUserId);
     });
 

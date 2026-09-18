@@ -78,6 +78,14 @@ pub async fn agent_runtime_stream_chat_turn(
     runtime::agent_runtime_stream_chat_turn(sink, request_json).await
 }
 
+pub fn agent_runtime_prepare_chat_stream() -> String {
+    runtime::agent_runtime_prepare_chat_stream()
+}
+
+pub fn agent_runtime_cancel_chat_stream(stream_id: String) {
+    runtime::agent_runtime_cancel_chat_stream(stream_id)
+}
+
 pub async fn agent_runtime_start_profile_turn_snapshot(
     catalog_json: String,
     llm_request_json: String,

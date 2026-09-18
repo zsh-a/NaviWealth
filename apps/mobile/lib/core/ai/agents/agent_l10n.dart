@@ -12,6 +12,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import 'agent_run_store.dart';
+
+String? agentRunErrorMessage(AppLocalizations l10n, AgentRunRecord record) {
+  final error = record.error;
+  if (error == null) return null;
+  return record.traceId?.startsWith('scheduled:') == true
+      ? l10n.agentExecutionError(error)
+      : error;
+}
 
 AppLocalizations agentL10n(Ref ref) {
   return lookupAppLocalizations(agentLocale(ref));

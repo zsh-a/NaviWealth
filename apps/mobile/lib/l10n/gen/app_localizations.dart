@@ -18833,7 +18833,7 @@ abstract class AppLocalizations {
   /// AI span detail notice when verbose payload capture is disabled
   ///
   /// In en, this message translates to:
-  /// **'input/output was not captured (compact mode). Turn on Detailed capture on the AI transparency page; new calls will record each step\'s parameters and return values for debugging.'**
+  /// **'No input/output was recorded for this step. Detailed capture may have been off, or this execution path did not provide payloads. Capture applies only to new calls started after enabling it; historical records cannot be backfilled.'**
   String get aiTraceNoPayloadCaptured;
 
   /// Chat error shown when no usable on-device AI runtime is available
@@ -29091,6 +29091,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New decision'**
   String get knowledgeNewDecision;
+
+  /// No description provided for @agentExecutionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Execution'**
+  String get agentExecutionTitle;
+
+  /// No description provided for @agentExecutionView.
+  ///
+  /// In en, this message translates to:
+  /// **'View execution'**
+  String get agentExecutionView;
+
+  /// No description provided for @agentExecutionDiagnostics.
+  ///
+  /// In en, this message translates to:
+  /// **'Diagnostics'**
+  String get agentExecutionDiagnostics;
+
+  /// No description provided for @agentExecutionModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Model'**
+  String get agentExecutionModel;
+
+  /// No description provided for @agentExecutionStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop execution'**
+  String get agentExecutionStop;
+
+  /// No description provided for @agentExecutionHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leaving this page does not stop the task. Backgrounding on mobile may interrupt it; return to retry manually.'**
+  String get agentExecutionHint;
+
+  /// No description provided for @agentExecutionMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No detailed execution record is available. Older runs retain their original history.'**
+  String get agentExecutionMissing;
+
+  /// No description provided for @agentExecutionStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'{status, select, preparing{Preparing} model{Analyzing} tool{Reading data} validating{Validating report} running{Running} completed{Completed} failed{Failed} cancelled{Stopped} interrupted{Interrupted} other{Waiting}}'**
+  String agentExecutionStatus(String status);
+
+  /// No description provided for @agentExecutionError.
+  ///
+  /// In en, this message translates to:
+  /// **'{code, select, model_unavailable{Configure a model before running this task.} no_tools{No read-only tools are available for this domain.} scheduled_task_timeout{Execution reached its time limit. Check the tool steps and model connection before retrying.} tool_timeout{The tool timed out.} invalid_report{The model did not return a valid evidence-based report.} scheduled_task_user_cancelled{You stopped this execution.} scheduled_task_backgrounded{Execution stopped because the app left the foreground.} scheduled_task_interrupted{The previous execution was interrupted. It will not restart automatically.} scheduled_task_access_revoked{Account or domain access changed.} scheduled_task_disabled{This task has been disabled.} scheduled_task_changed{The task changed during execution.} other{Execution did not complete. Check the model connection and execution details before retrying.}}'**
+  String agentExecutionError(String code);
 }
 
 class _AppLocalizationsDelegate

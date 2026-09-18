@@ -24,6 +24,10 @@ abstract final class SettingsRoutes {
   static const aiModels = '/settings/ai-models';
   static const personalMemory = '/settings/personal-memory';
   static const agents = '/settings/agents';
+  static const agentExecutionPattern = '/settings/agents/:agentId/execution';
+  static String agentExecution(String agentId, {String? runId}) =>
+      '/settings/agents/${Uri.encodeComponent(agentId)}/execution'
+      '${runId == null ? '' : '?run=${Uri.encodeComponent(runId)}'}';
   // Investment preferences — risk appetite SSOT + advanced
   // concentration thresholds.
   static const riskThresholds = '/settings/risk-thresholds';

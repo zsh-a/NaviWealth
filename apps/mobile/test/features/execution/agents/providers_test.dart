@@ -257,6 +257,10 @@ class _RunCall {
 }
 
 class _RecordingAgentRunController implements AgentRunController {
+  @override
+  Future<AgentRunRecord> startRunById(String agentId) =>
+      throw UnimplementedError();
+
   final List<_RunCall> calls = <_RunCall>[];
 
   @override

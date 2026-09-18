@@ -67,7 +67,9 @@ SpanEvent frbLlmSpan({
     tokens: frbSpanTokensFromUsage(state.usage),
     model: responseModel.isNotEmpty ? responseModel : requestedModel,
     stopReason: state.stopReason,
-    input: <String, Object?>{'messages': state.inputMessageCount},
+    input:
+        state.traceInput ??
+        <String, Object?>{'messages': state.inputMessageCount},
     output: state.text.isEmpty ? null : frbClip(state.text),
     attributes: <String, Object?>{'round': round, 'runtime': 'frb'},
   );

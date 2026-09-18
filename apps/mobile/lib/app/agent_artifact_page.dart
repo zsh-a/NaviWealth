@@ -70,24 +70,36 @@ class AgentArtifactPage extends ConsumerWidget {
               ),
             );
           }
-          return ListView(
-            padding: const EdgeInsets.all(AppSpacing.s16),
-            children: [
-              AgentArtifactDetailBody(
-                artifact: artifact,
-                onVisibilityChanged: () {
-                  ref.invalidate(agentArtifactProvider(artifactId));
-                  if (!context.mounted) return;
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go(AppRoutes.life);
-                  }
-                },
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AdaptiveMaxWidth.narrow,
               ),
-              const SizedBox(height: AppSpacing.s16),
-              AgentArtifactDetailFooter(artifact: artifact),
-            ],
+              child: ListView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s24,
+                  vertical: AppSpacing.s24,
+                ),
+                children: [
+                  AgentArtifactDetailBody(
+                    artifact: artifact,
+                    onVisibilityChanged: () {
+                      ref.invalidate(agentArtifactProvider(artifactId));
+                      if (!context.mounted) return;
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(AppRoutes.life);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.s24),
+                  AgentArtifactDetailFooter(artifact: artifact),
+                  const SizedBox(height: AppSpacing.s24),
+                ],
+              ),
+            ),
           );
         },
       ),

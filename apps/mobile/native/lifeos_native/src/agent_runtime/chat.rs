@@ -29,7 +29,9 @@ pub(super) async fn stream_chat_turn_response(
     let envelope = chat_turn_envelope_from_state(&state);
     if state.pending_interaction.is_some() {
         let started = chat_turn_started_event_without_llm(&envelope, &state)?;
-        let _ = sink.add(serde_json::to_string(&started)?);
+        if sink.add(serde_json::to_string(&started)?).is_err() {
+            return Ok(());
+        }
         let metadata =
             round_finished_metadata(&state, CHAT_STATUS_REQUIRES_INTERACTION, None, None)?;
         let mut round_finished = serde_json::to_value(ChatTurnEvent {
@@ -46,7 +48,9 @@ pub(super) async fn stream_chat_turn_response(
             metadata,
         })?;
         attach_chat_turn_envelope(&envelope, &mut round_finished);
-        let _ = sink.add(serde_json::to_string(&round_finished)?);
+        if sink.add(serde_json::to_string(&round_finished)?).is_err() {
+            return Ok(());
+        }
         let mut done = serde_json::to_value(ChatTurnEvent {
             kind: ChatTurnEventKind::Done,
             content: None,
@@ -61,18 +65,24 @@ pub(super) async fn stream_chat_turn_response(
             metadata: json!({"stop_reason": CHAT_STATUS_REQUIRES_INTERACTION}),
         })?;
         attach_chat_turn_envelope(&envelope, &mut done);
-        let _ = sink.add(serde_json::to_string(&done)?);
+        if sink.add(serde_json::to_string(&done)?).is_err() {
+            return Ok(());
+        }
         return Ok(());
     }
     let round = chat_turn_next_round(&state);
     let request = chat_turn_llm_request(&state);
     let started = chat_turn_started_event(&envelope, &request)?;
-    let _ = sink.add(serde_json::to_string(&started)?);
+    if sink.add(serde_json::to_string(&started)?).is_err() {
+        return Ok(());
+    }
     let mut stream = match provider.stream(request).await {
         Ok(stream) => stream,
         Err(error) => {
             let value = chat_turn_error_event(&envelope, llm_error_record_metadata(error));
-            let _ = sink.add(serde_json::to_string(&value)?);
+            if sink.add(serde_json::to_string(&value)?).is_err() {
+                return Ok(());
+            }
             return Ok(());
         }
     };
@@ -102,18 +112,24 @@ pub(super) async fn stream_chat_turn_response(
                                 &envelope,
                                 chat_error_metadata("llm_stream_event_invalid", &error),
                             );
-                            let _ = sink.add(serde_json::to_string(&value)?);
+                            if sink.add(serde_json::to_string(&value)?).is_err() {
+                                return Ok(());
+                            }
                             break;
                         }
                     }
                 }
                 let value = chat_turn_event_from_llm_event(&envelope, event)?;
-                let _ = sink.add(serde_json::to_string(&value)?);
+                if sink.add(serde_json::to_string(&value)?).is_err() {
+                    return Ok(());
+                }
             }
             Err(error) => {
                 saw_terminal_error = true;
                 let value = chat_turn_error_event(&envelope, llm_error_record_metadata(error));
-                let _ = sink.add(serde_json::to_string(&value)?);
+                if sink.add(serde_json::to_string(&value)?).is_err() {
+                    return Ok(());
+                }
                 break;
             }
         }
@@ -131,7 +147,9 @@ pub(super) async fn stream_chat_turn_response(
                 "details": {},
             }),
         );
-        let _ = sink.add(serde_json::to_string(&value)?);
+        if sink.add(serde_json::to_string(&value)?).is_err() {
+            return Ok(());
+        }
         return Ok(());
     };
 
@@ -150,7 +168,9 @@ pub(super) async fn stream_chat_turn_response(
             metadata: json!({}),
         })?;
         attach_chat_turn_envelope(&envelope, &mut usage_event);
-        let _ = sink.add(serde_json::to_string(&usage_event)?);
+        if sink.add(serde_json::to_string(&usage_event)?).is_err() {
+            return Ok(());
+        }
     }
 
     let finish_reason = response.finish_reason.clone();
@@ -173,7 +193,9 @@ pub(super) async fn stream_chat_turn_response(
                 metadata,
             })?;
             attach_chat_turn_envelope(&envelope, &mut round_finished);
-            let _ = sink.add(serde_json::to_string(&round_finished)?);
+            if sink.add(serde_json::to_string(&round_finished)?).is_err() {
+                return Ok(());
+            }
             let mut done = serde_json::to_value(ChatTurnEvent {
                 kind: ChatTurnEventKind::Done,
                 content: None,
@@ -188,7 +210,9 @@ pub(super) async fn stream_chat_turn_response(
                 metadata: json!({"stop_reason": stop_reason}),
             })?;
             attach_chat_turn_envelope(&envelope, &mut done);
-            let _ = sink.add(serde_json::to_string(&done)?);
+            if sink.add(serde_json::to_string(&done)?).is_err() {
+                return Ok(());
+            }
         }
         Ok(ChatTurnAdvance::RequiresToolResults { state, tool_calls }) => {
             let metadata = round_finished_metadata(
@@ -211,11 +235,15 @@ pub(super) async fn stream_chat_turn_response(
                 metadata,
             })?;
             attach_chat_turn_envelope(&envelope, &mut round_finished);
-            let _ = sink.add(serde_json::to_string(&round_finished)?);
+            if sink.add(serde_json::to_string(&round_finished)?).is_err() {
+                return Ok(());
+            }
         }
         Err(error) => {
             let value = chat_turn_error_event(&envelope, chat_error_record_metadata(&error));
-            let _ = sink.add(serde_json::to_string(&value)?);
+            if sink.add(serde_json::to_string(&value)?).is_err() {
+                return Ok(());
+            }
         }
     }
     Ok(())

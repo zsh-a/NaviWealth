@@ -586,6 +586,48 @@ void main() {
     expect(agent.runCount, 1);
   });
 
+  test(
+    'startRunById returns the lease before completion and reuses a busy run',
+    () async {
+      final rt = _runtime();
+      final store = InMemoryAgentRunStore();
+      final runner = AgentRunner(
+        runtime: rt,
+        ownerUserId: 'u',
+        runStore: store,
+      );
+      final agent = _BlockingAgent(id: 'registered');
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+      final controller = AgentRunController(
+        runner: runner,
+        agents: [agent],
+        ref: container.read(_refProvider),
+      );
+      final record = await controller.startRunById(agent.id);
+      expect(record.status, AgentRunLifecycleStatus.running);
+      final duplicate = await controller.startRunById(agent.id);
+      expect(duplicate.id, record.id);
+      expect(agent.runCount, 1);
+      agent.complete(
+        AgentRunResult(
+          agentId: agent.id,
+          status: AgentRunStatus.completed,
+          startedAt: record.startedAt,
+          finishedAt: DateTime.now().toUtc(),
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        (await store.latestForAgent(
+          ownerUserId: 'u',
+          agentId: agent.id,
+        ))?.status,
+        AgentRunLifecycleStatus.ready,
+      );
+    },
+  );
+
   test('AgentRunController ticks only selected registered agents', () async {
     final rt = _runtime();
     final runner = AgentRunner(runtime: rt, ownerUserId: 'u');

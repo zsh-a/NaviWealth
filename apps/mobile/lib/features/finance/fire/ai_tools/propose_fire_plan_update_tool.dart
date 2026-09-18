@@ -78,7 +78,7 @@ class ProposeFirePlanUpdateTool implements DeviceTool {
       );
     }
 
-    final currentPlan = ctx.ref.read(firePlanProvider);
+    final currentPlan = await ctx.readAsync(resolvedFirePlanProvider);
     final before = <String, Object?>{
       'target_net_worth': currentPlan.targetNetWorth.toString(),
       'monthly_expenses': currentPlan.monthlyExpenses.toString(),

@@ -1,7 +1,5 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
-import 'package:naviwealth/features/finance/fire/domain/fire_state.dart';
 
 /// `get_fire_state` — return the deterministic FIRE OS state read model.
 ///
@@ -34,19 +32,7 @@ class GetFireStateTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final state = await _awaitState(ctx);
-    if (state == null) {
-      return <String, Object?>{
-        'error': 'fire_state_unavailable',
-        'code': 'unavailable',
-        'note': 'snapshot not ready or no data',
-      };
-    }
+    final state = await ctx.readAsync(fireStateProvider);
     return state.toJson();
   }
-}
-
-Future<FireState?> _awaitState(DeviceToolContext ctx) async {
-  final async = ctx.ref.read(fireStateProvider);
-  return async.whenOrNull(data: (s) => s);
 }

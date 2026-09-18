@@ -11,9 +11,12 @@ import '../../../auth/current_user.dart';
 import '../../../shell/settings_route_paths.dart';
 import '../../composition/ask_ai.dart';
 import '../../intent/ai_intent_invocation.dart';
+import '../../visual/ai_markdown.dart';
+import '../../visual/ai_typography.dart';
 import '../agent_artifact.dart';
 import '../agent_feedback_store.dart';
 import '../agent_intents.dart';
+import '../agent_l10n.dart';
 import '../agent_run_store.dart';
 import '../providers.dart' as agent_providers;
 
@@ -316,7 +319,9 @@ class _RunStatusBannerState extends State<_RunStatusBanner> {
     final running = record.status == AgentRunLifecycleStatus.running;
     final accent = failed ? context.appTheme.status.danger.fg : colors.primary;
     final message = failed
-        ? (record.error ?? record.summary ?? l10n.agentResultRetryAction)
+        ? (agentRunErrorMessage(l10n, record) ??
+              record.summary ??
+              l10n.agentResultRetryAction)
         : (record.summary ?? l10n.agentResultLoadingBody);
 
     return SoftCard(
@@ -563,7 +568,9 @@ class _AgentRunStatusCardState extends State<AgentRunStatusCard> {
     final record = widget.record;
     final accent = _accentColorForRun(context, record.status);
     final summary =
-        record.error ?? record.summary ?? _statusLabel(l10n, record.status);
+        agentRunErrorMessage(l10n, record) ??
+        record.summary ??
+        _statusLabel(l10n, record.status);
 
     return SoftCard(
       level: SoftCardLevel.raised,

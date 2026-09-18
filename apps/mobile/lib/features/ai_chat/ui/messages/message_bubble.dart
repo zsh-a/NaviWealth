@@ -29,6 +29,7 @@ import '../tools/renderers/tool_invocation_renderers.dart'
     show isRichToolOutput, netWorthSparkValues, richToolPriority, ToolMiniSpark;
 import '../tools/tool_invocation_card.dart' show friendlyToolName;
 import '../tools/tool_invocation_inline.dart';
+import 'user_message_surface.dart';
 
 part 'assistant.dart';
 part 'streaming.dart';
@@ -108,8 +109,6 @@ class _UserBubble extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final l10n = AppLocalizations.of(context);
     final turn = ref.watch(chatControllerProvider(sessionId));
     final showEdit = isLastUser && !turn.isBusy;
@@ -118,47 +117,10 @@ class _UserBubble extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Flexible(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: AdaptiveMaxWidth.narrow,
-                  ),
-                  child: Semantics(
-                    container: true,
-                    label: l10n.aiChatSemanticsUserMessage,
-                    child: GestureDetector(
-                      onLongPress: () =>
-                          _showUserActions(context, ref, canEdit: showEdit),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.s14,
-                          vertical: AppSpacing.s10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(AppRadius.lg),
-                            topRight: Radius.circular(AppRadius.lg),
-                            bottomLeft: Radius.circular(AppRadius.lg),
-                            bottomRight: Radius.circular(AppRadius.sm),
-                          ),
-                        ),
-                        child: SelectableText(
-                          message.content,
-                          style: typography.body.sm.copyWith(
-                            height: 1.5,
-                            color: colors.primaryForeground,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          UserMessageSurface(
+            text: message.content,
+            onLongPress: () =>
+                _showUserActions(context, ref, canEdit: showEdit),
           ),
           if (showEdit)
             Padding(

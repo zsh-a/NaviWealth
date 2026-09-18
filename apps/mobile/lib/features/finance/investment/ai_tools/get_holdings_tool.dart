@@ -42,7 +42,9 @@ class GetHoldingsTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final snapshot = await ctx.ref.read(devicePortfolioSnapshotProvider.future);
+    final snapshot = await ctx.readFuture(
+      devicePortfolioSnapshotProvider.future,
+    );
     final result = shape(
       snapshot,
       inputAsOf: input['as_of'] is String ? input['as_of'] as String : null,

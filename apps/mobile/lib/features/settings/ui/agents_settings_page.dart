@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_routes.dart';
+import '../../../core/ai/agents/agent_l10n.dart';
 import '../../../core/ai/agents/agent_preference_store.dart';
 import '../../../core/ai/agents/agent_presentation.dart';
 import '../../../core/ai/agents/agent_registry.dart';
@@ -335,6 +336,15 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
     try {
       final l10n = AppLocalizations.of(context);
       final controller = await ref.read(agentRunControllerProvider.future);
+      if (widget.row.agent is ScheduledLlmAgent) {
+        final record = await controller.startRunById(widget.row.agent.id);
+        if (!mounted) return;
+        await context.push(
+          SettingsRoutes.agentExecution(widget.row.agent.id, runId: record.id),
+        );
+        if (mounted) ref.invalidate(_agentSettingsRowsProvider);
+        return;
+      }
       final result = await controller.runOnceById(widget.row.agent.id);
       if (!mounted) return;
       AppMessenger.show(
@@ -378,6 +388,14 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       maxHeightFactor: 0.88,
       builder: (sheetContext) => _AgentRunHistoryList(
         runs: runs,
+        onOpenRun: widget.row.agent is ScheduledLlmAgent
+            ? (run) {
+                Navigator.of(sheetContext).pop();
+                context.push(
+                  SettingsRoutes.agentExecution(run.agentId, runId: run.id),
+                );
+              }
+            : null,
         onRunNow: () {
           Navigator.of(sheetContext).maybePop();
           _runNow();
@@ -395,10 +413,13 @@ class _AgentSettingsRowTileState extends ConsumerState<_AgentSettingsRowTile> {
       title: label,
       subtitle: _domainLabel(row.domain),
       maxHeightFactor: 0.88,
-      builder: (_) => _AgentSettingsDetailSheet(
+      builder: (sheetContext) => _AgentSettingsDetailSheet(
         row: row,
         running: _running,
-        onRunNow: _runNow,
+        onRunNow: () async {
+          if (row.agent is ScheduledLlmAgent) Navigator.of(sheetContext).pop();
+          await _runNow();
+        },
         onShowHistory: _showHistory,
         onSetEnabled: _setEnabled,
         onRowsChanged: () => ref.invalidate(_agentSettingsRowsProvider),
@@ -672,7 +693,7 @@ class _AgentSettingsDetailSheetState
                       context,
                       initial: task,
                     );
-                      if (changed == true && context.mounted) {
+                    if (changed == true && context.mounted) {
                       widget.onRowsChanged();
                       Navigator.of(context).pop();
                     }
@@ -744,6 +765,23 @@ class _AgentSettingsDetailSheetState
                 ),
                 prefix: const Icon(
                   FLucideIcons.externalLink,
+                  size: AppIconSizes.xs,
+                ),
+              ),
+            if (row.agent is ScheduledLlmAgent && row.latestRun != null)
+              AppQuietButton(
+                label: l10n.agentExecutionView,
+                onPress: () {
+                  Navigator.of(context).pop();
+                  context.push(
+                    SettingsRoutes.agentExecution(
+                      row.agent.id,
+                      runId: row.latestRun!.id,
+                    ),
+                  );
+                },
+                prefix: const Icon(
+                  FLucideIcons.activity,
                   size: AppIconSizes.xs,
                 ),
               ),
@@ -898,7 +936,13 @@ class _AgentRunStatusDot extends StatelessWidget {
 }
 
 class _AgentRunHistoryList extends ConsumerWidget {
-  const _AgentRunHistoryList({required this.runs, required this.onRunNow});
+  const _AgentRunHistoryList({
+    required this.runs,
+    required this.onRunNow,
+    this.onOpenRun,
+  });
+
+  final void Function(AgentRunRecord)? onOpenRun;
 
   final VoidCallback onRunNow;
 
@@ -929,6 +973,11 @@ class _AgentRunHistoryList extends ConsumerWidget {
             record: runs[i],
             metaLabel: _historyMetaLabel(l10n, formatters, runs[i]),
           ),
+          if (onOpenRun != null)
+            AppQuietButton(
+              label: l10n.agentExecutionView,
+              onPress: () => onOpenRun!(runs[i]),
+            ),
           if (i != runs.length - 1) const SizedBox(height: AppSpacing.s12),
         ],
       ],
@@ -990,7 +1039,7 @@ String _detailSubtitle(
   final l10n = AppLocalizations.of(context);
   if (latest == null) return description ?? l10n.agentSettingsNeverRun;
   final status = _statusLabel(l10n, latest.status);
-  final detail = latest.error ?? latest.summary;
+  final detail = agentRunErrorMessage(l10n, latest) ?? latest.summary;
   return detail == null
       ? status
       : l10n.agentSettingsStatusWithDetail(status, detail);

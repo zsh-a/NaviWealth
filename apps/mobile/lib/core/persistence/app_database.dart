@@ -157,7 +157,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 93;
+  int get schemaVersion => 94;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1191,6 +1191,15 @@ class AppDatabase extends _$AppDatabase {
         await _createWatchlistSimulationLocalInvariants(this);
       }
       if (from < 93) await customStatement(createScheduledAgentTasks);
+      if (from < 94) {
+        await _createAgentRuns(this);
+        await _addColumnIfMissing(
+          this,
+          table: 'agent_runs',
+          column: 'execution_json',
+          definition: 'TEXT',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

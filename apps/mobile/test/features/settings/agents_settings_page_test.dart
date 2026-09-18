@@ -1117,6 +1117,10 @@ class _FailedAgent implements Agent {
 }
 
 class _DelayedAgentRunController implements AgentRunController {
+  @override
+  Future<AgentRunRecord> startRunById(String agentId) =>
+      throw UnimplementedError();
+
   _DelayedAgentRunController({required this.result});
 
   final Future<AgentRunResult> result;

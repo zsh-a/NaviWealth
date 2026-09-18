@@ -38,7 +38,9 @@ final persistedFirePlanProvider = StreamProvider.autoDispose<FirePlan?>((
   ref,
 ) async* {
   final repo = await ref.watch(firePlanRepositoryProvider.future);
+  if (!ref.mounted) return;
   final ownerUserId = await ref.watch(currentUserIdProvider)();
+  if (!ref.mounted) return;
   yield* repo.watch(ownerUserId);
 });
 
@@ -104,17 +106,25 @@ final fireDashboardViewProvider = Provider<AsyncValue<FireDashboardView>>((
   );
 });
 
-/// Synchronous projection of the recoverable plan stream.
-///
-/// Consumers keep the established ergonomic contract while the first Drift
-/// read resolves; an unset plan is shown during that short window.
-final firePlanProvider = Provider<FirePlan>((ref) {
+/// Preserve loading/errors until the persisted plan is known. Only a settled
+/// null row means "unconfigured"; base-currency normalization lives here once.
+final resolvedFirePlanProvider = Provider.autoDispose<AsyncValue<FirePlan>>((
+  ref,
+) {
   final baseCurrency = ref.watch(dashboardBaseCurrencyProvider);
-  final persisted = ref.watch(persistedFirePlanProvider).value;
-  if (persisted == null) return FirePlan.unset(baseCurrency: baseCurrency);
-  return persisted.baseCurrency == baseCurrency
-      ? persisted
-      : persisted.copyWith(baseCurrency: baseCurrency);
+  return ref.watch(persistedFirePlanProvider).whenData((persisted) {
+    if (persisted == null) return FirePlan.unset(baseCurrency: baseCurrency);
+    return persisted.baseCurrency == baseCurrency
+        ? persisted
+        : persisted.copyWith(baseCurrency: baseCurrency);
+  });
+});
+
+/// UI-only placeholder; tools consume [resolvedFirePlanProvider] so a cold
+/// database read cannot masquerade as an unconfigured plan.
+final firePlanProvider = Provider<FirePlan>((ref) {
+  return ref.watch(resolvedFirePlanProvider).value ??
+      FirePlan.unset(baseCurrency: ref.watch(dashboardBaseCurrencyProvider));
 });
 
 /// Legacy calculator input remains a derived view, not a second persisted
@@ -126,7 +136,7 @@ final fireGoalProvider = Provider(
 /// The FIRE OS read model. Recomputes whenever the plan, the dashboard
 /// snapshot, the trailing cashflow summary, or the projection changes.
 final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
-  final plan = ref.watch(firePlanProvider);
+  final planAsync = ref.watch(resolvedFirePlanProvider);
   final snapshotAsync = ref.watch(dashboardSnapshotProvider);
   final summaryAsync = ref.watch(
     cashFlowSummaryProvider(
@@ -136,21 +146,25 @@ final fireStateProvider = Provider<AsyncValue<FireState>>((ref) {
   final fireView = ref.watch(fireDashboardViewProvider);
   final now = ref.watch(fireNowProvider);
 
-  if (snapshotAsync.isLoading || summaryAsync.isLoading) {
+  for (final value in <AsyncValue<Object?>>[
+    planAsync,
+    snapshotAsync,
+    summaryAsync,
+  ]) {
+    if (!value.isLoading && value.hasError) {
+      return AsyncValue.error(
+        value.error!,
+        value.stackTrace ?? StackTrace.current,
+      );
+    }
+  }
+  if (planAsync.isLoading ||
+      snapshotAsync.isLoading ||
+      summaryAsync.isLoading) {
     return const AsyncValue.loading();
   }
-  if (snapshotAsync.hasError) {
-    return AsyncValue.error(
-      snapshotAsync.error!,
-      snapshotAsync.stackTrace ?? StackTrace.current,
-    );
-  }
-  if (summaryAsync.hasError) {
-    return AsyncValue.error(
-      summaryAsync.error!,
-      summaryAsync.stackTrace ?? StackTrace.current,
-    );
-  }
+
+  final plan = planAsync.requireValue;
 
   return snapshotAsync.when(
     loading: () => const AsyncValue.loading(),

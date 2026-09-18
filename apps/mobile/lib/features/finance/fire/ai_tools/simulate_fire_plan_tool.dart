@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
@@ -52,14 +51,7 @@ class SimulateFirePlanTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final stateAsync = ctx.ref.read(fireStateProvider);
-    final base = stateAsync.whenOrNull(data: (s) => s);
-    if (base == null) {
-      return <String, Object?>{
-        'error': 'base_state_unavailable',
-        'code': 'unavailable',
-      };
-    }
+    final base = await ctx.readAsync(fireStateProvider);
 
     Decimal? dec(String key) {
       final raw = input[key];

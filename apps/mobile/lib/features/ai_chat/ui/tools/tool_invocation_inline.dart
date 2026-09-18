@@ -23,9 +23,15 @@ class ToolInvocationInline extends StatefulWidget {
     required this.invocation,
     this.initiallyExpanded = false,
     this.showAsPrimary = false,
+    this.statusLabel,
+    this.isError = false,
+    this.isCancelled = false,
+    this.allowDebug = true,
   });
 
   final ToolInvocation invocation;
+  final String? statusLabel;
+  final bool isError, isCancelled, allowDebug;
 
   /// When true, body starts open (e.g. single-tool turns with a chart).
   final bool initiallyExpanded;
@@ -68,7 +74,10 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
         : renderToolOutput(context, invocation.name, invocation.output);
     final hasBody = body != null || invocation.output != null;
     final success =
-        !pending && invocation.status == ToolInvocationStatus.completed;
+        !pending &&
+        !widget.isError &&
+        !widget.isCancelled &&
+        invocation.status == ToolInvocationStatus.completed;
 
     if (widget.showAsPrimary && body != null && !pending) {
       return Padding(
@@ -111,7 +120,9 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           GestureDetector(
-            onLongPress: () => _openDebugSheet(context),
+            onLongPress: widget.allowDebug
+                ? () => _openDebugSheet(context)
+                : null,
             behavior: HitTestBehavior.opaque,
             child: AppTappable(
               onPress: hasBody && !pending
@@ -124,6 +135,10 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                     child: Icon(
                       pending
                           ? FLucideIcons.hourglass
+                          : widget.isError
+                          ? FLucideIcons.circleAlert
+                          : widget.isCancelled
+                          ? FLucideIcons.circleStop
                           : success
                           ? FLucideIcons.circleCheck
                           : toolIcon(invocation.name),
@@ -147,6 +162,15 @@ class _ToolInvocationInlineState extends State<ToolInvocationInline> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (widget.statusLabel != null) ...[
+                    const SizedBox(width: AppSpacing.s8),
+                    Flexible(
+                      child: Text(
+                        widget.statusLabel!,
+                        style: AiType.meta(context),
+                      ),
+                    ),
+                  ],
                   if (hasBody && !pending) ...[
                     const SizedBox(width: AppSpacing.s4),
                     AnimatedRotation(

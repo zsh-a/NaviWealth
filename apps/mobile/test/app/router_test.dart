@@ -6,15 +6,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/app/agent_artifact_page.dart';
+import 'package:naviwealth/app/agents/agent_execution_page.dart';
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
+import 'package:naviwealth/app/shell/app_dock_shell.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/desktop_sidebar.dart';
 import 'package:naviwealth/core/shell/route_error_page.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -333,6 +336,43 @@ void main() {
   });
 
   group('deep-link arrival', () {
+    testWidgets('result drill-down preserves one dock shell and back stack', (
+      tester,
+    ) async {
+      final container = await _pumpAt(tester);
+      final router = container.read(appRouterProvider);
+      final executionRoute = SettingsRoutes.agentExecution(
+        'weekly_wealth_review',
+      );
+      for (final route in [AppRoutes.settings, executionRoute]) {
+        unawaited(router.push<void>(route));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      expect(find.byType(AgentExecutionPage), findsOneWidget);
+      for (var i = 0; i < 2; i++) {
+        unawaited(router.push<void>(AppRoutes.agentArtifact('report-$i')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AgentArtifactPage), findsOneWidget);
+        expect(find.byType(AppDockShell, skipOffstage: false), findsOneWidget);
+        router.pop();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.byType(AgentExecutionPage), findsOneWidget);
+      }
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(SettingsPage), findsOneWidget);
+      router.pop();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byType(HomePage), findsOneWidget);
+      await _drainTimers(tester);
+    });
+
     testWidgets('Wealth object navigation opens Watchlist', (tester) async {
       final container = await _pumpAt(
         tester,

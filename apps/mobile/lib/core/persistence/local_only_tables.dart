@@ -220,7 +220,8 @@ CREATE TABLE IF NOT EXISTS agent_runs (
   error         TEXT,
   memory_id     TEXT,
   artifact_id   TEXT,
-  trace_id      TEXT
+  trace_id      TEXT,
+  execution_json TEXT
 )
 ''';
 

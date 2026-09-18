@@ -30,6 +30,26 @@ The repository/UI contract uses `AiChatEvent` for chat history, stream
 rendering, cancellation, and trace capture. Events are in-process Dart stream
 events mapped from FRB primitive JSON frames, not backend SSE frames.
 
+The Dart bridge prepares a native cancellation ticket before starting each
+chat stream. Cancelling the consumer aborts the Rust future (dropping its HTTP
+stream), while Dart keeps the receive port open and drains frames until native
+closure, with bounded fallback cleanup. The ticket is transport-only and is
+removed before constructing chat state. Rust also stops immediately on a failed
+sink send. Hot restart or isolate termination may still invalidate ports before
+cleanup can run; the FRB warning alone does not identify a model failure.
+Scheduled cancellation spans preserve the allowlisted `scheduled_task_*`
+reason (user cancellation, backgrounding, interruption, or timeout); other
+cancellations retain the generic `cancelled` code.
+
+Scheduled runs snapshot the detailed-capture preference at start and use the
+same `AiTraceBuilder` payload gate as chat. Diagnostic payloads are stored only
+in local AI traces; `execution_json` remains metadata-only. Streaming LLM spans
+include a bounded host-input digest (initial messages, current tool results and
+context blocks, up to 8,000 characters), not provider credentials or opaque
+native snapshots. This is not an exact provider wire-request capture. Model
+output retains the bounded text digest. Enabling capture cannot backfill older
+traces; absent payloads do not necessarily mean the preference was disabled.
+
 Production domain agents, profile-turn business seams, Settings connectivity
 probing, Vision ingest, and interactive AI Chat use the FRB/native runtime path described in
 [`ai-architecture.md`](./ai-architecture.md) and
@@ -49,8 +69,22 @@ that FRB runner.
 | `ToolResultEvent` | `{ id, name, output }` after the device dispatcher returns |
 | `UsageEvent` | token accounting for the current provider round |
 | `SpanEvent` | Opik-style trace span for turn / LLM round / tool execution |
+| `ProgressEvent` | Pending operation identity/start time; scheduled surfaces opt into model-round progress in addition to tool progress |
 | `ErrorEvent` | `{ message, code? }` for runtime or provider failures |
 | `DoneEvent` | `{ stopReason, rounds }` terminal marker |
+
+Read-only parallel tool batches emit completion spans/results as each tool
+finishes, keyed by tool-call ID (not request order). Scheduled execution projects
+these same events into local run history. Consumers must not infer that one
+completion means the entire batch completed. Runtime/tool policy is unchanged.
+
+Device tools must not treat a loading UI snapshot as missing data. Use scoped
+`DeviceToolContext.readFuture` for provider futures or `readAsync` for
+`AsyncValue` projections. These retain a subscription for the read, preserve
+errors and release it on completion/disposal; the dispatcher owns the timeout.
+FIRE tools use the resolved plan projection, where only a settled null row means
+an unconfigured plan. Async providers must stop after disposal rather than use
+an expired `Ref` when initialization resumes.
 
 `ToolCallDeltaEvent.partialInputJson` may not parse until the matching
 `ToolCallEvent` arrives. Consumers that need stable input should use

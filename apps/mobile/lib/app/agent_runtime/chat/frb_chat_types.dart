@@ -7,9 +7,10 @@ import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_json.dart';
 
 class FrbStreamRoundState {
-  FrbStreamRoundState({required this.inputMessageCount});
+  FrbStreamRoundState({required this.inputMessageCount, this.traceInput});
 
   final int inputMessageCount;
+  final Object? traceInput;
   final StringBuffer _text = StringBuffer();
   final StringBuffer _thinking = StringBuffer();
   final StringBuffer _thinkingSignature = StringBuffer();

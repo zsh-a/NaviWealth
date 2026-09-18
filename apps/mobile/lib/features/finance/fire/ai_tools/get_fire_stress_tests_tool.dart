@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 
@@ -28,14 +27,7 @@ class GetFireStressTestsTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final async = ctx.ref.read(fireStressTestsProvider);
-    final results = async.whenOrNull(data: (r) => r);
-    if (results == null) {
-      return <String, Object?>{
-        'error': 'stress_tests_unavailable',
-        'code': 'unavailable',
-      };
-    }
+    final results = await ctx.readAsync(fireStressTestsProvider);
     return <String, Object?>{
       'results': [for (final r in results) r.toJson()],
     };

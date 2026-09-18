@@ -2,6 +2,7 @@ part of 'providers.dart';
 
 final _ledgerRevisionProvider = StreamProvider.autoDispose<int>((ref) async* {
   final db = await ref.watch(appDatabaseProvider.future);
+  if (!ref.mounted) return;
   final query =
       db.select(db.postings).join([
           innerJoin(
@@ -20,19 +21,18 @@ final _ledgerRevisionProvider = StreamProvider.autoDispose<int>((ref) async* {
   // in a burst triggers the expensive holdings recomputation cascade.
   Timer? timer;
   final controller = StreamController<int>();
-  late final StreamSubscription<List<TypedResult>> subscription;
+  StreamSubscription<List<TypedResult>>? subscription;
   ref.onDispose(() {
     timer?.cancel();
-    unawaited(subscription.cancel());
-    controller.close();
+    unawaited(subscription?.cancel());
+    unawaited(controller.close());
   });
   subscription = query.watch().listen(
     (_) {
       timer?.cancel();
-      timer = Timer(
-        const Duration(milliseconds: 300),
-        () => controller.add(revision++),
-      );
+      timer = Timer(const Duration(milliseconds: 300), () {
+        if (!controller.isClosed) controller.add(revision++);
+      });
     },
     onError: controller.addError,
     onDone: controller.close,

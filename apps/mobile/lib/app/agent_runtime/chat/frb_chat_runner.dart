@@ -7,6 +7,7 @@
 library;
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart';
@@ -42,6 +43,7 @@ class FrbChatRunner implements ChatAgent {
     AgentRuntimeChatSnapshotStore? snapshotStore,
     int maxToolRounds = kMaxToolRounds,
     String agentId = kFrbChatRunnerAgentId,
+    this.emitModelProgress = false,
   }) : _streamBridge = streamBridge,
        _toolsReader = (() => tools),
        _toolLineHandler = toolLineHandler,
@@ -56,6 +58,7 @@ class FrbChatRunner implements ChatAgent {
     AgentRuntimeChatSnapshotStore? snapshotStore,
     int maxToolRounds = kMaxToolRounds,
     String agentId = kFrbChatRunnerAgentId,
+    this.emitModelProgress = false,
   }) : _streamBridge = streamBridge,
        _toolsReader = toolsReader,
        _toolLineHandler = toolLineHandler,
@@ -69,6 +72,7 @@ class FrbChatRunner implements ChatAgent {
   final AgentRuntimeChatSnapshotStore? _snapshotStore;
   final int _maxToolRounds;
   final String _agentId;
+  final bool emitModelProgress;
 
   @override
   Stream<AiChatEvent> runTurn(ChatAgentTurnRequest request) {
@@ -186,8 +190,25 @@ class FrbChatRunner implements ChatAgent {
       roundsUsed = nextRound;
       final roundId = 'r$nextRound';
       final roundStart = DateTime.now().toUtc();
+      if (emitModelProgress) {
+        yield ProgressEvent(
+          LongTaskProgress(id: roundId, label: 'model', startedAt: roundStart),
+        );
+      }
       final state = FrbStreamRoundState(
         inputMessageCount: initialMessages.length,
+        // Capture host inputs, never provider profiles, auth headers or opaque
+        // native snapshots. Persistence is gated by the per-turn trace builder.
+        traceInput: frbClip(
+          jsonEncode({
+            'initial_messages': initialMessages,
+            'tool_results': toolResults,
+            'context_blocks': [
+              for (final block in contextBlocks) block.toJson(),
+            ],
+          }),
+          8000,
+        ),
       );
       var finished = false;
       final stream = _cancelableFrbStream(
@@ -242,7 +263,7 @@ class FrbChatRunner implements ChatAgent {
             state: state,
             requestedModel: model,
             status: AiSpanStatus.cancelled,
-            errorCode: 'cancelled',
+            errorCode: _cancellationCode(cancelToken),
             errorMessage: 'FRB chat stream cancelled',
           );
           yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
@@ -257,7 +278,7 @@ class FrbChatRunner implements ChatAgent {
               state: state,
               requestedModel: model,
               status: AiSpanStatus.cancelled,
-              errorCode: 'cancelled',
+              errorCode: _cancellationCode(cancelToken),
               errorMessage: 'FRB chat stream cancelled',
             );
             yield DoneEvent(stopReason: 'error', rounds: roundsUsed);
@@ -558,7 +579,7 @@ class FrbChatRunner implements ChatAgent {
             );
           }
           var cancelled = false;
-          for (final outcome in await Future.wait(outcomes)) {
+          await for (final outcome in Stream.fromFutures(outcomes)) {
             if (outcome.cancelled) {
               if (activeSnapshot != null && snapshotRecord != null) {
                 final persisted = await _persistCancelledDispatch(
@@ -699,7 +720,7 @@ class FrbChatRunner implements ChatAgent {
           );
         }
         var cancelled = false;
-        for (final outcome in await Future.wait(outcomes)) {
+        await for (final outcome in Stream.fromFutures(outcomes)) {
           if (outcome.cancelled) {
             if (activeSnapshot != null && snapshotRecord != null) {
               final persisted = await _persistCancelledDispatch(
@@ -1336,7 +1357,11 @@ Future<_ToolDispatchOutcome> _dispatchChatTool({
     _waitForCancel(cancelToken).then((_) => null),
   ]);
   return outcome ??
-      _ToolDispatchOutcome.cancelled(call: call, startedAt: startedAt);
+      _ToolDispatchOutcome.cancelled(
+        call: call,
+        startedAt: startedAt,
+        code: _cancellationCode(cancelToken),
+      );
 }
 
 SpanEvent _toolSpan(
@@ -1385,9 +1410,10 @@ class _ToolDispatchOutcome {
   factory _ToolDispatchOutcome.cancelled({
     required AgentRuntimeToolCall call,
     required DateTime startedAt,
+    String code = _kToolCancelledErrorCode,
   }) {
     final output = <String, Object?>{
-      'code': _kToolCancelledErrorCode,
+      'code': code,
       'message': _kToolCancelledMessage,
     };
     return _ToolDispatchOutcome(
@@ -1404,7 +1430,7 @@ class _ToolDispatchOutcome {
         outcome: <String, Object?>{
           'status': 'cancelled',
           'retryable': true,
-          'code': _kToolCancelledErrorCode,
+          'code': code,
           'message': _kToolCancelledMessage,
           'details': const <String, Object?>{},
         },
@@ -1463,6 +1489,18 @@ Stream<Map<String, Object?>> _cancelableFrbStream(
 
 Future<void> _waitForCancel(CancelToken cancelToken) async {
   await cancelToken.whenCancel;
+}
+
+String _cancellationCode(CancelToken? token) {
+  final reason = token?.cancelError?.error;
+  return const {
+        'scheduled_task_user_cancelled',
+        'scheduled_task_backgrounded',
+        'scheduled_task_interrupted',
+        'scheduled_task_timeout',
+      }.contains(reason)
+      ? reason! as String
+      : 'cancelled';
 }
 
 class _FrbStreamOutcome {

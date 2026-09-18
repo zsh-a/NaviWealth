@@ -664,7 +664,7 @@ class SqliteAgentRunStore implements AgentRunStore {
   Future<void> _insertRunRecord(AgentRunRecord record) {
     return _db.customStatement(
       '''
-      INSERT OR REPLACE INTO agent_runs (
+      INSERT INTO agent_runs (
         id,
         owner_user_id,
         agent_id,
@@ -679,6 +679,12 @@ class SqliteAgentRunStore implements AgentRunStore {
         artifact_id,
         trace_id
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        status = excluded.status, finished_at = excluded.finished_at,
+        summary = excluded.summary, error = excluded.error,
+        memory_id = excluded.memory_id, artifact_id = excluded.artifact_id,
+        trace_id = COALESCE(excluded.trace_id, agent_runs.trace_id)
+      WHERE agent_runs.owner_user_id = excluded.owner_user_id
       ''',
       <Object?>[
         record.id,

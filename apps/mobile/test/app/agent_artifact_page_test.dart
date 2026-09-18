@@ -8,10 +8,69 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/agent_artifact_page.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
+import 'package:naviwealth/core/ai/visual/ai_markdown.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
+  for (final width in [360.0, 1440.0]) {
+    testWidgets('report is readable and selectable at width $width', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final artifact = AgentArtifact(
+        id: 'reading',
+        ownerUserId: 'user-1',
+        agentId: 'weekly_wealth_review',
+        domain: 'finance',
+        kind: AgentArtifactKind.review,
+        severity: AgentArtifactSeverity.info,
+        title: 'Weekly report',
+        summary:
+            '## Overview\n\nA **balanced** portfolio.\n\n'
+            '- Keep sufficient liquidity.\n- Review concentration.\n\n'
+            '## Limitations\n\n本次报告仅基于当前可用数据，不代表未来表现。',
+        createdAt: DateTime.utc(2026, 9, 18),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            agentArtifactProvider('reading')
+                .overrideWith((_) async => artifact),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            builder: (context, child) => FTheme(
+              data: FTheme.neutral.light.desktop,
+              child: MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: const TextScaler.linear(1.4)),
+                child: child!,
+              ),
+            ),
+            home: const AgentArtifactPage(artifactId: 'reading'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AiMarkdown), findsOneWidget);
+      expect(find.byType(SelectableText), findsWidgets);
+      expect(
+        tester.getSize(find.byType(AiMarkdown)).width,
+        lessThanOrEqualTo(AdaptiveMaxWidth.narrow),
+      );
+      expect(
+        find.textContaining('Overview', findRichText: true),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('opens the route owned by an individual conclusion', (
     tester,
   ) async {

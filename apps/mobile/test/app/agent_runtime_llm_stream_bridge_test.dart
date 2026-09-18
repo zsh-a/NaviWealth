@@ -10,6 +10,104 @@ import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'agent_runtime_native_bridge_test_harness.dart';
 
 void main() {
+  test('normal native completion does not send cancellation', () async {
+    final cancelled = <String>[];
+    final bridge = _cancellableBridge(
+      prepare: () async => 'completed-ticket',
+      cancel: (id) async => cancelled.add(id),
+      stream: ({required requestJson}) => Stream.value('{"kind":"finished"}'),
+    );
+    final events = await bridge.streamChatTurn(messages: const []).toList();
+    expect(events.single['kind'], 'finished');
+    expect(cancelled, isEmpty);
+  });
+
+  test('native startup failure releases its prepared ticket', () async {
+    final cancelled = <String>[];
+    final bridge = _cancellableBridge(
+      prepare: () async => 'failed-ticket',
+      cancel: (id) async => cancelled.add(id),
+      stream: ({required requestJson}) => throw StateError('startup failed'),
+    );
+    final events = await bridge.streamChatTurn(messages: const []).toList();
+    expect(events.single['kind'], 'error');
+    expect(cancelled, ['failed-ticket']);
+  });
+
+  test('failed native cancellation still completes startup cleanup', () async {
+    final bridge = _cancellableBridge(
+      prepare: () async => 'failed-ticket',
+      cancel: (_) async => throw StateError('native unavailable'),
+      stream: ({required requestJson}) => throw StateError('startup failed'),
+    );
+    final events = await bridge
+        .streamChatTurn(messages: const [])
+        .toList()
+        .timeout(const Duration(seconds: 1));
+    expect(events.single['kind'], 'error');
+  });
+
+  test('cancellation stops native work before closing its receive stream', () async {
+    final native = StreamController<String>();
+    final firstEvent = Completer<void>();
+    var cancelCalls = 0;
+    final bridge = _cancellableBridge(
+      prepare: () async => 'native-run',
+      cancel: (id) async {
+        expect(id, 'native-run');
+        expect(native.hasListener, isTrue);
+        cancelCalls++;
+        // Late native frames are drained, never delivered to the cancelled UI.
+        native.add('{"kind":"delta","content":"late"}');
+        await native.close();
+      },
+      stream: ({required requestJson}) {
+        final request = jsonDecode(requestJson) as Map;
+        expect((request['metadata'] as Map)['native_stream_id'], 'native-run');
+        scheduleMicrotask(() => native.add('{"kind":"started"}'));
+        return native.stream;
+      },
+    );
+    final received = <Map<String, Object?>>[];
+    final subscription = bridge.streamChatTurn(messages: const []).listen((
+      event,
+    ) {
+      received.add(event);
+      if (!firstEvent.isCompleted) firstEvent.complete();
+    });
+    await firstEvent.future;
+    await subscription.cancel().timeout(const Duration(seconds: 1));
+    expect(cancelCalls, 1);
+    expect(received.map((e) => e['kind']), ['started']);
+    expect(native.hasListener, isFalse);
+  });
+
+  test(
+    'cancellation during preparation cleans ticket without starting native I/O',
+    () async {
+      final preparing = Completer<void>();
+      final ticket = Completer<String>();
+      final cancelled = <String>[];
+      final bridge = _cancellableBridge(
+        prepare: () {
+          preparing.complete();
+          return ticket.future;
+        },
+        cancel: (id) async => cancelled.add(id),
+        stream: ({required requestJson}) => throw StateError('must not start'),
+      );
+      final subscription = bridge
+          .streamChatTurn(messages: const [])
+          .listen((_) {});
+      await preparing.future;
+      final stopped = subscription.cancel();
+      await Future<void>.delayed(Duration.zero);
+      ticket.complete('pending-ticket');
+      await stopped.timeout(const Duration(seconds: 1));
+      expect(cancelled, ['pending-ticket']);
+    },
+  );
+
   test(
     'streams profile-backed FRB chat-turn events from request JSON',
     () async {
@@ -421,3 +519,25 @@ void main() {
     expect(metadata['retryable'], false);
   });
 }
+
+AgentRuntimeLlmStreamBridge _cancellableBridge({
+  required Future<String> Function() prepare,
+  required Future<void> Function(String) cancel,
+  required AgentRuntimeChatTurnJsonStream stream,
+}) => AgentRuntimeLlmStreamBridge(
+  llmBridge: AgentRuntimeLlmBridge(
+    bridge: FakeAgentRuntimeNativeBridge(),
+    profile: const LlmProfile(
+      id: 'test',
+      name: 'Test',
+      provider: LlmProvider.openai,
+      apiKey: 'test',
+      baseUrl: 'https://example.test/v1',
+      model: 'test',
+    ),
+  ),
+  initRuntime: ({String? libraryPath}) async {},
+  prepareChatStream: prepare,
+  cancelChatStream: cancel,
+  streamChatTurnJson: stream,
+);

@@ -11175,7 +11175,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiTraceNoPayloadCaptured =>
-      'input/output was not captured (compact mode). Turn on Detailed capture on the AI transparency page; new calls will record each step\'s parameters and return values for debugging.';
+      'No input/output was recorded for this step. Detailed capture may have been off, or this execution path did not provide payloads. Capture applies only to new calls started after enabling it; historical records cannot be backfilled.';
 
   @override
   String get aiChatDeviceUnavailable =>
@@ -17297,4 +17297,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeNewDecision => 'New decision';
+
+  @override
+  String get agentExecutionTitle => 'Execution';
+
+  @override
+  String get agentExecutionView => 'View execution';
+
+  @override
+  String get agentExecutionDiagnostics => 'Diagnostics';
+
+  @override
+  String get agentExecutionModel => 'Model';
+
+  @override
+  String get agentExecutionStop => 'Stop execution';
+
+  @override
+  String get agentExecutionHint =>
+      'Leaving this page does not stop the task. Backgrounding on mobile may interrupt it; return to retry manually.';
+
+  @override
+  String get agentExecutionMissing =>
+      'No detailed execution record is available. Older runs retain their original history.';
+
+  @override
+  String agentExecutionStatus(String status) {
+    String _temp0 = intl.Intl.selectLogic(status, {
+      'preparing': 'Preparing',
+      'model': 'Analyzing',
+      'tool': 'Reading data',
+      'validating': 'Validating report',
+      'running': 'Running',
+      'completed': 'Completed',
+      'failed': 'Failed',
+      'cancelled': 'Stopped',
+      'interrupted': 'Interrupted',
+      'other': 'Waiting',
+    });
+    return '$_temp0';
+  }
+
+  @override
+  String agentExecutionError(String code) {
+    String _temp0 = intl.Intl.selectLogic(code, {
+      'model_unavailable': 'Configure a model before running this task.',
+      'no_tools': 'No read-only tools are available for this domain.',
+      'scheduled_task_timeout': 'Execution reached its time limit. Check the tool steps and model connection before retrying.',
+      'tool_timeout': 'The tool timed out.',
+      'invalid_report':
+          'The model did not return a valid evidence-based report.',
+      'scheduled_task_user_cancelled': 'You stopped this execution.',
+      'scheduled_task_backgrounded':
+          'Execution stopped because the app left the foreground.',
+      'scheduled_task_interrupted': 'The previous execution was interrupted. It will not restart automatically.',
+      'scheduled_task_access_revoked': 'Account or domain access changed.',
+      'scheduled_task_disabled': 'This task has been disabled.',
+      'scheduled_task_changed': 'The task changed during execution.',
+      'other': 'Execution did not complete. Check the model connection and execution details before retrying.',
+    });
+    return '$_temp0';
+  }
 }

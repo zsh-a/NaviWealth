@@ -194,9 +194,10 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
     final args = input is Map
         ? input.map((k, v) => MapEntry(k.toString(), v))
         : <String, Object?>{};
+    final context = DeviceToolContext(ref: _ref, session: session);
     try {
       return await tool
-          .invoke(DeviceToolContext(ref: _ref, session: session), args)
+          .invoke(context, args)
           .timeout(
             _timeout,
             onTimeout: () => <String, Object?>{
@@ -208,6 +209,8 @@ class DriftDeviceToolDispatcher implements DeviceToolDispatcher {
           );
     } catch (e) {
       return <String, Object?>{'error': '$e', 'code': 'tool_error'};
+    } finally {
+      context.dispose();
     }
   }
 

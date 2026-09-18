@@ -30,7 +30,7 @@ class GetFirePlanTool implements DeviceTool {
     DeviceToolContext ctx,
     Map<String, Object?> input,
   ) async {
-    final plan = ctx.ref.read(firePlanProvider);
+    final plan = await ctx.readAsync(resolvedFirePlanProvider);
     return _toJson(plan);
   }
 }

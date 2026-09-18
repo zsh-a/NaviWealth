@@ -5,6 +5,8 @@
 /// controller is the app-facing execution seam.
 library;
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'agent.dart';
@@ -36,6 +38,34 @@ class AgentRunController {
   final AgentRunner _runner;
   final List<Agent> _agents;
   final Ref _ref;
+
+  /// Returns the acquired (or already active) run immediately. Execution is
+  /// owned by the runner, never by the lifetime of a route or bottom sheet.
+  Future<AgentRunRecord> startRunById(String agentId) {
+    final started = Completer<AgentRunRecord>();
+    unawaited(
+      _runner
+          .runOnce(
+            _agentById(agentId),
+            AgentContext(ref: _ref, now: DateTime.now().toUtc()),
+            onStarted: (record) {
+              if (!started.isCompleted) started.complete(record);
+            },
+          )
+          .then<void>(
+            (_) {
+              if (!started.isCompleted) {
+                started.completeError(StateError('agent_not_started'));
+              }
+            },
+            onError: (Object error, StackTrace stack) {
+              if (!started.isCompleted) started.completeError(error, stack);
+              // Once acquired, terminal status belongs to the persistent run record.
+            },
+          ),
+    );
+    return started.future;
+  }
 
   Future<AgentRunResult> runOnceById(
     String agentId, {

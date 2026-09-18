@@ -91,8 +91,24 @@ tool rounds, twelve tool calls, 4096 output tokens per model round and two
 minutes. Current owner, active domain, task revision and enablement are checked
 again before tool dispatch and report persistence.
 
+Execution is owned by the application runner, not its viewing route. Focus
+loss (`inactive`) and window hiding (`hidden`) do not cancel runs. Desktop
+hosts continue under the existing time/tool budgets while hidden. Mobile
+Android/iOS hosts have no background execution lease: `paused` interrupts with
+`scheduled_task_backgrounded`; engine detachment interrupts with
+`scheduled_task_interrupted`. Attaching to an already paused mobile host is
+also rejected before starting model I/O. Returning to the foreground does not
+resume/replay the interrupted turn; its execution page retains the reason and
+offers an explicit new run. Normal scheduling and its failure backoff remain
+unchanged. This policy does not promise execution during OS suspension.
+
 LLM reports require structured JSON and references to actual successful tool
-results. Host-owned references contain the source tool, capture time and
+results. The JSON `summary` is a Markdown document: conclusion first, short
+paragraphs, section headings, findings lists and explicit limitations. JSON
+remains the transport/validation envelope, never the user-facing report.
+Result and execution detail pages use the shared Markdown renderer and reading
+typography. Existing plain-text reports remain valid; opening them does not
+rewrite content or invoke the model. Host-owned references contain the source tool, capture time and
 result, never model-invented routes. Statistics remain authoritative tool
 outputs; interpretation and report text come from the LLM. Evidence existence
 checks do not constitute semantic verification of every model claim.
@@ -164,6 +180,27 @@ Settings exposes active, user-configurable presentation specs only and supports:
 - manual run;
 - latest status and artifact;
 - run history.
+
+Scheduled LLM tasks open a read-only execution conversation from manual run,
+latest run, or history. `AgentExecutionPage` reuses the chat user-message surface,
+inline tool steps, Markdown and artifact follow-up action, without creating a chat
+session or exposing a composer. Execution remains owned by `AgentRunner`; leaving
+the page does not stop it. Mobile suspension follows the platform lifecycle
+policy above; desktop focus/visibility changes do not interrupt a run.
+
+Result details (`/insights/:artifactId`), execution details and AI diagnostics
+are root-navigator drill-downs, outside the domain dock shell. Opening a result
+from Settings or an execution page preserves the originating stack without
+duplicating a shell. Canonical result URLs and route names remain stable.
+
+The owner-scoped `agent_runs.execution_json` projection stores bounded model/tool
+timings, terminal status and the final report, not thinking deltas or raw tool
+inputs/outputs. Parallel tool completions appear independently. Stop and manual
+retry are explicit; opening a route never starts/restarts a task. A prior-process
+running projection is marked interrupted on access and releases its lease.
+Historic runs without a projection retain their original status cards. Each new
+run has its own artifact ID so same-day retries do not overwrite follow-up evidence.
+Typed failure codes produce localized messages; technical traces remain secondary.
 
 Disabling an agent prevents manual, scheduled, retry, and background-due runs
 at the runner boundary. Disabling an optional domain also removes its agent
