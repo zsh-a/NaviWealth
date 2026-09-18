@@ -234,7 +234,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s12),
-              child: _PortfolioSelector(
+              child: _PortfolioScopeBar(
                 portfolios: widget.portfolios,
                 value: widget.selectedPortfolioId,
                 holdingCount: data.holdings.length,
@@ -244,24 +244,8 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s20),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return AdaptiveSummaryGrid(
-                    gap: AppSpacing.s16,
-                    items: [
-                      AdaptiveSummaryTile(
-                        role: AdaptiveSummaryTileRole.continuous,
-                        child: _PortfolioSummary(data: data),
-                      ),
-                      const AdaptiveSummaryTile(
-                        role: AdaptiveSummaryTileRole.supporting,
-                        child: _ConcentrationRiskSection(),
-                      ),
-                    ],
-                  );
-                },
-              ),
+              padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+              child: _PortfolioOverview(data: data),
             ),
           ),
           _positionsSliver(
@@ -324,46 +308,141 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
     // stay virtualized inside one continuous group surface.
     final surfaceColor = appGroupedSurfaceFill(context);
 
-    return SliverMainAxisGroup(
-      slivers: [
-        SliverToBoxAdapter(
-          child: _PortfolioSectionTitle(title: l10n.portfolioHubPositionsTitle),
-        ),
-        DecoratedSliver(
-          decoration: BoxDecoration(
-            color: surfaceColor,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
-          sliver: SliverList.separated(
-            itemCount: holdings.length,
-            separatorBuilder: (_, _) => const AppGroupedDivider(
-              indent: AppSpacing.s12,
-              endIndent: AppSpacing.s12,
-            ),
-            itemBuilder: (context, index) {
-              final row = _HoldingRow(holding: holdings[index]);
-              if (_entranceStagger && index < _kStaggerRowCap) {
-                return FadeSlideIn(
-                  delay: Motion.staggerDelayFor(index, _kStaggerRowCap),
-                  child: row,
-                );
-              }
-              return row;
-            },
-          ),
-        ),
-        if (showReveal)
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s8),
-              child: AppRevealControl(
-                expanded: _showAllPositions,
-                collapsedLabel: l10n.commonRevealMore(overflowCount),
-                expandedLabel: l10n.commonRevealLess,
-                onToggle: () =>
-                    setState(() => _showAllPositions = !_showAllPositions),
+    return SliverLayoutBuilder(
+      builder: (context, constraints) {
+        final tabular = _usePortfolioTable(
+          context,
+          constraints.crossAxisExtent,
+        );
+        return SliverMainAxisGroup(
+          slivers: [
+            SliverToBoxAdapter(
+              child: _PortfolioSectionTitle(
+                title: l10n.portfolioHubPositionsTitle,
               ),
             ),
+            if (tabular) const SliverToBoxAdapter(child: _HoldingTableHeader()),
+            DecoratedSliver(
+              decoration: BoxDecoration(
+                color: surfaceColor,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              sliver: SliverList.separated(
+                itemCount: holdings.length,
+                separatorBuilder: (_, _) => const AppGroupedDivider(
+                  indent: AppSpacing.s12,
+                  endIndent: AppSpacing.s12,
+                ),
+                itemBuilder: (context, index) {
+                  final row = _HoldingRow(
+                    key: ValueKey(holdings[index].assetId),
+                    holding: holdings[index],
+                    tabular: tabular,
+                  );
+                  if (_entranceStagger && index < _kStaggerRowCap) {
+                    return FadeSlideIn(
+                      delay: Motion.staggerDelayFor(index, _kStaggerRowCap),
+                      child: row,
+                    );
+                  }
+                  return row;
+                },
+              ),
+            ),
+            if (showReveal)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.s8),
+                  child: AppRevealControl(
+                    expanded: _showAllPositions,
+                    collapsedLabel: l10n.commonRevealMore(overflowCount),
+                    expandedLabel: l10n.commonRevealLess,
+                    onToggle: () =>
+                        setState(() => _showAllPositions = !_showAllPositions),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PortfolioScopeBar extends StatelessWidget {
+  const _PortfolioScopeBar({
+    required this.portfolios,
+    required this.value,
+    required this.holdingCount,
+    required this.onChanged,
+  });
+
+  final List<InvestmentPortfolio> portfolios;
+  final String? value;
+  final int holdingCount;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final selector = _PortfolioSelector(
+      portfolios: portfolios,
+      value: value,
+      holdingCount: holdingCount,
+      onChanged: onChanged,
+    );
+    if (!portfolios.any((portfolio) => portfolio.id == value)) return selector;
+    final action = FButton(
+      key: const ValueKey('portfolio-manage'),
+      variant: FButtonVariant.ghost,
+      onPress: () =>
+          context.push(FinanceRoutes.wealthPortfolioStudioFor(value!)),
+      prefix: const Icon(FLucideIcons.settings2, size: AppIconSizes.sm),
+      child: Text(AppLocalizations.of(context).portfolioHubManageAction),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [selector, action],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: selector),
+            action,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PortfolioOverview extends ConsumerWidget {
+  const _PortfolioOverview({required this.data});
+
+  final PortfolioHubState data;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final risk = ref.watch(selectedPortfolioConcentrationAlertsProvider);
+    // Do not retain another portfolio's alerts while this scope is loading.
+    final alerts = risk.isLoading ? null : risk.value;
+    final hasRisk = alerts != null && alerts.isNotEmpty;
+    return AdaptiveSummaryGrid(
+      gap: AppSpacing.s12,
+      items: [
+        AdaptiveSummaryTile(
+          role: hasRisk
+              ? AdaptiveSummaryTileRole.featured
+              : AdaptiveSummaryTileRole.continuous,
+          child: _PortfolioSummary(data: data),
+        ),
+        if (hasRisk)
+          AdaptiveSummaryTile(
+            role: AdaptiveSummaryTileRole.supporting,
+            child: _ConcentrationRiskSection(alerts: alerts),
           ),
       ],
     );
@@ -534,27 +613,72 @@ class _PortfolioSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.portfolioHubMarketValueLabel,
-            style: context.mutedLabelStyle,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Wrap(
+            spacing: AppSpacing.s16,
+            runSpacing: AppSpacing.s4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
-                child: AnimatedMoneyText(
-                  amount: slice.marketValueInBase.toDouble(),
-                  currencyCode: slice.baseCurrency,
-                  style: TypographyTokens.displaySmall,
-                  color: context.theme.colors.foreground,
-                ),
+              Text(
+                l10n.portfolioHubMarketValueLabel,
+                style: context.mutedLabelStyle,
               ),
-              DeltaChip(value: pnlPercent, fractionDigits: 2),
+              if (!slice.portfolioScoped)
+                Text(
+                  '${l10n.portfolioHubYtdXirrLabel} ${xirr == null ? '—' : _formatRatio(context, xirr)}',
+                  style: context.captionStyle,
+                ),
             ],
           ),
+          const SizedBox(height: AppSpacing.s8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final amount = AnimatedMoneyText(
+                amount: slice.marketValueInBase.toDouble(),
+                currencyCode: slice.baseCurrency,
+                style: TypographyTokens.displaySmall,
+                color: context.theme.colors.foreground,
+              );
+              final change = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.portfolioHubHoldingReturnLabel,
+                    style: context.captionStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  DeltaChip(value: pnlPercent, fractionDigits: 2),
+                ],
+              );
+              if (constraints.maxWidth < 300 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    amount,
+                    const SizedBox(height: AppSpacing.s8),
+                    change,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(child: amount),
+                  const SizedBox(width: AppSpacing.s12),
+                  change,
+                ],
+              );
+            },
+          ),
           const SizedBox(height: AppSpacing.s14),
-          _PortfolioSummaryMetrics(slice: slice, xirr: xirr),
+          _PortfolioSummaryMetrics(slice: slice),
+          if (slice.portfolioScoped) ...[
+            const SizedBox(height: AppSpacing.s10),
+            Text(
+              l10n.portfolioHubScopedXirrUnavailable,
+              style: context.captionStyle,
+            ),
+          ],
         ],
       ),
     );
@@ -562,10 +686,9 @@ class _PortfolioSummaryCard extends StatelessWidget {
 }
 
 class _PortfolioSummaryMetrics extends StatelessWidget {
-  const _PortfolioSummaryMetrics({required this.slice, required this.xirr});
+  const _PortfolioSummaryMetrics({required this.slice});
 
   final PortfolioHubSummarySlice slice;
-  final double? xirr;
 
   @override
   Widget build(BuildContext context) {
@@ -582,19 +705,13 @@ class _PortfolioSummaryMetrics extends StatelessWidget {
         currency: slice.baseCurrency,
         showSign: true,
       ),
-      _SummaryMetric(
-        label: l10n.portfolioHubYtdXirrLabel,
-        value: xirr == null ? '—' : _formatRatio(context, xirr!),
-      ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
         if (Breakpoints.isMobile(constraints.maxWidth)) {
-          final columns =
-              constraints.maxWidth >= 320 &&
-                  MediaQuery.textScalerOf(context).scale(1) <= 1.3
-              ? 3
+          final columns = MediaQuery.textScalerOf(context).scale(1) > 1.5
+              ? 1
               : 2;
           final itemWidth =
               (constraints.maxWidth - AppSpacing.s8 * (columns - 1)) / columns;
@@ -609,11 +726,10 @@ class _PortfolioSummaryMetrics extends StatelessWidget {
         }
         return Row(
           children: [
-            Expanded(child: metrics[0]),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(child: metrics[1]),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(child: metrics[2]),
+            for (var index = 0; index < metrics.length; index++) ...[
+              if (index > 0) const SizedBox(width: AppSpacing.s12),
+              Expanded(child: metrics[index]),
+            ],
           ],
         );
       },
@@ -622,22 +738,16 @@ class _PortfolioSummaryMetrics extends StatelessWidget {
 }
 
 class _SummaryMetric extends StatelessWidget {
-  const _SummaryMetric({required this.label, required this.value})
-    : amount = null,
-      currency = null,
-      showSign = false;
-
   const _SummaryMetric.money({
     required this.label,
-    required double this.amount,
-    required String this.currency,
+    required this.amount,
+    required this.currency,
     this.showSign = false,
-  }) : value = null;
+  });
 
   final String label;
-  final String? value;
-  final double? amount;
-  final String? currency;
+  final double amount;
+  final String currency;
   final bool showSign;
 
   @override
@@ -651,22 +761,14 @@ class _SummaryMetric extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: context.captionStyle,
-            ),
+            Text(label, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s4),
-            if (amount == null)
-              Text(value ?? '—', style: context.theme.typography.body.lg)
-            else
-              AnimatedMoneyText(
-                amount: amount,
-                currencyCode: currency!,
-                showSign: showSign,
-                style: context.strongTitleStyle,
-              ),
+            AnimatedMoneyText(
+              amount: amount,
+              currencyCode: currency,
+              showSign: showSign,
+              style: context.strongTitleStyle,
+            ),
           ],
         ),
       ),

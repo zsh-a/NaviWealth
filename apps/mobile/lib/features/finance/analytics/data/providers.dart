@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart'
     show holdingsSnapshotProvider;
 
@@ -92,6 +93,31 @@ final concentrationAlertsProvider =
 
       return const ConcentrationRiskService().detect(
         snapshots: snapshots.values,
+        assetLookup: (id) => assetById[id],
+        classifier: classifier,
+        thresholds: thresholds,
+      );
+    });
+
+/// Portfolio-page risk follows the same capital assignments as its holdings.
+/// Global consumers (including the inbox) continue to use the provider above.
+final selectedPortfolioConcentrationAlertsProvider =
+    FutureProvider.autoDispose<List<ConcentrationAlert>>((ref) async {
+      final selectedId = ref.watch(
+        effectiveSelectedInvestmentPortfolioIdProvider,
+      );
+      if (selectedId == null) {
+        return ref.watch(concentrationAlertsProvider.future);
+      }
+      final holdingsFuture = ref.watch(scopedPortfolioHoldingsProvider.future);
+      final assetsFuture = ref.watch(equityAssetsStreamProvider.future);
+      final classifier = ref.watch(equityClassifierProvider);
+      final thresholds = ref.watch(concentrationThresholdsProvider);
+      final holdings = await holdingsFuture;
+      final assets = await assetsFuture;
+      final assetById = {for (final asset in assets) asset.id: asset};
+      return const ConcentrationRiskService().detect(
+        snapshots: holdings.snapshots.values,
         assetLookup: (id) => assetById[id],
         classifier: classifier,
         thresholds: thresholds,

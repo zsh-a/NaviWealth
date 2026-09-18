@@ -48,6 +48,7 @@ class PortfolioHubSummarySlice {
     required this.costBasisInBase,
     required this.unrealizedPnlInBase,
     required this.xirrRatio,
+    this.portfolioScoped = false,
   });
 
   factory PortfolioHubSummarySlice.fromState(PortfolioHubState state) {
@@ -57,6 +58,7 @@ class PortfolioHubSummarySlice {
       costBasisInBase: state.costBasisInBase,
       unrealizedPnlInBase: state.unrealizedPnlInBase,
       xirrRatio: state.xirrRatio,
+      portfolioScoped: state.portfolioScoped,
     );
   }
 
@@ -65,6 +67,7 @@ class PortfolioHubSummarySlice {
   final Decimal costBasisInBase;
   final Decimal unrealizedPnlInBase;
   final double? xirrRatio;
+  final bool portfolioScoped;
 
   @override
   bool operator ==(Object other) =>
@@ -73,7 +76,8 @@ class PortfolioHubSummarySlice {
       other.marketValueInBase == marketValueInBase &&
       other.costBasisInBase == costBasisInBase &&
       other.unrealizedPnlInBase == unrealizedPnlInBase &&
-      other.xirrRatio == xirrRatio;
+      other.xirrRatio == xirrRatio &&
+      other.portfolioScoped == portfolioScoped;
 
   @override
   int get hashCode => Object.hash(
@@ -82,6 +86,7 @@ class PortfolioHubSummarySlice {
     costBasisInBase,
     unrealizedPnlInBase,
     xirrRatio,
+    portfolioScoped,
   );
 }
 

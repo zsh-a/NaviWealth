@@ -1968,7 +1968,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get portfolioHubYtdXirrLabel => 'YTD XIRR';
 
   @override
-  String get portfolioHubAbsoluteReturnLabel => 'Absolute return';
+  String get portfolioHubAbsoluteReturnLabel => 'Unrealized P&L';
+
+  @override
+  String get portfolioHubHoldingReturnLabel => 'Holding return';
+
+  @override
+  String get portfolioHubScopedXirrUnavailable =>
+      'YTD XIRR is not yet available for individual portfolios: historical capital assignments are required.';
+
+  @override
+  String get portfolioHubManageAction => 'Manage portfolio';
+
+  @override
+  String get portfolioHubAssetColumn => 'Asset';
+
+  @override
+  String portfolioHubQuantityInline(String quantity) {
+    return 'Qty $quantity';
+  }
+
+  @override
+  String portfolioHubWeightInline(String weight) {
+    return 'Weight $weight';
+  }
 
   @override
   String get portfolioHubCostBasisLabel => 'Cost basis';

@@ -288,6 +288,7 @@ final _corporateActions = [
 
 List<Override> _portfolioOverrides(SharedPreferences prefs) => [
   sharedPreferencesProvider.overrideWithValue(prefs),
+  holdingBaseCurrencyProvider.overrideWithValue('USD'),
   allAssetsStreamProvider.overrideWith((_) => Stream.value(_assets)),
   equityAssetsStreamProvider.overrideWith((_) => Stream.value(_assets)),
   accountsStreamProvider.overrideWith((_) => Stream.value(_accounts)),
@@ -324,10 +325,14 @@ void main() {
       overrides: _portfolioOverrides(prefs),
       child: const PortfolioHubPage(),
     );
-    final marketValue = tester.widget<Text>(find.text('¥9,020.00'));
+    final marketValue = tester.widget<Text>(find.text(r'$9,020.00'));
     expect(marketValue.style?.color, isNotNull);
-    _expectTextFits(tester, '¥7,100.00');
-    _expectTextFits(tester, '+¥1,920.00');
+    _expectTextFits(tester, r'$7,100.00');
+    _expectTextFits(tester, r'+$1,920.00');
+    expect(
+      tester.getTopLeft(find.text('Vanguard S&P 500 ETF')).dy,
+      lessThan(520),
+    );
   });
 
   testVisualGolden('portfolio_hub_page — wide', (tester) async {
@@ -339,7 +344,53 @@ void main() {
       overrides: _portfolioOverrides(prefs),
       child: const PortfolioHubPage(),
     );
-    _expectTextFits(tester, '¥7,100.00');
-    _expectTextFits(tester, '+¥1,920.00');
+    _expectTextFits(tester, r'$7,100.00');
+    _expectTextFits(tester, r'+$1,920.00');
+    expect(
+      find.byKey(const ValueKey('portfolio-holdings-columns')),
+      findsOneWidget,
+    );
+    // Supporting risk belongs beside the summary, not on an orphaned row.
+    expect(
+      tester.getTopLeft(find.text('Concentration risk')).dy,
+      lessThan(tester.getBottomLeft(find.text(r'$9,020.00')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Vanguard S&P 500 ETF')).dy,
+      lessThan(400),
+    );
+  });
+
+  testVisualGolden('portfolio_hub_page — small Chinese phone', (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await pumpAndSnapshotResponsive(
+      tester,
+      name: 'portfolio_hub_page_small_zh',
+      profile: ResponsiveGoldenProfile.narrow,
+      logicalSizeOverride: const Size(375, 812),
+      locale: const Locale('zh'),
+      overrides: _portfolioOverrides(prefs),
+      child: const PortfolioHubPage(),
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('持仓收益率'), findsOneWidget);
+    _expectTextFits(tester, r'$7,100.00');
+    _expectTextFits(tester, r'+$1,920.00');
+  });
+
+  testVisualGolden('portfolio_hub_page — enlarged text', (tester) async {
+    final prefs = await SharedPreferences.getInstance();
+    await pumpAndSnapshotResponsive(
+      tester,
+      name: 'portfolio_hub_page_text_scale',
+      profile: ResponsiveGoldenProfile.textScale,
+      overrides: _portfolioOverrides(prefs),
+      child: const PortfolioHubPage(),
+    );
+    _expectTextFits(tester, r'$7,100.00');
+    _expectTextFits(tester, r'+$1,920.00');
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -650));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
   });
 }

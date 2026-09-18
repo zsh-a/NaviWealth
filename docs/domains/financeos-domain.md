@@ -79,6 +79,13 @@ rounding.
 Portfolio scope precedes its summary; holdings precede optional insights.
 Concentration risk keeps the highest-severity breach visible and reveals the
 remaining breaches on demand without removing the rebalance entry.
+Portfolio-page concentration risk follows the selected capital assignments,
+including partial lots and the unassigned scope; global inbox risk remains
+independent of that selection. Authored portfolios expose a direct management
+entry beside the scope control. Wide layouts align holding metrics in columns;
+phone layouts keep quantity and weight on a compact supporting line. Unrealized
+P&L and holding return are labeled explicitly, and unsupported portfolio-scoped
+XIRR explains its missing historical assignment basis.
 
 DCA simulation and plan creation share one parameter snapshot, including symbol
 weights. Editing parameters marks the displayed result outdated and prevents

@@ -3410,8 +3410,44 @@ abstract class AppLocalizations {
   /// Portfolio hub KPI label: absolute unrealized return
   ///
   /// In en, this message translates to:
-  /// **'Absolute return'**
+  /// **'Unrealized P&L'**
   String get portfolioHubAbsoluteReturnLabel;
+
+  /// No description provided for @portfolioHubHoldingReturnLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Holding return'**
+  String get portfolioHubHoldingReturnLabel;
+
+  /// No description provided for @portfolioHubScopedXirrUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'YTD XIRR is not yet available for individual portfolios: historical capital assignments are required.'**
+  String get portfolioHubScopedXirrUnavailable;
+
+  /// No description provided for @portfolioHubManageAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage portfolio'**
+  String get portfolioHubManageAction;
+
+  /// No description provided for @portfolioHubAssetColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Asset'**
+  String get portfolioHubAssetColumn;
+
+  /// No description provided for @portfolioHubQuantityInline.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty {quantity}'**
+  String portfolioHubQuantityInline(String quantity);
+
+  /// No description provided for @portfolioHubWeightInline.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight {weight}'**
+  String portfolioHubWeightInline(String weight);
 
   /// Portfolio hub KPI label: current total cost basis
   ///

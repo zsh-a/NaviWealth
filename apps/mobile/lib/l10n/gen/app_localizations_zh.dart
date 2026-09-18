@@ -1873,7 +1873,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get portfolioHubYtdXirrLabel => '年初至今 XIRR';
 
   @override
-  String get portfolioHubAbsoluteReturnLabel => '绝对收益';
+  String get portfolioHubAbsoluteReturnLabel => '未实现盈亏';
+
+  @override
+  String get portfolioHubHoldingReturnLabel => '持仓收益率';
+
+  @override
+  String get portfolioHubScopedXirrUnavailable =>
+      '单个组合暂不支持年初至今 XIRR：计算需要历史资金归属记录。';
+
+  @override
+  String get portfolioHubManageAction => '管理组合';
+
+  @override
+  String get portfolioHubAssetColumn => '资产';
+
+  @override
+  String portfolioHubQuantityInline(String quantity) {
+    return '数量 $quantity';
+  }
+
+  @override
+  String portfolioHubWeightInline(String weight) {
+    return '占比 $weight';
+  }
 
   @override
   String get portfolioHubCostBasisLabel => '持仓成本';

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -85,6 +86,109 @@ Lot _lot({
 }
 
 void main() {
+  testWidgets(
+    'selected portfolio has a direct management route and explains unavailable XIRR',
+    (tester) async {
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final portfolio = InvestmentPortfolio(
+        id: 'long-term',
+        name: 'Long term',
+        baseCurrency: 'USD',
+        goalId: null,
+        color: null,
+        createdAt: DateTime.utc(2026),
+        archived: false,
+        sync: _meta(),
+      );
+      final state = PortfolioHubState(
+        holdings: const [],
+        lots: const [],
+        accountById: const {},
+        baseCurrency: 'USD',
+        marketValueInBase: Decimal.zero,
+        costBasisInBase: Decimal.zero,
+        unrealizedPnlInBase: Decimal.zero,
+        portfolioScoped: true,
+        ytdReturn: PortfolioReturnResult(
+          from: DateTime.utc(2026),
+          to: DateTime.utc(2026, 5, 17),
+          baseCurrency: 'USD',
+          cashFlows: const [],
+          solution: const XirrConverged(rate: 0.12, iterations: 3),
+        ),
+      );
+      final router = GoRouter(
+        initialLocation: FinanceRoutes.wealthPortfolio,
+        routes: [
+          GoRoute(
+            path: FinanceRoutes.wealthPortfolio,
+            builder: (_, _) => const PortfolioHubPage(),
+          ),
+          GoRoute(
+            path: FinanceRoutes.wealthPortfolioStudioFor(portfolio.id),
+            builder: (_, _) =>
+                const Scaffold(body: Text('Selected portfolio studio')),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            portfolioHubProvider.overrideWith(
+              () => _StaticPortfolioHubNotifier(state),
+            ),
+            investmentPortfoliosProvider.overrideWith(
+              (_) => Stream.value([portfolio]),
+            ),
+            selectedInvestmentPortfolioIdProvider.overrideWith(
+              (_) => portfolio.id,
+            ),
+            selectedPortfolioConcentrationAlertsProvider.overrideWith(
+              (_) async => [],
+            ),
+          ],
+          child: FTheme(
+            data: FTheme.neutral.light.touch,
+            child: MaterialApp.router(
+              theme: AppTheme.light(),
+              routerConfig: router,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('en'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Manage portfolio'), findsOneWidget);
+      expect(
+        find.text(AppLocalizationsEn().portfolioHubScopedXirrUnavailable),
+        findsOneWidget,
+      );
+      expect(find.textContaining('12.0%'), findsNothing);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(PortfolioHubPage)),
+      );
+      for (final id in [null, kUnassignedInvestmentPortfolioId]) {
+        container.read(selectedInvestmentPortfolioIdProvider.notifier).state =
+            id;
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('portfolio-manage')), findsNothing);
+      }
+      container.read(selectedInvestmentPortfolioIdProvider.notifier).state =
+          portfolio.id;
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('portfolio-manage')));
+      await tester.pumpAndSettle();
+      expect(find.text('Selected portfolio studio'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'portfolio studio presents status overview with setup drill-ins',
     (tester) async {

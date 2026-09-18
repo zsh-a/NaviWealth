@@ -1,102 +1,100 @@
 part of 'portfolio_hub_page.dart';
 
-/// Surfaces user-threshold concentration breaches on the Allocation tab so
-/// Financial Inbox deep links to `/wealth/portfolio` land on a real review UI.
-class _ConcentrationRiskSection extends ConsumerStatefulWidget {
-  const _ConcentrationRiskSection();
+/// Keeps the worst breach and its recovery action visible in a compact surface.
+class _ConcentrationRiskSection extends StatefulWidget {
+  const _ConcentrationRiskSection({required this.alerts});
+
+  final List<ConcentrationAlert> alerts;
 
   @override
-  ConsumerState<_ConcentrationRiskSection> createState() =>
+  State<_ConcentrationRiskSection> createState() =>
       _ConcentrationRiskSectionState();
 }
 
-class _ConcentrationRiskSectionState
-    extends ConsumerState<_ConcentrationRiskSection> {
+class _ConcentrationRiskSectionState extends State<_ConcentrationRiskSection> {
   bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final async = ref.watch(concentrationAlertsProvider);
-    return async.when(
-      skipLoadingOnReload: true,
-      // loading: intentionally empty — this section only exists when there
-      // are concentration breaches; a skeleton would promise content that
-      // usually never appears and shift the Allocation tab on resolve.
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
-      data: (alerts) {
-        if (alerts.isEmpty) return const SizedBox.shrink();
-        final criticalCount = alerts
-            .where((a) => a.severity == RiskSeverity.critical)
-            .length;
-        final ordered = [...alerts]
-          ..sort((a, b) {
-            final severity = (b.severity == RiskSeverity.critical ? 1 : 0)
-                .compareTo(a.severity == RiskSeverity.critical ? 1 : 0);
-            return severity != 0
-                ? severity
-                : (b.weight - b.threshold).compareTo(a.weight - a.threshold);
-          });
-        final visible = _expanded ? ordered : ordered.take(1).toList();
-        return SoftCard.raised(
-          padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    final alerts = widget.alerts;
+    final criticalCount = alerts
+        .where((a) => a.severity == RiskSeverity.critical)
+        .length;
+    final ordered = [...alerts]
+      ..sort((a, b) {
+        final severity = (b.severity == RiskSeverity.critical ? 1 : 0)
+            .compareTo(a.severity == RiskSeverity.critical ? 1 : 0);
+        return severity != 0
+            ? severity
+            : (b.weight - b.threshold).compareTo(a.weight - a.threshold);
+      });
+    final visible = _expanded ? ordered : ordered.take(1).toList();
+    return SoftCard.raised(
+      padding: const EdgeInsets.all(AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    FLucideIcons.chartPie,
-                    size: AppIconSizes.h18,
-                    color: criticalCount > 0
-                        ? context.theme.colors.destructive
-                        : context.theme.colors.primary,
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  Expanded(
-                    child: Text(
-                      l10n.portfolioHubConcentrationTitle,
-                      style: context.labelStyle,
-                    ),
-                  ),
-                  Semantics(
-                    label: l10n.portfolioHubConcentrationSummary(alerts.length),
-                    child: AppBadge(
-                      label: '${alerts.length}',
-                      size: AppBadgeSize.compact,
-                    ),
-                  ),
-                  if (alerts.length > 1)
-                    Semantics(
-                      expanded: _expanded,
-                      child: AppIconButton(
-                        key: const ValueKey('portfolio-risk-expand'),
-                        icon: _expanded
-                            ? FLucideIcons.chevronUp
-                            : FLucideIcons.chevronDown,
-                        tooltip: _expanded
-                            ? l10n.commonRevealLess
-                            : l10n.commonRevealMore(alerts.length - 1),
-                        onPress: () => setState(() => _expanded = !_expanded),
-                      ),
-                    ),
-                ],
+              Icon(
+                FLucideIcons.chartPie,
+                size: AppIconSizes.h18,
+                color: criticalCount > 0
+                    ? context.theme.colors.destructive
+                    : context.theme.colors.primary,
               ),
-              const SizedBox(height: AppSpacing.s10),
-              for (var i = 0; i < visible.length; i++) ...[
-                if (i != 0) const SizedBox(height: AppSpacing.s8),
-                _ConcentrationAlertRow(alert: visible[i]),
-              ],
-              FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => context.push(FinanceRoutes.planRebalance),
-                child: Text(l10n.portfolioHubConcentrationRebalanceCta),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(
+                  l10n.portfolioHubConcentrationTitle,
+                  style: context.labelStyle,
+                ),
+              ),
+              Semantics(
+                label: l10n.portfolioHubConcentrationSummary(alerts.length),
+                child: AppBadge(
+                  label: '${alerts.length}',
+                  size: AppBadgeSize.compact,
+                ),
               ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: AppSpacing.s8),
+          for (var i = 0; i < visible.length; i++) ...[
+            if (i != 0) const SizedBox(height: AppSpacing.s8),
+            _ConcentrationAlertRow(alert: visible[i]),
+          ],
+          const SizedBox(height: AppSpacing.s4),
+          Row(
+            children: [
+              Expanded(
+                child: FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => context.push(FinanceRoutes.planRebalance),
+                  child: Flexible(
+                    child: Text(l10n.portfolioHubConcentrationRebalanceCta),
+                  ),
+                ),
+              ),
+              if (alerts.length > 1)
+                Semantics(
+                  expanded: _expanded,
+                  child: AppIconButton(
+                    key: const ValueKey('portfolio-risk-expand'),
+                    icon: _expanded
+                        ? FLucideIcons.chevronUp
+                        : FLucideIcons.chevronDown,
+                    tooltip: _expanded
+                        ? l10n.commonRevealLess
+                        : l10n.commonRevealMore(alerts.length - 1),
+                    onPress: () => setState(() => _expanded = !_expanded),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -120,24 +118,23 @@ class _ConcentrationAlertRow extends StatelessWidget {
     final severity = alert.severity == RiskSeverity.critical
         ? l10n.portfolioHubConcentrationSeverityCritical
         : l10n.portfolioHubConcentrationSeverityWarning;
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(alert.label, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s2),
-              Text('$dimension · $severity', style: context.captionStyle),
-            ],
-          ),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s2,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(alert.label, style: context.labelStyle),
+            Text(
+              l10n.portfolioHubConcentrationWeightLine(weightPct, thresholdPct),
+              style: context.captionLabelStyle,
+            ),
+          ],
         ),
-        Text(
-          l10n.portfolioHubConcentrationWeightLine(weightPct, thresholdPct),
-          style: context.captionLabelStyle,
-          textAlign: TextAlign.end,
-        ),
+        const SizedBox(height: AppSpacing.s2),
+        Text('$dimension · $severity', style: context.captionStyle),
       ],
     );
   }
@@ -177,10 +174,76 @@ class PortfolioHubViewSegment extends StatelessWidget {
   }
 }
 
+bool _usePortfolioTable(BuildContext context, double width) =>
+    width >= 1000 * MediaQuery.textScalerOf(context).scale(1);
+
+/// Shared column geometry keeps the lazy rows aligned with their header.
+class _HoldingColumns extends StatelessWidget {
+  const _HoldingColumns({
+    required this.identity,
+    required this.quantity,
+    required this.weight,
+    required this.value,
+    required this.pnl,
+  });
+
+  final Widget identity;
+  final Widget quantity;
+  final Widget weight;
+  final Widget value;
+  final Widget pnl;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(flex: 4, child: identity),
+      const SizedBox(width: AppSpacing.s16),
+      Expanded(flex: 2, child: quantity),
+      const SizedBox(width: AppSpacing.s16),
+      Expanded(child: weight),
+      const SizedBox(width: AppSpacing.s16),
+      Expanded(flex: 3, child: value),
+      const SizedBox(width: AppSpacing.s16),
+      Expanded(flex: 3, child: pnl),
+    ],
+  );
+}
+
+class _HoldingTableHeader extends StatelessWidget {
+  const _HoldingTableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    Widget label(String value, {bool leading = false}) => Text(
+      value,
+      style: context.captionStyle,
+      textAlign: leading ? TextAlign.start : TextAlign.end,
+    );
+    return Padding(
+      key: const ValueKey('portfolio-holdings-columns'),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s12,
+        0,
+        AppSpacing.s12,
+        AppSpacing.s8,
+      ),
+      child: _HoldingColumns(
+        identity: label(l10n.portfolioHubAssetColumn, leading: true),
+        quantity: label(l10n.assetDetailCurrentQuantity),
+        weight: label(l10n.targetAllocationEditorPercentLabel),
+        value: label(l10n.portfolioHubMarketValueLabel),
+        pnl: label(l10n.portfolioHubAbsoluteReturnLabel),
+      ),
+    );
+  }
+}
+
 class _HoldingRow extends StatelessWidget {
-  const _HoldingRow({required this.holding});
+  const _HoldingRow({super.key, required this.holding, required this.tabular});
 
   final PortfolioHoldingRow holding;
+  final bool tabular;
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +252,45 @@ class _HoldingRow extends StatelessWidget {
     final pnl = holding.unrealizedPnlInBase;
     final pnlColor = context.appTheme.market.roleForDelta(pnl.toDouble()).fg;
     final subtitle = _holdingSubtitle(l10n, holding);
+    final quantity = formatters.number(
+      holding.quantity.toDouble(),
+      decimalDigits: _quantityDigits(holding.quantity),
+    );
+    final weight = _formatRatio(context, holding.weight.toDouble());
+    final identity = Row(
+      children: [
+        AppIconTile(
+          icon: _holdingIcon(holding.assetType),
+          color: context.theme.colors.primary,
+          size: AppSpacing.s32,
+        ),
+        const SizedBox(width: AppSpacing.s10),
+        Expanded(
+          child: _TitleSubtitle(
+            title: holding.title,
+            subtitle: subtitle,
+            heroTag: 'asset-${holding.assetId}-name',
+          ),
+        ),
+      ],
+    );
+    final value = OptionalHero(
+      tag: 'asset-${holding.assetId}-value',
+      child: AnimatedMoneyText(
+        amount: holding.marketValueInBase.toDouble(),
+        currencyCode: holding.baseCurrency,
+        style: context.labelStyle,
+        textAlign: TextAlign.end,
+      ),
+    );
+    final profit = AnimatedMoneyText(
+      amount: pnl.toDouble(),
+      currencyCode: holding.baseCurrency,
+      showSign: true,
+      style: context.captionLabelStyle,
+      color: pnlColor,
+      textAlign: TextAlign.end,
+    );
     return Semantics(
       button: true,
       container: true,
@@ -196,73 +298,69 @@ class _HoldingRow extends StatelessWidget {
         onPress: () => context.push(FinanceRoutes.wealthAsset(holding.assetId)),
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.s12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  AppIconTile(
-                    icon: _holdingIcon(holding.assetType),
-                    color: context.theme.colors.primary,
-                    size: AppSpacing.s32,
+          child: tabular
+              ? _HoldingColumns(
+                  identity: identity,
+                  quantity: Text(
+                    quantity,
+                    style: context.captionLabelStyle,
+                    textAlign: TextAlign.end,
                   ),
-                  const SizedBox(width: AppSpacing.s10),
-                  Expanded(
-                    child: _TitleSubtitle(
-                      title: holding.title,
-                      subtitle: subtitle,
-                      // Hero source for the asset detail header
-                      // (`asset-{id}-name`); this list always pushes a new
-                      // route, so the pair never shares a navigator screen.
-                      heroTag: 'asset-${holding.assetId}-name',
-                    ),
+                  weight: Text(
+                    weight,
+                    style: context.captionLabelStyle,
+                    textAlign: TextAlign.end,
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Hero source for the detail's market-value metric
-                      // (`asset-{id}-value`); the target lives in
-                      // AssetHoldingCard on the equity detail page.
-                      OptionalHero(
-                        tag: 'asset-${holding.assetId}-value',
-                        child: AnimatedMoneyText(
-                          amount: holding.marketValueInBase.toDouble(),
-                          currencyCode: holding.baseCurrency,
-                          style: context.labelStyle,
+                  value: value,
+                  pnl: profit,
+                )
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final stacked =
+                        MediaQuery.textScalerOf(context).scale(1) > 1.3 ||
+                        constraints.maxWidth < 300;
+                    final amounts = Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        value,
+                        const SizedBox(height: AppSpacing.s4),
+                        profit,
+                      ],
+                    );
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (stacked) ...[
+                          identity,
+                          const SizedBox(height: AppSpacing.s8),
+                          amounts,
+                        ] else
+                          Row(
+                            children: [
+                              Expanded(flex: 3, child: identity),
+                              const SizedBox(width: AppSpacing.s12),
+                              Expanded(flex: 2, child: amounts),
+                            ],
+                          ),
+                        const SizedBox(height: AppSpacing.s8),
+                        Wrap(
+                          spacing: AppSpacing.s16,
+                          runSpacing: AppSpacing.s4,
+                          children: [
+                            Text(
+                              l10n.portfolioHubQuantityInline(quantity),
+                              style: context.captionStyle,
+                            ),
+                            Text(
+                              l10n.portfolioHubWeightInline(weight),
+                              style: context.captionStyle,
+                            ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.s4),
-                      AnimatedMoneyText(
-                        amount: pnl.toDouble(),
-                        currencyCode: holding.baseCurrency,
-                        showSign: true,
-                        style: context.captionLabelStyle.copyWith(
-                          color: pnlColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s10),
-              Row(
-                children: [
-                  _HoldingMetric(
-                    label: l10n.assetDetailCurrentQuantity,
-                    value: formatters.number(
-                      holding.quantity.toDouble(),
-                      decimalDigits: _quantityDigits(holding.quantity),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  _HoldingMetric(
-                    label: l10n.targetAllocationEditorPercentLabel,
-                    value: _formatRatio(context, holding.weight.toDouble()),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                      ],
+                    );
+                  },
+                ),
         ),
       ),
     );
@@ -276,38 +374,6 @@ IconData _holdingIcon(AssetType type) => switch (type) {
   AssetType.crypto => FLucideIcons.bitcoin,
   _ => FLucideIcons.walletCards,
 };
-
-class _HoldingMetric extends StatelessWidget {
-  const _HoldingMetric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.captionStyle,
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: context.captionLabelStyle.copyWith(color: colors.foreground),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _TitleSubtitle extends StatelessWidget {
   const _TitleSubtitle({
