@@ -98,6 +98,24 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @financeViewAllItems.
+  ///
+  /// In en, this message translates to:
+  /// **'View all ({count})'**
+  String financeViewAllItems(int count);
+
+  /// No description provided for @financeHistoryYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year'**
+  String get financeHistoryYear;
+
+  /// No description provided for @liabilityScheduleViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Full repayment schedule'**
+  String get liabilityScheduleViewAll;
+
   /// No description provided for @watchlistSearchHint.
   ///
   /// In en, this message translates to:
@@ -3418,6 +3436,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Holding return'**
   String get portfolioHubHoldingReturnLabel;
+
+  /// No description provided for @portfolioHubIncomeEventsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns & events'**
+  String get portfolioHubIncomeEventsTitle;
+
+  /// No description provided for @portfolioHubAllRisks.
+  ///
+  /// In en, this message translates to:
+  /// **'All risks ({count})'**
+  String portfolioHubAllRisks(int count);
 
   /// No description provided for @portfolioHubScopedXirrUnavailable.
   ///

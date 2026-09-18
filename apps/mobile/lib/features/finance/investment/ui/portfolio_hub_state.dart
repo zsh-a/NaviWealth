@@ -6,7 +6,7 @@ final portfolioHubCoreProvider =
       PortfolioHubCoreNotifier.new,
     );
 
-/// Realized PnL / dividends / corporate actions — only watched on Insights.
+/// Realized PnL / dividends / corporate actions for the visible summaries.
 final portfolioHubInsightsProvider =
     AsyncNotifierProvider<
       PortfolioHubInsightsNotifier,

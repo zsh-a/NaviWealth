@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_center_providers.dart';
 import 'package:naviwealth/features/finance/cashflow/data/dividend_forecast_providers.dart';
@@ -234,6 +234,20 @@ final _realizedPnl = [
     realizedAt: DateTime.utc(2026, 4, 14),
     lotOpenedAt: DateTime.utc(2025, 2, 2),
   ),
+  RealizedPnL(
+    id: 'realized-hkd',
+    sellTransactionId: 'sell-hkd',
+    lotId: 'lot-old-hkd',
+    accountId: 'ibkr',
+    assetId: 'hk:2800',
+    currency: 'HKD',
+    quantity: _d('10'),
+    costBasis: _d('200'),
+    proceeds: _d('302'),
+    fees: _d('2'),
+    realizedAt: DateTime.utc(2026, 4, 15),
+    lotOpenedAt: DateTime.utc(2025, 2, 2),
+  ),
 ];
 
 final _dividendForecast = ProjectedDividend(
@@ -359,6 +373,61 @@ void main() {
       tester.getTopLeft(find.text('Vanguard S&P 500 ETF')).dy,
       lessThan(400),
     );
+    expect(find.byType(AppDisclosureHeader), findsNothing);
+    expect(find.byType(AppRevealControl), findsNothing);
+    expect(find.text('Realized P/L'), findsOneWidget);
+    expect(find.text('Dividend forecast'), findsOneWidget);
+    expect(find.text('Event timeline'), findsOneWidget);
+    final amounts = tester.widgetList<AnimatedMoneyText>(
+      find.byType(AnimatedMoneyText),
+    );
+    expect(
+      amounts.where(
+        (amount) => amount.currencyCode == 'USD' && amount.amount == 158,
+      ),
+      hasLength(1),
+    );
+    expect(
+      amounts.where(
+        (amount) => amount.currencyCode == 'HKD' && amount.amount == 100,
+      ),
+      hasLength(1),
+    );
+    expect(amounts.where((amount) => amount.amount == 258), isEmpty);
+    final holdingPosition = tester.getTopLeft(
+      find.text('Vanguard S&P 500 ETF'),
+    );
+
+    await tester.tap(find.text('Realized P/L'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppSheet), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(AppSheet), matching: find.text('AAPL')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Dividend forecast'));
+    await tester.pumpAndSettle();
+    expect(find.text('Projected payout'), findsNWidgets(2));
+    expect(find.text('Dividend Center'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Event timeline'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byType(AppSheet), matching: find.text('AAPL')),
+      findsNWidgets(2),
+    );
+    await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getTopLeft(find.text('Vanguard S&P 500 ETF')),
+      holdingPosition,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testVisualGolden('portfolio_hub_page — small Chinese phone', (tester) async {
@@ -376,6 +445,14 @@ void main() {
     expect(find.text('持仓收益率'), findsOneWidget);
     _expectTextFits(tester, r'$7,100.00');
     _expectTextFits(tester, r'+$1,920.00');
+    await tester.tap(find.byKey(const ValueKey('portfolio-risk-details')));
+    await tester.pumpAndSettle();
+    await expectGoldenSurface(
+      'goldens/portfolio_hub_risk_details_small_zh.png',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
+    await tester.pumpAndSettle();
   });
 
   testVisualGolden('portfolio_hub_page — enlarged text', (tester) async {

@@ -10,6 +10,17 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String financeViewAllItems(int count) {
+    return '查看全部（$count）';
+  }
+
+  @override
+  String get financeHistoryYear => '年份';
+
+  @override
+  String get liabilityScheduleViewAll => '完整还款计划';
+
+  @override
   String get watchlistSearchHint => '搜索代码或名称';
 
   @override
@@ -1877,6 +1888,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get portfolioHubHoldingReturnLabel => '持仓收益率';
+
+  @override
+  String get portfolioHubIncomeEventsTitle => '收益与事件';
+
+  @override
+  String portfolioHubAllRisks(int count) {
+    return '全部风险（$count）';
+  }
 
   @override
   String get portfolioHubScopedXirrUnavailable =>

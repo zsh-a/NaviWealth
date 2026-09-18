@@ -55,7 +55,7 @@ do not duplicate full tool or route lists here.
 
 The command palette favors frequent Finance work. FIRE, Income Strategy,
 Options, Wheel lifecycle, and strategy statistics remain available through the
-Plan tab's progressive disclosure instead of competing as global commands.
+Plan tab's visible workflow entries instead of competing as global commands.
 Their Assistant tools are likewise added only while the user is on the owning
 Plan route.
 
@@ -76,9 +76,22 @@ rounding.
 
 ### Investment Interaction
 
-Portfolio scope precedes its summary; holdings precede optional insights.
-Concentration risk keeps the highest-severity breach visible and reveals the
-remaining breaches on demand without removing the rebalance entry.
+The Plan hub keeps investment workflow entries visible, with a compact
+highest-priority attention item and a separate all-items sheet. Cash runway
+keeps six upcoming flows in its overview and opens the full lazy timeline in
+a detail sheet; the stress-test entry is directly visible. Dividend history
+uses year selection rather than reveal/collapse. Phone liability details keep
+recent/upcoming installments in the overview and a live, year-filtered full
+schedule in a sheet; payment and undo actions retain their original workflow.
+
+Portfolio scope precedes its summary; holdings precede returns and event
+summaries. Holdings form one continuous lazy list with no reveal/collapse gate.
+Concentration risk keeps the highest-severity breach visible; all risks open
+in a dismissible detail sheet without shifting the holdings or removing the
+rebalance entry. Returns, dividend forecasts, and events show compact summaries
+directly, with complete details in sheets. Portfolio configuration and capital
+allocation stay in the explicit investment-plan action and portfolio studio,
+not inside an insights accordion.
 Portfolio-page concentration risk follows the selected capital assignments,
 including partial lots and the unassigned scope; global inbox risk remains
 independent of that selection. Authored portfolios expose a direct management

@@ -1,4 +1,8 @@
 {
+  "financeViewAllItems": "View all ({count})",
+  "@financeViewAllItems": { "placeholders": { "count": { "type": "int" } } },
+  "financeHistoryYear": "Year",
+  "liabilityScheduleViewAll": "Full repayment schedule",
   "watchlistSearchHint": "Search symbol or name",
   "watchlistExistingNotice": "Already watched. Existing alerts and order will be kept.",
   "watchlistAlertRangeError": "The lower price must be below the upper price.",
@@ -964,6 +968,9 @@
   "@portfolioHubYtdXirrLabel": { "description": "Portfolio hub KPI label: year-to-date money-weighted return" },
   "portfolioHubAbsoluteReturnLabel": "Unrealized P&L",
   "portfolioHubHoldingReturnLabel": "Holding return",
+  "portfolioHubIncomeEventsTitle": "Returns & events",
+  "portfolioHubAllRisks": "All risks ({count})",
+  "@portfolioHubAllRisks": { "placeholders": { "count": { "type": "int" } } },
   "portfolioHubScopedXirrUnavailable": "YTD XIRR is not yet available for individual portfolios: historical capital assignments are required.",
   "portfolioHubManageAction": "Manage portfolio",
   "portfolioHubAssetColumn": "Asset",

@@ -1,23 +1,38 @@
 part of 'portfolio_hub_page.dart';
 
+Future<T?> _showPortfolioDetailSheet<T>({
+  required BuildContext context,
+  required String title,
+  required WidgetBuilder builder,
+  String? subtitle,
+  Widget? footer,
+}) => showAppSheet<T>(
+  context: context,
+  title: title,
+  subtitle: subtitle,
+  footer: footer,
+  actions: [
+    Builder(
+      builder: (sheetContext) => AppIconButton(
+        key: const ValueKey('portfolio-detail-close'),
+        icon: FLucideIcons.x,
+        tooltip: AppLocalizations.of(sheetContext).commonClose,
+        onPress: () => Navigator.of(sheetContext).pop(),
+      ),
+    ),
+  ],
+  builder: builder,
+);
+
 /// Keeps the worst breach and its recovery action visible in a compact surface.
-class _ConcentrationRiskSection extends StatefulWidget {
+class _ConcentrationRiskSection extends StatelessWidget {
   const _ConcentrationRiskSection({required this.alerts});
 
   final List<ConcentrationAlert> alerts;
 
   @override
-  State<_ConcentrationRiskSection> createState() =>
-      _ConcentrationRiskSectionState();
-}
-
-class _ConcentrationRiskSectionState extends State<_ConcentrationRiskSection> {
-  bool _expanded = false;
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final alerts = widget.alerts;
     final criticalCount = alerts
         .where((a) => a.severity == RiskSeverity.critical)
         .length;
@@ -29,7 +44,6 @@ class _ConcentrationRiskSectionState extends State<_ConcentrationRiskSection> {
             ? severity
             : (b.weight - b.threshold).compareTo(a.weight - a.threshold);
       });
-    final visible = _expanded ? ordered : ordered.take(1).toList();
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
@@ -61,10 +75,7 @@ class _ConcentrationRiskSectionState extends State<_ConcentrationRiskSection> {
             ],
           ),
           const SizedBox(height: AppSpacing.s8),
-          for (var i = 0; i < visible.length; i++) ...[
-            if (i != 0) const SizedBox(height: AppSpacing.s8),
-            _ConcentrationAlertRow(alert: visible[i]),
-          ],
+          _ConcentrationAlertRow(alert: ordered.first),
           const SizedBox(height: AppSpacing.s4),
           Row(
             children: [
@@ -73,22 +84,44 @@ class _ConcentrationRiskSectionState extends State<_ConcentrationRiskSection> {
                   variant: FButtonVariant.ghost,
                   onPress: () => context.push(FinanceRoutes.planRebalance),
                   child: Flexible(
-                    child: Text(l10n.portfolioHubConcentrationRebalanceCta),
+                    child: Text(l10n.portfolioStudioRebalanceAction),
                   ),
                 ),
               ),
               if (alerts.length > 1)
-                Semantics(
-                  expanded: _expanded,
-                  child: AppIconButton(
-                    key: const ValueKey('portfolio-risk-expand'),
-                    icon: _expanded
-                        ? FLucideIcons.chevronUp
-                        : FLucideIcons.chevronDown,
-                    tooltip: _expanded
-                        ? l10n.commonRevealLess
-                        : l10n.commonRevealMore(alerts.length - 1),
-                    onPress: () => setState(() => _expanded = !_expanded),
+                Expanded(
+                  child: FButton(
+                    key: const ValueKey('portfolio-risk-details'),
+                    variant: FButtonVariant.ghost,
+                    onPress: () => _showPortfolioDetailSheet<void>(
+                      context: context,
+                      title: l10n.portfolioHubConcentrationTitle,
+                      subtitle: l10n.portfolioHubConcentrationSummary(
+                        alerts.length,
+                      ),
+                      builder: (_) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (
+                            var index = 0;
+                            index < ordered.length;
+                            index++
+                          ) ...[
+                            if (index > 0)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: AppSpacing.s12,
+                                ),
+                                child: AppGroupedDivider(),
+                              ),
+                            _ConcentrationAlertRow(alert: ordered[index]),
+                          ],
+                        ],
+                      ),
+                    ),
+                    child: Flexible(
+                      child: Text(l10n.portfolioHubAllRisks(alerts.length)),
+                    ),
                   ),
                 ),
             ],

@@ -45,6 +45,14 @@ void main() {
           certainty: RunwayFlowCertainty.estimated,
           kind: RunwayFlowKind.dividend,
         ),
+        for (var index = 1; index <= 6; index++)
+          RunwayScheduledFlow(
+            id: 'scheduled-$index',
+            date: DateTime.utc(2026, 7, 10 + index),
+            amount: Decimal.fromInt(-10),
+            label: 'Scheduled $index',
+            kind: RunwayFlowKind.dividend,
+          ),
       ],
       confidence: MoneyRunwayConfidence.medium,
       dataCompleteness: 1,
@@ -73,13 +81,34 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('2 upcoming items included'), findsOneWidget);
+    expect(find.text('8 upcoming items included'), findsOneWidget);
     expect(find.text('Declared after-tax dividend'), findsNothing);
     expect(find.text('Estimated after-tax dividend'), findsNothing);
 
-    await tester.ensureVisible(find.text('Stress test'));
-    await tester.tap(find.text('Stress test'));
+    final details = find.byKey(const ValueKey('runway-timeline-details'));
+    await tester.ensureVisible(details);
     await tester.pumpAndSettle();
+    final position = tester.getTopLeft(details);
+    expect(find.text('Scheduled 6'), findsNothing);
+    await tester.tap(details);
+    await tester.pumpAndSettle();
+    expect(find.byType(AppSheet), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Scheduled 6'),
+      120,
+      scrollable: find
+          .descendant(
+            of: find.byType(AppSheet),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('Scheduled 6'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('finance-detail-close')));
+    await tester.pumpAndSettle();
+    expect(find.text('Scheduled 6'), findsNothing);
+    expect(tester.getTopLeft(details), position);
+
     await tester.ensureVisible(find.text('Custom stress test'));
     await tester.tap(find.text('Custom stress test'));
     await tester.pumpAndSettle();

@@ -103,6 +103,45 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         AppAdaptiveActionMenu(
           title: l10n.shellMoreActions,
           actions: [
+            if (allocationTree != null)
+              AppAdaptiveAction(
+                icon: FLucideIcons.layers3,
+                title: l10n.portfolioStudioPlanTitle,
+                onPress: () async {
+                  final portfolioId = await _showPortfolioDetailSheet<String>(
+                    context: context,
+                    title: l10n.portfolioStudioPlanTitle,
+                    builder: (sheetContext) => Consumer(
+                      builder: (context, ref, _) {
+                        final plan = ref.watch(universeRebalancePlanProvider);
+                        return _PortfolioPlanStrip(
+                          portfolios:
+                              ref.watch(investmentPortfoliosProvider).value ??
+                              portfolios,
+                          tree:
+                              ref
+                                  .watch(portfolioAllocationTreeProvider)
+                                  .value ??
+                              allocationTree,
+                          actualWeights: {
+                            if (plan != null)
+                              for (final item in plan.portfolios)
+                                item.portfolio.id:
+                                    item.capitalDecision.actualWeight,
+                          },
+                          onPortfolioSelected: (id) =>
+                              Navigator.of(sheetContext).pop(id),
+                        );
+                      },
+                    ),
+                  );
+                  if (context.mounted && portfolioId != null) {
+                    await context.push(
+                      FinanceRoutes.wealthPortfolioStudioFor(portfolioId),
+                    );
+                  }
+                },
+              ),
             if (needsRebalance)
               AppAdaptiveAction(
                 icon: FLucideIcons.triangleAlert,
@@ -152,8 +191,6 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         data: (data) => _PortfolioHubBody(
           data: data,
           portfolios: portfolios,
-          allocationTree: allocationTree,
-          actualPortfolioWeights: actualPortfolioWeights,
           selectedPortfolioId: selectedPortfolioId,
           onPortfolioChanged: (id) {
             ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = id;
@@ -168,16 +205,12 @@ class _PortfolioHubBody extends StatefulWidget {
   const _PortfolioHubBody({
     required this.data,
     required this.portfolios,
-    required this.allocationTree,
-    required this.actualPortfolioWeights,
     required this.selectedPortfolioId,
     required this.onPortfolioChanged,
   });
 
   final PortfolioHubState data;
   final List<InvestmentPortfolio> portfolios;
-  final PortfolioAllocationTree? allocationTree;
-  final Map<String, double> actualPortfolioWeights;
   final String? selectedPortfolioId;
   final ValueChanged<String?> onPortfolioChanged;
 
@@ -186,11 +219,8 @@ class _PortfolioHubBody extends StatefulWidget {
 }
 
 class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
-  bool _showAllPositions = false;
-  bool _showInsights = false;
-
   // First-frame entrance stagger (doc 11 §5) — first-paint rows cascade in;
-  // later builds (reveal-more, data ticks) appear instantly.
+  // later builds (data ticks) appear instantly.
   bool _entranceStagger = true;
   static const int _kStaggerRowCap = 8;
 
@@ -206,15 +236,7 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final data = widget.data;
-    const previewCount = 6;
     final holdings = data.holdings;
-    final previewHoldings = holdings.take(previewCount).toList(growable: false);
-    final overflowHoldings = holdings.length > previewCount
-        ? holdings.skip(previewCount).toList(growable: false)
-        : const <PortfolioHoldingRow>[];
-
-    final visibleHoldings = _showAllPositions ? holdings : previewHoldings;
-    final showReveal = overflowHoldings.isNotEmpty;
 
     final padding = shellTabContentPadding(
       context,
@@ -250,34 +272,13 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
           ),
           _positionsSliver(
             l10n: l10n,
-            holdings: visibleHoldings,
+            holdings: holdings,
             empty: holdings.isEmpty,
-            showReveal: showReveal,
-            overflowCount: overflowHoldings.length,
           ),
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AppDisclosureHeader(
-                    title: l10n.portfolioHubSectionInsights,
-                    expanded: _showInsights,
-                    onToggle: () =>
-                        setState(() => _showInsights = !_showInsights),
-                  ),
-                  if (_showInsights) ...[
-                    if (widget.allocationTree case final tree?)
-                      _PortfolioPlanStrip(
-                        portfolios: widget.portfolios,
-                        tree: tree,
-                        actualWeights: widget.actualPortfolioWeights,
-                      ),
-                    _EngineExposureSection(baseCurrency: data.baseCurrency),
-                  ],
-                ],
-              ),
+              padding: EdgeInsets.only(top: AppSpacing.s16),
+              child: _PortfolioInsightsSection(),
             ),
           ),
         ],
@@ -289,8 +290,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
     required AppLocalizations l10n,
     required List<PortfolioHoldingRow> holdings,
     required bool empty,
-    required bool showReveal,
-    required int overflowCount,
   }) {
     if (empty) {
       return SliverToBoxAdapter(
@@ -349,19 +348,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                 },
               ),
             ),
-            if (showReveal)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.s8),
-                  child: AppRevealControl(
-                    expanded: _showAllPositions,
-                    collapsedLabel: l10n.commonRevealMore(overflowCount),
-                    expandedLabel: l10n.commonRevealLess,
-                    onToggle: () =>
-                        setState(() => _showAllPositions = !_showAllPositions),
-                  ),
-                ),
-              ),
           ],
         );
       },

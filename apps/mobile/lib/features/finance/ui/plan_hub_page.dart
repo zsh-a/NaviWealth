@@ -21,6 +21,7 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/planning_hub_status.dart';
 import '../composition/finance_route_paths.dart';
+import '../shared/ui/finance_detail_sheet.dart';
 
 part 'plan_hub_entries.dart';
 
@@ -143,7 +144,7 @@ List<AdaptiveSummaryTile> _planningSummaryTiles(
     ),
     AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.standard,
-      child: _CollapsiblePlanSection(
+      child: _PlanSection(
         key: const ValueKey('plan-investment-plan-section'),
         title: l10n.planInvestmentPlanTitle,
         entries: investmentPlan,
@@ -152,44 +153,29 @@ List<AdaptiveSummaryTile> _planningSummaryTiles(
   ];
 }
 
-class _AttentionSection extends StatefulWidget {
+class _AttentionSection extends StatelessWidget {
   const _AttentionSection({required this.status, required this.items});
 
   final PlanningHubStatus status;
   final List<_PlanEntrySpec> items;
 
   @override
-  State<_AttentionSection> createState() => _AttentionSectionState();
-}
-
-class _AttentionSectionState extends State<_AttentionSection> {
-  bool _expanded = false;
-
-  @override
-  void didUpdateWidget(covariant _AttentionSection oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.items.length <= 1 && _expanded) _expanded = false;
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final next = widget.items.firstOrNull;
-    final hasAttention = widget.items.isNotEmpty;
+    final next = items.firstOrNull;
+    final hasAttention = items.isNotEmpty;
     final tone = next?.tone ?? AppBadgeTone.neutral;
-    final visibleItems = _expanded
-        ? widget.items
-        : widget.items.take(1).toList(growable: false);
+    final visibleItems = items.take(1);
 
     return AppSection.group(
       title: l10n.planAttentionTitle,
-      trailing: hasAttention || widget.status.isLoading
+      trailing: hasAttention || status.isLoading
           ? AppBadge(
-              label: widget.status.isLoading && !hasAttention
+              label: status.isLoading && !hasAttention
                   ? l10n.commonLoading
-                  : l10n.planAttentionCount(widget.items.length),
+                  : l10n.planAttentionCount(items.length),
               size: AppBadgeSize.compact,
-              tone: widget.status.isLoading && !hasAttention
+              tone: status.isLoading && !hasAttention
                   ? AppBadgeTone.neutral
                   : tone,
               icon: hasAttention ? next!.icon : FLucideIcons.loaderCircle,
@@ -201,29 +187,46 @@ class _AttentionSectionState extends State<_AttentionSection> {
             if (index > 0) const FDivider(),
             _AttentionRow(spec: item),
           ],
-          if (widget.items.length > 1) ...[
+          if (items.length > 1) ...[
             const SizedBox(height: AppSpacing.s6),
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: FButton(
+                key: const ValueKey('plan-attention-details'),
                 variant: FButtonVariant.ghost,
-                onPress: () => setState(() => _expanded = !_expanded),
-                prefix: Icon(
-                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.listChecks,
+                onPress: () async {
+                  final path = await showFinanceDetailSheet<String>(
+                    context: context,
+                    title: l10n.planAttentionTitle,
+                    builder: (sheetContext) => Column(
+                      children: [
+                        for (final (index, item) in items.indexed) ...[
+                          if (index > 0) const FDivider(),
+                          _AttentionRow(
+                            spec: item,
+                            onTap: () =>
+                                Navigator.of(sheetContext).pop(item.path),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                  if (context.mounted && path != null) await context.push(path);
+                },
+                prefix: const Icon(
+                  FLucideIcons.listChecks,
                   size: AppIconSizes.sm,
                 ),
-                child: Text(
-                  _expanded
-                      ? l10n.planAttentionCollapse
-                      : l10n.planAttentionShowAll(widget.items.length - 1),
+                child: Flexible(
+                  child: Text(l10n.financeViewAllItems(items.length)),
                 ),
               ),
             ),
           ],
-        ] else if (widget.status.isLoading)
+        ] else if (status.isLoading)
           const _AttentionSkeleton(),
-        if (widget.status.hasError) ...[
-          if (hasAttention || widget.status.isLoading)
+        if (status.hasError) ...[
+          if (hasAttention || status.isLoading)
             const SizedBox(height: AppSpacing.s10),
           Row(
             children: [
@@ -248,9 +251,10 @@ class _AttentionSectionState extends State<_AttentionSection> {
 }
 
 class _AttentionRow extends StatelessWidget {
-  const _AttentionRow({required this.spec});
+  const _AttentionRow({required this.spec, this.onTap});
 
   final _PlanEntrySpec spec;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +264,7 @@ class _AttentionRow extends StatelessWidget {
       subtitle: spec.subtitle,
       tone: spec.tone,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-      onTap: () => context.push(spec.path),
+      onTap: onTap ?? () => context.push(spec.path),
     );
   }
 }
@@ -305,56 +309,6 @@ class _PlanSection extends StatelessWidget {
           if (index > 0) const FDivider(),
           _PlanRow(spec: entry),
         ],
-      ],
-    );
-  }
-}
-
-class _CollapsiblePlanSection extends StatefulWidget {
-  const _CollapsiblePlanSection({
-    super.key,
-    required this.title,
-    required this.entries,
-  });
-
-  final String title;
-  final List<_PlanEntrySpec> entries;
-
-  @override
-  State<_CollapsiblePlanSection> createState() =>
-      _CollapsiblePlanSectionState();
-}
-
-class _CollapsiblePlanSectionState extends State<_CollapsiblePlanSection> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Semantics(
-          expanded: _expanded,
-          child: AppNavRow(
-            key: const ValueKey('plan-investment-tools-disclosure'),
-            icon: FLucideIcons.layers,
-            title: widget.title,
-            titleMaxLines: 2,
-            subtitleMaxLines: 2,
-            showChevron: false,
-            trailing: Icon(
-              _expanded ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
-              size: AppIconSizes.sm,
-              color: context.theme.colors.mutedForeground,
-            ),
-            onTap: () => setState(() => _expanded = !_expanded),
-          ),
-        ),
-        if (_expanded)
-          for (final entry in widget.entries) ...[
-            const FDivider(),
-            _PlanRow(spec: entry),
-          ],
       ],
     );
   }

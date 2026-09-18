@@ -10,18 +10,19 @@ class _TimelineSection extends ConsumerStatefulWidget {
 }
 
 class _TimelineSectionState extends ConsumerState<_TimelineSection> {
-  static const _initialMonthCount = 6;
-
-  bool _showAll = false;
+  int? _selectedYear;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final months = _showAll
-        ? widget.snapshot.months
-        : widget.snapshot.months.take(_initialMonthCount);
-    final canToggle = widget.snapshot.months.length > _initialMonthCount;
+    final years =
+        widget.snapshot.months.map((m) => m.month.year).toSet().toList()
+          ..sort((a, b) => b.compareTo(a));
+    final year = years.contains(_selectedYear)
+        ? _selectedYear
+        : years.firstOrNull;
+    final months = widget.snapshot.months.where((m) => m.month.year == year);
     return SoftCard.raised(
       padding: const EdgeInsets.all(AppSpacing.s16),
       child: Column(
@@ -29,6 +30,18 @@ class _TimelineSectionState extends ConsumerState<_TimelineSection> {
         children: [
           _SectionHeading(title: l10n.dividendCenterHistoryTimeline),
           const SizedBox(height: AppSpacing.s12),
+          if (years.isNotEmpty) ...[
+            FSelect<int>(
+              key: const ValueKey('dividend-history-year'),
+              label: Text(l10n.financeHistoryYear),
+              items: {for (final value in years) '$value': value},
+              control: FSelectControl<int>.lifted(
+                value: year,
+                onChange: (value) => setState(() => _selectedYear = value),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           for (final month in months) ...[
             Text(formatters.monthYear(month.month), style: context.labelStyle),
             const SizedBox(height: AppSpacing.s8),
@@ -67,18 +80,6 @@ class _TimelineSectionState extends ConsumerState<_TimelineSection> {
               ),
             const SizedBox(height: AppSpacing.s6),
           ],
-          if (canToggle)
-            FButton(
-              variant: FButtonVariant.ghost,
-              onPress: () => setState(() => _showAll = !_showAll),
-              child: Text(
-                _showAll
-                    ? l10n.dividendCenterHistoryShowLess
-                    : l10n.dividendCenterHistoryShowAll(
-                        widget.snapshot.months.length,
-                      ),
-              ),
-            ),
         ],
       ),
     );

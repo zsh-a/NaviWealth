@@ -5,11 +5,13 @@ class _PortfolioPlanStrip extends ConsumerWidget {
     required this.portfolios,
     required this.tree,
     required this.actualWeights,
+    required this.onPortfolioSelected,
   });
 
   final List<InvestmentPortfolio> portfolios;
   final PortfolioAllocationTree tree;
   final Map<String, double> actualWeights;
+  final ValueChanged<String> onPortfolioSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,13 +85,18 @@ class _PortfolioPlanStrip extends ConsumerWidget {
                   child: FButton(
                     variant: FButtonVariant.outline,
                     onPress: () => showInvestmentPortfolioFormSheet(context),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(FLucideIcons.plus),
-                        const SizedBox(height: AppSpacing.s6),
-                        Text(l10n.portfolioCreateTitle),
-                      ],
+                    child: Flexible(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(FLucideIcons.plus),
+                          const SizedBox(height: AppSpacing.s6),
+                          Text(
+                            l10n.portfolioCreateTitle,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -109,9 +116,7 @@ class _PortfolioPlanStrip extends ConsumerWidget {
                 child: AppTappable(
                   onPress: portfolio == null
                       ? null
-                      : () => context.push(
-                          FinanceRoutes.wealthPortfolioStudioFor(portfolio.id),
-                        ),
+                      : () => onPortfolioSelected(portfolio.id),
                   child: SoftCard.raised(
                     padding: const EdgeInsets.all(AppSpacing.s12),
                     child: Column(

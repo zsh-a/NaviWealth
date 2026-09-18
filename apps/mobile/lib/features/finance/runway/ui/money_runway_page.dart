@@ -15,6 +15,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../shared/ui/finance_detail_sheet.dart';
 import '../data/money_runway_providers.dart';
 import '../domain/money_runway.dart';
 
@@ -233,27 +234,17 @@ class _RunwayRiskSummary extends StatelessWidget {
   }
 }
 
-class _RunwayTimeline extends StatefulWidget {
+class _RunwayTimeline extends StatelessWidget {
   const _RunwayTimeline({required this.snapshot, required this.formatters});
 
   final MoneyRunwaySnapshot snapshot;
   final AppFormatters formatters;
 
   @override
-  State<_RunwayTimeline> createState() => _RunwayTimelineState();
-}
-
-class _RunwayTimelineState extends State<_RunwayTimeline> {
-  static const _collapsedCount = 6;
-  bool _expanded = false;
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final flows = widget.snapshot.scheduledFlows;
-    final visibleFlows = _expanded
-        ? flows
-        : flows.take(_collapsedCount).toList(growable: false);
+    final flows = snapshot.scheduledFlows;
+    final visibleFlows = flows.take(6).toList(growable: false);
     final remaining = flows.length - visibleFlows.length;
 
     return AppSection.group(
@@ -272,26 +263,41 @@ class _RunwayTimelineState extends State<_RunwayTimeline> {
           for (final (index, flow) in visibleFlows.indexed) ...[
             if (index > 0) const FDivider(),
             _RunwayFlowRow(
-              snapshot: widget.snapshot,
+              snapshot: snapshot,
               flow: flow,
-              formatters: widget.formatters,
+              formatters: formatters,
             ),
           ],
-          if (remaining > 0 || _expanded) ...[
+          if (remaining > 0) ...[
             const SizedBox(height: AppSpacing.s8),
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: FButton(
+                key: const ValueKey('runway-timeline-details'),
                 variant: FButtonVariant.ghost,
-                onPress: () => setState(() => _expanded = !_expanded),
-                prefix: Icon(
-                  _expanded ? FLucideIcons.chevronUp : FLucideIcons.listChecks,
+                onPress: () => showFinanceDetailSheet<void>(
+                  context: context,
+                  title: l10n.moneyRunwayTimelineTitle,
+                  scrollable: false,
+                  builder: (_) => SizedBox(
+                    height: MediaQuery.sizeOf(context).height * 0.65,
+                    child: ListView.separated(
+                      itemCount: flows.length,
+                      separatorBuilder: (_, _) => const FDivider(),
+                      itemBuilder: (_, index) => _RunwayFlowRow(
+                        snapshot: snapshot,
+                        flow: flows[index],
+                        formatters: formatters,
+                      ),
+                    ),
+                  ),
+                ),
+                prefix: const Icon(
+                  FLucideIcons.listChecks,
                   size: AppIconSizes.sm,
                 ),
-                child: Text(
-                  _expanded
-                      ? l10n.moneyRunwayTimelineLess
-                      : l10n.moneyRunwayTimelineMore(remaining),
+                child: Flexible(
+                  child: Text(l10n.financeViewAllItems(flows.length)),
                 ),
               ),
             ),
@@ -561,7 +567,6 @@ class _ScenarioSection extends ConsumerStatefulWidget {
 class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
   MoneyRunwaySnapshot? _customResult;
   _CustomRunwayScenario? _customInput;
-  bool _open = false;
 
   @override
   Widget build(BuildContext context) {
@@ -570,95 +575,88 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AppDisclosureHeader(
-          title: l10n.moneyRunwayScenariosTitle,
-          expanded: _open,
-          onToggle: () => setState(() => _open = !_open),
-        ),
+        SectionHeader(title: l10n.moneyRunwayScenariosTitle),
         const SizedBox(height: AppSpacing.s8),
-        AnimatedSizeFade(
-          visible: _open,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FButton(
-                variant: FButtonVariant.outline,
-                onPress: _configureCustomScenario,
-                child: Text(l10n.moneyRunwayCustomScenarioAction),
-              ),
-              if (_customResult case final result?) ...[
-                const SizedBox(height: AppSpacing.s8),
-                SoftCard.raised(
-                  padding: const EdgeInsets.all(AppSpacing.s12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: _configureCustomScenario,
+              child: Text(l10n.moneyRunwayCustomScenarioAction),
+            ),
+            if (_customResult case final result?) ...[
+              const SizedBox(height: AppSpacing.s8),
+              SoftCard.raised(
+                padding: const EdgeInsets.all(AppSpacing.s12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.moneyRunwayCustomResult,
+                            style: context.labelStyle,
+                          ),
+                        ),
+                        Text(
+                          formatter.compactCurrency(
+                            result.minimumExpectedBalance,
+                            code: result.currency,
+                          ),
+                          style: TypographyTokens.numericBodyStrong,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(
+                      _statusCopy(l10n, result.status).$2,
+                      style: context.captionStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s6),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FButton(
+                          variant: FButtonVariant.outline,
+                          onPress: () => _createRunwayAction(
+                            context,
+                            ref,
+                            l10n,
+                            result,
+                            scenario: _customInput?.toEvidenceJson(),
+                          ),
+                          child: Flexible(
                             child: Text(
-                              l10n.moneyRunwayCustomResult,
-                              style: context.labelStyle,
+                              l10n.moneyRunwayCreateAction,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          Text(
-                            formatter.compactCurrency(
-                              result.minimumExpectedBalance,
-                              code: result.currency,
-                            ),
-                            style: TypographyTokens.numericBodyStrong,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        _statusCopy(l10n, result.status).$2,
-                        style: context.captionStyle,
-                      ),
-                      const SizedBox(height: AppSpacing.s6),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          FButton(
-                            variant: FButtonVariant.outline,
-                            onPress: () => _createRunwayAction(
-                              context,
-                              ref,
-                              l10n,
-                              result,
-                              scenario: _customInput?.toEvidenceJson(),
-                            ),
-                            child: Flexible(
-                              child: Text(
-                                l10n.moneyRunwayCreateAction,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                        ),
+                        const SizedBox(height: AppSpacing.s6),
+                        FButton(
+                          variant: FButtonVariant.ghost,
+                          onPress: () => setState(() {
+                            _customResult = null;
+                            _customInput = null;
+                          }),
+                          child: Flexible(
+                            child: Text(
+                              l10n.moneyRunwayCustomReset,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.s6),
-                          FButton(
-                            variant: FButtonVariant.ghost,
-                            onPress: () => setState(() {
-                              _customResult = null;
-                              _customInput = null;
-                            }),
-                            child: Flexible(
-                              child: Text(
-                                l10n.moneyRunwayCustomReset,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ],
     );

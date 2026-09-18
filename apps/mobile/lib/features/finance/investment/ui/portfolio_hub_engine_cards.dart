@@ -1,51 +1,42 @@
 part of 'portfolio_hub_page.dart';
 
-class _EngineExposureSection extends ConsumerWidget {
-  const _EngineExposureSection({required this.baseCurrency});
-
-  final String baseCurrency;
+class _PortfolioInsightsSection extends ConsumerWidget {
+  const _PortfolioInsightsSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final insightsAsync = ref.watch(portfolioHubInsightsProvider);
-    return insightsAsync.whenOrLoading(
-      context: context,
-      skipLoadingOnReload: true,
-      onRetry: () => ref.read(portfolioHubInsightsProvider.notifier).refresh(),
-      data: (insights) {
-        final cards = [
-          _RealizedPnlCard(insights: insights, baseCurrency: baseCurrency),
-          _DividendForecastCard(
-            forecast: insights.dividendForecast,
-            baseCurrency: baseCurrency,
-          ),
-          _EventTimelineCard(
-            dividendEvents: insights.dividendEvents,
-            corporateActions: insights.corporateActions,
-          ),
-        ];
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.portfolioHubEnginesTitle,
-              style: context.theme.typography.body.lg,
-            ),
-            const SizedBox(height: AppSpacing.s10),
-            LayoutBuilder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _PortfolioSectionTitle(title: l10n.portfolioHubIncomeEventsTitle),
+        insightsAsync.whenOrLoading(
+          context: context,
+          skipLoadingOnReload: true,
+          onRetry: () =>
+              ref.read(portfolioHubInsightsProvider.notifier).refresh(),
+          data: (insights) {
+            final cards = [
+              _RealizedPnlCard(insights: insights),
+              _DividendForecastCard(forecast: insights.dividendForecast),
+              _EventTimelineCard(
+                dividendEvents: insights.dividendEvents,
+                corporateActions: insights.corporateActions,
+              ),
+            ];
+            return LayoutBuilder(
               builder: (context, constraints) {
-                if (constraints.maxWidth >= 860) {
-                  return IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        for (var i = 0; i < cards.length; i++) ...[
-                          if (i != 0) const SizedBox(width: AppSpacing.s12),
-                          Expanded(child: cards[i]),
-                        ],
+                if (constraints.maxWidth >=
+                    1000 * MediaQuery.textScalerOf(context).scale(1)) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < cards.length; i++) ...[
+                        if (i != 0) const SizedBox(width: AppSpacing.s12),
+                        Expanded(child: cards[i]),
                       ],
-                    ),
+                    ],
                   );
                 }
                 return Column(
@@ -58,52 +49,74 @@ class _EngineExposureSection extends ConsumerWidget {
                   ],
                 );
               },
-            ),
-          ],
-        );
-      },
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
 class _RealizedPnlCard extends ConsumerWidget {
-  const _RealizedPnlCard({required this.insights, required this.baseCurrency});
+  const _RealizedPnlCard({required this.insights});
 
   final PortfolioHubInsightsState insights;
-  final String baseCurrency;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final rows = insights.realizedPnl.take(3).toList();
-    final total = _sum(insights.realizedPnl.map((row) => row.gain));
+    final rows = [...insights.realizedPnl]
+      ..sort((a, b) => b.realizedAt.compareTo(a.realizedAt));
+    // Realized gains are denominated in each lot's currency, not the hub base.
+    final totals = <String, Decimal>{};
+    for (final row in rows) {
+      totals.update(
+        row.currency,
+        (value) => value + row.gain,
+        ifAbsent: () => row.gain,
+      );
+    }
+    final currencies = totals.keys.toList()..sort();
     return _EngineCard(
       title: l10n.portfolioHubRealizedPnlTitle,
       trailing: l10n.portfolioHubRealizedPnlCount(insights.realizedPnl.length),
+      onPress: rows.isEmpty
+          ? null
+          : () => _showPortfolioDetailSheet<void>(
+              context: context,
+              title: l10n.portfolioHubRealizedPnlTitle,
+              builder: (_) => _InsightDetailList(
+                children: [
+                  for (final row in rows)
+                    _TwoLineAmountRow(
+                      title: _assetCode(row.assetId),
+                      subtitle:
+                          '${formatters.date(row.realizedAt)} · ${l10n.portfolioHubHoldingPeriod(_formatHoldingPeriod(context, row.holdingPeriod))}',
+                      amount: formatters.signedMoney(
+                        row.gain,
+                        unit: row.currency,
+                      ),
+                    ),
+                ],
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AnimatedMoneyText(
-            amount: total.toDouble(),
-            currencyCode: baseCurrency,
-            showSign: true,
-            style: context.strongTitleStyle,
-          ),
-          const SizedBox(height: AppSpacing.s10),
           if (rows.isEmpty)
             _MutedText(l10n.portfolioHubRealizedPnlEmpty)
           else
-            for (final row in rows) ...[
-              _TwoLineAmountRow(
-                title: _assetCode(row.assetId),
-                subtitle: l10n.portfolioHubHoldingPeriod(
-                  _formatHoldingPeriod(context, row.holdingPeriod),
-                ),
-                amount: formatters.signedMoney(row.gain, unit: row.currency),
+            for (final currency in currencies)
+              AnimatedMoneyText(
+                amount: totals[currency]!.toDouble(),
+                currencyCode: currency,
+                symbolStyle: currencies.length > 1
+                    ? MoneySymbolStyle.isoCode
+                    : MoneySymbolStyle.symbol,
+                showSign: true,
+                style: context.strongTitleStyle,
               ),
-              if (row != rows.last) const SizedBox(height: AppSpacing.s8),
-            ],
         ],
       ),
     );
@@ -111,13 +124,9 @@ class _RealizedPnlCard extends ConsumerWidget {
 }
 
 class _DividendForecastCard extends ConsumerWidget {
-  const _DividendForecastCard({
-    required this.forecast,
-    required this.baseCurrency,
-  });
+  const _DividendForecastCard({required this.forecast});
 
   final ProjectedDividend forecast;
-  final String baseCurrency;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -125,35 +134,51 @@ class _DividendForecastCard extends ConsumerWidget {
     final formatters = context.formatters(ref);
     final schedule = forecast.perAsset.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
-    final rows = schedule.take(3).toList();
+    final currency = forecast.currency.isEmpty
+        ? ref.watch(holdingBaseCurrencyProvider)
+        : forecast.currency;
     return _EngineCard(
       title: l10n.portfolioHubDividendForecastTitle,
       trailing: _strategyLabel(l10n, forecast.strategy),
-      onPress: () => context.push(FinanceRoutes.cashflowDividends),
+      onPress: () async {
+        final openCenter = await _showPortfolioDetailSheet<bool>(
+          context: context,
+          title: l10n.portfolioHubDividendForecastTitle,
+          subtitle: _confidenceLabel(l10n, forecast.confidence),
+          footer: Builder(
+            builder: (sheetContext) => FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => Navigator.of(sheetContext).pop(true),
+              child: Text(l10n.dividendCenterTitle),
+            ),
+          ),
+          builder: (_) => schedule.isEmpty
+              ? _MutedText(l10n.portfolioHubDividendForecastEmpty)
+              : _InsightDetailList(
+                  children: [
+                    for (final row in schedule)
+                      _TwoLineAmountRow(
+                        title: formatters.date(row.key),
+                        subtitle: l10n.portfolioHubDividendForecastEvent,
+                        amount: formatters.currency(row.value, code: currency),
+                      ),
+                  ],
+                ),
+        );
+        if (context.mounted && openCenter == true) {
+          await context.push(FinanceRoutes.cashflowDividends);
+        }
+      },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AnimatedMoneyText(
             amount: forecast.total.toDouble(),
-            currencyCode: forecast.currency.isEmpty
-                ? baseCurrency
-                : forecast.currency,
+            currencyCode: currency,
             style: context.strongTitleStyle,
           ),
           const SizedBox(height: AppSpacing.s4),
           _MutedText(_confidenceLabel(l10n, forecast.confidence)),
-          const SizedBox(height: AppSpacing.s10),
-          if (rows.isEmpty)
-            _MutedText(l10n.portfolioHubDividendForecastEmpty)
-          else
-            for (final row in rows) ...[
-              _TwoLineAmountRow(
-                title: formatters.date(row.key),
-                subtitle: l10n.portfolioHubDividendForecastEvent,
-                amount: formatters.currency(row.value, code: forecast.currency),
-              ),
-              if (row != rows.last) const SizedBox(height: AppSpacing.s8),
-            ],
         ],
       ),
     );
@@ -180,7 +205,7 @@ class _EventTimelineCard extends ConsumerWidget {
           title: event.assetLabel,
           subtitle: l10n.corpActionTypeCashDividend,
           detail: formatters.currency(
-            event.grossInBase,
+            event.event.originalAmount,
             code: event.event.currency,
           ),
         ),
@@ -192,10 +217,27 @@ class _EventTimelineCard extends ConsumerWidget {
           detail: _corporateActionDetail(formatters, action),
         ),
     ]..sort((a, b) => b.date.compareTo(a.date));
-    final visibleRows = rows.take(3).toList();
+    final visibleRows = rows.take(1).toList();
     return _EngineCard(
       title: l10n.portfolioHubEventTimelineTitle,
       trailing: l10n.portfolioHubEventTimelineCount(rows.length),
+      onPress: rows.isEmpty
+          ? null
+          : () => _showPortfolioDetailSheet<void>(
+              context: context,
+              title: l10n.portfolioHubEventTimelineTitle,
+              builder: (_) => _InsightDetailList(
+                children: [
+                  for (final row in rows)
+                    _TwoLineAmountRow(
+                      title: row.title,
+                      subtitle:
+                          '${formatters.date(row.date)} · ${row.subtitle}',
+                      amount: row.detail,
+                    ),
+                ],
+              ),
+            ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -256,7 +298,14 @@ class _EngineCard extends StatelessWidget {
             children: [
               Expanded(child: Text(title, style: context.labelStyle)),
               const SizedBox(width: AppSpacing.s8),
-              Text(trailing, style: context.captionStyle),
+              Flexible(
+                fit: FlexFit.tight,
+                child: Text(
+                  trailing,
+                  style: context.captionStyle,
+                  textAlign: TextAlign.end,
+                ),
+              ),
               if (onPress != null) ...[
                 const SizedBox(width: AppSpacing.s4),
                 Icon(
@@ -288,21 +337,55 @@ class _TwoLineAmountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _TitleSubtitle(title: title, subtitle: subtitle),
-        ),
-        const SizedBox(width: AppSpacing.s12),
-        Text(
-          amount,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: context.captionLabelStyle,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final amountText = Text(amount, style: context.captionLabelStyle);
+        if (constraints.maxWidth < 400 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: context.labelStyle),
+              const SizedBox(height: AppSpacing.s4),
+              Text(subtitle, style: context.captionStyle),
+              const SizedBox(height: AppSpacing.s4),
+              amountText,
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(
+              child: _TitleSubtitle(title: title, subtitle: subtitle),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Flexible(child: amountText),
+          ],
+        );
+      },
     );
   }
+}
+
+class _InsightDetailList extends StatelessWidget {
+  const _InsightDetailList({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (var index = 0; index < children.length; index++) ...[
+        if (index > 0)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
+            child: AppGroupedDivider(),
+          ),
+        children[index],
+      ],
+    ],
+  );
 }
 
 class _MutedText extends StatelessWidget {

@@ -10,6 +10,7 @@ import '../../../../core/format/formatters.dart';
 import '../../../../core/format/providers.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../shared/ui/finance_detail_sheet.dart';
 import '../data/providers.dart';
 import '../domain/liability_summary.dart';
 import 'liability_l10n.dart';
@@ -255,10 +256,15 @@ class _SummaryRow extends StatelessWidget {
 }
 
 class _AmortizationTable extends ConsumerStatefulWidget {
-  const _AmortizationTable({required this.liability, required this.schedule});
+  const _AmortizationTable({
+    required this.liability,
+    required this.schedule,
+    this.fullSchedule = false,
+  });
 
   final Liability liability;
   final List<AmortizationEntry> schedule;
+  final bool fullSchedule;
 
   @override
   ConsumerState<_AmortizationTable> createState() => _AmortizationTableState();
@@ -267,11 +273,12 @@ class _AmortizationTable extends ConsumerStatefulWidget {
 class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
   static const _compactPreviewCount = 6;
 
-  bool _showAll = false;
+  int? _selectedYear;
   int? _pendingPeriod;
 
   @override
   Widget build(BuildContext context) {
+    if (widget.fullSchedule) return _buildCompact(context);
     return LayoutBuilder(
       builder: (context, constraints) =>
           Breakpoints.isMobile(constraints.maxWidth)
@@ -283,14 +290,51 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
   Widget _buildCompact(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final visibleSchedule = _showAll
-        ? widget.schedule
-        : widget.schedule.take(_compactPreviewCount).toList(growable: false);
-    final hiddenCount = widget.schedule.length - visibleSchedule.length;
+    final years =
+        widget.schedule.map((row) => row.dueDate.year).toSet().toList()..sort();
+    final nextUnpaid = widget.schedule
+        .where((row) => row.paidAt == null)
+        .firstOrNull;
+    // Keep the last paid period next to upcoming periods as the loan ages.
+    final nextIndex = nextUnpaid == null
+        ? widget.schedule.length
+        : widget.schedule.indexOf(nextUnpaid);
+    final previewStart = (nextIndex - 1).clamp(
+      0,
+      (widget.schedule.length - _compactPreviewCount).clamp(
+        0,
+        widget.schedule.length,
+      ),
+    );
+    final year = years.contains(_selectedYear)
+        ? _selectedYear
+        : nextUnpaid?.dueDate.year ?? years.firstOrNull;
+    final visibleSchedule = widget.fullSchedule
+        ? widget.schedule.where((row) => row.dueDate.year == year).toList()
+        : widget.schedule
+              .skip(previewStart)
+              .take(_compactPreviewCount)
+              .toList(growable: false);
     return Column(
       children: [
+        if (widget.fullSchedule && years.isNotEmpty) ...[
+          FSelect<int>(
+            key: const ValueKey('liability-schedule-year'),
+            label: Text(l10n.financeHistoryYear),
+            items: {for (final value in years) '$value': value},
+            control: FSelectControl<int>.lifted(
+              value: year,
+              onChange: (value) => setState(() => _selectedYear = value),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+        ],
         SoftCard.raised(
-          key: const Key('liability-schedule-compact'),
+          key: ValueKey(
+            widget.fullSchedule
+                ? 'liability-schedule-full'
+                : 'liability-schedule-compact',
+          ),
           child: Column(
             children: [
               for (var i = 0; i < visibleSchedule.length; i++) ...[
@@ -318,13 +362,45 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
             ],
           ),
         ),
-        if (widget.schedule.length > _compactPreviewCount) ...[
+        if (!widget.fullSchedule &&
+            widget.schedule.length > _compactPreviewCount) ...[
           const SizedBox(height: AppSpacing.s8),
-          AppRevealControl(
-            expanded: _showAll,
-            collapsedLabel: l10n.commonRevealMore(hiddenCount),
-            expandedLabel: l10n.commonRevealLess,
-            onToggle: () => setState(() => _showAll = !_showAll),
+          FButton(
+            key: const ValueKey('liability-schedule-details'),
+            variant: FButtonVariant.ghost,
+            onPress: () => showFinanceDetailSheet<void>(
+              context: context,
+              title: l10n.liabilityScheduleHeading,
+              builder: (_) => Consumer(
+                builder: (context, ref, _) => ref
+                    .watch(
+                      amortizationScheduleStreamProvider(widget.liability.id),
+                    )
+                    .when(
+                      loading: () => const SkeletonBox(height: 96),
+                      error: (error, stack) => kDefaultError(
+                        context,
+                        error,
+                        stack,
+                        onRetry: () => ref.invalidate(
+                          amortizationScheduleStreamProvider(
+                            widget.liability.id,
+                          ),
+                        ),
+                      ),
+                      data: (schedule) => _AmortizationTable(
+                        liability: widget.liability,
+                        schedule: schedule,
+                        fullSchedule: true,
+                      ),
+                    ),
+              ),
+            ),
+            suffix: const Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+            ),
+            child: Flexible(child: Text(l10n.liabilityScheduleViewAll)),
           ),
         ],
       ],

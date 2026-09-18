@@ -10,6 +10,17 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String financeViewAllItems(int count) {
+    return 'View all ($count)';
+  }
+
+  @override
+  String get financeHistoryYear => 'Year';
+
+  @override
+  String get liabilityScheduleViewAll => 'Full repayment schedule';
+
+  @override
   String get watchlistSearchHint => 'Search symbol or name';
 
   @override
@@ -1972,6 +1983,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get portfolioHubHoldingReturnLabel => 'Holding return';
+
+  @override
+  String get portfolioHubIncomeEventsTitle => 'Returns & events';
+
+  @override
+  String portfolioHubAllRisks(int count) {
+    return 'All risks ($count)';
+  }
 
   @override
   String get portfolioHubScopedXirrUnavailable =>

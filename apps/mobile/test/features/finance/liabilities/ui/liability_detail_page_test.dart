@@ -42,38 +42,38 @@ SyncMeta _meta() => SyncMeta(
   hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'device-1'),
 );
 
-Liability _liability() => Liability(
+Liability _liability({int count = 8}) => Liability(
   id: 'liability-1',
   type: LiabilityType.mortgage,
   name: 'Home loan',
-  principal: _d('800000'),
+  principal: Decimal.fromInt(count * 100000),
   interestRate: _d('0.04'),
   currency: 'CNY',
-  termMonths: 8,
+  termMonths: count,
   startDate: DateTime.utc(2026, 1, 1),
   sync: _meta(),
 );
 
-List<AmortizationEntry> _schedule() => [
-  for (var index = 1; index <= 8; index++)
+List<AmortizationEntry> _schedule({int count = 8}) => [
+  for (var index = 1; index <= count; index++)
     AmortizationEntry(
       id: 'period-$index',
       liabilityId: 'liability-1',
       periodIndex: index,
       dueDate: DateTime.utc(2026, index + 1, 1),
       principalPayment: _d('100000'),
-      interestPayment: _d('${9000 - index * 500}'),
-      remainingBalance: _d('${800000 - index * 100000}'),
+      interestPayment: Decimal.fromInt((count - index + 1) * 500),
+      remainingBalance: Decimal.fromInt((count - index) * 100000),
       paidAt: index == 1 ? DateTime.utc(2026, 2, 1) : null,
       sync: _meta(),
     ),
 ];
 
-Future<Widget> _wrapDetailPage() async {
+Future<Widget> _wrapDetailPage({int count = 8}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final preferences = await SharedPreferences.getInstance();
-  final liability = _liability();
-  final schedule = _schedule();
+  final liability = _liability(count: count);
+  final schedule = _schedule(count: count);
   final summary = LiabilitySummary.fromSchedule(
     liability: liability,
     schedule: schedule,
@@ -99,95 +99,128 @@ Future<Widget> _wrapDetailPage() async {
 }
 
 void main() {
-  testWidgets('records the selected payment date instead of repository clock', (
-    tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(360, 1100));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final outbox = InMemoryOutboxStore();
-    final stamper = makeStubStamper();
-    final journalRepo = JournalEntryRepository(
-      db: db,
-      outbox: outbox,
-      stamper: stamper,
-      fxRateSource: const _IdentityFx(),
-      baseCurrency: 'CNY',
-    );
-    final repo = LiabilityRepository(
-      db: db,
-      outbox: outbox,
-      stamper: stamper,
-      journalEntryRepo: journalRepo,
-      clock: () => DateTime.utc(2000, 1, 1),
-    );
-    final liability = await repo.create(
-      type: LiabilityType.mortgage,
-      name: 'Home loan',
-      principal: _d('800000'),
-      interestRate: _d('0.04'),
-      currency: 'CNY',
-      termMonths: 8,
-      startDate: DateTime.utc(2026, 1, 1),
-      accountId: 'payer-account',
-    );
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final preferences = await SharedPreferences.getInstance();
-    final today = DateTime.now();
-    final selectedDate = DateTime(
-      today.year,
-      today.month,
-      today.day,
-    ).subtract(const Duration(days: 3));
+  for (final fullSchedule in [false, true]) {
+    testWidgets(
+      'records payment date ${fullSchedule ? 'from full schedule' : 'from overview'} and refreshes rows',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(360, 1100));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final outbox = InMemoryOutboxStore();
+        final stamper = makeStubStamper();
+        final journalRepo = JournalEntryRepository(
+          db: db,
+          outbox: outbox,
+          stamper: stamper,
+          fxRateSource: const _IdentityFx(),
+          baseCurrency: 'CNY',
+        );
+        final repo = LiabilityRepository(
+          db: db,
+          outbox: outbox,
+          stamper: stamper,
+          journalEntryRepo: journalRepo,
+          clock: () => DateTime.utc(2000, 1, 1),
+        );
+        final liability = await repo.create(
+          type: LiabilityType.mortgage,
+          name: 'Home loan',
+          principal: _d('800000'),
+          interestRate: _d('0.04'),
+          currency: 'CNY',
+          termMonths: 8,
+          startDate: DateTime.utc(2026, 1, 1),
+          accountId: 'payer-account',
+        );
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        final preferences = await SharedPreferences.getInstance();
+        final today = DateTime.now();
+        final selectedDate = DateTime(
+          today.year,
+          today.month,
+          today.day,
+        ).subtract(const Duration(days: 3));
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          sharedPreferencesProvider.overrideWithValue(preferences),
-          liabilityRepositoryProvider.overrideWith((_) async => repo),
-        ],
-        child: MaterialApp(
-          locale: const Locale('en', 'US'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: (context, child) => AppMessenger.init(
-            child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(preferences),
+              liabilityRepositoryProvider.overrideWith((_) async => repo),
+            ],
+            child: MaterialApp(
+              locale: const Locale('en', 'US'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              builder: (context, child) => AppMessenger.init(
+                child: FTheme(
+                  data: FTheme.neutral.light.desktop,
+                  child: child!,
+                ),
+              ),
+              home: LiabilityDetailPage(id: liability.id),
+            ),
           ),
-          home: LiabilityDetailPage(id: liability.id),
-        ),
-      ),
+        );
+        await tester.pumpAndSettle();
+
+        if (fullSchedule) {
+          final details = find.byKey(
+            const ValueKey('liability-schedule-details'),
+          );
+          await tester.ensureVisible(details);
+          await tester.pumpAndSettle();
+          await tester.tap(details);
+          await tester.pumpAndSettle();
+        }
+        final markPaid = fullSchedule
+            ? find
+                  .descendant(
+                    of: find.byType(AppSheet),
+                    matching: find.text('Mark paid'),
+                  )
+                  .first
+            : find.text('Mark paid').first;
+        await tester.ensureVisible(markPaid);
+        await tester.pumpAndSettle();
+        await tester.tap(markPaid);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Record period 1 payment'), findsOneWidget);
+        final paymentDateField = find.descendant(
+          of: find.byKey(const Key('liability-payment-date')),
+          matching: find.byWidgetPredicate((widget) => widget is FDateField),
+        );
+        expect(paymentDateField, findsOneWidget);
+        expect(find.textContaining('Payment amount ·'), findsOneWidget);
+        final dateControl =
+            tester.widget<FDateField>(paymentDateField).selectionControl
+                as FDateSelectionManagedControl<DateTime?>;
+        dateControl.onChange?.call(selectedDate);
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('liability-payment-submit')));
+        await tester.pumpAndSettle();
+
+        final paidAt = (await repo.scheduleFor(liability.id)).first.paidAt;
+        expect(paidAt, isNotNull);
+        expect(DateUtils.isSameDay(paidAt, selectedDate), isTrue);
+        expect(paidAt?.year, isNot(2000));
+        expect(find.text('Saved'), findsOneWidget);
+        if (fullSchedule) {
+          expect(
+            find.descendant(
+              of: find.byType(AppSheet),
+              matching: find.text('Undo'),
+            ),
+            findsOneWidget,
+          );
+          await tester.tap(find.byKey(const ValueKey('finance-detail-close')));
+          await tester.pumpAndSettle();
+        }
+        expect(tester.takeException(), isNull);
+      },
     );
-    await tester.pumpAndSettle();
-
-    final markPaid = find.text('Mark paid').first;
-    await tester.ensureVisible(markPaid);
-    await tester.pumpAndSettle();
-    await tester.tap(markPaid);
-    await tester.pumpAndSettle();
-
-    expect(find.text('Record period 1 payment'), findsOneWidget);
-    final paymentDateField = find.descendant(
-      of: find.byKey(const Key('liability-payment-date')),
-      matching: find.byWidgetPredicate((widget) => widget is FDateField),
-    );
-    expect(paymentDateField, findsOneWidget);
-    expect(find.textContaining('Payment amount ·'), findsOneWidget);
-    final dateControl =
-        tester.widget<FDateField>(paymentDateField).selectionControl
-            as FDateSelectionManagedControl<DateTime?>;
-    dateControl.onChange?.call(selectedDate);
-    await tester.pump();
-    await tester.tap(find.byKey(const Key('liability-payment-submit')));
-    await tester.pumpAndSettle();
-
-    final paidAt = (await repo.scheduleFor(liability.id)).first.paidAt;
-    expect(paidAt, isNotNull);
-    expect(DateUtils.isSameDay(paidAt, selectedDate), isTrue);
-    expect(paidAt?.year, isNot(2000));
-    expect(find.text('Saved'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
+  }
 
   testWidgets(
     'undoing a paid period restores it and removes its ledger entry',
@@ -264,7 +297,7 @@ void main() {
     },
   );
 
-  testWidgets('uses a progressive schedule list on narrow screens', (
+  testWidgets('opens full schedule without expanding the narrow overview', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(360, 1000));
@@ -283,15 +316,25 @@ void main() {
     expect(period(1), findsOneWidget);
     expect(period(6), findsOneWidget);
     expect(period(7), findsNothing);
-    expect(find.text('More · 2'), findsOneWidget);
+    expect(find.byType(AppRevealControl), findsNothing);
 
-    await tester.ensureVisible(find.text('More · 2'));
+    final details = find.byKey(const ValueKey('liability-schedule-details'));
+    await tester.ensureVisible(details);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('More · 2'));
+    final position = tester.getTopLeft(details);
+    await tester.tap(details);
     await tester.pumpAndSettle();
 
+    expect(find.byType(AppSheet), findsOneWidget);
     expect(period(8), findsOneWidget);
-    expect(find.text('Show less'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('liability-schedule-year')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('finance-detail-close')));
+    await tester.pumpAndSettle();
+    expect(period(8), findsNothing);
+    expect(tester.getTopLeft(details), position);
     expect(tester.takeException(), isNull);
   });
 
@@ -307,6 +350,41 @@ void main() {
     expect(find.byKey(const Key('liability-schedule-table')), findsOneWidget);
     expect(find.byKey(const Key('liability-schedule-compact')), findsNothing);
     expect(find.text('Mark paid'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('full schedule switches years without expanding all periods', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 1000));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(await _wrapDetailPage(count: 24));
+    await tester.pumpAndSettle();
+    final details = find.byKey(const ValueKey('liability-schedule-details'));
+    await tester.ensureVisible(details);
+    await tester.pumpAndSettle();
+    await tester.tap(details);
+    await tester.pumpAndSettle();
+    final selector = find.byKey(const ValueKey('liability-schedule-year'));
+    await tester.tap(selector);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2027').last);
+    await tester.pumpAndSettle();
+    final sheet = find.byType(AppSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining('#12 ·')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining('#1 ·')),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining('#24 ·')),
+      findsNothing,
+    );
+    await tester.tap(find.byKey(const ValueKey('finance-detail-close')));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 }

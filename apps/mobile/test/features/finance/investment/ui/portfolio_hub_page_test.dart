@@ -19,6 +19,7 @@ import 'package:naviwealth/features/finance/investment/data/investment_portfolio
 import 'package:naviwealth/features/finance/investment/data/portfolio_trend_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
+import 'package:naviwealth/features/finance/investment/domain/dividend_forecast.dart';
 import 'package:naviwealth/features/finance/investment/domain/fx_pnl/fx_pnl_breakdown.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/investment_portfolio.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
@@ -103,6 +104,25 @@ void main() {
         archived: false,
         sync: _meta(),
       );
+      const root = AllocationNode(
+        id: 'plan',
+        parentId: null,
+        type: AllocationNodeType.plan,
+        name: 'Investment plan',
+        targetWeightBps: 10000,
+        driftBandBps: 0,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+      );
+      const portfolioNode = AllocationNode(
+        id: 'portfolio:long-term',
+        parentId: 'plan',
+        type: AllocationNodeType.portfolio,
+        name: 'Long term',
+        referenceId: 'long-term',
+        targetWeightBps: 10000,
+        driftBandBps: 500,
+        transferPolicy: GroupTransferPolicy.bidirectional,
+      );
       final state = PortfolioHubState(
         holdings: const [],
         lots: const [],
@@ -143,6 +163,22 @@ void main() {
             ),
             investmentPortfoliosProvider.overrideWith(
               (_) => Stream.value([portfolio]),
+            ),
+            portfolioHubInsightsProvider.overrideWith(
+              _EmptyPortfolioInsightsNotifier.new,
+            ),
+            portfolioAllocationTreeProvider.overrideWithValue(
+              AsyncData(
+                PortfolioAllocationTree(
+                  root: root,
+                  nodes: [root, portfolioNode],
+                  attachments: [],
+                  inclusions: [],
+                ),
+              ),
+            ),
+            portfolioMonthlyTrendSummariesProvider.overrideWith(
+              (_) async => {},
             ),
             selectedInvestmentPortfolioIdProvider.overrideWith(
               (_) => portfolio.id,
@@ -185,7 +221,27 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('portfolio-manage')));
       await tester.pumpAndSettle();
       expect(find.text('Selected portfolio studio'), findsOneWidget);
+      router.pop();
+      await tester.pumpAndSettle();
+      container.read(selectedInvestmentPortfolioIdProvider.notifier).state =
+          null;
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.bySemanticsLabel(AppLocalizationsEn().shellMoreActions),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(AppLocalizationsEn().portfolioStudioPlanTitle),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AppSheet), findsOneWidget);
+      await tester.tap(find.text('Long term'));
+      await tester.pumpAndSettle();
+      expect(find.text('Selected portfolio studio'), findsOneWidget);
+      expect(find.byType(AppSheet), findsNothing);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 1));
     },
   );
 
@@ -647,6 +703,14 @@ void main() {
             marketValue: '100',
             costBasis: '80',
           ),
+          for (var index = 1; index < 8; index++)
+            _holding(
+              assetId: 'us:ASSET$index',
+              type: AssetType.stock,
+              currency: 'USD',
+              marketValue: '100',
+              costBasis: '80',
+            ),
         ],
         lots: [
           _lot(
@@ -684,6 +748,9 @@ void main() {
             portfolioHubProvider.overrideWith(
               () => _StaticPortfolioHubNotifier(state),
             ),
+            portfolioHubInsightsProvider.overrideWith(
+              _EmptyPortfolioInsightsNotifier.new,
+            ),
           ],
           child: FTheme(
             data: FTheme.neutral.light.desktop,
@@ -709,10 +776,23 @@ void main() {
       // Positions use a virtualized DecoratedSliver group surface.
       expect(find.byType(DecoratedSliver), findsOneWidget);
       expect(find.text('us:AAPL'), findsWidgets);
+      await tester.scrollUntilVisible(
+        find.text('us:ASSET7'),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(find.text('us:ASSET7'), findsOneWidget);
       expect(find.text('Cost basis'), findsOneWidget);
       // No concentration breaches → review surface stays hidden.
       expect(find.text('Concentration risk'), findsNothing);
-      expect(find.text('Insights'), findsOneWidget);
+      expect(find.text('Returns & events'), findsOneWidget);
+      expect(find.byType(AppDisclosureHeader), findsNothing);
+      expect(find.byType(AppRevealControl), findsNothing);
       expect(find.text('Allocation'), findsNothing);
     },
   );
@@ -772,6 +852,9 @@ void main() {
           portfolioHubProvider.overrideWith(
             () => _StaticPortfolioHubNotifier(state),
           ),
+          portfolioHubInsightsProvider.overrideWith(
+            _EmptyPortfolioInsightsNotifier.new,
+          ),
           concentrationAlertsProvider.overrideWith(
             (ref) async => [
               ConcentrationAlert(
@@ -813,15 +896,18 @@ void main() {
     expect(find.text('Concentration risk'), findsOneWidget);
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.textContaining('42.0%'), findsOneWidget);
-    expect(find.text('Review rebalance plan'), findsOneWidget);
+    expect(find.text('Check rebalance'), findsOneWidget);
     expect(find.text('EUR'), findsNothing);
     expect(tester.getTopLeft(find.text('us:AAPL').first).dy, lessThan(760));
-    await tester.tap(find.byKey(const ValueKey('portfolio-risk-expand')));
+    final holdingPosition = tester.getTopLeft(find.text('us:AAPL').first);
+    await tester.tap(find.byKey(const ValueKey('portfolio-risk-details')));
     await tester.pumpAndSettle();
+    expect(find.byType(AppSheet), findsOneWidget);
     expect(find.text('EUR'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('portfolio-risk-expand')));
+    await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
     await tester.pumpAndSettle();
     expect(find.text('EUR'), findsNothing);
+    expect(tester.getTopLeft(find.text('us:AAPL').first), holdingPosition);
   });
 
   test('aggregates holdings by account, currency, and asset class', () {
@@ -943,6 +1029,21 @@ void main() {
     expect(container.read(portfolioFxPnlProvider).marketPnLInBase, _d('20'));
     expect(container.read(portfolioFxPnlProvider).fxPnLInBase, _d('10'));
   });
+}
+
+class _EmptyPortfolioInsightsNotifier extends PortfolioHubInsightsNotifier {
+  @override
+  Future<PortfolioHubInsightsState> fetch() async => PortfolioHubInsightsState(
+    realizedPnl: const [],
+    dividendForecast: ProjectedDividend.empty(
+      assetId: 'portfolio',
+      currency: 'USD',
+      strategy: 'composite',
+      confidence: DividendForecastConfidence.low,
+    ),
+    dividendEvents: const [],
+    corporateActions: const [],
+  );
 }
 
 class _FailingPortfolioHubNotifier extends PortfolioHubNotifier {

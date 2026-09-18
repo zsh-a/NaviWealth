@@ -127,7 +127,21 @@ void main() {
           netYieldOnCost: 0.045,
         ),
       ],
-      months: const [],
+      months: [
+        for (var month = 9; month >= 1; month--)
+          DividendMonthGroup(
+            month: DateTime.utc(2026, month),
+            events: const [],
+            grossInBase: Decimal.zero,
+            withholdingInBase: Decimal.zero,
+          ),
+        DividendMonthGroup(
+          month: DateTime.utc(2024, 9),
+          events: [priorEvent],
+          grossInBase: amount,
+          withholdingInBase: Decimal.fromInt(10),
+        ),
+      ],
     );
 
     await tester.pumpWidget(
@@ -201,6 +215,20 @@ void main() {
     expect((focusedAttribution.child as Container).decoration, isNotNull);
     // Compact ranking embeds the yield label in a multi-metric detail line.
     expect(find.textContaining('Net yield on cost'), findsOneWidget);
+
+    final year = find.byKey(const ValueKey('dividend-history-year'));
+    await tester.ensureVisible(year);
+    await tester.pumpAndSettle();
+    expect(find.text('Jan 2026'), findsOneWidget);
+    expect(find.text('Sep 2024'), findsNothing);
+    expect(find.byType(AppRevealControl), findsNothing);
+    await tester.tap(year);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2024').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Sep 2024'), findsOneWidget);
+    expect(find.text('Jan 2026'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
 

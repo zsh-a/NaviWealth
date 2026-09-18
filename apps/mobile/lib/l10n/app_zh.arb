@@ -1,4 +1,8 @@
 {
+  "financeViewAllItems": "查看全部（{count}）",
+  "@financeViewAllItems": { "placeholders": { "count": { "type": "int" } } },
+  "financeHistoryYear": "年份",
+  "liabilityScheduleViewAll": "完整还款计划",
   "watchlistSearchHint": "搜索代码或名称",
   "watchlistExistingNotice": "已在自选中，将保留原有提醒和排序。",
   "watchlistAlertRangeError": "下限价格必须低于上限价格。",
@@ -673,6 +677,9 @@
   "portfolioHubYtdXirrLabel": "年初至今 XIRR",
   "portfolioHubAbsoluteReturnLabel": "未实现盈亏",
   "portfolioHubHoldingReturnLabel": "持仓收益率",
+  "portfolioHubIncomeEventsTitle": "收益与事件",
+  "portfolioHubAllRisks": "全部风险（{count}）",
+  "@portfolioHubAllRisks": { "placeholders": { "count": { "type": "int" } } },
   "portfolioHubScopedXirrUnavailable": "单个组合暂不支持年初至今 XIRR：计算需要历史资金归属记录。",
   "portfolioHubManageAction": "管理组合",
   "portfolioHubAssetColumn": "资产",
