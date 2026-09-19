@@ -8,6 +8,7 @@
 library;
 
 import 'package:decimal/decimal.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
 /// One scheduled or executed corporate action on a single symbol.
 class CorporateActionEvent {
@@ -19,6 +20,8 @@ class CorporateActionEvent {
     required this.cashAmount,
     required this.currency,
     this.ratio,
+    this.stockDistributionRatio,
+    this.status = MarketCorporateActionStatus.unknown,
     this.note,
   });
 
@@ -47,6 +50,16 @@ class CorporateActionEvent {
   /// pure-cash dividends.
   final SplitRatio? ratio;
 
+  /// New shares per existing share for a stock dividend or capital-reserve
+  /// conversion. This is intentionally separate from [ratio]: a stock
+  /// distribution changes entitlement quantity, while a split changes the
+  /// quoted unit ratio.
+  final Decimal? stockDistributionRatio;
+
+  /// Provider lifecycle status retained by the projection so consumers can
+  /// distinguish an announced plan from an implemented action.
+  final MarketCorporateActionStatus status;
+
   final String? note;
 }
 
@@ -54,6 +67,10 @@ class CorporateActionEvent {
 enum CorporateActionKind {
   /// Cash dividend (regular or special). `cashAmount` is per share.
   cashDividend,
+
+  /// Bonus shares / capital-reserve conversion. The ratio is expressed as
+  /// new shares per existing share.
+  stockDistribution,
 
   /// Forward / reverse split. `ratio` carries the numerator/denominator.
   split,
@@ -69,6 +86,7 @@ enum CorporateActionKind {
 extension CorporateActionKindWire on CorporateActionKind {
   String get wire => switch (this) {
     CorporateActionKind.cashDividend => 'cash_dividend',
+    CorporateActionKind.stockDistribution => 'stock_distribution',
     CorporateActionKind.split => 'split',
     CorporateActionKind.rights => 'rights',
     CorporateActionKind.drip => 'drip',

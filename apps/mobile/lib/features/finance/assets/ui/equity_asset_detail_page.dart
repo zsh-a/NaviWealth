@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -28,14 +29,17 @@ class EquityAssetDetailPage extends ConsumerStatefulWidget {
       _EquityAssetDetailPageState();
 }
 
-/// Only call yfinance for markets it actually services. US + HK stocks
-/// have dividend/split coverage; CN A-shares go through sina and don't
-/// publish events through the chart endpoint; crypto / FX never carry
-/// corporate actions. Gating saves a wasted HTTP round-trip per detail
-/// page open for assets the fetcher can't usefully answer for.
+/// Corporate-action availability follows the same market routing as the
+/// public provider service. A-shares are available natively through Eastmoney;
+/// the browser keeps them hidden because the upstream endpoint has no reliable
+/// CORS contract. Crypto / FX never carry this equity timeline.
 bool _supportsCorporateActions(Asset asset) {
   final market = assetMarketFromWire(asset.market);
-  return market == AssetMarket.usStock || market == AssetMarket.hkStock;
+  return switch (market) {
+    AssetMarket.usStock || AssetMarket.hkStock => true,
+    AssetMarket.cnA => !kIsWeb,
+    _ => false,
+  };
 }
 
 class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
@@ -202,7 +206,10 @@ class _EquityAssetDetailPageState extends ConsumerState<EquityAssetDetailPage> {
               AssetFxPnlCard(assetId: asset.id),
               if (_supportsCorporateActions(asset)) ...[
                 const SizedBox(height: AppSpacing.s16),
-                EventTimelineSection(symbol: asset.symbol),
+                EventTimelineSection(
+                  symbol: asset.symbol,
+                  market: assetMarketFromWire(asset.market)!,
+                ),
               ],
             ],
           ),

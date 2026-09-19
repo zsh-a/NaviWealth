@@ -651,13 +651,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get investmentEventTimelineEmpty =>
-      'No upcoming dividends or splits in the next 90 days.';
+      'No upcoming dividends, stock distributions, or splits in the next 90 days.';
 
   @override
   String get investmentEventTimelineError => 'Couldn\'t load upcoming events.';
 
   @override
   String get investmentEventDividend => 'Dividend';
+
+  @override
+  String investmentEventStockDistribution(String ratio) {
+    return 'Stock distribution +$ratio/share';
+  }
 
   @override
   String investmentEventSplit(String ratio) {
@@ -669,6 +674,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get investmentEventDrip => 'DRIP';
+
+  @override
+  String get investmentEventStatusProposed => 'Planned';
+
+  @override
+  String get investmentEventStatusApproved => 'Approved';
 
   @override
   String get planHeroEmpty => 'Set up your FIRE plan to see progress here.';

@@ -619,13 +619,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get investmentEventTimelineTitle => '即将到来的事件';
 
   @override
-  String get investmentEventTimelineEmpty => '未来 90 天内没有分红或拆股事件。';
+  String get investmentEventTimelineEmpty => '未来 90 天内没有分红、送股/转增或拆股事件。';
 
   @override
   String get investmentEventTimelineError => '无法加载即将到来的事件。';
 
   @override
   String get investmentEventDividend => '分红';
+
+  @override
+  String investmentEventStockDistribution(String ratio) {
+    return '送股/转增 +$ratio/股';
+  }
 
   @override
   String investmentEventSplit(String ratio) {
@@ -637,6 +642,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get investmentEventDrip => 'DRIP 红利再投';
+
+  @override
+  String get investmentEventStatusProposed => '计划中';
+
+  @override
+  String get investmentEventStatusApproved => '已批准';
 
   @override
   String get planHeroEmpty => '完成 FIRE 设置后，进度会显示在这里。';

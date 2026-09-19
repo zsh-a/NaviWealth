@@ -1,26 +1,22 @@
-import 'package:dio/dio.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
+import 'package:naviwealth/features/finance/data/market/providers/yahoo_crumb_session.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
 
+import 'yahoo_chart_client.dart';
 import 'yfinance_corporate_actions.dart';
 
 class YFinanceCorporateActionProvider implements CorporateActionProvider {
   YFinanceCorporateActionProvider({
     required MarketHttpClient http,
+    YahooCrumbSession? session,
     DateTime Function()? now,
-  }) : _http = http,
+  }) : _chart = YahooChartClient(http: http, session: session),
        _now = now ?? (() => DateTime.now().toUtc());
 
-  final MarketHttpClient _http;
+  final YahooChartClient _chart;
   final DateTime Function() _now;
-
-  static const String _chartBase =
-      'https://query1.finance.yahoo.com/v8/finance/chart';
-  static const String _userAgent =
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 '
-      '(KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
   @override
   String get name => 'yfinance';
@@ -58,26 +54,21 @@ class YFinanceCorporateActionProvider implements CorporateActionProvider {
       );
     }
 
-    final response = await _http.send<Map<String, dynamic>>(
-      RequestOptions(
-        path: '$_chartBase/${Uri.encodeComponent(symbol)}',
-        method: 'GET',
-        responseType: ResponseType.json,
-        queryParameters: <String, Object?>{
-          'interval': '1d',
-          'period1': (request.from.toUtc().millisecondsSinceEpoch ~/ 1000)
-              .toString(),
-          'period2':
-              (request.to
-                          .toUtc()
-                          .add(const Duration(days: 1))
-                          .millisecondsSinceEpoch ~/
-                      1000)
-                  .toString(),
-          'events': 'div,splits',
-        },
-        headers: const <String, Object?>{'User-Agent': _userAgent},
-      ),
+    final response = await _chart.getChart(
+      symbol: symbol,
+      queryParameters: <String, Object?>{
+        'interval': '1d',
+        'period1': (request.from.toUtc().millisecondsSinceEpoch ~/ 1000)
+            .toString(),
+        'period2':
+            (request.to
+                        .toUtc()
+                        .add(const Duration(days: 1))
+                        .millisecondsSinceEpoch ~/
+                    1000)
+                .toString(),
+        'events': 'div,splits',
+      },
       endpoint: 'corporateActions',
     );
     final body = response.data;

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
@@ -177,7 +178,9 @@ class CorporateActionsService {
   }) async {
     final providers = _providers
         .where(
-          (provider) => provider.capabilities.supportedMarkets.contains(market),
+          (provider) =>
+              provider.capabilities.supportedMarkets.contains(market) &&
+              (!kIsWeb || provider.capabilities.availableOnWeb),
         )
         .toList(growable: false);
     if (providers.isEmpty) {

@@ -281,15 +281,21 @@
   "planWheelStageCallExpired": "Call 已到期",
   "planWheelStageCallCalled": "正股已被行权卖出",
   "investmentEventTimelineTitle": "即将到来的事件",
-  "investmentEventTimelineEmpty": "未来 90 天内没有分红或拆股事件。",
+  "investmentEventTimelineEmpty": "未来 90 天内没有分红、送股/转增或拆股事件。",
   "investmentEventTimelineError": "无法加载即将到来的事件。",
   "investmentEventDividend": "分红",
+  "investmentEventStockDistribution": "送股/转增 +{ratio}/股",
+  "@investmentEventStockDistribution": {
+    "placeholders": { "ratio": { "type": "String" } }
+  },
   "investmentEventSplit": "拆股 {ratio}",
   "@investmentEventSplit": {
     "placeholders": { "ratio": { "type": "String" } }
   },
   "investmentEventRights": "配股",
   "investmentEventDrip": "DRIP 红利再投",
+  "investmentEventStatusProposed": "计划中",
+  "investmentEventStatusApproved": "已批准",
   "planHeroEmpty": "完成 FIRE 设置后，进度会显示在这里。",
   "planHeroConfigure": "设置计划",
   "planHeroYearsToFire": "距离 FIRE 还有 {years} 年",

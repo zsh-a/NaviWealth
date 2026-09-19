@@ -1133,7 +1133,7 @@ abstract class AppLocalizations {
   /// Empty state body when no corporate actions are scheduled
   ///
   /// In en, this message translates to:
-  /// **'No upcoming dividends or splits in the next 90 days.'**
+  /// **'No upcoming dividends, stock distributions, or splits in the next 90 days.'**
   String get investmentEventTimelineEmpty;
 
   /// Error state title when corporate-action events fail to load
@@ -1147,6 +1147,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dividend'**
   String get investmentEventDividend;
+
+  /// Label on a bonus-share or capital-reserve distribution row
+  ///
+  /// In en, this message translates to:
+  /// **'Stock distribution +{ratio}/share'**
+  String investmentEventStockDistribution(String ratio);
 
   /// Label on a split event row, with the ratio (e.g. "4-for-1")
   ///
@@ -1165,6 +1171,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'DRIP'**
   String get investmentEventDrip;
+
+  /// Status label for a proposed corporate action
+  ///
+  /// In en, this message translates to:
+  /// **'Planned'**
+  String get investmentEventStatusProposed;
+
+  /// Status label for an approved corporate action
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get investmentEventStatusApproved;
 
   /// Plan hero shown when FIRE engine has no data yet
   ///

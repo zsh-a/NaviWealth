@@ -7,6 +7,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/investment/data/event_timeline_providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 import 'package:naviwealth/features/finance/investment/ui/event_timeline_section.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 CorporateActionEvent _event({
@@ -16,6 +17,7 @@ CorporateActionEvent _event({
   required DateTime scheduledFor,
   String cashAmount = '0.22',
   SplitRatio? ratio,
+  String? stockDistributionRatio,
 }) => CorporateActionEvent(
   id: id,
   symbol: symbol,
@@ -24,6 +26,9 @@ CorporateActionEvent _event({
   cashAmount: Decimal.parse(cashAmount),
   currency: 'USD',
   ratio: ratio,
+  stockDistributionRatio: stockDistributionRatio == null
+      ? null
+      : Decimal.parse(stockDistributionRatio),
 );
 
 Future<void> _pump(
@@ -31,11 +36,11 @@ Future<void> _pump(
   String symbol,
   List<CorporateActionEvent> events,
 ) async {
+  final key = (symbol: symbol, market: AssetMarket.usStock);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        corporateActionEventsProvider(symbol)
-            .overrideWith((ref) async => events),
+        corporateActionEventsProvider(key).overrideWith((ref) async => events),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -43,7 +48,12 @@ Future<void> _pump(
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en', 'US'),
         builder: _foruiTestBuilder,
-        home: Scaffold(body: EventTimelineSection(symbol: symbol)),
+        home: Scaffold(
+          body: EventTimelineSection(
+            symbol: symbol,
+            market: AssetMarket.usStock,
+          ),
+        ),
       ),
     ),
   );
@@ -52,10 +62,11 @@ Future<void> _pump(
 }
 
 Future<void> _pumpError(WidgetTester tester, String symbol) async {
+  final key = (symbol: symbol, market: AssetMarket.usStock);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        corporateActionEventsProvider(symbol).overrideWith((ref) async {
+        corporateActionEventsProvider(key).overrideWith((ref) async {
           throw StateError('network down');
         }),
       ],
@@ -65,7 +76,12 @@ Future<void> _pumpError(WidgetTester tester, String symbol) async {
         supportedLocales: AppLocalizations.supportedLocales,
         locale: const Locale('en', 'US'),
         builder: _foruiTestBuilder,
-        home: Scaffold(body: EventTimelineSection(symbol: symbol)),
+        home: Scaffold(
+          body: EventTimelineSection(
+            symbol: symbol,
+            market: AssetMarket.usStock,
+          ),
+        ),
       ),
     ),
   );
@@ -90,7 +106,9 @@ void main() {
   ) async {
     await _pump(tester, 'AAPL', const []);
     expect(
-      find.text('No upcoming dividends or splits in the next 90 days.'),
+      find.text(
+        'No upcoming dividends, stock distributions, or splits in the next 90 days.',
+      ),
       findsOneWidget,
     );
   });
@@ -119,6 +137,26 @@ void main() {
       ),
     ]);
     expect(find.textContaining('Split 4-for-1'), findsOneWidget);
+  });
+
+  testWidgets('renders a stock distribution row with share ratio', (
+    tester,
+  ) async {
+    final inTenDays = DateTime.now().toUtc().add(const Duration(days: 10));
+    await _pump(tester, '600519', [
+      _event(
+        id: 'stock-1',
+        symbol: '600519',
+        scheduledFor: inTenDays,
+        kind: CorporateActionKind.stockDistribution,
+        cashAmount: '0',
+        stockDistributionRatio: '0.3',
+      ),
+    ]);
+    expect(
+      find.textContaining('Stock distribution +0.3/share'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('filters out events outside the 90-day window', (tester) async {

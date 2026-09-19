@@ -1,5 +1,4 @@
 import 'package:decimal/decimal.dart';
-import 'package:dio/dio.dart';
 import 'package:naviwealth/features/finance/data/market/exceptions.dart';
 import 'package:naviwealth/features/finance/data/market/http/market_http_client.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
@@ -8,6 +7,7 @@ import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
 import 'market_provider.dart';
+import 'yahoo_chart_client.dart';
 import 'yahoo_crumb_session.dart';
 
 /// Yahoo Finance adapter using the public `query1`/`query2` chart and search
@@ -21,13 +21,10 @@ import 'yahoo_crumb_session.dart';
 ///   surfaces `ProviderResponseException` on schema drift.
 class YFinanceProvider implements MarketProvider {
   YFinanceProvider({required MarketHttpClient http, YahooCrumbSession? session})
-    : _http = http,
-      _session = session;
+    : _chart = YahooChartClient(http: http, session: session);
 
-  final MarketHttpClient _http;
-  final YahooCrumbSession? _session;
+  final YahooChartClient _chart;
 
-  static const _chartBase = 'https://query1.finance.yahoo.com/v8/finance/chart';
   static const _searchBase =
       'https://query2.finance.yahoo.com/v1/finance/search';
 
@@ -43,9 +40,9 @@ class YFinanceProvider implements MarketProvider {
 
   @override
   Future<Quote> getQuote(String symbol) async {
-    final response = await _send(
-      path: '$_chartBase/${Uri.encodeComponent(symbol)}',
-      queryParameters: const {'interval': '1d', 'range': '5d'},
+    final response = await _chart.getChart(
+      queryParameters: const <String, Object?>{'interval': '1d', 'range': '5d'},
+      symbol: symbol,
       endpoint: 'getQuote',
     );
     final result = _firstChartResult(response.data, symbol);
@@ -81,8 +78,8 @@ class YFinanceProvider implements MarketProvider {
     // Yahoo's period2 is exclusive, while MarketDataService's contract is
     // inclusive on both calendar-day endpoints.
     final toExclusive = _floorUtcDay(to).add(const Duration(days: 1));
-    final response = await _send(
-      path: '$_chartBase/${Uri.encodeComponent(symbol)}',
+    final response = await _chart.getChart(
+      symbol: symbol,
       queryParameters: {
         'interval': _intervalParam(interval),
         'period1': (fromDay.millisecondsSinceEpoch ~/ 1000).toString(),
@@ -149,7 +146,7 @@ class YFinanceProvider implements MarketProvider {
   @override
   Future<List<SymbolInfo>> searchSymbol(String query) async {
     if (query.trim().isEmpty) return const [];
-    final response = await _send(
+    final response = await _chart.get(
       path: _searchBase,
       queryParameters: {
         'q': query,
@@ -184,55 +181,6 @@ class YFinanceProvider implements MarketProvider {
           );
         })
         .toList(growable: false);
-  }
-
-  /// Sends a Yahoo request with the shared browser session when one is
-  /// configured. The optional session keeps the provider easy to unit-test
-  /// with a plain canned HTTP adapter; production wiring always supplies the
-  /// app-wide [YahooCrumbSession].
-  Future<Response<Map<String, dynamic>>> _send({
-    required String path,
-    required Map<String, dynamic> queryParameters,
-    required String endpoint,
-  }) async {
-    Future<Response<Map<String, dynamic>>> attempt() async {
-      final query = Map<String, dynamic>.from(queryParameters);
-      final headers = Map<String, String>.from(
-        YahooCrumbSession.browserHeaders(),
-      );
-      final session = _session;
-      if (session != null) {
-        await session.ensureReady();
-        final crumb = session.crumb;
-        if (crumb != null && crumb.isNotEmpty) query['crumb'] = crumb;
-        final cookie = session.cookieHeader;
-        if (cookie != null) headers['Cookie'] = cookie;
-      }
-      return _http.send<Map<String, dynamic>>(
-        RequestOptions(
-          path: path,
-          method: 'GET',
-          responseType: ResponseType.json,
-          connectTimeout: _requestTimeout,
-          sendTimeout: _requestTimeout,
-          receiveTimeout: _requestTimeout,
-          queryParameters: query,
-          headers: headers,
-        ),
-        endpoint: endpoint,
-      );
-    }
-
-    try {
-      return await attempt();
-    } on ProviderUnavailableException catch (e) {
-      // Yahoo can rotate the crumb while the app is running. Retry the
-      // request once after a complete handshake rather than falling through
-      // to a provider that cannot serve FX at all.
-      if (_session == null || e.statusCode != 401) rethrow;
-      _session.invalidate();
-      return attempt();
-    }
   }
 
   Map<String, dynamic> _firstChartResult(dynamic body, String symbol) {
@@ -310,6 +258,4 @@ class YFinanceProvider implements MarketProvider {
     }
     return AssetMarket.unknown;
   }
-
-  static const _requestTimeout = Duration(seconds: 10);
 }

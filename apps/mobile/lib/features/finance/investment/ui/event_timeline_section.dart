@@ -4,6 +4,8 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/event_timeline_providers.dart';
@@ -17,14 +19,20 @@ import '../domain/reporting/event_timeline.dart';
 /// quiet empty state when no events are scheduled, and a retryable error
 /// state when the fetcher fails.
 class EventTimelineSection extends ConsumerWidget {
-  const EventTimelineSection({super.key, required this.symbol});
+  const EventTimelineSection({
+    super.key,
+    required this.symbol,
+    required this.market,
+  });
 
   final String symbol;
+  final AssetMarket market;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final eventsAsync = ref.watch(upcomingEventsForSymbolProvider(symbol));
+    final key = (symbol: symbol, market: market);
+    final eventsAsync = ref.watch(upcomingEventsForSymbolProvider(key));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -46,8 +54,8 @@ class EventTimelineSection extends ConsumerWidget {
             message: userSafeErrorMessage(context, error),
             retryLabel: l10n.commonRetry,
             onRetry: () {
-              ref.invalidate(corporateActionEventsProvider(symbol));
-              ref.invalidate(upcomingEventsForSymbolProvider(symbol));
+              ref.invalidate(corporateActionEventsProvider(key));
+              ref.invalidate(upcomingEventsForSymbolProvider(key));
             },
           ),
           data: (events) => events.isEmpty
@@ -101,7 +109,7 @@ class _EventRow extends StatelessWidget {
           ),
         ),
         title: Text(_kindLabel(l10n, event)),
-        subtitle: Text(dateText),
+        subtitle: Text(_subtitle(l10n, event, dateText)),
         suffix: event.kind == CorporateActionKind.cashDividend
             ? MoneyText(
                 amount: event.cashAmount.toDouble(),
@@ -115,6 +123,7 @@ class _EventRow extends StatelessWidget {
 
 IconData _kindIcon(CorporateActionKind kind) => switch (kind) {
   CorporateActionKind.cashDividend => FLucideIcons.banknote,
+  CorporateActionKind.stockDistribution => FLucideIcons.layers,
   CorporateActionKind.split => FLucideIcons.gitBranch,
   CorporateActionKind.rights => FLucideIcons.tag,
   CorporateActionKind.drip => FLucideIcons.refreshCw,
@@ -123,9 +132,28 @@ IconData _kindIcon(CorporateActionKind kind) => switch (kind) {
 String _kindLabel(AppLocalizations l10n, CorporateActionEvent event) =>
     switch (event.kind) {
       CorporateActionKind.cashDividend => l10n.investmentEventDividend,
+      CorporateActionKind.stockDistribution =>
+        l10n.investmentEventStockDistribution(
+          event.stockDistributionRatio?.toString() ?? '',
+        ),
       CorporateActionKind.split => l10n.investmentEventSplit(
         event.ratio?.toString() ?? '',
       ),
       CorporateActionKind.rights => l10n.investmentEventRights,
       CorporateActionKind.drip => l10n.investmentEventDrip,
     };
+
+String _subtitle(
+  AppLocalizations l10n,
+  CorporateActionEvent event,
+  String dateText,
+) {
+  final status = switch (event.status) {
+    MarketCorporateActionStatus.proposed => l10n.investmentEventStatusProposed,
+    MarketCorporateActionStatus.approved => l10n.investmentEventStatusApproved,
+    MarketCorporateActionStatus.implemented ||
+    MarketCorporateActionStatus.unknown ||
+    MarketCorporateActionStatus.cancelled => null,
+  };
+  return status == null ? dateText : '$dateText · $status';
+}
