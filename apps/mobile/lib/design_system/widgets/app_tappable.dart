@@ -1,7 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 import 'app_interaction.dart';
 
 /// The app's default tappable row/tile primitive.
@@ -12,6 +14,7 @@ import 'app_interaction.dart';
 /// non-optional:
 ///
 /// * keyboard focus → the theme focus ring, rounded to [borderRadius];
+/// * hover / press → a shared, motion-aware state tint;
 /// * Enter/Space activation comes with `FTappable` itself.
 ///
 /// Every press also fires [AppInteractionIntent.select] feedback so standard
@@ -66,6 +69,28 @@ class AppTappable extends StatelessWidget {
       focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
         borderRadius: borderRadius,
       ),
+      builder: (context, variants, child) {
+        final enabled = !variants.contains(FTappableVariant.disabled);
+        final colors = context.theme.colors;
+        final alpha = !enabled
+            ? 0.0
+            : variants.contains(FTappableVariant.pressed)
+            ? AppOpacity.light
+            : variants.contains(FTappableVariant.hovered)
+            ? AppOpacity.faint
+            : 0.0;
+        return AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          curve: Motion.standardDecelerate,
+          decoration: BoxDecoration(
+            color: (selected ? colors.primary : colors.foreground).withValues(
+              alpha: alpha,
+            ),
+            borderRadius: borderRadius,
+          ),
+          child: child,
+        );
+      },
       child: child,
     );
   }

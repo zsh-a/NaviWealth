@@ -10879,6 +10879,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watchlistEditCollectionAction => '编辑组合';
 
   @override
+  String get watchlistCollectionUnavailable => '此组合已不存在。';
+
+  @override
+  String get watchlistSimulationOpenAction => '投资模拟';
+
+  @override
   String get watchlistCollectionNameField => '组合名称';
 
   @override

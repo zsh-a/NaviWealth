@@ -290,7 +290,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Manage portfolio'), findsOneWidget);
+      expect(
+        tester
+            .widget<AppIconButton>(
+              find.byKey(const ValueKey('portfolio-manage')),
+            )
+            .tooltip,
+        'Manage portfolio',
+      );
       expect(
         find.text(AppLocalizationsEn().portfolioHubScopedXirrUnavailable),
         findsOneWidget,
@@ -1039,7 +1046,10 @@ void main() {
       expect(find.byType(AdaptiveSummaryGrid), findsOneWidget);
       expect(find.byType(AppAdaptiveSelectionMenu<String>), findsOneWidget);
       expect(find.byType(FSelect<String>), findsNothing);
-      expect(find.bySemanticsLabel('Portfolio: All holdings'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Portfolio: All holdings')),
+        findsOneWidget,
+      );
       expect(find.text('All holdings'), findsOneWidget);
       // Positions use a virtualized DecoratedSliver group surface.
       expect(find.byType(DecoratedSliver), findsOneWidget);

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +28,7 @@ bool shouldRenderAxisLabel({
   required TitleMeta meta,
   required double range,
   required int maxLabels,
+  String Function(double)? formatLabel,
 }) {
   if (range <= 0 || maxLabels <= 0) return true;
   final chartWidth = meta.parentAxisSize;
@@ -46,7 +49,12 @@ bool shouldRenderAxisLabel({
   final index = (value - firstTick) / interval;
   if (index < -0.001 || (index - index.round()).abs() > 0.001) return false;
   final stride = (range / interval / effectiveMax).ceil().clamp(1, 1000000);
-  return index.round() % stride == 0;
+  if (index.round() % stride != 0) return false;
+  // Sub-day ticks can map to the same date, just as monthly ticks can map
+  // to the same year. Keep the first visible label for each time period.
+  return formatLabel == null ||
+      index.round() < stride ||
+      formatLabel(value) != formatLabel(value - stride * interval);
 }
 
 /// Date-axis label format presets. Picked to match the time-window buttons
@@ -172,12 +180,16 @@ class ValueAxis {
   String formatValue(double value) {
     switch (format) {
       case ValueAxisFormat.auto:
-        return NumberFormat.compact(locale: locale).format(value);
+        return NumberFormat.decimalPatternDigits(
+          locale: locale,
+          decimalDigits: fractionDigits ?? 2,
+        ).format(value);
       case ValueAxisFormat.currency:
-        return NumberFormat.compactCurrency(
+        return NumberFormat.currency(
           locale: locale,
           name: currencyCode ?? 'CNY',
           symbol: _glyph(currencyCode ?? 'CNY'),
+          decimalDigits: fractionDigits,
         ).format(value);
       case ValueAxisFormat.percent:
         final digits = fractionDigits ?? 0;
@@ -193,6 +205,83 @@ class ValueAxis {
           decimalDigits: digits,
         ).format(value);
     }
+  }
+
+  /// Axis labels may be compact; inspected values retain their full precision.
+  /// Select one precision for the whole axis so neighbouring ticks stay distinct.
+  String Function(double) tickFormatter({
+    required double min,
+    required double max,
+    required double interval,
+  }) {
+    if (!interval.isFinite || interval <= 0 || !min.isFinite || !max.isFinite) {
+      return formatValue;
+    }
+    final first = (min / interval).ceil() * interval;
+    final count = ((max - first) / interval).floor().clamp(0, 100) + 1;
+    final ticks = List<double>.generate(count, (i) => first + i * interval);
+    for (var digits = fractionDigits ?? 0; digits <= 8; digits++) {
+      final formatter = switch (format) {
+        ValueAxisFormat.currency => NumberFormat.compactCurrency(
+          locale: locale,
+          name: currencyCode ?? 'CNY',
+          symbol: _glyph(currencyCode ?? 'CNY'),
+          decimalDigits: digits,
+        ),
+        ValueAxisFormat.auto =>
+          NumberFormat.compact(locale: locale)
+            ..minimumFractionDigits = digits
+            ..maximumFractionDigits = digits,
+        ValueAxisFormat.percent ||
+        ValueAxisFormat.decimal => NumberFormat.decimalPatternDigits(
+          locale: locale,
+          decimalDigits: math.max(digits, fractionDigits ?? 0),
+        ),
+      };
+      if (format == ValueAxisFormat.currency ||
+          format == ValueAxisFormat.auto) {
+        // intl compact formats default to three significant digits; setting
+        // decimalDigits alone does not override that rounding mode.
+        formatter
+          ..significantDigits = null
+          ..minimumFractionDigits = digits
+          ..maximumFractionDigits = digits;
+      }
+      String label(double value) =>
+          '${formatter.format(value)}${format == ValueAxisFormat.percent ? '%' : ''}';
+      if (ticks.map(label).toSet().length == ticks.length) return label;
+    }
+    return formatValue;
+  }
+
+  /// Measure the actual localized ticks, including the user's text scale.
+  double reservedWidth(
+    BuildContext context,
+    TextStyle style, {
+    required double min,
+    required double max,
+    required double interval,
+  }) {
+    final formatTick = tickFormatter(min: min, max: max, interval: interval);
+    final values = <double>[min, max];
+    if (interval.isFinite && interval > 0 && min.isFinite && max.isFinite) {
+      final first = (min / interval).ceil() * interval;
+      final count = ((max - first) / interval).floor().clamp(0, 100) + 1;
+      values.addAll(List.generate(count, (i) => first + i * interval));
+    }
+    var width = 44.0;
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    );
+    for (final value in values) {
+      painter.text = TextSpan(text: formatTick(value), style: style);
+      painter.layout();
+      width = math.max(width, painter.width.ceilToDouble() + 8);
+    }
+    painter.dispose();
+    return width;
   }
 
   static String _glyph(String code) => AppFormatters.currencyGlyph(code);

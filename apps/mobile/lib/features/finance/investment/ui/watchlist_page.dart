@@ -21,7 +21,8 @@ import 'watchlist_labels.dart';
 import 'watchlist_rows.dart';
 import 'watchlist_sections.dart';
 import 'watchlist_sheets.dart';
-import 'watchlist_simulation_section.dart';
+
+export 'watchlist_simulations_page.dart';
 
 /// The watchlist page.
 ///
@@ -292,14 +293,9 @@ class _WatchlistBody extends StatelessWidget {
             onEditCollection: onEditCollection,
             onOpenSimulation: selectedCollection == null
                 ? null
-                : () => showAppSheet<void>(
-                    context: context,
-                    title: selectedCollection!.name,
-                    subtitle: AppLocalizations.of(context)
-                        .watchlistSimulationScopeNote,
-                    builder: (_) => _WatchlistSimulationBatch(
-                      collection: selectedCollection!,
-                      items: items,
+                : () => context.push(
+                    FinanceRoutes.wealthWatchlistSimulationsFor(
+                      selectedCollection!.id,
                     ),
                   ),
           ),
@@ -455,40 +451,6 @@ class _WatchlistBody extends StatelessWidget {
             ? null
             : () => onRemoveFromCollection!(item),
         onRemove: () => onRemove(item),
-      ),
-    );
-  }
-}
-
-/// Simulations must not materialize observations from intermediate UI batches.
-class _WatchlistSimulationBatch extends ConsumerWidget {
-  const _WatchlistSimulationBatch({
-    required this.collection,
-    required this.items,
-  });
-  final WatchlistCollection collection;
-  final List<WatchlistItem> items;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final scope = WatchlistScope.collection(collection.id);
-    final quotes = ref.watch(watchlistQuoteSnapshotsForScopeProvider(scope));
-    return quotes.when(
-      error: (error, _) => AppEmptyState.error(
-        title: AppLocalizations.of(context).commonLoadFailed,
-        message: userSafeErrorMessage(context, error),
-        retryLabel: AppLocalizations.of(context).commonRetry,
-        onRetry: () =>
-            ref.invalidate(watchlistQuoteSnapshotsForScopeProvider(scope)),
-      ),
-      loading: () => Text(
-        AppLocalizations.of(context).watchlistOverviewFreshnessNone,
-        style: context.captionStyle,
-      ),
-      data: (snapshots) => WatchlistSimulationSection(
-        collection: collection,
-        items: items,
-        snapshots: snapshots,
       ),
     );
   }

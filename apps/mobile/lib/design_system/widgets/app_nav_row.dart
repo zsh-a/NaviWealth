@@ -94,74 +94,70 @@ class AppNavRow extends StatelessWidget {
       null => _tinted ? colors.primary : colors.mutedForeground,
     };
 
-    return Semantics(
-      button: true,
-      label: semanticsLabel ?? (subtitle == null ? title : '$title, $subtitle'),
+    return AppTappable(
+      onPress: onTap,
+      semanticsLabel:
+          semanticsLabel ?? (subtitle == null ? title : '$title, $subtitle'),
       excludeSemantics: true,
-      child: AppTappable(
-        onPress: onTap,
-        child: Padding(
-          padding: padding,
-          child: Row(
-            children: [
-              SizedBox.square(
-                dimension: _tinted ? AppSpacing.s40 : 36,
-                child: _tinted
-                    ? DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: iconColor.withValues(
-                            alpha: AppOpacity.whisper,
-                          ),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
-                        child: Icon(
-                          icon,
-                          size: AppIconSizes.md,
-                          color: iconColor,
-                        ),
-                      )
-                    : Icon(icon, size: AppIconSizes.sm, color: iconColor),
-              ),
-              SizedBox(width: _tinted ? AppSpacing.s12 : AppSpacing.s10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+      child: Padding(
+        padding: padding,
+        child: Row(
+          children: [
+            SizedBox.square(
+              dimension: _tinted ? AppSpacing.s40 : 36,
+              child: _tinted
+                  ? DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha: AppOpacity.whisper),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: Icon(
+                        icon,
+                        size: AppIconSizes.md,
+                        color: iconColor,
+                      ),
+                    )
+                  : Icon(icon, size: AppIconSizes.sm, color: iconColor),
+            ),
+            SizedBox(width: _tinted ? AppSpacing.s12 : AppSpacing.s10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: context.labelStyle,
+                    maxLines: titleMaxLines,
+                    overflow: titleMaxLines == null
+                        ? null
+                        : TextOverflow.ellipsis,
+                  ),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
-                      title,
-                      style: context.labelStyle,
-                      maxLines: titleMaxLines,
-                      overflow: titleMaxLines == null
+                      subtitle,
+                      style: context.captionStyle,
+                      maxLines: subtitleMaxLines,
+                      overflow: subtitleMaxLines == null
                           ? null
                           : TextOverflow.ellipsis,
                     ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        subtitle,
-                        style: context.captionStyle,
-                        maxLines: subtitleMaxLines,
-                        overflow: subtitleMaxLines == null
-                            ? null
-                            : TextOverflow.ellipsis,
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.s8),
-              if (trailing != null) ...[
-                trailing,
-                if (showChevron) const SizedBox(width: AppSpacing.s6),
-              ],
-              if (showChevron)
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: _chevronSize,
-                  color: colors.mutedForeground,
-                ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            if (trailing != null) ...[
+              trailing,
+              if (showChevron) const SizedBox(width: AppSpacing.s6),
             ],
-          ),
+            if (showChevron)
+              Icon(
+                FLucideIcons.chevronRight,
+                size: _chevronSize,
+                color: colors.mutedForeground,
+              ),
+          ],
         ),
       ),
     );

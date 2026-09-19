@@ -17,11 +17,6 @@ import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
 import 'wealth_trend_section.dart';
 
-/// Wealth hub intentionally renders no in-body greeting row: identity comes
-/// from the [ShellTabScaffold] title and the balance stage leads the brief —
-/// the same contract as the Plan hub.
-const Widget _kNoGreetingHeader = SizedBox.shrink();
-
 /// Wealth hub — landing page for the Wealth tab (IA contract §1).
 ///
 /// Renders a Net Worth Hero, compact owned-object navigation, and allocation.
@@ -120,7 +115,6 @@ class _WealthHubBody extends ConsumerWidget {
               ref.read(dashboardTrendProvider(range).future),
             ]);
           },
-          greeting: _kNoGreetingHeader,
           stage: AppCollapsingStage(
             child: _BalanceOverview(
               baseCurrency: baseCurrency,

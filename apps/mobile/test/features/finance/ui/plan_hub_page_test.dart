@@ -204,10 +204,10 @@ void main() {
     expect(find.text('On track'), findsWidgets);
     expect(
       find.text('2 reviews due'),
-      findsOneWidget,
-      reason: 'Attention copy appears once; stable entries keep a compact review badge.',
+      findsNWidgets(2),
+      reason: 'The priority action and its stable entry both retain specific status.',
     );
-    expect(find.text('7.5% drift'), findsNothing);
+    expect(find.text('7.5% drift'), findsOneWidget);
     expect(find.text('62% used this month'), findsOneWidget);
 
     await tester.scrollUntilVisible(
@@ -217,8 +217,8 @@ void main() {
     );
     await tester.ensureVisible(find.text(l10n.planInvestmentPlanTitle));
     await tester.pumpAndSettle();
-    expect(find.text('7.5% drift'), findsNothing);
-    expect(find.text(l10n.planNeedsAttentionShort), findsWidgets);
+    expect(find.text('7.5% drift'), findsOneWidget);
+    expect(find.text(l10n.planNeedsAttentionShort), findsNothing);
     expect(find.text(l10n.incomeStrategyTitle), findsOneWidget);
     expect(find.text(l10n.planExploreActiveOptions(1)), findsOneWidget);
   });
@@ -295,19 +295,25 @@ void main() {
 
     expect(find.text(l10n.planStatusActionRequired), findsNothing);
     expect(find.text(l10n.moneyRunwayStatusShortfall), findsWidgets);
-    expect(find.text(l10n.planAttentionCount(5)), findsOneWidget);
+    expect(find.text(l10n.planAttentionCount(5)), findsNothing);
     final position = tester.getTopLeft(find.text(l10n.planCashSafetyTitle));
     expect(find.text(l10n.financeViewAllItems(5)), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('plan-attention-details')));
     await tester.pumpAndSettle();
     expect(find.byType(AppSheet), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text(l10n.planStatusPendingReviews(2)),
+      find.descendant(
+        of: find.byType(AppSheet),
+        matching: find.text(l10n.planStatusPendingReviews(2)),
+      ),
       120,
       scrollable: find.byType(Scrollable).last,
     );
     expect(
-      find.text(l10n.planStatusPendingReviews(2)),
+      find.descendant(
+        of: find.byType(AppSheet),
+        matching: find.text(l10n.planStatusPendingReviews(2)),
+      ),
       findsOneWidget,
       reason: 'All attention items are reachable in the detail sheet.',
     );

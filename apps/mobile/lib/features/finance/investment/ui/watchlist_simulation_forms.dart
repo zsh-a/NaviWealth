@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
@@ -23,35 +24,25 @@ const int _kPercentScale = 100;
 /// Asks for the three things that actually shape the outcome — name, virtual
 /// capital, and which symbols the scenario covers — instead of equal-weighting
 /// the entire watchlist and forcing a second pass to fix it.
-Future<void> showWatchlistSimulationCreateSheet({
+Future<void> showWatchlistSimulationCreatePage({
   required BuildContext context,
   required WatchlistCollection collection,
   required List<WatchlistItem> items,
   required List<WatchlistQuoteSnapshot> snapshots,
 }) async {
-  final dirty = FormDirtyController();
-  try {
-    await showAppSheet<void>(
-      context: context,
-      title: AppLocalizations.of(context).watchlistSimulationCreateTitle,
-      maxHeightFactor: 0.9,
-      dirtyGuard: dirty,
-      confirmDismiss: () => confirmDiscardIfDirty(context, dirty),
-      builder: (_) => _WatchlistSimulationCreateSheet(
+  await Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => _WatchlistSimulationCreatePage(
         collection: collection,
         items: items,
         snapshots: snapshots,
-        dirty: dirty,
       ),
-    );
-  } finally {
-    dirty.dispose();
-  }
+    ),
+  );
 }
 
-/// Edits everything about an existing scenario: name, virtual capital, the
-/// symbols it holds, and their target weights.
-Future<void> showWatchlistSimulationAllocationSheet({
+/// Full-page allocation editor with one guarded return path and pinned save.
+Future<void> showWatchlistSimulationAllocationPage({
   required BuildContext context,
   required WatchlistSimulation simulation,
   required List<WatchlistSimulationPosition> positions,
@@ -59,26 +50,17 @@ Future<void> showWatchlistSimulationAllocationSheet({
   required List<WatchlistItem> items,
   required List<WatchlistQuoteSnapshot> snapshots,
 }) async {
-  final dirty = FormDirtyController();
-  try {
-    await showAppSheet<void>(
-      context: context,
-      title: AppLocalizations.of(context).watchlistSimulationAdjustTitle,
-      maxHeightFactor: 0.9,
-      dirtyGuard: dirty,
-      confirmDismiss: () => confirmDiscardIfDirty(context, dirty),
-      builder: (_) => _WatchlistSimulationAllocationSheet(
+  await Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (_) => _WatchlistSimulationAllocationPage(
         simulation: simulation,
         positions: positions,
         cashWeight: cashWeight,
         items: items,
         snapshots: snapshots,
-        dirty: dirty,
       ),
-    );
-  } finally {
-    dirty.dispose();
-  }
+    ),
+  );
 }
 
 /// Confirms, deletes, then offers a one-tap undo.
@@ -151,26 +133,28 @@ Future<void> _restoreSimulation(
   }
 }
 
-class _WatchlistSimulationCreateSheet extends ConsumerStatefulWidget {
-  const _WatchlistSimulationCreateSheet({
+class _WatchlistSimulationCreatePage extends ConsumerStatefulWidget {
+  const _WatchlistSimulationCreatePage({
     required this.collection,
     required this.items,
     required this.snapshots,
-    required this.dirty,
   });
 
   final WatchlistCollection collection;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
-  final FormDirtyController dirty;
 
   @override
-  ConsumerState<_WatchlistSimulationCreateSheet> createState() =>
-      _WatchlistSimulationCreateSheetState();
+  ConsumerState<_WatchlistSimulationCreatePage> createState() =>
+      _WatchlistSimulationCreatePageState();
 }
 
-class _WatchlistSimulationCreateSheetState
-    extends ConsumerState<_WatchlistSimulationCreateSheet> {
+class _WatchlistSimulationCreatePageState
+    extends ConsumerState<_WatchlistSimulationCreatePage>
+    with FormDirtyGuard<_WatchlistSimulationCreatePage> {
+  @override
+  String get leaveFallback => FinanceRoutes.wealthWatchlist;
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _capital;
@@ -185,17 +169,17 @@ class _WatchlistSimulationCreateSheetState
     _capital = TextEditingController(text: '100000');
     _cash = TextEditingController(text: '0');
     _selected = {for (final item in widget.items) item.id};
-    widget.dirty.bindTextControllers([_name, _capital, _cash]);
-    widget.dirty.snapshotBaseline();
+    dirty.bindTextControllers([_name, _capital, _cash]);
+    dirty.snapshotBaseline();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_name.text.isEmpty && !widget.dirty.isDirty) {
+    if (_name.text.isEmpty && !dirty.isDirty) {
       _name.text = AppLocalizations.of(context)
           .watchlistSimulationDefaultName(widget.collection.name);
-      widget.dirty.snapshotBaseline();
+      dirty.snapshotBaseline();
     }
   }
 
@@ -212,78 +196,86 @@ class _WatchlistSimulationCreateSheetState
     final l10n = AppLocalizations.of(context);
     final baseCurrency = ref.watch(baseCurrencyProvider);
     final allSelected = _selected.length == widget.items.length;
-    return Form(
-      key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.watchlistSimulationIsolationNote,
-            style: context.captionStyle,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
-          _WatchlistSimulationNameField(controller: _name),
-          const SizedBox(height: AppSpacing.s12),
-          AmountField(
-            label: l10n.watchlistSimulationCapitalField(baseCurrency),
-            controller: _capital,
-            currencyCode: baseCurrency,
-            allowZero: false,
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  l10n.watchlistSimulationUniverseSection,
-                  style: context.labelStyle,
+    return guardedScope(
+      child: AppFormPageScaffold(
+        title: Text(l10n.watchlistSimulationCreateTitle),
+        confirmLeave: handleBackIntent,
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: AbsorbPointer(
+            absorbing: _saving,
+            child: AppFormScaffoldBody(
+              softActionBar: true,
+              actionStatus: _saving ? AppGlassStatus.busy : AppGlassStatus.idle,
+              onSubmit: _saving ? null : _save,
+              action: AppBusyButton(
+                label: l10n.watchlistSimulationCreateAction,
+                busy: _saving,
+                onPress: _save,
+              ),
+              children: [
+                Text(
+                  l10n.watchlistSimulationIsolationNote,
+                  style: context.captionStyle,
                 ),
-              ),
-              Text(
-                l10n.watchlistSimulationUniverseSummary(
-                  _selected.length,
-                  widget.items.length,
+                const SizedBox(height: AppSpacing.s16),
+                AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
+                _WatchlistSimulationNameField(controller: _name),
+                const SizedBox(height: AppSpacing.s12),
+                AmountField(
+                  label: l10n.watchlistSimulationCapitalField(baseCurrency),
+                  controller: _capital,
+                  currencyCode: baseCurrency,
+                  allowZero: false,
                 ),
-                style: context.captionStyle,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              AppQuietButton(
-                label: allSelected
-                    ? l10n.watchlistSimulationUniverseNone
-                    : l10n.watchlistSimulationUniverseAll,
-                onPress: _toggleAll,
-              ),
-            ],
+                const SizedBox(height: AppSpacing.s20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.watchlistSimulationUniverseSection,
+                        style: context.labelStyle,
+                      ),
+                    ),
+                    Text(
+                      l10n.watchlistSimulationUniverseSummary(
+                        _selected.length,
+                        widget.items.length,
+                      ),
+                      style: context.captionStyle,
+                    ),
+                    const SizedBox(width: AppSpacing.s8),
+                    AppQuietButton(
+                      label: allSelected
+                          ? l10n.watchlistSimulationUniverseNone
+                          : l10n.watchlistSimulationUniverseAll,
+                      onPress: _toggleAll,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                _WatchlistSimulationSymbolList(
+                  items: widget.items,
+                  isSelected: _selected.contains,
+                  onToggle: _toggleSymbol,
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                PercentField(
+                  control: FTextFieldControl.managed(controller: _cash),
+                  label: Text(l10n.watchlistSimulationCashPercentField),
+                  validator: (value) => _validatePercent(context, value),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.s8),
-          _WatchlistSimulationSymbolList(
-            items: widget.items,
-            isSelected: _selected.contains,
-            onToggle: _toggleSymbol,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          PercentField(
-            control: FTextFieldControl.managed(controller: _cash),
-            label: Text(l10n.watchlistSimulationCashPercentField),
-            validator: (value) => _validatePercent(context, value),
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          AppSheetFooter(
-            cancelLabel: l10n.commonCancel,
-            submitLabel: l10n.watchlistSimulationCreateAction,
-            busy: _saving,
-            onSubmit: _save,
-          ),
-        ],
+        ),
       ),
     );
   }
 
   void _toggleAll() {
-    widget.dirty.markDirty();
+    dirty.markDirty();
     setState(() {
       if (_selected.length == widget.items.length) {
         _selected.clear();
@@ -296,13 +288,14 @@ class _WatchlistSimulationCreateSheetState
   }
 
   void _toggleSymbol(String itemId) {
-    widget.dirty.markDirty();
+    dirty.markDirty();
     setState(() {
       if (!_selected.remove(itemId)) _selected.add(itemId);
     });
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final l10n = AppLocalizations.of(context);
     if (_selected.isEmpty) {
       AppMessenger.show(
@@ -313,8 +306,9 @@ class _WatchlistSimulationCreateSheetState
       return;
     }
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _saving = true);
-    widget.dirty.busy = true;
+    dirty.busy = true;
     try {
       final repository = await ref.read(
         watchlistSimulationRepositoryProvider.future,
@@ -347,7 +341,7 @@ class _WatchlistSimulationCreateSheetState
           widget.snapshots,
         ),
       );
-      widget.dirty.markPristine();
+      dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
@@ -358,20 +352,19 @@ class _WatchlistSimulationCreateSheetState
         );
       }
     } finally {
-      widget.dirty.busy = false;
+      dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
 }
 
-class _WatchlistSimulationAllocationSheet extends ConsumerStatefulWidget {
-  const _WatchlistSimulationAllocationSheet({
+class _WatchlistSimulationAllocationPage extends ConsumerStatefulWidget {
+  const _WatchlistSimulationAllocationPage({
     required this.simulation,
     required this.positions,
     required this.cashWeight,
     required this.items,
     required this.snapshots,
-    required this.dirty,
   });
 
   final WatchlistSimulation simulation;
@@ -379,15 +372,18 @@ class _WatchlistSimulationAllocationSheet extends ConsumerStatefulWidget {
   final Decimal cashWeight;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
-  final FormDirtyController dirty;
 
   @override
-  ConsumerState<_WatchlistSimulationAllocationSheet> createState() =>
-      _WatchlistSimulationAllocationSheetState();
+  ConsumerState<_WatchlistSimulationAllocationPage> createState() =>
+      _WatchlistSimulationAllocationPageState();
 }
 
-class _WatchlistSimulationAllocationSheetState
-    extends ConsumerState<_WatchlistSimulationAllocationSheet> {
+class _WatchlistSimulationAllocationPageState
+    extends ConsumerState<_WatchlistSimulationAllocationPage>
+    with FormDirtyGuard<_WatchlistSimulationAllocationPage> {
+  @override
+  String get leaveFallback => FinanceRoutes.wealthWatchlist;
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _capital;
@@ -431,13 +427,8 @@ class _WatchlistSimulationAllocationSheetState
       text: widget.simulation.startingCapital.toString(),
     );
     _cash = TextEditingController(text: cashText);
-    widget.dirty.bindTextControllers([
-      _name,
-      _capital,
-      _cash,
-      ..._weights.values,
-    ]);
-    widget.dirty.snapshotBaseline();
+    dirty.bindTextControllers([_name, _capital, _cash, ..._weights.values]);
+    dirty.snapshotBaseline();
   }
 
   @override
@@ -458,137 +449,153 @@ class _WatchlistSimulationAllocationSheetState
     final baseCurrency = ref.watch(baseCurrencyProvider);
     final allocated = _allocatedPercent();
     final remaining = Decimal.fromInt(_kPercentScale) - allocated;
-    return Form(
-      key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
-          _WatchlistSimulationNameField(controller: _name),
-          const SizedBox(height: AppSpacing.s12),
-          AmountField(
-            label: l10n.watchlistSimulationCapitalField(baseCurrency),
-            controller: _capital,
-            currencyCode: baseCurrency,
-            allowZero: false,
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
+    return guardedScope(
+      child: AppFormPageScaffold(
+        title: Text(l10n.watchlistSimulationAdjustTitle),
+        confirmLeave: handleBackIntent,
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: AbsorbPointer(
+            absorbing: _saving,
+            child: AppFormScaffoldBody(
+              softActionBar: true,
+              actionStatus: _saving ? AppGlassStatus.busy : AppGlassStatus.idle,
+              onSubmit: _saving ? null : _save,
+              action: AppBusyButton(
+                label: l10n.commonSave,
+                busy: _saving,
+                onPress: _save,
+              ),
+              children: [
+                AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
+                _WatchlistSimulationNameField(controller: _name),
+                const SizedBox(height: AppSpacing.s12),
+                AmountField(
+                  label: l10n.watchlistSimulationCapitalField(baseCurrency),
+                  controller: _capital,
+                  currencyCode: baseCurrency,
+                  allowZero: false,
+                ),
+                const SizedBox(height: AppSpacing.s20),
+                Text(
                   l10n.watchlistSimulationHoldingsSection,
                   style: context.labelStyle,
                 ),
-              ),
-              if (_configured.isNotEmpty) ...[
-                AppQuietButton(
-                  label: l10n.watchlistSimulationEqualizeAction,
-                  onPress: _equalize,
-                ),
-                const SizedBox(width: AppSpacing.s4),
-              ],
-              AppQuietButton(
-                label: l10n.watchlistSimulationFillCashAction,
-                onPress: _fillCash,
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          if (_configured.isEmpty)
-            Text(
-              l10n.watchlistSimulationNoPositions,
-              style: context.captionStyle,
-            )
-          else
-            for (final id in _configured) ...[
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: PercentField(
-                      key: ValueKey<String>('watchlist-simulation-weight-$id'),
-                      control: FTextFieldControl.managed(
-                        controller: _weights[id]!,
-                        onChange: (_) => setState(() {}),
+                const SizedBox(height: AppSpacing.s8),
+                Wrap(
+                  spacing: AppSpacing.s8,
+                  runSpacing: AppSpacing.s8,
+                  children: [
+                    if (_configured.isNotEmpty)
+                      AppQuietButton(
+                        label: l10n.watchlistSimulationEqualizeAction,
+                        onPress: _equalize,
                       ),
-                      label: Text(
-                        l10n.watchlistSimulationHoldingWeightField(
-                          watchlistSimulationSymbolLabel(
-                            itemById[id],
-                            fallbackId: id,
+                    AppQuietButton(
+                      label: l10n.watchlistSimulationFillCashAction,
+                      onPress: _fillCash,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                if (_configured.isEmpty)
+                  Text(
+                    l10n.watchlistSimulationNoPositions,
+                    style: context.captionStyle,
+                  )
+                else
+                  for (final id in _configured) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: PercentField(
+                            key: ValueKey<String>(
+                              'watchlist-simulation-weight-$id',
+                            ),
+                            control: FTextFieldControl.managed(
+                              controller: _weights[id]!,
+                              onChange: (_) => setState(() {}),
+                            ),
+                            label: Text(
+                              l10n.watchlistSimulationHoldingWeightField(
+                                watchlistSimulationSymbolLabel(
+                                  itemById[id],
+                                  fallbackId: id,
+                                ),
+                              ),
+                            ),
+                            validator: (value) =>
+                                _validatePercent(context, value),
                           ),
                         ),
-                      ),
-                      validator: (value) => _validatePercent(context, value),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s4),
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.s6),
-                    child: AppIconButton(
-                      icon: FLucideIcons.x,
-                      tooltip: l10n.watchlistSimulationRemovePositionAction(
-                        watchlistSimulationSymbolLabel(
-                          itemById[id],
-                          fallbackId: id,
+                        const SizedBox(width: AppSpacing.s4),
+                        Padding(
+                          padding: const EdgeInsets.only(top: AppSpacing.s6),
+                          child: AppIconButton(
+                            icon: FLucideIcons.x,
+                            tooltip: l10n
+                                .watchlistSimulationRemovePositionAction(
+                                  watchlistSimulationSymbolLabel(
+                                    itemById[id],
+                                    fallbackId: id,
+                                  ),
+                                ),
+                            onPress: () => _removePosition(id),
+                            size: appActionTargetSize(context),
+                            iconSize: AppIconSizes.sm,
+                            surface: AppIconButtonSurface.softMuted,
+                          ),
                         ),
-                      ),
-                      onPress: () => _removePosition(id),
-                      size: appActionTargetSize(context),
-                      iconSize: AppIconSizes.sm,
-                      surface: AppIconButtonSurface.softMuted,
+                      ],
                     ),
+                    const SizedBox(height: AppSpacing.s12),
+                  ],
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppQuietButton(
+                    label: l10n.watchlistSimulationAddPositionAction,
+                    prefix: const Icon(
+                      FLucideIcons.plus,
+                      size: AppIconSizes.sm,
+                    ),
+                    onPress: () => unawaited(_addPositions()),
                   ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s12),
-            ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AppQuietButton(
-              label: l10n.watchlistSimulationAddPositionAction,
-              prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-              onPress: () => unawaited(_addPositions()),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          PercentField(
-            key: const ValueKey<String>('watchlist-simulation-cash-weight'),
-            control: FTextFieldControl.managed(
-              controller: _cash,
-              onChange: (_) => setState(() {}),
-            ),
-            label: Text(l10n.watchlistSimulationCashField),
-            validator: (value) => _validatePercent(context, value),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(
-            remaining == Decimal.zero
-                ? l10n.watchlistSimulationTotalReady
-                : l10n.watchlistSimulationAllocatedSummary(
-                    allocated.toString(),
-                    remaining.toString(),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                PercentField(
+                  key: const ValueKey<String>(
+                    'watchlist-simulation-cash-weight',
                   ),
-            key: const ValueKey<String>(
-              'watchlist-simulation-allocation-total',
-            ),
-            style: context.captionStyle.copyWith(
-              color: remaining == Decimal.zero
-                  ? null
-                  : context.theme.colors.destructive,
+                  control: FTextFieldControl.managed(
+                    controller: _cash,
+                    onChange: (_) => setState(() {}),
+                  ),
+                  label: Text(l10n.watchlistSimulationCashField),
+                  validator: (value) => _validatePercent(context, value),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  remaining == Decimal.zero
+                      ? l10n.watchlistSimulationTotalReady
+                      : l10n.watchlistSimulationAllocatedSummary(
+                          allocated.toString(),
+                          remaining.toString(),
+                        ),
+                  key: const ValueKey<String>(
+                    'watchlist-simulation-allocation-total',
+                  ),
+                  style: context.captionStyle.copyWith(
+                    color: remaining == Decimal.zero
+                        ? null
+                        : context.theme.colors.destructive,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppSpacing.s20),
-          AppSheetFooter(
-            cancelLabel: l10n.commonCancel,
-            submitLabel: l10n.commonSave,
-            busy: _saving,
-            onSubmit: _save,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -605,7 +612,7 @@ class _WatchlistSimulationAllocationSheetState
   }
 
   void _removePosition(String itemId) {
-    widget.dirty.markDirty();
+    dirty.markDirty();
     setState(() {
       _configured.remove(itemId);
       _weights[itemId]!.text = '0';
@@ -618,7 +625,7 @@ class _WatchlistSimulationAllocationSheetState
       ids: _configured,
       totalPercent: Decimal.fromInt(_kPercentScale) - cash,
     );
-    widget.dirty.markDirty();
+    dirty.markDirty();
     setState(() {
       for (final entry in texts.entries) {
         _weights[entry.key]!.text = entry.value;
@@ -633,7 +640,7 @@ class _WatchlistSimulationAllocationSheetState
     }
     final cash = Decimal.fromInt(_kPercentScale) - positions;
     if (cash < Decimal.zero) return;
-    widget.dirty.markDirty();
+    dirty.markDirty();
     setState(() => _cash.text = cash.round(scale: 2).toString());
   }
 
@@ -656,11 +663,12 @@ class _WatchlistSimulationAllocationSheetState
       title: l10n.watchlistSimulationPickSymbolsTitle,
     );
     if (!mounted || picked == null || picked.isEmpty) return;
-    widget.dirty.markDirty();
+    dirty.markDirty();
     setState(() => _configured.addAll(picked));
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final cash = _percentOf(_cash);
@@ -682,8 +690,9 @@ class _WatchlistSimulationAllocationSheetState
       );
       return;
     }
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _saving = true);
-    widget.dirty.busy = true;
+    dirty.busy = true;
     try {
       final repository = await ref.read(
         watchlistSimulationRepositoryProvider.future,
@@ -702,7 +711,7 @@ class _WatchlistSimulationAllocationSheetState
           widget.snapshots,
         ),
       );
-      widget.dirty.markPristine();
+      dirty.markPristine();
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
@@ -713,7 +722,7 @@ class _WatchlistSimulationAllocationSheetState
         );
       }
     } finally {
-      widget.dirty.busy = false;
+      dirty.busy = false;
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -745,7 +754,7 @@ class _WatchlistSimulationNameField extends StatelessWidget {
   }
 }
 
-/// Multi-select symbol list shared by the create sheet and the add-symbol sheet.
+/// Multi-select symbol list shared by the create page and the symbol picker.
 class _WatchlistSimulationSymbolList extends StatefulWidget {
   const _WatchlistSimulationSymbolList({
     required this.items,
@@ -879,22 +888,27 @@ class _WatchlistSimulationSymbolRow extends StatelessWidget {
   }
 }
 
-/// Nested sheet used by the allocation editor to bring new symbols in.
+/// Lightweight selection above the full-page allocation editor.
 Future<Set<String>?> showWatchlistSimulationSymbolPicker({
   required BuildContext context,
   required List<WatchlistItem> items,
   required String title,
 }) {
-  return showAppSheet<Set<String>>(
+  return showAppFormSheet<Set<String>>(
     context: context,
-    title: title,
     maxHeightFactor: 0.9,
-    builder: (_) => _WatchlistSimulationSymbolPickerSheet(items: items),
+    builder: (_) =>
+        _WatchlistSimulationSymbolPickerSheet(items: items, title: title),
   );
 }
 
 class _WatchlistSimulationSymbolPickerSheet extends StatefulWidget {
-  const _WatchlistSimulationSymbolPickerSheet({required this.items});
+  const _WatchlistSimulationSymbolPickerSheet({
+    required this.items,
+    required this.title,
+  });
+
+  final String title;
 
   final List<WatchlistItem> items;
 
@@ -910,33 +924,35 @@ class _WatchlistSimulationSymbolPickerSheetState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          l10n.watchlistSimulationUniverseSummary(
-            _selected.length,
-            widget.items.length,
+    return AppSheet(
+      title: widget.title,
+      footer: AppSheetFooter(
+        cancelLabel: l10n.commonCancel,
+        submitLabel: l10n.watchlistSimulationAddPositionAction,
+        enabled: _selected.isNotEmpty,
+        onSubmit: () => Navigator.of(context).pop(_selected),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.watchlistSimulationUniverseSummary(
+              _selected.length,
+              widget.items.length,
+            ),
+            style: context.captionStyle,
           ),
-          style: context.captionStyle,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        _WatchlistSimulationSymbolList(
-          items: widget.items,
-          isSelected: _selected.contains,
-          onToggle: (itemId) => setState(() {
-            if (!_selected.remove(itemId)) _selected.add(itemId);
-          }),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        AppSheetFooter(
-          cancelLabel: l10n.commonCancel,
-          submitLabel: l10n.watchlistSimulationAddPositionAction,
-          enabled: _selected.isNotEmpty,
-          onSubmit: () => Navigator.of(context).pop(_selected),
-        ),
-      ],
+          const SizedBox(height: AppSpacing.s8),
+          _WatchlistSimulationSymbolList(
+            items: widget.items,
+            isSelected: _selected.contains,
+            onToggle: (itemId) => setState(() {
+              if (!_selected.remove(itemId)) _selected.add(itemId);
+            }),
+          ),
+        ],
+      ),
     );
   }
 }

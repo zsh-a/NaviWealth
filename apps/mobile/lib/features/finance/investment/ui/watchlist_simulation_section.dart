@@ -15,13 +15,13 @@ import 'package:naviwealth/features/finance/market/domain/market_corporate_actio
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-import 'watchlist_simulation_sheets.dart';
+import 'watchlist_simulation_forms.dart';
 import 'watchlist_simulation_support.dart';
 
 /// Paper scenario panel for one watchlist collection.
 ///
-/// Reads only: create/edit/delete all live behind the sheets in
-/// `watchlist_simulation_sheets.dart`, and every number shown here is either a
+/// Reads only: create/edit/delete all live behind guarded pages in
+/// `watchlist_simulation_forms.dart`, and every number shown here is either a
 /// point-in-time projection or an observed value series derived on this device.
 class WatchlistSimulationSection extends ConsumerWidget {
   const WatchlistSimulationSection({
@@ -49,9 +49,10 @@ class WatchlistSimulationSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _WatchlistSimulationSectionHeader(
+          collectionName: collection.name,
           canCreate: items.isNotEmpty,
           onCreate: () => unawaited(
-            showWatchlistSimulationCreateSheet(
+            showWatchlistSimulationCreatePage(
               context: context,
               collection: collection,
               items: items,
@@ -105,11 +106,13 @@ class WatchlistSimulationSection extends ConsumerWidget {
 
 class _WatchlistSimulationSectionHeader extends StatelessWidget {
   const _WatchlistSimulationSectionHeader({
+    required this.collectionName,
     required this.canCreate,
     required this.onCreate,
   });
 
   final bool canCreate;
+  final String collectionName;
   final VoidCallback onCreate;
 
   @override
@@ -122,13 +125,10 @@ class _WatchlistSimulationSectionHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.watchlistSimulationSectionTitle,
-                style: context.labelStyle,
-              ),
+              Text(collectionName, style: context.labelStyle),
               const SizedBox(height: AppSpacing.s2),
               Text(
-                l10n.watchlistSimulationSectionSubtitle,
+                l10n.watchlistSimulationScopeNote,
                 style: context.captionStyle,
               ),
             ],
@@ -267,7 +267,7 @@ class _WatchlistSimulationUnavailable extends StatelessWidget {
                 icon: FLucideIcons.pencil,
                 tooltip: l10n.watchlistSimulationAdjustAction,
                 onPress: () => unawaited(
-                  showWatchlistSimulationAllocationSheet(
+                  showWatchlistSimulationAllocationPage(
                     context: context,
                     simulation: simulation,
                     positions: const [],
@@ -550,58 +550,56 @@ class _WatchlistSimulationCardHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
                 simulation.name,
                 style: context.rowTitleStyle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: AppSpacing.s6),
-              AppBadge(
-                label: l10n.watchlistSimulationPaperBadge,
-                size: AppBadgeSize.compact,
-                tone: AppBadgeTone.info,
-                icon: FLucideIcons.sparkles,
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        AppIconButton(
-          icon: FLucideIcons.slidersHorizontal,
-          tooltip: l10n.watchlistSimulationAdjustAction,
-          onPress: () => unawaited(
-            showWatchlistSimulationAllocationSheet(
-              context: context,
-              simulation: simulation,
-              positions: positions,
-              cashWeight: resolvedCashWeight,
-              items: items,
-              snapshots: snapshots,
             ),
-          ),
-          size: appActionTargetSize(context),
-          iconSize: AppIconSizes.sm,
-          surface: AppIconButtonSurface.softMuted,
+            const SizedBox(width: AppSpacing.s8),
+            AppIconButton(
+              icon: FLucideIcons.slidersHorizontal,
+              tooltip: l10n.watchlistSimulationAdjustAction,
+              onPress: () => unawaited(
+                showWatchlistSimulationAllocationPage(
+                  context: context,
+                  simulation: simulation,
+                  positions: positions,
+                  cashWeight: resolvedCashWeight,
+                  items: items,
+                  snapshots: snapshots,
+                ),
+              ),
+              size: appActionTargetSize(context),
+              iconSize: AppIconSizes.sm,
+              surface: AppIconButtonSurface.softMuted,
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            AppIconButton(
+              icon: FLucideIcons.trash2,
+              tooltip: l10n.watchlistSimulationDeleteAction,
+              onPress: () => unawaited(
+                deleteWatchlistSimulation(
+                  context: context,
+                  simulation: simulation,
+                ),
+              ),
+              size: appActionTargetSize(context),
+              iconSize: AppIconSizes.sm,
+              surface: AppIconButtonSurface.softMuted,
+            ),
+          ],
         ),
-        const SizedBox(width: AppSpacing.s8),
-        AppIconButton(
-          icon: FLucideIcons.trash2,
-          tooltip: l10n.watchlistSimulationDeleteAction,
-          onPress: () => unawaited(
-            deleteWatchlistSimulation(context: context, simulation: simulation),
-          ),
-          size: appActionTargetSize(context),
-          iconSize: AppIconSizes.sm,
-          surface: AppIconButtonSurface.softMuted,
-        ),
+        const SizedBox(height: AppSpacing.s4),
+        Text(l10n.watchlistSimulationPaperBadge, style: context.captionStyle),
       ],
     );
   }
@@ -626,54 +624,69 @@ class _WatchlistSimulationHero extends StatelessWidget {
     final cumulativeReturn = observed?.hasMoved ?? false
         ? observed!.cumulativeReturn
         : null;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+    final change = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l10n.watchlistSimulationCumulativeReturn,
-                style: context.captionStyle,
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              if (cumulativeReturn == null)
-                Text('—', style: context.strongTitleStyle)
-              else
-                DeltaChip(
-                  value: cumulativeReturn.toDouble() * 100,
-                  format: DeltaFormat.percent,
-                  fractionDigits: 2,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s8,
-                    vertical: AppSpacing.s2,
-                  ),
-                  style: context.strongTitleStyle,
-                ),
-            ],
-          ),
+        Text(
+          l10n.watchlistSimulationCumulativeReturn,
+          style: context.captionStyle,
         ),
-        const SizedBox(width: AppSpacing.s12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              l10n.watchlistSimulationObservedValue,
-              style: context.captionStyle,
+        const SizedBox(height: AppSpacing.s6),
+        if (cumulativeReturn == null)
+          Text('—', style: context.strongTitleStyle)
+        else
+          DeltaChip(
+            value: cumulativeReturn.toDouble() * 100,
+            format: DeltaFormat.percent,
+            fractionDigits: 2,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s2,
             ),
-            const SizedBox(height: AppSpacing.s6),
-            Text(
-              formatters.currency(
-                observed?.latestValue ?? simulation.startingCapital,
-                code: simulation.baseCurrency,
-                decimalDigits: 2,
-              ),
-              style: context.labelStyle,
-            ),
-          ],
+            style: context.strongTitleStyle,
+          ),
+      ],
+    );
+    final value = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.watchlistSimulationObservedValue,
+          style: context.captionStyle,
+        ),
+        const SizedBox(height: AppSpacing.s6),
+        Text(
+          formatters.currency(
+            observed?.latestValue ?? simulation.startingCapital,
+            code: simulation.baseCurrency,
+            decimalDigits: 2,
+          ),
+          style: context.labelStyle,
         ),
       ],
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 320 ||
+            MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              change,
+              const SizedBox(height: AppSpacing.s12),
+              value,
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(child: change),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(child: value),
+          ],
+        );
+      },
     );
   }
 }

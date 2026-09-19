@@ -77,14 +77,18 @@ rounding.
 ### Investment Interaction
 
 The Plan hub keeps investment workflow entries visible, with a compact
-highest-priority attention item and a separate all-items sheet. Cash runway
+highest-priority attention item and a header-level all-items sheet action.
+Stable workflow rows retain their specific status instead of a generic review
+badge. Optional brief slots contribute spacing only when present. Cash runway
 keeps six upcoming flows in its overview and opens the full lazy timeline in
 a detail sheet; the stress-test entry is directly visible. Dividend history
 uses year selection rather than reveal/collapse. Phone liability details keep
 recent/upcoming installments in the overview and a live, year-filtered full
 schedule in a sheet; payment and undo actions retain their original workflow.
 
-Portfolio scope precedes its summary; holdings precede returns and event
+Portfolio scope, investment-plan access, and selected-portfolio management share
+one compact toolbar. Supporting cost and gain figures are subordinate to the
+headline value; holdings precede returns and event
 summaries. Holdings form one continuous lazy list with no reveal/collapse gate.
 Concentration risk keeps the highest-severity breach visible; all risks open
 in a dismissible detail sheet without shifting the holdings or removing the
@@ -169,6 +173,17 @@ deduplication is owner-scoped. Stale, future-dated, erroneous, or mismatched quo
 cannot trigger a reminder.
 
 ### Watchlist Paper Simulations
+
+Watchlist uses one searchable collection selector independent of collection count,
+a labelled simulation entry, and a separate search/sort/filter row. Active filters
+stay on one horizontally scrollable line. The collection's paper workspace has
+the route `/wealth/watchlist/collections/:collectionId/simulations`; it loads the
+entire collection and completed quote batches, independent of list filters.
+Create and allocation edit use guarded full pages with pinned save bars. Only
+lightweight symbol selection uses a sheet, with a pinned confirmation footer.
+Busy forms block repeat submission and dismissal; successful save returns to
+the workspace. Currency charts use distinct range-aware compact ticks and full
+currency values for inspection, with measured label widths and deduplicated dates.
 
 Watchlist simulations are a separate paper-only aggregate backed by
 `watchlist_simulations`, legacy compatibility positions, a deterministic

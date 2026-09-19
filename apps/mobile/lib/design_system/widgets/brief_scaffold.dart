@@ -25,8 +25,8 @@ import 'staggered_column.dart';
 class BriefScaffold extends StatelessWidget {
   const BriefScaffold({
     super.key,
-    required this.greeting,
-    required this.stage,
+    this.greeting,
+    this.stage,
     this.modules = const <Widget>[],
     this.secondary = const <Widget>[],
     this.padding,
@@ -41,10 +41,10 @@ class BriefScaffold extends StatelessWidget {
   });
 
   /// Top identity row (greeting + chrome).
-  final Widget greeting;
+  final Widget? greeting;
 
   /// Single visual anchor (hero metric, scrub stage, recovery).
-  final Widget stage;
+  final Widget? stage;
 
   /// Primary modules under the stage.
   final List<Widget> modules;
@@ -96,23 +96,30 @@ class BriefScaffold extends StatelessWidget {
 
     final adaptiveTiles = summaryTiles;
     final leadingChildren = <Widget>[
-      greeting,
-      SizedBox(
-        height: compactHeight ? AppPageRhythm.row : AppPageRhythm.module,
-      ),
-      stage,
+      ?greeting,
+      if (greeting != null && stage != null)
+        SizedBox(
+          height: compactHeight ? AppPageRhythm.row : AppPageRhythm.module,
+        ),
+      ?stage,
     ];
     final columnChildren = <Widget>[
       ...leadingChildren,
       if (adaptiveTiles != null && adaptiveTiles.isNotEmpty) ...[
-        SizedBox(
-          height: compactHeight ? AppPageRhythm.module : AppPageRhythm.section,
-        ),
+        if (leadingChildren.isNotEmpty)
+          SizedBox(
+            height: compactHeight
+                ? AppPageRhythm.module
+                : AppPageRhythm.section,
+          ),
         AdaptiveSummaryGrid(items: adaptiveTiles),
       ] else if (modules.isNotEmpty) ...[
-        SizedBox(
-          height: compactHeight ? AppPageRhythm.module : AppPageRhythm.section,
-        ),
+        if (leadingChildren.isNotEmpty)
+          SizedBox(
+            height: compactHeight
+                ? AppPageRhythm.module
+                : AppPageRhythm.section,
+          ),
         if (adaptiveSupportingPane && secondary.isNotEmpty)
           AdaptiveSupportingPane(
             primary: _BriefModuleColumn(items: modules),
@@ -124,7 +131,8 @@ class BriefScaffold extends StatelessWidget {
       if (adaptiveTiles == null &&
           secondary.isNotEmpty &&
           (!adaptiveSupportingPane || modules.isEmpty)) ...[
-        const SizedBox(height: AppPageRhythm.section),
+        if (leadingChildren.isNotEmpty || modules.isNotEmpty)
+          const SizedBox(height: AppPageRhythm.section),
         ..._interleave(secondary, AppPageRhythm.module),
       ],
     ];

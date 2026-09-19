@@ -26,7 +26,6 @@ part 'nw_line_chart_data.dart';
 part 'nw_line_chart_models.dart';
 part 'nw_line_chart_touch.dart';
 
-const double _kLeftTitleReservedSize = 44;
 const double _kBottomTitleReservedSize = 24;
 
 /// Theme-aware line chart wrapper around `fl_chart`.
@@ -283,8 +282,14 @@ class _NwLineChartState extends State<NwLineChart> {
     final yPad = prepared.yPad;
     final chartMinY = minY - yPad;
     final chartMaxY = maxY + yPad;
-    final plotInsets = _plotInsets;
     final hideAmounts = AmountPrivacyScope.isHiddenOf(context);
+    final titles = widget.minimal
+        ? const FlTitlesData(show: false)
+        : _buildTitles(palette, minX, maxX, chartMinY, chartMaxY, hideAmounts);
+    final plotInsets = _ChartPlotInsets(
+      left: widget.minimal ? 0 : titles.leftTitles.sideTitles.reservedSize,
+      bottom: widget.minimal ? 0 : titles.bottomTitles.sideTitles.reservedSize,
+    );
     final chartConfig = (
       xAxis: widget.xAxis,
       yAxis: widget.yAxis,
@@ -302,6 +307,7 @@ class _NwLineChartState extends State<NwLineChart> {
       showYAxis: widget.showYAxis,
       minimal: widget.minimal,
       uniformSeriesStyle: widget.uniformSeriesStyle,
+      textScaler: MediaQuery.textScalerOf(context),
     );
 
     // Cache chart data — only rebuild when data/palette/privacy changes.
@@ -352,9 +358,7 @@ class _NwLineChartState extends State<NwLineChart> {
               FlLine(color: palette.gridLine, strokeWidth: AppStroke.hairline),
         ),
         borderData: FlBorderData(show: false),
-        titlesData: widget.minimal
-            ? const FlTitlesData(show: false)
-            : _buildTitles(palette, minX, maxX, minY, maxY, hideAmounts),
+        titlesData: titles,
         lineBarsData: lineBars,
         lineTouchData: widget.minimal
             ? const LineTouchData(enabled: false)

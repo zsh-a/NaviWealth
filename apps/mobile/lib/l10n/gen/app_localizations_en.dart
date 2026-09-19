@@ -11497,6 +11497,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get watchlistEditCollectionAction => 'Edit collection';
 
   @override
+  String get watchlistCollectionUnavailable =>
+      'This collection no longer exists.';
+
+  @override
+  String get watchlistSimulationOpenAction => 'Simulate';
+
+  @override
   String get watchlistCollectionNameField => 'Collection name';
 
   @override

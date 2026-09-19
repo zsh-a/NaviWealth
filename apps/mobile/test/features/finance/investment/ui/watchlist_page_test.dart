@@ -23,6 +23,7 @@ import 'package:naviwealth/features/finance/investment/notifications/watchlist_a
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_rows.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_sections.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_simulation_section.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
@@ -268,6 +269,20 @@ GoRouter _watchlistRouter({String? initialLocation}) {
           data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
           child: const WatchlistPage(),
         ),
+        routes: [
+          GoRoute(
+            path: 'collections/:collectionId/simulations',
+            builder: (_, state) => FTheme(
+              data: buildAppForuiTheme(
+                brightness: Brightness.light,
+                touch: true,
+              ),
+              child: WatchlistSimulationsPage(
+                collectionId: state.pathParameters['collectionId']!,
+              ),
+            ),
+          ),
+        ],
       ),
     ],
   );
@@ -363,11 +378,13 @@ void main() {
       kWatchlistCollectionPreferenceKey,
       'collection:${_collection.id}',
     );
+    final router = _watchlistRouter();
+    addTearDown(router.dispose);
     await tester.pumpWidget(
-      _wrap(TargetPlatform.android, items: [], collections: [_collection]),
+      _routerWrap(router: router, items: [], collections: [_collection]),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(FLucideIcons.chartLine));
+    await tester.tap(find.text('Simulate'));
     await tester.pumpAndSettle();
     expect(
       find.text('Based on the entire collection, independent of list filters.'),
@@ -377,6 +394,16 @@ void main() {
       find.byKey(const ValueKey('watchlist-simulation-section')),
       findsOneWidget,
     );
+    expect(find.byType(AppSheet), findsNothing);
+    expect(
+      GoRouterState.of(tester.element(find.byType(WatchlistSimulationsPage)))
+          .uri
+          .path,
+      FinanceRoutes.wealthWatchlistSimulationsFor(_collection.id),
+    );
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(WatchlistPage), findsOneWidget);
   });
 
   testWidgets('many collections use a searchable picker', (tester) async {
@@ -395,7 +422,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(FLucideIcons.layers).first);
+    await tester.tap(find.byKey(const ValueKey('watchlist-scope-trigger')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(EditableText).last, 'Group 5');
     await tester.pumpAndSettle();
@@ -405,11 +432,58 @@ void main() {
   });
 
   testWidgets(
+    'simulation deep links resolve the full collection independently of search',
+    (tester) async {
+      final router = _watchlistRouter(
+        initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor(
+          _collection.id,
+        ),
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        _routerWrap(
+          router: router,
+          items: [_item, _otherItem],
+          collections: [_collection],
+          members: [_membership, _otherMembership],
+          snapshots: [_advancingSnapshot, _decliningSnapshot],
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(WatchlistSimulationsPage)),
+      );
+      container.read(watchlistViewStateProvider.notifier).search('AAPL');
+      await tester.pumpAndSettle();
+      final section = tester.widget<WatchlistSimulationSection>(
+        find.byType(WatchlistSimulationSection),
+      );
+      expect(section.items.map((item) => item.id), [_item.id, _otherItem.id]);
+      expect(section.snapshots, hasLength(2));
+      expect(find.byType(AppSheet), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'deleted collection deep link has an explicit unavailable state',
+    (tester) async {
+      final router = _watchlistRouter(
+        initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor('deleted'),
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(_routerWrap(router: router));
+      await tester.pumpAndSettle();
+      expect(find.text('This collection no longer exists.'), findsOneWidget);
+      expect(find.byType(WatchlistSimulationSection), findsNothing);
+    },
+  );
+
+  testWidgets(
     'does not duplicate an ungrouped list and disables incomplete submission',
     (tester) async {
       await tester.pumpWidget(_wrap(TargetPlatform.android));
       await tester.pumpAndSettle();
-      expect(find.text('All (1)'), findsOneWidget);
+      expect(find.text('All'), findsOneWidget);
       expect(find.text('Ungrouped (1)'), findsNothing);
       await tester.tap(find.byIcon(FLucideIcons.plus));
       await _pumpSheet(tester);
@@ -943,7 +1017,7 @@ void main() {
     expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
   });
 
-  testWidgets('switches collection scope from the toolbar chips', (
+  testWidgets('switches collection scope through the stable scope picker', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -962,13 +1036,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Starts unscoped: every symbol shows, and picking a chip narrows.
-    expect(find.text('All (2)'), findsOneWidget);
-    expect(find.text('Growth (1)'), findsOneWidget);
+    // Scope navigation does not depend on the number of collections.
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Growth (1)'), findsNothing);
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.text('MSFT'), findsOneWidget);
 
-    // The chip row scrolls horizontally; later chips need scrolling in.
+    await tester.tap(find.byKey(const ValueKey('watchlist-scope-trigger')));
+    await tester.pumpAndSettle();
     final growthChip = find.text('Growth (1)');
     await tester.ensureVisible(growthChip);
     await tester.pumpAndSettle();
@@ -982,6 +1057,8 @@ void main() {
       'collection:${_collection.id}',
     );
 
+    await tester.tap(find.byKey(const ValueKey('watchlist-scope-trigger')));
+    await tester.pumpAndSettle();
     final ungroupedChip = find.text('Ungrouped (1)');
     await tester.ensureVisible(ungroupedChip);
     await tester.pumpAndSettle();
@@ -1018,7 +1095,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Growth (1)'), findsOneWidget);
+    expect(find.text('Growth'), findsOneWidget);
     expect(find.text('AAPL'), findsOneWidget);
     expect(find.text('MSFT'), findsNothing);
     expect(router.routeInformationProvider.value.uri.queryParameters, isEmpty);
@@ -1239,6 +1316,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(WatchlistPage), findsOneWidget);
 
+    await tester.tap(find.byKey(const ValueKey('watchlist-scope-trigger')));
+    await tester.pumpAndSettle();
     final collectionChip = find.text('Growth (1)');
     await tester.ensureVisible(collectionChip);
     await tester.pumpAndSettle();

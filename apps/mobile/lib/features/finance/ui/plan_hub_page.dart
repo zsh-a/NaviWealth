@@ -25,11 +25,6 @@ import '../shared/ui/finance_detail_sheet.dart';
 
 part 'plan_hub_entries.dart';
 
-/// Plan hub intentionally renders no in-body greeting row: identity comes
-/// from the [ShellTabScaffold] title and the attention stage leads the brief
-/// — the same contract as the Wealth hub.
-const Widget _kNoGreetingHeader = SizedBox.shrink();
-
 /// Finance planning workspace.
 ///
 /// The surface is deliberately action-first: due and risky work is promoted,
@@ -71,10 +66,9 @@ class PlanHubPage extends ConsumerWidget {
           primary: BriefScaffold(
             padding: shellTabContentPadding(context, top: AppSpacing.s8),
             onRefresh: () => _refreshPlanningWorkspace(ref),
-            greeting: _kNoGreetingHeader,
             stage: showAttention
                 ? _AttentionSection(status: status, items: attentionItems)
-                : const SizedBox.shrink(),
+                : null,
             summaryTiles: _planningSummaryTiles(l10n, entries),
           ),
         ),
@@ -169,7 +163,31 @@ class _AttentionSection extends StatelessWidget {
 
     return AppSection.group(
       title: l10n.planAttentionTitle,
-      trailing: hasAttention || status.isLoading
+      trailing: items.length > 1
+          ? AppQuietButton(
+              key: const ValueKey('plan-attention-details'),
+              label: l10n.financeViewAllItems(items.length),
+              onPress: () async {
+                final path = await showFinanceDetailSheet<String>(
+                  context: context,
+                  title: l10n.planAttentionTitle,
+                  builder: (sheetContext) => Column(
+                    children: [
+                      for (final (index, item) in items.indexed) ...[
+                        if (index > 0) const FDivider(),
+                        _AttentionRow(
+                          spec: item,
+                          onTap: () =>
+                              Navigator.of(sheetContext).pop(item.path),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+                if (context.mounted && path != null) await context.push(path);
+              },
+            )
+          : hasAttention || status.isLoading
           ? AppBadge(
               label: status.isLoading && !hasAttention
                   ? l10n.commonLoading
@@ -186,42 +204,6 @@ class _AttentionSection extends StatelessWidget {
           for (final (index, item) in visibleItems.indexed) ...[
             if (index > 0) const FDivider(),
             _AttentionRow(spec: item),
-          ],
-          if (items.length > 1) ...[
-            const SizedBox(height: AppSpacing.s6),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: FButton(
-                key: const ValueKey('plan-attention-details'),
-                variant: FButtonVariant.ghost,
-                onPress: () async {
-                  final path = await showFinanceDetailSheet<String>(
-                    context: context,
-                    title: l10n.planAttentionTitle,
-                    builder: (sheetContext) => Column(
-                      children: [
-                        for (final (index, item) in items.indexed) ...[
-                          if (index > 0) const FDivider(),
-                          _AttentionRow(
-                            spec: item,
-                            onTap: () =>
-                                Navigator.of(sheetContext).pop(item.path),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                  if (context.mounted && path != null) await context.push(path);
-                },
-                prefix: const Icon(
-                  FLucideIcons.listChecks,
-                  size: AppIconSizes.sm,
-                ),
-                child: Flexible(
-                  child: Text(l10n.financeViewAllItems(items.length)),
-                ),
-              ),
-            ),
           ],
         ] else if (status.isLoading)
           const _AttentionSkeleton(),
@@ -324,14 +306,8 @@ class _PlanRow extends StatelessWidget {
     return AppNavRow(
       icon: spec.icon,
       title: spec.title,
-      subtitle: spec.requiresAttention ? null : spec.subtitle,
-      trailing: spec.requiresAttention
-          ? AppBadge(
-              label: AppLocalizations.of(context).planNeedsAttentionShort,
-              tone: spec.tone,
-              size: AppBadgeSize.compact,
-            )
-          : null,
+      subtitle: spec.subtitle,
+      tone: spec.requiresAttention ? spec.tone : null,
       titleMaxLines: 2,
       subtitleMaxLines: 2,
       onTap: () => context.push(spec.path),

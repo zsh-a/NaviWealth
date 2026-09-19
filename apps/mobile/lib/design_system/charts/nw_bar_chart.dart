@@ -154,7 +154,6 @@ class _NwBarChartState extends State<NwBarChart> {
     final yPad = (maxY - minY).abs() * 0.1 + 1;
     final chartMinY = minY < 0 ? minY - yPad : 0.0;
     final chartMaxY = maxY + yPad;
-    final yRange = (chartMaxY - chartMinY).abs();
 
     Widget chartWidget = RepaintBoundary(
       child: BarChart(
@@ -171,7 +170,7 @@ class _NwBarChartState extends State<NwBarChart> {
             ),
           ),
           borderData: FlBorderData(show: false),
-          titlesData: _buildTitles(palette, yRange),
+          titlesData: _buildTitles(palette, chartMinY, chartMaxY),
           barTouchData: _buildTouchData(context, palette, colors),
         ),
       ),
@@ -214,9 +213,18 @@ class _NwBarChartState extends State<NwBarChart> {
     );
   }
 
-  FlTitlesData _buildTitles(ChartPalette palette, double yRange) {
+  FlTitlesData _buildTitles(ChartPalette palette, double minY, double maxY) {
+    final yRange = (maxY - minY).abs();
+    final interval = yRange > 0
+        ? yRange / (widget.yAxis.maxLabels - 1).clamp(1, 100)
+        : 1.0;
     final labelStyle = TypographyTokens.numericCaption.copyWith(
       color: palette.axisLabel,
+    );
+    final formatTick = widget.yAxis.tickFormatter(
+      min: minY,
+      max: maxY,
+      interval: interval,
     );
     return FlTitlesData(
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -250,7 +258,14 @@ class _NwBarChartState extends State<NwBarChart> {
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 44,
+          interval: interval,
+          reservedSize: widget.yAxis.reservedWidth(
+            context,
+            labelStyle,
+            min: minY,
+            max: maxY,
+            interval: interval,
+          ),
           getTitlesWidget: (value, meta) {
             if (!shouldRenderAxisLabel(
               value: value,
@@ -263,7 +278,7 @@ class _NwBarChartState extends State<NwBarChart> {
             return Padding(
               padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: Text(
-                widget.yAxis.formatValue(value),
+                formatTick(value),
                 style: labelStyle,
                 maxLines: 1,
                 softWrap: false,

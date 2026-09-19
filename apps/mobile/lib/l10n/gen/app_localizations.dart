@@ -19358,6 +19358,18 @@ abstract class AppLocalizations {
   /// **'Edit collection'**
   String get watchlistEditCollectionAction;
 
+  /// No description provided for @watchlistCollectionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This collection no longer exists.'**
+  String get watchlistCollectionUnavailable;
+
+  /// No description provided for @watchlistSimulationOpenAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulate'**
+  String get watchlistSimulationOpenAction;
+
   /// Watchlist collection name input label
   ///
   /// In en, this message translates to:
@@ -19711,7 +19723,7 @@ abstract class AppLocalizations {
   /// **'Reference only — quantity, tax, cash and NAV are not inferred from target weights.'**
   String get watchlistSimulationDividendReferenceNote;
 
-  /// Paper simulation creation sheet title
+  /// Paper simulation creation page title
   ///
   /// In en, this message translates to:
   /// **'Create paper simulation'**
@@ -19741,7 +19753,7 @@ abstract class AppLocalizations {
   /// **'{collection} simulation'**
   String watchlistSimulationDefaultName(String collection);
 
-  /// Paper allocation edit sheet title
+  /// Paper allocation edit page title
   ///
   /// In en, this message translates to:
   /// **'Adjust paper allocation'**

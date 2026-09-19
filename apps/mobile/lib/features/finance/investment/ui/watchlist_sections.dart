@@ -13,7 +13,7 @@ import '../data/watchlist_view_state.dart';
 import 'watchlist_labels.dart';
 import 'watchlist_sheets.dart';
 
-/// Scrollable scopes with fixed, directly reachable view controls.
+/// Stable scope navigation and directly reachable search, sort and filters.
 /// Collection administration stays in the overflow menu.
 class WatchlistToolbar extends StatelessWidget {
   const WatchlistToolbar({
@@ -59,37 +59,33 @@ class WatchlistToolbar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s12,
-            AppSpacing.s8,
-            AppSpacing.s12,
-            0,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
           child: Row(
             children: [
-              const Expanded(child: _WatchlistSearch()),
-              if (onOpenSimulation != null) ...[
-                const SizedBox(width: AppSpacing.s8),
-                AppIconButton(
-                  icon: FLucideIcons.chartLine,
-                  tooltip: l10n.watchlistSimulationSectionTitle,
-                  onPress: onOpenSimulation,
-                ),
-              ],
-            ],
-          ),
-        ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: collections.length > 4
-                  ? Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        start: AppSpacing.s12,
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: FButton(
+                    key: const ValueKey('watchlist-scope-trigger'),
+                    mainAxisSize: MainAxisSize.min,
+                    variant: FButtonVariant.ghost,
+                    suffix: const Icon(
+                      FLucideIcons.chevronDown,
+                      size: AppIconSizes.sm,
+                    ),
+                    onPress: () => showAppSheet<void>(
+                      context: context,
+                      title: l10n.watchlistManageScope,
+                      builder: (_) => _WatchlistCollectionPicker(
+                        collections: collections,
+                        counts: counts,
+                        scope: scope,
+                        onSelected: onScopeSelected,
                       ),
-                      child: AppQuietButton(
-                        label: scope.isAll
+                    ),
+                    child: Flexible(
+                      child: Text(
+                        scope.isAll
                             ? l10n.watchlistAllCollection
                             : scope.ungrouped
                             ? l10n.watchlistUngroupedCollection
@@ -98,96 +94,22 @@ class WatchlistToolbar extends StatelessWidget {
                                       .firstOrNull
                                       ?.name ??
                                   l10n.watchlistAllCollection,
-                        prefix: const Icon(FLucideIcons.layers),
-                        onPress: () => showAppSheet<void>(
-                          context: context,
-                          title: l10n.watchlistManageScope,
-                          builder: (_) => _WatchlistCollectionPicker(
-                            collections: collections,
-                            counts: counts,
-                            onSelected: onScopeSelected,
-                          ),
-                        ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.s12,
-                        AppSpacing.s8,
-                        0,
-                        AppSpacing.s4,
-                      ),
-                      child: Row(
-                        children: [
-                          AppFilterChip(
-                            label: l10n.watchlistCollectionCountLabel(
-                              l10n.watchlistAllCollection,
-                              counts.all,
-                            ),
-                            active: scope.isAll,
-                            onPress: () =>
-                                onScopeSelected(const WatchlistScope.all()),
-                          ),
-                          for (final entry
-                              in <
-                                ({
-                                  String label,
-                                  bool active,
-                                  WatchlistScope scope,
-                                })
-                              >[
-                                if (collections.isNotEmpty || scope.ungrouped)
-                                  (
-                                    label: l10n.watchlistCollectionCountLabel(
-                                      l10n.watchlistUngroupedCollection,
-                                      counts.ungrouped,
-                                    ),
-                                    active: scope.ungrouped,
-                                    scope: const WatchlistScope.ungrouped(),
-                                  ),
-                                for (final collection in collections)
-                                  (
-                                    label: l10n.watchlistCollectionCountLabel(
-                                      collection.name,
-                                      counts.forCollection(collection.id),
-                                    ),
-                                    active: scope.collectionId == collection.id,
-                                    scope: WatchlistScope.collection(
-                                      collection.id,
-                                    ),
-                                  ),
-                              ]) ...[
-                            const SizedBox(width: AppSpacing.s8),
-                            AppFilterChip(
-                              label: entry.label,
-                              active: entry.active,
-                              onPress: () => onScopeSelected(entry.scope),
-                            ),
-                          ],
-                          const SizedBox(width: AppSpacing.s12),
-                        ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-            ),
-            AppIconButton(
-              key: const ValueKey('watchlist-sort-trigger'),
-              icon: FLucideIcons.arrowUpDown,
-              tooltip:
-                  '${l10n.watchlistSortAction} · ${_sortLabel(l10n, viewState.sortOrder)}',
-              onPress: () => _openSort(context),
-            ),
-            AppIconButton(
-              key: const ValueKey('watchlist-filter-trigger'),
-              icon: filter.isDefault
-                  ? FLucideIcons.listFilter
-                  : FLucideIcons.listFilterPlus,
-              tooltip: l10n.watchlistFilterAction,
-              onPress: () => _openFilter(context),
-            ),
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: AppSpacing.s12),
-              child: AppAdaptiveActionMenu(
+                  ),
+                ),
+              ),
+              if (onOpenSimulation != null) ...[
+                const SizedBox(width: AppSpacing.s8),
+                FButton(
+                  variant: FButtonVariant.outline,
+                  onPress: onOpenSimulation,
+                  child: Text(l10n.watchlistSimulationOpenAction),
+                ),
+              ],
+              AppAdaptiveActionMenu(
                 title: l10n.watchlistMoreActions,
                 actions: <AppAdaptiveAction>[
                   if (onEditCollection != null)
@@ -233,64 +155,97 @@ class WatchlistToolbar extends StatelessWidget {
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s12,
+            AppSpacing.s4,
+            AppSpacing.s12,
+            AppSpacing.s8,
+          ),
+          child: Row(
+            children: [
+              const Expanded(child: _WatchlistSearch()),
+              const SizedBox(width: AppSpacing.s8),
+              AppIconButton(
+                key: const ValueKey('watchlist-sort-trigger'),
+                icon: FLucideIcons.arrowUpDown,
+                tooltip:
+                    '${l10n.watchlistSortAction} · ${_sortLabel(l10n, viewState.sortOrder)}',
+                onPress: () => _openSort(context),
+              ),
+              AppIconButton(
+                key: const ValueKey('watchlist-filter-trigger'),
+                icon: filter.isDefault
+                    ? FLucideIcons.listFilter
+                    : FLucideIcons.listFilterPlus,
+                tooltip: l10n.watchlistFilterAction,
+                onPress: () => _openFilter(context),
+              ),
+            ],
+          ),
         ),
         if (viewState.sortOrder != WatchlistSortOrder.defaultOrder ||
             !filter.isDefault)
           Padding(
             key: const ValueKey('watchlist-view-state'),
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-            child: Wrap(
-              spacing: AppSpacing.s6,
-              runSpacing: AppSpacing.s4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                if (viewState.sortOrder != WatchlistSortOrder.defaultOrder)
-                  AppFilterChip(
-                    label: _sortLabel(l10n, viewState.sortOrder),
-                    active: true,
-                    onPress: () => _openSort(context),
-                    onClear: () =>
-                        onSortSelected(WatchlistSortOrder.defaultOrder),
-                    clearSemanticLabel: l10n.watchlistSortDefault,
-                  ),
-                for (final label in _filterLabels(l10n, filter))
-                  AppFilterChip(
-                    label: label,
-                    active: true,
-                    onPress: () => _openFilter(context),
-                    onClear: () {
-                      final labels = _filterLabels(l10n, filter);
-                      final index = labels.indexOf(label);
-                      final marketIndex = filter.market == null ? -1 : 0;
-                      final alertIndex =
-                          filter.alerts == WatchlistAlertFilter.all
-                          ? -1
-                          : (filter.market == null ? 0 : 1);
-                      onFilterChanged(
-                        WatchlistFilter(
-                          market: index == marketIndex ? null : filter.market,
-                          alerts: index == alertIndex
-                              ? WatchlistAlertFilter.all
-                              : filter.alerts,
-                          freshness: index != marketIndex && index != alertIndex
-                              ? WatchlistFreshnessFilter.all
-                              : filter.freshness,
-                        ),
-                      );
-                    },
-                    clearSemanticLabel:
-                        '${l10n.watchlistFilterClearAction}: $label',
-                  ),
-                if (!filter.isDefault)
-                  AppIconButton(
-                    key: const ValueKey('watchlist-clear-filter'),
-                    icon: FLucideIcons.x,
-                    tooltip: l10n.watchlistFilterClearAction,
-                    onPress: () => onFilterChanged(const WatchlistFilter()),
-                  ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Wrap(
+                spacing: AppSpacing.s6,
+                runSpacing: AppSpacing.s4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (viewState.sortOrder != WatchlistSortOrder.defaultOrder)
+                    AppFilterChip(
+                      label: _sortLabel(l10n, viewState.sortOrder),
+                      active: true,
+                      onPress: () => _openSort(context),
+                      onClear: () =>
+                          onSortSelected(WatchlistSortOrder.defaultOrder),
+                      clearSemanticLabel: l10n.watchlistSortDefault,
+                    ),
+                  for (final label in _filterLabels(l10n, filter))
+                    AppFilterChip(
+                      label: label,
+                      active: true,
+                      onPress: () => _openFilter(context),
+                      onClear: () {
+                        final labels = _filterLabels(l10n, filter);
+                        final index = labels.indexOf(label);
+                        final marketIndex = filter.market == null ? -1 : 0;
+                        final alertIndex =
+                            filter.alerts == WatchlistAlertFilter.all
+                            ? -1
+                            : (filter.market == null ? 0 : 1);
+                        onFilterChanged(
+                          WatchlistFilter(
+                            market: index == marketIndex ? null : filter.market,
+                            alerts: index == alertIndex
+                                ? WatchlistAlertFilter.all
+                                : filter.alerts,
+                            freshness:
+                                index != marketIndex && index != alertIndex
+                                ? WatchlistFreshnessFilter.all
+                                : filter.freshness,
+                          ),
+                        );
+                      },
+                      clearSemanticLabel:
+                          '${l10n.watchlistFilterClearAction}: $label',
+                    ),
+                  if (!filter.isDefault)
+                    AppIconButton(
+                      key: const ValueKey('watchlist-clear-filter'),
+                      icon: FLucideIcons.x,
+                      tooltip: l10n.watchlistFilterClearAction,
+                      onPress: () => onFilterChanged(const WatchlistFilter()),
+                    ),
+                ],
+              ),
             ),
           ),
       ],
@@ -533,10 +488,12 @@ class _WatchlistCollectionPicker extends StatefulWidget {
   const _WatchlistCollectionPicker({
     required this.collections,
     required this.counts,
+    required this.scope,
     required this.onSelected,
   });
   final List<WatchlistCollection> collections;
   final WatchlistCollectionCounts counts;
+  final WatchlistScope scope;
   final ValueChanged<WatchlistScope> onSelected;
   @override
   State<_WatchlistCollectionPicker> createState() =>
@@ -597,7 +554,9 @@ class _WatchlistCollectionPickerState
               itemBuilder: (context, index) {
                 final option = options[index];
                 return AppActionSheetTile(
-                  icon: FLucideIcons.layers,
+                  icon: option.$1 == widget.scope
+                      ? FLucideIcons.check
+                      : FLucideIcons.layers,
                   title: l10n.watchlistCollectionCountLabel(
                     option.$2,
                     option.$3,

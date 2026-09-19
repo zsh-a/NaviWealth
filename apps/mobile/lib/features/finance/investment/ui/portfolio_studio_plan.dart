@@ -126,38 +126,6 @@ class _PortfolioPlanPageState extends ConsumerState<PortfolioPlanPage> {
   }
 }
 
-class _PortfolioPlanActionRail extends StatelessWidget {
-  const _PortfolioPlanActionRail({
-    required this.needsRebalance,
-    required this.onPress,
-  });
-
-  final bool needsRebalance;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return KeyedSubtree(
-      key: const ValueKey('portfolio-plan-action'),
-      child: AppGroupedActionList(
-        actions: [
-          AppGroupedAction(
-            icon: needsRebalance
-                ? FLucideIcons.triangleAlert
-                : FLucideIcons.layers3,
-            title: l10n.portfolioStudioPlanTitle,
-            subtitle: needsRebalance
-                ? l10n.portfolioPlanNeedsRebalance
-                : l10n.portfolioPlanEditWeights,
-            onPress: onPress,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Allocation is a comparison task: stable rows, not a horizontal chart rail.
 class _PortfolioPlanList extends StatelessWidget {
   const _PortfolioPlanList({

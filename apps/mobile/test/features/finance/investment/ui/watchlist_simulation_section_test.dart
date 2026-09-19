@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -189,7 +191,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Paper simulations'), findsOneWidget);
+    expect(find.text(_collection.name), findsOneWidget);
     expect(
       find.textContaining('never changes real portfolios'),
       findsOneWidget,
@@ -259,9 +261,7 @@ void main() {
     );
     await tester.tap(
       find.byKey(
-        const ValueKey<String>(
-          'watchlist-simulation-method-simulation-growth',
-        ),
+        const ValueKey<String>('watchlist-simulation-method-simulation-growth'),
       ),
     );
     await tester.pumpAndSettle();
@@ -282,6 +282,108 @@ void main() {
 
     expect(find.byIcon(FLucideIcons.slidersHorizontal), findsOneWidget);
     expect(find.byIcon(FLucideIcons.trash2), findsOneWidget);
+  });
+
+  testWidgets('create is a guarded page with pinned save and one submission', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _PendingCreateRepository();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: const [],
+        positions: const [],
+        repository: repository,
+        items: [
+          for (var i = 0; i < 15; i++)
+            WatchlistItem(
+              id: 'us_stock:TEST$i',
+              symbol: 'TEST$i',
+              market: _item.market,
+              addedAt: _item.addedAt,
+              alertRules: _item.alertRules,
+              sync: _item.sync,
+            ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New simulation'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppFormPageScaffold), findsOneWidget);
+    expect(find.byType(AppSheet), findsNothing);
+    final action = find.byType(AppFormActionBar);
+    final position = tester.getTopLeft(action);
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -600),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(action), position);
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, 1000),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(EditableText).first,
+      'My paper scenario',
+    );
+    await tester.tap(find.byKey(const ValueKey('app.back')));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await tester.pumpAndSettle();
+    expect(find.text('My paper scenario'), findsOneWidget);
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(repository.calls, 1);
+    expect(
+      tester.widget<AppBusyButton>(find.byType(AppBusyButton)).busy,
+      isTrue,
+    );
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.byType(AppFormPageScaffold), findsOneWidget);
+    repository.result.complete(_simulation);
+    await tester.pumpAndSettle();
+    expect(find.byType(AppFormPageScaffold), findsNothing);
+    expect(find.text('Discard changes?'), findsNothing);
+    expect(repository.savedName, 'My paper scenario');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('allocation uses a page and returns safely after discarding', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppFormPageScaffold), findsOneWidget);
+    expect(find.byType(AppSheet), findsNothing);
+    expect(find.byType(AppFormActionBar), findsOneWidget);
+    await tester.enterText(find.byType(EditableText).first, 'Changed');
+    await tester.pump();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppFormPageScaffold), findsNothing);
+    expect(find.byType(WatchlistSimulationSection), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('keeps pre-lineage observations in the history chart', (
@@ -487,6 +589,7 @@ Widget _wrap({
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot>? snapshots,
   WatchlistSimulationObservationRecorder? recorder,
+  WatchlistSimulationRepository? repository,
   List<WatchlistSimulationActionEntry> actionEntries = const [],
   WatchlistSimulationActionReconciliation reconciliation =
       const WatchlistSimulationActionReconciliation(
@@ -497,6 +600,10 @@ Widget _wrap({
 }) {
   return ProviderScope(
     overrides: [
+      if (repository != null)
+        watchlistSimulationRepositoryProvider.overrideWith(
+          (_) async => repository,
+        ),
       sharedPreferencesProvider.overrideWithValue(preferences),
       watchlistSimulationsProvider.overrideWith(
         (_) => Stream.value(simulations),
@@ -536,6 +643,10 @@ Widget _wrap({
       ),
     ],
     child: MaterialApp(
+      builder: (context, child) => FTheme(
+        data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+        child: child!,
+      ),
       theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -556,4 +667,33 @@ Widget _wrap({
       ),
     ),
   );
+}
+
+class _PendingCreateRepository implements WatchlistSimulationRepository {
+  final result = Completer<WatchlistSimulation>();
+  var calls = 0;
+  String? savedName;
+
+  @override
+  Future<WatchlistSimulation> create({
+    required String collectionId,
+    required String name,
+    required String baseCurrency,
+    required Decimal startingCapital,
+    required Map<String, Decimal> targetWeights,
+    required Decimal cashWeight,
+    Map<String, WatchlistSimulationHoldingInput>? holdingInputs,
+  }) {
+    calls++;
+    savedName = name;
+    expect(
+      targetWeights.values.fold(Decimal.zero, (sum, value) => sum + value) +
+          cashWeight,
+      Decimal.one,
+    );
+    return result.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -229,20 +229,14 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                 portfolios: widget.portfolios,
                 value: widget.selectedPortfolioId,
                 holdingCount: data.holdings.length,
+                onOpenPlan: widget.allocationTree == null
+                    ? null
+                    : widget.onOpenPlan,
+                needsRebalance: widget.needsRebalance,
                 onChanged: widget.onPortfolioChanged,
               ),
             ),
           ),
-          if (widget.allocationTree != null)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s16),
-                child: _PortfolioPlanActionRail(
-                  needsRebalance: widget.needsRebalance,
-                  onPress: widget.onOpenPlan,
-                ),
-              ),
-            ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s16),
@@ -340,43 +334,64 @@ class _PortfolioScopeBar extends StatelessWidget {
     required this.value,
     required this.holdingCount,
     required this.onChanged,
+    required this.onOpenPlan,
+    required this.needsRebalance,
   });
 
   final List<InvestmentPortfolio> portfolios;
   final String? value;
   final int holdingCount;
   final ValueChanged<String?> onChanged;
+  final VoidCallback? onOpenPlan;
+  final bool needsRebalance;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final selector = _PortfolioSelector(
       portfolios: portfolios,
       value: value,
       holdingCount: holdingCount,
       onChanged: onChanged,
     );
-    if (!portfolios.any((portfolio) => portfolio.id == value)) return selector;
-    final action = FButton(
-      key: const ValueKey('portfolio-manage'),
-      variant: FButtonVariant.ghost,
-      onPress: () =>
-          context.push(FinanceRoutes.wealthPortfolioStudioFor(value!)),
-      prefix: const Icon(FLucideIcons.settings2, size: AppIconSizes.sm),
-      child: Text(AppLocalizations.of(context).portfolioHubManageAction),
-    );
+    final actions = [
+      if (onOpenPlan != null)
+        FButton(
+          key: const ValueKey('portfolio-plan-action'),
+          mainAxisSize: MainAxisSize.min,
+          variant: FButtonVariant.ghost,
+          onPress: onOpenPlan,
+          prefix: Icon(
+            needsRebalance ? FLucideIcons.triangleAlert : FLucideIcons.layers3,
+            size: AppIconSizes.sm,
+          ),
+          child: Flexible(child: Text(l10n.portfolioStudioPlanTitle)),
+        ),
+      if (portfolios.any((portfolio) => portfolio.id == value))
+        AppIconButton(
+          key: const ValueKey('portfolio-manage'),
+          icon: FLucideIcons.settings2,
+          tooltip: l10n.portfolioHubManageAction,
+          onPress: () =>
+              context.push(FinanceRoutes.wealthPortfolioStudioFor(value!)),
+        ),
+    ];
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth < 360 ||
-            MediaQuery.textScalerOf(context).scale(1) > 1.3) {
+        if (MediaQuery.textScalerOf(context).scale(1) > 1.3) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [selector, action],
+            children: [
+              selector,
+              Wrap(spacing: AppSpacing.s8, children: actions),
+            ],
           );
         }
         return Row(
           children: [
             Expanded(child: selector),
-            action,
+            const SizedBox(width: AppSpacing.s8),
+            ...actions,
           ],
         );
       },
@@ -467,70 +482,41 @@ class _PortfolioSelector extends StatelessWidget {
             icon: FLucideIcons.circle,
           ),
         ],
-        triggerBuilder: (context, openMenu, focusNode) {
-          final colors = context.theme.colors;
-          return Focus(
-            focusNode: focusNode,
-            child: Semantics(
-              button: true,
-              label: '${l10n.portfolioHubTitle}: $selectedLabel',
-              child: AppGlassSurface(
-                role: AppGlassRole.chrome,
-                softLight: true,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                child: AppTappable(
-                  onPress: openMenu,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: AppSpacing.s48,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s4,
-                        vertical: AppSpacing.s4,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  selectedLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.titleLabelStyle.copyWith(
-                                    color: colors.foreground,
-                                  ),
-                                ),
-                                const SizedBox(height: AppSpacing.s2),
-                                Text(
-                                  holdingSummary,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.captionStyle,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.s8),
-                          Icon(
-                            FLucideIcons.chevronsUpDown,
-                            size: AppIconSizes.sm,
-                            color: colors.mutedForeground,
-                          ),
-                        ],
+        triggerBuilder: (context, openMenu, focusNode) => Focus(
+          focusNode: focusNode,
+          child: AppTappable(
+            onPress: openMenu,
+            semanticsLabel:
+                '${l10n.portfolioHubTitle}: $selectedLabel · $holdingSummary',
+            excludeSemantics: true,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: AppSpacing.s48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        selectedLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: context.labelStyle,
                       ),
                     ),
-                  ),
+                    const SizedBox(width: AppSpacing.s8),
+                    Icon(
+                      FLucideIcons.chevronDown,
+                      size: AppIconSizes.sm,
+                      color: context.theme.colors.mutedForeground,
+                    ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -739,7 +725,7 @@ class _SummaryMetric extends StatelessWidget {
               amount: amount,
               currencyCode: currency,
               showSign: showSign,
-              style: context.strongTitleStyle,
+              style: context.labelStyle,
             ),
           ],
         ),

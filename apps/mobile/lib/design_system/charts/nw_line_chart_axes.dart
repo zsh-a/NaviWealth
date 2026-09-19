@@ -1,11 +1,6 @@
 part of 'nw_line_chart.dart';
 
 extension _NwLineChartAxes on _NwLineChartState {
-  _ChartPlotInsets get _plotInsets => _ChartPlotInsets(
-    left: widget.minimal || !widget.showYAxis ? 0 : _kLeftTitleReservedSize,
-    bottom: !widget.minimal && widget.showXAxis ? _kBottomTitleReservedSize : 0,
-  );
-
   FlTitlesData _buildTitles(
     ChartPalette palette,
     double minX,
@@ -20,11 +15,16 @@ extension _NwLineChartAxes on _NwLineChartState {
     final xRange = (maxX - minX).abs();
     final yRange = (maxY - minY).abs();
     final xInterval = widget.xAxis.maxLabels > 0 && xRange > 0
-        ? xRange / widget.xAxis.maxLabels
+        ? xRange / math.max(1, widget.xAxis.maxLabels - 1)
         : null;
     final yInterval = widget.yAxis.maxLabels > 0 && yRange > 0
-        ? yRange / widget.yAxis.maxLabels
+        ? yRange / math.max(1, widget.yAxis.maxLabels - 1)
         : null;
+    final yLabel = widget.yAxis.tickFormatter(
+      min: minY,
+      max: maxY,
+      interval: yInterval ?? 1,
+    );
     return FlTitlesData(
       topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -40,6 +40,7 @@ extension _NwLineChartAxes on _NwLineChartState {
               meta: meta,
               range: xRange,
               maxLabels: widget.xAxis.maxLabels,
+              formatLabel: widget.xAxis.formatTimestamp,
             )) {
               return const SizedBox.shrink();
             }
@@ -61,7 +62,13 @@ extension _NwLineChartAxes on _NwLineChartState {
         sideTitles: SideTitles(
           showTitles: widget.showYAxis && !hideAmounts,
           reservedSize: widget.showYAxis && !hideAmounts
-              ? _kLeftTitleReservedSize
+              ? widget.yAxis.reservedWidth(
+                  context,
+                  labelStyle,
+                  min: minY,
+                  max: maxY,
+                  interval: yInterval ?? 1,
+                )
               : 0,
           interval: yInterval,
           getTitlesWidget: (value, meta) {
@@ -77,7 +84,7 @@ extension _NwLineChartAxes on _NwLineChartState {
             return Padding(
               padding: const EdgeInsets.only(right: AppSpacing.s4),
               child: Text(
-                widget.yAxis.formatValue(value),
+                yLabel(value),
                 style: labelStyle,
                 maxLines: 1,
                 softWrap: false,

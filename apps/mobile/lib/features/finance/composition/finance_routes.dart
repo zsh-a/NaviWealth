@@ -358,6 +358,17 @@ StatefulShellRoute financeShellRoute() {
                   load: watchlist_lib.loadLibrary,
                   builder: (_) => watchlist_lib.WatchlistPage(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'collections/:collectionId/simulations',
+                    builder: (context, state) => DeferredRoute(
+                      load: watchlist_lib.loadLibrary,
+                      builder: (_) => watchlist_lib.WatchlistSimulationsPage(
+                        collectionId: state.pathParameters['collectionId']!,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'assets/:assetId/edit',
