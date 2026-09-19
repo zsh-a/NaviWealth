@@ -174,16 +174,24 @@ class _AllocationRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.s8),
-            FSlider(
-              control: FSliderControl.liftedContinuous(
-                value: FSliderValue(max: value.clamp(0, 100).toDouble() / 100),
-                stepPercentage: 0.001,
-                onChange: (next) => onSliderChanged(next.max * 100),
+            AppGlassSurface(
+              role: AppGlassRole.sticky,
+              borderRadius: BorderRadius.circular(AppRadius.full),
+              softLight: true,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+              child: FSlider(
+                control: FSliderControl.liftedContinuous(
+                  value: FSliderValue(
+                    max: value.clamp(0, 100).toDouble() / 100,
+                  ),
+                  stepPercentage: 0.001,
+                  onChange: (next) => onSliderChanged(next.max * 100),
+                ),
+                tooltipBuilder: (_, next) =>
+                    Text(formatters.percent(next, decimalDigits: 1)),
+                semanticValueFormatterCallback: (next) =>
+                    formatters.percent(next, decimalDigits: 1),
               ),
-              tooltipBuilder: (_, next) =>
-                  Text(formatters.percent(next, decimalDigits: 1)),
-              semanticValueFormatterCallback: (next) =>
-                  formatters.percent(next, decimalDigits: 1),
             ),
           ],
         ),

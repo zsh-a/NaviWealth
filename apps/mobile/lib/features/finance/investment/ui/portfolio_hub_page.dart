@@ -580,49 +580,56 @@ class _PortfolioSelector extends StatelessWidget {
             child: Semantics(
               button: true,
               label: '${l10n.portfolioHubTitle}: $selectedLabel',
-              child: AppTappable(
-                onPress: openMenu,
+              child: AppGlassSurface(
+                role: AppGlassRole.chrome,
+                softLight: true,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: AppSpacing.s48),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s4,
-                      vertical: AppSpacing.s4,
+                child: AppTappable(
+                  onPress: openMenu,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: AppSpacing.s48,
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                selectedLabel,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.titleLabelStyle.copyWith(
-                                  color: colors.foreground,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                        vertical: AppSpacing.s4,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selectedLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.titleLabelStyle.copyWith(
+                                    color: colors.foreground,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: AppSpacing.s2),
-                              Text(
-                                holdingSummary,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: context.captionStyle,
-                              ),
-                            ],
+                                const SizedBox(height: AppSpacing.s2),
+                                Text(
+                                  holdingSummary,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: context.captionStyle,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: AppSpacing.s8),
-                        Icon(
-                          FLucideIcons.chevronsUpDown,
-                          size: AppIconSizes.sm,
-                          color: colors.mutedForeground,
-                        ),
-                      ],
+                          const SizedBox(width: AppSpacing.s8),
+                          Icon(
+                            FLucideIcons.chevronsUpDown,
+                            size: AppIconSizes.sm,
+                            color: colors.mutedForeground,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
