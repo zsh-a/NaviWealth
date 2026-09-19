@@ -335,6 +335,68 @@ void main() {
     },
   );
 
+  test('backfills missed days and rebuilds later projected values', () async {
+    final db = makeTestDatabase();
+    final repository = WatchlistSimulationRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(),
+    );
+    addTearDown(db.close);
+    final simulation = await repository.create(
+      collectionId: 'collection-growth',
+      name: 'Backfilled mix',
+      baseCurrency: 'USD',
+      startingCapital: Decimal.parse('1000'),
+      targetWeights: {'us_stock:AAPL': Decimal.one},
+      cashWeight: Decimal.zero,
+    );
+    final allocation = await repository.resolveAllocation(
+      ownerUserId: 'u-test',
+      simulationId: simulation.id,
+    );
+    final day3 = simulation.baselineAt.add(const Duration(days: 3));
+    await repository.recordObservation(
+      simulation: simulation,
+      observedAt: day3,
+      weightedDailyChange: Decimal.parse('0.1'),
+      pricedWeight: Decimal.one,
+      missingQuoteWeight: Decimal.zero,
+      allocationBasisKey: allocation.allocationBasisKey!,
+    );
+
+    final merged = await repository.mergeObservationInputs(
+      simulation: simulation,
+      allocationBasisKey: allocation.allocationBasisKey!,
+      inputs: [
+        WatchlistSimulationObservationInput(
+          observedAt: simulation.baselineAt.add(const Duration(days: 1)),
+          weightedDailyChange: Decimal.parse('0.05'),
+          pricedWeight: Decimal.one,
+          missingQuoteWeight: Decimal.zero,
+        ),
+        WatchlistSimulationObservationInput(
+          observedAt: simulation.baselineAt.add(const Duration(days: 2)),
+          weightedDailyChange: Decimal.parse('0.1'),
+          pricedWeight: Decimal.one,
+          missingQuoteWeight: Decimal.zero,
+        ),
+      ],
+    );
+
+    expect(merged, 2);
+    final observations = await repository
+        .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
+        .first;
+    expect(observations, hasLength(4));
+    expect(observations.map((observation) => observation.projectedValue), [
+      Decimal.parse('1000'),
+      Decimal.parse('1050.00'),
+      Decimal.parse('1155.000'),
+      Decimal.parse('1270.5000'),
+    ]);
+  });
+
   test(
     'rehydrates local baseline before the first restored observation',
     () async {

@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
+import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/event_timeline_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
+import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
+import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
 
 import 'watchlist_simulation_repository.dart';
 
@@ -244,6 +248,10 @@ final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
       ref,
       simulationId,
     ) async* {
+      // Make the read model self-healing for non-UI consumers as well. The
+      // live recorder can write independently because backfill only fills
+      // missing completed days and rebuilds the chain transactionally.
+      ref.watch(watchlistSimulationHistoricalBackfillProvider(simulationId));
       final allocation = ref
           .watch(watchlistSimulationAllocationProvider(simulationId))
           .asData
@@ -274,6 +282,143 @@ final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
                 .toList(growable: false),
           );
     });
+
+/// Fills missed UTC days from the simulation baseline through yesterday.
+///
+/// The current day still comes from the live quote recorder. Keeping the
+/// historical and live paths separate avoids mixing an unfinished intraday
+/// bar into a completed daily return while sharing the repository's single
+/// observation-chain rebuild.
+final watchlistSimulationHistoricalBackfillProvider = FutureProvider.autoDispose
+    .family<int, String>((ref, simulationId) async {
+      final simulations = await ref.watch(watchlistSimulationsProvider.future);
+      final simulation = simulations
+          .where((candidate) => candidate.id == simulationId)
+          .firstOrNull;
+      if (simulation == null) return 0;
+
+      final allocation = await ref.watch(
+        watchlistSimulationAllocationProvider(simulationId).future,
+      );
+      final allocationBasisKey = allocation.allocationBasisKey;
+      if (!allocation.isUsable || allocationBasisKey == null) return 0;
+
+      final positions = allocation.positions;
+      if (positions.isEmpty) return 0;
+      final items = await ref.watch(watchlistItemsProvider.future);
+      final itemById = {for (final item in items) item.id: item};
+      final market = await ref.watch(marketDataServiceProvider.future);
+      final baselineDay = _utcDay(simulation.baselineAt);
+      final today = _utcDay(ref.watch(clockProvider).now().toUtc());
+      final lastCompletedDay = today.subtract(const Duration(days: 1));
+      if (!baselineDay.isBefore(lastCompletedDay)) return 0;
+
+      final returnsByItemId = <String, Map<DateTime, Decimal>>{};
+      final dates = <DateTime>{};
+      for (final position in positions) {
+        final item = itemById[position.watchlistItemId];
+        if (item == null) continue;
+        final response = await _tryHistoricalResponse(
+          market,
+          item,
+          from: baselineDay.subtract(const Duration(days: 1)),
+          to: lastCompletedDay,
+        );
+        if (response == null) continue;
+        final closes = <DateTime, Decimal>{};
+        for (final bar in response.data) {
+          final day = _utcDay(bar.asOf);
+          if (day.isBefore(baselineDay.subtract(const Duration(days: 1))) ||
+              day.isAfter(lastCompletedDay) ||
+              bar.symbol.toUpperCase() != item.symbol.toUpperCase()) {
+            continue;
+          }
+          final close =
+              bar.adjustedClose != null && bar.adjustedClose! > Decimal.zero
+              ? bar.adjustedClose!
+              : bar.close;
+          if (close > Decimal.zero) closes[day] = close;
+        }
+        if (closes.isEmpty) continue;
+        final orderedDays = closes.keys.toList()..sort();
+        Decimal? previous;
+        final dailyReturns = <DateTime, Decimal>{};
+        for (final day in orderedDays) {
+          final close = closes[day]!;
+          if (previous != null && day.isAfter(baselineDay)) {
+            final ratio = (close / previous).toDecimal(
+              scaleOnInfinitePrecision: 18,
+            );
+            dailyReturns[day] = ratio - Decimal.one;
+            dates.add(day);
+          }
+          previous = close;
+        }
+        if (dailyReturns.isNotEmpty) {
+          returnsByItemId[position.watchlistItemId] = dailyReturns;
+        }
+      }
+      if (dates.isEmpty) return 0;
+
+      final inputs = <WatchlistSimulationObservationInput>[];
+      final orderedDates = dates.toList()..sort();
+      for (final day in orderedDates) {
+        var weightedDailyChange = Decimal.zero;
+        var pricedWeight = Decimal.zero;
+        var missingQuoteWeight = Decimal.zero;
+        for (final position in positions) {
+          final change = returnsByItemId[position.watchlistItemId]?[day];
+          if (change == null) {
+            missingQuoteWeight += position.targetWeight;
+          } else {
+            pricedWeight += position.targetWeight;
+            weightedDailyChange += position.targetWeight * change;
+          }
+        }
+        if (pricedWeight <= Decimal.zero) continue;
+        inputs.add(
+          WatchlistSimulationObservationInput(
+            observedAt: DateTime.utc(day.year, day.month, day.day, 23, 59, 59),
+            weightedDailyChange: weightedDailyChange,
+            pricedWeight: pricedWeight,
+            missingQuoteWeight: missingQuoteWeight,
+          ),
+        );
+      }
+      if (inputs.isEmpty) return 0;
+
+      final repository = await ref.watch(
+        watchlistSimulationRepositoryProvider.future,
+      );
+      return repository.mergeObservationInputs(
+        simulation: simulation,
+        inputs: inputs,
+        allocationBasisKey: allocationBasisKey,
+      );
+    });
+
+Future<MarketResponse<List<HistoricalBar>>?> _tryHistoricalResponse(
+  MarketDataService market,
+  WatchlistItem item, {
+  required DateTime from,
+  required DateTime to,
+}) async {
+  try {
+    return await market.getHistorical(
+      item.symbol,
+      from: from,
+      to: to,
+      market: item.market,
+    );
+  } on Object {
+    return null;
+  }
+}
+
+DateTime _utcDay(DateTime value) {
+  final utc = value.toUtc();
+  return DateTime.utc(utc.year, utc.month, utc.day);
+}
 
 class WatchlistSimulationObservationRequest {
   const WatchlistSimulationObservationRequest({

@@ -236,7 +236,10 @@ tables.
 The current projection applies available point-in-time daily percentage moves
 to virtual target weights. Missing or stale quotes reduce priced coverage, and
 only quotes from the latest shared UTC observation day are combined; older
-quote days are treated as missing rather than attributed to a newer day. A
+quote days are treated as missing rather than attributed to a newer day. When
+the simulation view is opened, completed historical daily bars are also
+backfilled from the creation baseline through yesterday when the market
+service provides them; adjusted closes are preferred when available. A
 local-only `watchlist_simulation_observations` read model records the creation
 baseline and at most one observation per UTC day. A synced/restored simulation
 rehydrates that baseline locally before recording a later observation.
@@ -248,10 +251,10 @@ through last-writer-wins; dropping them on the tombstone would silently restart
 the observed curve. They are removed once the definition row itself is gone.
 
 The observation curve is not historical NAV or actual return: it begins only
-when the simulation exists, treats missing quotes as flat, and does not infer FX
-history, split, or dividend adjustments. A future backfilled performance
-simulation must first define one authoritative FX series, missing-bar policy,
-and corporate-action adjustment policy.
+when the simulation exists, omits days with no priced allocation, and does not
+infer FX history or corporate-action adjustments beyond a provider-supplied
+adjusted close. Missing symbols reduce priced coverage for that day. These
+derived rows do not sync and remain rebuildable FinanceOS cache data.
 
 ## Topic Routing
 

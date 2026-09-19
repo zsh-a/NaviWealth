@@ -255,6 +255,23 @@ class WatchlistSimulationObservation {
   final String? allocationBasisKey;
 }
 
+/// A daily return that can be merged into a simulation's local observation
+/// series. Historical backfills use the same shape as live observations so
+/// the repository has one projection/rebuild path.
+class WatchlistSimulationObservationInput {
+  const WatchlistSimulationObservationInput({
+    required this.observedAt,
+    required this.weightedDailyChange,
+    required this.pricedWeight,
+    required this.missingQuoteWeight,
+  });
+
+  final DateTime observedAt;
+  final Decimal weightedDailyChange;
+  final Decimal pricedWeight;
+  final Decimal missingQuoteWeight;
+}
+
 /// Returns whether an observation belongs to the currently selected
 /// allocation lineage.
 ///
@@ -1008,6 +1025,186 @@ class WatchlistSimulationRepository {
       );
     });
     return result;
+  }
+
+  /// Merges historical daily returns and rebuilds the projected-value chain.
+  ///
+  /// A simulation may already have a newer live observation when the user
+  /// returns after several days. Inserting the missed days through
+  /// [recordObservation] would be rejected as out-of-order and would leave
+  /// later projected values stale. This method fills only missing days in the
+  /// active allocation lineage, then recomputes every later row from the
+  /// baseline in one transaction. Observations remain a local derived read
+  /// model; no sync/outbox rows are created.
+  Future<int> mergeObservationInputs({
+    required WatchlistSimulation simulation,
+    required Iterable<WatchlistSimulationObservationInput> inputs,
+    required String allocationBasisKey,
+  }) async {
+    final baselineDay = _observationDay(simulation.baselineAt);
+    final byDay = <String, WatchlistSimulationObservationInput>{};
+    for (final input in inputs) {
+      if (input.observedAt.isBefore(simulation.baselineAt) ||
+          input.pricedWeight <= Decimal.zero ||
+          input.weightedDailyChange < -Decimal.one ||
+          input.pricedWeight > Decimal.one ||
+          input.missingQuoteWeight < Decimal.zero ||
+          input.missingQuoteWeight > Decimal.one) {
+        throw ArgumentError('Invalid paper simulation observation input.');
+      }
+      final day = _observationDay(input.observedAt);
+      if (day == baselineDay) continue;
+      byDay[day] = input;
+    }
+    if (byDay.isEmpty) return 0;
+
+    final ownerUserId = simulation.sync.ownerUserId;
+    final allocationReady = await _ensureObservationBaseline(
+      ownerUserId: ownerUserId,
+      simulationId: simulation.id,
+    );
+    if (!allocationReady) {
+      throw StateError('Watchlist simulation allocation is not usable.');
+    }
+
+    var changedDays = 0;
+    await _db.transaction(() async {
+      final activeSimulation =
+          await (_db.select(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (activeSimulation == null) return;
+      final allocation = await resolveAllocation(
+        ownerUserId: ownerUserId,
+        simulationId: simulation.id,
+      );
+      if (!allocation.isUsable ||
+          allocation.allocationBasisKey != allocationBasisKey) {
+        throw StateError('Watchlist simulation allocation changed.');
+      }
+      var allocationEffectiveAt = simulation.baselineAt.toUtc();
+      final allocationVersionId = allocation.allocationVersionId;
+      if (allocationVersionId != null) {
+        final version =
+            await (_db.select(_db.watchlistSimulationAllocationVersions)..where(
+                  (t) =>
+                      t.ownerUserId.equals(ownerUserId) &
+                      t.simulationId.equals(simulation.id) &
+                      t.id.equals(allocationVersionId),
+                ))
+                .getSingleOrNull();
+        if (version != null) {
+          allocationEffectiveAt = version.effectiveAt.toUtc();
+        }
+      }
+      final validBasisKeys = allocation.validAllocationBasisKeys;
+      final observationQuery = _db.select(_db.watchlistSimulationObservations)
+        ..where((t) => t.ownerUserId.equals(ownerUserId))
+        ..where((t) => t.simulationId.equals(simulation.id))
+        ..orderBy([(t) => OrderingTerm.asc(t.observationDay)]);
+      final allRows = await observationQuery.get();
+      final validRows = <WatchlistSimulationObservationRow>[];
+      for (final row in allRows) {
+        if (!watchlistSimulationObservationIsInAllocationLineage(
+          allocationBasisKey: row.allocationBasisKey,
+          validAllocationBasisKeys: validBasisKeys,
+        )) {
+          await (_db.delete(
+            _db.watchlistSimulationObservations,
+          )..where((t) => t.id.equals(row.id))).go();
+        } else {
+          validRows.add(row);
+        }
+      }
+
+      final sortedEntries = byDay.entries.toList()
+        ..sort((left, right) => left.key.compareTo(right.key));
+      validRows.sort(
+        (left, right) => left.observationDay.compareTo(right.observationDay),
+      );
+      var existingIndex = 0;
+      String? previousBasis;
+      final now = DateTime.now().toUtc();
+      for (final entry in sortedEntries) {
+        // Existing rows are trusted observations. Backfill only fills a gap;
+        // it never replaces a quote observation. Before a reallocation's
+        // effective date, it also keeps the older allocation lineage intact.
+        final input = entry.value;
+        while (existingIndex < validRows.length &&
+            validRows[existingIndex].observationDay.compareTo(entry.key) < 0) {
+          previousBasis = validRows[existingIndex].allocationBasisKey;
+          existingIndex++;
+        }
+        if (existingIndex < validRows.length &&
+            validRows[existingIndex].observationDay == entry.key) {
+          previousBasis = validRows[existingIndex].allocationBasisKey;
+          existingIndex++;
+          continue;
+        }
+        if (previousBasis != null &&
+            previousBasis != allocationBasisKey &&
+            input.observedAt.toUtc().isBefore(allocationEffectiveAt)) {
+          continue;
+        }
+        await _db
+            .into(_db.watchlistSimulationObservations)
+            .insert(
+              WatchlistSimulationObservationsCompanion.insert(
+                id: _observationId(
+                  simulationId: simulation.id,
+                  observationDay: entry.key,
+                ),
+                ownerUserId: ownerUserId,
+                simulationId: simulation.id,
+                observationDay: entry.key,
+                observedAt: input.observedAt.toUtc(),
+                projectedValue: Decimal.zero,
+                weightedDailyChange: input.weightedDailyChange,
+                pricedWeight: input.pricedWeight,
+                missingQuoteWeight: input.missingQuoteWeight,
+                allocationBasisKey: Value(allocationBasisKey),
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+        previousBasis = allocationBasisKey;
+        changedDays++;
+      }
+
+      final rows = await observationQuery.get();
+      rows.sort(
+        (left, right) => left.observationDay.compareTo(right.observationDay),
+      );
+      final baselineRow = rows
+          .where((row) => row.observationDay == baselineDay)
+          .firstOrNull;
+      var projectedValue =
+          baselineRow?.projectedValue ?? simulation.startingCapital;
+      for (final row in rows) {
+        if (row.observationDay.compareTo(baselineDay) < 0) continue;
+        final nextProjected = row.observationDay == baselineDay
+            ? projectedValue
+            : (projectedValue * (Decimal.one + row.weightedDailyChange)).round(
+                scale: 8,
+              );
+        if (row.projectedValue != nextProjected) {
+          await (_db.update(
+            _db.watchlistSimulationObservations,
+          )..where((t) => t.id.equals(row.id))).write(
+            WatchlistSimulationObservationsCompanion(
+              projectedValue: Value(nextProjected),
+              updatedAt: Value(now),
+            ),
+          );
+        }
+        projectedValue = nextProjected;
+      }
+    });
+    return changedDays;
   }
 
   /// Advances already trusted paper dividend rows from entitlement to gross

@@ -11627,7 +11627,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSimulationMethodNote =>
-      'Uses each available symbol\'s current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.';
+      'Backfills completed daily moves from the simulation baseline when historical bars are available, then uses the current day\'s move. Missing quotes stay unpriced; no historical NAV is claimed, and FX or corporate-action adjustments are not inferred.';
 
   @override
   String get watchlistSimulationObservedValue => 'Latest observed value';
@@ -11649,7 +11649,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSimulationHistoryDisclaimer =>
-      'Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.';
+      'Daily observed curve built from available historical bars and current quotes — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.';
 
   @override
   String get watchlistSimulationDividendRecordsTitle => 'Recorded dividends';

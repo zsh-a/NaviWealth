@@ -205,6 +205,9 @@ void main() {
         watchlistSimulationsProvider.overrideWith(
           (_) => Stream.value([simulation]),
         ),
+        watchlistSimulationHistoricalBackfillProvider.overrideWith(
+          (_, _) async => 0,
+        ),
         watchlistSimulationAllocationProvider.overrideWith(
           (_, _) => allocations.stream,
         ),

@@ -19589,7 +19589,7 @@ abstract class AppLocalizations {
   /// Paper simulation calculation scope and limitations
   ///
   /// In en, this message translates to:
-  /// **'Uses each available symbol\'s current daily percentage move. Missing quotes stay flat; no historical NAV, FX series, or corporate-action adjustment is inferred.'**
+  /// **'Backfills completed daily moves from the simulation baseline when historical bars are available, then uses the current day\'s move. Missing quotes stay unpriced; no historical NAV is claimed, and FX or corporate-action adjustments are not inferred.'**
   String get watchlistSimulationMethodNote;
 
   /// Latest locally observed paper simulation value
@@ -19625,7 +19625,7 @@ abstract class AppLocalizations {
   /// Scope disclosure below the paper simulation observation chart
   ///
   /// In en, this message translates to:
-  /// **'Daily observed curve only — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.'**
+  /// **'Daily observed curve built from available historical bars and current quotes — not historical NAV or actual return. Same-day refreshes replace that day; allocation changes affect future observations only.'**
   String get watchlistSimulationHistoryDisclaimer;
 
   /// Title for automatically recorded paper dividend references

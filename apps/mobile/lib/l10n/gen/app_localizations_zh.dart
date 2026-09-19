@@ -11003,7 +11003,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistSimulationMethodNote =>
-      '仅使用各标的当前可用的当日涨跌幅；缺失行情按不变处理，且不会推断历史净值、汇率序列或公司行动调整。';
+      '有历史行情时，会从模拟基准日补齐已完成交易日，再使用当日行情；缺失标的保持未计价。这不是历史净值，也不会推断汇率或公司行动调整。';
 
   @override
   String get watchlistSimulationObservedValue => '最新观察值';
@@ -11023,7 +11023,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistSimulationHistoryDisclaimer =>
-      '仅为每日观察曲线，不是历史净值或真实收益。同日刷新会覆盖当日记录，调仓仅影响后续观察值。';
+      '基于可用历史行情与当日行情生成的每日观察曲线，不代表历史净值或真实收益。同日刷新会覆盖当日记录，调仓仅影响后续观察值。';
 
   @override
   String get watchlistSimulationDividendRecordsTitle => '已记录股息';

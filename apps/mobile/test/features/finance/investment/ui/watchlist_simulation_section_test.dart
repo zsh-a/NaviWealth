@@ -522,6 +522,9 @@ Widget _wrap({
       watchlistSimulationObservationsProvider.overrideWith(
         (_, _) => Stream.value(observations ?? _observations),
       ),
+      watchlistSimulationHistoricalBackfillProvider.overrideWith(
+        (_, _) async => 0,
+      ),
       watchlistSimulationActionEntriesProvider.overrideWith(
         (_, _) => Stream.value(actionEntries),
       ),
