@@ -19,6 +19,7 @@ class AppSoftGlassLight extends StatefulWidget {
     super.key,
     required this.borderRadius,
     required this.child,
+    this.role = AppGlassRole.chrome,
     this.status = AppGlassStatus.idle,
     this.variants = const {},
     this.accentColor,
@@ -28,6 +29,7 @@ class AppSoftGlassLight extends StatefulWidget {
 
   final BorderRadius borderRadius;
   final Widget child;
+  final AppGlassRole role;
   final AppGlassStatus status;
   final Set<FTappableVariant> variants;
   final Color? accentColor;
@@ -173,6 +175,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         builder: (context, value, child) => CustomPaint(
           painter: SoftGlassLightPainter(
             borderRadius: widget.borderRadius,
+            role: widget.role,
             brightness: colors.brightness,
             // Subtle neutral/brand mixture, never a market gain/loss color.
             lightColor: Color.lerp(
@@ -204,6 +207,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
 class SoftGlassLightPainter extends CustomPainter {
   SoftGlassLightPainter({
     required this.borderRadius,
+    required this.role,
     required this.brightness,
     required this.lightColor,
     required this.shadeColor,
@@ -216,6 +220,7 @@ class SoftGlassLightPainter extends CustomPainter {
   }) : super(repaint: repaint);
 
   final BorderRadius borderRadius;
+  final AppGlassRole role;
   final Brightness brightness;
   final Color lightColor;
   final Color shadeColor;
@@ -227,13 +232,14 @@ class SoftGlassLightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (size.isEmpty || (ambient == 0 && emphasis == 0 && intensity.value == 0)) {
+    if (size.isEmpty ||
+        (ambient == 0 && emphasis == 0 && intensity.value == 0)) {
       return;
     }
     final rect = Offset.zero & size;
     final shape = borderRadius.toRRect(rect).scaleRadii();
     const spec = kAppSoftGlassSpec;
-    final transparent = lightColor.withValues(alpha: 0);
+    final transparent = lightColor.withValues(alpha: AppOpacity.transparent);
 
     canvas.drawRRect(
       shape,
@@ -249,6 +255,26 @@ class SoftGlassLightPainter extends CustomPainter {
           ],
         ).createShader(rect),
     );
+    // A broad top-facing reflection makes the surface read as a thin
+    // translucent material rather than a flat translucent fill.
+    canvas.drawRRect(
+      shape,
+      Paint()
+        ..shader = LinearGradient(
+          begin: const Alignment(-0.9, -1),
+          end: const Alignment(0.9, 0.65),
+          colors: [
+            lightColor.withValues(
+              alpha: spec.specularOpacity(brightness, role) * ambient,
+            ),
+            transparent,
+            shadeColor.withValues(
+              alpha: spec.occlusionOpacity(brightness, role) * ambient,
+            ),
+          ],
+          stops: const [0, 0.42, 1],
+        ).createShader(rect),
+    );
     if (emphasis > 0) {
       canvas.drawRRect(
         shape,
@@ -260,7 +286,7 @@ class SoftGlassLightPainter extends CustomPainter {
               stateColor.withValues(
                 alpha: spec.stateOpacity(brightness) * emphasis,
               ),
-              stateColor.withValues(alpha: 0),
+              stateColor.withValues(alpha: AppOpacity.transparent),
             ],
           ).createShader(rect),
       );
@@ -274,7 +300,7 @@ class SoftGlassLightPainter extends CustomPainter {
             end: Alignment.bottomCenter,
             colors: [
               stateColor.withValues(alpha: spec.stateRimOpacity * emphasis),
-              stateColor.withValues(alpha: 0),
+              stateColor.withValues(alpha: AppOpacity.transparent),
             ],
           ).createShader(rect),
       );
@@ -306,9 +332,34 @@ class SoftGlassLightPainter extends CustomPainter {
           colors: [
             lightColor.withValues(alpha: spec.rimOpacity(brightness) * ambient),
             transparent,
-            shadeColor.withValues(alpha: AppOpacity.faint * ambient),
+            shadeColor.withValues(
+              alpha: spec.edgeShadeOpacity(brightness, role) * ambient,
+            ),
           ],
           stops: const [0, 0.6, 1],
+        ).createShader(rect),
+    );
+    // The second, inset rim is deliberately weaker and offset in the
+    // opposite direction: this is the thin edge refraction cue used by
+    // modern spatial glass surfaces.
+    canvas.drawRRect(
+      shape.deflate(AppStroke.hairline),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = AppStroke.hairline
+        ..shader = LinearGradient(
+          begin: Alignment.bottomRight,
+          end: Alignment.topLeft,
+          colors: [
+            shadeColor.withValues(
+              alpha: spec.edgeShadeOpacity(brightness, role) * 0.55 * ambient,
+            ),
+            transparent,
+            lightColor.withValues(
+              alpha: spec.edgeHighlightOpacity(brightness, role) * ambient,
+            ),
+          ],
+          stops: const [0, 0.56, 1],
         ).createShader(rect),
     );
   }
@@ -319,6 +370,7 @@ class SoftGlassLightPainter extends CustomPainter {
   @override
   bool shouldRepaint(SoftGlassLightPainter oldDelegate) =>
       borderRadius != oldDelegate.borderRadius ||
+      role != oldDelegate.role ||
       brightness != oldDelegate.brightness ||
       lightColor != oldDelegate.lightColor ||
       shadeColor != oldDelegate.shadeColor ||

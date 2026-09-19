@@ -149,3 +149,9 @@ signal of direction, even in colorblind mode.
   the only status cue. Transitions do not change geometry or run continuously.
   Reduced motion keeps static state differences, while high contrast and OLED
   omit decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.
+- Advanced material depth is role-aware: chrome, sticky, sheet and overlay use
+  progressively stronger specular, occlusion and inset-rim budgets. The effect
+  is a paint-only approximation of thin translucent glass (no shader asset or
+  per-frame backdrop resampling), so it remains safe for Web and low-power
+  devices. Keep the role from `AppGlassSurface`; do not recreate gradients at
+  feature call sites.

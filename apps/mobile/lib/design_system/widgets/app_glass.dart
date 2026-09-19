@@ -130,6 +130,7 @@ class AppGlassSurface extends StatelessWidget {
       child: useSoftLight
           ? AppSoftGlassLight(
               borderRadius: borderRadius,
+              role: role,
               status: status,
               trackPointer: trackPointer,
               child: content,
@@ -186,6 +187,7 @@ class AppGlassFeedback extends StatelessWidget {
       borderRadius: borderRadius,
       child: AppSoftGlassLight(
         borderRadius: borderRadius,
+        role: AppGlassRole.chrome,
         variants: variants,
         accentColor: accentColor,
         ambient: false,

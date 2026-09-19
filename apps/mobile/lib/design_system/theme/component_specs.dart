@@ -115,6 +115,27 @@ class SoftGlassSpec {
 
   double get touchRadius => 96;
 
+  /// Relative material thickness for the four chrome roles. Sheets and
+  /// overlays sit above scrolling content, while the dock stays quieter.
+  double depthFor(AppGlassRole role) => switch (role) {
+    AppGlassRole.chrome => 0.72,
+    AppGlassRole.sticky => 0.88,
+    AppGlassRole.sheet => 1.0,
+    AppGlassRole.overlay => 1.08,
+  };
+
+  double specularOpacity(Brightness brightness, AppGlassRole role) =>
+      (brightness == Brightness.dark ? 0.075 : 0.16) * depthFor(role);
+
+  double occlusionOpacity(Brightness brightness, AppGlassRole role) =>
+      (brightness == Brightness.dark ? 0.045 : 0.065) * depthFor(role);
+
+  double edgeHighlightOpacity(Brightness brightness, AppGlassRole role) =>
+      (brightness == Brightness.dark ? 0.20 : 0.34) * depthFor(role);
+
+  double edgeShadeOpacity(Brightness brightness, AppGlassRole role) =>
+      (brightness == Brightness.dark ? 0.18 : 0.12) * depthFor(role);
+
   double stateOpacity(Brightness brightness) =>
       brightness == Brightness.dark ? 0.12 : 0.10;
   double get stateRimOpacity => 0.40;

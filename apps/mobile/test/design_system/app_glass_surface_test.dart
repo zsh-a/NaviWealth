@@ -15,6 +15,7 @@ Widget _wrap({
   bool frosted = true,
   bool tickersEnabled = true,
   AppGlassStatus status = AppGlassStatus.idle,
+  AppGlassRole role = AppGlassRole.chrome,
   Widget? child,
 }) {
   final appTheme = brightness == Brightness.dark
@@ -49,6 +50,7 @@ Widget _wrap({
                 child: AppGlassSurface(
                   softLight: softLight,
                   status: status,
+                  role: role,
                   frosted: frosted,
                   borderRadius: BorderRadius.circular(24),
                   child:
@@ -69,6 +71,31 @@ Widget _wrap({
 }
 
 void main() {
+  testWidgets('glass roles tune material depth without changing semantics', (
+    tester,
+  ) async {
+    const roles = AppGlassRole.values;
+    for (final role in roles) {
+      await tester.pumpWidget(_wrap(softLight: true, role: role));
+      final painter = _lightPainter(tester);
+      expect(painter.role, role);
+      expect(find.text('glass'), findsOneWidget);
+    }
+    expect(
+      kAppSoftGlassSpec.depthFor(AppGlassRole.overlay),
+      greaterThan(kAppSoftGlassSpec.depthFor(AppGlassRole.chrome)),
+    );
+    expect(
+      kAppSoftGlassSpec.specularOpacity(Brightness.dark, AppGlassRole.chrome),
+      lessThan(
+        kAppSoftGlassSpec.specularOpacity(
+          Brightness.light,
+          AppGlassRole.chrome,
+        ),
+      ),
+    );
+  });
+
   testWidgets('busy and disabled stop active pointer feedback', (tester) async {
     for (final status in [AppGlassStatus.busy, AppGlassStatus.disabled]) {
       await tester.pumpWidget(_wrap(softLight: true));
