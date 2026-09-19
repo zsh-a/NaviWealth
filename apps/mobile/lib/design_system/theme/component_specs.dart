@@ -105,15 +105,38 @@ class SoftGlassSpec {
   const SoftGlassSpec();
 
   double chromeFillOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.84 : 0.72;
+      brightness == Brightness.dark ? 0.78 : 0.66;
   double washOpacity(Brightness brightness) =>
       brightness == Brightness.dark ? 0.045 : 0.11;
   double rimOpacity(Brightness brightness) =>
       brightness == Brightness.dark ? 0.16 : 0.34;
   double touchOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.14 : 0.28;
+      brightness == Brightness.dark ? 0.30 : 0.46;
+
+  /// Additional alpha budget for the directional tail while a pointer is
+  /// moving. The core light remains visible when the pointer is resting.
+  double pointerTrailOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.22 : 0.32;
+
+  /// Alpha budget for the small specular glint at the leading edge of a drag.
+  double pointerSpecularOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.30 : 0.38;
+
+  /// Mixes the semantic accent into the otherwise neutral field so the light
+  /// has a readable hue on white chrome without tinting the whole surface.
+  double pointerColorMix(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.62 : 0.54;
 
   double get touchRadius => 96;
+
+  /// Maximum length of the motion tail in logical pixels.
+  double get pointerTrailLength => 132;
+
+  /// Maximum width of the motion tail in logical pixels.
+  double get pointerTrailWidth => 46;
+
+  /// Pointer speed at which the tail reaches its maximum stretch.
+  double get pointerSpeedForMax => 1200;
 
   /// Resting pointer-light energy while a mouse/trackpad hovers the surface.
   /// Press/drag raises this to 1.0; touch pointers never use the hover level.

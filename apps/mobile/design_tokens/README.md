@@ -147,10 +147,11 @@ signal of direction, even in colorblind mode.
   tinting readable content cards.
 - `AppGlassFeedback` consumes the owning Forui control's selected, hovered,
   focused, pressed and disabled variants. The dock owns one surface-level
-  hover/drag light and keeps item-level state feedback local; do not add a
-  second gesture recognizer or pointer response at the tab call site. Keep
-  selection indicators, keyboard focus outlines and control semantics
-  alongside the light.
+  hover/drag light and keeps item-level state feedback local; pointer drag
+  uses a tinted core, velocity-based soft trail and leading specular glint.
+  Do not add a second gesture recognizer or pointer response at the tab call
+  site. Keep selection indicators, keyboard focus outlines and control
+  semantics alongside the light.
 - `AppGlassStatus` gives pinned actions a steady busy wash, subdued disabled
   finish or semantic error rim. Busy/disabled stops pointer tracking immediately.
   Loading indicators and inline errors remain authoritative; light is never
@@ -162,5 +163,7 @@ signal of direction, even in colorblind mode.
   field is a paint-only approximation of thin translucent glass; only the
   floating dock and modal sheets opt into the theme-gated `BackdropFilter`,
   while sticky chrome remains static for scroll performance on Web and
-  low-power devices. Keep the role from `AppGlassSurface`; do not recreate
-  gradients at feature call sites.
+  low-power devices. The surface pointer listener is translucent so a drag can
+  start in any empty part of the chrome without stealing child semantics.
+  Keep the role from `AppGlassSurface`; do not recreate gradients at feature
+  call sites.

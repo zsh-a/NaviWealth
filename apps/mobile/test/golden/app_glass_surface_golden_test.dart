@@ -38,6 +38,8 @@ void main() {
     final gesture = await tester.startGesture(
       tester.getCenter(find.text('Wealth')),
     );
+    await gesture.moveBy(const Offset(44, 0));
+    await tester.pump(const Duration(milliseconds: 40));
     await tester.pumpAndSettle();
     await expectGoldenSurface(
       'goldens/app_soft_glass_pressed_${variant.filenameSuffix}.png',

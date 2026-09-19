@@ -45,8 +45,15 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
     with SingleTickerProviderStateMixin {
   late final AnimationController _intensity = AnimationController(vsync: this);
   final ValueNotifier<Offset?> _position = ValueNotifier(null);
-  late final Listenable _repaint = Listenable.merge([_intensity, _position]);
+  final ValueNotifier<Offset> _velocity = ValueNotifier(Offset.zero);
+  late final Listenable _repaint = Listenable.merge([
+    _intensity,
+    _position,
+    _velocity,
+  ]);
   int? _pointer;
+  Duration? _lastPointerTime;
+  bool _pointerInside = false;
   bool _hovering = false;
   bool _enabled = false;
 
@@ -69,9 +76,12 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         TickerMode.valuesOf(context).enabled;
     if (!_enabled) {
       _pointer = null;
+      _lastPointerTime = null;
+      _pointerInside = false;
       _hovering = false;
       _intensity.value = 0;
       _position.value = null;
+      _velocity.value = Offset.zero;
     }
   }
 
@@ -96,19 +106,26 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
       return;
     }
     if (event.buttons != kPrimaryButton) {
+      _pointerInside = false;
       _hovering = false;
+      _velocity.value = Offset.zero;
       _intensity.animateBack(0, curve: Motion.standardAccelerate);
       return;
     }
     _pointer = event.pointer;
+    _lastPointerTime = event.timeStamp;
+    _pointerInside = _isInside(event.localPosition);
     _position.value = event.localPosition;
+    _velocity.value = Offset.zero;
     _intensity.animateTo(1, curve: Motion.standardDecelerate);
   }
 
   void _setHover(Offset position) {
     if (!mounted || !_enabled) return;
+    _pointerInside = true;
     _hovering = true;
     _position.value = position;
+    _velocity.value = Offset.zero;
     // While a primary pointer is held, the drag path owns intensity. The
     // hover callback still records re-entry so release can settle to the
     // quieter hover level instead of extinguishing unexpectedly.
@@ -129,6 +146,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
 
   void _exit(PointerExitEvent event) {
     if (!mounted || !_enabled) return;
+    _pointerInside = false;
     _hovering = false;
     if (_pointer == null) {
       _intensity.animateBack(0, curve: Motion.standardAccelerate);
@@ -137,8 +155,9 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
 
   void _move(PointerMoveEvent event) {
     if (!mounted || event.pointer != _pointer) return;
-    final size = context.size;
-    if (size == null || !(Offset.zero & size).contains(event.localPosition)) {
+    _updateVelocity(event);
+    _pointerInside = _isInside(event.localPosition);
+    if (!_pointerInside) {
       _hovering = false;
       if (_intensity.status != AnimationStatus.reverse &&
           _intensity.value != 0) {
@@ -146,7 +165,6 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
       }
       return;
     }
-    _position.value = event.localPosition;
     if (_intensity.status != AnimationStatus.forward && _intensity.value != 1) {
       _intensity.animateTo(1, curve: Motion.standardDecelerate);
     }
@@ -155,7 +173,9 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   void _end(PointerEvent event) {
     if (!mounted || event.pointer != _pointer) return;
     _pointer = null;
-    if (_hovering) {
+    _lastPointerTime = null;
+    if (_hovering && _pointerInside) {
+      _velocity.value = Offset.zero;
       _intensity.animateTo(
         kAppSoftGlassSpec.pointerHoverIntensity,
         curve: Motion.standardDecelerate,
@@ -165,14 +185,51 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
     }
   }
 
+  bool _isInside(Offset position) {
+    final size = context.size;
+    return size != null && (Offset.zero & size).contains(position);
+  }
+
+  void _updateVelocity(PointerMoveEvent event) {
+    final previous = _position.value;
+    final previousTime = _lastPointerTime;
+    final elapsed = previousTime == null
+        ? Duration.zero
+        : event.timeStamp - previousTime;
+    final delta = previous == null
+        ? event.delta
+        : event.localPosition - previous;
+    if (delta.distanceSquared > 0) {
+      // Test bindings and a few platform pointer sources can coalesce moves
+      // with the same timestamp. Keep the flow responsive with a one-frame
+      // fallback instead of dropping the directional signal entirely.
+      final seconds = elapsed > Duration.zero
+          ? elapsed.inMicroseconds / Duration.microsecondsPerSecond
+          : 1 / 60;
+      final instantaneous = Offset(delta.dx / seconds, delta.dy / seconds);
+      _velocity.value =
+          Offset.lerp(
+            _velocity.value,
+            instantaneous,
+            instantaneous.distance == 0 ? 0.18 : 0.34,
+          ) ??
+          instantaneous;
+    }
+    _position.value = event.localPosition;
+    _lastPointerTime = event.timeStamp;
+  }
+
   @override
   void dispose() {
     // Flutter may still deliver the terminal event from a cached hit-test path
     // after a pointer-down action removes this route/surface.
     _pointer = null;
+    _lastPointerTime = null;
+    _pointerInside = false;
     _hovering = false;
     _intensity.dispose();
     _position.dispose();
+    _velocity.dispose();
     super.dispose();
   }
 
@@ -203,6 +260,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         ? spec.hoverEmphasis
         : 0.0;
     final listener = Listener(
+      behavior: HitTestBehavior.translucent,
       onPointerDown: _enabled ? _down : null,
       onPointerMove: _enabled ? _move : null,
       onPointerUp: _enabled ? _end : null,
@@ -233,6 +291,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
             ambient: widget.ambient ? (disabled ? spec.disabledWash : 1) : 0,
             intensity: _intensity,
             position: _position,
+            velocity: _velocity,
             repaint: _repaint,
           ),
           child: child,
@@ -267,6 +326,7 @@ class SoftGlassLightPainter extends CustomPainter {
     required this.ambient,
     required this.intensity,
     required this.position,
+    required this.velocity,
     required Listenable repaint,
   }) : super(repaint: repaint);
 
@@ -282,6 +342,7 @@ class SoftGlassLightPainter extends CustomPainter {
   final double ambient;
   final Animation<double> intensity;
   final ValueListenable<Offset?> position;
+  final ValueListenable<Offset> velocity;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -348,19 +409,116 @@ class SoftGlassLightPainter extends CustomPainter {
     }
     final point = position.value;
     if (point != null && intensity.value > 0) {
-      final radius = math.min(spec.touchRadius, size.longestSide);
+      final pointerVelocity = velocity.value;
+      final speed = pointerVelocity.distance;
+      final speedRatio = (speed / spec.pointerSpeedForMax).clamp(0.0, 1.0);
+      final flowColor = Color.lerp(
+        lightColor,
+        stateColor,
+        spec.pointerColorMix(brightness),
+      )!;
+      final flowTransparent = flowColor.withValues(
+        alpha: AppOpacity.transparent,
+      );
+      final radius = math.min(
+        spec.touchRadius * (1 + speedRatio * 0.18),
+        role == AppGlassRole.chrome
+            ? size.shortestSide * 0.92
+            : size.shortestSide * 1.18,
+      );
+
+      canvas.save();
+      canvas.clipRRect(shape);
+      if (speed > 0.01) {
+        final direction = Offset(
+          pointerVelocity.dx / speed,
+          pointerVelocity.dy / speed,
+        );
+        final trailLength = math.min(
+          spec.pointerTrailLength,
+          spec.touchRadius * (0.5 + speedRatio * 0.875),
+        );
+        final trailWidth = math.min(
+          spec.pointerTrailWidth * (0.72 + speedRatio * 0.28),
+          size.shortestSide * 0.62,
+        );
+        final trailCenter = point - direction * (trailLength * 0.30);
+        final angle = math.atan2(direction.dy, direction.dx);
+        canvas.save();
+        canvas.translate(trailCenter.dx, trailCenter.dy);
+        canvas.rotate(angle);
+        final localTrailRect = Rect.fromCenter(
+          center: Offset.zero,
+          width: trailLength,
+          height: trailWidth,
+        );
+        canvas.drawOval(
+          localTrailRect,
+          Paint()
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 7)
+            ..shader = RadialGradient(
+              center: const Alignment(0.42, 0),
+              radius: 1,
+              colors: [
+                flowColor.withValues(
+                  alpha:
+                      spec.pointerTrailOpacity(brightness) *
+                      intensity.value *
+                      speedRatio,
+                ),
+                flowColor.withValues(
+                  alpha:
+                      spec.pointerTrailOpacity(brightness) *
+                      intensity.value *
+                      speedRatio *
+                      0.38,
+                ),
+                flowTransparent,
+              ],
+              stops: const [0, 0.48, 1],
+            ).createShader(localTrailRect),
+        );
+        canvas.restore();
+
+        final glintCenter = point + direction * (radius * 0.18);
+        canvas.drawCircle(
+          glintCenter,
+          radius * 0.16,
+          Paint()
+            ..shader =
+                RadialGradient(
+                  colors: [
+                    flowColor.withValues(
+                      alpha:
+                          spec.pointerSpecularOpacity(brightness) *
+                          intensity.value *
+                          speedRatio,
+                    ),
+                    flowTransparent,
+                  ],
+                ).createShader(
+                  Rect.fromCircle(center: glintCenter, radius: radius * 0.16),
+                ),
+        );
+      }
+
       canvas.drawRRect(
         shape,
         Paint()
           ..shader = RadialGradient(
             colors: [
-              lightColor.withValues(
+              flowColor.withValues(
                 alpha: spec.touchOpacity(brightness) * intensity.value,
               ),
-              transparent,
+              flowColor.withValues(
+                alpha: spec.touchOpacity(brightness) * intensity.value * 0.34,
+              ),
+              flowTransparent,
             ],
+            stops: const [0, 0.5, 1],
           ).createShader(Rect.fromCircle(center: point, radius: radius)),
       );
+      canvas.restore();
     }
     canvas.drawRRect(
       shape.deflate(AppStroke.hairline / 2),
@@ -400,5 +558,6 @@ class SoftGlassLightPainter extends CustomPainter {
       emphasis != oldDelegate.emphasis ||
       ambient != oldDelegate.ambient ||
       intensity != oldDelegate.intensity ||
-      position != oldDelegate.position;
+      position != oldDelegate.position ||
+      velocity != oldDelegate.velocity;
 }

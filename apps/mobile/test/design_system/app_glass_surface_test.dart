@@ -409,6 +409,7 @@ void main() {
     await gesture.moveBy(const Offset(50, 0));
     await tester.pump();
     expect(painter.position.value, const Offset(200, 50));
+    expect(painter.velocity.value.distance, greaterThan(0));
     // The first move wins the gesture arena; subsequent movement updates it.
     await gesture.moveBy(const Offset(20, 0));
     await tester.pump();
