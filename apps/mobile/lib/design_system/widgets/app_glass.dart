@@ -7,6 +7,7 @@ import '../theme/app_theme_scope.dart';
 import '../theme/component_specs.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import 'app_glass_environment.dart';
 import 'app_soft_glass_light.dart';
 
 /// The single source for the app's "glass" chrome tone (blueprint §6.3).
@@ -27,6 +28,7 @@ BoxDecoration appGlassDecoration(
   final isDark = colors.brightness == Brightness.dark;
   final surfaces = context.appTheme.surfaces;
   final material = context.appTheme.glass.resolve(role);
+  final field = AppGlassEnvironment.of(context);
   final useSoftLight =
       softLight &&
       material.liveBlur &&
@@ -36,7 +38,15 @@ BoxDecoration appGlassDecoration(
     AppGlassRole.sticky => isDark ? surfaces.card : ColorPalette.neutral0,
     AppGlassRole.sheet || AppGlassRole.overlay => surfaces.raised,
   };
-  final glassColor = base.withValues(
+  final environmentTint = useSoftLight
+      ? field.lightColor.withValues(
+          alpha: (isDark ? 0.05 : 0.08) * field.energy.clamp(0.0, 1.0),
+        )
+      : null;
+  final tintedBase = environmentTint == null
+      ? base
+      : Color.alphaBlend(environmentTint, base);
+  final glassColor = tintedBase.withValues(
     alpha: !frosted
         ? AppOpacity.opaque
         : useSoftLight && role == AppGlassRole.chrome
@@ -99,9 +109,8 @@ class AppGlassSurface extends StatelessWidget {
   /// while replacing live blur with an opaque surface.
   final bool frosted;
 
-  /// Adds a quiet directional wash and pointer-following light beneath the
-  /// content. Opt-in independently of live blur: the navigation dock keeps its
-  /// opaque scroll-performance fallback. High contrast and OLED disable both.
+  /// Adds a directional wash and pointer-following light beneath the content.
+  /// Opt-in independently of live blur. High contrast and OLED disable both.
   final bool softLight;
   final AppGlassStatus status;
 

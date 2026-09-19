@@ -11,9 +11,10 @@ import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'app_glass_environment.dart';
 
-/// Paint-only enhancement used internally by [AppGlassSurface]. No gesture
-/// recognizer, focus node, haptics, backdrop capture, or continuous ticker.
-/// The surrounding glass surface owns clipping and accessibility fallback.
+/// Paint-only enhancement used internally by [AppGlassSurface]. It does not
+/// own a gesture recognizer, focus node, haptics, or backdrop capture. The
+/// surface samples the pointer only to place a small, reversible light flow;
+/// the surrounding glass surface owns clipping and accessibility fallback.
 class AppSoftGlassLight extends StatefulWidget {
   const AppSoftGlassLight({
     super.key,
@@ -46,6 +47,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   final ValueNotifier<Offset?> _position = ValueNotifier(null);
   late final Listenable _repaint = Listenable.merge([_intensity, _position]);
   int? _pointer;
+  bool _hovering = false;
   bool _enabled = false;
 
   bool get _inactive =>
@@ -67,6 +69,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         TickerMode.valuesOf(context).enabled;
     if (!_enabled) {
       _pointer = null;
+      _hovering = false;
       _intensity.value = 0;
       _position.value = null;
     }
@@ -89,10 +92,12 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   }
 
   void _down(PointerDownEvent event) {
-    if (!mounted ||
-        !_enabled ||
-        _pointer != null ||
-        event.buttons != kPrimaryButton) {
+    if (!mounted || !_enabled || _pointer != null) {
+      return;
+    }
+    if (event.buttons != kPrimaryButton) {
+      _hovering = false;
+      _intensity.animateBack(0, curve: Motion.standardAccelerate);
       return;
     }
     _pointer = event.pointer;
@@ -100,10 +105,41 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
     _intensity.animateTo(1, curve: Motion.standardDecelerate);
   }
 
+  void _setHover(Offset position) {
+    if (!mounted || !_enabled) return;
+    _hovering = true;
+    _position.value = position;
+    // While a primary pointer is held, the drag path owns intensity. The
+    // hover callback still records re-entry so release can settle to the
+    // quieter hover level instead of extinguishing unexpectedly.
+    if (_pointer != null) return;
+    if (_intensity.status != AnimationStatus.forward &&
+        _intensity.value < kAppSoftGlassSpec.pointerHoverIntensity) {
+      _intensity.animateTo(
+        kAppSoftGlassSpec.pointerHoverIntensity,
+        duration: _intensity.duration,
+        curve: Motion.standardDecelerate,
+      );
+    }
+  }
+
+  void _enter(PointerEnterEvent event) => _setHover(event.localPosition);
+
+  void _hover(PointerHoverEvent event) => _setHover(event.localPosition);
+
+  void _exit(PointerExitEvent event) {
+    if (!mounted || !_enabled) return;
+    _hovering = false;
+    if (_pointer == null) {
+      _intensity.animateBack(0, curve: Motion.standardAccelerate);
+    }
+  }
+
   void _move(PointerMoveEvent event) {
     if (!mounted || event.pointer != _pointer) return;
     final size = context.size;
     if (size == null || !(Offset.zero & size).contains(event.localPosition)) {
+      _hovering = false;
       if (_intensity.status != AnimationStatus.reverse &&
           _intensity.value != 0) {
         _intensity.animateBack(0, curve: Motion.standardAccelerate);
@@ -119,7 +155,14 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   void _end(PointerEvent event) {
     if (!mounted || event.pointer != _pointer) return;
     _pointer = null;
-    _intensity.animateBack(0, curve: Motion.standardAccelerate);
+    if (_hovering) {
+      _intensity.animateTo(
+        kAppSoftGlassSpec.pointerHoverIntensity,
+        curve: Motion.standardDecelerate,
+      );
+    } else {
+      _intensity.animateBack(0, curve: Motion.standardAccelerate);
+    }
   }
 
   @override
@@ -127,6 +170,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
     // Flutter may still deliver the terminal event from a cached hit-test path
     // after a pointer-down action removes this route/surface.
     _pointer = null;
+    _hovering = false;
     _intensity.dispose();
     _position.dispose();
     super.dispose();
@@ -158,7 +202,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         : widget.variants.contains(FTappableVariant.hovered)
         ? spec.hoverEmphasis
         : 0.0;
-    return Listener(
+    final listener = Listener(
       onPointerDown: _enabled ? _down : null,
       onPointerMove: _enabled ? _move : null,
       onPointerUp: _enabled ? _end : null,
@@ -196,6 +240,13 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         // Pointer updates invalidate only the light paint, not foreground UI.
         child: RepaintBoundary(child: widget.child),
       ),
+    );
+    if (!_enabled) return listener;
+    return MouseRegion(
+      onEnter: _enter,
+      onHover: _hover,
+      onExit: _exit,
+      child: listener,
     );
   }
 }

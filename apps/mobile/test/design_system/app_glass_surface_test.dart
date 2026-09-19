@@ -117,6 +117,21 @@ void main() {
     expect(painter.energy, field.energy);
   });
 
+  testWidgets('environment field responds to an active domain accent', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(softLight: true));
+    final context = tester.element(find.byType(AppGlassSurface));
+    final themeField = AppGlassLightField.fromTheme(context);
+    final domainField = AppGlassLightField.fromTheme(
+      context,
+      accentColor: const Color(0xff8d7aff),
+    );
+
+    expect(domainField.lightColor, isNot(themeField.lightColor));
+    expect(domainField.shadeColor, themeField.shadeColor);
+  });
+
   testWidgets('busy and disabled stop active pointer feedback', (tester) async {
     for (final status in [AppGlassStatus.busy, AppGlassStatus.disabled]) {
       await tester.pumpWidget(_wrap(softLight: true));
@@ -407,6 +422,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(taps, 1);
     expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets('hover light flows with a mouse and fades on exit', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(softLight: true));
+    final surface = tester.getRect(find.byType(AppSoftGlassLight));
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(surface.center);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 140));
+
+    final painter = _lightPainter(tester);
+    expect(
+      painter.intensity.value,
+      closeTo(kAppSoftGlassSpec.pointerHoverIntensity, 0.02),
+    );
+    expect(
+      painter.position.value,
+      Offset(surface.width / 2, surface.height / 2),
+    );
+
+    await mouse.moveTo(surface.bottomRight + const Offset(24, 24));
+    await tester.pumpAndSettle();
+    expect(painter.intensity.value, 0);
+    await mouse.removePointer();
+  });
+
+  testWidgets('mouse drag out does not restore hover light on release', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_wrap(softLight: true));
+    final rect = tester.getRect(find.byType(AppSoftGlassLight));
+    final gesture = await tester.startGesture(
+      rect.center,
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 140));
+    expect(_lightPainter(tester).intensity.value, closeTo(1, 0.02));
+
+    await gesture.moveTo(rect.bottomRight + const Offset(24, 24));
+    await tester.pumpAndSettle();
+    expect(_lightPainter(tester).intensity.value, 0);
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(_lightPainter(tester).intensity.value, 0);
   });
 
   testWidgets('cancel and leaving the surface extinguish light', (

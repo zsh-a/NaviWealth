@@ -235,6 +235,10 @@ void main() {
       tester.widget<AppGlassSurface>(find.byType(AppGlassSurface)).frosted,
       isFalse,
     );
+    expect(
+      tester.widget<AppGlassSurface>(find.byType(AppGlassSurface)).softLight,
+      isTrue,
+    );
   });
 
   test('appScrollCollapseProgress clamps into 0–1', () {

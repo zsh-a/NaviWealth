@@ -160,16 +160,16 @@ void main() {
         tester.getSize(find.byType(FloatingGlassNavBar)).height,
         kFloatingGlassNavBarHeight,
       );
-      expect(find.byType(BackdropFilter), findsNothing);
+      expect(find.byType(BackdropFilter), findsOneWidget);
       final glassSurface = tester.widget<AppGlassSurface>(
         find.descendant(
           of: find.byType(FloatingGlassNavBar),
           matching: find.byType(AppGlassSurface),
         ),
       );
-      expect(glassSurface.frosted, isFalse);
+      expect(glassSurface.frosted, isTrue);
       expect(glassSurface.softLight, isTrue);
-      expect(glassSurface.trackPointer, isFalse);
+      expect(glassSurface.trackPointer, isTrue);
       final feedback = tester.widgetList<AppGlassFeedback>(
         find.byType(AppGlassFeedback),
       );

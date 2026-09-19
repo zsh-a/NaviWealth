@@ -29,6 +29,7 @@ void main() {
     );
     expect(surface.role, AppGlassRole.sheet);
     expect(surface.frosted, isTrue);
+    expect(surface.softLight, isTrue);
     expect(find.byType(BackdropFilter), findsOneWidget);
   });
 
@@ -44,6 +45,7 @@ void main() {
     );
     expect(surface.role, AppGlassRole.sheet);
     expect(surface.frosted, isFalse);
+    expect(surface.softLight, isTrue);
     expect(find.byType(BackdropFilter), findsNothing);
   });
 

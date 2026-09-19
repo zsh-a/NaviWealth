@@ -22,14 +22,23 @@ class AppGlassLightField {
   final Alignment origin;
   final double energy;
 
-  factory AppGlassLightField.fromTheme(BuildContext context) {
+  /// Derives a field from the resolved theme and optionally the active domain
+  /// accent. The accent is deliberately mixed at low energy so the chrome
+  /// responds to route context without recolouring readable content.
+  factory AppGlassLightField.fromTheme(
+    BuildContext context, {
+    Color? accentColor,
+  }) {
     final theme = context.appTheme;
     final dark = theme.brightness == Brightness.dark;
     final lightBase = dark ? theme.surfaces.raised : ColorPalette.neutral0;
+    final accent = accentColor ?? theme.accent.fg;
     final lightColor = Color.lerp(
       lightBase,
-      theme.accent.fg,
-      dark ? 0.22 : 0.12,
+      accent,
+      dark
+          ? (accentColor == null ? 0.22 : 0.30)
+          : (accentColor == null ? 0.12 : 0.18),
     )!;
     final shadeColor = Color.lerp(
       theme.surfaces.canvas,

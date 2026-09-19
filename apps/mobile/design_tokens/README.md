@@ -137,12 +137,20 @@ signal of direction, even in colorblind mode.
 - Segmented controls use a sliding selection surface when options fit one
   row, and retain local selection marks in wrapped layouts. Selection motion
   and chart interpolation stop under reduced motion.
-- Glass highlights are reserved for floating navigation and sticky chrome;
-  content modules remain opaque and high-contrast surfaces omit live blur.
+- Glass highlights are reserved for application chrome: the floating dock and
+  modal sheets use one live backdrop layer, while sticky summaries keep the
+  shared static light field without a per-scroll blur pass. Content modules
+  remain opaque and high-contrast/OLED surfaces omit live blur.
+- `AppGlassEnvironment` owns one light field for the shell. The active domain
+  accent is mixed into that field at low energy, so switching FinanceOS,
+  HealthOS, KnowledgeOS or ExecutionOS changes the chrome atmosphere without
+  tinting readable content cards.
 - `AppGlassFeedback` consumes the owning Forui control's selected, hovered,
-  focused, pressed and disabled variants. Dock feedback is local to each item;
-  the dock does not add a second pointer response. Keep selection indicators,
-  keyboard focus outlines and control semantics alongside the light.
+  focused, pressed and disabled variants. The dock owns one surface-level
+  hover/drag light and keeps item-level state feedback local; do not add a
+  second gesture recognizer or pointer response at the tab call site. Keep
+  selection indicators, keyboard focus outlines and control semantics
+  alongside the light.
 - `AppGlassStatus` gives pinned actions a steady busy wash, subdued disabled
   finish or semantic error rim. Busy/disabled stops pointer tracking immediately.
   Loading indicators and inline errors remain authoritative; light is never
@@ -150,8 +158,9 @@ signal of direction, even in colorblind mode.
   Reduced motion keeps static state differences, while high contrast and OLED
   omit decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.
 - Advanced material depth is role-aware: chrome, sticky, sheet and overlay use
-  progressively stronger specular, occlusion and inset-rim budgets. The effect
-  is a paint-only approximation of thin translucent glass (no shader asset or
-  per-frame backdrop resampling), so it remains safe for Web and low-power
-  devices. Keep the role from `AppGlassSurface`; do not recreate gradients at
-  feature call sites.
+  progressively stronger specular, occlusion and inset-rim budgets. The light
+  field is a paint-only approximation of thin translucent glass; only the
+  floating dock and modal sheets opt into the theme-gated `BackdropFilter`,
+  while sticky chrome remains static for scroll performance on Web and
+  low-power devices. Keep the role from `AppGlassSurface`; do not recreate
+  gradients at feature call sites.

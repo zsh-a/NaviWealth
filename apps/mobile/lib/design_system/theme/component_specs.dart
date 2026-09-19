@@ -105,15 +105,19 @@ class SoftGlassSpec {
   const SoftGlassSpec();
 
   double chromeFillOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.88 : 0.78;
+      brightness == Brightness.dark ? 0.84 : 0.72;
   double washOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.025 : 0.065;
+      brightness == Brightness.dark ? 0.045 : 0.11;
   double rimOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.10 : 0.25;
+      brightness == Brightness.dark ? 0.16 : 0.34;
   double touchOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.08 : 0.16;
+      brightness == Brightness.dark ? 0.14 : 0.28;
 
   double get touchRadius => 96;
+
+  /// Resting pointer-light energy while a mouse/trackpad hovers the surface.
+  /// Press/drag raises this to 1.0; touch pointers never use the hover level.
+  double get pointerHoverIntensity => 0.42;
 
   /// Relative material thickness for the four chrome roles. Sheets and
   /// overlays sit above scrolling content, while the dock stays quieter.
@@ -125,30 +129,30 @@ class SoftGlassSpec {
   };
 
   double specularOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.055 : 0.11) * depthFor(role);
+      (brightness == Brightness.dark ? 0.08 : 0.16) * depthFor(role);
 
   double occlusionOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.035 : 0.05) * depthFor(role);
+      (brightness == Brightness.dark ? 0.045 : 0.06) * depthFor(role);
 
   double edgeHighlightOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.14 : 0.20) * depthFor(role);
+      (brightness == Brightness.dark ? 0.18 : 0.28) * depthFor(role);
 
   double edgeShadeOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.10 : 0.08) * depthFor(role);
+      (brightness == Brightness.dark ? 0.12 : 0.10) * depthFor(role);
 
   double stateOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.08 : 0.06;
+      brightness == Brightness.dark ? 0.11 : 0.10;
 
   /// Kept as a token for callers that need to describe a state rim, but the
   /// painter intentionally uses one shared edge highlight in the resting
   /// state so glass does not turn into a collection of bright outlines.
   double get stateRimOpacity => 0.18;
-  double get selectedEmphasis => 0.42;
-  double get hoverEmphasis => 0.22;
-  double get focusEmphasis => 0.65;
-  double get pressedEmphasis => 0.82;
-  double get busyEmphasis => 0.25;
-  double get errorEmphasis => 0.42;
+  double get selectedEmphasis => 0.62;
+  double get hoverEmphasis => 0.34;
+  double get focusEmphasis => 0.82;
+  double get pressedEmphasis => 0.95;
+  double get busyEmphasis => 0.30;
+  double get errorEmphasis => 0.48;
   double get disabledWash => 0.30;
 }
 

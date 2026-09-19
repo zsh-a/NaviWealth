@@ -43,8 +43,9 @@ Future<void> closeSheetThen(
 /// drag handle, title row, surface tint, padding, keyboard avoidance and
 /// dismiss affordance look identical.
 ///
-/// The surface is intentionally near-opaque. Blur is opt-in for rare immersive
-/// overlays; ordinary task sheets stay crisp and inexpensive to render.
+/// The surface keeps a crisp task hierarchy while sharing the app's soft-glass
+/// material. Live blur and directional light are both theme-gated, so OLED and
+/// high-contrast modes still receive an opaque, high-legibility fallback.
 ///
 /// Drop-in replacement for `showFSheet`; the [builder] receives a
 /// `BuildContext` for the sheet body. Pass [title] / [subtitle] /
@@ -578,6 +579,7 @@ class AppSheetSurface extends StatelessWidget {
     this.safeTop = false,
     this.safeBottom = true,
     this.frosted = true,
+    this.softLight = true,
   });
 
   final Widget child;
@@ -588,6 +590,11 @@ class AppSheetSurface extends StatelessWidget {
   /// Enables live backdrop blur. Glass is the default modal material; callers
   /// may opt out only for a full-screen or rendering-heavy surface.
   final bool frosted;
+
+  /// Adds the shared environmental light field and state wash. Keep enabled
+  /// for task sheets so the modal surface belongs to the same material family
+  /// as the dock; set to false for deliberately plain/brand-neutral sheets.
+  final bool softLight;
 
   @override
   Widget build(BuildContext context) {
@@ -617,6 +624,7 @@ class AppSheetSurface extends StatelessWidget {
         role: AppGlassRole.sheet,
         borderRadius: borderRadius,
         frosted: frosted,
+        softLight: softLight,
         child: sheetContent,
       ),
     );

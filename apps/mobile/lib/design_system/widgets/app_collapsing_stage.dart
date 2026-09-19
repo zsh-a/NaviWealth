@@ -377,9 +377,12 @@ class _StickyGlassChrome extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppGlassSurface(
       role: AppGlassRole.sticky,
-      // Sticky chrome remains visible while its backdrop scrolls. Avoid a
-      // per-frame blur pass; the raised fill and shadow retain separation.
+      // Sticky chrome remains visible while its backdrop scrolls. Keep live
+      // blur off to avoid a per-frame resample, but retain the shared static
+      // light field so the summary belongs to the same material family as the
+      // dock and modal sheets.
       frosted: false,
+      softLight: true,
       borderRadius: BorderRadius.circular(AppRadius.lg),
       boxShadow: AppShadow.elevation2,
       padding: padding,

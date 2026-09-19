@@ -154,6 +154,20 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
       builder: (context, child) {
         final location = router.routeInformationProvider.value.uri.path;
         final routedChild = child ?? const SizedBox.shrink();
+        DomainShellSpec? activeSpec;
+        for (final spec in specs) {
+          if (specOwnsPath(spec, location)) {
+            activeSpec = spec;
+            break;
+          }
+        }
+        final activeAccent = activeSpec == null
+            ? null
+            : resolveDomainAccent(
+                ref.read(domainPackRegistryProvider),
+                activeSpec.scope,
+                context.appTheme.brightness,
+              );
         final shellChild = specs.isEmpty
             ? routedChild
             : _DockChrome(
@@ -166,6 +180,10 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
           onBack: _handleSystemBackBeforeExit,
           disarmKey: location,
           child: AppGlassEnvironment(
+            field: AppGlassLightField.fromTheme(
+              context,
+              accentColor: activeAccent,
+            ),
             child: _ShellGlobalMounts(child: shellChild),
           ),
         );

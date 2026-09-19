@@ -70,12 +70,13 @@ class FloatingGlassNavBar extends StatelessWidget {
         final compactAssistant =
             constraints.maxWidth < _kAssistantLabelBreakpoint;
         return AppGlassSurface(
-          // This surface sits above continuously moving list content. A live
-          // BackdropFilter must resample that content on every scroll frame,
-          // so use the same glass material hierarchy with an opaque fill.
-          frosted: false,
+          // The dock is the primary soft-glass surface. Keep the theme-owned
+          // liveBlur capability gate so high-contrast/OLED modes still fall
+          // back to an opaque fill, while normal devices preserve the content
+          // relationship that makes the material visibly glass-like.
+          frosted: true,
           softLight: true,
-          trackPointer: false,
+          trackPointer: true,
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadow.nav,
           padding: const EdgeInsets.symmetric(
