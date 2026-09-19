@@ -44,8 +44,14 @@ class _ConcentrationRiskSection extends StatelessWidget {
             ? severity
             : (b.weight - b.threshold).compareTo(a.weight - a.threshold);
       });
+    final riskTone = criticalCount > 0
+        ? AppBadgeTone.error
+        : AppBadgeTone.warning;
     return SoftCard.raised(
-      padding: const EdgeInsets.all(AppSpacing.s12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s10,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -69,6 +75,7 @@ class _ConcentrationRiskSection extends StatelessWidget {
                 label: l10n.portfolioHubConcentrationSummary(alerts.length),
                 child: AppBadge(
                   label: '${alerts.length}',
+                  tone: riskTone,
                   size: AppBadgeSize.compact,
                 ),
               ),
@@ -76,19 +83,22 @@ class _ConcentrationRiskSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.s8),
           _ConcentrationAlertRow(alert: ordered.first),
-          const SizedBox(height: AppSpacing.s4),
+          const SizedBox(height: AppSpacing.s6),
           Row(
             children: [
               Expanded(
                 child: FButton(
-                  variant: FButtonVariant.ghost,
+                  variant: criticalCount > 0
+                      ? FButtonVariant.primary
+                      : FButtonVariant.outline,
                   onPress: () => context.push(FinanceRoutes.planRebalance),
                   child: Flexible(
                     child: Text(l10n.portfolioStudioRebalanceAction),
                   ),
                 ),
               ),
-              if (alerts.length > 1)
+              if (alerts.length > 1) ...[
+                const SizedBox(width: AppSpacing.s8),
                 Expanded(
                   child: FButton(
                     key: const ValueKey('portfolio-risk-details'),
@@ -124,6 +134,7 @@ class _ConcentrationRiskSection extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ],

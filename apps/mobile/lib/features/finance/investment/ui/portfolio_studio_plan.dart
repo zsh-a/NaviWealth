@@ -45,11 +45,23 @@ class _PortfolioPlanList extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Semantics(
             liveRegion: true,
-            child: Text(switch (valuationStatus) {
-              _PlanValuationStatus.loading => l10n.portfolioPlanActualLoading,
-              _PlanValuationStatus.failed => l10n.portfolioPlanActualFailed,
-              _ => l10n.portfolioPlanActualUnavailable,
-            }, style: context.captionStyle),
+            child: AppBadge(
+              label: switch (valuationStatus) {
+                _PlanValuationStatus.loading => l10n.portfolioPlanActualLoading,
+                _PlanValuationStatus.failed => l10n.portfolioPlanActualFailed,
+                _ => l10n.portfolioPlanActualUnavailable,
+              },
+              tone: switch (valuationStatus) {
+                _PlanValuationStatus.failed => AppBadgeTone.warning,
+                _ => AppBadgeTone.neutral,
+              },
+              size: AppBadgeSize.compact,
+              icon: switch (valuationStatus) {
+                _PlanValuationStatus.loading => FLucideIcons.loaderCircle,
+                _PlanValuationStatus.failed => FLucideIcons.cloudAlert,
+                _ => FLucideIcons.info,
+              },
+            ),
           ),
           if (valuationStatus == _PlanValuationStatus.failed)
             Align(
@@ -68,7 +80,7 @@ class _PortfolioPlanList extends StatelessWidget {
               key: const ValueKey('portfolio-plan-create'),
               variant: nodes.isEmpty
                   ? FButtonVariant.primary
-                  : FButtonVariant.outline,
+                  : FButtonVariant.ghost,
               onPress: onCreate,
               prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
               child: Flexible(child: Text(l10n.portfolioCreateTitle)),
@@ -76,7 +88,7 @@ class _PortfolioPlanList extends StatelessWidget {
             if (nodes.length <= 1) return create;
             final edit = FButton(
               key: const ValueKey('portfolio-plan-allocation'),
-              variant: FButtonVariant.outline,
+              variant: FButtonVariant.primary,
               onPress: onEditAllocation,
               prefix: const Icon(
                 FLucideIcons.slidersHorizontal,
@@ -91,7 +103,10 @@ class _PortfolioPlanList extends StatelessWidget {
                 children: [
                   edit,
                   const SizedBox(height: AppSpacing.s8),
-                  create,
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: create,
+                  ),
                 ],
               );
             }
@@ -179,6 +194,12 @@ class _PortfolioPlanRow extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.s10),
+            _PlanWeightBar(
+              target: node.targetWeight,
+              actual: actual,
+              drifted: outsideBand,
+            ),
             if (outsideBand) ...[
               const SizedBox(height: AppSpacing.s8),
               Align(
@@ -206,6 +227,77 @@ class _PortfolioPlanRow extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlanWeightBar extends StatelessWidget {
+  const _PlanWeightBar({
+    required this.target,
+    required this.actual,
+    required this.drifted,
+  });
+
+  final double target;
+  final double? actual;
+  final bool drifted;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.theme.colors;
+    final actualColor = drifted
+        ? context.appTheme.status.warning.fg
+        : colors.primary;
+    final targetColor = colors.foreground.withValues(alpha: AppOpacity.muted);
+    return ExcludeSemantics(
+      child: SizedBox(
+        height: AppSpacing.s6,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final targetOffset = constraints.maxWidth * target.clamp(0.0, 1.0);
+            final actualWidth =
+                constraints.maxWidth * (actual ?? 0).clamp(0.0, 1.0);
+            return Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.border.withValues(alpha: AppOpacity.subtle),
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
+                  ),
+                ),
+                if (actual != null)
+                  PositionedDirectional(
+                    start: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: actualWidth,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: actualColor,
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                    ),
+                  ),
+                PositionedDirectional(
+                  start: targetOffset - AppStroke.accent / 2,
+                  top: -AppSpacing.s2,
+                  bottom: -AppSpacing.s2,
+                  width: AppStroke.accent,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: targetColor,
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

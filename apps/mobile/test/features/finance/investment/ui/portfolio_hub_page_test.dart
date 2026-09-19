@@ -509,7 +509,7 @@ void main() {
   );
 
   testWidgets(
-    'portfolio studio presents status overview with setup drill-ins',
+    'portfolio studio keeps setup sections visible as explicit navigation',
     (tester) async {
       final portfolio = InvestmentPortfolio(
         id: 'portfolio',
@@ -590,12 +590,9 @@ void main() {
       expect(find.text('Capital path'), findsOneWidget);
       expect(find.text('Index core'), findsOneWidget);
       expect(find.text('Check rebalance'), findsNothing);
-
-      await tester.drag(find.byType(ListView).first, const Offset(0, -900));
-      await tester.pumpAndSettle();
       expect(find.text('Structure'), findsOneWidget);
       expect(find.text('Assets'), findsOneWidget);
-      expect(find.text('Portfolio setup'), findsOneWidget);
+      expect(find.text('Overview'), findsOneWidget);
 
       await tester.tap(find.text('Structure'));
       await tester.pumpAndSettle();
@@ -611,8 +608,6 @@ void main() {
       expect(find.text('Capital path'), findsOneWidget);
       expect(find.byType(PortfolioStudioPage), findsOneWidget);
 
-      await tester.drag(find.byType(ListView).first, const Offset(0, -900));
-      await tester.pumpAndSettle();
       await tester.tap(find.text('Structure'));
       await tester.pumpAndSettle();
       expect(find.text('Strategy sleeves'), findsOneWidget);

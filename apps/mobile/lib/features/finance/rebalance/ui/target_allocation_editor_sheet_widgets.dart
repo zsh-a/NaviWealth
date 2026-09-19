@@ -161,10 +161,14 @@ class _AllocationRow extends StatelessWidget {
                 ),
                 if (onRemove != null) ...[
                   const SizedBox(width: AppSpacing.s6),
-                  FButton.icon(
-                    variant: FButtonVariant.ghost,
-                    onPress: onRemove,
-                    child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
+                  Semantics(
+                    button: true,
+                    label: l10n.commonDelete,
+                    child: FButton.icon(
+                      variant: FButtonVariant.ghost,
+                      onPress: onRemove,
+                      child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
+                    ),
                   ),
                 ],
               ],

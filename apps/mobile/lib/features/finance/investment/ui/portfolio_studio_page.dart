@@ -150,6 +150,8 @@ class _PortfolioStudioBody extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
+          _StudioSectionNavigation(value: section, onChanged: onSectionChanged),
+          const SizedBox(height: AppSpacing.s16),
           if (section == PortfolioStudioSection.overview) ...[
             _StudioHero(
               portfolio: portfolio,
@@ -165,19 +167,7 @@ class _PortfolioStudioBody extends StatelessWidget {
               tree: tree,
             ),
             const SizedBox(height: AppSpacing.s20),
-            _StudioConfigurationList(
-              summary: PortfolioStudioSummary.fromTree(
-                tree: tree,
-                sleeves: sleeves,
-              ),
-              onSelected: onSectionChanged,
-            ),
           ] else ...[
-            _StudioDrillInHeader(
-              section: section,
-              onBack: () => onSectionChanged(PortfolioStudioSection.overview),
-            ),
-            const SizedBox(height: AppSpacing.s12),
             switch (section) {
               PortfolioStudioSection.overview => const SizedBox.shrink(),
               PortfolioStudioSection.structure => _StudioStructure(
@@ -199,6 +189,39 @@ class _PortfolioStudioBody extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _StudioSectionNavigation extends StatelessWidget {
+  const _StudioSectionNavigation({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final PortfolioStudioSection value;
+  final ValueChanged<PortfolioStudioSection> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SegmentedRow<PortfolioStudioSection>(
+      options: PortfolioStudioSection.values,
+      value: value,
+      minSegmentWidth: 76,
+      labelOf: (section) => switch (section) {
+        PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
+        PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
+        PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
+        PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
+      },
+      iconOf: (section) => switch (section) {
+        PortfolioStudioSection.overview => FLucideIcons.layoutDashboard,
+        PortfolioStudioSection.structure => FLucideIcons.layers3,
+        PortfolioStudioSection.assets => FLucideIcons.walletCards,
+        PortfolioStudioSection.rules => FLucideIcons.listChecks,
+      },
+      onChanged: onChanged,
     );
   }
 }
@@ -267,101 +290,6 @@ class _StudioHero extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _StudioConfigurationList extends StatelessWidget {
-  const _StudioConfigurationList({
-    required this.summary,
-    required this.onSelected,
-  });
-
-  final PortfolioStudioSummary summary;
-  final ValueChanged<PortfolioStudioSection> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final items = [
-      (
-        section: PortfolioStudioSection.structure,
-        icon: FLucideIcons.layers3,
-        title: l10n.portfolioStudioStructureTab,
-        subtitle: l10n.portfolioStudioSleeveCount(summary.sleeveCount),
-      ),
-      (
-        section: PortfolioStudioSection.assets,
-        icon: FLucideIcons.walletCards,
-        title: l10n.portfolioStudioAssetsTab,
-        subtitle: l10n.portfolioStudioIncludedAssetCount(
-          summary.includedAssetCount,
-        ),
-      ),
-      (
-        section: PortfolioStudioSection.rules,
-        icon: FLucideIcons.listChecks,
-        title: l10n.portfolioStudioRulesTab,
-        subtitle: l10n.portfolioStudioRuleCount(summary.secondaryRuleCount),
-      ),
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _StudioSectionHeader(
-          title: l10n.portfolioStudioConfigurationTitle,
-          subtitle: l10n.portfolioStudioConfigurationHint,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        AppGroupedSurface(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (var index = 0; index < items.length; index++) ...[
-                FTile(
-                  prefix: Icon(items[index].icon),
-                  title: Text(items[index].title),
-                  subtitle: Text(items[index].subtitle),
-                  suffix: const Icon(
-                    FLucideIcons.chevronRight,
-                    size: AppIconSizes.sm,
-                  ),
-                  onPress: () => onSelected(items[index].section),
-                ),
-                if (index != items.length - 1)
-                  const AppGroupedDivider(
-                    indent: AppSpacing.s12,
-                    endIndent: AppSpacing.s12,
-                  ),
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StudioDrillInHeader extends StatelessWidget {
-  const _StudioDrillInHeader({required this.section, required this.onBack});
-
-  final PortfolioStudioSection section;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final title = switch (section) {
-      PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
-      PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
-      PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
-      PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
-    };
-    return FButton(
-      variant: FButtonVariant.ghost,
-      onPress: onBack,
-      prefix: const Icon(FLucideIcons.arrowLeft),
-      child: Align(alignment: Alignment.centerLeft, child: Text(title)),
     );
   }
 }
