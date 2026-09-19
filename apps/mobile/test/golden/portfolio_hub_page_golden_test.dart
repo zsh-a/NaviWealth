@@ -520,7 +520,7 @@ void main() {
       find.text('Vanguard S&P 500 ETF'),
     );
 
-    await tester.tap(find.text('Realized P/L'));
+    await tester.tap(find.byKey(const ValueKey('portfolio-realized-details')));
     await tester.pumpAndSettle();
     expect(find.byType(AppSheet), findsOneWidget);
     expect(
@@ -530,14 +530,14 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Dividend forecast'));
+    await tester.tap(find.byKey(const ValueKey('portfolio-dividend-center')));
     await tester.pumpAndSettle();
     expect(find.text('Projected payout'), findsNWidgets(2));
     expect(find.text('Dividend Center'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('portfolio-detail-close')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Event timeline'));
+    await tester.tap(find.byKey(const ValueKey('portfolio-event-details')));
     await tester.pumpAndSettle();
     expect(
       find.descendant(of: find.byType(AppSheet), matching: find.text('AAPL')),

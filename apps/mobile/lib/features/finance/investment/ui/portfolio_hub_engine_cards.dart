@@ -81,6 +81,8 @@ class _RealizedPnlCard extends ConsumerWidget {
     return _EngineCard(
       title: l10n.portfolioHubRealizedPnlTitle,
       trailing: l10n.portfolioHubRealizedPnlCount(insights.realizedPnl.length),
+      actionKey: const ValueKey('portfolio-realized-details'),
+      actionLabel: rows.isEmpty ? null : l10n.financeViewAllItems(rows.length),
       onPress: rows.isEmpty
           ? null
           : () => _showPortfolioDetailSheet<void>(
@@ -140,6 +142,10 @@ class _DividendForecastCard extends ConsumerWidget {
     return _EngineCard(
       title: l10n.portfolioHubDividendForecastTitle,
       trailing: _strategyLabel(l10n, forecast.strategy),
+      actionKey: const ValueKey('portfolio-dividend-center'),
+      actionLabel: schedule.isEmpty
+          ? l10n.dividendCenterTitle
+          : l10n.financeViewAllItems(schedule.length),
       onPress: () async {
         final openCenter = await _showPortfolioDetailSheet<bool>(
           context: context,
@@ -221,6 +227,8 @@ class _EventTimelineCard extends ConsumerWidget {
     return _EngineCard(
       title: l10n.portfolioHubEventTimelineTitle,
       trailing: l10n.portfolioHubEventTimelineCount(rows.length),
+      actionKey: const ValueKey('portfolio-event-details'),
+      actionLabel: rows.isEmpty ? null : l10n.financeViewAllItems(rows.length),
       onPress: rows.isEmpty
           ? null
           : () => _showPortfolioDetailSheet<void>(
@@ -279,17 +287,20 @@ class _EngineCard extends StatelessWidget {
     required this.trailing,
     required this.child,
     this.onPress,
-  });
+    this.actionKey,
+    this.actionLabel,
+  }) : assert(onPress == null || actionLabel != null);
 
   final String title;
   final String trailing;
   final Widget child;
   final VoidCallback? onPress;
+  final Key? actionKey;
+  final String? actionLabel;
 
   @override
   Widget build(BuildContext context) {
     return SoftCard.flat(
-      onPress: onPress,
       padding: const EdgeInsets.all(AppSpacing.s12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -306,18 +317,26 @@ class _EngineCard extends StatelessWidget {
                   textAlign: TextAlign.end,
                 ),
               ),
-              if (onPress != null) ...[
-                const SizedBox(width: AppSpacing.s4),
-                Icon(
-                  FLucideIcons.chevronRight,
-                  size: AppIconSizes.sm,
-                  color: context.theme.colors.mutedForeground,
-                ),
-              ],
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
           child,
+          if (onPress != null) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: FButton(
+                key: actionKey,
+                variant: FButtonVariant.ghost,
+                onPress: onPress,
+                prefix: const Icon(
+                  FLucideIcons.arrowUpRight,
+                  size: AppIconSizes.sm,
+                ),
+                child: Text(actionLabel!),
+              ),
+            ),
+          ],
         ],
       ),
     );
