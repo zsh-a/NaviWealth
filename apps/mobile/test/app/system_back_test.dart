@@ -364,6 +364,7 @@ void main() {
       AppRoutes.planFire: AppRoutes.plan,
       AppRoutes.spending: AppRoutes.activity,
       AppRoutes.wealthPortfolio: AppRoutes.wealth,
+      FinanceRoutes.wealthPortfolioPlan: AppRoutes.wealthPortfolio,
       AppRoutes.wealthWatchlist: AppRoutes.wealth,
       FinanceRoutes.wealthPortfolioAssignLots: AppRoutes.wealthPortfolio,
       FinanceRoutes.wealthPortfolioAssignCash: AppRoutes.wealthPortfolio,

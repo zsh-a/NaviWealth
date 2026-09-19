@@ -275,6 +275,53 @@ class _TargetAllocationEditorSheetState
     widget.dirty.markDirty();
   }
 
+  /// Recover an invalid draft in one deliberate action instead of making the
+  /// user hunt for the missing percentage across every row.
+  void _balanceEvenly() {
+    final categories = [
+      for (final category in _editableCategories)
+        if (_visibleCategories.contains(category)) category,
+    ];
+    final assets = _assetTargets.keys.toList(growable: false);
+    final count = categories.length + assets.length;
+    if (count == 0) return;
+
+    final baseTenths = 1000 ~/ count;
+    final remainder = 1000 - baseTenths * count;
+    double nextValue(int index) =>
+        (baseTenths + (index < remainder ? 1 : 0)) / 10;
+    final nextCategories = Map<AssetCategory, double>.from(_categoryWeights);
+    final nextAssets = Map<String, _AssetTargetDraft>.from(_assetTargets);
+
+    _writingController = true;
+    try {
+      var index = 0;
+      for (final category in categories) {
+        final value = nextValue(index++);
+        nextCategories[category] = value;
+        _categoryControllers[category]!.text = _formatInput(value);
+      }
+      for (final assetId in assets) {
+        final value = nextValue(index++);
+        final target = nextAssets[assetId];
+        if (target == null) continue;
+        nextAssets[assetId] = target.copyWith(weight: value);
+        _assetControllers[assetId]!.text = _formatInput(value);
+      }
+    } finally {
+      _writingController = false;
+    }
+
+    setState(() {
+      _categoryWeights = nextCategories;
+      _assetTargets = nextAssets;
+      _categoryErrors.clear();
+      _assetErrors.clear();
+      _showTotalError = false;
+    });
+    widget.dirty.markDirty();
+  }
+
   Future<void> _addCategory() async {
     final l10n = AppLocalizations.of(context);
     final available = _editableCategories
@@ -415,9 +462,10 @@ class _TargetAllocationEditorSheetState
     final hasAvailableCategories = _editableCategories.any(
       (category) => !_visibleCategories.contains(category),
     );
-    final firstVisibleCategory = _editableCategories.firstWhere(
-      _visibleCategories.contains,
-    );
+    final visibleCategories = [
+      for (final category in _editableCategories)
+        if (_visibleCategories.contains(category)) category,
+    ];
     final totalValid = _allocation.isValid;
     final totalColor = totalValid
         ? context.theme.colors.primary
@@ -430,35 +478,48 @@ class _TargetAllocationEditorSheetState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _TotalCard(totalPct: _totalPct, valid: totalValid),
+          _TotalCard(
+            totalPct: _totalPct,
+            valid: totalValid,
+            onBalanceEvenly: totalValid ? null : _balanceEvenly,
+          ),
           const SizedBox(height: AppSpacing.s12),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                for (final category in _editableCategories) ...[
-                  if (_visibleCategories.contains(category)) ...[
-                    if (category == firstVisibleCategory) ...[
-                      _SectionLabel(
-                        label: l10n.targetAllocationEditorCategoryTargets,
-                      ),
-                      const SizedBox(height: AppSpacing.s6),
-                    ],
-                    _AllocationRow(
-                      rowKey: 'category-${category.name}',
-                      label: AssetCategoryVisuals.label(l10n, category),
-                      icon: AssetCategoryVisuals.icon(category),
-                      value: _categoryWeights[category] ?? 0,
-                      errorText: _categoryErrors[category],
-                      controller: _categoryControllers[category]!,
-                      onSliderChanged: (value) =>
-                          _setCategoryWeight(category, value),
-                      onRemove: _visibleCategories.length == 1
-                          ? null
-                          : () => _removeCategory(category),
+                if (visibleCategories.isNotEmpty) ...[
+                  _SectionLabel(
+                    label: l10n.targetAllocationEditorCategoryTargets,
+                  ),
+                  const SizedBox(height: AppSpacing.s6),
+                  AppGroupedSurface(
+                    child: Column(
+                      children: [
+                        for (final (index, category)
+                            in visibleCategories.indexed) ...[
+                          _AllocationRow(
+                            rowKey: 'category-${category.name}',
+                            label: AssetCategoryVisuals.label(l10n, category),
+                            icon: AssetCategoryVisuals.icon(category),
+                            value: _categoryWeights[category] ?? 0,
+                            errorText: _categoryErrors[category],
+                            controller: _categoryControllers[category]!,
+                            onSliderChanged: (value) =>
+                                _setCategoryWeight(category, value),
+                            onRemove: visibleCategories.length == 1
+                                ? null
+                                : () => _removeCategory(category),
+                          ),
+                          if (index < visibleCategories.length - 1)
+                            const AppGroupedDivider(
+                              indent: AppSpacing.s12,
+                              endIndent: AppSpacing.s12,
+                            ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.s8),
-                  ],
+                  ),
                 ],
                 FButton(
                   variant: FButtonVariant.outline,
@@ -478,20 +539,31 @@ class _TargetAllocationEditorSheetState
                     message: l10n.targetAllocationEditorNoAssetTargets,
                   )
                 else
-                  for (final target in _assetTargets.values) ...[
-                    _AllocationRow(
-                      rowKey: 'asset-${target.assetId}',
-                      label: target.label,
-                      icon: AssetCategoryVisuals.icon(target.category),
-                      value: target.weight,
-                      errorText: _assetErrors[target.assetId],
-                      controller: _assetControllers[target.assetId]!,
-                      onSliderChanged: (value) =>
-                          _setAssetWeight(target.assetId, value),
-                      onRemove: () => _removeAssetTarget(target.assetId),
+                  AppGroupedSurface(
+                    child: Column(
+                      children: [
+                        for (final (index, target)
+                            in _assetTargets.values.indexed) ...[
+                          _AllocationRow(
+                            rowKey: 'asset-${target.assetId}',
+                            label: target.label,
+                            icon: AssetCategoryVisuals.icon(target.category),
+                            value: target.weight,
+                            errorText: _assetErrors[target.assetId],
+                            controller: _assetControllers[target.assetId]!,
+                            onSliderChanged: (value) =>
+                                _setAssetWeight(target.assetId, value),
+                            onRemove: () => _removeAssetTarget(target.assetId),
+                          ),
+                          if (index < _assetTargets.length - 1)
+                            const AppGroupedDivider(
+                              indent: AppSpacing.s12,
+                              endIndent: AppSpacing.s12,
+                            ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.s8),
-                  ],
+                  ),
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: hasAvailableAssets

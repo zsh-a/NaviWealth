@@ -130,6 +130,42 @@ class _PortfolioStudioBody extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final sleeves = tree.childrenOf(portfolioNode.id);
+    final sectionContent = switch (section) {
+      PortfolioStudioSection.overview => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _StudioHero(
+            portfolio: portfolio,
+            portfolioNode: portfolioNode,
+            sleeves: sleeves,
+            tree: tree,
+          ),
+          const SizedBox(height: AppSpacing.s20),
+          _StudioOverview(
+            portfolio: portfolio,
+            portfolioNode: portfolioNode,
+            sleeves: sleeves,
+            tree: tree,
+          ),
+          const SizedBox(height: AppSpacing.s20),
+        ],
+      ),
+      PortfolioStudioSection.structure => _StudioStructure(
+        portfolio: portfolio,
+        sleeves: sleeves,
+        tree: tree,
+      ),
+      PortfolioStudioSection.assets => _StudioAssets(
+        portfolio: portfolio,
+        sleeves: sleeves,
+        tree: tree,
+      ),
+      PortfolioStudioSection.rules => _StudioRules(
+        portfolio: portfolio,
+        sleeves: sleeves,
+        tree: tree,
+      ),
+    };
     return AdaptiveContentFrame(
       maxWidth: AdaptiveMaxWidth.page,
       expandSinglePrimary: true,
@@ -152,41 +188,20 @@ class _PortfolioStudioBody extends StatelessWidget {
           ],
           _StudioSectionNavigation(value: section, onChanged: onSectionChanged),
           const SizedBox(height: AppSpacing.s16),
-          if (section == PortfolioStudioSection.overview) ...[
-            _StudioHero(
-              portfolio: portfolio,
-              portfolioNode: portfolioNode,
-              sleeves: sleeves,
-              tree: tree,
+          AnimatedSwitcher(
+            duration: AppMotionPolicy.duration(context, Motion.componentChange),
+            switchInCurve: Motion.standardDecelerate,
+            switchOutCurve: Motion.standardAccelerate,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                sizeFactor: animation,
+                alignment: Alignment.topCenter,
+                child: child,
+              ),
             ),
-            const SizedBox(height: AppSpacing.s20),
-            _StudioOverview(
-              portfolio: portfolio,
-              portfolioNode: portfolioNode,
-              sleeves: sleeves,
-              tree: tree,
-            ),
-            const SizedBox(height: AppSpacing.s20),
-          ] else ...[
-            switch (section) {
-              PortfolioStudioSection.overview => const SizedBox.shrink(),
-              PortfolioStudioSection.structure => _StudioStructure(
-                portfolio: portfolio,
-                sleeves: sleeves,
-                tree: tree,
-              ),
-              PortfolioStudioSection.assets => _StudioAssets(
-                portfolio: portfolio,
-                sleeves: sleeves,
-                tree: tree,
-              ),
-              PortfolioStudioSection.rules => _StudioRules(
-                portfolio: portfolio,
-                sleeves: sleeves,
-                tree: tree,
-              ),
-            },
-          ],
+            child: KeyedSubtree(key: ValueKey(section), child: sectionContent),
+          ),
         ],
       ),
     );

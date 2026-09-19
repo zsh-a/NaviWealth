@@ -87,6 +87,37 @@ void main() {
     expect(container.read(targetAllocationProvider).isValid, isTrue);
   });
 
+  testWidgets('can recover an invalid draft with one balanced action', (
+    tester,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        appDatabaseProvider.overrideWith((_) async => db),
+      ],
+    );
+    addTearDown(container.dispose);
+    final dirty = FormDirtyController();
+    addTearDown(dirty.dispose);
+
+    await _pumpWithContainer(
+      tester,
+      container,
+      SingleChildScrollView(child: TargetAllocationEditorSheet(dirty: dirty)),
+    );
+
+    await _enterAllocation(tester, AssetCategory.stock, '50');
+    await tester.tap(find.text('Distribute evenly'));
+    await tester.pumpAndSettle();
+    await _tapSave(tester);
+    await tester.pumpAndSettle();
+
+    expect(container.read(targetAllocationProvider).isValid, isTrue);
+  });
+
   testWidgets('adds and saves a single asset target', (tester) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 1;

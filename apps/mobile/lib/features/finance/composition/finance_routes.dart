@@ -287,6 +287,14 @@ StatefulShellRoute financeShellRoute() {
                 ),
                 routes: [
                   GoRoute(
+                    path: 'plan',
+                    name: FinanceRouteNames.wealthPortfolioPlan,
+                    builder: (context, state) => DeferredRoute(
+                      load: portfolio_hub_lib.loadLibrary,
+                      builder: (_) => portfolio_hub_lib.PortfolioPlanPage(),
+                    ),
+                  ),
+                  GoRoute(
                     path: 'assign/positions',
                     name: FinanceRouteNames.wealthPortfolioAssignLots,
                     builder: (context, state) => DeferredRoute(

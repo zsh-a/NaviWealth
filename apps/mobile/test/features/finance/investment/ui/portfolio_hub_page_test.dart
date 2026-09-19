@@ -193,6 +193,10 @@ void main() {
             builder: (_, _) => const PortfolioHubPage(),
           ),
           GoRoute(
+            path: FinanceRoutes.wealthPortfolioPlan,
+            builder: (_, _) => const PortfolioPlanPage(),
+          ),
+          GoRoute(
             path: FinanceRoutes.wealthPortfolioStudioFor(portfolio.id),
             builder: (_, _) =>
                 const Scaffold(body: Text('Selected portfolio studio')),
@@ -314,18 +318,9 @@ void main() {
       container.read(selectedInvestmentPortfolioIdProvider.notifier).state =
           null;
       await tester.pumpAndSettle();
-      await tester.tap(
-        find
-            .bySemanticsLabel(AppLocalizationsEn().shellMoreActions)
-            .hitTestable()
-            .first,
-      );
+      await tester.tap(find.byKey(const ValueKey('portfolio-plan-action')));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.text(AppLocalizationsEn().portfolioStudioPlanTitle),
-      );
-      await tester.pumpAndSettle();
-      expect(find.byType(AppSheet), findsOneWidget);
+      expect(find.byType(PortfolioPlanPage), findsOneWidget);
       expect(
         find.text(AppLocalizationsEn().portfolioStudioPlanTitle),
         findsOneWidget,
@@ -340,7 +335,7 @@ void main() {
       );
       expect(
         find.descendant(
-          of: find.byType(AppSheet),
+          of: find.byType(PortfolioPlanPage),
           matching: find.byType(NwLineChart),
         ),
         findsNothing,
@@ -440,14 +435,25 @@ void main() {
       ]) {
         await tester.tap(find.byKey(ValueKey(action)));
         await tester.pumpAndSettle();
-        expect(
-          find.byType(AppSheet),
-          action.endsWith('create') ? findsOneWidget : findsNothing,
-          reason: 'Editing replaces the overview sheet.',
-        );
+        if (action.endsWith('create')) {
+          expect(
+            find.byType(AppSheetSurface),
+            findsAtLeastNWidgets(1),
+            reason: 'The create form opens above the plan page.',
+          );
+        } else {
+          expect(
+            find.byType(AppFormPageScaffold),
+            findsOneWidget,
+            reason: 'Allocation editing uses a focused full-page form.',
+          );
+        }
         expect(
           find.byKey(const ValueKey('portfolio-plan-row-long-term')),
-          findsNothing,
+          action.endsWith('create') ? findsOneWidget : findsNothing,
+          reason: action.endsWith('create')
+              ? 'The plan page remains mounted behind the form sheet.'
+              : 'The full-page allocation editor takes focus.',
         );
         expect(
           find.text(
@@ -455,7 +461,7 @@ void main() {
                 ? AppLocalizationsEn().portfolioCreateTitle
                 : AppLocalizationsEn().portfolioAllocationEditTitle,
           ),
-          findsOneWidget,
+          findsAtLeastNWidgets(1),
         );
         if (action.endsWith('create')) {
           await tester.tap(find.text(AppLocalizationsEn().commonCancel));
@@ -463,11 +469,11 @@ void main() {
           await tester.binding.handlePopRoute();
         }
         await tester.pumpAndSettle();
-        expect(find.byType(AppSheet), findsOneWidget);
+        expect(find.byType(PortfolioPlanPage), findsOneWidget);
         expect(
           find.byKey(const ValueKey('portfolio-plan-row-long-term')),
           findsOneWidget,
-          reason: 'The plan resumes automatically after cancelling.',
+          reason: 'The plan remains the current page after cancelling.',
         );
       }
       await tester.tap(find.byKey(const ValueKey('portfolio-plan-allocation')));
@@ -479,7 +485,7 @@ void main() {
       await tester.tap(find.text(AppLocalizationsEn().unsavedChangesDiscard));
       await tester.pumpAndSettle();
       expect(repository.saved, isNull);
-      expect(find.byType(AppSheet), findsOneWidget);
+      expect(find.byType(PortfolioPlanPage), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('portfolio-plan-allocation')));
       await tester.pumpAndSettle();
@@ -491,7 +497,7 @@ void main() {
         3500,
       ]);
       expect(find.byType(AppFormPageScaffold), findsNothing);
-      expect(find.byType(AppSheet), findsOneWidget);
+      expect(find.byType(PortfolioPlanPage), findsOneWidget);
       expect(find.text('65%'), findsOneWidget);
       expect(find.text('35%'), findsOneWidget);
       expect(

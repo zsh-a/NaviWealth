@@ -78,6 +78,7 @@ abstract final class FinanceRoutes {
   static const wealthLiabilities = '/wealth/liabilities';
   static const wealthLiabilityNew = '/wealth/liabilities/new';
   static const wealthPortfolio = '/wealth/portfolio';
+  static const wealthPortfolioPlan = '/wealth/portfolio/plan';
   static const wealthPortfolioStudio = '/wealth/portfolio/:portfolioId/studio';
   static const wealthPortfolioAssignLots = '/wealth/portfolio/assign/positions';
   static const wealthPortfolioAssignCash = '/wealth/portfolio/assign/cash';
@@ -218,6 +219,7 @@ abstract final class FinanceRouteNames {
   static const wealthLiabilityNew = 'wealth-liability-new';
   static const wealthLiabilityDetail = 'wealth-liability-detail';
   static const wealthPortfolio = 'wealth-portfolio';
+  static const wealthPortfolioPlan = 'wealth-portfolio-plan';
   static const wealthPortfolioStudio = 'wealth-portfolio-studio';
   static const wealthPortfolioAssignLots = 'wealth-portfolio-assign-lots';
   static const wealthPortfolioAssignCash = 'wealth-portfolio-assign-cash';

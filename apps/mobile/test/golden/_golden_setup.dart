@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
+import 'package:naviwealth/features/finance/investment/ui/portfolio_hub_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// FIR-113 visual baseline harness.
@@ -211,7 +213,13 @@ Future<void> pumpAndSnapshotMobile(
   // offstage placeholder.
   final router = GoRouter(
     initialLocation: routePath,
-    routes: [GoRoute(path: routePath, builder: (_, _) => child)],
+    routes: [
+      GoRoute(path: routePath, builder: (_, _) => child),
+      GoRoute(
+        path: FinanceRoutes.wealthPortfolioPlan,
+        builder: (_, _) => const PortfolioPlanPage(),
+      ),
+    ],
     errorBuilder: (_, _) => const SizedBox.shrink(),
   );
   addTearDown(router.dispose);
@@ -373,7 +381,13 @@ Future<void> pumpAndSnapshotResponsive(
     });
 
     final router = GoRouter(
-      routes: [GoRoute(path: '/', builder: (_, _) => child)],
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => child),
+        GoRoute(
+          path: FinanceRoutes.wealthPortfolioPlan,
+          builder: (_, _) => const PortfolioPlanPage(),
+        ),
+      ],
       errorBuilder: (_, _) => const SizedBox.shrink(),
     );
     addTearDown(router.dispose);

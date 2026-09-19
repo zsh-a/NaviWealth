@@ -42,10 +42,15 @@ class _EmptyAssetTargets extends StatelessWidget {
 }
 
 class _TotalCard extends StatelessWidget {
-  const _TotalCard({required this.totalPct, required this.valid});
+  const _TotalCard({
+    required this.totalPct,
+    required this.valid,
+    this.onBalanceEvenly,
+  });
 
   final double totalPct;
   final bool valid;
+  final VoidCallback? onBalanceEvenly;
 
   @override
   Widget build(BuildContext context) {
@@ -65,37 +70,60 @@ class _TotalCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Icon(
-              valid ? FLucideIcons.circleCheck : FLucideIcons.circleAlert,
-              size: AppIconSizes.md,
-              color: fg,
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(
-              child: Text(
-                l10n.targetAllocationEditorTotalLabel,
-                style: context.labelStyle,
-              ),
-            ),
             Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedMoneyText(
-                  amount: totalPct,
-                  currencyCode: 'PCT',
-                  symbolStyle: MoneySymbolStyle.none,
-                  fractionDigits: 1,
-                  style: context.strongLabelStyle.copyWith(color: fg),
-                  semanticsLabel: formatters.percent(
-                    totalPct / 100,
-                    decimalDigits: 1,
+                Icon(
+                  valid ? FLucideIcons.circleCheck : FLucideIcons.circleAlert,
+                  size: AppIconSizes.md,
+                  color: fg,
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Text(
+                    l10n.targetAllocationEditorTotalLabel,
+                    style: context.labelStyle,
                   ),
                 ),
-                Text('%', style: context.strongLabelStyle.copyWith(color: fg)),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedMoneyText(
+                      amount: totalPct,
+                      currencyCode: 'PCT',
+                      symbolStyle: MoneySymbolStyle.none,
+                      fractionDigits: 1,
+                      style: context.strongLabelStyle.copyWith(color: fg),
+                      semanticsLabel: formatters.percent(
+                        totalPct / 100,
+                        decimalDigits: 1,
+                      ),
+                    ),
+                    Text(
+                      '%',
+                      style: context.strongLabelStyle.copyWith(color: fg),
+                    ),
+                  ],
+                ),
               ],
             ),
+            if (onBalanceEvenly != null) ...[
+              const SizedBox(height: AppSpacing.s6),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: onBalanceEvenly,
+                  prefix: const Icon(
+                    FLucideIcons.wandSparkles,
+                    size: AppIconSizes.sm,
+                  ),
+                  child: Text(l10n.capitalAllocationBalanceEvenlyAction),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -130,71 +158,63 @@ class _AllocationRow extends StatelessWidget {
     final formatters = AppFormatters(locale: Localizations.localeOf(context));
     final colors = context.theme.colors;
 
-    return SoftCard.raised(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: AppIconSizes.h18,
-                  color: colors.mutedForeground,
-                ),
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(
-                  child: Text(label, style: context.theme.typography.body.sm),
-                ),
-                SizedBox(
-                  width: AppControlWidths.detailLabel,
-                  child: PercentField(
-                    key: ValueKey('target-allocation-field-$rowKey'),
-                    control: FTextFieldControl.managed(controller: controller),
-                    label: Text(l10n.targetAllocationEditorPercentLabel),
-                    compact: true,
-                    semanticLabel:
-                        '$label · ${l10n.targetAllocationEditorPercentLabel}',
-                    forceErrorText: errorText,
-                  ),
-                ),
-                if (onRemove != null) ...[
-                  const SizedBox(width: AppSpacing.s6),
-                  Semantics(
-                    button: true,
-                    label: l10n.commonDelete,
-                    child: FButton.icon(
-                      variant: FButtonVariant.ghost,
-                      onPress: onRemove,
-                      child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            AppGlassSurface(
-              role: AppGlassRole.sticky,
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              softLight: true,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
-              child: FSlider(
-                control: FSliderControl.liftedContinuous(
-                  value: FSliderValue(
-                    max: value.clamp(0, 100).toDouble() / 100,
-                  ),
-                  stepPercentage: 0.001,
-                  onChange: (next) => onSliderChanged(next.max * 100),
-                ),
-                tooltipBuilder: (_, next) =>
-                    Text(formatters.percent(next, decimalDigits: 1)),
-                semanticValueFormatterCallback: (next) =>
-                    formatters.percent(next, decimalDigits: 1),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s2,
+        vertical: AppSpacing.s12,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: AppIconSizes.h18, color: colors.mutedForeground),
+              const SizedBox(width: AppSpacing.s8),
+              Expanded(
+                child: Text(label, style: context.theme.typography.body.sm),
               ),
+              SizedBox(
+                width: AppControlWidths.detailLabel,
+                child: PercentField(
+                  key: ValueKey('target-allocation-field-$rowKey'),
+                  control: FTextFieldControl.managed(controller: controller),
+                  label: Text(l10n.targetAllocationEditorPercentLabel),
+                  compact: true,
+                  semanticLabel:
+                      '$label · ${l10n.targetAllocationEditorPercentLabel}',
+                  forceErrorText: errorText,
+                ),
+              ),
+              if (onRemove != null) ...[
+                const SizedBox(width: AppSpacing.s6),
+                Semantics(
+                  button: true,
+                  label: l10n.commonDelete,
+                  child: FButton.icon(
+                    variant: FButtonVariant.ghost,
+                    onPress: onRemove,
+                    child: const Icon(FLucideIcons.x, size: AppIconSizes.h18),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s4),
+            child: FSlider(
+              control: FSliderControl.liftedContinuous(
+                value: FSliderValue(max: value.clamp(0, 100).toDouble() / 100),
+                stepPercentage: 0.001,
+                onChange: (next) => onSliderChanged(next.max * 100),
+              ),
+              tooltipBuilder: (_, next) =>
+                  Text(formatters.percent(next, decimalDigits: 1)),
+              semanticValueFormatterCallback: (next) =>
+                  formatters.percent(next, decimalDigits: 1),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

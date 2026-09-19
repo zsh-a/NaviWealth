@@ -1,8 +1,162 @@
 part of 'portfolio_hub_page.dart';
 
-enum _PortfolioPlanAction { create, allocate }
-
 enum _PlanValuationStatus { ready, loading, failed, unavailable }
+
+/// Full-page plan workspace. The hub keeps the entry point visible while the
+/// plan itself owns the complete create → configure → inspect loop.
+class PortfolioPlanPage extends ConsumerStatefulWidget {
+  const PortfolioPlanPage({super.key});
+
+  @override
+  ConsumerState<PortfolioPlanPage> createState() => _PortfolioPlanPageState();
+}
+
+class _PortfolioPlanPageState extends ConsumerState<PortfolioPlanPage> {
+  Future<void> _editAllocation() async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final targets = ref
+          .read(activeUniversePortfolioTargetsProvider)
+          .requireValue;
+      final portfolios =
+          ref.read(investmentPortfoliosProvider).value ?? const [];
+      if (!targets.any(
+        (target) =>
+            portfolios.any((portfolio) => portfolio.id == target.portfolioId),
+      )) {
+        if (!mounted) return;
+        AppMessenger.show(context, ToastKind.error, l10n.commonLoadFailed);
+        return;
+      }
+      await showPortfolioAllocationEditor(
+        context,
+        ref,
+        portfolios: portfolios,
+        targets: targets,
+      );
+    } catch (error, stackTrace) {
+      if (!mounted) return;
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error, stackTrace: stackTrace),
+      );
+    }
+  }
+
+  void _retry() {
+    ref.invalidate(activeRebalanceUniverseProvider);
+    ref.invalidate(activeUniversePortfolioTargetsProvider);
+    ref.invalidate(investmentPortfoliosProvider);
+    ref.invalidate(portfolioRebalanceGroupsProvider);
+    ref.invalidate(allPortfolioGroupSnapshotsProvider);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tree = ref.watch(portfolioAllocationTreeProvider);
+    final plan = ref.watch(universeRebalancePlanProvider);
+    final portfolios = ref.watch(investmentPortfoliosProvider);
+    final valuationInputs = <AsyncValue<Object?>>[
+      ref.watch(activeRebalanceUniverseProvider),
+      ref.watch(activeUniversePortfolioTargetsProvider),
+      portfolios,
+      ref.watch(portfolioRebalanceGroupsProvider),
+      ref.watch(allPortfolioGroupSnapshotsProvider),
+    ];
+    final valuationStatus = valuationInputs.any((input) => input.hasError)
+        ? _PlanValuationStatus.failed
+        : valuationInputs.any((input) => input.isLoading)
+        ? _PlanValuationStatus.loading
+        : plan == null
+        ? _PlanValuationStatus.unavailable
+        : _PlanValuationStatus.ready;
+
+    return AppPageScaffold(
+      title: l10n.portfolioStudioPlanTitle,
+      childPad: false,
+      child: tree.when(
+        loading: () => const _PortfolioHubSkeleton(),
+        error: (error, stackTrace) =>
+            kDefaultError(context, error, stackTrace, onRetry: _retry),
+        data: (allocationTree) => allocationTree == null
+            ? AppEmptyState(
+                icon: FLucideIcons.layers,
+                title: l10n.portfolioStudioPlanEmptyHint,
+              )
+            : AdaptiveContentFrame(
+                maxWidth: AdaptiveMaxWidth.page,
+                expandSinglePrimary: true,
+                padding: shellTabContentPadding(
+                  context,
+                  left: AppSpacing.s16,
+                  top: AppSpacing.s8,
+                  right: AppSpacing.s16,
+                  bottom: AppSpacing.s24,
+                ),
+                primary: ListView(
+                  children: [
+                    AppGroupedSurface(
+                      padding: const EdgeInsets.all(AppSpacing.s12),
+                      child: _PortfolioPlanList(
+                        valuationStatus: valuationStatus,
+                        onRetry: _retry,
+                        portfolios: portfolios.value ?? const [],
+                        tree: allocationTree,
+                        actualWeights: {
+                          if (plan != null)
+                            for (final item in plan.portfolios)
+                              item.portfolio.id:
+                                  item.capitalDecision.actualWeight,
+                        },
+                        onPortfolioSelected: (id) => context.push(
+                          FinanceRoutes.wealthPortfolioStudioFor(id),
+                        ),
+                        onCreate: () =>
+                            showInvestmentPortfolioFormSheet(context),
+                        onEditAllocation: _editAllocation,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+class _PortfolioPlanActionRail extends StatelessWidget {
+  const _PortfolioPlanActionRail({
+    required this.needsRebalance,
+    required this.onPress,
+  });
+
+  final bool needsRebalance;
+  final VoidCallback onPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return KeyedSubtree(
+      key: const ValueKey('portfolio-plan-action'),
+      child: AppGroupedActionList(
+        actions: [
+          AppGroupedAction(
+            icon: needsRebalance
+                ? FLucideIcons.triangleAlert
+                : FLucideIcons.layers3,
+            title: l10n.portfolioStudioPlanTitle,
+            subtitle: needsRebalance
+                ? l10n.portfolioPlanNeedsRebalance
+                : l10n.portfolioPlanEditWeights,
+            onPress: onPress,
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Allocation is a comparison task: stable rows, not a horizontal chart rail.
 class _PortfolioPlanList extends StatelessWidget {
@@ -195,10 +349,21 @@ class _PortfolioPlanRow extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.s10),
-            _PlanWeightBar(
-              target: node.targetWeight,
-              actual: actual,
-              drifted: outsideBand,
+            AnimatedSwitcher(
+              duration: AppMotionPolicy.duration(
+                context,
+                Motion.componentChange,
+              ),
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: KeyedSubtree(
+                key: ValueKey('${actual ?? 'unknown'}:${node.targetWeight}'),
+                child: _PlanWeightBar(
+                  target: node.targetWeight,
+                  actual: actual,
+                  drifted: outsideBand,
+                ),
+              ),
             ),
             if (outsideBand) ...[
               const SizedBox(height: AppSpacing.s8),

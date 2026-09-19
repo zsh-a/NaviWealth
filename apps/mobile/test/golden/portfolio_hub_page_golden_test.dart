@@ -357,18 +357,24 @@ Future<void> _snapshotPlan(WidgetTester tester, String name) async {
   final l10n = AppLocalizations.of(
     tester.element(find.byType(PortfolioHubPage)),
   );
-  await tester.tap(find.bySemanticsLabel(l10n.shellMoreActions));
+  final scroll = find.byType(CustomScrollView);
+  if (scroll.evaluate().isNotEmpty) {
+    await tester.drag(scroll, const Offset(0, 1200));
+    await tester.pumpAndSettle();
+  }
+  await tester.ensureVisible(
+    find.byKey(const ValueKey('portfolio-plan-action')),
+  );
+  await tester.tap(find.byKey(const ValueKey('portfolio-plan-action')));
   await tester.pumpAndSettle();
-  await tester.tap(find.text(l10n.portfolioStudioPlanTitle));
-  await tester.pumpAndSettle();
-  expect(find.byType(AppSheet), findsOneWidget);
+  expect(find.byType(PortfolioPlanPage), findsOneWidget);
   expect(find.text(l10n.portfolioStudioPlanTitle), findsOneWidget);
   expect(find.text('60%'), findsOneWidget);
   expect(find.text('30%'), findsOneWidget);
   expect(find.text('10%'), findsOneWidget);
   expect(
     find.descendant(
-      of: find.byType(AppSheet),
+      of: find.byType(PortfolioPlanPage),
       matching: find.byType(NwLineChart),
     ),
     findsNothing,
@@ -460,7 +466,7 @@ void main() {
     _expectTextFits(tester, r'+$1,920.00');
     expect(
       tester.getTopLeft(find.text('Vanguard S&P 500 ETF')).dy,
-      lessThan(520),
+      lessThan(680),
     );
     await _snapshotPlan(tester, 'investment_plan_${variant.filenameSuffix}');
   });
@@ -487,7 +493,7 @@ void main() {
     );
     expect(
       tester.getTopLeft(find.text('Vanguard S&P 500 ETF')).dy,
-      lessThan(400),
+      lessThan(540),
     );
     expect(find.byType(AppDisclosureHeader), findsNothing);
     expect(find.byType(AppRevealControl), findsNothing);

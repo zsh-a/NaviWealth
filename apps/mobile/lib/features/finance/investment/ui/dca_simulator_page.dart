@@ -690,9 +690,11 @@ class _DcaResults extends StatelessWidget {
                       ],
                     ),
                   ],
-                  xAxis: const TimeAxis(
+                  // Month/year labels need a little more breathing room on
+                  // phones; fewer labels read better than a crowded axis.
+                  xAxis: TimeAxis(
                     format: AxisDateFormat.monthYear,
-                    maxLabels: 5,
+                    maxLabels: MediaQuery.sizeOf(context).width < 420 ? 3 : 5,
                   ),
                   yAxis: ValueAxis.currency(
                     currencyCode: result.currency,

@@ -102,131 +102,6 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         AppAdaptiveActionMenu(
           title: l10n.shellMoreActions,
           actions: [
-            if (allocationTree != null)
-              AppAdaptiveAction(
-                icon: FLucideIcons.layers3,
-                title: l10n.portfolioStudioPlanTitle,
-                onPress: () async {
-                  final originRoute = ModalRoute.of(context);
-                  // Replace the overview while editing; resume it only while
-                  // its originating page is still the current destination.
-                  while (true) {
-                    if (!context.mounted) return;
-                    if (!(originRoute?.isCurrent ?? true)) return;
-                    final selection = await _showPortfolioDetailSheet<Object>(
-                      context: context,
-                      title: l10n.portfolioStudioPlanTitle,
-                      builder: (sheetContext) => Consumer(
-                        builder: (context, ref, _) {
-                          final plan = ref.watch(universeRebalancePlanProvider);
-                          final valuationInputs = <AsyncValue<Object?>>[
-                            ref.watch(activeRebalanceUniverseProvider),
-                            ref.watch(activeUniversePortfolioTargetsProvider),
-                            ref.watch(investmentPortfoliosProvider),
-                            ref.watch(portfolioRebalanceGroupsProvider),
-                            ref.watch(allPortfolioGroupSnapshotsProvider),
-                          ];
-                          return _PortfolioPlanList(
-                            valuationStatus:
-                                valuationInputs.any((input) => input.hasError)
-                                ? _PlanValuationStatus.failed
-                                : valuationInputs.any(
-                                    (input) => input.isLoading,
-                                  )
-                                ? _PlanValuationStatus.loading
-                                : plan == null
-                                ? _PlanValuationStatus.unavailable
-                                : _PlanValuationStatus.ready,
-                            onRetry: () {
-                              ref.invalidate(activeRebalanceUniverseProvider);
-                              ref.invalidate(
-                                activeUniversePortfolioTargetsProvider,
-                              );
-                              ref.invalidate(investmentPortfoliosProvider);
-                              ref.invalidate(portfolioRebalanceGroupsProvider);
-                              ref.invalidate(
-                                allPortfolioGroupSnapshotsProvider,
-                              );
-                            },
-                            portfolios:
-                                ref.watch(investmentPortfoliosProvider).value ??
-                                portfolios,
-                            tree:
-                                ref
-                                    .watch(portfolioAllocationTreeProvider)
-                                    .value ??
-                                allocationTree,
-                            actualWeights: {
-                              if (plan != null)
-                                for (final item in plan.portfolios)
-                                  item.portfolio.id:
-                                      item.capitalDecision.actualWeight,
-                            },
-                            onPortfolioSelected: (id) =>
-                                Navigator.of(sheetContext).pop(id),
-                            onCreate: () =>
-                                Navigator.of(sheetContext)
-                                    .pop(_PortfolioPlanAction.create),
-                            onEditAllocation: () =>
-                                Navigator.of(sheetContext)
-                                    .pop(_PortfolioPlanAction.allocate),
-                          );
-                        },
-                      ),
-                    );
-                    if (!context.mounted) return;
-                    switch (selection) {
-                      case String portfolioId:
-                        await context.push(
-                          FinanceRoutes.wealthPortfolioStudioFor(portfolioId),
-                        );
-                        return;
-                      case _PortfolioPlanAction.create:
-                        await showInvestmentPortfolioFormSheet(context);
-                      case _PortfolioPlanAction.allocate:
-                        try {
-                          final targets = ref
-                              .read(activeUniversePortfolioTargetsProvider)
-                              .requireValue;
-                          final currentPortfolios =
-                              ref.read(investmentPortfoliosProvider).value ??
-                              portfolios;
-                          if (!targets.any(
-                            (target) => currentPortfolios.any(
-                              (portfolio) => portfolio.id == target.portfolioId,
-                            ),
-                          )) {
-                            AppMessenger.show(
-                              context,
-                              ToastKind.error,
-                              l10n.commonLoadFailed,
-                            );
-                            continue;
-                          }
-                          await showPortfolioAllocationEditor(
-                            context,
-                            ref,
-                            portfolios: currentPortfolios,
-                            targets: targets,
-                          );
-                        } catch (error, stackTrace) {
-                          if (!context.mounted) return;
-                          AppMessenger.show(
-                            context,
-                            ToastKind.error,
-                            userSafeErrorMessage(
-                              context,
-                              error,
-                              stackTrace: stackTrace,
-                            ),
-                          );
-                        }
-                      case null:
-                        return;
-                    }
-                  }
-                },
-              ),
             if (needsRebalance)
               AppAdaptiveAction(
                 icon: FLucideIcons.triangleAlert,
@@ -276,10 +151,13 @@ class _PortfolioHubPageState extends ConsumerState<PortfolioHubPage> {
         data: (data) => _PortfolioHubBody(
           data: data,
           portfolios: portfolios,
+          allocationTree: allocationTree,
+          needsRebalance: needsRebalance,
           selectedPortfolioId: selectedPortfolioId,
           onPortfolioChanged: (id) {
             ref.read(selectedInvestmentPortfolioIdProvider.notifier).state = id;
           },
+          onOpenPlan: () => context.push(FinanceRoutes.wealthPortfolioPlan),
         ),
       ),
     );
@@ -290,14 +168,20 @@ class _PortfolioHubBody extends StatefulWidget {
   const _PortfolioHubBody({
     required this.data,
     required this.portfolios,
+    required this.allocationTree,
+    required this.needsRebalance,
     required this.selectedPortfolioId,
     required this.onPortfolioChanged,
+    required this.onOpenPlan,
   });
 
   final PortfolioHubState data;
   final List<InvestmentPortfolio> portfolios;
+  final PortfolioAllocationTree? allocationTree;
+  final bool needsRebalance;
   final String? selectedPortfolioId;
   final ValueChanged<String?> onPortfolioChanged;
+  final VoidCallback onOpenPlan;
 
   @override
   State<_PortfolioHubBody> createState() => _PortfolioHubBodyState();
@@ -349,6 +233,16 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
               ),
             ),
           ),
+          if (widget.allocationTree != null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+                child: _PortfolioPlanActionRail(
+                  needsRebalance: widget.needsRebalance,
+                  onPress: widget.onOpenPlan,
+                ),
+              ),
+            ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.s16),
