@@ -107,11 +107,11 @@ class SoftGlassSpec {
   double chromeFillOpacity(Brightness brightness) =>
       brightness == Brightness.dark ? 0.88 : 0.78;
   double washOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.035 : 0.12;
+      brightness == Brightness.dark ? 0.025 : 0.065;
   double rimOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.14 : 0.48;
+      brightness == Brightness.dark ? 0.10 : 0.25;
   double touchOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.10 : 0.24;
+      brightness == Brightness.dark ? 0.08 : 0.16;
 
   double get touchRadius => 96;
 
@@ -125,27 +125,31 @@ class SoftGlassSpec {
   };
 
   double specularOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.075 : 0.16) * depthFor(role);
+      (brightness == Brightness.dark ? 0.055 : 0.11) * depthFor(role);
 
   double occlusionOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.045 : 0.065) * depthFor(role);
+      (brightness == Brightness.dark ? 0.035 : 0.05) * depthFor(role);
 
   double edgeHighlightOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.20 : 0.34) * depthFor(role);
+      (brightness == Brightness.dark ? 0.14 : 0.20) * depthFor(role);
 
   double edgeShadeOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.18 : 0.12) * depthFor(role);
+      (brightness == Brightness.dark ? 0.10 : 0.08) * depthFor(role);
 
   double stateOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.12 : 0.10;
-  double get stateRimOpacity => 0.40;
-  double get selectedEmphasis => 0.55;
-  double get hoverEmphasis => 0.30;
-  double get focusEmphasis => 0.75;
-  double get pressedEmphasis => 1;
-  double get busyEmphasis => 0.35;
-  double get errorEmphasis => 0.75;
-  double get disabledWash => 0.35;
+      brightness == Brightness.dark ? 0.08 : 0.06;
+
+  /// Kept as a token for callers that need to describe a state rim, but the
+  /// painter intentionally uses one shared edge highlight in the resting
+  /// state so glass does not turn into a collection of bright outlines.
+  double get stateRimOpacity => 0.18;
+  double get selectedEmphasis => 0.42;
+  double get hoverEmphasis => 0.22;
+  double get focusEmphasis => 0.65;
+  double get pressedEmphasis => 0.82;
+  double get busyEmphasis => 0.25;
+  double get errorEmphasis => 0.42;
+  double get disabledWash => 0.30;
 }
 
 const SoftGlassSpec kAppSoftGlassSpec = SoftGlassSpec();

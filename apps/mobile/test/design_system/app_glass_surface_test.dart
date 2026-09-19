@@ -16,6 +16,7 @@ Widget _wrap({
   bool tickersEnabled = true,
   AppGlassStatus status = AppGlassStatus.idle,
   AppGlassRole role = AppGlassRole.chrome,
+  AppGlassLightField? field,
   Widget? child,
 }) {
   final appTheme = brightness == Brightness.dark
@@ -47,19 +48,22 @@ Widget _wrap({
             body: Center(
               child: TickerMode(
                 enabled: tickersEnabled,
-                child: AppGlassSurface(
-                  softLight: softLight,
-                  status: status,
-                  role: role,
-                  frosted: frosted,
-                  borderRadius: BorderRadius.circular(24),
-                  child:
-                      child ??
-                      const SizedBox(
-                        width: 300,
-                        height: 100,
-                        child: Text('glass'),
-                      ),
+                child: AppGlassEnvironment(
+                  field: field,
+                  child: AppGlassSurface(
+                    softLight: softLight,
+                    status: status,
+                    role: role,
+                    frosted: frosted,
+                    borderRadius: BorderRadius.circular(24),
+                    child:
+                        child ??
+                        const SizedBox(
+                          width: 300,
+                          height: 100,
+                          child: Text('glass'),
+                        ),
+                  ),
                 ),
               ),
             ),
@@ -94,6 +98,23 @@ void main() {
         ),
       ),
     );
+  });
+
+  testWidgets('glass surfaces consume one shared environment light field', (
+    tester,
+  ) async {
+    const field = AppGlassLightField(
+      lightColor: Color(0xff86c8d4),
+      shadeColor: Color(0xff17313a),
+      origin: Alignment(-0.5, -0.8),
+      energy: 0.7,
+    );
+    await tester.pumpWidget(_wrap(softLight: true, field: field));
+    final painter = _lightPainter(tester);
+    expect(painter.lightColor, field.lightColor);
+    expect(painter.shadeColor, field.shadeColor);
+    expect(painter.lightOrigin, field.origin);
+    expect(painter.energy, field.energy);
   });
 
   testWidgets('busy and disabled stop active pointer feedback', (tester) async {

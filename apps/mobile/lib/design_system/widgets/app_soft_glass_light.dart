@@ -7,9 +7,9 @@ import 'package:forui/forui.dart';
 
 import '../theme/component_specs.dart';
 import '../tokens/app_motion_policy.dart';
-import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_glass_environment.dart';
 
 /// Paint-only enhancement used internally by [AppGlassSurface]. No gesture
 /// recognizer, focus node, haptics, backdrop capture, or continuous ticker.
@@ -136,6 +136,7 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     const spec = kAppSoftGlassSpec;
+    final field = AppGlassEnvironment.of(context);
     final disabled =
         widget.status == AppGlassStatus.disabled ||
         widget.variants.contains(FTappableVariant.disabled);
@@ -177,13 +178,10 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
             borderRadius: widget.borderRadius,
             role: widget.role,
             brightness: colors.brightness,
-            // Subtle neutral/brand mixture, never a market gain/loss color.
-            lightColor: Color.lerp(
-              ColorPalette.neutral0,
-              colors.primary,
-              AppOpacity.muted,
-            )!,
-            shadeColor: colors.foreground,
+            lightColor: field.lightColor,
+            shadeColor: field.shadeColor,
+            lightOrigin: field.origin,
+            energy: field.energy,
             stateColor: widget.status == AppGlassStatus.error
                 ? colors.destructive
                 : widget.accentColor ?? colors.primary,
@@ -211,6 +209,8 @@ class SoftGlassLightPainter extends CustomPainter {
     required this.brightness,
     required this.lightColor,
     required this.shadeColor,
+    required this.lightOrigin,
+    required this.energy,
     required this.stateColor,
     required this.emphasis,
     required this.ambient,
@@ -224,6 +224,8 @@ class SoftGlassLightPainter extends CustomPainter {
   final Brightness brightness;
   final Color lightColor;
   final Color shadeColor;
+  final Alignment lightOrigin;
+  final double energy;
   final Color stateColor;
   final double emphasis;
   final double ambient;
@@ -232,8 +234,10 @@ class SoftGlassLightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    final fieldEnergy = energy.clamp(0.0, 1.0);
+    final materialEnergy = ambient * fieldEnergy;
     if (size.isEmpty ||
-        (ambient == 0 && emphasis == 0 && intensity.value == 0)) {
+        (materialEnergy == 0 && emphasis == 0 && intensity.value == 0)) {
       return;
     }
     final rect = Offset.zero & size;
@@ -245,11 +249,11 @@ class SoftGlassLightPainter extends CustomPainter {
       shape,
       Paint()
         ..shader = RadialGradient(
-          center: const Alignment(-0.7, -1),
+          center: lightOrigin,
           radius: 1.5,
           colors: [
             lightColor.withValues(
-              alpha: spec.washOpacity(brightness) * ambient,
+              alpha: spec.washOpacity(brightness) * materialEnergy,
             ),
             transparent,
           ],
@@ -261,15 +265,15 @@ class SoftGlassLightPainter extends CustomPainter {
       shape,
       Paint()
         ..shader = LinearGradient(
-          begin: const Alignment(-0.9, -1),
+          begin: lightOrigin,
           end: const Alignment(0.9, 0.65),
           colors: [
             lightColor.withValues(
-              alpha: spec.specularOpacity(brightness, role) * ambient,
+              alpha: spec.specularOpacity(brightness, role) * materialEnergy,
             ),
             transparent,
             shadeColor.withValues(
-              alpha: spec.occlusionOpacity(brightness, role) * ambient,
+              alpha: spec.occlusionOpacity(brightness, role) * materialEnergy,
             ),
           ],
           stops: const [0, 0.42, 1],
@@ -280,26 +284,12 @@ class SoftGlassLightPainter extends CustomPainter {
         shape,
         Paint()
           ..shader = RadialGradient(
-            center: Alignment.topCenter,
+            center: lightOrigin,
             radius: 1.2,
             colors: [
               stateColor.withValues(
                 alpha: spec.stateOpacity(brightness) * emphasis,
               ),
-              stateColor.withValues(alpha: AppOpacity.transparent),
-            ],
-          ).createShader(rect),
-      );
-      canvas.drawRRect(
-        shape.deflate(AppStroke.hairline / 2),
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = AppStroke.hairline
-          ..shader = LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              stateColor.withValues(alpha: spec.stateRimOpacity * emphasis),
               stateColor.withValues(alpha: AppOpacity.transparent),
             ],
           ).createShader(rect),
@@ -327,39 +317,18 @@ class SoftGlassLightPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = AppStroke.hairline
         ..shader = LinearGradient(
-          begin: Alignment.topLeft,
+          begin: lightOrigin,
           end: Alignment.bottomRight,
           colors: [
-            lightColor.withValues(alpha: spec.rimOpacity(brightness) * ambient),
+            lightColor.withValues(
+              alpha: spec.rimOpacity(brightness) * materialEnergy,
+            ),
             transparent,
             shadeColor.withValues(
-              alpha: spec.edgeShadeOpacity(brightness, role) * ambient,
+              alpha: spec.edgeShadeOpacity(brightness, role) * materialEnergy,
             ),
           ],
           stops: const [0, 0.6, 1],
-        ).createShader(rect),
-    );
-    // The second, inset rim is deliberately weaker and offset in the
-    // opposite direction: this is the thin edge refraction cue used by
-    // modern spatial glass surfaces.
-    canvas.drawRRect(
-      shape.deflate(AppStroke.hairline),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = AppStroke.hairline
-        ..shader = LinearGradient(
-          begin: Alignment.bottomRight,
-          end: Alignment.topLeft,
-          colors: [
-            shadeColor.withValues(
-              alpha: spec.edgeShadeOpacity(brightness, role) * 0.55 * ambient,
-            ),
-            transparent,
-            lightColor.withValues(
-              alpha: spec.edgeHighlightOpacity(brightness, role) * ambient,
-            ),
-          ],
-          stops: const [0, 0.56, 1],
         ).createShader(rect),
     );
   }
@@ -374,6 +343,8 @@ class SoftGlassLightPainter extends CustomPainter {
       brightness != oldDelegate.brightness ||
       lightColor != oldDelegate.lightColor ||
       shadeColor != oldDelegate.shadeColor ||
+      lightOrigin != oldDelegate.lightOrigin ||
+      energy != oldDelegate.energy ||
       stateColor != oldDelegate.stateColor ||
       emphasis != oldDelegate.emphasis ||
       ambient != oldDelegate.ambient ||

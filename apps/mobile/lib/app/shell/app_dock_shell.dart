@@ -165,7 +165,9 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
         return ExitConfirmingSystemBackScope(
           onBack: _handleSystemBackBeforeExit,
           disarmKey: location,
-          child: _ShellGlobalMounts(child: shellChild),
+          child: AppGlassEnvironment(
+            child: _ShellGlobalMounts(child: shellChild),
+          ),
         );
       },
     );

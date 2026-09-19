@@ -63,6 +63,7 @@ export 'widgets/app_form_page_scaffold.dart';
 export 'widgets/app_form_scaffold_body.dart';
 export 'widgets/app_form_section.dart';
 export 'widgets/app_glass.dart';
+export 'widgets/app_glass_environment.dart';
 export 'widgets/app_gradient_divider.dart';
 export 'widgets/app_grouped_action_list.dart';
 export 'widgets/app_icon_button.dart';

@@ -75,7 +75,8 @@ BoxDecoration appGlassDecoration(
 /// Blur is intentionally centralized here so navigation, sticky summaries,
 /// sheets, and pinned actions share one compositing strategy. Content cards
 /// should continue to use [SoftCard]-style opaque surfaces; glass is reserved
-/// for layers that sit above moving content.
+/// for layers that sit above moving content. Soft-light surfaces consume the
+/// nearest [AppGlassEnvironment] so adjacent chrome shares one light field.
 class AppGlassSurface extends StatelessWidget {
   const AppGlassSurface({
     super.key,
