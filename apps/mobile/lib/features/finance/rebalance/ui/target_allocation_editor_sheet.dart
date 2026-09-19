@@ -519,33 +519,49 @@ class _TargetAllocationEditorSheetState
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.s16),
-          AnimatedBuilder(
-            animation: widget.dirty,
-            builder: (context, _) {
-              return AppSheetFooter(
-                cancelLabel: l10n.commonCancel,
-                submitLabel: l10n.commonSave,
-                busy: widget.dirty.busy,
-                onSubmit: _canSave
-                    ? _save
-                    : () => setState(() {
-                        _showTotalError = true;
-                      }),
-              );
-            },
-          ),
-          if (_showTotalError || !totalValid)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.s8),
-              child: Text(
-                l10n.targetAllocationEditorTotalHint(
-                  _totalPct.toStringAsFixed(1),
-                ),
-                style: context.captionStyle.copyWith(color: totalColor),
-                textAlign: TextAlign.center,
-              ),
+          const SizedBox(height: AppSpacing.s12),
+          AppGlassSurface(
+            role: AppGlassRole.sticky,
+            softLight: true,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s12,
+              AppSpacing.s8,
+              AppSpacing.s12,
+              AppSpacing.s8,
             ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AnimatedBuilder(
+                  animation: widget.dirty,
+                  builder: (context, _) {
+                    return AppSheetFooter(
+                      cancelLabel: l10n.commonCancel,
+                      submitLabel: l10n.commonSave,
+                      busy: widget.dirty.busy,
+                      onSubmit: _canSave
+                          ? _save
+                          : () => setState(() {
+                              _showTotalError = true;
+                            }),
+                    );
+                  },
+                ),
+                if (_showTotalError || !totalValid)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.s8),
+                    child: Text(
+                      l10n.targetAllocationEditorTotalHint(
+                        _totalPct.toStringAsFixed(1),
+                      ),
+                      style: context.captionStyle.copyWith(color: totalColor),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );

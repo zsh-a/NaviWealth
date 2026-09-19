@@ -5,6 +5,7 @@ import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_glass.dart';
 import 'app_interaction.dart';
 import 'app_selection_indicator.dart';
 
@@ -32,6 +33,7 @@ class SegmentedRow<T> extends StatelessWidget {
     this.semanticLabelOf,
     this.iconOf,
     this.minSegmentWidth = _defaultMinSegmentWidth,
+    this.glass = false,
   });
 
   final List<T> options;
@@ -44,6 +46,10 @@ class SegmentedRow<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
   final IconData? Function(T)? iconOf;
   final double minSegmentWidth;
+
+  /// Uses the shared floating-glass material for navigation-like controls.
+  /// Keep the default opaque/translucent surface for dense in-content filters.
+  final bool glass;
 
   static const double _defaultMinSegmentWidth = 96;
 
@@ -114,13 +120,17 @@ class SegmentedRow<T> extends StatelessWidget {
 
         final surface = DecoratedBox(
           decoration: BoxDecoration(
-            color: colors.foreground.withValues(alpha: AppOpacity.whisper),
+            color: glass
+                ? colors.foreground.withValues(alpha: AppOpacity.transparent)
+                : colors.foreground.withValues(alpha: AppOpacity.whisper),
             borderRadius: BorderRadius.circular(
               fits ? AppRadius.md : AppRadius.lg,
             ),
-            border: Border.all(
-              color: colors.border.withValues(alpha: AppOpacity.subtle),
-            ),
+            border: glass
+                ? null
+                : Border.all(
+                    color: colors.border.withValues(alpha: AppOpacity.subtle),
+                  ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
@@ -160,7 +170,14 @@ class SegmentedRow<T> extends StatelessWidget {
           ),
         );
 
-        return surface;
+        if (!glass) return surface;
+        return AppGlassSurface(
+          softLight: true,
+          borderRadius: BorderRadius.circular(
+            fits ? AppRadius.md : AppRadius.lg,
+          ),
+          child: surface,
+        );
       },
     );
   }

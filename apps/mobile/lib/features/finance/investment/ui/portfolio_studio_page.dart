@@ -209,6 +209,7 @@ class _StudioSectionNavigation extends StatelessWidget {
       options: PortfolioStudioSection.values,
       value: value,
       minSegmentWidth: 76,
+      glass: true,
       labelOf: (section) => switch (section) {
         PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
         PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,

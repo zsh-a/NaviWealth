@@ -50,6 +50,26 @@ void main() {
     expect(changedTo, 'b');
   });
 
+  testWidgets('supports shared glass chrome for navigation segments', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<String>(
+          options: const ['overview', 'rules'],
+          value: 'overview',
+          labelOf: (value) => value,
+          onChanged: (_) {},
+          glass: true,
+        ),
+      ),
+    );
+
+    expect(find.byType(AppGlassSurface), findsOneWidget);
+    expect(find.text('overview'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('long labels in the equal-split layout do not overflow', (
     tester,
   ) async {
