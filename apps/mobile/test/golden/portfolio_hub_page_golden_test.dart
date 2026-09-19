@@ -381,6 +381,17 @@ Future<void> _snapshotPlan(WidgetTester tester, String name) async {
   expect(find.byType(AppFormPageScaffold), findsOneWidget);
   await expectGoldenSurface('goldens/${name}_editor.png');
   expect(tester.takeException(), isNull);
+  if (name == 'investment_plan_small_zh') {
+    await tester.enterText(find.byType(EditableText).first, '65.5');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(
+      find.text(l10n.capitalAllocationWeightComparison('60', '65.50')),
+      findsOneWidget,
+    );
+    await expectGoldenSurface('goldens/${name}_editor_changed.png');
+    expect(tester.takeException(), isNull);
+  }
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump(const Duration(seconds: 1));
 }

@@ -95,6 +95,9 @@ class MetricTileSpec {
 /// chrome: navigation, sticky context, modal sheets, and temporary overlays.
 enum AppGlassRole { chrome, sticky, sheet, overlay }
 
+/// Visual status only. The owning control still owns actions and semantics.
+enum AppGlassStatus { idle, busy, disabled, error }
+
 /// Opt-in soft-light chrome. These are visual budgets, not a physical glass
 /// simulation. Dense surfaces retain their existing, more opaque material.
 @immutable
@@ -111,6 +114,17 @@ class SoftGlassSpec {
       brightness == Brightness.dark ? 0.10 : 0.24;
 
   double get touchRadius => 96;
+
+  double stateOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.12 : 0.10;
+  double get stateRimOpacity => 0.40;
+  double get selectedEmphasis => 0.55;
+  double get hoverEmphasis => 0.30;
+  double get focusEmphasis => 0.75;
+  double get pressedEmphasis => 1;
+  double get busyEmphasis => 0.35;
+  double get errorEmphasis => 0.75;
+  double get disabledWash => 0.35;
 }
 
 const SoftGlassSpec kAppSoftGlassSpec = SoftGlassSpec();

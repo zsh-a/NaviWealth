@@ -84,6 +84,8 @@ class AppGlassSurface extends StatelessWidget {
     this.role = AppGlassRole.chrome,
     this.frosted = true,
     this.softLight = false,
+    this.status = AppGlassStatus.idle,
+    this.trackPointer = true,
     this.boxShadow,
     this.padding = EdgeInsets.zero,
   });
@@ -100,6 +102,10 @@ class AppGlassSurface extends StatelessWidget {
   /// content. Opt-in independently of live blur: the navigation dock keeps its
   /// opaque scroll-performance fallback. High contrast and OLED disable both.
   final bool softLight;
+  final AppGlassStatus status;
+
+  /// Disable when descendants supply their own local feedback (e.g. dock tabs).
+  final bool trackPointer;
   final List<BoxShadow>? boxShadow;
   final EdgeInsetsGeometry padding;
 
@@ -122,7 +128,12 @@ class AppGlassSurface extends StatelessWidget {
     final contents = DecoratedBox(
       decoration: decoration,
       child: useSoftLight
-          ? AppSoftGlassLight(borderRadius: borderRadius, child: content)
+          ? AppSoftGlassLight(
+              borderRadius: borderRadius,
+              status: status,
+              trackPointer: trackPointer,
+              child: content,
+            )
           : content,
     );
     return RepaintBoundary(
@@ -143,6 +154,43 @@ class AppGlassSurface extends StatelessWidget {
                 )
               : contents,
         ),
+      ),
+    );
+  }
+}
+
+/// Paint-only local feedback for controls inside a glass surface. Feed the
+/// existing FTappable variants; this adds no focus node or gesture recognizer.
+/// Keep the control's focus outline, selected indicator and disabled semantics.
+class AppGlassFeedback extends StatelessWidget {
+  const AppGlassFeedback({
+    super.key,
+    required this.variants,
+    required this.child,
+    this.accentColor,
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.full)),
+  });
+
+  final Set<FTappableVariant> variants;
+  final Widget child;
+  final Color? accentColor;
+  final BorderRadius borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!context.appTheme.glass.resolve(AppGlassRole.chrome).liveBlur ||
+        (MediaQuery.maybeOf(context)?.highContrast ?? false)) {
+      return child;
+    }
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: AppSoftGlassLight(
+        borderRadius: borderRadius,
+        variants: variants,
+        accentColor: accentColor,
+        ambient: false,
+        trackPointer: false,
+        child: child,
       ),
     );
   }

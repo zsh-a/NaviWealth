@@ -10,7 +10,21 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get capitalAllocationAutoBalanceHint => '调整一个目标后，其余项目按比例联动，总计保持 100%。';
+  String get capitalAllocationAutoBalanceHint =>
+      '完成一个目标的输入后，其余项目按比例联动，总计保持 100%；保存时也会应用尚未完成的输入。';
+
+  @override
+  String get capitalAllocationRestoreAction => '恢复初始配置';
+
+  @override
+  String capitalAllocationWeightComparison(String before, String after) {
+    return '初始 $before% → 草稿 $after%';
+  }
+
+  @override
+  String capitalAllocationRuleComparison(String before, String after) {
+    return '初始：$before\n草稿：$after';
+  }
 
   @override
   String capitalAllocationRuleSummary(String policy, String tolerance) {

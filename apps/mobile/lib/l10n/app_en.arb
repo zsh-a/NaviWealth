@@ -1,5 +1,10 @@
 {
-  "capitalAllocationAutoBalanceHint": "Changing one target adjusts the others proportionally. Total allocation stays at 100%.",
+  "capitalAllocationAutoBalanceHint": "Finish editing a target to adjust the others proportionally. Total stays at 100%; saving also applies unfinished input.",
+  "capitalAllocationRestoreAction": "Restore initial settings",
+  "capitalAllocationWeightComparison": "Initial {before}% → Draft {after}%",
+  "@capitalAllocationWeightComparison": { "placeholders": { "before": { "type": "String" }, "after": { "type": "String" } } },
+  "capitalAllocationRuleComparison": "Initial: {before}\nDraft: {after}",
+  "@capitalAllocationRuleComparison": { "placeholders": { "before": { "type": "String" }, "after": { "type": "String" } } },
   "capitalAllocationRuleSummary": "{policy} · Tolerance ±{tolerance} pp",
   "capitalAllocationApplyRules": "Apply to draft",
   "capitalAllocationRulesDraftHint": "These changes are saved when you save the allocation plan.",

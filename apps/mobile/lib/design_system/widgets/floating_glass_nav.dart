@@ -75,6 +75,7 @@ class FloatingGlassNavBar extends StatelessWidget {
           // so use the same glass material hierarchy with an opaque fill.
           frosted: false,
           softLight: true,
+          trackPointer: false,
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadow.nav,
           padding: const EdgeInsets.symmetric(
@@ -153,6 +154,15 @@ class _NavTabButton extends StatelessWidget {
       selected: selected,
       label: tab.label,
       child: FTappable(
+        selected: selected,
+        focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        builder: (context, variants, child) => AppGlassFeedback(
+          variants: variants,
+          accentColor: accentColor,
+          child: child!,
+        ),
         onPress: () {
           if (!selected) {
             AppInteraction.signal(AppInteractionIntent.navigate);
@@ -235,6 +245,11 @@ class _AssistantActionButton extends StatelessWidget {
       label: semanticLabel ?? label ?? 'AI',
       child: FTappable(
         onPress: onTap,
+        focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+        ),
+        builder: (context, variants, child) =>
+            AppGlassFeedback(variants: variants, child: child!),
         child: Container(
           key: const ValueKey<String>('floating-nav.assistant'),
           height: AppSpacing.s40,

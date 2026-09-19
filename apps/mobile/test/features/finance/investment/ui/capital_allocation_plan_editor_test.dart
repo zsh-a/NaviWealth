@@ -89,7 +89,7 @@ void main() {
     expect(_input(tester, 1), '40');
     await tester.enterText(find.byType(EditableText).first, '63.27');
     await tester.pump();
-    expect(_input(tester, 1), '36.73');
+    expect(_input(tester, 1), '40', reason: 'Typing does not redistribute.');
     expect(find.text('100%'), findsOneWidget);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -103,6 +103,123 @@ void main() {
     await tester.pump();
     expect(_input(tester, 0), '70');
     expect(_input(tester, 1), '30');
+  });
+
+  testWidgets('typing waits for done or blur before redistributing', (
+    tester,
+  ) async {
+    await _open(tester);
+    for (final text in ['', '6', '63', '63.27']) {
+      await tester.enterText(find.byType(EditableText).first, text);
+      await tester.pump();
+      expect(_input(tester, 1), '40');
+      expect(find.text(l10n.targetAllocationEditorRangeError), findsNothing);
+    }
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(_input(tester, 1), '36.73');
+    expect(
+      find.text(l10n.capitalAllocationWeightComparison('60', '63.27')),
+      findsOneWidget,
+    );
+    await tester.enterText(find.byType(EditableText).first, '70');
+    await tester.ensureVisible(find.byType(EditableText).at(1));
+    await tester.tap(find.byType(EditableText).at(1));
+    await tester.pumpAndSettle();
+    expect(_input(tester, 1), '30');
+  });
+
+  testWidgets('committing another target preserves invalid input', (
+    tester,
+  ) async {
+    var saves = 0;
+    await _open(tester, onSave: (_) async => saves++);
+    await tester.enterText(find.byType(EditableText).first, '101');
+    await tester.enterText(find.byType(EditableText).at(1), '35');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(_input(tester, 0), '101');
+    expect(find.text(l10n.targetAllocationEditorRangeError), findsOneWidget);
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(saves, 0);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('allocation-restore')),
+    );
+    await tester.tap(find.byKey(const ValueKey('allocation-restore')));
+    await tester.pumpAndSettle();
+    expect(_input(tester, 0), '60');
+    expect(_input(tester, 1), '40');
+    expect(find.text(l10n.targetAllocationEditorRangeError), findsNothing);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.unsavedChangesTitle), findsNothing);
+    expect(find.byType(AppFormPageScaffold), findsNothing);
+  });
+
+  testWidgets('restore resets weights and rules without writing', (
+    tester,
+  ) async {
+    List<CapitalAllocationDraft>? saved;
+    await _open(tester, onSave: (drafts) async => saved = drafts);
+    tester.widget<Slider>(find.byType(Slider).first).onChanged!(7000);
+    await tester.pump();
+    await tester.tap(find.text(l10n.capitalAllocationAdvancedAction).first);
+    await tester.pumpAndSettle();
+    final field = find.descendant(
+      of: find.byType(AppSheet),
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(field.first, '7.25');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppSheet),
+        matching: find.text(l10n.capitalAllocationRuleBidirectional),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.capitalAllocationRuleIsolated).last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.capitalAllocationApplyRules));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Draft:'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('allocation-restore')),
+    );
+    await tester.tap(find.byKey(const ValueKey('allocation-restore')));
+    await tester.pumpAndSettle();
+    expect(saved, isNull);
+    expect(_input(tester, 0), '60');
+    expect(_input(tester, 1), '40');
+    expect(find.textContaining('7.25'), findsNothing);
+    expect(find.textContaining('Draft:'), findsNothing);
+    expect(
+      tester
+          .widget<FButton>(find.byKey(const ValueKey('allocation-restore')))
+          .onPress,
+      isNull,
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(saved!.first.driftBandBps, 500);
+    expect(saved!.first.transferPolicy, GroupTransferPolicy.bidirectional);
+    expect(saved!.map((draft) => draft.targetWeightBps), [6000, 4000]);
+  });
+
+  testWidgets('returning to the initial weights clears the dirty guard', (
+    tester,
+  ) async {
+    await _open(tester);
+    await tester.enterText(find.byType(EditableText).first, '65');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText).first, '60');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text(l10n.unsavedChangesTitle), findsNothing);
+    expect(find.byType(AppFormPageScaffold), findsNothing);
   });
 
   testWidgets('invalid input blocks save and focuses the visible error', (
@@ -152,7 +269,6 @@ void main() {
   ) async {
     List<CapitalAllocationDraft>? saved;
     await _open(tester, onSave: (drafts) async => saved = drafts);
-    final before = tester.getTopLeft(find.text('Income'));
     await tester.tap(find.text(l10n.capitalAllocationAdvancedAction).first);
     await tester.pumpAndSettle();
     expect(find.byType(AppSheet), findsOneWidget);
@@ -171,7 +287,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(saved, isNull);
     expect(find.byType(AppSheet), findsNothing);
-    expect(tester.getTopLeft(find.text('Income')), before);
+    expect(find.textContaining('Initial:'), findsOneWidget);
+    expect(find.textContaining('Draft:'), findsOneWidget);
     expect(find.textContaining('7.25'), findsOneWidget);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
@@ -192,6 +309,10 @@ void main() {
     expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(_input(tester, 0), '62.15');
     expect(find.text(l10n.capitalAllocationSaveFailed), findsOneWidget);
+    expect(
+      tester.widget<AppFormActionBar>(find.byType(AppFormActionBar)).status,
+      AppGlassStatus.error,
+    );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(attempts, 2);
@@ -216,6 +337,16 @@ void main() {
     await tester.pump();
     expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(calls, 1);
+    expect(
+      tester.widget<AppFormActionBar>(find.byType(AppFormActionBar)).status,
+      AppGlassStatus.busy,
+    );
+    expect(
+      tester
+          .widget<FButton>(find.byKey(const ValueKey('allocation-restore')))
+          .onPress,
+      isNull,
+    );
     save.complete();
     await tester.pumpAndSettle();
     expect(find.byType(AppFormPageScaffold), findsNothing);

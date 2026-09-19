@@ -169,6 +169,16 @@ void main() {
       );
       expect(glassSurface.frosted, isFalse);
       expect(glassSurface.softLight, isTrue);
+      expect(glassSurface.trackPointer, isFalse);
+      final feedback = tester.widgetList<AppGlassFeedback>(
+        find.byType(AppGlassFeedback),
+      );
+      expect(
+        feedback.where(
+          (item) => item.variants.contains(FTappableVariant.selected),
+        ),
+        hasLength(1),
+      );
       expect(glassSurface.boxShadow, hasLength(1));
       expect(glassSurface.borderRadius, BorderRadius.circular(AppRadius.full));
       final selectionIndicators = find.descendant(

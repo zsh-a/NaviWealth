@@ -1,5 +1,10 @@
 {
-  "capitalAllocationAutoBalanceHint": "调整一个目标后，其余项目按比例联动，总计保持 100%。",
+  "capitalAllocationAutoBalanceHint": "完成一个目标的输入后，其余项目按比例联动，总计保持 100%；保存时也会应用尚未完成的输入。",
+  "capitalAllocationRestoreAction": "恢复初始配置",
+  "capitalAllocationWeightComparison": "初始 {before}% → 草稿 {after}%",
+  "@capitalAllocationWeightComparison": { "placeholders": { "before": { "type": "String" }, "after": { "type": "String" } } },
+  "capitalAllocationRuleComparison": "初始：{before}\n草稿：{after}",
+  "@capitalAllocationRuleComparison": { "placeholders": { "before": { "type": "String" }, "after": { "type": "String" } } },
   "capitalAllocationRuleSummary": "{policy} · 容许偏离 ±{tolerance} 个百分点",
   "capitalAllocationApplyRules": "应用到草稿",
   "capitalAllocationRulesDraftHint": "这些更改将在保存配置方案时一并保存。",

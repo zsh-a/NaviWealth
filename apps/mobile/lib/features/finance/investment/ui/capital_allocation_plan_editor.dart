@@ -87,10 +87,13 @@ class _CapitalAllocationPlanEditorState
     extends ConsumerState<_CapitalAllocationPlanEditor>
     with FormDirtyGuard<_CapitalAllocationPlanEditor> {
   late List<CapitalAllocationDraft> _drafts;
+  late final List<CapitalAllocationDraft> _initialDrafts;
   late final Map<String, TextEditingController> _weightControllers;
   late final Map<String, FocusNode> _weightFocus;
   late final Map<String, GlobalKey> _fieldKeys;
   final _errors = <String, String>{};
+  final _pendingWeights = <String>{};
+  final _lastText = <String, String>{};
   bool _busy = false;
   bool _saveFailed = false;
   bool _writingControllers = false;
@@ -131,6 +134,8 @@ class _CapitalAllocationPlanEditorState
         _drafts = normalized;
       }
     }
+    // Reset returns to the normalized entry snapshot, not a later save attempt.
+    _initialDrafts = List.unmodifiable(_drafts);
     _weightControllers = {
       for (final draft in _drafts)
         draft.id: TextEditingController(
@@ -139,12 +144,17 @@ class _CapitalAllocationPlanEditorState
     };
     _weightFocus = {for (final draft in _drafts) draft.id: FocusNode()};
     _fieldKeys = {for (final draft in _drafts) draft.id: GlobalKey()};
-    dirty.bindTextControllers(_weightControllers.values.toList());
     for (var index = 0; index < _drafts.length; index++) {
       final id = _drafts[index].id;
+      _lastText[id] = _weightControllers[id]!.text;
       _weightControllers[id]!.addListener(
         () => _updateWeight(index, _weightControllers[id]!.text),
       );
+      _weightFocus[id]!.addListener(() {
+        if (!_weightFocus[id]!.hasFocus && mounted && !_busy) {
+          _commitWeight(index);
+        }
+      });
     }
   }
 
@@ -174,6 +184,24 @@ class _CapitalAllocationPlanEditorState
             draft.driftBandBps <= 10000,
       );
 
+  bool get _hasChanges =>
+      _pendingWeights.isNotEmpty ||
+      _drafts.indexed.any((entry) {
+        final (index, draft) = entry;
+        final original = _initialDrafts[index];
+        return draft.targetWeightBps != original.targetWeightBps ||
+            draft.driftBandBps != original.driftBandBps ||
+            draft.transferPolicy != original.transferPolicy;
+      });
+
+  void _syncDirty() {
+    if (_hasChanges) {
+      dirty.markDirty();
+    } else {
+      dirty.markPristine();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -183,6 +211,11 @@ class _CapitalAllocationPlanEditorState
         confirmLeave: handleBackIntent,
         child: AppFormScaffoldBody(
           softActionBar: true,
+          actionStatus: _busy
+              ? AppGlassStatus.busy
+              : _saveFailed || _errors.isNotEmpty
+              ? AppGlassStatus.error
+              : AppGlassStatus.idle,
           onSubmit: _busy ? null : _save,
           action: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -228,13 +261,38 @@ class _CapitalAllocationPlanEditorState
                   : l10n.capitalAllocationAutoBalanceHint,
               style: context.captionStyle,
             ),
-            if (_drafts.length > 1)
+            if (_drafts.isNotEmpty)
               Align(
                 alignment: AlignmentDirectional.centerEnd,
-                child: FButton(
-                  variant: FButtonVariant.ghost,
-                  onPress: _busy ? null : _balanceEvenly,
-                  child: Text(l10n.capitalAllocationBalanceEvenlyAction),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: AppSpacing.s8,
+                  children: [
+                    FButton(
+                      key: const ValueKey('allocation-restore'),
+                      variant: FButtonVariant.ghost,
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: _busy || !_hasChanges ? null : _restore,
+                      child: Flexible(
+                        child: Text(
+                          l10n.capitalAllocationRestoreAction,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    if (_drafts.length > 1)
+                      FButton(
+                        variant: FButtonVariant.ghost,
+                        mainAxisSize: MainAxisSize.min,
+                        onPress: _busy ? null : _balanceEvenly,
+                        child: Flexible(
+                          child: Text(
+                            l10n.capitalAllocationBalanceEvenlyAction,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             for (var index = 0; index < _drafts.length; index++) ...[
@@ -250,6 +308,15 @@ class _CapitalAllocationPlanEditorState
 
   Widget _buildRow(BuildContext context, AppLocalizations l10n, int index) {
     final draft = _drafts[index];
+    final original = _initialDrafts[index];
+    final currentRule = l10n.capitalAllocationRuleSummary(
+      _policyLabel(l10n, draft.transferPolicy),
+      _percentFromBps(draft.driftBandBps),
+    );
+    final originalRule = l10n.capitalAllocationRuleSummary(
+      _policyLabel(l10n, original.transferPolicy),
+      _percentFromBps(original.driftBandBps),
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
       child: Column(
@@ -267,6 +334,16 @@ class _CapitalAllocationPlanEditorState
             label: Text(widget.weightLabel),
             enabled: !_busy && _drafts.length > 1,
             forceErrorText: _errors[draft.id],
+            description: Text(
+              l10n.capitalAllocationWeightComparison(
+                _percentFromBps(original.targetWeightBps),
+                _percentFromBps(draft.targetWeightBps),
+              ),
+            ),
+            textInputAction: TextInputAction.done,
+            onSubmit: (_) {
+              if (_commitWeight(index)) _weightFocus[draft.id]!.unfocus();
+            },
           ),
           if (_drafts.length > 1)
             Slider(
@@ -278,17 +355,21 @@ class _CapitalAllocationPlanEditorState
                   '${_percentFromBps(value.round())}%',
               onChanged: _busy
                   ? null
-                  : (value) =>
-                        _setWeightLocked(index, (value / 50).round() * 50),
+                  : (value) {
+                      if (_commitPendingWeights()) {
+                        _setWeightLocked(index, (value / 50).round() * 50);
+                      }
+                    },
             ),
           FTile(
             title: Text(l10n.capitalAllocationAdvancedAction, maxLines: 3),
             subtitle: Text(
-              l10n.capitalAllocationRuleSummary(
-                _policyLabel(l10n, draft.transferPolicy),
-                _percentFromBps(draft.driftBandBps),
-              ),
-              maxLines: 4,
+              originalRule == currentRule
+                  ? currentRule
+                  : l10n.capitalAllocationRuleComparison(
+                      originalRule,
+                      currentRule,
+                    ),
             ),
             suffix: const Icon(
               FLucideIcons.chevronRight,
@@ -302,6 +383,10 @@ class _CapitalAllocationPlanEditorState
   }
 
   Future<void> _editRules(int index) async {
+    if (!_commitPendingWeights()) {
+      await _focusFirstError();
+      return;
+    }
     FocusManager.instance.primaryFocus?.unfocus();
     final updated = await showGuardedFormSheet<CapitalAllocationDraft>(
       context: context,
@@ -309,40 +394,85 @@ class _CapitalAllocationPlanEditorState
           _AllocationRuleForm(draft: _drafts[index], dirty: guard),
     );
     if (!mounted || updated == null) return;
-    setState(() => _drafts[index] = updated);
-    dirty.markDirty();
+    setState(() {
+      _drafts[index] = updated;
+      _saveFailed = false;
+    });
+    _syncDirty();
   }
 
   void _updateWeight(int index, String value) {
-    if (_writingControllers) return;
     final id = _drafts[index].id;
-    final parsed = double.tryParse(value.trim());
+    if (_writingControllers || _lastText[id] == value) return;
+    _lastText[id] = value;
+    setState(() {
+      _pendingWeights.add(id);
+      _errors.remove(id);
+      _saveFailed = false;
+    });
+    _syncDirty();
+  }
+
+  int? _parseWeight(String text) {
+    final parsed = double.tryParse(text.trim());
     if (parsed == null || !parsed.isFinite || parsed < 0 || parsed > 100) {
+      return null;
+    }
+    return (parsed * 100).round();
+  }
+
+  bool _commitWeight(int index) {
+    final id = _drafts[index].id;
+    if (!_pendingWeights.contains(id)) return !_errors.containsKey(id);
+    final weight = _parseWeight(_weightControllers[id]!.text);
+    if (weight == null) {
       setState(
         () =>
             _errors[id] = AppLocalizations.of(context)
                 .targetAllocationEditorRangeError,
       );
-      return;
+      return false;
     }
+    _pendingWeights.remove(id);
     _errors.remove(id);
-    _setWeightLocked(index, (parsed * 100).round(), editingId: id);
+    _setWeightLocked(index, weight, editingId: id);
+    return true;
+  }
+
+  bool _commitPendingWeights() {
+    for (final id in _pendingWeights.toList()) {
+      _commitWeight(_drafts.indexWhere((draft) => draft.id == id));
+    }
+    return _errors.isEmpty;
+  }
+
+  Future<void> _focusFirstError() async {
+    final invalidId = _drafts
+        .where((draft) => _errors.containsKey(draft.id))
+        .firstOrNull
+        ?.id;
+    if (invalidId == null) return;
+    _weightFocus[invalidId]!.requestFocus();
+    final fieldContext = _fieldKeys[invalidId]!.currentContext;
+    if (fieldContext != null) await Scrollable.ensureVisible(fieldContext);
+  }
+
+  void _restore() {
+    _pendingWeights.clear();
+    _errors.clear();
+    _drafts = List.of(_initialDrafts);
+    _setWeights([for (final draft in _drafts) draft.targetWeightBps]);
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Future<void> _save() async {
     if (_busy) return;
+    _commitPendingWeights();
     if (!_isValid) {
-      final invalidId = _drafts
-          .where((draft) => _errors.containsKey(draft.id))
-          .firstOrNull
-          ?.id;
-      if (invalidId != null) {
-        _weightFocus[invalidId]!.requestFocus();
-        final fieldContext = _fieldKeys[invalidId]!.currentContext;
-        if (fieldContext != null) await Scrollable.ensureVisible(fieldContext);
-      }
+      await _focusFirstError();
       return;
     }
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
       _busy = true;
       _saveFailed = false;
@@ -350,6 +480,7 @@ class _CapitalAllocationPlanEditorState
     dirty.busy = true;
     try {
       await widget.onSave(List.unmodifiable(_drafts));
+      if (!mounted) return;
       dirty.markPristine();
       dirty.busy = false;
       if (mounted) Navigator.of(context).pop();
@@ -364,6 +495,8 @@ class _CapitalAllocationPlanEditorState
   }
 
   void _balanceEvenly() {
+    _pendingWeights.clear();
+    _errors.clear();
     final base = 10000 ~/ _drafts.length;
     var remainder = 10000 - (base * _drafts.length);
     _setWeights([
@@ -415,27 +548,30 @@ class _CapitalAllocationPlanEditorState
   }
 
   void _setWeights(List<int> weights, {String? editingId}) {
-    dirty.markDirty();
     _writingControllers = true;
     try {
       setState(() {
+        _saveFailed = false;
         _drafts = [
           for (var index = 0; index < _drafts.length; index++)
             _drafts[index].copyWith(targetWeightBps: weights[index]),
         ];
         for (final draft in _drafts) {
-          if (draft.id == editingId) continue;
-          // Preserve other invalid inputs so saving cannot silently discard them.
-          if (editingId != null && _errors.containsKey(draft.id)) continue;
+          // Do not overwrite another field's incomplete or invalid input.
+          if (draft.id != editingId && _pendingWeights.contains(draft.id)) {
+            continue;
+          }
           _errors.remove(draft.id);
           _weightControllers[draft.id]!.text = _percentFromBps(
             draft.targetWeightBps,
           );
+          _lastText[draft.id] = _weightControllers[draft.id]!.text;
         }
       });
     } finally {
       _writingControllers = false;
     }
+    _syncDirty();
   }
 }
 

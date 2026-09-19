@@ -11,7 +11,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get capitalAllocationAutoBalanceHint =>
-      'Changing one target adjusts the others proportionally. Total allocation stays at 100%.';
+      'Finish editing a target to adjust the others proportionally. Total stays at 100%; saving also applies unfinished input.';
+
+  @override
+  String get capitalAllocationRestoreAction => 'Restore initial settings';
+
+  @override
+  String capitalAllocationWeightComparison(String before, String after) {
+    return 'Initial $before% → Draft $after%';
+  }
+
+  @override
+  String capitalAllocationRuleComparison(String before, String after) {
+    return 'Initial: $before\nDraft: $after';
+  }
 
   @override
   String capitalAllocationRuleSummary(String policy, String tolerance) {

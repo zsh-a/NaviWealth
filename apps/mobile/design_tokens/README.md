@@ -139,3 +139,13 @@ signal of direction, even in colorblind mode.
   and chart interpolation stop under reduced motion.
 - Glass highlights are reserved for floating navigation and sticky chrome;
   content modules remain opaque and high-contrast surfaces omit live blur.
+- `AppGlassFeedback` consumes the owning Forui control's selected, hovered,
+  focused, pressed and disabled variants. Dock feedback is local to each item;
+  the dock does not add a second pointer response. Keep selection indicators,
+  keyboard focus outlines and control semantics alongside the light.
+- `AppGlassStatus` gives pinned actions a steady busy wash, subdued disabled
+  finish or semantic error rim. Busy/disabled stops pointer tracking immediately.
+  Loading indicators and inline errors remain authoritative; light is never
+  the only status cue. Transitions do not change geometry or run continuously.
+  Reduced motion keeps static state differences, while high contrast and OLED
+  omit decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.

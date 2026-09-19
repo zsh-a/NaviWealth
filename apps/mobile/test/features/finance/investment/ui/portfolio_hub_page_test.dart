@@ -17,6 +17,7 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/investment/data/investment_portfolio_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/investment_portfolio_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/portfolio_trend_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/allocation/portfolio_allocation_tree.dart';
@@ -40,6 +41,22 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 
 Decimal _d(String value) => Decimal.parse(value);
+
+class _PlanRepository extends Fake implements InvestmentPortfolioRepository {
+  List<PortfolioAllocationTarget>? saved;
+  VoidCallback? onSaved;
+
+  @override
+  Future<List<PortfolioAllocationTarget>> updatePortfolioPlan({
+    required String universeId,
+    required List<PortfolioAllocationTarget> targets,
+  }) async {
+    expect(universeId, 'plan');
+    saved = targets;
+    onSaved?.call();
+    return targets;
+  }
+}
 
 SyncMeta _meta() => SyncMeta(
   ownerUserId: 'u',
@@ -183,9 +200,13 @@ void main() {
         ],
       );
       addTearDown(router.dispose);
+      final repository = _PlanRepository();
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            investmentPortfolioRepositoryProvider.overrideWith(
+              (_) async => repository,
+            ),
             portfolioHubProvider.overrideWith(
               () => _StaticPortfolioHubNotifier(state),
             ),
@@ -215,11 +236,28 @@ void main() {
             portfolioHubInsightsProvider.overrideWith(
               _EmptyPortfolioInsightsNotifier.new,
             ),
-            portfolioAllocationTreeProvider.overrideWithValue(
-              AsyncData(
+            portfolioAllocationTreeProvider.overrideWith(
+              (_) => AsyncData(
                 PortfolioAllocationTree(
                   root: root,
-                  nodes: [root, portfolioNode, incomeNode],
+                  nodes: [
+                    root,
+                    for (final node in [portfolioNode, incomeNode])
+                      AllocationNode(
+                        id: node.id,
+                        parentId: node.parentId,
+                        type: node.type,
+                        name: node.name,
+                        referenceId: node.referenceId,
+                        targetWeightBps:
+                            repository.saved
+                                ?.firstWhere((target) => target.id == node.id)
+                                .targetWeightBps ??
+                            node.targetWeightBps,
+                        driftBandBps: node.driftBandBps,
+                        transferPolicy: node.transferPolicy,
+                      ),
+                  ],
                   attachments: [],
                   inclusions: [],
                 ),
@@ -257,6 +295,8 @@ void main() {
       final container = ProviderScope.containerOf(
         tester.element(find.byType(PortfolioHubPage)),
       );
+      repository.onSaved = () =>
+          container.invalidate(portfolioAllocationTreeProvider);
       for (final id in [null, kUnassignedInvestmentPortfolioId]) {
         container.read(selectedInvestmentPortfolioIdProvider.notifier).state =
             id;
@@ -391,6 +431,9 @@ void main() {
         findsNothing,
       );
 
+      final originalScope = container.read(
+        selectedInvestmentPortfolioIdProvider,
+      );
       for (final action in [
         'portfolio-plan-create',
         'portfolio-plan-allocation',
@@ -420,19 +463,41 @@ void main() {
           await tester.binding.handlePopRoute();
         }
         await tester.pumpAndSettle();
-        expect(find.byType(AppSheet), findsNothing);
-        await tester.tap(
-          find
-              .bySemanticsLabel(AppLocalizationsEn().shellMoreActions)
-              .hitTestable()
-              .first,
+        expect(find.byType(AppSheet), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('portfolio-plan-row-long-term')),
+          findsOneWidget,
+          reason: 'The plan resumes automatically after cancelling.',
         );
-        await tester.pumpAndSettle();
-        await tester.tap(
-          find.text(AppLocalizationsEn().portfolioStudioPlanTitle),
-        );
-        await tester.pumpAndSettle();
       }
+      await tester.tap(find.byKey(const ValueKey('portfolio-plan-allocation')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).first, '65');
+      await tester.pump();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(AppLocalizationsEn().unsavedChangesDiscard));
+      await tester.pumpAndSettle();
+      expect(repository.saved, isNull);
+      expect(find.byType(AppSheet), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('portfolio-plan-allocation')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).first, '65');
+      await tester.tap(find.text(AppLocalizationsEn().commonSave));
+      await tester.pumpAndSettle();
+      expect(repository.saved!.map((target) => target.targetWeightBps), [
+        6500,
+        3500,
+      ]);
+      expect(find.byType(AppFormPageScaffold), findsNothing);
+      expect(find.byType(AppSheet), findsOneWidget);
+      expect(find.text('65%'), findsOneWidget);
+      expect(find.text('35%'), findsOneWidget);
+      expect(
+        container.read(selectedInvestmentPortfolioIdProvider),
+        originalScope,
+      );
       await tester.tap(find.text('Long term'));
       await tester.pumpAndSettle();
       expect(find.text('Selected portfolio studio'), findsOneWidget);

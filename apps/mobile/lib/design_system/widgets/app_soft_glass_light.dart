@@ -19,10 +19,20 @@ class AppSoftGlassLight extends StatefulWidget {
     super.key,
     required this.borderRadius,
     required this.child,
+    this.status = AppGlassStatus.idle,
+    this.variants = const {},
+    this.accentColor,
+    this.ambient = true,
+    this.trackPointer = true,
   });
 
   final BorderRadius borderRadius;
   final Widget child;
+  final AppGlassStatus status;
+  final Set<FTappableVariant> variants;
+  final Color? accentColor;
+  final bool ambient;
+  final bool trackPointer;
 
   @override
   State<AppSoftGlassLight> createState() => _AppSoftGlassLightState();
@@ -36,12 +46,34 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   int? _pointer;
   bool _enabled = false;
 
+  bool get _inactive =>
+      widget.status == AppGlassStatus.busy ||
+      widget.status == AppGlassStatus.disabled ||
+      widget.variants.contains(FTappableVariant.disabled);
+
+  @override
+  void didUpdateWidget(AppSoftGlassLight oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updatePointerPolicy();
+  }
+
+  void _updatePointerPolicy() {
+    _enabled =
+        widget.trackPointer &&
+        !_inactive &&
+        AppMotionPolicy.isEnabled(context, role: AppMotionRole.decorative) &&
+        TickerMode.valuesOf(context).enabled;
+    if (!_enabled) {
+      _pointer = null;
+      _intensity.value = 0;
+      _position.value = null;
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _enabled =
-        AppMotionPolicy.isEnabled(context, role: AppMotionRole.decorative) &&
-        TickerMode.valuesOf(context).enabled;
+    _updatePointerPolicy();
     _intensity.duration = AppMotionPolicy.duration(
       context,
       Motion.tapFeedback,
@@ -52,11 +84,6 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
       Motion.componentChange,
       role: AppMotionRole.decorative,
     );
-    if (!_enabled) {
-      _pointer = null;
-      _intensity.value = 0;
-      _position.value = null;
-    }
   }
 
   void _down(PointerDownEvent event) {
@@ -106,25 +133,64 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    const spec = kAppSoftGlassSpec;
+    final disabled =
+        widget.status == AppGlassStatus.disabled ||
+        widget.variants.contains(FTappableVariant.disabled);
+    final emphasis = disabled
+        ? 0.0
+        : widget.status == AppGlassStatus.busy
+        ? spec.busyEmphasis
+        : widget.status == AppGlassStatus.error
+        ? spec.errorEmphasis
+        : widget.variants.contains(FTappableVariant.pressed)
+        ? spec.pressedEmphasis
+        : widget.variants.contains(FTappableVariant.focused)
+        ? spec.focusEmphasis
+        : widget.variants.contains(FTappableVariant.selected)
+        ? spec.selectedEmphasis +
+              (widget.variants.contains(FTappableVariant.hovered)
+                  ? spec.hoverEmphasis / 2
+                  : 0)
+        : widget.variants.contains(FTappableVariant.hovered)
+        ? spec.hoverEmphasis
+        : 0.0;
     return Listener(
       onPointerDown: _enabled ? _down : null,
       onPointerMove: _enabled ? _move : null,
       onPointerUp: _enabled ? _end : null,
       onPointerCancel: _enabled ? _end : null,
-      child: CustomPaint(
-        painter: SoftGlassLightPainter(
-          borderRadius: widget.borderRadius,
-          brightness: colors.brightness,
-          // Subtle neutral/brand mixture, never a market gain/loss color.
-          lightColor: Color.lerp(
-            ColorPalette.neutral0,
-            colors.primary,
-            AppOpacity.muted,
-          )!,
-          shadeColor: colors.foreground,
-          intensity: _intensity,
-          position: _position,
-          repaint: _repaint,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(end: emphasis),
+        duration: TickerMode.valuesOf(context).enabled
+            ? AppMotionPolicy.duration(
+                context,
+                Motion.tapFeedback,
+                role: AppMotionRole.decorative,
+              )
+            : Duration.zero,
+        curve: Motion.standardDecelerate,
+        builder: (context, value, child) => CustomPaint(
+          painter: SoftGlassLightPainter(
+            borderRadius: widget.borderRadius,
+            brightness: colors.brightness,
+            // Subtle neutral/brand mixture, never a market gain/loss color.
+            lightColor: Color.lerp(
+              ColorPalette.neutral0,
+              colors.primary,
+              AppOpacity.muted,
+            )!,
+            shadeColor: colors.foreground,
+            stateColor: widget.status == AppGlassStatus.error
+                ? colors.destructive
+                : widget.accentColor ?? colors.primary,
+            emphasis: value,
+            ambient: widget.ambient ? (disabled ? spec.disabledWash : 1) : 0,
+            intensity: _intensity,
+            position: _position,
+            repaint: _repaint,
+          ),
+          child: child,
         ),
         // Pointer updates invalidate only the light paint, not foreground UI.
         child: RepaintBoundary(child: widget.child),
@@ -141,6 +207,9 @@ class SoftGlassLightPainter extends CustomPainter {
     required this.brightness,
     required this.lightColor,
     required this.shadeColor,
+    required this.stateColor,
+    required this.emphasis,
+    required this.ambient,
     required this.intensity,
     required this.position,
     required Listenable repaint,
@@ -150,12 +219,17 @@ class SoftGlassLightPainter extends CustomPainter {
   final Brightness brightness;
   final Color lightColor;
   final Color shadeColor;
+  final Color stateColor;
+  final double emphasis;
+  final double ambient;
   final Animation<double> intensity;
   final ValueListenable<Offset?> position;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (size.isEmpty) return;
+    if (size.isEmpty || (ambient == 0 && emphasis == 0 && intensity.value == 0)) {
+      return;
+    }
     final rect = Offset.zero & size;
     final shape = borderRadius.toRRect(rect).scaleRadii();
     const spec = kAppSoftGlassSpec;
@@ -168,11 +242,43 @@ class SoftGlassLightPainter extends CustomPainter {
           center: const Alignment(-0.7, -1),
           radius: 1.5,
           colors: [
-            lightColor.withValues(alpha: spec.washOpacity(brightness)),
+            lightColor.withValues(
+              alpha: spec.washOpacity(brightness) * ambient,
+            ),
             transparent,
           ],
         ).createShader(rect),
     );
+    if (emphasis > 0) {
+      canvas.drawRRect(
+        shape,
+        Paint()
+          ..shader = RadialGradient(
+            center: Alignment.topCenter,
+            radius: 1.2,
+            colors: [
+              stateColor.withValues(
+                alpha: spec.stateOpacity(brightness) * emphasis,
+              ),
+              stateColor.withValues(alpha: 0),
+            ],
+          ).createShader(rect),
+      );
+      canvas.drawRRect(
+        shape.deflate(AppStroke.hairline / 2),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = AppStroke.hairline
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              stateColor.withValues(alpha: spec.stateRimOpacity * emphasis),
+              stateColor.withValues(alpha: 0),
+            ],
+          ).createShader(rect),
+      );
+    }
     final point = position.value;
     if (point != null && intensity.value > 0) {
       final radius = math.min(spec.touchRadius, size.longestSide);
@@ -198,9 +304,9 @@ class SoftGlassLightPainter extends CustomPainter {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            lightColor.withValues(alpha: spec.rimOpacity(brightness)),
+            lightColor.withValues(alpha: spec.rimOpacity(brightness) * ambient),
             transparent,
-            shadeColor.withValues(alpha: AppOpacity.faint),
+            shadeColor.withValues(alpha: AppOpacity.faint * ambient),
           ],
           stops: const [0, 0.6, 1],
         ).createShader(rect),
@@ -216,6 +322,9 @@ class SoftGlassLightPainter extends CustomPainter {
       brightness != oldDelegate.brightness ||
       lightColor != oldDelegate.lightColor ||
       shadeColor != oldDelegate.shadeColor ||
+      stateColor != oldDelegate.stateColor ||
+      emphasis != oldDelegate.emphasis ||
+      ambient != oldDelegate.ambient ||
       intensity != oldDelegate.intensity ||
       position != oldDelegate.position;
 }

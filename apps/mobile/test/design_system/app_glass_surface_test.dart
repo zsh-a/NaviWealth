@@ -14,6 +14,7 @@ Widget _wrap({
   bool softLight = false,
   bool frosted = true,
   bool tickersEnabled = true,
+  AppGlassStatus status = AppGlassStatus.idle,
   Widget? child,
 }) {
   final appTheme = brightness == Brightness.dark
@@ -47,6 +48,7 @@ Widget _wrap({
                 enabled: tickersEnabled,
                 child: AppGlassSurface(
                   softLight: softLight,
+                  status: status,
                   frosted: frosted,
                   borderRadius: BorderRadius.circular(24),
                   child:
@@ -67,6 +69,169 @@ Widget _wrap({
 }
 
 void main() {
+  testWidgets('busy and disabled stop active pointer feedback', (tester) async {
+    for (final status in [AppGlassStatus.busy, AppGlassStatus.disabled]) {
+      await tester.pumpWidget(_wrap(softLight: true));
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('glass')),
+      );
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).intensity.value, 1);
+      await tester.pumpWidget(_wrap(softLight: true, status: status));
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).intensity.value, 0);
+      expect(_lightPainter(tester).position.value, isNull);
+      expect(
+        _lightPainter(tester).emphasis,
+        status == AppGlassStatus.busy ? kAppSoftGlassSpec.busyEmphasis : 0,
+      );
+      await gesture.up();
+      await tester.tap(find.text('glass'));
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).intensity.value, 0);
+      expect(tester.binding.transientCallbackCount, 0);
+    }
+  });
+
+  testWidgets('error uses semantic danger and clears on recovery', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(softLight: true, status: AppGlassStatus.error),
+    );
+    final context = tester.element(find.byType(AppGlassSurface));
+    expect(_lightPainter(tester).stateColor, context.theme.colors.destructive);
+    expect(_lightPainter(tester).emphasis, kAppSoftGlassSpec.errorEmphasis);
+    await tester.pumpWidget(_wrap(softLight: true));
+    await tester.pumpAndSettle();
+    expect(_lightPainter(tester).emphasis, 0);
+    expect(tester.binding.transientCallbackCount, 0);
+  });
+
+  testWidgets(
+    'local control light follows hover focus press and disabled state',
+    (tester) async {
+      final highlightStrategy = FocusManager.instance.highlightStrategy;
+      FocusManager.instance.highlightStrategy =
+          FocusHighlightStrategy.alwaysTraditional;
+      addTearDown(
+        () => FocusManager.instance.highlightStrategy = highlightStrategy,
+      );
+      final focus = FocusNode();
+      addTearDown(focus.dispose);
+      var taps = 0;
+      Widget control({bool enabled = true, bool selected = false}) => _wrap(
+        child: FTappable(
+          focusNode: focus,
+          selected: selected,
+          onPress: enabled ? () => taps++ : null,
+          builder: (context, variants, child) =>
+              AppGlassFeedback(variants: variants, child: child!),
+          child: const SizedBox(
+            width: 160,
+            height: 52,
+            child: Center(child: Text('Tab')),
+          ),
+        ),
+      );
+      await tester.pumpWidget(control());
+      expect(_lightPainter(tester).emphasis, 0);
+      expect(_lightPainter(tester).ambient, 0);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(find.text('Tab')));
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).emphasis, kAppSoftGlassSpec.hoverEmphasis);
+      await mouse.moveTo(Offset.zero);
+      await tester.pumpAndSettle();
+      focus.requestFocus();
+      await tester.pumpAndSettle();
+      expect(focus.hasFocus, isTrue);
+      expect(_lightPainter(tester).emphasis, kAppSoftGlassSpec.focusEmphasis);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(taps, 1);
+      focus.unfocus();
+      await tester.pumpAndSettle();
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('Tab')),
+      );
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).emphasis, kAppSoftGlassSpec.pressedEmphasis);
+      expect(
+        _lightPainter(tester).intensity.value,
+        0,
+        reason: 'No second raw-pointer response.',
+      );
+      await gesture.cancel();
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).emphasis, 0);
+      await tester.pumpWidget(control(selected: true));
+      await tester.pumpAndSettle();
+      expect(
+        _lightPainter(tester).emphasis,
+        kAppSoftGlassSpec.selectedEmphasis,
+      );
+      await tester.pumpWidget(control(enabled: false, selected: true));
+      await tester.pumpAndSettle();
+      expect(_lightPainter(tester).emphasis, 0);
+      await tester.tap(find.text('Tab'));
+      await tester.pumpAndSettle();
+      expect(taps, 1);
+      expect(tester.binding.transientCallbackCount, 0);
+      await mouse.removePointer();
+    },
+  );
+
+  testWidgets(
+    'reduced motion keeps static selected feedback without animation',
+    (tester) async {
+      for (final selected in [false, true, false]) {
+        await tester.pumpWidget(
+          _wrap(
+            reduceMotion: true,
+            child: AppGlassFeedback(
+              variants: {if (selected) FTappableVariant.selected},
+              child: const SizedBox(width: 160, height: 52),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(
+          _lightPainter(tester).emphasis,
+          selected ? kAppSoftGlassSpec.selectedEmphasis : 0,
+        );
+        expect(tester.binding.transientCallbackCount, 0);
+      }
+    },
+  );
+
+  testWidgets(
+    'high contrast and OLED omit local light but keep selected semantics',
+    (tester) async {
+      for (final style in [
+        AppSurfaceStyle.highContrast,
+        AppSurfaceStyle.oled,
+      ]) {
+        await tester.pumpWidget(
+          _wrap(
+            style: style,
+            brightness: Brightness.dark,
+            child: Semantics(
+              selected: true,
+              child: AppGlassFeedback(
+                variants: {FTappableVariant.selected},
+                child: const Text('Selected'),
+              ),
+            ),
+          ),
+        );
+        expect(find.byType(AppSoftGlassLight), findsNothing);
+        expect(find.text('Selected'), findsOneWidget);
+      }
+    },
+  );
+
   testWidgets('standard surface uses one live backdrop layer', (tester) async {
     await tester.pumpWidget(_wrap());
 

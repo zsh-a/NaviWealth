@@ -101,8 +101,26 @@ abstract class AppLocalizations {
   /// No description provided for @capitalAllocationAutoBalanceHint.
   ///
   /// In en, this message translates to:
-  /// **'Changing one target adjusts the others proportionally. Total allocation stays at 100%.'**
+  /// **'Finish editing a target to adjust the others proportionally. Total stays at 100%; saving also applies unfinished input.'**
   String get capitalAllocationAutoBalanceHint;
+
+  /// No description provided for @capitalAllocationRestoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore initial settings'**
+  String get capitalAllocationRestoreAction;
+
+  /// No description provided for @capitalAllocationWeightComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial {before}% → Draft {after}%'**
+  String capitalAllocationWeightComparison(String before, String after);
+
+  /// No description provided for @capitalAllocationRuleComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial: {before}\nDraft: {after}'**
+  String capitalAllocationRuleComparison(String before, String after);
 
   /// No description provided for @capitalAllocationRuleSummary.
   ///

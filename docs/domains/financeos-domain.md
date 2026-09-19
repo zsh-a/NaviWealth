@@ -96,8 +96,17 @@ The investment-plan sheet compares portfolios in vertical rows using actual
 and target weights, with explicit out-of-band labels. Trend charts and returns
 stay in portfolio details. Create and allocation-edit actions replace the
 overview sheet instead of stacking another sheet over it.
+Completing or cancelling these forms resumes the plan overview with live targets
+while preserving the originating portfolio scope. Leaving the originating route
+does not reopen the overview.
 Allocation editing uses the guarded full-page form pattern: precise percentage
 inputs and optional sliders share proportional redistribution with a 100% total.
+Typing remains local to the active field; redistribution occurs on blur, keyboard
+completion, or save. Invalid input stays visible and blocks saving. Initial-to-draft
+comparisons expose target and funding-rule changes. Restore resets targets,
+tolerances, and funding rules to the normalized entry snapshot without persisting;
+returning to that snapshot clears the unsaved-change guard. Failed saves retain
+the draft for retry, and saving blocks duplicate submission and dismissal.
 Funding rules use a separate guarded single-item form and apply to the allocation
 draft; only saving the parent persists changes. Valuation loading, failure and
 unavailable states remain explicit alongside targets, and drift labels state the
