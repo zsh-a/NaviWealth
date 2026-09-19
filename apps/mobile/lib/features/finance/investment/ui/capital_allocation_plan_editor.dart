@@ -182,6 +182,7 @@ class _CapitalAllocationPlanEditorState
         title: Text(widget.title),
         confirmLeave: handleBackIntent,
         child: AppFormScaffoldBody(
+          softActionBar: true,
           onSubmit: _busy ? null : _save,
           action: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

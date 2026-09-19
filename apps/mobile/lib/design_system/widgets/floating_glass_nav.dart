@@ -74,6 +74,7 @@ class FloatingGlassNavBar extends StatelessWidget {
           // BackdropFilter must resample that content on every scroll frame,
           // so use the same glass material hierarchy with an opaque fill.
           frosted: false,
+          softLight: true,
           borderRadius: BorderRadius.circular(AppRadius.full),
           boxShadow: AppShadow.nav,
           padding: const EdgeInsets.symmetric(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
@@ -13,10 +14,34 @@ void main() {
       child: const Scaffold(body: _GlassShowcase()),
     );
   });
+  runAllVariants('app_soft_glass_surface', (tester, variant) async {
+    await pumpAndSnapshotMobile(
+      tester,
+      name: 'app_soft_glass_surface',
+      variant: variant,
+      child: Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: false),
+          child: const Scaffold(body: _GlassShowcase(softLight: true)),
+        ),
+      ),
+    );
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('Wealth')),
+    );
+    await tester.pumpAndSettle();
+    await expectGoldenSurface(
+      'goldens/app_soft_glass_pressed_${variant.filenameSuffix}.png',
+    );
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
 }
 
 class _GlassShowcase extends StatelessWidget {
-  const _GlassShowcase();
+  const _GlassShowcase({this.softLight = false});
+
+  final bool softLight;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +84,7 @@ class _GlassShowcase extends StatelessWidget {
                 ),
                 const Spacer(),
                 AppGlassSurface(
+                  softLight: softLight,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: AppShadow.nav,
                   padding: const EdgeInsets.all(AppSpacing.s20),
@@ -112,6 +138,8 @@ class _GlassShowcase extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.s16),
                 AppGlassSurface(
+                  softLight: softLight,
+                  frosted: !softLight,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                   boxShadow: AppShadow.nav,
                   padding: const EdgeInsets.symmetric(

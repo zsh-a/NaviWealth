@@ -7,6 +7,7 @@ import '../theme/app_theme_scope.dart';
 import '../theme/component_specs.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
+import 'app_soft_glass_light.dart';
 
 /// The single source for the app's "glass" chrome tone (blueprint §6.3).
 ///
@@ -20,18 +21,27 @@ BoxDecoration appGlassDecoration(
   BorderRadius? borderRadius,
   List<BoxShadow>? boxShadow,
   bool frosted = true,
+  bool softLight = false,
 }) {
   final colors = context.theme.colors;
   final isDark = colors.brightness == Brightness.dark;
   final surfaces = context.appTheme.surfaces;
   final material = context.appTheme.glass.resolve(role);
+  final useSoftLight =
+      softLight &&
+      material.liveBlur &&
+      !(MediaQuery.maybeOf(context)?.highContrast ?? false);
   final base = switch (role) {
     AppGlassRole.chrome ||
     AppGlassRole.sticky => isDark ? surfaces.card : ColorPalette.neutral0,
     AppGlassRole.sheet || AppGlassRole.overlay => surfaces.raised,
   };
   final glassColor = base.withValues(
-    alpha: frosted ? material.fillOpacity : AppOpacity.opaque,
+    alpha: !frosted
+        ? AppOpacity.opaque
+        : useSoftLight && role == AppGlassRole.chrome
+        ? kAppSoftGlassSpec.chromeFillOpacity(colors.brightness)
+        : material.fillOpacity,
   );
   final borderColor = isDark
       ? colors.border.withValues(alpha: material.borderOpacity)
@@ -40,7 +50,9 @@ BoxDecoration appGlassDecoration(
     color: glassColor,
     borderRadius: borderRadius,
     gradient:
-        frosted && (role == AppGlassRole.chrome || role == AppGlassRole.sticky)
+        !useSoftLight &&
+            frosted &&
+            (role == AppGlassRole.chrome || role == AppGlassRole.sticky)
         ? LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -71,6 +83,7 @@ class AppGlassSurface extends StatelessWidget {
     this.borderRadius = BorderRadius.zero,
     this.role = AppGlassRole.chrome,
     this.frosted = true,
+    this.softLight = false,
     this.boxShadow,
     this.padding = EdgeInsets.zero,
   });
@@ -82,6 +95,11 @@ class AppGlassSurface extends StatelessWidget {
   /// Allows rendering-heavy callers to keep the same material hierarchy
   /// while replacing live blur with an opaque surface.
   final bool frosted;
+
+  /// Adds a quiet directional wash and pointer-following light beneath the
+  /// content. Opt-in independently of live blur: the navigation dock keeps its
+  /// opaque scroll-performance fallback. High contrast and OLED disable both.
+  final bool softLight;
   final List<BoxShadow>? boxShadow;
   final EdgeInsetsGeometry padding;
 
@@ -91,15 +109,21 @@ class AppGlassSurface extends StatelessWidget {
     final platformHighContrast =
         MediaQuery.maybeOf(context)?.highContrast ?? false;
     final liveBlur = frosted && material.liveBlur && !platformHighContrast;
+    final useSoftLight =
+        softLight && material.liveBlur && !platformHighContrast;
     final decoration = appGlassDecoration(
       context,
       role: role,
       borderRadius: borderRadius,
       frosted: liveBlur,
+      softLight: useSoftLight,
     );
+    final content = Padding(padding: padding, child: child);
     final contents = DecoratedBox(
       decoration: decoration,
-      child: Padding(padding: padding, child: child),
+      child: useSoftLight
+          ? AppSoftGlassLight(borderRadius: borderRadius, child: content)
+          : content,
     );
     return RepaintBoundary(
       child: DecoratedBox(

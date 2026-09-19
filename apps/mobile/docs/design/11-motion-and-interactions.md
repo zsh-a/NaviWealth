@@ -103,7 +103,23 @@
 - 数字滚动与列表 stagger 并存时,stagger 保持 30ms 且行数封顶(≤10)。
 - 图表主体包 `RepaintBoundary`;触摸层独立重建。
 
-## 12. Don't List
+## 12. 柔光玻璃试点
+
+- `AppGlassSurface(softLight: true)` 增加内容下方的柔和表面光、方向性细边缘和触点光晕；
+  不是原生系统材质或真实折射，不采集背景截图，也不启动常驻动画。
+- 首批接入底部 `FloatingGlassNavBar` 和投资计划编辑器的固定操作栏。
+  导航保留 `frosted: false` 的不透明性能策略，操作栏保留现有局部模糊。
+  其他内容卡片、表单和 sheet 默认不启用。
+- `Listener` 只观察主指针，点击、拖拽、键盘焦点及触觉仍由原控件处理；
+  指针移动只通知画布重绘，文字与业务组件不随光效重建。
+- 点按渐亮用 `Motion.tapFeedback`，抬起/取消后渐隐用 `Motion.componentChange`；
+  越界渐隐，多指操作不抢走首个触点。无待机呼吸、形变或循环闪烁。
+- `AppMotionPolicy` 的 decorative 角色关闭动态光效，保留静态材质；
+  系统高对比度、应用高对比度和暗色 OLED 关闭柔光与实时模糊。
+- 通透度按 `AppGlassRole` 分层，不宣称实时背景识别或系统减少透明度开关适配。
+  新增材质仍须做目标设备 profile 性能验证。
+
+## 13. Don't List
 
 - ❌ 数字闪烁颜色超过 1.2s(脉冲为 800ms 单次)。
 - ❌ 弹窗中嵌套弹窗动画(用 Sheet 链式 `closeSheetThen`)。

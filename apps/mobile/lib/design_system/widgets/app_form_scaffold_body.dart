@@ -27,6 +27,7 @@ class AppFormScaffoldBody extends StatelessWidget {
     this.physics,
     this.onSubmit,
     this.maxContentWidth = AdaptiveMaxWidth.narrow,
+    this.softActionBar = false,
   });
 
   final List<Widget> children;
@@ -35,6 +36,7 @@ class AppFormScaffoldBody extends StatelessWidget {
   final ScrollController? controller;
   final ScrollPhysics? physics;
   final double maxContentWidth;
+  final bool softActionBar;
 
   /// Enables the standard keyboard form-submit shortcuts. Keep this null when
   /// the primary action is disabled so modified Enter keeps propagating.
@@ -80,6 +82,7 @@ class AppFormScaffoldBody extends StatelessWidget {
                   ),
                 ),
                 AppFormActionBar(
+                  softLight: softActionBar,
                   maxContentWidth: constrainWideContent
                       ? maxContentWidth
                       : null,
@@ -141,11 +144,13 @@ class AppFormActionBar extends StatelessWidget {
       AppSpacing.s12,
     ),
     this.maxContentWidth,
+    this.softLight = false,
   });
 
   final Widget child;
   final EdgeInsets padding;
   final double? maxContentWidth;
+  final bool softLight;
 
   @override
   Widget build(BuildContext context) {
@@ -158,6 +163,7 @@ class AppFormActionBar extends StatelessWidget {
           );
     return AppGlassSurface(
       role: AppGlassRole.sheet,
+      softLight: softLight,
       child: SafeArea(top: false, minimum: padding, child: content),
     );
   }

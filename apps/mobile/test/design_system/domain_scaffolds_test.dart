@@ -168,6 +168,7 @@ void main() {
         ),
       );
       expect(glassSurface.frosted, isFalse);
+      expect(glassSurface.softLight, isTrue);
       expect(glassSurface.boxShadow, hasLength(1));
       expect(glassSurface.borderRadius, BorderRadius.circular(AppRadius.full));
       final selectionIndicators = find.descendant(

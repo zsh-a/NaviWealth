@@ -95,6 +95,26 @@ class MetricTileSpec {
 /// chrome: navigation, sticky context, modal sheets, and temporary overlays.
 enum AppGlassRole { chrome, sticky, sheet, overlay }
 
+/// Opt-in soft-light chrome. These are visual budgets, not a physical glass
+/// simulation. Dense surfaces retain their existing, more opaque material.
+@immutable
+class SoftGlassSpec {
+  const SoftGlassSpec();
+
+  double chromeFillOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.88 : 0.78;
+  double washOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.035 : 0.12;
+  double rimOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.14 : 0.48;
+  double touchOpacity(Brightness brightness) =>
+      brightness == Brightness.dark ? 0.10 : 0.24;
+
+  double get touchRadius => 96;
+}
+
+const SoftGlassSpec kAppSoftGlassSpec = SoftGlassSpec();
+
 @immutable
 class GlassMaterialSpec {
   const GlassMaterialSpec({
