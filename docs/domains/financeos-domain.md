@@ -123,6 +123,9 @@ entry beside the scope control. Wide layouts align holding metrics in columns;
 phone layouts keep quantity and weight on a compact supporting line. Unrealized
 P&L and holding return are labeled explicitly, and unsupported portfolio-scoped
 XIRR explains its missing historical assignment basis.
+Concentration risk uses a compact grouped surface: the worst breach, threshold
+and severity stay visible beside a direct rebalance action. When several risks
+exist, the summary row opens their sheet without expanding the holding layout.
 
 DCA simulation and plan creation share one parameter snapshot, including symbol
 weights. Editing parameters marks the displayed result outdated and prevents
@@ -181,9 +184,14 @@ the route `/wealth/watchlist/collections/:collectionId/simulations`; it loads th
 entire collection and completed quote batches, independent of list filters.
 Create and allocation edit use guarded full pages with pinned save bars. Only
 lightweight symbol selection uses a sheet, with a pinned confirmation footer.
-Busy forms block repeat submission and dismissal; successful save returns to
-the workspace. Currency charts use distinct range-aware compact ticks and full
-currency values for inspection, with measured label widths and deduplicated dates.
+Busy forms block repeat submission, pointer/keyboard editing, and dismissal;
+successful save returns to the workspace. Validation reveals the first invalid
+field; symbol-selection and allocation-total errors stay inline at their source.
+Form actions and selection summaries wrap at large text sizes, while the save
+bar remains above the keyboard. Allocation editing displays the scenario's own
+currency, independent of later app-preference changes. Currency charts use
+distinct range-aware compact ticks and full currency values for inspection,
+with measured label widths and deduplicated dates.
 
 Watchlist simulations are a separate paper-only aggregate backed by
 `watchlist_simulations`, legacy compatibility positions, a deterministic

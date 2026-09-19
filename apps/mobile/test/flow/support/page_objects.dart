@@ -812,14 +812,6 @@ class PlanPageObject {
   }
 
   Future<void> _openPlanAction(String label) async {
-    if (label == 'Rebalance' || label == 'Income strategy') {
-      final disclosure = find.byKey(
-        const ValueKey('plan-investment-tools-disclosure'),
-      );
-      await tester.ensureVisible(disclosure);
-      await tester.tap(disclosure);
-      await settle(tester);
-    }
     var action = find.text(label).hitTestable();
     if (action.evaluate().isEmpty) {
       // The plan hub is a lazy brief list: scroll the section into view.

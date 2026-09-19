@@ -43,11 +43,8 @@ void main() {
       expect(find.text('Money runway'), findsOneWidget);
       expect(find.text('Financial independence'), findsOneWidget);
       expect(find.text('Advanced investing'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('plan-investment-tools-disclosure')),
-        findsOneWidget,
-      );
-      expect(find.text('Recurring investment plan'), findsNothing);
+      expect(find.text('Income strategy'), findsOneWidget);
+      expect(find.text('Rebalance'), findsOneWidget);
       expect(find.text('Budget'), findsOneWidget);
       expect(find.text('Income Planner'), findsNothing);
       expect(find.text('Scenario analytics'), findsNothing);

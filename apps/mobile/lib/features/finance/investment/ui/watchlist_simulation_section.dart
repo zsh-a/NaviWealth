@@ -118,29 +118,45 @@ class _WatchlistSimulationSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Row(
+    final heading = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
+        Text(collectionName, style: context.labelStyle),
+        const SizedBox(height: AppSpacing.s2),
+        Text(l10n.watchlistSimulationScopeNote, style: context.captionStyle),
+      ],
+    );
+    final action = AppActionButton(
+      variant: FButtonVariant.outline,
+      mainAxisSize: MainAxisSize.min,
+      hapticIntent: AppInteractionIntent.navigate,
+      onPress: canCreate ? onCreate : null,
+      child: Flexible(child: Text(l10n.watchlistSimulationCreateAction)),
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 360 ||
+            MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3) {
+          return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(collectionName, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s2),
-              Text(
-                l10n.watchlistSimulationScopeNote,
-                style: context.captionStyle,
-              ),
+              heading,
+              const SizedBox(height: AppSpacing.s12),
+              action,
             ],
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        FButton(
-          variant: FButtonVariant.outline,
-          onPress: canCreate ? onCreate : null,
-          child: Text(l10n.watchlistSimulationCreateAction),
-        ),
-      ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: heading),
+            const SizedBox(width: AppSpacing.s8),
+            Flexible(
+              child: Align(alignment: Alignment.centerRight, child: action),
+            ),
+          ],
+        );
+      },
     );
   }
 }

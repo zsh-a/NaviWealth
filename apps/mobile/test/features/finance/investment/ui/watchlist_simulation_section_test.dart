@@ -345,6 +345,19 @@ void main() {
       tester.widget<AppBusyButton>(find.byType(AppBusyButton)).busy,
       isTrue,
     );
+    expect(
+      tester
+          .widget<ExcludeFocus>(
+            find
+                .descendant(
+                  of: find.byType(Form),
+                  matching: find.byType(ExcludeFocus),
+                )
+                .first,
+          )
+          .excluding,
+      isTrue,
+    );
     await tester.binding.handlePopRoute();
     await tester.pump();
     expect(find.byType(AppFormPageScaffold), findsOneWidget);
@@ -374,6 +387,8 @@ void main() {
     expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(find.byType(AppSheet), findsNothing);
     expect(find.byType(AppFormActionBar), findsOneWidget);
+    // Existing scenarios keep their currency even when app preferences differ.
+    expect(find.textContaining('Virtual capital (USD)'), findsOneWidget);
     await tester.enterText(find.byType(EditableText).first, 'Changed');
     await tester.pump();
     await tester.binding.handlePopRoute();
@@ -385,6 +400,202 @@ void main() {
     expect(find.byType(WatchlistSimulationSection), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('create reveals invalid fields above a long symbol list', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _PendingCreateRepository();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: const [],
+        positions: const [],
+        repository: repository,
+        items: [
+          for (var i = 0; i < 15; i++)
+            WatchlistItem(
+              id: 'us_stock:TEST$i',
+              symbol: 'TEST$i',
+              market: _item.market,
+              addedAt: _item.addedAt,
+              alertRules: _item.alertRules,
+              sync: _item.sync,
+            ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New simulation'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(EditableText).first, '');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -1800),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a simulation name').hitTestable(), findsNothing);
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pumpAndSettle();
+    expect(find.text('Enter a simulation name').hitTestable(), findsOneWidget);
+    expect(repository.calls, 0);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('empty selection has an inline error that clears on selection', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final repository = _PendingCreateRepository();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: const [],
+        positions: const [],
+        repository: repository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New simulation'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Clear'));
+    await tester.tap(find.text('Clear'));
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Select at least one symbol').hitTestable(),
+      findsOneWidget,
+    );
+    expect(repository.calls, 0);
+    expect(
+      tester
+          .getSize(
+            find.byKey(ValueKey('watchlist-simulation-symbol-${_item.id}')),
+          )
+          .height,
+      greaterThanOrEqualTo(44),
+    );
+    await tester.tap(find.text('AAPL'));
+    await tester.pumpAndSettle();
+    expect(find.text('Select at least one symbol'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('allocation reveals total errors and updates after correction', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+    await tester.pumpAndSettle();
+    final cash = find.descendant(
+      of: find.byKey(const ValueKey('watchlist-simulation-cash-weight')),
+      matching: find.byType(EditableText),
+    );
+    await tester.ensureVisible(cash);
+    await tester.enterText(cash, '5');
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, 1000),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('They must total 100%.').hitTestable(),
+      findsOneWidget,
+    );
+    await tester.ensureVisible(find.text('Fill with cash'));
+    await tester.tap(find.text('Fill with cash'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('They must total 100%.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final size in [const Size(375, 640), const Size(812, 375)]) {
+    testWidgets('simulation forms support large text and keyboard at $size', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(size);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: const [],
+          positions: const [],
+          textScaler: const TextScaler.linear(2),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('New simulation'));
+      await tester.tap(find.text('New simulation'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Clear'));
+      await tester.pumpAndSettle();
+      expect(find.text('Clear').hitTestable(), findsOneWidget);
+      expect(
+        tester
+            .getSize(
+              find.ancestor(
+                of: find.text('Clear'),
+                matching: find.byType(AppActionButton),
+              ),
+            )
+            .height,
+        greaterThanOrEqualTo(44),
+      );
+      expect(tester.takeException(), isNull);
+      // Match a compact landscape keyboard as well as a taller portrait one.
+      final keyboardHeight = size.height > 400 ? 220.0 : 110.0;
+      tester.view.viewInsets = FakeViewPadding(bottom: keyboardHeight);
+      await tester.pumpAndSettle();
+      final save = find.byType(AppBusyButton);
+      expect(
+        tester.getBottomRight(save).dy,
+        lessThanOrEqualTo(size.height - keyboardHeight),
+      );
+      expect(save.hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      tester.view.resetViewInsets();
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      // Start an existing scenario to cover its editor with fresh providers.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          textScaler: const TextScaler.linear(2),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final edit = find.byIcon(FLucideIcons.slidersHorizontal);
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Fill with cash'));
+      await tester.pumpAndSettle();
+      expect(find.text('Fill with cash').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('keeps pre-lineage observations in the history chart', (
     tester,
@@ -590,6 +801,7 @@ Widget _wrap({
   List<WatchlistQuoteSnapshot>? snapshots,
   WatchlistSimulationObservationRecorder? recorder,
   WatchlistSimulationRepository? repository,
+  TextScaler textScaler = TextScaler.noScaling,
   List<WatchlistSimulationActionEntry> actionEntries = const [],
   WatchlistSimulationActionReconciliation reconciliation =
       const WatchlistSimulationActionReconciliation(
@@ -643,9 +855,12 @@ Widget _wrap({
       ),
     ],
     child: MaterialApp(
-      builder: (context, child) => FTheme(
-        data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
-        child: child!,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+        child: FTheme(
+          data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+          child: child!,
+        ),
       ),
       theme: AppTheme.light().copyWith(platform: TargetPlatform.android),
       localizationsDelegates: AppLocalizations.localizationsDelegates,

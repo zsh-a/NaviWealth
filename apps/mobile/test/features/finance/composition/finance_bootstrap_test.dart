@@ -7,6 +7,7 @@ import 'package:naviwealth/features/finance/cashflow/data/recurring_transaction_
 import 'package:naviwealth/features/finance/composition/finance_bootstrap.dart';
 import 'package:naviwealth/features/finance/composition/finance_query_plan_executor_provider.dart';
 import 'package:naviwealth/features/finance/data/market/sync/price_sync_providers.dart';
+import 'package:naviwealth/features/finance/investment/notifications/watchlist_alerts.dart';
 
 void main() {
   test('Finance composition wires query plans to the Drift executor', () {
@@ -34,6 +35,9 @@ void main() {
           recurringRuns.add(now);
           return 0;
         }),
+        watchlistAlertMonitorProvider.overrideWith(
+          (ref) => WatchlistAlertMonitor(ref),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -58,6 +62,9 @@ void main() {
           recurringRuns.add(now);
           return 0;
         }),
+        watchlistAlertMonitorProvider.overrideWith(
+          (ref) => WatchlistAlertMonitor(ref),
+        ),
       ],
     );
     addTearDown(container.dispose);

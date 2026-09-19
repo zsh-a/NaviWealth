@@ -19,6 +19,31 @@ import 'watchlist_simulation_support.dart';
 
 const int _kPercentScale = 100;
 
+/// Reveal errors after their inline messages have been laid out, including
+/// fields above the viewport of a long form. Respect reduced-motion settings.
+void _revealSimulationField(BuildContext context) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (!context.mounted) return;
+    unawaited(
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.12,
+        duration: AppMotionPolicy.duration(context, Motion.componentChange),
+        curve: Motion.standardDecelerate,
+      ),
+    );
+  });
+}
+
+bool _validateSimulationForm(GlobalKey<FormState> key) {
+  final form = key.currentState;
+  if (form == null) return false;
+  final invalid = form.validateGranularly();
+  if (invalid.isEmpty) return true;
+  _revealSimulationField(invalid.first.context);
+  return false;
+}
+
 /// Creates a paper scenario for [collection].
 ///
 /// Asks for the three things that actually shape the outcome — name, virtual
@@ -156,11 +181,13 @@ class _WatchlistSimulationCreatePageState
   String get leaveFallback => FinanceRoutes.wealthWatchlist;
 
   final _formKey = GlobalKey<FormState>();
+  final _universeKey = GlobalKey();
   late final TextEditingController _name;
   late final TextEditingController _capital;
   late final TextEditingController _cash;
   late final Set<String> _selected;
   bool _saving = false;
+  bool _showSelectionError = false;
 
   @override
   void initState() {
@@ -203,70 +230,93 @@ class _WatchlistSimulationCreatePageState
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: AbsorbPointer(
-            absorbing: _saving,
-            child: AppFormScaffoldBody(
-              softActionBar: true,
-              actionStatus: _saving ? AppGlassStatus.busy : AppGlassStatus.idle,
-              onSubmit: _saving ? null : _save,
-              action: AppBusyButton(
-                label: l10n.watchlistSimulationCreateAction,
-                busy: _saving,
-                onPress: _save,
-              ),
-              children: [
-                Text(
-                  l10n.watchlistSimulationIsolationNote,
-                  style: context.captionStyle,
+          child: ExcludeFocus(
+            excluding: _saving,
+            child: AbsorbPointer(
+              absorbing: _saving,
+              child: AppFormScaffoldBody(
+                softActionBar: true,
+                actionStatus: _saving
+                    ? AppGlassStatus.busy
+                    : AppGlassStatus.idle,
+                onSubmit: _saving ? null : _save,
+                action: AppBusyButton(
+                  label: l10n.watchlistSimulationCreateAction,
+                  busy: _saving,
+                  onPress: _save,
                 ),
-                const SizedBox(height: AppSpacing.s16),
-                AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
-                _WatchlistSimulationNameField(controller: _name),
-                const SizedBox(height: AppSpacing.s12),
-                AmountField(
-                  label: l10n.watchlistSimulationCapitalField(baseCurrency),
-                  controller: _capital,
-                  currencyCode: baseCurrency,
-                  allowZero: false,
-                ),
-                const SizedBox(height: AppSpacing.s20),
-                Row(
-                  children: [
-                    Expanded(
+                children: [
+                  Text(
+                    l10n.watchlistSimulationIsolationNote,
+                    style: context.captionStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s16),
+                  AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
+                  _WatchlistSimulationNameField(controller: _name),
+                  const SizedBox(height: AppSpacing.s12),
+                  AmountField(
+                    label: l10n.watchlistSimulationCapitalField(baseCurrency),
+                    controller: _capital,
+                    currencyCode: baseCurrency,
+                    allowZero: false,
+                  ),
+                  const SizedBox(height: AppSpacing.s20),
+                  Text(
+                    l10n.watchlistSimulationUniverseSection,
+                    key: _universeKey,
+                    style: context.labelStyle,
+                  ),
+                  Wrap(
+                    spacing: AppSpacing.s12,
+                    runSpacing: AppSpacing.s4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        l10n.watchlistSimulationUniverseSummary(
+                          _selected.length,
+                          widget.items.length,
+                        ),
+                        style: context.captionStyle,
+                      ),
+                      AppActionButton(
+                        variant: FButtonVariant.ghost,
+                        mainAxisSize: MainAxisSize.min,
+                        hapticIntent: AppInteractionIntent.select,
+                        onPress: _toggleAll,
+                        child: Flexible(
+                          child: Text(
+                            allSelected
+                                ? l10n.watchlistSimulationUniverseNone
+                                : l10n.watchlistSimulationUniverseAll,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_showSelectionError && _selected.isEmpty)
+                    Semantics(
+                      liveRegion: true,
                       child: Text(
-                        l10n.watchlistSimulationUniverseSection,
-                        style: context.labelStyle,
+                        l10n.watchlistSimulationUniverseRequired,
+                        style: context.captionStyle.copyWith(
+                          color: context.theme.colors.destructive,
+                        ),
                       ),
                     ),
-                    Text(
-                      l10n.watchlistSimulationUniverseSummary(
-                        _selected.length,
-                        widget.items.length,
-                      ),
-                      style: context.captionStyle,
-                    ),
-                    const SizedBox(width: AppSpacing.s8),
-                    AppQuietButton(
-                      label: allSelected
-                          ? l10n.watchlistSimulationUniverseNone
-                          : l10n.watchlistSimulationUniverseAll,
-                      onPress: _toggleAll,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                _WatchlistSimulationSymbolList(
-                  items: widget.items,
-                  isSelected: _selected.contains,
-                  onToggle: _toggleSymbol,
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                PercentField(
-                  control: FTextFieldControl.managed(controller: _cash),
-                  label: Text(l10n.watchlistSimulationCashPercentField),
-                  validator: (value) => _validatePercent(context, value),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.s8),
+                  _WatchlistSimulationSymbolList(
+                    items: widget.items,
+                    isSelected: _selected.contains,
+                    onToggle: _toggleSymbol,
+                  ),
+                  const SizedBox(height: AppSpacing.s16),
+                  PercentField(
+                    control: FTextFieldControl.managed(controller: _cash),
+                    label: Text(l10n.watchlistSimulationCashPercentField),
+                    validator: (value) => _validatePercent(context, value),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -297,15 +347,12 @@ class _WatchlistSimulationCreatePageState
   Future<void> _save() async {
     if (_saving) return;
     final l10n = AppLocalizations.of(context);
+    setState(() => _showSelectionError = _selected.isEmpty);
+    if (!_validateSimulationForm(_formKey)) return;
     if (_selected.isEmpty) {
-      AppMessenger.show(
-        context,
-        ToastKind.warning,
-        l10n.watchlistSimulationUniverseRequired,
-      );
+      _revealSimulationField(_universeKey.currentContext!);
       return;
     }
-    if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _saving = true);
     dirty.busy = true;
@@ -385,12 +432,14 @@ class _WatchlistSimulationAllocationPageState
   String get leaveFallback => FinanceRoutes.wealthWatchlist;
 
   final _formKey = GlobalKey<FormState>();
+  final _allocationSummaryKey = GlobalKey();
   late final TextEditingController _name;
   late final TextEditingController _capital;
   late final TextEditingController _cash;
   late final Map<String, TextEditingController> _weights;
   late final List<String> _configured;
   bool _saving = false;
+  bool _showAllocationError = false;
 
   @override
   void initState() {
@@ -446,7 +495,7 @@ class _WatchlistSimulationAllocationPageState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final itemById = {for (final item in widget.items) item.id: item};
-    final baseCurrency = ref.watch(baseCurrencyProvider);
+    final baseCurrency = widget.simulation.baseCurrency;
     final allocated = _allocatedPercent();
     final remaining = Decimal.fromInt(_kPercentScale) - allocated;
     return guardedScope(
@@ -456,143 +505,171 @@ class _WatchlistSimulationAllocationPageState
         child: Form(
           key: _formKey,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: AbsorbPointer(
-            absorbing: _saving,
-            child: AppFormScaffoldBody(
-              softActionBar: true,
-              actionStatus: _saving ? AppGlassStatus.busy : AppGlassStatus.idle,
-              onSubmit: _saving ? null : _save,
-              action: AppBusyButton(
-                label: l10n.commonSave,
-                busy: _saving,
-                onPress: _save,
-              ),
-              children: [
-                AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
-                _WatchlistSimulationNameField(controller: _name),
-                const SizedBox(height: AppSpacing.s12),
-                AmountField(
-                  label: l10n.watchlistSimulationCapitalField(baseCurrency),
-                  controller: _capital,
-                  currencyCode: baseCurrency,
-                  allowZero: false,
+          child: ExcludeFocus(
+            excluding: _saving,
+            child: AbsorbPointer(
+              absorbing: _saving,
+              child: AppFormScaffoldBody(
+                softActionBar: true,
+                actionStatus: _saving
+                    ? AppGlassStatus.busy
+                    : AppGlassStatus.idle,
+                onSubmit: _saving ? null : _save,
+                action: AppBusyButton(
+                  label: l10n.commonSave,
+                  busy: _saving,
+                  onPress: _save,
                 ),
-                const SizedBox(height: AppSpacing.s20),
-                Text(
-                  l10n.watchlistSimulationHoldingsSection,
-                  style: context.labelStyle,
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s8,
-                  children: [
-                    if (_configured.isNotEmpty)
-                      AppQuietButton(
-                        label: l10n.watchlistSimulationEqualizeAction,
-                        onPress: _equalize,
-                      ),
-                    AppQuietButton(
-                      label: l10n.watchlistSimulationFillCashAction,
-                      onPress: _fillCash,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                if (_configured.isEmpty)
+                children: [
+                  AppSheetSectionLabel(l10n.watchlistSimulationBasicsSection),
+                  _WatchlistSimulationNameField(controller: _name),
+                  const SizedBox(height: AppSpacing.s12),
+                  AmountField(
+                    label: l10n.watchlistSimulationCapitalField(baseCurrency),
+                    controller: _capital,
+                    currencyCode: baseCurrency,
+                    allowZero: false,
+                  ),
+                  const SizedBox(height: AppSpacing.s20),
                   Text(
-                    l10n.watchlistSimulationNoPositions,
-                    style: context.captionStyle,
-                  )
-                else
-                  for (final id in _configured) ...[
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: PercentField(
-                            key: ValueKey<String>(
-                              'watchlist-simulation-weight-$id',
-                            ),
-                            control: FTextFieldControl.managed(
-                              controller: _weights[id]!,
-                              onChange: (_) => setState(() {}),
-                            ),
-                            label: Text(
-                              l10n.watchlistSimulationHoldingWeightField(
-                                watchlistSimulationSymbolLabel(
-                                  itemById[id],
-                                  fallbackId: id,
-                                ),
-                              ),
-                            ),
-                            validator: (value) =>
-                                _validatePercent(context, value),
+                    l10n.watchlistSimulationHoldingsSection,
+                    style: context.labelStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  Wrap(
+                    spacing: AppSpacing.s8,
+                    runSpacing: AppSpacing.s8,
+                    children: [
+                      if (_configured.isNotEmpty)
+                        AppActionButton(
+                          variant: FButtonVariant.ghost,
+                          mainAxisSize: MainAxisSize.min,
+                          hapticIntent: AppInteractionIntent.select,
+                          onPress: _equalize,
+                          child: Flexible(
+                            child: Text(l10n.watchlistSimulationEqualizeAction),
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.s4),
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppSpacing.s6),
-                          child: AppIconButton(
-                            icon: FLucideIcons.x,
-                            tooltip: l10n
-                                .watchlistSimulationRemovePositionAction(
+                      AppActionButton(
+                        variant: FButtonVariant.ghost,
+                        mainAxisSize: MainAxisSize.min,
+                        hapticIntent: AppInteractionIntent.select,
+                        onPress: _fillCash,
+                        child: Flexible(
+                          child: Text(l10n.watchlistSimulationFillCashAction),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  if (_configured.isEmpty)
+                    Text(
+                      l10n.watchlistSimulationNoPositions,
+                      style: context.captionStyle,
+                    )
+                  else
+                    for (final id in _configured) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: PercentField(
+                              key: ValueKey<String>(
+                                'watchlist-simulation-weight-$id',
+                              ),
+                              control: FTextFieldControl.managed(
+                                controller: _weights[id]!,
+                                onChange: (_) => setState(() {}),
+                              ),
+                              label: Text(
+                                l10n.watchlistSimulationHoldingWeightField(
                                   watchlistSimulationSymbolLabel(
                                     itemById[id],
                                     fallbackId: id,
                                   ),
                                 ),
-                            onPress: () => _removePosition(id),
-                            size: appActionTargetSize(context),
-                            iconSize: AppIconSizes.sm,
-                            surface: AppIconButtonSurface.softMuted,
+                              ),
+                              validator: (value) =>
+                                  _validatePercent(context, value),
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: AppSpacing.s4),
+                          Padding(
+                            padding: const EdgeInsets.only(top: AppSpacing.s6),
+                            child: AppIconButton(
+                              icon: FLucideIcons.x,
+                              tooltip: l10n
+                                  .watchlistSimulationRemovePositionAction(
+                                    watchlistSimulationSymbolLabel(
+                                      itemById[id],
+                                      fallbackId: id,
+                                    ),
+                                  ),
+                              onPress: () => _removePosition(id),
+                              size: appActionTargetSize(context),
+                              iconSize: AppIconSizes.sm,
+                              surface: AppIconButtonSurface.softMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                    ],
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: AppActionButton(
+                      variant: FButtonVariant.ghost,
+                      mainAxisSize: MainAxisSize.min,
+                      hapticIntent: AppInteractionIntent.select,
+                      prefix: const Icon(
+                        FLucideIcons.plus,
+                        size: AppIconSizes.sm,
+                      ),
+                      onPress: () => unawaited(_addPositions()),
+                      child: Flexible(
+                        child: Text(l10n.watchlistSimulationAddPositionAction),
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.s12),
-                  ],
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: AppQuietButton(
-                    label: l10n.watchlistSimulationAddPositionAction,
-                    prefix: const Icon(
-                      FLucideIcons.plus,
-                      size: AppIconSizes.sm,
+                  ),
+                  const SizedBox(height: AppSpacing.s12),
+                  PercentField(
+                    key: const ValueKey<String>(
+                      'watchlist-simulation-cash-weight',
                     ),
-                    onPress: () => unawaited(_addPositions()),
+                    control: FTextFieldControl.managed(
+                      controller: _cash,
+                      onChange: (_) => setState(() {}),
+                    ),
+                    label: Text(l10n.watchlistSimulationCashField),
+                    validator: (value) => _validatePercent(context, value),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.s12),
-                PercentField(
-                  key: const ValueKey<String>(
-                    'watchlist-simulation-cash-weight',
+                  const SizedBox(height: AppSpacing.s8),
+                  Semantics(
+                    key: _allocationSummaryKey,
+                    liveRegion: true,
+                    child: Text(
+                      remaining == Decimal.zero
+                          ? l10n.watchlistSimulationTotalReady
+                          : _showAllocationError
+                          ? l10n.watchlistSimulationWeightTotalError(
+                              allocated.toString(),
+                            )
+                          : l10n.watchlistSimulationAllocatedSummary(
+                              allocated.toString(),
+                              remaining.toString(),
+                            ),
+                      key: const ValueKey<String>(
+                        'watchlist-simulation-allocation-total',
+                      ),
+                      style: context.captionStyle.copyWith(
+                        color: remaining == Decimal.zero
+                            ? null
+                            : context.theme.colors.destructive,
+                      ),
+                    ),
                   ),
-                  control: FTextFieldControl.managed(
-                    controller: _cash,
-                    onChange: (_) => setState(() {}),
-                  ),
-                  label: Text(l10n.watchlistSimulationCashField),
-                  validator: (value) => _validatePercent(context, value),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                Text(
-                  remaining == Decimal.zero
-                      ? l10n.watchlistSimulationTotalReady
-                      : l10n.watchlistSimulationAllocatedSummary(
-                          allocated.toString(),
-                          remaining.toString(),
-                        ),
-                  key: const ValueKey<String>(
-                    'watchlist-simulation-allocation-total',
-                  ),
-                  style: context.captionStyle.copyWith(
-                    color: remaining == Decimal.zero
-                        ? null
-                        : context.theme.colors.destructive,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -670,7 +747,7 @@ class _WatchlistSimulationAllocationPageState
   Future<void> _save() async {
     if (_saving) return;
     final l10n = AppLocalizations.of(context);
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_validateSimulationForm(_formKey)) return;
     final cash = _percentOf(_cash);
     final targetWeights = <String, Decimal>{};
     var total = cash;
@@ -683,11 +760,8 @@ class _WatchlistSimulationAllocationPageState
     }
     total = total.round(scale: 2);
     if (total != Decimal.fromInt(_kPercentScale)) {
-      AppMessenger.show(
-        context,
-        ToastKind.warning,
-        l10n.watchlistSimulationWeightTotalError(total.toString()),
-      );
+      setState(() => _showAllocationError = true);
+      _revealSimulationField(_allocationSummaryKey.currentContext!);
       return;
     }
     FocusManager.instance.primaryFocus?.unfocus();
@@ -858,30 +932,33 @@ class _WatchlistSimulationSymbolRow extends StatelessWidget {
       key: ValueKey<String>('watchlist-simulation-symbol-${item.id}'),
       onPress: onToggle,
       selected: selected,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s4,
-          vertical: AppSpacing.s6,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.displaySymbol, style: context.strongLabelStyle),
-                  if (name != null)
-                    Text(
-                      name,
-                      style: context.captionStyle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: appActionTargetSize(context)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s4,
+            vertical: AppSpacing.s6,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(item.displaySymbol, style: context.strongLabelStyle),
+                    if (name != null)
+                      Text(
+                        name,
+                        style: context.captionStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
-            ),
-            FCheckbox(value: selected, onChange: (_) => onToggle()),
-          ],
+              FCheckbox(value: selected, onChange: (_) => onToggle()),
+            ],
+          ),
         ),
       ),
     );

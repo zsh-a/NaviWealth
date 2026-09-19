@@ -1176,6 +1176,22 @@ void main() {
     expect(find.textContaining('42.0%'), findsOneWidget);
     expect(find.text('Check rebalance'), findsOneWidget);
     expect(find.text('EUR'), findsNothing);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('portfolio-risk-summary')))
+          .height,
+      lessThan(130),
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('portfolio-risk-details')))
+          .height,
+      greaterThanOrEqualTo(
+        appActionTargetSize(
+          tester.element(find.byKey(const ValueKey('portfolio-risk-details'))),
+        ),
+      ),
+    );
     expect(tester.getTopLeft(find.text('us:AAPL').first).dy, lessThan(760));
     final holdingPosition = tester.getTopLeft(find.text('us:AAPL').first);
     await tester.tap(find.byKey(const ValueKey('portfolio-risk-details')));

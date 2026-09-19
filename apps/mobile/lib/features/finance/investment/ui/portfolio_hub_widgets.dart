@@ -47,7 +47,55 @@ class _ConcentrationRiskSection extends StatelessWidget {
     final riskTone = criticalCount > 0
         ? AppBadgeTone.error
         : AppBadgeTone.warning;
-    return SoftCard.raised(
+    final heading = Row(
+      children: [
+        Icon(
+          FLucideIcons.chartPie,
+          size: AppIconSizes.h18,
+          color: criticalCount > 0
+              ? context.theme.colors.destructive
+              : context.theme.colors.primary,
+        ),
+        const SizedBox(width: AppSpacing.s8),
+        Expanded(
+          child: Text(
+            l10n.portfolioHubConcentrationTitle,
+            style: context.labelStyle,
+          ),
+        ),
+      ],
+    );
+    final rebalanceAction = AppActionButton(
+      variant: FButtonVariant.outline,
+      mainAxisSize: MainAxisSize.min,
+      hapticIntent: AppInteractionIntent.navigate,
+      onPress: () => context.push(FinanceRoutes.planRebalance),
+      child: Flexible(child: Text(l10n.portfolioStudioRebalanceAction)),
+    );
+    final summary = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: appActionTargetSize(context)),
+      child: Row(
+        children: [
+          Expanded(child: _ConcentrationAlertRow(alert: ordered.first)),
+          if (alerts.length > 1) ...[
+            const SizedBox(width: AppSpacing.s8),
+            AppBadge(
+              label: '${alerts.length}',
+              tone: riskTone,
+              size: AppBadgeSize.compact,
+            ),
+            const SizedBox(width: AppSpacing.s4),
+            Icon(
+              FLucideIcons.chevronRight,
+              size: AppIconSizes.sm,
+              color: context.theme.colors.mutedForeground,
+            ),
+          ],
+        ],
+      ),
+    );
+    return AppGroupedSurface(
+      key: const ValueKey('portfolio-risk-summary'),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s12,
         vertical: AppSpacing.s10,
@@ -55,88 +103,57 @@ class _ConcentrationRiskSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(
-                FLucideIcons.chartPie,
-                size: AppIconSizes.h18,
-                color: criticalCount > 0
-                    ? context.theme.colors.destructive
-                    : context.theme.colors.primary,
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Text(
-                  l10n.portfolioHubConcentrationTitle,
-                  style: context.labelStyle,
-                ),
-              ),
-              Semantics(
-                label: l10n.portfolioHubConcentrationSummary(alerts.length),
-                child: AppBadge(
-                  label: '${alerts.length}',
-                  tone: riskTone,
-                  size: AppBadgeSize.compact,
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 300 ||
+                  MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    heading,
+                    const SizedBox(height: AppSpacing.s8),
+                    rebalanceAction,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: heading),
+                  const SizedBox(width: AppSpacing.s8),
+                  Flexible(child: rebalanceAction),
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.s8),
-          _ConcentrationAlertRow(alert: ordered.first),
-          const SizedBox(height: AppSpacing.s6),
-          Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: criticalCount > 0
-                      ? FButtonVariant.primary
-                      : FButtonVariant.outline,
-                  onPress: () => context.push(FinanceRoutes.planRebalance),
-                  child: Flexible(
-                    child: Text(l10n.portfolioStudioRebalanceAction),
-                  ),
+          if (alerts.length > 1)
+            AppTappable(
+              key: const ValueKey('portfolio-risk-details'),
+              semanticsLabel: l10n.portfolioHubAllRisks(alerts.length),
+              onPress: () => _showPortfolioDetailSheet<void>(
+                context: context,
+                title: l10n.portfolioHubConcentrationTitle,
+                subtitle: l10n.portfolioHubConcentrationSummary(alerts.length),
+                builder: (_) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var index = 0; index < ordered.length; index++) ...[
+                      if (index > 0)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: AppSpacing.s12,
+                          ),
+                          child: AppGroupedDivider(),
+                        ),
+                      _ConcentrationAlertRow(alert: ordered[index]),
+                    ],
+                  ],
                 ),
               ),
-              if (alerts.length > 1) ...[
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(
-                  child: FButton(
-                    key: const ValueKey('portfolio-risk-details'),
-                    variant: FButtonVariant.ghost,
-                    onPress: () => _showPortfolioDetailSheet<void>(
-                      context: context,
-                      title: l10n.portfolioHubConcentrationTitle,
-                      subtitle: l10n.portfolioHubConcentrationSummary(
-                        alerts.length,
-                      ),
-                      builder: (_) => Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          for (
-                            var index = 0;
-                            index < ordered.length;
-                            index++
-                          ) ...[
-                            if (index > 0)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  vertical: AppSpacing.s12,
-                                ),
-                                child: AppGroupedDivider(),
-                              ),
-                            _ConcentrationAlertRow(alert: ordered[index]),
-                          ],
-                        ],
-                      ),
-                    ),
-                    child: Flexible(
-                      child: Text(l10n.portfolioHubAllRisks(alerts.length)),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+              child: summary,
+            )
+          else
+            summary,
         ],
       ),
     );

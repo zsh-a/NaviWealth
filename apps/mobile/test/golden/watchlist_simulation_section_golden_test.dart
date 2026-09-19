@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -7,6 +11,7 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_providers.
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
+import 'package:naviwealth/features/finance/investment/ui/watchlist_simulation_forms.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_simulation_section.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
@@ -183,5 +188,78 @@ void main() {
         ),
       ),
     );
+    await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await expectGoldenSurface(
+      'goldens/watchlist_simulation_allocation_${variant.filenameSuffix}.png',
+    );
+    await tester.tap(find.byKey(const ValueKey('app.back')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New simulation'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await expectGoldenSurface(
+      'goldens/watchlist_simulation_create_${variant.filenameSuffix}.png',
+    );
   });
+  for (final create in [true, false]) {
+    final name = create ? 'create' : 'allocation';
+    testVisualGolden('simulation $name — enlarged text', (tester) async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      await pumpAndSnapshotResponsive(
+        tester,
+        name: 'watchlist_simulation_${name}_scaled',
+        profile: ResponsiveGoldenProfile.textScale,
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
+        child: _SimulationFormEntry(create: create),
+      );
+      expect(find.byType(AppFormPageScaffold), findsOneWidget);
+      expect(
+        MediaQuery.textScalerOf(tester.element(find.byType(Form))).scale(14),
+        28,
+      );
+    });
+  }
+}
+
+/// Open the public form route inside the responsive harness's navigator.
+class _SimulationFormEntry extends StatefulWidget {
+  const _SimulationFormEntry({required this.create});
+
+  final bool create;
+
+  @override
+  State<_SimulationFormEntry> createState() => _SimulationFormEntryState();
+}
+
+class _SimulationFormEntryState extends State<_SimulationFormEntry> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        widget.create
+            ? showWatchlistSimulationCreatePage(
+                context: context,
+                collection: _collection,
+                items: _items,
+                snapshots: _snapshots,
+              )
+            : showWatchlistSimulationAllocationPage(
+                context: context,
+                simulation: _simulation,
+                positions: _positions,
+                cashWeight: _simulation.cashWeight,
+                items: _items,
+                snapshots: _snapshots,
+              ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
 }
