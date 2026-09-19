@@ -35,7 +35,6 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   DcaFrequency _frequency = DcaFrequency.monthly;
   int _years = 5;
   bool? _builderOpen;
-  bool? _parametersOpen;
   bool _saving = false;
 
   @override
@@ -94,7 +93,6 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
     final state = ref.watch(dcaSimulationProvider);
     final plans = ref.watch(dcaPlansProvider);
     final builderOpen = _builderOpen ?? (plans.value?.isEmpty ?? false);
-    final parametersOpen = _parametersOpen ?? !state.hasValue;
     final changed =
         state.hasValue && !_matchesRequest(state.requireValue.request);
     return AppPageScaffold(
@@ -130,31 +128,26 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
               ),
               if (builderOpen) ...[
                 const SizedBox(height: AppSpacing.s16),
-                AppDisclosureHeader(
+                SectionHeader.module(
                   title: l10n.dcaSimulatorParametersTitle,
                   subtitle:
                       '${_symbols.text} · ${_amount.text} ${_currency.text}',
-                  expanded: parametersOpen,
-                  onToggle: () =>
-                      setState(() => _parametersOpen = !parametersOpen),
                 ),
-                const SizedBox(height: AppSpacing.s8),
-                if (parametersOpen)
-                  _DcaControls(
-                    formKey: _formKey,
-                    symbols: _symbols,
-                    amount: _amount,
-                    currency: _currency,
-                    market: _market,
-                    frequency: _frequency,
-                    years: _years,
-                    busy: state.isLoading || _saving,
-                    onMarketChanged: (value) => setState(() => _market = value),
-                    onFrequencyChanged: (value) =>
-                        setState(() => _frequency = value),
-                    onYearsChanged: (value) => setState(() => _years = value),
-                    onRun: _run,
-                  ),
+                _DcaControls(
+                  formKey: _formKey,
+                  symbols: _symbols,
+                  amount: _amount,
+                  currency: _currency,
+                  market: _market,
+                  frequency: _frequency,
+                  years: _years,
+                  busy: state.isLoading || _saving,
+                  onMarketChanged: (value) => setState(() => _market = value),
+                  onFrequencyChanged: (value) =>
+                      setState(() => _frequency = value),
+                  onYearsChanged: (value) => setState(() => _years = value),
+                  onRun: _run,
+                ),
                 const SizedBox(height: AppSpacing.s16),
                 if (changed) ...[
                   AppStatusBanner(
@@ -197,7 +190,6 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
         ref.read(dcaSimulationProvider).hasValue &&
         _matchesRequest(request)) {
       FocusScope.of(context).unfocus();
-      setState(() => _parametersOpen = false);
     }
   }
 
@@ -370,16 +362,26 @@ class _DcaPlansSection extends StatelessWidget {
           children: [
             Text(l10n.dcaPlanSectionTitle, style: context.mutedLabelStyle),
             const SizedBox(height: AppSpacing.s8),
-            for (final plan in rows)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.s8),
-                child: _DcaPlanCard(
-                  plan: plan,
-                  onExecute: () => onExecute(plan),
-                  onToggle: () => onToggle(plan),
-                  onDelete: () => onDelete(plan),
-                ),
+            AppGroupedSurface(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  for (var index = 0; index < rows.length; index++) ...[
+                    _DcaPlanCard(
+                      plan: rows[index],
+                      onExecute: () => onExecute(rows[index]),
+                      onToggle: () => onToggle(rows[index]),
+                      onDelete: () => onDelete(rows[index]),
+                    ),
+                    if (index != rows.length - 1)
+                      const AppGroupedDivider(
+                        indent: AppSpacing.s12,
+                        endIndent: AppSpacing.s12,
+                      ),
+                  ],
+                ],
               ),
+            ),
           ],
         );
       },
@@ -406,8 +408,11 @@ class _DcaPlanCard extends StatelessWidget {
     final symbols = plan.allocations.map((item) => item.symbol).join(' · ');
     final due = MaterialLocalizations.of(context)
         .formatShortDate(plan.nextDueAt.toLocal());
-    return SoftCard.raised(
-      padding: AppPageRhythm.cardPadding,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s12,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

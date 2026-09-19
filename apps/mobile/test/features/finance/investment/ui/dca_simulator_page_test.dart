@@ -64,10 +64,8 @@ void main() {
       final container = ProviderScope.containerOf(context);
       final save = find.widgetWithText(FButton, l10n.dcaSimulatorDraftAction);
       expect(find.text(l10n.dcaSimulatorResultTitle), findsOneWidget);
-      expect(find.byType(FTextField), findsNothing);
+      expect(find.byType(FTextField), findsWidgets);
 
-      await tester.tap(find.text(l10n.dcaSimulatorParametersTitle));
-      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const ValueKey('dca-symbols')),
         'MSFT:60 QQQ:40',
@@ -79,19 +77,11 @@ void main() {
       expect(tester.widget<FButton>(save).onPress, isNull);
       expect(container.read(dcaPlansProvider).requireValue, isEmpty);
 
-      // Collapsing parameters must keep the old result and its warning visible.
-      await tester.ensureVisible(find.text(l10n.dcaSimulatorParametersTitle));
-      await tester.tap(find.text(l10n.dcaSimulatorParametersTitle));
-      await tester.pumpAndSettle();
-      expect(find.text(l10n.dcaSimulatorResultTitle), findsOneWidget);
-      expect(find.text(l10n.dcaSimulatorParametersChanged), findsOneWidget);
-      await tester.tap(find.text(l10n.dcaSimulatorParametersTitle));
-      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text(l10n.dcaSimulatorRunAction));
       await tester.tap(find.text(l10n.dcaSimulatorRunAction));
       await tester.pumpAndSettle();
       expect(find.text(l10n.dcaSimulatorParametersChanged), findsNothing);
-      expect(find.byType(FTextField), findsNothing);
+      expect(find.byType(FTextField), findsWidgets);
       final simulation = container.read(dcaSimulationProvider).requireValue;
       expect(simulation.request.amountPerContribution, Decimal.fromInt(750));
       expect(simulation.request.symbols, ['MSFT', 'QQQ']);
