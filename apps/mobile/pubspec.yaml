@@ -73,7 +73,7 @@ dependencies:
   shared_preferences: ^2.5.5
   # 1.13.6 fixes the macOS release code signatures that previously required
   # pinning the macOS platform package to 1.13.4.
-  sherpa_onnx: ^1.13.6
+  sherpa_onnx: ^1.13.8
   sqlite3: ^3.5.2
   talker: ^5.1.19
   talker_dio_logger: ^5.1.19
