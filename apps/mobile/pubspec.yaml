@@ -110,7 +110,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   freezed: ^4.0.0
-  image: ^4.9.2
+  image: ^4.10.1
   integration_test:
     sdk: flutter
 
