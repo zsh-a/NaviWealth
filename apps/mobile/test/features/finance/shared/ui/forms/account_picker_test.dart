@@ -38,6 +38,34 @@ Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) {
 }
 
 void main() {
+  for (final required in [true, false]) {
+    testWidgets('empty account validates only when optional: $required', (
+      tester,
+    ) async {
+      final formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        _wrap(
+          Form(
+            key: formKey,
+            child: AccountPicker(
+              accounts: [_account('bank', 'Bank', 'CNY')],
+              value: null,
+              onChanged: (_) {},
+              required: required,
+            ),
+          ),
+        ),
+      );
+      expect(formKey.currentState!.validate(), !required);
+      await tester.pumpAndSettle();
+      final context = tester.element(find.byType(AccountPicker));
+      expect(
+        find.text(AppLocalizations.of(context).formAccountPickerRequired),
+        required ? findsOneWidget : findsNothing,
+      );
+    });
+  }
+
   testWidgets('renders selected account when labels are duplicated', (
     tester,
   ) async {

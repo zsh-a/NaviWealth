@@ -233,7 +233,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Future<void> _submit() async {
     if (_busy) return;
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      // Offstage fields still validate. Reveal their errors instead of
+      // silently rejecting a submission from the compact form.
+      setState(() {
+        _showSettlementDetails = true;
+        _showAdvancedDetails = true;
+      });
+      return;
+    }
     final l10n = AppLocalizations.of(context);
     final selected = _selected;
     if (selected == null) {
@@ -845,6 +853,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                     const SizedBox(height: AppSpacing.s12),
                     AccountPicker(
                       key: const Key('trade-entry-cash-account'),
+                      required: false,
                       label: l10n.tradeEntrySettlementAccountLabel,
                       accounts: _cashAccounts(accounts),
                       value: _cashAccountId,

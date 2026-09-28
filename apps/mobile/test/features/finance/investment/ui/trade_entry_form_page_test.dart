@@ -20,12 +20,14 @@ import 'package:naviwealth/features/finance/data/repositories/securities_asset_r
 import 'package:naviwealth/features/finance/data/securities_catalog/asset_search_hit.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/providers.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_search_service.dart';
+import 'package:naviwealth/features/finance/domain/fx/currency_converter.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/investment/application/trade_entry_submission_service.dart';
 import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/investment/domain/models/lot.dart';
+import 'package:naviwealth/features/finance/investment/domain/trade_entry/default_trade_entry_service.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_draft.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_plan.dart';
 import 'package:naviwealth/features/finance/investment/domain/trade_entry/trade_entry_prefill.dart';
@@ -209,6 +211,121 @@ Future<void> _pressControlEnter(WidgetTester tester) async {
 }
 
 void main() {
+  for (final invalidFee in [false, true]) {
+    testWidgets(
+      invalidFee
+          ? 'invalid hidden trade fee becomes visible on save'
+          : 'CNY A-share buy saves using broker cash without external account',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(900, 1600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await _seedBrokerAccount(db);
+        await (db.update(db.accounts)..where((row) => row.id.equals('broker')))
+            .write(const AccountsCompanion(currency: Value('CNY')));
+        final service = _submissionService(
+          db,
+          tradeService: DefaultTradeEntryService(
+            marketLoader: () async =>
+                throw StateError('Explicit price must stay offline'),
+            fx: FxRateCurrencyConverter(InMemoryFxRateLookup([])),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              appDatabaseProvider.overrideWith((_) async => db),
+              accountsStreamProvider.overrideWith(
+                (_) => Stream.value([
+                  _account(
+                    id: 'broker',
+                    name: 'Broker CNY',
+                    type: AccountCategory.broker,
+                    currency: 'CNY',
+                  ),
+                ]),
+              ),
+              securitiesSearchServiceProvider.overrideWith(
+                (_) async => _FakeSearch(db: db),
+              ),
+              tradeEntrySubmissionServiceProvider.overrideWith(
+                (_) async => service,
+              ),
+            ],
+            child: _wrap(
+              Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => TradeEntryFormPage(
+                        accountId: 'broker',
+                        prefill: TradeEntryPrefill(
+                          type: TradeType.buy,
+                          quantity: Decimal.fromInt(100),
+                          price: Decimal.fromInt(10),
+                          currency: 'CNY',
+                          symbol: '600519',
+                          market: AssetMarket.cnA,
+                          fee: invalidFee ? Decimal.fromInt(-1) : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  child: const Text('Open trade'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Open trade'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('trade-entry-submit')));
+        // The save spinner stays active while the overdraft dialog awaits input.
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        if (invalidFee) {
+          final context = tester.element(find.byType(TradeEntryFormPage));
+          expect(
+            find.text(
+              AppLocalizations.of(context).formAmountFieldNegativeNotAllowed,
+            ),
+            findsOneWidget,
+          );
+          expect(await db.select(db.journalEntries).get(), isEmpty);
+          return;
+        }
+        expect(find.text('Cash balance will go negative'), findsOneWidget);
+        await tester.tap(find.text('Proceed'));
+        await tester.pumpAndSettle();
+        expect(find.text('Undo'), findsOneWidget);
+        expect(await db.select(db.journalEntries).get(), hasLength(1));
+        final asset = await db.select(db.assets).getSingle();
+        expect(asset.symbol, '600519');
+        expect(asset.currency, 'CNY');
+        final postings = await db.select(db.postings).get();
+        expect(postings, hasLength(2));
+        expect(
+          postings.every((posting) => posting.accountId == 'broker'),
+          isTrue,
+        );
+        expect(
+          postings.any(
+            (posting) =>
+                posting.unit == 'CNY' &&
+                posting.units == Decimal.fromInt(-1000),
+          ),
+          isTrue,
+        );
+        await tester.pump(const Duration(seconds: 7));
+      },
+    );
+  }
+
   testWidgets('requires a brokerage account instead of accepting cash', (
     tester,
   ) async {
