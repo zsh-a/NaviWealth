@@ -131,10 +131,10 @@ void main() {
     );
 
     expect(
-      await service.syncRates(
+      (await service.syncRates(
         baseCurrency: 'USD',
         accountCurrencies: {'USD', 'CNY'},
-      ),
+      )).syncedCount,
       1,
     );
     expect(market.historyRequests, hasLength(1));
@@ -269,7 +269,7 @@ void main() {
       incrementalOverlap: const Duration(days: 7),
     );
 
-    final result = await service.syncRatesDetailed(
+    final result = await service.syncRates(
       baseCurrency: 'USD',
       accountCurrencies: {'USD', 'CNY'},
     );
@@ -301,7 +301,7 @@ void main() {
       historyLookback: const Duration(days: 10),
     );
 
-    final result = await service.syncRatesDetailed(
+    final result = await service.syncRates(
       baseCurrency: 'USD',
       accountCurrencies: {'USD', 'CNY'},
     );
@@ -347,7 +347,7 @@ void main() {
       historyLookback: const Duration(days: 30),
     );
 
-    final result = await service.syncRatesDetailed(
+    final result = await service.syncRates(
       baseCurrency: 'USD',
       accountCurrencies: {'USD', 'CNY'},
     );
@@ -370,7 +370,7 @@ void main() {
       historyLookback: const Duration(days: 30),
     );
 
-    final result = await service.syncRatesDetailed(
+    final result = await service.syncRates(
       baseCurrency: 'USD',
       accountCurrencies: {'USD', 'CNY'},
     );

@@ -28,7 +28,9 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 
 - Do not add enums, fields, tools, tables, or abstractions without a current caller.
 - Do not generalize for a hypothetical future domain. Add abstractions only when at least two real domains use them or a shell seam already exists.
-- Do not pivot the app into a wide Flutter/Rust local engine. Rust is allowed only for narrow performance or security surfaces.
+- Do not pivot the app into a wide Flutter/Rust local engine. Rust is allowed
+  for narrow performance or security surfaces and the explicitly scoped
+  standalone market-data SDK described under Rust Boundary.
 - Do not make one domain import another domain's business entities.
 - Do not turn sync v3 into an event platform, CRDT framework, or multi-schema negotiation layer.
 - Do not add social, collaboration, publishing, enterprise SaaS, or entertainment surfaces.
@@ -310,7 +312,8 @@ through an explicit Memory proposal and user confirmation.
 
 Rust is allowed only when all are true:
 
-- There is a real performance or security delta.
+- There is a real performance or security delta, or the work implements the
+  standalone market-data SDK exception defined below.
 - A caller exists in the current phase.
 - The FFI surface is narrow enough for `flutter_rust_bridge`.
 - Web does not require a new wasm runtime.
@@ -324,6 +327,8 @@ Current Rust surface:
   contract normalization.
 - Native Health provider primitives where platform/runtime behavior requires
   Rust.
+- Android/macOS A-share request/cancel bridge to the independent `market-data-rs`
+  provider SDK, with FinanceOS-owned Dart adaptation and Drift caching.
 - Generated FRB bindings under `apps/mobile/lib/src/rust/`.
 
 The standalone Rust `agent-runtime` already exists as the
@@ -341,7 +346,50 @@ domain-neutral `core/speech/` contract. It consumes microphone PCM and emits
 draft text; it does not own business policy, persistence, tools, or automatic
 writes. Web uses a stub and does not load the native runtime.
 
-Do not move business logic, Money math, market fetchers, SQL access, domain
+### Standalone market-data SDK
+
+`market-data-rs` is permitted as an independent, reusable provider SDK. The
+exception is justified by sharing provider protocols and request governance
+across hosts; it does not require a performance claim. Platform activation and
+verification belong to the Market Data Providers document.
+
+- Rust may own upstream HTTP protocols, provider capability declarations,
+  security identifier and market-data normalization, provider routing,
+  batching, rate limits, bounded retries, deadlines, cancellation, and circuit
+  breakers. Adding a provider must not require changes to FinanceOS business
+  logic or the routing engine.
+- FinanceOS owns the Dart adapter under `features/finance/`, exposed through
+  the existing `MarketDataService` seam. Features must not call the SDK or
+  upstream providers directly. Native access uses a thin FRB bridge; Web may
+  use an HTTP adapter to a separately deployed service without introducing a
+  browser wasm runtime. Neither transport may require an AI runtime.
+- The SDK must not depend on NaviWealth entities or repositories. Portfolio
+  valuation, simulated trading, returns, corporate-action application, Money
+  math, ledger writes, and user policy remain in Dart. Upstream reference data
+  must never directly mutate user financial records.
+- Each request path has one owner for provider routing, retry, and quota
+  policy. When Rust owns these policies, the Dart adapter must not wrap it in
+  a second upstream retry or provider-fallback chain.
+- NaviWealth's persistent market cache remains owned by FinanceOS through
+  Drift. Embedded SDK caching is disabled for this integration; the SDK must
+  not access the application database or introduce a parallel SQLite store.
+  A remote service cache, if used, must preserve provenance and freshness so
+  the client cannot relabel cached or stale data as newly observed data.
+- Transport contracts preserve actual provider source, observation and fetch
+  times, freshness, adjustment mode, historical coverage, and failure
+  diagnostics. Prices cross JSON/FFI as decimal strings, quote instants as
+  UTC, and daily bars as trading-date labels. Cache identity includes the
+  canonical security, interval, and adjustment mode where applicable.
+  Adapters must not silently substitute adjustment modes, merge incompatible
+  histories, or present partial coverage as complete.
+
+Provider usage and reference-data rules remain owned by
+[Market data providers](../domains/market-data-providers.md). Native target
+support requires target builds and runtime validation; a working Rust SDK
+alone does not establish Android, iOS, or Web integration readiness.
+
+Outside this scoped SDK exception, do not move market fetchers into Rust.
+Do not move business logic, Money math, application SQL access, domain
 repositories, or local LLM model inference into Rust.
 
 ## Review Checklist

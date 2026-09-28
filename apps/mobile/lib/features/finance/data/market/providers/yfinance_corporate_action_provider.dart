@@ -79,7 +79,7 @@ class YFinanceCorporateActionProvider implements CorporateActionProvider {
       );
     }
     final currency = _currencyOf(body) ?? _defaultCurrencyFor(symbol);
-    final parsed = parseYahooMarketCorporateActionsDetailed(
+    final parsed = parseYahooMarketCorporateActions(
       responseBody: body,
       symbol: symbol,
       currency: currency,

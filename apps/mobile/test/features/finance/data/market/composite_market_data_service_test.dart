@@ -68,6 +68,42 @@ class _FakeProvider implements MarketProvider {
 }
 
 void main() {
+  test(
+    'an explicitly unsupported market never fans out to unrelated sources',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final provider = _FakeProvider(
+        name: 'us-only',
+        supportedMarkets: {AssetMarket.usStock},
+      );
+      final service = CompositeMarketDataService(
+        providers: [provider],
+        cache: MarketCache(db: db),
+      );
+      await expectLater(
+        service.getQuote('600519', market: AssetMarket.cnA),
+        throwsA(isA<NoMarketDataAvailableException>()),
+      );
+      await expectLater(
+        service.getHistorical(
+          '600519',
+          market: AssetMarket.cnA,
+          from: DateTime.utc(2026, 4, 1),
+          to: DateTime.utc(2026, 4, 2),
+        ),
+        throwsA(isA<NoMarketDataAvailableException>()),
+      );
+      await expectLater(
+        service.searchSymbol('茅台', market: AssetMarket.cnA),
+        throwsA(isA<NoMarketDataAvailableException>()),
+      );
+      expect(provider.quoteCalls, 0);
+      expect(provider.historyCalls, 0);
+      expect(provider.searchCalls, 0);
+    },
+  );
+
   group('CompositeMarketDataService.getQuote', () {
     test('returns live quote and writes through to cache', () async {
       final db = makeTestDatabase();

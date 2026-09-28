@@ -9,6 +9,7 @@
 pub mod api;
 
 pub(crate) mod android_tls;
+pub(crate) mod market;
 
 // Internal agent runtime implementation — outside `api/` so FRB codegen sees
 // only the primitive wrapper in `api/agent_runtime.rs`.

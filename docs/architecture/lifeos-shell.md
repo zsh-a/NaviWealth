@@ -726,13 +726,21 @@ Rules:
 Allowed:
 
 - Embedding runtime and tokenizer through `flutter_rust_bridge`.
+- Native Agent Runtime contracts and device provider calls through the
+  existing app-owned FRB bridge.
+- Health provider primitives requiring native HTTP/runtime behavior.
 - Future security-sensitive sync encryption only after a separate trigger.
+- Standalone `market-data-rs` provider protocols and request governance behind
+  the FinanceOS `MarketDataService`, under the scoped exception in
+  [Architecture Northstar](lifeos-architecture-northstar.md#standalone-market-data-sdk).
+  Android and macOS use a thin FRB bridge; persistent cache and financial business
+  logic remain in Dart/Drift. Other platforms retain their existing routes.
 
 Not allowed:
 
 - Business logic.
 - Money math.
-- Market data fetchers.
+- Market data fetchers outside the standalone SDK exception above.
 - SQL/Drift logic.
 - Local LLM inference.
 - Wide protobuf/event-dispatch SDKs.

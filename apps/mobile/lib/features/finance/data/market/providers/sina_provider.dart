@@ -18,10 +18,8 @@ import 'market_provider.dart';
 ///   * Already prefixed: `sh600519`, `sz000001`, `bj430047`
 ///   * Unprefixed code: `600519` → routed to `sh`; `000001` / `300xxx` → `sz`
 ///
-/// Historical bars and search are NOT supported by this endpoint — see
-/// the fallback story (Tushare day-line / AKShare). This
-/// adapter throws [UnsupportedError] on those paths and the composite
-/// service falls through to the next provider in the chain.
+/// Used by Dart routes on platforms without the native market SDK. This endpoint does not support history
+/// or search. Android/macOS A-share requests use the Rust SDK instead.
 class SinaProvider implements MarketProvider {
   SinaProvider({required MarketHttpClient http}) : _http = http;
 
@@ -69,10 +67,7 @@ class SinaProvider implements MarketProvider {
     required DateTime to,
     BarInterval interval = BarInterval.day,
   }) {
-    throw UnsupportedError(
-      'sina hq endpoint does not expose historical bars; '
-      'route this provider chain through Tushare/AKShare for history',
-    );
+    throw UnsupportedError('sina hq endpoint does not expose historical bars');
   }
 
   @override

@@ -1,0 +1,25 @@
+[package]
+name = "market-data-rs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Provider-neutral A-share quotes and historical data with explicit provenance and adjustment semantics"
+
+[features]
+default = []
+sqlite = ["dep:rusqlite"]
+
+[dependencies]
+async-trait.workspace = true
+chrono.workspace = true
+reqwest.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+futures-util.workspace = true
+encoding_rs = "0.8"
+rusqlite = { version = "0.32", features = ["bundled"], optional = true }
+
+[dev-dependencies]
+axum = "0.8"

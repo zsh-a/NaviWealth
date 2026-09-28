@@ -104,6 +104,7 @@ final class AppDatabaseTransactionScope {
     FinancialReconciliations,
     Devices,
     OpLogs,
+    MarketDataSnapshots,
     MarketQuotes,
     MarketHistoryBars,
     MarketSymbolSearches,
@@ -157,7 +158,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 94;
+  int get schemaVersion => 95;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1191,6 +1192,7 @@ class AppDatabase extends _$AppDatabase {
         await _createWatchlistSimulationLocalInvariants(this);
       }
       if (from < 93) await customStatement(createScheduledAgentTasks);
+      if (from < 95) await m.createTable(marketDataSnapshots);
       if (from < 94) {
         await _createAgentRuns(this);
         await _addColumnIfMissing(

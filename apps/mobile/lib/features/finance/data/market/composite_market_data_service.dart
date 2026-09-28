@@ -303,10 +303,9 @@ class CompositeMarketDataService implements MarketDataService {
 
   List<MarketProvider> _providersFor(AssetMarket? market) {
     if (market == null || market == AssetMarket.unknown) return _providers;
-    final routed = _providers
+    return _providers
         .where((p) => p.supportedMarkets.contains(market))
         .toList(growable: false);
-    return routed.isEmpty ? _providers : routed;
   }
 
   bool _coversRange(

@@ -6,6 +6,7 @@
 import 'api/agent_runtime.dart';
 import 'api/embedder.dart';
 import 'api/health.dart';
+import 'api/market.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -69,7 +70,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 601110886;
+  int get rustContentHash => -751400094;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -235,6 +236,13 @@ abstract class RustLibApi extends BaseApi {
   Stream<GarminSyncProgress> crateApiHealthGarminSyncRangeStream({
     required String from,
     required String to,
+  });
+
+  Future<void> crateApiMarketMarketCancel({required String requestId});
+
+  Future<String> crateApiMarketMarketRequest({
+    required String requestId,
+    required String requestJson,
   });
 
   RustArcIncrementStrongCountFnType
@@ -1564,6 +1572,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(
         debugName: "garmin_sync_range_stream",
         argNames: ["sink", "from", "to"],
+      );
+
+  @override
+  Future<void> crateApiMarketMarketCancel({required String requestId}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(requestId, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 39,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiMarketMarketCancelConstMeta,
+        argValues: [requestId],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMarketMarketCancelConstMeta =>
+      const TaskConstMeta(debugName: "market_cancel", argNames: ["requestId"]);
+
+  @override
+  Future<String> crateApiMarketMarketRequest({
+    required String requestId,
+    required String requestJson,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(requestId, serializer);
+          sse_encode_String(requestJson, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 40,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiMarketMarketRequestConstMeta,
+        argValues: [requestId, requestJson],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiMarketMarketRequestConstMeta =>
+      const TaskConstMeta(
+        debugName: "market_request",
+        argNames: ["requestId", "requestJson"],
       );
 
   RustArcIncrementStrongCountFnType

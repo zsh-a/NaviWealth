@@ -1,16 +1,14 @@
 /// Parse provider-neutral corporate actions out of a Yahoo Finance `chart`
 /// response.
 ///
-/// Pure function — no I/O or logging. The compatibility
-/// [parseYahooCorporateActions] projection remains for the existing investment
-/// timeline while new consumers use [parseYahooMarketCorporateActions].
+/// Pure function — no I/O or logging. The result preserves malformed-envelope
+/// and dropped-row information for every consumer.
 library;
 
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:decimal/decimal.dart';
-import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
@@ -31,19 +29,7 @@ class YahooCorporateActionParseResult {
   final String? errorMessage;
 }
 
-List<MarketCorporateAction> parseYahooMarketCorporateActions({
-  required Map<String, Object?> responseBody,
-  required String symbol,
-  required String currency,
-  required AssetMarket market,
-}) => parseYahooMarketCorporateActionsDetailed(
-  responseBody: responseBody,
-  symbol: symbol,
-  currency: currency,
-  market: market,
-).actions;
-
-YahooCorporateActionParseResult parseYahooMarketCorporateActionsDetailed({
+YahooCorporateActionParseResult parseYahooMarketCorporateActions({
   required Map<String, Object?> responseBody,
   required String symbol,
   required String currency,
@@ -157,47 +143,6 @@ YahooCorporateActionParseResult parseYahooMarketCorporateActionsDetailed({
     envelopeValid: true,
     droppedRows: droppedRows,
   );
-}
-
-/// Compatibility projection for the existing investment event timeline.
-List<CorporateActionEvent> parseYahooCorporateActions({
-  required Map<String, Object?> responseBody,
-  required String symbol,
-  required String currency,
-}) {
-  final market = inferAssetMarket(symbol.toUpperCase());
-  final actions = parseYahooMarketCorporateActions(
-    responseBody: responseBody,
-    symbol: symbol,
-    currency: currency,
-    market: market,
-  );
-  return [
-    for (final action in actions)
-      if (action.kind == MarketCorporateActionKind.distribution &&
-          action.hasCashDistribution &&
-          action.timelineDate != null)
-        CorporateActionEvent(
-          id: 'div_${action.symbol}_${_day(action.timelineDate!)}',
-          symbol: action.symbol,
-          kind: CorporateActionKind.cashDividend,
-          scheduledFor: action.timelineDate!,
-          cashAmount: action.cashPerShare!,
-          currency: action.currency ?? currency.toUpperCase(),
-        )
-      else if (action.kind == MarketCorporateActionKind.split &&
-          action.hasSplit &&
-          action.timelineDate != null)
-        CorporateActionEvent(
-          id: 'split_${action.symbol}_${_day(action.timelineDate!)}',
-          symbol: action.symbol,
-          kind: CorporateActionKind.split,
-          scheduledFor: action.timelineDate!,
-          cashAmount: Decimal.zero,
-          currency: currency.toUpperCase(),
-          ratio: SplitRatio(action.splitNumerator!, action.splitDenominator!),
-        ),
-  ];
 }
 
 MarketCorporateAction? _parseDividend(

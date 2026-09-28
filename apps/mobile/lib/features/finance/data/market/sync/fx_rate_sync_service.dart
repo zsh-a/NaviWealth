@@ -12,10 +12,8 @@ import '../http/clock.dart';
 /// Outcome of one FX sync pass.
 ///
 /// FX is derived market data, so one unavailable pair should not discard
-/// rates that were fetched successfully for the other pairs. The old integer
-/// return value made that partial failure invisible to callers; this report
-/// keeps the compatibility wrapper below while giving UI and coordinator
-/// callers enough information to explain what happened.
+/// rates that were fetched successfully for the other pairs. Every caller
+/// receives the per-pair successes and failures.
 class FxRateSyncResult {
   FxRateSyncResult({
     required Set<String> requestedPairs,
@@ -130,7 +128,7 @@ class FxRateSyncService {
   ///
   /// Returns a per-pair report. A failed pair is recorded in [failures] and
   /// does not prevent the remaining pairs from being attempted.
-  Future<FxRateSyncResult> syncRatesDetailed({
+  Future<FxRateSyncResult> syncRates({
     required String baseCurrency,
     required Set<String> accountCurrencies,
     bool fullHistory = false,
@@ -199,24 +197,6 @@ class FxRateSyncService {
       syncedPairs: syncedPairs,
       failures: failures,
     );
-  }
-
-  /// Backwards-compatible count-only API for non-UI callers.
-  Future<int> syncRates({
-    required String baseCurrency,
-    required Set<String> accountCurrencies,
-    bool fullHistory = false,
-    DateTime? from,
-    DateTime? to,
-  }) async {
-    final result = await syncRatesDetailed(
-      baseCurrency: baseCurrency,
-      accountCurrencies: accountCurrencies,
-      fullHistory: fullHistory,
-      from: from,
-      to: to,
-    );
-    return result.syncedCount;
   }
 
   Future<DateTime> _startForPair({
@@ -340,8 +320,8 @@ class FxRateSyncService {
       throw _noDataError(base: base, quote: quote, failures: failures);
     }
 
-    // History is the source of truth for continuity, but retaining the old
-    // quote fallback means a provider outage can still record today's mark.
+    // When history is unavailable, a current quote can still record today's
+    // mark. It does not repair missing historical observations.
     final directQuote = await _fetchQuoteAndPersist(
       symbol: symbol,
       base: base,

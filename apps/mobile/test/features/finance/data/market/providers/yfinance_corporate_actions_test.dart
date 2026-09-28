@@ -1,8 +1,8 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/data/market/providers/yfinance_corporate_actions.dart';
-import 'package:naviwealth/features/finance/investment/domain/reporting/event_timeline.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
+import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
 
 const _exDivTs1 = 1714521600; // 2024-05-01 UTC
 const _exDivTs2 = 1722470400; // 2024-08-01 UTC
@@ -21,31 +21,33 @@ Map<String, Object?> _chart({Map<String, Object?>? events}) {
 }
 
 void main() {
-  group('parseYahooCorporateActions', () {
-    test('returns empty when body is missing chart.result', () {
+  group('parseYahooMarketCorporateActions', () {
+    test('invalid chart returns no actions', () {
       expect(
-        parseYahooCorporateActions(
+        parseYahooMarketCorporateActions(
           responseBody: const {},
           symbol: 'AAPL',
           currency: 'USD',
-        ),
+          market: AssetMarket.usStock,
+        ).actions,
         isEmpty,
       );
     });
 
     test('returns empty when result has no events block', () {
       expect(
-        parseYahooCorporateActions(
+        parseYahooMarketCorporateActions(
           responseBody: _chart(),
           symbol: 'AAPL',
           currency: 'USD',
-        ),
+          market: AssetMarket.usStock,
+        ).actions,
         isEmpty,
       );
     });
 
-    test('parses dividend events into cashDividend rows', () {
-      final out = parseYahooCorporateActions(
+    test('parses dividend distributions without timeline projection', () {
+      final out = parseYahooMarketCorporateActions(
         responseBody: _chart(
           events: <String, Object?>{
             'dividends': <String, Object?>{
@@ -62,15 +64,16 @@ void main() {
         ),
         symbol: 'aapl',
         currency: 'USD',
-      );
+        market: AssetMarket.usStock,
+      ).actions;
       expect(out, hasLength(2));
       for (final e in out) {
         expect(e.symbol, 'AAPL');
-        expect(e.kind, CorporateActionKind.cashDividend);
+        expect(e.kind, MarketCorporateActionKind.distribution);
         expect(e.currency, 'USD');
-        expect(e.ratio, isNull);
+        expect(e.splitNumerator, isNull);
       }
-      final amounts = out.map((e) => e.cashAmount).toList();
+      final amounts = out.map((e) => e.cashPerShare).toList();
       expect(
         amounts,
         containsAll([Decimal.parse('0.22'), Decimal.parse('0.24')]),
@@ -78,7 +81,7 @@ void main() {
     });
 
     test('parses split events with numerator/denominator', () {
-      final out = parseYahooCorporateActions(
+      final out = parseYahooMarketCorporateActions(
         responseBody: _chart(
           events: <String, Object?>{
             'splits': <String, Object?>{
@@ -93,17 +96,17 @@ void main() {
         ),
         symbol: 'AAPL',
         currency: 'USD',
-      );
+        market: AssetMarket.usStock,
+      ).actions;
       final ev = out.single;
-      expect(ev.kind, CorporateActionKind.split);
-      expect(ev.cashAmount, Decimal.zero);
-      expect(ev.ratio?.numerator, 20);
-      expect(ev.ratio?.denominator, 1);
-      expect(ev.ratio?.isForward, isTrue);
+      expect(ev.kind, MarketCorporateActionKind.split);
+      expect(ev.cashPerShare, isNull);
+      expect(ev.splitNumerator, 20);
+      expect(ev.splitDenominator, 1);
     });
 
     test('drops malformed dividend / split rows instead of throwing', () {
-      final out = parseYahooCorporateActions(
+      final out = parseYahooMarketCorporateActions(
         responseBody: _chart(
           events: <String, Object?>{
             'dividends': <String, Object?>{
@@ -138,15 +141,16 @@ void main() {
         ),
         symbol: 'AAPL',
         currency: 'USD',
-      );
+        market: AssetMarket.usStock,
+      ).actions;
       expect(out, hasLength(2));
       expect(out.map((e) => e.kind).toSet(), {
-        CorporateActionKind.cashDividend,
-        CorporateActionKind.split,
+        MarketCorporateActionKind.distribution,
+        MarketCorporateActionKind.split,
       });
     });
 
-    test('event ids are deterministic so re-fetch dedups in the timeline', () {
+    test('event ids are deterministic across re-fetches', () {
       Map<String, Object?> body() => _chart(
         events: <String, Object?>{
           'dividends': <String, Object?>{
@@ -154,24 +158,25 @@ void main() {
           },
         },
       );
-      final first = parseYahooCorporateActions(
+      final first = parseYahooMarketCorporateActions(
         responseBody: body(),
         symbol: 'AAPL',
         currency: 'USD',
-      );
-      final second = parseYahooCorporateActions(
+        market: AssetMarket.usStock,
+      ).actions;
+      final second = parseYahooMarketCorporateActions(
         responseBody: body(),
         symbol: 'AAPL',
         currency: 'USD',
-      );
+        market: AssetMarket.usStock,
+      ).actions;
       expect(first.single.id, second.single.id);
-      // The id format is also stable enough to compose with the timeline
-      // dedup keyed on `id`.
-      expect(first.single.id, startsWith('div_AAPL_'));
+      // Source-scoped ids preserve provider identity across re-fetches.
+      expect(first.single.id, startsWith('yfinance:yahoo_chart:div:AAPL:'));
     });
 
     test('detailed parser distinguishes malformed envelopes', () {
-      final parsed = parseYahooMarketCorporateActionsDetailed(
+      final parsed = parseYahooMarketCorporateActions(
         responseBody: const <String, Object?>{},
         symbol: 'AAPL',
         currency: 'USD',
@@ -183,7 +188,7 @@ void main() {
     });
 
     test('detailed parser reports mixed malformed rows as partial data', () {
-      final parsed = parseYahooMarketCorporateActionsDetailed(
+      final parsed = parseYahooMarketCorporateActions(
         responseBody: _chart(
           events: <String, Object?>{
             'dividends': <String, Object?>{
@@ -202,7 +207,7 @@ void main() {
     });
 
     test('same-day provider event keys retain distinct identities', () {
-      final parsed = parseYahooMarketCorporateActionsDetailed(
+      final parsed = parseYahooMarketCorporateActions(
         responseBody: _chart(
           events: <String, Object?>{
             'dividends': <String, Object?>{
@@ -219,8 +224,8 @@ void main() {
       expect(parsed.actions.map((action) => action.id).toSet(), hasLength(2));
     });
 
-    test('scheduledFor floors to UTC calendar day', () {
-      final out = parseYahooCorporateActions(
+    test('exDate floors to UTC calendar day', () {
+      final out = parseYahooMarketCorporateActions(
         responseBody: _chart(
           events: <String, Object?>{
             'dividends': <String, Object?>{
@@ -235,12 +240,13 @@ void main() {
         ),
         symbol: 'AAPL',
         currency: 'USD',
-      );
+        market: AssetMarket.usStock,
+      ).actions;
       final ev = out.single;
-      expect(ev.scheduledFor.hour, 0);
-      expect(ev.scheduledFor.minute, 0);
-      expect(ev.scheduledFor.second, 0);
-      expect(ev.scheduledFor.isUtc, isTrue);
+      expect(ev.exDate!.hour, 0);
+      expect(ev.exDate!.minute, 0);
+      expect(ev.exDate!.second, 0);
+      expect(ev.exDate!.isUtc, isTrue);
     });
   });
 }

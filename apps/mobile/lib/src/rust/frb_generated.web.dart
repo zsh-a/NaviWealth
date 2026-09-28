@@ -9,6 +9,7 @@
 import 'api/agent_runtime.dart';
 import 'api/embedder.dart';
 import 'api/health.dart';
+import 'api/market.dart';
 
 import 'dart:async';
 import 'dart:convert';

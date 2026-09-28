@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -14,6 +15,8 @@ import 'http/market_http_client.dart';
 import 'http/rate_limiter.dart';
 import 'http/retry_policy.dart';
 import 'metrics/market_metrics.dart';
+import 'native/market_snapshot_cache.dart';
+import 'native/native_market_data_service.dart';
 import 'providers/coingecko_provider.dart';
 import 'providers/market_provider.dart';
 import 'providers/options/options_chain_provider.dart';
@@ -152,11 +155,23 @@ final sinaProviderProvider = Provider<MarketProvider>((ref) {
   return SinaProvider(http: http);
 });
 
-/// Routing chain. Order matters — the composite service walks the list and
+/// Platform selection is shared by composition and the Dart provider chain.
+final nativeAShareMarketEnabledProvider = Provider<bool>(
+  (ref) =>
+      !kIsWeb &&
+      switch (defaultTargetPlatform) {
+        TargetPlatform.android || TargetPlatform.macOS => true,
+        _ => false,
+      },
+);
+
+/// Dart routing chain. Native A-share requests belong exclusively to Rust.
+/// Order matters — the composite service walks the list and
 /// the first provider that supports the requested market is tried first.
 final marketProviderChainProvider = Provider<List<MarketProvider>>((ref) {
   return [
-    ref.watch(sinaProviderProvider),
+    if (!ref.watch(nativeAShareMarketEnabledProvider))
+      ref.watch(sinaProviderProvider),
     ref.watch(yfinanceProviderProvider),
     ref.watch(coingeckoProviderProvider),
   ];
@@ -166,11 +181,18 @@ final marketDataServiceProvider = FutureProvider<MarketDataService>((
   ref,
 ) async {
   final cache = await ref.watch(marketCacheProvider.future);
-  return CompositeMarketDataService(
+  final dartMarkets = CompositeMarketDataService(
     providers: ref.watch(marketProviderChainProvider),
     cache: cache,
     clock: ref.watch(clockProvider),
     metrics: ref.watch(marketMetricsProvider),
+  );
+  if (!ref.watch(nativeAShareMarketEnabledProvider)) return dartMarkets;
+  return NativeMarketDataService(
+    dartMarkets: dartMarkets,
+    cache: MarketSnapshotCache(await ref.watch(appDatabaseProvider.future)),
+    clock: ref.watch(clockProvider),
+    policy: ref.watch(marketCachePolicyProvider),
   );
 });
 

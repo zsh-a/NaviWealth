@@ -18,12 +18,17 @@ class MarketResponse<T> {
     required this.freshness,
     required this.source,
     required this.fetchedAt,
+    this.diagnostics = const {},
   });
 
   final T data;
   final DataFreshness freshness;
   final String source;
   final DateTime fetchedAt;
+
+  /// Provider quality metadata (coverage, adjustment, warnings and attempts).
+  /// Preserved across cache reads; not a guarantee of calendar completeness.
+  final Map<String, Object?> diagnostics;
 
   bool get isStale => freshness == DataFreshness.stale;
 }

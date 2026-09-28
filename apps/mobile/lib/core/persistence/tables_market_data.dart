@@ -234,3 +234,16 @@ class SecuritiesCatalogMeta extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// Versioned provider envelopes for native A-share requests. Rebuildable,
+/// device-local FinanceOS cache; never synced or included in backups. Exact
+/// history windows preserve coverage metadata without splicing responses.
+@DataClassName('MarketDataSnapshotRow')
+class MarketDataSnapshots extends Table {
+  TextColumn get requestKey => text()();
+  TextColumn get envelope => text()();
+  DateTimeColumn get fetchedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {requestKey};
+}

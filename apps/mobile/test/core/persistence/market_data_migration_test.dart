@@ -7,6 +7,41 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
 void main() {
+  test(
+    'v94 creates envelope cache without changing existing quote rows',
+    () async {
+      final dir = await Directory.systemTemp.createTemp(
+        'naviwealth-market-v95-',
+      );
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File('${dir.path}/cache.db');
+      final legacy = sqlite3.sqlite3.open(file.path);
+      legacy.execute(
+        'CREATE TABLE market_quotes (symbol TEXT PRIMARY KEY, price TEXT)',
+      );
+      legacy.execute("INSERT INTO market_quotes VALUES ('600519', '1500.25')");
+      legacy.execute('PRAGMA user_version = 94');
+      legacy.close();
+      final db = AppDatabase(DatabaseConnection(NativeDatabase(file)));
+      addTearDown(db.close);
+      expect(await db.select(db.marketDataSnapshots).get(), isEmpty);
+      final quote = await db
+          .customSelect('SELECT price FROM market_quotes')
+          .getSingle();
+      expect(quote.read<String>('price'), '1500.25');
+      await db
+          .into(db.marketDataSnapshots)
+          .insert(
+            MarketDataSnapshotsCompanion.insert(
+              requestKey: 'native-cn:v1:raw:test',
+              envelope: '{}',
+              fetchedAt: DateTime.utc(2026),
+            ),
+          );
+      expect(await db.select(db.marketDataSnapshots).get(), hasLength(1));
+    },
+  );
+
   test('v77 market caches migrate without losing rows', () async {
     final dir = await Directory.systemTemp.createTemp('naviwealth-market-v78-');
     addTearDown(() async {

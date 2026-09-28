@@ -20,7 +20,7 @@ part 'yfinance_options_projection.dart';
 ///
 /// Uses the same `query1.finance.yahoo.com/v7/finance/options/<symbol>`
 /// endpoint as the `yfinance` (Python) library. Yahoo TOS bars commercial
-/// redistribution — see `docs/market-data-providers.md`; the data is
+/// redistribution — see `docs/domains/market-data-providers.md`; the data is
 /// consumed locally and never written to a synced table.
 class YFinanceOptionsProvider
     with

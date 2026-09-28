@@ -373,7 +373,7 @@ class PriceSyncCoordinator with WidgetsBindingObserver {
     if (inputs == null) return;
     if (inputs.currencies.isEmpty) return;
     try {
-      final result = await _fxSync.syncRatesDetailed(
+      final result = await _fxSync.syncRates(
         baseCurrency: inputs.baseCurrency,
         accountCurrencies: inputs.currencies,
       );

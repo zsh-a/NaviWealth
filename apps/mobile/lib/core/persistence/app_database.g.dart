@@ -33235,6 +33235,279 @@ class OpLogsCompanion extends UpdateCompanion<OpLogRow> {
   }
 }
 
+class $MarketDataSnapshotsTable extends MarketDataSnapshots
+    with TableInfo<$MarketDataSnapshotsTable, MarketDataSnapshotRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MarketDataSnapshotsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _requestKeyMeta = const VerificationMeta(
+    'requestKey',
+  );
+  @override
+  late final GeneratedColumn<String> requestKey = GeneratedColumn<String>(
+    'request_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _envelopeMeta = const VerificationMeta(
+    'envelope',
+  );
+  @override
+  late final GeneratedColumn<String> envelope = GeneratedColumn<String>(
+    'envelope',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fetchedAtMeta = const VerificationMeta(
+    'fetchedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> fetchedAt = GeneratedColumn<DateTime>(
+    'fetched_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [requestKey, envelope, fetchedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'market_data_snapshots';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<MarketDataSnapshotRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('request_key')) {
+      context.handle(
+        _requestKeyMeta,
+        requestKey.isAcceptableOrUnknown(data['request_key']!, _requestKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_requestKeyMeta);
+    }
+    if (data.containsKey('envelope')) {
+      context.handle(
+        _envelopeMeta,
+        envelope.isAcceptableOrUnknown(data['envelope']!, _envelopeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_envelopeMeta);
+    }
+    if (data.containsKey('fetched_at')) {
+      context.handle(
+        _fetchedAtMeta,
+        fetchedAt.isAcceptableOrUnknown(data['fetched_at']!, _fetchedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fetchedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {requestKey};
+  @override
+  MarketDataSnapshotRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return MarketDataSnapshotRow(
+      requestKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}request_key'],
+      )!,
+      envelope: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}envelope'],
+      )!,
+      fetchedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fetched_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MarketDataSnapshotsTable createAlias(String alias) {
+    return $MarketDataSnapshotsTable(attachedDatabase, alias);
+  }
+}
+
+class MarketDataSnapshotRow extends DataClass
+    implements Insertable<MarketDataSnapshotRow> {
+  final String requestKey;
+  final String envelope;
+  final DateTime fetchedAt;
+  const MarketDataSnapshotRow({
+    required this.requestKey,
+    required this.envelope,
+    required this.fetchedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['request_key'] = Variable<String>(requestKey);
+    map['envelope'] = Variable<String>(envelope);
+    map['fetched_at'] = Variable<DateTime>(fetchedAt);
+    return map;
+  }
+
+  MarketDataSnapshotsCompanion toCompanion(bool nullToAbsent) {
+    return MarketDataSnapshotsCompanion(
+      requestKey: Value(requestKey),
+      envelope: Value(envelope),
+      fetchedAt: Value(fetchedAt),
+    );
+  }
+
+  factory MarketDataSnapshotRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return MarketDataSnapshotRow(
+      requestKey: serializer.fromJson<String>(json['requestKey']),
+      envelope: serializer.fromJson<String>(json['envelope']),
+      fetchedAt: serializer.fromJson<DateTime>(json['fetchedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'requestKey': serializer.toJson<String>(requestKey),
+      'envelope': serializer.toJson<String>(envelope),
+      'fetchedAt': serializer.toJson<DateTime>(fetchedAt),
+    };
+  }
+
+  MarketDataSnapshotRow copyWith({
+    String? requestKey,
+    String? envelope,
+    DateTime? fetchedAt,
+  }) => MarketDataSnapshotRow(
+    requestKey: requestKey ?? this.requestKey,
+    envelope: envelope ?? this.envelope,
+    fetchedAt: fetchedAt ?? this.fetchedAt,
+  );
+  MarketDataSnapshotRow copyWithCompanion(MarketDataSnapshotsCompanion data) {
+    return MarketDataSnapshotRow(
+      requestKey: data.requestKey.present
+          ? data.requestKey.value
+          : this.requestKey,
+      envelope: data.envelope.present ? data.envelope.value : this.envelope,
+      fetchedAt: data.fetchedAt.present ? data.fetchedAt.value : this.fetchedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketDataSnapshotRow(')
+          ..write('requestKey: $requestKey, ')
+          ..write('envelope: $envelope, ')
+          ..write('fetchedAt: $fetchedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(requestKey, envelope, fetchedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is MarketDataSnapshotRow &&
+          other.requestKey == this.requestKey &&
+          other.envelope == this.envelope &&
+          other.fetchedAt == this.fetchedAt);
+}
+
+class MarketDataSnapshotsCompanion
+    extends UpdateCompanion<MarketDataSnapshotRow> {
+  final Value<String> requestKey;
+  final Value<String> envelope;
+  final Value<DateTime> fetchedAt;
+  final Value<int> rowid;
+  const MarketDataSnapshotsCompanion({
+    this.requestKey = const Value.absent(),
+    this.envelope = const Value.absent(),
+    this.fetchedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MarketDataSnapshotsCompanion.insert({
+    required String requestKey,
+    required String envelope,
+    required DateTime fetchedAt,
+    this.rowid = const Value.absent(),
+  }) : requestKey = Value(requestKey),
+       envelope = Value(envelope),
+       fetchedAt = Value(fetchedAt);
+  static Insertable<MarketDataSnapshotRow> custom({
+    Expression<String>? requestKey,
+    Expression<String>? envelope,
+    Expression<DateTime>? fetchedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (requestKey != null) 'request_key': requestKey,
+      if (envelope != null) 'envelope': envelope,
+      if (fetchedAt != null) 'fetched_at': fetchedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MarketDataSnapshotsCompanion copyWith({
+    Value<String>? requestKey,
+    Value<String>? envelope,
+    Value<DateTime>? fetchedAt,
+    Value<int>? rowid,
+  }) {
+    return MarketDataSnapshotsCompanion(
+      requestKey: requestKey ?? this.requestKey,
+      envelope: envelope ?? this.envelope,
+      fetchedAt: fetchedAt ?? this.fetchedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (requestKey.present) {
+      map['request_key'] = Variable<String>(requestKey.value);
+    }
+    if (envelope.present) {
+      map['envelope'] = Variable<String>(envelope.value);
+    }
+    if (fetchedAt.present) {
+      map['fetched_at'] = Variable<DateTime>(fetchedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MarketDataSnapshotsCompanion(')
+          ..write('requestKey: $requestKey, ')
+          ..write('envelope: $envelope, ')
+          ..write('fetchedAt: $fetchedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $MarketQuotesTable extends MarketQuotes
     with TableInfo<$MarketQuotesTable, MarketQuoteRow> {
   @override
@@ -52336,6 +52609,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $FinancialReconciliationsTable(this);
   late final $DevicesTable devices = $DevicesTable(this);
   late final $OpLogsTable opLogs = $OpLogsTable(this);
+  late final $MarketDataSnapshotsTable marketDataSnapshots =
+      $MarketDataSnapshotsTable(this);
   late final $MarketQuotesTable marketQuotes = $MarketQuotesTable(this);
   late final $MarketHistoryBarsTable marketHistoryBars =
       $MarketHistoryBarsTable(this);
@@ -52431,6 +52706,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     financialReconciliations,
     devices,
     opLogs,
+    marketDataSnapshots,
     marketQuotes,
     marketHistoryBars,
     marketSymbolSearches,
@@ -68029,6 +68305,197 @@ typedef $$OpLogsTableProcessedTableManager =
       OpLogRow,
       PrefetchHooks Function()
     >;
+typedef $$MarketDataSnapshotsTableCreateCompanionBuilder =
+    MarketDataSnapshotsCompanion Function({
+      required String requestKey,
+      required String envelope,
+      required DateTime fetchedAt,
+      Value<int> rowid,
+    });
+typedef $$MarketDataSnapshotsTableUpdateCompanionBuilder =
+    MarketDataSnapshotsCompanion Function({
+      Value<String> requestKey,
+      Value<String> envelope,
+      Value<DateTime> fetchedAt,
+      Value<int> rowid,
+    });
+
+class $$MarketDataSnapshotsTableFilterComposer
+    extends Composer<_$AppDatabase, $MarketDataSnapshotsTable> {
+  $$MarketDataSnapshotsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get requestKey => $composableBuilder(
+    column: $table.requestKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get envelope => $composableBuilder(
+    column: $table.envelope,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MarketDataSnapshotsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MarketDataSnapshotsTable> {
+  $$MarketDataSnapshotsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get requestKey => $composableBuilder(
+    column: $table.requestKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get envelope => $composableBuilder(
+    column: $table.envelope,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fetchedAt => $composableBuilder(
+    column: $table.fetchedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MarketDataSnapshotsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MarketDataSnapshotsTable> {
+  $$MarketDataSnapshotsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get requestKey => $composableBuilder(
+    column: $table.requestKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get envelope =>
+      $composableBuilder(column: $table.envelope, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fetchedAt =>
+      $composableBuilder(column: $table.fetchedAt, builder: (column) => column);
+}
+
+class $$MarketDataSnapshotsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MarketDataSnapshotsTable,
+          MarketDataSnapshotRow,
+          $$MarketDataSnapshotsTableFilterComposer,
+          $$MarketDataSnapshotsTableOrderingComposer,
+          $$MarketDataSnapshotsTableAnnotationComposer,
+          $$MarketDataSnapshotsTableCreateCompanionBuilder,
+          $$MarketDataSnapshotsTableUpdateCompanionBuilder,
+          (
+            MarketDataSnapshotRow,
+            BaseReferences<
+              _$AppDatabase,
+              $MarketDataSnapshotsTable,
+              MarketDataSnapshotRow
+            >,
+          ),
+          MarketDataSnapshotRow,
+          PrefetchHooks Function()
+        > {
+  $$MarketDataSnapshotsTableTableManager(
+    _$AppDatabase db,
+    $MarketDataSnapshotsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MarketDataSnapshotsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MarketDataSnapshotsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$MarketDataSnapshotsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> requestKey = const Value.absent(),
+                Value<String> envelope = const Value.absent(),
+                Value<DateTime> fetchedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MarketDataSnapshotsCompanion(
+                requestKey: requestKey,
+                envelope: envelope,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String requestKey,
+                required String envelope,
+                required DateTime fetchedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => MarketDataSnapshotsCompanion.insert(
+                requestKey: requestKey,
+                envelope: envelope,
+                fetchedAt: fetchedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$MarketDataSnapshotsTable, MarketDataSnapshotRow>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $MarketDataSnapshotsTable,
+                    MarketDataSnapshotRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MarketDataSnapshotsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MarketDataSnapshotsTable,
+      MarketDataSnapshotRow,
+      $$MarketDataSnapshotsTableFilterComposer,
+      $$MarketDataSnapshotsTableOrderingComposer,
+      $$MarketDataSnapshotsTableAnnotationComposer,
+      $$MarketDataSnapshotsTableCreateCompanionBuilder,
+      $$MarketDataSnapshotsTableUpdateCompanionBuilder,
+      (
+        MarketDataSnapshotRow,
+        BaseReferences<
+          _$AppDatabase,
+          $MarketDataSnapshotsTable,
+          MarketDataSnapshotRow
+        >,
+      ),
+      MarketDataSnapshotRow,
+      PrefetchHooks Function()
+    >;
 typedef $$MarketQuotesTableCreateCompanionBuilder =
     MarketQuotesCompanion Function({
       required String market,
@@ -77318,6 +77785,8 @@ class $AppDatabaseManager {
       $$DevicesTableTableManager(_db, _db.devices);
   $$OpLogsTableTableManager get opLogs =>
       $$OpLogsTableTableManager(_db, _db.opLogs);
+  $$MarketDataSnapshotsTableTableManager get marketDataSnapshots =>
+      $$MarketDataSnapshotsTableTableManager(_db, _db.marketDataSnapshots);
   $$MarketQuotesTableTableManager get marketQuotes =>
       $$MarketQuotesTableTableManager(_db, _db.marketQuotes);
   $$MarketHistoryBarsTableTableManager get marketHistoryBars =>

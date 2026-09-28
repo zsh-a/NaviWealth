@@ -4,3 +4,4 @@
 pub mod agent_runtime;
 pub mod embedder;
 pub mod health;
+pub mod market;

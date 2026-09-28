@@ -34,6 +34,7 @@ agent_runtime_upstream = { package = "agent-runtime", path = "../../../../third_
 agent-chat = { path = "../../../../third_party/agent-runtime/crates/agent-chat" }
 agent-llm = { path = "../../../../third_party/agent-runtime/crates/agent-llm" }
 futures = "0.3"
+market-data-rs = { path = "../../../../third_party/market-data-rs/crates/market-data", default-features = false }
 # flutter_rust_bridge generates Dart bindings from these signatures.
 # Surface in `src/api/` is the only thing the codegen looks at;
 # everything else stays private to the crate.
