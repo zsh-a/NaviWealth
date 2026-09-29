@@ -165,7 +165,12 @@ class NativeMarketDataService implements MarketDataService {
         AppLogger.instance.w('Native market cache write failed');
       }
       return result;
-    } on Object catch (error) {
+    } on Object catch (error, stack) {
+      AppLogger.instance.w(
+        'Native market ${query['operation']} request failed',
+        error: error is MarketDataException ? error.cause ?? error : error,
+        stackTrace: stack,
+      );
       if (cached != null && _age(cached) <= stale) {
         return cached.withFreshness(DataFreshness.stale);
       }

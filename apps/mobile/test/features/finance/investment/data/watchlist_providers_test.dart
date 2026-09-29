@@ -14,7 +14,28 @@ import 'package:naviwealth/features/finance/market/domain/market_data_service.da
 import 'package:naviwealth/features/finance/market/domain/quote.dart';
 import 'package:naviwealth/features/finance/market/domain/symbol_info.dart';
 
+import '../../data/market/fake_clock.dart';
+
 void main() {
+  test('A-share history ends today using inclusive dates', () async {
+    final service = _FakeMarketDataService();
+    final container = ProviderContainer(
+      overrides: [
+        clockProvider.overrideWithValue(
+          FakeClock(DateTime.utc(2026, 9, 29, 7, 13)),
+        ),
+        marketDataServiceProvider.overrideWith((_) async => service),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(
+      watchlistHistoryProvider((market: AssetMarket.cnA, symbol: '688420'))
+          .future,
+    );
+    expect(service.historyFrom, DateTime.utc(2026, 8, 30));
+    expect(service.historyTo, DateTime.utc(2026, 9, 29));
+  });
+
   test(
     'search matches code and both localized names while preserving facets',
     () {
@@ -562,6 +583,8 @@ WatchlistQuoteSnapshot _snapshot(
 
 class _FakeMarketDataService implements MarketDataService {
   int historyRequests = 0;
+  DateTime? historyFrom;
+  DateTime? historyTo;
   final quoteRequests = <String>[];
   final pending = <String, Completer<MarketResponse<Quote>>>{};
   List<HistoricalBar> history = const [];
@@ -594,6 +617,8 @@ class _FakeMarketDataService implements MarketDataService {
     AssetMarket? market,
   }) async {
     historyRequests++;
+    historyFrom = from;
+    historyTo = to;
     return MarketResponse(
       data: history,
       freshness: DataFreshness.cachedFresh,

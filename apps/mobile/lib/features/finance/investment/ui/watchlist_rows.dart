@@ -489,52 +489,53 @@ class _WatchlistPriceChart extends ConsumerWidget {
       children: [
         Text(l10n.watchlistHistoryPeriod, style: context.captionLabelStyle),
         const SizedBox(height: AppSpacing.s12),
-        SizedBox(
-          height: AppChartHeights.standard,
-          child: history.isLoading && bars.isEmpty
-              ? const Center(child: FCircularProgress())
-              : history.hasError
-              ? AppEmptyState.error(
-                  title: l10n.commonLoadFailed,
-                  retryLabel: l10n.commonRetry,
-                  onRetry: () => ref.invalidate(
-                    watchlistHistoryProvider(watchlistSymbolKey(item)),
-                  ),
-                )
-              : bars.length < 2
-              ? Center(
-                  child: Text(
-                    l10n.watchlistHistoryUnavailable,
-                    style: context.captionStyle,
-                  ),
-                )
-              : NwLineChart(
-                  key: const ValueKey('watchlist-detail-chart'),
-                  semanticLabel: l10n.watchlistDetailTrendTitle,
-                  interpolation: ChartInterpolation.linear,
-                  showDots: false,
-                  showXAxis: false,
-                  showYAxis: false,
-                  showTouchXAxisLabel: true,
-                  xAxis: TimeAxis(
-                    format: AxisDateFormat.dayMonth,
-                    locale: Localizations.localeOf(context).toLanguageTag(),
-                    maxLabels: 3,
-                  ),
-                  series: [
-                    ChartSeries(
-                      name: item.displaySymbol,
-                      points: [
-                        for (final bar in bars)
-                          ChartPoint(
-                            x: bar.asOf.millisecondsSinceEpoch.toDouble(),
-                            y: bar.close.toDouble(),
-                          ),
-                      ],
+        if (history.hasError && !history.isLoading)
+          AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            retryLabel: l10n.commonRetry,
+            onRetry: () => ref.invalidate(
+              watchlistHistoryProvider(watchlistSymbolKey(item)),
+            ),
+          )
+        else
+          SizedBox(
+            height: AppChartHeights.standard,
+            child: history.isLoading && bars.isEmpty
+                ? const Center(child: FCircularProgress())
+                : bars.length < 2
+                ? Center(
+                    child: Text(
+                      l10n.watchlistHistoryUnavailable,
+                      style: context.captionStyle,
                     ),
-                  ],
-                ),
-        ),
+                  )
+                : NwLineChart(
+                    key: const ValueKey('watchlist-detail-chart'),
+                    semanticLabel: l10n.watchlistDetailTrendTitle,
+                    interpolation: ChartInterpolation.linear,
+                    showDots: false,
+                    showXAxis: false,
+                    showYAxis: false,
+                    showTouchXAxisLabel: true,
+                    xAxis: TimeAxis(
+                      format: AxisDateFormat.dayMonth,
+                      locale: Localizations.localeOf(context).toLanguageTag(),
+                      maxLabels: 3,
+                    ),
+                    series: [
+                      ChartSeries(
+                        name: item.displaySymbol,
+                        points: [
+                          for (final bar in bars)
+                            ChartPoint(
+                              x: bar.asOf.millisecondsSinceEpoch.toDouble(),
+                              y: bar.close.toDouble(),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
         if (bars.length >= 2) ...[
           const SizedBox(height: AppSpacing.s8),
           Row(

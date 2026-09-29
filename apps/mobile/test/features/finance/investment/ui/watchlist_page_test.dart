@@ -135,6 +135,7 @@ late SharedPreferences _preferences;
 Widget _scope(
   Widget child, {
   Future<List<HistoricalBar>>? history,
+  Future<List<HistoricalBar>> Function()? loadHistory,
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistQuoteSnapshot>? scopedSnapshots,
@@ -147,7 +148,9 @@ Widget _scope(
       sharedPreferencesProvider.overrideWithValue(_preferences),
       manualAssetRepositoryProvider.overrideWith((_) async => _EmptyAssets()),
       watchlistHistoryProvider.overrideWith(
-        (_, key) async => history != null
+        (_, key) async => loadHistory != null
+            ? await loadHistory()
+            : history != null
             ? await history
             : [
                 for (var i = 0; i < 4; i++)
@@ -305,6 +308,67 @@ Future<void> _pumpSheet(WidgetTester tester) async {
 }
 
 void main() {
+  for (final scale in [1.0, 1.5, 2.0]) {
+    testWidgets(
+      'Chinese history error fits and retry recovers at scale $scale',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(534, 700));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        var attempts = 0;
+        await tester.pumpWidget(
+          _scope(
+            MaterialApp(
+              theme: AppTheme.light().copyWith(platform: TargetPlatform.macOS),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              locale: const Locale('zh'),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context)
+                    .copyWith(textScaler: TextScaler.linear(scale)),
+                child: child!,
+              ),
+              home: FTheme(
+                data: buildAppForuiTheme(
+                  brightness: Brightness.light,
+                  touch: false,
+                ),
+                child: WatchlistAssetDetailPage(assetId: _item.assetId),
+              ),
+            ),
+            snapshots: [_advancingSnapshot],
+            loadHistory: () async {
+              if (++attempts == 1) throw StateError('history unavailable');
+              return [
+                for (var day = 1; day <= 2; day++)
+                  HistoricalBar(
+                    symbol: _item.symbol,
+                    asOf: DateTime.utc(2026, 9, day),
+                    open: Decimal.one,
+                    high: Decimal.one,
+                    low: Decimal.one,
+                    close: Decimal.one,
+                  ),
+              ];
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final retry = find.text('重试');
+        expect(retry, findsOneWidget);
+        await tester.ensureVisible(retry);
+        await tester.tap(retry);
+        await tester.pumpAndSettle();
+        expect(attempts, 2);
+        expect(
+          find.byKey(const ValueKey('watchlist-detail-chart')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   setUp(() async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     _preferences = await SharedPreferences.getInstance();

@@ -453,9 +453,11 @@ final watchlistHistoryProvider = FutureProvider.autoDispose
     .family<List<HistoricalBar>, WatchlistSymbolKey>((ref, key) async {
       try {
         final service = await ref.watch(marketDataServiceProvider.future);
-        final now = DateTime.now().toUtc();
-        final to = DateTime.utc(now.year, now.month, now.day + 1);
-        final from = to.subtract(const Duration(days: 31));
+        final now = ref.watch(clockProvider).now().toUtc();
+        // MarketDataService uses inclusive UTC dates. Tomorrow is rejected
+        // by the native A-share SDK before it contacts an upstream provider.
+        final to = DateTime.utc(now.year, now.month, now.day);
+        final from = to.subtract(const Duration(days: 30));
         final response = await service.getHistorical(
           key.symbol,
           from: from,
