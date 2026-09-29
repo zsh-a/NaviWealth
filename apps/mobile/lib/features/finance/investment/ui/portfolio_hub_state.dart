@@ -13,12 +13,6 @@ final portfolioHubInsightsProvider =
       PortfolioHubInsightsState
     >(PortfolioHubInsightsNotifier.new);
 
-/// Page-level alias so existing tests and call sites keep a single entrypoint.
-final portfolioHubProvider = portfolioHubCoreProvider;
-
-/// Test/legacy alias for the core notifier type.
-typedef PortfolioHubNotifier = PortfolioHubCoreNotifier;
-
 /// Summary strip only — [select] so holdings-list churn does not rebuild
 /// the hero metrics when the numeric totals are unchanged.
 final portfolioHubSummarySliceProvider =

@@ -104,8 +104,11 @@ ask_user tool result
 ChatTurn 中 pending tools 与 pending interaction 强制互斥，恢复时也只能提交
 `tool_results` 或 `interaction_response` 之一。缺少快照、ID 不匹配、过期、重复响应或
 typed token 不匹配都 fail closed。`ask_user` 选择、Proposal approve/reject/cancel 和
-typed confirmation 均持久化同一 response contract；旧 `DecisionSelection` 与
-`applyState` 暂时保留作为兼容字段。
+typed confirmation 均持久化同一 response contract。
+`DecisionSelection` 当前仍用于决策卡渲染、对话上下文及检查点摘要；
+`applyState` 管理提案执行、失败恢复与撤销状态。它们仍是当前业务模型的一部分。
+移除前必须迁移全部读写方，并覆盖已有消息的读取、恢复和撤销；
+`InteractionResponse` 的接入本身不代表这些状态已被替代。
 
 ### 2.4 凭证与平台
 

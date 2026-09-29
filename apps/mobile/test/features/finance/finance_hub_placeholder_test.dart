@@ -43,6 +43,12 @@ void main() {
       expect(find.text('Money runway'), findsOneWidget);
       expect(find.text('Financial independence'), findsOneWidget);
       expect(find.text('Advanced investing'), findsOneWidget);
+      expect(find.text('Income strategy'), findsNothing);
+      expect(find.text('Rebalance'), findsNothing);
+      await tester.tap(
+        find.byKey(const ValueKey('plan-investment-tools-disclosure')),
+      );
+      await tester.pump();
       expect(find.text('Income strategy'), findsOneWidget);
       expect(find.text('Rebalance'), findsOneWidget);
       expect(find.text('Budget'), findsOneWidget);
@@ -94,7 +100,7 @@ void main() {
       find.byKey(const ValueKey('plan-long-term-goals-section')),
     );
     final investmentPlan = tester.getRect(
-      find.byKey(const ValueKey('plan-investment-plan-section')),
+      find.byKey(const ValueKey('plan-investment-tools-disclosure')),
     );
     expect(longTermGoals.top, cashSafety.top);
     expect(cashSafety.width, greaterThan(longTermGoals.width));

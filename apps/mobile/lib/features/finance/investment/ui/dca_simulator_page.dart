@@ -36,26 +36,14 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   int _years = 5;
   bool? _builderOpen;
   bool _saving = false;
+  DcaSimulationRequest? _previewRequest;
 
   @override
   void initState() {
     super.initState();
-    final request = ref.read(dcaSimulationProvider).value?.request;
-    _symbols = TextEditingController(
-      text: request == null
-          ? 'VOO'
-          : [
-              for (final allocation in request.allocations)
-                '${allocation.symbol}:${allocation.weight}',
-            ].join(', '),
-    );
-    _amount = TextEditingController(
-      text: request?.amountPerContribution.toString() ?? '500',
-    );
-    _currency = TextEditingController(text: request?.currency ?? 'USD');
-    _market = request?.market ?? _market;
-    _frequency = request?.frequency ?? _frequency;
-    _years = request?.years ?? _years;
+    _symbols = TextEditingController(text: 'VOO');
+    _amount = TextEditingController(text: '500');
+    _currency = TextEditingController(text: 'USD');
     for (final controller in [_symbols, _amount, _currency]) {
       controller.addListener(_onParametersChanged);
     }
@@ -90,18 +78,22 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ref.watch(dcaSimulationProvider);
+    final preview = _previewRequest;
+    final state = preview == null
+        ? null
+        : ref.watch(dcaPlanPreviewProvider(preview));
     final plans = ref.watch(dcaPlansProvider);
     final builderOpen = _builderOpen ?? (plans.value?.isEmpty ?? false);
     final changed =
-        state.hasValue && !_matchesRequest(state.requireValue.request);
+        state?.hasValue == true &&
+        !_matchesRequest(state!.requireValue.request);
     return AppPageScaffold(
       title: l10n.planDcaPlanTitle,
       actions: builderOpen
           ? const []
           : [
               AppHeaderAction(
-                semanticsLabel: l10n.dcaSimulatorTitle,
+                semanticsLabel: l10n.dcaPlanCreateTitle,
                 icon: const Icon(FLucideIcons.plus),
                 onPress: () => setState(() => _builderOpen = true),
               ),
@@ -129,7 +121,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
               if (builderOpen) ...[
                 const SizedBox(height: AppSpacing.s16),
                 SectionHeader.module(
-                  title: l10n.dcaSimulatorParametersTitle,
+                  title: l10n.dcaPlanCreateTitle,
                   subtitle:
                       '${_symbols.text} · ${_amount.text} ${_currency.text}',
                 ),
@@ -141,7 +133,9 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
                   market: _market,
                   frequency: _frequency,
                   years: _years,
-                  busy: state.isLoading || _saving,
+                  busy: _saving,
+                  previewBusy: state?.isLoading == true,
+                  onSave: _savePlan,
                   onMarketChanged: (value) => setState(() => _market = value),
                   onFrequencyChanged: (value) =>
                       setState(() => _frequency = value),
@@ -157,15 +151,13 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
                   ),
                   const SizedBox(height: AppSpacing.s12),
                 ],
-                state.when(
-                  loading: () => const SkeletonBox(height: 360, radius: 8),
-                  error: (error, stackTrace) =>
-                      kDefaultError(context, error, stackTrace),
-                  data: (data) => _DcaResults(
-                    state: data,
-                    onDraft: changed || _saving ? null : () => _savePlan(data),
+                if (state != null)
+                  state.when(
+                    loading: () => const SkeletonBox(height: 360, radius: 8),
+                    error: (error, stackTrace) =>
+                        kDefaultError(context, error, stackTrace),
+                    data: (data) => _DcaResults(state: data),
                   ),
-                ),
               ],
             ],
           );
@@ -175,7 +167,7 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
   }
 
   Future<void> _run() async {
-    if (ref.read(dcaSimulationProvider).isLoading || _saving) return;
+    if (_saving) return;
     if (!_formKey.currentState!.validate()) return;
     final request = DcaSimulationRequest(
       allocations: List.unmodifiable(_parseAllocations(_symbols.text)),
@@ -185,30 +177,31 @@ class _DcaSimulatorPageState extends ConsumerState<DcaSimulatorPage> {
       years: _years,
       frequency: _frequency,
     );
-    await ref.read(dcaSimulationProvider.notifier).run(request);
-    if (mounted &&
-        ref.read(dcaSimulationProvider).hasValue &&
-        _matchesRequest(request)) {
-      FocusScope.of(context).unfocus();
-    }
+    setState(() => _previewRequest = request);
+    FocusScope.of(context).unfocus();
   }
 
-  Future<void> _savePlan(DcaSimulationState state) async {
-    if (_saving || !_matchesRequest(state.request)) return;
-    final allocations = state.request.allocations;
+  Future<void> _savePlan() async {
+    if (_saving || !(_formKey.currentState?.validate() ?? false)) return;
+    final allocations = _parseAllocations(_symbols.text);
     if (allocations.isEmpty) return;
+    final amount = Decimal.parse(_amount.text.trim());
+    final currency = _currency.text.trim().toUpperCase();
+    final market = _market;
+    final frequency = _frequency;
+    final years = _years;
     setState(() => _saving = true);
     final now = DateTime.now().toUtc();
     try {
       final repository = await ref.read(dcaPlanRepositoryProvider.future);
       await repository.create(
         allocations: allocations,
-        amountPerContribution: state.request.amountPerContribution,
-        currency: state.request.currency,
-        market: state.request.market,
-        frequency: state.request.frequency,
+        amountPerContribution: amount,
+        currency: currency,
+        market: market,
+        frequency: frequency,
         nextDueAt: now,
-        endAt: DateTime.utc(now.year + state.request.years, now.month, now.day),
+        endAt: DateTime.utc(now.year + years, now.month, now.day),
       );
       if (mounted) {
         setState(() => _builderOpen = false);
@@ -494,6 +487,8 @@ class _DcaControls extends StatelessWidget {
     required this.onFrequencyChanged,
     required this.onYearsChanged,
     required this.onRun,
+    required this.onSave,
+    required this.previewBusy,
   });
 
   final GlobalKey<FormState> formKey;
@@ -508,6 +503,8 @@ class _DcaControls extends StatelessWidget {
   final ValueChanged<DcaFrequency> onFrequencyChanged;
   final ValueChanged<int> onYearsChanged;
   final VoidCallback onRun;
+  final VoidCallback onSave;
+  final bool previewBusy;
 
   @override
   Widget build(BuildContext context) {
@@ -620,21 +617,29 @@ class _DcaControls extends StatelessWidget {
                         if (value != null) onYearsChanged(value);
                       },
                     ),
-                    label: Text(l10n.dcaSimulatorWindowField),
+                    label: Text(l10n.dcaPlanDurationLabel),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.s16),
+            AppBusyButton(
+              key: const ValueKey('dca-plan-save'),
+              label: l10n.dcaSimulatorDraftAction,
+              busy: busy,
+              onPress: onSave,
+            ),
+            const SizedBox(height: AppSpacing.s8),
             FButton(
-              onPress: busy ? null : onRun,
+              variant: FButtonVariant.outline,
+              onPress: busy || previewBusy ? null : onRun,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(FLucideIcons.workflow, size: AppIconSizes.h18),
                   const SizedBox(width: AppSpacing.s6),
-                  Text(l10n.dcaSimulatorRunAction),
+                  Flexible(child: Text(l10n.dcaPlanPreviewAction)),
                 ],
               ),
             ),
@@ -646,10 +651,9 @@ class _DcaControls extends StatelessWidget {
 }
 
 class _DcaResults extends StatelessWidget {
-  const _DcaResults({required this.state, required this.onDraft});
+  const _DcaResults({required this.state});
 
   final DcaSimulationState state;
-  final VoidCallback? onDraft;
 
   @override
   Widget build(BuildContext context) {
@@ -712,15 +716,6 @@ class _DcaResults extends StatelessWidget {
               const SizedBox(height: AppSpacing.s14),
               for (final position in result.positions)
                 _PositionRow(position: position, currency: result.currency),
-              const SizedBox(height: AppSpacing.s12),
-              SizedBox(
-                width: double.infinity,
-                child: FButton(
-                  variant: FButtonVariant.secondary,
-                  onPress: onDraft,
-                  child: Text(l10n.dcaSimulatorDraftAction),
-                ),
-              ),
             ],
           ),
         ),

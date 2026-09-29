@@ -289,8 +289,12 @@ snapshots fail closed rather than silently starting a different execution.
 
 Proposal `readyPlan()` results expose the same approval envelope. Proposal
 approve/reject/cancel actions and `ask_user` selections persist the same
-`InteractionResponse` shape while retaining legacy `DecisionSelection` and
-`applyState` fields for compatibility.
+`InteractionResponse` shape. `DecisionSelection` still supplies decision-card
+rendering, conversation context, and checkpoint summaries. `applyState` still
+tracks proposal execution, failure recovery, and undo. Removing either field
+requires migrating its readers and writers and preserving existing-message
+loading, recovery, and undo behavior; adopting `InteractionResponse` alone does
+not replace these application states.
 
 ## Interaction Entrypoints
 

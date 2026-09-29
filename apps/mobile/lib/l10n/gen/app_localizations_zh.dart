@@ -356,9 +356,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get planCashSafetyTitle => '现金安全';
 
   @override
-  String get planLongTermGoalsTitle => '目标与场景';
-
-  @override
   String get planInvestmentPlanTitle => '进阶投资';
 
   @override
@@ -2218,9 +2215,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dcaSimulatorTitle => '定投模拟器';
 
   @override
-  String get dcaSimulatorParametersTitle => '模拟参数';
-
-  @override
   String get dcaSimulatorParametersChanged => '参数已变更，请重新计算后再保存计划。';
 
   @override
@@ -2303,9 +2297,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dcaSimulatorWindow5y => '5 年';
-
-  @override
-  String get dcaSimulatorRunAction => '运行模拟';
 
   @override
   String get dcaSimulatorDraftAction => '保存周期计划';
@@ -15341,9 +15332,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moneyRunwayHistoricalError => '近期预测误差';
 
   @override
-  String get moneyRunwayScenariosTitle => '压力测试';
-
-  @override
   String get moneyRunwayScenarioPurchase => '立即支出一个月生活费';
 
   @override
@@ -16548,4 +16536,28 @@ class AppLocalizationsZh extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get dcaPlanCreateTitle => '创建定投计划';
+
+  @override
+  String get dcaPlanDurationLabel => '计划期限';
+
+  @override
+  String get dcaPlanPreviewAction => '查看历史模拟（可选）';
+
+  @override
+  String get planGoalsAndContributionsTitle => '目标与投入';
+
+  @override
+  String get planAdvancedToolsHint => '再平衡与收入策略';
+
+  @override
+  String get planSimulateChangesTitle => '模拟变化';
+
+  @override
+  String get planCompareLifeEventsAction => '比较并保存人生事件方案';
+
+  @override
+  String get planCompareLifeEventsHint => '比较大额消费、职业空档或购房的影响，并保存决策以便复盘。';
 }

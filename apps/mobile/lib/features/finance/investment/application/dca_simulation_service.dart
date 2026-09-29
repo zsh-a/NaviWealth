@@ -1,6 +1,5 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/core/async/async_notifier_convention.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
@@ -8,9 +7,10 @@ import 'package:naviwealth/features/finance/market/domain/market_data_service.da
 
 import '../domain/dca/dca_simulator.dart';
 
-final dcaSimulationProvider =
-    AsyncNotifierProvider<DcaSimulationNotifier, DcaSimulationState>(
-      DcaSimulationNotifier.new,
+/// Explicit, on-demand preview; creating a plan never loads market history.
+final dcaPlanPreviewProvider = FutureProvider.autoDispose
+    .family<DcaSimulationState, DcaSimulationRequest>(
+      (ref, request) => _simulateDca(ref, request),
     );
 
 class DcaSimulationRequest {
@@ -67,67 +67,49 @@ class DcaSimulationState {
   bool get isStale => freshness == DataFreshness.stale;
 }
 
-class DcaSimulationNotifier
-    extends ConventionalAsyncNotifier<DcaSimulationState> {
-  DcaSimulationRequest _request = DcaSimulationRequest(
-    allocations: [DcaAllocation(symbol: 'VOO', weight: Decimal.one)],
-    market: AssetMarket.usStock,
-    amountPerContribution: Decimal.fromInt(500),
-    currency: 'USD',
-    years: 5,
-    frequency: DcaFrequency.monthly,
+Future<DcaSimulationState> _simulateDca(
+  Ref ref,
+  DcaSimulationRequest request,
+) async {
+  final market = await ref.watch(marketDataServiceProvider.future);
+  final now = ref.watch(clockProvider).now().toUtc();
+  final to = DateTime.utc(now.year, now.month);
+  final from = DateTime.utc(to.year - request.years, to.month);
+
+  var combinedFreshness = DataFreshness.cachedFresh;
+  final priceSeries = <String, List<DcaPricePoint>>{};
+  for (final symbol in request.symbols) {
+    final response = await market.getHistorical(
+      symbol,
+      from: from,
+      to: to,
+      interval: BarInterval.month,
+      market: request.market,
+    );
+    combinedFreshness = _leastFresh(combinedFreshness, response.freshness);
+    final points = [
+      for (final bar in response.data)
+        DcaPricePoint(asOf: bar.asOf, close: bar.adjustedClose ?? bar.close),
+    ];
+    priceSeries[symbol] = points;
+  }
+
+  final result = const DcaSimulator().simulate(
+    DcaSimulationInput(
+      allocations: request.allocations,
+      amountPerContribution: request.amountPerContribution,
+      currency: request.currency,
+      from: from,
+      to: to,
+      frequency: request.frequency,
+      priceSeries: priceSeries,
+    ),
   );
-
-  @override
-  Future<DcaSimulationState> fetch() => _simulate(_request);
-
-  Future<void> run(DcaSimulationRequest request) async {
-    _request = request;
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() => _simulate(request));
-  }
-
-  Future<DcaSimulationState> _simulate(DcaSimulationRequest request) async {
-    final market = await ref.watch(marketDataServiceProvider.future);
-    final now = ref.watch(clockProvider).now().toUtc();
-    final to = DateTime.utc(now.year, now.month);
-    final from = DateTime.utc(to.year - request.years, to.month);
-
-    var combinedFreshness = DataFreshness.cachedFresh;
-    final priceSeries = <String, List<DcaPricePoint>>{};
-    for (final symbol in request.symbols) {
-      final response = await market.getHistorical(
-        symbol,
-        from: from,
-        to: to,
-        interval: BarInterval.month,
-        market: request.market,
-      );
-      combinedFreshness = _leastFresh(combinedFreshness, response.freshness);
-      final points = [
-        for (final bar in response.data)
-          DcaPricePoint(asOf: bar.asOf, close: bar.adjustedClose ?? bar.close),
-      ];
-      priceSeries[symbol] = points;
-    }
-
-    final result = const DcaSimulator().simulate(
-      DcaSimulationInput(
-        allocations: request.allocations,
-        amountPerContribution: request.amountPerContribution,
-        currency: request.currency,
-        from: from,
-        to: to,
-        frequency: request.frequency,
-        priceSeries: priceSeries,
-      ),
-    );
-    return DcaSimulationState(
-      request: request,
-      result: result,
-      freshness: combinedFreshness,
-    );
-  }
+  return DcaSimulationState(
+    request: request,
+    result: result,
+    freshness: combinedFreshness,
+  );
 }
 
 DataFreshness _leastFresh(DataFreshness a, DataFreshness b) {

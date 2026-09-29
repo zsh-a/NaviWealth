@@ -575,7 +575,7 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(title: l10n.moneyRunwayScenariosTitle),
+        SectionHeader(title: l10n.planSimulateChangesTitle),
         const SizedBox(height: AppSpacing.s8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -585,6 +585,14 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
               onPress: _configureCustomScenario,
               child: Text(l10n.moneyRunwayCustomScenarioAction),
             ),
+            const SizedBox(height: AppSpacing.s8),
+            FButton(
+              key: const ValueKey('runway-life-event-scenarios'),
+              variant: FButtonVariant.ghost,
+              onPress: () => context.push(FinanceRoutes.planLifeEvents),
+              child: Flexible(child: Text(l10n.planCompareLifeEventsAction)),
+            ),
+            Text(l10n.planCompareLifeEventsHint, style: context.captionStyle),
             if (_customResult case final result?) ...[
               const SizedBox(height: AppSpacing.s8),
               SoftCard.raised(

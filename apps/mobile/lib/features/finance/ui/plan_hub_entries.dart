@@ -180,7 +180,7 @@ _PlanEntrySpec _dcaEntry(
   AppLocalizations l10n,
   PlanningHubStatus status,
 ) => _PlanEntrySpec(
-  group: _PlanEntryGroup.investmentPlan,
+  group: _PlanEntryGroup.longTermGoals,
   icon: FLucideIcons.calendarClock,
   title: l10n.planDcaPlanTitle,
   attentionTitle: l10n.planRecordContributionAction,

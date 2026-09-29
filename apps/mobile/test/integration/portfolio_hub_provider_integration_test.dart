@@ -34,13 +34,13 @@ void main() {
       );
       final transitions = <AsyncValue<PortfolioHubState>>[];
       final subscription = env.container.listen<AsyncValue<PortfolioHubState>>(
-        portfolioHubProvider,
+        portfolioHubCoreProvider,
         (_, next) => transitions.add(next),
         fireImmediately: true,
       );
       addTearDown(subscription.close);
 
-      await env.container.read(portfolioHubProvider.future);
+      await env.container.read(portfolioHubCoreProvider.future);
       await Future<void>.delayed(const Duration(seconds: 1));
 
       final firstData = transitions.indexWhere((value) => value.hasValue);

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:naviwealth/core/sync/hlc.dart';
 
 import '../../core/persistence/app_database.dart';
 import '../auth/domain_scope.dart';
@@ -64,12 +63,6 @@ class BackupService {
     required AppDatabase db,
     required BackupCodec codec,
     required OutboxStore outbox,
-    // Retained for call-site compatibility. The sync-v3 outbox is a pure
-    // dirty-pointer log, so the restore enqueue no longer needs a device id
-    // or an HLC stamp — the sync engine reads each restored row's current
-    // state (including its own `hlc`) directly at push time.
-    String? deviceId,
-    Future<Hlc> Function()? stampHlc,
     AppLogger? logger,
   }) : _db = db,
        _codec = codec,

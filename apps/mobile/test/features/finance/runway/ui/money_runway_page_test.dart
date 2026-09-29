@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/finance/runway/data/money_runway_providers.dart';
 import 'package:naviwealth/features/finance/runway/data/runway_forecast_repository.dart';
 import 'package:naviwealth/features/finance/runway/domain/money_runway.dart';
@@ -58,6 +60,20 @@ void main() {
       dataCompleteness: 1,
     );
 
+    final router = GoRouter(
+      initialLocation: FinanceRoutes.planRunway,
+      routes: [
+        GoRoute(
+          path: FinanceRoutes.planRunway,
+          builder: (_, _) => const MoneyRunwayPage(),
+        ),
+        GoRoute(
+          path: FinanceRoutes.planLifeEvents,
+          builder: (_, _) => const Scaffold(body: Text('life-event-workspace')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -67,15 +83,14 @@ void main() {
                 RunwayForecastRepository(db: db, ownerUserId: 'widget-test'),
           ),
         ],
-        child: MaterialApp(
+        child: MaterialApp.router(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           locale: const Locale('en', 'US'),
-          home: FTheme(
-            data: FTheme.neutral.light.desktop,
-            child: const MoneyRunwayPage(),
-          ),
+          routerConfig: router,
+          builder: (context, child) =>
+              FTheme(data: FTheme.neutral.light.desktop, child: child!),
         ),
       ),
     );
@@ -117,5 +132,14 @@ void main() {
     await tester.tap(find.text('Run scenario'));
     await tester.pumpAndSettle();
     expect(find.text('Custom minimum balance'), findsOneWidget);
+    final scenarios = find.byKey(const ValueKey('runway-life-event-scenarios'));
+    await tester.ensureVisible(scenarios);
+    await tester.tap(scenarios);
+    await tester.pumpAndSettle();
+    expect(find.text('life-event-workspace'), findsOneWidget);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('Custom minimum balance'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

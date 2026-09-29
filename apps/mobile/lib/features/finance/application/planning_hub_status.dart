@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../cashflow/domain/budget_signal.dart';
 import '../data/repositories/providers.dart';
+import '../income_strategy/data/providers.dart';
 import '../investment/data/dca_plan_providers.dart';
 import '../life_events/data/financial_decision_providers.dart';
 import '../options_income/data/providers.dart';
@@ -32,6 +33,7 @@ final class PlanningHubStatus {
     required this.isLoading,
     required this.hasError,
     this.unavailableSources = const {},
+    this.hasIncomeStrategies = false,
   });
 
   const PlanningHubStatus.loading()
@@ -49,8 +51,10 @@ final class PlanningHubStatus {
       wheelOpenPositionCount = null,
       isLoading = true,
       hasError = false,
-      unavailableSources = const {};
+      unavailableSources = const {},
+      hasIncomeStrategies = false;
 
+  final bool hasIncomeStrategies;
   final PlanningRunwayStatus? runway;
   final int? pendingLifeEventReviews;
   final PlanningRebalanceStatus? rebalance;
@@ -81,6 +85,7 @@ final planningHubStatusProvider = Provider.autoDispose<PlanningHubStatus>((
   final budgetSummaryAsync = ref.watch(monthlyBudgetSummaryProvider(month));
   final dcaPlansAsync = ref.watch(dcaPlansProvider);
   final wheelCyclesAsync = ref.watch(wheelLifecyclesProvider);
+  final incomeAsync = ref.watch(portfolioIncomeStrategyProvider);
 
   final runway = runwayAsync.value;
   final decisions = decisionsAsync.value;
@@ -96,6 +101,7 @@ final planningHubStatusProvider = Provider.autoDispose<PlanningHubStatus>((
     budgetSummaryAsync,
     dcaPlansAsync,
     wheelCyclesAsync,
+    incomeAsync,
   ];
 
   final enabledDcaPlans =
@@ -104,6 +110,7 @@ final planningHubStatusProvider = Provider.autoDispose<PlanningHubStatus>((
   final nextDca = enabledDcaPlans?.firstOrNull;
 
   return PlanningHubStatus(
+    hasIncomeStrategies: incomeAsync.value?.underlyings.isNotEmpty ?? false,
     runway: runway == null
         ? null
         : !runway.hasData
@@ -148,7 +155,8 @@ final planningHubStatusProvider = Provider.autoDispose<PlanningHubStatus>((
         PlanningSource.rebalance,
       if (budgetSummaryAsync.hasError) PlanningSource.budget,
       if (dcaPlansAsync.hasError) PlanningSource.dca,
-      if (wheelCyclesAsync.hasError) PlanningSource.income,
+      if (wheelCyclesAsync.hasError || incomeAsync.hasError)
+        PlanningSource.income,
     },
   );
 });

@@ -698,12 +698,6 @@ abstract class AppLocalizations {
   /// **'Cash safety'**
   String get planCashSafetyTitle;
 
-  /// Plan hub section for financial independence and life-event scenarios
-  ///
-  /// In en, this message translates to:
-  /// **'Goals & scenarios'**
-  String get planLongTermGoalsTitle;
-
   /// Plan hub section for optional hands-on investment tools
   ///
   /// In en, this message translates to:
@@ -3941,12 +3935,6 @@ abstract class AppLocalizations {
   /// **'DCA simulator'**
   String get dcaSimulatorTitle;
 
-  /// No description provided for @dcaSimulatorParametersTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Simulation parameters'**
-  String get dcaSimulatorParametersTitle;
-
   /// No description provided for @dcaSimulatorParametersChanged.
   ///
   /// In en, this message translates to:
@@ -4114,12 +4102,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'5 years'**
   String get dcaSimulatorWindow5y;
-
-  /// No description provided for @dcaSimulatorRunAction.
-  ///
-  /// In en, this message translates to:
-  /// **'Run simulation'**
-  String get dcaSimulatorRunAction;
 
   /// No description provided for @dcaSimulatorDraftAction.
   ///
@@ -27186,12 +27168,6 @@ abstract class AppLocalizations {
   /// **'Recent forecast error'**
   String get moneyRunwayHistoricalError;
 
-  /// No description provided for @moneyRunwayScenariosTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Stress test'**
-  String get moneyRunwayScenariosTitle;
-
   /// No description provided for @moneyRunwayScenarioPurchase.
   ///
   /// In en, this message translates to:
@@ -29343,6 +29319,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{code, select, model_unavailable{Configure a model before running this task.} no_tools{No read-only tools are available for this domain.} scheduled_task_timeout{Execution reached its time limit. Check the tool steps and model connection before retrying.} tool_timeout{The tool timed out.} invalid_report{The model did not return a valid evidence-based report.} scheduled_task_user_cancelled{You stopped this execution.} scheduled_task_backgrounded{Execution stopped because the app left the foreground.} scheduled_task_interrupted{The previous execution was interrupted. It will not restart automatically.} scheduled_task_access_revoked{Account or domain access changed.} scheduled_task_disabled{This task has been disabled.} scheduled_task_changed{The task changed during execution.} other{Execution did not complete. Check the model connection and execution details before retrying.}}'**
   String agentExecutionError(String code);
+
+  /// No description provided for @dcaPlanCreateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create investment plan'**
+  String get dcaPlanCreateTitle;
+
+  /// No description provided for @dcaPlanDurationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan duration'**
+  String get dcaPlanDurationLabel;
+
+  /// No description provided for @dcaPlanPreviewAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview historical performance (optional)'**
+  String get dcaPlanPreviewAction;
+
+  /// No description provided for @planGoalsAndContributionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals & contributions'**
+  String get planGoalsAndContributionsTitle;
+
+  /// No description provided for @planAdvancedToolsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Rebalancing and income strategies'**
+  String get planAdvancedToolsHint;
+
+  /// No description provided for @planSimulateChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulate a change'**
+  String get planSimulateChangesTitle;
+
+  /// No description provided for @planCompareLifeEventsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare and save a life-event decision'**
+  String get planCompareLifeEventsAction;
+
+  /// No description provided for @planCompareLifeEventsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare a large purchase, career break or home purchase, then save a decision for review.'**
+  String get planCompareLifeEventsHint;
 }
 
 class _AppLocalizationsDelegate

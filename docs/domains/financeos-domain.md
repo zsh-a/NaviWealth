@@ -76,15 +76,26 @@ rounding.
 
 ### Investment Interaction
 
-The Plan hub keeps investment workflow entries visible, with a compact
-highest-priority attention item and a header-level all-items sheet action.
-Stable workflow rows retain their specific status instead of a generic review
-badge. Optional brief slots contribute spacing only when present. Cash runway
-keeps six upcoming flows in its overview and opens the full lazy timeline in
-a detail sheet; the stress-test entry is directly visible. Dividend history
-uses year selection rather than reveal/collapse. Phone liability details keep
-recent/upcoming installments in the overview and a live, year-filtered full
-schedule in a sheet; payment and undo actions retain their original workflow.
+The Plan hub keeps cash safety and goals/contributions visible. Advanced
+rebalancing and income tools live behind a disclosure, expanded automatically
+for active income strategies, Wheel lifecycles, active/attention rebalancing,
+or unavailable advanced-source status. Due life-event reviews remain in the
+attention list; routine scenario access is consolidated under the cash-runway
+"Simulate a change" section alongside the custom stress test. Existing scenario
+routes and saved decisions remain available.
+
+DCA plans can be created directly from validated inputs without requesting
+market history. Historical simulation is an explicit optional preview; stale
+preview parameters and failed previews never block saving the current plan.
+The plan duration controls the plan end date; a preview uses the same number
+of historical years. Cash runway retains six upcoming flows in its overview
+and a full timeline in the detail sheet. Stable workflow rows retain specific
+status. The compact attention section keeps its highest-priority item and an
+all-items sheet. Optional brief slots contribute spacing only when present.
+Dividend history uses year selection rather than reveal/collapse. Phone
+liability details keep recent/upcoming installments in the overview and a
+live, year-filtered full schedule in a sheet; payment and undo actions retain
+their original workflow.
 
 Portfolio scope, investment-plan access, and selected-portfolio management share
 one compact toolbar. Supporting cost and gain figures are subordinate to the

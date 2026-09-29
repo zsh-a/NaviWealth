@@ -213,17 +213,7 @@ void main() {
   }
 
   BackupService makeService(AppDatabase db) {
-    return BackupService(
-      db: db,
-      codec: codec,
-      outbox: DriftOutboxStore(db),
-      deviceId: testDeviceId,
-      stampHlc: () async => Hlc(
-        wallMillis: DateTime.now().millisecondsSinceEpoch,
-        counter: 0,
-        nodeId: testDeviceId,
-      ),
-    );
+    return BackupService(db: db, codec: codec, outbox: DriftOutboxStore(db));
   }
 
   Future<Uint8List> encryptPayload(

@@ -377,9 +377,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get planCashSafetyTitle => 'Cash safety';
 
   @override
-  String get planLongTermGoalsTitle => 'Goals & scenarios';
-
-  @override
   String get planInvestmentPlanTitle => 'Advanced investing';
 
   @override
@@ -2324,9 +2321,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dcaSimulatorTitle => 'DCA simulator';
 
   @override
-  String get dcaSimulatorParametersTitle => 'Simulation parameters';
-
-  @override
   String get dcaSimulatorParametersChanged =>
       'Parameters changed. Run again before saving this plan.';
 
@@ -2412,9 +2406,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dcaSimulatorWindow5y => '5 years';
-
-  @override
-  String get dcaSimulatorRunAction => 'Run simulation';
 
   @override
   String get dcaSimulatorDraftAction => 'Save recurring plan';
@@ -16204,9 +16195,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moneyRunwayHistoricalError => 'Recent forecast error';
 
   @override
-  String get moneyRunwayScenariosTitle => 'Stress test';
-
-  @override
   String get moneyRunwayScenarioPurchase => 'Spend one month of expenses now';
 
   @override
@@ -17484,4 +17472,31 @@ class AppLocalizationsEn extends AppLocalizations {
     });
     return '$_temp0';
   }
+
+  @override
+  String get dcaPlanCreateTitle => 'Create investment plan';
+
+  @override
+  String get dcaPlanDurationLabel => 'Plan duration';
+
+  @override
+  String get dcaPlanPreviewAction =>
+      'Preview historical performance (optional)';
+
+  @override
+  String get planGoalsAndContributionsTitle => 'Goals & contributions';
+
+  @override
+  String get planAdvancedToolsHint => 'Rebalancing and income strategies';
+
+  @override
+  String get planSimulateChangesTitle => 'Simulate a change';
+
+  @override
+  String get planCompareLifeEventsAction =>
+      'Compare and save a life-event decision';
+
+  @override
+  String get planCompareLifeEventsHint =>
+      'Compare a large purchase, career break or home purchase, then save a decision for review.';
 }

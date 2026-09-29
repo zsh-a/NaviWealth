@@ -106,7 +106,7 @@ void main() {
     expect(find.text(l10n.planAttentionTitle), findsOneWidget);
     expect(find.byType(SkeletonBox), findsWidgets);
     expect(find.text(l10n.planCashSafetyTitle), findsOneWidget);
-    expect(find.text(l10n.planLongTermGoalsTitle), findsOneWidget);
+    expect(find.text(l10n.planGoalsAndContributionsTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
@@ -146,9 +146,9 @@ void main() {
     expect(find.text(l10n.planBudgetSectionTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
     expect(find.text(l10n.planInvestmentPlanTitle), findsOneWidget);
-    expect(find.text(l10n.planRebalanceSectionTitle), findsOneWidget);
+    expect(find.text(l10n.planRebalanceSectionTitle), findsNothing);
     expect(find.text(l10n.planDcaPlanTitle), findsOneWidget);
-    expect(find.text(l10n.lifeEventScenariosTitle), findsWidgets);
+    expect(find.text(l10n.lifeEventScenariosTitle), findsNothing);
     expect(find.text('Planning tools'), findsNothing);
     expect(find.text(l10n.incomePlannerTitle), findsNothing);
   });
@@ -204,8 +204,8 @@ void main() {
     expect(find.text('On track'), findsWidgets);
     expect(
       find.text('2 reviews due'),
-      findsNWidgets(2),
-      reason: 'The priority action and its stable entry both retain specific status.',
+      findsOneWidget,
+      reason: 'Due reviews remain reachable without a duplicate module entry.',
     );
     expect(find.text('7.5% drift'), findsOneWidget);
     expect(find.text('62% used this month'), findsOneWidget);
@@ -270,7 +270,7 @@ void main() {
     expect(find.text('Recurring investment plan'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('plan-investment-tools-disclosure')),
-      findsNothing,
+      findsOneWidget,
     );
     expect(tester.takeException(), isNull);
   });
@@ -356,9 +356,35 @@ void main() {
     await tester.pumpWidget(_wrapRouter(_view(FireGoal.unset())));
     await tester.pump();
 
+    expect(find.text(l10n.incomeStrategyTitle), findsNothing);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('plan-investment-tools-disclosure')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey('plan-investment-tools-disclosure')),
+    );
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text(l10n.incomeStrategyTitle));
     await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.incomeStrategyTitle).last);
+    await tester.pumpAndSettle();
+    expect(find.text('income-route'), findsOneWidget);
+  });
+
+  testWidgets('existing income strategies keep management visible', (
+    tester,
+  ) async {
+    final l = await AppLocalizations.delegate.load(const Locale('en'));
+    await tester.pumpWidget(
+      _wrapRouter(
+        _view(FireGoal.unset()),
+        status: _settledStatus(hasIncomeStrategies: true),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(l.incomeStrategyTitle), findsOneWidget);
+    await tester.ensureVisible(find.text(l.incomeStrategyTitle));
+    await tester.tap(find.text(l.incomeStrategyTitle));
     await tester.pumpAndSettle();
     expect(find.text('income-route'), findsOneWidget);
   });
@@ -427,8 +453,10 @@ PlanningHubStatus _settledStatus({
   PlanningRebalanceStatus rebalance = PlanningRebalanceStatus.balanced,
   BudgetSignal budgetSignal = BudgetSignal.comfortable,
   bool dcaDue = false,
+  bool hasIncomeStrategies = false,
   Set<PlanningSource> unavailableSources = const {},
 }) => PlanningHubStatus(
+  hasIncomeStrategies: hasIncomeStrategies,
   runway: runway,
   pendingLifeEventReviews: pendingLifeEventReviews,
   rebalance: rebalance,

@@ -85,7 +85,6 @@ void main() {
         db: sourceDb,
         codec: BackupCodec(),
         outbox: DriftOutboxStore(sourceDb),
-        deviceId: deviceId,
       ).exportBackup(passphrase: passphrase, overrideIterations: 1000);
       expect(backupBytes, isNotEmpty);
 
@@ -133,7 +132,6 @@ void main() {
               db: targetDb,
               codec: BackupCodec(),
               outbox: DriftOutboxStore(targetDb),
-              deviceId: deviceId,
             );
             return ({
               required String passphrase,

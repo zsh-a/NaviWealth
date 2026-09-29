@@ -153,8 +153,8 @@ Release history belongs in Git tags and release notes.
 
 ## FinanceOS Boundaries
 
-- Finance feature slices may keep their legacy sibling layout, but new
-  cross-domain composition belongs in `features/finance/` or `app/`.
+- Finance feature slices and Finance composition belong in `features/finance/`;
+  cross-domain composition belongs in `app/`.
 - Finance tools and agents belong in Finance-owned feature paths and are
   exported through the Finance `DomainPack`.
 - Finance rows use `fin:` only at the sync boundary.

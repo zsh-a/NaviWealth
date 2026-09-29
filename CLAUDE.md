@@ -73,7 +73,7 @@ apps/backend/src/
 ## Architecture Rules
 
 - `core/` is domain-neutral. It must not import `features/<domain>/` or domain business entities.
-- Domain business code lives under `features/<domain>/`. Finance slices may be legacy sibling features, but new cross-domain work should use `features/finance/` composition seams or app-level composition.
+- Domain business code lives under `features/<domain>/`, including all Finance slices under `features/finance/`. Finance composition belongs in `features/finance/`; cross-domain composition belongs in `app/`.
 - `app/` is the composition root. It may import multiple domains to assemble routers, memory indexers, domain packs, AI tools, agents, and provider overrides.
 - AI contracts and runtime stay in `core/ai/`; concrete domain tools live in `features/<domain>/ai_tools/` and are exported by `features/<domain>/<domain>_ai_tools.dart`.
 - `core/persistence/` is the shared Drift adapter. Domain repositories own domain table access. Cross-domain infrastructure may use only its own tables.

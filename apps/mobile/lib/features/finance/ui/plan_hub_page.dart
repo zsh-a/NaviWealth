@@ -27,8 +27,8 @@ part 'plan_hub_entries.dart';
 
 /// Finance planning workspace.
 ///
-/// The surface is deliberately action-first: due and risky work is promoted,
-/// while goals and investment strategies stay visible as stable entry points.
+/// Due and risky work is promoted alongside cash safety and contribution goals.
+/// Advanced investing expands when active work needs access or the user opens it.
 class PlanHubPage extends ConsumerWidget {
   const PlanHubPage({super.key});
 
@@ -69,7 +69,7 @@ class PlanHubPage extends ConsumerWidget {
             stage: showAttention
                 ? _AttentionSection(status: status, items: attentionItems)
                 : null,
-            summaryTiles: _planningSummaryTiles(l10n, entries),
+            summaryTiles: _planningSummaryTiles(l10n, entries, status),
           ),
         ),
       ),
@@ -109,12 +109,17 @@ Future<void> _refreshPlanningWorkspace(WidgetRef ref) async {
 List<AdaptiveSummaryTile> _planningSummaryTiles(
   AppLocalizations l10n,
   List<_PlanEntrySpec> entries,
+  PlanningHubStatus status,
 ) {
   final cashSafety = entries
       .where((entry) => entry.group == _PlanEntryGroup.cashSafety)
       .toList(growable: false);
   final longTermGoals = entries
-      .where((entry) => entry.group == _PlanEntryGroup.longTermGoals)
+      .where(
+        (entry) =>
+            entry.group == _PlanEntryGroup.longTermGoals &&
+            entry.path != FinanceRoutes.planLifeEvents,
+      )
       .toList(growable: false);
   final investmentPlan = entries
       .where((entry) => entry.group == _PlanEntryGroup.investmentPlan)
@@ -132,16 +137,21 @@ List<AdaptiveSummaryTile> _planningSummaryTiles(
       role: AdaptiveSummaryTileRole.standard,
       child: _PlanSection(
         key: const ValueKey('plan-long-term-goals-section'),
-        title: l10n.planLongTermGoalsTitle,
+        title: l10n.planGoalsAndContributionsTitle,
         entries: longTermGoals,
       ),
     ),
     AdaptiveSummaryTile(
       role: AdaptiveSummaryTileRole.standard,
-      child: _PlanSection(
-        key: const ValueKey('plan-investment-plan-section'),
-        title: l10n.planInvestmentPlanTitle,
+      child: _AdvancedPlanSection(
         entries: investmentPlan,
+        active:
+            investmentPlan.any((entry) => entry.requiresAttention) ||
+            status.rebalance == PlanningRebalanceStatus.active ||
+            status.hasIncomeStrategies ||
+            (status.wheelCycleCount ?? 0) > 0 ||
+            status.unavailableSources.contains(PlanningSource.income) ||
+            status.unavailableSources.contains(PlanningSource.rebalance),
       ),
     ),
   ];
@@ -311,6 +321,38 @@ class _PlanRow extends StatelessWidget {
       titleMaxLines: 2,
       subtitleMaxLines: 2,
       onTap: () => context.push(spec.path),
+    );
+  }
+}
+
+/// Advanced tools stay reachable without competing with routine cash planning.
+class _AdvancedPlanSection extends StatefulWidget {
+  const _AdvancedPlanSection({required this.entries, required this.active});
+  final List<_PlanEntrySpec> entries;
+  final bool active;
+  @override
+  State<_AdvancedPlanSection> createState() => _AdvancedPlanSectionState();
+}
+
+class _AdvancedPlanSectionState extends State<_AdvancedPlanSection> {
+  bool? _expanded;
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final open = _expanded ?? widget.active;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppDisclosureHeader(
+          key: const ValueKey('plan-investment-tools-disclosure'),
+          title: l.planInvestmentPlanTitle,
+          subtitle: l.planAdvancedToolsHint,
+          expanded: open,
+          onToggle: () => setState(() => _expanded = !open),
+        ),
+        if (open)
+          for (final entry in widget.entries) _PlanRow(spec: entry),
+      ],
     );
   }
 }

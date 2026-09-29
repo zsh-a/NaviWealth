@@ -211,7 +211,7 @@ void main() {
             investmentPortfolioRepositoryProvider.overrideWith(
               (_) async => repository,
             ),
-            portfolioHubProvider.overrideWith(
+            portfolioHubCoreProvider.overrideWith(
               () => _StaticPortfolioHubNotifier(state),
             ),
             investmentPortfoliosProvider.overrideWith(
@@ -930,7 +930,7 @@ void main() {
     final notifier = _FailingPortfolioHubNotifier();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [portfolioHubProvider.overrideWith(() => notifier)],
+        overrides: [portfolioHubCoreProvider.overrideWith(() => notifier)],
         child: FTheme(
           data: FTheme.neutral.light.desktop,
           child: MaterialApp(
@@ -1020,7 +1020,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            portfolioHubProvider.overrideWith(
+            portfolioHubCoreProvider.overrideWith(
               () => _StaticPortfolioHubNotifier(state),
             ),
             portfolioHubInsightsProvider.overrideWith(
@@ -1127,7 +1127,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          portfolioHubProvider.overrideWith(
+          portfolioHubCoreProvider.overrideWith(
             () => _StaticPortfolioHubNotifier(state),
           ),
           portfolioHubInsightsProvider.overrideWith(
@@ -1340,7 +1340,7 @@ class _EmptyPortfolioInsightsNotifier extends PortfolioHubInsightsNotifier {
   );
 }
 
-class _FailingPortfolioHubNotifier extends PortfolioHubNotifier {
+class _FailingPortfolioHubNotifier extends PortfolioHubCoreNotifier {
   int fetchCount = 0;
 
   @override
@@ -1350,7 +1350,7 @@ class _FailingPortfolioHubNotifier extends PortfolioHubNotifier {
   }
 }
 
-class _StaticPortfolioHubNotifier extends PortfolioHubNotifier {
+class _StaticPortfolioHubNotifier extends PortfolioHubCoreNotifier {
   _StaticPortfolioHubNotifier(this.value);
 
   final PortfolioHubState value;
