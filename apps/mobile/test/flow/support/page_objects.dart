@@ -800,6 +800,7 @@ class PlanPageObject {
   }
 
   Future<void> openRebalance() async {
+    await _expandAdvancedInvesting();
     await _openPlanAction('Rebalance');
   }
 
@@ -808,7 +809,24 @@ class PlanPageObject {
   }
 
   Future<void> openIncomeStrategy() async {
+    await _expandAdvancedInvesting();
     await _openPlanAction('Income strategy');
+  }
+
+  Future<void> _expandAdvancedInvesting() async {
+    final disclosure = find.byKey(
+      const ValueKey('plan-investment-tools-disclosure'),
+    );
+    await tester.scrollUntilVisible(
+      disclosure,
+      200,
+      scrollable: find.byType(Scrollable).hitTestable().first,
+    );
+    await settle(tester);
+    if (!tester.widget<AppDisclosureHeader>(disclosure).expanded) {
+      await tester.tap(disclosure);
+      await settle(tester);
+    }
   }
 
   Future<void> _openPlanAction(String label) async {
