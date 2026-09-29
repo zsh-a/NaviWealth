@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
@@ -10,11 +11,14 @@ import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
+import 'package:naviwealth/features/finance/application/planning_hub_status.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
+import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
 import 'package:naviwealth/features/finance/fire/ui/fire_state_hero_card.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/ui/ingest_review_page.dart';
+import 'package:naviwealth/features/finance/ui/plan_hub_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_trend_section.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
@@ -91,7 +95,7 @@ void main() {
           ],
         ),
       );
-      expect(find.text('今日恢复'), findsOneWidget);
+      expect(find.text('健康概览'), findsOneWidget);
       expect(find.text('充分恢复'), findsWidgets);
       expect(find.text('将深度工作留给上午'), findsOneWidget);
       expect(find.text('整理本周复盘中的三个关键信号'), findsOneWidget);
@@ -122,6 +126,46 @@ void main() {
         lessThanOrEqualTo(tester.getBottomLeft(find.byType(MaterialApp)).dy),
         reason: 'The README capture must not clip the wealth trend card.',
       );
+    },
+  );
+
+  readmeScreenshot(
+    'README planning workspace',
+    body: (tester) async {
+      await pumpReadmeScreenshot(
+        tester,
+        profile: ReadmeScreenshotProfile.desktopShowcase,
+        routePath: AppRoutes.plan,
+        goldenPath: '$_output/planning-workspace.png',
+        overrides: <Override>[
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          fireDashboardViewProvider.overrideWith(
+            (_) => AsyncValue.data(readmeFireView()),
+          ),
+          planningHubStatusProvider.overrideWith(
+            (_) => PlanningHubStatus(
+              runway: PlanningRunwayStatus.healthy,
+              pendingLifeEventReviews: 0,
+              rebalance: PlanningRebalanceStatus.active,
+              rebalanceDriftPct: 0.02,
+              budgetCount: 3,
+              budgetSignal: null,
+              budgetProgress: 0.45,
+              dcaPlanCount: 2,
+              dcaNextDueAt: readmeNow.add(const Duration(days: 3)),
+              dcaDue: false,
+              wheelCycleCount: 0,
+              wheelOpenPositionCount: 0,
+              isLoading: false,
+              hasError: false,
+            ),
+          ),
+        ],
+        child: const PlanHubPage(),
+      );
+      expect(find.text('现金安全'), findsWidgets);
+      expect(find.text('目标与投入'), findsOneWidget);
+      expect(find.text('进阶投资'), findsOneWidget);
     },
   );
 

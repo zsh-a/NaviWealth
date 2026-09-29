@@ -112,7 +112,48 @@ final _readmeBalances = <String, AccountBalances>{
 DashboardSnapshot _snapshot() => DashboardSnapshot(
   asOf: readmeNow,
   baseCurrency: 'CNY',
-  allocations: const [],
+  allocations: [
+    for (final entry in [
+      (
+        AssetCategory.cash,
+        'assets:checking',
+        '日常账户',
+        '123456.78',
+        '123456.78',
+        'CNY',
+      ),
+      (
+        AssetCategory.cash,
+        'assets:broker',
+        '长期投资',
+        '23043.22',
+        '3280.40',
+        'USD',
+      ),
+      (
+        AssetCategory.liability,
+        'liabilities:card',
+        '信用卡',
+        '8600.20',
+        '8600.20',
+        'CNY',
+      ),
+    ])
+      CategoryAllocation(
+        category: entry.$1,
+        totalInBase: Money(Decimal.parse(entry.$4), 'CNY'),
+        items: [
+          CategoryItem(
+            id: entry.$2,
+            name: entry.$3,
+            subtitle: null,
+            valueInBase: Money(Decimal.parse(entry.$4), 'CNY'),
+            nativeAmount: Decimal.parse(entry.$5),
+            nativeCurrency: entry.$6,
+          ),
+        ],
+      ),
+  ],
   totalAssets: Money(Decimal.parse('146500.00'), 'CNY'),
   totalLiabilities: Money(Decimal.parse('8600.20'), 'CNY'),
   netWorth: Money(Decimal.parse('137899.80'), 'CNY'),

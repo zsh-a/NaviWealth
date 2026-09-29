@@ -89,6 +89,7 @@ List<Override> readmeDomainShowcaseOverrides() => <Override>[
     (_) => Stream.value(const <KnowledgeDecision>[]),
   ),
   healthHasAnyDataProvider.overrideWith((_) async => true),
+  healthHasRecoveryInputsProvider.overrideWith((_) async => true),
   health_data.garminSyncControllerProvider.overrideWithBuild(
     (_, _) => const GarminInitial(),
   ),

@@ -10,7 +10,11 @@
       "height": 760,
       "locale": "zh",
       "theme": "dark",
-      "expected_visible_text": ["今日恢复", "将深度工作留给上午", "今日行动"],
+      "expected_visible_text": [
+        "健康概览",
+        "将深度工作留给上午",
+        "今日行动"
+      ],
       "description": "HealthOS recovery, KnowledgeOS inbox, and ExecutionOS daily actions in one LifeOS workspace."
     },
     {
@@ -20,7 +24,10 @@
       "height": 1688,
       "locale": "zh",
       "theme": "dark",
-      "expected_visible_text": ["净资产", "¥137,899.80"],
+      "expected_visible_text": [
+        "净资产",
+        "¥137,899.80"
+      ],
       "description": "FinanceOS wealth overview with net worth, assets, liabilities, and trend."
     },
     {
@@ -30,7 +37,10 @@
       "height": 880,
       "locale": "zh",
       "theme": "dark",
-      "expected_visible_text": ["自由状态", "谨慎"],
+      "expected_visible_text": [
+        "自由状态",
+        "谨慎"
+      ],
       "description": "FIRE safety status, withdrawal rate, cash buffer, and suggested actions."
     },
     {
@@ -40,8 +50,25 @@
       "height": 560,
       "locale": "zh",
       "theme": "dark",
-      "expected_visible_text": ["录入待确认", "Morning coffee"],
+      "expected_visible_text": [
+        "录入待确认",
+        "Morning coffee"
+      ],
       "description": "Desktop review workspace for deterministic transaction ingest."
+    },
+    {
+      "id": "planning-workspace",
+      "path": "generated/planning-workspace.png",
+      "width": 1280,
+      "height": 560,
+      "locale": "zh",
+      "theme": "dark",
+      "expected_visible_text": [
+        "现金安全",
+        "目标与投入",
+        "进阶投资"
+      ],
+      "description": "FinanceOS planning workspace with cash safety, contribution goals, and active advanced investing tools."
     }
   ]
 }

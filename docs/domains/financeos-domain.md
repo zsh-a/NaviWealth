@@ -138,10 +138,6 @@ Concentration risk uses a compact grouped surface: the worst breach, threshold
 and severity stay visible beside a direct rebalance action. When several risks
 exist, the summary row opens their sheet without expanding the holding layout.
 
-DCA simulation and plan creation share one parameter snapshot, including symbol
-weights. Editing parameters marks the displayed result outdated and prevents
-saving until recalculation. Parameters collapse independently of the result.
-
 ### Watchlist Navigation And Reminders
 
 Watchlist is available from Wealth's object navigation and the command palette.

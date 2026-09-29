@@ -29,6 +29,7 @@ Android release 产物仅打包 `arm64-v8a`，并且必须通过 native payload�
 ```bash
 tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
 tool/build-cn-fonts.sh     # app-cn-base.woff2 + app-cn-ext.woff2（CN 字体子集）
+tool/build-latin-fonts.sh  # Latin 字体资源
 ```
 
 macOS 上可运行固定模型和普通话 WAV 的原生 ASR 回归。脚本会将文件缓存到
@@ -63,7 +64,7 @@ lib/
 │   ├── command_palette/   跨域命令面板
 │   └── ...                config / format / haptics / logging / perf / pwa / security
 ├── features/              域业务代码（feature-first）
-│   ├── finance/           FinanceOS 组合根、数据、域模型
+│   ├── finance/           FinanceOS 组合根、全部业务切片、数据与域模型
 │   ├── health/            HealthOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── knowledge/         KnowledgeOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── execution/         ExecutionOS 数据、UI、AI 工具、Agent（用户启用）
@@ -80,12 +81,17 @@ FinanceOS 及各可选域按 `ui/`、`data/`、`domain/` 组织；域级目录�
 
 NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
 
-| 域 | 启用方式 | Shell 标签页 | AI 工具 | Agent |
-|---|---|---|---|---|
-| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | 35 设备工具 | Weekly Wealth / Cashflow Anomaly / FIRE Drift / Options Risk |
-| HealthOS | 用户启用 | Today / Trend / Plan | 7 设备工具 | Recovery Alert / Weekly Summary |
-| KnowledgeOS | 用户启用 | Inbox / Library | 7 设备工具 | — |
-| ExecutionOS | 用户启用 | Today / Plans / Review | 7 设备工具 | Due Action / Review |
+| 域 | 启用方式 | Shell 标签页 | Agent |
+|---|---|---|---|
+| FinanceOS | 始终开启 | Today / Activity / Wealth / Plan | Weekly Wealth / Cashflow Anomaly / FIRE Drift / Options Risk |
+| HealthOS | 用户启用 | Today / Trends | Recovery Alert / Weekly Summary |
+| KnowledgeOS | 用户启用 | Inbox / Library | — |
+| ExecutionOS | 用户启用 | Today / Plans / Review | Due Action / Review |
+
+生产域及工具清单以 [`domain_packs.dart`](lib/app/domain_packs.dart) 和各域 pack 为准。
+FinanceOS 规划页包含现金安全、目标与定投，以及按需展开的高级投资工具；
+定投创建独立于可选的历史预览。具体行为见
+[FinanceOS Domain](../../docs/domains/financeos-domain.md#investment-interaction)。
 
 跨域判断由 app-level `DailyNavigatorAgent` 完成；领域 Agent 只生成可验证的
 事实和 finding，不进行 agent-to-agent 调用。
@@ -112,7 +118,7 @@ NaviWealth 是 Personal LifeOS，通过 `DomainPack` 注册多域：
 AI 仅在设备端运行，无后端中继：
 
 - 用户自带 LLM key（Anthropic 或 OpenAI 兼容端点），存储为 `LlmProfile`
-- `DeviceAgentLoop` 在端侧完成 prompt 组装 / provider 调用 / tool dispatch / proposal
+- Rust Agent Runtime 管理模型调用、ChatTurn 状态、续轮与工具轮次预算；Dart host 组装设备上下文、执行本地工具并处理用户确认
 - 工具注册聚合：`deviceToolsProvider`，基于 active `DomainPack`s
 - 提示聚合：`systemPromptBlocksProvider`，同样基于 active packs
 - 写入工具返回 `ProposalEnvelope` 或要求显式确认
@@ -157,7 +163,7 @@ wrangler pages deploy --branch main
 
 ## 渲染策略
 
-走 Flutter 默认 Web 渲染器（CanvasKit on desktop，HTML/auto on mobile）。Wasm 模式 dry-run 已通过；后续按需加 `--wasm`。
+默认 `flutter build web --release` 使用 CanvasKit。启用 `--wasm` 时，可用浏览器使用 skwasm，不支持时回退到 CanvasKit；当前常规 Web 构建不启用该选项。
 
 ## 单包（非 melos）
 
