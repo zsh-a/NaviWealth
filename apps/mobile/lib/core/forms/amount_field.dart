@@ -20,6 +20,7 @@ class AmountField extends StatefulWidget {
     this.allowNegative = false,
     this.allowZero = true,
     this.required = true,
+    this.enabled = true,
     this.helperText,
     this.onChanged,
     this.focusNode,
@@ -34,6 +35,7 @@ class AmountField extends StatefulWidget {
   final bool allowNegative;
   final bool allowZero;
   final bool required;
+  final bool enabled;
   final String? helperText;
   final void Function(Decimal? value)? onChanged;
   final FocusNode? focusNode;
@@ -100,6 +102,7 @@ class _AmountFieldState extends State<AmountField> {
         ? _signedDecimalPattern
         : _positiveDecimalPattern;
     return AppNumberField(
+      enabled: widget.enabled,
       control: FTextFieldControl.managed(controller: _effectiveController),
       focusNode: widget.focusNode,
       textInputAction: widget.textInputAction ?? TextInputAction.next,

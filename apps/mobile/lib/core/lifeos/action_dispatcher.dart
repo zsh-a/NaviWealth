@@ -9,6 +9,8 @@ final class LifeActionDraft {
     required this.sourceRowId,
     this.sourceLabelSnapshot,
     this.dueAt,
+    this.scheduledFor,
+    this.replacesActionId,
     this.priority = 'normal',
   });
 
@@ -19,6 +21,10 @@ final class LifeActionDraft {
   final String sourceRowId;
   final String? sourceLabelSnapshot;
   final DateTime? dueAt;
+  final DateTime? scheduledFor;
+
+  /// Explicit confirmation to replace this source's dropped action.
+  final String? replacesActionId;
   final String priority;
 }
 

@@ -210,7 +210,16 @@ When ExecutionOS is active, Decision detail can explicitly create or open one
 source-linked Action through the domain-neutral Life action dispatcher. The
 Action stores `knowledge` / `know:knowledge_decisions` / Decision id as its
 source identity; app composition de-duplicates repeated creation and replaces
-only a previously dropped Action. KnowledgeOS does not import ExecutionOS.
+only a previously dropped Action after explicit replacement confirmation.
+Done Actions remain linked. Status changes and Undo refresh the association;
+opening the follow-up goes to its concrete registered object route.
+KnowledgeOS does not import ExecutionOS.
+
+Note and Decision edits use the shared commit-first submission protocol in
+place: pending saves lock editing and navigation, failed writes keep the draft
+and persistent inline feedback, and successful saves refresh the read view.
+Decision review commits while its guarded sheet is still open and closes only
+after success; failed review drafts can be retried without reopening the sheet.
 
 Deleting an entity also tombstones every live relation touching it.
 

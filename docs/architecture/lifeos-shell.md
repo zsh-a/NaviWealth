@@ -152,6 +152,17 @@ Rules:
   to Finance Today; the Life workspace becomes useful only when at least one
   optional domain is active.
 - The Life hub does not repeat domain destinations inside its content.
+- Life signals, Financial Inbox, and Knowledge Decisions use the shared
+  `SourceActionControl` and neutral action-dispatch/read seams. An existing
+  source Action remains visible across reopening and status changes, including
+  Done and Dropped states. Open navigates to the concrete registered Action;
+  a Dropped Action has an explicit replacement confirmation. Lookup failures
+  offer read retry rather than being treated as an absent association.
+- Direct user-confirmed Life creation uses the action dispatcher; it does not
+  require an AI proposal or runtime. Life suggestions retain today's schedule.
+  If source bookkeeping fails after Action creation, retry continues with the
+  committed id. Action completion never implies the source issue has cleared;
+  source outcome evaluation remains a separate observational result.
 
 Settings uses the same progressive-disclosure rule. Data & storage contains
 backup/export and destructive user-data actions. Cache counts, retention,

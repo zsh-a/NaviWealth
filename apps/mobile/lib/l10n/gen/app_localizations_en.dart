@@ -17516,4 +17516,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shellResizeListPane => 'Resize list pane';
+
+  @override
+  String get sourceActionReplace => 'Create replacement action';
+
+  @override
+  String get sourceActionReplaceConfirmTitle => 'Replace the dropped action?';
+
+  @override
+  String get sourceActionReplaceConfirmBody =>
+      'The dropped action will remain in your history. Create a new action for this source?';
+
+  @override
+  String get sourceActionLinked =>
+      'This source already has an action. Its status is tracked separately from whether the source issue has cleared.';
 }

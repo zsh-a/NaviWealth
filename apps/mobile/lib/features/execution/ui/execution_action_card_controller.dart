@@ -113,24 +113,11 @@ class _ExecutionActionCardControllerState
   }
 
   Future<void> _blockWithReason() async {
-    final l10n = AppLocalizations.of(context);
-    final reason = await showGuardedFormSheet<String>(
+    if (_busy) return;
+    await showGuardedFormSheet<bool>(
       context: context,
-      builder: (sheetContext, dirty) => AppSheet(
-        title: l10n.executionBlockReasonTitle,
-        child: _BlockReasonSheet(
-          dirty: dirty,
-          onSubmit: (value) {
-            dirty.markPristine();
-            Navigator.of(sheetContext).pop(value);
-          },
-        ),
-      ),
-    );
-    if (reason == null || reason.trim().isEmpty || !mounted) return;
-    await _changeStatus(
-      ExecutionActionStatus.blocked,
-      progressNote: reason.trim(),
+      builder: (_, dirty) =>
+          _BlockReasonSheet(dirty: dirty, action: widget.action),
     );
   }
 
@@ -180,17 +167,19 @@ class _ExecutionActionCardControllerState
   }
 }
 
-class _BlockReasonSheet extends StatefulWidget {
-  const _BlockReasonSheet({required this.onSubmit, required this.dirty});
+class _BlockReasonSheet extends ConsumerStatefulWidget {
+  const _BlockReasonSheet({required this.action, required this.dirty});
 
-  final ValueChanged<String> onSubmit;
+  final ExecutionAction action;
   final FormDirtyController dirty;
 
   @override
-  State<_BlockReasonSheet> createState() => _BlockReasonSheetState();
+  ConsumerState<_BlockReasonSheet> createState() => _BlockReasonSheetState();
 }
 
-class _BlockReasonSheetState extends State<_BlockReasonSheet> {
+class _BlockReasonSheetState extends ConsumerState<_BlockReasonSheet>
+    with FormSubmission<_BlockReasonSheet> {
+  bool _saving = false;
   final TextEditingController _controller = TextEditingController();
 
   @override
@@ -214,26 +203,62 @@ class _BlockReasonSheetState extends State<_BlockReasonSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final reason = _controller.text.trim();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        FTextField(
-          control: FTextFieldControl.managed(controller: _controller),
-          label: Text(l10n.executionBlockReasonTitle),
-          hint: l10n.executionBlockReasonHint,
-          maxLines: 3,
-          textInputAction: TextInputAction.done,
-          onSubmit: (_) {
-            if (reason.isNotEmpty) widget.onSubmit(reason);
-          },
-        ),
-        const SizedBox(height: AppSpacing.s12),
-        AppActionButton(
-          onPress: reason.isEmpty ? null : () => widget.onSubmit(reason),
-          child: Text(l10n.executionActionBlock),
-        ),
-      ],
+    return AppSheet(
+      title: l10n.executionBlockReasonTitle,
+      footer: AppSheetFooter(
+        submitLabel: l10n.executionActionBlock,
+        cancelLabel: l10n.commonCancel,
+        busy: _saving,
+        onSubmit: _submit,
+        enabled: reason.isNotEmpty,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FTextField(
+            control: FTextFieldControl.managed(controller: _controller),
+            enabled: !_saving,
+            hint: l10n.executionBlockReasonHint,
+            maxLines: 3,
+            textInputAction: TextInputAction.done,
+            onSubmit: (_) => _submit(),
+          ),
+          if (submissionFailureMessage case final message?) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(message: message, kind: AppStatusKind.error),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    final reason = _controller.text.trim();
+    if (_saving || reason.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    await submitForm<ExecutionActionStatusUndo>(
+      dirty: widget.dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () => updateExecutionActionStatus(
+        ref: ref,
+        action: widget.action,
+        status: ExecutionActionStatus.blocked,
+        progressNote: reason,
+      ),
+      leave: () => Navigator.of(context).pop(true),
+      failureMessage: (_) => l10n.executionActionStatusUpdateFailed,
+      successMessage: l10n.executionActionStatusUpdated(
+        executionStatusLabel(l10n, ExecutionActionStatus.blocked),
+      ),
+      undo: FormUndoPresentation<ExecutionActionStatusUndo>(
+        buildAction: (receipt) => FormUndoAction(receipt.restore),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+      ),
+      tag: 'execution-block-reason',
     );
   }
 }

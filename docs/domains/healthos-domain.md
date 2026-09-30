@@ -225,6 +225,9 @@ Presentation contract:
   preserves kind, date, and stable row identity; value/note are replaced and
   synced normally. Capture keeps separate weight/body-fat drafts and an optional
   note. Stored body fat remains a fraction; UI input/output is percentage.
+  Capture and correction use the shared commit-first form protocol: a pending
+  write locks fields and dismissal, failure keeps the same draft and a safe
+  inline error, and success closes the sheet and refreshes Today/Trends.
 
 This presentation refactor does not migrate stored rows or alter native
 integration/background scheduling.

@@ -29385,6 +29385,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resize list pane'**
   String get shellResizeListPane;
+
+  /// No description provided for @sourceActionReplace.
+  ///
+  /// In en, this message translates to:
+  /// **'Create replacement action'**
+  String get sourceActionReplace;
+
+  /// No description provided for @sourceActionReplaceConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace the dropped action?'**
+  String get sourceActionReplaceConfirmTitle;
+
+  /// No description provided for @sourceActionReplaceConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The dropped action will remain in your history. Create a new action for this source?'**
+  String get sourceActionReplaceConfirmBody;
+
+  /// No description provided for @sourceActionLinked.
+  ///
+  /// In en, this message translates to:
+  /// **'This source already has an action. Its status is tracked separately from whether the source issue has cleared.'**
+  String get sourceActionLinked;
 }
 
 class _AppLocalizationsDelegate

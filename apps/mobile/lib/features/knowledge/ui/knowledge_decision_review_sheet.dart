@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/forms/forms.dart';
@@ -24,30 +25,38 @@ class KnowledgeDecisionReviewDraft {
 Future<KnowledgeDecisionReviewDraft?> showKnowledgeDecisionReviewSheet({
   required BuildContext context,
   required KnowledgeDecision decision,
+  required Future<void> Function(KnowledgeDecisionReviewDraft draft) onSave,
 }) {
   return showGuardedFormSheet<KnowledgeDecisionReviewDraft>(
     context: context,
-    builder: (_, dirty) =>
-        _KnowledgeDecisionReviewSheet(decision: decision, dirty: dirty),
+    builder: (_, dirty) => _KnowledgeDecisionReviewSheet(
+      decision: decision,
+      dirty: dirty,
+      onSave: onSave,
+    ),
   );
 }
 
-class _KnowledgeDecisionReviewSheet extends StatefulWidget {
+class _KnowledgeDecisionReviewSheet extends ConsumerStatefulWidget {
   const _KnowledgeDecisionReviewSheet({
     required this.decision,
     required this.dirty,
+    required this.onSave,
   });
 
   final KnowledgeDecision decision;
   final FormDirtyController dirty;
+  final Future<void> Function(KnowledgeDecisionReviewDraft draft) onSave;
 
   @override
-  State<_KnowledgeDecisionReviewSheet> createState() =>
+  ConsumerState<_KnowledgeDecisionReviewSheet> createState() =>
       _KnowledgeDecisionReviewSheetState();
 }
 
 class _KnowledgeDecisionReviewSheetState
-    extends State<_KnowledgeDecisionReviewSheet> {
+    extends ConsumerState<_KnowledgeDecisionReviewSheet>
+    with FormSubmission<_KnowledgeDecisionReviewSheet> {
+  bool _saving = false;
   late final TextEditingController _conditions;
   late final TextEditingController _actual;
   late DateTime? _reviewDate;
@@ -87,6 +96,7 @@ class _KnowledgeDecisionReviewSheetState
         submitLabel: l10n.knowledgeDecisionReviewSaveAction,
         cancelLabel: l10n.commonCancel,
         onSubmit: _submit,
+        busy: _saving,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -102,6 +112,7 @@ class _KnowledgeDecisionReviewSheetState
             key: const Key('knowledge-decision-review-date'),
             label: l10n.knowledgeDecisionReviewDateLabel,
             initialValue: _reviewDate,
+            enabled: !_saving,
             onChanged: (value) {
               setState(() => _reviewDate = value);
               widget.dirty.markDirty();
@@ -111,6 +122,7 @@ class _KnowledgeDecisionReviewSheetState
           FTextField(
             key: const Key('knowledge-decision-review-conditions'),
             control: FTextFieldControl.managed(controller: _conditions),
+            enabled: !_saving,
             label: Text(l10n.knowledgeDecisionRevisitConditionsLabel),
             description: Text(
               l10n.knowledgeDecisionRevisitConditionsDescription,
@@ -121,38 +133,59 @@ class _KnowledgeDecisionReviewSheetState
           const SizedBox(height: AppSpacing.s16),
           KnowledgeMarkdownEditor(
             controller: _actual,
+            enabled: !_saving,
             label: l10n.knowledgeDecisionActualOutcomeLabel,
             minLines: 4,
             maxLines: 8,
             editorKey: const Key('knowledge-decision-review-actual'),
           ),
           const SizedBox(height: AppSpacing.s16),
-          AppAdaptiveChoice<DecisionStatus>(
-            key: const Key('knowledge-decision-review-status'),
-            title: l10n.knowledgeDecisionStatusLabel,
-            options: DecisionStatus.values,
-            value: _status,
-            labelOf: (status) => knowledgeDecisionStatusLabel(l10n, status),
-            iconOf: _statusIcon,
-            onChanged: (status) {
-              setState(() => _status = status);
-              widget.dirty.markDirty();
-            },
+          IgnorePointer(
+            ignoring: _saving,
+            child: AppAdaptiveChoice<DecisionStatus>(
+              key: const Key('knowledge-decision-review-status'),
+              title: l10n.knowledgeDecisionStatusLabel,
+              options: DecisionStatus.values,
+              value: _status,
+              labelOf: (status) => knowledgeDecisionStatusLabel(l10n, status),
+              iconOf: _statusIcon,
+              onChanged: (status) {
+                if (_saving) return;
+                setState(() => _status = status);
+                widget.dirty.markDirty();
+              },
+            ),
           ),
+          if (submissionFailureMessage case final message?) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(message: message, kind: AppStatusKind.error),
+          ],
         ],
       ),
     );
   }
 
-  void _submit() {
-    widget.dirty.markPristine();
-    Navigator.of(context).pop(
-      KnowledgeDecisionReviewDraft(
-        reviewDate: _reviewDate,
-        revisitConditions: _parseConditions(),
-        actualOutcomeMd: _nullable(_actual.text),
-        status: _status,
+  Future<void> _submit() async {
+    if (_saving) return;
+    final l10n = AppLocalizations.of(context);
+    final draft = KnowledgeDecisionReviewDraft(
+      reviewDate: _reviewDate,
+      revisitConditions: _parseConditions(),
+      actualOutcomeMd: _nullable(_actual.text),
+      status: _status,
+    );
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () => widget.onSave(draft),
+      leave: () => Navigator.of(context).pop(draft),
+      failureMessage: (error) => userSafeErrorMessage(
+        context,
+        error,
+        operation: 'save decision review',
       ),
+      successMessage: l10n.commonSaved,
+      tag: 'knowledge-decision-review',
     );
   }
 

@@ -8524,5 +8524,9 @@
   "commonClearFilters": "Clear filters",
   "commonSearchResultsCount": "Showing {count, plural, =1{1 result} other{{count} results}}",
   "shellResizeListPane": "Resize list pane",
-  "@commonSearchResultsCount": {"placeholders": {"count": {"type": "int"}}}
+  "@commonSearchResultsCount": {"placeholders": {"count": {"type": "int"}}},
+  "sourceActionReplace": "Create replacement action",
+  "sourceActionReplaceConfirmTitle": "Replace the dropped action?",
+  "sourceActionReplaceConfirmBody": "The dropped action will remain in your history. Create a new action for this source?",
+  "sourceActionLinked": "This source already has an action. Its status is tracked separately from whether the source issue has cleared."
 }

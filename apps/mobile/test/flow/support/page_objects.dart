@@ -11,6 +11,7 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/amount_field.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
+import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_review_page.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
 
@@ -622,6 +623,16 @@ class LifePageObject {
 
   Future<void> openExecution() async {
     await tester.tap(find.text('Open Execution').last);
+    await settle(tester);
+    expect(find.byType(ExecutionActionDetailPage), findsOneWidget);
+    // Back returns to the source workspace; switch to Execution through the existing picker.
+    final back = find.byKey(const ValueKey('app.back')).hitTestable();
+    await settleUntil(tester, back, maxPumps: 200);
+    await tester.tap(back.last);
+    await settle(tester);
+    await tester.tap(find.bySemanticsLabel('Switch domain').hitTestable());
+    await settle(tester);
+    await tester.tap(find.text('Execution').hitTestable().last);
     await settle(tester);
   }
 }

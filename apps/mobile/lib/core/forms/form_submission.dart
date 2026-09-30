@@ -34,7 +34,7 @@ final class FormUndoPresentation<T> {
 /// dismissal path. A failed commit leaves the user's input intact; pressing
 /// the form's submit button is the retry.
 mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
-  Future<void>? _submission;
+  Future<bool>? _submission;
   String? _submissionFailureMessage;
 
   /// Persistent, user-safe failure copy for the mounted form.
@@ -44,11 +44,12 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   /// retry. Forms render this through [AppStatusBanner].
   String? get submissionFailureMessage => _submissionFailureMessage;
 
-  /// Commits once, then leaves the form and shows success feedback.
+  /// Commits once, then leaves or refreshes the form and shows success feedback.
+  /// Returns whether the write committed, including after the form detaches.
   ///
   /// [onCommitted] receives the typed commit result before navigation. It is
   /// the seam for constructing a [FormUndoAction] from a repository receipt.
-  Future<void> submitForm<T>({
+  Future<bool> submitForm<T>({
     required FormDirtyController dirty,
     required ValueChanged<bool> onBusyChanged,
     required Future<T> Function() commit,
@@ -63,7 +64,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     final current = _submission;
     if (current != null) return current;
 
-    late final Future<void> operation;
+    late final Future<bool> operation;
     operation =
         _runSubmission(
           dirty: dirty,
@@ -84,7 +85,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   }
 
   /// [submitForm] with the app's standard back-stack/deep-link behavior.
-  Future<void> submitFormAndLeave<T>({
+  Future<bool> submitFormAndLeave<T>({
     required FormDirtyController dirty,
     required ValueChanged<bool> onBusyChanged,
     required String leaveFallback,
@@ -110,7 +111,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     );
   }
 
-  Future<void> _runSubmission<T>({
+  Future<bool> _runSubmission<T>({
     required FormDirtyController dirty,
     required ValueChanged<bool> onBusyChanged,
     required Future<T> Function() commit,
@@ -149,7 +150,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       committed = true;
       if (!mounted) {
         operation.complete(outcome: 'committed_detached');
-        return;
+        return true;
       }
 
       if (onCommitted != null) {
@@ -200,7 +201,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       );
       if (!mounted || !feedbackContext.mounted) {
         operation.complete(outcome: 'committed_detached');
-        return;
+        return true;
       }
       AppMessenger.cacheOverlay(feedbackContext);
       final undoOffer = undoAction == null
@@ -228,6 +229,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
                   unawaited(undoOffers.run(feedbackContext, undoOffer, logger)),
       );
       operation.complete();
+      return true;
     } catch (error, stack) {
       if (committed) {
         operation.complete(
@@ -252,6 +254,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
           duration: const Duration(seconds: 6),
         );
       }
+      return false;
     } finally {
       dirty.busy = false;
       if (mounted) onBusyChanged(false);

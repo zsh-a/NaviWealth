@@ -112,8 +112,10 @@ title and quick scheduling, while priority, dates, one `Belongs to` Plan
 relation, and notes are progressively disclosed. Plan capture uses a target
 date as its primary time expression.
 
-Blocking requires a concrete reason and records blocker progress. Manual
-status changes expose Undo. Progress opened from an Action or Plan keeps that
+Blocking requires a concrete reason and records blocker progress. The reason
+sheet stays open until the status and progress write commits; pending writes
+lock dismissal and input, and failures preserve the reason with inline retry
+feedback. Manual status changes expose Undo, including successful blocking. Progress opened from an Action or Plan keeps that
 context fixed instead of asking the user to choose it again.
 
 Today, Plans, and Review share search across Action title/note and Plan
@@ -131,9 +133,18 @@ sourceRowId
 sourceLabelSnapshot
 ```
 
-The domain must not import sibling business entities. App composition
-de-duplicates source-linked Actions so a source decision has one current
-follow-up; a dropped Action may be explicitly replaced.
+The domain must not import sibling business entities. App composition routes
+source creation through `ExecutionRepository.createOrReuseSourceAction`, which
+looks up the exact owner / source row family / source row id and creates the row
+and Sync outbox pointer in one local transaction. Concurrent local attempts
+reuse the same Action without replacing its user-edited fields. Open and Done
+Actions remain linked; replacing a Dropped Action requires confirmation of its
+exact id and keeps the old Action in history. Tombstones are excluded.
+
+This is local de-duplication, not a server uniqueness constraint; offline
+creation on different devices remains subject to Sync v3 row-state semantics.
+Legacy duplicates prefer an open Action, then Done, then the latest Dropped
+Action. Source reads cover all closed history rather than a bounded snapshot.
 
 KnowledgeOS Decision detail uses this seam as an explicit user action. The
 selected Decision option becomes the default Action title and the Action keeps

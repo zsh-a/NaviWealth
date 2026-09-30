@@ -3,12 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
-import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
-import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
-import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart';
+import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
@@ -16,25 +14,19 @@ import 'package:naviwealth/features/life/ui/life_signal_sheet.dart';
 import 'package:naviwealth/features/settings/ui/domains_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-class _RecordingApplier implements ProposalApplier {
-  ReadyProposalPlan? appliedPlan;
+class _RecordingDispatcher {
+  LifeActionDraft? appliedDraft;
+  LifeLinkedAction? linked;
 
-  @override
-  Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
-    appliedPlan = plan;
-    return const ProposalApplyState(
-      status: ProposalApplyStatus.applied,
-      appliedEntityId: 'created-action',
-      appliedTable: 'execution_actions',
+  Future<String?> dispatch(LifeActionDraft draft) async {
+    appliedDraft = draft;
+    linked = const LifeLinkedAction(
+      id: 'created-action',
+      state: LifeActionState.todo,
     );
+    return linked!.id;
   }
-
-  @override
-  Future<void> undo(ProposalApplyState state) async {}
 }
-
-String? _createdRoute(String family, String id) =>
-    family == 'exec:execution_actions' ? '/registered-execution/$id' : null;
 
 class _OptInStore extends Fake implements DomainOptInStore {
   DomainOptIns value = DomainOptIns.financeOnly;
@@ -52,7 +44,7 @@ void main() {
     'enabling Execution returns to the same suggestion without creating it',
     (tester) async {
       final store = _OptInStore();
-      final applier = _RecordingApplier();
+      final applier = _RecordingDispatcher();
       final event = LifeEvent(
         id: 'signal',
         at: DateTime.utc(2026),
@@ -62,6 +54,7 @@ void main() {
         actionSuggestion: const LifeActionSuggestion(
           template: LifeActionTemplate.reviewFinanceActivity,
           sourceRowFamily: 'fin:journal_entries',
+          sourceRowId: 'day:2026-09-30',
         ),
       );
       final router = GoRouter(
@@ -101,7 +94,13 @@ void main() {
                 ),
               ),
             ]),
-            proposalApplierProvider.overrideWith((_) async => applier),
+            lifeActionDispatcherProvider.overrideWithValue(applier.dispatch),
+            lifeSourceActionReaderProvider.overrideWithValue(
+              (_) async => applier.linked,
+            ),
+            lifeActionRouteBuilderProvider.overrideWithValue(
+              (id) => '/registered-execution/$id',
+            ),
           ],
           child: MaterialApp.router(
             theme: AppTheme.light(),
@@ -132,7 +131,7 @@ void main() {
       expect(store.value.contains(DomainScope.execution), isTrue);
       expect(find.text(l10n.lifeSignalCreateAction), findsOneWidget);
       expect(find.text(l10n.lifeSignalDetailTitle), findsOneWidget);
-      expect(applier.appliedPlan, isNull);
+      expect(applier.appliedDraft, isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
     },
@@ -152,7 +151,7 @@ void main() {
           sourceRowId: 'day:2026-09-30',
         ),
       );
-      final applier = _RecordingApplier();
+      final applier = _RecordingDispatcher();
       final router = GoRouter(
         routes: [
           GoRoute(
@@ -184,10 +183,15 @@ void main() {
               DomainPack(
                 scope: DomainScope.execution,
                 tabPaths: ['/registered-execution'],
-                sourceRouteResolver: _createdRoute,
               ),
             ]),
-            proposalApplierProvider.overrideWith((_) async => applier),
+            lifeActionDispatcherProvider.overrideWithValue(applier.dispatch),
+            lifeSourceActionReaderProvider.overrideWithValue(
+              (_) async => applier.linked,
+            ),
+            lifeActionRouteBuilderProvider.overrideWithValue(
+              (id) => '/registered-execution/$id',
+            ),
           ],
           child: MaterialApp.router(
             theme: AppTheme.light(),
@@ -207,13 +211,14 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en', 'US'));
       await tester.tap(find.text(l10n.lifeSignalCreateAction));
       await tester.pumpAndSettle();
-      expect(applier.appliedPlan, isNull);
+      expect(applier.appliedDraft, isNull);
       expect(find.text(l10n.lifeSignalActionConfirmTitle), findsOneWidget);
 
       await tester.tap(find.text(l10n.lifeSignalCreateAction).last);
       await tester.pumpAndSettle();
-      expect(applier.appliedPlan?.kind, 'execution_action');
-      expect(applier.appliedPlan?.payload['source_row_id'], 'day:2026-09-30');
+      expect(applier.appliedDraft?.sourceDomain, 'finance');
+      expect(applier.appliedDraft?.scheduledFor, isNotNull);
+      expect(applier.appliedDraft?.sourceRowId, 'day:2026-09-30');
 
       await tester.tap(find.text(l10n.lifeSignalOpenExecution));
       await tester.pumpAndSettle();

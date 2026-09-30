@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/lifeos/action_dispatcher.dart';
+import '../../../../core/lifeos/ui/source_action_control.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -293,12 +294,21 @@ Future<void> _showInboxDetail(
   required String title,
   required String body,
 }) {
-  return showAppSheet<void>(
+  final dirty = FormDirtyController();
+  return showAppFormSheet<void>(
     context: context,
-    title: title,
-    builder: (_) =>
-        _InboxDetail(item: item, icon: icon, title: title, body: body),
-  );
+    dirtyGuard: dirty,
+    builder: (_) => AppSheet(
+      title: title,
+      child: _InboxDetail(
+        item: item,
+        icon: icon,
+        title: title,
+        body: body,
+        dirty: dirty,
+      ),
+    ),
+  ).whenComplete(dirty.dispose);
 }
 
 class _InboxDetail extends ConsumerWidget {
@@ -307,8 +317,10 @@ class _InboxDetail extends ConsumerWidget {
     required this.icon,
     required this.title,
     required this.body,
+    required this.dirty,
   });
 
+  final FormDirtyController dirty;
   final FinancialInboxItem item;
   final IconData icon;
   final String title;
@@ -317,11 +329,6 @@ class _InboxDetail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final actionState = item.actionId == null
-        ? const AsyncValue<LifeActionState?>.data(null)
-        : ref.watch(lifeActionStateProvider(item.actionId!));
-    final canCreateAction =
-        item.actionId == null || actionState.value == LifeActionState.dropped;
     final anomalyExpenses = item.kind == FinancialInboxKind.expenseAnomaly
         ? _anomalyExpenses(item.evidence['expenses'])
         : const <_AnomalyExpense>[];
@@ -404,13 +411,6 @@ class _InboxDetail extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s8),
           ],
         ],
-        if (item.actionId != null) ...[
-          const SizedBox(height: AppSpacing.s12),
-          _EvidenceRow(
-            label: l10n.financialInboxLinkedAction,
-            value: _actionStateLabel(l10n, actionState.value),
-          ),
-        ],
         if (item.revalidationStatus != null) ...[
           _EvidenceRow(
             label: l10n.financialInboxRevalidation,
@@ -432,22 +432,47 @@ class _InboxDetail extends ConsumerWidget {
           child: Text(l10n.financialInboxFixSource),
         ),
         const SizedBox(height: AppSpacing.s8),
-        FButton(
-          variant: FButtonVariant.secondary,
-          onPress: canCreateAction
-              ? () => _createAction(context, ref, l10n)
-              : () {
-                  final route = ref.read(lifeActionReviewRouteProvider);
-                  if (route == null) return;
-                  final router = GoRouter.of(context);
-                  Navigator.of(context).pop();
-                  router.push(route);
-                },
-          child: Text(
-            canCreateAction
-                ? l10n.financialInboxCreateAction
-                : l10n.financialInboxViewAction,
+        SourceActionControl(
+          checkAvailability: true,
+          source: (rowFamily: 'fin:financial_signals', rowId: item.id),
+          createLabel: l10n.financialInboxCreateAction,
+          openLabel: l10n.financialInboxViewAction,
+          confirmTitle: l10n.lifeSignalActionConfirmTitle,
+          confirmBody: l10n.lifeSignalActionConfirmBody(title, title),
+          successMessage: l10n.lifeSignalActionCreated,
+          onBusyChanged: (busy) => dirty.busy = busy,
+          beforeOpen: () => Navigator.of(context).pop(),
+          buildDraft: (replacesActionId) => LifeActionDraft(
+            title: title,
+            note: jsonEncode(<String, Object?>{
+              'signal_kind': item.kind.name,
+              'evidence': item.evidence,
+              'last_checked_at': item.lastDetectedAt.toUtc().toIso8601String(),
+            }),
+            sourceDomain: 'finance',
+            sourceRowFamily: 'fin:financial_signals',
+            sourceRowId: item.id,
+            priority: item.priority == FinancialInboxPriority.important
+                ? 'high'
+                : 'normal',
+            replacesActionId: replacesActionId,
           ),
+          onCreated: (id) async {
+            final repository = await ref.read(
+              financialSignalRepositoryProvider.future,
+            );
+            await repository.linkAction(
+              item.id,
+              actionId: id,
+              now: DateTime.now(),
+            );
+            await recordProductMetric(
+              () => ref.read(productMetricsProvider.notifier),
+              ProductFunnelEvent.executionActionCreated,
+              success: true,
+            );
+            _refresh(ref);
+          },
         ),
         const SizedBox(height: AppSpacing.s8),
         AppAdaptiveActionMenu(
@@ -474,67 +499,6 @@ class _InboxDetail extends ConsumerWidget {
         ),
       ],
     );
-  }
-
-  Future<void> _createAction(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l10n,
-  ) async {
-    try {
-      final actionId = await ref.read(lifeActionDispatcherProvider)(
-        LifeActionDraft(
-          title: title,
-          note: jsonEncode(<String, Object?>{
-            'signal_kind': item.kind.name,
-            'evidence': item.evidence,
-            'last_checked_at': item.lastDetectedAt.toUtc().toIso8601String(),
-          }),
-          sourceDomain: 'finance',
-          sourceRowFamily: 'fin:financial_signals',
-          sourceRowId: item.id,
-          priority: item.priority == FinancialInboxPriority.important
-              ? 'high'
-              : 'normal',
-        ),
-      );
-      if (actionId == null || !context.mounted) {
-        if (context.mounted) {
-          AppMessenger.show(
-            context,
-            ToastKind.warning,
-            l10n.financialInboxActionUnavailable,
-          );
-        }
-        return;
-      }
-      final repository = await ref.read(
-        financialSignalRepositoryProvider.future,
-      );
-      await repository.linkAction(
-        item.id,
-        actionId: actionId,
-        now: DateTime.now(),
-      );
-      await ref
-          .read(productMetricsProvider.notifier)
-          .record(ProductFunnelEvent.executionActionCreated, success: true);
-      _refresh(ref);
-      if (context.mounted) Navigator.of(context).pop();
-    } catch (error, stackTrace) {
-      if (context.mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          userSafeErrorMessage(
-            context,
-            error,
-            stackTrace: stackTrace,
-            operation: 'create action from financial inbox',
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _resolve(BuildContext context, WidgetRef ref) async {
@@ -735,16 +699,6 @@ List<_AnomalyExpense> _anomalyExpenses(Object? value) {
       .whereType<_AnomalyExpense>()
       .toList(growable: false);
 }
-
-String _actionStateLabel(AppLocalizations l10n, LifeActionState? state) =>
-    switch (state) {
-      LifeActionState.todo => l10n.financialInboxActionTodo,
-      LifeActionState.doing => l10n.financialInboxActionDoing,
-      LifeActionState.blocked => l10n.financialInboxActionBlocked,
-      LifeActionState.done => l10n.financialInboxActionDone,
-      LifeActionState.dropped => l10n.financialInboxActionDropped,
-      null => l10n.financialInboxActionUnknown,
-    };
 
 String _revalidationLabel(
   AppLocalizations l10n,

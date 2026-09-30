@@ -54,7 +54,7 @@ void main() {
         commit.complete('r-1');
         await tester.pump();
         await tester.pump();
-        await first;
+        expect(await first, isTrue);
         await tester.pumpAndSettle();
 
         expect(events, ['commit-started', 'receipt:r-1', 'leave']);
@@ -315,7 +315,7 @@ class _ProbeFormState extends ConsumerState<_ProbeForm>
     dirty.markDirty();
   }
 
-  Future<void> submit() {
+  Future<bool> submit() {
     return submitForm<String>(
       dirty: dirty,
       onBusyChanged: (value) {

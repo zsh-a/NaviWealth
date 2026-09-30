@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
@@ -41,6 +43,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/execution/composition/execution_route_paths.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
+import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/features/health/composition/health_route_paths.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
@@ -222,6 +225,7 @@ void main() {
           mutationStamperProvider.overrideWith(
             (_) async => makeStubStamper(userId: 'user-1'),
           ),
+          currentUserIdProvider.overrideWithValue(() async => 'user-1'),
           ...lifeOsDomainCompositionOverrides(),
         ],
       );
@@ -253,6 +257,69 @@ void main() {
       );
       expect(linked?.id, firstId);
       expect(linked?.state, LifeActionState.todo);
+      final source = (
+        rowFamily: draft.sourceRowFamily,
+        rowId: draft.sourceRowId,
+      );
+      final doneSeen = Completer<void>();
+      final subscription = c.listen(lifeLinkedActionProvider(source), (
+        _,
+        next,
+      ) {
+        if (next.value?.state == LifeActionState.done &&
+            !doneSeen.isCompleted) {
+          doneSeen.complete();
+        }
+      });
+      addTearDown(subscription.close);
+      await repository.updateActionStatus(
+        action: actions.single,
+        status: ExecutionActionStatus.done,
+        sync: actions.single.sync,
+      );
+      await doneSeen.future.timeout(const Duration(seconds: 3));
+      expect(await dispatcher(draft), firstId);
+      final done = await repository.findAction(
+        ownerUserId: 'user-1',
+        id: firstId!,
+      );
+      final droppedSeen = Completer<void>();
+      final dropSubscription = c.listen(lifeLinkedActionProvider(source), (
+        _,
+        next,
+      ) {
+        if (next.value?.state == LifeActionState.dropped &&
+            !droppedSeen.isCompleted) {
+          droppedSeen.complete();
+        }
+      });
+      addTearDown(dropSubscription.close);
+      await repository.updateActionStatus(
+        action: done!,
+        status: ExecutionActionStatus.dropped,
+        sync: done.sync,
+      );
+      await droppedSeen.future.timeout(const Duration(seconds: 3));
+      await expectLater(dispatcher(draft), throwsStateError);
+      final replacement = await dispatcher(
+        LifeActionDraft(
+          title: draft.title,
+          note: draft.note,
+          sourceDomain: draft.sourceDomain,
+          sourceRowFamily: draft.sourceRowFamily,
+          sourceRowId: draft.sourceRowId,
+          replacesActionId: firstId,
+        ),
+      );
+      expect(replacement, isNot(firstId));
+      expect(
+        await repository.listOpenActions(ownerUserId: 'user-1'),
+        hasLength(1),
+      );
+      expect(
+        (await repository.listClosedActions(ownerUserId: 'user-1')).single.id,
+        firstId,
+      );
     },
   );
 

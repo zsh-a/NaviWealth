@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,6 +65,82 @@ void main() {
     );
     await _disposeWidget(tester);
   });
+  testWidgets(
+    'failed review preserves input and locks dismissal until commit',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = _DelayedKnowledgeRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final decision = _decision();
+      await repository.upsertDecision(decision);
+      await tester.pumpWidget(
+        _wrap(
+          decisionId: decision.id,
+          repository: repository,
+          executionAvailable: false,
+        ),
+      );
+      await _settlePaint(tester);
+      await tester.tap(find.byKey(const Key('knowledge-decision-review')));
+      await _settlePaint(tester);
+      await tester.enterText(
+        find.byKey(const Key('knowledge-decision-review-actual')),
+        'Preserved after failure',
+      );
+      repository.gate = Completer<void>();
+      final submit = find.byKey(const Key('knowledge-decision-review-submit'));
+      await tester.tap(submit);
+      await _settlePaint(tester);
+      expect(repository.attempts, 1);
+      await tester.binding.handlePopRoute();
+      await _settlePaint(tester);
+      expect(find.text('Discard changes?'), findsNothing);
+      expect(
+        find.byKey(const Key('knowledge-decision-review-actual')),
+        findsOneWidget,
+      );
+      expect(tester.widget<FButton>(submit).onPress, isNull);
+      repository.gate!.completeError(
+        StateError('internal private storage path'),
+      );
+      await _settlePaint(tester);
+      expect(find.text('Preserved after failure'), findsOneWidget);
+      expect(find.byType(AppStatusBanner), findsWidgets);
+      expect(
+        find.textContaining('internal private storage path'),
+        findsNothing,
+      );
+      expect(
+        (await repository.findDecision(
+          ownerUserId: _owner,
+          id: decision.id,
+        ))?.actualOutcomeMd,
+        isNull,
+      );
+      repository.gate = null;
+      await tester.tap(submit);
+      await _settlePaint(tester);
+      expect(repository.attempts, 2);
+      expect(
+        find.byKey(const Key('knowledge-decision-review-actual')),
+        findsNothing,
+      );
+      expect(
+        (await repository.findDecision(
+          ownerUserId: _owner,
+          id: decision.id,
+        ))?.actualOutcomeMd,
+        'Preserved after failure',
+      );
+      await _disposeWidget(tester);
+    },
+  );
+
   testWidgets('reviews a due Decision and persists its outcome', (
     tester,
   ) async {
@@ -322,4 +400,18 @@ SyncMeta _sync(int tick) {
       nodeId: 'knowledge-device',
     ),
   );
+}
+
+class _DelayedKnowledgeRepository extends KnowledgeRepository {
+  _DelayedKnowledgeRepository({required super.db, required super.outbox});
+  Completer<void>? gate;
+  int attempts = 0;
+  @override
+  Future<void> upsertDecision(KnowledgeDecision decision) async {
+    if (decision.actualOutcomeMd != null) {
+      attempts++;
+      await gate?.future;
+    }
+    await super.upsertDecision(decision);
+  }
 }

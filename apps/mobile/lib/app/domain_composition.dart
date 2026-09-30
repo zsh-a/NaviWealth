@@ -146,6 +146,9 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       };
     }),
     lifeSourceActionReaderProvider.overrideWith((ref) {
+      // Rebuild source reads when local writes, undo, or sync change statuses.
+      ref.watch(executionOpenActionsProvider);
+      ref.watch(executionClosedActionsProvider);
       return (source) => _readLinkedLifeAction(ref, source);
     }),
     lifeOpenActionCountProvider.overrideWith((ref) {
@@ -264,22 +267,15 @@ MemoryAccessPolicy memoryAccessPolicyForPacks(List<DomainPack> packs) {
 Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
   final repository = await ref.read(executionRepositoryProvider.future);
   final stamp = await (await ref.read(mutationStamperProvider.future)).stamp();
-  final existing = await _findLinkedExecutionAction(
-    repository: repository,
-    ownerUserId: stamp.ownerUserId,
-    source: (rowFamily: draft.sourceRowFamily, rowId: draft.sourceRowId),
-  );
-  if (existing != null && existing.status != ExecutionActionStatus.dropped) {
-    return existing.id;
-  }
   final id = kExecutionUuid.v4();
-  await repository.upsertAction(
+  final action = await repository.createOrReuseSourceAction(
     ExecutionAction(
       id: id,
       title: draft.title,
       note: draft.note,
       priority: ExecutionPriority.parse(draft.priority),
       dueAt: draft.dueAt,
+      scheduledFor: draft.scheduledFor,
       source: ExecutionSourceRef(
         domain: draft.sourceDomain,
         rowFamily: draft.sourceRowFamily,
@@ -294,8 +290,9 @@ Future<String> _dispatchLifeAction(Ref ref, LifeActionDraft draft) async {
         hlc: stamp.hlc,
       ),
     ),
+    replacesActionId: draft.replacesActionId,
   );
-  return id;
+  return action.id;
 }
 
 Future<LifeLinkedAction?> _readLinkedLifeAction(
@@ -310,7 +307,7 @@ Future<LifeLinkedAction?> _readLinkedLifeAction(
     ownerUserId: owner,
     source: source,
   );
-  if (action == null || action.status == ExecutionActionStatus.dropped) {
+  if (action == null) {
     return null;
   }
   return LifeLinkedAction(
@@ -330,17 +327,11 @@ Future<ExecutionAction?> _findLinkedExecutionAction({
   required String ownerUserId,
   required LifeActionSource source,
 }) async {
-  final actions = <ExecutionAction>[
-    ...await repository.listOpenActions(ownerUserId: ownerUserId),
-    ...await repository.listClosedActions(ownerUserId: ownerUserId),
-  ];
-  for (final action in actions) {
-    if (action.source.rowFamily == source.rowFamily &&
-        action.source.rowId == source.rowId) {
-      return action;
-    }
-  }
-  return null;
+  return repository.findActionForSource(
+    ownerUserId: ownerUserId,
+    rowFamily: source.rowFamily,
+    rowId: source.rowId,
+  );
 }
 
 String? appEntityRouteResolver(EntityRouteRef ref) {

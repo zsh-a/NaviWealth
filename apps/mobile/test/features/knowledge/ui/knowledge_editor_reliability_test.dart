@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +22,65 @@ import '../../finance/data/repositories/_stub_stamper.dart';
 const _owner = 'knowledge-editor-user';
 
 void main() {
+  testWidgets(
+    'Note save locks editing and preserves a failed draft for retry',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = _DelayedRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final note = _note();
+      await repository.upsertNote(note);
+      await tester.pumpWidget(_wrap(note.id, repository));
+      await _settle(tester);
+      await tester.tap(find.text('Open note'));
+      await _settle(tester);
+      await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+      await _settle(tester);
+      await tester.enterText(
+        find.byKey(const Key('knowledge-note-title')),
+        'Retryable title',
+      );
+      await _settle(tester);
+      repository.gate = Completer<void>();
+      await tester.tap(find.text('Save'));
+      await _settle(tester);
+      expect(repository.writes, 1);
+      await tester.binding.handlePopRoute();
+      await _settle(tester);
+      expect(find.text('Discard changes?'), findsNothing);
+      expect(
+        tester.widget<EditableText>(find.byType(EditableText).first).readOnly,
+        isTrue,
+      );
+      repository.gate!.completeError(StateError('private storage path'));
+      await _settle(tester);
+      expect(find.text('Retryable title'), findsOneWidget);
+      expect(find.byType(AppStatusBanner), findsWidgets);
+      expect(find.textContaining('private storage path'), findsNothing);
+      expect(
+        (await repository.findNote(ownerUserId: _owner, id: note.id))?.title,
+        note.title,
+      );
+      repository.gate = null;
+      await tester.tap(find.text('Save'));
+      await _settle(tester);
+      expect(repository.writes, 2);
+      expect(
+        (await repository.findNote(ownerUserId: _owner, id: note.id))?.title,
+        'Retryable title',
+      );
+      expect(find.byKey(const Key('knowledge-note-title')), findsNothing);
+      await tester.pump(const Duration(seconds: 7));
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    },
+  );
+
   testWidgets('Note editor guards dirty exits and confirms deletion', (
     tester,
   ) async {
@@ -84,6 +145,8 @@ void main() {
       isNull,
     );
 
+    await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+    await _settle(tester);
     await tester.tap(find.text('Delete').hitTestable());
     await _settle(tester);
     expect(find.text('Delete this note?'), findsOneWidget);
@@ -160,4 +223,18 @@ SyncMeta _sync() {
       nodeId: 'knowledge-editor-device',
     ),
   );
+}
+
+class _DelayedRepository extends KnowledgeRepository {
+  _DelayedRepository({required super.db, required super.outbox});
+  Completer<void>? gate;
+  int writes = 0;
+  @override
+  Future<void> upsertNote(KnowledgeNote note) async {
+    if (note.title == 'Retryable title') {
+      writes++;
+      await gate?.future;
+    }
+    await super.upsertNote(note);
+  }
 }

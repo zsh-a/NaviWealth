@@ -5287,5 +5287,9 @@
   "commonClearFilters": "清除筛选",
   "commonSearchResultsCount": "显示 {count} 条结果",
   "shellResizeListPane": "调整列表宽度",
-  "@commonSearchResultsCount": {"placeholders": {"count": {"type": "int"}}}
+  "@commonSearchResultsCount": {"placeholders": {"count": {"type": "int"}}},
+  "sourceActionReplace": "创建替代行动",
+  "sourceActionReplaceConfirmTitle": "替换已放弃的行动？",
+  "sourceActionReplaceConfirmBody": "已放弃的行动会保留在历史记录中。是否为此来源创建新的行动？",
+  "sourceActionLinked": "此来源已有行动。行动状态与来源问题是否解除分别跟踪。"
 }

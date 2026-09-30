@@ -55,7 +55,8 @@ class BodyMeasurementEntrySheet extends ConsumerStatefulWidget {
 }
 
 class _BodyMeasurementEntrySheetState
-    extends ConsumerState<BodyMeasurementEntrySheet> {
+    extends ConsumerState<BodyMeasurementEntrySheet>
+    with FormSubmission<BodyMeasurementEntrySheet> {
   final _formKey = GlobalKey<FormState>();
   final _valueCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
@@ -144,6 +145,7 @@ class _BodyMeasurementEntrySheetState
             AmountField(
               label: _labelOf(l10n, _kind),
               controller: _valueCtrl,
+              enabled: !_saving,
               helperText: _kind == HealthMetricKind.weight
                   ? l10n.healthBodyMeasurementWeightHelper
                   : l10n.healthBodyMeasurementBodyFatHelper,
@@ -193,16 +195,23 @@ class _BodyMeasurementEntrySheetState
               FButton(
                 variant: FButtonVariant.ghost,
                 mainAxisSize: MainAxisSize.min,
-                onPress: () => setState(() => _showNote = true),
+                onPress: _saving
+                    ? null
+                    : () => setState(() => _showNote = true),
                 child: Text(l10n.healthMeasurementNoteOptional),
               ),
             if (_showNote)
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _noteCtrl),
+                enabled: !_saving,
                 label: Text(l10n.commonNote),
                 maxLines: 3,
                 minLines: 1,
               ),
+            if (submissionFailureMessage case final message?) ...[
+              const SizedBox(height: AppSpacing.s12),
+              AppStatusBanner(message: message, kind: AppStatusKind.error),
+            ],
           ],
         ),
       ),
@@ -210,6 +219,7 @@ class _BodyMeasurementEntrySheetState
   }
 
   Future<void> _submit() async {
+    if (_saving) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final decimal = Decimal.tryParse(_valueCtrl.text.trim());
     if (decimal == null) return;
@@ -222,34 +232,38 @@ class _BodyMeasurementEntrySheetState
       return;
     }
 
-    setState(() => _saving = true);
-    try {
-      final service = await ref.read(healthMetricWriteServiceProvider.future);
-      await service.recordBodyMeasurement(
-        kind: _kind,
-        value: _kind == HealthMetricKind.bodyFat ? value / 100 : value,
-        capturedAt: _capturedAt,
-        source: 'manual',
-        note: _noteCtrl.text.trim().isEmpty ? null : _noteCtrl.text.trim(),
-        expectedRecordId: widget.initialMetric?.id,
-      );
-      ref
-        ..invalidate(healthTodaySnapshotProvider)
-        ..invalidate(healthTrendSeriesProvider);
-      widget.dirty.markPristine();
-      if (!mounted) return;
-      AppInteraction.signal(AppInteractionIntent.success);
-      Navigator.of(context).pop(true);
-    } catch (e) {
-      if (!mounted) return;
-      AppMessenger.show(
+    final l10n = AppLocalizations.of(context);
+    final kind = _kind;
+    final capturedAt = _capturedAt;
+    final note = _noteCtrl.text.trim();
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () async {
+        final service = await ref.read(healthMetricWriteServiceProvider.future);
+        await service.recordBodyMeasurement(
+          kind: kind,
+          value: kind == HealthMetricKind.bodyFat ? value / 100 : value,
+          capturedAt: capturedAt,
+          source: 'manual',
+          note: note.isEmpty ? null : note,
+          expectedRecordId: widget.initialMetric?.id,
+        );
+      },
+      leave: () {
+        ref
+          ..invalidate(healthTodaySnapshotProvider)
+          ..invalidate(healthTrendSeriesProvider);
+        Navigator.of(context).pop(true);
+      },
+      failureMessage: (error) => userSafeErrorMessage(
         context,
-        ToastKind.error,
-        AppLocalizations.of(context).healthBodyMeasurementSaveFailed('$e'),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
+        error,
+        operation: 'save body measurement',
+      ),
+      successMessage: l10n.commonSaved,
+      tag: 'health-body-measurement',
+    );
   }
 
   static String _labelOf(AppLocalizations l10n, HealthMetricKind kind) =>

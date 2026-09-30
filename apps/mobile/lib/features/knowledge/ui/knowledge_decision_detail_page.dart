@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/forms/form_dirty_guard.dart';
+import '../../../core/forms/form_submission.dart';
 import '../../../core/product/product_metrics.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
@@ -79,7 +80,7 @@ class _DecisionEditor extends ConsumerStatefulWidget {
 }
 
 class _DecisionEditorState extends ConsumerState<_DecisionEditor>
-    with FormDirtyGuard<_DecisionEditor> {
+    with FormDirtyGuard<_DecisionEditor>, FormSubmission<_DecisionEditor> {
   @override
   String get leaveFallback => KnowledgeRoutes.library;
 
@@ -218,7 +219,13 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
           onReview: _saving ? null : _review,
         ),
         const SizedBox(height: AppSpacing.s16),
-        KnowledgeDecisionActionSection(decision: widget.decision),
+        KnowledgeDecisionActionSection(
+          decision: widget.decision,
+          onBusyChanged: (busy) {
+            dirty.busy = busy;
+            if (mounted) setState(() => _saving = busy);
+          },
+        ),
         const SizedBox(height: AppSpacing.s16),
         KnowledgeRelationsSection(
           subjectKind: KnowledgeEntryKind.decision,
@@ -276,6 +283,10 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
           label: Text(l10n.knowledgeDecisionExpectedOutcomeLabel),
           maxLines: 3,
         ),
+        if (submissionFailureMessage case final message?) ...[
+          const SizedBox(height: AppSpacing.s12),
+          AppStatusBanner(message: message, kind: AppStatusKind.error),
+        ],
         const SizedBox(height: AppSpacing.s20),
         SizedBox(
           width: double.infinity,
@@ -293,7 +304,13 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
           onReview: _saving ? null : _review,
         ),
         const SizedBox(height: AppSpacing.s16),
-        KnowledgeDecisionActionSection(decision: widget.decision),
+        KnowledgeDecisionActionSection(
+          decision: widget.decision,
+          onBusyChanged: (busy) {
+            dirty.busy = busy;
+            if (mounted) setState(() => _saving = busy);
+          },
+        ),
         const SizedBox(height: AppSpacing.s16),
         KnowledgeRelationsSection(
           subjectKind: KnowledgeEntryKind.decision,
@@ -340,6 +357,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
   }
 
   Future<bool> _save() async {
+    if (_saving) return false;
     final question = _question.text.trim();
     final l10n = AppLocalizations.of(context);
     if (question.isEmpty) {
@@ -358,101 +376,97 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       );
       return false;
     }
-    setState(() => _saving = true);
-    dirty.busy = true;
-    try {
-      final repository = await ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await ref.read(mutationStamperProvider.future);
-      final value = await stamper.stamp();
-      await repository.upsertDecision(
-        KnowledgeDecision(
-          id: widget.decision.id,
-          question: question,
-          options: _options.options,
-          selectedLabel: _options.selectedLabel,
-          rationaleMd: _rationale.text.trim(),
-          expectedOutcome: _nullable(_expected.text),
-          reviewDate: _reviewDate,
-          revisitConditions: _revisitConditions,
-          actualOutcomeMd: _nullable(_actual.text),
-          status: _status,
-          supersededByDecisionId: widget.decision.supersededByDecisionId,
-          decidedAt: widget.decision.decidedAt,
-          mergedIntoId: widget.decision.mergedIntoId,
-          sync: SyncMeta(
-            ownerUserId: value.ownerUserId,
-            updatedAt: value.now,
-            updatedByDevice: value.deviceId,
-            hlc: value.hlc,
-          ),
-        ),
-      );
-      ref.invalidate(_decisionProvider(widget.decision.id));
-      ref.invalidate(knowledgeDecisionsProvider);
-      dirty.markPristine();
-      if (mounted) {
-        AppMessenger.show(context, ToastKind.success, l10n.commonSaved);
-      }
-      return true;
-    } on Object catch (error, stackTrace) {
-      if (!mounted) return false;
-      AppMessenger.show(
+    return submitForm<void>(
+      dirty: dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () => _commitDecision(),
+      leave: () {
+        ref.invalidate(_decisionProvider(widget.decision.id));
+        ref.invalidate(knowledgeDecisionsProvider);
+      },
+      failureMessage: (error) => userSafeErrorMessage(
         context,
-        ToastKind.error,
-        userSafeErrorMessage(
-          context,
-          error,
-          stackTrace: stackTrace,
-          operation: 'save knowledge decision',
+        error,
+        operation: 'save knowledge decision',
+      ),
+      successMessage: l10n.commonSaved,
+      tag: 'knowledge-decision-edit',
+    );
+  }
+
+  KnowledgeDecision _draftDecision({
+    KnowledgeDecisionReviewDraft? review,
+    SyncMeta? sync,
+  }) {
+    return KnowledgeDecision(
+      id: widget.decision.id,
+      question: _question.text.trim(),
+      options: _options.options,
+      selectedLabel: _options.selectedLabel,
+      rationaleMd: _rationale.text.trim(),
+      expectedOutcome: _nullable(_expected.text),
+      reviewDate: review == null ? _reviewDate : review.reviewDate,
+      revisitConditions: review?.revisitConditions ?? _revisitConditions,
+      actualOutcomeMd: review == null
+          ? _nullable(_actual.text)
+          : review.actualOutcomeMd,
+      status: review?.status ?? _status,
+      supersededByDecisionId: widget.decision.supersededByDecisionId,
+      decidedAt: widget.decision.decidedAt,
+      mergedIntoId: widget.decision.mergedIntoId,
+      sync: sync ?? widget.decision.sync,
+    );
+  }
+
+  Future<void> _commitDecision({KnowledgeDecisionReviewDraft? review}) async {
+    final repository = await ref.read(knowledgeRepositoryProvider.future);
+    final stamper = await ref.read(mutationStamperProvider.future);
+    final value = await stamper.stamp();
+    await repository.upsertDecision(
+      _draftDecision(
+        review: review,
+        sync: SyncMeta(
+          ownerUserId: value.ownerUserId,
+          updatedAt: value.now,
+          updatedByDevice: value.deviceId,
+          hlc: value.hlc,
         ),
-      );
-      return false;
-    } finally {
-      dirty.busy = false;
-      if (mounted) setState(() => _saving = false);
-    }
+      ),
+    );
   }
 
   Future<void> _review() async {
+    if (_saving) return;
+    final l10n = AppLocalizations.of(context);
+    if (_question.text.trim().isEmpty || !_options.isValid) {
+      AppMessenger.show(
+        context,
+        ToastKind.warning,
+        _question.text.trim().isEmpty
+            ? l10n.knowledgeDecisionSaveRequirement
+            : l10n.knowledgeDecisionOptionsInvalid,
+      );
+      return;
+    }
     final draft = await showKnowledgeDecisionReviewSheet(
       context: context,
-      decision: KnowledgeDecision(
-        id: widget.decision.id,
-        question: _question.text.trim(),
-        options: _options.options,
-        selectedLabel: _options.selectedLabel,
-        rationaleMd: _rationale.text.trim(),
-        expectedOutcome: _nullable(_expected.text),
-        reviewDate: _reviewDate,
-        revisitConditions: _revisitConditions,
-        actualOutcomeMd: _nullable(_actual.text),
-        status: _status,
-        supersededByDecisionId: widget.decision.supersededByDecisionId,
-        decidedAt: widget.decision.decidedAt,
-        mergedIntoId: widget.decision.mergedIntoId,
-        sync: widget.decision.sync,
-      ),
+      decision: _draftDecision(),
+      onSave: (review) => _commitDecision(review: review),
     );
     if (!mounted || draft == null) return;
-    setState(() {
-      _reviewDate = draft.reviewDate;
-      _revisitConditions = draft.revisitConditions;
-      _actual.text = draft.actualOutcomeMd ?? '';
-      _status = draft.status;
-    });
-    dirty.markDirty();
-    final saved = await _save();
-    if (saved) {
-      final elapsed = DateTime.now().toUtc().difference(
-        widget.decision.decidedAt.toUtc(),
-      );
-      await recordProductMetric(
-        () => ref.read(productMetricsProvider.notifier),
-        ProductFunnelEvent.knowledgeDecisionReviewed,
-        success: true,
-        duration: elapsed.isNegative ? Duration.zero : elapsed,
-      );
-    }
+    dirty.markPristine();
+    final elapsed = DateTime.now().toUtc().difference(
+      widget.decision.decidedAt.toUtc(),
+    );
+    // Refresh only after the review sheet has published its pristine state and closed.
+    ref.invalidate(_decisionProvider(widget.decision.id));
+    ref.invalidate(knowledgeDecisionsProvider);
+    await recordProductMetric(
+      () => ref.read(productMetricsProvider.notifier),
+      ProductFunnelEvent.knowledgeDecisionReviewed,
+      success: true,
+      duration: elapsed.isNegative ? Duration.zero : elapsed,
+    );
   }
 
   Future<void> _rewrite() async {

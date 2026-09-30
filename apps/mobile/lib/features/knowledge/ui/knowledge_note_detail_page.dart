@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/forms/form_dirty_guard.dart';
+import '../../../core/forms/form_submission.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -77,7 +78,7 @@ class _NoteEditor extends ConsumerStatefulWidget {
 }
 
 class _NoteEditorState extends ConsumerState<_NoteEditor>
-    with FormDirtyGuard<_NoteEditor> {
+    with FormDirtyGuard<_NoteEditor>, FormSubmission<_NoteEditor> {
   @override
   String get leaveFallback => KnowledgeRoutes.library;
 
@@ -274,6 +275,10 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
               );
             },
           ),
+          if (submissionFailureMessage case final message?) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(message: message, kind: AppStatusKind.error),
+          ],
           const SizedBox(height: AppSpacing.s20),
           AppBusyButton(
             label: l10n.commonSave,
@@ -312,58 +317,51 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final l10n = AppLocalizations.of(context);
     final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
-    setState(() => _saving = true);
-    dirty.busy = true;
-    try {
-      final repository = await ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await ref.read(mutationStamperProvider.future);
-      final value = await stamper.stamp();
-      await repository.upsertNote(
-        KnowledgeNote(
-          id: widget.note.id,
-          title: _title.text.trim(),
-          bodyMd: _body.text.trim(),
-          sourceUrl: sourceUrl,
-          tags: _tags.text
-              .split(RegExp(r'[,，\s]+'))
-              .where((value) => value.isNotEmpty)
-              .toSet()
-              .toList(growable: false),
-          createdAt: widget.note.createdAt,
-          mergedIntoId: widget.note.mergedIntoId,
-          sync: SyncMeta(
-            ownerUserId: value.ownerUserId,
-            updatedAt: value.now,
-            updatedByDevice: value.deviceId,
-            hlc: value.hlc,
+    await submitForm<void>(
+      dirty: dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () async {
+        final repository = await ref.read(knowledgeRepositoryProvider.future);
+        final stamper = await ref.read(mutationStamperProvider.future);
+        final value = await stamper.stamp();
+        await repository.upsertNote(
+          KnowledgeNote(
+            id: widget.note.id,
+            title: _title.text.trim(),
+            bodyMd: _body.text.trim(),
+            sourceUrl: sourceUrl,
+            tags: _tags.text
+                .split(RegExp(r'[,，\s]+'))
+                .where((value) => value.isNotEmpty)
+                .toSet()
+                .toList(growable: false),
+            createdAt: widget.note.createdAt,
+            mergedIntoId: widget.note.mergedIntoId,
+            sync: SyncMeta(
+              ownerUserId: value.ownerUserId,
+              updatedAt: value.now,
+              updatedByDevice: value.deviceId,
+              hlc: value.hlc,
+            ),
           ),
-        ),
-      );
-      ref.invalidate(_noteProvider(widget.note.id));
-      ref.invalidate(knowledgeNotesProvider);
-      dirty.markPristine();
-      if (mounted) {
-        AppMessenger.show(context, ToastKind.success, l10n.commonSaved);
-      }
-    } on Object catch (error, stackTrace) {
-      if (!mounted) return;
-      AppMessenger.show(
+        );
+      },
+      leave: () {
+        ref.invalidate(_noteProvider(widget.note.id));
+        ref.invalidate(knowledgeNotesProvider);
+      },
+      failureMessage: (error) => userSafeErrorMessage(
         context,
-        ToastKind.error,
-        userSafeErrorMessage(
-          context,
-          error,
-          stackTrace: stackTrace,
-          operation: 'save knowledge note',
-        ),
-      );
-    } finally {
-      dirty.busy = false;
-      if (mounted) setState(() => _saving = false);
-    }
+        error,
+        operation: 'save knowledge note',
+      ),
+      successMessage: l10n.commonSaved,
+      tag: 'knowledge-note-edit',
+    );
   }
 
   Future<void> _rewrite() async {

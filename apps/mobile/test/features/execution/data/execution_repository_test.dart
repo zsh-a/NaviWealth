@@ -77,6 +77,111 @@ void main() {
 
   tearDown(() => db.close());
 
+  ExecutionAction sourced(
+    String id, {
+    ExecutionActionStatus status = ExecutionActionStatus.todo,
+    String owner = _userId,
+  }) => ExecutionAction(
+    id: id,
+    title: id,
+    source: const ExecutionSourceRef(
+      domain: 'knowledge',
+      rowFamily: 'know:knowledge_decisions',
+      rowId: 'decision',
+    ),
+    status: status,
+    createdAt: DateTime.utc(2026),
+    sync: SyncMeta(
+      ownerUserId: owner,
+      updatedAt: DateTime.utc(2026),
+      updatedByDevice: _deviceId,
+      hlc: Hlc.zero(_deviceId),
+    ),
+  );
+
+  test(
+    'concurrent source creation writes only one action and outbox pointer',
+    () async {
+      final actions = await Future.wait([
+        repo.createOrReuseSourceAction(sourced('first')),
+        repo.createOrReuseSourceAction(sourced('second')),
+      ]);
+      expect(actions.map((a) => a.id).toSet(), hasLength(1));
+      expect(await repo.listOpenActions(ownerUserId: _userId), hasLength(1));
+      expect(outbox.queued, hasLength(1));
+    },
+  );
+
+  test(
+    'completed source action is reused without overwriting user changes',
+    () async {
+      await repo.upsertAction(
+        sourced('done', status: ExecutionActionStatus.done),
+      );
+      outbox.clearQueued();
+      final result = await repo.createOrReuseSourceAction(sourced('new title'));
+      expect(result.id, 'done');
+      expect(result.status, ExecutionActionStatus.done);
+      expect(outbox.queued, isEmpty);
+    },
+  );
+
+  test(
+    'dropped source replacement requires confirmation and preserves history',
+    () async {
+      await repo.upsertAction(
+        sourced('dropped', status: ExecutionActionStatus.dropped),
+      );
+      outbox.clearQueued();
+      await expectLater(
+        repo.createOrReuseSourceAction(sourced('new')),
+        throwsStateError,
+      );
+      await expectLater(
+        repo.createOrReuseSourceAction(
+          sourced('new'),
+          replacesActionId: 'stale-id',
+        ),
+        throwsStateError,
+      );
+      expect(outbox.queued, isEmpty);
+      final result = await repo.createOrReuseSourceAction(
+        sourced('new'),
+        replacesActionId: 'dropped',
+      );
+      expect(result.id, 'new');
+      expect(
+        (await repo.listClosedActions(ownerUserId: _userId)).single.id,
+        'dropped',
+      );
+      expect(
+        (await repo.findActionForSource(
+          ownerUserId: _userId,
+          rowFamily: 'know:knowledge_decisions',
+          rowId: 'decision',
+        ))?.id,
+        'new',
+      );
+      expect(
+        (await repo.createOrReuseSourceAction(
+          sourced('third'),
+          replacesActionId: 'dropped',
+        )).id,
+        'new',
+      );
+      expect(outbox.queued, hasLength(1));
+    },
+  );
+
+  test('source matching isolates owners and ignores tombstones', () async {
+    await repo.upsertAction(sourced('other-owner', owner: 'other'));
+    final deleted = sourced('deleted');
+    await repo.upsertAction(deleted);
+    await repo.softDeleteAction(action: deleted, sync: _sync(3));
+    final result = await repo.createOrReuseSourceAction(sourced('fresh'));
+    expect(result.id, 'fresh');
+  });
+
   test('upsertAction stores personal todo and enqueues sync pointer', () async {
     await repo.upsertAction(
       _action(id: 'a1', title: 'Review FIRE budget delta'),

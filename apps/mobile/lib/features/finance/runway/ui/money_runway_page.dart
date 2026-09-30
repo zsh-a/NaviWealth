@@ -925,45 +925,73 @@ Future<void> _createRunwayAction(
   MoneyRunwaySnapshot snapshot, {
   Map<String, Object?>? scenario,
 }) async {
-  final confirmed = await showConfirmDialog(
-    context: context,
-    title: Text(l10n.moneyRunwayActionConfirmTitle),
-    body: Text(l10n.moneyRunwayActionConfirmBody),
-    confirmLabel: l10n.commonConfirm,
-    cancelLabel: l10n.commonCancel,
-    icon: FLucideIcons.listTodo,
+  final source = (
+    rowFamily: 'money_runway',
+    rowId: scenario == null ? 'current' : 'custom-scenario',
   );
-  if (confirmed != true || !context.mounted) return;
-  final dispatch = ref.read(lifeActionDispatcherProvider);
-  final evidence = <String, Object?>{...snapshot.toEvidenceJson()};
-  if (scenario != null) evidence['scenario'] = scenario;
-  final id = await dispatch(
-    LifeActionDraft(
-      title: l10n.moneyRunwayActionTitle,
-      note: jsonEncode(evidence),
-      sourceDomain: 'finance',
-      sourceRowFamily: 'money_runway',
-      sourceRowId: scenario == null ? 'current' : 'custom-scenario',
-      priority: snapshot.status == MoneyRunwayStatus.shortfall
-          ? 'high'
-          : 'normal',
-      dueAt: snapshot.firstShortfallDate,
-    ),
-  );
-  if (context.mounted && id != null) {
-    unawaited(
-      ref
-          .read(productMetricsProvider.notifier)
-          .record(ProductFunnelEvent.executionActionCreated, success: true),
+  try {
+    final linked = await ref.read(lifeLinkedActionProvider(source).future);
+    if (!context.mounted) return;
+    final replacing = linked?.state == LifeActionState.dropped;
+    final confirmed = await showConfirmDialog(
+      context: context,
+      title: Text(
+        replacing
+            ? l10n.sourceActionReplaceConfirmTitle
+            : l10n.moneyRunwayActionConfirmTitle,
+      ),
+      body: Text(
+        replacing
+            ? l10n.sourceActionReplaceConfirmBody
+            : l10n.moneyRunwayActionConfirmBody,
+      ),
+      confirmLabel: replacing ? l10n.sourceActionReplace : l10n.commonConfirm,
+      cancelLabel: l10n.commonCancel,
+      icon: FLucideIcons.listTodo,
     );
-    AppMessenger.show(
-      context,
-      ToastKind.success,
-      l10n.moneyRunwayActionCreated,
+    if (confirmed != true || !context.mounted) return;
+    final dispatch = ref.read(lifeActionDispatcherProvider);
+    final evidence = <String, Object?>{...snapshot.toEvidenceJson()};
+    if (scenario != null) evidence['scenario'] = scenario;
+    final id = await dispatch(
+      LifeActionDraft(
+        title: l10n.moneyRunwayActionTitle,
+        note: jsonEncode(evidence),
+        sourceDomain: 'finance',
+        sourceRowFamily: 'money_runway',
+        sourceRowId: source.rowId,
+        replacesActionId: replacing ? linked!.id : null,
+        priority: snapshot.status == MoneyRunwayStatus.shortfall
+            ? 'high'
+            : 'normal',
+        dueAt: snapshot.firstShortfallDate,
+      ),
     );
-    final routeBuilder = ref.read(lifeActionRouteBuilderProvider);
-    if (routeBuilder != null && context.mounted) {
-      await context.push<void>(routeBuilder(id));
+    if (context.mounted && id != null) {
+      unawaited(
+        ref
+            .read(productMetricsProvider.notifier)
+            .record(ProductFunnelEvent.executionActionCreated, success: true),
+      );
+      AppMessenger.show(
+        context,
+        ToastKind.success,
+        l10n.moneyRunwayActionCreated,
+      );
+      final routeBuilder = ref.read(lifeActionRouteBuilderProvider);
+      if (routeBuilder != null && context.mounted) {
+        await context.push<void>(routeBuilder(id));
+      }
     }
+  } catch (error) {
+    if (context.mounted) {
+      AppMessenger.show(
+        context,
+        ToastKind.error,
+        userSafeErrorMessage(context, error, operation: 'create runway action'),
+      );
+    }
+  } finally {
+    if (context.mounted) ref.invalidate(lifeLinkedActionProvider(source));
   }
 }

@@ -236,6 +236,68 @@ mixin ExecutionActionRepositoryMixin {
     return rows.map(executionActionFromRow).toList(growable: false);
   }
 
+  /// Looks up the source directly, including closed actions and excluding tombstones.
+  /// Legacy duplicates prefer an open action, then completed, then dropped.
+  Future<ExecutionAction?> findActionForSource({
+    required String ownerUserId,
+    required String rowFamily,
+    required String rowId,
+  }) async {
+    final query = _db.select(_db.executionActions)
+      ..where(
+        (t) =>
+            t.ownerUserId.equals(ownerUserId) &
+            t.deletedAt.isNull() &
+            t.sourceRowFamily.equals(rowFamily) &
+            t.sourceRowId.equals(rowId),
+      )
+      ..orderBy([
+        (t) => OrderingTerm(
+          expression: t.status.isIn([
+            ExecutionActionStatus.todo.wire,
+            ExecutionActionStatus.doing.wire,
+            ExecutionActionStatus.blocked.wire,
+          ]),
+          mode: OrderingMode.desc,
+        ),
+        (t) => OrderingTerm(
+          expression: t.status.equals(ExecutionActionStatus.dropped.wire),
+        ),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.id),
+      ])
+      ..limit(1);
+    final row = await query.getSingleOrNull();
+    return row == null ? null : executionActionFromRow(row);
+  }
+
+  /// Serializes local source lookup and row/outbox creation in one transaction.
+  Future<ExecutionAction> createOrReuseSourceAction(
+    ExecutionAction draft, {
+    String? replacesActionId,
+  }) {
+    final family = draft.source.rowFamily;
+    final rowId = draft.source.rowId;
+    if (family == null || family.isEmpty || rowId == null || rowId.isEmpty) {
+      throw ArgumentError('A source-linked action requires a stable source.');
+    }
+    return _db.transaction(() async {
+      final existing = await findActionForSource(
+        ownerUserId: draft.sync.ownerUserId,
+        rowFamily: family,
+        rowId: rowId,
+      );
+      if (existing != null) {
+        if (existing.status != ExecutionActionStatus.dropped) return existing;
+        if (replacesActionId != existing.id) {
+          throw StateError('Confirm replacement of the dropped action first.');
+        }
+      }
+      await upsertAction(draft);
+      return draft;
+    });
+  }
+
   Future<void> upsertAction(ExecutionAction action) {
     return _upsertAndEnqueue(
       _db.executionActions,

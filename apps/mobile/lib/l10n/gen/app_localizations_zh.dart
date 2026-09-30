@@ -16572,4 +16572,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get shellResizeListPane => '调整列表宽度';
+
+  @override
+  String get sourceActionReplace => '创建替代行动';
+
+  @override
+  String get sourceActionReplaceConfirmTitle => '替换已放弃的行动？';
+
+  @override
+  String get sourceActionReplaceConfirmBody => '已放弃的行动会保留在历史记录中。是否为此来源创建新的行动？';
+
+  @override
+  String get sourceActionLinked => '此来源已有行动。行动状态与来源问题是否解除分别跟踪。';
 }
