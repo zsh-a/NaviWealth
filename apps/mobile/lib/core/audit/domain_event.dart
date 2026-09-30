@@ -13,8 +13,8 @@ enum DomainEventKind {
   created,
 
   /// One or more columns of an existing row were updated. `before_json`
-  /// and `after_json` each carry only the *changed* fields, matching the
-  /// `fields_diff` granularity that flows through the sync OpLog.
+  /// and `after_json` each carry only the *changed* fields for local audit.
+  /// Sync v3 separately transmits the complete row state.
   fieldChanged,
 
   /// The entity was soft-deleted (tombstoned). `before_json` carries the

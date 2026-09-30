@@ -3,7 +3,7 @@
 /// These model the *staging* shape only: a parsed-but-unconfirmed
 /// transaction and its dedup verdict. None of this is sync wire format —
 /// drafts live exclusively in the local `ingest_drafts` table and never
-/// enter the OpLog. They become durable ledger truth only after the user
+/// enter the sync outbox. They become durable ledger truth only after the user
 /// confirms, at which point the normal repository write path takes over.
 library;
 

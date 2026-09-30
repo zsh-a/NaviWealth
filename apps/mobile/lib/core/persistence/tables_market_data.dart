@@ -173,7 +173,7 @@ class MarketCorporateActionFetchStates extends Table {
 ///   - The catalog is a market dictionary, not user data — every device
 ///     has the same rows, derived from a pinned source bundle.
 ///   - Rebuilding it on demand from a versioned asset is cheaper than
-///     replicating ~10k rows through the OpLog.
+///     replicating ~10k rows through sync.
 ///   - Excluding it from sync also lets us iterate the schema (new
 ///     fields, finer-grained tokens) without burning HLC budget.
 ///

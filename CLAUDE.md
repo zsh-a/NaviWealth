@@ -53,7 +53,7 @@ apps/mobile/lib/
   features/
     finance/            Finance composition, tools, data root, domain values, and slices
     health/             HealthOS data, UI, AI tools, agents
-    knowledge/          KnowledgeOS data, UI, AI tools, agents
+    knowledge/          KnowledgeOS notes, decisions, UI, AI tools
     execution/          ExecutionOS data, UI, AI tools, agents
   l10n/                 ARB files and generated localizations
 ```
@@ -245,8 +245,8 @@ Project lint gates:
 | `docs/architecture/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
 | `docs/architecture/lifeos-shell.md` | Cross-domain shell SSOT |
 | `docs/domains/healthos-domain.md` | HealthOS scope, data, AI tools, agents |
-| `docs/domains/knowledgeos-domain.md` | KnowledgeOS scope, data, AI tools, agents |
-| `docs/domains/executionos-domain.md` | ExecutionOS scope, actions, commitments, progress |
+| `docs/domains/knowledgeos-domain.md` | KnowledgeOS notes, decisions, relations, AI tools |
+| `docs/domains/executionos-domain.md` | ExecutionOS scope, plans, actions, progress |
 | `docs/ai/ai-architecture.md` | Device AI runtime design |
 | `docs/ai/ai-protocol.md` | AI event/tool protocol |
 | `docs/sync/sync-v3.md` | Active sync protocol |

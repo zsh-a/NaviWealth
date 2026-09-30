@@ -2,9 +2,9 @@
 
 > Last reviewed: 2026-08-01
 > 关联：[`ai-architecture.md`](../ai/ai-architecture.md)、[`ai-protocol.md`](../ai/ai-protocol.md)、[`roadmap-finance.md`](../roadmap/roadmap-finance.md)、[`market-data-providers.md`](./market-data-providers.md)、[`sync-v3.md`](../sync/sync-v3.md)
-> 定位：在 NaviWealth 已有的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"之上，新增一个**低频期权现金流规划器**。
+> 定位：基于 NaviWealth 的"持仓 + 现金 + FIRE 现金桶 + 风险偏好"提供**低频期权现金流规划**。
 >
-> 状态：Income Planner 采用 Opportunities / Wheel / Journal 三工作区；交易日志记录到期日、合约数量和总费用。Wheel 与 LEAPS 通过 [Income Strategy Framework](income-strategy.md) 和股息 sleeve 组合；LEAPS 不属于 Wheel 阶段，也不是 PMCC。当前行情源是 yfinance；AI tool **只读 cache**，不触发实时扫描。Authenticated provider 属于未排期的触发式工作。
+> 状态：Options workspace 采用 Opportunities / Journal 两工作区，Wheel 生命周期使用独立页面；交易日志记录到期日、合约数量和总费用。Wheel 与 LEAPS 通过 [Income Strategy Framework](income-strategy.md) 和股息 sleeve 组合；LEAPS 不属于 Wheel 阶段，也不是 PMCC。当前行情源是 yfinance；AI tool **只读 cache**，不触发实时扫描。Authenticated provider 属于未排期的触发式工作。
 
 ---
 
@@ -41,7 +41,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ### 1.2 不做什么
 
-第一阶段明确不做：
+当前边界：
 
 - **不下单**。不接券商交易 API，不发出实盘订单。下单是 `SideEffect.externalCall`，是独立战役（远期）。
 - **不预测价格**。不预测 underlying 涨跌方向，不预测 IV 走势。
@@ -72,13 +72,13 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 | 约束 | 来源 | 对设计的影响 |
 |---|---|---|
-| AI 完全设备端，无 `/ai/chat` 中继 | [`ai-architecture.md`](../ai/ai-architecture.md) §4.6 | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
+| AI 完全设备端，无 `/ai/chat` 中继 | [AI Architecture](../ai/ai-architecture.md) | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v3.md`](../sync/sync-v3.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / income strategy plan / journal）走行级同步。 |
 | Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
-| Money 类型 | CLAUDE.md「Money」 | 所有期权金额走 `Money` + `Decimal`。 |
-| Web 无 AI | CLAUDE.md「AI」 | Income Planner 通过 `kIsWeb` 短路；`web_smoke` 反向断言不出现期权文案。 |
-| Modal 系统 | memory: modal_system | 详情面板用 `showAppFormSheet` + `AppSheetFooter`，并由设计系统 widget tests 覆盖。 |
-| Forui + design tokens | `apps/mobile/lib/design_system/` | `FCard` / `FButton` + `AppSpacing` / `AppRadius`，不写魔法数字。 |
+| Money 类型 | [FinanceOS](financeos-domain.md)，`apps/mobile/lib/features/finance/domain/fx/money.dart` | 所有期权金额走 `Money` + `Decimal`。 |
+| Web 无 AI | [LifeOS Shell](../architecture/lifeos-shell.md) | Plan hub 隐藏收入策略入口；期权页面通过 `kIsWeb` 返回不支持提示。 |
+| 表单与面板 | [Agent Guide](https://github.com/zsh-a/NaviWealth/blob/main/CLAUDE.md#ui-conventions) | 只读详情用 `showAppFormSheet` + `AppSheetFooter`；可编辑轻量表单用 `showGuardedFormSheet`；多区块交易记录用 `AppFormPageScaffold`。 |
+| Forui + design tokens | `apps/mobile/lib/design_system/` | `SoftCard` / `AppSection` / `FButton` + `AppSpacing` / `AppRadius`。 |
 
 ### 2.2 不会被打破的现有原则
 
@@ -105,8 +105,8 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
                   └───────────────┬───────────────┘
                                   │
             ┌─────────────────────▼─────────────────────┐
-            │ OptionsChainProvider (lib/data/market/)    │
-            │  • yfinance_options_provider (MVP)         │
+            │ OptionsChainProvider                       │
+            │  • yfinance_options_provider                │
             │  • shares MarketHttpClient + RateLimiter   │
             └─────────────────────┬─────────────────────┘
                                   │
@@ -141,7 +141,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 
 ### 4.1 MVP：yfinance 非官方端点
 
-复用 `features/finance/data/market/providers/yfinance_provider.dart` 同款 `MarketHttpClient` + `RateLimiter`，新增 `features/finance/data/market/providers/options/yfinance_options_provider.dart`。
+实现位于 `features/finance/data/market/providers/options/yfinance_options_provider.dart`，复用 `features/finance/data/market/providers/yfinance_provider.dart` 同款 `MarketHttpClient` + `RateLimiter`。
 
 **配额策略**：
 
@@ -593,9 +593,11 @@ LEAPS 使用独立表单和字段语义。表单对日期顺序、正数金额�
 ### 9.3 web 行为
 
 入口在 web 构建中不显示（Plan hub 的收入策略行带 `!kIsWeb` 守卫）。直接
-命中路由（如 AI 深链）时，`IncomePlannerPage` / `WheelLifecyclePage` /
+命中路由时，`IncomePlannerPage` / `WheelLifecyclePage` /
 `OptionsTradeStatsPage` 渲染带脚手架的"web 不支持"占位页，而不是空白。
-`web_smoke` 加一条反向断言："web build 不应出现 'Options workspace' 字样"。
+平台支持和发布验证见[浏览器兼容矩阵](../development/web-compat-matrix.md)。
+当前 `web_smoke` 没有专门覆盖期权入口隐藏和直接访问的断言；上述行为以生产
+页面的守卫为准，不能把计划中的断言当作已交付覆盖。
 
 ---
 

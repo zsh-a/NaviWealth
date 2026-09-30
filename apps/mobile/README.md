@@ -46,7 +46,9 @@ tool/run-asr-native-smoke.sh .cache/asr-native-smoke
 ```
 lib/
 ├── app/                   启动、路由、域注册（DomainPack）、组合根、Shell chrome
-│   ├── bootstrap.dart     Provider overrides 和 Shell 组合
+│   ├── bootstrap.dart     首帧前初始化（binding、偏好、formatter、日志）
+│   ├── bootstrap/        Provider overrides、首帧后启动与原生模型发现
+│   ├── domain_composition.dart 跨域 Provider、Action 与 proposal 组合
 │   ├── domain_packs.dart  生产域清单（Finance / Health / Knowledge / Execution）
 │   ├── routing/            外层 dock Shell + 域路由
 │   └── shell/              多域导航 chrome
@@ -66,7 +68,7 @@ lib/
 ├── features/              域业务代码（feature-first）
 │   ├── finance/           FinanceOS 组合根、全部业务切片、数据与域模型
 │   ├── health/            HealthOS 数据、UI、AI 工具、Agent（用户启用）
-│   ├── knowledge/         KnowledgeOS 数据、UI、AI 工具、Agent（用户启用）
+│   ├── knowledge/         KnowledgeOS 笔记、决策、UI、AI 工具（用户启用）
 │   ├── execution/         ExecutionOS 数据、UI、AI 工具、Agent（用户启用）
 │   ├── ai_chat/           跨域 AI 对话 UI
 │   ├── settings/          设置（含域启用页）

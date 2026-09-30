@@ -543,8 +543,9 @@ is suspended into a local `requires_interaction` snapshot without another
 model request. A user response resumes the original turn id and becomes an
 `interaction_result` block. Missing or mismatched snapshots fail closed.
 Proposal approval uses the same response contract but resumes through the
-proposal-apply route. Legacy decision/apply fields remain during the
-compatibility migration.
+proposal-apply route. Decision-card presentation fields and persisted
+apply/undo/error state remain part of the current UI and recovery contract;
+`InteractionResponse` does not replace them.
 
 ## Data Management
 

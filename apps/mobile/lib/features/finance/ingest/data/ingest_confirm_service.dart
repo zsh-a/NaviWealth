@@ -3,7 +3,7 @@
 /// A confirmed draft is turned into an expense or income
 /// [ReadyProposalPlan] and pushed through the **existing**
 /// [ProposalApplier]. That is the whole point: ingest reuses the one
-/// audited write path (repository → Drift → OpLog → AiTouch) instead of
+/// audited write path (repository → Drift → sync outbox → AiTouch) instead of
 /// inventing a parallel one, and the AI is never the final writer —
 /// the user's tap is (§5.10.6). Only after the apply succeeds is the
 /// draft marked `confirmed`. Pre-invocation failures release the draft;

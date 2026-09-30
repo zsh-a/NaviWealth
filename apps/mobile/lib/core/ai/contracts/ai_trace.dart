@@ -1,6 +1,6 @@
 /// Per-request AI execution record.
 ///
-/// Stored locally only — never replicated via OpLog. Drives the user-
+/// Stored locally only — never enqueued for sync. Drives the user-
 /// visible 'AI 透明度' affordance (tool count, spans, badge) and the
 /// in-app audit page. 30-day rolling retention; older rows are pruned
 /// by [AiTraceStore].

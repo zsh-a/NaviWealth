@@ -10,7 +10,7 @@ const bool kDefaultWriteDailyPriceSnapshots = true;
 
 /// User preference controlling the coordinator's daily snapshot write-back.
 /// When OFF, the coordinator still warms the local `MarketQuotes` cache
-/// but never enqueues `auto:*` rows on the OpLog, so other devices fetch
+/// but never enqueues `auto:*` rows in the sync outbox, so other devices fetch
 /// their own prices independently.
 final writeDailyPriceSnapshotsProvider =
     StateNotifierProvider<WriteDailyPriceSnapshotsController, bool>((ref) {

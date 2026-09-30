@@ -147,15 +147,15 @@ class AskUserTool implements DeviceTool {
       createdAt: DateTime.now().toUtc(),
     );
 
-    // Keep the legacy fields during migration so existing decision cards
-    // render unchanged; `interaction` is the durable runtime contract.
+    // Decision cards use these presentation fields; `interaction` owns
+    // the durable runtime identity, response schema, and resume contract.
     return <String, Object?>{
       'type': 'decision_request',
       'title': title,
       'context': (input['context'] as String?)?.trim() ?? '',
       'options': options,
       'allow_custom': allowCustom,
-      // The loop pauses here; the user's pick arrives as the next turn.
+      // The loop suspends here; the user's response resumes this turn.
       'awaiting_user': true,
       'domain': kDomainShell,
       'interaction': interaction.toJson(),

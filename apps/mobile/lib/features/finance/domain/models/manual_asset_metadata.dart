@@ -10,11 +10,8 @@ import 'package:decimal/decimal.dart';
 /// layer typed wrappers in the domain so feature code never deals with
 /// stringly-typed lookups.
 ///
-/// Sync semantics: changes to deposit/wealth-product specifics show up in
-/// the `fields_diff` payload as a single `metadata_json` field. That gives
-/// us row-level (rather than column-level) LWW *within* the metadata blob,
-/// which is acceptable for v1 — the inner fields rarely race because they
-/// only mutate when a user edits the holding.
+/// Sync v3 transmits the asset's complete row state, including `metadata_json`.
+/// Concurrent edits use row-level LWW; metadata fields are not merged separately.
 sealed class ManualAssetMetadata {
   const ManualAssetMetadata({required this.accountId});
 

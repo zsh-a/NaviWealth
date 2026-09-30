@@ -277,7 +277,7 @@ class AppDatabase extends _$AppDatabase {
       // v7 → v8: Layer 4 ingest pipeline (§5.10.10 / S5a). Parsed-but-
       // unconfirmed transactions live in `ingest_drafts` — a local-only,
       // never-synced staging table. Drafts do NOT enter journal_entries
-      // / OpLog until the user confirms; this is what makes §4.2's
+      // / sync outbox until the user confirms; this is what makes §4.2's
       // "draft gate" hold by construction. `ingest_attachments` is
       // created now (schema-ready) but only wired by S5b/S5c when the
       // Vision path actually has a blob to stage.
@@ -305,7 +305,7 @@ class AppDatabase extends _$AppDatabase {
       }
       // v11 -> v12: Options Income Planner P1 — local-only opportunity
       // cache table populated by the scanner (`docs/domains/options-income.md`
-      // §6.2). Never enters the sync OpLog.
+      // §6.2). Never enters the sync outbox.
       if (from < 12) {
         await _createOptionsOpportunityCache(this);
       }

@@ -28,7 +28,7 @@ class SyncBackfill {
   /// registry and includes all owner-scoped sync tables.
   static const version = '6';
 
-  /// Tables to backfill. Order is irrelevant — v2 rows are independent.
+  /// Tables to backfill. Order is irrelevant — Sync v3 rows are independent.
   /// Also used by [AuthController._migrateOwnerUserId] for mode switching.
   static final List<String> tables = kSyncBackfillTables;
 

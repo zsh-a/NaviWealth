@@ -7,7 +7,7 @@ Last reviewed: 2026-09-12.
 This document records the current Garmin integration and its maintenance
 boundaries. Delivery phases, dependency snapshots, proposed APIs, and completed
 task checklists have been removed; the code and tests are authoritative for
-exact signatures.
+exact signatures. This is a maintenance reference, not an implementation plan.
 
 ## Scope And Boundaries
 

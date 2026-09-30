@@ -13,24 +13,29 @@ device AI design.
 
 ## Prerequisites
 
-- Rust + `wasm32-unknown-unknown`: `rustup target add wasm32-unknown-unknown`
-- Wrangler: `npm i -g wrangler`
+- Rust + `wasm32-unknown-unknown`: `rtk rustup target add wasm32-unknown-unknown`
+- Wrangler: `rtk npm i -g wrangler`
 - Flutter SDK
+- RTK command wrapper (repository commands use `rtk`)
 - Xcode (iOS / macOS), Android Studio (Android)
 
 ---
 
 ## 1. Backend
 
+From the repository root:
+
 ```bash
 cd apps/backend
-cargo check --target wasm32-unknown-unknown          # build check
-echo "JWT_SECRET=$(openssl rand -hex 32)" > .dev.vars # local secret (gitignored)
-wrangler d1 migrations apply naviwealth --local      # init local SQLite
-wrangler dev                                         # serves http://127.0.0.1:8787
+rtk cargo check --target wasm32-unknown-unknown
+rtk proxy echo "JWT_SECRET=$(rtk proxy openssl rand -hex 32)" > .dev.vars
+rtk wrangler d1 migrations apply naviwealth --local
+rtk wrangler dev  # serves http://127.0.0.1:8787
 ```
 
-Verify with `curl http://127.0.0.1:8787/health`, then create the first account
+`.dev.vars` is gitignored and holds the local secret. Keep `wrangler dev`
+running in this terminal. Verify with `rtk curl http://127.0.0.1:8787/health`,
+then create the first account
 from the mobile app's registration screen. Registration uses the same
 `POST /auth/register` path in local and production environments.
 
@@ -38,16 +43,19 @@ from the mobile app's registration screen. Registration uses the same
 
 ## 2. Flutter app
 
+Open a second terminal at the repository root:
+
 ```bash
 cd apps/mobile
-flutter pub get
+rtk flutter pub get
 ```
 
 One-time web setup (only if targeting `-d chrome` / building web):
 
 ```bash
-apps/mobile/tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
-apps/mobile/tool/build-cn-fonts.sh     # CN font subsets
+rtk ./tool/setup-drift-web.sh    # sqlite3.wasm + drift_worker.dart.js
+rtk ./tool/build-cn-fonts.sh     # CN font subsets
+rtk ./tool/build-latin-fonts.sh  # Latin font assets
 ```
 
 ---
@@ -64,7 +72,7 @@ apps/mobile/tool/build-cn-fonts.sh     # CN font subsets
 <array><string>$(AppIdentifierPrefix)*</string></array>
 ```
 
-Entitlement changes require a full rebuild (`flutter clean && flutter run`); hot restart won't pick them up.
+Entitlement changes require a full rebuild (`rtk flutter clean && rtk flutter run`); hot restart won't pick them up.
 
 ### iOS — allow HTTP for local backend
 
@@ -93,15 +101,19 @@ Entitlement changes require a full rebuild (`flutter clean && flutter run`); hot
 
 | Target | Command |
 |--------|---------|
-| macOS desktop | `flutter run -d macos` |
-| iOS Simulator | `flutter run -d iPhone` |
-| Android emulator | `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8787` |
-| Physical device | `flutter run --dart-define=API_BASE_URL=http://<LAN-IP>:8787` |
-| Web (Chrome) | `flutter run -d chrome` |
+| macOS desktop (development) | `rtk flutter run -d macos` |
+| iOS Simulator | `rtk flutter run -d <simulator-device-id>` |
+| Android emulator | `rtk flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8787` |
+| Physical device | `rtk flutter run --dart-define=API_BASE_URL=http://<LAN-IP>:8787` |
+| Web (Chrome) | `rtk flutter run -d chrome` |
 
 `API_BASE_URL` defaults to `http://127.0.0.1:8787` (see `apps/mobile/lib/core/config/app_config.dart`). `BYPASS_AUTH` defaults to `false`; for an auth-free dev loop pass `--dart-define=BYPASS_AUTH=true`.
 
-After login, the debug console should show `Backend health check: 200 OK` and `NaviWealth bootstrap complete (dev)`.
+Use `rtk flutter devices` to obtain the simulator/device id. Startup logs
+include `NaviWealth critical bootstrap complete` and, in debug builds,
+`API_BASE_URL`. Authentication, network diagnostics, and domain background work
+start after first paint; the startup message does not prove backend connectivity.
+Verify registration/sign-in against the running local backend.
 
 ---
 
@@ -109,19 +121,21 @@ After login, the debug console should show `Backend health check: 200 OK` and `N
 
 | Symptom | Cause / Fix |
 |---------|-------------|
-| `Connection failed` / `Operation not permitted` (macOS) | Missing `network.client` entitlement → add it, `flutter clean && flutter run`. |
+| `Connection failed` / `Operation not permitted` (macOS) | Missing `network.client` entitlement → add it, `rtk flutter clean && rtk flutter run`. |
 | `Connection failed` (Android emulator) | Using `127.0.0.1` — use `10.0.2.2`. |
 | `Connection failed` (physical device) | Using `127.0.0.1` — use the host's LAN IP. |
 | `Keychain error -34018` (macOS) | Missing `keychain-access-groups` entitlement → add and full rebuild. |
 | `JWT_SECRET unbound` | `apps/backend/.dev.vars` missing → recreate, restart `wrangler dev`. |
-| `no such table: users` | Run `wrangler d1 migrations apply naviwealth --local`. |
+| `no such table: users` | Run `rtk wrangler d1 migrations apply naviwealth --local` from `apps/backend`. |
 | CORS error (web) | Backend not running, or stale build → restart `wrangler dev`. |
 
 ---
 
 ## 6. Local DB inspection
 
+From the repository root in another terminal:
+
 ```bash
 cd apps/backend
-wrangler d1 execute naviwealth --local --command "SELECT * FROM users;"
+rtk wrangler d1 execute naviwealth --local --command "SELECT * FROM users;"
 ```

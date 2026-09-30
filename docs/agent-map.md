@@ -40,7 +40,7 @@ router, not a second source of product or architecture truth.
 | Domain | Entry SSOT | Topic SSOTs |
 |---|---|---|
 | FinanceOS | [FinanceOS](domains/financeos-domain.md) | [Income Strategy](domains/income-strategy.md), [Options Income](domains/options-income.md), [Portfolio Strategy Groups](domains/portfolio-strategy-groups.md), [Market Data Providers](domains/market-data-providers.md) |
-| HealthOS | [HealthOS](domains/healthos-domain.md) | [Garmin Integration](domains/garmin-integration-plan.md) |
+| HealthOS | [HealthOS](domains/healthos-domain.md) | [Garmin Integration](domains/garmin-integration.md) |
 | KnowledgeOS | [KnowledgeOS](domains/knowledgeos-domain.md) | — |
 | ExecutionOS | [ExecutionOS](domains/executionos-domain.md) | — |
 

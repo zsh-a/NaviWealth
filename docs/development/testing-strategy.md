@@ -37,7 +37,7 @@ sake.
        Contract (Dart↔Rust↔wire)     ~5%   schema-driven, blocking
       Golden (visual regression)     ~5%   expanded surfaces + breakpoints, Linux-pinned
      Integration (real Drift chain)  ~10%  UI→repo→Drift→domain, real connection
-    Unit + Widget (the base)         ~75%  KEEP — ~1,765 unit + ~365 widget today
+    Unit + Widget (the base)         ~75%  repositories, domain services, state, widgets
 ```
 
 Percentages are directional, not quotas. The base stays unit-heavy.
@@ -232,10 +232,10 @@ PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ build_runner freshness + l10n parity         (existing)
     ├─ flutter test (4 shards; unit/widget/flow/integ.)       flow/integ run here today
     ├─ golden regression (Linux-pinned)             ~30 s    (existing)
-    ├─ cargo test (backend, native host)            ~1 min   ← ADDED
+    ├─ cargo test (backend, native host)            ~1 min
     ├─ contract tests                               ~30 s
     ├─ native ASR pinned-WAV regression             speech changes, macOS
-    └─ web smoke (chromium)                         ~2 min   ← ADDED (web-smoke.yml)
+    └─ web smoke (chromium)                         ~2 min   (web-smoke.yml)
 Weekly ├─ web smoke full matrix (Firefox/WebKit/OPFS)
        └─ native ASR pinned model/WAV exact-transcript smoke
 ```

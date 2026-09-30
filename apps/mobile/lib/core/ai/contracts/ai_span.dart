@@ -7,7 +7,7 @@
 /// token/model/stop facts, and the start offsets needed to draw a
 /// waterfall. `AiSpan` is now the single execution record — it
 /// serialises into the same `payload_json` blob and never enters the
-/// OpLog. Traces written before the span model simply have no
+/// sync outbox. Traces written before the span model simply have no
 /// `spans` (no backward-compat shim; they age out within the 30-day
 /// retention window).
 ///

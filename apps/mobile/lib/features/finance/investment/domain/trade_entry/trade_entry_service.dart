@@ -19,7 +19,7 @@ import 'trade_entry_plan.dart';
 /// The service is **pure** in the sense that it does not touch the database
 /// itself — that's the repository's job. This split lets us unit-test the
 /// orchestration without spinning up Drift, and lets the persistence layer
-/// stamp HLCs / write OpLog rows in a single transaction.
+/// stamp HLCs and enqueue sync outbox pointers in a single transaction.
 abstract class TradeEntryService {
   /// Resolve [draft] given the current [openLots] for the account / asset.
   /// Throws [TradeEntryException] for any validation error or unrecoverable

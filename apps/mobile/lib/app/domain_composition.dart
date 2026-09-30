@@ -126,25 +126,6 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       (ref) =>
           (actionId) => ExecutionRoutes.action(actionId),
     ),
-    lifeActionStateReaderProvider.overrideWith((ref) {
-      return (actionId) async {
-        final repository = await ref.read(executionRepositoryProvider.future);
-        final owner = await (await ref.read(mutationStamperProvider.future))
-            .currentUserId();
-        final action = await repository.findAction(
-          ownerUserId: owner,
-          id: actionId,
-        );
-        if (action == null) return null;
-        return switch (action.status) {
-          ExecutionActionStatus.todo => LifeActionState.todo,
-          ExecutionActionStatus.doing => LifeActionState.doing,
-          ExecutionActionStatus.blocked => LifeActionState.blocked,
-          ExecutionActionStatus.done => LifeActionState.done,
-          ExecutionActionStatus.dropped => LifeActionState.dropped,
-        };
-      };
-    }),
     lifeSourceActionReaderProvider.overrideWith((ref) {
       // Rebuild source reads when local writes, undo, or sync change statuses.
       ref.watch(executionOpenActionsProvider);

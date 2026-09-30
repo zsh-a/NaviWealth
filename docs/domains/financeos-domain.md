@@ -300,8 +300,8 @@ derived rows do not sync and remain rebuildable FinanceOS cache data.
 
 ## Change Rules
 
-- Put new Finance business behavior under `features/finance/`; legacy Finance
-  slices may remain until touched by a real migration.
+- Keep all Finance business slices and Finance composition under
+  `features/finance/`; cross-domain composition belongs in `app/`.
 - Export tools and agents through the Finance pack instead of adding manual
   unions in bootstrap or shared code.
 - Keep deterministic calculations out of the LLM and Backend.

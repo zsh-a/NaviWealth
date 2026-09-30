@@ -1,16 +1,15 @@
 /// Undo-stack manager for [LocalImmediateWrite] envelopes.
 ///
-/// Phase 2-B baseline: in-memory only. Each registered write carries
+/// In-memory only. Each registered write carries
 /// a `revert` closure the caller hands in at apply time; the executor
 /// keeps it alive for [defaultUndoWindow] before dropping it. UI
 /// surfaces show a snackbar / toast that calls back into [undo] before
 /// the window expires.
 ///
-/// Phase 2.5 will swap the in-memory list for a Drift-backed table
-/// keyed by undo token, so the affordance survives an app restart.
-/// Until then a process exit drops outstanding undos — acceptable
-/// because the user-visible window is 30 seconds and the underlying
-/// mutation already replicated through the normal OpLog path.
+/// A process exit drops these closure-backed undos. Restart-safe operations
+/// use the separate Drift undo stack with serializable handlers; this class
+/// does not persist closures. The underlying write uses the normal repository
+/// path and, when sync is enabled, queues its row in the sync outbox.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

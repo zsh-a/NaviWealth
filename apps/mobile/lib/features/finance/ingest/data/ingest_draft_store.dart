@@ -3,7 +3,7 @@
 /// Same engineering shape as `DriftUndoStack` / `DriftAiTouchedStore`:
 /// owner-partitioned raw SQL over a side table, a broadcast tick so
 /// providers re-query on mutation. Crucially this table is **never**
-/// in the sync OpLog — drafts are device-local until confirmed.
+/// in the sync outbox — drafts are device-local until confirmed.
 library;
 
 import 'dart:async';

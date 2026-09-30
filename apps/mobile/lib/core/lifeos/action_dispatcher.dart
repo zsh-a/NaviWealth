@@ -32,10 +32,6 @@ typedef LifeActionDispatcher = Future<String?> Function(LifeActionDraft draft);
 
 enum LifeActionState { todo, doing, blocked, done, dropped }
 
-typedef LifeActionStateReader = Future<LifeActionState?> Function(
-  String actionId,
-);
-
 typedef LifeActionSource = ({String rowFamily, String rowId});
 
 final class LifeLinkedAction {
@@ -63,11 +59,6 @@ final lifeActionReviewRouteProvider = Provider<String?>((ref) => null);
 final lifeActionRouteBuilderProvider =
     Provider<String Function(String actionId)?>((ref) => null);
 
-final lifeActionStateReaderProvider = Provider<LifeActionStateReader>(
-  (ref) =>
-      (actionId) async => null,
-);
-
 final lifeSourceActionReaderProvider = Provider<LifeSourceActionReader>(
   (ref) =>
       (source) async => null,
@@ -76,11 +67,6 @@ final lifeSourceActionReaderProvider = Provider<LifeSourceActionReader>(
 final lifeLinkedActionProvider = FutureProvider.autoDispose
     .family<LifeLinkedAction?, LifeActionSource>((ref, source) {
       return ref.watch(lifeSourceActionReaderProvider)(source);
-    });
-
-final lifeActionStateProvider = FutureProvider.autoDispose
-    .family<LifeActionState?, String>((ref, actionId) {
-      return ref.watch(lifeActionStateReaderProvider)(actionId);
     });
 
 /// Domain-neutral read seam used by review workflows. `null` means the

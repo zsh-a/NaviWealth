@@ -1,4 +1,4 @@
-# Personal Memory V1 实施计划
+# Personal Memory 后续实施计划
 
 Status: Phases 0–3 implemented; this plan owns only deferred Phases 4–5.
 

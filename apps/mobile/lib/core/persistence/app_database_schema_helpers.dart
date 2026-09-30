@@ -768,7 +768,7 @@ Future<void> _createIngestTables(AppDatabase db) async {
   //
   // `ingest_drafts` holds parsed-but-unconfirmed transactions. It is
   // deliberately a raw-SQL side table (same pattern as ai_undo_stack /
-  // ai_touched_entities) and is **never added to the sync OpLog**: a
+  // ai_touched_entities) and is **never added to the sync outbox**: a
   // draft only becomes durable ledger truth after the user confirms it,
   // at which point it is written through the normal repository path.
   // This keeps "Raw Write-side Truth · AI 永远不能直接访问" intact and

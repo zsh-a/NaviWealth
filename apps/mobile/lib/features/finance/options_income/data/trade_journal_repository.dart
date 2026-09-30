@@ -11,9 +11,8 @@ import '../domain/trade_journal_entry.dart';
 
 const _uuid = Uuid();
 
-/// Synced CRUD surface for `options_trade_journal`. Mirrors the
-/// approved-underlyings pattern: insert / update / soft-delete with
-/// matching OpLog entries.
+/// Synced CRUD surface for `options_trade_journal`: insert, update, and
+/// soft-delete enqueue dirty-row pointers in the same database transaction.
 class TradeJournalRepository {
   TradeJournalRepository({
     required AppDatabase db,

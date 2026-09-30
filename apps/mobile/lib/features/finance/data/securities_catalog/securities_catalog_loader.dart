@@ -20,7 +20,7 @@ const String kBundledSecuritiesCatalogAsset =
 
 /// Materialises the bundled seed catalog into the local DB.
 ///
-/// Conceptually a "side-channel" loader: not part of the OpLog sync
+/// Conceptually a "side-channel" loader: not part of the row-state sync
 /// pipeline, not stamped with HLC, not mirrored to peers — every device
 /// derives the same catalog independently from the bundled asset.
 ///

@@ -3,9 +3,8 @@ import 'dart:convert';
 /// Typed view over the `expense_metadata_json` blob stored on
 /// expense journal entries.
 ///
-/// Sync semantics: a partial edit (e.g. adding tags) ships
-/// `expense_metadata_json` as a single field in the Op `fields_diff`.
-/// That's row-level LWW *within* the blob, which is fine for v1.
+/// Sync v3 transmits the journal entry's complete row state, including this
+/// blob. Concurrent edits use row-level LWW; tags are not merged separately.
 class ExpenseMetadata {
   const ExpenseMetadata({this.tags = const []});
 

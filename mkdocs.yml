@@ -38,12 +38,12 @@ nav:
       - ExecutionOS: domains/executionos-domain.md
       - Options Income: domains/options-income.md
       - Market Data Providers: domains/market-data-providers.md
-      - Garmin Integration Reference: domains/garmin-integration-plan.md
+      - Garmin Integration Reference: domains/garmin-integration.md
   - AI:
       - Device AI Architecture: ai/ai-architecture.md
       - Runtime Event Contract: ai/ai-protocol.md
       - Agent Experience: ai/agent-experience.md
-      - Personal Memory V1 Plan: ai/personal-memory-implementation-plan.md
+      - Personal Memory Deferred Plan: ai/personal-memory-implementation-plan.md
   - Sync:
       - Sync v3 Protocol: sync/sync-v3.md
       - Protocol Test Catalogue: sync/sync-protocol-tests.md

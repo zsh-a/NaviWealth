@@ -20,8 +20,8 @@
 ## Domain Docs
 
 - [HealthOS](docs/domains/healthos-domain.md): Health domain behavior, data, AI tools, agents.
-- [KnowledgeOS](docs/domains/knowledgeos-domain.md): Knowledge domain behavior, proposals, memory, agents.
-- [ExecutionOS](docs/domains/executionos-domain.md): Execution domain behavior, actions, commitments, progress.
+- [KnowledgeOS](docs/domains/knowledgeos-domain.md): Notes, decisions, relations, proposals, and memory projections.
+- [ExecutionOS](docs/domains/executionos-domain.md): Plans, actions, progress, and review.
 - [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md): Finance domain sequencing.
 
 ## Current Code Roots

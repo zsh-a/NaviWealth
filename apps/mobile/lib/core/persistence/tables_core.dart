@@ -74,9 +74,9 @@ class Devices extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
-/// Append-only operation log. Not a SyncableTable: ops *describe* sync
-/// events, they aren't themselves synced via the same mechanism — the
-/// server consumes them on push and emits them back to peers on pull.
+/// Legacy operation-log table retained in the database schema.
+/// It is not a SyncableTable or the active outbox. Sync v3 reads dirty
+/// pointers from `op_outbox` and transmits complete versioned row states.
 @DataClassName('OpLogRow')
 class OpLogs extends Table {
   TextColumn get id => text()();

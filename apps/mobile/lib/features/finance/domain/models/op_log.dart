@@ -5,16 +5,11 @@ import 'enums.dart';
 
 part 'op_log.freezed.dart';
 
-/// Append-only operation log.
+/// Legacy DTO for the retained `op_logs` table.
 ///
-/// The OpLog is the wire format for sync: every mutation to a synced table
-/// produces one entry, which is shipped to the server and replayed on
-/// other devices. Replaying ops in HLC order yields a deterministic state.
-///
-/// `patchJson` carries only the changed fields, enabling field-level LWW —
-/// e.g. two devices editing different attributes of the same transaction
-/// won't clobber each other; only the field with the higher HLC wins.
-/// `null` patch means a delete (entity-level tombstone).
+/// This is not the active sync wire format. Sync v3 uses `op_outbox` dirty
+/// pointers to transmit complete versioned row states with row-level LWW.
+/// Its serializer does not replay this model or interpret [patchJson].
 @freezed
 abstract class OpLog with _$OpLog {
   const factory OpLog({

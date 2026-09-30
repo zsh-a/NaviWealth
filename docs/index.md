@@ -36,7 +36,7 @@ This documentation uses a docs-as-code structure:
 | Domain | Status | Code root | Sync prefix | SSOT |
 |---|---|---|---|---|
 | FinanceOS | Always on | `apps/mobile/lib/features/finance/` | `fin:` | [FinanceOS](domains/financeos-domain.md) |
-| HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md), [Garmin Integration](domains/garmin-integration-plan.md) |
+| HealthOS | User opt-in | `apps/mobile/lib/features/health/` | `health:` | [HealthOS](domains/healthos-domain.md), [Garmin Integration](domains/garmin-integration.md) |
 | KnowledgeOS | User opt-in | `apps/mobile/lib/features/knowledge/` | `know:` | [KnowledgeOS](domains/knowledgeos-domain.md) |
 | ExecutionOS | User opt-in | `apps/mobile/lib/features/execution/` | `exec:` | [ExecutionOS](domains/executionos-domain.md) |
 
@@ -58,7 +58,7 @@ apps/mobile/lib/
   features/
     finance/            FinanceOS composition, tools, data root, and slices
     health/             HealthOS data, UI, AI tools, agents
-    knowledge/          KnowledgeOS data, UI, AI tools, agents
+    knowledge/          KnowledgeOS notes, decisions, UI, AI tools
     execution/          ExecutionOS data, UI, AI tools, agents
   l10n/                 generated localizations and ARB sources
 ```

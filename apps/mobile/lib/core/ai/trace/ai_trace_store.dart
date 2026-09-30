@@ -1,10 +1,8 @@
 /// Local-only audit store for [AiTrace] records.
 ///
-/// Traces NEVER replicate to the cloud (no OpLog, no D1) — they are a
-/// privacy-transparency surface for the user, not a sync object. The
-/// concrete storage backend is intentionally pluggable: Phase 1 uses
-/// the in-memory ring buffer below; Phase 2 will introduce a Drift
-/// table behind the same [AiTraceStore] interface.
+/// Traces never enter the sync outbox or backend storage. The production
+/// provider uses the Drift store once the database is ready; the ring buffer
+/// below serves tests and startup/error fallback through the same interface.
 library;
 
 import '../contracts/contracts.dart';
@@ -29,12 +27,11 @@ abstract class AiTraceStore {
   Future<AiTrace?> findByRequestId(String requestId);
 }
 
-/// In-memory, ring-buffered [AiTraceStore] suitable for Phase 1.
+/// In-memory, ring-buffered [AiTraceStore] for tests and fallback.
 ///
-/// State lives only for the current process — traces are lost on
-/// restart. Phase 2 swaps this for a Drift-backed store with 30-day
-/// rolling retention; until then the buffer is bounded by [maxSize]
-/// so memory cannot grow unbounded.
+/// State lives only for the current process; traces are lost on restart.
+/// The buffer is bounded by [maxSize]. Production persistence and rolling
+/// retention are provided by the separate Drift store.
 class InMemoryAiTraceStore implements AiTraceStore {
   InMemoryAiTraceStore({this.maxSize = 500});
 

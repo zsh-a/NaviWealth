@@ -1,19 +1,15 @@
-/// User-supplied LLM credentials for the on-device AI runtime
-/// (§4.6.1 decision 1).
+/// User-supplied LLM credentials for the on-device AI runtime.
 ///
-/// The Phase 5 device runtime calls the LLM provider **directly** with
-/// a key the user pastes in Settings. The single slot was generalised
-/// into **multiple named profiles + one active selection** so the
-/// user can keep e.g. an official Anthropic key, a self-hosted
+/// The device runtime calls the selected LLM provider directly with
+/// a key the user supplies in Settings. Multiple named profiles and one
+/// active selection let the user keep an official Anthropic key, a self-hosted
 /// gateway, and a regional proxy side by side and switch between them.
 ///
 /// Persisted only through [LlmCredentialStore] (Keychain/Keystore),
-/// never via OpLog / cloud sync / plaintext backup — same trust class
+/// never via the sync outbox or plaintext backup — same trust class
 /// as the SQLCipher DB key.
 ///
-/// **The opt-in `enabled` switch was removed.** It only made sense
-/// while a cloud relay existed to fall back to; the relay was deleted.
-/// The active profile *is* the intent: a saved+active
+/// The active profile is the intent: a saved+active
 /// profile with a key → device AI runs; otherwise the turn surfaces
 /// `device_unavailable`.
 library;

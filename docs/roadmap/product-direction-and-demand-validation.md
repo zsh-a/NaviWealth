@@ -2,8 +2,8 @@
 
 Status: active product-discovery SSOT.
 
-Last reviewed: 2026-09-30 (repository implementation status only; external
-demand evidence has not been revalidated).
+Last reviewed: 2026-10-01 (code baseline `0809735fc`; the official external
+sources cited below were rechecked on this date).
 
 This document records the product hypotheses that should be validated before
 they change delivery sequencing. It is intentionally separate from the active
@@ -75,70 +75,88 @@ reason for a user to adopt or retain the product.
 
 ## External Demand Evidence
 
-### Cashflow uncertainty is a real user problem
+This review uses population research and official product documentation. The
+former describes a broad problem; the latter establishes advertised product
+capabilities. Neither proves NaviWealth adoption, willingness to pay, Chinese
+target-user demand, or successful participant tasks. No new interview or
+retention results are recorded by this refresh.
 
-The US Federal Reserve's report on household economic well-being in 2024
-found that:
+### Cashflow uncertainty remains a research priority
 
-- 19 percent of adults spent more than their income in the prior month.
-- 17 percent did not pay all bills in full in the prior month.
-- 11 percent had struggled to pay bills during the year because income varied.
-- Only 51 percent spent less than their income in the prior month.
+The Federal Reserve's May 2026 report covers US households in 2025. It reports
+that 30 percent of adults had income that varied at least occasionally, 11
+percent struggled to pay bills because of income variability, and 41 percent
+always or often had money left at month end. These are the current report's
+measures; the last measure is not the earlier report's spending-less-than-income
+question. [Federal Reserve, Income and Expenses](https://www.federalreserve.gov/publications/2026-economic-well-being-of-us-households-in-2025-Income-and-Expenses.htm).
 
-Source: [Federal Reserve, Economic Well-Being of U.S. Households in 2024](https://www.federalreserve.gov/publications/2025-economic-well-being-of-us-households-in-2024-income-and-expenses.htm).
+Inference: timing of available cash, delayed income, committed outflows, and
+the affordability of a decision remain useful research questions. US population
+figures do not identify NaviWealth's first regional segment. N2 must establish
+whether the existing 30/90-day Runway answers these questions using reviewed
+data, and whether users return to compare it with later observations.
 
-The direct user questions are therefore forward-looking:
+### Repeated import correction is the local workflow hypothesis
 
-- Will cash run short before the next income event?
-- Which bills and subscriptions are already committed?
-- Is a discretionary purchase safe now?
-- How long will emergency reserves last?
-- What changes if income falls, a large expense occurs, or a life plan moves?
+Billbook's current FAQ describes CSV/XLSX statement import, Excel/CSV export,
+recurring entry, budgets/assets, and platform-specific capture requiring user
+activation. This is direct regional product evidence for a broad recording
+workflow, not evidence that its users want NaviWealth or that it is entirely
+local. [Billbook FAQ](https://billbook.net.cn/faq/).
 
-Historical categorization and reporting are inputs to these questions, not the
-end product.
+Inference: another parser or capture shortcut is unlikely to be sufficient
+positioning. Test whether NaviWealth's reviewed imports make the second and
+third close faster, preserve correct account/duplicate decisions, and lead to
+a useful forecast. Add a correction rule, field editor, or provider only when
+measured correction patterns or real redacted samples justify it.
 
-### Import friction is validated, but import alone is crowded
+### Scenario comparison already has mature alternatives
 
-Chinese personal-finance products repeatedly lead with WeChat Pay and Alipay
-recognition, automated entry, import/export, privacy, and local protection.
-Examples include [Momi](https://www.momisapp.com/),
-[Billbook](https://billbook.net.cn/), and
-[Mini Accounting](https://miniexp.com/).
+Monarch's June 16, 2026 release describes saved forecasting scenarios and
+cashflow drill-ins. This is evidence that these capabilities were announced
+in that release, without measuring their adoption or user outcomes.
+[Monarch June product update](https://www.monarch.com/blog/june-product-update).
 
-This supports three hypotheses:
+ProjectionLab documents baseline/alternative comparison and creates progress
+points when current balances are updated. These pages establish comparison
+and observation capabilities; listed prices or feature availability alone
+cannot establish payment intent for NaviWealth.
+[ProjectionLab comparison](https://projectionlab.com/help/using-what-if),
+[ProjectionLab balance updates and progress](https://projectionlab.com/help/update-account-balances).
 
-- Fragmented payment records create recurring reconciliation work.
-- Users do not want to enter every transaction manually.
-- Import correctness and privacy can influence adoption.
+Inference: NaviWealth should research one decision's assumptions, rationale,
+confirmed follow-up, and later source evidence. Finance already stores saved
+decisions and review evidence, while Knowledge already stores rationale and
+actual outcomes. The remaining hypothesis is whether source-preserving
+composition saves context switching; it does not justify a new calculator,
+duplicate Decision record, or many unvalidated life-event templates.
 
-It also shows that adding another generic accounting interface or another
-isolated parser is not a durable differentiator. Imported data must produce a
-better forecast, decision, or action.
+### Privacy includes recovery and credential boundaries
 
-### Personal-finance dashboards are becoming commodity capabilities
+Actual Budget documents local copies with optional encrypted sync. It also
+states that bank-sync credentials are outside that encryption and describes
+the consequences of losing the encryption password and local copy. These are
+separate boundaries, not a blanket claim that every stored datum is encrypted.
+[Actual sync and encryption](https://actualbudget.org/docs/getting-started/sync/).
 
-Current competitors validate demand while narrowing NaviWealth's whitespace:
+Inference: NaviWealth must verify portability, database-key handling, and Sync
+stability independently. E2EE is a conditional architecture decision after its
+existing stability gate; copying a competitor's encryption feature does not
+resolve onboarding, migration, key recovery, or credential custody.
 
-- [Monarch household collaboration](https://www.monarchmoney.com/features/collaboration)
-  combines separate and joint accounts, transaction review, budgets, and
-  shared goals. Its 2026 Shared Views update adds account and transaction
-  ownership for household members.
-- [Copilot Money](https://www.copilot.money/faq) combines spending, budgets,
-  investments, net worth, subscriptions, categorization, and conversational
-  AI.
-- [Actual Budget](https://actualbudget.org/docs/getting-started/sync/) provides
-  a local-first data model and optional end-to-end encrypted sync.
-- [Wealthfolio](https://wealthfolio.app/docs/introduction/) now covers local
-  investments, net worth, spending, goals, and FIRE planning.
-- [ProjectionLab](https://projectionlab.com/pricing) demonstrates willingness
-  to pay for life-event modeling, Monte Carlo analysis, cashflow projections,
-  and what-if comparison.
+### Health correlations require an explicit review workflow
 
-The inference is that "local-first plus budget plus net worth plus FIRE" is
-not enough positioning. NaviWealth must win through the combination of
-region-appropriate ingestion, private computation, forward-looking decisions,
-and verified follow-through.
+Oura's Discovery Hub documents tag/biometric correlations and a baseline of at
+least 14 of the past 30 days. It explicitly acknowledges other contributing
+factors. This threshold belongs to Oura's product; it is not a clinical rule or
+a proposed NaviWealth coverage threshold.
+[Oura Discovery Hub](https://support.ouraring.com/hc/en-us/articles/30697762898323-Discovery-Hub).
+
+Inference: test a manual behavior-experiment workflow using existing Knowledge,
+Execution, and Health records before designing new entities or automatic
+insights. The candidate must earn repeated use through reviewable observations
+and manageable logging cost. Correlation and completed tasks do not establish
+causation or diagnostic value.
 
 ## Target User Hypothesis
 
@@ -166,13 +184,14 @@ note-taking should not be the initial acquisition segments.
 
 ## Priority Opportunity Areas
 
-| Direction | Demand | Current product fit | Recommendation |
-|---|---:|---:|---|
-| Financial inbox and monthly close | High | Very high | Build and validate first |
-| 30/90-day money runway | High | Very high | Make the core product loop |
-| Life-event decision room | High-value, lower-frequency | High | Second product phase |
-| Household and partner finance | High | Low to medium | Research before architecture work |
-| Personal health experiments | Medium | High | Use as a cross-domain loop |
+| Direction | Current baseline | Unvalidated extension | Sequencing |
+|---|---|---|---|
+| Financial Inbox and Monthly Close | Implemented, with repeated-close evidence and import reports | Lower repeated correction cost | N1/N2; code follows an observed failure |
+| 30/90-day Money Runway | Forecast snapshots, due evaluation, and aggregate error already exist | Explain deviations with trustworthy observation dates and completeness | First research follow-up after N2 |
+| High-value decision workflow | Finance scenarios/saved reviews and Knowledge Decisions exist | Preserve rationale across the source-linked follow-up and review | One observed life event before more templates |
+| Consequential due reviews in Life | Domain review entries exist; Life contributions are partial | Project one repeatedly missed domain-owned review | Measured missed work before another Life signal |
+| Personal Health experiments | Health windows plus Knowledge/Execution records exist | Manual experiment and evidence review | At least two repeated cycles before structured expansion |
+| Household and partner finance | Current single-user boundary | Permission-aware shared decisions | Discovery and a Northstar change before architecture work |
 
 ### 1. Financial Inbox And Monthly Close
 
@@ -278,12 +297,12 @@ result. A minimum discovery sample is 8 to 10 couples or households.
 
 ### 5. HealthOS As A Personal Experiment System
 
-HealthOS should not compete on displaying more wearable metrics or another
-generic readiness score. Oura and platform health apps already offer daily
-readiness, sleep summaries, guidance, and habit associations. See the
-[current Oura app guide](https://support.ouraring.com/hc/en-us/articles/42987005571859-How-to-Use-the-Oura-App).
+HealthOS has recovery and trend views. Oura already documents habit/biometric
+associations in its [Discovery Hub](https://support.ouraring.com/hc/en-us/articles/30697762898323-Discovery-Hub).
+The extension to research is whether an explicit hypothesis, manageable
+follow-through, and a later review are more useful than another metric view.
 
-NaviWealth's stronger opportunity is a reviewable behavior experiment:
+The candidate workflow to test is a reviewable behavior experiment:
 
 ```text
 Record a hypothesis such as "late caffeine reduces sleep quality"
@@ -294,13 +313,11 @@ Record a hypothesis such as "late caffeine reduces sleep quality"
   -> keep, revise, or reject the routine
 ```
 
-Wearable interventions are more useful when self-monitoring is combined with
-specific goals, feedback, and goal review. See this
-[systematic review and meta-analysis](https://pmc.ncbi.nlm.nih.gov/articles/PMC6120856/).
-
-This direction uses existing Health, Knowledge, and Execution capabilities
-without making diagnostic or causal claims. Current source-preserving and
-observational outcome rules continue to apply.
+Begin with a manual prototype using existing records. It must distinguish
+missing observations from no change and record the user's subjective review
+without automatic clinical or causal conclusions. Oura's baseline requirement
+is a competitor implementation detail, not NaviWealth's experiment policy.
+Repeated use and logging cost are the entry evidence for structured expansion.
 
 ## Explicit Depriorities
 
@@ -322,7 +339,7 @@ financial and health evidence.
 
 ## Recommended Product Sequence
 
-### Implementation Baseline (reviewed 2026-09-30)
+### Implementation Baseline (reviewed 2026-10-01)
 
 The first two phases now have an executable validation baseline. This is
 implementation evidence, not demand evidence:
@@ -358,6 +375,15 @@ implementation evidence, not demand evidence:
 - Saved financial decisions create a source-preserving review action. Due
   reviews enter Financial Inbox and store the observed source families and
   data-completeness score alongside the actual outcome.
+- Life, Financial Inbox, and Knowledge Decision now share source-linked Action
+  controls. Direct confirmed creation does not require AI; open/Done Actions
+  are reused, Dropped replacement is confirmed, and retry preserves a committed
+  Action id. These are implemented lifecycle guarantees, not evidence that the
+  source problem has cleared or that cross-device duplicate creation is impossible.
+- Health measurement, Execution blocker, and Knowledge edit/review submissions
+  lock pending work and retain failed drafts. These current forms do not imply
+  draft recovery after process death. The remaining outcome/detail consistency
+  work is scoped as LifeOS N3.
 - Opt-in product evidence uses local 90-day daily buckets plus cumulative
   counters. Settings can explicitly copy the privacy-safe aggregate report;
   no financial values, labels, routes, or row identifiers are included.

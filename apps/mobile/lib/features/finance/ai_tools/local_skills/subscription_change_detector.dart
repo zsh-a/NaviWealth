@@ -8,11 +8,10 @@
 /// tiny merchant-side rounding moving cheap subs), emit a
 /// [SubscriptionChange].
 ///
-/// Stateless: re-runs against the full input set on every chat turn. No
-/// cross-session persistence required, no OpLog plumbing — the trade-off
-/// is we can only detect changes *within the window of expenses the
-/// device feeds us*. Once `recurring_patterns` is persisted via OpLog
-/// (future wave) we can switch to long-history comparison.
+/// Pure calculations over caller-supplied data. [detectSubscriptionChanges]
+/// compares the supplied expense window; [detectSubscriptionChangesFromPatternHistory]
+/// compares observations loaded by the Finance recurring-pattern history store.
+/// These functions do not write storage or enqueue sync work themselves.
 library;
 
 import 'package:naviwealth/core/ai/contracts/task_context.dart'

@@ -3,7 +3,7 @@
 /// Backed by [SecureKeyStore] — the *same* store as the auth session
 /// and the SQLCipher DB key (iOS Keychain / Android Keystore-backed
 /// EncryptedSharedPreferences). The key therefore never lands in the
-/// app sandbox, OpLog, cloud sync, or a plaintext backup (§4.6.1).
+/// ordinary app preferences, the sync outbox, or a plaintext backup.
 ///
 /// Mirrors [TokenStore]: one namespaced slot, JSON value, corrupt
 /// entries are dropped so callers fall back to "no device LLM".
@@ -15,7 +15,7 @@ import 'llm_credentials.dart';
 class LlmCredentialStore {
   LlmCredentialStore(this._store);
 
-  /// Single slot — only one set of credentials at a time. Namespaced
+  /// Single document containing named profiles and their active id. Namespaced
   /// alongside `naviwealth.auth_session` so it's discoverable in the
   /// Keychain UI and obviously security-sensitive.
   static const String storageKey = 'naviwealth.llm_credentials';
