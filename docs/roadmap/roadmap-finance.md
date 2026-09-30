@@ -2,7 +2,7 @@
 
 Status: active FinanceOS sequencing SSOT.
 
-Last reviewed: 2026-08-29.
+Last reviewed: 2026-09-30.
 
 FinanceOS is the always-on seed domain. This document contains only
 Finance-specific product sequencing. Cross-domain shell, Memory Runtime,
@@ -20,6 +20,10 @@ Sync v3 boundary.
 Budget already feeds FIRE through the one-way `monthlyBudgetSignalProvider`
 read-model seam. FIRE renders and tests no-data, comfortable, strained, and
 over-budget states; this is baseline rather than future work.
+
+User-authored FIRE plans are already synced through `FirePlanRepository` and
+the `fire_plans` registration, with `user_id` as the primary key. Local review
+caches remain separate derived data.
 
 ## Now
 
@@ -99,9 +103,9 @@ Current evidence:
 Exit evidence:
 
 - Prove interruption recovery on the production Android file-backed database.
-  The shared Android emulator integration gate is temporarily skipped on CI
-  pending an upstream Flutter fix; see the shared delivery-risk note in
-  `roadmap-lifeos.md` Next.
+  The shared Android emulator integration workflow is enabled; a successful
+  run with the required recovery evidence remains the device exit criterion.
+  See the shared delivery-risk note in `roadmap-lifeos.md` Next.
 - Expand the representative dataset only when measured production exports
   exceed the current 1,000-row boundary.
 
@@ -136,7 +140,6 @@ important than speculative tax-policy breadth.
 | Tax export | Confirmed user jurisdiction and workflow priority | IRS Schedule D, China individual income tax, or generic tax CSV |
 | Tradier OAuth / real greeks | Confirmed need for authenticated options data | Credential custody, schema-agnostic proxy, revocation, typed confirmation |
 | Broker write/execution | Explicit demand and external-side-effect design review | Proposal mode, typed confirmation, audit and failure recovery |
-| FIRE plan sync | A real multi-device FIRE inconsistency report | Source of truth and migration behavior |
 | Extra locales | A real non-English/Chinese user group | Localization scope and support policy |
 | Household/multi-user finance | Explicit request plus design review | Ownership, permissions, privacy and sync model |
 

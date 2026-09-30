@@ -8,10 +8,10 @@ import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
 import '../../../core/auth/domain_scope.dart';
+import '../../../core/lifeos/domain_pack.dart';
 import '../../../core/shell/settings_route_paths.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
-import '../../execution/composition/execution_route_paths.dart';
 import '../domain/life_event.dart';
 import 'life_event_l10n.dart';
 
@@ -51,6 +51,11 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
     final suggestion = event.actionSuggestion;
     final actionTitle = event.localizedActionTitle(l10n);
     final canCreate = suggestion != null && actionTitle != null;
+    final executionPath = ref
+        .watch(activeDomainPacksProvider)
+        .where((pack) => pack.scope == DomainScope.execution)
+        .expand((pack) => pack.tabPaths)
+        .firstOrNull;
 
     return AppSheet(
       title: l10n.lifeSignalDetailTitle,
@@ -143,12 +148,12 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
               ),
             ),
           ],
-          if (_created) ...[
+          if (_created && executionPath != null) ...[
             const SizedBox(height: AppSpacing.s12),
             Align(
               alignment: Alignment.centerLeft,
               child: FButton(
-                onPress: _openExecution,
+                onPress: () => _closeAndGo(executionPath),
                 child: Text(l10n.lifeSignalOpenExecution),
               ),
             ),
@@ -229,8 +234,6 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
   }
 
   void _openSource() => _closeAndGo(widget.event.routePath!);
-
-  void _openExecution() => _closeAndGo(ExecutionRoutes.today);
 
   void _openDomainSettings() => _closeAndGo(SettingsRoutes.domains);
 

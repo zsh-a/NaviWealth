@@ -42,8 +42,11 @@ This documentation uses a docs-as-code structure:
 
 The production registry is
 `apps/mobile/lib/app/domain_packs.dart`. Add a domain by adding a real domain
-package and one `DomainPack` entry; do not scatter one-off switches through
-bootstrap, router, command palette, or AI tool aggregation.
+package and one `DomainPack` entry for app composition. A new domain identity
+also requires deliberate opt-in and client/backend sync namespace registration;
+see [LifeOS Shell](architecture/lifeos-shell.md#adding-or-changing-a-domain).
+Do not scatter one-off switches through bootstrap, router, command palette,
+or AI tool aggregation.
 
 ## Current Code Map
 
@@ -67,7 +70,6 @@ apps/backend/src/
   routes/               health, auth, me, sync
   sync/                 generic row-state sync store
   error.rs              coded JSON errors
-  hlc.rs                Hybrid Logical Clock
 ```
 
 ## Maintenance Policy

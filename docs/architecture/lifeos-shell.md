@@ -107,6 +107,11 @@ Use this path for any domain-level change:
    conditionals.
 9. Add tests for opt-in behavior, route ownership, tool registration, and domain-specific repositories.
 
+For a new domain identity, also register `DomainScope`, client sync prefixes and
+tables in `core/sync/sync_table_registry.dart`, and backend prefix/claim mapping
+in `apps/backend/src/sync/domain.rs`. `DomainPack` centralizes app composition;
+it does not replace these explicit identity and protocol registrations.
+
 Do not add custom opt-in checks to every consumer. Consumers should derive from `activeDomainPacksProvider` or from a domain-owned provider that already observes the opt-in.
 
 ## Multi-Domain IA
@@ -303,13 +308,17 @@ context.
 
 ### Engine policy
 
-Engine choice is capability- and policy-driven, not model-name-driven:
+The implemented cascaded path is assembled from `InteractionSessionCoordinator`,
+`SpeechInput`, `SpeechOutput`, and the existing Agent Runtime. Recognizers expose
+`SpeechRecognizerCapabilities`; full-duplex is currently available only on the
+opt-in Android native Zipformer path. The following engine names describe
+architecture families, not classes in the current code:
 
-| Engine | Role | Default policy |
+| Engine family | Implementation status | Policy |
 |---|---|---|
-| `LocalCascadedEngine` | Native audio processing → local/system ASR → existing Agent Runtime → system TTS | Production default |
-| `CloudRealtimeEngine` | Provider realtime audio session with host tool/interaction gateways | Explicit opt-in; never a silent fallback |
-| `LocalOmniEngine` | High-resource local speech/vision experiment | Experimental and device-gated |
+| Local cascaded | Implemented through the Host speech/session seams; capabilities vary by platform/provider | Production path |
+| Cloud realtime | Not implemented | Requires explicit opt-in, transport policy, and the existing tool/interaction gateways |
+| Local omni | Not implemented | Requires a real caller and device/resource verification before experimentation |
 
 The engine descriptor must advertise the capabilities required by the Host:
 streaming input/output, full-duplex, interruption, transcript, tool calls,
@@ -317,7 +326,8 @@ proposal handling, interaction resume, durable resume, and delivery tracking.
 An engine without the required safety capability is restricted to lower-risk,
 read-only conversation.
 
-Privacy is expressed per signal rather than as one ambiguous local flag:
+Future engine adapters must express privacy per signal. These policy dimensions
+are not current runtime wire fields or implemented user settings:
 
 ```text
 audio_transport
@@ -325,21 +335,21 @@ transcript_transport
 context_transport
 ```
 
-Local ASR plus a cloud LLM is audio-local but not a fully local turn. Cloud
-Realtime is available only when the user policy permits audio and context to
-leave the device.
+Local ASR plus a remote LLM is audio-local but not a fully local turn. A future
+cloud realtime adapter requires user policy permitting audio and context to
+leave the device. It is not an available fallback in the current app.
 
 The production model policy follows capability slots rather than a single
 "all-in-one voice model":
 
 | Capability slot | Production default | Optional path | Boundary |
 |---|---|---|---|
-| AEC / NS / AGC | iOS / Android system audio processing | Native engine-specific processing | High-rate audio stays native |
+| AEC / NS / AGC | Best-effort platform effects on the Android native capture path | Future platform-native adapters | High-rate audio stays native |
 | Streaming ASR | Android system on-device ASR; iOS/macOS local Zipformer through `SpeechRecognizer` | Android local Zipformer; future native system adapters on Apple platforms | Partial text is semantic input only |
 | Offline refinement | None in the first path | SenseVoice or Whisper when a real second-pass caller exists | Never required by the live turn loop |
 | Agent reasoning | Existing user-selected `LlmProfile` and Agent Runtime | Realtime provider's generation inside its Host adapter | Voice does not choose a separate reasoning profile |
 | TTS | System TTS | Downloadable local TTS | System TTS is not bundled model data |
-| Full-duplex engine | Local cascaded engine | Explicit cloud realtime or experimental local omni engine | Capability and privacy gates are mandatory |
+| Full-duplex | Opt-in Android native Zipformer through the cascaded session | Future cloud realtime or local omni adapter | Other paths retain their advertised lower capabilities |
 
 The current installed Zipformer bundle is Mandarin-only; a zh-en streaming
 bundle is a versioned model-manifest change with its own language declaration,
@@ -362,6 +372,18 @@ Current composition:
 Rule: proposal metadata and proposal applier routes belong in the owning domain's `DomainPack`, not in bootstrap-time manual unions or domain-specific composite overrides.
 
 ## Cross-Domain Review
+
+Current Finance Life contributions cover budget pressure and today's journal
+summary through `app/domain_packs/finance_life_contribution.dart`. Financial
+Inbox has a richer Finance-owned detector and post-action revalidation path;
+its Runway, reconciliation, valuation, and decision-review signals are not yet
+all projected into Life. Knowledge contributes memory sources and source-route
+resolution but no `lifeSignalBuilder`. The current Life inventory must not be
+described as complete coverage of every domain workflow.
+
+Any further Life contribution consumes domain-owned results as neutral signals
+and evidence; app composition must not repeat financial calculations or infer
+clearance from an incomplete observation.
 
 ExecutionOS contributes its contextual review destination through
 `DomainPack.reviewRoutePath`. The Life hub renders one review entry and offers
@@ -406,6 +428,7 @@ time, respectively; users may override plans and goals. Custom tasks are
 single-domain, read-only and settings-only results in the first version.
 There is no server scheduling or rule-report fallback. See Agent Experience
 for confirmation, tool allow-lists, budgets and failure behavior.
+
 - Cross-run diagnostics are stored as local-only stable findings. Agents
   reconcile open findings by stable identity; disappeared signals resolve, and
   ignored/snoozed findings reopen only when evidence changes or snooze expires.
@@ -534,8 +557,11 @@ registry seam:
 - Per-OS encrypted archives filter the shared backup inventory by row-family
   prefix and can restore that OS without replacing unrelated domains.
 - AI chat, audit traces, memories, event projections, and agent history are
-  counted and cleaned as a separate cross-domain local resource. Source data,
-  credentials, and preferences are not included in that action.
+  counted and cleaned as a separate cross-domain local resource. The current
+  `clearSharedHistory()` removes all owner-scoped `memories`, including
+  user-confirmed rows. Domain business rows, Personal Profile, credentials,
+  and preferences are preserved. This is an explicit history deletion, not
+  rebuildable-cache cleanup; see the recovery limits below.
 - Daily retention maintenance is opt-out, recorded in
   `data_maintenance_runs`, and can also be run manually. Database compaction is
   manual because SQLite `VACUUM` can be comparatively expensive.
@@ -702,6 +728,29 @@ Rules:
 - Syncable tables are not automatically backup tables unless their table
   metadata opts into backup coverage.
 
+### Current Recovery Limits
+
+Local-only data has distinct lifecycle roles:
+
+| Data | Recovery role | Current backup/cleanup behavior |
+|---|---|---|
+| Synced domain source rows | Authoritative user data | Included when `backupEligible`; restored rows enqueue Sync work |
+| Personal Profile | Confirmed user-authored local data | Encrypted backup only; restore does not enqueue Sync; shared-history cleanup preserves it |
+| Confirmed `memories` | User-confirmed local data with no guaranteed rebuild source | Not backed up or synced; shared-history cleanup deletes it |
+| Domain memory/event projections and embeddings | Derived indexes | Not backed up; rebuilt from available sources |
+| Chat, traces, Agent artifacts and execution history | Local history | Outside the user-data backup inventory |
+
+An encrypted archive currently cannot recover confirmed Memory on a new
+device. Authority metadata does not change backup coverage or cleanup policy.
+Before promising recovery of all confirmed personal data, backup coverage and
+history deletion must distinguish those rows from rebuildable projections.
+
+Schema v80/v81 intentionally reset Execution/Knowledge tables. These historical
+resets do not establish a general data-preserving upgrade guarantee. Future
+schema changes must state preservation or explicit reset behavior and provide
+upgrade, failed-upgrade, and supported-old-archive evidence for affected user
+data. Current guarantees come from the affected migration and recovery tests.
+
 ## Background And Notifications
 
 Location:
@@ -726,8 +775,9 @@ Rules:
 Allowed:
 
 - Embedding runtime and tokenizer through `flutter_rust_bridge`.
-- Native Agent Runtime contracts and device provider calls through the
-  existing app-owned FRB bridge.
+- Domain-neutral Agent Runtime execution, ChatTurn continuation, budgets,
+  context validation, and resume contracts through the existing app-owned FRB
+  bridge; permissions, Drift and business effects remain Host-owned.
 - Health provider primitives requiring native HTTP/runtime behavior.
 - Future security-sensitive sync encryption only after a separate trigger.
 - Standalone `market-data-rs` provider protocols and request governance behind
@@ -760,8 +810,10 @@ Run these when touching architecture boundaries:
 
 Expected guarantees:
 
-- Shared layers do not import domain features.
-- `features/ai_chat/` does not import sibling features directly.
+- Shared layers do not import or export domain features through package or
+  relative URIs, including conditional directives.
+- Every `features/<feature>/` directory stays free of sibling-feature imports
+  and exports, including Finance and Life.
 - Finance domain code does not import data-layer repositories or Drift rows.
 - Domain-neutral contracts do not mention domain business types.
 - AI contract wire enums match the checked-in serializer fixture.

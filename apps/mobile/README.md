@@ -1,6 +1,6 @@
 # NaviWealth Mobile (Flutter)
 
-跨端三平台 App（iOS / Android / Web），Personal LifeOS 的客户端。本 README 覆盖工程基线；功能架构详见仓库根目录的 [`docs/index.md`](../../docs/index.md) 和 [`CLAUDE.md`](../../CLAUDE.md)。
+Personal LifeOS 的 Flutter 客户端，产品目标平台为 iOS / Android / Web。当前自动发布 Android，Web 由 CI 构建并部署；macOS 支持本地开发及部分原生能力验证，iOS 原生分发仍是路线图中的触发项目。本 README 覆盖工程基线；功能架构详见仓库根目录的 [`docs/index.md`](../../docs/index.md) 和 [`CLAUDE.md`](../../CLAUDE.md)。
 
 ## 运行
 
@@ -39,7 +39,7 @@ macOS 上可运行固定模型和普通话 WAV 的原生 ASR 回归。脚本会�
 tool/run-asr-native-smoke.sh .cache/asr-native-smoke
 ```
 
-> Web 字体子集化的细节见 [`docs/design/13-web-fonts.md`](docs/design/13-web-fonts.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中文字符并产出 ≤335,000 B（约 327 KiB）的首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
+> Web 字体准备与验证见[本地开发](../../docs/development/local-development.md)和[浏览器兼容矩阵](../../docs/development/web-compat-matrix.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中文字符并产出首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
 
 ## 目录结构
 
@@ -51,7 +51,7 @@ lib/
 │   ├── routing/            外层 dock Shell + 域路由
 │   └── shell/              多域导航 chrome
 ├── core/                  跨域基础设施（域中立）
-│   ├── ai/                运行时契约、设备端 agent loop、本地记忆、嵌入、组合接缝
+│   ├── ai/                运行时契约、Host 接缝、本地记忆、嵌入、组合接缝
 │   ├── auth/              JWT / session / 域启用（DomainScope）
 │   ├── persistence/       Drift adapter 和共享表（含 health / knowledge / execution 表声明）
 │   ├── shell/             多域 IA 原语（DomainShell spec）
@@ -116,6 +116,8 @@ FinanceOS 规划页包含现金安全、目标与定投，以及按需展开的�
 ## 设备端 AI
 
 AI 仅在设备端运行，无后端中继：
+
+这里的设备端指执行、上下文和凭证所在边界；使用远程 `LlmProfile` 时，推理请求与选定上下文仍会从设备发送给该 provider，并非离线推理。
 
 - 用户自带 LLM key（Anthropic 或 OpenAI 兼容端点），存储为 `LlmProfile`
 - Rust Agent Runtime 管理模型调用、ChatTurn 状态、续轮与工具轮次预算；Dart host 组装设备上下文、执行本地工具并处理用户确认
@@ -202,4 +204,4 @@ wrangler pages deploy --branch main
 ./tool/check-ai-contract-wire-enums.sh   # AI wire enum fixture 一致
 ```
 
-Android / iOS 构建在 `release.yml` 里跟着 tag 跑，不属于 PR 必需 check。
+`release.yml` 在 tag 发布时运行质量门槛并构建 Android arm64 APK/AAB；其中设备质量门槛复用 `integration-device.yml`。当前没有 iOS tag 构建或分发 job；其验证与分发条件见 [LifeOS 路线图](../../docs/roadmap/roadmap-lifeos.md#triggered-bets)。

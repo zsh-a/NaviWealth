@@ -98,10 +98,44 @@ both use protocol version 3.
 
 `apps/mobile/lib/core/sync/sync_table_registry.dart` is the client SSOT for
 syncable tables. Each `SyncTableRegistration` declares its row-family prefix,
-primary key, owner scope, backfill behavior, payload codec, and row applier.
+primary key, owner scope, backfill eligibility, and backup eligibility. Row
+serialization and application use the shared storage/applier implementation;
+the registry does not contain per-table payload codecs or applier callbacks.
 Local table names remain unprefixed; `fin:`、`health:`、`know:` and `exec:` are
 added and stripped only at the sync boundary. Local-only and derived tables
 must not enter this registry.
+
+## Client business invariants and compatibility
+
+Sync selects a winning state per row. `RowApplier` applies one received page in
+a Drift transaction with deferred foreign-key checks; this does not guarantee
+that every row of a business aggregate arrives in the same page or belongs to
+the same authored version.
+
+Domains own aggregate completeness and calculation eligibility. Watchlist paper
+allocations already use a deterministic head, immutable versions, and a pending
+state while the selected version is incomplete. See
+[FinanceOS](../domains/financeos-domain.md#watchlist-paper-simulations) for that
+business contract. Other multi-row changes must state their own constraint and
+partial-arrival behavior; they must not infer business atomicity from per-row
+LWW or move financial validation into the backend.
+
+The current applier skips unknown domain prefixes and unsupported local tables
+and reports those counts. It accepts only known Drift columns from payloads.
+Those diagnostics are not a schema migration or a guarantee that skipped data
+will be replayed after upgrading. Changes to synced source shapes must document
+old-client behavior and recovery of unsupported rows, with executable mixed-
+version evidence. This remains client compatibility work within Sync v3, not
+multi-schema negotiation or a replacement sync protocol.
+
+## Encryption boundary
+
+Current Sync payloads are JSON that the backend can parse; Sync v3 does not
+provide end-to-end encryption. Native database-at-rest encryption and encrypted
+local archives protect separate storage boundaries. A future Sync E2EE change
+requires its own threat model, key custody/recovery, and client compatibility
+decision. The production stability gate below supplies operational evidence;
+it does not establish confidentiality or key recovery guarantees.
 
 ## Data-management behavior
 

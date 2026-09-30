@@ -2,7 +2,8 @@
 
 Status: active product-discovery SSOT.
 
-Last reviewed: 2026-07-19.
+Last reviewed: 2026-09-30 (repository implementation status only; external
+demand evidence has not been revalidated).
 
 This document records the product hypotheses that should be validated before
 they change delivery sequencing. It is intentionally separate from the active
@@ -52,15 +53,17 @@ The current product already includes:
 - Statement capture, deterministic parsing, deduplication, review, and
   explicit confirmation.
 - HealthKit, Health Connect, and Garmin-derived recovery signals.
-- Decision, assumption, experiment, routine, action, project, commitment, and
-  progress objects.
+- Knowledge Notes, Decisions, and Relations; Execution Plans, Actions, and
+  Progress. Assumptions and experiments can be expressed within these existing
+  records; they are not separate current domain entities.
 - Device-only AI, Memory Runtime, named agents, proposals, Sync v3, encrypted
   backup, and database-at-rest encryption work.
 
 These capabilities create three product risks:
 
-1. **Activation risk.** First-run onboarding chooses local or cloud mode, but
-   does not yet guide a user through a first complete value-producing workflow.
+1. **Activation risk.** A resumable Finance first-task path now connects import,
+   review, and the first Money Runway result. Whether users complete it quickly
+   and trust the result still requires the task study below.
 2. **Retention risk.** A wide set of dashboards and tools does not by itself
    create a weekly or monthly return event.
 3. **Positioning risk.** Local-first budgeting, net worth, investments, FIRE,
@@ -226,8 +229,11 @@ estimated dates or amounts as guaranteed facts.
 
 ### 3. Life-Event Decision Room
 
-FIRE, goals, Knowledge decisions, assumptions, and Execution actions should be
-composed into a small number of opinionated scenarios:
+FIRE, goals, Finance scenario assumptions, Knowledge Decisions and their revisit
+conditions, and Execution Actions should be composed into a small number of
+opinionated scenarios. Finance owns scenario calculations and saved financial
+outcomes; Knowledge owns decision rationale and recall. Cross-domain links use
+source references rather than duplicate authoritative records:
 
 - Buy versus continue renting.
 - Change jobs or take a sabbatical.
@@ -316,7 +322,7 @@ financial and health evidence.
 
 ## Recommended Product Sequence
 
-### Implementation Baseline (2026-07-19)
+### Implementation Baseline (reviewed 2026-09-30)
 
 The first two phases now have an executable validation baseline. This is
 implementation evidence, not demand evidence:
@@ -368,20 +374,22 @@ driven by observed failures rather than feature-count goals.
 
 ### Phase 1: Activation And Repeated Close
 
-Target window: first 0 to 3 months after product discovery begins.
+Implementation baseline exists. The six-week study must now validate completion,
+trust, correction cost, and repeated use of the existing path:
 
-- Turn onboarding into a real first task rather than a feature tour.
-- Deliver the first trustworthy result within ten minutes.
-- Build the unified Financial Inbox.
-- Compose existing data into a 30/90-day Money Runway.
-- Allow a confirmed risk or opportunity to become an Execution action.
-- Add privacy-safe, opt-in local product-funnel measurement.
+- Measure whether the first-task path delivers a trustworthy result within ten
+  minutes.
+- Validate repeated use of Financial Inbox and Monthly Close.
+- Validate whether the 30/90-day Money Runway answers a real cash-safety question.
+- Measure whether confirmed follow-up Actions lead to a later source review.
+- Use the existing privacy-safe, opt-in local product-funnel measurement.
 
 ### Phase 2: High-Value Decisions
 
-Target window: 3 to 6 months, only after Phase 1 evidence.
+Basic deterministic scenarios, saved decisions, and review Actions already
+exist. Further templates and workflow expansion require Phase 1 demand evidence:
 
-- Add two or three validated life-event templates.
+- Select or refine two or three life-event templates based on observed demand.
 - Connect FIRE and goals to scenario comparison rather than a separate
   calculator-only journey.
 - Preserve assumptions, choice, review date, and actual outcome.

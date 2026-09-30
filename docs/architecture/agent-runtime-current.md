@@ -36,8 +36,10 @@ vendored into NaviWealth as `third_party/agent-runtime`. It provides:
 - Dart app-level adapters that keep business data and device tools in Flutter
 
 The runtime must remain independent of Flutter, Riverpod, Drift, and
-NaviWealth domain models. Business policy and repositories stay in the host
-application unless a migration explicitly moves them into a Rust agent.
+NaviWealth domain models. Business policy, permissions, repositories, and
+business side effects stay in the Host application. Rust agents consume
+domain-neutral contracts and request effects through the same Host gateways;
+adding one does not transfer domain ownership into the standalone runtime.
 
 ## Interaction Session Relationship
 

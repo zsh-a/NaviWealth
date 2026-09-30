@@ -6,8 +6,8 @@
 /// to repeat the same opt-in branching (device tools, system-prompt
 /// blocks, proposal kinds, proposal applier routes, shell specs, agent list,
 /// memory indexers, background jobs, settings surfaces) all read this registry seam instead —
-/// adding a new domain is now a single entry in the registry, not scattered
-/// edits in `bootstrap.dart`.
+/// app composition needs one registry entry per domain. New domain identities
+/// also require deliberate opt-in and client/backend sync namespace registration.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -265,7 +265,7 @@ class DomainPack {
   final String? reviewRoutePath;
 
   /// Builds the per-turn list of [Agent]s. Null when the domain has no
-  /// agents (e.g. FinanceOS today). Non-null builders typically read
+  /// agents. Non-null builders typically read
   /// one or more agent providers from `ref` so each agent stays
   /// composition-blind.
   final DomainAgentBuilder? agentBuilder;

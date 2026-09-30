@@ -29,8 +29,9 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 - Do not add enums, fields, tools, tables, or abstractions without a current caller.
 - Do not generalize for a hypothetical future domain. Add abstractions only when at least two real domains use them or a shell seam already exists.
 - Do not pivot the app into a wide Flutter/Rust local engine. Rust is allowed
-  for narrow performance or security surfaces and the explicitly scoped
-  standalone market-data SDK described under Rust Boundary.
+  for the existing domain-neutral Agent Runtime, narrow native capability
+  surfaces, and the scoped standalone market-data SDK described under Rust
+  Boundary. Domain truth and business side effects stay in the Host.
 - Do not make one domain import another domain's business entities.
 - Do not turn sync v3 into an event platform, CRDT framework, or multi-schema negotiation layer.
 - Do not add social, collaboration, publishing, enterprise SaaS, or entertainment surfaces.
@@ -90,7 +91,11 @@ Each domain may contribute:
 - Data-management, notification, and domain-settings surfaces
 - Share-intent handlers
 
-Adding a domain means landing the domain feature, adding a `DomainPack`, and wiring a single registry entry. Do not add independent domain switches in bootstrap, router, command palette, tool registry, or agent registry.
+`DomainPack` provides one app-composition registration for a domain. New domain
+identities also require explicit `DomainScope` and client/backend sync namespace
+registration; this is a finite build inventory, not a dynamic plugin contract.
+Do not add independent domain switches in bootstrap, router, command palette,
+tool registry, or agent registry.
 
 ## AI Boundaries
 
@@ -112,8 +117,9 @@ Domain-owned code:
 
 App-owned cross-domain synthesis lives under `app/agents/`. It consumes only
 domain-neutral signals/context and must not recalculate domain business values.
-The production shape is many deterministic domain analyzers plus one bounded
-Life synthesis agent, not agent-to-agent orchestration.
+The production shape combines deterministic domain analyzers, confirmed
+read-only scheduled LLM tasks, and one bounded Life synthesis agent. Financial
+calculations remain domain-tool-owned; agents do not orchestrate other agents.
 
 Rules:
 
@@ -219,19 +225,24 @@ input is a new `Turn` carrying `inputOrigin` (`voice`, `touch`, `keyboard`,
 etc.); a session may therefore move from voice to touch to text without
 creating a new AI surface or chat loop.
 
-Production engine selection is capability-driven:
+The current cascaded speech path uses the Host Coordinator, SpeechInput,
+SpeechOutput, and the existing Agent Runtime. Engine families below define
+extension policy; they are not three implemented engine classes:
 
 - `LocalCascaded`: the default production shape — native audio processing,
   local/system ASR, the existing Agent Runtime, and system TTS.
-- `CloudRealtime`: an explicit opt-in engine. Audio, transcript, context, and
-  tool requests remain subject to host privacy and proposal policy.
-- `LocalOmni`: an experimental engine gated by device, memory, thermal, and
-  capability checks.
+- `CloudRealtime`: an unimplemented opt-in extension. Any future audio,
+  transcript, context, and tool requests must obey Host privacy and proposal
+  policy.
+- `LocalOmni`: an unimplemented experimental extension requiring device,
+  memory, thermal, and capability checks plus a separately justified caller.
 
-User policy must distinguish `audio_transport`, `transcript_transport`, and
-`context_transport`. Local ASR alone does not make a cloud LLM turn fully
-local. Engine descriptors must advertise transcript, tool-call, proposal,
-interaction-resume, durable-resume, interruption, and delivery capabilities;
+Future transport policy must distinguish `audio_transport`,
+`transcript_transport`, and `context_transport`; these are policy dimensions,
+not current wire fields or implemented settings. Local ASR alone does not make
+a remote LLM turn fully local. Engine descriptors must advertise transcript,
+tool-call, proposal, interaction-resume, durable-resume, interruption, and
+delivery capabilities;
 an engine without the required safety capability is restricted to the lower
 side-effect modes.
 
@@ -292,7 +303,8 @@ Memory Runtime is cross-domain infrastructure:
 - Embeddings: model-fingerprint-keyed side table.
 - Context Builder: slot-based retrieval for agent and chat prompts.
 - `PersonalProfileSnapshot`: stable, structured, explicitly confirmed goals,
-  preferences, constraints, baselines, and routines.
+  preferences, constraints, and rules. Derived baselines remain current state
+  or lower-authority patterns unless the user confirms a Profile fact.
 - `LifeContextSnapshot`: active-domain dynamic state, freshness, changes,
   relevant history, and a deterministic fingerprint.
 
@@ -310,9 +322,19 @@ through an explicit Memory proposal and user confirmation.
 
 ## Rust Boundary
 
-Rust is allowed only when all are true:
+Rust responsibilities are bounded by ownership:
 
-- There is a real performance or security delta, or the work implements the
+- The standalone Agent Runtime owns provider-neutral execution semantics,
+  ChatTurn continuation, budgets, context validation, and resume contracts.
+- NaviWealth Host/Dart owns domain repositories, permissions, Drift, user
+  confirmation, and business effects dispatched through Host gateways.
+- Native capabilities and the market-data SDK own their scoped model/runtime
+  or provider-protocol work; they do not acquire application business truth.
+
+New Rust work is allowed only when all are true:
+
+- It maintains the existing domain-neutral Agent Runtime, demonstrates a real
+  performance or security delta for a native capability, or implements the
   standalone market-data SDK exception defined below.
 - A caller exists in the current phase.
 - The FFI surface is narrow enough for `flutter_rust_bridge`.

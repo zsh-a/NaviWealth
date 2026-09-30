@@ -25,6 +25,7 @@ function relative(file) {
 const markdownFiles = [
   path.join(repoRoot, 'README.md'),
   path.join(repoRoot, 'CLAUDE.md'),
+  path.join(repoRoot, 'apps/mobile/README.md'),
   ...walkMarkdown(docsRoot),
 ];
 const failures = [];
@@ -50,13 +51,32 @@ for (const match of mkdocs.matchAll(/^\s+-\s+[^:]+:\s+(\S+\.md)$/gm)) {
   }
 }
 
-const agentMapPath = path.join(docsRoot, 'agent-map.md');
-const agentMap = fs.readFileSync(agentMapPath, 'utf8');
-for (const match of agentMap.matchAll(/`((?:apps|tool|\.github)\/[^`]+)`/g)) {
-  const target = match[1];
-  if (/[<*>]/.test(target)) continue;
-  if (!fs.existsSync(path.join(repoRoot, target))) {
-    failures.push(`docs/agent-map.md: missing code authority ${target}`);
+for (const file of markdownFiles) {
+  const source = fs.readFileSync(file, 'utf8');
+  for (const match of source.matchAll(
+    /`((?:apps\/mobile\/lib|apps\/mobile\/native\/lifeos_native\/src|apps\/backend\/src|tool|\.github\/workflows)\/[^`]+)`/g,
+  )) {
+    const target = match[1];
+    if (/[<*>\s]/.test(target)) continue;
+    if (!fs.existsSync(path.join(repoRoot, target))) {
+      failures.push(`${relative(file)}: missing code authority ${target}`);
+    }
+  }
+
+  for (const block of source.matchAll(/```[^\n]*\n([\s\S]*?)```/g)) {
+    let codeRoot;
+    for (const line of block[1].split('\n')) {
+      if (/^apps\/(?:mobile|backend)\/\S+\/$/.test(line)) {
+        codeRoot = line;
+      } else if (codeRoot) {
+        const entry = line.match(/^ {2}(\S+\.(?:dart|rs|kt|cpp))\s/);
+        if (!entry || /[<*>]/.test(entry[1])) continue;
+        const target = path.join(codeRoot, entry[1]);
+        if (!fs.existsSync(path.join(repoRoot, target))) {
+          failures.push(`${relative(file)}: missing code-map file ${target}`);
+        }
+      }
+    }
   }
 }
 

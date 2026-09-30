@@ -9,6 +9,7 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dart run "$repo_root/tool/generate_agent_runtime_capabilities.dart" --check
 "$repo_root/tool/check-sync-client-wire-fixtures.sh"
 "$repo_root/tool/lint-motion-policy.sh"
+python3 -B -m unittest discover -s "$repo_root/tool/tests" -p 'test_*.py'
 "$repo_root/tool/lint-no-feature-in-shared.sh"
 "$repo_root/tool/lint-cross-feature-imports.sh"
 "$repo_root/tool/lint-finance-domain-data-imports.sh"

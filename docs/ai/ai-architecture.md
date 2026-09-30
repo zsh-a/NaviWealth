@@ -5,6 +5,10 @@ Rust agent runtime，再使用用户自己的 `LlmProfile` 直连 Anthropic 或
 OpenAI-compatible provider。Backend 不持有模型密钥、不转发 AI 请求；Web 不加载
 AI runtime。
 
+`device-only` 描述执行、上下文组装和凭证所在边界，不代表离线推理。使用远程
+`LlmProfile` 时，选定的 transcript/context 会直接发给该 provider；本地 ASR
+只保证识别音频的处理路径，不改变后续模型请求的传输边界。
+
 ## Document Contract
 
 本文拥有设备端 AI 的产品边界、Host/Runtime 分工、工具治理、Memory 上下文和写入
@@ -170,11 +174,17 @@ Apply 时重新校验 owner、candidate 终态、active-domain policy、目标�
 Settings 直接维护的 Profile 同样是 user-confirmed，但不经过模型。Conversation
 checkpoint 不会自动升级为长期 Memory。
 
+确认权限与恢复能力是不同的契约：Personal Profile 已进入加密备份，正式
+`memories` 目前仍不参与备份或同步，且会随显式共享历史清理一起删除。完整的数据
+分类与恢复缺口见 [LifeOS Shell](../architecture/lifeos-shell.md#current-recovery-limits)。
+
 ### 3.4 Trace
 
-唯一执行记录是 Opik 风格 `AiSpan` 树：`turn` / `llm` / `tool`、父子关系、耗时、
+用户可见的 AI trace 使用 Opik 风格 `AiSpan` 树：`turn` / `llm` / `tool`、父子关系、耗时、
 token、model、stop reason、状态和可选 I/O。`ai_traces`、`ai_undo_stack` 与
 `ai_touched_entities` 均为 local-only。
+Runtime events、执行状态和恢复 checkpoints 各有对应契约；trace 是诊断视图，
+不能替代持久化续轮状态或副作用恢复记录。
 
 ## 4. Device LLM Runtime 契约
 
@@ -317,8 +327,11 @@ apps/mobile/lib/app/interaction/
   interaction_chat_session.dart         ChatRepository-backed host composition
   speech_output_bridge.dart              serialized output and delivery bridge
   agent_event_adapter.dart               Chat event -> session projection
-  turn_arbiter.dart                     interruption and turn policy
   voice_interaction_adapter.dart        Speech/Chat/HITL adapters
+
+apps/mobile/lib/core/ai/session/
+  interaction_reducer.dart              pure lane, epoch and turn policy
+  interruption_policy.dart              two-phase barge-in policy
 
 apps/mobile/lib/core/speech/
   speech input/output capabilities, the existing SpeechRecognizer seam, and

@@ -67,7 +67,6 @@ apps/backend/src/
   routes/               health, auth, me, sync
   sync/                 generic row-state sync store
   error.rs              coded JSON errors
-  hlc.rs                Hybrid Logical Clock
 ```
 
 ## Architecture Rules
