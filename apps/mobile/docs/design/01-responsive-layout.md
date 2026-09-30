@@ -61,9 +61,14 @@ mobile                tablet                  desktop
 
 | 类型 | mobile | tablet | desktop |
 |------|--------|--------|---------|
-| 添加交易 | 全屏 ModalSheet | 中央 Dialog 720×自适应 | Dialog 720×自适应 |
+| 复杂记录表单 | 全页路由 | 全页路由 | 全页路由 |
+| 轻量录入（`showAppFormSheet`） | BottomSheet | 宽度达到 840dp 且高度达到 480dp 时使用中央 Dialog，其他情况限宽 BottomSheet | 中央 Dialog，宽度上限 720dp |
 | 筛选 | 底部 BottomSheet 高度 75% | BottomSheet | 右侧 Drawer |
 | 资产详情 | 全屏 push 路由 | 全屏 push | 右侧 DetailPanel（同时保留主列表） |
+
+轻量录入继续使用同一入口和保存协议。中央 Dialog 提供关闭按钮、Esc、焦点恢复
+与键盘避让；有未保存修改时确认放弃。主从列表分隔条可通过方向键以 16dp
+步长调整，Home/End 调整至上下限，并提供辅助技术的增减操作。
 
 ## 3. 输入设备适配
 

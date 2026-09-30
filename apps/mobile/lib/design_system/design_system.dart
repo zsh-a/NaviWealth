@@ -59,6 +59,7 @@ export 'widgets/app_divider.dart';
 export 'widgets/app_empty_state.dart';
 export 'widgets/app_entrance.dart';
 export 'widgets/app_filter_chip.dart';
+export 'widgets/app_filter_summary.dart';
 export 'widgets/app_form_page_scaffold.dart';
 export 'widgets/app_form_scaffold_body.dart';
 export 'widgets/app_form_section.dart';

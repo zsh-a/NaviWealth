@@ -58,6 +58,12 @@ control. Tag facets cover the full library; tag filtering precedes the query
 limit. Ranked search displays up to 50 results and explains when to refine the
 query.
 
+Library preserves query (`q`), object kind (`scope`), and tag (`tag`) in the
+route alongside `selected`. Reloading restores those filters; clearing them
+keeps the selected object and unrelated route parameters. Applied filters and
+the displayed search-result count use the shared filter summary. Note deletion
+lives in the detail header's More actions menu and still requires confirmation.
+
 Key files:
 
 - `features/knowledge/composition/knowledge_routes.dart`

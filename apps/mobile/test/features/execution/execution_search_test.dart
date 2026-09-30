@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/ui/execution_search_sheet.dart';
@@ -83,6 +84,24 @@ void main() {
     ]);
     await tester.pumpAndSettle();
     expect(find.text('Current result'), findsOneWidget);
+    expect(find.text('Showing 1 result'), findsOneWidget);
+    Navigator.of(tester.element(find.byType(AppSearchField))).pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open'));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump();
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).controller.text,
+      'second',
+    );
+    repository.requests.last.complete(const []);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Clear filters'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).controller.text,
+      isEmpty,
+    );
     expect(tester.takeException(), isNull);
   });
 }

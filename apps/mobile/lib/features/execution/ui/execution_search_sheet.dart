@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/execution_route_paths.dart';
@@ -12,6 +13,25 @@ import '../data/execution_repository.dart';
 import '../data/providers.dart';
 import '../domain/execution_models.dart';
 import 'execution_widgets.dart';
+
+final _searchFiltersProvider =
+    NotifierProvider<
+      _SearchFilters,
+      ({String query, _ExecutionSearchScope scope})
+    >(_SearchFilters.new);
+
+class _SearchFilters
+    extends Notifier<({String query, _ExecutionSearchScope scope})> {
+  @override
+  ({String query, _ExecutionSearchScope scope}) build() {
+    ref.watch(authSessionProvider.select((session) => session?.userId));
+    return (query: '', scope: _ExecutionSearchScope.all);
+  }
+
+  void query(String query) => state = (query: query, scope: state.scope);
+  void scope(_ExecutionSearchScope scope) =>
+      state = (query: state.query, scope: scope);
+}
 
 Future<void> showExecutionSearchSheet({required BuildContext context}) {
   return showAppSheet<void>(
@@ -43,10 +63,21 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
   @override
   void initState() {
     super.initState();
+    final filters = ref.read(_searchFiltersProvider);
+    _query = filters.query;
+    _scope = filters.scope;
+    _controller.text = _query;
+    if (_query.isNotEmpty) {
+      _loading = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_runSearch());
+      });
+    }
     _controller.addListener(() {
       final next = _controller.text.trim();
       if (next == _query || !mounted) return;
       setState(() => _query = next);
+      ref.read(_searchFiltersProvider.notifier).query(next);
       _requestId++;
       _error = null;
       _debounce?.cancel();
@@ -80,6 +111,7 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
           AppSearchField(
             controller: _controller,
             focusNode: _searchFocus,
+            autofocus: true,
             hint: l10n.executionSearchHint,
             clearLabel: l10n.aiChatSessionsSearchClear,
           ),
@@ -98,8 +130,32 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
               _ExecutionSearchScope.action => FLucideIcons.listTodo,
               _ExecutionSearchScope.plan => FLucideIcons.layers,
             },
-            onChanged: (scope) => setState(() => _scope = scope),
+            onChanged: (scope) {
+              setState(() => _scope = scope);
+              ref.read(_searchFiltersProvider.notifier).scope(scope);
+            },
           ),
+          if (_query.isNotEmpty || _scope != _ExecutionSearchScope.all) ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppFilterSummary(
+              labels: [
+                if (_query.isNotEmpty) _query,
+                if (_scope != _ExecutionSearchScope.all)
+                  _scope == _ExecutionSearchScope.action
+                      ? l10n.executionSearchKindAction
+                      : l10n.executionSearchKindPlan,
+              ],
+              resultCount: _query.isNotEmpty && !_loading && _error == null
+                  ? _visibleHits.length
+                  : null,
+              onClear: () {
+                setState(() => _scope = _ExecutionSearchScope.all);
+                ref.read(_searchFiltersProvider.notifier).scope(_scope);
+                _controller.clear();
+                _searchFocus.requestFocus();
+              },
+            ),
+          ],
           const SizedBox(height: AppSpacing.s12),
           Expanded(
             child: _query.isEmpty

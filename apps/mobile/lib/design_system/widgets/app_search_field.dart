@@ -14,6 +14,7 @@ class AppSearchField extends StatelessWidget {
     required this.clearLabel,
     this.focusNode,
     this.onChanged,
+    this.autofocus = false,
   });
 
   final TextEditingController controller;
@@ -21,6 +22,7 @@ class AppSearchField extends StatelessWidget {
   final String clearLabel;
   final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
+  final bool autofocus;
 
   @override
   Widget build(BuildContext context) =>
@@ -32,6 +34,7 @@ class AppSearchField extends StatelessWidget {
             onChange: (value) => onChanged?.call(value.text),
           ),
           focusNode: focusNode,
+          autofocus: autofocus,
           hint: hint,
           maxLines: 1,
           textInputAction: TextInputAction.search,

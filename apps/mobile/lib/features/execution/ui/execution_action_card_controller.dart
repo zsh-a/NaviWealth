@@ -5,7 +5,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/form_dirty_guard.dart';
+import '../../../core/forms/form_submission.dart';
 import '../../../core/lifeos/action_outcome.dart';
+import '../../../core/logging/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/execution_models.dart';
@@ -74,13 +77,27 @@ class _ExecutionActionCardControllerState
         progressNote: progressNote,
       );
       if (!feedbackContext.mounted) return;
+      final offers = ref.read(formUndoOfferProvider.notifier);
+      final offer = FormUndoOffer(
+        message: l10n.executionActionStatusUpdated(
+          executionStatusLabel(l10n, status),
+        ),
+        action: FormUndoAction(undo.restore),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (_) => l10n.commonUndoFailed,
+        retryLabel: l10n.commonRetry,
+        tag: 'execution-status',
+      );
+      offers.offer(offer);
+      final logger = ref.read(loggerProvider);
       AppMessenger.show(
         feedbackContext,
         ToastKind.success,
         l10n.executionActionStatusUpdated(executionStatusLabel(l10n, status)),
         duration: const Duration(seconds: 6),
         actionLabel: l10n.commonUndo,
-        onAction: () => unawaited(_undoStatus(feedbackContext, undo, l10n)),
+        onAction: () => unawaited(offers.run(feedbackContext, offer, logger)),
       );
     } catch (_) {
       if (feedbackContext.mounted) {
@@ -95,39 +112,19 @@ class _ExecutionActionCardControllerState
     }
   }
 
-  Future<void> _undoStatus(
-    BuildContext feedbackContext,
-    ExecutionActionStatusUndo undo,
-    AppLocalizations l10n,
-  ) async {
-    try {
-      await undo.restore();
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.success,
-          l10n.commonUndoSucceeded,
-        );
-      }
-    } on Object {
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.error,
-          l10n.commonUndoFailed,
-        );
-      }
-    }
-  }
-
   Future<void> _blockWithReason() async {
     final l10n = AppLocalizations.of(context);
-    final reason = await showAppSheet<String>(
+    final reason = await showGuardedFormSheet<String>(
       context: context,
-      title: l10n.executionBlockReasonTitle,
-      scrollable: false,
-      builder: (sheetContext) => _BlockReasonSheet(
-        onSubmit: (value) => Navigator.of(sheetContext).pop(value),
+      builder: (sheetContext, dirty) => AppSheet(
+        title: l10n.executionBlockReasonTitle,
+        child: _BlockReasonSheet(
+          dirty: dirty,
+          onSubmit: (value) {
+            dirty.markPristine();
+            Navigator.of(sheetContext).pop(value);
+          },
+        ),
       ),
     );
     if (reason == null || reason.trim().isEmpty || !mounted) return;
@@ -184,9 +181,10 @@ class _ExecutionActionCardControllerState
 }
 
 class _BlockReasonSheet extends StatefulWidget {
-  const _BlockReasonSheet({required this.onSubmit});
+  const _BlockReasonSheet({required this.onSubmit, required this.dirty});
 
   final ValueChanged<String> onSubmit;
+  final FormDirtyController dirty;
 
   @override
   State<_BlockReasonSheet> createState() => _BlockReasonSheetState();
@@ -199,6 +197,7 @@ class _BlockReasonSheetState extends State<_BlockReasonSheet> {
   void initState() {
     super.initState();
     _controller.addListener(_refresh);
+    widget.dirty.bindTextControllers([_controller]);
   }
 
   @override
@@ -221,6 +220,7 @@ class _BlockReasonSheetState extends State<_BlockReasonSheet> {
       children: [
         FTextField(
           control: FTextFieldControl.managed(controller: _controller),
+          label: Text(l10n.executionBlockReasonTitle),
           hint: l10n.executionBlockReasonHint,
           maxLines: 3,
           textInputAction: TextInputAction.done,
@@ -229,7 +229,7 @@ class _BlockReasonSheetState extends State<_BlockReasonSheet> {
           },
         ),
         const SizedBox(height: AppSpacing.s12),
-        FButton(
+        AppActionButton(
           onPress: reason.isEmpty ? null : () => widget.onSubmit(reason),
           child: Text(l10n.executionActionBlock),
         ),

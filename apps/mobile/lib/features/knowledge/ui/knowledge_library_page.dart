@@ -55,6 +55,67 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   var _scope = _LibraryScope.all;
   var _query = '';
   String? _selectedTag;
+  String? _routeFilters;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (GoRouter.maybeOf(context) == null) return;
+    final params = GoRouterState.of(context).uri.queryParameters;
+    final query = params['q'] ?? '';
+    final scope =
+        _LibraryScope.values
+            .where((scope) => scope.name == params['scope'])
+            .firstOrNull ??
+        _LibraryScope.all;
+    final tag = scope == _LibraryScope.decisions ? null : params['tag'];
+    final fingerprint = Uri(
+      queryParameters: {'q': query, 'scope': scope.name, 'tag': tag ?? ''},
+    ).toString();
+    if (_routeFilters == fingerprint) return;
+    _routeFilters = fingerprint;
+    _debounce?.cancel();
+    _query = query;
+    _scope = scope;
+    _selectedTag = tag;
+    _searchController.value = TextEditingValue(
+      text: query,
+      selection: TextSelection.collapsed(offset: query.length),
+    );
+    _limit = _pageSize;
+  }
+
+  void _writeFilters() {
+    final router = GoRouter.maybeOf(context);
+    if (router == null) return;
+    final uri = GoRouterState.of(context).uri;
+    final params = {...uri.queryParameters}
+      ..remove('q')
+      ..remove('scope')
+      ..remove('tag');
+    if (_query.isNotEmpty) params['q'] = _query;
+    if (_scope != _LibraryScope.all) params['scope'] = _scope.name;
+    if (_selectedTag != null) params['tag'] = _selectedTag!;
+    final next = Uri(
+      path: uri.path,
+      queryParameters: params.isEmpty ? null : params,
+      fragment: uri.hasFragment ? uri.fragment : null,
+    );
+    if (next != uri) router.replace<void>(next.toString());
+  }
+
+  void _clearFilters() {
+    _debounce?.cancel();
+    setState(() {
+      _query = '';
+      _scope = _LibraryScope.all;
+      _selectedTag = null;
+      _limit = _pageSize;
+    });
+    _searchController.clear();
+    _writeFilters();
+    _searchFocus.requestFocus();
+  }
 
   @override
   void dispose() {
@@ -72,6 +133,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
         _query = value.text.trim();
         _limit = _pageSize;
       });
+      _writeFilters();
     });
   }
 
@@ -192,6 +254,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                       _selectedTag = null;
                     }
                   });
+                  _writeFilters();
                 },
               ),
               if (tagFacets.isNotEmpty &&
@@ -208,7 +271,25 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                       _limit = _pageSize;
                       if (tag != null) _scope = _LibraryScope.notes;
                     });
+                    _writeFilters();
                   },
+                ),
+              ],
+              if (_query.isNotEmpty ||
+                  _scope != _LibraryScope.all ||
+                  _selectedTag != null) ...[
+                const SizedBox(height: AppSpacing.s8),
+                AppFilterSummary(
+                  labels: [
+                    if (_query.isNotEmpty) _query,
+                    if (_scope != _LibraryScope.all)
+                      _scope == _LibraryScope.notes
+                          ? l10n.knowledgeSegmentNotes
+                          : l10n.knowledgeSegmentDecisions,
+                    ?_selectedTag,
+                  ],
+                  onClear: _clearFilters,
+                  resultCount: searchResults?.value?.length,
                 ),
               ],
             ],
@@ -491,6 +572,7 @@ class _LibraryList extends ConsumerWidget {
       return _buildGrouped(context, ref, l10n);
     }
     return ListView.separated(
+      key: const PageStorageKey('knowledge-library-list'),
       padding: shellTabContentPadding(context),
       itemCount: visibleEntries.length + (hasMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
@@ -526,6 +608,7 @@ class _LibraryList extends ConsumerWidget {
       if (hasMore) _loadMore,
     ];
     return ListView.builder(
+      key: const PageStorageKey('knowledge-library-grouped-list'),
       padding: shellTabContentPadding(context),
       itemCount: builders.length,
       itemBuilder: (context, index) => builders[index](context),

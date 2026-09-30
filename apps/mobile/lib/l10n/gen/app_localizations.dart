@@ -29367,6 +29367,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Compare a large purchase, career break or home purchase, then save a decision for review.'**
   String get planCompareLifeEventsHint;
+
+  /// No description provided for @commonClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get commonClearFilters;
+
+  /// No description provided for @commonSearchResultsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {count, plural, =1{1 result} other{{count} results}}'**
+  String commonSearchResultsCount(int count);
+
+  /// No description provided for @shellResizeListPane.
+  ///
+  /// In en, this message translates to:
+  /// **'Resize list pane'**
+  String get shellResizeListPane;
 }
 
 class _AppLocalizationsDelegate

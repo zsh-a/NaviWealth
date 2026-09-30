@@ -131,6 +131,25 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
             icon: Icon(_editing ? FLucideIcons.eye : FLucideIcons.pencil),
             onPress: _saving ? null : _toggleMode,
           ),
+          AppAdaptiveActionMenu(
+            title: l10n.shellMoreActions,
+            actions: [
+              AppAdaptiveAction(
+                icon: FLucideIcons.trash2,
+                title: l10n.commonDelete,
+                destructive: true,
+                onPress: _delete,
+              ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => Focus(
+              focusNode: focusNode,
+              child: AppIconButton(
+                icon: FLucideIcons.ellipsis,
+                tooltip: l10n.shellMoreActions,
+                onPress: _saving ? null : openMenu,
+              ),
+            ),
+          ),
         ],
         child: AnimatedBuilder(
           animation: dirty,
@@ -182,12 +201,6 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
           subjectId: widget.note.id,
           subjectText: KnowledgeSearchDocument.fromNote(widget.note).searchText,
           onCreateDecision: _createDecision,
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        FButton(
-          variant: FButtonVariant.destructive,
-          onPress: _saving ? null : _delete,
-          child: Text(l10n.commonDelete),
         ),
       ],
     );
@@ -275,12 +288,6 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
             subjectText: KnowledgeSearchDocument.fromNote(widget.note)
                 .searchText,
             onCreateDecision: _createDecision,
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          FButton(
-            variant: FButtonVariant.destructive,
-            onPress: _saving ? null : _delete,
-            child: Text(l10n.commonDelete),
           ),
         ],
       ),

@@ -52,6 +52,7 @@ class _ExecutionActionForm extends ConsumerStatefulWidget {
 class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     with FormSubmission<_ExecutionActionForm> {
   final _formKey = GlobalKey<FormState>();
+  final _scheduleErrorKey = GlobalKey();
   final TextEditingController _title = TextEditingController();
   final TextEditingController _note = TextEditingController();
   late ExecutionPriority _priority;
@@ -90,18 +91,23 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
 
   bool get _canSave => !_saving && _title.text.trim().isNotEmpty;
 
+  bool get _invalidSchedule =>
+      _scheduledFor != null &&
+      _dueAt != null &&
+      _scheduledFor!.isAfter(_dueAt!);
+
   Future<void> _save() async {
     if (!_canSave) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final l10n = AppLocalizations.of(context);
-    if (_scheduledFor != null &&
-        _dueAt != null &&
-        _scheduledFor!.isAfter(_dueAt!)) {
-      AppMessenger.show(
-        context,
-        ToastKind.warning,
-        l10n.executionScheduleAfterDue,
-      );
+    if (_invalidSchedule) {
+      setState(() => _showDetails = true);
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      final errorContext = _scheduleErrorKey.currentContext;
+      if (errorContext != null && errorContext.mounted) {
+        await Scrollable.ensureVisible(errorContext);
+      }
       return;
     }
     final title = _title.text.trim();
@@ -312,6 +318,19 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                   );
                 },
               ),
+              if (_invalidSchedule) ...[
+                const SizedBox(height: AppSpacing.s6),
+                Semantics(
+                  key: _scheduleErrorKey,
+                  liveRegion: true,
+                  child: Text(
+                    l10n.executionScheduleAfterDue,
+                    style: context.captionStyle.copyWith(
+                      color: context.appTheme.status.danger.fg,
+                    ),
+                  ),
+                ),
+              ],
               const SizedBox(height: AppSpacing.s12),
               FormPickerRow(
                 label: l10n.executionRelationField,

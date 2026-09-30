@@ -1,8 +1,10 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
+import '../../l10n/gen/app_localizations.dart';
 import 'selection_query.dart';
 import 'shell_preferences.dart';
 
@@ -100,30 +102,69 @@ class _Splitter extends StatefulWidget {
 class _SplitterState extends State<_Splitter> {
   bool _hovering = false;
   bool _dragging = false;
+  bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
-    final highlight = _hovering || _dragging;
-    return MouseRegion(
-      cursor: SystemMouseCursors.resizeColumn,
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onHorizontalDragStart: (_) => setState(() => _dragging = true),
-        onHorizontalDragEnd: (_) => setState(() => _dragging = false),
-        onHorizontalDragCancel: () => setState(() => _dragging = false),
-        onHorizontalDragUpdate: (d) => widget.onChanged(d.delta.dx),
-        // Hit area is intentionally wider than the visible hairline so
-        // touch/mouse can grab the splitter without precision aiming. The
-        // visible bar stays at 1–2 px to keep the chrome quiet.
-        child: SizedBox(
-          width: AppSpacing.s16,
-          child: Center(
-            child: AnimatedContainer(
-              duration: AppMotionPolicy.duration(context, Motion.fast),
-              width: highlight ? 2 : 1,
-              color: highlight ? context.theme.colors.primary : widget.color,
+    final highlight = _hovering || _dragging || _focused;
+    return Semantics(
+      label: AppLocalizations.of(context).shellResizeListPane,
+      value: '${widget.width.round()}',
+      increasedValue:
+          '${(widget.width + AppSpacing.s16).clamp(kMasterPaneMinWidth, kMasterPaneMaxWidth).round()}',
+      decreasedValue:
+          '${(widget.width - AppSpacing.s16).clamp(kMasterPaneMinWidth, kMasterPaneMaxWidth).round()}',
+      onIncrease: () => widget.onChanged(AppSpacing.s16),
+      onDecrease: () => widget.onChanged(-AppSpacing.s16),
+      child: Focus(
+        key: const ValueKey('master-detail-splitter'),
+        onFocusChange: (value) => setState(() => _focused = value),
+        onKeyEvent: (_, event) {
+          if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+            return KeyEventResult.ignored;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            widget.onChanged(AppSpacing.s16);
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            widget.onChanged(-AppSpacing.s16);
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.home) {
+            widget.onChanged(kMasterPaneMinWidth - widget.width);
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.end) {
+            widget.onChanged(kMasterPaneMaxWidth - widget.width);
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: MouseRegion(
+          cursor: SystemMouseCursors.resizeColumn,
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragStart: (_) => setState(() => _dragging = true),
+            onHorizontalDragEnd: (_) => setState(() => _dragging = false),
+            onHorizontalDragCancel: () => setState(() => _dragging = false),
+            onHorizontalDragUpdate: (d) => widget.onChanged(d.delta.dx),
+            // Hit area is intentionally wider than the visible hairline so
+            // touch/mouse can grab the splitter without precision aiming. The
+            // visible bar stays at 1–2 px to keep the chrome quiet.
+            child: SizedBox(
+              width: AppSpacing.s16,
+              child: Center(
+                child: AnimatedContainer(
+                  duration: AppMotionPolicy.duration(context, Motion.fast),
+                  width: highlight ? 2 : 1,
+                  color: highlight
+                      ? context.theme.colors.primary
+                      : widget.color,
+                ),
+              ),
             ),
           ),
         ),

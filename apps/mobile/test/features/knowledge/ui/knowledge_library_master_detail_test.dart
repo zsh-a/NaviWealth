@@ -43,9 +43,10 @@ Widget _wrap({
   required double contentWidth,
   List<KnowledgeNote>? notes,
   List<KnowledgeDecision>? decisions,
+  String initialLocation = '/knowledge/library',
 }) {
   final router = GoRouter(
-    initialLocation: '/knowledge/library',
+    initialLocation: initialLocation,
     routes: [
       GoRoute(
         path: '/knowledge/library',
@@ -124,6 +125,55 @@ void main() {
       outbox: InMemoryOutboxStore(),
     );
     await _repository.upsertNote(_note);
+  });
+
+  testWidgets(
+    'route restores filters and clearing preserves the selected object',
+    (tester) async {
+      await _setSurface(tester, 1280);
+      await tester.pumpWidget(
+        _wrap(
+          contentWidth: 1100,
+          initialLocation:
+              '/knowledge/library?scope=notes&tag=work&selected=note:note-1',
+        ),
+      );
+      await _settlePaint(tester);
+      final context = tester.element(find.byType(KnowledgeLibraryPage));
+      final router = GoRouter.of(context);
+      expect(find.byType(AppFilterSummary), findsOneWidget);
+      expect(find.byType(KnowledgeNoteDetailPage), findsOneWidget);
+      await tester.tap(find.text('Clear filters'));
+      await _settlePaint(tester);
+      expect(router.routeInformationProvider.value.uri.queryParameters, {
+        'selected': 'note:note-1',
+      });
+      expect(find.byType(AppFilterSummary), findsNothing);
+      expect(find.byType(KnowledgeNoteDetailPage), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('clearing the last search condition removes its URL query', (
+    tester,
+  ) async {
+    await _setSurface(tester, 1280);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 1100,
+        initialLocation: '/knowledge/library?scope=notes',
+      ),
+    );
+    await _settlePaint(tester);
+    final router = GoRouter.of(
+      tester.element(find.byType(KnowledgeLibraryPage)),
+    );
+    await tester.tap(find.text('Clear filters'));
+    await _settlePaint(tester);
+    expect(router.routeInformationProvider.value.uri.hasQuery, isFalse);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('wide layout opens the note detail in the side pane', (

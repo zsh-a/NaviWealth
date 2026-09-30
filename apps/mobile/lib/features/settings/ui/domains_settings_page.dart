@@ -118,6 +118,11 @@ class DomainsSettingsPage extends ConsumerWidget {
         .setEnabled(pack.scope, enabled);
     if (!context.mounted) return;
     if (enabled) {
+      final resume = GoRouterState.of(context).uri.queryParameters['resume'];
+      if (resume == pack.scope.wire && context.canPop()) {
+        context.pop();
+        return;
+      }
       final homePath = pack.tabPaths.isEmpty ? null : pack.tabPaths.first;
       if (homePath == null) return;
       final openNow = await showConfirmDialog(

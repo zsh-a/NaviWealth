@@ -172,7 +172,7 @@ class _TodayMetricCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s4),
           Text(caption, style: context.microCaptionStyle),
           if (series != null &&
-              series.samples.isNotEmpty &&
+              series.samples.length > 1 &&
               kind != HealthMetricKind.trainingEffectDaily) ...[
             const SizedBox(height: AppSpacing.s8),
             SizedBox(

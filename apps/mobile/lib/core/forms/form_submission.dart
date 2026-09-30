@@ -6,8 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../design_system/design_system.dart';
 import '../logging/app_logger.dart';
 import '../logging/providers.dart';
+import 'form_undo.dart';
 
-typedef FormFailureMessageBuilder = String Function(Object error);
+export 'form_undo.dart';
 
 /// Builds and presents Undo for a typed repository commit result.
 final class FormUndoPresentation<T> {
@@ -202,25 +203,29 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
         return;
       }
       AppMessenger.cacheOverlay(feedbackContext);
+      final undoOffer = undoAction == null
+          ? null
+          : FormUndoOffer(
+              message: successMessage,
+              action: undoAction,
+              actionLabel: undo!.actionLabel,
+              successMessage: undo.successMessage,
+              failureMessage: undo.failureMessage,
+              retryLabel: undo.retryLabel,
+              tag: tag,
+            );
+      final undoOffers = ref.read(formUndoOfferProvider.notifier);
+      if (undoOffer != null) undoOffers.offer(undoOffer);
       leave();
       AppMessenger.show(
         feedbackContext,
         ToastKind.success,
         successMessage,
-        actionLabel: undoAction == null ? null : undo!.actionLabel,
-        onAction: undoAction == null
+        actionLabel: undoOffer?.actionLabel,
+        onAction: undoOffer == null
             ? null
-            : () => unawaited(
-                runFormUndoWithFeedback(
-                  context: feedbackContext,
-                  action: undoAction!,
-                  logger: logger,
-                  successMessage: undo!.successMessage,
-                  failureMessage: undo.failureMessage,
-                  retryLabel: undo.retryLabel,
-                  tag: tag,
-                ),
-              ),
+            : () =>
+                  unawaited(undoOffers.run(feedbackContext, undoOffer, logger)),
       );
       operation.complete();
     } catch (error, stack) {
@@ -259,85 +264,4 @@ Future<void> _nextFrame() {
   WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
   WidgetsBinding.instance.scheduleFrame();
   return completer.future;
-}
-
-/// A one-shot, retryable undo operation.
-///
-/// Concurrent calls share one operation. Once it succeeds, future calls are
-/// permanent no-ops. A failure clears the in-flight state so the exact same
-/// atomic callback can be retried.
-final class FormUndoAction {
-  FormUndoAction(Future<void> Function() undo) : _undo = undo;
-
-  final Future<void> Function() _undo;
-  Future<bool>? _inFlight;
-  bool _completed = false;
-
-  bool get completed => _completed;
-
-  Future<bool> call() {
-    if (_completed) return Future<bool>.value(false);
-    final current = _inFlight;
-    if (current != null) return current;
-
-    late final Future<bool> operation;
-    operation = _undo()
-        .then((_) {
-          _completed = true;
-          return true;
-        })
-        .whenComplete(() {
-          if (identical(_inFlight, operation)) _inFlight = null;
-        });
-    _inFlight = operation;
-    return operation;
-  }
-}
-
-/// Runs [action] and reports its localized result through [AppMessenger].
-Future<void> runFormUndoWithFeedback({
-  required BuildContext context,
-  required FormUndoAction action,
-  required AppLogger logger,
-  required String successMessage,
-  required FormFailureMessageBuilder failureMessage,
-  required String retryLabel,
-  String tag = 'form',
-}) async {
-  AppMessenger.cacheOverlay(context);
-  final operation = logger.startOperation(
-    'form.undo',
-    fields: {'form_type': tag},
-  );
-  try {
-    final changed = await operation.step('apply', action.call);
-    if (changed) {
-      AppMessenger.show(
-        context, // ignore: use_build_context_synchronously -- overlay cached above
-        ToastKind.success,
-        successMessage,
-      );
-    }
-    operation.complete(outcome: changed ? 'success' : 'noop');
-  } catch (error, stack) {
-    operation.fail(error, stackTrace: stack, stage: 'apply', retryable: true);
-    AppMessenger.show(
-      context, // ignore: use_build_context_synchronously -- overlay cached above
-      ToastKind.error,
-      failureMessage(error),
-      duration: const Duration(seconds: 6),
-      actionLabel: retryLabel,
-      onAction: () => unawaited(
-        runFormUndoWithFeedback(
-          context: context,
-          action: action,
-          logger: logger,
-          successMessage: successMessage,
-          failureMessage: failureMessage,
-          retryLabel: retryLabel,
-          tag: tag,
-        ),
-      ),
-    );
-  }
 }

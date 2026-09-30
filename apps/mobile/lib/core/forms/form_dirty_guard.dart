@@ -2,33 +2,13 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/design_system.dart';
-import '../../l10n/gen/app_localizations.dart';
 
 // The pure dirty-tracking primitive lives in the design-system layer so
 // `showAppFormSheet` can consume it without a layering inversion. Re-
 // exported here so feature forms keep importing it via the forms barrel.
-export '../../../design_system/widgets/form_dirty_controller.dart';
-
-/// Returns `true` when it is safe to leave the form: either nothing is
-/// dirty, or the user confirmed discarding their edits. Reuses the
-/// shared [showConfirmDialog] so the prompt matches every other
-/// destructive confirm in the app.
-Future<bool> confirmDiscardIfDirty(
-  BuildContext context,
-  FormDirtyController controller,
-) async {
-  if (!controller.isDirty) return true;
-  final l10n = AppLocalizations.of(context);
-  final discard = await showConfirmDialog(
-    context: context,
-    title: Text(l10n.unsavedChangesTitle),
-    body: Text(l10n.unsavedChangesBody),
-    cancelLabel: l10n.unsavedChangesKeepEditing,
-    confirmLabel: l10n.unsavedChangesDiscard,
-    destructive: true,
-  );
-  return discard == true;
-}
+export '../../design_system/widgets/form_dirty_controller.dart';
+export '../../design_system/widgets/forui_dialogs.dart'
+    show confirmDiscardIfDirty;
 
 /// Opens a guarded form sheet: creates a [FormDirtyController], wires it
 /// into `showAppFormSheet` (which keeps barrier-tap / swipe-down available

@@ -20,18 +20,28 @@ Future<void> showLifeSignalSheet({
   required LifeEvent event,
   required bool executionEnabled,
 }) {
+  final dirty = FormDirtyController();
   return showAppFormSheet<void>(
     context: context,
-    builder: (_) =>
-        _LifeSignalSheet(event: event, executionEnabled: executionEnabled),
-  );
+    dirtyGuard: dirty,
+    builder: (_) => _LifeSignalSheet(
+      event: event,
+      executionEnabled: executionEnabled,
+      dirty: dirty,
+    ),
+  ).whenComplete(dirty.dispose);
 }
 
 class _LifeSignalSheet extends ConsumerStatefulWidget {
-  const _LifeSignalSheet({required this.event, required this.executionEnabled});
+  const _LifeSignalSheet({
+    required this.event,
+    required this.executionEnabled,
+    required this.dirty,
+  });
 
   final LifeEvent event;
   final bool executionEnabled;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_LifeSignalSheet> createState() => _LifeSignalSheetState();
@@ -41,7 +51,10 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
   static const Uuid _uuid = Uuid();
 
   bool _applying = false;
+  bool _confirming = false;
   bool _created = false;
+  String? _createdPath;
+  String? _error;
 
   @override
   Widget build(BuildContext context) {
@@ -51,23 +64,25 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
     final suggestion = event.actionSuggestion;
     final actionTitle = event.localizedActionTitle(l10n);
     final canCreate = suggestion != null && actionTitle != null;
-    final executionPath = ref
+    final executionPack = ref
         .watch(activeDomainPacksProvider)
         .where((pack) => pack.scope == DomainScope.execution)
-        .expand((pack) => pack.tabPaths)
         .firstOrNull;
+    final executionEnabled = widget.executionEnabled || executionPack != null;
+    final executionPath = _createdPath ?? executionPack?.tabPaths.firstOrNull;
 
     return AppSheet(
       title: l10n.lifeSignalDetailTitle,
       subtitle: event.localizedTitle(l10n),
-      footer: canCreate && !_created && !_applying
+      footer: canCreate && !_created
           ? AppSheetFooter(
-              submitLabel: widget.executionEnabled
+              submitLabel: executionEnabled
                   ? l10n.lifeSignalCreateAction
                   : l10n.lifeSignalEnableExecution,
               cancelLabel: l10n.commonCancel,
               busy: _applying,
-              onSubmit: widget.executionEnabled
+              enabled: !_confirming,
+              onSubmit: executionEnabled
                   ? () => _createAction(actionTitle)
                   : _openDomainSettings,
             )
@@ -76,6 +91,10 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (_error != null) ...[
+            AppStatusBanner(kind: AppStatusKind.error, message: _error!),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           SoftCard.flat(
             padding: const EdgeInsets.all(AppSpacing.s12),
             child: Column(
@@ -163,7 +182,7 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
             Align(
               alignment: Alignment.centerLeft,
               child: FButton(
-                onPress: _openSource,
+                onPress: _applying || _confirming ? null : _openSource,
                 variant: FButtonVariant.outline,
                 child: Text(l10n.lifeSignalOpenSource),
               ),
@@ -175,7 +194,12 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
   }
 
   Future<void> _createAction(String actionTitle) async {
-    if (_applying || _created) return;
+    if (_applying || _created || _confirming) return;
+    setState(() {
+      _confirming = true;
+      _error = null;
+    });
+    widget.dirty.busy = true;
     final l10n = AppLocalizations.of(context);
     final sourceLabel = widget.event.localizedTitle(l10n);
     final confirmed = await showConfirmDialog(
@@ -185,9 +209,15 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
       confirmLabel: l10n.lifeSignalCreateAction,
       cancelLabel: l10n.commonCancel,
     );
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _applying = true);
+    if (confirmed != true || !mounted) {
+      widget.dirty.busy = false;
+      if (mounted) setState(() => _confirming = false);
+      return;
+    }
+    setState(() {
+      _confirming = false;
+      _applying = true;
+    });
     try {
       final suggestion = widget.event.actionSuggestion!;
       final plan = ReadyProposalPlan(
@@ -215,7 +245,18 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
         throw ProposalApplyException('proposal was not applied');
       }
       if (!mounted) return;
-      setState(() => _created = true);
+      final pack = ref
+          .read(activeDomainPacksProvider)
+          .where((pack) => pack.scope == DomainScope.execution)
+          .firstOrNull;
+      final id = result.appliedEntityId;
+      final table = result.appliedTable;
+      setState(() {
+        _created = true;
+        _createdPath = id == null || table == null
+            ? null
+            : pack?.sourceRouteResolver?.call('exec:$table', id);
+      });
       AppMessenger.show(
         context,
         ToastKind.success,
@@ -223,19 +264,23 @@ class _LifeSignalSheetState extends ConsumerState<_LifeSignalSheet> {
       );
     } catch (error) {
       if (!mounted) return;
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.lifeSignalActionFailed('$error'),
-      );
+      setState(() => _error = userSafeErrorMessage(context, error));
+      AppMessenger.show(context, ToastKind.error, _error!);
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _applying = false);
     }
   }
 
   void _openSource() => _closeAndGo(widget.event.routePath!);
 
-  void _openDomainSettings() => _closeAndGo(SettingsRoutes.domains);
+  Future<void> _openDomainSettings() async {
+    // Keep this suggestion mounted below Settings so enabling the domain can
+    // return to the same evidence and explicit create confirmation.
+    await GoRouter.of(context).push<void>(
+      '${SettingsRoutes.domains}?resume=${DomainScope.execution.wire}',
+    );
+  }
 
   void _closeAndGo(String path) {
     final router = GoRouter.of(context);

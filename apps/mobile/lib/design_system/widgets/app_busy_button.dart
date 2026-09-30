@@ -26,6 +26,7 @@ class AppBusyButton extends StatelessWidget {
     this.prefix,
     this.busyPrefix,
     this.busyLabel,
+    this.mainAxisSize = MainAxisSize.max,
     this.hapticIntent = AppInteractionIntent.commit,
   });
 
@@ -50,6 +51,7 @@ class AppBusyButton extends StatelessWidget {
 
   /// Label shown when busy.  Falls back to [label] when null.
   final String? busyLabel;
+  final MainAxisSize mainAxisSize;
 
   /// Haptic fired when the button is pressed.  Defaults to
   /// [AppInteractionIntent.commit] because this is the app's async-action
@@ -93,6 +95,7 @@ class AppBusyButton extends StatelessWidget {
     return FButton(
       key: buttonKey,
       variant: variant,
+      mainAxisSize: mainAxisSize,
       size: size ?? FButtonSizeVariant.md,
       prefix: busy ? busyPrefix : prefix,
       onPress: busy

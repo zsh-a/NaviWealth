@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../l10n/gen/app_localizations.dart';
 import '../theme/app_theme_scope.dart';
 import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
@@ -12,6 +13,26 @@ import 'app_interaction.dart';
 import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
 import 'app_status_banner.dart';
+import 'form_dirty_controller.dart';
+
+/// Shared discard prompt for page forms and modal routes.
+Future<bool> confirmDiscardIfDirty(
+  BuildContext context,
+  FormDirtyController controller,
+) async {
+  if (controller.busy) return false;
+  if (!controller.isDirty) return true;
+  final l10n = AppLocalizations.of(context);
+  return await showConfirmDialog(
+        context: context,
+        title: Text(l10n.unsavedChangesTitle),
+        body: Text(l10n.unsavedChangesBody),
+        cancelLabel: l10n.unsavedChangesKeepEditing,
+        confirmLabel: l10n.unsavedChangesDiscard,
+        destructive: true,
+      ) ==
+      true;
+}
 
 /// Shows arbitrary app-styled dialog content in a centered, width-constrained
 /// frame. Feature code should use this seam instead of calling [showFDialog]
@@ -101,9 +122,12 @@ Future<String?> showAppTextPromptSheet({
   TextInputType keyboardType = TextInputType.text,
   String? Function(String value)? validator,
 }) {
+  final dirty = FormDirtyController();
   return showAppFormSheet<String>(
     context: context,
+    dirtyGuard: dirty,
     builder: (_) => _TextPromptSheet(
+      dirty: dirty,
       title: title,
       fieldLabel: fieldLabel,
       submitLabel: submitLabel,
@@ -113,7 +137,7 @@ Future<String?> showAppTextPromptSheet({
       keyboardType: keyboardType,
       validator: validator,
     ),
-  );
+  ).whenComplete(dirty.dispose);
 }
 
 class _TextPromptSheet extends StatefulWidget {
@@ -126,6 +150,7 @@ class _TextPromptSheet extends StatefulWidget {
     required this.hint,
     required this.keyboardType,
     required this.validator,
+    required this.dirty,
   });
 
   final String title;
@@ -136,6 +161,7 @@ class _TextPromptSheet extends StatefulWidget {
   final String? hint;
   final TextInputType keyboardType;
   final String? Function(String value)? validator;
+  final FormDirtyController dirty;
 
   @override
   State<_TextPromptSheet> createState() => _TextPromptSheetState();
@@ -149,6 +175,7 @@ class _TextPromptSheetState extends State<_TextPromptSheet> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialValue);
+    widget.dirty.bindTextControllers([_controller]);
   }
 
   @override
@@ -194,6 +221,7 @@ class _TextPromptSheetState extends State<_TextPromptSheet> {
       return;
     }
     if (value.isEmpty) return;
+    widget.dirty.markPristine();
     Navigator.of(context).pop(value);
   }
 }

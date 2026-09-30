@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../../l10n/gen/app_localizations.dart';
 import '../theme/component_specs.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/breakpoints.dart';
@@ -12,8 +13,10 @@ import '../tokens/text_style_presets.dart';
 import 'app_busy_button.dart';
 import 'app_glass.dart';
 import 'app_gradient_divider.dart';
+import 'app_icon_button.dart';
 import 'app_interaction.dart';
 import 'form_dirty_controller.dart';
+import 'forui_dialogs.dart';
 
 final ValueNotifier<int> appSheetOverlayDepthListenable = ValueNotifier<int>(0);
 
@@ -111,6 +114,7 @@ Future<T?> showAppFormSheet<T>({
       confirmDismiss: confirmDismiss,
       builder: (sheetContext) =>
           AppSheetSurface(child: Builder(builder: builder)),
+      centerOnWide: true,
     );
   } finally {
     _endAppSheetOverlay();
@@ -130,7 +134,58 @@ Future<T?> _showAppModalSheet<T>({
   required double? mainAxisMaxRatio,
   required FormDirtyController? dirtyGuard,
   required Future<bool> Function()? confirmDismiss,
+  bool centerOnWide = false,
 }) {
+  final media = MediaQuery.of(context);
+  if (centerOnWide &&
+      media.size.width >= Breakpoints.expanded &&
+      media.size.height >= Breakpoints.mediumHeight) {
+    final navigator = Navigator.of(context);
+    return navigator.push(
+      _AppFormDialogRoute<T>(
+        style: context.theme.dialogRouteStyle,
+        capturedFTheme: FTheme.capture(from: context, to: navigator.context),
+        capturedThemes: InheritedTheme.capture(
+          from: context,
+          to: navigator.context,
+        ),
+        barrierLabel: MaterialLocalizations.of(context)
+            .modalBarrierDismissLabel,
+        dirtyGuard: dirtyGuard,
+        confirmDismiss: dirtyGuard == null
+            ? null
+            : confirmDismiss ??
+                  () => confirmDiscardIfDirty(context, dirtyGuard),
+        duration: AppMotionPolicy.duration(context, Motion.fast),
+        builder: (context, animation) => _AppSheetDialogScope(
+          child: FadeTransition(
+            opacity: animation,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.s24,
+                AppSpacing.s24,
+                AppSpacing.s24,
+                MediaQuery.viewInsetsOf(context).bottom + AppSpacing.s24,
+              ),
+              child: Center(
+                child: LayoutBuilder(
+                  builder: (context, constraints) => ConstrainedBox(
+                    key: const ValueKey('app-form-dialog'),
+                    constraints: BoxConstraints(
+                      maxWidth: Breakpoints.sheetFormMax,
+                      maxHeight:
+                          constraints.maxHeight * (mainAxisMaxRatio ?? 0.94),
+                    ),
+                    child: Builder(builder: builder),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
   if (dirtyGuard == null) {
     return showFSheet<T>(
       context: context,
@@ -157,12 +212,14 @@ Future<T?> _showAppModalSheet<T>({
         localizations.sheetSemanticsLabel,
       ),
       dirtyGuard: dirtyGuard,
-      confirmDismiss: confirmDismiss,
+      confirmDismiss:
+          confirmDismiss ?? () => confirmDiscardIfDirty(context, dirtyGuard),
     ),
   );
 }
 
-class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
+class _AppModalSheetRoute<T> extends FModalSheetRoute<T>
+    with _AppModalDismissal<T> {
   _AppModalSheetRoute({
     required super.style,
     required super.builder,
@@ -175,15 +232,56 @@ class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
     required this.confirmDismiss,
   }) : super(side: FLayout.btt, barrierDismissible: true, draggable: true);
 
+  @override
   final FormDirtyController dirtyGuard;
+  @override
+  final Future<bool> Function() confirmDismiss;
+
+  @override
+  void restoreAfterDismissAttempt() {
+    final sheetController = controller;
+    if (sheetController != null && sheetController.value < 1) {
+      unawaited(sheetController.forward());
+    }
+  }
+}
+
+class _AppFormDialogRoute<T> extends FDialogRoute<T>
+    with _AppModalDismissal<T> {
+  _AppFormDialogRoute({
+    required super.style,
+    required super.builder,
+    required super.capturedFTheme,
+    required super.capturedThemes,
+    required super.barrierLabel,
+    required this.dirtyGuard,
+    required this.confirmDismiss,
+    required this.duration,
+  });
+
+  @override
+  final FormDirtyController? dirtyGuard;
+  @override
   final Future<bool> Function()? confirmDismiss;
+  final Duration duration;
+  @override
+  Duration get transitionDuration => duration;
+  @override
+  Duration get reverseTransitionDuration => duration;
+}
+
+mixin _AppModalDismissal<T> on PopupRoute<T> {
+  FormDirtyController? get dirtyGuard;
+  Future<bool> Function()? get confirmDismiss;
+  void restoreAfterDismissAttempt() {}
 
   bool _allowNextPop = false;
   bool _confirming = false;
   bool _dismissScheduled = false;
 
   bool get _blocksDismissal =>
-      !_allowNextPop && (dirtyGuard.isDirty || dirtyGuard.busy);
+      !_allowNextPop &&
+      (dirtyGuard?.isDirty == true || dirtyGuard?.busy == true);
 
   @override
   RoutePopDisposition get popDisposition =>
@@ -192,7 +290,7 @@ class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
   @override
   bool didPop(T? result) {
     if (!_blocksDismissal) return super.didPop(result);
-    _restoreDraggedSheet();
+    restoreAfterDismissAttempt();
     _scheduleDismiss(result);
     return false;
   }
@@ -213,8 +311,8 @@ class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
   }
 
   Future<void> _requestDismiss(T? result) async {
-    if (!isCurrent || _confirming || dirtyGuard.busy) return;
-    if (!dirtyGuard.isDirty) {
+    if (!isCurrent || _confirming || dirtyGuard?.busy == true) return;
+    if (dirtyGuard?.isDirty != true) {
       _allowNextPop = true;
       navigator?.pop(result);
       return;
@@ -222,21 +320,20 @@ class _AppModalSheetRoute<T> extends FModalSheetRoute<T> {
 
     _confirming = true;
     try {
-      final approved = confirmDismiss == null || await confirmDismiss!();
-      if (!approved || !isCurrent) return;
+      final approved = await confirmDismiss!();
+      if (!approved || !isCurrent || dirtyGuard?.busy == true) return;
       _allowNextPop = true;
       navigator?.pop(result);
     } finally {
       _confirming = false;
     }
   }
+}
 
-  void _restoreDraggedSheet() {
-    final sheetController = controller;
-    if (sheetController != null && sheetController.value < 1) {
-      unawaited(sheetController.forward());
-    }
-  }
+class _AppSheetDialogScope extends InheritedWidget {
+  const _AppSheetDialogScope({required super.child});
+  @override
+  bool updateShouldNotify(_AppSheetDialogScope oldWidget) => false;
 }
 
 /// Internal shell — wraps the body with the unified chrome. Public
@@ -336,6 +433,14 @@ class AppSheet extends StatelessWidget {
             ),
           ),
           ...actions,
+          if (context
+                  .dependOnInheritedWidgetOfExactType<_AppSheetDialogScope>() !=
+              null)
+            AppIconButton(
+              icon: FLucideIcons.x,
+              tooltip: AppLocalizations.of(context).commonClose,
+              onPress: () => Navigator.of(context).maybePop(),
+            ),
         ],
       ),
     );
@@ -344,6 +449,9 @@ class AppSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final dialog =
+        context.dependOnInheritedWidgetOfExactType<_AppSheetDialogScope>() !=
+        null;
 
     // ── Footer branch: scrollable body + pinned, keyboard-aware footer.
     //
@@ -364,7 +472,7 @@ class AppSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _dragHandle(colors),
+            if (!dialog) _dragHandle(colors),
             _header(context),
             Flexible(
               child: SingleChildScrollView(
@@ -396,7 +504,7 @@ class AppSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _dragHandle(colors),
+        if (!dialog) _dragHandle(colors),
         _header(context),
         Flexible(
           child: AnimatedSize(
@@ -622,7 +730,14 @@ class AppSheetSurface extends StatelessWidget {
       child: AppGlassSurface(
         key: const ValueKey<String>('app-sheet.surface'),
         role: AppGlassRole.sheet,
-        borderRadius: borderRadius,
+        borderRadius:
+            context
+                    .dependOnInheritedWidgetOfExactType<
+                      _AppSheetDialogScope
+                    >() !=
+                null
+            ? BorderRadius.circular(AppRadius.lg)
+            : borderRadius,
         frosted: frosted,
         softLight: softLight,
         child: sheetContent,
@@ -633,7 +748,11 @@ class AppSheetSurface extends StatelessWidget {
     // window reads as a full-window band (doc 15 §6.5 / design doc
     // 01-responsive-layout §2.4). Center and cap it instead; phones keep
     // the classic full-width sheet.
-    if (mediaQuery.size.width < Breakpoints.mobile) return surfaceWidget;
+    if (mediaQuery.size.width < Breakpoints.mobile ||
+        context.dependOnInheritedWidgetOfExactType<_AppSheetDialogScope>() !=
+            null) {
+      return surfaceWidget;
+    }
     return Align(
       alignment: Alignment.bottomCenter,
       child: ConstrainedBox(

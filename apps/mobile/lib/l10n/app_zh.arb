@@ -5283,5 +5283,9 @@
   "planAdvancedToolsHint": "再平衡与收入策略",
   "planSimulateChangesTitle": "模拟变化",
   "planCompareLifeEventsAction": "比较并保存人生事件方案",
-  "planCompareLifeEventsHint": "比较大额消费、职业空档或购房的影响，并保存决策以便复盘。"
+  "planCompareLifeEventsHint": "比较大额消费、职业空档或购房的影响，并保存决策以便复盘。",
+  "commonClearFilters": "清除筛选",
+  "commonSearchResultsCount": "显示 {count} 条结果",
+  "shellResizeListPane": "调整列表宽度",
+  "@commonSearchResultsCount": {"placeholders": {"count": {"type": "int"}}}
 }

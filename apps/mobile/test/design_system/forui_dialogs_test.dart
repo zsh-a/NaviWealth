@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: FTheme(data: FTheme.neutral.light.desktop, child: child),
   );
 }
@@ -141,6 +144,12 @@ void main() {
     expect(find.text('A note is required'), findsOneWidget);
 
     await tester.enterText(find.byType(FTextField), '  Reviewed  ');
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await tester.pumpAndSettle();
+    expect(find.text('  Reviewed  '), findsOneWidget);
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 

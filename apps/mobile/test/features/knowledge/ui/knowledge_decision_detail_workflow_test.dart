@@ -20,6 +20,49 @@ import '../../finance/data/repositories/_stub_stamper.dart';
 const _owner = 'knowledge-decision-workflow-user';
 
 void main() {
+  testWidgets('review draft stays intact when dismissal is cancelled', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final database = makeTestDatabase();
+    addTearDown(database.close);
+    final repository = KnowledgeRepository(
+      db: database,
+      outbox: InMemoryOutboxStore(),
+    );
+    final decision = _decision(reviewDate: DateTime.utc(2020));
+    await repository.upsertDecision(decision);
+    await tester.pumpWidget(
+      _wrap(
+        decisionId: decision.id,
+        repository: repository,
+        executionAvailable: false,
+      ),
+    );
+    await _settlePaint(tester);
+    await tester.tap(find.byKey(const Key('knowledge-decision-review')));
+    await _settlePaint(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-decision-review-actual')),
+      'Preserve my review',
+    );
+    await tester.tapAt(const Offset(4, 4));
+    await _settlePaint(tester);
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(find.text(l10n.unsavedChangesTitle), findsOneWidget);
+    await tester.tap(find.text(l10n.unsavedChangesKeepEditing));
+    await _settlePaint(tester);
+    expect(find.text('Preserve my review'), findsOneWidget);
+    expect(
+      (await repository.findDecision(
+        ownerUserId: _owner,
+        id: decision.id,
+      ))?.actualOutcomeMd,
+      isNull,
+    );
+    await _disposeWidget(tester);
+  });
   testWidgets('reviews a due Decision and persists its outcome', (
     tester,
   ) async {

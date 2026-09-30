@@ -56,6 +56,22 @@ void main() {
     expect(find.text('Updated'), findsOneWidget);
     // The form stays hidden until the edit toggle is pressed.
     expect(find.byKey(const Key('knowledge-note-title')), findsNothing);
+    expect(find.text('Delete'), findsNothing);
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is AppIconButton && widget.tooltip == 'More actions',
+      ),
+    );
+    await _settle(tester);
+    await tester.tap(find.text('Delete'));
+    await _settle(tester);
+    expect(find.text('Delete this note?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await _settle(tester);
+    expect(
+      await repository.findNote(ownerUserId: _owner, id: 'note-read'),
+      isNotNull,
+    );
 
     await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
     await _settle(tester);

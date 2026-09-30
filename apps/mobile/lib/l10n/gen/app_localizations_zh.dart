@@ -16561,4 +16561,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get planCompareLifeEventsHint => '比较大额消费、职业空档或购房的影响，并保存决策以便复盘。';
+
+  @override
+  String get commonClearFilters => '清除筛选';
+
+  @override
+  String commonSearchResultsCount(int count) {
+    return '显示 $count 条结果';
+  }
+
+  @override
+  String get shellResizeListPane => '调整列表宽度';
 }

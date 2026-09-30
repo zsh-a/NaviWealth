@@ -8520,5 +8520,9 @@
   "planAdvancedToolsHint": "Rebalancing and income strategies",
   "planSimulateChangesTitle": "Simulate a change",
   "planCompareLifeEventsAction": "Compare and save a life-event decision",
-  "planCompareLifeEventsHint": "Compare a large purchase, career break or home purchase, then save a decision for review."
+  "planCompareLifeEventsHint": "Compare a large purchase, career break or home purchase, then save a decision for review.",
+  "commonClearFilters": "Clear filters",
+  "commonSearchResultsCount": "Showing {count, plural, =1{1 result} other{{count} results}}",
+  "shellResizeListPane": "Resize list pane",
+  "@commonSearchResultsCount": {"placeholders": {"count": {"type": "int"}}}
 }

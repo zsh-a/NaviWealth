@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/write/persistent_undo_banner.dart';
+import '../forms/form_undo_banner.dart';
 import '../lifeos/domain_pack.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
@@ -128,7 +129,13 @@ Widget _withGlobalOverlays(Widget layout, {bool undoBanner = true}) {
           left: 0,
           right: 0,
           bottom: 0,
-          child: SafeArea(top: false, child: PersistentUndoBanner()),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [FormUndoBanner(), PersistentUndoBanner()],
+            ),
+          ),
         ),
       // Shell-level sync activity: a hairline strip at the very top of
       // every layout (doc 11 "完成同步" trigger).
@@ -250,6 +257,7 @@ class _MobileLayout extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          const FormUndoBanner(),
                           const PersistentUndoBanner(),
                           _DockReveal(
                             visible: showNav,

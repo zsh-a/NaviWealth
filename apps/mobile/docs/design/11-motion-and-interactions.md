@@ -79,6 +79,12 @@
 
 - 通知唯一路径 `AppMessenger`(toast);持久性状态用 `AppStatusBanner`;
   AI 写操作配 `PersistentUndoBanner`。`SnackBar` 被 lint 封禁。
+- 有真实撤销回执的业务表单和行动状态变更，通过 `FormUndoOffer` 在导航上方
+  展示 `FormUndoBanner`，窗口统一为 60 秒；页面切换后仍可操作，账号切换时
+  清除。失败保留同一回执供重试，成功只执行一次。此回执是会话内 UI 状态，
+  不替代 AI 的持久化撤销栈。
+- 表单传入 `dirtyGuard` 后默认使用共享放弃确认，特殊调用方可以覆盖回调；
+  遮罩、拖动、关闭按钮和系统返回遵循同一协议。提交中阻止退出，失败保留输入。
 - **触觉语法**:一律经 `AppInteraction.signal(intent)` 的七种语义意图
   (commit / select / reveal / navigate / destroy / success / failure);
   禁止直接调用 `Haptics.*`(`SoftCard`、`FloatingGlassNavBar` 等组件已内建)。

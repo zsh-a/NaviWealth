@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/shell/shell_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> _pumpLayout(
@@ -23,6 +25,8 @@ Future<void> _pumpLayout(
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const Scaffold(
           body: MasterDetailLayout(
             master: ColoredBox(key: ValueKey('master'), color: Colors.red),
@@ -35,6 +39,46 @@ Future<void> _pumpLayout(
 }
 
 void main() {
+  testWidgets('splitter supports keyboard resizing and clamps width', (
+    tester,
+  ) async {
+    await _pumpLayout(tester);
+    final focus = tester.widget<Focus>(
+      find.byKey(const ValueKey('master-detail-splitter')),
+    );
+    // The Focus widget owns the node below its build context.
+    final node = Focus.of(
+      tester.element(
+        find
+            .descendant(
+              of: find.byKey(const ValueKey('master-detail-splitter')),
+              matching: find.byType(MouseRegion),
+            )
+            .first,
+      ),
+    );
+    node.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pump();
+    expect(
+      tester.getSize(find.byKey(const ValueKey('master'))).width,
+      kMasterPaneDefaultWidth + AppSpacing.s16,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pump();
+    expect(
+      tester.getSize(find.byKey(const ValueKey('master'))).width,
+      kMasterPaneMaxWidth,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    await tester.pump();
+    expect(
+      tester.getSize(find.byKey(const ValueKey('master'))).width,
+      kMasterPaneMinWidth,
+    );
+    expect(focus.canRequestFocus, isTrue);
+  });
   test('shouldUseMasterDetail follows the local content breakpoint', () {
     expect(MasterDetailLayout.shouldUseMasterDetail(1023), isFalse);
     expect(MasterDetailLayout.shouldUseMasterDetail(1024), isTrue);

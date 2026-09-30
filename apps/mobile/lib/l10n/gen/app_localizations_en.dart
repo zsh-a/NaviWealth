@@ -17499,4 +17499,21 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get planCompareLifeEventsHint =>
       'Compare a large purchase, career break or home purchase, then save a decision for review.';
+
+  @override
+  String get commonClearFilters => 'Clear filters';
+
+  @override
+  String commonSearchResultsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count results',
+      one: '1 result',
+    );
+    return 'Showing $_temp0';
+  }
+
+  @override
+  String get shellResizeListPane => 'Resize list pane';
 }

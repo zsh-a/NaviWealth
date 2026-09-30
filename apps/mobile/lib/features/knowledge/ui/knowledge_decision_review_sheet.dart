@@ -25,16 +25,21 @@ Future<KnowledgeDecisionReviewDraft?> showKnowledgeDecisionReviewSheet({
   required BuildContext context,
   required KnowledgeDecision decision,
 }) {
-  return showAppFormSheet<KnowledgeDecisionReviewDraft>(
+  return showGuardedFormSheet<KnowledgeDecisionReviewDraft>(
     context: context,
-    builder: (_) => _KnowledgeDecisionReviewSheet(decision: decision),
+    builder: (_, dirty) =>
+        _KnowledgeDecisionReviewSheet(decision: decision, dirty: dirty),
   );
 }
 
 class _KnowledgeDecisionReviewSheet extends StatefulWidget {
-  const _KnowledgeDecisionReviewSheet({required this.decision});
+  const _KnowledgeDecisionReviewSheet({
+    required this.decision,
+    required this.dirty,
+  });
 
   final KnowledgeDecision decision;
+  final FormDirtyController dirty;
 
   @override
   State<_KnowledgeDecisionReviewSheet> createState() =>
@@ -60,6 +65,7 @@ class _KnowledgeDecisionReviewSheetState
     _actual = TextEditingController(text: decision.actualOutcomeMd);
     _reviewDate = decision.reviewDate;
     _status = decision.status;
+    widget.dirty.bindTextControllers([_conditions, _actual]);
   }
 
   @override
@@ -96,7 +102,10 @@ class _KnowledgeDecisionReviewSheetState
             key: const Key('knowledge-decision-review-date'),
             label: l10n.knowledgeDecisionReviewDateLabel,
             initialValue: _reviewDate,
-            onChanged: (value) => setState(() => _reviewDate = value),
+            onChanged: (value) {
+              setState(() => _reviewDate = value);
+              widget.dirty.markDirty();
+            },
           ),
           const SizedBox(height: AppSpacing.s16),
           FTextField(
@@ -125,7 +134,10 @@ class _KnowledgeDecisionReviewSheetState
             value: _status,
             labelOf: (status) => knowledgeDecisionStatusLabel(l10n, status),
             iconOf: _statusIcon,
-            onChanged: (status) => setState(() => _status = status),
+            onChanged: (status) {
+              setState(() => _status = status);
+              widget.dirty.markDirty();
+            },
           ),
         ],
       ),
@@ -133,6 +145,7 @@ class _KnowledgeDecisionReviewSheetState
   }
 
   void _submit() {
+    widget.dirty.markPristine();
     Navigator.of(context).pop(
       KnowledgeDecisionReviewDraft(
         reviewDate: _reviewDate,

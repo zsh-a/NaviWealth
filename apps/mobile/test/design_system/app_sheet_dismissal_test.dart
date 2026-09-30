@@ -1,30 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _harness({
   required FormDirtyController dirty,
-  required Future<bool> Function(BuildContext context) confirmDismiss,
+  Future<bool> Function(BuildContext context)? confirmDismiss,
+  bool form = false,
 }) {
   return MaterialApp(
     theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
     home: FTheme(
       data: FTheme.neutral.light.desktop,
       child: Builder(
         builder: (context) => Scaffold(
           body: Center(
             child: FButton(
-              onPress: () => showAppSheet<void>(
-                context: context,
-                title: 'Edit allocation',
-                dirtyGuard: dirty,
-                confirmDismiss: () => confirmDismiss(context),
-                builder: (_) => const SizedBox(
-                  height: 160,
-                  child: Center(child: Text('Allocation form')),
-                ),
-              ),
+              onPress: () => form
+                  ? showAppFormSheet<void>(
+                      context: context,
+                      dirtyGuard: dirty,
+                      confirmDismiss: confirmDismiss == null
+                          ? null
+                          : () => confirmDismiss(context),
+                      builder: (_) => const AppSheet(
+                        title: 'Edit allocation',
+                        footer: SizedBox(key: Key('footer'), height: 48),
+                        child: SizedBox(
+                          height: 500,
+                          child: Text('Allocation form'),
+                        ),
+                      ),
+                    )
+                  : showAppSheet<void>(
+                      context: context,
+                      title: 'Edit allocation',
+                      dirtyGuard: dirty,
+                      confirmDismiss: confirmDismiss == null
+                          ? null
+                          : () => confirmDismiss(context),
+                      builder: (_) => const SizedBox(
+                        height: 160,
+                        child: Center(child: Text('Allocation form')),
+                      ),
+                    ),
               child: const Text('Open'),
             ),
           ),
@@ -35,6 +59,67 @@ Widget _harness({
 }
 
 void main() {
+  testWidgets('omitted callback still asks before discarding edits', (
+    tester,
+  ) async {
+    final dirty = FormDirtyController();
+    addTearDown(dirty.dispose);
+    await tester.pumpWidget(_harness(dirty: dirty));
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    dirty.markDirty();
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(find.text(l10n.unsavedChangesTitle), findsOneWidget);
+    await tester.tap(find.text(l10n.unsavedChangesKeepEditing));
+    await tester.pumpAndSettle();
+    expect(find.text('Allocation form'), findsOneWidget);
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.unsavedChangesDiscard));
+    await tester.pumpAndSettle();
+    expect(find.text('Allocation form'), findsNothing);
+  });
+
+  testWidgets('wide form is centered, keyboard safe, and guards Escape', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final dirty = FormDirtyController();
+    addTearDown(dirty.dispose);
+    var confirmations = 0;
+    await tester.pumpWidget(
+      _harness(
+        dirty: dirty,
+        form: true,
+        confirmDismiss: (_) async {
+          confirmations++;
+          return false;
+        },
+      ),
+    );
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    final rect = tester.getRect(find.byKey(const ValueKey('app-form-dialog')));
+    expect(rect.width, lessThanOrEqualTo(Breakpoints.sheetFormMax));
+    expect(rect.center.dy, closeTo(450, 1));
+    expect(find.byType(AppSheetDragHandle), findsNothing);
+    dirty.markDirty();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(confirmations, 1);
+    expect(find.text('Allocation form'), findsOneWidget);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.byKey(const Key('footer'))).bottom,
+      lessThan(600),
+    );
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('pristine guarded sheet closes from a barrier tap', (
     tester,
   ) async {

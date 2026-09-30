@@ -76,6 +76,12 @@ void main() {
         }
         final value = kind == HealthMetricKind.weight ? '72.5' : '18.5';
         await tester.enterText(find.byType(EditableText).first, value);
+        await tester.tapAt(const Offset(4, 4));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.unsavedChangesTitle), findsOneWidget);
+        await tester.tap(find.text(l10n.unsavedChangesKeepEditing));
+        await tester.pumpAndSettle();
+        expect(find.text(value), findsOneWidget);
         await tester.tap(find.text(l10n.commonSave));
         await tester.pumpAndSettle();
         expect(find.text(l10n.healthActivationTitle), findsNothing);
@@ -84,6 +90,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.text(l10n.healthNoData), findsNothing);
+        expect(find.byType(NwLineChart), findsNothing);
         final container = ProviderScope.containerOf(context);
         expect(await container.read(healthHasAnyDataProvider.future), isTrue);
         final model = await container.read(
