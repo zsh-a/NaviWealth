@@ -46,6 +46,7 @@ void main() {
       name: 'Incoming Template',
     );
     final exported = await BackupService(
+      ownerUserId: 'integration-user',
       db: sourceDb,
       codec: codec,
       outbox: DriftOutboxStore(sourceDb),
@@ -95,6 +96,7 @@ void main() {
         .enqueue(table: 'accounts', rowId: 'preserved-acct');
 
     await BackupService(
+      ownerUserId: 'integration-user',
       db: targetDb,
       codec: codec,
       outbox: DriftOutboxStore(targetDb),

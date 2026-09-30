@@ -4152,10 +4152,10 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "dataManagementSharedTitle": "AI & cross-domain data",
-  "dataManagementSharedSubtitle": "Device-local conversations, traces, memories, event projections, and agent results",
+  "dataManagementSharedSubtitle": "Device-local conversations, traces, derived memories, event projections, and agent results. Confirmed memories and Personal Profile are preserved.",
   "dataManagementChatRows": "Chat",
   "dataManagementAiRows": "AI audit",
-  "dataManagementMemoryRows": "Memory",
+  "dataManagementMemoryRows": "Derived memory & events",
   "dataManagementAgentRows": "Agents",
   "dataManagementStorageUsage": "Database {used} · {reclaimable} reclaimable",
   "@dataManagementStorageUsage": {
@@ -4166,7 +4166,7 @@
   },
   "dataManagementClearSharedAction": "Clear local history",
   "dataManagementClearSharedConfirmTitle": "Clear AI and cross-domain history?",
-  "dataManagementClearSharedConfirmBody": "This removes {count} local chat, audit, memory, event, and agent-history rows. OS source data and preferences remain.",
+  "dataManagementClearSharedConfirmBody": "This removes {count} local chat, audit, derived-memory, event, and agent-history rows. Confirmed memories, Personal Profile, OS source data, and preferences remain.",
   "@dataManagementClearSharedConfirmBody": {
     "placeholders": { "count": { "type": "int" } }
   },

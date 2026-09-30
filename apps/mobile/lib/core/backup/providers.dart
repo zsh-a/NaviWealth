@@ -25,6 +25,7 @@ final backupServiceProvider = FutureProvider<BackupService?>((ref) async {
     db: db,
     codec: codec,
     outbox: outbox,
+    ownerUserId: userId,
     logger: ref.read(loggerProvider),
   );
 });

@@ -567,40 +567,48 @@ void main() {
       expect(rebuilt!.deviceId, _dev);
     });
 
-    test('resets a stale pull cursor on applier-version bump', () async {
-      final db = makeTestDatabase();
-      addTearDown(db.close);
-      final cursors = DriftCursorStore(db);
-      // A leftover v1-era cursor.
-      await cursors.writeSeq(1287);
+    test(
+      'resets a legacy pull cursor when the client schema is first tracked',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final cursors = DriftCursorStore(db);
+        // A leftover v1-era cursor.
+        await cursors.writeSeq(1287);
 
-      final container = ProviderContainer(
-        overrides: [
-          appDatabaseProvider.overrideWith((_) async => db),
-          authSessionProvider.overrideWith(
-            (_) => AuthSession(
-              accessToken: 'token',
-              expiresAt: DateTime.utc(2099),
-              userId: 'user-1',
-              deviceId: _dev,
+        final container = ProviderContainer(
+          overrides: [
+            appDatabaseProvider.overrideWith((_) async => db),
+            authSessionProvider.overrideWith(
+              (_) => AuthSession(
+                accessToken: 'token',
+                expiresAt: DateTime.utc(2099),
+                userId: 'user-1',
+                deviceId: _dev,
+              ),
             ),
-          ),
-          syncApiClientProvider.overrideWithValue(FakeSyncApiClient()),
-        ],
-      );
-      addTearDown(container.dispose);
+            syncApiClientProvider.overrideWithValue(FakeSyncApiClient()),
+          ],
+        );
+        addTearDown(container.dispose);
 
-      expect(await container.read(syncEngineProvider.future), isNotNull);
-      // The cursor row was wiped → readSeq falls back to 0.
-      expect(await cursors.readSeq(), 0);
+        expect(await container.read(syncEngineProvider.future), isNotNull);
+        // The cursor row was wiped → readSeq falls back to 0.
+        expect(await cursors.readSeq(), 0);
 
-      final version = await db
-          .customSelect(
-            "SELECT value FROM sync_meta WHERE key = 'sync.applier_version'",
-          )
-          .getSingle();
-      expect(version.read<String>('value'), '7');
-    });
+        final signature = await db
+            .customSelect(
+              "SELECT value FROM sync_meta WHERE key = 'sync.schema_signature'",
+            )
+            .getSingle();
+        expect(signature.read<String>('value'), isNotEmpty);
+        // Rebuilding the provider for the same shape must keep pull progress.
+        await cursors.writeSeq(1288);
+        container.invalidate(syncEngineProvider);
+        expect(await container.read(syncEngineProvider.future), isNotNull);
+        expect(await cursors.readSeq(), 1288);
+      },
+    );
 
     test('backfills historical local rows into the outbox', () async {
       final db = makeTestDatabase();

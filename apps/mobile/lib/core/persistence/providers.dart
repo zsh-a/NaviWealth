@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/security/flutter_secure_key_store.dart';
 import '../../core/security/secure_key_store.dart';
+import '../sync/row_applier.dart';
 import 'app_database.dart';
 import 'database_encryption_platform.dart';
 
@@ -21,6 +22,7 @@ final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
     // migration if necessary, and run Drift migrations before UI consumers
     // receive a seemingly healthy database handle.
     await db.customSelect('SELECT 1;').getSingle();
+    await RowApplier(db).prepareCompatibility();
   } on Object {
     await db.close();
     rethrow;

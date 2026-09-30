@@ -14080,7 +14080,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataManagementSharedSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Device-local conversations, traces, memories, event projections, and agent results'**
+  /// **'Device-local conversations, traces, derived memories, event projections, and agent results. Confirmed memories and Personal Profile are preserved.'**
   String get dataManagementSharedSubtitle;
 
   /// No description provided for @dataManagementChatRows.
@@ -14098,7 +14098,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataManagementMemoryRows.
   ///
   /// In en, this message translates to:
-  /// **'Memory'**
+  /// **'Derived memory & events'**
   String get dataManagementMemoryRows;
 
   /// No description provided for @dataManagementAgentRows.
@@ -14128,7 +14128,7 @@ abstract class AppLocalizations {
   /// No description provided for @dataManagementClearSharedConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This removes {count} local chat, audit, memory, event, and agent-history rows. OS source data and preferences remain.'**
+  /// **'This removes {count} local chat, audit, derived-memory, event, and agent-history rows. Confirmed memories, Personal Profile, OS source data, and preferences remain.'**
   String dataManagementClearSharedConfirmBody(int count);
 
   /// No description provided for @dataManagementClearSharedSuccess.

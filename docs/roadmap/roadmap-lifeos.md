@@ -189,6 +189,13 @@ Current evidence:
 - The generic encrypted export now has a cross-currency money contract test:
   ISO currency and high-precision decimal principal, rate, and payment fields
   survive decrypt/restore exactly, without symbols, grouping, or locale text.
+- Confirmed Memory and Profile are covered by owner-scoped full archives and
+  preserved by shared-history cleanup. Recovery tests retain Memory provenance,
+  validity and supersession, preserve rows absent from older archives, and rebuild
+  confirmed vectors without overwriting concurrent edits.
+- Schema v95→v96 has file-backed preservation, failed-DDL rollback and retry
+  evidence. Mixed-version client tests cover opaque fields, skipped-table replay
+  and interrupted pagination; Watchlist tests cover partial aggregate arrival.
 
 Exit evidence:
 

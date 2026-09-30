@@ -174,9 +174,11 @@ Apply 时重新校验 owner、candidate 终态、active-domain policy、目标�
 Settings 直接维护的 Profile 同样是 user-confirmed，但不经过模型。Conversation
 checkpoint 不会自动升级为长期 Memory。
 
-确认权限与恢复能力是不同的契约：Personal Profile 已进入加密备份，正式
-`memories` 目前仍不参与备份或同步，且会随显式共享历史清理一起删除。完整的数据
-分类与恢复缺口见 [LifeOS Shell](../architecture/lifeos-shell.md#current-recovery-limits)。
+Personal Profile 与 `authority=user_confirmed` 的正式 Memory 已进入当前 owner 的完整
+加密备份，均不同步，也不会被共享历史清理删除。Memory 的来源、有效期和替代关系
+随记录恢复；向量不备份，由语义召回按需重建，写入前检查记录未被并发修改。
+旧备份没有 Memory 表时保留本地确认记录。数据分类与恢复边界见
+[LifeOS Shell](../architecture/lifeos-shell.md#current-recovery-limits)。
 
 ### 3.4 Trace
 

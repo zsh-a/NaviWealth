@@ -213,6 +213,91 @@ List<RowChange> _branchChanges({
 }
 
 void main() {
+  Iterable<List<int>> permutations(List<int> remaining) sync* {
+    if (remaining.isEmpty) {
+      yield [];
+    } else {
+      for (final first in remaining) {
+        for (final tail in permutations(
+          remaining.where((value) => value != first).toList(),
+        )) {
+          yield [first, ...tail];
+        }
+      }
+    }
+  }
+
+  for (final order in permutations([0, 1, 2, 3])) {
+    test('multi-holding snapshot stays coherent across pages $order', () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final applier = RowApplier(db, ownerUserId: _user);
+      final base = _baseChanges();
+      await applier.applyAll(base);
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+      );
+      final branch = _branchChanges(
+        allocationId: 'allocation-split',
+        itemId: 'us_stock:AAPL',
+        symbol: 'AAPL',
+        targetWeight: '0.3',
+        cashWeight: '0.3',
+        device: _deviceB,
+      );
+      final pages = [
+        branch.first,
+        branch[1],
+        _holdingChange(
+          id: 'holding-split-msft',
+          allocationId: 'allocation-split',
+          itemId: 'us_stock:MSFT',
+          symbol: 'MSFT',
+          targetWeight: '0.4',
+          version: branch.first.version,
+          device: _deviceB,
+        ),
+        branch.last,
+      ];
+      final received = <int>{};
+      for (final index in order) {
+        await applier.applyAll([pages[index]]);
+        // Duplicate deliveries and an older head can cross page boundaries.
+        await applier.applyAll([pages[index], base.last]);
+        received.add(index);
+        final resolved = await repository.resolveAllocation(
+          ownerUserId: _user,
+          simulationId: _simulationId,
+        );
+        if (received.length == pages.length) {
+          expect(resolved.status, WatchlistSimulationAllocationStatus.selected);
+          expect(resolved.allocationVersionId, 'allocation-split');
+          expect(
+            resolved.positions.map((p) => p.watchlistItemId),
+            unorderedEquals(['us_stock:AAPL', 'us_stock:MSFT']),
+          );
+          expect(resolved.cashWeight, Decimal.parse('0.3'));
+          expect(
+            resolved.positions.fold(
+              resolved.cashWeight!,
+              (sum, p) => sum + p.targetWeight,
+            ),
+            Decimal.one,
+          );
+        } else if (received.contains(3)) {
+          expect(resolved.status, WatchlistSimulationAllocationStatus.pending);
+          expect(resolved.positions, isEmpty);
+        } else {
+          expect(resolved.status, WatchlistSimulationAllocationStatus.selected);
+          expect(resolved.allocationVersionId, 'allocation-base');
+          expect(resolved.positions.single.watchlistItemId, 'us_stock:AAPL');
+        }
+      }
+    });
+  }
+
   test('two devices converge on one atomic allocation head', () async {
     final dbA = makeTestDatabase();
     final dbB = makeTestDatabase();

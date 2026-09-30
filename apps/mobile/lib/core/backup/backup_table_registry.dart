@@ -5,6 +5,7 @@ class BackupTableRegistration {
     this.table, {
     this.primaryKey = 'id',
     this.enqueueRestoreOp = false,
+    this.rowFilter,
   });
 
   final String table;
@@ -13,11 +14,14 @@ class BackupTableRegistration {
   /// True when restoring rows from this table should queue a sync dirty
   /// pointer after insertion.
   final bool enqueueRestoreOp;
+
+  /// Trusted SQL predicate shared by export and replacement during restore.
+  /// A filtered resource must not erase unrelated rows in the same table.
+  final String? rowFilter;
 }
 
-/// Backup table surface. It is derived from sync table metadata today so
-/// backup/sync coverage stays consistent without duplicating table names, but
-/// BackupService depends only on this registry.
+/// Backup coverage derives domain sources from sync metadata and explicitly
+/// registers confirmed local resources with their row-selection policy.
 final List<BackupTableRegistration> kBackupTableRegistrations =
     List<BackupTableRegistration>.unmodifiable(<BackupTableRegistration>[
       for (final registration in kSyncTableRegistrations)
@@ -28,6 +32,10 @@ final List<BackupTableRegistration> kBackupTableRegistrations =
             enqueueRestoreOp: kSyncableTables.contains(registration.table),
           ),
       const BackupTableRegistration('personal_profile_facts'),
+      const BackupTableRegistration(
+        'memories',
+        rowFilter: "authority = 'user_confirmed'",
+      ),
     ]);
 
 final List<String> kBackupTables = List<String>.unmodifiable(

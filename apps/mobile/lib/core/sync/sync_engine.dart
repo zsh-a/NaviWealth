@@ -198,6 +198,7 @@ class SyncEngine {
         );
         since = resp.seq;
         await cursors.writeSeq(since);
+        if (!resp.more) await applier.finishCompatibilityReplay();
 
         if (!batch.morePending && !resp.more) break;
       }

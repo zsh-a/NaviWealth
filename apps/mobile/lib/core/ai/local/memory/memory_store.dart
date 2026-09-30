@@ -43,6 +43,14 @@ abstract class MemoryStore {
   /// retrievable by kind/scope/entity but not by semantic similarity.
   Future<void> writeMemoryWithoutVector(MemoryRecord record);
 
+  /// Rebuild a derived vector only while its source record is unchanged.
+  /// Never rewrites the authoritative Memory row or its lifecycle metadata.
+  Future<bool> writeEmbeddingIfUnchanged(
+    MemoryRecord record, {
+    required List<double> vector,
+    required String fingerprint,
+  });
+
   Future<MemoryRecord?> readMemory(String id);
   Future<void> deleteMemory(String id);
 
@@ -114,6 +122,36 @@ class SqliteMemoryStore implements MemoryStore {
   @override
   Future<void> writeMemoryWithoutVector(MemoryRecord record) async {
     await _upsertMemoryRow(record);
+  }
+
+  @override
+  Future<bool> writeEmbeddingIfUnchanged(
+    MemoryRecord record, {
+    required List<double> vector,
+    required String fingerprint,
+  }) async {
+    return await _db.customUpdate(
+          'INSERT INTO memory_embeddings '
+          '(memory_id, fingerprint, dimension, vector_bytes) '
+          'SELECT id, ?, ?, ? FROM memories '
+          'WHERE id = ? AND owner_user_id = ? AND updated_at = ? '
+          'AND title = ? AND summary = ? AND authority = ? '
+          'ON CONFLICT(memory_id) DO UPDATE SET '
+          'fingerprint = excluded.fingerprint, dimension = excluded.dimension, '
+          'vector_bytes = excluded.vector_bytes',
+          variables: <Variable<Object>>[
+            Variable(fingerprint),
+            Variable(vector.length),
+            Variable(packVector(vector)),
+            Variable(record.id),
+            Variable(record.ownerUserId),
+            Variable(record.updatedAt.toUtc().millisecondsSinceEpoch),
+            Variable(record.title),
+            Variable(record.summary),
+            Variable(record.authority.wire),
+          ],
+        ) >
+        0;
   }
 
   Future<void> _upsertMemoryRow(MemoryRecord r) async {
@@ -287,7 +325,12 @@ class SqliteMemoryStore implements MemoryStore {
     // fingerprint so stale vectors are skipped.
     const join = 'LEFT JOIN memory_embeddings e ON e.memory_id = m.id';
     if (wantsVector) {
-      filters.add('e.fingerprint = ?');
+      // Restored confirmed rows have no bundled vector. They remain eligible
+      // for recall and lazy rebuilding; other missing/stale indexes stay out.
+      filters.add(
+        '(e.fingerprint = ? OR '
+        "(m.authority = 'user_confirmed' AND e.memory_id IS NULL))",
+      );
       vars.add(Variable.withString(fingerprint ?? ''));
     }
 

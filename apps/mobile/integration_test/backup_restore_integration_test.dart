@@ -82,6 +82,7 @@ void main() {
         deviceId: deviceId,
       );
       final backupBytes = await BackupService(
+        ownerUserId: 'integration-user',
         db: sourceDb,
         codec: BackupCodec(),
         outbox: DriftOutboxStore(sourceDb),
@@ -129,6 +130,7 @@ void main() {
           }),
           backupRestoreRunnerProvider.overrideWith((ref) async {
             final service = BackupService(
+              ownerUserId: 'integration-user',
               db: targetDb,
               codec: BackupCodec(),
               outbox: DriftOutboxStore(targetDb),
@@ -187,6 +189,7 @@ void main() {
         deviceId: deviceId,
       );
       final exported = await BackupService(
+        ownerUserId: 'integration-user',
         db: sourceDb,
         codec: codec,
         outbox: DriftOutboxStore(sourceDb),
@@ -201,7 +204,10 @@ void main() {
       final header = payload['header'] as Map<String, Object?>;
       final data = payload['data'] as Map<String, Object?>;
       final accounts = data['accounts'] as List<Object?>;
-      accounts.add(<String, Object?>{'id': 'invalid-row'});
+      accounts.add(<String, Object?>{
+        'id': 'invalid-row',
+        'owner_user_id': 'integration-user',
+      });
       (header['tables'] as Map<String, Object?>)['accounts'] = accounts.length;
       final invalidEnvelope = await codec.encrypt(
         passphrase: passphrase,
@@ -232,6 +238,7 @@ void main() {
 
       await expectLater(
         BackupService(
+          ownerUserId: 'integration-user',
           db: targetDb,
           codec: codec,
           outbox: DriftOutboxStore(targetDb),

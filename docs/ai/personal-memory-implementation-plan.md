@@ -26,9 +26,9 @@ V1 已具备统一 active-domain 访问策略、Evidence authority/provenance/te
 后续阶段仍遵守既有边界：Host 拥有权限、存储、embedding 和领域语义；Rust 拥有
 通用 Context/Evidence 安全语义。Agent Artifact 不自动写入长期 Memory。
 
-正式 `memories` 当前不备份、不同步，显式共享历史清理会删除确认记录；Profile 已有
-加密备份。解决确认记录的恢复与删除分类，不属于延期 retention 已交付的能力，
-也不能用“local-only”或 TTL 代替用户数据保护策略。
+确认 Memory 与 Profile 已有完整加密备份，共享历史清理保留它们；Memory 向量由召回
+按需重建。它们仍不同步，具体恢复契约由 Shell SSOT 维护。该保护属于当前用户数据
+能力，不代表延期 retention 已交付，也不改变 Phase 4–5 的质量证据触发条件。
 
 Phase 4–5 只在 V1 的检索质量、Profile 修改率和重复/过时记录数据提供触发证据后
 排期；架构完整性本身不是触发条件。

@@ -11,6 +11,7 @@
 library;
 
 import '../../../auth/domain_scope.dart';
+import '../../contracts/context_evidence.dart';
 import '../../contracts/event_record.dart';
 import '../../contracts/memory_record.dart';
 import '../embedding/embedder.dart';
@@ -158,7 +159,27 @@ class MemoryRuntime {
     if (candidates.isEmpty) return const <MemoryHit>[];
 
     final hits = <MemoryHit>[];
+    var rebuildBudget = topK.clamp(1, 20);
     for (final c in candidates) {
+      var semanticSim = c.semanticSim;
+      if (queryVec != null &&
+          semanticSim == null &&
+          rebuildBudget > 0 &&
+          c.record.authority == EvidenceAuthority.userConfirmed) {
+        rebuildBudget--;
+        final vector = await embedder.embed(
+          '${c.record.title}\n${c.record.summary}',
+        );
+        final saved = await memoryStore.writeEmbeddingIfUnchanged(
+          c.record,
+          vector: vector,
+          fingerprint: embedder.fingerprint,
+        );
+        if (!saved) {
+          continue; // Concurrent edit/delete: never recall stale text.
+        }
+        semanticSim = cosineSimilarity(queryVec, vector);
+      }
       final ent = (entityFilter == null || entityFilter.isEmpty)
           ? 0.0
           : entityOverlap(c.record.entities, entityFilter);
@@ -168,7 +189,7 @@ class MemoryRuntime {
         halfLife: recencyHalfLife,
       );
       final score = hybridScore(
-        semanticSim: c.semanticSim,
+        semanticSim: semanticSim,
         importance: c.record.importance,
         entityOverlap: ent,
         recency: rec,
@@ -178,7 +199,7 @@ class MemoryRuntime {
         MemoryHit(
           record: c.record,
           score: score,
-          semanticSim: c.semanticSim,
+          semanticSim: semanticSim,
           entityOverlap: ent,
           recency: rec,
         ),

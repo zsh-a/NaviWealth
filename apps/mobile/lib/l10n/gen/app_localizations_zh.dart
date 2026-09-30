@@ -7927,7 +7927,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataManagementSharedTitle => 'AI 与跨域数据';
 
   @override
-  String get dataManagementSharedSubtitle => '仅保存在本机的对话、审计轨迹、记忆、事件投影和 Agent 结果';
+  String get dataManagementSharedSubtitle =>
+      '仅保存在本机的对话、审计轨迹、派生记忆、事件投影和 Agent 结果。用户确认的记忆与个人档案会保留。';
 
   @override
   String get dataManagementChatRows => '对话';
@@ -7936,7 +7937,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dataManagementAiRows => 'AI 审计';
 
   @override
-  String get dataManagementMemoryRows => '记忆';
+  String get dataManagementMemoryRows => '派生记忆与事件';
 
   @override
   String get dataManagementAgentRows => 'Agent';
@@ -7954,7 +7955,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String dataManagementClearSharedConfirmBody(int count) {
-    return '将移除 $count 条本地对话、审计、记忆、事件和 Agent 历史。各 OS 的源数据与偏好设置会保留。';
+    return '将移除 $count 条本地对话、审计、派生记忆、事件和 Agent 历史。用户确认的记忆、个人档案、各 OS 的源数据与偏好设置会保留。';
   }
 
   @override

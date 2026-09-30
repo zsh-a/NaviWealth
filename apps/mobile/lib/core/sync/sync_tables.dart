@@ -32,8 +32,24 @@ CREATE TABLE IF NOT EXISTS sync_meta (
 )
 ''';
 
+/// Opaque fields received from a newer client. These never enter domain reads,
+/// but are carried through subsequent writes until the local schema supports
+/// them. Owner isolation and domain reset apply to this local-only state.
+const String createSyncRowExtras = '''
+CREATE TABLE IF NOT EXISTS sync_row_extras (
+  owner_user_id TEXT NOT NULL,
+  table_name TEXT NOT NULL,
+  row_id TEXT NOT NULL,
+  fields_json TEXT NOT NULL,
+  PRIMARY KEY (owner_user_id, table_name, row_id)
+)
+''';
+
+const List<String> syncCompatibilityDdl = [createSyncRowExtras];
+
 const List<String> syncTableDdl = [
   createOpOutbox,
   createOpOutboxIndex,
   createSyncMeta,
+  ...syncCompatibilityDdl,
 ];

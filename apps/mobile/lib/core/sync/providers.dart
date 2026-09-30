@@ -1,10 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 
-import '../../core/persistence/app_database.dart';
 import '../../core/persistence/providers.dart';
 import '../auth/providers.dart';
 import '../config/providers.dart';
@@ -114,9 +112,11 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   if (session == null) return null;
 
   final db = await ref.watch(appDatabaseProvider.future);
-  final resetCursor = await _ensureSyncApplierVersion(db);
+  final resetCursor = await RowApplier(db).prepareCompatibility();
   if (resetCursor) {
-    ref.read(loggerProvider).i('sync: reset pull cursor for v3 row-state');
+    ref
+        .read(loggerProvider)
+        .i('sync: replay current rows for client schema change');
   }
   final outbox = DriftOutboxStore(db);
   final resetHandler = await ref.watch(
@@ -124,9 +124,9 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   );
   final engine = SyncEngine(
     api: ref.watch(syncApiClientProvider),
-    pending: DriftPendingRows(db),
+    pending: DriftPendingRows(db, ownerUserId: session.userId),
     cursors: DriftCursorStore(db),
-    applier: RowApplier(db),
+    applier: RowApplier(db, ownerUserId: session.userId),
     deviceId: session.deviceId,
     statusBus: ref.watch(syncStatusBusProvider),
     generationStore: DriftDomainGenerationStore(
@@ -150,34 +150,6 @@ final syncEngineProvider = FutureProvider<SyncEngine?>((ref) async {
   }
   return engine;
 });
-
-/// Bumped whenever the row-state codec changes; a mismatch wipes the pull
-/// cursor so the next sync re-pulls from `seq = 0`. v1 → v2 is one such bump
-/// (the v1 cursor was an HLC string, not an integer `seq`).
-const _kSyncApplierVersionKey = 'sync.applier_version';
-const _kSyncApplierVersion = '7';
-
-Future<bool> _ensureSyncApplierVersion(AppDatabase db) async {
-  final row = await db
-      .customSelect(
-        'SELECT value FROM sync_meta WHERE key = ?',
-        variables: [Variable.withString(_kSyncApplierVersionKey)],
-      )
-      .getSingleOrNull();
-  final current = row?.read<String>('value');
-  if (current == _kSyncApplierVersion) return false;
-  await db.transaction(() async {
-    await db.customStatement('DELETE FROM sync_meta WHERE key = ?', [
-      'sync.cursor',
-    ]);
-    await db.customStatement(
-      'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
-      'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      [_kSyncApplierVersionKey, _kSyncApplierVersion],
-    );
-  });
-  return true;
-}
 
 final syncSchedulerProvider = FutureProvider<SyncScheduler?>((ref) async {
   final engine = await ref.watch(syncEngineProvider.future);

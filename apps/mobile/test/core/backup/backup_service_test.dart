@@ -7,13 +7,24 @@ import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/backup/backup_table_registry.dart';
+import 'package:naviwealth/core/config/app_config.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:talker/talker.dart';
 
 import '../../core/persistence/test_database.dart';
 
 void main() {
+  setUpAll(
+    () => AppLogger.bootstrap(
+      AppLogger(
+        environment: AppEnvironment.dev,
+        talker: Talker(settings: TalkerSettings(useConsoleLogs: false)),
+      ),
+    ),
+  );
   const testIterations = 1000; // fast for tests
   const testPassphrase = 'test-passphrase-123';
   const testDeviceId = '00000000-0000-0000-0000-000000000001';
@@ -213,7 +224,12 @@ void main() {
   }
 
   BackupService makeService(AppDatabase db) {
-    return BackupService(db: db, codec: codec, outbox: DriftOutboxStore(db));
+    return BackupService(
+      db: db,
+      codec: codec,
+      outbox: DriftOutboxStore(db),
+      ownerUserId: 'user-1',
+    );
   }
 
   Future<Uint8List> encryptPayload(
@@ -794,7 +810,10 @@ void main() {
         final header = payload['header'] as Map<String, Object?>;
         final data = payload['data'] as Map<String, Object?>;
         final accounts = data['accounts'] as List<Object?>;
-        accounts.add(<String, Object?>{'id': 'invalid-row'});
+        accounts.add(<String, Object?>{
+          'id': 'invalid-row',
+          'owner_user_id': 'user-1',
+        });
         (header['tables'] as Map<String, Object?>)['accounts'] =
             accounts.length;
         final invalid = await encryptPayload(sourceDb, payload);

@@ -10,7 +10,7 @@ void main() {
       final expected = kSyncTableRegistrations
           .where((registration) => registration.backupEligible)
           .map((registration) => registration.table)
-          .followedBy(const <String>['personal_profile_facts'])
+          .followedBy(const <String>['personal_profile_facts', 'memories'])
           .toList(growable: false);
 
       expect(kBackupTables, expected);

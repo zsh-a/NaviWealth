@@ -7,6 +7,7 @@ import '../auth/domain_scope.dart';
 import 'cursor_store.dart';
 import 'domain_generation.dart';
 import 'op_outbox.dart';
+import 'sync_payload_store.dart';
 import 'sync_table_registry.dart';
 
 /// Drift-backed [OutboxStore] over the `op_outbox` table.
@@ -55,19 +56,23 @@ bool isOutboxBoundToDatabase(OutboxStore outbox, AppDatabase database) =>
 /// Reads `op_outbox` as the set of locally-dirty rows and serialises each
 /// row's current state for push (`docs/sync/sync-v3.md`).
 class DriftPendingRows implements PendingRows {
-  DriftPendingRows(this._db);
+  DriftPendingRows(this._db, {String? ownerUserId})
+    : _ownerUserId = ownerUserId;
   final AppDatabase _db;
+  final String? _ownerUserId;
 
   @override
   Future<int> depth() async {
+    if (_ownerUserId != null) return (await pointers()).length;
     final row = await _db
         .customSelect('SELECT COUNT(*) AS c FROM op_outbox')
         .getSingle();
     return row.read<int>('c');
   }
 
-  /// All queued local mutations as `(opId, table, rowId)` pointers, oldest
-  /// first. Multiple ops on the same row collapse to one push downstream.
+  /// Queued local mutations for this owner, oldest first. Foreign-owner rows
+  /// remain queued; they must not be classified as missing rows and discarded.
+  /// Orphan pointers still reach the engine for normal stale-pointer cleanup.
   @override
   Future<List<PendingPointer>> pointers() async {
     final rows = await _db
@@ -76,7 +81,25 @@ class DriftPendingRows implements PendingRows {
           'ORDER BY created_at ASC, op_id ASC',
         )
         .get();
+    final foreignOps = <String>{};
+    if (_ownerUserId != null) {
+      for (final table
+          in rows.map((r) => r.read<String>('table_name')).toSet()) {
+        final registration = kSyncTableRegistry[table];
+        if (registration == null || !registration.ownerScoped) continue;
+        final foreign = await _db
+            .customSelect(
+              'SELECT o.op_id FROM op_outbox o JOIN $table s '
+              'ON s.${registration.primaryKey} = o.row_id '
+              'WHERE o.table_name = ? AND s.owner_user_id != ?',
+              variables: [Variable(table), Variable(_ownerUserId)],
+            )
+            .get();
+        foreignOps.addAll(foreign.map((r) => r.read<String>('op_id')));
+      }
+    }
     return rows
+        .where((r) => !foreignOps.contains(r.read<String>('op_id')))
         .map(
           (r) => PendingPointer(
             opId: r.read<String>('op_id'),
@@ -90,7 +113,8 @@ class DriftPendingRows implements PendingRows {
   /// Read a row's current state as a JSON-safe column → value map.
   ///
   /// Returns `null` if the row is gone — deletes are soft, so under normal
-  /// operation the row always exists; a `null` means a stale pointer.
+  /// operation the row always exists. Foreign-owner rows are also withheld;
+  /// [pointers] excludes their dirty work so it is not cleared as stale.
   @override
   Future<Map<String, Object?>?> readRow(String table, String rowId) async {
     if (!kSyncableTables.contains(table)) return null;
@@ -101,7 +125,16 @@ class DriftPendingRows implements PendingRows {
           variables: [Variable.withString(rowId)],
         )
         .getSingleOrNull();
-    return row?.data;
+    if (row == null) return null;
+    final owner = _ownerUserId ?? row.data['owner_user_id'] as String? ?? '';
+    if (kSyncTableRegistry[table]!.ownerScoped &&
+        row.data['owner_user_id'] != owner) {
+      return null;
+    }
+    return <String, Object?>{
+      ...await SyncPayloadStore(_db).extras(table, rowId, owner),
+      ...row.data,
+    };
   }
 
   /// Delete acknowledged op pointers. New ops queued mid-flight carry fresh

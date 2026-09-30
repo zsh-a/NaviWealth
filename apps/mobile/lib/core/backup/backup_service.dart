@@ -63,15 +63,18 @@ class BackupService {
     required AppDatabase db,
     required BackupCodec codec,
     required OutboxStore outbox,
+    required String ownerUserId,
     AppLogger? logger,
   }) : _db = db,
        _codec = codec,
        _outbox = outbox,
+       _ownerUserId = ownerUserId,
        _logger = logger ?? AppLogger.instance;
 
   final AppDatabase _db;
   final BackupCodec _codec;
   final OutboxStore _outbox;
+  final String _ownerUserId;
   final AppLogger _logger;
 
   /// Export all backup-eligible local data as an encrypted backup envelope.
@@ -94,16 +97,24 @@ class BackupService {
                   registration.domainPrefix == _prefixForScope(domain))
                 registration.table,
           ];
-    for (final tableName in backupTables) {
-      final rows = await _db.customSelect('SELECT * FROM $tableName').get();
-      final rowMaps = <Map<String, Object?>>[];
-      for (final row in rows) {
-        rowMaps.add(_rowToMap(row));
+    await _db.transaction(() async {
+      for (final tableName in backupTables) {
+        final (where, values) = _selection(tableName);
+        final rows = await _db
+            .customSelect(
+              'SELECT * FROM $tableName$where',
+              variables: [for (final value in values) Variable<String>(value)],
+            )
+            .get();
+        final rowMaps = <Map<String, Object?>>[];
+        for (final row in rows) {
+          rowMaps.add(_rowToMap(row));
+        }
+        data[tableName] = rowMaps;
+        tableCounts[tableName] = rowMaps.length;
+        _logger.d('backup: exported $tableName (${rowMaps.length} rows)');
       }
-      data[tableName] = rowMaps;
-      tableCounts[tableName] = rowMaps.length;
-      _logger.d('backup: exported $tableName (${rowMaps.length} rows)');
-    }
+    });
 
     final totalRows = tableCounts.values.fold(0, (s, c) => s + c);
     _logger.d(
@@ -117,6 +128,7 @@ class BackupService {
         'schemaVersion': schemaVersion,
         'createdAt': DateTime.now().toUtc().toIso8601String(),
         'domain': domain?.wire,
+        'ownerUserId': _ownerUserId,
         'tables': tableCounts,
       },
       'data': data,
@@ -154,7 +166,8 @@ class BackupService {
     return bytes;
   }
 
-  /// Decrypt and restore from backup bytes. Wipes all local data first.
+  /// Decrypt and replace the current owner's data in the archive's scope.
+  /// Old archives replace only their declared tables; absent resources survive.
   ///
   /// [pauseSync] and [resumeSync] are called before and after the restore
   /// transaction to prevent the sync engine from interfering.
@@ -214,6 +227,12 @@ class BackupService {
         'got=${header['magic']}, expected=$_backupMagic',
       );
       throw const BackupValidationException('Invalid backup magic');
+    }
+    if (header.containsKey('ownerUserId') &&
+        header['ownerUserId'] != _ownerUserId) {
+      throw const BackupValidationException(
+        'Archive belongs to a different owner',
+      );
     }
 
     final backupSchema = _requireInt(header['schemaVersion'], 'schemaVersion');
@@ -307,6 +326,10 @@ class BackupService {
 
     final restoreTableCounts = <String, int>{};
     for (final entry in data.entries) {
+      final columnNames =
+          (await _db.customSelect('PRAGMA table_info(${entry.key})').get())
+              .map((row) => row.read<String>('name'))
+              .toSet();
       final declaredCount = _requireInt(
         headerTables[entry.key],
         'header.tables.${entry.key}',
@@ -320,6 +343,22 @@ class BackupService {
       for (final row in entry.value) {
         if (row.isEmpty) {
           throw BackupValidationException('Empty row in ${entry.key}');
+        }
+        if (row.keys.any((column) => !columnNames.contains(column))) {
+          throw BackupValidationException('Unknown column in ${entry.key}');
+        }
+        if (_ownerScoped(entry.key) && row['owner_user_id'] != _ownerUserId) {
+          throw const BackupValidationException(
+            'Archive contains data for a different owner',
+          );
+        }
+        if (entry.key == 'memories' && row['authority'] != 'user_confirmed') {
+          throw const BackupValidationException(
+            'Memory archives may contain only user-confirmed records',
+          );
+        }
+        if (entry.key == 'memories' && _extractRowId(entry.key, row).isEmpty) {
+          throw const BackupValidationException('Missing memory primary key');
         }
         if (shouldEnqueueRestoreOpForBackupTable(entry.key) &&
             _extractRowId(entry.key, row).isEmpty) {
@@ -360,18 +399,21 @@ class BackupService {
         // Full archives contain the complete registry; domain archives contain
         // only that domain. Replace exactly the tables declared by the archive.
         for (final tableName in data.keys) {
-          await _db.customStatement('DELETE FROM $tableName');
-        }
-        final outboxTables = data.keys.toList(growable: false);
-        if (outboxTables.isNotEmpty) {
-          final placeholders = List<String>.filled(
-            outboxTables.length,
-            '?',
-          ).join(',');
-          await _db.customStatement(
-            'DELETE FROM op_outbox WHERE table_name IN ($placeholders)',
-            outboxTables,
-          );
+          final (where, values) = _selection(tableName);
+          if (shouldEnqueueRestoreOpForBackupTable(tableName)) {
+            await _db.customStatement(
+              'DELETE FROM sync_row_extras WHERE table_name = ? '
+              'AND owner_user_id = ?',
+              [tableName, _ownerUserId],
+            );
+            final pk = backupPrimaryKeyForTable(tableName);
+            await _db.customStatement(
+              'DELETE FROM op_outbox WHERE table_name = ? AND row_id IN '
+              '(SELECT $pk FROM $tableName$where)',
+              <Object?>[tableName, ...values],
+            );
+          }
+          await _db.customStatement('DELETE FROM $tableName$where', values);
         }
         _logger.d('backup: cleared archive tables + matching outbox rows');
 
@@ -422,6 +464,25 @@ class BackupService {
       _logger.d('backup: resuming sync');
       resumeSync?.call();
     }
+  }
+
+  bool _ownerScoped(String table) =>
+      kSyncTableRegistry[table]?.ownerScoped ??
+      (table == 'memories' || table == 'personal_profile_facts');
+
+  (String, List<String>) _selection(String table) {
+    final predicates = <String>[];
+    final values = <String>[];
+    if (_ownerScoped(table)) {
+      predicates.add('owner_user_id = ?');
+      values.add(_ownerUserId);
+    }
+    final filter = kBackupTableRegistry[table]?.rowFilter;
+    if (filter != null) predicates.add(filter);
+    return (
+      predicates.isEmpty ? '' : ' WHERE ${predicates.join(' AND ')}',
+      values,
+    );
   }
 
   /// Convert a Drift [QueryRow] to a JSON-serializable map.

@@ -158,7 +158,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 95;
+  int get schemaVersion => 96;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -198,7 +198,7 @@ class AppDatabase extends _$AppDatabase {
       await _createFinancePlanningIndexes(this);
       await _createForecastSnapshots(this);
     },
-    onUpgrade: (m, from, to) async {
+    onUpgrade: (m, from, to) => transaction(() async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
       // so the timeline can render a "reply was truncated" footer that
       // survives a refresh / app restart instead of flashing for a
@@ -1202,7 +1202,14 @@ class AppDatabase extends _$AppDatabase {
           definition: 'TEXT',
         );
       }
-    },
+      // v95 -> v96 adds only local Sync compatibility bookkeeping. Domain
+      // source rows, confirmed Memory, and dirty pointers remain untouched.
+      if (from < 96) {
+        for (final ddl in syncCompatibilityDdl) {
+          await customStatement(ddl);
+        }
+      }
+    }),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

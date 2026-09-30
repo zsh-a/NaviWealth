@@ -8374,7 +8374,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dataManagementSharedSubtitle =>
-      'Device-local conversations, traces, memories, event projections, and agent results';
+      'Device-local conversations, traces, derived memories, event projections, and agent results. Confirmed memories and Personal Profile are preserved.';
 
   @override
   String get dataManagementChatRows => 'Chat';
@@ -8383,7 +8383,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dataManagementAiRows => 'AI audit';
 
   @override
-  String get dataManagementMemoryRows => 'Memory';
+  String get dataManagementMemoryRows => 'Derived memory & events';
 
   @override
   String get dataManagementAgentRows => 'Agents';
@@ -8402,7 +8402,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String dataManagementClearSharedConfirmBody(int count) {
-    return 'This removes $count local chat, audit, memory, event, and agent-history rows. OS source data and preferences remain.';
+    return 'This removes $count local chat, audit, derived-memory, event, and agent-history rows. Confirmed memories, Personal Profile, OS source data, and preferences remain.';
   }
 
   @override

@@ -1,6 +1,6 @@
 # Sync Protocol — NaviWealth v3
 
-Status: **Active** (2026-07-12).
+Status: **Active** (2026-09-30).
 
 ## Document Contract
 
@@ -120,13 +120,39 @@ business contract. Other multi-row changes must state their own constraint and
 partial-arrival behavior; they must not infer business atomicity from per-row
 LWW or move financial validation into the backend.
 
-The current applier skips unknown domain prefixes and unsupported local tables
-and reports those counts. It accepts only known Drift columns from payloads.
-Those diagnostics are not a schema migration or a guarantee that skipped data
-will be replayed after upgrading. Changes to synced source shapes must document
-old-client behavior and recovery of unsupported rows, with executable mixed-
-version evidence. This remains client compatibility work within Sync v3, not
-multi-schema negotiation or a replacement sync protocol.
+The applier validates a table's registered prefix and owner before applying it.
+Known columns are updated in place using an UPSERT; columns omitted by an older
+client keep their current values. The wire version supplies the stored HLC.
+Unknown fields on a supported row are retained as opaque JSON in the local-only
+`sync_row_extras`, keyed by owner, table and row id. Dirty-row serialization merges
+them back into the payload, with current known columns taking precedence. A newer
+winning row updates retained fields; absence preserves them, and explicit null
+clears their value. Stale rows cannot modify either source data or opaque state.
+The page transaction rolls both back together on failure. Domain reset and backup
+restore clear compatibility state in their owner/table scope.
+Push collection excludes another owner's rows while preserving their dirty
+pointers; it still clears genuine orphan pointers through the normal ack path.
+
+Before exposing the database to callers, the client compares a signature of its
+codec, namespace, registered primary keys, owner scope and actual supported column
+types with the persisted signature. A change atomically hydrates newly supported
+opaque fields, resets the pull cursor to zero and marks a schema replay. Pending
+local mutations remain queued and a strictly newer local HLC always wins. During
+this replay equal-version rows may hydrate fields lost by clients predating opaque
+preservation. The replay marker survives interrupted pagination and clears only
+after the final successful page and durable cursor write. An unchanged signature
+keeps the cursor intact.
+
+Unknown prefixes and unsupported tables are skipped with diagnostics. Adding
+support changes the signature and re-pulls current server state, including rows
+previously skipped after cursor advancement. This is additive client compatibility
+within Sync v3. It is not schema negotiation, a historical event log, or a migration
+of retired entities. Replay cannot reconstruct values already overwritten on the
+server, rows erased by a domain reset, or new enum semantics unsupported by older
+business code. Additive columns need nullable values or backward-compatible
+defaults; new required columns without defaults need a separate migration and
+old-client contract. Synced source changes must document those limits and provide
+mixed-version tests.
 
 ## Encryption boundary
 

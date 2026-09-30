@@ -263,6 +263,24 @@ content as diagnostics. Run the same gate locally from `apps/mobile/` with
 
 ## 6. On-device integration (`integration_test/`)
 
+The host suites pin recovery and upgrade behavior before device execution:
+
+- `confirmed_memory_recovery_test.dart` covers encrypted confirmed Memory
+  lineage/provenance, owner isolation, old archives without Memory, cleanup
+  protection, rollback, and vector rebuilding without overwriting edited rows.
+- `sync_compatibility_test.dart` covers mixed-version opaque fields, upgrade
+  hydration, skipped-table replay, interrupted pagination, LWW and scoped reset.
+- `sync_compatibility_migration_test.dart` opens a real schema-v95 SQLite file,
+  preserves all four domains, confirmed Memory/Profile and pending sync state,
+  injects a failure after compatibility DDL, and verifies rollback and retry
+  across close/reopen.
+- `watchlist_simulation_allocation_sync_test.dart` checks all 24 orders for a
+  two-holding version/head delivered in separate pages, including duplicate and
+  stale rows; the selected aggregate remains pending until complete.
+
+These host contracts do not establish Android process-interruption or iOS
+packaged-platform evidence.
+
 `test/flow/` runs headless under `flutter test` and stubs the data layer.
 It does **not** exercise the platform secure-storage key path or a real
 on-device Drift connection. Focused native file tests exercise SQLCipher on

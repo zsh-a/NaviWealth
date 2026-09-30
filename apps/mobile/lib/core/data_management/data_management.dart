@@ -228,7 +228,11 @@ class DataManagementService {
           await _countOwnerRows('ai_undo_stack', resource: 'ai') +
           await _countOwnerRows('ai_touched_entities', resource: 'ai');
       final memoryRows =
-          await _countOwnerRows('memories', resource: 'memory') +
+          await _countOwnerRows(
+            'memories',
+            resource: 'memory',
+            extraWhere: "authority != 'user_confirmed'",
+          ) +
           await _countOwnerRows('memory_candidates', resource: 'memory') +
           await _countOwnerRows('events', resource: 'memory') +
           await _countOwnerRows(
@@ -266,7 +270,8 @@ class DataManagementService {
   }
 
   /// Removes local AI/chat/memory/agent history without touching domain source
-  /// data, sync generations, credentials, or agent preferences.
+  /// data, confirmed memories, Personal Profile, sync generations,
+  /// credentials, or agent preferences.
   Future<int> clearSharedHistory() async {
     var affected = 0;
     await _database.transaction(() async {
@@ -283,13 +288,17 @@ class DataManagementService {
         'agent_findings',
         'agent_runs',
         'memory_candidates',
-        'memories',
         'events',
       ]) {
         affected += await _deleteWhere(table, 'owner_user_id = ?', <Object?>[
           _ownerUserId,
         ]);
       }
+      affected += await _deleteWhere(
+        'memories',
+        "owner_user_id = ? AND authority != 'user_confirmed'",
+        <Object?>[_ownerUserId],
+      );
       affected += await _deleteWhere(
         'domain_event_log',
         'actor_user_id = ?',
@@ -372,6 +381,14 @@ class DataManagementService {
 
     await _database.transaction(() async {
       await _database.customStatement('PRAGMA defer_foreign_keys = ON');
+      // Compatibility state belongs to the erased generation, including
+      // identity/config rows that are explicitly requeued after this reset.
+      affected += await _deleteIn(
+        table: 'sync_row_extras',
+        column: 'table_name',
+        values: sourceNames,
+        ownerColumn: 'owner_user_id',
+      );
       affected += await _deleteIn(
         table: 'memories',
         column: 'source',
@@ -570,13 +587,15 @@ class DataManagementService {
     String table, {
     String ownerColumn = 'owner_user_id',
     required String resource,
+    String? extraWhere,
   }) async {
     try {
       _validateTableName(table);
       _validateTableName(ownerColumn);
       final row = await _database
           .customSelect(
-            'SELECT COUNT(*) AS c FROM $table WHERE $ownerColumn = ?',
+            'SELECT COUNT(*) AS c FROM $table WHERE $ownerColumn = ?'
+            '${extraWhere == null ? '' : ' AND $extraWhere'}',
             variables: <Variable<Object>>[Variable<Object>(_ownerUserId)],
           )
           .getSingle();

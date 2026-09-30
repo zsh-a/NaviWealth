@@ -556,12 +556,12 @@ registry seam:
   caches may be cleared for the whole device.
 - Per-OS encrypted archives filter the shared backup inventory by row-family
   prefix and can restore that OS without replacing unrelated domains.
-- AI chat, audit traces, memories, event projections, and agent history are
-  counted and cleaned as a separate cross-domain local resource. The current
-  `clearSharedHistory()` removes all owner-scoped `memories`, including
-  user-confirmed rows. Domain business rows, Personal Profile, credentials,
-  and preferences are preserved. This is an explicit history deletion, not
-  rebuildable-cache cleanup; see the recovery limits below.
+- AI chat, audit traces, derived memories, event projections, and agent history
+  are counted and cleaned as a separate cross-domain local resource.
+  `clearSharedHistory()` preserves `authority=user_confirmed` Memory rows and
+  their embeddings, Personal Profile, domain business rows, credentials, and
+  preferences. Explicit Memory `forget` and domain reset keep their own deletion
+  semantics.
 - Daily retention maintenance is opt-out, recorded in
   `data_maintenance_runs`, and can also be run manually. Database compaction is
   manual because SQLite `VACUUM` can be comparatively expensive.
@@ -736,20 +736,35 @@ Local-only data has distinct lifecycle roles:
 |---|---|---|
 | Synced domain source rows | Authoritative user data | Included when `backupEligible`; restored rows enqueue Sync work |
 | Personal Profile | Confirmed user-authored local data | Encrypted backup only; restore does not enqueue Sync; shared-history cleanup preserves it |
-| Confirmed `memories` | User-confirmed local data with no guaranteed rebuild source | Not backed up or synced; shared-history cleanup deletes it |
+| Confirmed `memories` | User-confirmed local data with no guaranteed rebuild source | Full encrypted backup includes only `authority=user_confirmed`; restore does not enqueue Sync; shared-history cleanup preserves it |
 | Domain memory/event projections and embeddings | Derived indexes | Not backed up; rebuilt from available sources |
 | Chat, traces, Agent artifacts and execution history | Local history | Outside the user-data backup inventory |
 
-An encrypted archive currently cannot recover confirmed Memory on a new
-device. Authority metadata does not change backup coverage or cleanup policy.
-Before promising recovery of all confirmed personal data, backup coverage and
-history deletion must distinguish those rows from rebuildable projections.
+Full archives preserve the current owner's confirmed Memory, including expired
+and superseded rows, provenance, validity and lineage. Per-domain archives cover
+domain source tables only. Embeddings are excluded; semantic recall rebuilds
+missing confirmed vectors on demand, with a bounded budget and a conditional
+write that checks the source record has not changed. Existing access policy and
+validity filters still apply. Derived rows are not promoted during recovery.
+
+Export reads a consistent database snapshot and filters owner-scoped tables;
+shared FX rows remain device-global. Restore rejects a
+different archive owner before pausing Sync, replaces only the current owner's
+declared data, and commits source writes, compatibility cleanup and outbox
+changes together. An archive predating confirmed Memory coverage leaves local
+confirmed rows intact. Primary-key collisions with preserved rows abort and
+roll back the restore. Older archives without an owner header are validated by
+their row owners; account identity remapping is not part of restore.
 
 Schema v80/v81 intentionally reset Execution/Knowledge tables. These historical
 resets do not establish a general data-preserving upgrade guarantee. Future
 schema changes must state preservation or explicit reset behavior and provide
 upgrade, failed-upgrade, and supported-old-archive evidence for affected user
-data. Current guarantees come from the affected migration and recovery tests.
+data. Schema v95→v96 adds only local Sync compatibility state and wraps upgrades
+in a transaction. File-backed tests preserve all four domains, confirmed Memory,
+Profile, vectors, dirty pointers and sync metadata; an injected failure after
+DDL rolls back and succeeds on retry. These tests do not recover data removed
+by historical resets or replace packaged-device interruption evidence.
 
 ## Background And Notifications
 

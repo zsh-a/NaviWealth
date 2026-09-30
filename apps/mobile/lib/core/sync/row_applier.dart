@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 
 import '../../core/persistence/app_database.dart';
 import '../logging/app_logger.dart';
 import 'sync_api_client.dart';
+import 'sync_payload_store.dart';
 import 'sync_table_registry.dart';
 
 /// Applies pulled row-states to the local Drift tables with per-row LWW
@@ -11,29 +14,154 @@ import 'sync_table_registry.dart';
 ///
 /// Schema-agnostic: column shapes are read from Drift's runtime metadata,
 /// so a new syncable table needs no applier change. This mirrors the
-/// server's generic row store — one ~120-line class replaces v1's per-table
-/// op-appliers.
+/// server's generic row store. Local compatibility state preserves opaque
+/// fields through mixed-version edits without adding business logic.
 class RowApplier {
-  RowApplier(this._db, {AppLogger? logger})
-    : _logger = logger ?? AppLogger.instance;
+  RowApplier(
+    this._db, {
+    AppLogger? logger,
+    String? ownerUserId,
+    List<SyncTableRegistration> registrations = kSyncTableRegistrations,
+  }) : _logger = logger ?? AppLogger.instance,
+       _ownerUserId = ownerUserId,
+       _payloads = SyncPayloadStore(_db),
+       _registry = {
+         for (final registration in registrations)
+           registration.table: registration,
+       };
 
   final AppDatabase _db;
   final AppLogger _logger;
+  final String? _ownerUserId;
+  final SyncPayloadStore _payloads;
+  final Map<String, SyncTableRegistration> _registry;
   final Map<String, Map<String, DriftSqlType<Object>>> _typeCache = {};
+  bool _allowEqualReplay = false;
 
-  Map<String, DriftSqlType<Object>> _columnTypes(String table) {
-    return _typeCache.putIfAbsent(table, () {
-      final info = _db.allTables.firstWhere(
-        (t) => t.actualTableName == table,
-        orElse: () => throw StateError('unknown drift table: $table'),
-      );
-      final map = <String, DriftSqlType<Object>>{};
-      for (final c in info.$columns) {
-        final t = c.type;
-        if (t is DriftSqlType<Object>) map[c.name] = t;
+  Future<Map<String, DriftSqlType<Object>>> _columnTypes(String table) async {
+    final cached = _typeCache[table];
+    if (cached != null) return cached;
+    final actual = await _db.customSelect('PRAGMA table_info($table)').get();
+    final names = actual.map((row) => row.read<String>('name')).toSet();
+    final info = _db.allTables.firstWhere(
+      (t) => t.actualTableName == table,
+      orElse: () => throw StateError('unknown drift table: $table'),
+    );
+    final map = <String, DriftSqlType<Object>>{};
+    for (final c in info.$columns) {
+      final t = c.type;
+      if (names.contains(c.name) && t is DriftSqlType<Object>) map[c.name] = t;
+    }
+    _typeCache[table] = map;
+    return map;
+  }
+
+  /// Reset the cursor once when codec, namespace, PK or supported columns
+  /// change. Re-pull is a current-state replay within Sync v3, not negotiation.
+  /// Hydrate previously opaque fields before UI or dirty-row serialization can
+  /// replace newly supported values with local defaults.
+  Future<bool> prepareCompatibility() async {
+    _typeCache.clear();
+    final registrations = _registry.values.toList()
+      ..sort((a, b) => a.table.compareTo(b.table));
+    final prefixes = kSyncDomainPrefixes.toList()..sort();
+    final shape = <Object?>['row-codec-8', prefixes];
+    for (final registration in registrations) {
+      final types = await _columnTypes(registration.table);
+      final columns = types.keys.toList()..sort();
+      shape.add([
+        registration.table,
+        registration.domainPrefix,
+        registration.primaryKey,
+        registration.ownerScoped,
+        [
+          for (final column in columns) [column, types[column].toString()],
+        ],
+      ]);
+    }
+    final signature = jsonEncode(shape);
+    return _db.transaction(() async {
+      final previous = await _db
+          .customSelect(
+            "SELECT value FROM sync_meta WHERE key = 'sync.schema_signature'",
+          )
+          .getSingleOrNull();
+      if (previous?.read<String>('value') == signature) return false;
+      final retained = await _db
+          .customSelect('SELECT * FROM sync_row_extras')
+          .get();
+      for (final row in retained) {
+        final table = row.read<String>('table_name');
+        if (!_registry.containsKey(table)) continue;
+        final id = row.read<String>('row_id');
+        final owner = row.read<String>('owner_user_id');
+        final extras = await _payloads.extras(table, id, owner);
+        final types = await _columnTypes(table);
+        final supported = extras.keys.where(types.containsKey).toList();
+        if (supported.isEmpty) continue;
+        final pk = _registry[table]!.primaryKey;
+        final ownerWhere = _registry[table]!.ownerScoped
+            ? ' AND owner_user_id = ?'
+            : '';
+        await _db.customStatement(
+          'UPDATE $table SET ${supported.map((c) => '$c = ?').join(', ')} '
+          'WHERE $pk = ?$ownerWhere',
+          [
+            for (final c in supported) _coerce(types[c], extras[c]),
+            id,
+            if (ownerWhere.isNotEmpty) owner,
+          ],
+        );
+        for (final key in supported) {
+          extras.remove(key);
+        }
+        await _payloads.writeExtras(table, id, owner, extras);
       }
-      return map;
+      await _db.customStatement(
+        "DELETE FROM sync_meta WHERE key = 'sync.cursor'",
+      );
+      await _db.customStatement(
+        'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
+        'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+        ['sync.schema_signature', signature],
+      );
+      await _db.customStatement(
+        "INSERT OR REPLACE INTO sync_meta(key, value) VALUES ('sync.schema_replay', '1')",
+      );
+      return true;
     });
+  }
+
+  /// Clear only after the engine durably drains the entire current-state pull.
+  /// A crash or partial pull keeps equal-version hydration enabled on restart.
+  Future<void> finishCompatibilityReplay() => _db.customStatement(
+    "DELETE FROM sync_meta WHERE key = 'sync.schema_replay'",
+  );
+
+  String _owner(RowChange row) =>
+      _ownerUserId ?? row.payload?['owner_user_id'] as String? ?? '';
+
+  Future<bool> _localWins(RowChange row, String table) async {
+    final pk = _registry[table]!.primaryKey;
+    final scoped = _registry[table]!.ownerScoped;
+    if (scoped &&
+        _ownerUserId != null &&
+        row.payload?['owner_user_id'] != _ownerUserId) {
+      throw StateError('Sync row owner mismatch');
+    }
+    final existing = await _db
+        .customSelect(
+          'SELECT hlc${scoped ? ', owner_user_id' : ''} FROM $table WHERE $pk = ?',
+          variables: [Variable(row.id)],
+        )
+        .getSingleOrNull();
+    if (existing == null) return false;
+    if (scoped && existing.read<String>('owner_user_id') != _owner(row)) {
+      throw StateError('Sync row identity belongs to another owner');
+    }
+    final comparison = Hlc.parse(existing.read<String>('hlc'))
+        .compareTo(Hlc.parse(row.version));
+    return comparison > 0 || (comparison == 0 && !_allowEqualReplay);
   }
 
   /// Apply [rows] in a single transaction. Returns the count actually
@@ -46,28 +174,31 @@ class RowApplier {
   /// write path still uses LWW; this report only makes that decision visible
   /// to the engine and settings page.
   Future<RowApplyReport> applyWithReport(List<RowChange> rows) async {
-    if (rows.isEmpty) return const RowApplyReport.empty();
+    _allowEqualReplay =
+        (await _db
+            .customSelect(
+              "SELECT 1 FROM sync_meta WHERE key = 'sync.schema_replay'",
+            )
+            .getSingleOrNull()) !=
+        null;
     var written = 0;
     var skippedLocalWins = 0;
     var skippedUnknownDomain = 0;
     var skippedUnsupportedTable = 0;
     var skippedEmptyPayload = 0;
     await _db.transaction(() async {
-      // Cross-row references (posting → journal_entry) may arrive in any
-      // order; defer FK checks to commit so the page applies atomically.
       await _db.customStatement('PRAGMA defer_foreign_keys = ON');
       for (final row in rows) {
         final local = _resolveLocalTable(row.table);
         switch (local.outcome) {
           case _ResolveOutcome.ok:
-            final outcome = await _apply(row, local.table!);
-            switch (outcome) {
-              case _ApplyOutcome.written:
-                written++;
-              case _ApplyOutcome.localWins:
-                skippedLocalWins++;
-              case _ApplyOutcome.emptyPayload:
-                skippedEmptyPayload++;
+            if (row.payload == null || row.payload!.isEmpty) {
+              skippedEmptyPayload++;
+            } else if (await _localWins(row, local.table!)) {
+              skippedLocalWins++;
+            } else {
+              await _apply(row, local.table!);
+              written++;
             }
           case _ResolveOutcome.unknownDomain:
             skippedUnknownDomain++;
@@ -97,47 +228,43 @@ class RowApplier {
       _logger.w('sync: dropping row with unknown domain prefix: $wireTable');
       return const _ResolvedTable(_ResolveOutcome.unknownDomain);
     }
-    if (!kSyncableTables.contains(stripped)) {
+    final registration = _registry[stripped];
+    if (registration == null ||
+        wireTable != '${registration.domainPrefix}$stripped') {
       return const _ResolvedTable(_ResolveOutcome.unsupportedTable);
     }
     return _ResolvedTable(_ResolveOutcome.ok, table: stripped);
   }
 
-  Future<_ApplyOutcome> _apply(RowChange row, String table) async {
-    final types = _columnTypes(table);
-    final pk = syncPrimaryKeyForTable(table);
-
-    // LWW guard — keep local state when its version is newer-or-equal.
-    final existing = await _db
-        .customSelect(
-          'SELECT hlc FROM $table WHERE $pk = ?',
-          variables: [Variable.withString(row.id)],
-        )
-        .getSingleOrNull();
-    if (existing != null) {
-      final localHlc = Hlc.parse(existing.read<String>('hlc'));
-      final remoteHlc = Hlc.parse(row.version);
-      if (localHlc >= remoteHlc) return _ApplyOutcome.localWins;
-    }
+  Future<void> _apply(RowChange row, String table) async {
+    final types = await _columnTypes(table);
+    final pk = _registry[table]!.primaryKey;
 
     // Write the full row state. The payload already carries every column
     // (including `hlc`, `deleted_at`, `owner_user_id`) so a delete is just
     // a row whose `deleted_at` is set.
     final ordered = <String, Object?>{...?row.payload};
     ordered[pk] = row.id;
-    ordered.putIfAbsent('hlc', () => row.version);
+    ordered['hlc'] = row.version;
     final cols = ordered.keys.where(types.containsKey).toList(growable: false);
-    if (cols.isEmpty) return _ApplyOutcome.emptyPayload;
     final placeholders = List.filled(cols.length, '?').join(', ');
     final args = cols
         .map((c) => _coerce(types[c], ordered[c]))
         .toList(growable: false);
     await _db.customStatement(
-      'INSERT OR REPLACE INTO $table (${cols.join(', ')}) '
-      'VALUES ($placeholders)',
+      'INSERT INTO $table (${cols.join(', ')}) VALUES ($placeholders) '
+      'ON CONFLICT($pk) DO UPDATE SET '
+      '${cols.where((c) => c != pk).map((c) => '$c = excluded.$c').join(', ')}',
       args,
     );
-    return _ApplyOutcome.written;
+    final extras = await _payloads.extras(table, row.id, _owner(row));
+    extras.removeWhere((key, _) => types.containsKey(key));
+    extras.addAll(
+      Map<String, Object?>.fromEntries(
+        ordered.entries.where((entry) => !types.containsKey(entry.key)),
+      ),
+    );
+    await _payloads.writeExtras(table, row.id, _owner(row), extras);
   }
 
   /// Coerce a JSON-decoded value to the SQLite-native shape Drift's readers
@@ -221,5 +348,3 @@ class _ResolvedTable {
   final _ResolveOutcome outcome;
   final String? table;
 }
-
-enum _ApplyOutcome { written, localWins, emptyPayload }
