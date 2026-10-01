@@ -50,7 +50,9 @@ class AppFilterSummary extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         hapticIntent: AppInteractionIntent.select,
         onPress: onClear,
-        child: Text(AppLocalizations.of(context).commonClearFilters),
+        child: Flexible(
+          child: Text(AppLocalizations.of(context).commonClearFilters),
+        ),
       ),
     ],
   );

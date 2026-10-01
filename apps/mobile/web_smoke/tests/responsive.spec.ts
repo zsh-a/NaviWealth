@@ -21,9 +21,23 @@ const CORE_ROUTES = [
   '/plan/rebalance',
 ] as const;
 
+// Direct routes, refresh, and history already have a dedicated suite. PRs
+// sample content-heavy routes at phone/desktop sizes; weekly/manual runs
+// retain every route and breakpoint. Local runs default to the full matrix.
+const scope = process.env.WEB_SMOKE_RESPONSIVE ?? 'full';
+if (scope !== 'compact' && scope !== 'full') {
+  throw new Error(`Unknown WEB_SMOKE_RESPONSIVE scope: ${scope}`);
+}
+const viewports = scope === 'compact'
+  ? VIEWPORTS.filter(({ name }) => name === 'phone' || name === 'desktop')
+  : VIEWPORTS;
+const routes = scope === 'compact'
+  ? ['/wealth/accounts', '/plan/rebalance']
+  : CORE_ROUTES;
+
 test.describe('responsive application shell', () => {
-  for (const viewport of VIEWPORTS) {
-    test(`${viewport.name} keeps core Finance routes inside the viewport`, async ({
+  for (const viewport of viewports) {
+    test(`${viewport.name} keeps Finance documents inside the viewport`, async ({
       browserName,
       page,
     }) => {
@@ -42,7 +56,7 @@ test.describe('responsive application shell', () => {
         if (response.status() === 404) notFoundResponses.push(response.url());
       });
 
-      for (const route of CORE_ROUTES) {
+      for (const route of routes) {
         await page.goto(route);
         await waitForFlutterReady(page);
 

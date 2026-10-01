@@ -85,13 +85,13 @@ jobs:
         run: mkdir -p test-results
       - name: Run tests
         run: >
-          flutter test
+          node tool/run-test-shard.mjs
+          --total-shards=4
+          --shard-index=${{ matrix.shard }}
+          --
           --reporter=expanded
           --file-reporter=json:test-results/shard-${{ matrix.shard }}.json
           --concurrency=4
-          --exclude-tags=golden
-          --total-shards=4
-          --shard-index=${{ matrix.shard }}
       - name: Summarize this shard
         if: always()
         continue-on-error: true

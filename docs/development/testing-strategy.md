@@ -69,11 +69,12 @@ part of the durable contract; test-file count is not the journey count.
 | 16 | 捕获知识笔记 | Capture Knowledge note | KnowledgeOS → Inbox |
 | 17 | 处理 Life 信号并闭环 | Act on a Life signal | Life → Execution Today → Review |
 
-The repository currently has 18 `test/flow/*_test.dart` files. They are not a
-second task inventory: `navigation_flow_test.dart` is an auxiliary shell route
-smoke, backup/export use separate flows, and Task 17 has separate Health and
-Finance/Knowledge evidence scenarios. Task 7 is primarily proven by Sync v3
-contract and deterministic multi-device E2E coverage rather than a page flow.
+The `test/flow/*_test.dart` files are not a second task inventory:
+`navigation_flow_test.dart` shares one app session for shell routes and the
+Plan entry smoke for Tasks 11–12, backup/export use separate flows, and Task 17
+has separate Health and Finance/Knowledge evidence scenarios. Task 7 is
+primarily proven by Sync v3 contract and deterministic multi-device E2E
+coverage rather than a page flow.
 
 ## 4. Layers — what each is for and how to write it
 
@@ -147,13 +148,15 @@ Current flow mapping:
 | Tasks | Flow coverage |
 |---|---|
 | 1–6 | `net_worth`, `add_account`, `add_transaction`, `transfer`, `import_statement`, `budget` |
-| 8–12 | `ai_chat`, `portfolio_analysis`, `rebalance`, `options_income`, `fire_report` |
+| 8–10 | `ai_chat`, `portfolio_analysis`, `rebalance` |
+| 11–12 | Plan entry smoke in `navigation` (Income strategy and first-run FIRE setup) |
 | 13–16 | `restore_backup`, `export_backup`, `domain_opt_in`, `knowledge_capture` |
 | 17 | `life_execution_loop`, `life_finance_knowledge_execution` |
 
-`navigation_flow_test.dart` is an auxiliary Finance shell smoke. Keep selectors
-inside Page Objects and outcomes inside the task test. Do not create a new flow
-just to mirror a page when an existing durable journey already covers it.
+`navigation_flow_test.dart` also proves the Finance primary tabs resolve. Keep
+selectors inside Page Objects and outcomes inside the task test. Do not create
+a new flow just to mirror a page when an existing durable journey already
+covers it.
 
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
@@ -244,19 +247,51 @@ Release └─ signed Android APK/AAB + native payload/16 KiB checks + device ga
 ```
 
 **Zero-failure unit/widget gate.** `mobile.yml` distributes
-`flutter test --reporter=expanded --exclude-tags=golden` across four
-deterministic shards with bounded concurrency. There is no known-failing allowlist:
-any non-golden test failure fails CI. Each shard writes wall time and slow-test
-timing directly to the workflow summary; no separate aggregation runner is
-required. Failed shards upload their machine-readable JSON event streams for
-seven days, preserving the last completed test and error events. Successful
+all regular `*_test.dart` files across four deterministic **file** shards using
+`apps/mobile/tool/run-test-shard.mjs`, with bounded concurrency. Sorted paths
+are interleaved across shards; every file belongs to exactly one shard. The
+inventory excludes `test/golden/` (its own gate) and `test/readme_screenshots/`
+(manual documentation generation). It does not use Flutter's native case
+sharding, which loads every file in every runner before splitting cases.
+Invalid or empty shards fail instead of silently passing. There is no
+known-failing allowlist: any regular test failure fails CI.
+
+To reproduce a CI shard from `apps/mobile/`:
+
+```bash
+node tool/run-test-shard.mjs --total-shards=4 --shard-index=0 -- --reporter=expanded --concurrency=4
+# Inspect its file inventory without executing tests:
+node tool/run-test-shard.mjs --total-shards=4 --shard-index=0 --list
+```
+
+Each shard writes wall time, loaded-file count, and slow-file/case timing
+directly to the workflow summary; widget cases resolve to their suite's file
+instead of the Flutter test helper. Final runner outcomes stay visible even
+when a late framework failure follows a successful case event. Loading
+durations are cumulative and may overlap; only shard wall time measures
+elapsed runtime. No aggregation runner is required. Failed shards upload
+their machine-readable JSON event streams for seven days, preserving the last
+completed test and error events. Successful
 shards retain their timing in the summary without artifact uploads. Use that
 evidence before changing shard count or test placement.
+
+The Node inventory and timing-parser tests run in `check-mobile-static.sh`.
+Design-token export freshness runs once in the Flutter shards; the root
+`check-design-tokens-export.sh` remains an optional local diff helper. Source
+token guards share one cached source inventory rather than rereading files for
+each rule, and prohibit raw values without imposing minimum usage counts.
+
 One Linux-pinned `golden-regression` job runs responsive task flows on PRs and
 the full suite on `main` and release calls. Static checks and tests do not wait
 for renderable fonts: their declared assets use stubs. Rendering and Web builds
 share font subsets cached by font tooling and the extracted CN glyph set;
 unrelated code changes cannot force font regeneration.
+
+Web PR smoke retains direct hits, refresh/history, persistence, and PWA checks
+in Chromium. Its document-overflow matrix samples two content-heavy routes at
+phone/desktop sizes; weekly/manual runs retain all five routes and four widths
+alongside the full browser matrix. Flutter's internal responsive rendering is
+covered by the responsive goldens rather than DOM width assertions.
 
 README screenshots are curated documentation and updated manually with
 `apps/mobile/tool/update-readme-screenshots.sh`; they are not a product CI gate.

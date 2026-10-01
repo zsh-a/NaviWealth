@@ -54,7 +54,6 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
   Future<QueryResult> _netWorthTrend(NetWorthTrendPlan plan) async {
     final from = DateTime.tryParse(plan.range.fromInclusive)?.toUtc();
     final toExclusive = DateTime.tryParse(plan.range.toExclusive)?.toUtc();
-    final fallbackRange = ref.read(dashboardTimeRangeProvider);
     final range =
         from != null && toExclusive != null && toExclusive.isAfter(from)
         ? DashboardTimeRange.resolve(
@@ -63,7 +62,7 @@ class DriftQueryPlanExecutor implements QueryPlanExecutor {
             customFrom: from,
             customTo: toExclusive.subtract(const Duration(microseconds: 1)),
           )
-        : fallbackRange;
+        : ref.read(dashboardTimeRangeProvider);
     final DashboardTrend trend;
     try {
       trend = await ref.read(dashboardTrendProvider(range).future);

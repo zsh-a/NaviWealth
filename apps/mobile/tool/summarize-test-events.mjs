@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import {pathToFileURL} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 
 function jsonFiles(target) {
   const stat = fs.statSync(target);
@@ -23,11 +23,24 @@ export function summarizeTestEvents(targets, {slowestCount = 20} = {}) {
   const tests = [];
   const shards = [];
   const warnings = [];
+  const testFiles = new Map();
+
+  function fileTiming(url) {
+    if (!testFiles.has(url)) {
+      testFiles.set(url, {url, completed: 0, loadingMs: 0, caseMs: 0});
+    }
+    return testFiles.get(url);
+  }
 
   for (const file of files) {
     const starts = new Map();
+    const suites = new Map();
+    const loadedFiles = new Set();
     let maxTimeMs = 0;
     let completed = 0;
+    let skipped = 0;
+    let loadingMs = 0;
+    let outcome = 'incomplete';
     for (const [lineIndex, line] of fs
       .readFileSync(file, 'utf8')
       .split('\n')
@@ -43,29 +56,55 @@ export function summarizeTestEvents(targets, {slowestCount = 20} = {}) {
       if (typeof event.time === 'number') {
         maxTimeMs = Math.max(maxTimeMs, event.time);
       }
+      if (event.type === 'done') {
+        outcome = event.success === true ? 'passed' : 'failed';
+      }
+      if (event.type === 'suite' && event.suite?.path) {
+        suites.set(event.suite.id, pathToFileURL(event.suite.path).href);
+      }
       if (event.type === 'testStart' && event.test) {
+        const url = suites.get(event.test.suiteID) ?? event.test.url ?? '';
+        const isLoading = !event.test.url && event.test.name?.startsWith('loading ');
+        if (isLoading && url) loadedFiles.add(url);
         starts.set(event.test.id, {
           name: event.test.name ?? `test ${event.test.id}`,
-          url: event.test.url ?? '',
+          // Widget test URLs point into flutter_test. suiteID identifies the
+          // owning repository file for both widget and ordinary Dart tests.
+          url,
           startMs: event.time ?? 0,
+          isLoading,
+          skipped: event.test.metadata?.skip ?? false,
         });
       }
       if (event.type === 'testDone') {
         const start = starts.get(event.testID);
-        // The reporter emits a synthetic "loading <file>" test without a
-        // URL. Its time is shard startup overhead, not an executable case;
-        // retain it in wall time but exclude it from counts and rankings.
-        if (!start || !start.url) continue;
+        if (!start) continue;
+        starts.delete(event.testID);
+        const durationMs = Math.max(0, (event.time ?? start.startMs) - start.startMs);
+        if (start.isLoading) {
+          loadingMs += durationMs;
+          if (start.url) fileTiming(start.url).loadingMs += durationMs;
+          continue;
+        }
+        if (event.hidden && event.result === 'success') continue;
+        if (event.skipped || start.skipped) {
+          skipped += 1;
+          continue;
+        }
+        if (!start.url) continue;
         completed += 1;
+        const timing = fileTiming(start.url);
+        timing.completed += 1;
+        timing.caseMs += durationMs;
         tests.push({
           ...start,
-          durationMs: Math.max(0, (event.time ?? start.startMs) - start.startMs),
+          durationMs,
           result: event.result ?? 'unknown',
           shard: path.basename(file),
         });
       }
     }
-    shards.push({file: path.basename(file), completed, wallTimeMs: maxTimeMs});
+    shards.push({file: path.basename(file), completed, skipped, loadedFiles: loadedFiles.size, loadingMs, wallTimeMs: maxTimeMs, outcome});
   }
 
   const resultCounts = new Map();
@@ -79,6 +118,9 @@ export function summarizeTestEvents(targets, {slowestCount = 20} = {}) {
     tests,
     resultCounts,
     warnings,
+    slowestFiles: [...testFiles.values()]
+      .sort((a, b) => (b.loadingMs + b.caseMs) - (a.loadingMs + a.caseMs))
+      .slice(0, slowestCount),
     slowest: [...tests]
       .sort((a, b) => b.durationMs - a.durationMs)
       .slice(0, slowestCount),
@@ -92,7 +134,9 @@ function seconds(milliseconds) {
 function displayUrl(url) {
   if (!url) return '—';
   try {
-    return path.relative(process.cwd(), new URL(url).pathname) || url;
+    const file = fileURLToPath(url);
+    const testRoot = file.lastIndexOf('/test/');
+    return testRoot >= 0 ? file.slice(testRoot + 1) : path.relative(process.cwd(), file) || url;
   } catch {
     return url;
   }
@@ -108,11 +152,21 @@ export function renderMarkdown(summary) {
     '',
     `Parsed ${summary.tests.length} completed tests from ${summary.files.length} shard files${counts ? ` (${counts})` : ''}.`,
     '',
-    '| Shard | Tests | Wall time (s) |',
-    '|---|---:|---:|',
+    '| Shard | Outcome | Loaded files | Tests | Skipped | Wall time (s) | Loading sum (s) |',
+    '|---|---|---:|---:|---:|---:|---:|',
     ...summary.shards.map(
       (shard) =>
-        `| ${shard.file} | ${shard.completed} | ${seconds(shard.wallTimeMs)} |`,
+        `| ${shard.file} | ${shard.outcome} | ${shard.loadedFiles} | ${shard.completed} | ${shard.skipped} | ${seconds(shard.wallTimeMs)} | ${seconds(shard.loadingMs)} |`,
+    ),
+    '',
+    'Loading and case durations are cumulative and may overlap; only shard wall time measures elapsed runtime.',
+    '',
+    '### Slowest files (loading + cases)',
+    '',
+    '| File | Tests | Loading sum (s) | Case sum (s) |',
+    '|---|---:|---:|---:|',
+    ...summary.slowestFiles.map(
+      (file) => `| ${displayUrl(file.url)} | ${file.completed} | ${seconds(file.loadingMs)} | ${seconds(file.caseMs)} |`,
     ),
     '',
     '### Slowest tests',

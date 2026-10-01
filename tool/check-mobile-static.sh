@@ -10,6 +10,7 @@ dart run "$repo_root/tool/generate_agent_runtime_capabilities.dart" --check
 "$repo_root/tool/check-sync-client-wire-fixtures.sh"
 "$repo_root/tool/lint-motion-policy.sh"
 python3 -B -m unittest discover -s "$repo_root/tool/tests" -p 'test_*.py'
+node --test "$repo_root"/apps/mobile/tool/test/*_test.mjs
 "$repo_root/tool/lint-no-feature-in-shared.sh"
 "$repo_root/tool/lint-cross-feature-imports.sh"
 "$repo_root/tool/lint-finance-domain-data-imports.sh"
@@ -23,4 +24,4 @@ python3 -B -m unittest discover -s "$repo_root/tool/tests" -p 'test_*.py'
 "$repo_root/tool/lint-typography.sh"
 "$repo_root/tool/lint-async-value.sh"
 "$repo_root/tool/lint-interaction-primitives.sh"
-"$repo_root/tool/check-design-tokens-export.sh"
+# Token-export freshness is covered once by the regular Flutter test shards.

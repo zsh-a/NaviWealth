@@ -76,6 +76,7 @@ jobs:
         env:
           CI: 'true'
           WEB_BUILD_DIR: ${{ github.workspace }}/apps/mobile/build/web
+          WEB_SMOKE_RESPONSIVE: ${{ github.event_name == 'pull_request' && 'compact' || 'full' }}
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             npx playwright test --project=chromium

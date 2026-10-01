@@ -184,7 +184,7 @@ wrangler pages deploy --branch main
 `.github/workflows/mobile.yml` 在 `apps/mobile/**` 变更时触发：
 
 1. `static checks` — `flutter analyze --fatal-infos`、生成代码 freshness、l10n 与架构边界检查
-2. `test shard 0..3 / 4` — 普通 unit/widget 测试
+2. `test shard 0..3 / 4` — 按文件分片执行完整普通 unit/widget/flow/integration 测试，每个文件只加载一次
 3. `golden regression (mobile)` — PR 执行响应式任务流；`main` 和发布执行完整 Linux golden 回归
 4. `build web` — `main` 上并行执行 release 构建；Pages 部署等待静态检查、全部分片及 golden 回归通过
 

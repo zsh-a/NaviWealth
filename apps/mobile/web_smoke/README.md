@@ -18,6 +18,8 @@ Out of scope:
 The responsive viewport matrix runs once in Chromium; the existing boot,
 routing, persistence, and PWA suites continue to run in all three browser
 engines so breakpoint coverage does not multiply the cross-browser runtime.
+Document-width assertions detect host-page overflow; the responsive Flutter
+goldens cover layout inside the canvas.
 
 ## Local run
 
@@ -53,6 +55,12 @@ pull requests that touch Web-relevant paths. Weekly and manually dispatched
 runs execute the Chromium, Firefox, and WebKit projects. The workflow builds
 its own production-shaped Flutter Web bundle so every smoke run verifies the
 same commit without depending on a separate workflow artifact.
+
+PRs set `WEB_SMOKE_RESPONSIVE=compact`: `/wealth/accounts` and
+`/plan/rebalance` at 390px and 1200px (four app boots). Weekly/manual runs use
+`full`: all five Finance routes at all four widths (20 boots). Direct-hit,
+refresh/history, storage, and PWA suites run in both modes. Local runs default
+to `full`; set `WEB_SMOKE_RESPONSIVE=compact` to reproduce the PR gate.
 
 ## Adding a check
 

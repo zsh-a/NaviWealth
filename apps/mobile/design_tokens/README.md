@@ -25,9 +25,9 @@ UPDATE_DESIGN_TOKENS=1 flutter test test/tools/export_design_tokens_test.dart
 flutter test test/tools/export_design_tokens_test.dart
 ```
 
-`tool/check-design-tokens-export.sh` (repo root) wraps the check mode, prints
-a diff when the file is stale, and runs as part of
-`tool/check-mobile-static.sh`.
+CI runs this freshness test once in the regular Flutter test shards.
+`tool/check-design-tokens-export.sh` (repo root) is an optional local wrapper
+that prints a diff when the file is stale.
 
 The output is deterministic: fixed key order, 2-space indent, trailing
 newline — so a regenerated file only differs when Dart token values actually

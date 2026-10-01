@@ -44,6 +44,11 @@ class AppShell {
     await settle(tester);
   }
 
+  Future<void> goBack() async {
+    await tester.binding.handlePopRoute();
+    await settle(tester);
+  }
+
   Future<void> openSettings() async {
     final action = find.byIcon(FLucideIcons.settings);
     expect(action, findsWidgets, reason: 'settings action missing');

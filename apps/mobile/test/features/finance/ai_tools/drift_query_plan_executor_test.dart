@@ -128,6 +128,11 @@ void main() {
   test('net-worth trend emits only the latest complete segment', () async {
     final container = ProviderContainer(
       overrides: [
+        // Explicit ranges must work without bootstrapping the unrelated
+        // dashboard repositories behind the fallback range.
+        dashboardTimeRangeProvider.overrideWith(
+          (_) => throw StateError('fallback range unavailable'),
+        ),
         dashboardTrendProvider.overrideWith(
           (_, range) async => DashboardTrend(
             range: range,

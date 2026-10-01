@@ -253,55 +253,81 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                 clearLabel: l10n.aiChatSessionsSearchClear,
               ),
               const SizedBox(height: AppSpacing.s10),
-              Row(
-                children: [
-                  Expanded(
-                    child: AppAdaptiveChoice<_LibraryScope>(
-                      title: l10n.knowledgeLibraryFilterTitle,
-                      options: _LibraryScope.values,
-                      value: _scope,
-                      labelOf: (scope) => switch (scope) {
-                        _LibraryScope.all => l10n.knowledgeSegmentAll,
-                        _LibraryScope.notes => l10n.knowledgeSegmentNotes,
-                        _LibraryScope.decisions =>
-                          l10n.knowledgeSegmentDecisions,
-                      },
-                      iconOf: (scope) => switch (scope) {
-                        _LibraryScope.all => FLucideIcons.library,
-                        _LibraryScope.notes => FLucideIcons.fileText,
-                        _LibraryScope.decisions => FLucideIcons.circleCheck,
-                      },
-                      onChanged: (scope) {
-                        setState(() {
-                          _scope = scope;
-                          _limit = _pageSize;
-                          if (scope == _LibraryScope.decisions) {
-                            _selectedTag = null;
-                          }
-                        });
-                        _writeFilters();
-                      },
-                    ),
-                  ),
-                  if (tagFacets.isNotEmpty &&
-                      _scope != _LibraryScope.decisions) ...[
-                    const SizedBox(width: AppSpacing.s8),
-                    _LibraryTagFilter(
-                      tags: tagFacets,
-                      selectedTag: _selectedTag,
-                      allLabel: l10n.knowledgeLibraryAllTags,
-                      semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
-                      onChanged: (tag) {
-                        setState(() {
-                          _selectedTag = tag;
-                          _limit = _pageSize;
-                          if (tag != null) _scope = _LibraryScope.notes;
-                        });
-                        _writeFilters();
-                      },
-                    ),
-                  ],
-                ],
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final scopeFilter = AppAdaptiveChoice<_LibraryScope>(
+                    title: l10n.knowledgeLibraryFilterTitle,
+                    options: _LibraryScope.values,
+                    value: _scope,
+                    labelOf: (scope) => switch (scope) {
+                      _LibraryScope.all => l10n.knowledgeSegmentAll,
+                      _LibraryScope.notes => l10n.knowledgeSegmentNotes,
+                      _LibraryScope.decisions => l10n.knowledgeSegmentDecisions,
+                    },
+                    iconOf: (scope) => switch (scope) {
+                      _LibraryScope.all => FLucideIcons.library,
+                      _LibraryScope.notes => FLucideIcons.fileText,
+                      _LibraryScope.decisions => FLucideIcons.circleCheck,
+                    },
+                    onChanged: (scope) {
+                      setState(() {
+                        _scope = scope;
+                        _limit = _pageSize;
+                        if (scope == _LibraryScope.decisions) {
+                          _selectedTag = null;
+                        }
+                      });
+                      _writeFilters();
+                    },
+                  );
+                  final tagFilter =
+                      tagFacets.isNotEmpty && _scope != _LibraryScope.decisions
+                      ? _LibraryTagFilter(
+                          tags: tagFacets,
+                          selectedTag: _selectedTag,
+                          allLabel: l10n.knowledgeLibraryAllTags,
+                          semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
+                          onChanged: (tag) {
+                            setState(() {
+                              _selectedTag = tag;
+                              _limit = _pageSize;
+                              if (tag != null) _scope = _LibraryScope.notes;
+                            });
+                            _writeFilters();
+                          },
+                        )
+                      : null;
+                  final textScale = MediaQuery.textScalerOf(context).scale(1);
+                  if (constraints.maxWidth < Breakpoints.mobile * textScale) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        scopeFilter,
+                        if (tagFilter != null) ...[
+                          const SizedBox(height: AppSpacing.s8),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: tagFilter,
+                          ),
+                        ],
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: scopeFilter),
+                      if (tagFilter != null) ...[
+                        const SizedBox(width: AppSpacing.s8),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth / 2,
+                          ),
+                          child: tagFilter,
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
               if (_query.isNotEmpty ||
                   _scope != _LibraryScope.all ||
