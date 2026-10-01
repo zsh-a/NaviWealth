@@ -19,6 +19,7 @@ import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_foreground_refresh_scope.dart';
+import 'health_check_in_sections.dart';
 import 'health_metric_detail.dart';
 import 'health_metric_presentation.dart';
 import 'health_series_chart.dart';
@@ -28,10 +29,8 @@ import 'health_today_providers.dart';
 part 'health_trend_overview.dart';
 
 String _healthSignedPercent(BuildContext context, num value) =>
-    AppFormatters(locale: Localizations.localeOf(context)).signedPercent(
-      value,
-      decimalDigits: 1,
-    );
+    AppFormatters(locale: Localizations.localeOf(context))
+        .signedPercent(value, decimalDigits: 1);
 
 class HealthTrendPage extends ConsumerStatefulWidget {
   const HealthTrendPage({
@@ -247,6 +246,8 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                     );
                   },
                 ),
+                const SizedBox(height: AppSpacing.s24),
+                HealthCheckInHistory(days: days),
               ],
             ),
           ),

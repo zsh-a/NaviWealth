@@ -12,6 +12,8 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../data/health_metric_selector.dart';
+import '../data/health_preferences.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
@@ -59,10 +61,9 @@ class GetActivitySummaryTool implements DeviceTool {
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    // A heavy user might log 3–5 workouts/day; pull a generous buffer
-    // so we don't crop the window short. listByKinds orders newest
-    // first per kind, and the shaper filters by window.
-    final data = await repo.listByKinds(
+    final now = DateTime.now().toUtc();
+    final preferences = await ctx.ref.read(healthPreferencesProvider.future);
+    final raw = await repo.listInRange(
       ownerUserId: ownerUserId,
       kinds: const <HealthMetricKind>{
         HealthMetricKind.stepsDaily,
@@ -70,9 +71,13 @@ class GetActivitySummaryTool implements DeviceTool {
         HealthMetricKind.distanceWalkingRunningDaily,
         HealthMetricKind.workoutSession,
       },
-      limit: daysBack * 5 + 10,
+      from: now.subtract(Duration(days: daysBack)),
+      to: now.add(const Duration(seconds: 1)),
     );
-    final now = DateTime.now().toUtc();
+    final data = selectCanonicalHealthMetrics(
+      raw,
+      preferredSources: preferences.sources,
+    );
     final result = shape(
       steps: data[HealthMetricKind.stepsDaily] ?? const <HealthMetric>[],
       energy:

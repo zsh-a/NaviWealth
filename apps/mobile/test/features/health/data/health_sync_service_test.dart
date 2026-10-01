@@ -164,6 +164,9 @@ void main() {
               externalId: 'hk:hrv:2026-05-25',
               day: DateTime.utc(2026, 5, 25),
               value: 48.2,
+              measurementMethod: 'sdnn',
+              sourceOrigin: 'com.apple.health',
+              sourceDevice: 'Apple Watch',
             ),
           ],
           steps: <RawDailyValue>[
@@ -241,6 +244,10 @@ void main() {
       expect(hrv!.kind, HealthMetricKind.hrvDaily);
       expect(hrv.value, closeTo(48.2, 1e-6));
       expect(hrv.unit, 'ms');
+      expect(hrv.sourceId, 'healthkit');
+      expect(hrv.sourceDevice, 'Apple Watch');
+      expect(hrv.payloadJson, contains('"measurement_method":"sdnn"'));
+      expect(hrv.payloadJson, contains('"source_origin":"com.apple.health"'));
 
       final steps = await repo.findById('hk:steps:2026-05-25');
       expect(steps!.kind, HealthMetricKind.stepsDaily);

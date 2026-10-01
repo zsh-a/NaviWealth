@@ -41,6 +41,9 @@ abstract class HealthMetric with _$HealthMetric {
     /// adapter.
     String? sourceDevice,
 
+    /// Persisted adapter source identity; legacy rows may omit it.
+    String? sourceId,
+
     /// Sync metadata — owner / HLC / soft-delete tombstone. Same shape
     /// as every other synced domain entity.
     required SyncMeta sync,

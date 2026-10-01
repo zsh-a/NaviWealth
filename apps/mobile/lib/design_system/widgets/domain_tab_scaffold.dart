@@ -1,3 +1,4 @@
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
@@ -85,6 +86,8 @@ class DomainTabScaffold extends StatefulWidget {
 class _DomainTabScaffoldState extends State<DomainTabScaffold> {
   /// Local-only so body rebuilds are not forced when the header collapses.
   final ValueNotifier<bool> _headerVisible = ValueNotifier(true);
+  bool? _pendingHeaderVisible;
+  bool _headerUpdateScheduled = false;
 
   /// Accumulated pixels in the current drag direction before flip.
   double _directionDelta = 0;
@@ -135,6 +138,26 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
   }
 
   void _setHeaderVisible(bool visible) {
+    // A shorter list or restored offset can dispatch scroll notifications from
+    // viewport layout. Publish that change after the frame, preserving the
+    // newest requested state, instead of rebuilding header chrome in layout.
+    _pendingHeaderVisible = visible;
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      if (!_headerUpdateScheduled && _headerVisible.value != visible) {
+        _headerUpdateScheduled = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _headerUpdateScheduled = false;
+          final next = _pendingHeaderVisible;
+          _pendingHeaderVisible = null;
+          if (mounted && next != null && _headerVisible.value != next) {
+            _headerVisible.value = next;
+          }
+        });
+      }
+      return;
+    }
+    _pendingHeaderVisible = null;
     if (_headerVisible.value == visible) return;
     _headerVisible.value = visible;
   }
@@ -170,12 +193,24 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
       },
     );
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: _onScroll,
-      child: FScaffold(
-        header: header,
-        childPad: widget.childPad,
-        child: widget.child,
+    return NotificationListener<ScrollMetricsNotification>(
+      onNotification: (notification) {
+        final metrics = notification.metrics;
+        if (widget.collapseOnScroll &&
+            metrics.axis == Axis.vertical &&
+            (metrics.maxScrollExtent <= 0 || metrics.pixels <= 0)) {
+          _setHeaderVisible(true);
+          _directionDelta = 0;
+        }
+        return false;
+      },
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: FScaffold(
+          header: header,
+          childPad: widget.childPad,
+          child: widget.child,
+        ),
       ),
     );
   }

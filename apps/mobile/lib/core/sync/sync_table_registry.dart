@@ -189,6 +189,7 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kFinanceDomainPrefix,
   ),
   SyncTableRegistration('health_metrics', domainPrefix: kHealthDomainPrefix),
+  SyncTableRegistration('health_check_ins', domainPrefix: kHealthDomainPrefix),
   SyncTableRegistration(
     'knowledge_notes',
     domainPrefix: kKnowledgeDomainPrefix,

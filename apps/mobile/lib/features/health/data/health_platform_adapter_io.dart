@@ -198,6 +198,7 @@ class _HealthPackageAdapter implements HealthPlatformAdapter {
       points: points.where((p) => p.type == hrvType),
       kindWire: 'hrv',
       platformPrefix: platformPrefix,
+      measurementMethod: Platform.isIOS ? 'sdnn' : 'rmssd',
     );
     final rhr = _aggregateDailyAverage(
       points: points.where((p) => p.type == HealthDataType.RESTING_HEART_RATE),

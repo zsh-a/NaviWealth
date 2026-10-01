@@ -24,12 +24,14 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
 import '../composition/health_trend_location.dart';
+import '../data/health_metric_source.dart';
 import '../data/health_series.dart';
 import '../data/providers.dart' as health_data;
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
 import 'garmin_account_bind_sheet.dart';
 import 'garmin_foreground_refresh_scope.dart';
+import 'health_check_in_sections.dart';
 import 'health_greeting_header.dart';
 import 'health_metric_colors.dart';
 import 'health_metric_presentation.dart';
@@ -105,6 +107,10 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                 ? staggeredSummaryTiles([
                     const AdaptiveSummaryTile(
                       role: AdaptiveSummaryTileRole.continuous,
+                      child: HealthCheckInToday(),
+                    ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
                       child: HealthSourceAttention(),
                     ),
                     if (hasRecovery)
@@ -145,7 +151,12 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                 // source actions. Repeating the same collapsed source section
                 // below it makes the empty state feel like two onboarding
                 // surfaces instead of one clear next step.
-                : const <AdaptiveSummaryTile>[],
+                : const [
+                    AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
+                      child: HealthCheckInToday(),
+                    ),
+                  ],
           ),
         ),
       ),

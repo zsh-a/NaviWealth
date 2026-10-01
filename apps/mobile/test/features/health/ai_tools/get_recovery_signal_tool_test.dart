@@ -120,6 +120,15 @@ void main() {
         );
       }
 
+      sleep.addAll([
+        for (var i = 8; i <= 14; i++)
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 7 * 3600.0,
+            unit: 's',
+          ),
+      ]);
       final out = GetRecoverySignalTool.shape(
         hrv: hrv,
         sleep: sleep,
@@ -134,7 +143,7 @@ void main() {
       expect(inputs['latest_rhr_bpm'], 55);
       expect(out['confidence'], 'medium');
       expect(out['coverage'], 0.5);
-      expect(out['freshness_hours'], 24);
+      expect(out['freshness_hours'], 25);
       expect(out['components'], hasLength(3));
       final components = out['components']! as List<Object?>;
       final hrvComponent = components
@@ -230,6 +239,15 @@ void main() {
           ),
         );
       }
+      sleep.addAll([
+        for (var i = 8; i <= 14; i++)
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 7 * 3600.0,
+            unit: 's',
+          ),
+      ]);
       final out = GetRecoverySignalTool.shape(
         hrv: hrv,
         sleep: sleep,
@@ -285,6 +303,15 @@ void main() {
           ),
         );
       }
+      sleep.addAll([
+        for (var i = 8; i <= 14; i++)
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 7 * 3600.0,
+            unit: 's',
+          ),
+      ]);
       final out = GetRecoverySignalTool.shape(
         hrv: hrv,
         sleep: sleep,
@@ -332,6 +359,15 @@ void main() {
         );
       }
 
+      sleep.addAll([
+        for (var i = 8; i <= 14; i++)
+          _m(
+            kind: HealthMetricKind.sleepSession,
+            at: now.subtract(Duration(days: i, hours: 1)),
+            value: 7 * 3600.0,
+            unit: 's',
+          ),
+      ]);
       final out = GetRecoverySignalTool.shape(
         hrv: const <HealthMetric>[],
         sleep: sleep,

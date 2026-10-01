@@ -195,6 +195,7 @@ Future<void> _seedV95(File file) async {
   final raw = sqlite3.sqlite3.open(file.path);
   try {
     raw.execute('DROP TABLE sync_row_extras');
+    raw.execute('DROP TABLE health_check_ins');
     raw.execute('PRAGMA user_version = 95');
   } finally {
     raw.close();
@@ -297,7 +298,7 @@ void main() {
             expect(
               (await migrated.customSelect('PRAGMA user_version').getSingle())
                   .read<int>('user_version'),
-              96,
+              migrated.schemaVersion,
             );
             expect(
               await migrated

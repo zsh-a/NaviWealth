@@ -10,6 +10,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
 import 'package:naviwealth/features/health/data/garmin/garmin_token_store.dart';
+import 'package:naviwealth/features/health/data/health_preferences.dart';
 import 'package:naviwealth/features/health/data/providers.dart' as health_data;
 import 'package:naviwealth/features/health/ui/garmin_account_bind_sheet.dart';
 import 'package:naviwealth/features/health/ui/garmin_sync_status_card.dart';
@@ -63,6 +64,8 @@ void main() {
       );
       expect(find.byType(LinearProgressIndicator), findsNothing);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     },
   );
 
@@ -103,6 +106,8 @@ void main() {
     expect(controller.imports, 1);
     expect(find.byType(EditableText), findsNothing);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('HealthOS source cards stay readable at narrow width', (
@@ -163,6 +168,8 @@ void main() {
     expect(find.text('HealthKit / Health Connect'), findsOneWidget);
     expect(find.text('Garmin Connect'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('Garmin failure details do not overflow at narrow width', (
@@ -199,6 +206,8 @@ void main() {
     expect(find.text('Garmin Connect'), findsOneWidget);
     expect(find.text('Sync'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('settings reports a failed platform check as unavailable', (
@@ -231,12 +240,19 @@ void main() {
     expect(find.text('Unavailable'), findsOneWidget);
     expect(find.text('Checking connection…'), findsNothing);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 }
 
 Widget _wrap(Widget child, {List<Override> overrides = const []}) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [
+      healthPreferencesProvider.overrideWith(
+        (_) async => const HealthPreferences(),
+      ),
+      ...overrides,
+    ],
     child: MaterialApp(
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,

@@ -154,6 +154,8 @@ class RawDailyValue {
     required this.day,
     required this.value,
     this.sourceDevice,
+    this.measurementMethod,
+    this.sourceOrigin,
   });
 
   /// Platform-stable id. For daily aggregates synthesised across
@@ -167,6 +169,8 @@ class RawDailyValue {
   final double value;
 
   final String? sourceDevice;
+  final String? measurementMethod;
+  final String? sourceOrigin;
 }
 
 /// One workout session that has already ended. Most fields are

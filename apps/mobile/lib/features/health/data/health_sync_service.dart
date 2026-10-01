@@ -232,6 +232,13 @@ class HealthSyncService {
         value: d.value,
         unit: kind.defaultUnit,
         sourceDevice: d.sourceDevice,
+        payloadJson: d.measurementMethod == null && d.sourceOrigin == null
+            ? null
+            : jsonEncode({
+                if (d.measurementMethod != null)
+                  'measurement_method': d.measurementMethod,
+                if (d.sourceOrigin != null) 'source_origin': d.sourceOrigin,
+              }),
       );
 
   RawHealthMetric _pointMetric(RawPointValue p, HealthMetricKind kind) =>

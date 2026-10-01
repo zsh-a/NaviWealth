@@ -3,7 +3,9 @@ library;
 
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
+import 'health_metric_comparability.dart';
 import 'health_metric_selector.dart';
+import 'health_metric_source.dart';
 
 /// UTC is only a date container here, not an instant to display in local time.
 DateTime healthDay(DateTime date) =>
@@ -101,11 +103,15 @@ class HealthSeries {
     required this.window,
     required this.samples,
     required this.previousSamples,
+    this.availableSources = const [],
+    this.preferredSource,
   });
   final HealthMetricKind kind;
   final HealthWindow window;
   final List<HealthDaySample> samples;
   final List<HealthDaySample> previousSamples;
+  final List<HealthMetricSource> availableSources;
+  final HealthMetricSource? preferredSource;
 
   HealthDaySample? get latest => samples.lastOrNull;
   int get recordedDays => samples.length;
@@ -154,20 +160,29 @@ HealthSeries buildHealthSeries({
   required List<HealthMetric> rows,
   required HealthWindow window,
   DateTime Function(DateTime)? localize,
+  HealthMetricSource? preferredSource,
 }) {
-  final canonical = selectCanonicalMetricsForKind(
-    kind,
-    rows
-        .where(
-          (row) =>
-              row.kind == kind &&
-              kind != HealthMetricKind.unknown &&
-              row.value.isFinite &&
-              row.value >= 0 &&
-              row.sync.deletedAt == null,
-        )
-        .toList(),
-  );
+  final valid = rows
+      .where(
+        (row) =>
+            row.kind == kind &&
+            kind != HealthMetricKind.unknown &&
+            row.value.isFinite &&
+            row.value >= 0 &&
+            row.sync.deletedAt == null &&
+            (window.contains(healthMetricDay(row, localize: localize)) ||
+                window.previous.contains(
+                  healthMetricDay(row, localize: localize),
+                )),
+      )
+      .toList();
+  final canonical = kind == HealthMetricKind.hrvDaily
+      ? comparableHealthMetrics(kind, valid, preferredSource: preferredSource)
+      : selectCanonicalMetricsForKind(
+          kind,
+          valid,
+          preferredSource: preferredSource,
+        );
   final buckets = <DateTime, List<HealthMetric>>{};
   for (final row in canonical) {
     if (!row.value.isFinite || row.value < 0) continue;
@@ -200,5 +215,14 @@ HealthSeries buildHealthSeries({
     previousSamples: List.unmodifiable(
       samples.where((s) => window.previous.contains(s.day)),
     ),
+    availableSources: List.unmodifiable(
+      valid
+          .map(sourceForHealthMetric)
+          .where((source) => source != HealthMetricSource.unknown)
+          .toSet()
+          .toList()
+        ..sort((a, b) => b.priority.compareTo(a.priority)),
+    ),
+    preferredSource: preferredSource,
   );
 }

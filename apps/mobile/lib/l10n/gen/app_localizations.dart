@@ -28725,7 +28725,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthRecoveryEvidenceBaseline.
   ///
   /// In en, this message translates to:
-  /// **'Baseline {baseline} · {recentSamples} recent / {baselineSamples} baseline samples'**
+  /// **'Baseline {baseline} · {recentSamples} recent / {baselineSamples} baseline days'**
   String healthRecoveryEvidenceBaseline(
     String baseline,
     int recentSamples,
@@ -28735,7 +28735,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthRecoveryEvidenceNoBaselineSamples.
   ///
   /// In en, this message translates to:
-  /// **'{recentSamples} recent samples · baseline forming'**
+  /// **'{recentSamples} recent days · baseline forming'**
   String healthRecoveryEvidenceNoBaselineSamples(int recentSamples);
 
   /// No description provided for @healthRecoveryDeltaUp.
@@ -29892,6 +29892,282 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Find a tag'**
   String get knowledgeTagsSearchHint;
+
+  /// No description provided for @healthCheckInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily check-in'**
+  String get healthCheckInTitle;
+
+  /// No description provided for @healthCheckInHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Record only what matters today. All fields are optional; tap a selected rating again to clear it.'**
+  String get healthCheckInHelp;
+
+  /// No description provided for @healthCheckInEnergy.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy'**
+  String get healthCheckInEnergy;
+
+  /// No description provided for @healthCheckInSleepQuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep quality'**
+  String get healthCheckInSleepQuality;
+
+  /// No description provided for @healthCheckInStress.
+  ///
+  /// In en, this message translates to:
+  /// **'Perceived stress'**
+  String get healthCheckInStress;
+
+  /// No description provided for @healthCheckInEnergyScale.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Low energy · 5 High energy'**
+  String get healthCheckInEnergyScale;
+
+  /// No description provided for @healthCheckInSleepScale.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Poor sleep · 5 Restful sleep'**
+  String get healthCheckInSleepScale;
+
+  /// No description provided for @healthCheckInStressScale.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Little stress · 5 High stress'**
+  String get healthCheckInStressScale;
+
+  /// No description provided for @healthCheckInEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Life events'**
+  String get healthCheckInEvents;
+
+  /// No description provided for @healthCheckInValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} {value}/5'**
+  String healthCheckInValue(String label, int value);
+
+  /// No description provided for @healthCheckInLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your check-in could not be loaded. Retry before editing it.'**
+  String get healthCheckInLoadFailed;
+
+  /// No description provided for @healthCheckInEmptyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Record at least one feeling, event, or note.'**
+  String get healthCheckInEmptyError;
+
+  /// No description provided for @healthCheckInDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete check-in'**
+  String get healthCheckInDelete;
+
+  /// No description provided for @healthCheckInDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the feelings, events, and note for this date?'**
+  String get healthCheckInDeleteConfirm;
+
+  /// No description provided for @healthCheckInRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record feelings'**
+  String get healthCheckInRecord;
+
+  /// No description provided for @healthCheckInEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit check-in'**
+  String get healthCheckInEdit;
+
+  /// No description provided for @healthCheckInRecordDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Record another day'**
+  String get healthCheckInRecordDay;
+
+  /// No description provided for @healthCheckInEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'How do you feel today?'**
+  String get healthCheckInEmpty;
+
+  /// No description provided for @healthCheckInEmptyHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Add feelings and life events to understand your health trends. A wearable is optional.'**
+  String get healthCheckInEmptyHelp;
+
+  /// No description provided for @healthCheckInHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Feelings & life events'**
+  String get healthCheckInHistory;
+
+  /// No description provided for @healthCheckInHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No check-ins in this period. Missing days stay unrecorded.'**
+  String get healthCheckInHistoryEmpty;
+
+  /// No description provided for @healthCheckInContextEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No check-in for this date.'**
+  String get healthCheckInContextEmpty;
+
+  /// No description provided for @healthCheckInObservedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded on {count} of {days} days'**
+  String healthCheckInObservedDays(int count, int days);
+
+  /// No description provided for @healthCheckInEventDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in dates'**
+  String get healthCheckInEventDates;
+
+  /// No description provided for @healthCheckInAssociationHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare observations and context. These records do not establish cause and effect.'**
+  String get healthCheckInAssociationHelp;
+
+  /// No description provided for @healthTagCaffeine.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeine'**
+  String get healthTagCaffeine;
+
+  /// No description provided for @healthTagLateMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Late meal'**
+  String get healthTagLateMeal;
+
+  /// No description provided for @healthTagAlcohol.
+  ///
+  /// In en, this message translates to:
+  /// **'Alcohol'**
+  String get healthTagAlcohol;
+
+  /// No description provided for @healthTagIllness.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeling unwell'**
+  String get healthTagIllness;
+
+  /// No description provided for @healthTagTravel.
+  ///
+  /// In en, this message translates to:
+  /// **'Travel'**
+  String get healthTagTravel;
+
+  /// No description provided for @healthTagHardWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard workout'**
+  String get healthTagHardWorkout;
+
+  /// No description provided for @healthTagMeditation.
+  ///
+  /// In en, this message translates to:
+  /// **'Meditation'**
+  String get healthTagMeditation;
+
+  /// No description provided for @healthTagLateScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Late screen time'**
+  String get healthTagLateScreen;
+
+  /// No description provided for @healthSourcePreference.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred data source'**
+  String get healthSourcePreference;
+
+  /// No description provided for @healthSourceAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get healthSourceAutomatic;
+
+  /// No description provided for @healthSourcePreferenceHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Used when sources overlap. Other sources fill missing dates. Original readings are kept.'**
+  String get healthSourcePreferenceHelp;
+
+  /// No description provided for @healthHrvComparableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'HRV compares the current source, device, and measurement method. A switch may shorten the available history.'**
+  String get healthHrvComparableHint;
+
+  /// No description provided for @healthRecoveryLearning.
+  ///
+  /// In en, this message translates to:
+  /// **'{metric}: baseline learning · {count}/{required} days'**
+  String healthRecoveryLearning(String metric, int count, int required);
+
+  /// No description provided for @healthRecoveryMissingRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'{metric}: no recent observations'**
+  String healthRecoveryMissingRecent(String metric);
+
+  /// No description provided for @healthRecoverySourceDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'{source} · {age}'**
+  String healthRecoverySourceDetail(String source, String age);
+
+  /// No description provided for @healthRecoveryGoalReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep goal {hours} h · {days} observed days'**
+  String healthRecoveryGoalReference(String hours, int days);
+
+  /// No description provided for @healthRecoveryWorstFreshness.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest scoring input: {age}'**
+  String healthRecoveryWorstFreshness(String age);
+
+  /// No description provided for @healthSleepGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal sleep goal'**
+  String get healthSleepGoalTitle;
+
+  /// No description provided for @healthSleepGoalHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your own duration goal, or use your observed baseline. This is not an estimate of your biological sleep need.'**
+  String get healthSleepGoalHelp;
+
+  /// No description provided for @healthSleepGoalAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Use personal baseline'**
+  String get healthSleepGoalAutomatic;
+
+  /// No description provided for @healthSleepGoalHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hours'**
+  String healthSleepGoalHours(String hours);
 }
 
 class _AppLocalizationsDelegate

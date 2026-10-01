@@ -4,12 +4,13 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth;
 import '../domain/health_metric_kind.dart';
+import 'health_calendar_providers.dart';
+import 'health_preferences.dart';
 import 'health_series.dart';
 import 'providers.dart';
 
-final healthClockProvider = Provider<DateTime Function()>(
-  (ref) => DateTime.now,
-);
+export 'health_calendar_providers.dart'
+    show healthClockProvider, healthCalendarDayProvider;
 
 final healthTrendSeriesProvider = FutureProvider.autoDispose
     .family<
@@ -24,7 +25,10 @@ final healthTrendSeriesProvider = FutureProvider.autoDispose
           false;
       ref.watch(activeUserIdProvider);
       if (!enabled) return const {};
-      final owner = await ref.watch(currentUserIdProvider)();
+      ref.watch(healthCalendarDayProvider);
+      final ownerFuture = ref.watch(currentUserIdProvider)();
+      final preferencesFuture = ref.watch(healthPreferencesProvider.future);
+      final repoFuture = ref.watch(healthMetricRepositoryProvider.future);
       final window = HealthWindow(
         now: ref.watch(healthClockProvider)(),
         days: params.windowDays,
@@ -34,7 +38,9 @@ final healthTrendSeriesProvider = FutureProvider.autoDispose
             (k) => k != HealthMetricKind.unknown && k.group == params.group,
           )
           .toSet();
-      final repo = await ref.watch(healthMetricRepositoryProvider.future);
+      final owner = await ownerFuture;
+      final preferences = await preferencesFuture;
+      final repo = await repoFuture;
       // Include timezone edges and overnight session starts; the projector applies
       // the exact calendar bounds after source selection and wake-date attribution.
       final rows = await repo.listInRange(
@@ -49,6 +55,7 @@ final healthTrendSeriesProvider = FutureProvider.autoDispose
             kind: kind,
             rows: rows[kind] ?? [],
             window: window,
+            preferredSource: preferences.sources[kind],
           ),
       };
     });

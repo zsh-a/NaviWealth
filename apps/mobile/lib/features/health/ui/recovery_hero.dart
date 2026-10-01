@@ -72,7 +72,11 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
             if (score == null ||
                 confidence == 'insufficient' ||
                 verdict == 'insufficient_data') {
-              return _RecoveryInsufficientState(verdict: verdict, color: color);
+              return _RecoveryInsufficientState(
+                verdict: verdict,
+                color: color,
+                components: components,
+              );
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,7 +140,7 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                     ),
                     if (freshnessHours != null && freshnessHours > 36)
                       AppBadge(
-                        label: l10n.healthRecoveryFreshness(
+                        label: l10n.healthRecoveryWorstFreshness(
                           _ago(
                             l10n,
                             DateTime.now().toUtc().subtract(
@@ -198,10 +202,12 @@ class _RecoveryInsufficientState extends StatelessWidget {
   const _RecoveryInsufficientState({
     required this.verdict,
     required this.color,
+    this.components = const [],
   });
 
   final String verdict;
   final Color color;
+  final List<Map<String, Object?>> components;
 
   @override
   Widget build(BuildContext context) {
@@ -240,6 +246,10 @@ class _RecoveryInsufficientState extends StatelessWidget {
           maxLines: 3,
           overflow: TextOverflow.ellipsis,
         ),
+        for (final component in components) ...[
+          const SizedBox(height: AppSpacing.s8),
+          _RecoveryEvidenceRow(component: component),
+        ],
       ],
     );
   }
@@ -259,9 +269,17 @@ class _RecoveryEvidenceRow extends StatelessWidget {
     final recentSamples = (component['recent_samples'] as num?)?.toInt();
     final baselineSamples = (component['baseline_samples'] as num?)?.toInt();
     final delta = (component['delta_pct'] as num?)?.toDouble();
-    if (recent == null) return const SizedBox.shrink();
-    final recentLabel = _recoveryValue(metric, recent);
-    final message = delta == null
+    final state = component['status'];
+    final recentLabel = recent == null ? '' : _recoveryValue(metric, recent);
+    final message = state == 'missing_recent'
+        ? l10n.healthRecoveryMissingRecent(_recoveryMetricLabel(l10n, metric))
+        : state == 'learning'
+        ? l10n.healthRecoveryLearning(
+            _recoveryMetricLabel(l10n, metric),
+            baselineSamples ?? 0,
+            (component['baseline_days_required'] as num?)?.toInt() ?? 5,
+          )
+        : delta == null
         ? l10n.healthRecoveryEvidenceNoBaseline(
             _recoveryMetricLabel(l10n, metric),
             recentLabel,
@@ -273,7 +291,12 @@ class _RecoveryEvidenceRow extends StatelessWidget {
                 ? l10n.healthRecoveryDeltaUp(delta.abs().toStringAsFixed(1))
                 : l10n.healthRecoveryDeltaDown(delta.abs().toStringAsFixed(1)),
           );
-    final evidenceMeta = baseline != null
+    final evidenceMeta = component['reference_basis'] == 'user_goal'
+        ? l10n.healthRecoveryGoalReference(
+            (component['reference_value'] as num).toStringAsFixed(1),
+            recentSamples ?? 0,
+          )
+        : baseline != null
         ? l10n.healthRecoveryEvidenceBaseline(
             _recoveryValue(metric, baseline),
             recentSamples ?? 0,
@@ -307,6 +330,31 @@ class _RecoveryEvidenceRow extends StatelessWidget {
               if (evidenceMeta != null) ...[
                 const SizedBox(height: AppSpacing.s2),
                 Text(evidenceMeta, style: context.microCaptionStyle),
+              ],
+              if (component['source_id'] case final String sourceId) ...[
+                const SizedBox(height: AppSpacing.s2),
+                Text(
+                  [
+                    healthMetricSourceFromId(sourceId)?.label ??
+                        l10n.healthUnknownSource,
+                    if (component['source_device'] case final String device
+                        when device.isNotEmpty)
+                      device,
+                    if (metric == 'hrv')
+                      if (component['measurement_method']
+                          case final String method
+                          when method == 'sdnn' || method == 'rmssd')
+                        method.toUpperCase(),
+                    if (component['freshness_hours'] case final num hours)
+                      _ago(
+                        l10n,
+                        DateTime.now().toUtc().subtract(
+                          Duration(minutes: (hours * 60).round()),
+                        ),
+                      ),
+                  ].join(' · '),
+                  style: context.microCaptionStyle,
+                ),
               ],
             ],
           ),

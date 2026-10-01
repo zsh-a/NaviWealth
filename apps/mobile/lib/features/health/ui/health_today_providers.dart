@@ -7,6 +7,7 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth;
 import '../data/health_metric_selector.dart';
+import '../data/health_preferences.dart';
 import '../data/health_series.dart';
 import '../data/health_series_providers.dart';
 import '../data/providers.dart';
@@ -15,16 +16,26 @@ import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
 class HealthTodaySnapshot {
-  const HealthTodaySnapshot({required this.now, required this.byKind});
+  const HealthTodaySnapshot({
+    required this.now,
+    required this.byKind,
+    this.rawByKind,
+    this.preferences = const HealthPreferences(),
+  });
   final DateTime now;
   final Map<HealthMetricKind, List<HealthMetric>> byKind;
+  final Map<HealthMetricKind, List<HealthMetric>>? rawByKind;
+  final HealthPreferences preferences;
+  List<HealthMetric> rawRows(HealthMetricKind kind) =>
+      rawByKind?[kind] ?? rows(kind);
   List<HealthMetric> rows(HealthMetricKind kind) => byKind[kind] ?? const [];
   HealthMetric? latest(HealthMetricKind kind) => rows(kind).firstOrNull;
   HealthSeries series(HealthMetricKind kind, {int days = 7}) =>
       buildHealthSeries(
         kind: kind,
-        rows: rows(kind),
+        rows: rawRows(kind),
         window: HealthWindow(now: now, days: days),
+        preferredSource: preferences.sources[kind],
       );
 }
 
@@ -39,9 +50,14 @@ final healthTodaySnapshotProvider = FutureProvider<HealthTodaySnapshot?>((
       false;
   ref.watch(activeUserIdProvider);
   if (!enabled) return null;
-  final repo = await ref.watch(healthMetricRepositoryProvider.future);
-  final owner = await ref.watch(currentUserIdProvider)();
+  ref.watch(healthCalendarDayProvider);
+  final repoFuture = ref.watch(healthMetricRepositoryProvider.future);
+  final ownerFuture = ref.watch(currentUserIdProvider)();
+  final preferencesFuture = ref.watch(healthPreferencesProvider.future);
   final now = ref.watch(healthClockProvider)();
+  final repo = await repoFuture;
+  final owner = await ownerFuture;
+  final preferences = await preferencesFuture;
   final kinds = HealthMetricKind.values
       .where((k) => k != HealthMetricKind.unknown)
       .toSet();
@@ -66,7 +82,12 @@ final healthTodaySnapshotProvider = FutureProvider<HealthTodaySnapshot?>((
   };
   return HealthTodaySnapshot(
     now: now,
-    byKind: selectCanonicalHealthMetrics(combined),
+    byKind: selectCanonicalHealthMetrics(
+      combined,
+      preferredSources: preferences.sources,
+    ),
+    rawByKind: combined,
+    preferences: preferences,
   );
 });
 
@@ -122,13 +143,15 @@ final recoverySignalProvider =
       if (snapshot == null) return null;
       return const RecoveryScorer()
           .score(
-            hrv: snapshot.rows(HealthMetricKind.hrvDaily),
-            sleep: snapshot.rows(HealthMetricKind.sleepSession),
-            rhr: snapshot.rows(HealthMetricKind.rhrDaily),
-            vo2Max: snapshot.rows(HealthMetricKind.vo2Max),
-            bodyBattery: snapshot.rows(HealthMetricKind.bodyBatteryDaily),
-            stress: snapshot.rows(HealthMetricKind.stressDaily),
-            now: snapshot.now.toUtc(),
+            hrv: snapshot.rawRows(HealthMetricKind.hrvDaily),
+            sleep: snapshot.rawRows(HealthMetricKind.sleepSession),
+            rhr: snapshot.rawRows(HealthMetricKind.rhrDaily),
+            vo2Max: snapshot.rawRows(HealthMetricKind.vo2Max),
+            bodyBattery: snapshot.rawRows(HealthMetricKind.bodyBatteryDaily),
+            stress: snapshot.rawRows(HealthMetricKind.stressDaily),
+            preferredSources: snapshot.preferences.sources,
+            sleepGoalHours: snapshot.preferences.sleepGoalHours,
+            now: snapshot.now,
           )
           .toJson();
     });

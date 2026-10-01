@@ -7,27 +7,38 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/features/health/data/health_check_in_providers.dart';
+import 'package:naviwealth/features/health/data/health_check_in_repository.dart';
 import 'package:naviwealth/features/health/data/health_metric_repository.dart';
 import 'package:naviwealth/features/health/data/health_metric_write_service.dart';
+import 'package:naviwealth/features/health/data/health_preferences.dart';
 import 'package:naviwealth/features/health/data/health_series_providers.dart';
 import 'package:naviwealth/features/health/data/providers.dart' as health;
 import 'package:naviwealth/features/health/domain/health_metric.dart';
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 class HealthTestFixture {
-  HealthTestFixture._(this.db, this.repo);
+  HealthTestFixture._(this.db, this.repo, this.preferences);
   final AppDatabase db;
   final HealthMetricRepository repo;
+  final HealthPreferencesStore preferences;
   static final now = DateTime(2026, 9, 12, 12);
   static const owner = 'health-test';
   static Future<HealthTestFixture> create({bool populated = true}) async {
     final db = makeTestDatabase();
     await DomainOptInStore(db).write(DomainOptIns(const {DomainScope.health}));
     final repo = HealthMetricRepository(db: db, outbox: InMemoryOutboxStore());
-    final result = HealthTestFixture._(db, repo);
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final result = HealthTestFixture._(
+      db,
+      repo,
+      HealthPreferencesStore(prefs, owner),
+    );
     if (populated) {
       for (var i = 0; i < 60; i++) {
         final day = DateTime.utc(2026, 9, 12).subtract(Duration(days: i));
@@ -78,6 +89,12 @@ class HealthTestFixture {
     repository: repo,
     stamper: makeStubStamper(userId: owner),
   );
+  HealthCheckInRepository get checkIns => HealthCheckInRepository(
+    db: db,
+    outbox: InMemoryOutboxStore(),
+    stamper: makeStubStamper(userId: owner),
+    clock: () => now,
+  );
   HealthMetric metric(
     String id,
     HealthMetricKind kind,
@@ -102,6 +119,8 @@ class HealthTestFixture {
     ),
   );
   List<Override> get overrides => [
+    healthPreferencesStoreProvider.overrideWith((_) async => preferences),
+    healthCheckInRepositoryProvider.overrideWith((_) async => checkIns),
     appDatabaseProvider.overrideWith((_) async => db),
     currentUserIdProvider.overrideWithValue(() async => owner),
     healthClockProvider.overrideWithValue(() => now),

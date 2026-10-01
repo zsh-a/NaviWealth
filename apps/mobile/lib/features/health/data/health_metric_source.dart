@@ -81,6 +81,7 @@ HealthMetricSource legacyHealthMetricSource({
 }
 
 HealthMetricSource sourceForHealthMetric(HealthMetric metric) =>
+    healthMetricSourceFromId(metric.sourceId) ??
     legacyHealthMetricSource(
       rowId: metric.id,
       sourceDevice: metric.sourceDevice,

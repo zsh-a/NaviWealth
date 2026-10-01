@@ -11,6 +11,9 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../data/health_metric_comparability.dart';
+import '../data/health_metric_source.dart';
+import '../data/health_preferences.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
@@ -52,13 +55,28 @@ class GetHrvTrendTool implements DeviceTool {
     final windowDays = _normalizeWindow(input['window_days']);
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-
-    final rows = await repo.listByKind(
-      ownerUserId: ownerUserId,
-      kind: HealthMetricKind.hrvDaily,
-      limit: windowDays + 10,
-    );
+    final preferences = await ctx.ref.read(healthPreferencesProvider.future);
     final now = DateTime.now().toUtc();
+
+    final data = await repo.listInRange(
+      ownerUserId: ownerUserId,
+      kinds: const {HealthMetricKind.hrvDaily},
+      from: now.subtract(Duration(days: windowDays)),
+      to: now.add(const Duration(seconds: 1)),
+    );
+    final rows = comparableHealthMetrics(
+      HealthMetricKind.hrvDaily,
+      (data[HealthMetricKind.hrvDaily] ?? const [])
+          .where(
+            (row) =>
+                row.value.isFinite &&
+                row.value >= 0 &&
+                row.unit == 'ms' &&
+                !row.capturedAt.isAfter(now),
+          )
+          .toList(),
+      preferredSource: preferences.sources[HealthMetricKind.hrvDaily],
+    );
     final result = shape(rows, windowDays: windowDays, now: now);
     return withEvidence(
       result: result,
@@ -93,15 +111,21 @@ class GetHrvTrendTool implements DeviceTool {
     final fromInstant = now.subtract(Duration(days: windowDays));
     // Window-filter, then sort oldest-first so the JSON `points`
     // array reads chronologically (the repo returns newest-first).
-    final inWindow =
-        rows
-            .where(
-              (m) =>
-                  !m.capturedAt.isBefore(fromInstant) &&
-                  !m.capturedAt.isAfter(now),
-            )
-            .toList()
-          ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
+    final inWindow = comparableHealthMetrics(
+      HealthMetricKind.hrvDaily,
+      rows
+          .where(
+            (row) =>
+                row.kind == HealthMetricKind.hrvDaily &&
+                row.unit == 'ms' &&
+                row.value.isFinite &&
+                row.value >= 0 &&
+                row.sync.deletedAt == null &&
+                !row.capturedAt.isBefore(fromInstant) &&
+                !row.capturedAt.isAfter(now),
+          )
+          .toList(),
+    ).toList()..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
 
     final points = <Map<String, Object?>>[];
     for (final m in inWindow) {
@@ -145,6 +169,10 @@ class GetHrvTrendTool implements DeviceTool {
       'from': fromInstant.toIso8601String().substring(0, 10),
       'to': now.toIso8601String().substring(0, 10),
       'points': points,
+      if (inWindow.isNotEmpty)
+        'source_id': sourceForHealthMetric(inWindow.last).id,
+      if (inWindow.isNotEmpty)
+        'measurement_method': healthMeasurementMethod(inWindow.last),
       'summary': ?summary,
       if (points.isEmpty)
         'note':

@@ -5143,7 +5143,7 @@
       "recent": { "type": "String" }
     }
   },
-  "healthRecoveryEvidenceBaseline": "基线 {baseline} · 近期 {recentSamples} 条 / 基线 {baselineSamples} 条",
+  "healthRecoveryEvidenceBaseline": "基线 {baseline} · 近期 {recentSamples} 天 / 基线 {baselineSamples} 天",
   "@healthRecoveryEvidenceBaseline": {
     "placeholders": {
       "baseline": { "type": "String" },
@@ -5151,7 +5151,7 @@
       "baselineSamples": { "type": "int" }
     }
   },
-  "healthRecoveryEvidenceNoBaselineSamples": "近期 {recentSamples} 条 · 正在建立个人基线",
+  "healthRecoveryEvidenceNoBaselineSamples": "近期 {recentSamples} 天 · 正在建立个人基线",
   "@healthRecoveryEvidenceNoBaselineSamples": {
     "placeholders": { "recentSamples": { "type": "int" } }
   },
@@ -5416,5 +5416,125 @@
   "knowledgeReviewNextMonth": "30 天后",
   "knowledgeReviewNextDateRequired": "继续观察时，请选择未来的回顾日期。",
   "knowledgeSourceViewExisting": "查看已有笔记",
-  "knowledgeTagsSearchHint": "搜索标签"
+  "knowledgeTagsSearchHint": "搜索标签",
+  "healthCheckInTitle": "每日感受",
+  "healthCheckInHelp": "只记录今天重要的感受。各项均可跳过，再次点击已选分数可清除。",
+  "healthCheckInEnergy": "精力",
+  "healthCheckInSleepQuality": "主观睡眠质量",
+  "healthCheckInStress": "主观压力",
+  "healthCheckInEnergyScale": "1 精力不足 · 5 精力充沛",
+  "healthCheckInSleepScale": "1 睡眠不佳 · 5 睡得很好",
+  "healthCheckInStressScale": "1 压力很小 · 5 压力很大",
+  "healthCheckInEvents": "生活事件",
+  "healthCheckInValue": "{label} {value}/5",
+  "@healthCheckInValue": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "healthCheckInLoadFailed": "暂时无法读取记录，请重试后再编辑。",
+  "healthCheckInEmptyError": "请至少记录一项感受、事件或备注。",
+  "healthCheckInDelete": "删除记录",
+  "healthCheckInDeleteConfirm": "删除这一天的感受、事件和备注？",
+  "healthCheckInRecord": "记录感受",
+  "healthCheckInEdit": "编辑记录",
+  "healthCheckInRecordDay": "记录其他日期",
+  "healthCheckInEmpty": "今天感觉怎么样？",
+  "healthCheckInEmptyHelp": "记录感受和生活事件，帮助理解健康趋势；无需连接手表。",
+  "healthCheckInHistory": "感受与生活事件",
+  "healthCheckInHistoryEmpty": "这段时间还没有记录，未填写的日期不会记为零。",
+  "healthCheckInContextEmpty": "这一天尚未记录感受。",
+  "healthCheckInObservedDays": "已记录 {count}/{days} 天",
+  "@healthCheckInObservedDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthCheckInEventDates": "感受记录日期",
+  "healthCheckInAssociationHelp": "对照指标与生活背景查看变化；这些记录不能证明因果关系。",
+  "healthTagCaffeine": "咖啡因",
+  "healthTagLateMeal": "晚餐较晚",
+  "healthTagAlcohol": "饮酒",
+  "healthTagIllness": "身体不适",
+  "healthTagTravel": "出行",
+  "healthTagHardWorkout": "高强度运动",
+  "healthTagMeditation": "冥想",
+  "healthTagLateScreen": "睡前看屏幕",
+  "healthSourcePreference": "优先数据来源",
+  "healthSourceAutomatic": "自动选择",
+  "healthSourcePreferenceHelp": "同一天有多个来源时优先使用所选来源，缺失日期由其他来源补充，原始记录保留。",
+  "healthHrvComparableHint": "HRV 仅对照当前来源、设备和测量算法；切换后可比较的历史可能变少。",
+  "healthRecoveryLearning": "{metric}：基线积累中 · {count}/{required} 天",
+  "@healthRecoveryLearning": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRecoveryMissingRecent": "{metric}：近期没有观测数据",
+  "@healthRecoveryMissingRecent": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "healthRecoverySourceDetail": "{source} · {age}",
+  "@healthRecoverySourceDetail": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "healthRecoveryGoalReference": "睡眠目标 {hours} 小时 · 已观测 {days} 天",
+  "@healthRecoveryGoalReference": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRecoveryWorstFreshness": "参与评分的最旧指标：{age}",
+  "@healthRecoveryWorstFreshness": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "healthSleepGoalTitle": "个人睡眠目标",
+  "healthSleepGoalHelp": "设置期望睡眠时长，或使用自己的历史基线；此目标不是对生理睡眠需求的估算。",
+  "healthSleepGoalAutomatic": "使用个人基线",
+  "healthSleepGoalHours": "{hours} 小时",
+  "@healthSleepGoalHours": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  }
 }

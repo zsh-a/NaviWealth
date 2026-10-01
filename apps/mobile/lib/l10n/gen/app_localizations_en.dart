@@ -17095,12 +17095,12 @@ class AppLocalizationsEn extends AppLocalizations {
     int recentSamples,
     int baselineSamples,
   ) {
-    return 'Baseline $baseline · $recentSamples recent / $baselineSamples baseline samples';
+    return 'Baseline $baseline · $recentSamples recent / $baselineSamples baseline days';
   }
 
   @override
   String healthRecoveryEvidenceNoBaselineSamples(int recentSamples) {
-    return '$recentSamples recent samples · baseline forming';
+    return '$recentSamples recent days · baseline forming';
   }
 
   @override
@@ -17838,4 +17838,168 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeTagsSearchHint => 'Find a tag';
+
+  @override
+  String get healthCheckInTitle => 'Daily check-in';
+
+  @override
+  String get healthCheckInHelp =>
+      'Record only what matters today. All fields are optional; tap a selected rating again to clear it.';
+
+  @override
+  String get healthCheckInEnergy => 'Energy';
+
+  @override
+  String get healthCheckInSleepQuality => 'Sleep quality';
+
+  @override
+  String get healthCheckInStress => 'Perceived stress';
+
+  @override
+  String get healthCheckInEnergyScale => '1 Low energy · 5 High energy';
+
+  @override
+  String get healthCheckInSleepScale => '1 Poor sleep · 5 Restful sleep';
+
+  @override
+  String get healthCheckInStressScale => '1 Little stress · 5 High stress';
+
+  @override
+  String get healthCheckInEvents => 'Life events';
+
+  @override
+  String healthCheckInValue(String label, int value) {
+    return '$label $value/5';
+  }
+
+  @override
+  String get healthCheckInLoadFailed =>
+      'Your check-in could not be loaded. Retry before editing it.';
+
+  @override
+  String get healthCheckInEmptyError =>
+      'Record at least one feeling, event, or note.';
+
+  @override
+  String get healthCheckInDelete => 'Delete check-in';
+
+  @override
+  String get healthCheckInDeleteConfirm =>
+      'Delete the feelings, events, and note for this date?';
+
+  @override
+  String get healthCheckInRecord => 'Record feelings';
+
+  @override
+  String get healthCheckInEdit => 'Edit check-in';
+
+  @override
+  String get healthCheckInRecordDay => 'Record another day';
+
+  @override
+  String get healthCheckInEmpty => 'How do you feel today?';
+
+  @override
+  String get healthCheckInEmptyHelp =>
+      'Add feelings and life events to understand your health trends. A wearable is optional.';
+
+  @override
+  String get healthCheckInHistory => 'Feelings & life events';
+
+  @override
+  String get healthCheckInHistoryEmpty =>
+      'No check-ins in this period. Missing days stay unrecorded.';
+
+  @override
+  String get healthCheckInContextEmpty => 'No check-in for this date.';
+
+  @override
+  String healthCheckInObservedDays(int count, int days) {
+    return 'Recorded on $count of $days days';
+  }
+
+  @override
+  String get healthCheckInEventDates => 'Check-in dates';
+
+  @override
+  String get healthCheckInAssociationHelp =>
+      'Compare observations and context. These records do not establish cause and effect.';
+
+  @override
+  String get healthTagCaffeine => 'Caffeine';
+
+  @override
+  String get healthTagLateMeal => 'Late meal';
+
+  @override
+  String get healthTagAlcohol => 'Alcohol';
+
+  @override
+  String get healthTagIllness => 'Feeling unwell';
+
+  @override
+  String get healthTagTravel => 'Travel';
+
+  @override
+  String get healthTagHardWorkout => 'Hard workout';
+
+  @override
+  String get healthTagMeditation => 'Meditation';
+
+  @override
+  String get healthTagLateScreen => 'Late screen time';
+
+  @override
+  String get healthSourcePreference => 'Preferred data source';
+
+  @override
+  String get healthSourceAutomatic => 'Automatic';
+
+  @override
+  String get healthSourcePreferenceHelp =>
+      'Used when sources overlap. Other sources fill missing dates. Original readings are kept.';
+
+  @override
+  String get healthHrvComparableHint =>
+      'HRV compares the current source, device, and measurement method. A switch may shorten the available history.';
+
+  @override
+  String healthRecoveryLearning(String metric, int count, int required) {
+    return '$metric: baseline learning · $count/$required days';
+  }
+
+  @override
+  String healthRecoveryMissingRecent(String metric) {
+    return '$metric: no recent observations';
+  }
+
+  @override
+  String healthRecoverySourceDetail(String source, String age) {
+    return '$source · $age';
+  }
+
+  @override
+  String healthRecoveryGoalReference(String hours, int days) {
+    return 'Sleep goal $hours h · $days observed days';
+  }
+
+  @override
+  String healthRecoveryWorstFreshness(String age) {
+    return 'Oldest scoring input: $age';
+  }
+
+  @override
+  String get healthSleepGoalTitle => 'Personal sleep goal';
+
+  @override
+  String get healthSleepGoalHelp =>
+      'Set your own duration goal, or use your observed baseline. This is not an estimate of your biological sleep need.';
+
+  @override
+  String get healthSleepGoalAutomatic => 'Use personal baseline';
+
+  @override
+  String healthSleepGoalHours(String hours) {
+    return '$hours hours';
+  }
 }

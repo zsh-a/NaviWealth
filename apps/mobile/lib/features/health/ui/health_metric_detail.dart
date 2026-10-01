@@ -1,30 +1,38 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
+import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../data/health_check_in_providers.dart';
+import '../data/health_metric_comparability.dart';
 import '../data/health_metric_source.dart';
+import '../data/health_preferences.dart';
 import '../data/health_series.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
+import 'health_check_in_sections.dart';
 import 'health_metric_presentation.dart';
 import 'health_series_chart.dart';
 
-class HealthMetricDetail extends StatefulWidget {
+class HealthMetricDetail extends ConsumerStatefulWidget {
   const HealthMetricDetail({super.key, required this.series});
   final HealthSeries series;
   @override
-  State<HealthMetricDetail> createState() => _HealthMetricDetailState();
+  ConsumerState<HealthMetricDetail> createState() => _HealthMetricDetailState();
 }
 
-class _HealthMetricDetailState extends State<HealthMetricDetail> {
+class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
   HealthDaySample? _focused;
   bool _showAll = false;
+  bool _sourceSaving = false;
+  String? _sourceError;
   @override
   void didUpdateWidget(covariant HealthMetricDetail oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -58,6 +66,12 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
     }
     final records = series.samples.reversed.toList();
     final visible = _showAll ? records : records.take(7);
+    final checkIns = ref.watch(healthCheckInsProvider(series.window.days));
+    final entries = checkIns.value ?? const [];
+    final entryByDay = {for (final entry in entries) entry.day: entry};
+    final marked = series.samples
+        .where((day) => entryByDay.containsKey(day.day))
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -67,6 +81,43 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(kind.description(l), style: context.captionStyle),
+              if (series.availableSources.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.s8),
+                AppAdaptiveChoice<HealthMetricSource?>(
+                  title: l.healthSourcePreference,
+                  subtitle: l.healthSourcePreferenceHelp,
+                  options: {
+                    null,
+                    ...series.availableSources,
+                    if (series.preferredSource != null) series.preferredSource,
+                  }.toList(),
+                  value: series.preferredSource,
+                  wideInlineBreakpoint: double.infinity,
+                  inlineMaxOptions: 1,
+                  labelOf: (source) => source == null
+                      ? l.healthSourceAutomatic
+                      : healthSourceLabel(l, source),
+                  onChanged: _sourceSaving ? null : _saveSource,
+                ),
+                Text(
+                  l.healthSourcePreferenceHelp,
+                  style: context.microCaptionStyle,
+                ),
+              ],
+              if (_sourceError != null) ...[
+                const SizedBox(height: AppSpacing.s8),
+                AppStatusBanner(
+                  message: _sourceError!,
+                  kind: AppStatusKind.error,
+                ),
+              ],
+              if (kind == HealthMetricKind.hrvDaily) ...[
+                const SizedBox(height: AppSpacing.s8),
+                Text(
+                  l.healthHrvComparableHint,
+                  style: context.microCaptionStyle,
+                ),
+              ],
               const SizedBox(height: AppSpacing.s12),
               Text(
                 kind.formatValue(l, sample.value),
@@ -92,6 +143,30 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
                 ),
               ],
               const SizedBox(height: AppSpacing.s12),
+              if (marked.isNotEmpty) ...[
+                Text(
+                  l.healthCheckInEventDates,
+                  style: context.microCaptionStyle,
+                ),
+                const SizedBox(height: AppSpacing.s4),
+                Wrap(
+                  spacing: AppSpacing.s6,
+                  runSpacing: AppSpacing.s6,
+                  children: [
+                    for (final day in marked.reversed.take(7))
+                      AppFilterChip(
+                        key: ValueKey(
+                          'health-check-in-date:${day.day.toIso8601String()}',
+                        ),
+                        label: healthDateLabel(l, day.day),
+                        icon: FLucideIcons.notebookPen,
+                        active: sample.day == day.day,
+                        onPress: () => setState(() => _focused = day),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.s12),
+              ],
               Wrap(
                 spacing: AppSpacing.s12,
                 runSpacing: AppSpacing.s8,
@@ -138,6 +213,23 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.s16),
+        checkIns.when(
+          skipLoadingOnRefresh: true,
+          skipLoadingOnReload: true,
+          loading: () => const SkeletonBox(height: 44),
+          error: (error, stack) => kDefaultError(
+            context,
+            error,
+            stack,
+            onRetry: () =>
+                ref.invalidate(healthCheckInsProvider(series.window.days)),
+          ),
+          data: (_) => HealthCheckInContext(
+            day: sample.day,
+            entry: entryByDay[sample.day],
+          ),
+        ),
         const SizedBox(height: AppSpacing.s20),
         Text(l.healthRecordsTitle, style: context.labelStyle),
         const SizedBox(height: AppSpacing.s8),
@@ -171,6 +263,36 @@ class _HealthMetricDetailState extends State<HealthMetricDetail> {
         ],
       ],
     );
+  }
+
+  Future<void> _saveSource(HealthMetricSource? source) async {
+    if (_sourceSaving) return;
+    final kind = widget.series.kind;
+    final container = ProviderScope.containerOf(context);
+    setState(() {
+      _sourceSaving = true;
+      _sourceError = null;
+    });
+    try {
+      final store = await container.read(healthPreferencesStoreProvider.future);
+      if (store.owner != await container.read(currentUserIdProvider)()) {
+        throw StateError('The active user changed.');
+      }
+      await store.setSource(kind, source);
+      container.invalidate(healthPreferencesProvider);
+    } on Object catch (error) {
+      if (mounted) {
+        setState(
+          () => _sourceError = userSafeErrorMessage(
+            context,
+            error,
+            operation: 'save health source preference',
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sourceSaving = false);
+    }
   }
 }
 
@@ -278,6 +400,11 @@ class _RecordEvidence extends StatelessWidget {
             '$timestamp · ${row.kind.formatValue(l, healthDisplayValue(row))}',
             style: context.captionStyle,
           ),
+          if (row.kind == HealthMetricKind.hrvDaily)
+            Text(
+              healthMeasurementMethod(row) ?? l.healthUnknownSource,
+              style: context.microCaptionStyle,
+            ),
           if (payload['note'] case final String note when note.isNotEmpty)
             Text(note, style: context.captionStyle),
           if (row.kind == HealthMetricKind.sleepSession)

@@ -16179,12 +16179,12 @@ class AppLocalizationsZh extends AppLocalizations {
     int recentSamples,
     int baselineSamples,
   ) {
-    return '基线 $baseline · 近期 $recentSamples 条 / 基线 $baselineSamples 条';
+    return '基线 $baseline · 近期 $recentSamples 天 / 基线 $baselineSamples 天';
   }
 
   @override
   String healthRecoveryEvidenceNoBaselineSamples(int recentSamples) {
-    return '近期 $recentSamples 条 · 正在建立个人基线';
+    return '近期 $recentSamples 天 · 正在建立个人基线';
   }
 
   @override
@@ -16865,4 +16865,159 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeTagsSearchHint => '搜索标签';
+
+  @override
+  String get healthCheckInTitle => '每日感受';
+
+  @override
+  String get healthCheckInHelp => '只记录今天重要的感受。各项均可跳过，再次点击已选分数可清除。';
+
+  @override
+  String get healthCheckInEnergy => '精力';
+
+  @override
+  String get healthCheckInSleepQuality => '主观睡眠质量';
+
+  @override
+  String get healthCheckInStress => '主观压力';
+
+  @override
+  String get healthCheckInEnergyScale => '1 精力不足 · 5 精力充沛';
+
+  @override
+  String get healthCheckInSleepScale => '1 睡眠不佳 · 5 睡得很好';
+
+  @override
+  String get healthCheckInStressScale => '1 压力很小 · 5 压力很大';
+
+  @override
+  String get healthCheckInEvents => '生活事件';
+
+  @override
+  String healthCheckInValue(String label, int value) {
+    return '$label $value/5';
+  }
+
+  @override
+  String get healthCheckInLoadFailed => '暂时无法读取记录，请重试后再编辑。';
+
+  @override
+  String get healthCheckInEmptyError => '请至少记录一项感受、事件或备注。';
+
+  @override
+  String get healthCheckInDelete => '删除记录';
+
+  @override
+  String get healthCheckInDeleteConfirm => '删除这一天的感受、事件和备注？';
+
+  @override
+  String get healthCheckInRecord => '记录感受';
+
+  @override
+  String get healthCheckInEdit => '编辑记录';
+
+  @override
+  String get healthCheckInRecordDay => '记录其他日期';
+
+  @override
+  String get healthCheckInEmpty => '今天感觉怎么样？';
+
+  @override
+  String get healthCheckInEmptyHelp => '记录感受和生活事件，帮助理解健康趋势；无需连接手表。';
+
+  @override
+  String get healthCheckInHistory => '感受与生活事件';
+
+  @override
+  String get healthCheckInHistoryEmpty => '这段时间还没有记录，未填写的日期不会记为零。';
+
+  @override
+  String get healthCheckInContextEmpty => '这一天尚未记录感受。';
+
+  @override
+  String healthCheckInObservedDays(int count, int days) {
+    return '已记录 $count/$days 天';
+  }
+
+  @override
+  String get healthCheckInEventDates => '感受记录日期';
+
+  @override
+  String get healthCheckInAssociationHelp => '对照指标与生活背景查看变化；这些记录不能证明因果关系。';
+
+  @override
+  String get healthTagCaffeine => '咖啡因';
+
+  @override
+  String get healthTagLateMeal => '晚餐较晚';
+
+  @override
+  String get healthTagAlcohol => '饮酒';
+
+  @override
+  String get healthTagIllness => '身体不适';
+
+  @override
+  String get healthTagTravel => '出行';
+
+  @override
+  String get healthTagHardWorkout => '高强度运动';
+
+  @override
+  String get healthTagMeditation => '冥想';
+
+  @override
+  String get healthTagLateScreen => '睡前看屏幕';
+
+  @override
+  String get healthSourcePreference => '优先数据来源';
+
+  @override
+  String get healthSourceAutomatic => '自动选择';
+
+  @override
+  String get healthSourcePreferenceHelp =>
+      '同一天有多个来源时优先使用所选来源，缺失日期由其他来源补充，原始记录保留。';
+
+  @override
+  String get healthHrvComparableHint => 'HRV 仅对照当前来源、设备和测量算法；切换后可比较的历史可能变少。';
+
+  @override
+  String healthRecoveryLearning(String metric, int count, int required) {
+    return '$metric：基线积累中 · $count/$required 天';
+  }
+
+  @override
+  String healthRecoveryMissingRecent(String metric) {
+    return '$metric：近期没有观测数据';
+  }
+
+  @override
+  String healthRecoverySourceDetail(String source, String age) {
+    return '$source · $age';
+  }
+
+  @override
+  String healthRecoveryGoalReference(String hours, int days) {
+    return '睡眠目标 $hours 小时 · 已观测 $days 天';
+  }
+
+  @override
+  String healthRecoveryWorstFreshness(String age) {
+    return '参与评分的最旧指标：$age';
+  }
+
+  @override
+  String get healthSleepGoalTitle => '个人睡眠目标';
+
+  @override
+  String get healthSleepGoalHelp => '设置期望睡眠时长，或使用自己的历史基线；此目标不是对生理睡眠需求的估算。';
+
+  @override
+  String get healthSleepGoalAutomatic => '使用个人基线';
+
+  @override
+  String healthSleepGoalHours(String hours) {
+    return '$hours 小时';
+  }
 }

@@ -12,6 +12,9 @@ import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 
+import '../data/health_metric_source.dart';
+import '../data/health_preferences.dart';
+import '../data/health_series.dart';
 import '../data/providers.dart';
 import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
@@ -24,7 +27,7 @@ class GetRecentSleepSummaryTool implements DeviceTool {
 
   @override
   String get description =>
-      '返回最近 N 天的睡眠会话摘要(每天的入睡时间 + 时长)+ 汇总(平均时长、'
+      '返回最近 N 天的睡眠会话摘要(每天的入睡时间 + 时长)+ 汇总(按本地醒来日期合计后计算的已记录日平均时长、'
       '总时长、会话数)。数据来自端侧 `health_metrics` 表的 `sleep_session` 类型,'
       '由 HealthKit / Health Connect 适配器同步。'
       '适合场景:"最近一周睡得怎么样" / "周末和工作日睡眠时长对比" / "上次睡过 8 小时是哪天"。'
@@ -56,16 +59,23 @@ class GetRecentSleepSummaryTool implements DeviceTool {
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    // We pull a generous limit; the repo orders by capturedAt desc, so
-    // taking the first ~daysBack*1.5 rows covers most patterns (multiple
-    // naps in a day, daytime sessions). Then we filter to the window in
-    // [shape] for the final output.
-    final rows = await repo.listByKind(
+    final now = DateTime.now();
+    final preferences = await ctx.ref.read(healthPreferencesProvider.future);
+    final window = HealthWindow(now: now, days: daysBack);
+    final data = await repo.listInRange(
       ownerUserId: ownerUserId,
-      kind: HealthMetricKind.sleepSession,
-      limit: (daysBack * 1.5).ceil().clamp(10, 200),
+      kinds: const {HealthMetricKind.sleepSession},
+      from: window.start.subtract(const Duration(days: 2)),
+      to: window.end.add(const Duration(days: 1)),
     );
-    final now = DateTime.now().toUtc();
+    final rows = buildHealthSeries(
+      kind: HealthMetricKind.sleepSession,
+      rows: (data[HealthMetricKind.sleepSession] ?? const [])
+          .where((row) => _completed(row, now))
+          .toList(),
+      window: window,
+      preferredSource: preferences.sources[HealthMetricKind.sleepSession],
+    ).samples.reversed.expand((day) => day.records).toList();
     final result = shape(rows, daysBack: daysBack, now: now);
     return withEvidence(
       result: result,
@@ -89,11 +99,16 @@ class GetRecentSleepSummaryTool implements DeviceTool {
     List<HealthMetric> rows, {
     required int daysBack,
     required DateTime now,
+    HealthMetricSource? preferredSource,
   }) {
-    final fromInstant = now.subtract(Duration(days: daysBack));
-    final inWindow = rows.where(
-      (m) => !m.capturedAt.isBefore(fromInstant) && !m.capturedAt.isAfter(now),
+    final window = HealthWindow(now: now, days: daysBack);
+    final series = buildHealthSeries(
+      kind: HealthMetricKind.sleepSession,
+      rows: rows.where((row) => _completed(row, now)).toList(),
+      window: window,
+      preferredSource: preferredSource,
     );
+    final inWindow = series.samples.reversed.expand((day) => day.records);
 
     final sessions = <Map<String, Object?>>[];
     double totalHours = 0;
@@ -107,16 +122,17 @@ class GetRecentSleepSummaryTool implements DeviceTool {
       });
     }
     final count = sessions.length;
-    final avgHours = count == 0 ? 0.0 : totalHours / count;
+    final avgHours = series.average ?? 0;
 
     return <String, Object?>{
-      'from': _toIso(fromInstant),
+      'from': _toIso(window.start),
       'to': _toIso(now),
       'sessions': sessions,
       'summary': <String, Object?>{
         'session_count': count,
         'total_hours': _round(totalHours),
         'average_hours': _round(avgHours),
+        'observed_days': series.recordedDays,
       },
       if (count == 0)
         'note':
@@ -126,6 +142,16 @@ class GetRecentSleepSummaryTool implements DeviceTool {
   }
 
   static String _toIso(DateTime d) => d.toUtc().toIso8601String();
+
+  static bool _completed(HealthMetric row, DateTime now) =>
+      row.kind == HealthMetricKind.sleepSession &&
+      row.value.isFinite &&
+      row.value >= 0 &&
+      const ['s', 'min', 'h'].contains(row.unit) &&
+      row.sync.deletedAt == null &&
+      !row.capturedAt
+          .add(Duration(seconds: healthDurationSeconds(row).round()))
+          .isAfter(now);
 
   static double _secondsToHours(double value, String unit) {
     return switch (unit) {

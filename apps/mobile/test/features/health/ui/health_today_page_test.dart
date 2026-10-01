@@ -12,6 +12,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/health/data/garmin/garmin_sync_controller.dart';
+import 'package:naviwealth/features/health/data/health_preferences.dart';
 import 'package:naviwealth/features/health/data/health_sync_status.dart';
 import 'package:naviwealth/features/health/data/providers.dart' as health_data;
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
@@ -149,6 +150,8 @@ void main() {
     expect(find.text('HealthKit / Health Connect'), findsOneWidget);
     expect(find.text('Ready'), findsOneWidget);
     expect(find.text('Sync'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('today surfaces a persisted source failure', (tester) async {
@@ -185,6 +188,8 @@ void main() {
 
     expect(find.text('1 data source failed to refresh'), findsOneWidget);
     expect(find.textContaining('health-platform-fetch-failed'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('today distinguishes a recent data point from a stale failure', (
@@ -220,6 +225,8 @@ void main() {
     expect(find.text('1 data source failed to refresh'), findsOneWidget);
     expect(find.textContaining('Health data updated'), findsOneWidget);
     expect(find.textContaining('may be out of date'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 }
 
@@ -285,7 +292,12 @@ List<Override> _todayOverrides({
 
 Widget _wrap(Widget child, {required List<Override> overrides}) {
   return ProviderScope(
-    overrides: overrides,
+    overrides: [
+      healthPreferencesProvider.overrideWith(
+        (_) async => const HealthPreferences(),
+      ),
+      ...overrides,
+    ],
     child: MaterialApp(
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,

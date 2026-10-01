@@ -212,6 +212,7 @@ class HealthMetricRepository {
     unit: row.unit,
     payloadJson: row.payloadJson,
     sourceDevice: row.sourceDevice,
+    sourceId: row.sourceId,
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
       updatedAt: row.updatedAt,

@@ -66,3 +66,21 @@ class HealthMetrics extends Table with SyncableTable {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// One user-authored check-in per owner and calendar date. Scores are optional
+/// and never substituted for wearable measurements or recovery inputs.
+@DataClassName('HealthCheckInRow')
+class HealthCheckIns extends Table with SyncableTable {
+  TextColumn get id => text()();
+
+  /// UTC midnight encodes a calendar date, not an observation instant.
+  DateTimeColumn get day => dateTime()();
+  IntColumn get energy => integer().nullable()();
+  IntColumn get sleepQuality => integer().nullable()();
+  IntColumn get stress => integer().nullable()();
+  TextColumn get tagsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get note => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

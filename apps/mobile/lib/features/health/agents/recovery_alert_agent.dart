@@ -21,6 +21,8 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
+import '../data/health_metric_comparability.dart';
+import '../data/health_preferences.dart';
 import '../data/providers.dart';
 import '../domain/health_metric_kind.dart';
 
@@ -242,10 +244,17 @@ class RepositoryRecoveryAlertSignalReader implements RecoveryAlertSignalReader {
   Future<RecoveryAlertSignalRead> read(AgentContext ctx) async {
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
-    final rows = await repo.listByKind(
+    final preferences = await ctx.ref.read(healthPreferencesProvider.future);
+    final data = await repo.listInRange(
       ownerUserId: ownerUserId,
-      kind: HealthMetricKind.hrvDaily,
-      limit: 10,
+      kinds: const {HealthMetricKind.hrvDaily},
+      from: ctx.now.subtract(const Duration(days: 14)),
+      to: ctx.now.add(const Duration(seconds: 1)),
+    );
+    final rows = comparableHealthMetrics(
+      HealthMetricKind.hrvDaily,
+      data[HealthMetricKind.hrvDaily] ?? const [],
+      preferredSource: preferences.sources[HealthMetricKind.hrvDaily],
     );
     return recoveryAlertSignalFromValues(
       rows.map((m) => RecoveryAlertHrvPoint(m.capturedAt, m.value)).toList(),

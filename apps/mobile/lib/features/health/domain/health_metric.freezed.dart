@@ -26,7 +26,8 @@ mixin _$HealthMetric {
  String? get payloadJson;/// Best-effort device attribution (`'iPhone'`, `'Apple Watch'`,
 /// `'manual'`, …). Free text — pass through from the platform
 /// adapter.
- String? get sourceDevice;/// Sync metadata — owner / HLC / soft-delete tombstone. Same shape
+ String? get sourceDevice;/// Persisted adapter source identity; legacy rows may omit it.
+ String? get sourceId;/// Sync metadata — owner / HLC / soft-delete tombstone. Same shape
 /// as every other synced domain entity.
  SyncMeta get sync;
 /// Create a copy of HealthMetric
@@ -40,20 +41,20 @@ $HealthMetricCopyWith<HealthMetric> get copyWith => _$HealthMetricCopyWithImpl<H
 @override
 bool operator ==(Object other) {
   final _this = this as HealthMetric;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is HealthMetric&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.capturedAt, _this.capturedAt) || other.capturedAt == _this.capturedAt)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.unit, _this.unit) || other.unit == _this.unit)&&(identical(other.payloadJson, _this.payloadJson) || other.payloadJson == _this.payloadJson)&&(identical(other.sourceDevice, _this.sourceDevice) || other.sourceDevice == _this.sourceDevice)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is HealthMetric&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.capturedAt, _this.capturedAt) || other.capturedAt == _this.capturedAt)&&(identical(other.kind, _this.kind) || other.kind == _this.kind)&&(identical(other.value, _this.value) || other.value == _this.value)&&(identical(other.unit, _this.unit) || other.unit == _this.unit)&&(identical(other.payloadJson, _this.payloadJson) || other.payloadJson == _this.payloadJson)&&(identical(other.sourceDevice, _this.sourceDevice) || other.sourceDevice == _this.sourceDevice)&&(identical(other.sourceId, _this.sourceId) || other.sourceId == _this.sourceId)&&(identical(other.sync, _this.sync) || other.sync == _this.sync));
 }
 
 
 @override
 int get hashCode {
   final _this = this as HealthMetric;
-  return Object.hash(runtimeType,_this.id,_this.capturedAt,_this.kind,_this.value,_this.unit,_this.payloadJson,_this.sourceDevice,_this.sync);
+  return Object.hash(runtimeType,_this.id,_this.capturedAt,_this.kind,_this.value,_this.unit,_this.payloadJson,_this.sourceDevice,_this.sourceId,_this.sync);
 }
 
 @override
 String toString() {
   final _this = this as HealthMetric;
-  return 'HealthMetric(id: ${_this.id}, capturedAt: ${_this.capturedAt}, kind: ${_this.kind}, value: ${_this.value}, unit: ${_this.unit}, payloadJson: ${_this.payloadJson}, sourceDevice: ${_this.sourceDevice}, sync: ${_this.sync})';
+  return 'HealthMetric(id: ${_this.id}, capturedAt: ${_this.capturedAt}, kind: ${_this.kind}, value: ${_this.value}, unit: ${_this.unit}, payloadJson: ${_this.payloadJson}, sourceDevice: ${_this.sourceDevice}, sourceId: ${_this.sourceId}, sync: ${_this.sync})';
 }
 
 
@@ -64,7 +65,7 @@ abstract mixin class $HealthMetricCopyWith<$Res>  {
   factory $HealthMetricCopyWith(HealthMetric value, $Res Function(HealthMetric) _then) = _$HealthMetricCopyWithImpl;
 @useResult
 $Res call({
- String id, DateTime capturedAt, HealthMetricKind kind, double value, String unit, String? payloadJson, String? sourceDevice, SyncMeta sync
+ String id, DateTime capturedAt, HealthMetricKind kind, double value, String unit, String? payloadJson, String? sourceDevice, String? sourceId, SyncMeta sync
 });
 
 
@@ -81,7 +82,7 @@ class _$HealthMetricCopyWithImpl<$Res>
 
 /// Create a copy of HealthMetric
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? capturedAt = null,Object? kind = null,Object? value = null,Object? unit = null,Object? payloadJson = freezed,Object? sourceDevice = freezed,Object? sync = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? capturedAt = null,Object? kind = null,Object? value = null,Object? unit = null,Object? payloadJson = freezed,Object? sourceDevice = freezed,Object? sourceId = freezed,Object? sync = null,}) {
   return _then(HealthMetric(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,capturedAt: null == capturedAt ? _self.capturedAt : capturedAt // ignore: cast_nullable_to_non_nullable
@@ -90,6 +91,7 @@ as HealthMetricKind,value: null == value ? _self.value : value // ignore: cast_n
 as double,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,payloadJson: freezed == payloadJson ? _self.payloadJson : payloadJson // ignore: cast_nullable_to_non_nullable
 as String?,sourceDevice: freezed == sourceDevice ? _self.sourceDevice : sourceDevice // ignore: cast_nullable_to_non_nullable
+as String?,sourceId: freezed == sourceId ? _self.sourceId : sourceId // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));
@@ -185,10 +187,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  DateTime capturedAt,  HealthMetricKind kind,  double value,  String unit,  String? payloadJson,  String? sourceDevice,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  DateTime capturedAt,  HealthMetricKind kind,  double value,  String unit,  String? payloadJson,  String? sourceDevice,  String? sourceId,  SyncMeta sync)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _HealthMetric() when $default != null:
-return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_that.payloadJson,_that.sourceDevice,_that.sync);case _:
+return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_that.payloadJson,_that.sourceDevice,_that.sourceId,_that.sync);case _:
   return orElse();
 
 }
@@ -206,10 +208,10 @@ return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  DateTime capturedAt,  HealthMetricKind kind,  double value,  String unit,  String? payloadJson,  String? sourceDevice,  SyncMeta sync)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  DateTime capturedAt,  HealthMetricKind kind,  double value,  String unit,  String? payloadJson,  String? sourceDevice,  String? sourceId,  SyncMeta sync)  $default,) {final _that = this;
 switch (_that) {
 case _HealthMetric():
-return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_that.payloadJson,_that.sourceDevice,_that.sync);case _:
+return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_that.payloadJson,_that.sourceDevice,_that.sourceId,_that.sync);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -226,10 +228,10 @@ return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  DateTime capturedAt,  HealthMetricKind kind,  double value,  String unit,  String? payloadJson,  String? sourceDevice,  SyncMeta sync)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  DateTime capturedAt,  HealthMetricKind kind,  double value,  String unit,  String? payloadJson,  String? sourceDevice,  String? sourceId,  SyncMeta sync)?  $default,) {final _that = this;
 switch (_that) {
 case _HealthMetric() when $default != null:
-return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_that.payloadJson,_that.sourceDevice,_that.sync);case _:
+return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_that.payloadJson,_that.sourceDevice,_that.sourceId,_that.sync);case _:
   return null;
 
 }
@@ -241,7 +243,7 @@ return $default(_that.id,_that.capturedAt,_that.kind,_that.value,_that.unit,_tha
 
 
 class _HealthMetric implements HealthMetric {
-  const _HealthMetric({required this.id, required this.capturedAt, required this.kind, required this.value, required this.unit, this.payloadJson, this.sourceDevice, required this.sync});
+  const _HealthMetric({required this.id, required this.capturedAt, required this.kind, required this.value, required this.unit, this.payloadJson, this.sourceDevice, this.sourceId, required this.sync});
   
 
 /// String UUID. Stable across syncs; same convention as Finance.
@@ -262,6 +264,8 @@ class _HealthMetric implements HealthMetric {
 /// `'manual'`, …). Free text — pass through from the platform
 /// adapter.
 @override final  String? sourceDevice;
+/// Persisted adapter source identity; legacy rows may omit it.
+@override final  String? sourceId;
 /// Sync metadata — owner / HLC / soft-delete tombstone. Same shape
 /// as every other synced domain entity.
 @override final  SyncMeta sync;
@@ -276,18 +280,18 @@ _$HealthMetricCopyWith<_HealthMetric> get copyWith => __$HealthMetricCopyWithImp
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HealthMetric&&(identical(other.id, id) || other.id == id)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.value, value) || other.value == value)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.payloadJson, payloadJson) || other.payloadJson == payloadJson)&&(identical(other.sourceDevice, sourceDevice) || other.sourceDevice == sourceDevice)&&(identical(other.sync, sync) || other.sync == sync));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _HealthMetric&&(identical(other.id, id) || other.id == id)&&(identical(other.capturedAt, capturedAt) || other.capturedAt == capturedAt)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.value, value) || other.value == value)&&(identical(other.unit, unit) || other.unit == unit)&&(identical(other.payloadJson, payloadJson) || other.payloadJson == payloadJson)&&(identical(other.sourceDevice, sourceDevice) || other.sourceDevice == sourceDevice)&&(identical(other.sourceId, sourceId) || other.sourceId == sourceId)&&(identical(other.sync, sync) || other.sync == sync));
 }
 
 
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,capturedAt,kind,value,unit,payloadJson,sourceDevice,sync);
+    return Object.hash(runtimeType,id,capturedAt,kind,value,unit,payloadJson,sourceDevice,sourceId,sync);
 }
 
 @override
 String toString() {
-    return 'HealthMetric(id: $id, capturedAt: $capturedAt, kind: $kind, value: $value, unit: $unit, payloadJson: $payloadJson, sourceDevice: $sourceDevice, sync: $sync)';
+    return 'HealthMetric(id: $id, capturedAt: $capturedAt, kind: $kind, value: $value, unit: $unit, payloadJson: $payloadJson, sourceDevice: $sourceDevice, sourceId: $sourceId, sync: $sync)';
 }
 
 
@@ -298,7 +302,7 @@ abstract mixin class _$HealthMetricCopyWith<$Res> implements $HealthMetricCopyWi
   factory _$HealthMetricCopyWith(_HealthMetric value, $Res Function(_HealthMetric) _then) = __$HealthMetricCopyWithImpl;
 @override @useResult
 $Res call({
- String id, DateTime capturedAt, HealthMetricKind kind, double value, String unit, String? payloadJson, String? sourceDevice, SyncMeta sync
+ String id, DateTime capturedAt, HealthMetricKind kind, double value, String unit, String? payloadJson, String? sourceDevice, String? sourceId, SyncMeta sync
 });
 
 
@@ -315,7 +319,7 @@ class __$HealthMetricCopyWithImpl<$Res>
 
 /// Create a copy of HealthMetric
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? capturedAt = null,Object? kind = null,Object? value = null,Object? unit = null,Object? payloadJson = freezed,Object? sourceDevice = freezed,Object? sync = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? capturedAt = null,Object? kind = null,Object? value = null,Object? unit = null,Object? payloadJson = freezed,Object? sourceDevice = freezed,Object? sourceId = freezed,Object? sync = null,}) {
   return _then(_HealthMetric(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,capturedAt: null == capturedAt ? _self.capturedAt : capturedAt // ignore: cast_nullable_to_non_nullable
@@ -324,6 +328,7 @@ as HealthMetricKind,value: null == value ? _self.value : value // ignore: cast_n
 as double,unit: null == unit ? _self.unit : unit // ignore: cast_nullable_to_non_nullable
 as String,payloadJson: freezed == payloadJson ? _self.payloadJson : payloadJson // ignore: cast_nullable_to_non_nullable
 as String?,sourceDevice: freezed == sourceDevice ? _self.sourceDevice : sourceDevice // ignore: cast_nullable_to_non_nullable
+as String?,sourceId: freezed == sourceId ? _self.sourceId : sourceId // ignore: cast_nullable_to_non_nullable
 as String?,sync: null == sync ? _self.sync : sync // ignore: cast_nullable_to_non_nullable
 as SyncMeta,
   ));

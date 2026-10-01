@@ -114,6 +114,7 @@ final class AppDatabaseTransactionScope {
     SecuritiesCatalogMeta,
     // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
     HealthMetrics,
+    HealthCheckIns,
     // KnowledgeOS: notes, decisions, and explicit relations.
     KnowledgeNotes,
     KnowledgeDecisions,
@@ -158,7 +159,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 96;
+  int get schemaVersion => 97;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -197,6 +198,7 @@ class AppDatabase extends _$AppDatabase {
       await _createRebalanceExecutionTables(this);
       await _createFinancePlanningIndexes(this);
       await _createForecastSnapshots(this);
+      await _createHealthCheckInIndexes(this);
     },
     onUpgrade: (m, from, to) => transaction(() async {
       // v1 → v2: capture the AI stream's `stop_reason` on chat messages
@@ -1209,12 +1211,22 @@ class AppDatabase extends _$AppDatabase {
           await customStatement(ddl);
         }
       }
+      // v96 -> v97 is additive. Existing domain rows and sync pointers survive.
+      if (from < 97) {
+        await m.createTable(healthCheckIns);
+        await _createHealthCheckInIndexes(this);
+      }
     }),
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },
   );
 }
+
+Future<void> _createHealthCheckInIndexes(AppDatabase db) => db.customStatement(
+  'CREATE INDEX IF NOT EXISTS idx_health_check_ins_owner_day '
+  'ON health_check_ins(owner_user_id, day)',
+);
 
 Future<void> _createWatchlistSimulationLocalInvariants(AppDatabase db) async {
   Future<bool> hasTable(String name) async {

@@ -10,28 +10,34 @@ import '../domain/health_metric_kind.dart';
 import 'health_metric_source.dart';
 
 Map<HealthMetricKind, List<HealthMetric>> selectCanonicalHealthMetrics(
-  Map<HealthMetricKind, List<HealthMetric>> raw,
-) {
+  Map<HealthMetricKind, List<HealthMetric>> raw, {
+  Map<HealthMetricKind, HealthMetricSource> preferredSources = const {},
+}) {
   return <HealthMetricKind, List<HealthMetric>>{
     for (final entry in raw.entries)
-      entry.key: selectCanonicalMetricsForKind(entry.key, entry.value),
+      entry.key: selectCanonicalMetricsForKind(
+        entry.key,
+        entry.value,
+        preferredSource: preferredSources[entry.key],
+      ),
   };
 }
 
 List<HealthMetric> selectCanonicalMetricsForKind(
   HealthMetricKind kind,
-  List<HealthMetric> rows,
-) {
+  List<HealthMetric> rows, {
+  HealthMetricSource? preferredSource,
+}) {
   if (rows.length < 2) return rows;
   if (kind == HealthMetricKind.sleepSession) {
-    return _selectCanonicalSleep(rows);
+    return _selectCanonicalSleep(rows, preferredSource);
   }
 
   final byBucket = <String, HealthMetric>{};
   for (final row in rows) {
     final key = _bucketKey(kind, row);
     final current = byBucket[key];
-    if (current == null || _isBetter(row, current)) {
+    if (current == null || _isBetter(row, current, preferredSource)) {
       byBucket[key] = row;
     }
   }
@@ -41,9 +47,17 @@ List<HealthMetric> selectCanonicalMetricsForKind(
   return List<HealthMetric>.unmodifiable(selected);
 }
 
-bool _isBetter(HealthMetric candidate, HealthMetric incumbent) {
+bool _isBetter(
+  HealthMetric candidate,
+  HealthMetric incumbent,
+  HealthMetricSource? preferredSource,
+) {
   final cSource = sourceForHealthMetric(candidate);
   final iSource = sourceForHealthMetric(incumbent);
+  if (preferredSource != null && cSource != iSource) {
+    if (cSource == preferredSource) return true;
+    if (iSource == preferredSource) return false;
+  }
   final sourceDelta = cSource.priority.compareTo(iSource.priority);
   if (sourceDelta != 0) return sourceDelta > 0;
 
@@ -67,7 +81,10 @@ String _bucketKey(HealthMetricKind kind, HealthMetric row) {
   return row.id;
 }
 
-List<HealthMetric> _selectCanonicalSleep(List<HealthMetric> rows) {
+List<HealthMetric> _selectCanonicalSleep(
+  List<HealthMetric> rows,
+  HealthMetricSource? preferredSource,
+) {
   final selected = <HealthMetric>[];
   final ordered = rows.toList()
     ..sort((a, b) => a.capturedAt.compareTo(b.capturedAt));
@@ -77,7 +94,11 @@ List<HealthMetric> _selectCanonicalSleep(List<HealthMetric> rows) {
     );
     if (duplicateIndex < 0) {
       selected.add(candidate);
-    } else if (_isBetter(candidate, selected[duplicateIndex])) {
+    } else if (_isBetter(
+      candidate,
+      selected[duplicateIndex],
+      preferredSource,
+    )) {
       selected[duplicateIndex] = candidate;
     }
   }

@@ -59,30 +59,38 @@ RawPointValue? _pointFrom(
   );
 }
 
-/// Group [points] by UTC day and average the numeric values. The
-/// synthetic [externalId] is `'<prefix>:<kindWire>:<yyyy-mm-dd>'` so
-/// subsequent syncs replace the same row instead of duplicating.
+/// Average readings within one UTC day and import origin/device. Stable IDs
+/// include that attribution so different measurement families remain separate.
 List<RawDailyValue> _aggregateDailyAverage({
   required Iterable<HealthDataPoint> points,
   required String kindWire,
   required String platformPrefix,
+  String? measurementMethod,
 }) {
   final buckets = <String, _DailyBucket>{};
   for (final p in points) {
     final v = _numericValue(p);
     if (v == null) continue;
     final dayKey = _dayKeyUtc(p.dateFrom);
+    final origin = '${p.sourceId}|${_sourceLabel(p) ?? ''}';
+    final bucketKey = '$dayKey|$origin';
     final bucket = buckets.putIfAbsent(
-      dayKey,
-      () => _DailyBucket(dayKey: dayKey, source: _sourceLabel(p)),
+      bucketKey,
+      () => _DailyBucket(
+        dayKey: dayKey,
+        source: _sourceLabel(p),
+        sourceOrigin: p.sourceId,
+      ),
     );
     bucket.add(v);
   }
   return buckets.values
       .map(
         (b) => b.toDaily(
-          externalId: '$platformPrefix:$kindWire:${b.dayKey}',
+          externalId:
+              '$platformPrefix:$kindWire:${b.dayKey}:${Uri.encodeComponent('${b.sourceOrigin}|${b.source ?? ''}')}',
           reduce: _Reduce.average,
+          measurementMethod: measurementMethod,
         ),
       )
       .toList(growable: false);
@@ -141,9 +149,10 @@ DateTime _minInstant(DateTime a, DateTime b) => a.isBefore(b) ? a : b;
 enum _Reduce { sum, average }
 
 class _DailyBucket {
-  _DailyBucket({required this.dayKey, required this.source});
+  _DailyBucket({required this.dayKey, required this.source, this.sourceOrigin});
   final String dayKey;
   final String? source;
+  final String? sourceOrigin;
   double _sum = 0.0;
   int _count = 0;
 
@@ -152,7 +161,11 @@ class _DailyBucket {
     _count++;
   }
 
-  RawDailyValue toDaily({required String externalId, required _Reduce reduce}) {
+  RawDailyValue toDaily({
+    required String externalId,
+    required _Reduce reduce,
+    String? measurementMethod,
+  }) {
     final parts = dayKey.split('-');
     final day = DateTime.utc(
       int.parse(parts[0]),
@@ -168,6 +181,8 @@ class _DailyBucket {
       day: day,
       value: value,
       sourceDevice: source,
+      sourceOrigin: sourceOrigin,
+      measurementMethod: measurementMethod,
     );
   }
 }

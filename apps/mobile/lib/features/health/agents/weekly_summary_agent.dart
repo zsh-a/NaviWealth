@@ -20,9 +20,10 @@ import '../../../core/auth/current_user.dart';
 import '../../../core/format/formatters.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
+import '../data/health_preferences.dart';
+import '../data/health_series.dart';
 import '../data/providers.dart';
 import '../data/recovery_scorer.dart';
-import '../domain/health_metric.dart';
 import '../domain/health_metric_kind.dart';
 
 const String kWeeklySummaryAgentId = 'weekly_summary';
@@ -271,70 +272,6 @@ class WeeklySummaryAgent implements Agent {
     );
   }
 
-  static double _sumInWindow(
-    List<HealthMetric> rows,
-    DateTime from,
-    DateTime to,
-  ) {
-    var sum = 0.0;
-    for (final m in rows) {
-      if (m.capturedAt.isBefore(from) || m.capturedAt.isAfter(to)) continue;
-      sum += m.value;
-    }
-    return sum;
-  }
-
-  static int _countInWindow(
-    List<HealthMetric> rows,
-    DateTime from,
-    DateTime to,
-  ) {
-    var n = 0;
-    for (final m in rows) {
-      if (m.capturedAt.isBefore(from) || m.capturedAt.isAfter(to)) continue;
-      n++;
-    }
-    return n;
-  }
-
-  static double _sumWorkoutMinutes(
-    List<HealthMetric> rows,
-    DateTime from,
-    DateTime to,
-  ) {
-    var sum = 0.0;
-    for (final m in rows) {
-      if (m.capturedAt.isBefore(from) || m.capturedAt.isAfter(to)) continue;
-      sum += switch (m.unit) {
-        's' => m.value / 60.0,
-        'min' => m.value,
-        'h' => m.value * 60.0,
-        _ => m.value / 60.0,
-      };
-    }
-    return sum;
-  }
-
-  static double? _avgSleepHours(
-    List<HealthMetric> rows,
-    DateTime from,
-    DateTime to,
-  ) {
-    var sum = 0.0;
-    var n = 0;
-    for (final m in rows) {
-      if (m.capturedAt.isBefore(from) || m.capturedAt.isAfter(to)) continue;
-      sum += switch (m.unit) {
-        's' => m.value / 3600.0,
-        'min' => m.value / 60.0,
-        'h' => m.value,
-        _ => m.value / 3600.0,
-      };
-      n++;
-    }
-    return n == 0 ? null : sum / n;
-  }
-
   static String _formatSteps(double v) {
     if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
     return v.round().toString();
@@ -360,7 +297,10 @@ class RepositoryWeeklySummaryReader implements WeeklySummaryReader {
     final repo = await ctx.ref.read(healthMetricRepositoryProvider.future);
     final ownerUserId = await ctx.ref.read(currentUserIdProvider)();
 
-    final data = await repo.listByKinds(
+    final now = ctx.now;
+    final preferences = await ctx.ref.read(healthPreferencesProvider.future);
+    final window = HealthWindow(now: now, days: 7);
+    final data = await repo.listInRange(
       ownerUserId: ownerUserId,
       kinds: const {
         HealthMetricKind.hrvDaily,
@@ -369,31 +309,43 @@ class RepositoryWeeklySummaryReader implements WeeklySummaryReader {
         HealthMetricKind.stepsDaily,
         HealthMetricKind.workoutSession,
         HealthMetricKind.vo2Max,
+        HealthMetricKind.bodyBatteryDaily,
+        HealthMetricKind.stressDaily,
       },
-      limit: 14,
+      from: window.today.subtract(const Duration(days: 30)),
+      to: window.end,
     );
-
-    final hrv = data[HealthMetricKind.hrvDaily] ?? const [];
-    final sleep = data[HealthMetricKind.sleepSession] ?? const [];
-    final rhr = data[HealthMetricKind.rhrDaily] ?? const [];
-    final steps = data[HealthMetricKind.stepsDaily] ?? const [];
-    final workouts = data[HealthMetricKind.workoutSession] ?? const [];
-    const scorer = RecoveryScorer();
-    final recovery = scorer.score(hrv: hrv, sleep: sleep, rhr: rhr);
-    final now = ctx.now;
-    final weekFrom = now.subtract(const Duration(days: 7));
+    HealthSeries series(HealthMetricKind kind) => buildHealthSeries(
+      kind: kind,
+      rows: data[kind] ?? const [],
+      window: window,
+      preferredSource: preferences.sources[kind],
+    );
+    final sleep = series(HealthMetricKind.sleepSession);
+    final steps = series(HealthMetricKind.stepsDaily);
+    final workouts = series(HealthMetricKind.workoutSession);
+    final recovery = const RecoveryScorer().score(
+      hrv: data[HealthMetricKind.hrvDaily] ?? const [],
+      sleep: data[HealthMetricKind.sleepSession] ?? const [],
+      rhr: data[HealthMetricKind.rhrDaily] ?? const [],
+      vo2Max: data[HealthMetricKind.vo2Max] ?? const [],
+      bodyBattery: data[HealthMetricKind.bodyBatteryDaily] ?? const [],
+      stress: data[HealthMetricKind.stressDaily] ?? const [],
+      preferredSources: preferences.sources,
+      sleepGoalHours: preferences.sleepGoalHours,
+      now: now,
+    );
     return WeeklySummarySnapshot(
-      hasHealthData: hrv.isNotEmpty || sleep.isNotEmpty || steps.isNotEmpty,
-      recoveryScore: recovery.hasScore ? recovery.score : null,
+      hasHealthData: data.values.any((rows) => rows.isNotEmpty),
+      recoveryScore: recovery.score,
       recoveryVerdict: recovery.hasScore ? recovery.verdict : null,
-      avgSleepHours: WeeklySummaryAgent._avgSleepHours(sleep, weekFrom, now),
-      totalSteps: WeeklySummaryAgent._sumInWindow(steps, weekFrom, now),
-      workoutCount: WeeklySummaryAgent._countInWindow(workouts, weekFrom, now),
-      workoutMinutes: WeeklySummaryAgent._sumWorkoutMinutes(
-        workouts,
-        weekFrom,
-        now,
+      avgSleepHours: sleep.average,
+      totalSteps: steps.total,
+      workoutCount: workouts.samples.fold(
+        0,
+        (n, day) => n + day.records.length,
       ),
+      workoutMinutes: workouts.total,
     );
   }
 }

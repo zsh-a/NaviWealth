@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/health/ai_tools/get_recent_sleep_summary_tool.dart';
+import 'package:naviwealth/features/health/data/health_metric_source.dart';
 import 'package:naviwealth/features/health/domain/health_metric.dart';
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 
@@ -35,6 +36,58 @@ void main() {
   final now = DateTime.utc(2026, 5, 27, 12);
 
   group('GetRecentSleepSummaryTool.shape', () {
+    test('invalid and unfinished sessions do not replace completed sleep', () {
+      final start = now.subtract(const Duration(hours: 7, minutes: 30));
+      final out = GetRecentSleepSummaryTool.shape(
+        [
+          _sleep(
+            id: 'garmin:unfinished',
+            startedAt: start,
+            durationSeconds: 8 * 3600,
+          ),
+          _sleep(
+            id: 'hk:completed',
+            startedAt: start,
+            durationSeconds: 7 * 3600,
+          ),
+          _sleep(
+            id: 'hk:invalid',
+            startedAt: start,
+            durationSeconds: double.nan,
+          ),
+        ],
+        daysBack: 7,
+        now: now,
+      );
+      expect((out['summary'] as Map)['average_hours'], 7);
+      expect(out['sessions'], hasLength(1));
+    });
+    test('naps sum with night sleep by wake date and source preference deduplicates sessions', () {
+      final night = DateTime(2026, 5, 26, 23).toUtc();
+      final out = GetRecentSleepSummaryTool.shape(
+        [
+          _sleep(id: 'hk:night', startedAt: night, durationSeconds: 7 * 3600),
+          _sleep(
+            id: 'garmin:night',
+            startedAt: night,
+            durationSeconds: 8 * 3600,
+          ),
+          _sleep(
+            id: 'hk:nap',
+            startedAt: DateTime(2026, 5, 27, 10).toUtc(),
+            durationSeconds: 3600,
+          ),
+        ],
+        daysBack: 7,
+        now: now,
+        preferredSource: HealthMetricSource.healthKit,
+      );
+      final summary = out['summary'] as Map<String, Object?>;
+      expect(summary['session_count'], 2);
+      expect(summary['observed_days'], 1);
+      expect(summary['average_hours'], 8);
+      expect(summary['total_hours'], 8);
+    });
     test('returns empty payload + note when no rows', () {
       final out = GetRecentSleepSummaryTool.shape(
         const <HealthMetric>[],

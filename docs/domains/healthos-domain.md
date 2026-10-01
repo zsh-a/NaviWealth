@@ -18,6 +18,9 @@ Included:
 - Steps, active energy, workouts, workout duration, distance.
 - VO2 max pipeline where platform support exists.
 - Weight and body fat as explicit low-frequency manual or AI-confirmed entries.
+- Optional daily energy, sleep quality, and subjective stress check-ins, with
+  life-event tags and notes. Recording does not require a wearable or AI.
+- Personal source preferences and an optional user-set sleep-duration goal.
 - Read-only Garmin Connect ingestion through the narrow native runtime.
 - Recovery Alert and Weekly Summary domain analyzers.
 
@@ -129,10 +132,11 @@ sheet initiates the first import without a second Sync tap.
 
 ## Persistence
 
-Table:
+Tables:
 
 - `core/persistence/health_tables.dart`
 - Drift table: `health_metrics`
+- Drift table: `health_check_ins` (additive schema v97)
 - Entity: `features/health/domain/health_metric.dart`
 - Kind enum: `features/health/domain/health_metric_kind.dart`
 
@@ -154,6 +158,7 @@ value
 unit
 payload_json
 source_device
+source_id
 sync metadata
 ```
 
@@ -168,6 +173,58 @@ Typical kinds:
 - `vo2_max_daily`
 - `weight`
 - `body_fat`
+
+Daily check-ins are owner-scoped and use a UTC midnight value as a calendar
+date container. The row carries optional 1–5 `energy`, `sleep_quality`, and
+`stress`, a JSON list of event tags, an optional note (up to 1,000 characters),
+and the shared sync metadata. Saving requires at least one value, tag, or note;
+future dates are rejected. Edits, deletion tombstones, and later restoration
+reuse the same date's row identity. Owner-migration duplicates are resolved by
+HLC before tombstone filtering. Writes and outbox enqueue share a transaction.
+Unknown event tags remain intact when an older client edits a record.
+
+`health:health_check_ins` is registered in the generic sync table registry and
+participates in Health reset and encrypted backups. Older clients skip the
+unknown row family; upgrading changes the registry compatibility signature
+and replays the remote rows. Restoring an older archive that has no check-in
+table preserves existing check-ins. The v97 migration adds the table/indexes
+without rewriting existing metrics or sync state.
+
+Source selection and sleep goals are device-local, owner-scoped preferences
+in `health_preferences.dart`; they are not synced or included in backups.
+
+## Sources and Recovery Comparability
+
+Persisted `source_id` takes precedence over legacy adapter ID/device-name
+inference. A per-metric preference wins overlapping daily/session records;
+dates missing from that source fall back to the existing priority order
+(Garmin, HealthKit, Health Connect, manual). Selection preserves raw rows.
+
+HRV trends and all recovery components use the newest active measurement
+family: source, available device attribution, unit, measurement method, and
+import origin must match. HealthKit HRV uses SDNN; Health Connect uses RMSSD;
+Garmin remains provider-defined. Platform daily averages retain method/origin
+metadata and aggregate separately by import origin/device. A source or method
+switch starts a new baseline instead of mixing incompatible histories.
+Legacy aggregates lack origin metadata and remain a separate family until
+history is reimported or enough new observations accumulate; this is not a
+destructive migration of old rows.
+
+`RecoveryScorer` compares the most recent seven calendar dates (including
+today) with the preceding 21 dates. Each component needs five distinct
+baseline observation days and a recent observation before contributing.
+Sleep sums separate sessions/naps by local wake date and compares recorded-day
+averages; an explicitly configured sleep goal may replace its baseline.
+Unfinished sleep and future dates do not contribute. Without an eligible
+component, the score remains absent and evidence shows baseline learning.
+
+Eligible components have equal weight. Coverage is eligible components / six;
+freshness is the age of the oldest contributing component's latest capture,
+so one fresh input cannot conceal a stale one. Confidence also depends on
+each component's recent observed-day count. Evidence includes component
+status, source/device/method, reference basis, observed-day counts, freshness,
+and weight. This is an explainable lifestyle heuristic, not a validated
+physiological or clinical score.
 
 ## Shell Registration
 
@@ -191,8 +248,8 @@ HealthOS is active only when the user enables it in Settings.
 
 | Tab | Purpose |
 |---|---|
-| Today | Compact recovery summary, latest metric readings with seven-day mini charts, last-seven-day digest, and collapsed source status |
-| Trends | Recovery / Activity / Body overview; one focused metric chart with date, unit, coverage, and expandable source records |
+| Today | Daily check-in, compact recovery summary, latest metric readings with seven-day mini charts, last-seven-day digest, and collapsed source status |
+| Trends | Recovery / Activity / Body overview; one focused metric chart with date, unit, coverage, source choice, daily context, and check-in history |
 
 Presentation contract:
 
@@ -228,9 +285,27 @@ Presentation contract:
   Capture and correction use the shared commit-first form protocol: a pending
   write locks fields and dismissal, failure keeps the same draft and a safe
   inline error, and success closes the sheet and refreshes Today/Trends.
+- Daily check-ins use the same guarded, commit-first sheet. Scales are optional;
+  tapping the selected value clears it. Event tags include caffeine, late meals,
+  alcohol, illness, travel, hard workouts, meditation, and late screen time.
+  History supports past-day recording, editing, and confirmed deletion; the
+  existing entry is loaded before editing a date. Live subscriptions reflect
+  local and synced changes and stop exposing records when Health is disabled
+  or the owner changes.
+- Calendar windows advance with the shell's shared minute clock after
+  device-local midnight and on foreground resume,
+  including retained tabs. This refreshes local reads without starting a new
+  source import or background task.
+- Focused metric charts mark dates that also have check-ins. Selecting a date
+  shows that day's subjective context without fabricating a missing metric.
+  Check-in-only dates stay in the window's history. These are contextual
+  observations; the UI does not claim event causation.
+- Health Settings allows a sleep goal or automatic personal baseline. Metric
+  details allow a source preference; Today, recovery, and related AI reads
+  honor it while keeping underlying source records.
 
-This presentation refactor does not migrate stored rows or alter native
-integration/background scheduling.
+These additions retain the existing Today/Trends navigation and native
+foreground/background scheduling.
 
 Key files:
 
@@ -239,6 +314,8 @@ Key files:
 - `features/health/ui/health_metric_presentation.dart`
 - `features/health/ui/health_metric_detail.dart`
 - `features/health/data/health_series.dart`
+- `features/health/data/health_check_in_repository.dart`
+- `features/health/ui/health_check_in_sheet.dart`
 - `features/health/ui/health_domain_settings_page.dart`
 
 ## AI Tools
@@ -247,7 +324,7 @@ Tool barrel: `features/health/health_ai_tools.dart`.
 
 | Tool | Access | Purpose |
 |---|---|---|
-| `get_recent_sleep_summary` | Read | Sleep sessions and average duration |
+| `get_recent_sleep_summary` | Read | Sleep sessions and recorded-day average duration, including naps |
 | `get_hrv_trend` | Read | HRV points, window summary, delta |
 | `get_activity_summary` | Read | Steps, active calories, workout totals |
 | `get_recovery_signal` | Read | Score, verdict, confidence, coverage, freshness, and explainable components from sleep, HRV, RHR, VO2 max, Body Battery, and stress where available |
@@ -261,7 +338,11 @@ Rules:
 - Recovery score is a lifestyle signal, not a diagnosis. Today and the AI
   tool use the same scorer and expose the same confidence, input coverage,
   freshness, and component evidence. Component evidence includes recent value,
-  personal baseline, delta, and sample counts where available.
+  personal baseline or explicit goal, delta, and observed-day counts where
+  available. Recovery Alert compares a single HRV measurement family; legacy
+  repository Weekly Summary helpers use the same preferences and scorer.
+- Check-in notes/tags are not automatically exposed through AI tools or the
+  memory indexer in this version.
 
 ## Memory Integration
 
@@ -332,6 +413,10 @@ When touching HealthOS, add or run targeted tests for:
 - `HealthSyncService` mapping and idempotency.
 - Sleep segment merge behavior.
 - `HealthMetricRepository` queries.
+- Check-in owner/date identity, live opt-in gating, transactional outbox,
+  tombstones, v96→v97 upgrade/rollback, sync replay, and backup compatibility.
+- Source/method/device isolation, per-component baseline days, stale inputs,
+  naps, explicit goals, and chart-date context.
 - Health AI tool outputs.
 - `HealthMetricMemoryIndexer`.
 - Recovery Alert and Weekly Summary agents.

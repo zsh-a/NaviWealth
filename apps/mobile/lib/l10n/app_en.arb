@@ -8376,7 +8376,7 @@
       "recent": { "type": "String" }
     }
   },
-  "healthRecoveryEvidenceBaseline": "Baseline {baseline} · {recentSamples} recent / {baselineSamples} baseline samples",
+  "healthRecoveryEvidenceBaseline": "Baseline {baseline} · {recentSamples} recent / {baselineSamples} baseline days",
   "@healthRecoveryEvidenceBaseline": {
     "placeholders": {
       "baseline": { "type": "String" },
@@ -8384,7 +8384,7 @@
       "baselineSamples": { "type": "int" }
     }
   },
-  "healthRecoveryEvidenceNoBaselineSamples": "{recentSamples} recent samples · baseline forming",
+  "healthRecoveryEvidenceNoBaselineSamples": "{recentSamples} recent days · baseline forming",
   "@healthRecoveryEvidenceNoBaselineSamples": {
     "placeholders": { "recentSamples": { "type": "int" } }
   },
@@ -8660,5 +8660,125 @@
   "knowledgeReviewNextMonth": "In 30 days",
   "knowledgeReviewNextDateRequired": "Choose a future date to continue observing.",
   "knowledgeSourceViewExisting": "View existing note",
-  "knowledgeTagsSearchHint": "Find a tag"
+  "knowledgeTagsSearchHint": "Find a tag",
+  "healthCheckInTitle": "Daily check-in",
+  "healthCheckInHelp": "Record only what matters today. All fields are optional; tap a selected rating again to clear it.",
+  "healthCheckInEnergy": "Energy",
+  "healthCheckInSleepQuality": "Sleep quality",
+  "healthCheckInStress": "Perceived stress",
+  "healthCheckInEnergyScale": "1 Low energy · 5 High energy",
+  "healthCheckInSleepScale": "1 Poor sleep · 5 Restful sleep",
+  "healthCheckInStressScale": "1 Little stress · 5 High stress",
+  "healthCheckInEvents": "Life events",
+  "healthCheckInValue": "{label} {value}/5",
+  "@healthCheckInValue": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "healthCheckInLoadFailed": "Your check-in could not be loaded. Retry before editing it.",
+  "healthCheckInEmptyError": "Record at least one feeling, event, or note.",
+  "healthCheckInDelete": "Delete check-in",
+  "healthCheckInDeleteConfirm": "Delete the feelings, events, and note for this date?",
+  "healthCheckInRecord": "Record feelings",
+  "healthCheckInEdit": "Edit check-in",
+  "healthCheckInRecordDay": "Record another day",
+  "healthCheckInEmpty": "How do you feel today?",
+  "healthCheckInEmptyHelp": "Add feelings and life events to understand your health trends. A wearable is optional.",
+  "healthCheckInHistory": "Feelings & life events",
+  "healthCheckInHistoryEmpty": "No check-ins in this period. Missing days stay unrecorded.",
+  "healthCheckInContextEmpty": "No check-in for this date.",
+  "healthCheckInObservedDays": "Recorded on {count} of {days} days",
+  "@healthCheckInObservedDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthCheckInEventDates": "Check-in dates",
+  "healthCheckInAssociationHelp": "Compare observations and context. These records do not establish cause and effect.",
+  "healthTagCaffeine": "Caffeine",
+  "healthTagLateMeal": "Late meal",
+  "healthTagAlcohol": "Alcohol",
+  "healthTagIllness": "Feeling unwell",
+  "healthTagTravel": "Travel",
+  "healthTagHardWorkout": "Hard workout",
+  "healthTagMeditation": "Meditation",
+  "healthTagLateScreen": "Late screen time",
+  "healthSourcePreference": "Preferred data source",
+  "healthSourceAutomatic": "Automatic",
+  "healthSourcePreferenceHelp": "Used when sources overlap. Other sources fill missing dates. Original readings are kept.",
+  "healthHrvComparableHint": "HRV compares the current source, device, and measurement method. A switch may shorten the available history.",
+  "healthRecoveryLearning": "{metric}: baseline learning · {count}/{required} days",
+  "@healthRecoveryLearning": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "required": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRecoveryMissingRecent": "{metric}: no recent observations",
+  "@healthRecoveryMissingRecent": {
+    "placeholders": {
+      "metric": {
+        "type": "String"
+      }
+    }
+  },
+  "healthRecoverySourceDetail": "{source} · {age}",
+  "@healthRecoverySourceDetail": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      },
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "healthRecoveryGoalReference": "Sleep goal {hours} h · {days} observed days",
+  "@healthRecoveryGoalReference": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      },
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "healthRecoveryWorstFreshness": "Oldest scoring input: {age}",
+  "@healthRecoveryWorstFreshness": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "healthSleepGoalTitle": "Personal sleep goal",
+  "healthSleepGoalHelp": "Set your own duration goal, or use your observed baseline. This is not an estimate of your biological sleep need.",
+  "healthSleepGoalAutomatic": "Use personal baseline",
+  "healthSleepGoalHours": "{hours} hours",
+  "@healthSleepGoalHours": {
+    "placeholders": {
+      "hours": {
+        "type": "String"
+      }
+    }
+  }
 }

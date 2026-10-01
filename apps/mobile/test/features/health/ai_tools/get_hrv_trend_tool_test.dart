@@ -28,6 +28,22 @@ void main() {
   final now = DateTime.utc(2026, 5, 27, 8);
 
   group('GetHrvTrendTool.shape', () {
+    test('method changes stay separate and future devices cannot replace valid history', () {
+      final rows = [
+        _hrv(id: 'hk:old', day: now.subtract(const Duration(days: 2)), ms: 80),
+        _hrv(id: 'hc:new', day: now.subtract(const Duration(days: 1)), ms: 40),
+        _hrv(
+          id: 'garmin:future',
+          day: now.add(const Duration(days: 1)),
+          ms: 100,
+        ),
+      ];
+      final out = GetHrvTrendTool.shape(rows, windowDays: 7, now: now);
+      expect(out['points'], hasLength(1));
+      expect(out['measurement_method'], 'rmssd');
+      expect(out['source_id'], 'health_connect');
+      expect((out['summary'] as Map)['latest_ms'], 40);
+    });
     test('empty rows → note + no summary', () {
       final out = GetHrvTrendTool.shape(
         const <HealthMetric>[],

@@ -12,6 +12,7 @@ import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import 'garmin_sync_status_card.dart';
+import 'health_sleep_goal_control.dart';
 import 'health_source_attention.dart';
 import 'health_sources_summary.dart';
 
@@ -37,6 +38,8 @@ class HealthDomainSettingsPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppPageRhythm.row),
           const GarminSyncStatusCard(),
+          const SizedBox(height: AppPageRhythm.row),
+          const HealthSleepGoalControl(),
         ],
       ),
     );

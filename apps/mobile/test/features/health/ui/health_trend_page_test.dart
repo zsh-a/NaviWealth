@@ -4,9 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/health/data/health_metric_source.dart';
 import 'package:naviwealth/features/health/data/health_series_providers.dart';
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/body_measurement_entry_sheet.dart';
+import 'package:naviwealth/features/health/ui/health_check_in_sections.dart';
 import 'package:naviwealth/features/health/ui/health_metric_detail.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
@@ -65,6 +67,128 @@ Future<GoRouter> _pump(
 
 void main() {
   testWidgets(
+    'journal dates select matching metric context and dates without metrics stay in history',
+    (tester) async {
+      final f = await HealthTestFixture.create();
+      addTearDown(f.db.close);
+      final markedDay = HealthTestFixture.now.subtract(const Duration(days: 2));
+      final missingDay = HealthTestFixture.now.subtract(
+        const Duration(days: 3),
+      );
+      await f.checkIns.save(
+        day: markedDay,
+        energy: 2,
+        tags: ['travel'],
+        note: 'After travel',
+      );
+      await f.checkIns.save(
+        day: missingDay,
+        tags: ['meditation'],
+        note: 'Journal without HRV',
+      );
+      final router = await _pump(
+        tester,
+        f,
+        location: '/health/trend?metric=hrv_daily&window=7',
+      );
+      final marker = find.byKey(
+        ValueKey(
+          'health-check-in-date:${DateTime.utc(markedDay.year, markedDay.month, markedDay.day).toIso8601String()}',
+        ),
+      );
+      await tester.ensureVisible(marker);
+      await tester.tap(marker);
+      await tester.pumpAndSettle();
+      final context = tester.widget<HealthCheckInContext>(
+        find.byType(HealthCheckInContext),
+      );
+      expect(context.entry!.note, 'After travel');
+      expect(context.day, DateTime.utc(2026, 9, 10));
+      expect(
+        find.byKey(
+          const ValueKey('health-check-in-date:2026-09-09T00:00:00.000Z'),
+        ),
+        findsNothing,
+      );
+      expect(find.text('Journal without HRV'), findsOneWidget);
+      await tester.scrollUntilVisible(
+        find.text('30d'),
+        -250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('30d'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<HealthTrendPage>(find.byType(HealthTrendPage))
+            .initialWindowDays,
+        30,
+      );
+      expect(
+        router.routeInformationProvider.value.uri.queryParameters['metric'],
+        'hrv_daily',
+      );
+      await tester.scrollUntilVisible(
+        find.text('Journal without HRV'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('Journal without HRV'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'changing source updates chart and Today without deleting raw readings',
+    (tester) async {
+      final f = await HealthTestFixture.create();
+      addTearDown(f.db.close);
+      for (var i = 0; i < 28; i++) {
+        await f.repo.upsert(
+          f.metric(
+            'hk:hrv:$i',
+            HealthMetricKind.hrvDaily,
+            DateTime.utc(2026, 9, 12).subtract(Duration(days: i)),
+            80,
+          ),
+        );
+      }
+      await _pump(
+        tester,
+        f,
+        location: '/health/trend?metric=hrv_daily&window=7',
+      );
+      await tester.tap(find.text('Automatic'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('HealthKit').last);
+      await tester.pumpAndSettle();
+      expect(
+        f.preferences.read().sources[HealthMetricKind.hrvDaily],
+        HealthMetricSource.healthKit,
+      );
+      final detail = tester.widget<HealthMetricDetail>(
+        find.byType(HealthMetricDetail),
+      );
+      expect(detail.series.latest!.value, 80);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(HealthTrendPage)),
+      );
+      final today = await container.read(healthTodayMetricGridProvider.future);
+      expect(today.series[HealthMetricKind.hrvDaily]!.latest!.value, 80);
+      expect(
+        (await f.repo.listByKind(
+          ownerUserId: HealthTestFixture.owner,
+          kind: HealthMetricKind.hrvDaily,
+        )).length,
+        86,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
     'overview drills into one metric; window and back preserve URL state',
     (tester) async {
       final f = await HealthTestFixture.create();
@@ -99,6 +223,8 @@ void main() {
       });
       expect(find.byType(HealthMetricDetail), findsNothing);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     },
   );
 
@@ -133,6 +259,8 @@ void main() {
       1,
     );
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets(
@@ -173,6 +301,8 @@ void main() {
         )).single.value,
         0.005,
       );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     },
   );
 
@@ -207,6 +337,8 @@ void main() {
       180,
     );
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   testWidgets('Today and Trends use the same sleep daily aggregate', (
@@ -233,6 +365,8 @@ void main() {
     );
     expect(today.series[HealthMetricKind.sleepSession]!.latest!.value, 7.5);
     expect(trends[HealthMetricKind.sleepSession]!.latest!.value, 7.5);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
   });
 
   for (final location in [
@@ -248,6 +382,8 @@ void main() {
       addTearDown(f.db.close);
       await _pump(tester, f, location: location, width: 320, scale: 2);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     });
   }
 }
