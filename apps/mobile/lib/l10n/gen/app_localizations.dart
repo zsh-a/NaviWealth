@@ -29538,6 +29538,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quote date: {date} (UTC)'**
   String watchlistSimulationQuoteDate(String date);
+
+  /// No description provided for @watchlistSimulationOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Scenarios'**
+  String get watchlistSimulationOverview;
+
+  /// No description provided for @watchlistSimulationHistoryRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded range (UTC): {from}–{to} · observations after baseline: {count}'**
+  String watchlistSimulationHistoryRange(String from, String to, int count);
+
+  /// No description provided for @watchlistSimulationIncompleteDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed days with missing quotes: {count}. Cumulative change is based on partial coverage.'**
+  String watchlistSimulationIncompleteDays(int count);
+
+  /// No description provided for @watchlistSimulationHistoryPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Only part of the historical quotes are usable. Missing or outdated data is excluded; cumulative change may be incomplete.'**
+  String get watchlistSimulationHistoryPartial;
+
+  /// No description provided for @watchlistSimulationHistoryNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No usable historical returns were found for this range. Recorded observations are still available.'**
+  String get watchlistSimulationHistoryNoData;
+
+  /// No description provided for @watchlistSimulationHistoryAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Available historical quotes are loaded. The chart shows the recorded range.'**
+  String get watchlistSimulationHistoryAvailable;
+
+  /// No description provided for @watchlistSimulationQuotesLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading quotes… Saved scenarios and history remain available.'**
+  String get watchlistSimulationQuotesLoading;
+
+  /// No description provided for @watchlistSimulationQuotesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes could not load. Saved scenarios and history remain available.'**
+  String get watchlistSimulationQuotesFailed;
+
+  /// No description provided for @watchlistSimulationQuoteBatchPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} quotes are missing or outdated. Retry to update daily estimates.'**
+  String watchlistSimulationQuoteBatchPartial(int count, int total);
+
+  /// No description provided for @watchlistSimulationQuotesReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes loaded.'**
+  String get watchlistSimulationQuotesReady;
+
+  /// No description provided for @watchlistSimulationQuotesUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote data fetched: {time}'**
+  String watchlistSimulationQuotesUpdated(String time);
+
+  /// No description provided for @watchlistSimulationHistoryCoverageShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed days with missing quotes: {count}'**
+  String watchlistSimulationHistoryCoverageShort(int count);
 }
 
 class _AppLocalizationsDelegate

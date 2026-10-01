@@ -200,6 +200,220 @@ void main() {
     expect(find.text('New simulation'), findsOneWidget);
   });
 
+  testWidgets(
+    'overview loads one selected detail and falls back after deletion',
+    (tester) async {
+      final other = WatchlistSimulation(
+        id: 'simulation-income',
+        collectionId: _simulation.collectionId,
+        name: 'Income paper mix',
+        baseCurrency: 'CNY',
+        startingCapital: Decimal.fromInt(200000),
+        cashWeight: _simulation.cashWeight,
+        baselineAt: _simulation.baselineAt,
+        createdAt: _simulation.createdAt,
+        sync: _simulation.sync,
+      );
+      final stream = StreamController<List<WatchlistSimulation>>();
+      addTearDown(stream.close);
+      final histories = <String>[];
+      final actions = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation, other],
+          positions: [_position],
+          simulationStream: stream.stream,
+          onDetailHistory: histories.add,
+          onDetailActions: actions.add,
+        ),
+      );
+      stream.add([_simulation, other]);
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .getSize(
+              find.byKey(
+                ValueKey('watchlist-simulation-select-${_simulation.id}'),
+              ),
+            )
+            .width,
+        tester
+            .getSize(
+              find.byKey(ValueKey('watchlist-simulation-${_simulation.id}')),
+            )
+            .width,
+      );
+      expect(histories, [_simulation.id]);
+      expect(actions, [_simulation.id]);
+      expect(find.byType(NwLineChart), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${other.id}')),
+        findsNothing,
+      );
+      await tester.tap(
+        find.byKey(ValueKey('watchlist-simulation-select-${other.id}')),
+      );
+      await tester.pumpAndSettle();
+      expect(histories.last, other.id);
+      expect(actions.last, other.id);
+      expect(find.byType(NwLineChart), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${other.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${_simulation.id}')),
+        findsNothing,
+      );
+      stream.add([_simulation]);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${_simulation.id}')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-select-${_simulation.id}')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'partial history reports actual range and retries without hiding saved values',
+    (tester) async {
+      var requests = 0;
+      final observations = [
+        _observations.first,
+        WatchlistSimulationObservation(
+          id: 'partial',
+          simulationId: _simulation.id,
+          observationDay: '2026-09-01',
+          observedAt: DateTime.utc(2026, 9, 1),
+          projectedValue: Decimal.fromInt(100900),
+          weightedDailyChange: Decimal.parse('0.009'),
+          pricedWeight: Decimal.parse('0.45'),
+          missingQuoteWeight: Decimal.parse('0.45'),
+        ),
+      ];
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          observations: observations,
+          loadBackfill: (_) async {
+            requests++;
+            return WatchlistSimulationHistoryResult(
+              status: requests == 1
+                  ? WatchlistSimulationHistoryStatus.partial
+                  : WatchlistSimulationHistoryStatus.complete,
+              requestedSymbolCount: 2,
+              failedSymbolCount: requests == 1 ? 1 : 0,
+            );
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Observed days with missing quotes: 1'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Recorded range (UTC)'), findsOneWidget);
+      expect(
+        find.textContaining('Only part of the historical quotes'),
+        findsOneWidget,
+      );
+      expect(find.text(r'$100,900.00'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('watchlist-simulation-history-retry')),
+      );
+      await tester.pumpAndSettle();
+      expect(requests, 2);
+      expect(
+        find.textContaining('Available historical quotes are loaded'),
+        findsOneWidget,
+      );
+      expect(find.text(r'$100,900.00'), findsOneWidget);
+    },
+  );
+
+  for (final status in [
+    WatchlistSimulationHistoryStatus.noData,
+    WatchlistSimulationHistoryStatus.failed,
+  ]) {
+    testWidgets('history $status retains observations and provides retry', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          loadBackfill: (_) async =>
+              WatchlistSimulationHistoryResult(status: status),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining(
+          status == WatchlistSimulationHistoryStatus.noData
+              ? 'No usable historical returns'
+              : 'Historical quotes could not be filled in',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('watchlist-simulation-history-retry')),
+        findsOneWidget,
+      );
+      expect(find.text(r'$100,900.00'), findsOneWidget);
+    });
+  }
+
+  testWidgets('pending quote batches cannot record observations', (
+    tester,
+  ) async {
+    final recorded = <WatchlistSimulationObservationRequest>[];
+    Widget host(bool ready) => _wrap(
+      preferences: preferences,
+      simulations: [_simulation],
+      positions: [_position],
+      quotesReady: ready,
+      recorder: (request) async => recorded.add(request),
+    );
+    await tester.pumpWidget(host(false));
+    await tester.pumpAndSettle();
+    expect(recorded, isEmpty);
+    expect(find.text(r'$100,900.00'), findsOneWidget);
+    await tester.pumpWidget(host(true));
+    await tester.pumpAndSettle();
+    expect(recorded, hasLength(1));
+  });
+
+  testWidgets('large text uses vertical daily metrics with wrapping labels', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        textScaler: const TextScaler.linear(1.6),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final cluster = tester.widget<AppMetricCluster>(
+      find.byType(AppMetricCluster),
+    );
+    expect(cluster.axis, Axis.vertical);
+    expect(cluster.items.every((item) => item.labelMaxLines == 2), isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows paper projection and allocation controls', (tester) async {
     await tester.pumpWidget(
       _wrap(
@@ -562,7 +776,15 @@ void main() {
     stream.add(simulations);
     await tester.pumpAndSettle();
     expect(find.text('Saved · Scenario 3').hitTestable(), findsOneWidget);
-    expect(find.text('Scenario 3').hitTestable(), findsOneWidget);
+    expect(
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('watchlist-simulation-simulation-3')),
+            matching: find.text('Scenario 3'),
+          )
+          .hitTestable(),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -1183,6 +1405,10 @@ Widget _wrap({
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot>? snapshots,
   WatchlistSimulationObservationRecorder? recorder,
+  bool quotesReady = true,
+  Future<WatchlistSimulationHistoryResult> Function(String)? loadBackfill,
+  void Function(String)? onDetailHistory,
+  void Function(String)? onDetailActions,
   WatchlistSimulationRepository? repository,
   TextScaler textScaler = TextScaler.noScaling,
   List<WatchlistSimulationActionEntry> actionEntries = const [],
@@ -1221,19 +1447,31 @@ Widget _wrap({
           ),
         );
       }),
-      watchlistSimulationObservationsProvider.overrideWith(
-        (_, _) =>
-            observationsStream ?? Stream.value(observations ?? _observations),
+      watchlistSimulationStoredObservationsProvider.overrideWith(
+        (_, _) => Stream.value(observations ?? _observations),
       ),
+      watchlistSimulationObservationsProvider.overrideWith((_, id) {
+        onDetailHistory?.call(id);
+        return observationsStream ??
+            Stream.value(observations ?? _observations);
+      }),
       watchlistSimulationHistoricalBackfillProvider.overrideWith(
-        (_, _) async => 0,
+        (_, id) async => loadBackfill != null
+            ? await loadBackfill(id)
+            : const WatchlistSimulationHistoryResult(
+                status: WatchlistSimulationHistoryStatus.notNeeded,
+              ),
       ),
       watchlistSimulationActionEntriesProvider.overrideWith(
         (_, _) => Stream.value(actionEntries),
       ),
-      watchlistSimulationActionReconciliationProvider.overrideWith(
-        (_, _) async => reconciliation,
-      ),
+      watchlistSimulationActionReconciliationProvider.overrideWith((
+        _,
+        id,
+      ) async {
+        onDetailActions?.call(id);
+        return reconciliation;
+      }),
       watchlistSimulationObservationRecorderProvider.overrideWithValue(
         recorder ?? (_) async {},
       ),
@@ -1259,6 +1497,7 @@ Widget _wrap({
                 collection: _collection,
                 items: items ?? [item ?? _item],
                 snapshots: snapshots ?? [_snapshot],
+                quotesReady: quotesReady,
               ),
             ],
           ),

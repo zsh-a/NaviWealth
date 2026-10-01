@@ -5357,5 +5357,17 @@
         "type": "String"
       }
     }
-  }
+  },
+  "watchlistSimulationOverview": "方案总览",
+  "watchlistSimulationHistoryRange": "记录范围（UTC）：{from} 至 {to} · 基线后 {count} 个观测日",
+  "watchlistSimulationIncompleteDays": "{count} 个观测日存在行情缺失，累计变化基于部分覆盖计算。",
+  "watchlistSimulationHistoryPartial": "仅部分历史行情可用。缺失或过期的数据未计入，累计变化可能不完整。",
+  "watchlistSimulationHistoryNoData": "当前范围未找到可用的历史收益数据，已有观测记录仍可查看。",
+  "watchlistSimulationHistoryAvailable": "已加载可用的历史行情，图表展示实际记录范围。",
+  "watchlistSimulationQuotesLoading": "行情加载中，已保存的方案和历史记录可先查看。",
+  "watchlistSimulationQuotesFailed": "行情加载失败，已保存的方案和历史记录仍可查看。",
+  "watchlistSimulationQuoteBatchPartial": "{total} 个标的中有 {count} 个行情缺失或过期，可重试更新当日估算。",
+  "watchlistSimulationQuotesReady": "行情已加载。",
+  "watchlistSimulationQuotesUpdated": "行情数据获取时间：{time}",
+  "watchlistSimulationHistoryCoverageShort": "行情缺失：{count} 个观测日"
 }

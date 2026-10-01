@@ -188,7 +188,15 @@ Watchlist uses one searchable collection selector independent of collection coun
 a labelled simulation entry, and a separate search/sort/filter row. Active filters
 stay on one horizontally scrollable line. The collection's paper workspace has
 the route `/wealth/watchlist/collections/:collectionId/simulations`; it loads the
-entire collection and completed quote batches, independent of list filters.
+entire collection, independent of list filters. Saved simulations and local
+history render before quotes finish loading; quote loading, errors, coverage,
+fetch time, and refresh stay inline without replacing the workspace. Only a
+completed quote batch may record a new live observation. Multiple scenarios use
+compact selectable overview rows with currency/capital, recorded cumulative
+change, observation date, and incomplete-day warnings. Overview rows read only
+stored, lineage-filtered observations; only the selected detail loads historical
+quotes, charts, and dividend reconciliation. A single scenario opens directly
+as the detail. Saving selects and reveals the returned scenario.
 Create and allocation edit use guarded full pages with pinned save bars. Only
 lightweight symbol selection uses a sheet, with a pinned confirmation footer.
 Busy forms block repeat submission, pointer/keyboard editing, and dismissal;
@@ -218,8 +226,13 @@ before headline numbers. An entirely unpriced invested allocation displays an
 unavailable daily move and omits its amount; an all-cash allocation is explicitly
 identified. Observation loading/errors never substitute initial capital for a
 missing latest value. A baseline-only series is labelled as a creation baseline;
-recorded results display their UTC observation date. Historical backfill progress
-and failures are displayed separately from the existing observation series.
+recorded results display their UTC observation date. Historical backfill progress,
+available data, partial coverage, empty responses, and request failures are
+displayed separately from the existing observation series, with retry for
+incomplete or failed fetches. The detail shows the actual UTC record range and
+the count of incomplete observed days after the baseline; it does not claim
+exchange-calendar completeness. Daily metric labels wrap, and larger text uses
+a vertical metric layout.
 
 Watchlist simulations are a separate paper-only aggregate backed by
 `watchlist_simulations`, legacy compatibility positions, a deterministic
@@ -290,7 +303,11 @@ only quotes from the latest shared UTC observation day are combined; older
 quote days are treated as missing rather than attributed to a newer day. When
 the simulation view is opened, completed historical daily bars are also
 backfilled from the creation baseline through yesterday when the market
-service provides them; adjusted closes are preferred when available. A
+service provides them; adjusted closes are preferred when available. Stale
+historical responses cannot create new observations. Retrying may repair an
+incomplete day only with increased priced coverage and reduced missing weight
+in the same allocation basis; complete days and previous allocation lineages
+remain unchanged. Repairs rebuild later derived values in one transaction. A
 local-only `watchlist_simulation_observations` read model records the creation
 baseline and at most one observation per UTC day. A synced/restored simulation
 rehydrates that baseline locally before recording a later observation.

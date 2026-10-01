@@ -8594,5 +8594,22 @@
         "type": "String"
       }
     }
-  }
+  },
+  "watchlistSimulationOverview": "Scenarios",
+  "watchlistSimulationHistoryRange": "Recorded range (UTC): {from}–{to} · observations after baseline: {count}",
+  "@watchlistSimulationHistoryRange": {"placeholders": {"from": {"type": "String"}, "to": {"type": "String"}, "count": {"type": "int"}}},
+  "watchlistSimulationIncompleteDays": "Observed days with missing quotes: {count}. Cumulative change is based on partial coverage.",
+  "@watchlistSimulationIncompleteDays": {"placeholders": {"count": {"type": "int"}}},
+  "watchlistSimulationHistoryPartial": "Only part of the historical quotes are usable. Missing or outdated data is excluded; cumulative change may be incomplete.",
+  "watchlistSimulationHistoryNoData": "No usable historical returns were found for this range. Recorded observations are still available.",
+  "watchlistSimulationHistoryAvailable": "Available historical quotes are loaded. The chart shows the recorded range.",
+  "watchlistSimulationQuotesLoading": "Loading quotes… Saved scenarios and history remain available.",
+  "watchlistSimulationQuotesFailed": "Quotes could not load. Saved scenarios and history remain available.",
+  "watchlistSimulationQuoteBatchPartial": "{count} of {total} quotes are missing or outdated. Retry to update daily estimates.",
+  "@watchlistSimulationQuoteBatchPartial": {"placeholders": {"count": {"type": "int"}, "total": {"type": "int"}}},
+  "watchlistSimulationQuotesReady": "Quotes loaded.",
+  "watchlistSimulationQuotesUpdated": "Quote data fetched: {time}",
+  "@watchlistSimulationQuotesUpdated": {"placeholders": {"time": {"type": "String"}}},
+  "watchlistSimulationHistoryCoverageShort": "Observed days with missing quotes: {count}",
+  "@watchlistSimulationHistoryCoverageShort": {"placeholders": {"count": {"type": "int"}}}
 }

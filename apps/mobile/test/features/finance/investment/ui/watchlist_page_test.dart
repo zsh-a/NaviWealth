@@ -236,6 +236,7 @@ Widget _routerWrap({
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistQuoteSnapshot>? scopedSnapshots,
+  Future<List<WatchlistQuoteSnapshot>> Function()? loadRefresh,
   List<WatchlistCollection> collections = const [],
   List<WatchlistCollectionMember> members = const [],
 }) {
@@ -250,6 +251,7 @@ Widget _routerWrap({
     items: items,
     snapshots: snapshots,
     scopedSnapshots: scopedSnapshots,
+    loadRefresh: loadRefresh,
     collections: collections,
     members: members,
   );
@@ -373,6 +375,97 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     _preferences = await SharedPreferences.getInstance();
   });
+
+  testWidgets(
+    'simulation workspace renders local content while quotes are pending',
+    (tester) async {
+      final batch = Completer<List<WatchlistQuoteSnapshot>>();
+      final router = _watchlistRouter(
+        initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor(
+          _collection.id,
+        ),
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        _routerWrap(
+          router: router,
+          items: [_item],
+          collections: [_collection],
+          members: [_membership],
+          loadRefresh: () => batch.future,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(WatchlistSimulationSection), findsOneWidget);
+      final sectionState = tester.state(
+        find.byType(WatchlistSimulationSection),
+      );
+      expect(
+        find.textContaining('Saved scenarios and history remain available'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<WatchlistSimulationSection>(
+              find.byType(WatchlistSimulationSection),
+            )
+            .quotesReady,
+        isFalse,
+      );
+      batch.complete([_advancingSnapshot]);
+      await tester.pumpAndSettle();
+      expect(
+        tester.state(find.byType(WatchlistSimulationSection)),
+        same(sectionState),
+      );
+      expect(
+        tester
+            .widget<WatchlistSimulationSection>(
+              find.byType(WatchlistSimulationSection),
+            )
+            .quotesReady,
+        isTrue,
+      );
+      expect(find.textContaining('Quote data fetched:'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'simulation quote failure retains local content and retries the batch',
+    (tester) async {
+      var requests = 0;
+      final router = _watchlistRouter(
+        initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor(
+          _collection.id,
+        ),
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        _routerWrap(
+          router: router,
+          items: [_item],
+          collections: [_collection],
+          members: [_membership],
+          loadRefresh: () async {
+            requests++;
+            if (requests == 1) throw StateError('Quote fixture failure');
+            return [_advancingSnapshot];
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(WatchlistSimulationSection), findsOneWidget);
+      expect(find.textContaining('Quotes could not load'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('watchlist-simulation-quotes-refresh')),
+      );
+      await tester.pumpAndSettle();
+      expect(requests, 2);
+      expect(find.text('Quotes loaded.'), findsOneWidget);
+      expect(find.byType(WatchlistSimulationSection), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('pull refresh waits for the completed quote batch', (
     tester,

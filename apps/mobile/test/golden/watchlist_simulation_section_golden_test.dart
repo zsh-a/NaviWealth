@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -131,6 +132,40 @@ final _observations = [
 ];
 
 void main() {
+  runAllVariants('watchlist_simulation_overview', (tester, variant) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final other = WatchlistSimulation(
+      id: 'simulation-income',
+      collectionId: _simulation.collectionId,
+      name: 'Income paper mix',
+      baseCurrency: 'CNY',
+      startingCapital: Decimal.fromInt(200000),
+      cashWeight: _simulation.cashWeight,
+      baselineAt: _simulation.baselineAt,
+      createdAt: _simulation.createdAt,
+      sync: _simulation.sync,
+    );
+    await pumpAndSnapshotMobile(
+      tester,
+      name: 'watchlist_simulation_overview',
+      variant: variant,
+      overrides: _paperOverrides(preferences, [_simulation, other]),
+      child: Scaffold(
+        body: ListView(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          children: [
+            WatchlistSimulationSection(
+              collection: _collection,
+              items: _items,
+              snapshots: _snapshots,
+            ),
+          ],
+        ),
+      ),
+    );
+  });
+
   runAllVariants('watchlist_simulation_section', (tester, variant) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
@@ -138,46 +173,7 @@ void main() {
       tester,
       name: 'watchlist_simulation_section',
       variant: variant,
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(preferences),
-        watchlistSimulationsProvider.overrideWith(
-          (_) => Stream.value([_simulation]),
-        ),
-        watchlistSimulationPositionsProvider.overrideWith(
-          (_, _) => Stream.value(_positions),
-        ),
-        watchlistSimulationAllocationProvider.overrideWith(
-          (_, _) => Stream.value(
-            ResolvedWatchlistSimulationAllocation(
-              status: WatchlistSimulationAllocationStatus.selected,
-              allocationVersionId: 'allocation-test',
-              allocationBasisKey: 'basis-test',
-              validAllocationBasisKeys: const {'basis-test'},
-              cashWeight: _simulation.cashWeight,
-              positions: _positions,
-            ),
-          ),
-        ),
-        watchlistSimulationHistoricalBackfillProvider.overrideWith(
-          (_, _) async => 0,
-        ),
-        watchlistSimulationObservationsProvider.overrideWith(
-          (_, _) => Stream.value(_observations),
-        ),
-        watchlistSimulationActionEntriesProvider.overrideWith(
-          (_, _) => Stream.value(const []),
-        ),
-        watchlistSimulationActionReconciliationProvider.overrideWith(
-          (_, _) async => const WatchlistSimulationActionReconciliation(
-            materializedCount: 0,
-            failedSymbolCount: 0,
-            unsupportedSymbolCount: 0,
-          ),
-        ),
-        watchlistSimulationObservationRecorderProvider.overrideWithValue(
-          (_) async {},
-        ),
-      ],
+      overrides: _paperOverrides(preferences, [_simulation]),
       child: Scaffold(
         body: ListView(
           padding: const EdgeInsets.all(AppSpacing.s12),
@@ -266,3 +262,50 @@ class _SimulationFormEntryState extends State<_SimulationFormEntry> {
   @override
   Widget build(BuildContext context) => const SizedBox.shrink();
 }
+
+List<Override> _paperOverrides(
+  SharedPreferences preferences,
+  List<WatchlistSimulation> simulations,
+) => [
+  sharedPreferencesProvider.overrideWithValue(preferences),
+  watchlistSimulationsProvider.overrideWith((_) => Stream.value(simulations)),
+  watchlistSimulationPositionsProvider.overrideWith(
+    (_, _) => Stream.value(_positions),
+  ),
+  watchlistSimulationAllocationProvider.overrideWith(
+    (_, _) => Stream.value(
+      ResolvedWatchlistSimulationAllocation(
+        status: WatchlistSimulationAllocationStatus.selected,
+        allocationVersionId: 'allocation-test',
+        allocationBasisKey: 'basis-test',
+        validAllocationBasisKeys: const {'basis-test'},
+        cashWeight: _simulation.cashWeight,
+        positions: _positions,
+      ),
+    ),
+  ),
+  watchlistSimulationHistoricalBackfillProvider.overrideWith(
+    (_, _) async => const WatchlistSimulationHistoryResult(
+      status: WatchlistSimulationHistoryStatus.notNeeded,
+    ),
+  ),
+  watchlistSimulationStoredObservationsProvider.overrideWith(
+    (_, _) => Stream.value(_observations),
+  ),
+  watchlistSimulationObservationsProvider.overrideWith(
+    (_, _) => Stream.value(_observations),
+  ),
+  watchlistSimulationActionEntriesProvider.overrideWith(
+    (_, _) => Stream.value(const []),
+  ),
+  watchlistSimulationActionReconciliationProvider.overrideWith(
+    (_, _) async => const WatchlistSimulationActionReconciliation(
+      materializedCount: 0,
+      failedSymbolCount: 0,
+      unsupportedSymbolCount: 0,
+    ),
+  ),
+  watchlistSimulationObservationRecorderProvider.overrideWithValue(
+    (_) async {},
+  ),
+];

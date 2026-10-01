@@ -17620,4 +17620,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String watchlistSimulationQuoteDate(String date) {
     return 'Quote date: $date (UTC)';
   }
+
+  @override
+  String get watchlistSimulationOverview => 'Scenarios';
+
+  @override
+  String watchlistSimulationHistoryRange(String from, String to, int count) {
+    return 'Recorded range (UTC): $from–$to · observations after baseline: $count';
+  }
+
+  @override
+  String watchlistSimulationIncompleteDays(int count) {
+    return 'Observed days with missing quotes: $count. Cumulative change is based on partial coverage.';
+  }
+
+  @override
+  String get watchlistSimulationHistoryPartial =>
+      'Only part of the historical quotes are usable. Missing or outdated data is excluded; cumulative change may be incomplete.';
+
+  @override
+  String get watchlistSimulationHistoryNoData =>
+      'No usable historical returns were found for this range. Recorded observations are still available.';
+
+  @override
+  String get watchlistSimulationHistoryAvailable =>
+      'Available historical quotes are loaded. The chart shows the recorded range.';
+
+  @override
+  String get watchlistSimulationQuotesLoading =>
+      'Loading quotes… Saved scenarios and history remain available.';
+
+  @override
+  String get watchlistSimulationQuotesFailed =>
+      'Quotes could not load. Saved scenarios and history remain available.';
+
+  @override
+  String watchlistSimulationQuoteBatchPartial(int count, int total) {
+    return '$count of $total quotes are missing or outdated. Retry to update daily estimates.';
+  }
+
+  @override
+  String get watchlistSimulationQuotesReady => 'Quotes loaded.';
+
+  @override
+  String watchlistSimulationQuotesUpdated(String time) {
+    return 'Quote data fetched: $time';
+  }
+
+  @override
+  String watchlistSimulationHistoryCoverageShort(int count) {
+    return 'Observed days with missing quotes: $count';
+  }
 }

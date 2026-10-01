@@ -15,6 +15,7 @@ class AppMetricItem {
     required this.value,
     this.flex = 1,
     this.maxLines = 2,
+    this.labelMaxLines = 1,
     this.sensitive = false,
   });
 
@@ -22,6 +23,7 @@ class AppMetricItem {
   final String value;
   final int flex;
   final int maxLines;
+  final int labelMaxLines;
 
   /// Whether [value] contains an exact monetary amount that should respect
   /// the nearest [AmountPrivacyScope].
@@ -108,7 +110,7 @@ class _MetricCell extends StatelessWidget {
         Text(
           item.label,
           style: context.captionStyle,
-          maxLines: 1,
+          maxLines: item.labelMaxLines,
           overflow: TextOverflow.ellipsis,
         ),
         SizedBox(height: dense ? AppSpacing.s2 : AppSpacing.s4),

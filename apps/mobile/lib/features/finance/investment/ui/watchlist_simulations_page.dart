@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -45,23 +46,45 @@ class WatchlistSimulationsPage extends ConsumerWidget {
                       final quotes = ref.watch(
                         watchlistQuoteSnapshotsForScopeProvider(scope),
                       );
-                      return quotes.whenOrError(
-                        context: context,
-                        onRetry: () => ref.invalidate(
-                          watchlistQuoteSnapshotsForScopeProvider(scope),
-                        ),
-                        data: (snapshots) => SingleChildScrollView(
-                          key: const PageStorageKey(
-                            'watchlist-simulations-scroll',
-                          ),
-                          padding: const EdgeInsets.all(AppSpacing.s16),
-                          child: AdaptiveContentFrame(
-                            maxWidth: AdaptiveMaxWidth.narrow,
-                            primary: WatchlistSimulationSection(
-                              collection: collection,
-                              items: items,
-                              snapshots: snapshots,
+                      final snapshots =
+                          quotes.value ?? const <WatchlistQuoteSnapshot>[];
+                      void refreshQuotes() {
+                        for (final item in items) {
+                          ref.invalidate(
+                            watchlistSymbolQuoteProvider(
+                              watchlistSymbolKey(item),
                             ),
+                          );
+                        }
+                        ref.invalidate(
+                          watchlistQuoteSnapshotsForScopeProvider(scope),
+                        );
+                      }
+
+                      return SingleChildScrollView(
+                        key: const PageStorageKey(
+                          'watchlist-simulations-scroll',
+                        ),
+                        padding: const EdgeInsets.all(AppSpacing.s16),
+                        child: AdaptiveContentFrame(
+                          maxWidth: AdaptiveMaxWidth.narrow,
+                          primary: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _SimulationQuotesStatus(
+                                quotes: quotes,
+                                snapshots: snapshots,
+                                onRefresh: refreshQuotes,
+                              ),
+                              const SizedBox(height: AppSpacing.s16),
+                              WatchlistSimulationSection(
+                                collection: collection,
+                                items: items,
+                                snapshots: snapshots,
+                                quotesReady:
+                                    !quotes.isLoading && !quotes.hasError,
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -69,6 +92,78 @@ class WatchlistSimulationsPage extends ConsumerWidget {
                   );
             },
           ),
+    );
+  }
+}
+
+class _SimulationQuotesStatus extends StatelessWidget {
+  const _SimulationQuotesStatus({
+    required this.quotes,
+    required this.snapshots,
+    required this.onRefresh,
+  });
+
+  final AsyncValue<List<WatchlistQuoteSnapshot>> quotes;
+  final List<WatchlistQuoteSnapshot> snapshots;
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final unavailable = snapshots
+        .where(
+          (snapshot) => snapshot.response == null || snapshot.response!.isStale,
+        )
+        .length;
+    final fetchedTimes =
+        snapshots
+            .map((snapshot) => snapshot.response?.fetchedAt)
+            .whereType<DateTime>()
+            .toList()
+          ..sort();
+    return Column(
+      key: const ValueKey('watchlist-simulation-quotes-status'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          liveRegion: true,
+          child: Text(
+            quotes.isLoading
+                ? l10n.watchlistSimulationQuotesLoading
+                : quotes.hasError
+                ? l10n.watchlistSimulationQuotesFailed
+                : unavailable > 0
+                ? l10n.watchlistSimulationQuoteBatchPartial(
+                    unavailable,
+                    snapshots.length,
+                  )
+                : l10n.watchlistSimulationQuotesReady,
+            style: context.captionStyle,
+          ),
+        ),
+        if (fetchedTimes.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            l10n.watchlistSimulationQuotesUpdated(
+              formatters.dateTime(fetchedTimes.last),
+            ),
+            style: context.captionStyle,
+          ),
+        ],
+        const SizedBox(height: AppSpacing.s4),
+        AppActionButton(
+          key: const ValueKey('watchlist-simulation-quotes-refresh'),
+          variant: FButtonVariant.outline,
+          mainAxisSize: MainAxisSize.min,
+          onPress: quotes.isLoading ? null : onRefresh,
+          child: Text(
+            quotes.hasError || unavailable > 0
+                ? l10n.commonRetry
+                : l10n.commonRefresh,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1107,13 +1107,14 @@ class WatchlistSimulationRepository {
   /// returns after several days. Inserting the missed days through
   /// [recordObservation] would be rejected as out-of-order and would leave
   /// later projected values stale. This method fills only missing days in the
-  /// active allocation lineage, then recomputes every later row from the
-  /// baseline in one transaction. Observations remain a local derived read
-  /// model; no sync/outbox rows are created.
+  /// active allocation lineage (or repairs incomplete days when requested), then
+  /// recomputes every later row from the baseline in one transaction. Observations
+  /// remain a local derived read model; no sync/outbox rows are created.
   Future<int> mergeObservationInputs({
     required WatchlistSimulation simulation,
     required Iterable<WatchlistSimulationObservationInput> inputs,
     required String allocationBasisKey,
+    bool repairIncompleteObservations = false,
   }) async {
     final baselineDay = _observationDay(simulation.baselineAt);
     final byDay = <String, WatchlistSimulationObservationInput>{};
@@ -1204,9 +1205,9 @@ class WatchlistSimulationRepository {
       String? previousBasis;
       final now = DateTime.now().toUtc();
       for (final entry in sortedEntries) {
-        // Existing rows are trusted observations. Backfill only fills a gap;
-        // it never replaces a quote observation. Before a reallocation's
-        // effective date, it also keeps the older allocation lineage intact.
+        // Preserve recorded rows unless explicitly repairing an incomplete day
+        // with better coverage in the same allocation. Complete observations
+        // and earlier allocation lineages remain unchanged.
         final input = entry.value;
         while (existingIndex < validRows.length &&
             validRows[existingIndex].observationDay.compareTo(entry.key) < 0) {
@@ -1215,7 +1216,26 @@ class WatchlistSimulationRepository {
         }
         if (existingIndex < validRows.length &&
             validRows[existingIndex].observationDay == entry.key) {
-          previousBasis = validRows[existingIndex].allocationBasisKey;
+          final existing = validRows[existingIndex];
+          previousBasis = existing.allocationBasisKey;
+          if (repairIncompleteObservations &&
+              existing.allocationBasisKey == allocationBasisKey &&
+              existing.missingQuoteWeight > Decimal.zero &&
+              input.pricedWeight > existing.pricedWeight &&
+              input.missingQuoteWeight < existing.missingQuoteWeight) {
+            await (_db.update(
+              _db.watchlistSimulationObservations,
+            )..where((t) => t.id.equals(existing.id))).write(
+              WatchlistSimulationObservationsCompanion(
+                observedAt: Value(input.observedAt.toUtc()),
+                weightedDailyChange: Value(input.weightedDailyChange),
+                pricedWeight: Value(input.pricedWeight),
+                missingQuoteWeight: Value(input.missingQuoteWeight),
+                updatedAt: Value(now),
+              ),
+            );
+            changedDays++;
+          }
           existingIndex++;
           continue;
         }

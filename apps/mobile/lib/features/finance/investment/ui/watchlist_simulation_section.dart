@@ -29,11 +29,13 @@ class WatchlistSimulationSection extends ConsumerStatefulWidget {
     required this.collection,
     required this.items,
     required this.snapshots,
+    this.quotesReady = true,
   });
 
   final WatchlistCollection collection;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
+  final bool quotesReady;
 
   @override
   ConsumerState<WatchlistSimulationSection> createState() =>
@@ -43,12 +45,14 @@ class WatchlistSimulationSection extends ConsumerStatefulWidget {
 class _WatchlistSimulationSectionState
     extends ConsumerState<WatchlistSimulationSection> {
   final _cardKeys = <String, GlobalKey>{};
+  String? _selectedId;
   String? _savedId;
   String? _pendingSavedId;
 
   void _showSaved(String id) {
     if (!mounted) return;
     setState(() {
+      _selectedId = id;
       _savedId = id;
       _pendingSavedId = id;
     });
@@ -128,50 +132,252 @@ class _WatchlistSimulationSectionState
                 itemsEmpty: widget.items.isEmpty,
               );
             }
+            final selected =
+                scoped
+                    .where((simulation) => simulation.id == _selectedId)
+                    .firstOrNull ??
+                scoped.first;
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (var index = 0; index < scoped.length; index++) ...[
-                  Semantics(
-                    selected: _savedId == scoped[index].id,
+                if (scoped.length > 1) ...[
+                  Text(
+                    l10n.watchlistSimulationOverview,
+                    style: context.labelStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                  AppGroupedSurface(
+                    padding: EdgeInsets.zero,
                     child: Column(
-                      key: _cardKeys.putIfAbsent(
-                        scoped[index].id,
-                        GlobalKey.new,
-                      ),
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (_savedId == scoped[index].id)
-                          Semantics(
-                            liveRegion: true,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AppSpacing.s8,
-                              ),
-                              child: Text(
-                                l10n.watchlistSimulationSavedStatus(
-                                  scoped[index].name,
-                                ),
-                                style: context.labelStyle,
-                              ),
-                            ),
+                        for (var index = 0; index < scoped.length; index++) ...[
+                          if (index > 0) const AppDivider(horizontalPadding: 0),
+                          _WatchlistSimulationOverviewRow(
+                            simulation: scoped[index],
+                            selected: selected.id == scoped[index].id,
+                            onSelect: () => setState(() {
+                              _selectedId = scoped[index].id;
+                              _pendingSavedId = scoped[index].id;
+                            }),
                           ),
-                        _WatchlistSimulationCard(
-                          simulation: scoped[index],
-                          items: widget.items,
-                          snapshots: widget.snapshots,
-                          onSaved: _showSaved,
-                          onReady: _revealSaved,
-                        ),
+                        ],
                       ],
                     ),
                   ),
-                  if (index != scoped.length - 1)
-                    const SizedBox(height: AppSpacing.s8),
+                  const SizedBox(height: AppSpacing.s16),
                 ],
+                Column(
+                  key: _cardKeys.putIfAbsent(selected.id, GlobalKey.new),
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_savedId == selected.id)
+                      Semantics(
+                        liveRegion: true,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.s8,
+                          ),
+                          child: Text(
+                            l10n.watchlistSimulationSavedStatus(selected.name),
+                            style: context.labelStyle,
+                          ),
+                        ),
+                      ),
+                    _WatchlistSimulationCard(
+                      key: ValueKey(selected.id),
+                      simulation: selected,
+                      items: widget.items,
+                      snapshots: widget.snapshots,
+                      quotesReady: widget.quotesReady,
+                      onSaved: _showSaved,
+                      onReady: _revealSaved,
+                    ),
+                  ],
+                ),
               ],
             );
           },
         ),
+      ],
+    );
+  }
+}
+
+class _WatchlistSimulationOverviewRow extends ConsumerWidget {
+  const _WatchlistSimulationOverviewRow({
+    required this.simulation,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final WatchlistSimulation simulation;
+  final bool selected;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final history = ref.watch(
+      watchlistSimulationStoredObservationsProvider(simulation.id),
+    );
+    final observations =
+        history.asData?.value ?? const <WatchlistSimulationObservation>[];
+    final performance = WatchlistSimulationPerformance.fromSeries(
+      projectedValues: observations.map(
+        (observation) => observation.projectedValue,
+      ),
+      startingCapital:
+          observations.firstOrNull?.projectedValue ??
+          simulation.startingCapital,
+    );
+    final incomplete = _incompleteObservationCount(simulation, observations);
+    return AppTappable(
+      key: ValueKey('watchlist-simulation-select-${simulation.id}'),
+      selected: selected,
+      onPress: onSelect,
+      child: AppSelectedRow(
+        selected: selected,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(simulation.name, style: context.rowTitleStyle),
+              const SizedBox(height: AppSpacing.s4),
+              Wrap(
+                spacing: AppSpacing.s12,
+                runSpacing: AppSpacing.s4,
+                children: [
+                  Text(
+                    formatters.currency(
+                      simulation.startingCapital,
+                      code: simulation.baseCurrency,
+                    ),
+                    style: context.captionStyle,
+                  ),
+                  Text(
+                    '${l10n.watchlistSimulationCumulativeReturn} · ${performance == null || !performance.hasMoved ? '—' : formatters.signedPercent(performance.cumulativeReturn.toDouble(), decimalDigits: 2)}',
+                    style: context.labelStyle,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(
+                history.isLoading
+                    ? l10n.watchlistSimulationHistoryLoading
+                    : history.hasError
+                    ? l10n.watchlistSimulationHistoryLoadFailed
+                    : observations.isEmpty
+                    ? l10n.watchlistSimulationHistoryEmpty
+                    : observations.length < 2
+                    ? l10n.watchlistSimulationHistoryBaselineOnly
+                    : l10n.watchlistSimulationObservationDate(
+                        formatters.date(observations.last.observedAt.toUtc()),
+                      ),
+                style: context.captionStyle,
+              ),
+              if (incomplete > 0)
+                Text(
+                  l10n.watchlistSimulationHistoryCoverageShort(incomplete),
+                  style: context.captionStyle,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+int _incompleteObservationCount(
+  WatchlistSimulation simulation,
+  List<WatchlistSimulationObservation> observations,
+) {
+  final baseline = simulation.baselineAt.toUtc();
+  final baselineDay = DateTime.utc(baseline.year, baseline.month, baseline.day);
+  return observations
+      .where(
+        (observation) =>
+            !observation.observedAt.toUtc().isBefore(
+              baselineDay.add(const Duration(days: 1)),
+            ) &&
+            observation.missingQuoteWeight > Decimal.zero,
+      )
+      .length;
+}
+
+class _WatchlistSimulationHistoryQuality extends StatelessWidget {
+  const _WatchlistSimulationHistoryQuality({
+    required this.simulation,
+    required this.observations,
+    required this.backfill,
+    required this.onRetry,
+  });
+
+  final WatchlistSimulation simulation;
+  final List<WatchlistSimulationObservation> observations;
+  final AsyncValue<WatchlistSimulationHistoryResult> backfill;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final formatters = AppFormatters(locale: Localizations.localeOf(context));
+    final result = backfill.asData?.value;
+    final incomplete = _incompleteObservationCount(simulation, observations);
+    final message = backfill.isLoading
+        ? l10n.watchlistSimulationHistoryBackfilling
+        : backfill.hasError ||
+              result?.status == WatchlistSimulationHistoryStatus.failed
+        ? l10n.watchlistSimulationHistoryBackfillFailed
+        : switch (result?.status) {
+            WatchlistSimulationHistoryStatus.partial =>
+              l10n.watchlistSimulationHistoryPartial,
+            WatchlistSimulationHistoryStatus.noData =>
+              l10n.watchlistSimulationHistoryNoData,
+            WatchlistSimulationHistoryStatus.complete =>
+              l10n.watchlistSimulationHistoryAvailable,
+            _ => null,
+          };
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (observations.length > 1) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            l10n.watchlistSimulationHistoryRange(
+              formatters.date(observations.first.observedAt.toUtc()),
+              formatters.date(observations.last.observedAt.toUtc()),
+              observations.length - 1,
+            ),
+            style: context.captionStyle,
+          ),
+        ],
+        if (incomplete > 0) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            l10n.watchlistSimulationIncompleteDays(incomplete),
+            style: context.captionStyle,
+          ),
+        ],
+        if (message != null) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Semantics(
+            liveRegion: true,
+            child: Text(message, style: context.captionStyle),
+          ),
+        ],
+        if (!backfill.isLoading &&
+            (backfill.hasError || (result?.canRetry ?? false)))
+          AppActionButton(
+            key: const ValueKey('watchlist-simulation-history-retry'),
+            variant: FButtonVariant.ghost,
+            mainAxisSize: MainAxisSize.min,
+            onPress: onRetry,
+            child: Text(l10n.commonRetry),
+          ),
       ],
     );
   }
@@ -266,9 +472,11 @@ class _WatchlistSimulationEmpty extends StatelessWidget {
 
 class _WatchlistSimulationCard extends ConsumerWidget {
   const _WatchlistSimulationCard({
+    super.key,
     required this.simulation,
     required this.items,
     required this.snapshots,
+    required this.quotesReady,
     required this.onSaved,
     required this.onReady,
   });
@@ -276,6 +484,7 @@ class _WatchlistSimulationCard extends ConsumerWidget {
   final WatchlistSimulation simulation;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
+  final bool quotesReady;
   final ValueChanged<String> onSaved;
   final ValueChanged<String> onReady;
 
@@ -307,6 +516,7 @@ class _WatchlistSimulationCard extends ConsumerWidget {
             allocationBasisKey: allocation.allocationBasisKey!,
             items: items,
             snapshots: snapshots,
+            quotesReady: quotesReady,
             onSaved: onSaved,
           );
         }
@@ -405,6 +615,7 @@ class _WatchlistSimulationBody extends ConsumerWidget {
     required this.allocationBasisKey,
     required this.items,
     required this.snapshots,
+    required this.quotesReady,
     required this.onSaved,
   });
 
@@ -414,6 +625,7 @@ class _WatchlistSimulationBody extends ConsumerWidget {
   final String allocationBasisKey;
   final List<WatchlistItem> items;
   final List<WatchlistQuoteSnapshot> snapshots;
+  final bool quotesReady;
   final ValueChanged<String> onSaved;
 
   @override
@@ -508,7 +720,7 @@ class _WatchlistSimulationBody extends ConsumerWidget {
                 style: context.captionStyle,
               ),
             ),
-          ] else if (observations.isNotEmpty) ...[
+          ] else if (observations.length == 1) ...[
             const SizedBox(height: AppSpacing.s8),
             Text(
               l10n.watchlistSimulationObservationDate(
@@ -517,38 +729,22 @@ class _WatchlistSimulationBody extends ConsumerWidget {
               style: context.captionStyle,
             ),
           ],
-          if (backfillAsync.isLoading) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.watchlistSimulationHistoryBackfilling,
-              style: context.captionStyle,
-            ),
-          ],
-          if (backfillAsync.hasError) ...[
-            const SizedBox(height: AppSpacing.s8),
-            Text(
-              l10n.watchlistSimulationHistoryBackfillFailed,
-              style: context.captionStyle,
-            ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: AppActionButton(
-                variant: FButtonVariant.ghost,
-                mainAxisSize: MainAxisSize.min,
-                onPress: () => ref.invalidate(
-                  watchlistSimulationHistoricalBackfillProvider(simulation.id),
-                ),
-                child: Text(l10n.commonRetry),
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.s12),
-          _WatchlistSimulationObservationRecorder(
+          _WatchlistSimulationHistoryQuality(
             simulation: simulation,
-            projection: projection,
-            observedAt: quoteInputs.latestQuoteAt,
-            allocationBasisKey: allocationBasisKey,
+            observations: observations,
+            backfill: backfillAsync,
+            onRetry: () => ref.invalidate(
+              watchlistSimulationHistoricalBackfillProvider(simulation.id),
+            ),
           ),
+          const SizedBox(height: AppSpacing.s12),
+          if (quotesReady)
+            _WatchlistSimulationObservationRecorder(
+              simulation: simulation,
+              projection: projection,
+              observedAt: quoteInputs.latestQuoteAt,
+              allocationBasisKey: allocationBasisKey,
+            ),
           observationsAsync.whenOrLoading(
             context: context,
             loading: () => const SizedBox(
@@ -573,9 +769,13 @@ class _WatchlistSimulationBody extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s12),
           AppMetricCluster(
             dense: true,
+            axis: MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3
+                ? Axis.vertical
+                : Axis.horizontal,
             items: [
               AppMetricItem(
                 label: l10n.watchlistSimulationDailyMove,
+                labelMaxLines: 2,
                 value:
                     projection.pricedWeight == Decimal.zero &&
                         projection.investedWeight > Decimal.zero
@@ -587,6 +787,7 @@ class _WatchlistSimulationBody extends ConsumerWidget {
               ),
               AppMetricItem(
                 label: l10n.watchlistSimulationPricedWeight,
+                labelMaxLines: 2,
                 value: formatters.percent(
                   projection.pricedWeight.toDouble(),
                   decimalDigits: 0,
@@ -594,6 +795,7 @@ class _WatchlistSimulationBody extends ConsumerWidget {
               ),
               AppMetricItem(
                 label: l10n.watchlistSimulationCashWeight,
+                labelMaxLines: 2,
                 value: formatters.percent(
                   resolvedCashWeight.toDouble(),
                   decimalDigits: 0,

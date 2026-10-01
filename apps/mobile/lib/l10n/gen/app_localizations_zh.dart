@@ -16668,4 +16668,51 @@ class AppLocalizationsZh extends AppLocalizations {
   String watchlistSimulationQuoteDate(String date) {
     return '行情日期：$date（UTC）';
   }
+
+  @override
+  String get watchlistSimulationOverview => '方案总览';
+
+  @override
+  String watchlistSimulationHistoryRange(String from, String to, int count) {
+    return '记录范围（UTC）：$from 至 $to · 基线后 $count 个观测日';
+  }
+
+  @override
+  String watchlistSimulationIncompleteDays(int count) {
+    return '$count 个观测日存在行情缺失，累计变化基于部分覆盖计算。';
+  }
+
+  @override
+  String get watchlistSimulationHistoryPartial =>
+      '仅部分历史行情可用。缺失或过期的数据未计入，累计变化可能不完整。';
+
+  @override
+  String get watchlistSimulationHistoryNoData => '当前范围未找到可用的历史收益数据，已有观测记录仍可查看。';
+
+  @override
+  String get watchlistSimulationHistoryAvailable => '已加载可用的历史行情，图表展示实际记录范围。';
+
+  @override
+  String get watchlistSimulationQuotesLoading => '行情加载中，已保存的方案和历史记录可先查看。';
+
+  @override
+  String get watchlistSimulationQuotesFailed => '行情加载失败，已保存的方案和历史记录仍可查看。';
+
+  @override
+  String watchlistSimulationQuoteBatchPartial(int count, int total) {
+    return '$total 个标的中有 $count 个行情缺失或过期，可重试更新当日估算。';
+  }
+
+  @override
+  String get watchlistSimulationQuotesReady => '行情已加载。';
+
+  @override
+  String watchlistSimulationQuotesUpdated(String time) {
+    return '行情数据获取时间：$time';
+  }
+
+  @override
+  String watchlistSimulationHistoryCoverageShort(int count) {
+    return '行情缺失：$count 个观测日';
+  }
 }

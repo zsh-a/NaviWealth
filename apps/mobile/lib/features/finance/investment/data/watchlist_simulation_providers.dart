@@ -6,7 +6,6 @@ import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/features/finance/data/market/market_data_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/event_timeline_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
-import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/market/domain/corporate_action_provider.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
@@ -243,45 +242,88 @@ final watchlistSimulationActionReconciliationProvider = FutureProvider
       );
     });
 
+/// Reads local, lineage-filtered observations without fetching market data.
+/// Compact overview rows use this provider so only the selected detail backfills.
+final watchlistSimulationStoredObservationsProvider = StreamProvider.autoDispose
+    .family<List<WatchlistSimulationObservation>, String>(
+      _watchStoredSimulationObservations,
+    );
+
 final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
-    .family<List<WatchlistSimulationObservation>, String>((
-      ref,
-      simulationId,
-    ) async* {
-      // Make the read model self-healing for non-UI consumers as well. The
-      // live recorder can write independently because backfill only fills
-      // missing completed days and rebuilds the chain transactionally.
-      ref.watch(watchlistSimulationHistoricalBackfillProvider(simulationId));
-      final allocation = ref
-          .watch(watchlistSimulationAllocationProvider(simulationId))
-          .asData
-          ?.value;
-      if (allocation == null || !allocation.isUsable) {
-        yield const <WatchlistSimulationObservation>[];
-        return;
-      }
-      final repository = await ref.watch(
-        watchlistSimulationRepositoryProvider.future,
+    .family<List<WatchlistSimulationObservation>, String>((ref, simulationId) {
+      // Keep backfill alive without restarting the local stream at each fetch
+      // transition. Repository writes update the stream independently.
+      ref.watch(
+        watchlistSimulationHistoricalBackfillProvider(simulationId)
+            .select((_) => null),
       );
-      final ownerUserId = await ref.watch(currentUserIdProvider)();
-      yield* repository
-          .watchObservations(
-            ownerUserId: ownerUserId,
-            simulationId: simulationId,
-          )
-          .map(
-            (observations) => observations
-                .where(
-                  (observation) =>
-                      watchlistSimulationObservationIsInAllocationLineage(
-                        allocationBasisKey: observation.allocationBasisKey,
-                        validAllocationBasisKeys:
-                            allocation.validAllocationBasisKeys,
-                      ),
-                )
-                .toList(growable: false),
-          );
+      return _watchStoredSimulationObservations(ref, simulationId);
     });
+
+Stream<List<WatchlistSimulationObservation>> _watchStoredSimulationObservations(
+  Ref ref,
+  String simulationId,
+) async* {
+  final allocation = ref
+      .watch(watchlistSimulationAllocationProvider(simulationId))
+      .asData
+      ?.value;
+  if (allocation == null || !allocation.isUsable) {
+    yield const <WatchlistSimulationObservation>[];
+    return;
+  }
+  final repository = await ref.watch(
+    watchlistSimulationRepositoryProvider.future,
+  );
+  final ownerUserId = await ref.watch(currentUserIdProvider)();
+  yield* repository
+      .watchObservations(ownerUserId: ownerUserId, simulationId: simulationId)
+      .map(
+        (observations) => observations
+            .where(
+              (observation) =>
+                  watchlistSimulationObservationIsInAllocationLineage(
+                    allocationBasisKey: observation.allocationBasisKey,
+                    validAllocationBasisKeys:
+                        allocation.validAllocationBasisKeys,
+                  ),
+            )
+            .toList(growable: false),
+      );
+}
+
+enum WatchlistSimulationHistoryStatus {
+  notNeeded,
+  complete,
+  partial,
+  noData,
+  failed,
+}
+
+class WatchlistSimulationHistoryResult {
+  const WatchlistSimulationHistoryResult({
+    required this.status,
+    this.updatedObservationCount = 0,
+    this.requestedSymbolCount = 0,
+    this.failedSymbolCount = 0,
+    this.staleSymbolCount = 0,
+    this.unavailableSymbolCount = 0,
+    this.incompleteObservationCount = 0,
+  });
+
+  final WatchlistSimulationHistoryStatus status;
+  final int updatedObservationCount;
+  final int requestedSymbolCount;
+  final int failedSymbolCount;
+  final int staleSymbolCount;
+  final int unavailableSymbolCount;
+  final int incompleteObservationCount;
+
+  bool get canRetry =>
+      status == WatchlistSimulationHistoryStatus.partial ||
+      status == WatchlistSimulationHistoryStatus.failed ||
+      status == WatchlistSimulationHistoryStatus.noData;
+}
 
 /// Fills missed UTC days from the simulation baseline through yesterday.
 ///
@@ -290,41 +332,77 @@ final watchlistSimulationObservationsProvider = StreamProvider.autoDispose
 /// bar into a completed daily return while sharing the repository's single
 /// observation-chain rebuild.
 final watchlistSimulationHistoricalBackfillProvider = FutureProvider.autoDispose
-    .family<int, String>((ref, simulationId) async {
+    .family<WatchlistSimulationHistoryResult, String>((
+      ref,
+      simulationId,
+    ) async {
       final simulations = await ref.watch(watchlistSimulationsProvider.future);
       final simulation = simulations
           .where((candidate) => candidate.id == simulationId)
           .firstOrNull;
-      if (simulation == null) return 0;
+      if (simulation == null) {
+        return const WatchlistSimulationHistoryResult(
+          status: WatchlistSimulationHistoryStatus.notNeeded,
+        );
+      }
 
       final allocation = await ref.watch(
         watchlistSimulationAllocationProvider(simulationId).future,
       );
       final allocationBasisKey = allocation.allocationBasisKey;
-      if (!allocation.isUsable || allocationBasisKey == null) return 0;
+      if (!allocation.isUsable || allocationBasisKey == null) {
+        return const WatchlistSimulationHistoryResult(
+          status: WatchlistSimulationHistoryStatus.notNeeded,
+        );
+      }
 
       final positions = allocation.positions;
-      if (positions.isEmpty) return 0;
-      final items = await ref.watch(watchlistItemsProvider.future);
-      final itemById = {for (final item in items) item.id: item};
-      final market = await ref.watch(marketDataServiceProvider.future);
+      if (positions.isEmpty) {
+        return const WatchlistSimulationHistoryResult(
+          status: WatchlistSimulationHistoryStatus.notNeeded,
+        );
+      }
       final baselineDay = _utcDay(simulation.baselineAt);
       final today = _utcDay(ref.watch(clockProvider).now().toUtc());
       final lastCompletedDay = today.subtract(const Duration(days: 1));
-      if (!baselineDay.isBefore(lastCompletedDay)) return 0;
+      if (!baselineDay.isBefore(lastCompletedDay)) {
+        return const WatchlistSimulationHistoryResult(
+          status: WatchlistSimulationHistoryStatus.notNeeded,
+        );
+      }
 
+      final items = await ref.watch(watchlistItemsProvider.future);
+      final itemById = {for (final item in items) item.id: item};
+      final market = await ref.watch(marketDataServiceProvider.future);
+
+      var failedSymbolCount = 0;
+      var staleSymbolCount = 0;
+      var unavailableSymbolCount = 0;
+      var incompleteObservationCount = 0;
       final returnsByItemId = <String, Map<DateTime, Decimal>>{};
       final dates = <DateTime>{};
       for (final position in positions) {
         final item = itemById[position.watchlistItemId];
-        if (item == null) continue;
-        final response = await _tryHistoricalResponse(
-          market,
-          item,
-          from: baselineDay.subtract(const Duration(days: 1)),
-          to: lastCompletedDay,
-        );
-        if (response == null) continue;
+        if (item == null) {
+          unavailableSymbolCount++;
+          continue;
+        }
+        MarketResponse<List<HistoricalBar>> response;
+        try {
+          response = await market.getHistorical(
+            item.symbol,
+            market: item.market,
+            from: baselineDay.subtract(const Duration(days: 1)),
+            to: lastCompletedDay,
+          );
+        } on Object {
+          failedSymbolCount++;
+          continue;
+        }
+        if (response.isStale) {
+          staleSymbolCount++;
+          continue;
+        }
         final closes = <DateTime, Decimal>{};
         for (final bar in response.data) {
           final day = _utcDay(bar.asOf);
@@ -339,7 +417,10 @@ final watchlistSimulationHistoricalBackfillProvider = FutureProvider.autoDispose
               : bar.close;
           if (close > Decimal.zero) closes[day] = close;
         }
-        if (closes.isEmpty) continue;
+        if (closes.isEmpty) {
+          unavailableSymbolCount++;
+          continue;
+        }
         final orderedDays = closes.keys.toList()..sort();
         Decimal? previous;
         final dailyReturns = <DateTime, Decimal>{};
@@ -356,10 +437,10 @@ final watchlistSimulationHistoricalBackfillProvider = FutureProvider.autoDispose
         }
         if (dailyReturns.isNotEmpty) {
           returnsByItemId[position.watchlistItemId] = dailyReturns;
+        } else {
+          unavailableSymbolCount++;
         }
       }
-      if (dates.isEmpty) return 0;
-
       final inputs = <WatchlistSimulationObservationInput>[];
       final orderedDates = dates.toList()..sort();
       for (final day in orderedDates) {
@@ -376,6 +457,7 @@ final watchlistSimulationHistoricalBackfillProvider = FutureProvider.autoDispose
           }
         }
         if (pricedWeight <= Decimal.zero) continue;
+        if (missingQuoteWeight > Decimal.zero) incompleteObservationCount++;
         inputs.add(
           WatchlistSimulationObservationInput(
             observedAt: DateTime.utc(day.year, day.month, day.day, 23, 59, 59),
@@ -385,35 +467,40 @@ final watchlistSimulationHistoricalBackfillProvider = FutureProvider.autoDispose
           ),
         );
       }
-      if (inputs.isEmpty) return 0;
-
-      final repository = await ref.watch(
-        watchlistSimulationRepositoryProvider.future,
-      );
-      return repository.mergeObservationInputs(
-        simulation: simulation,
-        inputs: inputs,
-        allocationBasisKey: allocationBasisKey,
+      var updatedObservationCount = 0;
+      if (inputs.isNotEmpty) {
+        final repository = await ref.watch(
+          watchlistSimulationRepositoryProvider.future,
+        );
+        updatedObservationCount = await repository.mergeObservationInputs(
+          simulation: simulation,
+          inputs: inputs,
+          allocationBasisKey: allocationBasisKey,
+          repairIncompleteObservations: true,
+        );
+      }
+      final hasIssues =
+          failedSymbolCount > 0 ||
+          staleSymbolCount > 0 ||
+          unavailableSymbolCount > 0 ||
+          incompleteObservationCount > 0;
+      final status = inputs.isEmpty && failedSymbolCount > 0
+          ? WatchlistSimulationHistoryStatus.failed
+          : inputs.isEmpty && staleSymbolCount == 0
+          ? WatchlistSimulationHistoryStatus.noData
+          : hasIssues
+          ? WatchlistSimulationHistoryStatus.partial
+          : WatchlistSimulationHistoryStatus.complete;
+      return WatchlistSimulationHistoryResult(
+        status: status,
+        updatedObservationCount: updatedObservationCount,
+        requestedSymbolCount: positions.length,
+        failedSymbolCount: failedSymbolCount,
+        staleSymbolCount: staleSymbolCount,
+        unavailableSymbolCount: unavailableSymbolCount,
+        incompleteObservationCount: incompleteObservationCount,
       );
     });
-
-Future<MarketResponse<List<HistoricalBar>>?> _tryHistoricalResponse(
-  MarketDataService market,
-  WatchlistItem item, {
-  required DateTime from,
-  required DateTime to,
-}) async {
-  try {
-    return await market.getHistorical(
-      item.symbol,
-      from: from,
-      to: to,
-      market: item.market,
-    );
-  } on Object {
-    return null;
-  }
-}
 
 DateTime _utcDay(DateTime value) {
   final utc = value.toUtc();
