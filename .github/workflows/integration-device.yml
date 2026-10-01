@@ -14,12 +14,15 @@ on:
   pull_request:
     paths:
       - 'apps/mobile/integration_test/**'
+      - 'apps/mobile/test_driver/**'
+      - 'apps/mobile/tool/run-android-integration.sh'
       - 'apps/mobile/tool/run-android-backup-interruption.sh'
       - 'apps/mobile/lib/core/backup/**'
       - 'apps/mobile/lib/core/persistence/**'
       - 'apps/mobile/lib/core/sync/**'
       - 'apps/mobile/android/**'
       - 'apps/mobile/pubspec.yaml'
+      - 'apps/mobile/pubspec.lock'
       - 'apps/mobile/native/lifeos_native/**'
       - '.gitmodules'
       - 'third_party/agent-runtime'
@@ -48,6 +51,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            apps/mobile/android/**/*.gradle*
+            apps/mobile/android/gradle/wrapper/gradle-wrapper.properties
+            apps/mobile/pubspec.lock
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.2'

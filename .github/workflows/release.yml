@@ -126,6 +126,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            apps/mobile/android/**/*.gradle*
+            apps/mobile/android/gradle/wrapper/gradle-wrapper.properties
+            apps/mobile/pubspec.lock
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
@@ -141,12 +146,7 @@ jobs:
           sed -i -E "s/^version: .*/version: ${SEMVER}+${BUILD}/" pubspec.yaml
           grep '^version:' pubspec.yaml
       - run: flutter pub get
-      - name: Build CN web font subsets
-        env:
-          CHECK_CN_FONT_SIZE: 'false'
-        run: bash tool/build-cn-fonts.sh
-      - name: Build Latin font subsets (Inter + Outfit)
-        run: bash tool/build-latin-fonts.sh
+      - uses: ./.github/actions/mobile-fonts
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}

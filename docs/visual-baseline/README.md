@@ -14,8 +14,9 @@ cd apps/mobile
 ```
 
 `docs/assets/readme/manifest.json` pins each image's dimensions, locale,
-theme, and description. CI uploads refreshed images and fails when committed
-screenshots are stale; review and commit the generated images with UI changes.
+theme, and description. Refresh and review these curated screenshots manually
+when the README presentation changes. They do not block ordinary product CI;
+the product golden and task-flow suites own visual regression checks.
 
 ## Golden screenshot regression
 
@@ -45,10 +46,9 @@ screenshots are stale; review and commit the generated images with UI changes.
 | Health / Knowledge / Execution pages | `apps/mobile/test/golden/domain_pages_golden_test.dart` | light / dark / colorblind |
 | Task flows (Ingest, forms, Undo, Rebalance) | `apps/mobile/test/golden/task_flow_responsive_golden_test.dart` | dark responsive N / W / T matrix |
 
-There are currently 21 golden test files and **108 PNG baselines** under
-`apps/mobile/test/golden/goldens/`: 93 page/component baselines plus 15 dark
-responsive task-flow baselines. Theme-matrix pages run light, dark, and
-dark-colorblind variants; AI primitives keep their minimal light surfaces so
+Checked-in baselines live under `apps/mobile/test/golden/goldens/`, covering
+pages, components, and responsive task flows. Theme-matrix pages run light,
+dark, and dark-colorblind variants; AI primitives keep their minimal light surfaces so
 the visual language is isolated from app chrome.
 
 The responsive profiles mirror production behavior: N (`390×844 @2x`, text
@@ -64,7 +64,7 @@ dark Linux desktop theme with compact density. The 15 task-flow baselines are:
 - `task_flow_rebalance_n.png`, `task_flow_rebalance_offline_n.png`,
   `task_flow_rebalance_w.png`, `task_flow_rebalance_t.png`
 
-The 93 page/component baselines keep the dark red-up-green-down and
+Page/component baselines keep the dark red-up-green-down and
 dark-colorblind blue-plus-orange regimes. The task-flow matrix is dark-only so
 its budget is spent on width and text-scale coverage.
 
@@ -102,8 +102,8 @@ flutter test test/golden --tags=golden
 ```
 
 In CI, ordinary unit/widget tests run in four shards. Pull requests run the
-independent responsive task-flow job; `main` runs the full golden regression
-and compares all 108 baselines. On failure, diff PNGs in
+responsive task flows in the same golden job; `main` and releases run the full
+golden regression and compare all checked-in baselines. On failure, diff PNGs in
 `apps/mobile/test/golden/failures/` are uploaded as a workflow artifact.
 
 ### Adding a new golden

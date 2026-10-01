@@ -214,14 +214,14 @@ cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
 cargo check --target wasm32-unknown-unknown
 ```
 
-### 自动刷新 README 效果图
+### 更新 README 效果图
 
 ```bash
 cd apps/mobile
 ./tool/update-readme-screenshots.sh --update
 ```
 
-效果图使用固定 Flutter、字体、locale、viewport 和演示数据。PR 会生成预览 artifact；UI 合并到 `main` 后，CI 在图片变化时自动创建刷新 PR。详见 [Visual Baseline](docs/visual-baseline/README.md)。
+效果图使用固定 Flutter、字体、locale、viewport 和演示数据，按需在本地更新并审阅；产品 CI 通过 golden 和任务流测试验证界面，不再要求每次 UI 变更重渲染 README 图片。详见 [Visual Baseline](docs/visual-baseline/README.md)。
 
 ### 仓库入口
 

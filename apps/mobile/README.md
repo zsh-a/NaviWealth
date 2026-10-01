@@ -185,10 +185,15 @@ wrangler pages deploy --branch main
 
 1. `static checks` — `flutter analyze --fatal-infos`、生成代码 freshness、l10n 与架构边界检查
 2. `test shard 0..3 / 4` — 普通 unit/widget 测试
-3. `responsive task-flow goldens` — PR 上执行响应式 byte-diff
-4. `golden regression (mobile)` — `main` 上执行完整 Linux golden 回归
-5. `build Android arm64 AAB` — `main` 上执行 release cross-compile、native payload 完整性与 16 KiB ELF 对齐检查
-6. `build web` — `main` 上执行 `flutter build web --release`
+3. `golden regression (mobile)` — PR 执行响应式任务流；`main` 和发布执行完整 Linux golden 回归
+4. `build web` — `main` 上并行执行 release 构建；Pages 部署等待静态检查、全部分片及 golden 回归通过
+
+静态检查与普通测试使用字体占位文件，真实截图和 Web 构建通过共享 action
+按字体脚本与所需字符集缓存字体。各分片直接写入耗时摘要，仅失败时上传
+JSON 事件；Markdown、浏览器测试、设备 harness 和 README 图片维护不再
+触发整套移动端检查。README 图片使用本地脚本按需更新。
+Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
+负责；设备集成测试仍在相关 PR、每周及发布流程运行。
 
 `.github/workflows/asr-native-smoke.yml` 独立运行真实 `sherpa_onnx` 推理：
 语音运行时相关变更会在 PR/main 上触发，同时每周一和手动调度也会执行。

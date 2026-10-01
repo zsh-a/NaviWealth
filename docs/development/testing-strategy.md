@@ -180,8 +180,8 @@ surface evolves.
 `test/golden/` uses Flutter's native `matchesGoldenFile` matcher through the
 repository's deterministic harness. Comparison remains Linux-pinned (other
 hosts still pump the surfaces; CI `golden-regression` is the source of truth).
-21 golden test files currently produce 108 PNG baselines; theme-matrix pages
-run light, dark, and dark-colorblind variants, while AI primitive goldens use
+Golden test files and their PNG baselines live under `test/golden/`;
+theme-matrix pages run light, dark, and dark-colorblind variants, while AI primitive goldens use
 component-scoped light surfaces. Keep new Task primary surfaces and
 responsive breakpoints (phone/tablet/web) covered as layout refactors land.
 
@@ -231,26 +231,39 @@ Target: **< 12 min** of blocking PR checks; heavy/flaky-prone work nightly.
 PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ build_runner freshness + l10n parity         (existing)
     ├─ flutter test (4 shards; unit/widget/flow/integ.)       flow/integ run here today
-    ├─ golden regression (Linux-pinned)             ~30 s    (existing)
+    ├─ responsive golden regression (Linux-pinned)          (parallel)
     ├─ cargo test (backend, native host)            ~1 min
     ├─ contract tests                               ~30 s
     ├─ native ASR pinned-WAV regression             speech changes, macOS
     └─ web smoke (chromium)                         ~2 min   (web-smoke.yml)
 Weekly ├─ web smoke full matrix (Firefox/WebKit/OPFS)
        └─ native ASR pinned model/WAV exact-transcript smoke
+Main ├─ full golden regression + web release build (parallel with checks)
+     └─ Pages deploy after static/tests/goldens/build succeed
+Release └─ signed Android APK/AAB + native payload/16 KiB checks + device gate
 ```
 
 **Zero-failure unit/widget gate.** `mobile.yml` distributes
 `flutter test --reporter=expanded --exclude-tags=golden` across four
 deterministic shards with bounded concurrency. There is no known-failing allowlist:
-any non-golden test failure fails CI. Every shard uploads its machine-readable
-JSON event stream for seven days. The `test timing summary` job reports shard
-wall time and the slowest executable test cases in the workflow summary, while
-failure artifacts retain the last completed test and error events instead of
-leaving only an incomplete console log. Use accumulated timing evidence before
-changing shard count or test placement.
-Golden PNG comparison remains isolated in the Linux-pinned
-`golden-regression` job.
+any non-golden test failure fails CI. Each shard writes wall time and slow-test
+timing directly to the workflow summary; no separate aggregation runner is
+required. Failed shards upload their machine-readable JSON event streams for
+seven days, preserving the last completed test and error events. Successful
+shards retain their timing in the summary without artifact uploads. Use that
+evidence before changing shard count or test placement.
+One Linux-pinned `golden-regression` job runs responsive task flows on PRs and
+the full suite on `main` and release calls. Static checks and tests do not wait
+for renderable fonts: their declared assets use stubs. Rendering and Web builds
+share font subsets cached by font tooling and the extracted CN glyph set;
+unrelated code changes cannot force font regeneration.
+
+README screenshots are curated documentation and updated manually with
+`apps/mobile/tool/update-readme-screenshots.sh`; they are not a product CI gate.
+Ordinary `main` pushes no longer build and discard an Android release bundle. Signed
+APK/AAB generation, native payload validation, and 16 KiB compatibility remain
+release gates, alongside the Android device evidence. Web builds run in
+parallel with quality checks, while deployment waits for all required results.
 
 **Native ASR regression gate.** `.github/workflows/asr-native-smoke.yml` runs
 on speech-runtime dependency changes, every Monday, and by manual dispatch. It

@@ -9,23 +9,23 @@ choose to use pull requests.
 
 - `mobile / static checks`
 - `mobile / test shard 0..3 / 4`
-- `mobile / test timing summary`
-- `mobile / responsive task-flow goldens` on pull requests
-- `mobile / golden regression (mobile)` on `main`
-- `mobile / build Android arm64 AAB`
+- `mobile / golden regression (mobile)` (responsive task flows on PRs, full suite on `main` and release)
 - `mobile / build web` on `main`
 - `backend / fmt + clippy + test`
 - `web-smoke / web smoke (...)` for web-relevant pull requests
 - `docs / links + strict build` for documentation changes
 
 Workflows use path filters, so unrelated application areas do not start each
-other's checks.
+other's checks. Test timings are written by each shard; failure events remain
+available as artifacts. README screenshot refresh is manual. Android APK/AAB
+and native-payload checks run in releases, with related PRs still covered by
+the device and native-runtime workflows.
 
 ## Optional protected-main setup
 
 If protected-main development is re-enabled, use a Ruleset and require only
 checks that are present for the changed paths. Do not require push-only jobs
-such as `golden regression (mobile)` or `build web` on pull requests.
+such as `build web` on pull requests.
 
 ## Repository secrets
 

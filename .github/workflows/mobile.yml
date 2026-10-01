@@ -4,65 +4,29 @@ on:
   workflow_call:
   push:
     branches: [main]
-    paths:
+    paths: &mobile-paths
       - 'apps/mobile/**'
+      - '!apps/mobile/**/*.md'
+      - '!apps/mobile/web_smoke/**'
+      - '!apps/mobile/integration_test/**'
+      - '!apps/mobile/test_driver/**'
+      - '!apps/mobile/test/readme_screenshots/**'
       - '.github/workflows/mobile.yml'
+      - '.github/actions/mobile-fonts/**'
+      - '.gitmodules'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v3_*.json'
       - 'docs/architecture/agent-runtime-capabilities.json'
       - 'third_party/agent-runtime'
       - 'third_party/market-data-rs/**'
       - 'tool/generate_agent_runtime_capabilities.dart'
-      - 'tool/check-ai-contract-wire-enums.sh'
-      - 'tool/check-sync-client-wire-fixtures.sh'
-      - 'tool/check-mobile-static.sh'
-      - 'tool/check-frb-version-alignment.sh'
-      - 'tool/lint-motion-policy.sh'
-      - 'tool/lint-no-feature-in-shared.sh'
+      - 'tool/check-*.sh'
+      - '!tool/check-sync-wire-fixtures.sh'
+      - 'tool/lint-*.sh'
       - 'tool/dart_dependencies.py'
       - 'tool/tests/**'
-      - 'tool/lint-cross-feature-imports.sh'
-      - 'tool/lint-finance-domain-data-imports.sh'
-      - 'tool/lint-domain-neutral-contracts.sh'
-      - 'tool/lint-frb-llm-entrypoints.sh'
-      - 'tool/lint-theme-layering.sh'
-      - 'tool/lint-material-chrome.sh'
-      - 'tool/lint-format-path.sh'
-      - 'tool/lint-typography.sh'
-      - 'tool/lint-async-value.sh'
-      - 'tool/lint-interaction-primitives.sh'
-      - 'tool/check-design-tokens-export.sh'
-      - 'tool/check-android-native-libs.sh'
   pull_request:
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/mobile.yml'
-      - 'docs/fixtures/ai_contract_wire_enums.json'
-      - 'docs/fixtures/sync_v3_*.json'
-      - 'docs/architecture/agent-runtime-capabilities.json'
-      - 'third_party/agent-runtime'
-      - 'third_party/market-data-rs/**'
-      - 'tool/generate_agent_runtime_capabilities.dart'
-      - 'tool/check-ai-contract-wire-enums.sh'
-      - 'tool/check-sync-client-wire-fixtures.sh'
-      - 'tool/check-mobile-static.sh'
-      - 'tool/check-frb-version-alignment.sh'
-      - 'tool/lint-motion-policy.sh'
-      - 'tool/lint-no-feature-in-shared.sh'
-      - 'tool/dart_dependencies.py'
-      - 'tool/tests/**'
-      - 'tool/lint-cross-feature-imports.sh'
-      - 'tool/lint-finance-domain-data-imports.sh'
-      - 'tool/lint-domain-neutral-contracts.sh'
-      - 'tool/lint-frb-llm-entrypoints.sh'
-      - 'tool/lint-theme-layering.sh'
-      - 'tool/lint-material-chrome.sh'
-      - 'tool/lint-format-path.sh'
-      - 'tool/lint-typography.sh'
-      - 'tool/lint-async-value.sh'
-      - 'tool/lint-interaction-primitives.sh'
-      - 'tool/check-design-tokens-export.sh'
-      - 'tool/check-android-native-libs.sh'
+    paths: *mobile-paths
 
 concurrency:
   group: mobile-${{ github.ref }}
@@ -73,32 +37,9 @@ defaults:
     working-directory: apps/mobile
 
 jobs:
-  prepare-font-assets:
-    name: prepare font assets
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Build generated font assets
-        env:
-          CHECK_CN_FONT_SIZE: 'false'
-        # These files are gitignored build artifacts. Build them once per
-        # workflow and fan them out to all jobs that render UI or web bundles.
-        run: |
-          tool/build-cn-fonts.sh
-          tool/build-latin-fonts.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mobile-font-assets
-          path: |
-            apps/mobile/assets/fonts/*.woff2
-            apps/mobile/assets/fonts/*.ttf
-          if-no-files-found: error
-          retention-days: 1
-
   static-checks:
     name: static checks
     runs-on: ubuntu-latest
-    needs: prepare-font-assets
     steps:
       - uses: actions/checkout@v7
         with:
@@ -107,10 +48,8 @@ jobs:
         with:
           flutter-version: '3.47.2'
           cache: true
-      - uses: actions/download-artifact@v8
-        with:
-          name: mobile-font-assets
-          path: apps/mobile/assets/fonts
+      - name: Stub font assets for static analysis
+        run: tool/prepare-test-font-stubs.sh
       - run: flutter pub get
       - run: flutter analyze --fatal-infos
       - name: Verify generated code is up to date
@@ -153,8 +92,16 @@ jobs:
           --exclude-tags=golden
           --total-shards=4
           --shard-index=${{ matrix.shard }}
-      - name: Upload shard test events
-        if: ${{ always() }}
+      - name: Summarize this shard
+        if: always()
+        continue-on-error: true
+        run: |
+          events="test-results/shard-${{ matrix.shard }}.json"
+          if [ -f "$events" ]; then
+            node tool/summarize-test-events.mjs "$events" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload failed shard test events
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: mobile-test-events-shard-${{ matrix.shard }}
@@ -162,143 +109,42 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-  test-timing-summary:
-    name: test timing summary
-    runs-on: ubuntu-latest
-    needs: test-shards
-    if: always()
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-      - name: Prepare merged test event directory
-        working-directory: ${{ github.workspace }}
-        run: mkdir -p test-results
-      - uses: actions/download-artifact@v8
-        continue-on-error: true
-        with:
-          pattern: mobile-test-events-shard-*
-          path: test-results
-          merge-multiple: true
-      - name: Summarize shard and slow-test timing
-        working-directory: ${{ github.workspace }}
-        run: |
-          if find test-results -name '*.json' -print -quit | grep -q .; then
-            node apps/mobile/tool/summarize-test-events.mjs test-results >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo '## Flutter test timing' >> "$GITHUB_STEP_SUMMARY"
-            echo '' >> "$GITHUB_STEP_SUMMARY"
-            echo 'No shard event artifacts were available.' >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-  responsive-golden-pr:
-    name: responsive task-flow goldens
-    runs-on: ubuntu-latest
-    needs: prepare-font-assets
-    if: ${{ github.event_name == 'pull_request' }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.2'
-          cache: true
-      - uses: actions/download-artifact@v8
-        with:
-          name: mobile-font-assets
-          path: apps/mobile/assets/fonts
-      - run: flutter pub get
-      - name: Run responsive task-flow golden suite
-        run: >
-          flutter test test/golden/task_flow_responsive_golden_test.dart
-          --tags=responsive-golden
-          --reporter=expanded
-      - name: Upload responsive golden diffs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: responsive-task-flow-golden-failures
-          path: |
-            apps/mobile/test/golden/failures/**
-            apps/mobile/test/golden/goldens/**
-          if-no-files-found: ignore
-          retention-days: 7
-
   golden-regression:
     name: golden regression (mobile)
     runs-on: ubuntu-latest
-    needs: [prepare-font-assets, static-checks, test-shards]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v7
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.2'
           cache: true
-      - uses: actions/download-artifact@v8
-        with:
-          name: mobile-font-assets
-          path: apps/mobile/assets/fonts
+      - uses: ./.github/actions/mobile-fonts
       - run: flutter pub get
-      - name: Run mobile golden suite (FIR-113)
+      - name: Run golden suite
         # The visual baseline is locked to Linux rasterisation. Devs on
         # macOS / Windows skip the comparison via flutter_test_config.dart;
         # this job is the source of truth. A failed match dumps the diff
         # PNG next to the golden so it's recoverable from the artifact.
-        run: flutter test test/golden --tags=golden --reporter=expanded
+        run: |
+          # PRs keep the responsive task spine; main and releases compare all
+          # baselines. Both share one job instead of separate render runners.
+          args=(test/golden --tags=golden)
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            args=(test/golden/task_flow_responsive_golden_test.dart --tags=responsive-golden)
+          fi
+          flutter test "${args[@]}" --reporter=expanded
       - name: Upload golden diffs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: mobile-golden-failures
-          path: |
-            apps/mobile/test/golden/failures/**
-            apps/mobile/test/golden/goldens/**
+          path: apps/mobile/test/golden/failures/**
           if-no-files-found: ignore
           retention-days: 7
 
-  build-android:
-    name: build Android arm64 AAB
-    runs-on: ubuntu-latest
-    needs: [prepare-font-assets, static-checks, test-shards]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          submodules: recursive
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.2'
-          cache: true
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/mobile/native/lifeos_native
-      - uses: actions/download-artifact@v8
-        with:
-          name: mobile-font-assets
-          path: apps/mobile/assets/fonts
-      - run: flutter pub get
-      - name: Build release app bundle
-        run: >
-          flutter build appbundle
-          --release
-          --target-platform android-arm64
-          --android-project-arg=naviwealth-arm64-only=true
-          --dart-define=API_BASE_URL=http://127.0.0.1:8787
-          --dart-define=GIT_SHA=${{ github.sha }}
-      - name: Verify arm64 native payload and 16 KiB compatibility
-        run: ../../tool/check-android-native-libs.sh build/app/outputs/bundle/release/app-release.aab
   build-web:
     name: build web
     runs-on: ubuntu-latest
-    needs: [prepare-font-assets, static-checks, test-shards]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v7
@@ -306,10 +152,7 @@ jobs:
         with:
           flutter-version: '3.47.2'
           cache: true
-      - uses: actions/download-artifact@v8
-        with:
-          name: mobile-font-assets
-          path: apps/mobile/assets/fonts
+      - uses: ./.github/actions/mobile-fonts
       - run: flutter pub get
       - name: Read backend API URL
         id: api-url
@@ -326,7 +169,7 @@ jobs:
   deploy-pages:
     name: deploy Cloudflare Pages
     runs-on: ubuntu-latest
-    needs: build-web
+    needs: [build-web, static-checks, test-shards, golden-regression]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       HAS_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}

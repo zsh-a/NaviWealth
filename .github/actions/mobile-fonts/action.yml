@@ -1,0 +1,40 @@
+name: Mobile font assets
+description: Cache renderable subsets by font tooling and the required glyph set.
+runs:
+  using: composite
+  steps:
+    - name: Identify required CN glyphs
+      id: glyphs
+      shell: bash
+      working-directory: ${{ github.workspace }}/apps/mobile
+      run: |
+        python3 tool/cn_font_chars.py --lib-root lib \
+          --out-base "$RUNNER_TEMP/mobile-cn-base.txt" \
+          --out-ext "$RUNNER_TEMP/mobile-cn-ext.txt"
+        python3 - <<'PY'
+        import hashlib
+        import os
+        from pathlib import Path
+
+        root = Path(os.environ['RUNNER_TEMP'])
+        glyphs = (root / 'mobile-cn-base.txt').read_bytes() + b'\0' + (root / 'mobile-cn-ext.txt').read_bytes()
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write(f'digest={hashlib.sha256(glyphs).hexdigest()}\n')
+        PY
+    - name: Restore generated fonts
+      id: fonts
+      uses: actions/cache@v6
+      with:
+        path: |
+          apps/mobile/assets/fonts/*.woff2
+          apps/mobile/assets/fonts/*.ttf
+        key: mobile-fonts-${{ runner.os }}-v1-${{ hashFiles('apps/mobile/tool/build-cn-fonts.sh', 'apps/mobile/tool/build-latin-fonts.sh', 'apps/mobile/tool/cn_font_chars.py') }}-${{ steps.glyphs.outputs.digest }}
+    - name: Build fonts on cache miss
+      if: steps.fonts.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: ${{ github.workspace }}/apps/mobile
+      env:
+        CHECK_CN_FONT_SIZE: 'false'
+      run: |
+        tool/build-cn-fonts.sh
+        tool/build-latin-fonts.sh

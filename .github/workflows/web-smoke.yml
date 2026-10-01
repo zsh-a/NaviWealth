@@ -14,7 +14,16 @@ on:
       - 'apps/mobile/web/**'
       - 'apps/mobile/web_smoke/**'
       - 'apps/mobile/pubspec.yaml'
+      - 'apps/mobile/pubspec.lock'
+      - 'apps/mobile/assets/**'
+      - 'apps/mobile/tool/build-web.sh'
+      - 'apps/mobile/tool/setup-drift-web.sh'
+      - 'apps/mobile/tool/build-cn-fonts.sh'
+      - 'apps/mobile/tool/build-latin-fonts.sh'
+      - 'apps/mobile/tool/cn_font_chars.py'
+      - '.github/actions/mobile-fonts/**'
       - '.github/workflows/web-smoke.yml'
+      - '!apps/mobile/**/*.md'
   schedule:
     # 02:30 UTC Sunday — full browser matrix.
     - cron: '30 2 * * 0'
@@ -40,16 +49,11 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/mobile/web_smoke/package-lock.json
       - run: flutter pub get
 
-      # Web build needs the same asset materialisation as the build-web job
-      # in mobile.yml (drift wasm worker + font subsets).
-      - name: Build CN web font subsets
-        env:
-          CHECK_CN_FONT_SIZE: 'false'
-        run: tool/build-cn-fonts.sh
-      - name: Build Latin font subsets (Inter + Outfit)
-        run: tool/build-latin-fonts.sh
+      - uses: ./.github/actions/mobile-fonts
       - name: Read backend API URL
         id: api-url
         working-directory: ${{ github.workspace }}
