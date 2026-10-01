@@ -525,9 +525,10 @@ class WatchlistSimulationObservationRequest {
   final String allocationBasisKey;
 }
 
-typedef WatchlistSimulationObservationRecorder = Future<void> Function(
-  WatchlistSimulationObservationRequest request,
-);
+typedef WatchlistSimulationObservationRecorder =
+    Future<WatchlistSimulationObservation?> Function(
+      WatchlistSimulationObservationRequest request,
+    );
 
 final watchlistSimulationObservationRecorderProvider =
     Provider<WatchlistSimulationObservationRecorder>((ref) {
@@ -535,7 +536,7 @@ final watchlistSimulationObservationRecorderProvider =
         final repository = await ref.read(
           watchlistSimulationRepositoryProvider.future,
         );
-        await repository.recordObservation(
+        return repository.recordObservation(
           simulation: request.simulation,
           observedAt: request.observedAt,
           weightedDailyChange: request.weightedDailyChange,

@@ -16715,4 +16715,91 @@ class AppLocalizationsZh extends AppLocalizations {
   String watchlistSimulationHistoryCoverageShort(int count) {
     return '行情缺失：$count 个观测日';
   }
+
+  @override
+  String get watchlistSimulationSearchHint => '搜索方案名称';
+
+  @override
+  String get watchlistSimulationSearchEmpty => '没有匹配的方案。';
+
+  @override
+  String get watchlistSimulationSelectionOutsideSearch =>
+      '当前选中的方案不在搜索结果中，其详情仍显示在下方。';
+
+  @override
+  String get watchlistSimulationSortNewest => '最近创建';
+
+  @override
+  String get watchlistSimulationSortOldest => '最早创建';
+
+  @override
+  String get watchlistSimulationSortName => '名称排序';
+
+  @override
+  String get watchlistSimulationLinkUnavailable => '指定的方案在此集合中不可用。';
+
+  @override
+  String get watchlistSimulationPositionTargetWeight => '目标权重';
+
+  @override
+  String get watchlistSimulationPositionDailyChange => '标的涨跌';
+
+  @override
+  String get watchlistSimulationPositionContribution => '组合贡献（百分点）';
+
+  @override
+  String get watchlistSimulationQuoteReasonLoading => '行情加载中，暂未计入此标的。';
+
+  @override
+  String get watchlistSimulationQuoteReasonFailed => '行情请求失败，可重试刷新行情。';
+
+  @override
+  String get watchlistSimulationQuoteReasonMissing => '当前集合未提供此标的的行情。';
+
+  @override
+  String get watchlistSimulationQuoteReasonStale => '缓存行情已过期，未计入当日估算。';
+
+  @override
+  String get watchlistSimulationQuoteReasonPreviousClose =>
+      '缺少有效的前收盘价，无法计算当日涨跌。';
+
+  @override
+  String get watchlistSimulationQuoteReasonInvalid => '行情标的或价格数据异常，未计入估算。';
+
+  @override
+  String watchlistSimulationQuoteReasonDifferentDay(String date) {
+    return '行情日期为 $date（UTC），与当前观测日不一致，未计入估算。';
+  }
+
+  @override
+  String get watchlistSimulationObservationWriting => '正在保存行情观测…';
+
+  @override
+  String watchlistSimulationObservationSaved(String date) {
+    return '已保存 $date（UTC）的行情观测。';
+  }
+
+  @override
+  String get watchlistSimulationObservationUnchanged => '本次行情未新增观测，已有历史记录仍可查看。';
+
+  @override
+  String get watchlistSimulationObservationWriteFailed =>
+      '行情已加载，但观测保存失败。已有历史记录仍可查看。';
+
+  @override
+  String get watchlistSimulationDividendRefreshing => '正在更新分红记录，已保存记录仍可查看。';
+
+  @override
+  String get watchlistSimulationDividendRefreshFailed =>
+      '分红刷新失败，已保存记录仍保留，可重试更新。';
+
+  @override
+  String get watchlistSimulationDividendRecordsLoadFailed =>
+      '已保存的分红记录读取失败，可重试读取。';
+
+  @override
+  String get watchlistSimulationDividendEmpty => '可用数据中暂无分红记录。';
+
+  @override
+  String get watchlistSimulationSortAction => '方案排序';
 }

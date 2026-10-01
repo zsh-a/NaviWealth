@@ -13,6 +13,7 @@ import 'package:naviwealth/features/finance/investment/data/watchlist_providers.
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_view_state.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_simulation_section.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_corporate_action.dart';
@@ -180,6 +181,382 @@ void main() {
     preferences = await SharedPreferences.getInstance();
   });
 
+  testWidgets('failed observation retries once and retains saved history', (
+    tester,
+  ) async {
+    final requests = <WatchlistSimulationObservationRequest>[];
+    final result = Completer<WatchlistSimulationObservation?>();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        recorder: (request) async {
+          requests.add(request);
+          if (requests.length == 1) throw StateError('Write unavailable');
+          return result.future;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('observation could not be saved'),
+      findsOneWidget,
+    );
+    expect(find.text(r'$100,900.00'), findsOneWidget);
+    await tester.pump();
+    expect(requests, hasLength(1));
+    final retry = find.descendant(
+      of: find.byKey(const ValueKey('watchlist-simulation-observation-status')),
+      matching: find.byType(AppActionButton),
+    );
+    await tester.ensureVisible(retry);
+    final press = tester.widget<AppActionButton>(retry).onPress!;
+    press();
+    press();
+    await tester.pump();
+    expect(requests, hasLength(2));
+    expect(find.text('Saving the quote observation…'), findsOneWidget);
+    expect(find.text(r'$100,900.00'), findsOneWidget);
+    result.complete(_writtenObservation(requests.last));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Quote observation saved for'), findsOneWidget);
+    expect(find.textContaining('observation could not be saved'), findsNothing);
+    expect(requests, hasLength(2));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'observation writes serialize and use only the latest queued quote',
+    (tester) async {
+      final quotes = ValueNotifier<List<WatchlistQuoteSnapshot>>([_snapshot]);
+      addTearDown(quotes.dispose);
+      final requests = <WatchlistSimulationObservationRequest>[];
+      final first = Completer<WatchlistSimulationObservation?>();
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          quoteUpdates: quotes,
+          recorder: (request) async {
+            requests.add(request);
+            if (requests.length == 1) return first.future;
+            return _writtenObservation(request);
+          },
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      expect(requests, hasLength(1));
+      quotes.value = [_updatedQuote('102')];
+      await tester.pump();
+      quotes.value = [_updatedQuote('103')];
+      await tester.pump();
+      expect(requests, hasLength(1));
+      first.complete(_writtenObservation(requests.first));
+      await tester.pumpAndSettle();
+      expect(requests.map((request) => request.weightedDailyChange), [
+        Decimal.parse('0.009'),
+        Decimal.parse('0.027'),
+      ]);
+      expect(
+        find.textContaining('Quote observation saved for'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('a skipped observation does not report a successful save', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('This quote added no observation'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Quote observation saved for'), findsNothing);
+  });
+
+  testWidgets('dividend retry retains records and prevents duplicate refresh', (
+    tester,
+  ) async {
+    var requests = 0;
+    final result = Completer<WatchlistSimulationActionReconciliation>();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        actionEntries: [_dividendEntitlement],
+        loadReconciliation: () async {
+          requests++;
+          if (requests == 1) throw StateError('Refresh unavailable');
+          return result.future;
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Dividend refresh failed'), findsOneWidget);
+    expect(find.text(r'$25.00 gross · 100 virtual shares'), findsOneWidget);
+    final retry = find.descendant(
+      of: find.byKey(
+        const ValueKey('watchlist-simulation-dividend-refresh-status'),
+      ),
+      matching: find.byType(AppActionButton),
+    );
+    await tester.ensureVisible(retry);
+    final press = tester.widget<AppActionButton>(retry).onPress!;
+    press();
+    press();
+    await tester.pump();
+    expect(requests, 2);
+    expect(find.textContaining('Updating dividend records'), findsOneWidget);
+    expect(find.text(r'$25.00 gross · 100 virtual shares'), findsOneWidget);
+    result.complete(
+      const WatchlistSimulationActionReconciliation(
+        materializedCount: 0,
+        failedSymbolCount: 0,
+        unsupportedSymbolCount: 0,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Dividend refresh failed'), findsNothing);
+    expect(find.text(r'$25.00 gross · 100 virtual shares'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('empty dividend state waits for refresh to finish', (
+    tester,
+  ) async {
+    final result = Completer<WatchlistSimulationActionReconciliation>();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        loadReconciliation: () => result.future,
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.textContaining('Updating dividend records'), findsOneWidget);
+    expect(find.textContaining('No dividend records were found'), findsNothing);
+    result.complete(
+      const WatchlistSimulationActionReconciliation(
+        materializedCount: 0,
+        failedSymbolCount: 0,
+        unsupportedSymbolCount: 0,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('No dividend records were found'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'restores the selected scenario while a deep link takes precedence',
+    (tester) async {
+      final other = _otherSimulation();
+      final view = WatchlistSimulationViewPreferences(
+        preferences,
+        ownerUserId: _sync.ownerUserId,
+        collectionId: _collection.id,
+      );
+      await view.writeSelectedId(other.id);
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation, other],
+          positions: [_position],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${other.id}')),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation, other],
+          positions: [_position],
+          initialSimulationId: _simulation.id,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${_simulation.id}')),
+        findsOneWidget,
+      );
+      expect(view.readSelectedId(), _simulation.id);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('overview search and sorting retain the selected detail', (
+    tester,
+  ) async {
+    final other = _otherSimulation();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [other, _simulation],
+        positions: [_position],
+        initialSimulationId: other.id,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final search = find.descendant(
+      of: find.byKey(const ValueKey('watchlist-simulation-search')),
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(search, 'growth');
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(ValueKey('watchlist-simulation-select-${other.id}')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(ValueKey('watchlist-simulation-${other.id}')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('outside the search results'), findsOneWidget);
+    await tester.enterText(search, 'no match');
+    await tester.pumpAndSettle();
+    expect(find.text('No scenarios match this search.'), findsOneWidget);
+    expect(
+      find.byKey(ValueKey('watchlist-simulation-${other.id}')),
+      findsOneWidget,
+    );
+    await tester.enterText(search, '');
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    final sort = find.byKey(const ValueKey('watchlist-simulation-sort'));
+    await tester.ensureVisible(sort);
+    await tester.tap(sort);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Name'));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .getTopLeft(
+            find.byKey(
+              ValueKey('watchlist-simulation-select-${_simulation.id}'),
+            ),
+          )
+          .dy,
+      lessThan(
+        tester
+            .getTopLeft(
+              find.byKey(ValueKey('watchlist-simulation-select-${other.id}')),
+            )
+            .dy,
+      ),
+    );
+    expect(
+      WatchlistSimulationViewPreferences(
+        preferences,
+        ownerUserId: _sync.ownerUserId,
+        collectionId: _collection.id,
+      ).readSortOrder(),
+      WatchlistSimulationSortOrder.name,
+    );
+    expect(
+      find.byKey(ValueKey('watchlist-simulation-${other.id}')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'overview controls and holdings fit a narrow screen with large text',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation, _otherSimulation()],
+          positions: [_position],
+          textScaler: const TextScaler.linear(2),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('watchlist-simulation-search')),
+        findsOneWidget,
+      );
+      final sort = find.byKey(const ValueKey('watchlist-simulation-sort'));
+      await tester.ensureVisible(sort);
+      await tester.tap(sort);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Oldest first'));
+      await tester.tap(find.text('Oldest first'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Contribution (pp)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Contribution (pp)').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('local dividend read failure can be retried independently', (
+    tester,
+  ) async {
+    var reads = 0;
+    var refreshes = 0;
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        actionEntriesStream: () {
+          reads++;
+          return reads == 1
+              ? Stream.error(StateError('Local read unavailable'))
+              : Stream.value([_dividendEntitlement]);
+        },
+        onDetailActions: (_) => refreshes++,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Saved dividend records could not load'),
+      findsOneWidget,
+    );
+    final retry = find.byKey(
+      const ValueKey('watchlist-simulation-dividend-read-status'),
+    );
+    final button = find.descendant(
+      of: retry,
+      matching: find.byType(AppActionButton),
+    );
+    await tester.ensureVisible(button);
+    await tester.pumpAndSettle();
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    expect(reads, 2);
+    expect(refreshes, 1);
+    expect(find.text(r'$25.00 gross · 100 virtual shares'), findsOneWidget);
+    expect(
+      find.textContaining('Saved dividend records could not load'),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('offers simulations only from a concrete collection', (
     tester,
   ) async {
@@ -277,6 +654,14 @@ void main() {
         findsNothing,
       );
       expect(tester.takeException(), isNull);
+      expect(
+        WatchlistSimulationViewPreferences(
+          preferences,
+          ownerUserId: _sync.ownerUserId,
+          collectionId: _collection.id,
+        ).readSelectedId(),
+        _simulation.id,
+      );
     },
   );
 
@@ -381,7 +766,10 @@ void main() {
       simulations: [_simulation],
       positions: [_position],
       quotesReady: ready,
-      recorder: (request) async => recorded.add(request),
+      recorder: (request) async {
+        recorded.add(request);
+        return null;
+      },
     );
     await tester.pumpWidget(host(false));
     await tester.pumpAndSettle();
@@ -446,6 +834,10 @@ void main() {
       'Priced allocation:90%',
       'Virtual cash:10%',
     ]);
+    expect(find.text('Target weight'), findsOneWidget);
+    expect(find.text('Stock move'), findsOneWidget);
+    expect(find.text('Contribution (pp)'), findsOneWidget);
+    expect(find.text('+0.90'), findsOneWidget);
     expect(
       find.descendant(of: card, matching: find.text('AAPL')),
       findsOneWidget,
@@ -597,6 +989,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(
+      find.textContaining('No quote is available for this holding'),
+      findsOneWidget,
+    );
     expect(
       find.text('Waiting for usable quotes · Daily move unavailable'),
       findsOneWidget,
@@ -1338,7 +1734,10 @@ void main() {
         positions: [firstPosition, secondPosition],
         items: [_item, secondItem],
         snapshots: [_snapshot, olderSnapshot],
-        recorder: (request) async => captured = request,
+        recorder: (request) async {
+          captured = request;
+          return null;
+        },
       ),
     );
     await tester.pumpAndSettle();
@@ -1392,6 +1791,48 @@ void main() {
   });
 }
 
+WatchlistSimulation _otherSimulation() => WatchlistSimulation(
+  id: 'simulation-income',
+  collectionId: _simulation.collectionId,
+  name: 'Income paper mix',
+  baseCurrency: _simulation.baseCurrency,
+  startingCapital: _simulation.startingCapital,
+  cashWeight: _simulation.cashWeight,
+  baselineAt: _simulation.baselineAt,
+  createdAt: _simulation.createdAt,
+  sync: _simulation.sync,
+);
+
+WatchlistQuoteSnapshot _updatedQuote(String price) => WatchlistQuoteSnapshot(
+  item: _item,
+  response: MarketResponse(
+    data: Quote(
+      symbol: _item.symbol,
+      currency: 'USD',
+      price: Decimal.parse(price),
+      previousClose: Decimal.fromInt(100),
+      asOf: _snapshot.quote!.asOf,
+    ),
+    freshness: DataFreshness.cachedFresh,
+    source: 'test',
+    fetchedAt: _snapshot.quote!.asOf,
+  ),
+);
+
+WatchlistSimulationObservation _writtenObservation(
+  WatchlistSimulationObservationRequest request,
+) => WatchlistSimulationObservation(
+  id: 'written-observation',
+  simulationId: request.simulation.id,
+  observationDay: request.observedAt.toUtc().toIso8601String().substring(0, 10),
+  observedAt: request.observedAt,
+  projectedValue: request.simulation.startingCapital,
+  weightedDailyChange: request.weightedDailyChange,
+  pricedWeight: request.pricedWeight,
+  missingQuoteWeight: request.missingQuoteWeight,
+  allocationBasisKey: request.allocationBasisKey,
+);
+
 Widget _wrap({
   required SharedPreferences preferences,
   required List<WatchlistSimulation> simulations,
@@ -1406,12 +1847,18 @@ Widget _wrap({
   List<WatchlistQuoteSnapshot>? snapshots,
   WatchlistSimulationObservationRecorder? recorder,
   bool quotesReady = true,
+  bool quotesLoading = false,
+  String? initialSimulationId,
+  ValueNotifier<List<WatchlistQuoteSnapshot>>? quoteUpdates,
+  Future<WatchlistSimulationActionReconciliation> Function()?
+  loadReconciliation,
   Future<WatchlistSimulationHistoryResult> Function(String)? loadBackfill,
   void Function(String)? onDetailHistory,
   void Function(String)? onDetailActions,
   WatchlistSimulationRepository? repository,
   TextScaler textScaler = TextScaler.noScaling,
   List<WatchlistSimulationActionEntry> actionEntries = const [],
+  Stream<List<WatchlistSimulationActionEntry>> Function()? actionEntriesStream,
   WatchlistSimulationActionReconciliation reconciliation =
       const WatchlistSimulationActionReconciliation(
         materializedCount: 0,
@@ -1463,17 +1910,19 @@ Widget _wrap({
               ),
       ),
       watchlistSimulationActionEntriesProvider.overrideWith(
-        (_, _) => Stream.value(actionEntries),
+        (_, _) => actionEntriesStream?.call() ?? Stream.value(actionEntries),
       ),
       watchlistSimulationActionReconciliationProvider.overrideWith((
         _,
         id,
       ) async {
         onDetailActions?.call(id);
-        return reconciliation;
+        return loadReconciliation != null
+            ? await loadReconciliation()
+            : reconciliation;
       }),
       watchlistSimulationObservationRecorderProvider.overrideWithValue(
-        recorder ?? (_) async {},
+        recorder ?? (_) async => null,
       ),
     ],
     child: MaterialApp(
@@ -1493,12 +1942,27 @@ Widget _wrap({
         child: Scaffold(
           body: ListView(
             children: [
-              WatchlistSimulationSection(
-                collection: _collection,
-                items: items ?? [item ?? _item],
-                snapshots: snapshots ?? [_snapshot],
-                quotesReady: quotesReady,
-              ),
+              if (quoteUpdates != null)
+                ValueListenableBuilder<List<WatchlistQuoteSnapshot>>(
+                  valueListenable: quoteUpdates,
+                  builder: (_, next, _) => WatchlistSimulationSection(
+                    collection: _collection,
+                    items: items ?? [item ?? _item],
+                    snapshots: next,
+                    quotesReady: quotesReady,
+                    quotesLoading: quotesLoading,
+                    initialSimulationId: initialSimulationId,
+                  ),
+                )
+              else
+                WatchlistSimulationSection(
+                  collection: _collection,
+                  items: items ?? [item ?? _item],
+                  snapshots: snapshots ?? [_snapshot],
+                  quotesReady: quotesReady,
+                  quotesLoading: quotesLoading,
+                  initialSimulationId: initialSimulationId,
+                ),
             ],
           ),
         ),

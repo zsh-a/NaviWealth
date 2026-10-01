@@ -196,7 +196,13 @@ compact selectable overview rows with currency/capital, recorded cumulative
 change, observation date, and incomplete-day warnings. Overview rows read only
 stored, lineage-filtered observations; only the selected detail loads historical
 quotes, charts, and dividend reconciliation. A single scenario opens directly
-as the detail. Saving selects and reveals the returned scenario.
+as the detail. Saving selects and reveals the returned scenario. Selection and
+creation-date/name sorting are device-local preferences scoped by user and
+collection. A `simulationId` query parameter opens a particular scenario and
+takes precedence over the saved selection. Missing/deleted or other-collection
+ids display an unavailable notice; deletion falls back to an available scenario.
+Overview name search never changes the selected detail; it explains when that
+detail lies outside the search results.
 Create and allocation edit use guarded full pages with pinned save bars. Only
 lightweight symbol selection uses a sheet, with a pinned confirmation footer.
 Busy forms block repeat submission, pointer/keyboard editing, and dismissal;
@@ -232,7 +238,21 @@ displayed separately from the existing observation series, with retry for
 incomplete or failed fetches. The detail shows the actual UTC record range and
 the count of incomplete observed days after the baseline; it does not claim
 exchange-calendar completeness. Daily metric labels wrap, and larger text uses
-a vertical metric layout.
+a vertical metric layout. Each holding labels target weight, individual stock
+move, and weighted contribution in percentage points separately. Quote
+eligibility is shared by the display, projection, and observation request:
+loading, failed requests, absent quotes, stale cache, invalid identity/price,
+missing previous close, and an older UTC quote day each have a specific reason.
+Unusable or unrelated quotes cannot advance the observation day.
+
+Live observation writes show saving, the actual acknowledged UTC date, skipped
+writes, or an explicit failure with retry. Writes serialize and coalesce newer
+queued inputs; rebuilding async sections cannot repeat the same in-flight
+write. Failed writes retain the existing chart and do not retry on every redraw.
+Dividend refresh progress and failures remain visible even when saved entries
+exist. Refresh retry does not duplicate a pending request, and saved records
+remain available during refresh. Local record-read errors and a successfully
+refreshed empty dataset have distinct states.
 
 Watchlist simulations are a separate paper-only aggregate backed by
 `watchlist_simulations`, legacy compatibility positions, a deterministic

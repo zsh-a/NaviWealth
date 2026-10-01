@@ -83,8 +83,16 @@ abstract final class FinanceRoutes {
   static const wealthPortfolioAssignLots = '/wealth/portfolio/assign/positions';
   static const wealthPortfolioAssignCash = '/wealth/portfolio/assign/cash';
   static const wealthWatchlist = '/wealth/watchlist';
-  static String wealthWatchlistSimulationsFor(String collectionId) =>
-      '$wealthWatchlist/collections/${Uri.encodeComponent(collectionId)}/simulations';
+  static String wealthWatchlistSimulationsFor(
+    String collectionId, {
+    String? simulationId,
+  }) {
+    final path =
+        '$wealthWatchlist/collections/${Uri.encodeComponent(collectionId)}/simulations';
+    return simulationId == null
+        ? path
+        : '$path?${Uri(queryParameters: {'simulationId': simulationId}).query}';
+  }
 
   static const planFire = '/plan/fire';
   static const planRebalance = '/plan/rebalance';

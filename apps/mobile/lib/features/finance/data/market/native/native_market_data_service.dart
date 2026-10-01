@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:decimal/decimal.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
+import 'package:naviwealth/features/finance/market/domain/a_share_identity.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/historical_bar.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
@@ -289,21 +290,7 @@ String _date(DateTime value) =>
 
 /// Mirrors SDK identity grammar; never rewrites user asset/ledger identifiers.
 String canonicalAShare(String symbol) {
-  final s = symbol.trim().toUpperCase();
-  final suffix = RegExp(r'^(\d{6})\.(SH|SS|SZ|BJ)$').firstMatch(s);
-  if (suffix != null) {
-    return '${suffix[1]}.${suffix[2] == 'SS' ? 'SH' : suffix[2]}';
-  }
-  final prefix = RegExp(r'^(SH|SZ|BJ)(\d{6})$').firstMatch(s);
-  if (prefix != null) return '${prefix[2]}.${prefix[1]}';
-  if (RegExp(r'^\d{6}$').hasMatch(s)) {
-    if (s.startsWith('5') || s.startsWith('6')) return '$s.SH';
-    if (s.startsWith('0') || s.startsWith('1') || s.startsWith('3')) {
-      return '$s.SZ';
-    }
-    if (s.startsWith('4') || s.startsWith('8') || s.startsWith('920')) {
-      return '$s.BJ';
-    }
-  }
+  final canonical = tryCanonicalAShareSymbol(symbol);
+  if (canonical != null) return canonical;
   throw SymbolNotFoundException('Invalid A-share identifier: $symbol');
 }

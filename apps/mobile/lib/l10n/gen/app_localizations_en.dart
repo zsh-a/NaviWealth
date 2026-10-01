@@ -17671,4 +17671,102 @@ class AppLocalizationsEn extends AppLocalizations {
   String watchlistSimulationHistoryCoverageShort(int count) {
     return 'Observed days with missing quotes: $count';
   }
+
+  @override
+  String get watchlistSimulationSearchHint => 'Search scenario names';
+
+  @override
+  String get watchlistSimulationSearchEmpty =>
+      'No scenarios match this search.';
+
+  @override
+  String get watchlistSimulationSelectionOutsideSearch =>
+      'The selected scenario is outside the search results. Its detail remains below.';
+
+  @override
+  String get watchlistSimulationSortNewest => 'Newest first';
+
+  @override
+  String get watchlistSimulationSortOldest => 'Oldest first';
+
+  @override
+  String get watchlistSimulationSortName => 'Name';
+
+  @override
+  String get watchlistSimulationLinkUnavailable =>
+      'The requested scenario is unavailable in this collection.';
+
+  @override
+  String get watchlistSimulationPositionTargetWeight => 'Target weight';
+
+  @override
+  String get watchlistSimulationPositionDailyChange => 'Stock move';
+
+  @override
+  String get watchlistSimulationPositionContribution => 'Contribution (pp)';
+
+  @override
+  String get watchlistSimulationQuoteReasonLoading =>
+      'Quote loading; this holding is not included yet.';
+
+  @override
+  String get watchlistSimulationQuoteReasonFailed =>
+      'Quote request failed. Retry quotes to update this holding.';
+
+  @override
+  String get watchlistSimulationQuoteReasonMissing =>
+      'No quote is available for this holding in the current collection.';
+
+  @override
+  String get watchlistSimulationQuoteReasonStale =>
+      'Cached quote is outdated and excluded from the daily estimate.';
+
+  @override
+  String get watchlistSimulationQuoteReasonPreviousClose =>
+      'A valid previous close is missing; the daily move cannot be calculated.';
+
+  @override
+  String get watchlistSimulationQuoteReasonInvalid =>
+      'Quote identity or price is invalid and excluded from the estimate.';
+
+  @override
+  String watchlistSimulationQuoteReasonDifferentDay(String date) {
+    return 'Quote date $date (UTC) differs from the current observation day and is excluded.';
+  }
+
+  @override
+  String get watchlistSimulationObservationWriting =>
+      'Saving the quote observation…';
+
+  @override
+  String watchlistSimulationObservationSaved(String date) {
+    return 'Quote observation saved for $date (UTC).';
+  }
+
+  @override
+  String get watchlistSimulationObservationUnchanged =>
+      'This quote added no observation. Existing history is still available.';
+
+  @override
+  String get watchlistSimulationObservationWriteFailed =>
+      'Quotes loaded, but the observation could not be saved. Existing history is still available.';
+
+  @override
+  String get watchlistSimulationDividendRefreshing =>
+      'Updating dividend records… Saved records remain available.';
+
+  @override
+  String get watchlistSimulationDividendRefreshFailed =>
+      'Dividend refresh failed. Saved records are retained; retry to update them.';
+
+  @override
+  String get watchlistSimulationDividendRecordsLoadFailed =>
+      'Saved dividend records could not load. Retry to read them.';
+
+  @override
+  String get watchlistSimulationDividendEmpty =>
+      'No dividend records were found in the available data.';
+
+  @override
+  String get watchlistSimulationSortAction => 'Sort scenarios';
 }

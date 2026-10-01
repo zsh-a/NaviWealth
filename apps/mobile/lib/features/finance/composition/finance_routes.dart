@@ -365,6 +365,8 @@ StatefulShellRoute financeShellRoute() {
                       load: watchlist_lib.loadLibrary,
                       builder: (_) => watchlist_lib.WatchlistSimulationsPage(
                         collectionId: state.pathParameters['collectionId']!,
+                        initialSimulationId:
+                            state.uri.queryParameters['simulationId'],
                       ),
                     ),
                   ),

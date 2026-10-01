@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../data/watchlist_providers.dart';
@@ -10,9 +12,14 @@ import 'watchlist_simulation_section.dart';
 
 /// Collection-scoped workspace with a stable route and a single scroll owner.
 class WatchlistSimulationsPage extends ConsumerWidget {
-  const WatchlistSimulationsPage({super.key, required this.collectionId});
+  const WatchlistSimulationsPage({
+    super.key,
+    required this.collectionId,
+    this.initialSimulationId,
+  });
 
   final String collectionId;
+  final String? initialSimulationId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -62,8 +69,8 @@ class WatchlistSimulationsPage extends ConsumerWidget {
                       }
 
                       return SingleChildScrollView(
-                        key: const PageStorageKey(
-                          'watchlist-simulations-scroll',
+                        key: PageStorageKey(
+                          'watchlist-simulations-scroll-$collectionId',
                         ),
                         padding: const EdgeInsets.all(AppSpacing.s16),
                         child: AdaptiveContentFrame(
@@ -83,6 +90,10 @@ class WatchlistSimulationsPage extends ConsumerWidget {
                                 snapshots: snapshots,
                                 quotesReady:
                                     !quotes.isLoading && !quotes.hasError,
+                                quotesLoading: quotes.isLoading,
+                                initialSimulationId: initialSimulationId,
+                                onSelected: (id) =>
+                                    _selectScenario(context, id),
                               ),
                             ],
                           ),
@@ -93,6 +104,27 @@ class WatchlistSimulationsPage extends ConsumerWidget {
             },
           ),
     );
+  }
+
+  void _selectScenario(BuildContext context, String id) {
+    final router = GoRouter.maybeOf(context);
+    if (router == null) return;
+    final current = GoRouterState.of(context).uri;
+    final next = Uri.parse(
+      FinanceRoutes.wealthWatchlistSimulationsFor(
+        collectionId,
+        simulationId: id,
+      ),
+    );
+    if (current == next) return;
+    if (router.routerDelegate.currentConfiguration.uri == current) {
+      // A directly opened workspace uses declarative routing so its browser
+      // address follows selection without adding history or replacing the page.
+      Router.neglect(context, () => router.go(next.toString()));
+    } else {
+      // A pushed workspace must retain the original page beneath it.
+      router.replace<void>(next.toString());
+    }
   }
 }
 

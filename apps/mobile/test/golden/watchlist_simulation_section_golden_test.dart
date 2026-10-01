@@ -187,16 +187,30 @@ void main() {
         ),
       ),
     );
+    await tester.ensureVisible(
+      find.text('No dividend records were found in the available data.'),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await expectGoldenSurface(
+      'goldens/watchlist_simulation_positions_${variant.filenameSuffix}.png',
+    );
+    await tester.ensureVisible(find.byIcon(FLucideIcons.slidersHorizontal));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
     await tester.pumpAndSettle();
+    expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(tester.takeException(), isNull);
     await expectGoldenSurface(
       'goldens/watchlist_simulation_allocation_${variant.filenameSuffix}.png',
     );
     await tester.tap(find.byKey(const ValueKey('app.back')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('New simulation'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('New simulation'));
     await tester.pumpAndSettle();
+    expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(tester.takeException(), isNull);
     await expectGoldenSurface(
       'goldens/watchlist_simulation_create_${variant.filenameSuffix}.png',
@@ -306,6 +320,6 @@ List<Override> _paperOverrides(
     ),
   ),
   watchlistSimulationObservationRecorderProvider.overrideWithValue(
-    (_) async {},
+    (_) async => null,
   ),
 ];

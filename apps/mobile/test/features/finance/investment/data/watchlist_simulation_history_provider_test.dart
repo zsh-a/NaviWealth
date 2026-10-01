@@ -19,6 +19,43 @@ import '../../data/repositories/_stub_stamper.dart';
 
 void main() {
   test(
+    'live recorder returns the saved row and preserves skipped writes',
+    () async {
+      final fixture = await _Fixture.create();
+      final allocation = await fixture.repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: fixture.simulation.id,
+      );
+      final recorder = fixture.container.read(
+        watchlistSimulationObservationRecorderProvider,
+      );
+      WatchlistSimulationObservationRequest request(DateTime observedAt) =>
+          WatchlistSimulationObservationRequest(
+            simulation: fixture.simulation,
+            observedAt: observedAt,
+            weightedDailyChange: Decimal.parse('0.01'),
+            pricedWeight: Decimal.one,
+            missingQuoteWeight: Decimal.zero,
+            allocationBasisKey: allocation.allocationBasisKey!,
+          );
+      final observedAt = fixture.simulation.baselineAt.add(
+        const Duration(days: 1),
+      );
+      final saved = await recorder(request(observedAt));
+      expect(saved, isNotNull);
+      expect(saved!.observedAt, observedAt);
+      expect(saved.projectedValue, Decimal.fromInt(1010));
+      final skipped = await recorder(
+        request(
+          fixture.simulation.baselineAt.subtract(const Duration(days: 1)),
+        ),
+      );
+      expect(skipped, isNull);
+      expect((await fixture.observations()).last.id, saved.id);
+    },
+  );
+
+  test(
     'local overview reads stored observations without fetching history',
     () async {
       final fixture = await _Fixture.create();

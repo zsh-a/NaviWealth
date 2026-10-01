@@ -18,6 +18,7 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_providers.dart';
+import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_view_state.dart';
 import 'package:naviwealth/features/finance/investment/notifications/watchlist_alerts.dart';
 import 'package:naviwealth/features/finance/investment/ui/watchlist_page.dart';
@@ -137,6 +138,7 @@ Widget _scope(
   Future<List<HistoricalBar>>? history,
   Future<List<HistoricalBar>> Function()? loadHistory,
   List<WatchlistItem>? items,
+  List<WatchlistSimulation> simulations = const [],
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistQuoteSnapshot>? scopedSnapshots,
   Future<List<WatchlistQuoteSnapshot>> Function()? loadRefresh,
@@ -187,7 +189,44 @@ Widget _scope(
       watchlistCollectionMembersProvider.overrideWith(
         (_) => Stream.value(members),
       ),
-      watchlistSimulationsProvider.overrideWith((_) => Stream.value(const [])),
+      watchlistSimulationsProvider.overrideWith(
+        (_) => Stream.value(simulations),
+      ),
+      if (simulations.isNotEmpty) ...[
+        watchlistSimulationAllocationProvider.overrideWith(
+          (_, id) => Stream.value(
+            ResolvedWatchlistSimulationAllocation(
+              status: WatchlistSimulationAllocationStatus.selected,
+              allocationVersionId: 'version-$id',
+              allocationBasisKey: 'basis-$id',
+              cashWeight: Decimal.one,
+              positions: const [],
+              validAllocationBasisKeys: {'basis-$id'},
+            ),
+          ),
+        ),
+        watchlistSimulationStoredObservationsProvider.overrideWith(
+          (_, _) => Stream.value(const []),
+        ),
+        watchlistSimulationObservationsProvider.overrideWith(
+          (_, _) => Stream.value(const []),
+        ),
+        watchlistSimulationHistoricalBackfillProvider.overrideWith(
+          (_, _) async => const WatchlistSimulationHistoryResult(
+            status: WatchlistSimulationHistoryStatus.notNeeded,
+          ),
+        ),
+        watchlistSimulationActionEntriesProvider.overrideWith(
+          (_, _) => Stream.value(const []),
+        ),
+        watchlistSimulationActionReconciliationProvider.overrideWith(
+          (_, _) async => const WatchlistSimulationActionReconciliation(
+            materializedCount: 0,
+            failedSymbolCount: 0,
+            unsupportedSymbolCount: 0,
+          ),
+        ),
+      ],
       watchlistQuoteSnapshotsProvider.overrideWith((_) async => snapshots),
       watchlistQuoteSnapshotsForScopeProvider.overrideWith(
         (_, _) async => loadRefresh != null
@@ -234,6 +273,7 @@ Widget _wrap(
 Widget _routerWrap({
   required GoRouter router,
   List<WatchlistItem>? items,
+  List<WatchlistSimulation> simulations = const [],
   List<WatchlistQuoteSnapshot> snapshots = const [],
   List<WatchlistQuoteSnapshot>? scopedSnapshots,
   Future<List<WatchlistQuoteSnapshot>> Function()? loadRefresh,
@@ -249,6 +289,7 @@ Widget _routerWrap({
       locale: const Locale('en', 'US'),
     ),
     items: items,
+    simulations: simulations,
     snapshots: snapshots,
     scopedSnapshots: scopedSnapshots,
     loadRefresh: loadRefresh,
@@ -284,6 +325,7 @@ GoRouter _watchlistRouter({String? initialLocation}) {
               ),
               child: WatchlistSimulationsPage(
                 collectionId: state.pathParameters['collectionId']!,
+                initialSimulationId: state.uri.queryParameters['simulationId'],
               ),
             ),
           ),
@@ -308,6 +350,22 @@ Future<void> _pumpSheet(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(seconds: 1));
 }
+
+WatchlistSimulation _cashSimulation(
+  String id,
+  String name, {
+  String? collectionId,
+}) => WatchlistSimulation(
+  id: id,
+  collectionId: collectionId ?? _collection.id,
+  name: name,
+  baseCurrency: 'USD',
+  startingCapital: Decimal.fromInt(1000),
+  cashWeight: Decimal.one,
+  baselineAt: _collection.createdAt,
+  createdAt: _collection.createdAt,
+  sync: _collection.sync,
+);
 
 void main() {
   for (final scale in [1.0, 1.5, 2.0]) {
@@ -634,6 +692,191 @@ void main() {
       expect(find.byType(WatchlistSimulationSection), findsNothing);
     },
   );
+
+  testWidgets(
+    'scenario links select a detail and switching updates route parameters',
+    (tester) async {
+      final growth = _cashSimulation('growth', 'Growth scenario');
+      final income = _cashSimulation('income', 'Income scenario');
+      final router = _watchlistRouter(
+        initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor(
+          _collection.id,
+          simulationId: income.id,
+        ),
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        _routerWrap(
+          router: router,
+          items: [_item],
+          collections: [_collection],
+          members: [_membership],
+          simulations: [growth, income],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${income.id}')),
+        findsOneWidget,
+      );
+      final selectGrowth = find.byKey(
+        ValueKey('watchlist-simulation-select-${growth.id}'),
+      );
+      await tester.ensureVisible(selectGrowth);
+      await tester.tap(selectGrowth);
+      await tester.pumpAndSettle();
+      expect(
+        GoRouterState.of(tester.element(find.byType(WatchlistSimulationsPage)))
+            .uri
+            .queryParameters['simulationId'],
+        growth.id,
+      );
+      expect(
+        router
+            .routeInformationProvider
+            .value
+            .uri
+            .queryParameters['simulationId'],
+        growth.id,
+      );
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${growth.id}')),
+        findsOneWidget,
+      );
+      expect(router.routerDelegate.currentConfiguration.matches, hasLength(2));
+      router.go(FinanceRoutes.wealthWatchlist);
+      await tester.pumpAndSettle();
+      router.go(FinanceRoutes.wealthWatchlistSimulationsFor(_collection.id));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${growth.id}')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('an unavailable scenario link falls back within its collection', (
+    tester,
+  ) async {
+    final growth = _cashSimulation('growth', 'Growth scenario');
+    final outside = _cashSimulation(
+      'outside',
+      'Outside scenario',
+      collectionId: _otherCollection.id,
+    );
+    final router = _watchlistRouter(
+      initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor(
+        _collection.id,
+        simulationId: outside.id,
+      ),
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item],
+        collections: [_collection, _otherCollection],
+        members: [_membership],
+        simulations: [growth, outside],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('requested scenario is unavailable'),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey('watchlist-simulation-${growth.id}')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(ValueKey('watchlist-simulation-${outside.id}')),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'scenario selection preserves the page below a pushed workspace',
+    (tester) async {
+      final growth = _cashSimulation('growth', 'Growth scenario');
+      final income = _cashSimulation('income', 'Income scenario');
+      final router = _watchlistRouter();
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        _routerWrap(
+          router: router,
+          items: [_item],
+          collections: [_collection],
+          members: [_membership],
+          simulations: [growth, income],
+        ),
+      );
+      await tester.pumpAndSettle();
+      unawaited(
+        router.push<void>(
+          FinanceRoutes.wealthWatchlistSimulationsFor(
+            _collection.id,
+            simulationId: income.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final select = find.byKey(
+        ValueKey('watchlist-simulation-select-${growth.id}'),
+      );
+      await tester.ensureVisible(select);
+      await tester.tap(select);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(ValueKey('watchlist-simulation-${growth.id}')),
+        findsOneWidget,
+      );
+      expect(
+        GoRouterState.of(tester.element(find.byType(WatchlistSimulationsPage)))
+            .uri
+            .queryParameters['simulationId'],
+        growth.id,
+      );
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(WatchlistPage), findsOneWidget);
+      expect(find.byType(WatchlistSimulationsPage), findsNothing);
+      expect(
+        router.routeInformationProvider.value.uri.path,
+        FinanceRoutes.wealthWatchlist,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('an unavailable link is explained even in an empty workspace', (
+    tester,
+  ) async {
+    final router = _watchlistRouter(
+      initialLocation: FinanceRoutes.wealthWatchlistSimulationsFor(
+        _collection.id,
+        simulationId: 'deleted',
+      ),
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      _routerWrap(
+        router: router,
+        items: [_item],
+        collections: [_collection],
+        members: [_membership],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('requested scenario is unavailable'),
+      findsOneWidget,
+    );
+    expect(find.text('New simulation'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'does not duplicate an ungrouped list and disables incomplete submission',

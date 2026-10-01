@@ -29610,6 +29610,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Observed days with missing quotes: {count}'**
   String watchlistSimulationHistoryCoverageShort(int count);
+
+  /// No description provided for @watchlistSimulationSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search scenario names'**
+  String get watchlistSimulationSearchHint;
+
+  /// No description provided for @watchlistSimulationSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No scenarios match this search.'**
+  String get watchlistSimulationSearchEmpty;
+
+  /// No description provided for @watchlistSimulationSelectionOutsideSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected scenario is outside the search results. Its detail remains below.'**
+  String get watchlistSimulationSelectionOutsideSearch;
+
+  /// No description provided for @watchlistSimulationSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get watchlistSimulationSortNewest;
+
+  /// No description provided for @watchlistSimulationSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get watchlistSimulationSortOldest;
+
+  /// No description provided for @watchlistSimulationSortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get watchlistSimulationSortName;
+
+  /// No description provided for @watchlistSimulationLinkUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The requested scenario is unavailable in this collection.'**
+  String get watchlistSimulationLinkUnavailable;
+
+  /// No description provided for @watchlistSimulationPositionTargetWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Target weight'**
+  String get watchlistSimulationPositionTargetWeight;
+
+  /// No description provided for @watchlistSimulationPositionDailyChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock move'**
+  String get watchlistSimulationPositionDailyChange;
+
+  /// No description provided for @watchlistSimulationPositionContribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Contribution (pp)'**
+  String get watchlistSimulationPositionContribution;
+
+  /// No description provided for @watchlistSimulationQuoteReasonLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote loading; this holding is not included yet.'**
+  String get watchlistSimulationQuoteReasonLoading;
+
+  /// No description provided for @watchlistSimulationQuoteReasonFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote request failed. Retry quotes to update this holding.'**
+  String get watchlistSimulationQuoteReasonFailed;
+
+  /// No description provided for @watchlistSimulationQuoteReasonMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'No quote is available for this holding in the current collection.'**
+  String get watchlistSimulationQuoteReasonMissing;
+
+  /// No description provided for @watchlistSimulationQuoteReasonStale.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached quote is outdated and excluded from the daily estimate.'**
+  String get watchlistSimulationQuoteReasonStale;
+
+  /// No description provided for @watchlistSimulationQuoteReasonPreviousClose.
+  ///
+  /// In en, this message translates to:
+  /// **'A valid previous close is missing; the daily move cannot be calculated.'**
+  String get watchlistSimulationQuoteReasonPreviousClose;
+
+  /// No description provided for @watchlistSimulationQuoteReasonInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote identity or price is invalid and excluded from the estimate.'**
+  String get watchlistSimulationQuoteReasonInvalid;
+
+  /// No description provided for @watchlistSimulationQuoteReasonDifferentDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote date {date} (UTC) differs from the current observation day and is excluded.'**
+  String watchlistSimulationQuoteReasonDifferentDay(String date);
+
+  /// No description provided for @watchlistSimulationObservationWriting.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving the quote observation…'**
+  String get watchlistSimulationObservationWriting;
+
+  /// No description provided for @watchlistSimulationObservationSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote observation saved for {date} (UTC).'**
+  String watchlistSimulationObservationSaved(String date);
+
+  /// No description provided for @watchlistSimulationObservationUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This quote added no observation. Existing history is still available.'**
+  String get watchlistSimulationObservationUnchanged;
+
+  /// No description provided for @watchlistSimulationObservationWriteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes loaded, but the observation could not be saved. Existing history is still available.'**
+  String get watchlistSimulationObservationWriteFailed;
+
+  /// No description provided for @watchlistSimulationDividendRefreshing.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating dividend records… Saved records remain available.'**
+  String get watchlistSimulationDividendRefreshing;
+
+  /// No description provided for @watchlistSimulationDividendRefreshFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend refresh failed. Saved records are retained; retry to update them.'**
+  String get watchlistSimulationDividendRefreshFailed;
+
+  /// No description provided for @watchlistSimulationDividendRecordsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved dividend records could not load. Retry to read them.'**
+  String get watchlistSimulationDividendRecordsLoadFailed;
+
+  /// No description provided for @watchlistSimulationDividendEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No dividend records were found in the available data.'**
+  String get watchlistSimulationDividendEmpty;
+
+  /// No description provided for @watchlistSimulationSortAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort scenarios'**
+  String get watchlistSimulationSortAction;
 }
 
 class _AppLocalizationsDelegate

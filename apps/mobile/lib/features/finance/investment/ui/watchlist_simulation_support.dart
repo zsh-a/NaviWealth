@@ -3,7 +3,113 @@ import 'package:flutter/widgets.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_providers.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_repository.dart';
 import 'package:naviwealth/features/finance/investment/data/watchlist_simulation_repository.dart';
+import 'package:naviwealth/features/finance/market/domain/a_share_identity.dart';
+import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
+
+enum WatchlistSimulationQuoteUnavailableReason {
+  loading,
+  requestFailed,
+  missing,
+  stale,
+  previousCloseMissing,
+  differentDay,
+  invalid,
+}
+
+/// One eligibility decision feeds the projection, holdings and write request.
+class WatchlistSimulationQuoteInputs {
+  const WatchlistSimulationQuoteInputs({
+    required this.changeByItemId,
+    required this.reasonByItemId,
+    required this.quoteAtByItemId,
+    required this.latestQuoteAt,
+  });
+
+  final Map<String, Decimal?> changeByItemId;
+  final Map<String, WatchlistSimulationQuoteUnavailableReason> reasonByItemId;
+  final Map<String, DateTime> quoteAtByItemId;
+  final DateTime? latestQuoteAt;
+}
+
+WatchlistSimulationQuoteInputs resolveWatchlistSimulationQuoteInputs({
+  required List<WatchlistQuoteSnapshot> snapshots,
+  required List<WatchlistSimulationPosition> positions,
+  bool loading = false,
+}) {
+  final snapshotById = {
+    for (final snapshot in snapshots) snapshot.item.id: snapshot,
+  };
+  final reasons = <String, WatchlistSimulationQuoteUnavailableReason>{};
+  final dates = <String, DateTime>{};
+  DateTime? latestDay;
+  for (final position in positions) {
+    final id = position.watchlistItemId;
+    final snapshot = snapshotById[id];
+    final quote = snapshot?.quote;
+    if (quote != null) dates[id] = quote.asOf;
+    final reason = switch (snapshot) {
+      null =>
+        loading
+            ? WatchlistSimulationQuoteUnavailableReason.loading
+            : WatchlistSimulationQuoteUnavailableReason.missing,
+      _ when snapshot.isLoading =>
+        WatchlistSimulationQuoteUnavailableReason.loading,
+      _ when snapshot.hasError =>
+        WatchlistSimulationQuoteUnavailableReason.requestFailed,
+      _ when quote == null => WatchlistSimulationQuoteUnavailableReason.missing,
+      _ when snapshot.response!.isStale =>
+        WatchlistSimulationQuoteUnavailableReason.stale,
+      _
+          when !_quoteSymbolMatchesItem(quote.symbol, snapshot.item) ||
+              quote.price <= Decimal.zero ||
+              (quote.previousClose != null &&
+                  quote.previousClose! < Decimal.zero) =>
+        WatchlistSimulationQuoteUnavailableReason.invalid,
+      _ when quote.changePercent == null =>
+        WatchlistSimulationQuoteUnavailableReason.previousCloseMissing,
+      _ => null,
+    };
+    if (reason != null) {
+      reasons[id] = reason;
+    } else {
+      final day = watchlistSimulationUtcDay(quote!.asOf);
+      if (latestDay == null || day.isAfter(latestDay)) latestDay = day;
+    }
+  }
+  final changes = <String, Decimal?>{};
+  DateTime? latestQuoteAt;
+  for (final position in positions) {
+    final id = position.watchlistItemId;
+    final quote = snapshotById[id]?.quote;
+    if (!reasons.containsKey(id) && quote != null) {
+      if (watchlistSimulationUtcDay(quote.asOf) != latestDay) {
+        reasons[id] = WatchlistSimulationQuoteUnavailableReason.differentDay;
+      } else {
+        changes[id] = quote.changePercent;
+        if (latestQuoteAt == null || quote.asOf.isAfter(latestQuoteAt)) {
+          latestQuoteAt = quote.asOf;
+        }
+      }
+    }
+    changes.putIfAbsent(id, () => null);
+  }
+  return WatchlistSimulationQuoteInputs(
+    changeByItemId: changes,
+    reasonByItemId: reasons,
+    quoteAtByItemId: dates,
+    latestQuoteAt: latestQuoteAt,
+  );
+}
+
+bool _quoteSymbolMatchesItem(String symbol, WatchlistItem item) {
+  if (item.market == AssetMarket.cnA) {
+    final canonical = tryCanonicalAShareSymbol(symbol);
+    return canonical != null &&
+        canonical == tryCanonicalAShareSymbol(item.symbol);
+  }
+  return symbol.trim().toUpperCase() == item.symbol.trim().toUpperCase();
+}
 
 /// Longest accepted paper simulation name. Mirrors the repository guard so the
 /// form can reject an over-long name before the write is attempted.
