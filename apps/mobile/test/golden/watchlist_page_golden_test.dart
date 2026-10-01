@@ -47,6 +47,7 @@ final _items = [
   ),
 ];
 
+// Quote timestamps are displayed in local time, so fixtures pin wall time.
 final _snapshots = [
   WatchlistQuoteSnapshot(
     item: _items[0],
@@ -61,11 +62,11 @@ final _snapshots = [
         dayLow: _d('198.20'),
         volume: 42000000,
         exchange: 'NASDAQ',
-        asOf: DateTime.utc(2026, 5, 18, 2),
+        asOf: DateTime(2026, 5, 18, 10),
       ),
       freshness: DataFreshness.cachedFresh,
       source: 'golden-cache',
-      fetchedAt: DateTime.utc(2026, 5, 18, 2),
+      fetchedAt: DateTime(2026, 5, 18, 10),
     ),
   ),
   WatchlistQuoteSnapshot(
@@ -76,11 +77,11 @@ final _snapshots = [
         currency: 'HKD',
         price: _d('18.42'),
         previousClose: _d('19'),
-        asOf: DateTime.utc(2026, 5, 18, 2),
+        asOf: DateTime(2026, 5, 18, 10),
       ),
       freshness: DataFreshness.stale,
       source: 'golden-cache',
-      fetchedAt: DateTime.utc(2026, 5, 18, 2),
+      fetchedAt: DateTime(2026, 5, 18, 10),
     ),
   ),
 ];
@@ -100,7 +101,7 @@ void main() {
             for (var i = 0; i < 15; i++)
               HistoricalBar(
                 symbol: key.symbol,
-                asOf: DateTime.utc(2026, 5, 4 + i),
+                asOf: DateTime(2026, 5, 4 + i),
                 open: _d('190'),
                 high: _d('202'),
                 low: _d('188'),

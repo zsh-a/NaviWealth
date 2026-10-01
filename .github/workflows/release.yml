@@ -208,7 +208,19 @@ jobs:
           BUILD_NUMBER: ${{ needs.meta.outputs.build_number }}
           API_URL: ${{ steps.api-url.outputs.url }}
           RELEASE_NOTES: ${{ runner.temp }}/release-notes.md
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          # Failed candidate tags must not hide changes from the next release.
+          published_tags="$(gh release list --exclude-drafts --exclude-pre-releases --limit 100 --json tagName --jq '.[].tagName')"
+          export PREVIOUS_RELEASE_TAG=''
+          while IFS= read -r tag; do
+            if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] &&
+              git merge-base --is-ancestor "$tag" "${GITHUB_SHA}^"; then
+              export PREVIOUS_RELEASE_TAG="$tag"
+              break
+            fi
+          done <<< "$published_tags"
           bash tool/generate-release-notes.sh \
             "$RELEASE_TAG" \
             "$SEMVER" \

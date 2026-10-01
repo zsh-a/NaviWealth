@@ -3,6 +3,8 @@
 #
 # Usage:
 #   tool/generate-release-notes.sh <tag> <semver> <build-number> <api-url> <output>
+# CI sets PREVIOUS_RELEASE_TAG to the last published ancestor release; an
+# explicit empty value means this is the first published release.
 set -euo pipefail
 
 usage() {
@@ -55,10 +57,22 @@ fi
 
 if git rev-parse --verify "refs/tags/$release_tag" >/dev/null 2>&1; then
   target_commit="$(git rev-list -n 1 "$release_tag")"
-  previous_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${target_commit}^" 2>/dev/null || true)"
+  previous_ref="${target_commit}^"
 else
   target_commit="$(git rev-parse HEAD)"
-  previous_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$target_commit" 2>/dev/null || true)"
+  previous_ref="$target_commit"
+fi
+
+if [ "${PREVIOUS_RELEASE_TAG+x}" = x ]; then
+  previous_tag="$PREVIOUS_RELEASE_TAG"
+  if [ -n "$previous_tag" ] &&
+    { ! [[ "$previous_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+      ! git merge-base --is-ancestor "$previous_tag" "${target_commit}^"; }; then
+    echo "error: previous release must be an ancestor version tag" >&2
+    exit 1
+  fi
+else
+  previous_tag="$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$previous_ref" 2>/dev/null || true)"
 fi
 
 if [ -n "$previous_tag" ]; then

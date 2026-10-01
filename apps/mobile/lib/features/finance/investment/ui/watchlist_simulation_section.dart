@@ -1889,6 +1889,7 @@ class _WatchlistSimulationHistoryChart extends StatelessWidget {
               format: AxisDateFormat.dayMonth,
               locale: locale,
               maxLabels: 4,
+              isUtc: true,
             ),
             yAxis: ValueAxis.currency(
               currencyCode: simulation.baseCurrency,

@@ -4,6 +4,21 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:naviwealth/design_system/charts/axes.dart';
 
 void main() {
+  test('UTC time labels preserve observation days at midnight', () async {
+    await initializeDateFormatting('en_US');
+    const axis = TimeAxis(
+      format: AxisDateFormat.dayMonth,
+      locale: 'en_US',
+      isUtc: true,
+    );
+    final start = DateTime.utc(2026, 9, 1).millisecondsSinceEpoch.toDouble();
+    final end = start + const Duration(hours: 23).inMilliseconds;
+    expect(axis.formatTimestamp(start), 'Sep 1');
+    expect(axis.formatTimestamp(end), 'Sep 1');
+    expect(axis.formatPrecise(start), 'Sep 1, 2026');
+    expect(axis.formatPrecise(end), 'Sep 1, 2026');
+  });
+
   test('money ticks distinguish small changes at large balances', () {
     for (final locale in ['en_US', 'zh_CN']) {
       final axis = ValueAxis.currency(currencyCode: 'USD', locale: locale);

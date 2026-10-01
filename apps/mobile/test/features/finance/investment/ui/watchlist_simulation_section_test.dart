@@ -1639,6 +1639,13 @@ void main() {
       ),
     );
     expect(chart.series.single.points, hasLength(3));
+    expect(
+      chart.xAxis.formatPrecise(
+        chart.series.single.points.last.x +
+            const Duration(hours: 23).inMilliseconds,
+      ),
+      'Sep 2, 2026',
+    );
   });
 
   testWidgets('shows automatically recorded dividend references', (

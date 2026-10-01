@@ -78,6 +78,7 @@ class TimeAxis {
     this.locale,
     this.maxLabels = 6,
     this.showGrid = false,
+    this.isUtc = false,
   });
 
   final AxisDateFormat format;
@@ -89,8 +90,14 @@ class TimeAxis {
 
   final bool showGrid;
 
+  /// Use UTC calendar dates for series grouped by UTC observation day.
+  final bool isUtc;
+
   String formatTimestamp(double msSinceEpoch) {
-    final dt = DateTime.fromMillisecondsSinceEpoch(msSinceEpoch.round());
+    final dt = DateTime.fromMillisecondsSinceEpoch(
+      msSinceEpoch.round(),
+      isUtc: isUtc,
+    );
     final pattern = switch (format) {
       AxisDateFormat.dayMonth => DateFormat.MMMd(locale),
       AxisDateFormat.monthYear => DateFormat.yMMM(locale),
@@ -107,7 +114,10 @@ class TimeAxis {
   /// single point they want the exact date — `2025` or `2025年3月` is
   /// not actionable, `2025年3月31日` is.
   String formatPrecise(double msSinceEpoch) {
-    final dt = DateTime.fromMillisecondsSinceEpoch(msSinceEpoch.round());
+    final dt = DateTime.fromMillisecondsSinceEpoch(
+      msSinceEpoch.round(),
+      isUtc: isUtc,
+    );
     return DateFormat.yMMMd(locale).format(dt);
   }
 
@@ -117,10 +127,11 @@ class TimeAxis {
       format == other.format &&
       locale == other.locale &&
       maxLabels == other.maxLabels &&
-      showGrid == other.showGrid;
+      showGrid == other.showGrid &&
+      isUtc == other.isUtc;
 
   @override
-  int get hashCode => Object.hash(format, locale, maxLabels, showGrid);
+  int get hashCode => Object.hash(format, locale, maxLabels, showGrid, isUtc);
 }
 
 /// Axis configuration for a Y axis displaying numeric values.
