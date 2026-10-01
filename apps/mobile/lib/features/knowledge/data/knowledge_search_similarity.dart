@@ -31,6 +31,17 @@ Future<List<KnowledgeSimilarityHit>> _findSimilarKnowledge(
       source: entry.value,
       topK: (effectiveTopK * 3).clamp(effectiveTopK, 40).toInt(),
     );
+    final documents = await _documentsForIds(
+      service,
+      ownerUserId: ownerUserId,
+      kind: entry.key,
+      ids: hits
+          .where((hit) => (hit.semanticSim ?? 0) >= effectiveThreshold)
+          .map((hit) => hit.record.sourceId)
+          .whereType<String>()
+          .where((id) => id != excludeId)
+          .toSet(),
+    );
     for (final hit in hits) {
       final id = hit.record.sourceId;
       if (id == null) continue;
@@ -39,12 +50,7 @@ Future<List<KnowledgeSimilarityHit>> _findSimilarKnowledge(
       }
       final cosine = hit.semanticSim ?? 0.0;
       if (cosine < effectiveThreshold) continue;
-      final doc = await _documentForId(
-        service,
-        ownerUserId: ownerUserId,
-        kind: entry.key,
-        id: id,
-      );
+      final doc = documents[id];
       if (doc == null) continue;
       final overlap = _jaccard(queryTokens, _tokenize(doc.searchText));
       out.add(

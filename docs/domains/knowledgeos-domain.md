@@ -54,8 +54,9 @@ in the primary pane and due reviews in an independently scrolling supporting
 pane; narrow or large-text layouts retain the review-first single list.
 Library grows its live browse window
 in batches of 50, with deterministic updated-time ordering and a load-more
-control. Tag facets cover the full library; tag filtering precedes the query
-limit. Ranked search displays up to 50 results and explains when to refine the
+control. Tag facets cover the full library; tag filtering precedes the browse
+and lexical-search limits. The tag picker searches a lazy list of facets.
+Ranked search displays up to 50 results and explains when to refine the
 query.
 
 Library preserves query (`q`), object kind (`scope`), and tag (`tag`) in the
@@ -65,8 +66,11 @@ the displayed search-result count use the shared filter summary. Each applied
 filter can be removed independently; the tag picker opens on demand. Search
 excerpts show the matching passage when the query occurs in the document.
 Note and Decision deletion live in the detail header's More actions menu and
-still require confirmation. Desktop row changes, detail close, and Library
-route exits confirm discarding unsaved edits and block navigation during saves.
+still require confirmation. Desktop row changes, detail close, route parameter
+and query changes, and route exits confirm discarding unsaved edits and block
+navigation during saves. When the Library becomes too narrow for two panes,
+the selected detail fills the content area and retains its mounted editor;
+widening restores both panes.
 Keyboard users can focus search with `/`, select adjacent rows with `j` / `k`,
 and submit edits with Ctrl/Cmd + Enter.
 
@@ -84,11 +88,16 @@ Decision capture remains an explicit secondary action in Inbox and Library.
 Normal capture and creation from a Note share one full-page guarded form; the
 latter still atomically creates its source Relation. Note and Decision editors
 use pinned Save/Cancel actions and a readable content width. Notes require a
-title or body in both capture and editing, and offer existing tags as shortcuts.
-Inbox due rows provide a direct review action. Reviews lead with actual outcome
-and common statuses; schedule, revisit conditions, and the full status set are
-available under an explicit reveal control. Review submission reads the current
-stored Decision before updating review fields.
+title or body in both capture and editing. Existing tags complete the current
+input prefix and selected tags can be removed directly. Commas and newlines
+separate tags; spaces inside an existing tag are preserved.
+Inbox due rows provide a direct review action. Due reviews lead with actual
+outcome and common statuses; scheduling leads with the date. Revisit conditions
+and the full status set remain under an explicit reveal control. Unchanged
+reviews cannot submit. Continuing an overdue Decision requires a future review
+date, with one-week and 30-day shortcuts. Review submission atomically reads the
+current Decision, preserves unrelated text changes, and rejects changed review
+fields or deleted sources.
 AI rewrite is native-only: unconfigured profiles link directly to settings,
 and Web hides the entry. Generated drafts support original-text comparison,
 confirm dirty dismissal/style resets, and only enter the editor after explicit
@@ -105,7 +114,8 @@ optional source URL and tags in the same canonical row, matching the provenance
 retained by system-share capture. Source URLs are normalized to HTTP(S)
 document identity, render as an external-link card on Note detail, and receive
 a non-blocking inline warning when quick capture finds an existing live Note
-with the same source.
+with the same source. Viewing that existing Note pushes its normal detail over
+the capture sheet; returning retains the capture draft.
 
 Note and Decision editors share one reliability contract: unchanged forms do
 not submit, dirty forms guard system/back-button dismissal, in-flight saves
@@ -153,6 +163,23 @@ scopes. Empty-query browsing is a single update-ordered collection; active
 queries merge semantic recall with deterministic lexical matches from canonical
 Notes and Decisions. The lexical path remains available when the derived index
 is cold, partially populated, or unavailable on Web/native devices.
+Tagged search applies its tag intersection to canonical candidates before
+paging and ranking, so a matching old Note cannot disappear behind unrelated
+top-ranked or recent rows. Semantic search and similarity candidates are
+hydrated in owner-scoped batches and exclude tombstones. Lexical ranking reuses
+query tokens and only cleans Markdown excerpts for consumed results.
+
+The lexical path still scans the eligible canonical rows. Measure its cost with
+the opt-in 1,000/5,000/10,000-Note benchmark before introducing another index:
+
+```bash
+cd apps/mobile
+rtk flutter test test/benchmarks/knowledge_search_benchmark.dart --reporter expanded
+```
+
+The benchmark warms Drift, reports five-sample p50/p95 for tagged and untagged
+search, and checks result integrity. Host debug timings do not establish mobile
+or Web performance budgets.
 
 ## AI Tools
 
@@ -210,6 +237,10 @@ Note and Decision detail pages expose the same related-content section: users
 can search live Knowledge rows, add a generic `related_to` link, remove a link,
 and navigate to the related row. Both endpoints render the relation regardless
 of which side originally created it.
+Manual linking commits before closing its guarded picker; a failed write keeps
+the chosen target and offers retry. Removal locks repeated submission and
+offers the shared session Undo. Link creation and Undo validate both live,
+owner-scoped endpoints; Undo also checks that its deletion receipt is current.
 
 The same section offers an explicit “discover related” action backed by the
 local Memory semantic index. It excludes the current row and every already
@@ -238,6 +269,12 @@ place: pending saves lock editing and navigation, failed writes keep the draft
 and persistent inline feedback, and successful saves refresh the read view.
 Decision review commits while its guarded sheet is still open and closes only
 after success; failed review drafts can be retried without reopening the sheet.
+Detail readers watch the current owner-scoped row, including tombstones for
+draft preservation. Pristine editors follow updates; dirty editors retain their
+input and show a change/deletion notice. Editor saves atomically check the
+captured HLC and live source through `KnowledgeEditService`. Loading the latest
+version confirms discarding a draft; a deleted source cannot be saved back into
+existence. This is local edit protection over the existing Sync v3 protocol.
 
 Deleting an entity also tombstones every live relation touching it.
 
@@ -252,6 +289,8 @@ creation, and review completion. Review evidence may include elapsed duration,
 but never stores Note/Decision text, row ids, option labels, source URLs, or
 relation endpoints. Metric failure is best-effort and cannot roll back or fail
 the domain mutation that produced it.
+Unchanged submissions and date-only scheduling do not count as completed
+reviews; outcome/status changes provide the review evidence.
 
 ## Boundaries
 

@@ -9,6 +9,7 @@ import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_decision_review_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import 'widgets/knowledge_edit_notice.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 
 export '../domain/knowledge_models.dart' show KnowledgeDecisionReviewDraft;
@@ -17,6 +18,7 @@ Future<KnowledgeDecisionReviewDraft?> showKnowledgeDecisionReviewSheet({
   required BuildContext context,
   required KnowledgeDecision decision,
   required Future<void> Function(KnowledgeDecisionReviewDraft draft) onSave,
+  bool schedule = false,
 }) {
   return showGuardedFormSheet<KnowledgeDecisionReviewDraft>(
     context: context,
@@ -24,6 +26,7 @@ Future<KnowledgeDecisionReviewDraft?> showKnowledgeDecisionReviewSheet({
       decision: decision,
       dirty: dirty,
       onSave: onSave,
+      schedule: schedule,
     ),
   );
 }
@@ -33,11 +36,13 @@ class _KnowledgeDecisionReviewSheet extends ConsumerStatefulWidget {
     required this.decision,
     required this.dirty,
     required this.onSave,
+    required this.schedule,
   });
 
   final KnowledgeDecision decision;
   final FormDirtyController dirty;
   final Future<void> Function(KnowledgeDecisionReviewDraft draft) onSave;
+  final bool schedule;
 
   @override
   ConsumerState<_KnowledgeDecisionReviewSheet> createState() =>
@@ -53,6 +58,26 @@ class _KnowledgeDecisionReviewSheetState
   late final TextEditingController _actual;
   late DateTime? _reviewDate;
   late DecisionStatus _status;
+  String? _validationError;
+
+  KnowledgeDecisionReviewDraft get _draft => KnowledgeDecisionReviewDraft(
+    reviewDate: _reviewDate,
+    revisitConditions: _parseConditions(),
+    actualOutcomeMd: _nullable(_actual.text),
+    status: _status,
+  );
+
+  bool get _pending => switch (_status) {
+    DecisionStatus.active ||
+    DecisionStatus.draft ||
+    DecisionStatus.paused => true,
+    _ => false,
+  };
+
+  bool get _needsNextDate =>
+      _pending &&
+      widget.decision.reviewDate != null &&
+      !widget.decision.reviewDate!.toUtc().isAfter(DateTime.now().toUtc());
 
   @override
   void initState() {
@@ -67,6 +92,12 @@ class _KnowledgeDecisionReviewSheetState
     _reviewDate = decision.reviewDate;
     _status = decision.status;
     widget.dirty.bindTextControllers([_conditions, _actual]);
+    _conditions.addListener(_onTextChanged);
+    _actual.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    if (mounted) setState(() => _validationError = null);
   }
 
   @override
@@ -81,18 +112,27 @@ class _KnowledgeDecisionReviewSheetState
     final l10n = AppLocalizations.of(context);
     final expected = widget.decision.expectedOutcome?.trim();
     return AppSheet(
-      title: l10n.knowledgeDecisionReviewTitle,
+      title: widget.schedule
+          ? l10n.knowledgeDecisionReviewScheduleAction
+          : l10n.knowledgeDecisionReviewTitle,
       subtitle: widget.decision.question,
       footer: AppSheetFooter(
         submitKey: const Key('knowledge-decision-review-submit'),
-        submitLabel: l10n.knowledgeDecisionReviewSaveAction,
+        submitLabel: widget.schedule
+            ? l10n.commonSave
+            : l10n.knowledgeDecisionReviewSaveAction,
         cancelLabel: l10n.commonCancel,
         onSubmit: _submit,
         busy: _saving,
+        enabled: !_draft.matchesDecision(widget.decision),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (widget.schedule) ...[
+            _dateField(),
+            const SizedBox(height: AppSpacing.s16),
+          ],
           if (expected != null && expected.isNotEmpty) ...[
             AppSection.item(
               title: l10n.knowledgeDecisionExpectedOutcomeLabel,
@@ -133,6 +173,43 @@ class _KnowledgeDecisionReviewSheetState
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
+          if (_needsNextDate) ...[
+            Text(
+              l10n.knowledgeReviewContinueObserving,
+              style: context.captionLabelStyle,
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            Wrap(
+              spacing: AppSpacing.s8,
+              runSpacing: AppSpacing.s8,
+              children: [
+                for (final days in [7, 30])
+                  AppFilterChip(
+                    key: ValueKey('knowledge-review-next-$days'),
+                    active: false,
+                    label: days == 7
+                        ? l10n.knowledgeReviewNextWeek
+                        : l10n.knowledgeReviewNextMonth,
+                    onPress: _saving
+                        ? null
+                        : () {
+                            setState(() {
+                              final now = DateTime.now();
+                              _reviewDate = DateTime(
+                                now.year,
+                                now.month,
+                                now.day + days,
+                              ).toUtc();
+                              _showDetails = true;
+                              _validationError = null;
+                            });
+                            widget.dirty.markDirty();
+                          },
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           AppRevealControl(
             key: const Key('knowledge-decision-review-details'),
             expanded: _showDetails,
@@ -142,17 +219,10 @@ class _KnowledgeDecisionReviewSheetState
             onToggle: () => setState(() => _showDetails = !_showDetails),
           ),
           if (_showDetails) ...[
-            DateField(
-              key: const Key('knowledge-decision-review-date'),
-              label: l10n.knowledgeDecisionReviewDateLabel,
-              initialValue: _reviewDate,
-              enabled: !_saving,
-              onChanged: (value) {
-                setState(() => _reviewDate = value);
-                widget.dirty.markDirty();
-              },
-            ),
-            const SizedBox(height: AppSpacing.s16),
+            if (!widget.schedule) ...[
+              _dateField(),
+              const SizedBox(height: AppSpacing.s16),
+            ],
             FTextField(
               key: const Key('knowledge-decision-review-conditions'),
               control: FTextFieldControl.managed(controller: _conditions),
@@ -166,6 +236,10 @@ class _KnowledgeDecisionReviewSheetState
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
+          if (_validationError case final message?) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(message: message, kind: AppStatusKind.error),
+          ],
           if (submissionFailureMessage case final message?) ...[
             const SizedBox(height: AppSpacing.s12),
             AppStatusBanner(message: message, kind: AppStatusKind.error),
@@ -175,25 +249,40 @@ class _KnowledgeDecisionReviewSheetState
     );
   }
 
+  Widget _dateField() => DateField(
+    key: const ValueKey('knowledge-decision-review-date'),
+    label: AppLocalizations.of(context).knowledgeDecisionReviewDateLabel,
+    initialValue: _reviewDate,
+    enabled: !_saving,
+    onChanged: (value) {
+      setState(() {
+        _reviewDate = value;
+        _validationError = null;
+      });
+      widget.dirty.markDirty();
+    },
+  );
+
   Future<void> _submit() async {
-    if (_saving) return;
+    if (_saving || _draft.matchesDecision(widget.decision)) return;
     final l10n = AppLocalizations.of(context);
-    final draft = KnowledgeDecisionReviewDraft(
-      reviewDate: _reviewDate,
-      revisitConditions: _parseConditions(),
-      actualOutcomeMd: _nullable(_actual.text),
-      status: _status,
-    );
+    final draft = _draft;
+    if (_pending &&
+        (widget.schedule || _needsNextDate) &&
+        (_reviewDate == null ||
+            !_reviewDate!.toUtc().isAfter(DateTime.now().toUtc()))) {
+      setState(() {
+        _showDetails = true;
+        _validationError = l10n.knowledgeReviewNextDateRequired;
+      });
+      return;
+    }
     await submitForm<void>(
       dirty: widget.dirty,
       onBusyChanged: (busy) => setState(() => _saving = busy),
       commit: () => widget.onSave(draft),
       leave: () => Navigator.of(context).pop(draft),
-      failureMessage: (error) => userSafeErrorMessage(
-        context,
-        error,
-        operation: 'save decision review',
-      ),
+      failureMessage: (error) => knowledgeEditFailureMessage(context, error),
       successMessage: l10n.commonSaved,
       tag: 'knowledge-decision-review',
     );
@@ -257,11 +346,14 @@ Future<bool> reviewSavedKnowledgeDecision({
   final draft = await showKnowledgeDecisionReviewSheet(
     context: context,
     decision: decision,
+    schedule:
+        decision.reviewDate == null ||
+        decision.reviewDate!.toUtc().isAfter(DateTime.now().toUtc()),
     onSave: (draft) async {
       final service = await container.read(
         knowledgeDecisionReviewServiceProvider.future,
       );
-      await service.review(id: decision.id, draft: draft);
+      await service.review(baseline: decision, draft: draft);
     },
   );
   if (draft == null) return false;
@@ -269,12 +361,18 @@ Future<bool> reviewSavedKnowledgeDecision({
     ref.invalidate(knowledgeDecisionsProvider);
     ref.invalidate(knowledgeDueReviewsProvider);
   }
-  final elapsed = DateTime.now().toUtc().difference(decision.decidedAt.toUtc());
-  await recordProductMetric(
-    () => container.read(productMetricsProvider.notifier),
-    ProductFunnelEvent.knowledgeDecisionReviewed,
-    success: true,
-    duration: elapsed.isNegative ? Duration.zero : elapsed,
-  );
+  if (draft.status != decision.status ||
+      (draft.actualOutcomeMd?.trim() ?? '') !=
+          (decision.actualOutcomeMd?.trim() ?? '')) {
+    final elapsed = DateTime.now().toUtc().difference(
+      decision.decidedAt.toUtc(),
+    );
+    await recordProductMetric(
+      () => container.read(productMetricsProvider.notifier),
+      ProductFunnelEvent.knowledgeDecisionReviewed,
+      success: true,
+      duration: elapsed.isNegative ? Duration.zero : elapsed,
+    );
+  }
   return true;
 }

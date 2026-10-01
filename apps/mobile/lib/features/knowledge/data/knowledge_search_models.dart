@@ -50,21 +50,23 @@ class KnowledgeSimilarityHit {
 }
 
 class KnowledgeSearchDocument {
-  const KnowledgeSearchDocument({
+  KnowledgeSearchDocument._({
     required this.kind,
     required this.id,
     required this.title,
-    required this.excerpt,
+    required String excerptSource,
     required this.searchText,
     required this.updatedAt,
     this.note,
     this.decision,
-  });
+  }) : _excerptSource = excerptSource;
 
   final String kind;
   final String id;
   final String title;
-  final String excerpt;
+  final String _excerptSource;
+  // Ranking scans canonical rows, but only visible hits need Markdown cleanup.
+  late final String excerpt = _excerpt(_excerptSource);
   final String searchText;
   final DateTime updatedAt;
   final KnowledgeNote? note;
@@ -75,11 +77,11 @@ class KnowledgeSearchDocument {
     String untitled = 'Untitled',
   }) {
     final title = n.title.isEmpty ? untitled : n.title;
-    return KnowledgeSearchDocument(
+    return KnowledgeSearchDocument._(
       kind: 'note',
       id: n.id,
       title: title,
-      excerpt: _excerpt(n.bodyMd.isEmpty ? title : n.bodyMd),
+      excerptSource: n.bodyMd.isEmpty ? title : n.bodyMd,
       searchText:
           '$title ${n.bodyMd} ${n.tags.join(' ')} '
           '${n.sourceUrl ?? ''}',
@@ -89,13 +91,11 @@ class KnowledgeSearchDocument {
   }
 
   static KnowledgeSearchDocument fromDecision(KnowledgeDecision d) {
-    return KnowledgeSearchDocument(
+    return KnowledgeSearchDocument._(
       kind: 'decision',
       id: d.id,
       title: d.question,
-      excerpt: _excerpt(
-        d.rationaleMd.isEmpty ? d.selectedLabel : d.rationaleMd,
-      ),
+      excerptSource: d.rationaleMd.isEmpty ? d.selectedLabel : d.rationaleMd,
       searchText:
           '${d.question} ${d.selectedLabel} ${d.rationaleMd} '
           '${d.expectedOutcome ?? ''} ${d.actualOutcomeMd ?? ''} '
@@ -117,8 +117,9 @@ class KnowledgeLexicalMatch {
 
   static KnowledgeLexicalMatch calculate(
     String query,
-    KnowledgeSearchDocument doc,
-  ) {
+    KnowledgeSearchDocument doc, {
+    Set<String>? queryTokens,
+  }) {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) {
       return const KnowledgeLexicalMatch(score: 0, matchedFields: <String>[]);
@@ -145,9 +146,9 @@ class KnowledgeLexicalMatch {
       fields.add('body');
     }
 
-    final queryTokens = _tokenize(q);
-    final titleOverlap = _jaccard(queryTokens, _tokenize(title));
-    final bodyOverlap = _jaccard(queryTokens, _tokenize(body));
+    final tokens = queryTokens ?? _tokenize(q);
+    final titleOverlap = _jaccard(tokens, _tokenize(title));
+    final bodyOverlap = _jaccard(tokens, _tokenize(body));
     if (titleOverlap > 0) fields.add('title_tokens');
     if (bodyOverlap > 0) fields.add('body_tokens');
     final overlapScore = (titleOverlap * 0.85 + bodyOverlap * 0.55)
@@ -165,12 +166,16 @@ class KnowledgeLexicalMatch {
 String _excerpt(String s, [int n = kKnowledgeSupportingExcerptMaxChars]) =>
     knowledgeExcerpt(s, max: n);
 
+final _wordSeparator = RegExp(r'[^a-z0-9一-鿿]+');
+final _cjkWord = RegExp(r'[一-鿿]');
+
 Set<String> _tokenize(String s) {
   final lower = s.toLowerCase();
   final tokens = <String>{};
-  for (final word in lower.split(RegExp(r'[^a-z0-9一-鿿]+'))) {
-    if (word.isEmpty) continue;
-    if (RegExp(r'[一-鿿]').hasMatch(word)) {
+  final seen = <String>{};
+  for (final word in lower.split(_wordSeparator)) {
+    if (word.isEmpty || !seen.add(word)) continue;
+    if (_cjkWord.hasMatch(word)) {
       if (word.length == 1) {
         tokens.add(word);
       } else {
@@ -187,7 +192,12 @@ Set<String> _tokenize(String s) {
 
 double _jaccard(Set<String> a, Set<String> b) {
   if (a.isEmpty || b.isEmpty) return 0;
-  final inter = a.intersection(b).length;
+  final smaller = a.length <= b.length ? a : b;
+  final larger = identical(smaller, a) ? b : a;
+  var inter = 0;
+  for (final token in smaller) {
+    if (larger.contains(token)) inter++;
+  }
   if (inter == 0) return 0;
-  return inter / a.union(b).length;
+  return inter / (a.length + b.length - inter);
 }

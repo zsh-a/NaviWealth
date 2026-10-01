@@ -189,4 +189,64 @@ void main() {
 
     expect(hits.map((hit) => hit.id), <String>['work-roadmap']);
   });
+
+  test(
+    'tag filtering precedes ranking and never limits fallback to recent notes',
+    () async {
+      await repository.upsertNote(
+        _note(
+          id: 'old-target',
+          title: 'roadmap',
+          body: 'roadmap',
+          tick: 0,
+          tags: const ['target', 'archive'],
+        ),
+      );
+      for (var i = 1; i <= 600; i++) {
+        await repository.upsertNote(
+          _note(
+            id: 'other-$i',
+            title: 'roadmap',
+            body: 'roadmap',
+            tick: i,
+            tags: const ['other'],
+          ),
+        );
+      }
+      await repository.upsertNote(
+        _note(
+          id: 'recent-target',
+          title: 'roadmap',
+          body: 'roadmap',
+          tick: 601,
+          tags: const ['target'],
+        ),
+      );
+      final service = KnowledgeSearchService(
+        repository: repository,
+        memoryRuntime: _runtime(database, _UnavailableEmbedder()),
+      );
+      final targetHits = await service.searchNotes(
+        ownerUserId: _owner,
+        query: 'roadmap',
+        tags: const {'target'},
+        limit: 50,
+      );
+      expect(targetHits.map((hit) => hit.id), ['recent-target', 'old-target']);
+      final oldHits = await service.searchNotes(
+        ownerUserId: _owner,
+        query: 'roadmap',
+        tags: const {'target', 'archive'},
+        limit: 50,
+      );
+      expect(oldHits.map((hit) => hit.id), ['old-target']);
+      final browseHits = await service.searchNotes(
+        ownerUserId: _owner,
+        query: '',
+        tags: const {'archive'},
+        limit: 1,
+      );
+      expect(browseHits.map((hit) => hit.id), ['old-target']);
+    },
+  );
 }

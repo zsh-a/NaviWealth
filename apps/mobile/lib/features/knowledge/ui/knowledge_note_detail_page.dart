@@ -7,11 +7,10 @@ import 'package:intl/intl.dart';
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/forms/form_submission.dart';
-import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
+import '../application/knowledge_edit_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/knowledge_rewrite_client.dart';
@@ -21,6 +20,7 @@ import '../domain/knowledge_models.dart';
 import '../domain/knowledge_source_url.dart';
 import 'knowledge_capture_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
+import 'widgets/knowledge_edit_notice.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_relations_section.dart';
 import 'widgets/knowledge_rewrite_action.dart';
@@ -28,11 +28,11 @@ import 'widgets/knowledge_source_link.dart';
 import 'widgets/knowledge_tag_chips.dart';
 import 'widgets/knowledge_tag_input.dart';
 
-final _noteProvider = FutureProvider.autoDispose.family<KnowledgeNote?, String>(
-  (ref, id) async {
+final _noteProvider = StreamProvider.autoDispose.family<KnowledgeNote?, String>(
+  (ref, id) async* {
     final repository = await ref.watch(knowledgeRepositoryProvider.future);
     final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
-    return repository.findNote(ownerUserId: owner, id: id);
+    yield* repository.watchNote(ownerUserId: owner, id: id);
   },
 );
 
@@ -45,7 +45,7 @@ class KnowledgeNoteDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(_noteProvider(noteId));
-    return value.when(
+    final body = value.when(
       loading: () => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentNotes,
         child: kDefaultLoading,
@@ -64,8 +64,12 @@ class KnowledgeNoteDetailPage extends ConsumerWidget {
               title: l10n.knowledgeSegmentNotes,
               child: Center(child: Text(l10n.knowledgeObjectNotFound)),
             )
-          : _NoteEditor(key: ValueKey(note.sync.hlc), note: note),
+          : _NoteEditor(key: ValueKey(note.id), note: note),
     );
+    final path = KnowledgeRoutes.note(noteId);
+    return GoRouter.maybeOf(context)?.routerDelegate.state.uri.path == path
+        ? FormLeaveScope(routePath: path, child: body)
+        : body;
   }
 }
 
@@ -93,10 +97,14 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
   /// Detail pages open in read mode; the form stays behind this toggle.
   var _editing = false;
   var _showMetadata = false;
+  late KnowledgeNote _baseline;
+  bool get _deleted => widget.note.sync.deletedAt != null;
+  bool get _changed => widget.note.sync.hlc != _baseline.sync.hlc;
 
   @override
   void initState() {
     super.initState();
+    _baseline = widget.note;
     _title = TextEditingController(text: widget.note.title);
     _body = TextEditingController(text: widget.note.bodyMd);
     _source = TextEditingController(text: widget.note.sourceUrl);
@@ -107,6 +115,12 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       _source,
       _tags,
     ]);
+  }
+
+  @override
+  void didUpdateWidget(_NoteEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!dirty.isDirty && !_saving) _resetFields();
   }
 
   @override
@@ -133,7 +147,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
                 ? l10n.knowledgeViewAction
                 : l10n.knowledgeEditAction,
             icon: Icon(_editing ? FLucideIcons.eye : FLucideIcons.pencil),
-            onPress: _saving ? null : _toggleMode,
+            onPress: _saving || _deleted ? null : _toggleMode,
           ),
           AppAdaptiveActionMenu(
             title: l10n.shellMoreActions,
@@ -150,15 +164,18 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
               child: AppIconButton(
                 icon: FLucideIcons.ellipsis,
                 tooltip: l10n.shellMoreActions,
-                onPress: _saving ? null : openMenu,
+                onPress: _saving || _deleted ? null : openMenu,
               ),
             ),
           ),
         ],
         child: AnimatedBuilder(
           animation: dirty,
-          builder: (context, _) =>
-              _editing ? _buildEditForm(context) : _buildReadView(context),
+          builder: (context, _) => _editing
+              ? _buildEditForm(context)
+              : _deleted
+              ? Center(child: Text(l10n.knowledgeObjectNotFound))
+              : _buildReadView(context),
         ),
       ),
     );
@@ -243,16 +260,23 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
-        onSubmit: dirty.isDirty && !_saving ? _save : null,
+        onSubmit: dirty.isDirty && !_saving && !_deleted && !_changed
+            ? _save
+            : null,
         action: AppSheetFooter(
           submitLabel: l10n.commonSave,
           cancelLabel: l10n.commonCancel,
-          enabled: dirty.isDirty,
+          enabled: dirty.isDirty && !_deleted && !_changed,
           busy: _saving,
           onSubmit: _save,
           onCancel: _toggleMode,
         ),
         children: [
+          if (_deleted || _changed)
+            KnowledgeEditNotice(
+              deleted: _deleted,
+              onReload: _saving ? null : _reload,
+            ),
           FTextFormField(
             key: const Key('knowledge-note-title'),
             control: FTextFieldControl.managed(controller: _title),
@@ -332,6 +356,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
   }
 
   void _resetFields() {
+    _baseline = widget.note;
     _title.text = widget.note.title;
     _body.text = widget.note.bodyMd;
     _source.text = widget.note.sourceUrl ?? '';
@@ -339,8 +364,18 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
     dirty.markPristine();
   }
 
+  Future<void> _reload() async {
+    if (_saving || !await confirmDiscardIfDirty(context, dirty) || !mounted) {
+      return;
+    }
+    setState(() {
+      _resetFields();
+      _editing = false;
+    });
+  }
+
   Future<void> _save() async {
-    if (_saving) return;
+    if (_saving || _deleted || _changed) return;
     if (_source.text.trim().isNotEmpty &&
         normalizeKnowledgeSourceUrl(_source.text) == null) {
       setState(() => _showMetadata = true);
@@ -356,11 +391,10 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       dirty: dirty,
       onBusyChanged: (busy) => setState(() => _saving = busy),
       commit: () async {
-        final repository = await ref.read(knowledgeRepositoryProvider.future);
-        final stamper = await ref.read(mutationStamperProvider.future);
-        final value = await stamper.stamp();
-        await repository.upsertNote(
-          KnowledgeNote(
+        final service = await ref.read(knowledgeEditServiceProvider.future);
+        await service.saveNote(
+          expectedHlc: _baseline.sync.hlc,
+          draft: KnowledgeNote(
             id: widget.note.id,
             title: _title.text.trim(),
             bodyMd: _body.text.trim(),
@@ -368,24 +402,18 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
             tags: parseKnowledgeTags(_tags.text),
             createdAt: widget.note.createdAt,
             mergedIntoId: widget.note.mergedIntoId,
-            sync: SyncMeta(
-              ownerUserId: value.ownerUserId,
-              updatedAt: value.now,
-              updatedByDevice: value.deviceId,
-              hlc: value.hlc,
-            ),
+            sync: _baseline.sync,
           ),
         );
       },
       leave: () {
-        ref.invalidate(_noteProvider(widget.note.id));
+        setState(() {
+          _resetFields();
+          _editing = false;
+        });
         ref.invalidate(knowledgeNotesProvider);
       },
-      failureMessage: (error) => userSafeErrorMessage(
-        context,
-        error,
-        operation: 'save knowledge note',
-      ),
+      failureMessage: (error) => knowledgeEditFailureMessage(context, error),
       successMessage: l10n.commonSaved,
       tag: 'knowledge-note-edit',
     );

@@ -254,4 +254,21 @@ class KnowledgeDecisionReviewDraft {
   final List<DecisionRevisitCondition> revisitConditions;
   final String? actualOutcomeMd;
   final DecisionStatus status;
+
+  factory KnowledgeDecisionReviewDraft.fromDecision(
+    KnowledgeDecision decision,
+  ) => KnowledgeDecisionReviewDraft(
+    reviewDate: decision.reviewDate,
+    revisitConditions: decision.revisitConditions,
+    actualOutcomeMd: decision.actualOutcomeMd,
+    status: decision.status,
+  );
+
+  bool matchesDecision(KnowledgeDecision decision) =>
+      reviewDate?.toUtc() == decision.reviewDate?.toUtc() &&
+      DecisionRevisitCondition.encode(revisitConditions) ==
+          DecisionRevisitCondition.encode(decision.revisitConditions) &&
+      (actualOutcomeMd?.trim() ?? '') ==
+          (decision.actualOutcomeMd?.trim() ?? '') &&
+      status == decision.status;
 }

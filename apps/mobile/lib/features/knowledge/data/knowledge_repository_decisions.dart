@@ -119,6 +119,32 @@ mixin KnowledgeDecisionsRepositoryMixin {
     );
   }
 
+  /// Includes tombstones so an open editor can retain its draft after deletion.
+  Stream<KnowledgeDecision?> watchDecision({
+    required String ownerUserId,
+    required String id,
+  }) =>
+      (_db.select(_db.knowledgeDecisions)
+            ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId)))
+          .watchSingleOrNull()
+          .map((row) => row == null ? null : knowledgeDecisionFromRow(row));
+
+  Future<List<KnowledgeDecision>> listDecisionsByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return const <KnowledgeDecision>[];
+    final rows =
+        await (_db.select(_db.knowledgeDecisions)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.deletedAt.isNull() &
+                  t.id.isIn(ids),
+            ))
+            .get();
+    return rows.map(knowledgeDecisionFromRow).toList(growable: false);
+  }
+
   Stream<List<KnowledgeDecision>> watchDecisionsByIds({
     required String ownerUserId,
     required Set<String> ids,

@@ -300,11 +300,12 @@ class _AppSoftGlassLightState extends State<AppSoftGlassLight>
         child: RepaintBoundary(child: widget.child),
       ),
     );
-    if (!_enabled) return listener;
+    // Keep foreground state mounted when a route pauses its tickers or the
+    // pointer policy changes. Removing this wrapper would recreate its form.
     return MouseRegion(
-      onEnter: _enter,
-      onHover: _hover,
-      onExit: _exit,
+      onEnter: _enabled ? _enter : null,
+      onHover: _enabled ? _hover : null,
+      onExit: _enabled ? _exit : null,
       child: listener,
     );
   }

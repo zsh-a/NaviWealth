@@ -15,6 +15,7 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_source_url.dart';
 import '../domain/knowledge_text.dart';
+import 'knowledge_note_detail_page.dart';
 import 'widgets/knowledge_decision_options_editor.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_tag_chips.dart';
@@ -235,6 +236,13 @@ class _KnowledgeCaptureSheetState
                           : _duplicateSource!.title,
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.s8),
+                  FButton(
+                    key: const Key('knowledge-duplicate-source-open'),
+                    variant: FButtonVariant.outline,
+                    onPress: _saving ? null : _viewExistingNote,
+                    child: Text(l10n.knowledgeSourceViewExisting),
+                  ),
                 ],
                 const SizedBox(height: AppSpacing.s12),
                 KnowledgeTagInput(
@@ -271,6 +279,22 @@ class _KnowledgeCaptureSheetState
       footer: footer,
       child: fields,
     );
+  }
+
+  Future<void> _viewExistingNote() async {
+    final duplicate = _duplicateSource;
+    if (_saving || duplicate == null) return;
+    FocusScope.of(context).unfocus();
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final theme = FTheme.capture(from: context, to: navigator.context);
+    await navigator.push<void>(
+      MaterialPageRoute(
+        builder: (_) =>
+            theme.wrap(KnowledgeNoteDetailPage(noteId: duplicate.id)),
+      ),
+    );
+    // The capture sheet remains mounted below the detail, retaining its draft.
+    if (mounted) _onSourceChanged();
   }
 
   Future<void> _save() async {

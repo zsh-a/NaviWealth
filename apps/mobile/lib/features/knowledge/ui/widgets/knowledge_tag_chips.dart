@@ -2,12 +2,12 @@ import 'package:flutter/widgets.dart';
 
 import '../../../../design_system/design_system.dart';
 
-/// Parses the raw comma/space separated tag field into canonical tags.
+/// Parses comma/newline-separated tags while retaining spaces inside a tag.
 ///
 /// This matches the split every Knowledge save path applies, so the chip
 /// preview never drifts from what is actually persisted.
 List<String> parseKnowledgeTags(String raw) => raw
-    .split(RegExp(r'[,，\s]+'))
+    .split(RegExp(r'[,，\r\n]+'))
     .map((value) => value.trim())
     .where((value) => value.isNotEmpty)
     .toSet()

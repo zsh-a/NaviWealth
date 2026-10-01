@@ -17788,4 +17788,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get watchlistSimulationSortAction => 'Sort scenarios';
+
+  @override
+  String get knowledgeEditChanged =>
+      'This item changed while you were editing. Your draft is preserved; load the latest version before saving.';
+
+  @override
+  String get knowledgeEditDeletedDraft =>
+      'This item was deleted. Your draft is preserved here, but it can no longer be saved.';
+
+  @override
+  String get knowledgeEditReload => 'Load latest version';
+
+  @override
+  String get knowledgeReviewContinueObserving =>
+      'Still observing? Schedule the next review.';
+
+  @override
+  String get knowledgeReviewNextWeek => 'In one week';
+
+  @override
+  String get knowledgeReviewNextMonth => 'In 30 days';
+
+  @override
+  String get knowledgeReviewNextDateRequired =>
+      'Choose a future date to continue observing.';
+
+  @override
+  String get knowledgeSourceViewExisting => 'View existing note';
+
+  @override
+  String get knowledgeTagsSearchHint => 'Find a tag';
 }

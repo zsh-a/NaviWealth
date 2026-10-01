@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/forms/date_field.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -77,7 +78,9 @@ void main() {
         db: database,
         outbox: InMemoryOutboxStore(),
       );
-      final decision = _decision();
+      final decision = _decision(
+        reviewDate: DateTime.now().toUtc().add(const Duration(days: 30)),
+      );
       await repository.upsertDecision(decision);
       await tester.pumpWidget(
         _wrap(
@@ -93,6 +96,7 @@ void main() {
         find.byKey(const Key('knowledge-decision-review-actual')),
         'Preserved after failure',
       );
+      await _settlePaint(tester);
       repository.gate = Completer<void>();
       final submit = find.byKey(const Key('knowledge-decision-review-submit'));
       await tester.tap(submit);
@@ -208,6 +212,117 @@ void main() {
     expect(saved?.status, DecisionStatus.verified);
     await _disposeWidget(tester);
   });
+
+  testWidgets(
+    'scheduling leads with the date and does not submit unchanged fields',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = KnowledgeRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final decision = _decision();
+      await repository.upsertDecision(decision);
+      await tester.pumpWidget(
+        _wrap(
+          decisionId: decision.id,
+          repository: repository,
+          executionAvailable: false,
+        ),
+      );
+      await _settlePaint(tester);
+      await tester.tap(find.byKey(const Key('knowledge-decision-review')));
+      await _settlePaint(tester);
+      final date = find.byKey(const Key('knowledge-decision-review-date'));
+      final actual = find.byKey(const Key('knowledge-decision-review-actual'));
+      final submit = find.byKey(const Key('knowledge-decision-review-submit'));
+      expect(date, findsOneWidget);
+      expect(
+        tester.getTopLeft(date).dy,
+        lessThan(tester.getTopLeft(actual).dy),
+      );
+      expect(tester.widget<FButton>(submit).onPress, isNull);
+      final now = DateTime.now();
+      final scheduled = DateTime(now.year, now.month, now.day + 7).toUtc();
+      tester.widget<DateField>(date).onChanged!(scheduled);
+      await _settlePaint(tester);
+      await tester.tap(submit);
+      await _settlePaint(tester);
+      final saved = await repository.findDecision(
+        ownerUserId: _owner,
+        id: decision.id,
+      );
+      expect(saved!.reviewDate!.toUtc(), scheduled.toUtc());
+      expect(saved.actualOutcomeMd, isNull);
+      await _disposeWidget(tester);
+    },
+  );
+
+  testWidgets(
+    'continuing an overdue review requires a future date and clears the due list',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = KnowledgeRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final decision = _decision(reviewDate: DateTime.utc(2020));
+      await repository.upsertDecision(decision);
+      await tester.pumpWidget(
+        _wrap(
+          decisionId: decision.id,
+          repository: repository,
+          executionAvailable: false,
+        ),
+      );
+      await _settlePaint(tester);
+      await tester.tap(find.byKey(const Key('knowledge-decision-review')));
+      await _settlePaint(tester);
+      final actual = find.byKey(const Key('knowledge-decision-review-actual'));
+      final submit = find.byKey(const Key('knowledge-decision-review-submit'));
+      expect(tester.widget<FButton>(submit).onPress, isNull);
+      await tester.enterText(actual, 'More observation needed');
+      await _settlePaint(tester);
+      await tester.tap(submit);
+      await _settlePaint(tester);
+      expect(
+        find.text('Choose a future date to continue observing.'),
+        findsOneWidget,
+      );
+      expect(
+        (await repository.findDecision(
+          ownerUserId: _owner,
+          id: decision.id,
+        ))!.actualOutcomeMd,
+        isNull,
+      );
+      await tester.tap(find.byKey(const ValueKey('knowledge-review-next-7')));
+      await _settlePaint(tester);
+      await tester.tap(submit);
+      await _settlePaint(tester);
+      final saved = await repository.findDecision(
+        ownerUserId: _owner,
+        id: decision.id,
+      );
+      expect(saved!.actualOutcomeMd, 'More observation needed');
+      expect(saved.status, DecisionStatus.active);
+      expect(saved.reviewDate!.toUtc().isAfter(DateTime.now().toUtc()), isTrue);
+      expect(
+        await repository.listDueReviews(
+          ownerUserId: _owner,
+          asOf: DateTime.now().toUtc(),
+        ),
+        isEmpty,
+      );
+      await _disposeWidget(tester);
+    },
+  );
 
   testWidgets(
     'Inbox reviews a due decision directly and removes completed work',

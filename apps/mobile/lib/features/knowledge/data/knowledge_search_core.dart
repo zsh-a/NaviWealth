@@ -6,9 +6,11 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
   required String query,
   Set<String>? types,
   int topK = 8,
+  Set<String> noteTags = const <String>{},
 }) async {
   final q = query.trim();
   if (q.isEmpty || topK <= 0) return const <KnowledgeSearchHit>[];
+  final queryTokens = _tokenize(q);
   final limit = topK.clamp(1, 100).toInt();
   final wantTypes = (types == null || types.isEmpty)
       ? kKnowledgeMemorySources.keys.toSet()
@@ -27,7 +29,7 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
         ownerUserId: ownerUserId,
         queryText: q,
         source: entry.value,
-        topK: (limit * 4).clamp(limit, 80).toInt(),
+        topK: (limit * 4).clamp(1, 80).toInt(),
       );
     } on Object {
       // The semantic index is derived and optional. A missing native embedder,
@@ -35,17 +37,25 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
       // KnowledgeOS data unsearchable.
       continue;
     }
+    final documents = await _documentsForIds(
+      service,
+      ownerUserId: ownerUserId,
+      kind: entry.key,
+      ids: hits.map((hit) => hit.record.sourceId).whereType<String>().toSet(),
+    );
     for (final hit in hits) {
       final id = hit.record.sourceId;
       if (id == null) continue;
-      final doc = await _documentForId(
-        service,
-        ownerUserId: ownerUserId,
-        kind: entry.key,
-        id: id,
-      );
+      final doc = documents[id];
       if (doc == null) continue;
-      final lexical = KnowledgeLexicalMatch.calculate(q, doc);
+      if (doc.note case final note?) {
+        if (!_matchesNoteFilters(note, tags: noteTags)) continue;
+      }
+      final lexical = KnowledgeLexicalMatch.calculate(
+        q,
+        doc,
+        queryTokens: queryTokens,
+      );
       final score = _combinedSearchScore(
         semanticScore: hit.score,
         lexicalScore: lexical.score,
@@ -73,6 +83,7 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
     query: q,
     types: wantTypes,
     limit: limit,
+    noteTags: noteTags,
   );
   for (final hit in lexicalHits) {
     byKey.putIfAbsent('${hit.kind}:${hit.id}', () => hit);
@@ -82,31 +93,24 @@ Future<List<KnowledgeSearchHit>> _searchKnowledge(
   return out.take(limit).toList(growable: false);
 }
 
-Future<KnowledgeSearchDocument?> _documentForId(
+Future<Map<String, KnowledgeSearchDocument>> _documentsForIds(
   KnowledgeSearchService service, {
   required String ownerUserId,
   required String kind,
-  required String id,
+  required Set<String> ids,
 }) async {
-  return switch (kind) {
-    'note' =>
-      service._repository
-          .findNote(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromNote(v),
-          ),
-    'decision' =>
-      service._repository
-          .findDecision(ownerUserId: ownerUserId, id: id)
-          .then(
-            (v) => v == null || v.sync.deletedAt != null
-                ? null
-                : KnowledgeSearchDocument.fromDecision(v),
-          ),
-    _ => Future<KnowledgeSearchDocument?>.value(),
+  final docs = switch (kind) {
+    'note' => (await service._repository.listNotesByIds(
+      ownerUserId: ownerUserId,
+      ids: ids,
+    )).map(KnowledgeSearchDocument.fromNote),
+    'decision' => (await service._repository.listDecisionsByIds(
+      ownerUserId: ownerUserId,
+      ids: ids,
+    )).map(KnowledgeSearchDocument.fromDecision),
+    _ => const <KnowledgeSearchDocument>[],
   };
+  return {for (final doc in docs) doc.id: doc};
 }
 
 Future<List<KnowledgeSearchHit>> _lexicalFallback(
@@ -115,8 +119,10 @@ Future<List<KnowledgeSearchHit>> _lexicalFallback(
   required String query,
   required Set<String> types,
   required int limit,
+  Set<String> noteTags = const <String>{},
 }) async {
   final hits = <KnowledgeSearchHit>[];
+  final queryTokens = _tokenize(query);
   for (final type in types) {
     var offset = 0;
     while (true) {
@@ -126,10 +132,15 @@ Future<List<KnowledgeSearchHit>> _lexicalFallback(
         type,
         limit: _lexicalFallbackPageSize,
         offset: offset,
+        noteTags: noteTags,
       );
       if (docs.isEmpty) break;
       for (final doc in docs) {
-        final lexical = KnowledgeLexicalMatch.calculate(query, doc);
+        final lexical = KnowledgeLexicalMatch.calculate(
+          query,
+          doc,
+          queryTokens: queryTokens,
+        );
         if (lexical.score <= 0) continue;
         hits.add(
           KnowledgeSearchHit(
@@ -160,12 +171,14 @@ Future<List<KnowledgeSearchDocument>> _documentsForKind(
   String kind, {
   required int limit,
   required int offset,
+  Set<String> noteTags = const <String>{},
 }) async {
   return switch (kind) {
     'note' => (await service._repository.listNotes(
       ownerUserId: ownerUserId,
       limit: limit,
       offset: offset,
+      tags: noteTags,
     )).map(KnowledgeSearchDocument.fromNote).toList(growable: false),
     'decision' => (await service._repository.listDecisions(
       ownerUserId: ownerUserId,

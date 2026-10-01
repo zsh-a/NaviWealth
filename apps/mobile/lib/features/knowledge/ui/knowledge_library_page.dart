@@ -23,6 +23,7 @@ import '../domain/knowledge_text.dart';
 import 'knowledge_capture_sheet.dart';
 import 'knowledge_decision_detail_page.dart';
 import 'knowledge_note_detail_page.dart';
+import 'knowledge_tag_picker_sheet.dart';
 import 'widgets/knowledge_entry_tile.dart';
 
 enum _LibraryScope {
@@ -57,6 +58,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
   var _query = '';
   String? _selectedTag;
   String? _routeFilters;
+  GlobalKey _detailKey = GlobalKey();
+  String? _detailSelection;
 
   @override
   void didChangeDependencies() {
@@ -164,15 +167,26 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
             routePath: KnowledgeRoutes.library,
             child: LayoutBuilder(
               builder: (context, constraints) {
+                final selected = selectedQueryOf(context);
+                if (_detailSelection != selected) {
+                  _detailSelection = selected;
+                  _detailKey = GlobalKey();
+                }
+                final detail = KeyedSubtree(
+                  key: _detailKey,
+                  child: _libraryDetail(context, selected),
+                );
                 if (GoRouter.maybeOf(context) == null ||
                     !MasterDetailLayout.shouldUseMasterDetail(
                       constraints.maxWidth,
                     )) {
-                  return _buildBody(context, inMasterDetail: false);
+                  return selected == null
+                      ? _buildBody(context, inMasterDetail: false)
+                      : detail;
                 }
                 return MasterDetailLayout(
                   master: _buildBody(context, inMasterDetail: true),
-                  detail: _libraryDetail(context, selectedQueryOf(context)),
+                  detail: detail,
                 );
               },
             ),
@@ -390,26 +404,12 @@ class _LibraryTagFilter extends StatelessWidget {
     icon: FLucideIcons.tags,
     active: selectedTag != null,
     onPress: () async {
-      final result = await showAppSheet<String>(
+      final result = await showKnowledgeTagPickerSheet(
         context: context,
         title: semanticLabel,
-        builder: (sheetContext) => Wrap(
-          spacing: AppSpacing.s8,
-          runSpacing: AppSpacing.s8,
-          children: [
-            for (final tag in <String?>[null, ...tags])
-              AppFilterChip(
-                key: ValueKey(
-                  tag == null
-                      ? 'knowledge-library-all-tags'
-                      : 'knowledge-library-tag-$tag',
-                ),
-                label: tag ?? allLabel,
-                active: selectedTag == tag,
-                onPress: () => Navigator.of(sheetContext).pop(tag ?? ''),
-              ),
-          ],
-        ),
+        tags: tags,
+        selectedTag: selectedTag,
+        allLabel: allLabel,
       );
       if (context.mounted && result != null) {
         onChanged(result.isEmpty ? null : result);

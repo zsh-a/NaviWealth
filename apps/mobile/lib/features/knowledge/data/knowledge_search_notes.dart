@@ -10,29 +10,20 @@ Future<List<KnowledgeSearchHit>> _searchNotes(
   final effectiveLimit = limit.clamp(1, 100).toInt();
   final q = query.trim();
   if (q.isNotEmpty) {
-    final semantic = await service.searchKnowledge(
+    return _searchKnowledge(
+      service,
       ownerUserId: ownerUserId,
       query: q,
       types: const <String>{'note'},
-      topK: (effectiveLimit * 4).clamp(effectiveLimit, 100).toInt(),
+      topK: effectiveLimit,
+      noteTags: tags,
     );
-    final filtered = semantic
-        .where((hit) {
-          final note = hit.document.note;
-          if (note == null) return false;
-          if (!_matchesNoteFilters(note, tags: tags)) {
-            return false;
-          }
-          return true;
-        })
-        .take(effectiveLimit)
-        .toList(growable: false);
-    if (filtered.isNotEmpty) return filtered;
   }
 
   final notes = await service._repository.listNotes(
     ownerUserId: ownerUserId,
-    limit: 500,
+    limit: effectiveLimit,
+    tags: tags,
   );
   final hits = <KnowledgeSearchHit>[];
   for (final note in notes) {

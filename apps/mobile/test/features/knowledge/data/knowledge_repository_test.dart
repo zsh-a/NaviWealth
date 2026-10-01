@@ -9,6 +9,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/features/knowledge/application/knowledge_decision_from_note_service.dart';
 import 'package:naviwealth/features/knowledge/application/knowledge_decision_review_service.dart';
+import 'package:naviwealth/features/knowledge/application/knowledge_edit_service.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
@@ -194,7 +195,7 @@ void main() {
         actualOutcomeMd: 'Worked as expected',
         status: DecisionStatus.verified,
       );
-      await service.review(id: 'review', draft: draft);
+      await service.review(baseline: _decision('review', 1), draft: draft);
       final saved = await repository.findDecision(
         ownerUserId: _owner,
         id: 'review',
@@ -207,8 +208,8 @@ void main() {
         _decision('gone', 2, sync: _sync(3, deletedAt: DateTime.utc(2026))),
       );
       await expectLater(
-        service.review(id: 'gone', draft: draft),
-        throwsStateError,
+        service.review(baseline: _decision('gone', 2), draft: draft),
+        throwsA(KnowledgeEditFailure.missing),
       );
     },
   );

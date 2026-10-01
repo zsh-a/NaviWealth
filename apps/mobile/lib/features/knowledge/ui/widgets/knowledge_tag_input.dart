@@ -27,8 +27,14 @@ class KnowledgeTagInput extends ConsumerWidget {
       valueListenable: controller,
       builder: (context, value, _) {
         final selected = parseKnowledgeTags(value.text);
+        final fragment = RegExp(r'[^,，\r\n]+$').firstMatch(value.text);
+        final prefix = fragment?.group(0)?.trim().toLowerCase() ?? '';
         final suggestions = available
-            .where((tag) => !selected.contains(tag))
+            .where(
+              (tag) =>
+                  !selected.contains(tag) &&
+                  tag.toLowerCase().startsWith(prefix),
+            )
             .take(6);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,7 +47,25 @@ class KnowledgeTagInput extends ConsumerWidget {
             ),
             if (selected.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s8),
-              KnowledgeTagChips(tags: selected),
+              Wrap(
+                spacing: AppSpacing.s6,
+                runSpacing: AppSpacing.s4,
+                children: [
+                  for (final tag in selected)
+                    AppFilterChip(
+                      key: ValueKey('knowledge-tag-remove-$tag'),
+                      label: tag,
+                      active: true,
+                      onPress: null,
+                      onClear: enabled
+                          ? () => _setTags(
+                              selected.where((value) => value != tag),
+                            )
+                          : null,
+                      clearSemanticLabel: '${l10n.commonDelete}: $tag',
+                    ),
+                ],
+              ),
             ],
             if (suggestions.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.s8),
@@ -51,17 +75,17 @@ class KnowledgeTagInput extends ConsumerWidget {
                 children: [
                   for (final tag in suggestions)
                     AppFilterChip(
+                      key: ValueKey('knowledge-tag-suggestion-$tag'),
                       label: tag,
                       active: false,
                       onPress: enabled
                           ? () {
-                              final text = [...selected, tag].join(', ');
-                              controller.value = TextEditingValue(
-                                text: text,
-                                selection: TextSelection.collapsed(
-                                  offset: text.length,
-                                ),
-                              );
+                              final completed = fragment == null
+                                  ? selected
+                                  : parseKnowledgeTags(
+                                      value.text.substring(0, fragment.start),
+                                    );
+                              _setTags([...completed, tag]);
                             }
                           : null,
                     ),
@@ -71,6 +95,15 @@ class KnowledgeTagInput extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+
+  void _setTags(Iterable<String> tags) {
+    final values = tags.toSet().toList();
+    final text = values.isEmpty ? '' : '${values.join(', ')}, ';
+    controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

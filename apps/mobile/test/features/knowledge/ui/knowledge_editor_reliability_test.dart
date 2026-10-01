@@ -199,6 +199,85 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(Duration.zero);
   });
+  testWidgets('live updates preserve dirty drafts and deletion blocks saving', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final database = makeTestDatabase();
+    addTearDown(database.close);
+    final repository = KnowledgeRepository(
+      db: database,
+      outbox: InMemoryOutboxStore(),
+    );
+    final original = _note();
+    await repository.upsertNote(original);
+    await tester.pumpWidget(_wrap(original.id, repository));
+    await tester.tap(find.text('Open note'));
+    await _settle(tester);
+    KnowledgeNote update(String title, int counter) => KnowledgeNote(
+      id: original.id,
+      title: title,
+      bodyMd: original.bodyMd,
+      createdAt: original.createdAt,
+      sync: original.sync.copyWith(
+        hlc: Hlc(
+          wallMillis: original.sync.hlc.wallMillis,
+          counter: counter,
+          nodeId: original.sync.hlc.nodeId,
+        ),
+      ),
+    );
+    await repository.upsertNote(update('Latest read title', 1));
+    await _settle(tester);
+    expect(find.text('Latest read title'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settle(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-title')),
+      'My preserved draft',
+    );
+    await repository.upsertNote(update('External update', 2));
+    await _settle(tester);
+    expect(find.text('My preserved draft'), findsOneWidget);
+    expect(
+      find.byKey(const Key('knowledge-edit-change-notice')),
+      findsOneWidget,
+    );
+    expect(
+      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
+      isNull,
+    );
+    await tester.tap(find.byKey(const Key('knowledge-edit-reload')));
+    await _settle(tester);
+    await tester.tap(find.text('Keep editing'));
+    await _settle(tester);
+    expect(find.text('My preserved draft'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('knowledge-edit-reload')));
+    await _settle(tester);
+    await tester.tap(find.text('Discard'));
+    await _settle(tester);
+    expect(find.text('External update'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settle(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-title')),
+      'Deleted source draft',
+    );
+    await repository.deleteEntry(
+      kind: KnowledgeEntryKind.note,
+      id: original.id,
+      sync: _sync(),
+    );
+    await _settle(tester);
+    expect(find.text('Deleted source draft'), findsOneWidget);
+    expect(
+      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
+      isNull,
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
+  });
 }
 
 Widget _wrap(String noteId, KnowledgeRepository repository) => ProviderScope(

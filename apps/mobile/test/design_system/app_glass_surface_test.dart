@@ -156,6 +156,43 @@ void main() {
     }
   });
 
+  testWidgets('pausing light feedback retains the foreground form state', (
+    tester,
+  ) async {
+    Widget form({
+      AppGlassStatus status = AppGlassStatus.idle,
+      bool tickersEnabled = true,
+      bool reduceMotion = false,
+    }) => _wrap(
+      softLight: true,
+      status: status,
+      tickersEnabled: tickersEnabled,
+      reduceMotion: reduceMotion,
+      child: const SizedBox(width: 300, child: TextField()),
+    );
+    await tester.pumpWidget(form());
+    await tester.enterText(find.byType(TextField), 'Unsaved draft');
+    final state = tester.state(find.byType(TextField));
+    for (final configuration in [
+      (AppGlassStatus.busy, true, false),
+      (AppGlassStatus.disabled, true, false),
+      (AppGlassStatus.idle, false, false),
+      (AppGlassStatus.idle, true, true),
+      (AppGlassStatus.idle, true, false),
+    ]) {
+      await tester.pumpWidget(
+        form(
+          status: configuration.$1,
+          tickersEnabled: configuration.$2,
+          reduceMotion: configuration.$3,
+        ),
+      );
+      await tester.pump();
+      expect(tester.state(find.byType(TextField)), same(state));
+      expect(find.text('Unsaved draft'), findsOneWidget);
+    }
+  });
+
   testWidgets('error uses semantic danger and clears on recovery', (
     tester,
   ) async {

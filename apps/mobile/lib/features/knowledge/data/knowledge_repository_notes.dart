@@ -66,14 +66,24 @@ mixin KnowledgeNotesRepositoryMixin {
     required String ownerUserId,
     int limit = 200,
     int offset = 0,
+    Set<String> tags = const <String>{},
   }) async {
     final q = _db.select(_db.knowledgeNotes)
       ..where((t) => t.ownerUserId.equals(ownerUserId))
       ..where((t) => t.deletedAt.isNull())
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.id),
       ])
       ..limit(limit, offset: offset);
+    for (final tag in tags) {
+      q.where(
+        (t) => FunctionCallExpression<int>('instr', [
+          t.tagsJson,
+          Variable<String>(jsonEncode(tag)),
+        ]).isBiggerThanValue(0),
+      );
+    }
     final rows = await q.get();
     return rows.map(knowledgeNoteFromRow).toList();
   }
@@ -88,6 +98,32 @@ mixin KnowledgeNotesRepositoryMixin {
             ))
             .getSingleOrNull();
     return row == null ? null : knowledgeNoteFromRow(row);
+  }
+
+  /// Includes tombstones so an open editor can retain its draft after deletion.
+  Stream<KnowledgeNote?> watchNote({
+    required String ownerUserId,
+    required String id,
+  }) =>
+      (_db.select(_db.knowledgeNotes)
+            ..where((t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId)))
+          .watchSingleOrNull()
+          .map((row) => row == null ? null : knowledgeNoteFromRow(row));
+
+  Future<List<KnowledgeNote>> listNotesByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) async {
+    if (ids.isEmpty) return const <KnowledgeNote>[];
+    final rows =
+        await (_db.select(_db.knowledgeNotes)..where(
+              (t) =>
+                  t.ownerUserId.equals(ownerUserId) &
+                  t.deletedAt.isNull() &
+                  t.id.isIn(ids),
+            ))
+            .get();
+    return rows.map(knowledgeNoteFromRow).toList(growable: false);
   }
 
   Future<KnowledgeNote?> findNoteBySourceUrl({

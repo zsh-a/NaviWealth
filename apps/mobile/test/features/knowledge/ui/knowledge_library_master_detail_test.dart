@@ -14,6 +14,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/knowledge/composition/knowledge_route_guard.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
@@ -49,12 +50,14 @@ Widget _wrap({
   List<KnowledgeNote>? notes,
   List<KnowledgeDecision>? decisions,
   String initialLocation = '/knowledge/library',
+  bool liveDetailRoutes = false,
 }) {
   final router = GoRouter(
     initialLocation: initialLocation,
     routes: [
       GoRoute(
         path: '/knowledge/library',
+        redirect: guardKnowledgeDetailChange,
         onExit: (context, _) => FormLeaveScope.confirmRouteLeave(
           context,
           path: '/knowledge/library',
@@ -70,7 +73,12 @@ Widget _wrap({
       GoRoute(path: '/elsewhere', builder: (_, _) => const Text('elsewhere')),
       GoRoute(
         path: '/knowledge/library/note/:id',
-        builder: (_, _) => const Text('pushed-note-detail'),
+        redirect: guardKnowledgeDetailChange,
+        onExit: (context, state) =>
+            FormLeaveScope.confirmRouteLeave(context, path: state.uri.path),
+        builder: (_, state) => liveDetailRoutes
+            ? KnowledgeNoteDetailPage(noteId: state.pathParameters['id']!)
+            : const Text('pushed-note-detail'),
       ),
       GoRoute(
         path: '/knowledge/library/decision/:id',
@@ -216,6 +224,93 @@ void main() {
     await _disposeWidget(tester);
   });
 
+  testWidgets('responsive layout retains a dirty detail and its editor state', (
+    tester,
+  ) async {
+    await _setSurface(tester, 1280);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 1100,
+        initialLocation: '/knowledge/library?selected=note:note-1',
+      ),
+    );
+    await _settlePaint(tester);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settlePaint(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-title')),
+      'Responsive draft',
+    );
+    tester.view.physicalSize = const Size(500, 900);
+    await _settlePaint(tester);
+    expect(find.byType(MasterDetailLayout), findsNothing);
+    expect(find.text('Responsive draft'), findsOneWidget);
+    tester.view.physicalSize = const Size(1280, 900);
+    await _settlePaint(tester);
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    expect(find.text('Responsive draft'), findsOneWidget);
+    expect(find.text('Discard changes?'), findsNothing);
+    await _disposeWidget(tester);
+  });
+
+  testWidgets(
+    'same-path query navigation confirms before replacing a dirty detail',
+    (tester) async {
+      final other = KnowledgeNote(
+        id: 'note-2',
+        title: 'Other note',
+        bodyMd: 'Other body',
+        createdAt: _note.createdAt,
+        sync: _note.sync,
+      );
+      await _repository.upsertNote(other);
+      await _setSurface(tester, 1280);
+      await tester.pumpWidget(
+        _wrap(
+          contentWidth: 1100,
+          initialLocation: '/knowledge/library?selected=note:note-1',
+        ),
+      );
+      await _settlePaint(tester);
+      final router = GoRouter.of(
+        tester.element(find.byType(KnowledgeLibraryPage)),
+      );
+      await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+      await _settlePaint(tester);
+      await tester.enterText(
+        find.byKey(const Key('knowledge-note-title')),
+        'Query draft',
+      );
+      router.go('/knowledge/library?selected=note:note-2');
+      await _settlePaint(tester);
+      expect(find.text('Discard changes?'), findsOneWidget);
+      expect(find.text('Query draft'), findsOneWidget);
+      await tester.tap(find.text('Keep editing'));
+      await _settlePaint(tester);
+      expect(
+        router.routeInformationProvider.value.uri.queryParameters['selected'],
+        'note:note-1',
+      );
+      router.go('/knowledge/library?scope=notes&selected=note:note-1');
+      await _settlePaint(tester);
+      expect(find.text('Discard changes?'), findsNothing);
+      expect(find.text('Query draft'), findsOneWidget);
+      router.go('/knowledge/library?selected=note:note-2');
+      await _settlePaint(tester);
+      await tester.tap(find.text('Discard'));
+      await _settlePaint(tester);
+      expect(
+        find.descendant(
+          of: find.byType(KnowledgeNoteDetailPage),
+          matching: find.text('Other body'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Query draft'), findsNothing);
+      await _disposeWidget(tester);
+    },
+  );
+
   testWidgets('dirty detail blocks row changes, pane close, and route exit', (
     tester,
   ) async {
@@ -283,6 +378,59 @@ void main() {
     await _disposeWidget(tester);
   });
 
+  testWidgets('pushed details guard record parameter changes and route exits', (
+    tester,
+  ) async {
+    final other = KnowledgeNote(
+      id: 'note-2',
+      title: 'Other note',
+      bodyMd: 'Other body',
+      createdAt: _note.createdAt,
+      sync: _note.sync,
+    );
+    await _repository.upsertNote(other);
+    await _setSurface(tester, 800);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 800,
+        liveDetailRoutes: true,
+        initialLocation: '/knowledge/library/note/note-1',
+      ),
+    );
+    await _settlePaint(tester);
+    final router = GoRouter.of(
+      tester.element(find.byType(KnowledgeNoteDetailPage)),
+    );
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settlePaint(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-title')),
+      'Pushed detail draft',
+    );
+    router.go('/knowledge/library/note/note-2');
+    await _settlePaint(tester);
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      '/knowledge/library/note/note-1',
+    );
+    expect(find.text('Pushed detail draft'), findsOneWidget);
+    router.go('/elsewhere');
+    await _settlePaint(tester);
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await _settlePaint(tester);
+    expect(find.text('Pushed detail draft'), findsOneWidget);
+    router.go('/knowledge/library/note/note-2');
+    await _settlePaint(tester);
+    await tester.tap(find.text('Discard'));
+    await _settlePaint(tester);
+    expect(find.text('Other note'), findsOneWidget);
+    await _disposeWidget(tester);
+  });
+
   testWidgets('saving a detail locks row selection and pane close', (
     tester,
   ) async {
@@ -324,6 +472,12 @@ void main() {
     await _settlePaint(tester);
     await tester.tap(find.text('Another note'));
     clearSelectedDetail(context);
+    router.go('/knowledge/library?selected=note:note-2');
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['selected'],
+      'note:note-1',
+    );
     router.go('/elsewhere');
     await _settlePaint(tester);
     expect(

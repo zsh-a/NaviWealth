@@ -8645,5 +8645,14 @@
   "watchlistSimulationDividendRefreshFailed": "Dividend refresh failed. Saved records are retained; retry to update them.",
   "watchlistSimulationDividendRecordsLoadFailed": "Saved dividend records could not load. Retry to read them.",
   "watchlistSimulationDividendEmpty": "No dividend records were found in the available data.",
-  "watchlistSimulationSortAction": "Sort scenarios"
+  "watchlistSimulationSortAction": "Sort scenarios",
+  "knowledgeEditChanged": "This item changed while you were editing. Your draft is preserved; load the latest version before saving.",
+  "knowledgeEditDeletedDraft": "This item was deleted. Your draft is preserved here, but it can no longer be saved.",
+  "knowledgeEditReload": "Load latest version",
+  "knowledgeReviewContinueObserving": "Still observing? Schedule the next review.",
+  "knowledgeReviewNextWeek": "In one week",
+  "knowledgeReviewNextMonth": "In 30 days",
+  "knowledgeReviewNextDateRequired": "Choose a future date to continue observing.",
+  "knowledgeSourceViewExisting": "View existing note",
+  "knowledgeTagsSearchHint": "Find a tag"
 }

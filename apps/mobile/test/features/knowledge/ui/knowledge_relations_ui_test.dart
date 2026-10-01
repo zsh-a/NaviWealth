@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +23,76 @@ import '../../finance/data/repositories/_stub_stamper.dart';
 const _owner = 'knowledge-relations-user';
 
 void main() {
+  testWidgets(
+    'a failed relation write retains its target and can be retried in the picker',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = _DelayedRelationRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final source = _note('source', 'Source evidence', 1);
+      final target = _note('target', 'Chosen target', 2);
+      await repository.upsertNote(source);
+      await repository.upsertNote(target);
+      await tester.pumpWidget(
+        _wrap(
+          KnowledgeRelationsSection(
+            subjectKind: KnowledgeEntryKind.note,
+            subjectId: source.id,
+          ),
+          repository,
+        ),
+      );
+      await _settleSheet(tester);
+      await tester.tap(find.byKey(const Key('knowledge-relations-add')));
+      await _settleSheet(tester);
+      repository.gate = Completer<void>();
+      await tester.tap(
+        find.byKey(const ValueKey('knowledge-relation-target-note:target')),
+      );
+      await _settleSheet(tester);
+      expect(find.text('Link knowledge'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await _settleSheet(tester);
+      expect(find.text('Discard changes?'), findsNothing);
+      repository.gate!.completeError(StateError('private database failure'));
+      await _settleSheet(tester);
+      expect(
+        find.byKey(const ValueKey('knowledge-relation-target-note:target')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('knowledge-relation-picker-retry')),
+        findsOneWidget,
+      );
+      expect(find.byType(AppStatusBanner), findsWidgets);
+      expect(find.textContaining('private database failure'), findsNothing);
+      repository.gate = null;
+      await tester.tap(
+        find.byKey(const Key('knowledge-relation-picker-retry')),
+      );
+      await _settleSheet(tester);
+      expect(
+        find.byKey(const Key('knowledge-relation-picker-retry')),
+        findsNothing,
+      );
+      expect(find.text('Chosen target'), findsOneWidget);
+      expect(
+        await repository.listRelationsForObject(
+          ownerUserId: _owner,
+          kind: 'note',
+          id: source.id,
+        ),
+        hasLength(1),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    },
+  );
   testWidgets('links, displays, and removes related knowledge', (tester) async {
     final database = makeTestDatabase();
     addTearDown(database.close);
@@ -218,7 +290,7 @@ void main() {
   ) async {
     final database = makeTestDatabase();
     addTearDown(database.close);
-    final repository = KnowledgeRepository(
+    final repository = _DelayedRelationRepository(
       db: database,
       outbox: InMemoryOutboxStore(),
     );
@@ -263,15 +335,21 @@ void main() {
 
     await tester.pumpWidget(
       _wrap(
-        KnowledgeRelationsSection(
-          subjectKind: KnowledgeEntryKind.note,
-          subjectId: source.id,
+        FormLeaveScope(
+          routePath: '/knowledge/library',
+          child: KnowledgeRelationsSection(
+            subjectKind: KnowledgeEntryKind.note,
+            subjectId: source.id,
+          ),
         ),
         repository,
         suggestions: suggestions,
       ),
     );
     await tester.pumpAndSettle();
+    final leave = FormLeaveScope.maybeOf(
+      tester.element(find.byType(KnowledgeRelationsSection)),
+    )!;
 
     await tester.tap(find.byKey(const Key('knowledge-relations-discover')));
     await _settleSheet(tester);
@@ -288,12 +366,18 @@ void main() {
       findsNothing,
     );
 
+    repository.gate = Completer<void>();
     await tester.tap(
       find.byKey(
         const ValueKey('knowledge-relation-suggestion-link-note:candidate'),
       ),
     );
     await _settleSheet(tester);
+    expect(leave.isBusy, isTrue);
+    expect(await leave.confirmLeave(), isFalse);
+    repository.gate!.complete();
+    await _settleSheet(tester);
+    expect(leave.isBusy, isFalse);
 
     final relationId = knowledgeRelationId(
       fromKind: KnowledgeEntryKind.note.name,
@@ -312,6 +396,17 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(Duration.zero);
   });
+}
+
+class _DelayedRelationRepository extends KnowledgeRepository {
+  _DelayedRelationRepository({required super.db, required super.outbox});
+  Completer<void>? gate;
+
+  @override
+  Future<void> upsertRelation(KnowledgeRelation relation) async {
+    await gate?.future;
+    await super.upsertRelation(relation);
+  }
 }
 
 Future<void> _settleSheet(WidgetTester tester) async {

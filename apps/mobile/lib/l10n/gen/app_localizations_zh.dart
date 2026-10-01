@@ -16820,4 +16820,31 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get watchlistSimulationSortAction => '方案排序';
+
+  @override
+  String get knowledgeEditChanged => '此条目已在编辑期间更新。草稿已保留，请加载最新内容后再保存。';
+
+  @override
+  String get knowledgeEditDeletedDraft => '此条目已删除。当前草稿仍保留在这里，但无法继续保存。';
+
+  @override
+  String get knowledgeEditReload => '加载最新内容';
+
+  @override
+  String get knowledgeReviewContinueObserving => '继续观察？请安排下一次回顾。';
+
+  @override
+  String get knowledgeReviewNextWeek => '一周后';
+
+  @override
+  String get knowledgeReviewNextMonth => '30 天后';
+
+  @override
+  String get knowledgeReviewNextDateRequired => '继续观察时，请选择未来的回顾日期。';
+
+  @override
+  String get knowledgeSourceViewExisting => '查看已有笔记';
+
+  @override
+  String get knowledgeTagsSearchHint => '搜索标签';
 }

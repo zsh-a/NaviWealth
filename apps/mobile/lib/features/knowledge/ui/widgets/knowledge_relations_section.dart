@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/sync/mutation_context.dart';
-import '../../../../core/sync/sync_meta.dart';
+import '../../../../core/forms/form_dirty_guard.dart';
+import '../../../../core/forms/form_submission.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import '../../application/knowledge_relation_service.dart';
 import '../../composition/knowledge_route_paths.dart';
 import '../../data/knowledge_repository.dart';
 import '../../data/knowledge_search_service.dart';
@@ -15,8 +16,9 @@ import '../../domain/knowledge_models.dart';
 import '../../domain/knowledge_text.dart';
 import '../knowledge_relation_picker_sheet.dart';
 import '../knowledge_relation_suggestions_sheet.dart';
+import 'knowledge_edit_notice.dart';
 
-class KnowledgeRelationsSection extends ConsumerWidget {
+class KnowledgeRelationsSection extends ConsumerStatefulWidget {
   const KnowledgeRelationsSection({
     super.key,
     required this.subjectKind,
@@ -30,11 +32,31 @@ class KnowledgeRelationsSection extends ConsumerWidget {
   final String? subjectText;
   final VoidCallback? onCreateDecision;
 
+  @override
+  ConsumerState<KnowledgeRelationsSection> createState() =>
+      _KnowledgeRelationsSectionState();
+}
+
+class _KnowledgeRelationsSectionState
+    extends ConsumerState<KnowledgeRelationsSection>
+    with
+        FormDirtyGuard<KnowledgeRelationsSection>,
+        FormSubmission<KnowledgeRelationsSection> {
+  KnowledgeEntryKind get subjectKind => widget.subjectKind;
+  String get subjectId => widget.subjectId;
+  String? get subjectText => widget.subjectText;
+  VoidCallback? get onCreateDecision => widget.onCreateDecision;
+  bool _saving = false;
+  bool _pickerOpen = false;
+
+  @override
+  String get leaveFallback => KnowledgeRoutes.library;
+
   KnowledgeRelationSubject get _subject =>
       (kind: subjectKind.name, id: subjectId);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final relationsAsync = ref.watch(
       knowledgeRelationsForObjectProvider(_subject),
@@ -73,7 +95,11 @@ class KnowledgeRelationsSection extends ConsumerWidget {
                 icon: FLucideIcons.sparkles,
                 tooltip: l10n.knowledgeRelationDiscoverAction,
                 onPress:
-                    loading || error != null || suggestionText.trim().isEmpty
+                    _saving ||
+                        _pickerOpen ||
+                        loading ||
+                        error != null ||
+                        suggestionText.trim().isEmpty
                     ? null
                     : () => _discoverRelations(
                         context,
@@ -88,7 +114,7 @@ class KnowledgeRelationsSection extends ConsumerWidget {
                 key: const Key('knowledge-relations-add'),
                 icon: FLucideIcons.link2,
                 tooltip: l10n.knowledgeRelationAddAction,
-                onPress: loading || error != null
+                onPress: _saving || _pickerOpen || loading || error != null
                     ? null
                     : () => _addRelation(context, ref, relations),
                 size: AppSpacing.s32,
@@ -100,7 +126,7 @@ class KnowledgeRelationsSection extends ConsumerWidget {
         if (onCreateDecision case final action?) ...[
           FButton(
             variant: FButtonVariant.outline,
-            onPress: action,
+            onPress: _saving ? null : action,
             prefix: const Icon(
               FLucideIcons.gitBranchPlus,
               size: AppIconSizes.sm,
@@ -145,7 +171,9 @@ class KnowledgeRelationsSection extends ConsumerWidget {
                   _KnowledgeRelationRow(
                     item: items[index],
                     onOpen: () => _open(context, items[index]),
-                    onRemove: () => _removeRelation(ref, items[index].relation),
+                    onRemove: _saving
+                        ? null
+                        : () => _removeRelation(ref, items[index].relation),
                   ),
                   if (index != items.length - 1)
                     const AppGroupedDivider(
@@ -156,6 +184,10 @@ class KnowledgeRelationsSection extends ConsumerWidget {
               ],
             ),
           ),
+        if (submissionFailureMessage case final message?) ...[
+          const SizedBox(height: AppSpacing.s8),
+          AppStatusBanner(message: message, kind: AppStatusKind.error),
+        ],
       ],
     );
   }
@@ -165,52 +197,57 @@ class KnowledgeRelationsSection extends ConsumerWidget {
     WidgetRef ref,
     List<KnowledgeRelation> relations,
   ) async {
-    final target = await showKnowledgeRelationPickerSheet(
-      context: context,
-      subjectKind: subjectKind.name,
-      subjectId: subjectId,
-      excludedTargetKeys: _excludedTargetKeys(relations),
-    );
-    if (target == null) return;
-    final repository = await ref.read(knowledgeRepositoryProvider.future);
-    final stamper = await ref.read(mutationStamperProvider.future);
-    final stamp = await stamper.stamp();
-    final relation = KnowledgeRelation(
-      id: knowledgeRelationId(
-        fromKind: subjectKind.name,
-        fromId: subjectId,
-        relation: KnowledgeRelationType.relatedTo,
-        toKind: target.kind,
-        toId: target.id,
-      ),
-      fromKind: subjectKind.name,
-      fromId: subjectId,
-      relation: KnowledgeRelationType.relatedTo,
-      toKind: target.kind,
-      toId: target.id,
-      createdAt: stamp.now,
-      sync: SyncMeta(
-        ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
-      ),
-    );
-    await repository.upsertRelation(relation);
+    if (_pickerOpen || _saving) return;
+    setState(() => _pickerOpen = true);
+    try {
+      await showKnowledgeRelationPickerSheet(
+        context: context,
+        subjectKind: subjectKind.name,
+        subjectId: subjectId,
+        excludedTargetKeys: _excludedTargetKeys(relations),
+        onSelect: (target) async {
+          dirty.busy = true;
+          try {
+            final service = await ref.read(
+              knowledgeRelationServiceProvider.future,
+            );
+            await service.add(
+              fromKind: subjectKind.name,
+              fromId: subjectId,
+              toKind: target.kind,
+              toId: target.id,
+            );
+          } finally {
+            dirty.busy = false;
+          }
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _pickerOpen = false);
+    }
   }
 
   Future<void> _discoverRelations(
     BuildContext context,
     List<KnowledgeRelation> relations,
     String subjectText,
-  ) {
-    return showKnowledgeRelationSuggestionsSheet(
-      context: context,
-      subjectKind: subjectKind.name,
-      subjectId: subjectId,
-      subjectText: subjectText,
-      excludedTargetKeys: _excludedTargetKeys(relations),
-    );
+  ) async {
+    if (_pickerOpen || _saving) return;
+    setState(() => _pickerOpen = true);
+    try {
+      await showKnowledgeRelationSuggestionsSheet(
+        context: context,
+        subjectKind: subjectKind.name,
+        subjectId: subjectId,
+        subjectText: subjectText,
+        excludedTargetKeys: _excludedTargetKeys(relations),
+        onBusyChanged: (busy) {
+          if (mounted) dirty.busy = busy;
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _pickerOpen = false);
+    }
   }
 
   Set<String> _excludedTargetKeys(List<KnowledgeRelation> relations) => {
@@ -245,17 +282,28 @@ class KnowledgeRelationsSection extends ConsumerWidget {
     WidgetRef ref,
     KnowledgeRelation relation,
   ) async {
-    final repository = await ref.read(knowledgeRepositoryProvider.future);
-    final stamper = await ref.read(mutationStamperProvider.future);
-    final stamp = await stamper.stamp();
-    await repository.deleteRelation(
-      id: relation.id,
-      sync: SyncMeta(
-        ownerUserId: stamp.ownerUserId,
-        updatedAt: stamp.now,
-        updatedByDevice: stamp.deviceId,
-        hlc: stamp.hlc,
+    if (_saving) return;
+    late KnowledgeRelationService service;
+    final l10n = AppLocalizations.of(context);
+    await submitForm<KnowledgeRelation>(
+      dirty: dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () async {
+        service = await ref.read(knowledgeRelationServiceProvider.future);
+        return service.remove(relation);
+      },
+      leave: () {},
+      failureMessage: (error) => knowledgeEditFailureMessage(context, error),
+      successMessage: l10n.commonDeleted,
+      undo: FormUndoPresentation<KnowledgeRelation>(
+        buildAction: (receipt) =>
+            FormUndoAction(() => service.restore(receipt)),
+        actionLabel: l10n.commonUndo,
+        successMessage: l10n.commonUndoSucceeded,
+        failureMessage: (error) => knowledgeEditFailureMessage(context, error),
+        retryLabel: l10n.commonRetry,
       ),
+      tag: 'knowledge-relation-remove',
     );
   }
 
@@ -331,7 +379,7 @@ class _KnowledgeRelationRow extends StatelessWidget {
 
   final _RelatedKnowledgeItem item;
   final VoidCallback onOpen;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {

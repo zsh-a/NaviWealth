@@ -5401,5 +5401,14 @@
   "watchlistSimulationDividendRefreshFailed": "分红刷新失败，已保存记录仍保留，可重试更新。",
   "watchlistSimulationDividendRecordsLoadFailed": "已保存的分红记录读取失败，可重试读取。",
   "watchlistSimulationDividendEmpty": "可用数据中暂无分红记录。",
-  "watchlistSimulationSortAction": "方案排序"
+  "watchlistSimulationSortAction": "方案排序",
+  "knowledgeEditChanged": "此条目已在编辑期间更新。草稿已保留，请加载最新内容后再保存。",
+  "knowledgeEditDeletedDraft": "此条目已删除。当前草稿仍保留在这里，但无法继续保存。",
+  "knowledgeEditReload": "加载最新内容",
+  "knowledgeReviewContinueObserving": "继续观察？请安排下一次回顾。",
+  "knowledgeReviewNextWeek": "一周后",
+  "knowledgeReviewNextMonth": "30 天后",
+  "knowledgeReviewNextDateRequired": "继续观察时，请选择未来的回顾日期。",
+  "knowledgeSourceViewExisting": "查看已有笔记",
+  "knowledgeTagsSearchHint": "搜索标签"
 }

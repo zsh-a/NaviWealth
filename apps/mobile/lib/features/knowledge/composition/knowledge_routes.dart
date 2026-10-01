@@ -14,6 +14,7 @@ import '../ui/knowledge_inbox_page.dart';
 import '../ui/knowledge_library_page.dart';
 import '../ui/knowledge_note_detail_page.dart';
 import 'knowledge_domain_shell.dart';
+import 'knowledge_route_guard.dart';
 import 'knowledge_route_paths.dart';
 
 StatefulShellRoute knowledgeShellRoute() {
@@ -37,6 +38,7 @@ StatefulShellRoute knowledgeShellRoute() {
           GoRoute(
             path: KnowledgeRoutes.library,
             name: KnowledgeRouteNames.library,
+            redirect: guardKnowledgeDetailChange,
             onExit: (context, _) => FormLeaveScope.confirmRouteLeave(
               context,
               path: KnowledgeRoutes.library,
@@ -46,6 +48,10 @@ StatefulShellRoute knowledgeShellRoute() {
               GoRoute(
                 path: 'note/:id',
                 name: KnowledgeRouteNames.noteDetail,
+                onExit: (context, state) => FormLeaveScope.confirmRouteLeave(
+                  context,
+                  path: state.uri.path,
+                ),
                 builder: (context, state) => KnowledgeNoteDetailPage(
                   noteId: state.pathParameters['id'] ?? '',
                 ),
@@ -53,6 +59,10 @@ StatefulShellRoute knowledgeShellRoute() {
               GoRoute(
                 path: 'decision/:id',
                 name: KnowledgeRouteNames.decisionDetail,
+                onExit: (context, state) => FormLeaveScope.confirmRouteLeave(
+                  context,
+                  path: state.uri.path,
+                ),
                 builder: (context, state) => KnowledgeDecisionDetailPage(
                   decisionId: state.pathParameters['id'] ?? '',
                 ),

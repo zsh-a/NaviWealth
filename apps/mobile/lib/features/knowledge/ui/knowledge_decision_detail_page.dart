@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
 import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/forms/form_submission.dart';
-import '../../../core/sync/mutation_context.dart';
-import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
+import '../application/knowledge_edit_service.dart';
 import '../composition/knowledge_route_paths.dart';
 import '../data/knowledge_repository.dart';
 import '../data/knowledge_rewrite_client.dart';
@@ -22,15 +22,16 @@ import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_decision_action_section.dart';
 import 'widgets/knowledge_decision_options_editor.dart';
 import 'widgets/knowledge_decision_status_badge.dart';
+import 'widgets/knowledge_edit_notice.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_relations_section.dart';
 import 'widgets/knowledge_rewrite_action.dart';
 
-final _decisionProvider = FutureProvider.autoDispose
-    .family<KnowledgeDecision?, String>((ref, id) async {
+final _decisionProvider = StreamProvider.autoDispose
+    .family<KnowledgeDecision?, String>((ref, id) async* {
       final repository = await ref.watch(knowledgeRepositoryProvider.future);
       final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
-      return repository.findDecision(ownerUserId: owner, id: id);
+      yield* repository.watchDecision(ownerUserId: owner, id: id);
     });
 
 class KnowledgeDecisionDetailPage extends ConsumerWidget {
@@ -42,7 +43,7 @@ class KnowledgeDecisionDetailPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final value = ref.watch(_decisionProvider(decisionId));
-    return value.when(
+    final body = value.when(
       loading: () => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentDecisions,
         child: kDefaultLoading,
@@ -61,11 +62,12 @@ class KnowledgeDecisionDetailPage extends ConsumerWidget {
               title: l10n.knowledgeSegmentDecisions,
               child: Center(child: Text(l10n.knowledgeDecisionNotFound)),
             )
-          : _DecisionEditor(
-              key: ValueKey(decision.sync.hlc),
-              decision: decision,
-            ),
+          : _DecisionEditor(key: ValueKey(decision.id), decision: decision),
     );
+    final path = KnowledgeRoutes.decision(decisionId);
+    return GoRouter.maybeOf(context)?.routerDelegate.state.uri.path == path
+        ? FormLeaveScope(routePath: path, child: body)
+        : body;
   }
 }
 
@@ -93,11 +95,15 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
 
   /// Detail pages open in read mode; the form stays behind this toggle.
   var _editing = false;
+  late KnowledgeDecision _baseline;
+  bool get _deleted => widget.decision.sync.deletedAt != null;
+  bool get _changed => widget.decision.sync.hlc != _baseline.sync.hlc;
 
   @override
   void initState() {
     super.initState();
     final value = widget.decision;
+    _baseline = value;
     _question = TextEditingController(text: value.question);
     _rationale = TextEditingController(text: value.rationaleMd);
     _expected = TextEditingController(text: value.expectedOutcome);
@@ -110,6 +116,12 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       _rationale,
       _expected,
     ]);
+  }
+
+  @override
+  void didUpdateWidget(_DecisionEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!dirty.isDirty && !_saving) _resetFields();
   }
 
   @override
@@ -138,7 +150,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
                 ? l10n.knowledgeViewAction
                 : l10n.knowledgeEditAction,
             icon: Icon(_editing ? FLucideIcons.eye : FLucideIcons.pencil),
-            onPress: _saving ? null : _toggleMode,
+            onPress: _saving || _deleted ? null : _toggleMode,
           ),
           AppAdaptiveActionMenu(
             title: l10n.shellMoreActions,
@@ -155,15 +167,18 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
               child: AppIconButton(
                 icon: FLucideIcons.ellipsis,
                 tooltip: l10n.shellMoreActions,
-                onPress: _saving ? null : openMenu,
+                onPress: _saving || _deleted ? null : openMenu,
               ),
             ),
           ),
         ],
         child: AnimatedBuilder(
           animation: dirty,
-          builder: (context, _) =>
-              _editing ? _buildEditForm(context) : _buildReadView(context),
+          builder: (context, _) => _editing
+              ? _buildEditForm(context)
+              : _deleted
+              ? Center(child: Text(l10n.knowledgeDecisionNotFound))
+              : _buildReadView(context),
         ),
       ),
     );
@@ -268,16 +283,23 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
-        onSubmit: dirty.isDirty && !_saving ? _save : null,
+        onSubmit: dirty.isDirty && !_saving && !_deleted && !_changed
+            ? _save
+            : null,
         action: AppSheetFooter(
           submitLabel: l10n.commonSave,
           cancelLabel: l10n.commonCancel,
-          enabled: dirty.isDirty,
+          enabled: dirty.isDirty && !_deleted && !_changed,
           busy: _saving,
           onSubmit: _save,
           onCancel: _toggleMode,
         ),
         children: [
+          if (_deleted || _changed)
+            KnowledgeEditNotice(
+              deleted: _deleted,
+              onReload: _saving ? null : _reload,
+            ),
           FTextFormField(
             control: FTextFieldControl.managed(controller: _question),
             enabled: !_saving,
@@ -337,6 +359,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
 
   void _resetFields() {
     final value = widget.decision;
+    _baseline = value;
     _question.text = value.question;
     _rationale.text = value.rationaleMd;
     _expected.text = value.expectedOutcome ?? '';
@@ -350,8 +373,18 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
     dirty.markPristine();
   }
 
+  Future<void> _reload() async {
+    if (_saving || !await confirmDiscardIfDirty(context, dirty) || !mounted) {
+      return;
+    }
+    setState(() {
+      _resetFields();
+      _editing = false;
+    });
+  }
+
   Future<bool> _save() async {
-    if (_saving) return false;
+    if (_saving || _deleted || _changed) return false;
     final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return false;
     if (!_options.isValid) {
@@ -364,20 +397,19 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       onBusyChanged: (busy) => setState(() => _saving = busy),
       commit: () => _commitDecision(),
       leave: () {
-        ref.invalidate(_decisionProvider(widget.decision.id));
+        setState(() {
+          _resetFields();
+          _editing = false;
+        });
         ref.invalidate(knowledgeDecisionsProvider);
       },
-      failureMessage: (error) => userSafeErrorMessage(
-        context,
-        error,
-        operation: 'save knowledge decision',
-      ),
+      failureMessage: (error) => knowledgeEditFailureMessage(context, error),
       successMessage: l10n.commonSaved,
       tag: 'knowledge-decision-edit',
     );
   }
 
-  KnowledgeDecision _draftDecision({SyncMeta? sync}) {
+  KnowledgeDecision _draftDecision() {
     return KnowledgeDecision(
       id: widget.decision.id,
       question: _question.text.trim(),
@@ -392,23 +424,15 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       supersededByDecisionId: widget.decision.supersededByDecisionId,
       decidedAt: widget.decision.decidedAt,
       mergedIntoId: widget.decision.mergedIntoId,
-      sync: sync ?? widget.decision.sync,
+      sync: _baseline.sync,
     );
   }
 
   Future<void> _commitDecision() async {
-    final repository = await ref.read(knowledgeRepositoryProvider.future);
-    final stamper = await ref.read(mutationStamperProvider.future);
-    final value = await stamper.stamp();
-    await repository.upsertDecision(
-      _draftDecision(
-        sync: SyncMeta(
-          ownerUserId: value.ownerUserId,
-          updatedAt: value.now,
-          updatedByDevice: value.deviceId,
-          hlc: value.hlc,
-        ),
-      ),
+    final service = await ref.read(knowledgeEditServiceProvider.future);
+    await service.saveDecision(
+      draft: _draftDecision(),
+      expectedHlc: _baseline.sync.hlc,
     );
   }
 

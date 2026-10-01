@@ -29802,6 +29802,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sort scenarios'**
   String get watchlistSimulationSortAction;
+
+  /// No description provided for @knowledgeEditChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This item changed while you were editing. Your draft is preserved; load the latest version before saving.'**
+  String get knowledgeEditChanged;
+
+  /// No description provided for @knowledgeEditDeletedDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'This item was deleted. Your draft is preserved here, but it can no longer be saved.'**
+  String get knowledgeEditDeletedDraft;
+
+  /// No description provided for @knowledgeEditReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Load latest version'**
+  String get knowledgeEditReload;
+
+  /// No description provided for @knowledgeReviewContinueObserving.
+  ///
+  /// In en, this message translates to:
+  /// **'Still observing? Schedule the next review.'**
+  String get knowledgeReviewContinueObserving;
+
+  /// No description provided for @knowledgeReviewNextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'In one week'**
+  String get knowledgeReviewNextWeek;
+
+  /// No description provided for @knowledgeReviewNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'In 30 days'**
+  String get knowledgeReviewNextMonth;
+
+  /// No description provided for @knowledgeReviewNextDateRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a future date to continue observing.'**
+  String get knowledgeReviewNextDateRequired;
+
+  /// No description provided for @knowledgeSourceViewExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'View existing note'**
+  String get knowledgeSourceViewExisting;
+
+  /// No description provided for @knowledgeTagsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a tag'**
+  String get knowledgeTagsSearchHint;
 }
 
 class _AppLocalizationsDelegate
