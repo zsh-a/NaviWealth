@@ -54,6 +54,39 @@ void main() {
     expect(find.text('Rewrite Knowledge'), findsNothing);
   });
 
+  testWidgets('draft comparison and cancelled dismissal preserve the rewrite', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1300));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    KnowledgeRewriteDraft? applied;
+    await _pumpHost(
+      tester,
+      client: _FakeRewriteClient(),
+      onResult: (draft) => applied = draft,
+    );
+    await tester.tap(find.text('Open'));
+    await _settleKnowledgeRewrite(tester);
+    await tester.tap(find.byKey(const Key('knowledge-rewrite-submit')));
+    await _settleKnowledgeRewrite(tester);
+    await tester.tap(find.text('Compare with original'));
+    await _settleKnowledgeRewrite(tester);
+    expect(find.text('Rough title'), findsOneWidget);
+    expect(find.byType(AiMarkdown), findsNWidgets(2));
+    await tester.tapAt(const Offset(4, 4));
+    await _settleKnowledgeRewrite(tester);
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await _settleKnowledgeRewrite(tester);
+    expect(find.text('Clear title'), findsOneWidget);
+    expect(applied, isNull);
+    await tester.tap(find.byKey(const Key('knowledge-rewrite-submit')));
+    await _settleKnowledgeRewrite(tester);
+    expect(applied?.heading, 'Clear title');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
+  });
+
   testWidgets('shows an unavailable state without a generate action', (
     tester,
   ) async {

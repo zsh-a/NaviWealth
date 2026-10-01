@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +11,7 @@ import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
@@ -21,6 +24,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../finance/data/repositories/_stub_stamper.dart';
 
 late SharedPreferences _prefs;
 late KnowledgeRepository _repository;
@@ -41,6 +45,7 @@ final _note = KnowledgeNote(
 
 Widget _wrap({
   required double contentWidth,
+  double textScale = 1,
   List<KnowledgeNote>? notes,
   List<KnowledgeDecision>? decisions,
   String initialLocation = '/knowledge/library',
@@ -50,6 +55,10 @@ Widget _wrap({
     routes: [
       GoRoute(
         path: '/knowledge/library',
+        onExit: (context, _) => FormLeaveScope.confirmRouteLeave(
+          context,
+          path: '/knowledge/library',
+        ),
         builder: (_, _) => Align(
           alignment: Alignment.topLeft,
           child: SizedBox(
@@ -58,6 +67,7 @@ Widget _wrap({
           ),
         ),
       ),
+      GoRoute(path: '/elsewhere', builder: (_, _) => const Text('elsewhere')),
       GoRoute(
         path: '/knowledge/library/note/:id',
         builder: (_, _) => const Text('pushed-note-detail'),
@@ -78,6 +88,9 @@ Widget _wrap({
         knowledgeLibraryDecisionsProvider.overrideWith(
           (_, limit) => Stream.value(decisions.take(limit + 1).toList()),
         ),
+      mutationStamperProvider.overrideWith(
+        (_) async => makeStubStamper(userId: _note.sync.ownerUserId),
+      ),
       sharedPreferencesProvider.overrideWithValue(_prefs),
       knowledgeRepositoryProvider.overrideWith((_) async => _repository),
       knowledgeOwnerUserIdProvider.overrideWith(
@@ -96,8 +109,11 @@ Widget _wrap({
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en'),
       routerConfig: router,
-      builder: (context, child) =>
-          FTheme(data: FTheme.neutral.light.desktop, child: child!),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
+      ),
     ),
   );
 }
@@ -197,6 +213,154 @@ void main() {
       isTrue,
     );
     expect(find.text('pushed-note-detail'), findsNothing);
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('dirty detail blocks row changes, pane close, and route exit', (
+    tester,
+  ) async {
+    final other = KnowledgeNote(
+      id: 'note-2',
+      title: 'Another note',
+      bodyMd: 'Other body',
+      createdAt: _note.createdAt,
+      sync: _note.sync,
+    );
+    await _repository.upsertNote(other);
+    await _setSurface(tester, 1280);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 1100,
+        notes: [_note, other],
+        initialLocation: '/knowledge/library?selected=note:note-1',
+      ),
+    );
+    await _settlePaint(tester);
+    final context = tester.element(find.byType(KnowledgeLibraryPage));
+    final router = GoRouter.of(context);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settlePaint(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-title')),
+      'Unsaved title',
+    );
+    await tester.tap(find.text('Another note'));
+    await _settlePaint(tester);
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['selected'],
+      'note:note-1',
+    );
+    expect(find.text('Unsaved title'), findsOneWidget);
+    expect(clearSelectedDetail(context), isTrue);
+    await _settlePaint(tester);
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await _settlePaint(tester);
+    router.go('/elsewhere');
+    await _settlePaint(tester);
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await _settlePaint(tester);
+    expect(find.text('Unsaved title'), findsOneWidget);
+    await tester.tap(find.text('Another note'));
+    await _settlePaint(tester);
+    await tester.tap(find.text('Discard'));
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['selected'],
+      'note:note-2',
+    );
+    expect(
+      (await _repository.findNote(
+        ownerUserId: _note.sync.ownerUserId,
+        id: _note.id,
+      ))?.title,
+      _note.title,
+    );
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('saving a detail locks row selection and pane close', (
+    tester,
+  ) async {
+    final database = makeTestDatabase();
+    addTearDown(database.close);
+    final repository = _BlockingRepository(
+      db: database,
+      outbox: InMemoryOutboxStore(),
+    );
+    _repository = repository;
+    final other = KnowledgeNote(
+      id: 'note-2',
+      title: 'Another note',
+      bodyMd: 'Other',
+      createdAt: _note.createdAt,
+      sync: _note.sync,
+    );
+    await repository.upsertNote(_note);
+    await repository.upsertNote(other);
+    await _setSurface(tester, 1280);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 1100,
+        notes: [_note, other],
+        initialLocation: '/knowledge/library?selected=note:note-1',
+      ),
+    );
+    await _settlePaint(tester);
+    final context = tester.element(find.byType(KnowledgeLibraryPage));
+    final router = GoRouter.of(context);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settlePaint(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-title')),
+      'Busy draft',
+    );
+    await _settlePaint(tester);
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await _settlePaint(tester);
+    await tester.tap(find.text('Another note'));
+    clearSelectedDetail(context);
+    router.go('/elsewhere');
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['selected'],
+      'note:note-1',
+    );
+    expect(find.text('Discard changes?'), findsNothing);
+    repository.gate.complete();
+    await _settlePaint(tester);
+    expect(
+      (await repository.findNote(
+        ownerUserId: _note.sync.ownerUserId,
+        id: _note.id,
+      ))?.title,
+      'Busy draft',
+    );
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('library filters fit a narrow viewport with large text', (
+    tester,
+  ) async {
+    await _setSurface(tester, 320);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 320,
+        textScale: 1.5,
+        initialLocation: '/knowledge/library?scope=notes&tag=work',
+      ),
+    );
+    await _settlePaint(tester);
+    expect(
+      find.byKey(const Key('knowledge-library-tag-filter')),
+      findsOneWidget,
+    );
+    expect(find.byType(AppFilterSummary), findsOneWidget);
+    expect(tester.takeException(), isNull);
     await _disposeWidget(tester);
   });
 
@@ -320,4 +484,16 @@ void main() {
 Future<void> _disposeWidget(WidgetTester tester) async {
   await tester.pumpWidget(const SizedBox.shrink());
   await tester.pump(Duration.zero);
+}
+
+class _BlockingRepository extends KnowledgeRepository {
+  _BlockingRepository({required super.db, required super.outbox});
+  final gate = Completer<void>();
+  @override
+  Future<void> upsertNote(KnowledgeNote note) async {
+    if (note.title == 'Busy draft') {
+      await gate.future;
+    }
+    await super.upsertNote(note);
+  }
 }

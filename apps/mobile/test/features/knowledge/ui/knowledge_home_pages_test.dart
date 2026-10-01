@@ -385,6 +385,8 @@ void main() {
     );
     await _settlePaint(tester);
 
+    await tester.tap(find.byKey(const Key('knowledge-library-tag-filter')));
+    await _settlePaint(tester);
     await tester.tap(
       find.byKey(const ValueKey<String>('knowledge-library-tag-work')),
     );

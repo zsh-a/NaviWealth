@@ -19,10 +19,12 @@ class KnowledgeTagChips extends StatelessWidget {
     super.key,
     required this.tags,
     this.keyPrefix = 'knowledge-tag',
+    this.onTagPressed,
   });
 
   final List<String> tags;
   final String keyPrefix;
+  final ValueChanged<String>? onTagPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +33,20 @@ class KnowledgeTagChips extends StatelessWidget {
       runSpacing: AppSpacing.s8,
       children: [
         for (final tag in tags)
-          AppBadge(
-            key: ValueKey<String>('$keyPrefix-$tag'),
-            label: tag,
-            size: AppBadgeSize.compact,
-            outlined: true,
-          ),
+          if (onTagPressed == null)
+            AppBadge(
+              key: ValueKey<String>('$keyPrefix-$tag'),
+              label: tag,
+              size: AppBadgeSize.compact,
+              outlined: true,
+            )
+          else
+            AppFilterChip(
+              key: ValueKey<String>('$keyPrefix-$tag'),
+              label: tag,
+              active: false,
+              onPress: () => onTagPressed!(tag),
+            ),
       ],
     );
   }

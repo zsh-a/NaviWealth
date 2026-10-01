@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -5,6 +7,7 @@ import 'package:forui/forui.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/knowledge_repository.dart';
+import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
@@ -65,9 +68,11 @@ class _KnowledgeRelationPickerBodyState
     extends ConsumerState<_KnowledgeRelationPickerBody> {
   final _search = TextEditingController();
   var _query = '';
+  Timer? _debounce;
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -75,16 +80,47 @@ class _KnowledgeRelationPickerBodyState
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final notesAsync = ref.watch(knowledgeNotesProvider);
-    final decisionsAsync = ref.watch(knowledgeDecisionsProvider);
-    final error = notesAsync.error ?? decisionsAsync.error;
-    final loading =
-        (notesAsync.isLoading && !notesAsync.hasValue) ||
-        (decisionsAsync.isLoading && !decisionsAsync.hasValue);
-    final targets = _targets(
-      l10n,
-      notesAsync.value ?? const <KnowledgeNote>[],
-      decisionsAsync.value ?? const <KnowledgeDecision>[],
+    final searchProvider = knowledgeLibrarySearchProvider((
+      query: _query,
+      kind: null,
+      tag: null,
+    ));
+    final notesAsync = ref.watch(
+      knowledgeLibraryNotesProvider((limit: 50, tag: null)),
+    );
+    final decisionsAsync = ref.watch(knowledgeLibraryDecisionsProvider(50));
+    final searchAsync = _query.isEmpty ? null : ref.watch(searchProvider);
+    final error = searchAsync == null
+        ? notesAsync.error ?? decisionsAsync.error
+        : searchAsync.error;
+    final loading = searchAsync == null
+        ? (notesAsync.isLoading && !notesAsync.hasValue) ||
+              (decisionsAsync.isLoading && !decisionsAsync.hasValue)
+        : searchAsync.isLoading && !searchAsync.hasValue;
+    final targets = searchAsync == null
+        ? _targets(
+            l10n,
+            notesAsync.value ?? const <KnowledgeNote>[],
+            decisionsAsync.value ?? const <KnowledgeDecision>[],
+          )
+        : [
+            for (final hit in searchAsync.value ?? const <KnowledgeSearchHit>[])
+              KnowledgeRelationTarget(
+                kind: hit.kind,
+                id: hit.id,
+                title: hit.title.isEmpty ? l10n.knowledgeUntitled : hit.title,
+                subtitle: knowledgeSearchExcerpt(
+                  hit.document.searchText,
+                  _query,
+                ),
+                updatedAt: hit.document.updatedAt,
+              ),
+          ];
+    targets.removeWhere(
+      (target) =>
+          (target.kind == widget.subjectKind &&
+              target.id == widget.subjectId) ||
+          widget.excludedTargetKeys.contains(target.key),
     );
     return SizedBox(
       height: AppControlHeights.searchSheet,
@@ -94,7 +130,12 @@ class _KnowledgeRelationPickerBodyState
           FTextField(
             control: FTextFieldControl.managed(
               controller: _search,
-              onChange: (value) => setState(() => _query = value.text.trim()),
+              onChange: (value) {
+                _debounce?.cancel();
+                _debounce = Timer(const Duration(milliseconds: 250), () {
+                  if (mounted) setState(() => _query = value.text.trim());
+                });
+              },
             ),
             autofocus: true,
             hint: l10n.knowledgeRelationPickerSearchHint,
@@ -107,8 +148,11 @@ class _KnowledgeRelationPickerBodyState
                     message: userSafeErrorMessage(context, error),
                     retryLabel: l10n.commonRetry,
                     onRetry: () {
-                      ref.invalidate(knowledgeNotesProvider);
-                      ref.invalidate(knowledgeDecisionsProvider);
+                      ref.invalidate(
+                        knowledgeLibraryNotesProvider((limit: 50, tag: null)),
+                      );
+                      ref.invalidate(knowledgeLibraryDecisionsProvider(50));
+                      ref.invalidate(searchProvider);
                     },
                     compact: true,
                   )
@@ -200,6 +244,6 @@ class _KnowledgeRelationPickerBodyState
               )),
     );
     targets.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return targets.take(50).toList(growable: false);
+    return targets.take(50).toList();
   }
 }

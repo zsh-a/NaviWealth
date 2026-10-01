@@ -8,9 +8,11 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/features/knowledge/application/knowledge_decision_from_note_service.dart';
+import 'package:naviwealth/features/knowledge/application/knowledge_decision_review_service.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/domain/knowledge_text.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
@@ -80,6 +82,136 @@ void main() {
   });
 
   tearDown(() => database.close());
+
+  test(
+    'search excerpts show late matches and keep semantic fallback readable',
+    () {
+      final source =
+          '${List.filled(100, 'intro').join(' ')} **late evidence** ends here';
+      final excerpt = knowledgeSearchExcerpt(source, 'late evidence');
+      expect(excerpt, contains('late evidence'));
+      expect(excerpt, startsWith('…'));
+      expect(excerpt, isNot(contains('**')));
+      expect(
+        excerpt.length,
+        lessThanOrEqualTo(kKnowledgeSupportingExcerptMaxChars + 2),
+      );
+      expect(
+        knowledgeSearchExcerpt(
+          '## Overview\nUseful material',
+          'semantic concept',
+        ),
+        'Overview Useful material',
+      );
+    },
+  );
+
+  test(
+    'relation hydration resolves endpoints outside the recent window',
+    () async {
+      for (var index = 0; index < 205; index++) {
+        await repository.upsertNote(_note('note-$index', index));
+        await repository.upsertDecision(_decision('decision-$index', index));
+      }
+      await repository.upsertRelation(
+        KnowledgeRelation(
+          id: 'old-endpoint-relation',
+          fromKind: 'note',
+          fromId: 'note-204',
+          toKind: 'decision',
+          toId: 'decision-0',
+          relation: KnowledgeRelationType.informs,
+          createdAt: _sync(210).updatedAt,
+          sync: _sync(210),
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          knowledgeRepositoryProvider.overrideWith((_) async => repository),
+          knowledgeOwnerUserIdProvider.overrideWith((_) async => _owner),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(knowledgeDecisionsProvider, (_, _) {});
+      expect(
+        (await container.read(knowledgeDecisionsProvider.future))
+            .map((d) => d.id),
+        isNot(contains('decision-0')),
+      );
+      const subject = (kind: 'note', id: 'note-204');
+      container.listen(knowledgeRelationDecisionsProvider(subject), (_, _) {});
+      container.listen(knowledgeRelationNotesProvider(subject), (_, _) {});
+      final decisions = await container.read(
+        knowledgeRelationDecisionsProvider(subject).future,
+      );
+      expect(decisions.map((d) => d.id), ['decision-0']);
+      expect(
+        (await container.read(knowledgeRelationNotesProvider(subject).future))
+            .single
+            .id,
+        'note-204',
+      );
+      await repository.upsertDecision(
+        _decision(
+          'deleted',
+          210,
+          sync: _sync(211, deletedAt: DateTime.utc(2026)),
+        ),
+      );
+      final foreignSync = SyncMeta(
+        ownerUserId: 'another-owner',
+        updatedAt: _sync(212).updatedAt,
+        updatedByDevice: _device,
+        hlc: _sync(212).hlc,
+      );
+      await repository.upsertDecision(
+        _decision('foreign', 212, sync: foreignSync),
+      );
+      expect(
+        (await repository
+                .watchDecisionsByIds(
+                  ownerUserId: _owner,
+                  ids: {'decision-0', 'deleted', 'foreign'},
+                )
+                .first)
+            .map((d) => d.id),
+        ['decision-0'],
+      );
+    },
+  );
+
+  test(
+    'review keeps the current decision content and rejects deleted records',
+    () async {
+      await repository.upsertDecision(_decision('review', 1));
+      final service = KnowledgeDecisionReviewService(
+        repository: repository,
+        stamper: makeStubStamper(userId: _owner),
+      );
+      const draft = KnowledgeDecisionReviewDraft(
+        reviewDate: null,
+        revisitConditions: [],
+        actualOutcomeMd: 'Worked as expected',
+        status: DecisionStatus.verified,
+      );
+      await service.review(id: 'review', draft: draft);
+      final saved = await repository.findDecision(
+        ownerUserId: _owner,
+        id: 'review',
+      );
+      expect(saved?.question, 'question review');
+      expect(saved?.options.single.label, 'yes');
+      expect(saved?.actualOutcomeMd, 'Worked as expected');
+      expect(saved?.status, DecisionStatus.verified);
+      await repository.upsertDecision(
+        _decision('gone', 2, sync: _sync(3, deletedAt: DateTime.utc(2026))),
+      );
+      await expectLater(
+        service.review(id: 'gone', draft: draft),
+        throwsStateError,
+      );
+    },
+  );
 
   test(
     'due reviews refresh when time advances without a database write',

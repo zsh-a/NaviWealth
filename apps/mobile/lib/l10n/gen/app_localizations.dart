@@ -16086,7 +16086,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeNoteTagsHint.
   ///
   /// In en, this message translates to:
-  /// **'\"investing\", \"fire\", \"banking\"'**
+  /// **'investing, fire, banking'**
   String get knowledgeNoteTagsHint;
 
   /// No description provided for @knowledgeObjectNotFound.
@@ -23485,7 +23485,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeNoteTagsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Tags (comma separated)'**
+  /// **'Tags'**
   String get knowledgeNoteTagsLabel;
 
   /// No description provided for @knowledgeTagsLabel.
@@ -23553,6 +23553,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Filter notes by tag'**
   String get knowledgeLibraryTagFilterLabel;
+
+  /// No description provided for @knowledgeRewriteConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure AI rewrite'**
+  String get knowledgeRewriteConfigure;
+
+  /// No description provided for @knowledgeRewriteWebUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'AI rewrite is available in the native app.'**
+  String get knowledgeRewriteWebUnavailable;
+
+  /// No description provided for @knowledgeRewriteShowOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare with original'**
+  String get knowledgeRewriteShowOriginal;
+
+  /// No description provided for @knowledgeRewriteHideOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide original'**
+  String get knowledgeRewriteHideOriginal;
+
+  /// No description provided for @knowledgeReviewShowDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule and more statuses'**
+  String get knowledgeReviewShowDetails;
+
+  /// No description provided for @knowledgeReviewHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide review details'**
+  String get knowledgeReviewHideDetails;
 
   /// No description provided for @knowledgeRewriteAction.
   ///

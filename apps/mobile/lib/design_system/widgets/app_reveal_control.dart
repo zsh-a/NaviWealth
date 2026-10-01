@@ -17,6 +17,7 @@ class AppRevealControl extends StatelessWidget {
     required this.collapsedLabel,
     required this.expandedLabel,
     required this.onToggle,
+    this.enabled = true,
     this.signalReveal = true,
   });
 
@@ -29,6 +30,7 @@ class AppRevealControl extends StatelessWidget {
   final String expandedLabel;
 
   final VoidCallback onToggle;
+  final bool enabled;
 
   /// When true, fires [AppInteractionIntent.reveal] on press.
   final bool signalReveal;
@@ -40,16 +42,19 @@ class AppRevealControl extends StatelessWidget {
 
     return Semantics(
       button: true,
+      enabled: enabled,
       expanded: expanded,
       label: label,
       child: Center(
         child: FTappable(
-          onPress: () {
-            if (signalReveal) {
-              AppInteraction.signal(AppInteractionIntent.reveal);
-            }
-            onToggle();
-          },
+          onPress: !enabled
+              ? null
+              : () {
+                  if (signalReveal) {
+                    AppInteraction.signal(AppInteractionIntent.reveal);
+                  }
+                  onToggle();
+                },
           child: Container(
             constraints: const BoxConstraints(
               minHeight: AppControlHeights.touchTarget,

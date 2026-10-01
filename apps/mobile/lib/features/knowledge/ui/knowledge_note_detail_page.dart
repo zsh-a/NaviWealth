@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
-import '../../../core/ai/visual/ai_pill.dart';
 import '../../../core/forms/form_dirty_guard.dart';
 import '../../../core/forms/form_submission.dart';
 import '../../../core/sync/mutation_context.dart';
@@ -20,12 +19,14 @@ import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_source_url.dart';
-import 'knowledge_decision_from_note_sheet.dart';
+import 'knowledge_capture_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_relations_section.dart';
+import 'widgets/knowledge_rewrite_action.dart';
 import 'widgets/knowledge_source_link.dart';
 import 'widgets/knowledge_tag_chips.dart';
+import 'widgets/knowledge_tag_input.dart';
 
 final _noteProvider = FutureProvider.autoDispose.family<KnowledgeNote?, String>(
   (ref, id) async {
@@ -91,6 +92,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
 
   /// Detail pages open in read mode; the form stays behind this toggle.
   var _editing = false;
+  var _showMetadata = false;
 
   @override
   void initState() {
@@ -123,6 +125,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       child: ObjectDetailScaffold(
         title: l10n.knowledgeSegmentNotes,
         confirmLeave: handleBackIntent,
+        resizeToAvoidBottomInset: !_editing,
         actions: [
           AppHeaderAction(
             key: const Key('knowledge-note-edit-toggle'),
@@ -169,122 +172,57 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
     final updated = DateFormat.yMMMd(locale)
         .format(note.sync.updatedAt.toLocal());
     final sourceUrl = note.sourceUrl;
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      children: [
-        Text(
-          note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
-          style: context.strongHeadlineStyle,
-        ),
-        if (note.tags.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeTagChips(tags: note.tags, keyPrefix: 'knowledge-note-tag'),
-        ],
-        const SizedBox(height: AppSpacing.s16),
-        if (note.bodyMd.trim().isEmpty)
-          Text(l10n.knowledgeNoteEmptyBody, style: context.bodyCaptionStyle)
-        else
-          AiMarkdown(text: note.bodyMd),
-        if (sourceUrl != null) ...[
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeSourceLink(sourceUrl: sourceUrl),
-        ],
-        const SizedBox(height: AppSpacing.s20),
-        AppMetadataStrip(
-          children: [
-            AppMetadataItem(label: l10n.knowledgeCreatedLabel, value: created),
-            AppMetadataItem(label: l10n.knowledgeUpdatedLabel, value: updated),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        KnowledgeRelationsSection(
-          subjectKind: KnowledgeEntryKind.note,
-          subjectId: widget.note.id,
-          subjectText: KnowledgeSearchDocument.fromNote(widget.note).searchText,
-          onCreateDecision: _createDecision,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditForm(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Form(
-      key: _formKey,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      child: ListView(
+    return AdaptiveContentFrame(
+      maxWidth: AdaptiveMaxWidth.narrow,
+      padding: EdgeInsets.zero,
+      expandSinglePrimary: true,
+      primary: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [
-          FTextFormField(
-            key: const Key('knowledge-note-title'),
-            control: FTextFieldControl.managed(controller: _title),
-            enabled: !_saving,
-            label: RequiredLabel(l10n.knowledgeCaptureTitleField),
-            validator: (value) => (value == null || value.trim().isEmpty)
-                ? l10n.knowledgeNoteSaveRequirement
-                : null,
+          Text(
+            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+            style: context.strongHeadlineStyle,
           ),
-          const SizedBox(height: AppSpacing.s12),
-          KnowledgeMarkdownEditor(
-            controller: _body,
-            label: l10n.knowledgeCaptureBodyField,
-            minLines: 8,
-            enabled: !_saving,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: AiPill(
-              leading: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
-              label: l10n.knowledgeRewriteAction,
-              onTap: _saving ? null : _rewrite,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FTextFormField(
-            control: FTextFieldControl.managed(controller: _tags),
-            enabled: !_saving,
-            label: Text(l10n.knowledgeNoteTagsLabel),
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          ValueListenableBuilder<TextEditingValue>(
-            valueListenable: _source,
-            builder: (context, value, _) {
-              final sourceUrl = normalizeKnowledgeSourceUrl(value.text);
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (sourceUrl != null) ...[
-                    KnowledgeSourceLink(sourceUrl: sourceUrl),
-                    const SizedBox(height: AppSpacing.s8),
-                  ],
-                  FTextFormField(
-                    control: FTextFieldControl.managed(controller: _source),
-                    enabled: !_saving,
-                    keyboardType: TextInputType.url,
-                    label: Text(l10n.knowledgeNoteSourceUrlLabel),
-                    validator: (value) {
-                      final text = value?.trim() ?? '';
-                      if (text.isEmpty) return null;
-                      return normalizeKnowledgeSourceUrl(text) == null
-                          ? l10n.knowledgeSourceInvalid
-                          : null;
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
-          if (submissionFailureMessage case final message?) ...[
+          if (note.tags.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s12),
-            AppStatusBanner(message: message, kind: AppStatusKind.error),
+            KnowledgeTagChips(
+              tags: note.tags,
+              keyPrefix: 'knowledge-note-tag',
+              onTagPressed: GoRouter.maybeOf(context) == null
+                  ? null
+                  : (tag) => context.go(
+                      Uri(
+                        path: KnowledgeRoutes.library,
+                        queryParameters: {
+                          'scope': 'notes',
+                          'tag': tag,
+                          'selected': 'note:${note.id}',
+                        },
+                      ).toString(),
+                    ),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s16),
+          if (note.bodyMd.trim().isEmpty)
+            Text(l10n.knowledgeNoteEmptyBody, style: context.bodyCaptionStyle)
+          else
+            AiMarkdown(text: note.bodyMd),
+          if (sourceUrl != null) ...[
+            const SizedBox(height: AppSpacing.s12),
+            KnowledgeSourceLink(sourceUrl: sourceUrl),
           ],
           const SizedBox(height: AppSpacing.s20),
-          AppBusyButton(
-            label: l10n.commonSave,
-            busyLabel: l10n.commonSaving,
-            busy: _saving,
-            onPress: dirty.isDirty ? _save : null,
+          AppMetadataStrip(
+            children: [
+              AppMetadataItem(
+                label: l10n.knowledgeCreatedLabel,
+                value: created,
+              ),
+              AppMetadataItem(
+                label: l10n.knowledgeUpdatedLabel,
+                value: updated,
+              ),
+            ],
           ),
           const SizedBox(height: AppSpacing.s20),
           KnowledgeRelationsSection(
@@ -294,6 +232,91 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
                 .searchText,
             onCreateDecision: _createDecision,
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditForm(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: AppFormScaffoldBody(
+        onSubmit: dirty.isDirty && !_saving ? _save : null,
+        action: AppSheetFooter(
+          submitLabel: l10n.commonSave,
+          cancelLabel: l10n.commonCancel,
+          enabled: dirty.isDirty,
+          busy: _saving,
+          onSubmit: _save,
+          onCancel: _toggleMode,
+        ),
+        children: [
+          FTextFormField(
+            key: const Key('knowledge-note-title'),
+            control: FTextFieldControl.managed(controller: _title),
+            enabled: !_saving,
+            label: Text(l10n.knowledgeCaptureTitleField),
+            validator: (value) =>
+                (value?.trim().isEmpty ?? true) && _body.text.trim().isEmpty
+                ? l10n.knowledgeNoteSaveRequirement
+                : null,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+          KnowledgeMarkdownEditor(
+            controller: _body,
+            editorKey: const Key('knowledge-note-body'),
+            label: l10n.knowledgeCaptureBodyField,
+            minLines: 8,
+            enabled: !_saving,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          KnowledgeRewriteAction(enabled: !_saving, onRewrite: _rewrite),
+          const SizedBox(height: AppSpacing.s12),
+          AppRevealControl(
+            expanded: _showMetadata,
+            collapsedLabel: l10n.knowledgeCaptureMetadata,
+            expandedLabel: l10n.knowledgeCaptureMetadata,
+            enabled: !_saving,
+            onToggle: () => setState(() => _showMetadata = !_showMetadata),
+          ),
+          if (_showMetadata) ...[
+            KnowledgeTagInput(controller: _tags, enabled: !_saving),
+            const SizedBox(height: AppSpacing.s12),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _source,
+              builder: (context, value, _) {
+                final sourceUrl = normalizeKnowledgeSourceUrl(value.text);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (sourceUrl != null) ...[
+                      KnowledgeSourceLink(sourceUrl: sourceUrl),
+                      const SizedBox(height: AppSpacing.s8),
+                    ],
+                    FTextFormField(
+                      control: FTextFieldControl.managed(controller: _source),
+                      enabled: !_saving,
+                      keyboardType: TextInputType.url,
+                      label: Text(l10n.knowledgeNoteSourceUrlLabel),
+                      validator: (value) {
+                        final text = value?.trim() ?? '';
+                        if (text.isEmpty) return null;
+                        return normalizeKnowledgeSourceUrl(text) == null
+                            ? l10n.knowledgeSourceInvalid
+                            : null;
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+          if (submissionFailureMessage case final message?) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(message: message, kind: AppStatusKind.error),
+          ],
         ],
       ),
     );
@@ -318,6 +341,14 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
 
   Future<void> _save() async {
     if (_saving) return;
+    if (_source.text.trim().isNotEmpty &&
+        normalizeKnowledgeSourceUrl(_source.text) == null) {
+      setState(() => _showMetadata = true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _formKey.currentState?.validate();
+      });
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final l10n = AppLocalizations.of(context);
     final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
@@ -334,11 +365,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
             title: _title.text.trim(),
             bodyMd: _body.text.trim(),
             sourceUrl: sourceUrl,
-            tags: _tags.text
-                .split(RegExp(r'[,，\s]+'))
-                .where((value) => value.isNotEmpty)
-                .toSet()
-                .toList(growable: false),
+            tags: parseKnowledgeTags(_tags.text),
             createdAt: widget.note.createdAt,
             mergedIntoId: widget.note.mergedIntoId,
             sync: SyncMeta(
@@ -382,9 +409,9 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
 
   Future<void> _createDecision() async {
     FocusScope.of(context).unfocus();
-    final decisionId = await showKnowledgeDecisionFromNoteSheet(
-      context: context,
-      note: widget.note,
+    final decisionId = await showKnowledgeDecisionCapturePage(
+      context,
+      sourceNote: widget.note,
     );
     if (!mounted || decisionId == null) return;
     await context.push<void>(KnowledgeRoutes.decision(decisionId));

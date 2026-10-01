@@ -7,6 +7,7 @@ library;
 import 'package:go_router/go_router.dart';
 
 import '../../../core/shell/domain_tabs_shell.dart';
+import '../../../design_system/widgets/form_leave_scope.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';
@@ -36,6 +37,10 @@ StatefulShellRoute knowledgeShellRoute() {
           GoRoute(
             path: KnowledgeRoutes.library,
             name: KnowledgeRouteNames.library,
+            onExit: (context, _) => FormLeaveScope.confirmRouteLeave(
+              context,
+              path: KnowledgeRoutes.library,
+            ),
             builder: (context, state) => const KnowledgeLibraryPage(),
             routes: [
               GoRoute(

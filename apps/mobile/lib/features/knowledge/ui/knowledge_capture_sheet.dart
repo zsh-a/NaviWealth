@@ -10,12 +10,15 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../application/knowledge_decision_from_note_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_source_url.dart';
+import '../domain/knowledge_text.dart';
 import 'widgets/knowledge_decision_options_editor.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 import 'widgets/knowledge_tag_chips.dart';
+import 'widgets/knowledge_tag_input.dart';
 
 enum _CaptureType { note, decision }
 
@@ -26,11 +29,17 @@ Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
   );
 }
 
-Future<void> showKnowledgeDecisionCapturePage(BuildContext context) async {
-  await Navigator.of(
-    context,
-    rootNavigator: true,
-  ).push<bool>(MaterialPageRoute(builder: (_) => const _DecisionCapturePage()));
+Future<String?> showKnowledgeDecisionCapturePage(
+  BuildContext context, {
+  KnowledgeNote? sourceNote,
+}) {
+  final navigator = Navigator.of(context, rootNavigator: true);
+  final theme = FTheme.capture(from: context, to: navigator.context);
+  return navigator.push<String>(
+    MaterialPageRoute(
+      builder: (_) => theme.wrap(_DecisionCapturePage(sourceNote: sourceNote)),
+    ),
+  );
 }
 
 class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
@@ -38,8 +47,10 @@ class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
     required this.dirty,
     this.fullPage = false,
     this.confirmLeave,
+    this.sourceNote,
   });
 
+  final KnowledgeNote? sourceNote;
   final bool fullPage;
   final Future<bool> Function()? confirmLeave;
 
@@ -113,7 +124,12 @@ class _KnowledgeCaptureSheetState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final footer = AppSheetFooter(
-      submitLabel: l10n.commonSave,
+      submitKey: widget.sourceNote == null
+          ? null
+          : const Key('knowledge-decision-from-note-submit'),
+      submitLabel: widget.sourceNote == null
+          ? l10n.commonSave
+          : l10n.knowledgeCreateDecisionAction,
       cancelLabel: l10n.commonCancel,
       onSubmit: _save,
       enabled: _canSave,
@@ -123,7 +139,28 @@ class _KnowledgeCaptureSheetState
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.sourceNote case final note?) ...[
+          Text(l10n.knowledgeDecisionSourceNote, style: context.captionStyle),
+          const SizedBox(height: AppSpacing.s8),
+          Text(
+            note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
+            style: context.labelStyle,
+          ),
+          Text(
+            knowledgeExcerpt(
+              note.bodyMd,
+              max: kKnowledgeHeadlineExcerptMaxChars,
+            ),
+            style: context.captionStyle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.s16),
+        ],
         FTextField(
+          key: widget.sourceNote == null
+              ? null
+              : const Key('knowledge-decision-from-note-question'),
           control: FTextFieldControl.managed(controller: _title),
           enabled: !_saving,
           autofocus: true,
@@ -138,7 +175,9 @@ class _KnowledgeCaptureSheetState
         if (_type == _CaptureType.decision) ...[
           KnowledgeDecisionOptionsEditor(
             controller: _options,
-            keyPrefix: 'knowledge-capture-option',
+            keyPrefix: widget.sourceNote == null
+                ? 'knowledge-capture-option'
+                : 'knowledge-decision-from-note',
             enabled: !_saving,
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -198,21 +237,11 @@ class _KnowledgeCaptureSheetState
                   ),
                 ],
                 const SizedBox(height: AppSpacing.s12),
-                FTextField(
+                KnowledgeTagInput(
                   key: const ValueKey('knowledge-capture-tags'),
-                  control: FTextFieldControl.managed(controller: _tags),
+                  controller: _tags,
                   enabled: !_saving,
-                  label: Text(l10n.knowledgeNoteTagsLabel),
-                  hint: l10n.knowledgeNoteTagsHint,
                 ),
-                if (parseKnowledgeTags(_tags.text) case final tagPreview
-                    when tagPreview.isNotEmpty) ...[
-                  const SizedBox(height: AppSpacing.s8),
-                  KnowledgeTagChips(
-                    tags: tagPreview,
-                    keyPrefix: 'knowledge-capture-tag',
-                  ),
-                ],
               ],
             ),
           ),
@@ -245,6 +274,7 @@ class _KnowledgeCaptureSheetState
   }
 
   Future<void> _save() async {
+    if (_saving) return;
     final title = _title.text.trim();
     final body = _body.text.trim();
     final sourceUrl = normalizeKnowledgeSourceUrl(_source.text);
@@ -259,6 +289,10 @@ class _KnowledgeCaptureSheetState
     if (_type == _CaptureType.note &&
         _source.text.trim().isNotEmpty &&
         sourceUrl == null) {
+      setState(() {
+        _showMetadata = true;
+        _error = AppLocalizations.of(context).knowledgeSourceInvalid;
+      });
       return;
     }
     setState(() {
@@ -267,45 +301,58 @@ class _KnowledgeCaptureSheetState
     });
     widget.dirty.busy = true;
     try {
-      final repository = await ref.read(knowledgeRepositoryProvider.future);
-      final stamper = await ref.read(mutationStamperProvider.future);
-      final value = await stamper.stamp();
-      final sync = SyncMeta(
-        ownerUserId: value.ownerUserId,
-        updatedAt: value.now,
-        updatedByDevice: value.deviceId,
-        hlc: value.hlc,
-      );
-      if (_type == _CaptureType.note) {
-        await repository.upsertNote(
-          KnowledgeNote(
-            id: kKnowledgeUuid.v4(),
-            title: title,
-            bodyMd: body,
-            sourceUrl: sourceUrl,
-            tags: _tags.text
-                .split(RegExp(r'[,，\s]+'))
-                .map((value) => value.trim())
-                .where((value) => value.isNotEmpty)
-                .toSet()
-                .toList(growable: false),
-            createdAt: value.now,
-            sync: sync,
-          ),
+      String? decisionId;
+      if (widget.sourceNote case final note?) {
+        final service = await ref.read(
+          knowledgeDecisionFromNoteServiceProvider.future,
         );
+        final decision = await service.create(
+          noteId: note.id,
+          question: title,
+          options: _options.options,
+          selectedLabel: _options.selectedLabel,
+          rationaleMd: body,
+        );
+        decisionId = decision.id;
       } else {
-        await repository.upsertDecision(
-          KnowledgeDecision(
-            id: kKnowledgeUuid.v4(),
-            question: title,
-            options: _options.options,
-            selectedLabel: _options.selectedLabel,
-            rationaleMd: body,
-            status: DecisionStatus.active,
-            decidedAt: value.now,
-            sync: sync,
-          ),
+        final repository = await ref.read(knowledgeRepositoryProvider.future);
+        final stamper = await ref.read(mutationStamperProvider.future);
+        final value = await stamper.stamp();
+        final sync = SyncMeta(
+          ownerUserId: value.ownerUserId,
+          updatedAt: value.now,
+          updatedByDevice: value.deviceId,
+          hlc: value.hlc,
         );
+        if (_type == _CaptureType.note) {
+          await repository.upsertNote(
+            KnowledgeNote(
+              id: kKnowledgeUuid.v4(),
+              title: title,
+              bodyMd: body,
+              sourceUrl: sourceUrl,
+              tags: parseKnowledgeTags(_tags.text),
+              createdAt: value.now,
+              sync: sync,
+            ),
+          );
+        } else {
+          decisionId = kKnowledgeUuid.v4();
+          await repository.upsertDecision(
+            KnowledgeDecision(
+              id: decisionId,
+              question: title,
+              options: _options.options,
+              selectedLabel: _options.selectedLabel,
+              rationaleMd: body,
+              status: DecisionStatus.active,
+              decidedAt: value.now,
+              sync: sync,
+            ),
+          );
+        }
+      }
+      if (_type == _CaptureType.decision) {
         await recordProductMetric(
           () => ref.read(productMetricsProvider.notifier),
           ProductFunnelEvent.knowledgeDecisionCreated,
@@ -315,7 +362,7 @@ class _KnowledgeCaptureSheetState
       ref.invalidate(knowledgeNotesProvider);
       ref.invalidate(knowledgeDecisionsProvider);
       widget.dirty.markPristine();
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, decisionId);
     } on Object catch (error, stackTrace) {
       if (!mounted) return;
       setState(() {
@@ -377,7 +424,9 @@ class _KnowledgeCaptureSheetState
 }
 
 class _DecisionCapturePage extends ConsumerStatefulWidget {
-  const _DecisionCapturePage();
+  const _DecisionCapturePage({this.sourceNote});
+
+  final KnowledgeNote? sourceNote;
 
   @override
   ConsumerState<_DecisionCapturePage> createState() =>
@@ -393,6 +442,7 @@ class _DecisionCapturePageState extends ConsumerState<_DecisionCapturePage>
   Widget build(BuildContext context) => guardedScope(
     child: _KnowledgeCaptureSheet(
       dirty: dirty,
+      sourceNote: widget.sourceNote,
       fullPage: true,
       confirmLeave: handleBackIntent,
     ),

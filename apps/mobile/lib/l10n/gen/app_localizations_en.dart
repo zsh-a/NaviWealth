@@ -9579,7 +9579,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get knowledgeNoteTagsHint => '\"investing\", \"fire\", \"banking\"';
+  String get knowledgeNoteTagsHint => 'investing, fire, banking';
 
   @override
   String get knowledgeObjectNotFound => 'Item does not exist or was deleted';
@@ -13960,7 +13960,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeWriterRationaleMarkdownLabel => 'Rationale (Markdown)';
 
   @override
-  String get knowledgeNoteTagsLabel => 'Tags (comma separated)';
+  String get knowledgeNoteTagsLabel => 'Tags';
 
   @override
   String get knowledgeTagsLabel => 'Tags';
@@ -13994,6 +13994,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeLibraryTagFilterLabel => 'Filter notes by tag';
+
+  @override
+  String get knowledgeRewriteConfigure => 'Configure AI rewrite';
+
+  @override
+  String get knowledgeRewriteWebUnavailable =>
+      'AI rewrite is available in the native app.';
+
+  @override
+  String get knowledgeRewriteShowOriginal => 'Compare with original';
+
+  @override
+  String get knowledgeRewriteHideOriginal => 'Hide original';
+
+  @override
+  String get knowledgeReviewShowDetails => 'Schedule and more statuses';
+
+  @override
+  String get knowledgeReviewHideDetails => 'Hide review details';
 
   @override
   String get knowledgeRewriteAction => 'Rewrite with AI';

@@ -10,6 +10,7 @@ import '../../../core/shell/master_detail_layout.dart';
 import '../../../core/shell/selection_query.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
+import '../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
@@ -155,21 +156,27 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           onPress: () => showKnowledgeDecisionCapturePage(context),
         ),
       ],
-      child: ShellTabPause(
+      child: FormLeaveScope(
         routePath: KnowledgeRoutes.library,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            if (GoRouter.maybeOf(context) == null ||
-                !MasterDetailLayout.shouldUseMasterDetail(
-                  constraints.maxWidth,
-                )) {
-              return _buildBody(context, inMasterDetail: false);
-            }
-            return MasterDetailLayout(
-              master: _buildBody(context, inMasterDetail: true),
-              detail: _libraryDetail(context, selectedQueryOf(context)),
-            );
-          },
+        child: MasterDetailShortcuts(
+          onSearchFocus: _searchFocus.requestFocus,
+          child: ShellTabPause(
+            routePath: KnowledgeRoutes.library,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (GoRouter.maybeOf(context) == null ||
+                    !MasterDetailLayout.shouldUseMasterDetail(
+                      constraints.maxWidth,
+                    )) {
+                  return _buildBody(context, inMasterDetail: false);
+                }
+                return MasterDetailLayout(
+                  master: _buildBody(context, inMasterDetail: true),
+                  detail: _libraryDetail(context, selectedQueryOf(context)),
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -232,49 +239,56 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                 clearLabel: l10n.aiChatSessionsSearchClear,
               ),
               const SizedBox(height: AppSpacing.s10),
-              AppAdaptiveChoice<_LibraryScope>(
-                title: l10n.knowledgeLibraryFilterTitle,
-                options: _LibraryScope.values,
-                value: _scope,
-                labelOf: (scope) => switch (scope) {
-                  _LibraryScope.all => l10n.knowledgeSegmentAll,
-                  _LibraryScope.notes => l10n.knowledgeSegmentNotes,
-                  _LibraryScope.decisions => l10n.knowledgeSegmentDecisions,
-                },
-                iconOf: (scope) => switch (scope) {
-                  _LibraryScope.all => FLucideIcons.library,
-                  _LibraryScope.notes => FLucideIcons.fileText,
-                  _LibraryScope.decisions => FLucideIcons.circleCheck,
-                },
-                onChanged: (scope) {
-                  setState(() {
-                    _scope = scope;
-                    _limit = _pageSize;
-                    if (scope == _LibraryScope.decisions) {
-                      _selectedTag = null;
-                    }
-                  });
-                  _writeFilters();
-                },
+              Row(
+                children: [
+                  Expanded(
+                    child: AppAdaptiveChoice<_LibraryScope>(
+                      title: l10n.knowledgeLibraryFilterTitle,
+                      options: _LibraryScope.values,
+                      value: _scope,
+                      labelOf: (scope) => switch (scope) {
+                        _LibraryScope.all => l10n.knowledgeSegmentAll,
+                        _LibraryScope.notes => l10n.knowledgeSegmentNotes,
+                        _LibraryScope.decisions =>
+                          l10n.knowledgeSegmentDecisions,
+                      },
+                      iconOf: (scope) => switch (scope) {
+                        _LibraryScope.all => FLucideIcons.library,
+                        _LibraryScope.notes => FLucideIcons.fileText,
+                        _LibraryScope.decisions => FLucideIcons.circleCheck,
+                      },
+                      onChanged: (scope) {
+                        setState(() {
+                          _scope = scope;
+                          _limit = _pageSize;
+                          if (scope == _LibraryScope.decisions) {
+                            _selectedTag = null;
+                          }
+                        });
+                        _writeFilters();
+                      },
+                    ),
+                  ),
+                  if (tagFacets.isNotEmpty &&
+                      _scope != _LibraryScope.decisions) ...[
+                    const SizedBox(width: AppSpacing.s8),
+                    _LibraryTagFilter(
+                      tags: tagFacets,
+                      selectedTag: _selectedTag,
+                      allLabel: l10n.knowledgeLibraryAllTags,
+                      semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
+                      onChanged: (tag) {
+                        setState(() {
+                          _selectedTag = tag;
+                          _limit = _pageSize;
+                          if (tag != null) _scope = _LibraryScope.notes;
+                        });
+                        _writeFilters();
+                      },
+                    ),
+                  ],
+                ],
               ),
-              if (tagFacets.isNotEmpty &&
-                  _scope != _LibraryScope.decisions) ...[
-                const SizedBox(height: AppSpacing.s10),
-                _LibraryTagFilter(
-                  tags: tagFacets,
-                  selectedTag: _selectedTag,
-                  allLabel: l10n.knowledgeLibraryAllTags,
-                  semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
-                  onChanged: (tag) {
-                    setState(() {
-                      _selectedTag = tag;
-                      _limit = _pageSize;
-                      if (tag != null) _scope = _LibraryScope.notes;
-                    });
-                    _writeFilters();
-                  },
-                ),
-              ],
               if (_query.isNotEmpty ||
                   _scope != _LibraryScope.all ||
                   _selectedTag != null) ...[
@@ -288,6 +302,27 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                           : l10n.knowledgeSegmentDecisions,
                     ?_selectedTag,
                   ],
+                  onRemove: (index) {
+                    final filters = [
+                      if (_query.isNotEmpty) 'query',
+                      if (_scope != _LibraryScope.all) 'scope',
+                      if (_selectedTag != null) 'tag',
+                    ];
+                    setState(() {
+                      switch (filters[index]) {
+                        case 'query':
+                          _debounce?.cancel();
+                          _query = '';
+                          _searchController.clear();
+                        case 'scope':
+                          _scope = _LibraryScope.all;
+                        case 'tag':
+                          _selectedTag = null;
+                      }
+                      _limit = _pageSize;
+                    });
+                    _writeFilters();
+                  },
                   onClear: _clearFilters,
                   resultCount: searchResults?.value?.length,
                 ),
@@ -316,6 +351,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                 )
               : _LibrarySearchResults(
                   value: searchResults,
+                  query: _query,
+                  showKind: _scope == _LibraryScope.all && _selectedTag == null,
                   inMasterDetail: inMasterDetail,
                   onRetry: () => ref.invalidate(
                     knowledgeLibrarySearchProvider((
@@ -347,34 +384,38 @@ class _LibraryTagFilter extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      label: semanticLabel,
-      child: SizedBox(
-        height: AppControlHeights.touchTarget,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: tags.length + 1,
-          separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.s8),
-          itemBuilder: (context, index) {
-            final tag = index == 0 ? null : tags[index - 1];
-            return AppFilterChip(
-              key: ValueKey<String>(
-                tag == null
-                    ? 'knowledge-library-all-tags'
-                    : 'knowledge-library-tag-$tag',
+  Widget build(BuildContext context) => AppFilterChip(
+    key: const Key('knowledge-library-tag-filter'),
+    label: semanticLabel,
+    icon: FLucideIcons.tags,
+    active: selectedTag != null,
+    onPress: () async {
+      final result = await showAppSheet<String>(
+        context: context,
+        title: semanticLabel,
+        builder: (sheetContext) => Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            for (final tag in <String?>[null, ...tags])
+              AppFilterChip(
+                key: ValueKey(
+                  tag == null
+                      ? 'knowledge-library-all-tags'
+                      : 'knowledge-library-tag-$tag',
+                ),
+                label: tag ?? allLabel,
+                active: selectedTag == tag,
+                onPress: () => Navigator.of(sheetContext).pop(tag ?? ''),
               ),
-              label: tag ?? allLabel,
-              active: selectedTag == tag,
-              icon: tag == null ? FLucideIcons.tags : FLucideIcons.tag,
-              onPress: () => onChanged(tag),
-            );
-          },
+          ],
         ),
-      ),
-    );
-  }
+      );
+      if (context.mounted && result != null) {
+        onChanged(result.isEmpty ? null : result);
+      }
+    },
+  );
 }
 
 class _LibraryBrowse extends ConsumerWidget {
@@ -404,12 +445,13 @@ class _LibraryBrowse extends ConsumerWidget {
       showControls: false,
       padding: shellTabContentPadding(context),
     );
-    if (scope == _LibraryScope.notes) {
+    if (scope == _LibraryScope.notes || selectedTag != null) {
       return notes.when(
         loading: skeleton,
         error: (_, _) => _LibraryError(onRetry: onRetry),
         data: (items) => _LibraryList(
           limit: limit,
+          showKind: false,
           onLoadMore: onLoadMore,
           entries: items
               .where(
@@ -430,6 +472,7 @@ class _LibraryBrowse extends ConsumerWidget {
         error: (_, _) => _LibraryError(onRetry: onRetry),
         data: (items) => _LibraryList(
           limit: limit,
+          showKind: false,
           onLoadMore: onLoadMore,
           entries: items
               .map(_LibraryEntry.fromDecision)
@@ -474,12 +517,16 @@ class _LibraryBrowse extends ConsumerWidget {
 class _LibrarySearchResults extends StatelessWidget {
   const _LibrarySearchResults({
     required this.value,
+    required this.query,
+    required this.showKind,
     required this.inMasterDetail,
     required this.onRetry,
   });
 
   final AsyncValue<List<KnowledgeSearchHit>> value;
   final bool inMasterDetail;
+  final String query;
+  final bool showKind;
   final VoidCallback onRetry;
 
   @override
@@ -502,8 +549,9 @@ class _LibrarySearchResults extends StatelessWidget {
             ),
           Expanded(
             child: _LibraryList(
+              showKind: showKind,
               entries: hits
-                  .map((hit) => _LibraryEntry.fromSearchHit(hit))
+                  .map((hit) => _LibraryEntry.fromSearchHit(hit, query: query))
                   .toList(growable: false),
               emptyTitle: AppLocalizations.of(context)
                   .knowledgeLibraryNoResultsTitle,
@@ -529,6 +577,7 @@ class _LibraryList extends ConsumerWidget {
     this.onLoadMore,
     this.emptyIcon = FLucideIcons.library,
     this.groupByDate = false,
+    this.showKind = true,
   });
 
   final int? limit;
@@ -552,6 +601,7 @@ class _LibraryList extends ConsumerWidget {
   final String? emptyMessage;
   final IconData emptyIcon;
   final bool inMasterDetail;
+  final bool showKind;
 
   /// Groups rows into 今天/昨天/本周/更早 sections (the activity-feed date
   /// labels) — used by the default merged browse view only.
@@ -569,17 +619,42 @@ class _LibraryList extends ConsumerWidget {
     }
     final l10n = AppLocalizations.of(context);
     if (groupByDate) {
-      return _buildGrouped(context, ref, l10n);
+      return _shortcuts(context, _buildGrouped(context, ref, l10n));
     }
-    return ListView.separated(
-      key: const PageStorageKey('knowledge-library-list'),
-      padding: shellTabContentPadding(context),
-      itemCount: visibleEntries.length + (hasMore ? 1 : 0),
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
-      itemBuilder: (context, index) => index == visibleEntries.length
-          ? _loadMore(context)
-          : _buildEntryTile(context, ref, l10n, visibleEntries[index]),
+    return _shortcuts(
+      context,
+      ListView.separated(
+        key: const PageStorageKey('knowledge-library-list'),
+        padding: shellTabContentPadding(context),
+        itemCount: visibleEntries.length + (hasMore ? 1 : 0),
+        separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.s10),
+        itemBuilder: (context, index) => index == visibleEntries.length
+            ? _loadMore(context)
+            : _buildEntryTile(context, ref, l10n, visibleEntries[index]),
+      ),
     );
+  }
+
+  Widget _shortcuts(BuildContext context, Widget child) {
+    void select(int delta) {
+      final items = visibleEntries;
+      final selected = selectedQueryOf(context);
+      final current = items.indexWhere(
+        (entry) => '${entry.kind}:${entry.id}' == selected,
+      );
+      final next = current < 0
+          ? (delta > 0 ? 0 : items.length - 1)
+          : (current + delta).clamp(0, items.length - 1);
+      _openEntry(context, entry: items[next], inMasterDetail: true);
+    }
+
+    return !inMasterDetail
+        ? child
+        : MasterDetailShortcuts(
+            onSelectNext: () => select(1),
+            onSelectPrevious: () => select(-1),
+            child: child,
+          );
   }
 
   Widget _buildGrouped(
@@ -637,6 +712,7 @@ class _LibraryList extends ConsumerWidget {
         subtitle: entry.subtitle,
         meta: _relativeMeta(l10n, entry.updatedAt),
         tags: entry.tags,
+        showKind: showKind,
         kindLabel: entry.kind == 'note'
             ? l10n.knowledgeKindNote
             : l10n.knowledgeKindDecision,
@@ -666,6 +742,11 @@ class _LibraryList extends ConsumerWidget {
     WidgetRef ref,
     _LibraryEntry entry,
   ) async {
+    bool selectedFormBusy() =>
+        inMasterDetail &&
+        selectedQueryOf(context) == '${entry.kind}:${entry.id}' &&
+        FormLeaveScope.forRouter(GoRouter.of(context))?.isBusy == true;
+    if (selectedFormBusy()) return;
     final l10n = AppLocalizations.of(context);
     final isNote = entry.kind == 'note';
     final confirmed = await showConfirmDialog(
@@ -681,7 +762,7 @@ class _LibraryList extends ConsumerWidget {
       destructive: true,
       icon: FLucideIcons.trash2,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !context.mounted || selectedFormBusy()) return;
     try {
       final service = await ref.read(knowledgeDeletionServiceProvider.future);
       await service.delete(
@@ -802,12 +883,16 @@ Widget _libraryDetail(BuildContext context, String? selected) {
   };
 }
 
-void _openEntry(
+Future<void> _openEntry(
   BuildContext context, {
   required _LibraryEntry entry,
   required bool inMasterDetail,
-}) {
+}) async {
   if (inMasterDetail) {
+    if (selectedQueryOf(context) == '${entry.kind}:${entry.id}') return;
+    if (!await FormLeaveScope.confirmRouteLeave(context) || !context.mounted) {
+      return;
+    }
     replaceSelectedQuery(
       context,
       path: KnowledgeRoutes.library,
@@ -815,7 +900,7 @@ void _openEntry(
     );
     return;
   }
-  context.push(
+  await context.push<void>(
     entry.kind == 'note'
         ? KnowledgeRoutes.note(entry.id)
         : KnowledgeRoutes.decision(entry.id),
@@ -861,11 +946,14 @@ class _LibraryEntry {
         decisionStatus: decision.status,
       );
 
-  factory _LibraryEntry.fromSearchHit(KnowledgeSearchHit hit) => _LibraryEntry(
+  factory _LibraryEntry.fromSearchHit(
+    KnowledgeSearchHit hit, {
+    required String query,
+  }) => _LibraryEntry(
     kind: hit.kind,
     id: hit.id,
     title: hit.title,
-    subtitle: hit.excerpt,
+    subtitle: knowledgeSearchExcerpt(hit.document.searchText, query),
     tags: hit.document.note?.tags ?? const <String>[],
     updatedAt: hit.document.updatedAt,
     decisionStatus: hit.document.decision?.status,

@@ -118,4 +118,21 @@ mixin KnowledgeDecisionsRepositoryMixin {
       rowId: d.id,
     );
   }
+
+  Stream<List<KnowledgeDecision>> watchDecisionsByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) {
+    if (ids.isEmpty) return Stream.value(const <KnowledgeDecision>[]);
+    final query = _db.select(_db.knowledgeDecisions)
+      ..where(
+        (table) =>
+            table.ownerUserId.equals(ownerUserId) &
+            table.deletedAt.isNull() &
+            table.id.isIn(ids),
+      );
+    return query.watch().map(
+      (rows) => rows.map(knowledgeDecisionFromRow).toList(growable: false),
+    );
+  }
 }

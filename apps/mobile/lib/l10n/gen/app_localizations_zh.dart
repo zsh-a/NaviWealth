@@ -9064,7 +9064,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get knowledgeNoteTagsHint => '\"投资\", \"fire\", \"银行卡\"';
+  String get knowledgeNoteTagsHint => '投资, fire, 银行卡';
 
   @override
   String get knowledgeObjectNotFound => '条目不存在或已删除';
@@ -13210,7 +13210,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeWriterRationaleMarkdownLabel => '理由（Markdown）';
 
   @override
-  String get knowledgeNoteTagsLabel => '标签（用逗号分隔）';
+  String get knowledgeNoteTagsLabel => '标签';
 
   @override
   String get knowledgeTagsLabel => '标签';
@@ -13244,6 +13244,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get knowledgeLibraryTagFilterLabel => '按标签筛选笔记';
+
+  @override
+  String get knowledgeRewriteConfigure => '配置 AI 改写';
+
+  @override
+  String get knowledgeRewriteWebUnavailable => 'AI 改写仅在原生应用中提供。';
+
+  @override
+  String get knowledgeRewriteShowOriginal => '对照原文';
+
+  @override
+  String get knowledgeRewriteHideOriginal => '收起原文';
+
+  @override
+  String get knowledgeReviewShowDetails => '回顾安排与更多状态';
+
+  @override
+  String get knowledgeReviewHideDetails => '收起回顾详情';
 
   @override
   String get knowledgeRewriteAction => 'AI 改写';

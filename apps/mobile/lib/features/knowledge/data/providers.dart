@@ -83,6 +83,50 @@ final knowledgeRelationsForObjectProvider = StreamProvider.autoDispose
       );
     });
 
+Set<String> _relationEndpointIds(
+  KnowledgeRelationSubject subject,
+  List<KnowledgeRelation> relations,
+  String kind,
+) => {
+  if (subject.kind == kind) subject.id,
+  for (final relation in relations) ...[
+    if (relation.fromKind == kind) relation.fromId,
+    if (relation.toKind == kind) relation.toId,
+  ],
+};
+
+final knowledgeRelationNotesProvider = StreamProvider.autoDispose
+    .family<List<KnowledgeNote>, KnowledgeRelationSubject>((
+      ref,
+      subject,
+    ) async* {
+      final relations = await ref.watch(
+        knowledgeRelationsForObjectProvider(subject).future,
+      );
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchNotesByIds(
+        ownerUserId: owner,
+        ids: _relationEndpointIds(subject, relations, 'note'),
+      );
+    });
+
+final knowledgeRelationDecisionsProvider = StreamProvider.autoDispose
+    .family<List<KnowledgeDecision>, KnowledgeRelationSubject>((
+      ref,
+      subject,
+    ) async* {
+      final relations = await ref.watch(
+        knowledgeRelationsForObjectProvider(subject).future,
+      );
+      final owner = await ref.watch(knowledgeOwnerUserIdProvider.future);
+      final repository = await ref.watch(knowledgeRepositoryProvider.future);
+      yield* repository.watchDecisionsByIds(
+        ownerUserId: owner,
+        ids: _relationEndpointIds(subject, relations, 'decision'),
+      );
+    });
+
 final knowledgeSearchServiceProvider = FutureProvider<KnowledgeSearchService>((
   ref,
 ) async {

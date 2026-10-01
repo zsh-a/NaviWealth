@@ -12,8 +12,8 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/ui/knowledge_capture_sheet.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_decision_detail_page.dart';
-import 'package:naviwealth/features/knowledge/ui/knowledge_decision_from_note_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -47,9 +47,9 @@ void main() {
         Builder(
           builder: (context) => FButton(
             onPress: () async {
-              decisionId = await showKnowledgeDecisionFromNoteSheet(
-                context: context,
-                note: note,
+              decisionId = await showKnowledgeDecisionCapturePage(
+                context,
+                sourceNote: note,
               );
             },
             child: const Text('Start decision'),

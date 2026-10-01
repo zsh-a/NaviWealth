@@ -3,24 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/forms/forms.dart';
+import '../../../core/product/product_metrics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../application/knowledge_decision_review_service.dart';
+import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import 'widgets/knowledge_markdown_editor.dart';
 
-class KnowledgeDecisionReviewDraft {
-  const KnowledgeDecisionReviewDraft({
-    required this.reviewDate,
-    required this.revisitConditions,
-    required this.actualOutcomeMd,
-    required this.status,
-  });
-
-  final DateTime? reviewDate;
-  final List<DecisionRevisitCondition> revisitConditions;
-  final String? actualOutcomeMd;
-  final DecisionStatus status;
-}
+export '../domain/knowledge_models.dart' show KnowledgeDecisionReviewDraft;
 
 Future<KnowledgeDecisionReviewDraft?> showKnowledgeDecisionReviewSheet({
   required BuildContext context,
@@ -57,6 +48,7 @@ class _KnowledgeDecisionReviewSheetState
     extends ConsumerState<_KnowledgeDecisionReviewSheet>
     with FormSubmission<_KnowledgeDecisionReviewSheet> {
   bool _saving = false;
+  bool _showDetails = false;
   late final TextEditingController _conditions;
   late final TextEditingController _actual;
   late DateTime? _reviewDate;
@@ -108,29 +100,6 @@ class _KnowledgeDecisionReviewSheetState
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
-          DateField(
-            key: const Key('knowledge-decision-review-date'),
-            label: l10n.knowledgeDecisionReviewDateLabel,
-            initialValue: _reviewDate,
-            enabled: !_saving,
-            onChanged: (value) {
-              setState(() => _reviewDate = value);
-              widget.dirty.markDirty();
-            },
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          FTextField(
-            key: const Key('knowledge-decision-review-conditions'),
-            control: FTextFieldControl.managed(controller: _conditions),
-            enabled: !_saving,
-            label: Text(l10n.knowledgeDecisionRevisitConditionsLabel),
-            description: Text(
-              l10n.knowledgeDecisionRevisitConditionsDescription,
-            ),
-            minLines: 2,
-            maxLines: 5,
-          ),
-          const SizedBox(height: AppSpacing.s16),
           KnowledgeMarkdownEditor(
             controller: _actual,
             enabled: !_saving,
@@ -145,7 +114,14 @@ class _KnowledgeDecisionReviewSheetState
             child: AppAdaptiveChoice<DecisionStatus>(
               key: const Key('knowledge-decision-review-status'),
               title: l10n.knowledgeDecisionStatusLabel,
-              options: DecisionStatus.values,
+              options: _showDetails
+                  ? DecisionStatus.values
+                  : <DecisionStatus>{
+                      DecisionStatus.active,
+                      DecisionStatus.verified,
+                      DecisionStatus.falsified,
+                      _status,
+                    }.toList(growable: false),
               value: _status,
               labelOf: (status) => knowledgeDecisionStatusLabel(l10n, status),
               iconOf: _statusIcon,
@@ -156,6 +132,40 @@ class _KnowledgeDecisionReviewSheetState
               },
             ),
           ),
+          const SizedBox(height: AppSpacing.s8),
+          AppRevealControl(
+            key: const Key('knowledge-decision-review-details'),
+            expanded: _showDetails,
+            collapsedLabel: l10n.knowledgeReviewShowDetails,
+            expandedLabel: l10n.knowledgeReviewHideDetails,
+            enabled: !_saving,
+            onToggle: () => setState(() => _showDetails = !_showDetails),
+          ),
+          if (_showDetails) ...[
+            DateField(
+              key: const Key('knowledge-decision-review-date'),
+              label: l10n.knowledgeDecisionReviewDateLabel,
+              initialValue: _reviewDate,
+              enabled: !_saving,
+              onChanged: (value) {
+                setState(() => _reviewDate = value);
+                widget.dirty.markDirty();
+              },
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            FTextField(
+              key: const Key('knowledge-decision-review-conditions'),
+              control: FTextFieldControl.managed(controller: _conditions),
+              enabled: !_saving,
+              label: Text(l10n.knowledgeDecisionRevisitConditionsLabel),
+              description: Text(
+                l10n.knowledgeDecisionRevisitConditionsDescription,
+              ),
+              minLines: 2,
+              maxLines: 5,
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ],
           if (submissionFailureMessage case final message?) ...[
             const SizedBox(height: AppSpacing.s12),
             AppStatusBanner(message: message, kind: AppStatusKind.error),
@@ -235,4 +245,36 @@ IconData _statusIcon(DecisionStatus status) => switch (status) {
 String? _nullable(String value) {
   final trimmed = value.trim();
   return trimmed.isEmpty ? null : trimmed;
+}
+
+/// Review a stored decision from either its detail page or the Inbox.
+Future<bool> reviewSavedKnowledgeDecision({
+  required BuildContext context,
+  required WidgetRef ref,
+  required KnowledgeDecision decision,
+}) async {
+  final container = ProviderScope.containerOf(context, listen: false);
+  final draft = await showKnowledgeDecisionReviewSheet(
+    context: context,
+    decision: decision,
+    onSave: (draft) async {
+      final service = await container.read(
+        knowledgeDecisionReviewServiceProvider.future,
+      );
+      await service.review(id: decision.id, draft: draft);
+    },
+  );
+  if (draft == null) return false;
+  if (context.mounted) {
+    ref.invalidate(knowledgeDecisionsProvider);
+    ref.invalidate(knowledgeDueReviewsProvider);
+  }
+  final elapsed = DateTime.now().toUtc().difference(decision.decidedAt.toUtc());
+  await recordProductMetric(
+    () => container.read(productMetricsProvider.notifier),
+    ProductFunnelEvent.knowledgeDecisionReviewed,
+    success: true,
+    duration: elapsed.isNegative ? Duration.zero : elapsed,
+  );
+  return true;
 }

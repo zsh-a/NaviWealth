@@ -55,6 +55,17 @@ Future<T?> showGuardedFormSheet<T>({
 /// [PopScope.canPop]) is guarded.
 mixin FormDirtyGuard<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   final FormDirtyController dirty = FormDirtyController();
+  FormLeaveController? _leaveController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final controller = FormLeaveScope.maybeOf(context);
+    if (controller == _leaveController) return;
+    _leaveController?.unregister(dirty);
+    _leaveController = controller;
+    controller?.register(dirty, handleBackIntent);
+  }
 
   /// Where to land when the form was deep-linked with no back stack.
   String get leaveFallback;
@@ -82,12 +93,15 @@ mixin FormDirtyGuard<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   /// Pass as `backHeaderAction(context, confirmLeave: handleBackIntent)`.
   Future<bool> handleBackIntent() async {
     if (dirty.busy) return false;
-    return confirmDiscardIfDirty(context, dirty);
+    final leave = await confirmDiscardIfDirty(context, dirty);
+    if (leave && mounted) dirty.markPristine();
+    return leave;
   }
 
   @mustCallSuper
   @override
   void dispose() {
+    _leaveController?.unregister(dirty);
     dirty.dispose();
     super.dispose();
   }

@@ -95,3 +95,23 @@ String knowledgePlainText(String markdown) {
   s = s.replaceAll(RegExp(r'[ \t]{2,}'), ' ');
   return s.trim();
 }
+
+/// Preview the part of a document that contains the query; semantic-only
+/// matches keep the ordinary opening excerpt.
+String knowledgeSearchExcerpt(
+  String markdown,
+  String query, {
+  int max = kKnowledgeSupportingExcerptMaxChars,
+}) {
+  final plain = knowledgePlainText(markdown).replaceAll(RegExp(r'\s+'), ' ');
+  final needle = query.trim().toLowerCase();
+  if (needle.isEmpty) return knowledgeExcerpt(plain, max: max);
+  final index = plain.toLowerCase().indexOf(needle);
+  if (index < 0) return knowledgeExcerpt(plain, max: max);
+  var start = (index - max ~/ 4).clamp(0, plain.length);
+  if (start > 0) {
+    final boundary = plain.lastIndexOf(' ', start);
+    if (boundary >= start - 20) start = boundary + 1;
+  }
+  return '${start > 0 ? '…' : ''}${knowledgeExcerpt(plain.substring(start), max: max)}';
+}

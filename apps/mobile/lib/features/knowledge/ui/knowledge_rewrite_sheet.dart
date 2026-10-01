@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/ai/visual/ai_markdown.dart';
+import '../../../core/forms/form_dirty_guard.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/knowledge_rewrite_client.dart';
@@ -14,9 +17,10 @@ Future<KnowledgeRewriteDraft?> showKnowledgeRewriteSheet({
   required String heading,
   required String content,
 }) {
-  return showAppFormSheet<KnowledgeRewriteDraft>(
+  return showGuardedFormSheet<KnowledgeRewriteDraft>(
     context: context,
-    builder: (_) => _KnowledgeRewriteSheet(
+    builder: (_, dirty) => _KnowledgeRewriteSheet(
+      dirty: dirty,
       kind: kind,
       objectId: objectId,
       locale: Localizations.localeOf(context).toLanguageTag(),
@@ -28,6 +32,7 @@ Future<KnowledgeRewriteDraft?> showKnowledgeRewriteSheet({
 
 class _KnowledgeRewriteSheet extends ConsumerStatefulWidget {
   const _KnowledgeRewriteSheet({
+    required this.dirty,
     required this.kind,
     required this.objectId,
     required this.locale,
@@ -35,6 +40,7 @@ class _KnowledgeRewriteSheet extends ConsumerStatefulWidget {
     required this.content,
   });
 
+  final FormDirtyController dirty;
   final KnowledgeRewriteKind kind;
   final String objectId;
   final String locale;
@@ -53,6 +59,7 @@ class _KnowledgeRewriteSheetState
   var _style = KnowledgeRewriteStyle.clear;
   var _loading = false;
   var _hasDraft = false;
+  var _showOriginal = false;
   String? _error;
   late String _sourceHeading;
   late String _sourceContent;
@@ -63,6 +70,7 @@ class _KnowledgeRewriteSheetState
     _sourceHeading = widget.heading.trim();
     _sourceContent = widget.content.trim();
     _restoreSource();
+    widget.dirty.bindTextControllers([_heading, _content]);
   }
 
   @override
@@ -108,7 +116,9 @@ class _KnowledgeRewriteSheetState
             compact: true,
             kind: client == null ? AppStatusKind.warning : AppStatusKind.info,
             message: client == null
-                ? l10n.knowledgeRewriteUnavailable
+                ? (kIsWeb
+                      ? l10n.knowledgeRewriteWebUnavailable
+                      : l10n.knowledgeRewriteUnavailable)
                 : l10n.knowledgeRewriteDisclosure,
           ),
           if (client != null) ...[
@@ -137,6 +147,23 @@ class _KnowledgeRewriteSheetState
                 kind: AppStatusKind.error,
                 message: _error!,
               ),
+            ],
+            if (_hasDraft) ...[
+              AppRevealControl(
+                expanded: _showOriginal,
+                collapsedLabel: l10n.knowledgeRewriteShowOriginal,
+                expandedLabel: l10n.knowledgeRewriteHideOriginal,
+                enabled: !_loading,
+                onToggle: () => setState(() => _showOriginal = !_showOriginal),
+              ),
+              if (_showOriginal)
+                AppSection.item(
+                  title: l10n.knowledgeRewriteOriginalTitle,
+                  children: [
+                    Text(_sourceHeading, style: context.labelStyle),
+                    AiMarkdown(text: _sourceContent),
+                  ],
+                ),
             ],
             const SizedBox(height: AppSpacing.s16),
             Text(
@@ -176,12 +203,15 @@ class _KnowledgeRewriteSheetState
     );
   }
 
-  void _changeStyle(KnowledgeRewriteStyle style) {
+  Future<void> _changeStyle(KnowledgeRewriteStyle style) async {
+    if (style == _style) return;
+    if (!await confirmDiscardIfDirty(context, widget.dirty) || !mounted) return;
     setState(() {
       _style = style;
       _hasDraft = false;
       _error = null;
       _restoreSource();
+      widget.dirty.markPristine();
     });
   }
 
@@ -205,6 +235,7 @@ class _KnowledgeRewriteSheetState
       _loading = true;
       _error = null;
     });
+    widget.dirty.busy = true;
     try {
       final draft = await client.rewrite(
         KnowledgeRewriteRequest(
@@ -219,6 +250,7 @@ class _KnowledgeRewriteSheetState
       if (!mounted) return;
       _heading.text = draft.heading;
       _content.text = draft.content;
+      widget.dirty.markDirty();
       setState(() => _hasDraft = true);
     } on KnowledgeRewriteEmptyResponseException catch (error, stackTrace) {
       if (!mounted) return;
@@ -255,6 +287,7 @@ class _KnowledgeRewriteSheetState
         );
       });
     } finally {
+      widget.dirty.busy = false;
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -268,6 +301,7 @@ class _KnowledgeRewriteSheetState
       );
       return;
     }
+    widget.dirty.markPristine();
     Navigator.of(context)
         .pop(KnowledgeRewriteDraft(heading: heading, content: content));
   }

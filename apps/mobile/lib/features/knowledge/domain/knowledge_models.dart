@@ -241,3 +241,17 @@ List<String> decodeStringList(String value) {
 }
 
 String encodeStringList(List<String> values) => jsonEncode(values);
+
+class KnowledgeDecisionReviewDraft {
+  const KnowledgeDecisionReviewDraft({
+    required this.reviewDate,
+    required this.revisitConditions,
+    required this.actualOutcomeMd,
+    required this.status,
+  });
+
+  final DateTime? reviewDate;
+  final List<DecisionRevisitCondition> revisitConditions;
+  final String? actualOutcomeMd;
+  final DecisionStatus status;
+}

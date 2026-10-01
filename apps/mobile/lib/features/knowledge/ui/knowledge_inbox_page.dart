@@ -12,6 +12,7 @@ import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
 import '../domain/knowledge_text.dart';
 import 'knowledge_capture_sheet.dart';
+import 'knowledge_decision_review_sheet.dart';
 import 'knowledge_greeting_header.dart';
 import 'widgets/knowledge_entry_tile.dart';
 
@@ -111,6 +112,7 @@ class _InboxContentState extends ConsumerState<_InboxContent> {
           subtitle: knowledgeExcerpt(note.bodyMd),
           tags: note.tags,
           kindLabel: l10n.knowledgeKindNote,
+          showKind: false,
           icon: FLucideIcons.fileText,
           onPress: () => context.push(KnowledgeRoutes.note(note.id)),
         ),
@@ -203,10 +205,18 @@ class _InboxContentState extends ConsumerState<_InboxContent> {
       );
 }
 
-class _DueDecisionTile extends StatelessWidget {
+class _DueDecisionTile extends ConsumerStatefulWidget {
   const _DueDecisionTile({required this.decision});
 
   final KnowledgeDecision decision;
+
+  @override
+  ConsumerState<_DueDecisionTile> createState() => _DueDecisionTileState();
+}
+
+class _DueDecisionTileState extends ConsumerState<_DueDecisionTile> {
+  bool _reviewing = false;
+  KnowledgeDecision get decision => widget.decision;
 
   @override
   Widget build(BuildContext context) {
@@ -226,6 +236,25 @@ class _DueDecisionTile extends StatelessWidget {
       kindLabel: l10n.knowledgeKindDecision,
       icon: FLucideIcons.history,
       accented: true,
+      showKind: false,
+      trailingAction: AppQuietButton(
+        key: ValueKey('knowledge-inbox-start-review-${decision.id}'),
+        onPress: _reviewing
+            ? null
+            : () async {
+                setState(() => _reviewing = true);
+                try {
+                  await reviewSavedKnowledgeDecision(
+                    context: context,
+                    ref: ref,
+                    decision: decision,
+                  );
+                } finally {
+                  if (mounted) setState(() => _reviewing = false);
+                }
+              },
+        label: l10n.knowledgeDecisionReviewNowAction,
+      ),
       onPress: () => context.push(KnowledgeRoutes.decision(decision.id)),
     );
   }

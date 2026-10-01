@@ -125,4 +125,21 @@ mixin KnowledgeNotesRepositoryMixin {
       rowId: note.id,
     );
   }
+
+  Stream<List<KnowledgeNote>> watchNotesByIds({
+    required String ownerUserId,
+    required Set<String> ids,
+  }) {
+    if (ids.isEmpty) return Stream.value(const <KnowledgeNote>[]);
+    final query = _db.select(_db.knowledgeNotes)
+      ..where(
+        (table) =>
+            table.ownerUserId.equals(ownerUserId) &
+            table.deletedAt.isNull() &
+            table.id.isIn(ids),
+      );
+    return query.watch().map(
+      (rows) => rows.map(knowledgeNoteFromRow).toList(growable: false),
+    );
+  }
 }

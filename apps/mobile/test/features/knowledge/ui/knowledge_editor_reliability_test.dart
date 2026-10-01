@@ -81,6 +81,43 @@ void main() {
     },
   );
 
+  testWidgets('a body-only Note can be edited and saved without a title', (
+    tester,
+  ) async {
+    final database = makeTestDatabase();
+    addTearDown(database.close);
+    final repository = KnowledgeRepository(
+      db: database,
+      outbox: InMemoryOutboxStore(),
+    );
+    final note = KnowledgeNote(
+      id: 'body-only',
+      title: '',
+      bodyMd: 'Source text',
+      createdAt: _sync().updatedAt,
+      sync: _sync(),
+    );
+    await repository.upsertNote(note);
+    await tester.pumpWidget(_wrap(note.id, repository));
+    await tester.tap(find.text('Open note'));
+    await _settle(tester);
+    await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+    await _settle(tester);
+    await tester.enterText(
+      find.byKey(const Key('knowledge-note-body')),
+      'Updated body',
+    );
+    await _settle(tester);
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await _settle(tester);
+    final saved = await repository.findNote(ownerUserId: _owner, id: note.id);
+    expect(saved?.title, '');
+    expect(saved?.bodyMd, 'Updated body');
+    expect(find.byKey(const Key('knowledge-note-title')), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(Duration.zero);
+  });
+
   testWidgets('Note editor guards dirty exits and confirms deletion', (
     tester,
   ) async {
@@ -150,7 +187,7 @@ void main() {
     await tester.tap(find.text('Delete').hitTestable());
     await _settle(tester);
     expect(find.text('Delete this note?'), findsOneWidget);
-    await tester.tap(find.text('Cancel'));
+    await tester.tap(find.text('Cancel').hitTestable());
     await _settle(tester);
     expect(
       (await repository.findNote(

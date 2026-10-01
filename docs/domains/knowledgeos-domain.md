@@ -61,8 +61,14 @@ query.
 Library preserves query (`q`), object kind (`scope`), and tag (`tag`) in the
 route alongside `selected`. Reloading restores those filters; clearing them
 keeps the selected object and unrelated route parameters. Applied filters and
-the displayed search-result count use the shared filter summary. Note deletion
-lives in the detail header's More actions menu and still requires confirmation.
+the displayed search-result count use the shared filter summary. Each applied
+filter can be removed independently; the tag picker opens on demand. Search
+excerpts show the matching passage when the query occurs in the document.
+Note and Decision deletion live in the detail header's More actions menu and
+still require confirmation. Desktop row changes, detail close, and Library
+route exits confirm discarding unsaved edits and block navigation during saves.
+Keyboard users can focus search with `/`, select adjacent rows with `j` / `k`,
+and submit edits with Ctrl/Cmd + Enter.
 
 Key files:
 
@@ -75,6 +81,18 @@ Key files:
 
 The primary capture action opens a Note directly, without a type chooser.
 Decision capture remains an explicit secondary action in Inbox and Library.
+Normal capture and creation from a Note share one full-page guarded form; the
+latter still atomically creates its source Relation. Note and Decision editors
+use pinned Save/Cancel actions and a readable content width. Notes require a
+title or body in both capture and editing, and offer existing tags as shortcuts.
+Inbox due rows provide a direct review action. Reviews lead with actual outcome
+and common statuses; schedule, revisit conditions, and the full status set are
+available under an explicit reveal control. Review submission reads the current
+stored Decision before updating review fields.
+AI rewrite is native-only: unconfigured profiles link directly to settings,
+and Web hides the entry. Generated drafts support original-text comparison,
+confirm dirty dismissal/style resets, and only enter the editor after explicit
+acceptance; the user still saves the record normally.
 Capture never saves an intermediate Note merely to classify or promote it later.
 Notes use a guarded sheet with source and tags collapsed initially. Structured
 Decision capture opens a full page with an unsaved-changes guard; switching

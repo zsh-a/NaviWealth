@@ -19,6 +19,8 @@ class KnowledgeEntryTile extends StatelessWidget {
     this.meta,
     this.tags = const <String>[],
     this.accented = false,
+    this.showKind = true,
+    this.trailingAction,
     this.iconColor,
     this.decisionStatus,
     this.menuActions = const <AppAdaptiveAction>[],
@@ -32,9 +34,10 @@ class KnowledgeEntryTile extends StatelessWidget {
   final String? meta;
   final List<String> tags;
   final bool accented;
+  final bool showKind;
+  final Widget? trailingAction;
 
-  /// Optional tonal override for the leading [AppIconTile]. When null the
-  /// tile keeps the muted treatment, or the KnowledgeOS domain accent when
+  /// Optional color for the leading icon. Defaults to muted, or the KnowledgeOS domain accent when
   /// [accented].
   final Color? iconColor;
 
@@ -72,44 +75,20 @@ class KnowledgeEntryTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppIconTile(
-              icon: icon,
-              color: tileColor,
-              size: AppControlHeights.touchTarget,
-              iconSize: AppIconSizes.sm,
-              radius: AppRadius.md,
-              backgroundOpacity: accented || iconColor != null
-                  ? AppOpacity.whisper
-                  : AppOpacity.subtle,
-              foregroundOpacity: 1,
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.s2),
+              child: Icon(icon, color: tileColor, size: AppIconSizes.sm),
             ),
-            const SizedBox(width: AppSpacing.s12),
+            const SizedBox(width: AppSpacing.s10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.rowTitleStyle,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.s8),
-                      FBadge(child: Text(kindLabel)),
-                      if (decisionStatus case final status?) ...[
-                        const SizedBox(width: AppSpacing.s4),
-                        AppBadge(
-                          label: knowledgeDecisionStatusLabel(l10n, status),
-                          tone: _decisionStatusTone(status),
-                          size: AppBadgeSize.compact,
-                          icon: _decisionStatusIcon(status),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.rowTitleStyle,
                   ),
                   if (secondary != null && secondary.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.s4),
@@ -120,9 +99,28 @@ class KnowledgeEntryTile extends StatelessWidget {
                       style: context.bodyCaptionStyle,
                     ),
                   ],
-                  if (metadata != null && metadata.isNotEmpty) ...[
+                  if (showKind ||
+                      decisionStatus != null ||
+                      (metadata?.isNotEmpty ?? false)) ...[
                     const SizedBox(height: AppSpacing.s6),
-                    Text(metadata, style: context.captionMediumStyle),
+                    Wrap(
+                      spacing: AppSpacing.s6,
+                      runSpacing: AppSpacing.s4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (showKind)
+                          Text(kindLabel, style: context.captionStyle),
+                        if (decisionStatus case final status?)
+                          AppBadge(
+                            label: knowledgeDecisionStatusLabel(l10n, status),
+                            tone: _decisionStatusTone(status),
+                            size: AppBadgeSize.compact,
+                            icon: _decisionStatusIcon(status),
+                          ),
+                        if (metadata?.isNotEmpty ?? false)
+                          Text(metadata!, style: context.captionMediumStyle),
+                      ],
+                    ),
                   ],
                   if (visibleTags.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.s8),
@@ -148,7 +146,9 @@ class KnowledgeEntryTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
-            if (menuActions.isNotEmpty)
+            if (trailingAction != null)
+              trailingAction!
+            else if (menuActions.isNotEmpty)
               IgnorePointer(
                 ignoring: !showActions,
                 child: AnimatedOpacity(

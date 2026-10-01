@@ -28,6 +28,7 @@ class ObjectDetailScaffold extends StatelessWidget {
     this.childPad = false,
     this.confirmLeave,
     this.transparentMaterial = true,
+    this.resizeToAvoidBottomInset = true,
   }) : assert(title != null || titleWidget != null);
 
   /// Plain header title, e.g. `'概念'` or an object label.
@@ -55,6 +56,7 @@ class ObjectDetailScaffold extends StatelessWidget {
   /// Wrap the body in a transparent Material so ForUI/Material descendants
   /// render consistently without every detail page repeating the same shell.
   final bool transparentMaterial;
+  final bool resizeToAvoidBottomInset;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +71,7 @@ class ObjectDetailScaffold extends StatelessWidget {
         confirmLeave: confirmLeave,
       ),
       childPad: childPad,
+      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
       child: body,
     );
   }

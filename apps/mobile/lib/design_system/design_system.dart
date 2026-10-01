@@ -108,6 +108,7 @@ export 'widgets/domain_tab_scaffold.dart';
 export 'widgets/fade_slide_in.dart';
 export 'widgets/floating_glass_nav.dart';
 export 'widgets/form_dirty_controller.dart';
+export 'widgets/form_leave_scope.dart';
 export 'widgets/form_picker_row.dart';
 export 'widgets/forui_dialogs.dart';
 export 'widgets/life_timeline.dart';

@@ -14,6 +14,7 @@ import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_decision_detail_page.dart';
+import 'package:naviwealth/features/knowledge/ui/knowledge_inbox_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -168,6 +169,10 @@ void main() {
     await tester.tap(find.byKey(const Key('knowledge-decision-review')));
     await _settlePaint(tester);
 
+    await tester.tap(
+      find.byKey(const Key('knowledge-decision-review-details')),
+    );
+    await _settlePaint(tester);
     await tester.enterText(
       find.byKey(const Key('knowledge-decision-review-conditions')),
       'Revenue drops\nThe vendor changes terms',
@@ -203,6 +208,57 @@ void main() {
     expect(saved?.status, DecisionStatus.verified);
     await _disposeWidget(tester);
   });
+
+  testWidgets(
+    'Inbox reviews a due decision directly and removes completed work',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1200));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = KnowledgeRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final decision = _decision(reviewDate: DateTime.utc(2020));
+      await repository.upsertDecision(decision);
+      await tester.pumpWidget(
+        _wrap(
+          decisionId: decision.id,
+          repository: repository,
+          executionAvailable: false,
+          child: const KnowledgeInboxPage(),
+        ),
+      );
+      await _settlePaint(tester);
+      await tester.tap(
+        find.byKey(ValueKey('knowledge-inbox-start-review-${decision.id}')),
+      );
+      await _settlePaint(tester);
+      await tester.enterText(
+        find.byKey(const Key('knowledge-decision-review-actual')),
+        'Completed from Inbox',
+      );
+      await tester.tap(find.text('Verified').hitTestable());
+      await _settlePaint(tester);
+      await tester.tap(
+        find.byKey(const Key('knowledge-decision-review-submit')),
+      );
+      await _settlePaint(tester);
+      final saved = await repository.findDecision(
+        ownerUserId: _owner,
+        id: decision.id,
+      );
+      expect(saved?.actualOutcomeMd, 'Completed from Inbox');
+      expect(saved?.status, DecisionStatus.verified);
+      expect(
+        find.byKey(ValueKey('knowledge-inbox-review-${decision.id}')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+      await _disposeWidget(tester);
+    },
+  );
 
   testWidgets('creates one source-linked Action from a Decision', (
     tester,
@@ -331,6 +387,7 @@ Widget _wrap({
   required bool executionAvailable,
   LifeSourceActionReader? readLinkedAction,
   LifeActionDispatcher? dispatchAction,
+  Widget? child,
 }) {
   return ProviderScope(
     overrides: [
@@ -357,7 +414,7 @@ Widget _wrap({
       locale: const Locale('en'),
       home: FTheme(
         data: FTheme.neutral.light.desktop,
-        child: KnowledgeDecisionDetailPage(decisionId: decisionId),
+        child: child ?? KnowledgeDecisionDetailPage(decisionId: decisionId),
       ),
     ),
   );

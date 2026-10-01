@@ -39,8 +39,10 @@ class KnowledgeRelationsSection extends ConsumerWidget {
     final relationsAsync = ref.watch(
       knowledgeRelationsForObjectProvider(_subject),
     );
-    final notesAsync = ref.watch(knowledgeNotesProvider);
-    final decisionsAsync = ref.watch(knowledgeDecisionsProvider);
+    final notesAsync = ref.watch(knowledgeRelationNotesProvider(_subject));
+    final decisionsAsync = ref.watch(
+      knowledgeRelationDecisionsProvider(_subject),
+    );
     final error =
         relationsAsync.error ?? notesAsync.error ?? decisionsAsync.error;
     final loading =
@@ -108,11 +110,16 @@ class KnowledgeRelationsSection extends ConsumerWidget {
           const SizedBox(height: AppSpacing.s10),
         ],
         if (error != null)
-          Text(
-            userSafeErrorMessage(context, error),
-            style: context.captionStyle.copyWith(
-              color: context.theme.colors.destructive,
-            ),
+          AppEmptyState.error(
+            title: l10n.commonLoadFailed,
+            message: userSafeErrorMessage(context, error),
+            retryLabel: l10n.commonRetry,
+            onRetry: () {
+              ref.invalidate(knowledgeRelationsForObjectProvider(_subject));
+              ref.invalidate(knowledgeRelationNotesProvider(_subject));
+              ref.invalidate(knowledgeRelationDecisionsProvider(_subject));
+            },
+            compact: true,
           )
         else if (loading)
           const Center(

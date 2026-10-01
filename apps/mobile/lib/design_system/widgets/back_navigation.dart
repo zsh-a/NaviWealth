@@ -13,8 +13,12 @@
 // clearSelectedDetail) also live here so the constant and the URI
 // rewrite never drift across layers.
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+
+import 'form_leave_scope.dart';
 
 /// Conventional name for the master-detail "selected row" query
 /// parameter — `?selected=<id>`. Owned here so the router, list pages,
@@ -54,7 +58,8 @@ bool hasSelectedDetail(BuildContext context) {
 
 /// If the current location carries a `?selected=` query, drop just that
 /// key (preserving the path and other query keys) and `go()` to the
-/// resulting URL. Returns `true` when a clear was performed.
+/// resulting URL. Returns `true` when the back request was handled; a dirty
+/// detail may first ask for confirmation and retain its selection on cancel.
 ///
 /// Used as a "virtual stack entry" on desktop master-detail: clearing
 /// `?selected=` unmounts the detail pane without leaving the list page.
@@ -69,7 +74,18 @@ bool clearSelectedDetail(BuildContext context) {
     path: uri.path,
     queryParameters: next.isEmpty ? null : next,
   );
-  router.go(rewritten.toString());
+  final guard = FormLeaveScope.forRouter(router);
+  if (guard != null && guard.hasPendingChanges) {
+    unawaited(() async {
+      if (await guard.confirmLeave() &&
+          context.mounted &&
+          router.routeInformationProvider.value.uri == uri) {
+        router.go(rewritten.toString());
+      }
+    }());
+  } else {
+    router.go(rewritten.toString());
+  }
   return true;
 }
 
