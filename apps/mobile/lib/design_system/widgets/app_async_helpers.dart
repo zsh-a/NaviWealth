@@ -1,18 +1,32 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
 import '../../core/errors/user_safe_error.dart';
 import '../../l10n/gen/app_localizations.dart';
+import '../tokens/dimens_tokens.dart';
 import 'app_empty_state.dart';
+import 'skeleton.dart';
 
-/// Default loading widget: centred [FCircularProgress].
-const Widget kDefaultLoading = Center(child: FCircularProgress());
+/// Compact content placeholder; action buttons own their progress spinners.
+const Widget kDefaultLoading = Padding(
+  padding: EdgeInsets.all(AppSpacing.s16),
+  child: Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      SkeletonBox(height: 16),
+      SizedBox(height: AppSpacing.s12),
+      SkeletonBox(height: 16),
+      SizedBox(height: AppSpacing.s12),
+      SkeletonBox(height: 16),
+    ],
+  ),
+);
 
 /// Builds a default error widget from an [Object] error.
 ///
-/// Renders an [AppEmptyState.error] with the error's [toString] as the
-/// message and an optional [onRetry] callback surfaced as the canonical
+/// Renders an [AppEmptyState.error] with a user-safe message and an
+/// optional [onRetry] callback surfaced as the canonical
 /// primary retry action.
 Widget kDefaultError(
   BuildContext context,
@@ -43,14 +57,14 @@ Widget kDefaultError(
 /// async.whenOrError(data: (items) => _buildList(items))
 /// ```
 extension AsyncValueWhenX<T> on AsyncValue<T> {
-  /// Like [when], but supplies a default [FCircularProgress] for loading.
+  /// Like [when], but preserves resolved content during refresh by default.
   Widget whenOrLoading({
     required BuildContext context,
     required Widget Function(T data) data,
     Widget Function()? loading,
     Widget Function(Object error, StackTrace stack)? error,
     VoidCallback? onRetry,
-    bool skipLoadingOnRefresh = false,
+    bool skipLoadingOnRefresh = true,
     bool skipLoadingOnReload = false,
   }) {
     return when(

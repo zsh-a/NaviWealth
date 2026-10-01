@@ -16584,6 +16584,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get commonClearFilters => '清除筛选';
 
   @override
+  String get commonSortAscending => '升序';
+
+  @override
+  String get commonSortDescending => '降序';
+
+  @override
+  String get portfolioHoldingsSearchHint => '按名称或代码搜索持仓';
+
+  @override
+  String get portfolioHoldingsSortAction => '持仓排序';
+
+  @override
+  String get portfolioHoldingsNoResultsTitle => '没有匹配的持仓';
+
+  @override
+  String get portfolioHoldingsNoResultsBody => '试试其他名称或代码，或清除搜索。';
+
+  @override
   String commonSearchResultsCount(int count) {
     return '显示 $count 条结果';
   }

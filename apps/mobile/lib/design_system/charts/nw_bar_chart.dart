@@ -1,12 +1,14 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:forui/forui.dart';
 
 import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import '../widgets/amount_privacy_scope.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
 import 'chart_series.dart';
@@ -53,6 +55,68 @@ class NwBarChart extends StatefulWidget {
 class _NwBarChartState extends State<NwBarChart> {
   // First-paint entrance reveal has completed (or was skipped).
   bool _revealDone = false;
+  bool _focused = false;
+  int _keyboardIndex = -1;
+
+  List<({CategoryDatum datum, String seriesName})> get _samples => [
+    for (
+      var category = 0;
+      category <
+          widget.series.fold<int>(
+            0,
+            (n, s) => s.data.length > n ? s.data.length : n,
+          );
+      category++
+    )
+      for (final series in widget.series)
+        if (category < series.data.length && !series.data[category].isMissing)
+          (datum: series.data[category], seriesName: series.name),
+  ];
+
+  void _moveSelection(int delta) {
+    final samples = _samples;
+    if (samples.isEmpty) return;
+    final next = _keyboardIndex < 0
+        ? (delta < 0 ? samples.length - 1 : 0)
+        : (_keyboardIndex + delta).clamp(0, samples.length - 1);
+    setState(() => _keyboardIndex = next);
+    widget.onScrub?.call(samples[next].datum);
+  }
+
+  void _clearSelection() {
+    if (_keyboardIndex < 0) return;
+    setState(() => _keyboardIndex = -1);
+    widget.onScrub?.call(null);
+  }
+
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+      _moveSelection(-1);
+    } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+      _moveSelection(1);
+    } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+      _clearSelection();
+    } else if ((event.logicalKey == LogicalKeyboardKey.enter ||
+            event.logicalKey == LogicalKeyboardKey.space) &&
+        widget.drillDown is BarDrillDown &&
+        _keyboardIndex >= 0 &&
+        _keyboardIndex < _samples.length) {
+      final drillDown = widget.drillDown! as BarDrillDown;
+      if (drillDown.haptic) HapticFeedback.selectionClick();
+      drillDown.onTap(_samples[_keyboardIndex].datum);
+    } else {
+      return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
+  }
+
+  String _sampleLabel(({CategoryDatum datum, String seriesName}) sample) {
+    final value = AmountPrivacyScope.isHiddenOf(context)
+        ? AmountPrivacyScope.hiddenSemanticsLabelOf(context)
+        : widget.yAxis.formatValue(sample.datum.value);
+    return '${sample.seriesName} · ${sample.datum.tooltipLabel ?? sample.datum.label} · $value';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +219,7 @@ class _NwBarChartState extends State<NwBarChart> {
     final chartMinY = minY < 0 ? minY - yPad : 0.0;
     final chartMaxY = maxY + yPad;
 
+    final hideAmounts = AmountPrivacyScope.isHiddenOf(context);
     Widget chartWidget = RepaintBoundary(
       child: BarChart(
         BarChartData(
@@ -170,9 +235,15 @@ class _NwBarChartState extends State<NwBarChart> {
             ),
           ),
           borderData: FlBorderData(show: false),
-          titlesData: _buildTitles(palette, chartMinY, chartMaxY),
+          titlesData: _buildTitles(palette, chartMinY, chartMaxY, hideAmounts),
           barTouchData: _buildTouchData(context, palette, colors),
         ),
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.componentChange,
+          role: AppMotionRole.status,
+        ),
+        curve: Motion.standardDecelerate,
       ),
     );
 
@@ -206,14 +277,85 @@ class _NwBarChartState extends State<NwBarChart> {
       );
     }
 
+    final samples = _samples;
+    final selected = _keyboardIndex >= 0 && _keyboardIndex < samples.length
+        ? samples[_keyboardIndex]
+        : null;
+    String? nextLabel(int delta) {
+      if (samples.isEmpty) return null;
+      final index = _keyboardIndex < 0
+          ? (delta < 0 ? samples.length - 1 : 0)
+          : (_keyboardIndex + delta).clamp(0, samples.length - 1);
+      return _sampleLabel(samples[index]);
+    }
+
+    final description =
+        widget.semanticLabel ??
+        widget.series.map((series) => series.name).join(', ');
     return Semantics(
-      label: widget.semanticLabel,
+      label: description,
+      value: samples.isEmpty ? null : _sampleLabel(selected ?? samples.first),
+      increasedValue: nextLabel(1),
+      decreasedValue: nextLabel(-1),
       container: true,
-      child: AspectRatio(aspectRatio: widget.aspectRatio, child: chartWidget),
+      excludeSemantics: true,
+      focusable: true,
+      focused: _focused,
+      onIncrease: samples.isEmpty ? null : () => _moveSelection(1),
+      onDecrease: samples.isEmpty ? null : () => _moveSelection(-1),
+      child: Focus(
+        onKeyEvent: _handleKeyEvent,
+        onFocusChange: (focused) {
+          setState(() => _focused = focused);
+          if (!focused) _clearSelection();
+        },
+        child: FFocusedOutline(
+          focused: _focused,
+          child: AspectRatio(
+            aspectRatio: widget.aspectRatio,
+            child: Stack(
+              children: [
+                Positioned.fill(child: chartWidget),
+                if (selected != null && widget.onScrub == null)
+                  PositionedDirectional(
+                    top: AppSpacing.s4,
+                    end: AppSpacing.s4,
+                    start: AppSpacing.s4,
+                    child: IgnorePointer(
+                      child: Align(
+                        alignment: AlignmentDirectional.topEnd,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: palette.tooltipBackground,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.s8),
+                            child: Text(
+                              _sampleLabel(selected),
+                              style: TypographyTokens.numericCaption.copyWith(
+                                color: palette.tooltipForeground,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  FlTitlesData _buildTitles(ChartPalette palette, double minY, double maxY) {
+  FlTitlesData _buildTitles(
+    ChartPalette palette,
+    double minY,
+    double maxY,
+    bool hideAmounts,
+  ) {
     final yRange = (maxY - minY).abs();
     final interval = yRange > 0
         ? yRange / (widget.yAxis.maxLabels - 1).clamp(1, 100)
@@ -257,7 +399,7 @@ class _NwBarChartState extends State<NwBarChart> {
       ),
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
-          showTitles: true,
+          showTitles: !hideAmounts,
           interval: interval,
           reservedSize: widget.yAxis.reservedWidth(
             context,
@@ -330,7 +472,7 @@ class _NwBarChartState extends State<NwBarChart> {
           if (datum.isMissing) return null;
           return BarTooltipItem(
             '${source.name}\n${datum.tooltipLabel ?? datum.label} · '
-            '${widget.yAxis.formatValue(datum.value)}',
+            '${AmountPrivacyScope.isHiddenOf(context) ? AmountPrivacyScope.hiddenSemanticsLabelOf(context) : widget.yAxis.formatValue(datum.value)}',
             TypographyTokens.numericCaption.copyWith(
               color: palette.tooltipForeground,
             ),

@@ -29410,6 +29410,42 @@ abstract class AppLocalizations {
   /// **'Clear filters'**
   String get commonClearFilters;
 
+  /// No description provided for @commonSortAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get commonSortAscending;
+
+  /// No description provided for @commonSortDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get commonSortDescending;
+
+  /// No description provided for @portfolioHoldingsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search holdings by name or symbol'**
+  String get portfolioHoldingsSearchHint;
+
+  /// No description provided for @portfolioHoldingsSortAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort holdings'**
+  String get portfolioHoldingsSortAction;
+
+  /// No description provided for @portfolioHoldingsNoResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching holdings'**
+  String get portfolioHoldingsNoResultsTitle;
+
+  /// No description provided for @portfolioHoldingsNoResultsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another name or symbol, or clear the search.'**
+  String get portfolioHoldingsNoResultsBody;
+
   /// No description provided for @commonSearchResultsCount.
   ///
   /// In en, this message translates to:

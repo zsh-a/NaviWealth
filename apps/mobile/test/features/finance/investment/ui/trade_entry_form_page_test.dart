@@ -861,7 +861,7 @@ void main() {
 
     tester
         .widget<SegmentedRow<TradeType>>(find.byType(SegmentedRow<TradeType>))
-        .onChanged(TradeType.buy);
+        .onChanged!(TradeType.buy);
     await tester.pump();
     await tester.tap(find.byKey(const Key('trade-entry-settlement-summary')));
     await tester.pumpAndSettle();

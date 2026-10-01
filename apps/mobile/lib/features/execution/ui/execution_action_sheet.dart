@@ -111,6 +111,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       return;
     }
     final title = _title.text.trim();
+    final note = _note.text.trim();
     await submitForm<void>(
       dirty: widget.dirty,
       onBusyChanged: _setSaving,
@@ -121,7 +122,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       commit: () async {
         final repo = await ref.read(executionRepositoryProvider.future);
         final sync = await stampExecutionSync(ref);
-        await repo.upsertAction(_buildAction(sync, title));
+        await repo.upsertAction(_buildAction(sync, title, note));
       },
     );
   }
@@ -154,12 +155,12 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     if (mounted && _saving != value) setState(() => _saving = value);
   }
 
-  ExecutionAction _buildAction(SyncMeta sync, String title) {
+  ExecutionAction _buildAction(SyncMeta sync, String title, String note) {
     final existing = widget.action;
     return ExecutionAction(
       id: existing?.id ?? kExecutionUuid.v4(),
       title: title,
-      note: _note.text.trim(),
+      note: note,
       status: existing?.status ?? ExecutionActionStatus.todo,
       priority: _priority,
       dueAt: _dueAt,
@@ -208,6 +209,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
             ],
             FTextFormField(
               control: FTextFieldControl.managed(controller: _title),
+              enabled: !_saving,
               label: Text(l10n.executionActionField),
               hint: l10n.executionActionTitleHint,
               maxLines: 1,
@@ -237,7 +239,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                   _ExecutionQuickWhen.today => FLucideIcons.sun,
                   _ExecutionQuickWhen.tomorrow => FLucideIcons.sunrise,
                 },
-                onChanged: _saving ? (_) {} : _setQuickWhen,
+                onChanged: _saving ? null : _setQuickWhen,
               ),
               const SizedBox(height: AppSpacing.s12),
               SizedBox(
@@ -270,7 +272,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                 labelOf: (priority) => executionPriorityLabel(l10n, priority),
                 iconOf: _priorityIcon,
                 onChanged: _saving
-                    ? (_) {}
+                    ? null
                     : (priority) {
                         setState(() => _priority = priority);
                         _markDirty();
@@ -355,6 +357,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
               const SizedBox(height: AppSpacing.s12),
               FTextFormField(
                 control: FTextFieldControl.managed(controller: _note),
+                enabled: !_saving,
                 label: Text(l10n.commonNote),
                 hint: l10n.executionActionNoteHint,
                 minLines: 3,

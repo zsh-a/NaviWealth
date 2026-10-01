@@ -40,6 +40,8 @@ import 'package:naviwealth/features/finance/rebalance/domain/universe_rebalance_
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_en.dart';
 
+import '../../../../support/test_app_theme.dart';
+
 Decimal _d(String value) => Decimal.parse(value);
 
 class _PlanRepository extends Fake implements InvestmentPortfolioRepository {
@@ -110,6 +112,102 @@ Lot _lot({
 }
 
 void main() {
+  for (final width in [390.0, 1200.0]) {
+    testWidgets('holdings search and sorting work at $width dp', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size(width, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final state = PortfolioHubState(
+        holdings: [
+          _holding(
+            assetId: 'AAA',
+            type: AssetType.stock,
+            currency: 'USD',
+            marketValue: '100',
+            costBasis: '80',
+          ),
+          _holding(
+            assetId: 'ZZZ',
+            type: AssetType.stock,
+            currency: 'CNY',
+            marketValue: '200',
+            costBasis: '150',
+          ),
+        ],
+        lots: const [],
+        accountById: const {},
+        baseCurrency: 'USD',
+        marketValueInBase: _d('300'),
+        costBasisInBase: _d('230'),
+        unrealizedPnlInBase: _d('70'),
+        ytdReturn: PortfolioReturnResult(
+          from: DateTime.utc(2026),
+          to: DateTime.utc(2026, 5, 17),
+          baseCurrency: 'USD',
+          cashFlows: const [],
+          solution: const XirrConverged(rate: 0.12, iterations: 3),
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            portfolioHubCoreProvider.overrideWith(
+              () => _StaticPortfolioHubNotifier(state),
+            ),
+            portfolioHubInsightsProvider.overrideWith(
+              _EmptyPortfolioInsightsNotifier.new,
+            ),
+            investmentPortfoliosProvider.overrideWith(
+              (_) => Stream.value(const []),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            builder: buildTestAppTheme,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: const PortfolioHubPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final aaa = find.byKey(const ValueKey('AAA'));
+      final zzz = find.byKey(const ValueKey('ZZZ'));
+      expect(tester.getTopLeft(zzz).dy, lessThan(tester.getTopLeft(aaa).dy));
+      if (width >= 1000) {
+        await tester.tap(find.byKey(const ValueKey('portfolio-sort-identity')));
+      } else {
+        await tester.tap(
+          find.byKey(const ValueKey('portfolio-holdings-sort-direction')),
+        );
+      }
+      await tester.pumpAndSettle();
+      expect(tester.getTopLeft(aaa).dy, lessThan(tester.getTopLeft(zzz).dy));
+      final field = find.descendant(
+        of: find.byKey(const ValueKey('portfolio-holdings-search')),
+        matching: find.byType(EditableText),
+      );
+      await tester.enterText(field, 'cny');
+      await tester.pumpAndSettle();
+      expect(aaa, findsNothing);
+      expect(zzz, findsOneWidget);
+      await tester.enterText(field, 'no match');
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppLocalizationsEn().portfolioHoldingsNoResultsTitle),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(AppLocalizationsEn().commonClearFilters).last);
+      await tester.pumpAndSettle();
+      expect(aaa, findsOneWidget);
+      expect(zzz, findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets(
     'selected portfolio has a direct management route and explains unavailable XIRR',
     (tester) async {

@@ -10,6 +10,8 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import '../widgets/amount_privacy_placeholder.dart';
+import '../widgets/amount_privacy_scope.dart';
 import '../widgets/app_tappable.dart';
 import 'chart_palette.dart';
 import 'chart_series.dart';
@@ -66,6 +68,7 @@ class NwPieChart extends StatefulWidget {
 
 class _NwPieChartState extends State<NwPieChart> {
   int _highlightedIndex = -1;
+  bool _focused = false;
 
   // First-paint entrance reveal has completed (or was skipped).
   bool _revealDone = false;
@@ -128,6 +131,12 @@ class _NwPieChartState extends State<NwPieChart> {
           sectionsSpace: 3,
           pieTouchData: _buildTouchData(),
         ),
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.componentChange,
+          role: AppMotionRole.status,
+        ),
+        curve: Motion.standardDecelerate,
       ),
     );
 
@@ -197,17 +206,23 @@ class _NwPieChartState extends State<NwPieChart> {
       container: true,
       onIncrease: () => _moveHighlight(1),
       onDecrease: () => _moveHighlight(-1),
-      child: Focus(onKeyEvent: _handleKeyEvent, child: content),
+      child: Focus(
+        onKeyEvent: _handleKeyEvent,
+        onFocusChange: (focused) => setState(() {
+          _focused = focused;
+          if (!focused) _highlightedIndex = -1;
+        }),
+        child: FFocusedOutline(focused: _focused, child: content),
+      ),
     );
   }
 
   void _moveHighlight(int delta) {
     if (widget.slices.isEmpty) return;
-    final base = _highlightedIndex < 0
-        ? (delta < 0 ? widget.slices.length - 1 : 0)
-        : _highlightedIndex;
     setState(() {
-      _highlightedIndex = (base + delta).clamp(0, widget.slices.length - 1);
+      _highlightedIndex = _highlightedIndex < 0
+          ? (delta < 0 ? widget.slices.length - 1 : 0)
+          : (_highlightedIndex + delta).clamp(0, widget.slices.length - 1);
     });
   }
 
@@ -228,6 +243,7 @@ class _NwPieChartState extends State<NwPieChart> {
     if ((event.logicalKey == LogicalKeyboardKey.enter ||
             event.logicalKey == LogicalKeyboardKey.space) &&
         _highlightedIndex >= 0 &&
+        _highlightedIndex < widget.slices.length &&
         widget.drillDown is SliceDrillDown) {
       (widget.drillDown! as SliceDrillDown).onTap(
         widget.slices[_highlightedIndex],
@@ -261,13 +277,16 @@ class _NwPieChartState extends State<NwPieChart> {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            _formatCompact(s.value),
-            style: TypographyTokens.numericTitle.copyWith(color: onSurface),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (AmountPrivacyScope.isHiddenOf(context))
+            const AmountPrivacyPlaceholder(textAlign: TextAlign.center)
+          else
+            Text(
+              _formatCompact(s.value),
+              style: TypographyTokens.numericTitle.copyWith(color: onSurface),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           const SizedBox(height: AppSpacing.s2),
           Text(
             s.label,
@@ -291,13 +310,19 @@ class _NwPieChartState extends State<NwPieChart> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          _formatCompact(total),
-          style: TypographyTokens.displaySmall.copyWith(color: onSurface),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        if (AmountPrivacyScope.isHiddenOf(context))
+          const AmountPrivacyPlaceholder(
+            density: AmountPrivacyPlaceholderDensity.display,
+            textAlign: TextAlign.center,
+          )
+        else
+          Text(
+            _formatCompact(total),
+            style: TypographyTokens.displaySmall.copyWith(color: onSurface),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         Text(
           AppLocalizations.of(context).chartTotalLabel,
           style: TypographyTokens.numericCaption.copyWith(
@@ -400,17 +425,24 @@ class LegendRow extends StatelessWidget {
                     color: onSurface.withValues(alpha: AppOpacity.prominent),
                   ),
                 ),
-                if (value != null) ...[
-                  const SizedBox(width: AppSpacing.s4),
-                  Text(
-                    value!,
-                    style: TypographyTokens.chartCaption.copyWith(
-                      color: onSurface.withValues(alpha: AppOpacity.emphasis),
-                    ),
-                  ),
-                ],
               ],
             ),
+            if (value != null) ...[
+              const SizedBox(height: AppSpacing.s2),
+              if (AmountPrivacyScope.isHiddenOf(context))
+                const AmountPrivacyPlaceholder(
+                  density: AmountPrivacyPlaceholderDensity.compact,
+                )
+              else
+                Text(
+                  value!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TypographyTokens.chartCaption.copyWith(
+                    color: onSurface.withValues(alpha: AppOpacity.emphasis),
+                  ),
+                ),
+            ],
             const SizedBox(height: AppSpacing.s2),
             Container(
               height: AppStroke.branch,

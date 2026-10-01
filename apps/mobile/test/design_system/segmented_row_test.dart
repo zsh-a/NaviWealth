@@ -27,6 +27,64 @@ Widget _wrap(Widget child, {double width = 400, double textScale = 1}) {
 }
 
 void main() {
+  testWidgets('disabled segments expose no activation or focus target', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<String>(
+          options: const ['a', 'b'],
+          value: 'a',
+          labelOf: (value) => value,
+          onChanged: null,
+        ),
+      ),
+    );
+    final node = tester.getSemantics(find.bySemanticsLabel('b'));
+    expect(node.flagsCollection.isEnabled, Tristate.isFalse);
+    expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(
+      FocusManager.instance.primaryFocus?.context?.widget,
+      isNot(isA<FTappable>()),
+    );
+    semantics.dispose();
+  });
+
+  testWidgets('changing a segment emits one selection haptic', (tester) async {
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        calls.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<String>(
+          options: const ['a', 'b'],
+          value: 'a',
+          labelOf: (value) => value,
+          onChanged: (_) {},
+        ),
+      ),
+    );
+    await tester.tap(find.text('b'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      calls.where((call) => call.method == 'HapticFeedback.vibrate'),
+      hasLength(1),
+    );
+  });
+
   testWidgets('renders one labelled segment per option', (tester) async {
     String? changedTo;
     await tester.pumpWidget(

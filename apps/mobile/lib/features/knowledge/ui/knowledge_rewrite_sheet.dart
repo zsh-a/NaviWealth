@@ -138,7 +138,7 @@ class _KnowledgeRewriteSheetState
                 KnowledgeRewriteStyle.structured =>
                   l10n.knowledgeRewriteStyleStructured,
               },
-              onChanged: _loading ? (_) {} : _changeStyle,
+              onChanged: _loading ? null : _changeStyle,
             ),
             if (_error != null) ...[
               const SizedBox(height: AppSpacing.s12),

@@ -4,6 +4,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
+import '../../../core/forms/form_undo.dart';
+import '../../../core/logging/providers.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -49,7 +51,7 @@ class _ExecutionPlanCardControllerState
   Future<void> _changeStatus(ExecutionPlanStatus status) async {
     if (_busy) return;
     final l10n = AppLocalizations.of(context);
-    final feedbackContext = context;
+    final feedbackContext = Navigator.of(context).context;
     AppMessenger.cacheOverlay(feedbackContext);
     if ((status == ExecutionPlanStatus.completed ||
             status == ExecutionPlanStatus.archived) &&
@@ -61,33 +63,61 @@ class _ExecutionPlanCardControllerState
       return;
     }
     if (!feedbackContext.mounted || !mounted) return;
+    final offers = ref.read(formUndoOfferProvider.notifier);
+    final logger = ref.read(loggerProvider);
+    final before = widget.plan;
     setState(() => _busy = true);
     try {
-      final repo = await ref.read(executionRepositoryProvider.future);
-      final sync = await stampExecutionSync(ref);
+      final repository = ref.read(executionRepositoryProvider.future);
+      final stampSource = ref.read(mutationStamperProvider.future);
+      final repo = await repository;
+      final stamper = await stampSource;
+      Future<SyncMeta> stampSync() async {
+        final stamp = await stamper.stamp();
+        return SyncMeta(
+          ownerUserId: stamp.ownerUserId,
+          updatedAt: stamp.now,
+          updatedByDevice: stamp.deviceId,
+          hlc: stamp.hlc,
+        );
+      }
+
+      final sync = await stampSync();
       final progress = ExecutionProgressEntry(
         id: kExecutionUuid.v4(),
-        planId: widget.plan.id,
+        planId: before.id,
         kind: _planProgressKind(status),
         note: _planProgressNote(l10n, status),
         createdAt: sync.updatedAt,
         sync: sync,
       );
       final affectedActions = await repo.updatePlanStatus(
-        plan: widget.plan,
+        plan: before,
         status: status,
         sync: sync,
         progress: progress,
       );
       final undo = ExecutionPlanStatusUndo(
         repository: repo,
-        before: widget.plan,
+        before: before,
         affectedActions: affectedActions,
         appliedSync: sync,
-        stamp: () => _stampForUndo(ref),
+        stamp: stampSync,
         progressId: progress.id,
       );
       if (feedbackContext.mounted) {
+        final offer = FormUndoOffer(
+          message: l10n.executionLifecycleStatusUpdated(
+            executionPlanStatusLabel(l10n, status),
+          ),
+          action: FormUndoAction(undo.restore),
+          actionLabel: l10n.commonUndo,
+          successMessage: l10n.commonUndoSucceeded,
+          failureMessage: (_) => l10n.commonUndoFailed,
+          retryLabel: l10n.commonRetry,
+          tag: 'execution-plan-status',
+        );
+        offers.offer(offer);
         AppMessenger.show(
           feedbackContext,
           ToastKind.success,
@@ -96,8 +126,7 @@ class _ExecutionPlanCardControllerState
           ),
           duration: const Duration(seconds: 6),
           actionLabel: l10n.commonUndo,
-          onAction: () =>
-              unawaited(_undoPlanStatus(feedbackContext, undo, l10n)),
+          onAction: () => unawaited(offers.run(feedbackContext, offer, logger)),
         );
       }
     } catch (_) {
@@ -110,31 +139,6 @@ class _ExecutionPlanCardControllerState
       }
     } finally {
       if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _undoPlanStatus(
-    BuildContext feedbackContext,
-    ExecutionPlanStatusUndo undo,
-    AppLocalizations l10n,
-  ) async {
-    try {
-      await undo.restore();
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.success,
-          l10n.commonUndoSucceeded,
-        );
-      }
-    } on Object {
-      if (feedbackContext.mounted) {
-        AppMessenger.show(
-          feedbackContext,
-          ToastKind.error,
-          l10n.commonUndoFailed,
-        );
-      }
     }
   }
 
@@ -185,17 +189,6 @@ Future<bool> _confirmOpenActions(
         icon: FLucideIcons.triangleAlert,
       ) ==
       true;
-}
-
-Future<SyncMeta> _stampForUndo(WidgetRef ref) async {
-  final next = await ref.read(mutationStamperProvider.future);
-  final stamp = await next.stamp();
-  return SyncMeta(
-    ownerUserId: stamp.ownerUserId,
-    updatedAt: stamp.now,
-    updatedByDevice: stamp.deviceId,
-    hlc: stamp.hlc,
-  );
 }
 
 class ExecutionPlanStatusUndo {

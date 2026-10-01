@@ -42,7 +42,7 @@ class AppAdaptiveChoice<T> extends StatelessWidget {
   final String? Function(T value)? descriptionOf;
   final IconData? Function(T value)? iconOf;
   final String Function(T value)? semanticLabelOf;
-  final ValueChanged<T> onChanged;
+  final ValueChanged<T>? onChanged;
 
   /// Optional second line in the compact trigger, such as a result count.
   final String? triggerSubtitle;
@@ -85,16 +85,17 @@ class AppAdaptiveChoice<T> extends StatelessWidget {
               ),
           ],
           value: value,
-          onChanged: onChanged,
+          onChanged: (value) => onChanged?.call(value),
           triggerBuilder: (context, openMenu, focusNode) => Focus(
             focusNode: focusNode,
+            canRequestFocus: onChanged != null,
             child: _ChoiceTrigger(
               title: labelOf(value),
               subtitle: triggerSubtitle,
               semanticLabel:
                   '$title: ${semanticLabelOf?.call(value) ?? labelOf(value)}',
               icon: iconOf?.call(value),
-              onPress: openMenu,
+              onPress: onChanged == null ? null : openMenu,
             ),
           ),
         );
@@ -116,7 +117,7 @@ class _ChoiceTrigger extends StatelessWidget {
   final String? subtitle;
   final String semanticLabel;
   final IconData? icon;
-  final VoidCallback onPress;
+  final VoidCallback? onPress;
 
   @override
   Widget build(BuildContext context) {
@@ -124,64 +125,68 @@ class _ChoiceTrigger extends StatelessWidget {
     final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
     return Semantics(
       button: true,
+      enabled: onPress != null,
       label: semanticLabel,
       excludeSemantics: true,
-      child: AppTappable(
-        onPress: onPress,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: colors.muted.withValues(alpha: AppOpacity.disabled),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: colors.border.withValues(alpha: AppOpacity.highlight),
-            ),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: AppControlHeights.touchTarget,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s12,
-                vertical: AppSpacing.s8,
+      child: Opacity(
+        opacity: onPress == null ? AppOpacity.disabled : AppOpacity.opaque,
+        child: AppTappable(
+          onPress: onPress,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.muted.withValues(alpha: AppOpacity.disabled),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                color: colors.border.withValues(alpha: AppOpacity.highlight),
               ),
-              child: Row(
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: AppIconSizes.sm, color: colors.primary),
-                    const SizedBox(width: AppSpacing.s8),
-                  ],
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: context.labelStyle,
-                        ),
-                        if (hasSubtitle) ...[
-                          const SizedBox(height: AppSpacing.s2),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                minHeight: AppControlHeights.touchTarget,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.s12,
+                  vertical: AppSpacing.s8,
+                ),
+                child: Row(
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+                      const SizedBox(width: AppSpacing.s8),
+                    ],
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            subtitle!,
+                            title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: context.captionStyle,
+                            style: context.labelStyle,
                           ),
+                          if (hasSubtitle) ...[
+                            const SizedBox(height: AppSpacing.s2),
+                            Text(
+                              subtitle!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.captionStyle,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.s8),
-                  Icon(
-                    FLucideIcons.chevronsUpDown,
-                    size: AppIconSizes.sm,
-                    color: colors.mutedForeground,
-                  ),
-                ],
+                    const SizedBox(width: AppSpacing.s8),
+                    Icon(
+                      FLucideIcons.chevronsUpDown,
+                      size: AppIconSizes.sm,
+                      color: colors.mutedForeground,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -69,7 +69,7 @@ List<AmortizationEntry> _schedule({int count = 8}) => [
     ),
 ];
 
-Future<Widget> _wrapDetailPage({int count = 8}) async {
+Future<Widget> _wrapDetailPage({int count = 8, bool hidden = false}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final preferences = await SharedPreferences.getInstance();
   final liability = _liability(count: count);
@@ -93,12 +93,46 @@ Future<Widget> _wrapDetailPage({int count = 8}) async {
       builder: (context, child) => AppMessenger.init(
         child: FTheme(data: FTheme.neutral.light.desktop, child: child!),
       ),
-      home: const LiabilityDetailPage(id: 'liability-1'),
+      home: AmountPrivacyScope(
+        hidden: hidden,
+        child: const LiabilityDetailPage(id: 'liability-1'),
+      ),
     ),
   );
 }
 
 void main() {
+  for (final width in [390.0, 1200.0]) {
+    testWidgets(
+      'hidden amounts stay hidden in liability overview and full schedule at $width dp',
+      (tester) async {
+        await tester.binding.setSurfaceSize(Size(width, 1400));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(await _wrapDetailPage(hidden: true));
+        await tester.pumpAndSettle();
+        expect(find.byType(AmountPrivacyPlaceholder), findsWidgets);
+        expect(find.textContaining('800,000'), findsNothing);
+        expect(find.textContaining('100,000'), findsNothing);
+        expect(find.textContaining('4,000'), findsNothing);
+        final l10n = lookupAppLocalizations(const Locale('en', 'US'));
+        final full = find.byKey(const ValueKey('liability-schedule-details'));
+        if (width < 600) {
+          await tester.ensureVisible(full);
+          await tester.pumpAndSettle();
+          await tester.tap(full);
+          await tester.pumpAndSettle();
+          expect(find.byType(AppSheet), findsOneWidget);
+        }
+        expect(find.textContaining('100,000'), findsNothing);
+        expect(find.textContaining('4,000'), findsNothing);
+        expect(find.bySemanticsLabel(RegExp(l10n.amountHidden)), findsWidgets);
+        expect(tester.takeException(), isNull);
+        semantics.dispose();
+      },
+    );
+  }
+
   for (final fullSchedule in [false, true]) {
     testWidgets(
       'records payment date ${fullSchedule ? 'from full schedule' : 'from overview'} and refreshes rows',

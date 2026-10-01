@@ -48,7 +48,7 @@ class KnowledgeNoteDetailPage extends ConsumerWidget {
     final body = value.when(
       loading: () => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentNotes,
-        child: kDefaultLoading,
+        child: const AssetDetailSkeleton(),
       ),
       error: (error, stackTrace) => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentNotes,

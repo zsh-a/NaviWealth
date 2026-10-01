@@ -75,6 +75,7 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final l10n = AppLocalizations.of(context);
     final title = _title.text.trim();
+    final description = _description.text.trim();
     await submitForm<void>(
       dirty: widget.dirty,
       onBusyChanged: _setSaving,
@@ -85,7 +86,7 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
       commit: () async {
         final repo = await ref.read(executionRepositoryProvider.future);
         final sync = await stampExecutionSync(ref);
-        await repo.upsertPlan(_buildPlan(sync, title));
+        await repo.upsertPlan(_buildPlan(sync, title, description));
       },
     );
   }
@@ -142,12 +143,12 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
     if (mounted && _saving != value) setState(() => _saving = value);
   }
 
-  ExecutionPlan _buildPlan(SyncMeta sync, String title) {
+  ExecutionPlan _buildPlan(SyncMeta sync, String title, String description) {
     final existing = widget.plan;
     return ExecutionPlan(
       id: existing?.id ?? kExecutionUuid.v4(),
       title: title,
-      description: _description.text.trim(),
+      description: description,
       status: existing?.status ?? ExecutionPlanStatus.active,
       horizon: _horizon,
       targetDate: _targetDate,
@@ -191,6 +192,7 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
             ],
             FTextFormField(
               control: FTextFieldControl.managed(controller: _title),
+              enabled: !_saving,
               label: Text(l10n.executionPlanField),
               hint: l10n.executionPlanTitleHint,
               maxLines: 1,
@@ -212,6 +214,7 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _description),
+              enabled: !_saving,
               label: Text(l10n.executionDescriptionField),
               hint: l10n.executionPlanDescriptionHint,
               minLines: 3,

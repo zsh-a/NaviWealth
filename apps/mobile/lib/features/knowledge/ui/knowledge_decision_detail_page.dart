@@ -46,7 +46,7 @@ class KnowledgeDecisionDetailPage extends ConsumerWidget {
     final body = value.when(
       loading: () => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentDecisions,
-        child: kDefaultLoading,
+        child: const AssetDetailSkeleton(),
       ),
       error: (error, stackTrace) => ObjectDetailScaffold(
         title: l10n.knowledgeSegmentDecisions,

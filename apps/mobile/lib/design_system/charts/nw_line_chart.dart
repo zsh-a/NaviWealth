@@ -255,6 +255,10 @@ class _NwLineChartState extends State<NwLineChart> {
   String _resolvedSemanticLabel(List<ChartSeries> processed) {
     final supplied = widget.semanticLabel?.trim();
     if (supplied != null && supplied.isNotEmpty) return supplied;
+    if (AmountPrivacyScope.isHiddenOf(context)) {
+      return '${processed.map((series) => series.name).join(', ')}: '
+          '${AmountPrivacyScope.hiddenSemanticsLabelOf(context)}';
+    }
     return processed
         .where((series) => series.points.isNotEmpty)
         .map((series) => '${series.name}: ${series.points.last.y}')

@@ -34,9 +34,11 @@ class SpendingPage extends ConsumerWidget {
       childPad: false,
       child: reportAsync.whenOrLoading(
         context: context,
+        loading: () => const CashFlowSkeleton(),
         onRetry: () => ref.invalidate(expenseReportProvider),
         data: (report) => categoriesAsync.whenOrLoading(
           context: context,
+          loading: () => const CashFlowSkeleton(),
           onRetry: () => ref.invalidate(allExpenseCategoriesProvider),
           data: (categories) => SpendingBody(
             report: report,

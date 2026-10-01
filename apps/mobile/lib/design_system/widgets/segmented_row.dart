@@ -8,6 +8,7 @@ import '../tokens/text_style_presets.dart';
 import 'app_glass.dart';
 import 'app_interaction.dart';
 import 'app_selection_indicator.dart';
+import 'app_tappable.dart';
 
 /// Shared Forui-based segmented control with a quiet single-surface chrome.
 ///
@@ -43,7 +44,7 @@ class SegmentedRow<T> extends StatelessWidget {
   /// Optional accessible label when the compact visible label is ambiguous.
   /// Defaults to [labelOf].
   final String Function(T)? semanticLabelOf;
-  final ValueChanged<T> onChanged;
+  final ValueChanged<T>? onChanged;
   final IconData? Function(T)? iconOf;
   final double minSegmentWidth;
 
@@ -191,7 +192,11 @@ class SegmentedRow<T> extends StatelessWidget {
     final colors = context.theme.colors;
     final icon = iconOf?.call(option);
     final selected = option == value;
-    final foreground = selected ? colors.primary : colors.mutedForeground;
+    final enabled = onChanged != null;
+    final tone = selected ? colors.primary : colors.mutedForeground;
+    final foreground = enabled
+        ? tone
+        : tone.withValues(alpha: AppOpacity.disabled);
     final label = labelOf(option);
     final semanticLabel = semanticLabelOf?.call(option) ?? label;
     final duration = AppMotionPolicy.duration(
@@ -229,11 +234,17 @@ class SegmentedRow<T> extends StatelessWidget {
     final segment = Semantics(
       button: true,
       selected: selected,
+      enabled: enabled,
       label: semanticLabel,
-      onTap: () => _select(option),
+      onTap: AppInteraction.wrap(
+        enabled ? () => _select(option) : null,
+        intent: AppInteractionIntent.select,
+      ),
       excludeSemantics: true,
-      child: FTappable(
-        onPress: () => _select(option),
+      child: AppTappable(
+        selected: selected,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        onPress: enabled ? () => _select(option) : null,
         child: Container(
           constraints: const BoxConstraints(
             minHeight: AppControlHeights.touchTarget,
@@ -271,7 +282,6 @@ class SegmentedRow<T> extends StatelessWidget {
 
   void _select(T option) {
     if (option == value) return;
-    AppInteraction.signal(AppInteractionIntent.select);
-    onChanged(option);
+    onChanged?.call(option);
   }
 }

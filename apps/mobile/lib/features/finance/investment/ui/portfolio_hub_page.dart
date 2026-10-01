@@ -10,6 +10,7 @@ import 'package:naviwealth/core/async/async_notifier_convention.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
+import 'package:naviwealth/core/shortcuts/master_detail_shortcuts.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/analytics/data/providers.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
@@ -187,7 +188,23 @@ class _PortfolioHubBody extends StatefulWidget {
   State<_PortfolioHubBody> createState() => _PortfolioHubBodyState();
 }
 
+enum _HoldingSort { identity, quantity, weight, value, pnl }
+
+String _holdingSortLabel(AppLocalizations l10n, _HoldingSort sort) =>
+    switch (sort) {
+      _HoldingSort.identity => l10n.portfolioHubAssetColumn,
+      _HoldingSort.quantity => l10n.assetDetailCurrentQuantity,
+      _HoldingSort.weight => l10n.targetAllocationEditorPercentLabel,
+      _HoldingSort.value => l10n.portfolioHubMarketValueLabel,
+      _HoldingSort.pnl => l10n.portfolioHubAbsoluteReturnLabel,
+    };
+
 class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
+  final _search = TextEditingController();
+  final _searchFocus = FocusNode();
+  String _query = '';
+  _HoldingSort _sort = _HoldingSort.value;
+  bool _ascending = false;
   // First-frame entrance stagger (doc 11 §5) — first-paint rows cascade in;
   // later builds (data ticks) appear instantly.
   bool _entranceStagger = true;
@@ -202,10 +219,66 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   }
 
   @override
+  void dispose() {
+    _search.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  void _selectSort(_HoldingSort sort) {
+    setState(() {
+      if (_sort == sort) {
+        _ascending = !_ascending;
+      } else {
+        _sort = sort;
+        _ascending = sort == _HoldingSort.identity;
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _search.clear();
+    setState(() => _query = '');
+    _searchFocus.requestFocus();
+  }
+
+  List<PortfolioHoldingRow> _visibleHoldings() {
+    final query = _query.trim().toLowerCase();
+    final rows = widget.data.holdings
+        .where(
+          (holding) =>
+              query.isEmpty ||
+              '${holding.title} ${holding.subtitle} ${holding.assetId} ${holding.assetCurrency}'
+                  .toLowerCase()
+                  .contains(query),
+        )
+        .toList();
+    rows.sort((a, b) {
+      final result = switch (_sort) {
+        _HoldingSort.identity => a.title.toLowerCase().compareTo(
+          b.title.toLowerCase(),
+        ),
+        _HoldingSort.quantity => a.quantity.compareTo(b.quantity),
+        _HoldingSort.weight => a.weight.compareTo(b.weight),
+        _HoldingSort.value => a.marketValueInBase.compareTo(
+          b.marketValueInBase,
+        ),
+        _HoldingSort.pnl => a.unrealizedPnlInBase.compareTo(
+          b.unrealizedPnlInBase,
+        ),
+      };
+      return result == 0
+          ? a.assetId.compareTo(b.assetId)
+          : (_ascending ? result : -result);
+    });
+    return rows;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final data = widget.data;
-    final holdings = data.holdings;
+    final holdings = _visibleHoldings();
 
     final padding = shellTabContentPadding(
       context,
@@ -215,45 +288,135 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
       bottom: AppSpacing.s16,
     );
 
-    return AdaptiveContentFrame(
-      maxWidth: AdaptiveMaxWidth.dashboard,
-      expandSinglePrimary: true,
-      padding: padding,
-      primary: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s12),
-              child: _PortfolioScopeBar(
-                portfolios: widget.portfolios,
-                value: widget.selectedPortfolioId,
-                holdingCount: data.holdings.length,
-                onOpenPlan: widget.allocationTree == null
-                    ? null
-                    : widget.onOpenPlan,
-                needsRebalance: widget.needsRebalance,
-                onChanged: widget.onPortfolioChanged,
+    return MasterDetailShortcuts(
+      onSearchFocus: () => _searchFocus.requestFocus(),
+      child: AdaptiveContentFrame(
+        maxWidth: AdaptiveMaxWidth.dashboard,
+        expandSinglePrimary: true,
+        padding: padding,
+        primary: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+                child: _PortfolioScopeBar(
+                  portfolios: widget.portfolios,
+                  value: widget.selectedPortfolioId,
+                  holdingCount: data.holdings.length,
+                  onOpenPlan: widget.allocationTree == null
+                      ? null
+                      : widget.onOpenPlan,
+                  needsRebalance: widget.needsRebalance,
+                  onChanged: widget.onPortfolioChanged,
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.s16),
-              child: _PortfolioOverview(data: data),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.s16),
+                child: _PortfolioOverview(data: data),
+              ),
+            ),
+            _positionsSliver(l10n: l10n, holdings: holdings),
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(top: AppSpacing.s16),
+                child: _PortfolioInsightsSection(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _holdingToolbar(AppLocalizations l10n, int resultCount) {
+    final direction = _ascending
+        ? l10n.commonSortAscending
+        : l10n.commonSortDescending;
+    final search = AppSearchField(
+      key: const ValueKey('portfolio-holdings-search'),
+      controller: _search,
+      focusNode: _searchFocus,
+      hint: l10n.portfolioHoldingsSearchHint,
+      clearLabel: l10n.commonClearFilters,
+      onChanged: (value) => setState(() => _query = value),
+    );
+    final sort = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: AppAdaptiveSelectionMenu<_HoldingSort>(
+            title: l10n.portfolioHoldingsSortAction,
+            value: _sort,
+            onChanged: _selectSort,
+            options: [
+              for (final sort in _HoldingSort.values)
+                AppAdaptiveSelection(
+                  value: sort,
+                  title: _holdingSortLabel(l10n, sort),
+                  icon: FLucideIcons.arrowUpDown,
+                ),
+            ],
+            triggerBuilder: (context, openMenu, focusNode) => FButton(
+              key: const ValueKey('portfolio-holdings-sort'),
+              variant: FButtonVariant.outline,
+              mainAxisSize: MainAxisSize.min,
+              focusNode: focusNode,
+              onPress: openMenu,
+              prefix: const Icon(
+                FLucideIcons.arrowUpDown,
+                size: AppIconSizes.sm,
+              ),
+              child: Flexible(child: Text(_holdingSortLabel(l10n, _sort))),
             ),
           ),
-          _positionsSliver(
-            l10n: l10n,
-            holdings: holdings,
-            empty: holdings.isEmpty,
+        ),
+        const SizedBox(width: AppSpacing.s4),
+        AppIconButton(
+          key: const ValueKey('portfolio-holdings-sort-direction'),
+          tooltip: direction,
+          icon: _ascending ? FLucideIcons.arrowUp : FLucideIcons.arrowDown,
+          onPress: () => setState(() => _ascending = !_ascending),
+        ),
+      ],
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth <
+                  600 * MediaQuery.textScalerOf(context).scale(1)) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    search,
+                    const SizedBox(height: AppSpacing.s8),
+                    sort,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: search),
+                  const SizedBox(width: AppSpacing.s12),
+                  Flexible(child: sort),
+                ],
+              );
+            },
           ),
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.only(top: AppSpacing.s16),
-              child: _PortfolioInsightsSection(),
+          if (_query.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppFilterSummary(
+              labels: [_query.trim()],
+              resultCount: resultCount,
+              onClear: _clearSearch,
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -262,9 +425,8 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   Widget _positionsSliver({
     required AppLocalizations l10n,
     required List<PortfolioHoldingRow> holdings,
-    required bool empty,
   }) {
-    if (empty) {
+    if (widget.data.holdings.isEmpty) {
       return SliverToBoxAdapter(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -289,38 +451,64 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
         return SliverMainAxisGroup(
           slivers: [
             SliverToBoxAdapter(
-              child: _PortfolioSectionTitle(
-                title: l10n.portfolioHubPositionsTitle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _PortfolioSectionTitle(
+                    title: l10n.portfolioHubPositionsTitle,
+                  ),
+                  _holdingToolbar(l10n, holdings.length),
+                ],
               ),
             ),
-            if (tabular) const SliverToBoxAdapter(child: _HoldingTableHeader()),
-            DecoratedSliver(
-              decoration: BoxDecoration(
-                color: surfaceColor,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              sliver: SliverList.separated(
-                itemCount: holdings.length,
-                separatorBuilder: (_, _) => const AppGroupedDivider(
-                  indent: AppSpacing.s12,
-                  endIndent: AppSpacing.s12,
+            if (holdings.isEmpty)
+              SliverToBoxAdapter(
+                child: AppEmptyState(
+                  icon: FLucideIcons.search,
+                  title: l10n.portfolioHoldingsNoResultsTitle,
+                  message: l10n.portfolioHoldingsNoResultsBody,
+                  action: AppActionButton(
+                    onPress: _clearSearch,
+                    child: Text(l10n.commonClearFilters),
+                  ),
                 ),
-                itemBuilder: (context, index) {
-                  final row = _HoldingRow(
-                    key: ValueKey(holdings[index].assetId),
-                    holding: holdings[index],
-                    tabular: tabular,
-                  );
-                  if (_entranceStagger && index < _kStaggerRowCap) {
-                    return FadeSlideIn(
-                      delay: Motion.staggerDelayFor(index, _kStaggerRowCap),
-                      child: row,
-                    );
-                  }
-                  return row;
-                },
               ),
-            ),
+            if (tabular && holdings.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _HoldingTableHeader(
+                  sort: _sort,
+                  ascending: _ascending,
+                  onSort: _selectSort,
+                ),
+              ),
+            if (holdings.isNotEmpty)
+              DecoratedSliver(
+                decoration: BoxDecoration(
+                  color: surfaceColor,
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                ),
+                sliver: SliverList.separated(
+                  itemCount: holdings.length,
+                  separatorBuilder: (_, _) => const AppGroupedDivider(
+                    indent: AppSpacing.s12,
+                    endIndent: AppSpacing.s12,
+                  ),
+                  itemBuilder: (context, index) {
+                    final row = _HoldingRow(
+                      key: ValueKey(holdings[index].assetId),
+                      holding: holdings[index],
+                      tabular: tabular,
+                    );
+                    if (_entranceStagger && index < _kStaggerRowCap) {
+                      return FadeSlideIn(
+                        delay: Motion.staggerDelayFor(index, _kStaggerRowCap),
+                        child: row,
+                      );
+                    }
+                    return row;
+                  },
+                ),
+              ),
           ],
         );
       },
@@ -461,7 +649,6 @@ class _PortfolioSelector extends StatelessWidget {
         subtitle: holdingSummary,
         value: selectedValue,
         onChanged: (id) {
-          AppInteraction.signal(AppInteractionIntent.select);
           onChanged(id.isEmpty ? null : id);
         },
         options: [

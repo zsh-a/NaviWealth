@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/forms/form_undo_banner.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -28,9 +29,98 @@ import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../../support/test_app_theme.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 void main() {
+  testWidgets(
+    'plan status undo remains available after navigation and the toast expires',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = ExecutionRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+      );
+      final plan = ExecutionPlan(
+        id: 'undo-navigation',
+        title: 'Keep plan',
+        createdAt: DateTime.utc(2026),
+        sync: _sync(ownerUserId: 'user'),
+      );
+      await repository.upsertPlan(plan);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            executionRepositoryProvider.overrideWith((_) async => repository),
+            mutationStamperProvider.overrideWith(
+              (_) async => makeStubStamper(userId: 'user'),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            builder: (context, child) =>
+                buildTestAppTheme(context, AppMessenger.init(child: child!)),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            locale: const Locale('en', 'US'),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: Column(
+                  children: [
+                    ExecutionPlanCardController(
+                      plan: plan,
+                      onCreateAction: () {},
+                      onEdit: () {},
+                      onRecordProgress: () {},
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pushReplacement(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const Scaffold(
+                            body: Column(
+                              children: [Text('Next page'), FormUndoBanner()],
+                            ),
+                          ),
+                        ),
+                      ),
+                      child: const Text('Navigate'),
+                    ),
+                    const FormUndoBanner(),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byIcon(FLucideIcons.ellipsis));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pause'));
+      await tester.pumpAndSettle();
+      expect(
+        (await repository.findPlan(ownerUserId: 'user', id: plan.id))?.status,
+        ExecutionPlanStatus.paused,
+      );
+      await tester.tap(find.text('Navigate'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ExecutionPlanCardController), findsNothing);
+      await tester.pump(const Duration(seconds: 7));
+      await tester.pumpAndSettle();
+      expect(find.text('Undo'), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(
+        (await repository.findPlan(ownerUserId: 'user', id: plan.id))?.status,
+        ExecutionPlanStatus.active,
+      );
+      expect(find.text('Undo'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 7));
+    },
+  );
+
   testWidgets(
     'scrolled Today keeps the selected lens and can switch in place',
     (tester) async {

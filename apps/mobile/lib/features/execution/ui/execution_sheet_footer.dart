@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
 import '../../../design_system/design_system.dart';
 
@@ -25,46 +24,14 @@ class ExecutionSheetFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cancelButton = FButton(
-      variant: FButtonVariant.outline,
-      onPress: busy
-          ? null
-          : (onCancel ?? () => Navigator.of(context).maybePop(false)),
-      child: Text(cancelLabel),
-    );
-    final submitButton = AppBusyButton(
-      label: submitLabel,
-      busyLabel: submitLabel,
+    return AppSheetFooter(
+      submitLabel: submitLabel,
+      cancelLabel: cancelLabel,
+      onSubmit: onSubmit,
+      onCancel: onCancel ?? () => Navigator.of(context).maybePop(false),
+      enabled: enabled,
       busy: busy,
-      variant: destructive
-          ? FButtonVariant.destructive
-          : FButtonVariant.primary,
-      onPress: enabled && !busy ? onSubmit : null,
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final textScale = MediaQuery.textScalerOf(context).scale(1);
-        final stackActions = constraints.maxWidth < 360 || textScale > 1.3;
-        if (stackActions) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              cancelButton,
-              const SizedBox(height: AppSpacing.s8),
-              submitButton,
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: cancelButton),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(child: submitButton),
-          ],
-        );
-      },
+      destructive: destructive,
     );
   }
 }

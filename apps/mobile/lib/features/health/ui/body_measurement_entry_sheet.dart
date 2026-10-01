@@ -130,7 +130,7 @@ class _BodyMeasurementEntrySheetState
                 value: _kind,
                 labelOf: (kind) => _labelOf(l10n, kind),
                 onChanged: _saving
-                    ? (_) {}
+                    ? null
                     : (kind) {
                         setState(() {
                           _drafts[_kind] = _valueCtrl.text;

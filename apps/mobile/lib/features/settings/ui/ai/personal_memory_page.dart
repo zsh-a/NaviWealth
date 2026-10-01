@@ -298,12 +298,13 @@ class _PersonalProfileFactSheetState
               labelOf: (kind) => _kindLabel(l10n, kind),
               iconOf: _kindIcon,
               onChanged: _saving
-                  ? (_) {}
+                  ? null
                   : (kind) => setState(() => _kind = kind),
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _key),
+              enabled: !_saving,
               label: Text(l10n.personalMemoryKey),
               hint: l10n.personalMemoryKeyHint,
               validator: (value) => value == null || value.trim().isEmpty
@@ -313,6 +314,7 @@ class _PersonalProfileFactSheetState
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _value),
+              enabled: !_saving,
               label: Text(l10n.personalMemoryValue),
               hint: l10n.personalMemoryValueHint,
               minLines: 2,

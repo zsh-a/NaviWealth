@@ -2,12 +2,17 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
-Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
+Widget _wrap(
+  Widget child, {
+  Brightness brightness = Brightness.light,
+  bool reducedMotion = false,
+}) {
   final baseFTheme = brightness == Brightness.dark
       ? FTheme.neutral.dark.desktop
       : FTheme.neutral.light.desktop;
@@ -35,13 +40,166 @@ Widget _wrap(Widget child, {Brightness brightness = Brightness.light}) {
             marketMode: MarketColorMode.redUpGreenDown,
           ),
         ),
-        child: Scaffold(body: SizedBox(width: 400, height: 250, child: child)),
+        child: MediaQuery(
+          data: MediaQueryData(disableAnimations: reducedMotion),
+          child: Scaffold(
+            body: SizedBox(width: 400, height: 250, child: child),
+          ),
+        ),
       ),
     ),
   );
 }
 
 void main() {
+  testWidgets(
+    'bar keyboard navigation skips missing data and supports drilldown',
+    (tester) async {
+      final samples = <CategoryDatum?>[];
+      CategoryDatum? opened;
+      await tester.pumpWidget(
+        _wrap(
+          NwBarChart(
+            onScrub: samples.add,
+            drillDown: BarDrillDown((datum) => opened = datum, haptic: false),
+            series: const [
+              CategorySeries(
+                name: 'Income',
+                data: [
+                  CategoryDatum(label: 'Jan', value: 10),
+                  CategoryDatum(label: 'Feb', value: 0, isMissing: true),
+                  CategoryDatum(label: 'Mar', value: 30),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(samples.last?.label, 'Jan');
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(samples.last?.label, 'Mar');
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(opened?.label, 'Mar');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      expect(samples.last, isNull);
+    },
+  );
+
+  testWidgets(
+    'hidden bar values stay out of axes, tooltips and keyboard readouts',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        _wrap(
+          AmountPrivacyScope(
+            hidden: true,
+            child: NwBarChart(
+              yAxis: ValueAxis.currency(currencyCode: 'USD'),
+              series: const [
+                CategorySeries(
+                  name: 'Income',
+                  data: [CategoryDatum(label: 'Jan', value: 456789)],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final chart = tester.widget<BarChart>(find.byType(BarChart));
+      expect(chart.data.titlesData.leftTitles.sideTitles.showTitles, isFalse);
+      final group = chart.data.barGroups.single;
+      final tooltip = chart.data.barTouchData.touchTooltipData.getTooltipItem(
+        group,
+        0,
+        group.barRods.single,
+        0,
+      )!;
+      expect(tooltip.text, contains('Amount hidden'));
+      expect(tooltip.text, isNot(contains('456')));
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(find.textContaining('456'), findsNothing);
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Income').first).value,
+        contains('Amount hidden'),
+      );
+      semantics.dispose();
+    },
+  );
+
+  testWidgets(
+    'hidden pie center and legend conceal amounts while retaining proportions',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          AmountPrivacyScope(
+            hidden: true,
+            child: NwPieChart(
+              slices: const [Slice(label: 'Stock', value: 456789)],
+              legendBuilder: (context, slices, colors, total) => SizedBox(
+                width: 120,
+                child: LegendRow(
+                  color: colors.first,
+                  label: 'Stock',
+                  percent: 100,
+                  value: '456,789',
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AmountPrivacyPlaceholder), findsNWidgets(2));
+      expect(find.textContaining('456'), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+      await tester.pump();
+      expect(find.textContaining('456'), findsNothing);
+      expect(find.text('100.0%'), findsWidgets);
+    },
+  );
+
+  testWidgets('bar and pie data updates respect reduced motion', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        const NwBarChart(
+          series: [
+            CategorySeries(
+              name: 'Income',
+              data: [CategoryDatum(label: 'Jan', value: 10)],
+            ),
+          ],
+        ),
+        reducedMotion: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<BarChart>(find.byType(BarChart)).duration,
+      Duration.zero,
+    );
+    await tester.pumpWidget(
+      _wrap(
+        const NwPieChart(slices: [Slice(label: 'Stock', value: 10)]),
+        reducedMotion: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<PieChart>(find.byType(PieChart)).duration,
+      Duration.zero,
+    );
+  });
+
   test(
     'axis thinning retains real ticks instead of rejecting the whole scale',
     () {

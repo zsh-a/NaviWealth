@@ -227,10 +227,7 @@ class PortfolioHubViewSegment extends StatelessWidget {
         PortfolioHubView.currency => FLucideIcons.banknote,
         PortfolioHubView.assetClass => FLucideIcons.layoutGrid,
       },
-      onChanged: (next) {
-        AppInteraction.signal(AppInteractionIntent.select);
-        onChanged(next);
-      },
+      onChanged: onChanged,
     );
   }
 }
@@ -271,16 +268,58 @@ class _HoldingColumns extends StatelessWidget {
 }
 
 class _HoldingTableHeader extends StatelessWidget {
-  const _HoldingTableHeader();
+  const _HoldingTableHeader({
+    required this.sort,
+    required this.ascending,
+    required this.onSort,
+  });
+
+  final _HoldingSort sort;
+  final bool ascending;
+  final ValueChanged<_HoldingSort> onSort;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    Widget label(String value, {bool leading = false}) => Text(
-      value,
-      style: context.captionStyle,
-      textAlign: leading ? TextAlign.start : TextAlign.end,
-    );
+    Widget label(_HoldingSort column, {bool leading = false}) {
+      final selected = sort == column;
+      final title = _holdingSortLabel(l10n, column);
+      final direction = ascending
+          ? l10n.commonSortAscending
+          : l10n.commonSortDescending;
+      return AppTappable(
+        key: ValueKey('portfolio-sort-${column.name}'),
+        semanticsLabel: selected ? '$title, $direction' : title,
+        selected: selected,
+        excludeSemantics: true,
+        onPress: () => onSort(column),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: AppControlHeights.touchTarget,
+          ),
+          child: Row(
+            mainAxisAlignment: leading
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.end,
+            children: [
+              Flexible(child: Text(title, style: context.captionStyle)),
+              const SizedBox(width: AppSpacing.s4),
+              Icon(
+                selected
+                    ? (ascending
+                          ? FLucideIcons.arrowUp
+                          : FLucideIcons.arrowDown)
+                    : FLucideIcons.arrowUpDown,
+                size: AppIconSizes.xs,
+                color: context.theme.colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Padding(
       key: const ValueKey('portfolio-holdings-columns'),
       padding: const EdgeInsets.fromLTRB(
@@ -290,11 +329,11 @@ class _HoldingTableHeader extends StatelessWidget {
         AppSpacing.s8,
       ),
       child: _HoldingColumns(
-        identity: label(l10n.portfolioHubAssetColumn, leading: true),
-        quantity: label(l10n.assetDetailCurrentQuantity),
-        weight: label(l10n.targetAllocationEditorPercentLabel),
-        value: label(l10n.portfolioHubMarketValueLabel),
-        pnl: label(l10n.portfolioHubAbsoluteReturnLabel),
+        identity: label(_HoldingSort.identity, leading: true),
+        quantity: label(_HoldingSort.quantity),
+        weight: label(_HoldingSort.weight),
+        value: label(_HoldingSort.value),
+        pnl: label(_HoldingSort.pnl),
       ),
     );
   }

@@ -189,7 +189,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
               labelOf: (kind) => executionProgressKindLabel(l10n, kind),
               iconOf: _progressKindIcon,
               onChanged: _saving
-                  ? (_) {}
+                  ? null
                   : (kind) {
                       setState(() => _kind = kind);
                       _markDirty();
@@ -198,6 +198,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _note),
+              enabled: !_saving,
               label: Text(l10n.executionProgressNoteField),
               hint: l10n.executionProgressNoteHint,
               minLines: 3,

@@ -17523,6 +17523,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonClearFilters => 'Clear filters';
 
   @override
+  String get commonSortAscending => 'Ascending';
+
+  @override
+  String get commonSortDescending => 'Descending';
+
+  @override
+  String get portfolioHoldingsSearchHint => 'Search holdings by name or symbol';
+
+  @override
+  String get portfolioHoldingsSortAction => 'Sort holdings';
+
+  @override
+  String get portfolioHoldingsNoResultsTitle => 'No matching holdings';
+
+  @override
+  String get portfolioHoldingsNoResultsBody =>
+      'Try another name or symbol, or clear the search.';
+
+  @override
   String commonSearchResultsCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

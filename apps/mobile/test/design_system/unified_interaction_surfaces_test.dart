@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/features/execution/ui/execution_sheet_footer.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
@@ -14,6 +15,48 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  for (final width in [320.0, 400.0, 600.0]) {
+    testWidgets('execution and shared form footers agree at $width dp', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          Column(
+            children: [
+              SizedBox(
+                width: width,
+                child: AppSheetFooter(
+                  submitLabel: 'Save shared',
+                  cancelLabel: 'Cancel shared',
+                  onSubmit: () {},
+                  onCancel: () {},
+                ),
+              ),
+              SizedBox(
+                width: width,
+                child: ExecutionSheetFooter(
+                  submitLabel: 'Save execution',
+                  cancelLabel: 'Cancel execution',
+                  onSubmit: () {},
+                  onCancel: () {},
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      final sharedDelta =
+          tester.getCenter(find.text('Save shared')) -
+          tester.getCenter(find.text('Cancel shared'));
+      final executionDelta =
+          tester.getCenter(find.text('Save execution')) -
+          tester.getCenter(find.text('Cancel execution'));
+      expect(executionDelta.dy, closeTo(sharedDelta.dy, 0.1));
+      expect(executionDelta.dx, closeTo(sharedDelta.dx, 0.1));
+      expect(tester.takeException(), isNull);
+    });
+  }
+
   testWidgets('error state owns one clear primary retry action', (
     tester,
   ) async {

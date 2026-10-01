@@ -1,3 +1,4 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -146,9 +147,11 @@ class _LiabilityHeaderCard extends ConsumerWidget {
               style: context.captionStyle,
             ),
             const SizedBox(height: AppSpacing.s12),
-            Text(
-              formatters.currency(l.principal, code: l.currency),
-              style: context.theme.typography.body.xl,
+            MoneyText(
+              amount: l.principal.toDouble(),
+              currencyCode: l.currency,
+              style: context.appTheme.type.numericTitle,
+              emphasizeInteger: true,
             ),
             const SizedBox(height: AppSpacing.s4),
             Text(
@@ -180,26 +183,20 @@ class _LiabilitySummaryCard extends ConsumerWidget {
           children: [
             _SummaryRow(
               label: l10n.liabilitySummaryRemaining,
-              value: formatters.currency(
-                summary.remainingPrincipal,
-                code: l.currency,
-              ),
+              amount: summary.remainingPrincipal,
+              currency: l.currency,
             ),
             _SummaryRow(
               label: l10n.liabilitySummaryInterestPaid,
-              value: formatters.currency(
-                summary.interestPaid,
-                code: l.currency,
-              ),
+              amount: summary.interestPaid,
+              currency: l.currency,
             ),
             _SummaryRow(
               label: l10n.liabilitySummaryInterestTotal,
-              value: formatters.currency(
-                summary.totalScheduledInterest,
-                code: l.currency,
-              ),
+              amount: summary.totalScheduledInterest,
+              currency: l.currency,
             ),
-            _SummaryRow(
+            _SummaryRow.text(
               label: l10n.liabilitySummaryInterestRatio,
               value: formatters.percent(summary.interestRatio.toDouble()),
             ),
@@ -225,10 +222,20 @@ class _LiabilitySummaryCard extends ConsumerWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
+  const _SummaryRow({
+    required this.label,
+    required this.amount,
+    required this.currency,
+  }) : value = null;
+
+  const _SummaryRow.text({required this.label, required this.value})
+    : amount = null,
+      currency = null;
 
   final String label;
-  final String value;
+  final Decimal? amount;
+  final String? currency;
+  final String? value;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +253,14 @@ class _SummaryRow extends StatelessWidget {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,
-              child: Text(value, style: context.theme.typography.body.sm),
+              child: amount == null
+                  ? Text(value!, style: context.appTheme.type.numericBody)
+                  : MoneyText(
+                      amount: amount!.toDouble(),
+                      currencyCode: currency!,
+                      style: context.appTheme.type.numericBody,
+                      textAlign: TextAlign.end,
+                    ),
             ),
           ),
         ],
@@ -468,10 +482,12 @@ class _AmortizationTableState extends ConsumerState<_AmortizationTable> {
       return;
     }
     final formatters = context.formatters(ref);
-    final amount = formatters.currency(
-      row.principalPayment + row.interestPayment,
-      code: liability.currency,
-    );
+    final amount = AmountPrivacyScope.isHiddenOf(context)
+        ? AmountPrivacyScope.hiddenSemanticsLabelOf(context)
+        : formatters.currency(
+            row.principalPayment + row.interestPayment,
+            code: liability.currency,
+          );
     final paymentDate = await LiabilityPaymentSheet.show(
       context,
       periodIndex: row.periodIndex,
@@ -577,20 +593,16 @@ class _CompactAmortizationRow extends StatelessWidget {
               Expanded(
                 child: _CompactScheduleMetric(
                   label: l10n.liabilityScheduleColPrincipal,
-                  value: formatters.currency(
-                    row.principalPayment,
-                    code: currency,
-                  ),
+                  amount: row.principalPayment,
+                  currency: currency,
                 ),
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: _CompactScheduleMetric(
                   label: l10n.liabilityScheduleColInterest,
-                  value: formatters.currency(
-                    row.interestPayment,
-                    code: currency,
-                  ),
+                  amount: row.interestPayment,
+                  currency: currency,
                 ),
               ),
             ],
@@ -598,7 +610,8 @@ class _CompactAmortizationRow extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           _SummaryRow(
             label: l10n.liabilityScheduleColRemaining,
-            value: formatters.currency(row.remainingBalance, code: currency),
+            amount: row.remainingBalance,
+            currency: currency,
           ),
           if (row.paidAt == null) ...[
             const SizedBox(height: AppSpacing.s8),
@@ -625,10 +638,15 @@ class _CompactAmortizationRow extends StatelessWidget {
 }
 
 class _CompactScheduleMetric extends StatelessWidget {
-  const _CompactScheduleMetric({required this.label, required this.value});
+  const _CompactScheduleMetric({
+    required this.label,
+    required this.amount,
+    required this.currency,
+  });
 
   final String label;
-  final String value;
+  final Decimal amount;
+  final String currency;
 
   @override
   Widget build(BuildContext context) {
@@ -640,7 +658,11 @@ class _CompactScheduleMetric extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
-          child: Text(value, style: context.theme.typography.body.sm),
+          child: MoneyText(
+            amount: amount.toDouble(),
+            currencyCode: currency,
+            style: context.appTheme.type.numericBody,
+          ),
         ),
       ],
     );
@@ -741,25 +763,28 @@ class _AmortizationDataRow extends StatelessWidget {
           ),
           SizedBox(
             width: AppControlWidths.scheduleValue,
-            child: Text(
-              formatters.currency(row.principalPayment, code: currency),
-              style: textStyle,
+            child: MoneyText(
+              amount: row.principalPayment.toDouble(),
+              currencyCode: currency,
+              style: context.appTheme.type.numericCaption,
               textAlign: TextAlign.right,
             ),
           ),
           SizedBox(
             width: AppControlWidths.scheduleValue,
-            child: Text(
-              formatters.currency(row.interestPayment, code: currency),
-              style: textStyle,
+            child: MoneyText(
+              amount: row.interestPayment.toDouble(),
+              currencyCode: currency,
+              style: context.appTheme.type.numericCaption,
               textAlign: TextAlign.right,
             ),
           ),
           SizedBox(
             width: AppControlWidths.scheduleValue,
-            child: Text(
-              formatters.currency(row.remainingBalance, code: currency),
-              style: textStyle,
+            child: MoneyText(
+              amount: row.remainingBalance.toDouble(),
+              currencyCode: currency,
+              style: context.appTheme.type.numericCaption,
               textAlign: TextAlign.right,
             ),
           ),
