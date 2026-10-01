@@ -158,6 +158,9 @@ void main() {
             ),
           ),
         ),
+        watchlistSimulationHistoricalBackfillProvider.overrideWith(
+          (_, _) async => 0,
+        ),
         watchlistSimulationObservationsProvider.overrideWith(
           (_, _) => Stream.value(_observations),
         ),

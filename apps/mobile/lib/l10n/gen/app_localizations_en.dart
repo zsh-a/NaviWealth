@@ -17530,4 +17530,94 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get sourceActionLinked =>
       'This source already has an action. Its status is tracked separately from whether the source issue has cleared.';
+
+  @override
+  String get watchlistSimulationPreviewTitle => 'Allocation preview';
+
+  @override
+  String get watchlistSimulationPreviewNote =>
+      'The remaining allocation is split equally after reserving cash. These preview weights will be saved.';
+
+  @override
+  String get watchlistSimulationCustomWeightsAction => 'Customize weights';
+
+  @override
+  String get watchlistSimulationCapitalFixedNote =>
+      'Existing capital is fixed; historical change uses the recorded baseline. Copy this allocation to start a new simulation with different capital.';
+
+  @override
+  String get watchlistSimulationCopyCapitalAction =>
+      'Copy with different capital';
+
+  @override
+  String watchlistSimulationCopyName(String name) {
+    return '$name copy';
+  }
+
+  @override
+  String get watchlistSimulationFillCashUnavailable =>
+      'Correct the position weights so they total at most 100% before filling with cash.';
+
+  @override
+  String watchlistSimulationOverallocatedSummary(
+    String allocated,
+    String excess,
+  ) {
+    return 'Allocated $allocated% · Over by $excess%';
+  }
+
+  @override
+  String get watchlistSimulationChangedWhileEditing =>
+      'This simulation changed or was deleted. Go back and reopen it before saving.';
+
+  @override
+  String watchlistSimulationSavedStatus(String name) {
+    return 'Saved · $name';
+  }
+
+  @override
+  String get watchlistSimulationHistoryLoading =>
+      'Loading observation history…';
+
+  @override
+  String get watchlistSimulationHistoryLoadFailed =>
+      'Observation history could not load. Cumulative change and the latest observed value are unavailable.';
+
+  @override
+  String get watchlistSimulationHistoryBackfilling =>
+      'Filling in available historical quotes…';
+
+  @override
+  String get watchlistSimulationHistoryBackfillFailed =>
+      'Historical quotes could not be filled in. Recorded observations are still available.';
+
+  @override
+  String watchlistSimulationObservationDate(String date) {
+    return 'Observation date: $date (UTC)';
+  }
+
+  @override
+  String get watchlistSimulationBaselineValue => 'Creation baseline';
+
+  @override
+  String get watchlistSimulationCashOnlyStatus =>
+      'All-cash allocation · Daily scenario move is zero';
+
+  @override
+  String get watchlistSimulationQuotesUnavailable =>
+      'Waiting for usable quotes · Daily move unavailable';
+
+  @override
+  String watchlistSimulationQuotesPartial(String coverage) {
+    return 'Quote coverage $coverage · Daily move includes priced positions only';
+  }
+
+  @override
+  String get watchlistSimulationQuotesComplete =>
+      'Quotes complete · All non-cash allocation covered';
+
+  @override
+  String watchlistSimulationQuoteDate(String date) {
+    return 'Quote date: $date (UTC)';
+  }
 }

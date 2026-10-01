@@ -192,13 +192,34 @@ entire collection and completed quote batches, independent of list filters.
 Create and allocation edit use guarded full pages with pinned save bars. Only
 lightweight symbol selection uses a sheet, with a pinned confirmation footer.
 Busy forms block repeat submission, pointer/keyboard editing, and dismissal;
-successful save returns to the workspace. Validation reveals the first invalid
-field; symbol-selection and allocation-total errors stay inline at their source.
+successful save returns to and reveals the saved scenario in the workspace.
+Creation previews the exact equal-weight split after reserving cash, or accepts
+custom weights before the first save. Both forms pin the allocation total,
+remaining/excess weight, and save action above the keyboard. Filling cash is
+disabled with an explanation when position weights are invalid or exceed 100%.
+Validation reveals the first invalid field; symbol-selection errors stay inline,
+and allocation-total errors stay visible in the pinned summary.
 Form actions and selection summaries wrap at large text sizes, while the save
 bar remains above the keyboard. Allocation editing displays the scenario's own
 currency, independent of later app-preference changes. Currency charts use
 distinct range-aware compact ticks and full currency values for inspection,
 with measured label widths and deduplicated dates.
+
+Configuration saves update the name and allocation in one local transaction,
+including sync outbox pointers. Pending snapshots cannot be edited; a definition
+or head change while editing requires reopening the form before saving. Existing
+capital is immutable: copying the current form configuration creates a new id,
+capital baseline, and observation history while preserving the source simulation.
+For older definitions that allowed capital edits, cumulative return uses the
+recorded observation baseline rather than the edited definition's amount.
+
+Result cards show quote completeness, missing symbols, and the UTC quote date
+before headline numbers. An entirely unpriced invested allocation displays an
+unavailable daily move and omits its amount; an all-cash allocation is explicitly
+identified. Observation loading/errors never substitute initial capital for a
+missing latest value. A baseline-only series is labelled as a creation baseline;
+recorded results display their UTC observation date. Historical backfill progress
+and failures are displayed separately from the existing observation series.
 
 Watchlist simulations are a separate paper-only aggregate backed by
 `watchlist_simulations`, legacy compatibility positions, a deterministic

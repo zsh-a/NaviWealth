@@ -210,7 +210,7 @@ void main() {
     },
   );
 
-  test('renames and re-bases virtual capital without touching history', () async {
+  test('renames while keeping the recorded capital immutable', () async {
     final db = makeTestDatabase();
     final outbox = InMemoryOutboxStore();
     final repository = WatchlistSimulationRepository(
@@ -232,19 +232,28 @@ void main() {
     final updated = await repository.updateDefinition(
       simulation: simulation,
       name: '  Renamed mix  ',
-      startingCapital: Decimal.parse('2500'),
+      startingCapital: Decimal.parse('1000'),
+    );
+
+    await expectLater(
+      repository.updateDefinition(
+        simulation: updated,
+        name: 'Changed capital',
+        startingCapital: Decimal.parse('2500'),
+      ),
+      throwsArgumentError,
     );
 
     expect(updated.id, simulation.id);
     expect(updated.name, 'Renamed mix');
-    expect(updated.startingCapital, Decimal.parse('2500'));
+    expect(updated.startingCapital, Decimal.parse('1000'));
     expect(updated.baselineAt, simulation.baselineAt);
     expect(outbox.queued.map((item) => item.table), [
       WatchlistSimulationRepository.simulationsTable,
     ]);
     final stored = (await repository.watchActive('u-test').first).single;
     expect(stored.name, 'Renamed mix');
-    expect(stored.startingCapital, Decimal.parse('2500'));
+    expect(stored.startingCapital, Decimal.parse('1000'));
     expect(
       await repository
           .watchPositions(ownerUserId: 'u-test', simulationId: simulation.id)
@@ -269,6 +278,157 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test(
+    'configuration rolls back name, allocation and outbox on a late failure',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final outbox = DriftOutboxStore(db);
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      );
+      final simulation = await repository.create(
+        collectionId: 'growth',
+        name: 'Original',
+        baseCurrency: 'USD',
+        startingCapital: Decimal.fromInt(1000),
+        targetWeights: {'us_stock:AAPL': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+      final before = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      await db.customStatement('DELETE FROM op_outbox');
+      await db.customStatement(
+        'CREATE TRIGGER reject_new_head BEFORE UPDATE ON watchlist_simulation_allocation_heads '
+        "BEGIN SELECT RAISE(ABORT, 'injected head failure'); END",
+      );
+      await expectLater(
+        repository.saveConfiguration(
+          simulation: simulation,
+          name: 'Partial rename',
+          expectedAllocationBasisKey: before.allocationBasisKey,
+          targetWeights: {'us_stock:AAPL': Decimal.parse('0.5')},
+          cashWeight: Decimal.parse('0.5'),
+        ),
+        throwsA(isA<Exception>()),
+      );
+      final stored = (await repository.watchActive('u-test').first).single;
+      final after = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      expect(stored.name, 'Original');
+      expect(stored.cashWeight, Decimal.zero);
+      expect(after.allocationVersionId, before.allocationVersionId);
+      expect(after.positions.single.targetWeight, Decimal.one);
+      expect(
+        await db.select(db.watchlistSimulationAllocationVersions).get(),
+        hasLength(1),
+      );
+      expect(await outbox.depth(), 0);
+    },
+  );
+
+  test(
+    'configuration detects a changed head and saves valid edits atomically',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = WatchlistSimulationRepository(
+        db: db,
+        outbox: DriftOutboxStore(db),
+        stamper: makeStubStamper(),
+      );
+      final simulation = await repository.create(
+        collectionId: 'growth',
+        name: 'Original',
+        baseCurrency: 'USD',
+        startingCapital: Decimal.fromInt(1000),
+        targetWeights: {'us_stock:AAPL': Decimal.one},
+        cashWeight: Decimal.zero,
+      );
+      await expectLater(
+        repository.saveConfiguration(
+          simulation: simulation,
+          name: 'Stale rename',
+          expectedAllocationBasisKey: 'old-head',
+          targetWeights: {'us_stock:AAPL': Decimal.one},
+          cashWeight: Decimal.zero,
+        ),
+        throwsA(
+          isA<WatchlistSimulationSaveException>().having(
+            (error) => error.reason,
+            'reason',
+            WatchlistSimulationSaveFailure.changed,
+          ),
+        ),
+      );
+      expect(
+        (await repository.watchActive('u-test').first).single.name,
+        'Original',
+      );
+      await repository.saveConfiguration(
+        simulation: simulation,
+        name: 'Saved',
+        targetWeights: {'us_stock:AAPL': Decimal.parse('0.6')},
+        cashWeight: Decimal.parse('0.4'),
+      );
+      final stored = (await repository.watchActive('u-test').first).single;
+      expect(stored.name, 'Saved');
+      expect(stored.cashWeight, Decimal.parse('0.4'));
+      expect(stored.startingCapital, simulation.startingCapital);
+      final allocation = await repository.resolveAllocation(
+        ownerUserId: 'u-test',
+        simulationId: simulation.id,
+      );
+      expect(allocation.positions.single.targetWeight, Decimal.parse('0.6'));
+      await expectLater(
+        repository.saveConfiguration(
+          simulation: simulation,
+          name: 'Old editor',
+          targetWeights: {'us_stock:AAPL': Decimal.one},
+          cashWeight: Decimal.zero,
+        ),
+        throwsA(isA<WatchlistSimulationSaveException>()),
+      );
+      final copied = await repository.create(
+        collectionId: stored.collectionId,
+        name: 'Copy',
+        baseCurrency: stored.baseCurrency,
+        startingCapital: Decimal.fromInt(2500),
+        targetWeights: {'us_stock:AAPL': Decimal.parse('0.6')},
+        cashWeight: Decimal.parse('0.4'),
+      );
+      expect(copied.id, isNot(simulation.id));
+      expect(
+        (await repository
+                .watchObservations(
+                  ownerUserId: 'u-test',
+                  simulationId: copied.id,
+                )
+                .first)
+            .single
+            .projectedValue,
+        Decimal.fromInt(2500),
+      );
+      expect(
+        (await repository
+                .watchObservations(
+                  ownerUserId: 'u-test',
+                  simulationId: simulation.id,
+                )
+                .first)
+            .single
+            .projectedValue,
+        Decimal.fromInt(1000),
+      );
+    },
+  );
 
   test(
     'compounds once per observed day and replaces same-day refreshes',
@@ -496,10 +656,10 @@ void main() {
               id: 'legacy-observation',
               ownerUserId: 'u-test',
               simulationId: simulation.id,
-              observationDay: historicalAt
-                  .toUtc()
-                  .toIso8601String()
-                  .substring(0, 10),
+              observationDay: historicalAt.toUtc().toIso8601String().substring(
+                0,
+                10,
+              ),
               observedAt: historicalAt,
               projectedValue: Decimal.parse('1100'),
               weightedDailyChange: Decimal.parse('0.1'),
@@ -514,10 +674,7 @@ void main() {
         ownerUserId: 'u-test',
         simulationId: simulation.id,
       );
-      expect(
-        legacy.status,
-        WatchlistSimulationAllocationStatus.legacyFallback,
-      );
+      expect(legacy.status, WatchlistSimulationAllocationStatus.legacyFallback);
       expect(legacy.allocationVersionId, isNull);
 
       await repository.replaceAllocation(
@@ -539,16 +696,10 @@ void main() {
       expect(headed.previousAllocationVersionId, predecessor.id);
 
       final observations = await repository
-          .watchObservations(
-            ownerUserId: 'u-test',
-            simulationId: simulation.id,
-          )
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
           .first;
       expect(observations, hasLength(2));
-      expect(
-        observations.last.allocationBasisKey,
-        'version:${predecessor.id}',
-      );
+      expect(observations.last.allocationBasisKey, 'version:${predecessor.id}');
 
       final current = await repository.resolveAllocation(
         ownerUserId: 'u-test',
@@ -563,10 +714,7 @@ void main() {
         allocationBasisKey: current.allocationBasisKey!,
       );
       final continued = await repository
-          .watchObservations(
-            ownerUserId: 'u-test',
-            simulationId: simulation.id,
-          )
+          .watchObservations(ownerUserId: 'u-test', simulationId: simulation.id)
           .first;
       expect(continued, hasLength(3));
       expect(continued.last.projectedValue, Decimal.parse('1210.0'));

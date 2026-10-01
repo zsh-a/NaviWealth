@@ -16584,4 +16584,88 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sourceActionLinked => '此来源已有行动。行动状态与来源问题是否解除分别跟踪。';
+
+  @override
+  String get watchlistSimulationPreviewTitle => '配置预览';
+
+  @override
+  String get watchlistSimulationPreviewNote =>
+      '默认将扣除现金后的权重均分给已选标的。预览中的权重将用于创建模拟。';
+
+  @override
+  String get watchlistSimulationCustomWeightsAction => '自定义权重';
+
+  @override
+  String get watchlistSimulationCapitalFixedNote =>
+      '已有模拟的本金不可修改；历史变化以记录的基线计算。更换本金时，请复制配置创建新的模拟。';
+
+  @override
+  String get watchlistSimulationCopyCapitalAction => '复制配置，更换本金';
+
+  @override
+  String watchlistSimulationCopyName(String name) {
+    return '$name副本';
+  }
+
+  @override
+  String get watchlistSimulationFillCashUnavailable =>
+      '请先修正标的权重，使其合计不超过 100%，再补齐现金。';
+
+  @override
+  String watchlistSimulationOverallocatedSummary(
+    String allocated,
+    String excess,
+  ) {
+    return '已分配 $allocated% · 超出 $excess%';
+  }
+
+  @override
+  String get watchlistSimulationChangedWhileEditing =>
+      '配置已更新或被删除。请返回并重新打开后再保存。';
+
+  @override
+  String watchlistSimulationSavedStatus(String name) {
+    return '已保存 · $name';
+  }
+
+  @override
+  String get watchlistSimulationHistoryLoading => '正在加载观察历史…';
+
+  @override
+  String get watchlistSimulationHistoryLoadFailed =>
+      '观察历史加载失败，暂时无法显示累计变化和最新观察值。';
+
+  @override
+  String get watchlistSimulationHistoryBackfilling => '正在补齐可用的历史行情…';
+
+  @override
+  String get watchlistSimulationHistoryBackfillFailed =>
+      '历史行情补齐失败，已记录的观察值仍可查看。';
+
+  @override
+  String watchlistSimulationObservationDate(String date) {
+    return '观察日期：$date（UTC）';
+  }
+
+  @override
+  String get watchlistSimulationBaselineValue => '创建基线';
+
+  @override
+  String get watchlistSimulationCashOnlyStatus => '全现金配置 · 当日情景变动为零';
+
+  @override
+  String get watchlistSimulationQuotesUnavailable => '等待可用行情 · 当日变动暂不可用';
+
+  @override
+  String watchlistSimulationQuotesPartial(String coverage) {
+    return '行情覆盖 $coverage · 当日变动仅包含有行情的标的';
+  }
+
+  @override
+  String get watchlistSimulationQuotesComplete => '行情完整 · 已覆盖全部非现金权重';
+
+  @override
+  String watchlistSimulationQuoteDate(String date) {
+    return '行情日期：$date（UTC）';
+  }
 }

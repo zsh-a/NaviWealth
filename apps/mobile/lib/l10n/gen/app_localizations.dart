@@ -29409,6 +29409,135 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This source already has an action. Its status is tracked separately from whether the source issue has cleared.'**
   String get sourceActionLinked;
+
+  /// No description provided for @watchlistSimulationPreviewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocation preview'**
+  String get watchlistSimulationPreviewTitle;
+
+  /// No description provided for @watchlistSimulationPreviewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The remaining allocation is split equally after reserving cash. These preview weights will be saved.'**
+  String get watchlistSimulationPreviewNote;
+
+  /// No description provided for @watchlistSimulationCustomWeightsAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize weights'**
+  String get watchlistSimulationCustomWeightsAction;
+
+  /// No description provided for @watchlistSimulationCapitalFixedNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing capital is fixed; historical change uses the recorded baseline. Copy this allocation to start a new simulation with different capital.'**
+  String get watchlistSimulationCapitalFixedNote;
+
+  /// No description provided for @watchlistSimulationCopyCapitalAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy with different capital'**
+  String get watchlistSimulationCopyCapitalAction;
+
+  /// No description provided for @watchlistSimulationCopyName.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} copy'**
+  String watchlistSimulationCopyName(String name);
+
+  /// No description provided for @watchlistSimulationFillCashUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct the position weights so they total at most 100% before filling with cash.'**
+  String get watchlistSimulationFillCashUnavailable;
+
+  /// No description provided for @watchlistSimulationOverallocatedSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Allocated {allocated}% · Over by {excess}%'**
+  String watchlistSimulationOverallocatedSummary(
+    String allocated,
+    String excess,
+  );
+
+  /// No description provided for @watchlistSimulationChangedWhileEditing.
+  ///
+  /// In en, this message translates to:
+  /// **'This simulation changed or was deleted. Go back and reopen it before saving.'**
+  String get watchlistSimulationChangedWhileEditing;
+
+  /// No description provided for @watchlistSimulationSavedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved · {name}'**
+  String watchlistSimulationSavedStatus(String name);
+
+  /// No description provided for @watchlistSimulationHistoryLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading observation history…'**
+  String get watchlistSimulationHistoryLoading;
+
+  /// No description provided for @watchlistSimulationHistoryLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation history could not load. Cumulative change and the latest observed value are unavailable.'**
+  String get watchlistSimulationHistoryLoadFailed;
+
+  /// No description provided for @watchlistSimulationHistoryBackfilling.
+  ///
+  /// In en, this message translates to:
+  /// **'Filling in available historical quotes…'**
+  String get watchlistSimulationHistoryBackfilling;
+
+  /// No description provided for @watchlistSimulationHistoryBackfillFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Historical quotes could not be filled in. Recorded observations are still available.'**
+  String get watchlistSimulationHistoryBackfillFailed;
+
+  /// No description provided for @watchlistSimulationObservationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Observation date: {date} (UTC)'**
+  String watchlistSimulationObservationDate(String date);
+
+  /// No description provided for @watchlistSimulationBaselineValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Creation baseline'**
+  String get watchlistSimulationBaselineValue;
+
+  /// No description provided for @watchlistSimulationCashOnlyStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'All-cash allocation · Daily scenario move is zero'**
+  String get watchlistSimulationCashOnlyStatus;
+
+  /// No description provided for @watchlistSimulationQuotesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for usable quotes · Daily move unavailable'**
+  String get watchlistSimulationQuotesUnavailable;
+
+  /// No description provided for @watchlistSimulationQuotesPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote coverage {coverage} · Daily move includes priced positions only'**
+  String watchlistSimulationQuotesPartial(String coverage);
+
+  /// No description provided for @watchlistSimulationQuotesComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Quotes complete · All non-cash allocation covered'**
+  String get watchlistSimulationQuotesComplete;
+
+  /// No description provided for @watchlistSimulationQuoteDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Quote date: {date} (UTC)'**
+  String watchlistSimulationQuoteDate(String date);
 }
 
 class _AppLocalizationsDelegate

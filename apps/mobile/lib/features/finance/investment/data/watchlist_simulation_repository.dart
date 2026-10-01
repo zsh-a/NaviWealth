@@ -286,6 +286,14 @@ bool watchlistSimulationObservationIsInAllocationLineage({
     allocationBasisKey == null ||
     validAllocationBasisKeys.contains(allocationBasisKey);
 
+enum WatchlistSimulationSaveFailure { syncing, changed }
+
+class WatchlistSimulationSaveException implements Exception {
+  const WatchlistSimulationSaveException(this.reason);
+
+  final WatchlistSimulationSaveFailure reason;
+}
+
 /// Paper-only repository for watchlist allocation scenarios.
 ///
 /// This repository intentionally has no dependency on the real investment
@@ -844,18 +852,71 @@ class WatchlistSimulationRepository {
     return simulation;
   }
 
-  /// Renames a simulation and/or changes its virtual capital.
-  ///
-  /// Only the definition row changes: target weights, observations and paper
-  /// dividend references are untouched, so editing a name or the notional
-  /// amount never rewrites history.
+  /// Saves the editable definition and allocation as one local transaction.
+  /// A stale editor must reopen rather than overwrite a newly selected head.
+  Future<void> saveConfiguration({
+    required WatchlistSimulation simulation,
+    required String name,
+    required Map<String, Decimal> targetWeights,
+    required Decimal cashWeight,
+    String? expectedAllocationBasisKey,
+    Map<String, WatchlistSimulationHoldingInput>? holdingInputs,
+  }) async {
+    _requireName(name);
+    _validateAllocation(targetWeights, cashWeight);
+    await _db.transaction(() async {
+      final row =
+          await (_db.select(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(simulation.sync.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (row == null || row.hlc != simulation.sync.hlc) {
+        throw const WatchlistSimulationSaveException(
+          WatchlistSimulationSaveFailure.changed,
+        );
+      }
+      final allocation = await resolveAllocation(
+        ownerUserId: row.ownerUserId,
+        simulationId: row.id,
+      );
+      if (allocation.status == WatchlistSimulationAllocationStatus.pending) {
+        throw const WatchlistSimulationSaveException(
+          WatchlistSimulationSaveFailure.syncing,
+        );
+      }
+      if (expectedAllocationBasisKey != null &&
+          allocation.allocationBasisKey != expectedAllocationBasisKey) {
+        throw const WatchlistSimulationSaveException(
+          WatchlistSimulationSaveFailure.changed,
+        );
+      }
+      final updated = await updateDefinition(
+        simulation: _simulationFromRow(row),
+        name: name,
+        startingCapital: row.startingCapital,
+      );
+      await replaceAllocation(
+        simulation: updated,
+        targetWeights: targetWeights,
+        cashWeight: cashWeight,
+        holdingInputs: holdingInputs,
+      );
+    });
+  }
+
+  /// Renames a simulation without changing its historical capital baseline.
+  /// A different capital amount requires a new simulation and baseline.
   Future<WatchlistSimulation> updateDefinition({
     required WatchlistSimulation simulation,
     required String name,
     required Decimal startingCapital,
   }) async {
     final normalizedName = _requireName(name);
-    if (startingCapital <= Decimal.zero) {
+    if (startingCapital <= Decimal.zero ||
+        startingCapital != simulation.startingCapital) {
       throw ArgumentError.value(startingCapital, 'startingCapital');
     }
     if (normalizedName == simulation.name &&
@@ -874,9 +935,22 @@ class WatchlistSimulationRepository {
       allocationProtocolVersion: simulation.allocationProtocolVersion,
       baselineAt: simulation.baselineAt,
       createdAt: simulation.createdAt,
-      sync: simulation.sync,
+      sync: _syncFromStamp(stamp),
     );
     await _db.transaction(() async {
+      final current =
+          await (_db.select(_db.watchlistSimulations)..where(
+                (t) =>
+                    t.id.equals(simulation.id) &
+                    t.ownerUserId.equals(stamp.ownerUserId) &
+                    t.deletedAt.isNull(),
+              ))
+              .getSingleOrNull();
+      if (current == null || current.startingCapital != startingCapital) {
+        throw const WatchlistSimulationSaveException(
+          WatchlistSimulationSaveFailure.changed,
+        );
+      }
       final changed =
           await (_db.update(_db.watchlistSimulations)..where(
                 (t) =>

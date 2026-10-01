@@ -5291,5 +5291,71 @@
   "sourceActionReplace": "创建替代行动",
   "sourceActionReplaceConfirmTitle": "替换已放弃的行动？",
   "sourceActionReplaceConfirmBody": "已放弃的行动会保留在历史记录中。是否为此来源创建新的行动？",
-  "sourceActionLinked": "此来源已有行动。行动状态与来源问题是否解除分别跟踪。"
+  "sourceActionLinked": "此来源已有行动。行动状态与来源问题是否解除分别跟踪。",
+  "watchlistSimulationPreviewTitle": "配置预览",
+  "watchlistSimulationPreviewNote": "默认将扣除现金后的权重均分给已选标的。预览中的权重将用于创建模拟。",
+  "watchlistSimulationCustomWeightsAction": "自定义权重",
+  "watchlistSimulationCapitalFixedNote": "已有模拟的本金不可修改；历史变化以记录的基线计算。更换本金时，请复制配置创建新的模拟。",
+  "watchlistSimulationCopyCapitalAction": "复制配置，更换本金",
+  "watchlistSimulationCopyName": "{name}副本",
+  "@watchlistSimulationCopyName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationFillCashUnavailable": "请先修正标的权重，使其合计不超过 100%，再补齐现金。",
+  "watchlistSimulationOverallocatedSummary": "已分配 {allocated}% · 超出 {excess}%",
+  "@watchlistSimulationOverallocatedSummary": {
+    "placeholders": {
+      "allocated": {
+        "type": "String"
+      },
+      "excess": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationChangedWhileEditing": "配置已更新或被删除。请返回并重新打开后再保存。",
+  "watchlistSimulationSavedStatus": "已保存 · {name}",
+  "@watchlistSimulationSavedStatus": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationHistoryLoading": "正在加载观察历史…",
+  "watchlistSimulationHistoryLoadFailed": "观察历史加载失败，暂时无法显示累计变化和最新观察值。",
+  "watchlistSimulationHistoryBackfilling": "正在补齐可用的历史行情…",
+  "watchlistSimulationHistoryBackfillFailed": "历史行情补齐失败，已记录的观察值仍可查看。",
+  "watchlistSimulationObservationDate": "观察日期：{date}（UTC）",
+  "@watchlistSimulationObservationDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationBaselineValue": "创建基线",
+  "watchlistSimulationCashOnlyStatus": "全现金配置 · 当日情景变动为零",
+  "watchlistSimulationQuotesUnavailable": "等待可用行情 · 当日变动暂不可用",
+  "watchlistSimulationQuotesPartial": "行情覆盖 {coverage} · 当日变动仅包含有行情的标的",
+  "@watchlistSimulationQuotesPartial": {
+    "placeholders": {
+      "coverage": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationQuotesComplete": "行情完整 · 已覆盖全部非现金权重",
+  "watchlistSimulationQuoteDate": "行情日期：{date}（UTC）",
+  "@watchlistSimulationQuoteDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }

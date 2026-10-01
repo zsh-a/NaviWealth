@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -259,11 +260,12 @@ void main() {
       ),
       findsNothing,
     );
-    await tester.tap(
-      find.byKey(
-        const ValueKey<String>('watchlist-simulation-method-simulation-growth'),
-      ),
+    final method = find.byKey(
+      const ValueKey<String>('watchlist-simulation-method-simulation-growth'),
     );
+    await tester.ensureVisible(method);
+    await tester.pumpAndSettle();
+    await tester.tap(method);
     await tester.pumpAndSettle();
     expect(
       find.descendant(
@@ -368,6 +370,383 @@ void main() {
     expect(repository.savedName, 'My paper scenario');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('missing quotes show unavailable daily move instead of zero', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        snapshots: const [],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Waiting for usable quotes · Daily move unavailable'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Scenario move amount:'), findsNothing);
+    final metrics = tester.widget<AppMetricCluster>(
+      find.byType(AppMetricCluster),
+    );
+    expect(metrics.items.first.value, '—');
+    expect(find.textContaining('Quote date:'), findsNothing);
+  });
+
+  testWidgets(
+    'history loading and errors never invent an observed capital value',
+    (tester) async {
+      final history = StreamController<List<WatchlistSimulationObservation>>();
+      addTearDown(history.close);
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          observationsStream: history.stream,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Loading observation history…'), findsOneWidget);
+      expect(find.textContaining('100,000'), findsNothing);
+      history.addError(StateError('unavailable'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('Observation history could not load.'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('100,000'), findsNothing);
+      expect(find.text('Retry'), findsOneWidget);
+    },
+  );
+
+  testWidgets('pending allocation cannot open an editor', (tester) async {
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [_simulation],
+        positions: [_position],
+        allocationStatus: WatchlistSimulationAllocationStatus.pending,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final edit = tester.widget<AppIconButton>(find.byType(AppIconButton));
+    expect(edit.onPress, isNull);
+    expect(find.textContaining('still syncing'), findsOneWidget);
+  });
+
+  testWidgets('create previews exact weights and saves customized allocation', (
+    tester,
+  ) async {
+    final repository = _PendingCreateRepository();
+    final items = [
+      for (var i = 0; i < 3; i++)
+        WatchlistItem(
+          id: 'us_stock:T$i',
+          symbol: 'T$i',
+          market: _item.market,
+          addedAt: _item.addedAt,
+          alertRules: _item.alertRules,
+          sync: _item.sync,
+        ),
+    ];
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: const [],
+        positions: const [],
+        repository: repository,
+        items: items,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New simulation'));
+    await tester.pumpAndSettle();
+    expect(find.text('T0 · 33.33%'), findsOneWidget);
+    expect(find.text('T2 · 33.34%'), findsOneWidget);
+    await tester.ensureVisible(find.text('Customize weights'));
+    await tester.tap(find.text('Customize weights'));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 3; i++) {
+      final field = find.descendant(
+        of: find.byKey(ValueKey('watchlist-simulation-preview-us_stock:T$i')),
+        matching: find.byType(EditableText),
+      );
+      await tester.ensureVisible(field);
+      await tester.enterText(field, ['50', '30', '20'][i]);
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    expect(find.text('100% allocated').hitTestable(), findsOneWidget);
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pump();
+    expect(repository.savedWeights, {
+      'us_stock:T0': Decimal.parse('0.5'),
+      'us_stock:T1': Decimal.parse('0.3'),
+      'us_stock:T2': Decimal.parse('0.2'),
+    });
+    repository.result.complete(_simulation);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+    'legacy capital edits cannot change the recorded return denominator',
+    (tester) async {
+      final oldDefinition = WatchlistSimulation(
+        id: _simulation.id,
+        collectionId: _simulation.collectionId,
+        name: _simulation.name,
+        baseCurrency: _simulation.baseCurrency,
+        startingCapital: Decimal.fromInt(200000),
+        cashWeight: _simulation.cashWeight,
+        baselineAt: _simulation.baselineAt,
+        createdAt: _simulation.createdAt,
+        sync: _simulation.sync,
+      );
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [oldDefinition],
+          positions: [_position],
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('+0.90%'), findsWidgets);
+      expect(find.text('-49.55%'), findsNothing);
+    },
+  );
+
+  testWidgets('saved simulation is revealed after its stream entry arrives', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(375, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final stream = StreamController<List<WatchlistSimulation>>();
+    addTearDown(stream.close);
+    final repository = _PendingCreateRepository();
+    final simulations = [
+      for (var i = 0; i < 4; i++)
+        WatchlistSimulation(
+          id: 'simulation-$i',
+          collectionId: _simulation.collectionId,
+          name: 'Scenario $i',
+          baseCurrency: _simulation.baseCurrency,
+          startingCapital: _simulation.startingCapital,
+          cashWeight: _simulation.cashWeight,
+          baselineAt: _simulation.baselineAt,
+          createdAt: _simulation.createdAt,
+          sync: _simulation.sync,
+        ),
+    ];
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: simulations,
+        positions: [_position],
+        simulationStream: stream.stream,
+        repository: repository,
+      ),
+    );
+    stream.add(simulations.take(3).toList());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New simulation'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pump();
+    repository.result.complete(simulations.last);
+    await tester.pumpAndSettle();
+    expect(find.text('Saved · Scenario 3'), findsNothing);
+    stream.add(simulations);
+    await tester.pumpAndSettle();
+    expect(find.text('Saved · Scenario 3').hitTestable(), findsOneWidget);
+    expect(find.text('Scenario 3').hitTestable(), findsOneWidget);
+  });
+
+  testWidgets(
+    'editor saves through one configuration operation and stays open on failure',
+    (tester) async {
+      final repository = _PendingConfigurationRepository();
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).first, 'Saved edit');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(AppBusyButton));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(repository.calls, 1);
+      expect(repository.savedName, 'Saved edit');
+      expect(repository.savedBasisKey, 'basis-test');
+      expect(repository.savedWeights, {_item.id: Decimal.parse('0.9')});
+      expect(repository.savedCash, Decimal.parse('0.1'));
+      expect(
+        tester.widget<AppBusyButton>(find.byType(AppBusyButton)).busy,
+        isTrue,
+      );
+      repository.result.completeError(StateError('write failed'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AppFormPageScaffold), findsOneWidget);
+      expect(find.text('Saved edit'), findsOneWidget);
+      expect(
+        tester.widget<AppBusyButton>(find.byType(AppBusyButton)).busy,
+        isFalse,
+      );
+      repository.result = Completer<void>();
+      await tester.tap(find.byType(AppBusyButton));
+      await tester.pump();
+      expect(repository.calls, 2);
+      repository.result.complete();
+      await tester.pumpAndSettle();
+      expect(find.byType(AppFormPageScaffold), findsNothing);
+      expect(find.text('Saved · Growth paper mix'), findsOneWidget);
+    },
+  );
+
+  testWidgets('an all-cash simulation can be copied without any symbols', (
+    tester,
+  ) async {
+    final cashOnly = WatchlistSimulation(
+      id: _simulation.id,
+      collectionId: _simulation.collectionId,
+      name: _simulation.name,
+      baseCurrency: _simulation.baseCurrency,
+      startingCapital: _simulation.startingCapital,
+      cashWeight: Decimal.one,
+      baselineAt: _simulation.baselineAt,
+      createdAt: _simulation.createdAt,
+      sync: _simulation.sync,
+    );
+    final repository = _PendingCreateRepository();
+    await tester.pumpWidget(
+      _wrap(
+        preferences: preferences,
+        simulations: [cashOnly],
+        positions: const [],
+        items: const [],
+        repository: repository,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('All-cash allocation'), findsOneWidget);
+    expect(
+      tester
+          .widget<AppMetricCluster>(find.byType(AppMetricCluster))
+          .items
+          .first
+          .value,
+      '0.00%',
+    );
+    await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Copy with different capital'));
+    await tester.tap(find.text('Copy with different capital'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(AppBusyButton));
+    await tester.pump();
+    expect(repository.calls, 1);
+    expect(repository.savedWeights, isEmpty);
+    expect(repository.savedCash, Decimal.one);
+    repository.result.complete(cashOnly);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+    'capital copy keeps currency and weights while allowing a fresh amount',
+    (tester) async {
+      final repository = _PendingCreateRepository();
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+      await tester.pumpAndSettle();
+      // The editor has name and weight fields, but no editable capital.
+      expect(find.byType(AmountField), findsNothing);
+      await tester.ensureVisible(find.text('Copy with different capital'));
+      await tester.tap(find.text('Copy with different capital'));
+      await tester.pumpAndSettle();
+      final capital = find.descendant(
+        of: find.byType(AmountField),
+        matching: find.byType(EditableText),
+      );
+      await tester.ensureVisible(capital);
+      await tester.enterText(capital, '200000');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(AppBusyButton).last);
+      await tester.pump();
+      expect(repository.savedCurrency, 'USD');
+      expect(repository.savedCapital, Decimal.fromInt(200000));
+      expect(repository.savedWeights, {_item.id: Decimal.parse('0.9')});
+      expect(repository.savedCash, Decimal.parse('0.1'));
+      repository.result.complete(_simulation);
+      await tester.pumpAndSettle();
+      expect(find.byType(AppFormPageScaffold), findsNothing);
+      expect(find.text('Saved · Growth paper mix'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'overallocated weights keep summary visible and disable filling cash',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(375, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        _wrap(
+          preferences: preferences,
+          simulations: [_simulation],
+          positions: [_position],
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(FLucideIcons.slidersHorizontal));
+      await tester.pumpAndSettle();
+      final weight = find.descendant(
+        of: find.byKey(ValueKey('watchlist-simulation-weight-${_item.id}')),
+        matching: find.byType(EditableText),
+      );
+      await tester.ensureVisible(weight);
+      await tester.enterText(weight, '100');
+      final cash = find.descendant(
+        of: find.byKey(const ValueKey('watchlist-simulation-cash-weight')),
+        matching: find.byType(EditableText),
+      );
+      await tester.ensureVisible(cash);
+      await tester.enterText(cash, '5');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Allocated 105% · Over by 5%').hitTestable(),
+        findsOneWidget,
+      );
+      // Invested weight greater than 100% is the case that cannot be filled.
+      await tester.ensureVisible(weight);
+      await tester.enterText(weight, '101');
+      await tester.pumpAndSettle();
+      final fill = find.ancestor(
+        of: find.text('Fill with cash'),
+        matching: find.byType(AppActionButton),
+      );
+      expect(tester.widget<AppActionButton>(fill).onPress, isNull);
+    },
+  );
 
   testWidgets('allocation uses a page and returns safely after discarding', (
     tester,
@@ -796,6 +1175,10 @@ Widget _wrap({
   required List<WatchlistSimulation> simulations,
   required List<WatchlistSimulationPosition> positions,
   List<WatchlistSimulationObservation>? observations,
+  Stream<List<WatchlistSimulationObservation>>? observationsStream,
+  Stream<List<WatchlistSimulation>>? simulationStream,
+  WatchlistSimulationAllocationStatus allocationStatus =
+      WatchlistSimulationAllocationStatus.selected,
   WatchlistItem? item,
   List<WatchlistItem>? items,
   List<WatchlistQuoteSnapshot>? snapshots,
@@ -818,7 +1201,7 @@ Widget _wrap({
         ),
       sharedPreferencesProvider.overrideWithValue(preferences),
       watchlistSimulationsProvider.overrideWith(
-        (_) => Stream.value(simulations),
+        (_) => simulationStream ?? Stream.value(simulations),
       ),
       watchlistSimulationPositionsProvider.overrideWith(
         (_, _) => Stream.value(positions),
@@ -829,7 +1212,7 @@ Widget _wrap({
         );
         return Stream.value(
           ResolvedWatchlistSimulationAllocation(
-            status: WatchlistSimulationAllocationStatus.selected,
+            status: allocationStatus,
             allocationVersionId: 'allocation-test',
             allocationBasisKey: 'basis-test',
             validAllocationBasisKeys: const {'basis-test'},
@@ -839,7 +1222,8 @@ Widget _wrap({
         );
       }),
       watchlistSimulationObservationsProvider.overrideWith(
-        (_, _) => Stream.value(observations ?? _observations),
+        (_, _) =>
+            observationsStream ?? Stream.value(observations ?? _observations),
       ),
       watchlistSimulationHistoricalBackfillProvider.overrideWith(
         (_, _) async => 0,
@@ -888,6 +1272,10 @@ class _PendingCreateRepository implements WatchlistSimulationRepository {
   final result = Completer<WatchlistSimulation>();
   var calls = 0;
   String? savedName;
+  String? savedCurrency;
+  Decimal? savedCapital;
+  Map<String, Decimal>? savedWeights;
+  Decimal? savedCash;
 
   @override
   Future<WatchlistSimulation> create({
@@ -901,11 +1289,44 @@ class _PendingCreateRepository implements WatchlistSimulationRepository {
   }) {
     calls++;
     savedName = name;
+    savedCurrency = baseCurrency;
+    savedCapital = startingCapital;
+    savedWeights = targetWeights;
+    savedCash = cashWeight;
     expect(
       targetWeights.values.fold(Decimal.zero, (sum, value) => sum + value) +
           cashWeight,
       Decimal.one,
     );
+    return result.future;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _PendingConfigurationRepository implements WatchlistSimulationRepository {
+  var result = Completer<void>();
+  var calls = 0;
+  String? savedName;
+  String? savedBasisKey;
+  Map<String, Decimal>? savedWeights;
+  Decimal? savedCash;
+
+  @override
+  Future<void> saveConfiguration({
+    required WatchlistSimulation simulation,
+    required String name,
+    required Map<String, Decimal> targetWeights,
+    required Decimal cashWeight,
+    String? expectedAllocationBasisKey,
+    Map<String, WatchlistSimulationHoldingInput>? holdingInputs,
+  }) {
+    calls++;
+    savedName = name;
+    savedBasisKey = expectedAllocationBasisKey;
+    savedWeights = targetWeights;
+    savedCash = cashWeight;
     return result.future;
   }
 

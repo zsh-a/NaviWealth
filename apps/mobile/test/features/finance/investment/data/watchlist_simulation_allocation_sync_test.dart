@@ -382,6 +382,27 @@ void main() {
         WatchlistSimulationAllocationStatus.pending,
       );
 
+      final active = (await repository.watchActive(_user).first).single;
+      await expectLater(
+        repository.saveConfiguration(
+          simulation: active,
+          name: 'Must not partially save',
+          targetWeights: {'us_stock:MSFT': Decimal.parse('0.5')},
+          cashWeight: Decimal.parse('0.5'),
+        ),
+        throwsA(
+          isA<WatchlistSimulationSaveException>().having(
+            (error) => error.reason,
+            'reason',
+            WatchlistSimulationSaveFailure.syncing,
+          ),
+        ),
+      );
+      expect(
+        (await repository.watchActive(_user).first).single.name,
+        active.name,
+      );
+
       await applier.applyAll([branch.first]);
       expect(
         (await repository.resolveAllocation(

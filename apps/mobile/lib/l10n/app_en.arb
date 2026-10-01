@@ -8528,5 +8528,71 @@
   "sourceActionReplace": "Create replacement action",
   "sourceActionReplaceConfirmTitle": "Replace the dropped action?",
   "sourceActionReplaceConfirmBody": "The dropped action will remain in your history. Create a new action for this source?",
-  "sourceActionLinked": "This source already has an action. Its status is tracked separately from whether the source issue has cleared."
+  "sourceActionLinked": "This source already has an action. Its status is tracked separately from whether the source issue has cleared.",
+  "watchlistSimulationPreviewTitle": "Allocation preview",
+  "watchlistSimulationPreviewNote": "The remaining allocation is split equally after reserving cash. These preview weights will be saved.",
+  "watchlistSimulationCustomWeightsAction": "Customize weights",
+  "watchlistSimulationCapitalFixedNote": "Existing capital is fixed; historical change uses the recorded baseline. Copy this allocation to start a new simulation with different capital.",
+  "watchlistSimulationCopyCapitalAction": "Copy with different capital",
+  "watchlistSimulationCopyName": "{name} copy",
+  "@watchlistSimulationCopyName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationFillCashUnavailable": "Correct the position weights so they total at most 100% before filling with cash.",
+  "watchlistSimulationOverallocatedSummary": "Allocated {allocated}% · Over by {excess}%",
+  "@watchlistSimulationOverallocatedSummary": {
+    "placeholders": {
+      "allocated": {
+        "type": "String"
+      },
+      "excess": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationChangedWhileEditing": "This simulation changed or was deleted. Go back and reopen it before saving.",
+  "watchlistSimulationSavedStatus": "Saved · {name}",
+  "@watchlistSimulationSavedStatus": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationHistoryLoading": "Loading observation history…",
+  "watchlistSimulationHistoryLoadFailed": "Observation history could not load. Cumulative change and the latest observed value are unavailable.",
+  "watchlistSimulationHistoryBackfilling": "Filling in available historical quotes…",
+  "watchlistSimulationHistoryBackfillFailed": "Historical quotes could not be filled in. Recorded observations are still available.",
+  "watchlistSimulationObservationDate": "Observation date: {date} (UTC)",
+  "@watchlistSimulationObservationDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationBaselineValue": "Creation baseline",
+  "watchlistSimulationCashOnlyStatus": "All-cash allocation · Daily scenario move is zero",
+  "watchlistSimulationQuotesUnavailable": "Waiting for usable quotes · Daily move unavailable",
+  "watchlistSimulationQuotesPartial": "Quote coverage {coverage} · Daily move includes priced positions only",
+  "@watchlistSimulationQuotesPartial": {
+    "placeholders": {
+      "coverage": {
+        "type": "String"
+      }
+    }
+  },
+  "watchlistSimulationQuotesComplete": "Quotes complete · All non-cash allocation covered",
+  "watchlistSimulationQuoteDate": "Quote date: {date} (UTC)",
+  "@watchlistSimulationQuoteDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  }
 }
