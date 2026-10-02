@@ -180,6 +180,8 @@ final _account = Account(
 IngestDraft _draft({
   String id = 'draft-1',
   String description = 'Coffee receipt',
+  int amountMinor = -3850,
+  IngestTransactionKind kind = IngestTransactionKind.expense,
 }) => IngestDraft(
   draftId: id,
   ownerUserId: 'u1',
@@ -187,9 +189,10 @@ IngestDraft _draft({
   sourceKind: IngestSourceKind.csv,
   parsed: ParsedTransaction(
     description: description,
-    amountMinor: -3850,
+    amountMinor: amountMinor,
     currency: 'CNY',
     occurredAt: DateTime.utc(2026, 5, 10),
+    kind: kind,
   ),
   verdict: DedupVerdict.newTxn,
   status: DraftStatus.pending,
@@ -303,6 +306,317 @@ Future<void> _settleUntil(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  testWidgets('continuous navigation protects unsaved fields on Android', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([
+      _draft(id: 'first'),
+      _draft(id: 'second', description: 'Metro receipt', amountMinor: -500),
+    ]);
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    await tester.pumpWidget(
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        accounts: [_account],
+        touch: true,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final edit = find.widgetWithText(AppActionButton, 'Correct fields');
+    await tester.ensureVisible(edit);
+    await tester.tap(edit);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(FTextField, 'Description'),
+      'Unsaved change',
+    );
+    await tester.tap(find.bySemanticsLabel('Next draft'));
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Keep editing'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 of 2'), findsOneWidget);
+    expect(
+      (await store.readReviewItem('first'))!.draft.parsed.description,
+      'Coffee receipt',
+    );
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('Discard changes?'), findsOneWidget);
+    await tester.tap(find.text('Discard'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('app-sheet.surface')), findsNothing);
+    expect(await store.countByStatus(DraftStatus.confirmed), 0);
+    expect(tester.takeException(), isNull);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+  testWidgets(
+    'long Android queue searches and selects beyond the old 200 row window',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(390, 844)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll(
+        List.generate(
+          500,
+          (index) => _draft(
+            id: 'row-$index',
+            description: 'Merchant-$index',
+            amountMinor: -(1000 + index * 200),
+          ),
+        ),
+      );
+      final service = IngestConfirmService(
+        applier: const _NoopApplier(),
+        store: store,
+      );
+      await tester.pumpWidget(
+        _app(
+          db: db,
+          store: store,
+          service: service,
+          accounts: [_account],
+          touch: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('500 results · 500 pending'), findsOneWidget);
+      expect(
+        tester
+            .widget<SliverList>(find.byType(SliverList).last)
+            .delegate
+            .estimatedChildCount,
+        101,
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('ingest-load-more')),
+        500,
+        scrollable: find
+            .descendant(
+              of: find.byType(CustomScrollView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.tap(find.byKey(const ValueKey('ingest-load-more')));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<SliverList>(find.byType(SliverList).last)
+            .delegate
+            .estimatedChildCount,
+        201,
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('ingest-select-filtered')),
+        -500,
+        scrollable: find
+            .descendant(
+              of: find.byType(CustomScrollView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.tap(find.byKey(const ValueKey('ingest-select-filtered')));
+      await tester.pumpAndSettle();
+      expect(find.text('500 selected'), findsOneWidget);
+      expect(
+        find.widgetWithText(AppActionButton, 'Confirm (500)'),
+        findsOneWidget,
+      );
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('ingest-review-search')),
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('ingest-review-search')),
+        'Merchant-499',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('1 results · 500 pending'), findsOneWidget);
+      expect(
+        find
+            .text('Merchant-499', skipOffstage: true)
+            .evaluate()
+            .where((element) => element.widget is Text),
+        hasLength(1),
+      );
+      expect(find.text('500 selected'), findsNothing);
+      expect(find.text('Confirm recordable results (1)'), findsOneWidget);
+      final list = tester.widget<SliverList>(find.byType(SliverList).last);
+      expect(list.delegate.estimatedChildCount, 1);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
+  testWidgets(
+    'mixed bulk selection reports and confirms only eligible drafts',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(1440, 1000)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft(id: 'expense'),
+        _draft(id: 'duplicate'),
+        _draft(id: 'transfer', kind: IngestTransactionKind.transfer),
+        _draft(id: 'trade', kind: IngestTransactionKind.trade),
+      ]);
+      final applier = _RecordingApplier();
+      final service = IngestConfirmService(applier: applier, store: store);
+      await tester.pumpWidget(
+        _app(db: db, store: store, service: service, accounts: [_account]),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Confirm all · new only (1)'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('ingest-select-filtered')));
+      await tester.pumpAndSettle();
+      expect(find.text('4 selected'), findsOneWidget);
+      expect(
+        find.text('1 recordable · 3 excluded from confirmation'),
+        findsOneWidget,
+      );
+      await tester.tap(find.widgetWithText(AppActionButton, 'Confirm (1)'));
+      await tester.pumpAndSettle();
+      expect(applier.applyCount, 1);
+      expect(await store.countByStatus(DraftStatus.confirmed), 1);
+      expect(await store.countByStatus(DraftStatus.pending), 3);
+      expect(find.byKey(const ValueKey('ingest-batch-result')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'continuous editing saves the first draft then loads the next without recording',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(390, 844)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft(id: 'first'),
+        _draft(id: 'second', description: 'Metro receipt', amountMinor: -500),
+      ]);
+      final service = IngestConfirmService(
+        applier: const _NoopApplier(),
+        store: store,
+      );
+      await tester.pumpWidget(
+        _app(
+          db: db,
+          store: store,
+          service: service,
+          accounts: [_account],
+          touch: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final edit = find.widgetWithText(AppActionButton, 'Correct fields');
+      await tester.ensureVisible(edit);
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+      final field = find.widgetWithText(FTextField, 'Description');
+      await tester.enterText(field, 'Corrected coffee');
+      await tester.tap(find.byKey(const ValueKey('ingest-save-next')));
+      await tester.pumpAndSettle();
+      expect(
+        (await store.readReviewItem('first'))!.draft.parsed.description,
+        'Corrected coffee',
+      );
+      expect(find.text('2 of 2'), findsOneWidget);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: field, matching: find.byType(EditableText)),
+            )
+            .controller
+            .text,
+        'Metro receipt',
+      );
+      await tester.enterText(field, 'Corrected metro');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(
+        (await store.readReviewItem('second'))!.draft.parsed.description,
+        'Corrected metro',
+      );
+      expect(await store.countByStatus(DraftStatus.confirmed), 0);
+      expect(await store.countByStatus(DraftStatus.pending), 2);
+      expect(find.byKey(const ValueKey('app-sheet.surface')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
+  testWidgets('category edits apply to the filtered selection only', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1440, 1000)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([
+      _draft(id: 'coffee'),
+      _draft(id: 'metro', description: 'Metro receipt', amountMinor: -500),
+    ]);
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    await tester.pumpWidget(
+      _app(db: db, store: store, service: service, accounts: [_account]),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('ingest-review-search')),
+      'Coffee',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('ingest-select-filtered')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppActionButton, 'Set category'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(FTextField, 'Category hint (optional)'),
+      'Food',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      (await store.readReviewItem('coffee'))!.draft.parsed.categoryHint,
+      'Food',
+    );
+    expect(
+      (await store.readReviewItem('metro'))!.draft.parsed.categoryHint,
+      isNull,
+    );
+    expect(await store.countByStatus(DraftStatus.confirmed), 0);
+  });
+
   for (final size in [const Size(390, 844), const Size(1440, 900)]) {
     testWidgets(
       'draft details open without surface blur and save at $size',
@@ -384,6 +698,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('ingest-master-repeat')));
     await tester.pumpAndSettle();
+    expect(find.text('Matching imported draft'), findsOneWidget);
     expect(
       find.widgetWithText(AppActionButton, 'Record anyway'),
       findsOneWidget,
@@ -666,6 +981,51 @@ void main() {
     expect(tester.takeException(), isNull);
     semantics.dispose();
   });
+
+  testWidgets('Android batch actions fit a narrow screen at 2x text', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([
+      _draft(id: 'first'),
+      _draft(id: 'second', description: 'Metro receipt', amountMinor: -500),
+    ]);
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    await tester.pumpWidget(
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        accounts: [_account],
+        touch: true,
+        textScaler: const TextScaler.linear(2),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final select = find.byKey(const ValueKey('ingest-select-filtered'));
+    await tester.ensureVisible(select);
+    await tester.tap(select);
+    await tester.pumpAndSettle();
+
+    for (final label in ['Confirm (2)', 'Skip', 'Set category']) {
+      final action = find.widgetWithText(AppActionButton, label);
+      expect(action, findsOneWidget);
+      final bounds = tester.getRect(action);
+      expect(bounds.left, greaterThanOrEqualTo(0));
+      expect(bounds.right, lessThanOrEqualTo(390));
+      expect(bounds.height, greaterThanOrEqualTo(48));
+    }
+    expect(tester.takeException(), isNull);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   testWidgets('wide low-height account select reaches the last account at 2x', (
     tester,
@@ -1045,6 +1405,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
+    await tester.ensureVisible(find.widgetWithText(AppActionButton, 'Skip'));
     await tester.tap(find.widgetWithText(AppActionButton, 'Skip'));
     await tester.pumpAndSettle();
 
@@ -1071,6 +1432,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.widgetWithText(AppActionButton, 'Record'));
     await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
     await tester.pumpAndSettle();
     expect(find.text('Coffee receipt'), findsNothing);
@@ -1097,6 +1459,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(
+        find.widgetWithText(AppActionButton, 'Record'),
+      );
       await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
       await tester.pumpAndSettle();
 
@@ -1179,6 +1544,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Metro receipt'), findsOneWidget);
+    await tester.ensureVisible(find.text('Metro receipt'));
+    await tester.pumpAndSettle();
     expect(find.text('Resolve review state'), findsOneWidget);
     expect(find.text('Undo'), findsOneWidget);
 
@@ -1189,6 +1556,17 @@ void main() {
     await tester.tap(find.text('Coffee receipt'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppActionButton, 'Record'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Metro receipt'),
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView).first,
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.pumpAndSettle();
     expect(find.text('Resolve review state'), findsOneWidget);
     expect(
       applier.undone.map((state) => state.appliedEntityId),
@@ -1259,6 +1637,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.widgetWithText(AppActionButton, 'Record'));
     await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Undo'));

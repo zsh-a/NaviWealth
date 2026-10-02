@@ -2,6 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/ui/ingest_review_selection.dart';
 
 void main() {
+  test('bulk selection deduplicates a long queue and can be cleared', () {
+    final selection = IngestReviewSelection();
+    final ids = List.generate(2000, (index) => 'row-$index');
+    selection.selectAll(ids);
+    selection.selectAll(ids);
+    expect(selection.selectedIds, hasLength(2000));
+    expect(selection.isSelected('row-1999'), isTrue);
+    selection.clear();
+    expect(selection.selectedIds, isEmpty);
+  });
   test('selection preserves insertion order and prevents duplicates', () {
     final selection = IngestReviewSelection();
 

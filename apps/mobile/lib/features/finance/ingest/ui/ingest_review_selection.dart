@@ -3,7 +3,7 @@
 /// Keeping this independent from Flutter lets the page delegate ordered
 /// selection/focus mutations without coupling them to widget lifecycle code.
 class IngestReviewSelection {
-  final List<String> _selectedIds = <String>[];
+  final Set<String> _selectedIds = <String>{};
   String? _focusedId;
 
   List<String> get selectedIds => List<String>.unmodifiable(_selectedIds);
@@ -16,6 +16,10 @@ class IngestReviewSelection {
     _selectedIds.remove(draftId);
     if (selected) _selectedIds.add(draftId);
   }
+
+  void selectAll(Iterable<String> draftIds) => _selectedIds.addAll(draftIds);
+
+  void clear() => _selectedIds.clear();
 
   void focus(String draftId) {
     _focusedId = draftId;

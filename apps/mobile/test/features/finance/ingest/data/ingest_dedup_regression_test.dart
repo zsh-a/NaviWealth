@@ -637,6 +637,26 @@ void main() {
       expect(await db.select(db.journalEntries).get(), hasLength(1));
       final second = await controller.ingest(source);
       expect(second.drafts.single.verdict, DedupVerdict.duplicate);
+      final targetId = second.drafts.single.dedupTargetEntryId!;
+      final dedup = IngestDedupService(store: store, repository: repository);
+      final debit = await dedup.findMatch(targetId, against: draft.parsed);
+      expect(debit!.isDraft, isFalse);
+      expect(debit.parsed.amountMinor, -10000);
+      expect(debit.parsed.kind, IngestTransactionKind.transfer);
+      final credit = await dedup.findMatch(
+        targetId,
+        against: draft.parsed.copyWith(amountMinor: 10000),
+      );
+      expect(credit!.parsed.amountMinor, 10000);
+      final foreignStore = IngestDraftStore(db, ownerUserId: 'other-user');
+      addTearDown(foreignStore.dispose);
+      expect(
+        await IngestDedupService(
+          store: foreignStore,
+          repository: repository,
+        ).findMatch(targetId),
+        isNull,
+      );
       final corrected = IngestPipeline().planFromParsed(
         parsed: [
           draft.parsed.copyWith(

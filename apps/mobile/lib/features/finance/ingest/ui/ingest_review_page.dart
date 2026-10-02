@@ -56,6 +56,8 @@ part 'ingest_review/processing.dart';
 part 'ingest_review/review_actions.dart';
 part 'ingest_review/selection_actions.dart';
 part 'ingest_review/workspace.dart';
+part 'ingest_review/controls.dart';
+part 'ingest_review/duplicate_comparison.dart';
 
 class IngestReviewPage extends ConsumerStatefulWidget {
   const IngestReviewPage({super.key});
@@ -72,12 +74,27 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   final IngestReviewSelection _selection = IngestReviewSelection();
   final FocusNode _masterFocus = FocusNode(debugLabel: 'ingest review master');
   IngestQualityReport? _latestQualityReport;
+  final TextEditingController _search = TextEditingController();
+  final FocusNode _searchFocus = FocusNode(debugLabel: 'ingest review search');
+  String _query = '';
+  IngestReviewFilter _filter = IngestReviewFilter.all;
+  IngestReviewSort _sort = IngestReviewSort.importOrder;
+  int _visibleLimit = 100;
+  IngestReviewViewData? _currentData;
+  Object? _projectionKey;
+  IngestBatchReviewOutcome? _lastBatchOutcome;
+  Set<String> _attentionIds = {};
+  List<String> _previousReviewOrder = const [];
+  final ScrollController _reviewScroll = ScrollController();
 
   bool get _isBusy => _busy != null || _captureLease.isHeld;
 
   @override
   void dispose() {
     _masterFocus.dispose();
+    _search.dispose();
+    _searchFocus.dispose();
+    _reviewScroll.dispose();
     super.dispose();
   }
 
@@ -93,18 +110,38 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         final useMasterDetail = MasterDetailLayout.shouldUseMasterDetail(
           constraints.maxWidth,
         );
-        final viewData =
-            accountsAsync.hasError ||
-                reviewItemsAsync.hasError ||
-                accounts == null ||
-                items == null
-            ? null
-            : IngestReviewViewData.from(
-                accounts: accounts,
-                items: items,
-                selectedAccountId: _accountId,
-                pendingFinalizeIds: _pendingFinalize.keys.toSet(),
-              );
+        if (accountsAsync.hasError ||
+            reviewItemsAsync.hasError ||
+            accounts == null ||
+            items == null) {
+          _currentData = null;
+          _projectionKey = null;
+        } else {
+          final key = (
+            accounts,
+            items,
+            _accountId,
+            _query,
+            _filter,
+            _sort,
+            _pendingFinalize.keys.join('\u0000'),
+            _attentionIds,
+          );
+          if (_projectionKey != key) {
+            _currentData = IngestReviewViewData.from(
+              accounts: accounts,
+              items: items,
+              selectedAccountId: _accountId,
+              pendingFinalizeIds: _pendingFinalize.keys.toSet(),
+              query: _query,
+              filter: _filter,
+              sort: _sort,
+              attentionIds: _attentionIds,
+            );
+            _projectionKey = key;
+          }
+        }
+        final viewData = _currentData;
         if (viewData != null) {
           _scheduleSelectionPrune(viewData.items, ensureFocus: true);
         }
@@ -116,16 +153,24 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             ? _wideWorkspace(viewData, selectedItems ?? const [])
             : AppTaskScaffold(
                 titleWidget: _title(l10n),
-                actionsBuilder: (context, wide) => wide
-                    ? const <Widget>[]
-                    : <Widget>[
-                        _CapturePopoverAction(
-                          enabled: !_isBusy,
-                          onCamera: _captureCamera,
-                          onFile: _pickFile,
-                          onPaste: _openPasteDialog,
-                        ),
-                      ],
+                scrollController: _reviewScroll,
+                actionsBuilder: (context, wide) => <Widget>[
+                  if (viewData != null && viewData.allItems.isNotEmpty)
+                    AppIconButton(
+                      tooltip: l10n.navSearch,
+                      icon: FLucideIcons.search,
+                      onPress: _isBusy
+                          ? null
+                          : () => _resetReviewScroll(focusSearch: true),
+                    ),
+                  if (!wide)
+                    _CapturePopoverAction(
+                      enabled: !_isBusy,
+                      onCamera: _captureCamera,
+                      onFile: _pickFile,
+                      onPaste: _openPasteDialog,
+                    ),
+                ],
                 compactLeadingSliversBuilder: viewData == null
                     ? null
                     : (_) => _compactControlSlivers(viewData),

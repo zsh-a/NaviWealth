@@ -30180,6 +30180,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{hours} hours'**
   String healthSleepGoalHours(String hours);
+
+  /// No description provided for @ingestReviewQueueCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{matches} results · {total} pending'**
+  String ingestReviewQueueCount(int matches, int total);
+
+  /// No description provided for @ingestReviewSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search description, category, amount…'**
+  String get ingestReviewSearchHint;
+
+  /// No description provided for @ingestFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get ingestFilterAll;
+
+  /// No description provided for @ingestFilterReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to record'**
+  String get ingestFilterReady;
+
+  /// No description provided for @ingestFilterAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get ingestFilterAttention;
+
+  /// No description provided for @ingestSortImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import order'**
+  String get ingestSortImport;
+
+  /// No description provided for @ingestSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get ingestSortNewest;
+
+  /// No description provided for @ingestSortOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get ingestSortOldest;
+
+  /// No description provided for @ingestSortAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount by currency'**
+  String get ingestSortAmount;
+
+  /// No description provided for @ingestSelectFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Select results'**
+  String get ingestSelectFiltered;
+
+  /// No description provided for @ingestSelectReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Select recordable'**
+  String get ingestSelectReady;
+
+  /// No description provided for @ingestClearSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear selection'**
+  String get ingestClearSelection;
+
+  /// No description provided for @ingestLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing {shown} of {total} · Load more'**
+  String ingestLoadMore(int shown, int total);
+
+  /// No description provided for @ingestNoMatchingDrafts.
+  ///
+  /// In en, this message translates to:
+  /// **'No drafts match these filters.'**
+  String get ingestNoMatchingDrafts;
+
+  /// No description provided for @ingestConfirmFiltered.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm recordable results ({count})'**
+  String ingestConfirmFiltered(int count);
+
+  /// No description provided for @ingestConfirmSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm ({count})'**
+  String ingestConfirmSelected(int count);
+
+  /// No description provided for @ingestSelectionEligibility.
+  ///
+  /// In en, this message translates to:
+  /// **'{ready} recordable · {excluded} excluded from confirmation'**
+  String ingestSelectionEligibility(int ready, int excluded);
+
+  /// No description provided for @ingestBatchCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Set category'**
+  String get ingestBatchCategory;
+
+  /// No description provided for @ingestBatchCategoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Set category for {count} drafts'**
+  String ingestBatchCategoryCount(int count);
+
+  /// No description provided for @ingestCategoryClearHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave empty to clear the category'**
+  String get ingestCategoryClearHint;
+
+  /// No description provided for @ingestUpdatingCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Updating selected draft categories…'**
+  String get ingestUpdatingCategory;
+
+  /// No description provided for @ingestCategoryUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated {updated} drafts; {conflicts} changed and were left untouched.'**
+  String ingestCategoryUpdated(int updated, int conflicts);
+
+  /// No description provided for @ingestPreviousDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous draft'**
+  String get ingestPreviousDraft;
+
+  /// No description provided for @ingestNextDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Next draft'**
+  String get ingestNextDraft;
+
+  /// No description provided for @ingestReviewPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'{position} of {total}'**
+  String ingestReviewPosition(int position, int total);
+
+  /// No description provided for @ingestSaveAndNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and next'**
+  String get ingestSaveAndNext;
+
+  /// No description provided for @ingestMatchedDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Matching imported draft'**
+  String get ingestMatchedDraft;
+
+  /// No description provided for @ingestMatchedLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'Matching recorded transaction'**
+  String get ingestMatchedLedger;
+
+  /// No description provided for @ingestMatchUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The matching record changed or is unavailable. Check this draft before recording.'**
+  String get ingestMatchUnavailable;
+
+  /// No description provided for @ingestMatchLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading matching record…'**
+  String get ingestMatchLoading;
+
+  /// No description provided for @ingestCompareBeforeRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Compare this record with the draft above before recording it again.'**
+  String get ingestCompareBeforeRecording;
+
+  /// No description provided for @ingestReviewFailures.
+  ///
+  /// In en, this message translates to:
+  /// **'Review remaining issues'**
+  String get ingestReviewFailures;
+
+  /// No description provided for @ingestLastBatchResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Last batch: {recorded} recorded · {failed} need attention'**
+  String ingestLastBatchResult(int recorded, int failed);
 }
 
 class _AppLocalizationsDelegate

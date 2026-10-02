@@ -4,9 +4,10 @@ class _IngestSelectionActions extends StatelessWidget {
   const _IngestSelectionActions({
     required this.count,
     required this.busy,
-    required this.canConfirm,
-    required this.canDismiss,
-    required this.canFinalize,
+    required this.confirmCount,
+    required this.dismissCount,
+    required this.finalizeCount,
+    required this.onCategory,
     required this.onConfirm,
     required this.onDismiss,
     required this.onFinalize,
@@ -14,9 +15,10 @@ class _IngestSelectionActions extends StatelessWidget {
 
   final int count;
   final bool busy;
-  final bool canConfirm;
-  final bool canDismiss;
-  final bool canFinalize;
+  final int confirmCount;
+  final int dismissCount;
+  final int finalizeCount;
+  final VoidCallback? onCategory;
   final VoidCallback onConfirm;
   final VoidCallback onDismiss;
   final VoidCallback onFinalize;
@@ -24,42 +26,59 @@ class _IngestSelectionActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Row(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.commonSelectedCount(count), style: context.labelStyle),
-        const SizedBox(width: AppSpacing.s12),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                if (canConfirm)
-                  AppActionButton(
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: busy ? null : onConfirm,
-                    child: Text(l10n.ingestConfirm),
-                  ),
-                if (canDismiss) ...[
-                  const SizedBox(width: AppSpacing.s8),
-                  AppActionButton(
-                    variant: FButtonVariant.outline,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: busy ? null : onDismiss,
-                    child: Text(l10n.ingestSkip),
-                  ),
-                ],
-                if (canFinalize) ...[
-                  const SizedBox(width: AppSpacing.s8),
-                  AppActionButton(
-                    variant: FButtonVariant.primary,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: busy ? null : onFinalize,
-                    child: Text(l10n.ingestResolveAction),
-                  ),
-                ],
-              ],
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s4,
+          children: [
+            Text(l10n.commonSelectedCount(count), style: context.labelStyle),
+            Text(
+              l10n.ingestSelectionEligibility(
+                confirmCount,
+                count - confirmCount,
+              ),
+              style: context.bodyCaptionStyle,
             ),
-          ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s8),
+        Wrap(
+          spacing: AppSpacing.s8,
+          runSpacing: AppSpacing.s8,
+          children: [
+            if (confirmCount > 0)
+              AppActionButton(
+                mainAxisSize: MainAxisSize.min,
+                onPress: busy ? null : onConfirm,
+                child: Flexible(
+                  child: Text(l10n.ingestConfirmSelected(confirmCount)),
+                ),
+              ),
+            if (dismissCount > 0)
+              AppActionButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: busy ? null : onDismiss,
+                child: Flexible(child: Text(l10n.ingestSkip)),
+              ),
+            if (onCategory != null)
+              AppActionButton(
+                variant: FButtonVariant.outline,
+                mainAxisSize: MainAxisSize.min,
+                onPress: busy ? null : onCategory,
+                child: Flexible(child: Text(l10n.ingestBatchCategory)),
+              ),
+            if (finalizeCount > 0)
+              AppActionButton(
+                variant: FButtonVariant.primary,
+                mainAxisSize: MainAxisSize.min,
+                onPress: busy ? null : onFinalize,
+                child: Flexible(child: Text(l10n.ingestResolveAction)),
+              ),
+          ],
         ),
       ],
     );

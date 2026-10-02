@@ -18009,4 +18009,123 @@ class AppLocalizationsEn extends AppLocalizations {
   String healthSleepGoalHours(String hours) {
     return '$hours hours';
   }
+
+  @override
+  String ingestReviewQueueCount(int matches, int total) {
+    return '$matches results · $total pending';
+  }
+
+  @override
+  String get ingestReviewSearchHint => 'Search description, category, amount…';
+
+  @override
+  String get ingestFilterAll => 'All';
+
+  @override
+  String get ingestFilterReady => 'Ready to record';
+
+  @override
+  String get ingestFilterAttention => 'Needs attention';
+
+  @override
+  String get ingestSortImport => 'Import order';
+
+  @override
+  String get ingestSortNewest => 'Newest first';
+
+  @override
+  String get ingestSortOldest => 'Oldest first';
+
+  @override
+  String get ingestSortAmount => 'Amount by currency';
+
+  @override
+  String get ingestSelectFiltered => 'Select results';
+
+  @override
+  String get ingestSelectReady => 'Select recordable';
+
+  @override
+  String get ingestClearSelection => 'Clear selection';
+
+  @override
+  String ingestLoadMore(int shown, int total) {
+    return 'Showing $shown of $total · Load more';
+  }
+
+  @override
+  String get ingestNoMatchingDrafts => 'No drafts match these filters.';
+
+  @override
+  String ingestConfirmFiltered(int count) {
+    return 'Confirm recordable results ($count)';
+  }
+
+  @override
+  String ingestConfirmSelected(int count) {
+    return 'Confirm ($count)';
+  }
+
+  @override
+  String ingestSelectionEligibility(int ready, int excluded) {
+    return '$ready recordable · $excluded excluded from confirmation';
+  }
+
+  @override
+  String get ingestBatchCategory => 'Set category';
+
+  @override
+  String ingestBatchCategoryCount(int count) {
+    return 'Set category for $count drafts';
+  }
+
+  @override
+  String get ingestCategoryClearHint => 'Leave empty to clear the category';
+
+  @override
+  String get ingestUpdatingCategory => 'Updating selected draft categories…';
+
+  @override
+  String ingestCategoryUpdated(int updated, int conflicts) {
+    return 'Updated $updated drafts; $conflicts changed and were left untouched.';
+  }
+
+  @override
+  String get ingestPreviousDraft => 'Previous draft';
+
+  @override
+  String get ingestNextDraft => 'Next draft';
+
+  @override
+  String ingestReviewPosition(int position, int total) {
+    return '$position of $total';
+  }
+
+  @override
+  String get ingestSaveAndNext => 'Save and next';
+
+  @override
+  String get ingestMatchedDraft => 'Matching imported draft';
+
+  @override
+  String get ingestMatchedLedger => 'Matching recorded transaction';
+
+  @override
+  String get ingestMatchUnavailable =>
+      'The matching record changed or is unavailable. Check this draft before recording.';
+
+  @override
+  String get ingestMatchLoading => 'Loading matching record…';
+
+  @override
+  String get ingestCompareBeforeRecording =>
+      'Compare this record with the draft above before recording it again.';
+
+  @override
+  String get ingestReviewFailures => 'Review remaining issues';
+
+  @override
+  String ingestLastBatchResult(int recorded, int failed) {
+    return 'Last batch: $recorded recorded · $failed need attention';
+  }
 }

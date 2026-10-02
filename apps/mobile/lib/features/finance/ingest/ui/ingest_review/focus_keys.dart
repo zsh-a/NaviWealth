@@ -61,6 +61,9 @@ extension _IngestReviewFocusKeys on _IngestReviewPageState {
   }) {
     final ids = items.map((item) => item.draft.draftId).toSet();
     final fallbackFocusId = ensureFocus ? _preferredFocusId(items) : null;
+    _previousReviewOrder = items
+        .map((item) => item.draft.draftId)
+        .toList(growable: false);
     if (!_selection.needsReconcile(ids, fallbackFocusId: fallbackFocusId)) {
       return;
     }
@@ -74,6 +77,25 @@ extension _IngestReviewFocusKeys on _IngestReviewPageState {
 
   String? _preferredFocusId(List<IngestReviewItem> items) {
     if (items.isEmpty) return null;
+    final focusedId = _selection.focusedId;
+    final oldIndex = _previousReviewOrder.indexOf(focusedId ?? '');
+    final available = items.map((item) => item.draft.draftId).toSet();
+    if (oldIndex >= 0 && !available.contains(focusedId)) {
+      for (
+        var index = oldIndex + 1;
+        index < _previousReviewOrder.length;
+        index++
+      ) {
+        if (available.contains(_previousReviewOrder[index])) {
+          return _previousReviewOrder[index];
+        }
+      }
+      for (var index = oldIndex - 1; index >= 0; index--) {
+        if (available.contains(_previousReviewOrder[index])) {
+          return _previousReviewOrder[index];
+        }
+      }
+    }
     for (final item in items) {
       final draftId = item.draft.draftId;
       final pending = item.pendingFinalize ?? _pendingFinalize[draftId];

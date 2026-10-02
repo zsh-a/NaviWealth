@@ -64,9 +64,9 @@ final pendingIngestReviewItemsProvider =
       }
       final service = await ref.watch(ingestDedupServiceProvider.future);
       if (service == null) return;
-      await for (final _ in store.watchPendingReviewItems()) {
+      await for (final _ in store.watchPendingReviewItems(limit: null)) {
         await service.refreshPending();
-        yield await store.listPendingReviewItems();
+        yield await store.listPendingReviewItems(limit: null);
       }
     });
 
@@ -78,6 +78,16 @@ final ingestDedupServiceProvider = FutureProvider<IngestDedupService?>((
   final repository = await ref.watch(journalEntryRepositoryProvider.future);
   return IngestDedupService(store: store, repository: repository);
 });
+
+final ingestDuplicateMatchProvider = FutureProvider.autoDispose
+    .family<
+      ({ParsedTransaction parsed, bool isDraft})?,
+      ({String targetId, ParsedTransaction against})
+    >((ref, request) async {
+      ref.watch(pendingIngestReviewItemsProvider);
+      final service = await ref.watch(ingestDedupServiceProvider.future);
+      return service?.findMatch(request.targetId, against: request.against);
+    });
 
 final ingestDraftProgressProvider =
     StreamProvider.autoDispose<IngestDraftProgress>((ref) async* {

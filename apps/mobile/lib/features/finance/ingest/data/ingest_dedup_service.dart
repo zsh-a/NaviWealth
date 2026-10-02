@@ -19,6 +19,47 @@ class IngestDedupService {
 
   String get _owner => store.ownerUserId ?? '';
 
+  /// Resolve comparison evidence only when a user opens a duplicate. Targets
+  /// may be another local draft or a journal entry and are always owner-scoped.
+  Future<({ParsedTransaction parsed, bool isDraft})?> findMatch(
+    String targetId, {
+    ParsedTransaction? against,
+  }) async {
+    final staged = await store.readReviewItem(targetId);
+    if (staged != null) return (parsed: staged.draft.parsed, isDraft: true);
+    final ledger = await readLedger();
+    final candidates = ledger.where((entry) => entry.id == targetId).toList();
+    // One journal entry may have opposite transfer legs or trade fees. Prefer
+    // the same kind/currency/direction instead of displaying an unrelated leg.
+    final matched =
+        candidates
+            .where(
+              (entry) =>
+                  against == null ||
+                  (entry.currency.toUpperCase() ==
+                          against.currency.toUpperCase() &&
+                      parseAmountMinor(entry.amountMinor).isNegative ==
+                          against.amountMinor.isNegative &&
+                      (entry is! IngestDedupCandidate ||
+                          entry.kind == against.kind)),
+            )
+            .firstOrNull ??
+        candidates.firstOrNull;
+    if (matched == null) return null;
+    final candidate = matched is IngestDedupCandidate ? matched : null;
+    return (
+      parsed: ParsedTransaction(
+        description: matched.description,
+        amountMinor: parseAmountMinor(matched.amountMinor),
+        currency: matched.currency,
+        occurredAt: matched.occurredAt,
+        kind: candidate?.kind ?? IngestTransactionKind.expense,
+        dateHasTime: candidate?.dateHasTime ?? true,
+      ),
+      isDraft: false,
+    );
+  }
+
   Future<List<TransactionInput>> readLedger() async {
     final expenses = await repository.watchExpenses(_owner).first;
     final entries = await repository.watchAllWithPostings().first;

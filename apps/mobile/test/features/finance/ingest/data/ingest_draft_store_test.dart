@@ -83,6 +83,83 @@ ProposalApplyState _appliedState() => ProposalApplyState(
 );
 
 void main() {
+  test('unbounded review stream and lookup remain owner-scoped for long statements', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    final other = IngestDraftStore(db, ownerUserId: 'u2');
+    await store.putAll(List.generate(500, (index) => _draft('row-$index')));
+    await other.putAll([_draft('foreign')]);
+    expect(
+      await store.watchPendingReviewItems(limit: null).first,
+      hasLength(500),
+    );
+    expect(await store.listPendingReviewItems(), hasLength(200));
+    expect((await store.readReviewItem('row-499'))!.draft.draftId, 'row-499');
+    expect(await store.readReviewItem('foreign'), isNull);
+  });
+
+  test(
+    'bulk category edits preserve changed, recovery and foreign revisions',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft('normal'),
+        _draft('changed'),
+        _draft('recovery'),
+        _draft('foreign'),
+      ]);
+      final before = await store.listByStatus(DraftStatus.pending);
+      await store.updateParsed(
+        draftId: 'changed',
+        expectedRevision: 0,
+        parsed: before
+            .firstWhere((draft) => draft.draftId == 'changed')
+            .parsed
+            .copyWith(description: 'New description'),
+      );
+      await db.customStatement(
+        'UPDATE ingest_drafts SET recovery_kind = ? WHERE draft_id = ?',
+        ['confirm_ambiguous', 'recovery'],
+      );
+      final foreign = IngestDraft(
+        draftId: 'foreign',
+        ownerUserId: 'u2',
+        createdAt: DateTime.utc(2026),
+        sourceKind: IngestSourceKind.csv,
+        parsed: before.first.parsed,
+        verdict: DedupVerdict.newTxn,
+        status: DraftStatus.pending,
+      );
+      final result = await store.updateSelectedCategories([
+        ...before.where((draft) => draft.draftId != 'foreign'),
+        foreign,
+      ], 'travel');
+      expect(result.updatedIds, {'normal'});
+      expect(result.conflictedIds, {'changed', 'recovery', 'foreign'});
+      expect(
+        (await store.readReviewItem('normal'))!.draft.parsed.categoryHint,
+        'travel',
+      );
+      expect(
+        (await store.readReviewItem('changed'))!.draft.parsed.categoryHint,
+        'coffee',
+      );
+      expect(
+        (await store.readReviewItem('changed'))!.draft.parsed.description,
+        'New description',
+      );
+      final normal = (await store.readReviewItem('normal'))!.draft;
+      await store.updateSelectedCategories([normal], null);
+      expect(
+        (await store.readReviewItem('normal'))!.draft.parsed.categoryHint,
+        isNull,
+      );
+    },
+  );
+
   test(
     'putAll + listByStatus round-trips and preserves parsed fields',
     () async {

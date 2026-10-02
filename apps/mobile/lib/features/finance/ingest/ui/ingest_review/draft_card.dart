@@ -72,8 +72,14 @@ class _DraftMasterRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: AppSpacing.s4),
-                    Row(
+                    Wrap(
+                      spacing: AppSpacing.s4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        Text(
+                          '${_DraftCard._ymd(parsed.occurredAt)} · ${parsed.categoryHint ?? AppLocalizations.of(context).ingestUncategorized}',
+                          style: context.bodyCaptionStyle,
+                        ),
                         if (pendingFinalize || recoveryUnavailable) ...[
                           Icon(
                             FLucideIcons.triangleAlert,
@@ -82,7 +88,8 @@ class _DraftMasterRow extends StatelessWidget {
                           ),
                           const SizedBox(width: AppSpacing.s4),
                         ],
-                        _VerdictIndicator(verdict: draft.verdict),
+                        if (draft.verdict != DedupVerdict.newTxn)
+                          _VerdictIndicator(verdict: draft.verdict),
                       ],
                     ),
                   ],
@@ -193,29 +200,27 @@ class _DraftCard extends StatelessWidget {
               runSpacing: AppSpacing.s6,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                _DraftMetaChip(
-                  icon: switch (p.kind) {
-                    IngestTransactionKind.income => FLucideIcons.trendingUp,
-                    IngestTransactionKind.expense => FLucideIcons.trendingDown,
-                    IngestTransactionKind.transfer =>
-                      FLucideIcons.arrowRightLeft,
-                    IngestTransactionKind.trade =>
-                      FLucideIcons.chartCandlestick,
-                  },
-                  label: switch (p.kind) {
-                    IngestTransactionKind.income => l10n.ingestKindIncome,
-                    IngestTransactionKind.expense => l10n.ingestKindExpense,
-                    IngestTransactionKind.transfer => l10n.ingestKindTransfer,
-                    IngestTransactionKind.trade => l10n.ingestKindTrade,
-                  },
-                ),
-                _DraftMetaChip(
-                  icon: FLucideIcons.calendar,
-                  label: _ymd(p.occurredAt),
-                ),
-                _DraftMetaChip(
-                  icon: FLucideIcons.tags,
-                  label: p.categoryHint ?? l10n.ingestUncategorized,
+                if (focused)
+                  _DraftMetaChip(
+                    icon: switch (p.kind) {
+                      IngestTransactionKind.income => FLucideIcons.trendingUp,
+                      IngestTransactionKind.expense =>
+                        FLucideIcons.trendingDown,
+                      IngestTransactionKind.transfer =>
+                        FLucideIcons.arrowRightLeft,
+                      IngestTransactionKind.trade =>
+                        FLucideIcons.chartCandlestick,
+                    },
+                    label: switch (p.kind) {
+                      IngestTransactionKind.income => l10n.ingestKindIncome,
+                      IngestTransactionKind.expense => l10n.ingestKindExpense,
+                      IngestTransactionKind.transfer => l10n.ingestKindTransfer,
+                      IngestTransactionKind.trade => l10n.ingestKindTrade,
+                    },
+                  ),
+                Text(
+                  '${_ymd(p.occurredAt)} · ${p.categoryHint ?? l10n.ingestUncategorized}',
+                  style: context.bodyCaptionStyle,
                 ),
                 if (focused) ...[
                   _DraftMetaChip(
@@ -229,7 +234,8 @@ class _DraftCard extends StatelessWidget {
                     ),
                   ),
                 ],
-                _VerdictIndicator(verdict: draft.verdict),
+                if (focused || draft.verdict != DedupVerdict.newTxn)
+                  _VerdictIndicator(verdict: draft.verdict),
               ],
             ),
             AnimatedSizeFade(
@@ -265,7 +271,9 @@ class _DraftCard extends StatelessWidget {
                             AppActionButton(
                               variant: FButtonVariant.primary,
                               onPress: busy ? null : onFinalize,
-                              child: Text(l10n.ingestResolveAction),
+                              child: Flexible(
+                                child: Text(l10n.ingestResolveAction),
+                              ),
                             ),
                           ],
                         ],
@@ -273,10 +281,14 @@ class _DraftCard extends StatelessWidget {
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          if (focused && draft.verdict.skipByDefault) ...[
+                            _DuplicateComparison(draft: draft),
+                            const SizedBox(height: AppSpacing.s8),
+                          ],
                           AppActionButton(
                             variant: FButtonVariant.ghost,
                             onPress: busy ? null : onEdit,
-                            child: Text(l10n.ingestEditDraft),
+                            child: Flexible(child: Text(l10n.ingestEditDraft)),
                           ),
                           const SizedBox(height: AppSpacing.s6),
                           Row(
@@ -387,10 +399,14 @@ class _DraftMetaChip extends StatelessWidget {
         children: [
           Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
           const SizedBox(width: AppSpacing.s4),
-          Text(
-            label,
-            style: context.microLabelStyle.copyWith(
-              color: colors.mutedForeground,
+          Flexible(
+            child: Text(
+              label,
+              style: context.microLabelStyle.copyWith(
+                color: colors.mutedForeground,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

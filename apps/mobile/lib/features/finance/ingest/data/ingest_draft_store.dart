@@ -141,12 +141,63 @@ class IngestDraftStore implements IngestDraftBatchLifecycleStore {
   }
 
   Stream<List<IngestReviewItem>> watchPendingReviewItems({
-    int limit = 200,
+    int? limit = 200,
   }) async* {
     yield await listPendingReviewItems(limit: limit);
     await for (final _ in _changes.stream) {
       yield await listPendingReviewItems(limit: limit);
     }
+  }
+
+  /// Owner-scoped lookup for continuous review and optimistic field edits.
+  Future<IngestReviewItem?> readReviewItem(String draftId) async {
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM ingest_drafts WHERE owner_user_id = ?1 AND draft_id = ?2',
+          variables: [
+            Variable.withString(_owner),
+            Variable.withString(draftId),
+          ],
+        )
+        .get();
+    return rows.isEmpty ? null : _rowToReviewItem(rows.single);
+  }
+
+  /// Edit only the selected revisions; lifecycle/recovery conflicts remain
+  /// untouched. Notifications are coalesced per bounded transaction.
+  Future<({Set<String> updatedIds, Set<String> conflictedIds})>
+  updateSelectedCategories(
+    List<IngestDraft> drafts,
+    String? categoryHint,
+  ) async {
+    final updated = <String>{};
+    final conflicted = <String>{};
+    const chunkSize = 25;
+    for (var start = 0; start < drafts.length; start += chunkSize) {
+      final end = (start + chunkSize).clamp(0, drafts.length);
+      final chunkUpdated = <String>{};
+      final chunkConflicted = <String>{};
+      await runBatch(() async {
+        for (final draft in drafts.sublist(start, end)) {
+          if (draft.ownerUserId != _owner) {
+            chunkConflicted.add(draft.draftId);
+            continue;
+          }
+          final saved = await updateParsed(
+            draftId: draft.draftId,
+            expectedRevision: draft.revision,
+            parsed: draft.parsed.copyWith(
+              categoryHint: categoryHint,
+              clearCategoryHint: categoryHint == null,
+            ),
+          );
+          (saved ? chunkUpdated : chunkConflicted).add(draft.draftId);
+        }
+      });
+      updated.addAll(chunkUpdated);
+      conflicted.addAll(chunkConflicted);
+    }
+    return (updatedIds: updated, conflictedIds: conflicted);
   }
 
   Future<int> countByStatus(DraftStatus status) async {

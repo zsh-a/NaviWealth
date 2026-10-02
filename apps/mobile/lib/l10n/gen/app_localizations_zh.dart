@@ -17026,4 +17026,121 @@ class AppLocalizationsZh extends AppLocalizations {
   String healthSleepGoalHours(String hours) {
     return '$hours 小时';
   }
+
+  @override
+  String ingestReviewQueueCount(int matches, int total) {
+    return '筛选 $matches 条 · 共待审核 $total 条';
+  }
+
+  @override
+  String get ingestReviewSearchHint => '搜索描述、分类、金额…';
+
+  @override
+  String get ingestFilterAll => '全部';
+
+  @override
+  String get ingestFilterReady => '可批量确认';
+
+  @override
+  String get ingestFilterAttention => '需核对／修复';
+
+  @override
+  String get ingestSortImport => '导入顺序';
+
+  @override
+  String get ingestSortNewest => '日期从新到旧';
+
+  @override
+  String get ingestSortOldest => '日期从旧到新';
+
+  @override
+  String get ingestSortAmount => '金额（按币种）';
+
+  @override
+  String get ingestSelectFiltered => '选择筛选结果';
+
+  @override
+  String get ingestSelectReady => '仅选可确认项';
+
+  @override
+  String get ingestClearSelection => '清空选择';
+
+  @override
+  String ingestLoadMore(int shown, int total) {
+    return '已显示 $shown/$total 条 · 加载更多';
+  }
+
+  @override
+  String get ingestNoMatchingDrafts => '没有符合条件的待审核记录';
+
+  @override
+  String ingestConfirmFiltered(int count) {
+    return '确认筛选中的可处理项（$count）';
+  }
+
+  @override
+  String ingestConfirmSelected(int count) {
+    return '确认（$count）';
+  }
+
+  @override
+  String ingestSelectionEligibility(int ready, int excluded) {
+    return '可确认 $ready 条 · $excluded 条不参与确认';
+  }
+
+  @override
+  String get ingestBatchCategory => '批量设置分类';
+
+  @override
+  String ingestBatchCategoryCount(int count) {
+    return '设置 $count 条草稿的分类';
+  }
+
+  @override
+  String get ingestCategoryClearHint => '留空可清除分类';
+
+  @override
+  String get ingestUpdatingCategory => '正在更新所选草稿的分类…';
+
+  @override
+  String ingestCategoryUpdated(int updated, int conflicts) {
+    return '已更新 $updated 条；$conflicts 条已发生变化，未覆盖。';
+  }
+
+  @override
+  String get ingestPreviousDraft => '上一条草稿';
+
+  @override
+  String get ingestNextDraft => '下一条草稿';
+
+  @override
+  String ingestReviewPosition(int position, int total) {
+    return '第 $position/$total 条';
+  }
+
+  @override
+  String get ingestSaveAndNext => '保存并下一条';
+
+  @override
+  String get ingestMatchedDraft => '匹配的导入草稿';
+
+  @override
+  String get ingestMatchedLedger => '匹配的已有流水';
+
+  @override
+  String get ingestMatchUnavailable => '匹配记录已变化或暂不可用，请核对后再决定是否录入。';
+
+  @override
+  String get ingestMatchLoading => '正在读取匹配记录…';
+
+  @override
+  String get ingestCompareBeforeRecording => '请与上方草稿核对金额、日期和描述，再决定是否仍然录入。';
+
+  @override
+  String get ingestReviewFailures => '查看剩余问题';
+
+  @override
+  String ingestLastBatchResult(int recorded, int failed) {
+    return '上次批量：已记录 $recorded 条 · 待处理 $failed 条';
+  }
 }

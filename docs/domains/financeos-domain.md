@@ -102,6 +102,18 @@ batch confirmation does not override duplicates, while a single reviewed item
 can be explicitly recorded anyway. Recovery reservations and Undo retain their
 existing fail-closed lifecycle semantics.
 
+The review queue searches, filters and counts all owner-scoped pending and
+confirming drafts; rendering is lazy and reveals rows in 100-item increments.
+Selecting filtered results includes rows beyond the rendered window. Changing
+search/filter scope clears selection, and batch button counts use the same
+expense/income eligibility rules as confirmation. Transfers, trades and duplicate
+overrides remain explicit individual workflows; recovery actions remain separate
+from confirmation. Continuous
+field editing saves drafts only, protects unsaved changes, and reloads each
+destination revision; bulk category edits use owner-scoped optimistic revisions
+without overwriting lifecycle or recovery conflicts. Duplicate comparison can
+resolve either another staged draft or the owning user's journal evidence.
+
 ### Investment Interaction
 
 The Plan hub keeps cash safety and goals/contributions visible. Advanced

@@ -8784,5 +8784,119 @@
         "type": "String"
       }
     }
+  },
+  "ingestReviewQueueCount": "{matches} results · {total} pending",
+  "@ingestReviewQueueCount": {
+    "placeholders": {
+      "matches": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestReviewSearchHint": "Search description, category, amount…",
+  "ingestFilterAll": "All",
+  "ingestFilterReady": "Ready to record",
+  "ingestFilterAttention": "Needs attention",
+  "ingestSortImport": "Import order",
+  "ingestSortNewest": "Newest first",
+  "ingestSortOldest": "Oldest first",
+  "ingestSortAmount": "Amount by currency",
+  "ingestSelectFiltered": "Select results",
+  "ingestSelectReady": "Select recordable",
+  "ingestClearSelection": "Clear selection",
+  "ingestLoadMore": "Showing {shown} of {total} · Load more",
+  "@ingestLoadMore": {
+    "placeholders": {
+      "shown": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestNoMatchingDrafts": "No drafts match these filters.",
+  "ingestConfirmFiltered": "Confirm recordable results ({count})",
+  "@ingestConfirmFiltered": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestConfirmSelected": "Confirm ({count})",
+  "@ingestConfirmSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestSelectionEligibility": "{ready} recordable · {excluded} excluded from confirmation",
+  "@ingestSelectionEligibility": {
+    "placeholders": {
+      "ready": {
+        "type": "int"
+      },
+      "excluded": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestBatchCategory": "Set category",
+  "ingestBatchCategoryCount": "Set category for {count} drafts",
+  "@ingestBatchCategoryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestCategoryClearHint": "Leave empty to clear the category",
+  "ingestUpdatingCategory": "Updating selected draft categories…",
+  "ingestCategoryUpdated": "Updated {updated} drafts; {conflicts} changed and were left untouched.",
+  "@ingestCategoryUpdated": {
+    "placeholders": {
+      "updated": {
+        "type": "int"
+      },
+      "conflicts": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestPreviousDraft": "Previous draft",
+  "ingestNextDraft": "Next draft",
+  "ingestReviewPosition": "{position} of {total}",
+  "@ingestReviewPosition": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestSaveAndNext": "Save and next",
+  "ingestMatchedDraft": "Matching imported draft",
+  "ingestMatchedLedger": "Matching recorded transaction",
+  "ingestMatchUnavailable": "The matching record changed or is unavailable. Check this draft before recording.",
+  "ingestMatchLoading": "Loading matching record…",
+  "ingestCompareBeforeRecording": "Compare this record with the draft above before recording it again.",
+  "ingestReviewFailures": "Review remaining issues",
+  "ingestLastBatchResult": "Last batch: {recorded} recorded · {failed} need attention",
+  "@ingestLastBatchResult": {
+    "placeholders": {
+      "recorded": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
   }
 }

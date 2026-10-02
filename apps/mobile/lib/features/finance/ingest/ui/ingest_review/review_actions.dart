@@ -12,26 +12,93 @@ extension _IngestReviewActions on _IngestReviewPageState {
 
   Future<void> _editDraft(IngestDraft draft) async {
     if (_isBusy) return;
-    final parsed = await showAppFormSheet<ParsedTransaction>(
+    final drafts =
+        _currentData?.items
+            .where(
+              (item) =>
+                  item.isOrdinaryPending &&
+                  !_pendingFinalize.containsKey(item.draft.draftId),
+            )
+            .map((item) => item.draft)
+            .toList() ??
+        [draft];
+    if (!drafts.any((item) => item.draftId == draft.draftId)) return;
+    await showGuardedFormSheet<void>(
       context: context,
       maxHeightFactor: 0.9,
-      builder: (_) => _IngestDraftEditSheet(parsed: draft.parsed),
+      builder: (_, dirty) => _IngestDraftEditSheet(
+        drafts: drafts,
+        initialId: draft.draftId,
+        dirty: dirty,
+        onCurrentChanged: (id) {
+          if (!mounted) return;
+          setState(() {
+            _selection.focus(id);
+            final index =
+                _currentData?.items.indexWhere(
+                  (item) => item.draft.draftId == id,
+                ) ??
+                -1;
+            if (index >= _visibleLimit) {
+              _visibleLimit = ((index ~/ 100) + 1) * 100;
+            }
+          });
+        },
+      ),
     );
-    if (parsed == null || !mounted) return;
+  }
+
+  Future<void> _editSelectedCategory(List<IngestReviewItem> items) async {
+    if (_isBusy) return;
+    final drafts = items
+        .where(
+          (item) =>
+              item.isOrdinaryPending &&
+              !_pendingFinalize.containsKey(item.draft.draftId),
+        )
+        .map((item) => item.draft)
+        .toList();
+    if (drafts.isEmpty) return;
+    final category = await showGuardedFormSheet<String>(
+      context: context,
+      builder: (_, dirty) =>
+          _IngestCategorySheet(count: drafts.length, dirty: dirty),
+    );
+    if (category == null || !mounted) return;
     final store = ref.read(ingestDraftStoreProvider);
     if (store == null) return;
-    final updated = await store.updateParsed(
-      draftId: draft.draftId,
-      expectedRevision: draft.revision,
-      parsed: parsed,
+    final l10n = AppLocalizations.of(context);
+    setState(
+      () => _busy = _IngestBusyState(
+        action: _IngestAction.confirmingBatch,
+        title: l10n.ingestBatchCategory,
+        message: l10n.ingestUpdatingCategory,
+        icon: FLucideIcons.tags,
+      ),
     );
-    if (!mounted) return;
-    if (!updated) {
+    try {
+      final result = await store.updateSelectedCategories(
+        drafts,
+        category.trim().isEmpty ? null : category.trim(),
+      );
+      if (!mounted) return;
+      setState(
+        () => _attentionIds = {..._attentionIds, ...result.conflictedIds},
+      );
       AppMessenger.show(
         context,
-        ToastKind.warning,
-        AppLocalizations.of(context).ingestEditConflict,
+        result.conflictedIds.isEmpty ? ToastKind.success : ToastKind.warning,
+        l10n.ingestCategoryUpdated(
+          result.updatedIds.length,
+          result.conflictedIds.length,
+        ),
       );
+    } catch (_) {
+      if (mounted) {
+        AppMessenger.show(context, ToastKind.warning, l10n.ingestEditConflict);
+      }
+    } finally {
+      if (mounted) setState(() => _busy = null);
     }
   }
 
@@ -70,7 +137,12 @@ extension _IngestReviewActions on _IngestReviewPageState {
     List<IngestReviewItem> items,
     String? accountId,
   ) async {
-    await _confirmAllFresh(items, accountId);
+    await _confirmAllFresh(
+      items
+          .where((item) => !_pendingFinalize.containsKey(item.draft.draftId))
+          .toList(),
+      accountId,
+    );
   }
 
   Future<void> _dismissSelected(List<IngestReviewItem> items) async {
@@ -87,7 +159,12 @@ extension _IngestReviewActions on _IngestReviewPageState {
     try {
       final service = await ref.read(ingestConfirmServiceProvider.future);
       if (service == null) return;
-      final result = await service.dismissSelected(items);
+      final result = await service.dismissSelected(
+        items
+            .where((item) => !_pendingFinalize.containsKey(item.draft.draftId))
+            .toList(),
+        onProgress: _updateBatchProgress,
+      );
       final dismissed = result.succeeded.map((item) => item.draft).toList();
       if (!mounted) return;
       setState(() {
@@ -142,7 +219,20 @@ extension _IngestReviewActions on _IngestReviewPageState {
     try {
       final service = await ref.read(ingestConfirmServiceProvider.future);
       if (service == null) return;
-      final result = await service.finalizeSelected(items);
+      final result = await service.finalizeSelected(
+        items
+            .map(
+              (item) => IngestReviewItem(
+                draft: item.draft,
+                pendingFinalize:
+                    item.pendingFinalize ??
+                    _pendingFinalize[item.draft.draftId],
+                recoveryUnreadable: item.recoveryUnreadable,
+              ),
+            )
+            .toList(),
+        onProgress: _updateBatchProgress,
+      );
       if (result.succeeded.isNotEmpty) {
         await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
       }
@@ -360,6 +450,10 @@ extension _IngestReviewActions on _IngestReviewPageState {
       }
       if (mounted) {
         setState(() {
+          _lastBatchOutcome = outcome;
+          _attentionIds = result.failures
+              .map((failure) => failure.item.draftId)
+              .toSet();
           _selection.removeAll(outcome.confirmedDraftIds);
           _pendingFinalize.addAll(outcome.pendingFinalizeByDraftId);
         });
@@ -390,6 +484,20 @@ extension _IngestReviewActions on _IngestReviewPageState {
     } finally {
       if (mounted) setState(() => _busy = null);
     }
+  }
+
+  void _updateBatchProgress(int completed, int total) {
+    if (!mounted || _busy == null) return;
+    final state = _busy!;
+    setState(
+      () => _busy = _IngestBusyState(
+        action: state.action,
+        title: state.title,
+        message: AppLocalizations.of(context)
+            .ingestRecordingProgress(completed, total),
+        icon: state.icon,
+      ),
+    );
   }
 
   Future<void> _undoConfirmed(
@@ -466,6 +574,7 @@ extension _IngestReviewActions on _IngestReviewPageState {
               onProgress: onProgress,
             );
       if (mounted) {
+        setState(() => _lastBatchOutcome = null);
         AppMessenger.show(
           context,
           result.failures.isEmpty ? ToastKind.success : ToastKind.warning,
