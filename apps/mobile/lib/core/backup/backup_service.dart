@@ -37,6 +37,16 @@ class RestoreResult {
   };
 }
 
+/// Validated, read-only archive held in memory until explicit restore.
+/// The rows are private and tied to the service/owner that validated them.
+class PreparedBackup {
+  PreparedBackup._(this._service, this._data, this.summary, this.createdAt);
+  final BackupService _service;
+  final Map<String, List<Map<String, Object?>>> _data;
+  final RestoreResult summary;
+  final DateTime createdAt;
+}
+
 /// Thrown when the backup's schema version is newer than the app's.
 class BackupSchemaTooNewException implements Exception {
   const BackupSchemaTooNewException(this.backupVersion, this.currentVersion);
@@ -178,7 +188,23 @@ class BackupService {
     void Function()? pauseSync,
     void Function()? resumeSync,
   }) async {
-    final sw = Stopwatch()..start();
+    final prepared = await prepareRestore(
+      passphrase: passphrase,
+      fileBytes: fileBytes,
+      expectedDomain: expectedDomain,
+    );
+    return restorePreparedBackup(
+      prepared,
+      pauseSync: pauseSync,
+      resumeSync: resumeSync,
+    );
+  }
+
+  Future<PreparedBackup> prepareRestore({
+    required String passphrase,
+    required Uint8List fileBytes,
+    DomainScope? expectedDomain,
+  }) async {
     _logger.i('backup: restore starting (file=${fileBytes.length} bytes)');
 
     // 1. Decode and validate envelope.
@@ -375,6 +401,32 @@ class BackupService {
       '${restoreTableCounts.length} tables',
     );
 
+    return PreparedBackup._(
+      this,
+      data,
+      RestoreResult(
+        tableCounts: Map.unmodifiable(restoreTableCounts),
+        archiveSchemaVersion: backupSchema,
+        archiveDomain: backupDomain,
+      ),
+      DateTime.parse(createdAt),
+    );
+  }
+
+  Future<RestoreResult> restorePreparedBackup(
+    PreparedBackup prepared, {
+    void Function()? pauseSync,
+    void Function()? resumeSync,
+  }) async {
+    if (!identical(prepared._service, this)) {
+      throw const BackupValidationException(
+        'The active owner or backup service changed',
+      );
+    }
+    final sw = Stopwatch()..start();
+    final data = prepared._data;
+    final backupSchema = prepared.summary.archiveSchemaVersion;
+    final backupDomain = prepared.summary.archiveDomain;
     if (!isOutboxBoundToDatabase(_outbox, _db)) {
       throw StateError(
         'Backup restore requires a transaction-bound outbox store',

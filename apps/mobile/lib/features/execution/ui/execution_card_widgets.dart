@@ -9,7 +9,7 @@ class ExecutionSectionHeader extends StatelessWidget {
   });
 
   final String title;
-  final int count;
+  final int? count;
   final IconData? icon;
 
   @override
@@ -24,11 +24,12 @@ class ExecutionSectionHeader extends StatelessWidget {
             Icon(icon, size: AppIconSizes.xs, color: colors.mutedForeground),
             const SizedBox(width: AppSpacing.s6),
           ],
-          AppBadge(
-            label: count.toString(),
-            size: AppBadgeSize.compact,
-            minWidth: AppSpacing.s24,
-          ),
+          if (count != null)
+            AppBadge(
+              label: count.toString(),
+              size: AppBadgeSize.compact,
+              minWidth: AppSpacing.s24,
+            ),
         ],
       ),
     );

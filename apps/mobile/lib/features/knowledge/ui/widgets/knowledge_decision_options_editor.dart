@@ -45,6 +45,41 @@ class KnowledgeDecisionOptionsController extends ChangeNotifier {
   bool get canAdd => length < kKnowledgeDecisionPreferredOptionLimit;
   bool get canRemove => length > 1;
 
+  /// Keep unfinished labels and rationales verbatim in local input drafts.
+  Map<String, Object?> get draft => {
+    'options': [
+      for (final fields in _fields)
+        {'label': fields.label.text, 'rationale': fields.rationale.text},
+    ],
+    'selected': _selectedIndex,
+  };
+
+  factory KnowledgeDecisionOptionsController.fromDraft(Object? payload) {
+    final value = payload is Map<Object?, Object?>
+        ? payload
+        : const <String, Object?>{};
+    final raw = value['options'];
+    final controller = KnowledgeDecisionOptionsController(
+      options: raw is List
+          ? raw.whereType<Map<Object?, Object?>>().map(
+              (option) => DecisionOption(
+                label: option['label'] is String
+                    ? option['label'] as String
+                    : '',
+                rationale: option['rationale'] is String
+                    ? option['rationale'] as String
+                    : null,
+              ),
+            )
+          : const [],
+    );
+    final selected = value['selected'];
+    if (selected is int && selected >= 0 && selected < controller.length) {
+      controller._selectedIndex = selected;
+    }
+    return controller;
+  }
+
   bool get isValid {
     if (_fields.isEmpty ||
         _selectedIndex < 0 ||

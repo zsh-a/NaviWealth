@@ -4892,6 +4892,8 @@
   "@backupPassphraseRequired": { "description": "Backup dialog: empty passphrase error" },
   "backupConfirmRestoreTitle": "Restore Backup",
   "@backupConfirmRestoreTitle": { "description": "Backup dialog: restore confirmation title" },
+  "backupRestoreScopeWarning": "The data included in this backup will replace the corresponding local data in {scope}. This cannot be undone.",
+  "@backupRestoreScopeWarning": { "description": "Restore warning for the selected backup scope", "placeholders": { "scope": { "type": "String" } } },
   "backupConfirmRestoreMessage": "This will replace ALL local data with the contents of the backup. This cannot be undone. Continue?",
   "@backupConfirmRestoreMessage": { "description": "Backup dialog: restore confirmation message" },
   "backupConfirmRestoreAction": "Restore",
@@ -8927,5 +8929,18 @@
   "syncLocalSavedPending": "Saved on this device · {count} changes waiting to sync",
   "@syncLocalSavedPending": {"placeholders": {"count": {"type": "int"}}},
   "ingestCategoryFallback": "Other · Unrecognized category: {category}",
-  "@ingestCategoryFallback": {"placeholders": {"category": {"type": "String"}}}
+  "@ingestCategoryFallback": {"placeholders": {"category": {"type": "String"}}},
+  "productRecordUnavailable": "This product is unavailable or has been deleted. Reload before editing.",
+  "productEditConflict": "This product changed elsewhere. Your input is kept. Reopen the latest record before saving.",
+  "productLedgerFieldsLocked": "The account and currency are fixed to preserve the existing ledger.",
+  "backupArchiveInvalid": "This backup cannot be restored for the current account and scope. Select a compatible backup.",
+  "backupInspectAction": "Check backup",
+  "backupInspectProgress": "Decrypting and checking backup…",
+  "backupInspectHint": "Check the backup first to review its date, scope and record count before restoring.",
+  "backupFullScope": "All domains",
+  "backupArchiveScope": "Restore scope",
+  "backupArchiveDate": "Backup date",
+  "backupArchiveRows": "Records",
+  "backupSelectedFileSize": "File size: {kilobytes} KB",
+  "@backupSelectedFileSize": {"placeholders": {"kilobytes": {"type": "int"}}}
 }

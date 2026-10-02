@@ -5,6 +5,8 @@
 /// unsupported-state card because there is no web AI runtime.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -16,6 +18,8 @@ import '../../../../core/ai/composition/proposal_plan.dart';
 import '../../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../../core/ai/llm_credentials/providers.dart';
+import '../../../../core/forms/forms.dart';
+import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -39,11 +43,30 @@ class AiLlmCredentialsPage extends ConsumerStatefulWidget {
 }
 
 abstract class _AiLlmCredentialsPageStateBase
-    extends ConsumerState<AiLlmCredentialsPage> {
+    extends ConsumerState<AiLlmCredentialsPage>
+    with
+        FormSubmission<AiLlmCredentialsPage>,
+        FormDirtyGuard<AiLlmCredentialsPage> {
+  @override
+  String get leaveFallback => SettingsRoutes.ai;
+
+  @override
+  void initState() {
+    super.initState();
+    dirty.bindTextControllers([
+      _nameController,
+      _keyController,
+      _baseUrlController,
+      _modelController,
+    ]);
+  }
+
   final _nameController = TextEditingController();
   final _keyController = TextEditingController();
   final _baseUrlController = TextEditingController();
   final _modelController = TextEditingController();
+  LlmProfile? _editingProfile;
+  String? _probeError;
   LlmProvider _provider = LlmProvider.anthropic;
 
   /// `null` means editor closed. Empty string means a brand-new profile.
@@ -94,49 +117,46 @@ class _AiLlmCredentialsPageState extends _AiLlmCredentialsPageStateBase
     final creds = asyncCreds.asData?.value ?? const LlmCredentials();
     final profiles = creds.profiles;
     final editing = _editingId != null;
-    final existing = editing
-        ? profiles
-              .where((p) => p.id == _editingId)
-              .cast<LlmProfile?>()
-              .firstWhere((_) => true, orElse: () => null)
-        : null;
-    return AppPageScaffold(
-      title: l10n.settingsAiLlmTitle,
-      childPad: false,
-      resizeToAvoidBottomInset: false,
-      child: !supported
-          ? SettingsPageFrame(
-              topPadding: AppSpacing.s8,
-              children: [_unsupportedCard(context)],
-            )
-          : editing
-          ? AppFormScaffoldBody(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.s16,
-                AppSpacing.s8,
-                AppSpacing.s16,
-                AppSpacing.s16,
+    final existing = _editingProfile;
+    return guardedScope(
+      alwaysHandleBack: true,
+      child: AppFormPageScaffold(
+        title: Text(l10n.settingsAiLlmTitle),
+        confirmLeave: handleBackIntent,
+        child: !supported
+            ? SettingsPageFrame(
+                topPadding: AppSpacing.s8,
+                children: [_unsupportedCard(context)],
+              )
+            : editing
+            ? AppFormScaffoldBody(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s8,
+                  AppSpacing.s16,
+                  AppSpacing.s16,
+                ),
+                action: _editorActions(context, existing),
+                children: _supportedBody(
+                  context,
+                  asyncCreds: asyncCreds,
+                  profiles: profiles,
+                  existing: existing,
+                  runtime: runtime,
+                  includeEditorActions: false,
+                ),
+              )
+            : SettingsPageFrame(
+                topPadding: AppSpacing.s8,
+                children: _supportedBody(
+                  context,
+                  asyncCreds: asyncCreds,
+                  profiles: profiles,
+                  existing: null,
+                  runtime: runtime,
+                ),
               ),
-              action: _editorActions(context, existing),
-              children: _supportedBody(
-                context,
-                asyncCreds: asyncCreds,
-                profiles: profiles,
-                existing: existing,
-                runtime: runtime,
-                includeEditorActions: false,
-              ),
-            )
-          : SettingsPageFrame(
-              topPadding: AppSpacing.s8,
-              children: _supportedBody(
-                context,
-                asyncCreds: asyncCreds,
-                profiles: profiles,
-                existing: null,
-                runtime: runtime,
-              ),
-            ),
+      ),
     );
   }
 
@@ -151,7 +171,42 @@ class _AiLlmCredentialsPageState extends _AiLlmCredentialsPageStateBase
     final l10n = AppLocalizations.of(context);
     final creds = asyncCreds.asData?.value ?? const LlmCredentials();
 
+    if (!asyncCreds.hasValue && _editingId == null) {
+      return [
+        asyncCreds.when(
+          loading: () => const SkeletonBox(height: 120),
+          error: (error, stack) => kDefaultError(
+            context,
+            error,
+            stack,
+            onRetry: () => ref.invalidate(llmCredentialsProvider),
+          ),
+          data: (_) => const SizedBox.shrink(),
+        ),
+      ];
+    }
+    if (_editingId != null) {
+      return [
+        if (submissionFailureMessage != null) ...[
+          AppStatusBanner(
+            kind: AppStatusKind.error,
+            message: submissionFailureMessage!,
+            compact: true,
+          ),
+          const SizedBox(height: AppSpacing.s12),
+        ],
+        _editorCard(context, existing, includeActions: includeEditorActions),
+      ];
+    }
     return [
+      if (submissionFailureMessage != null) ...[
+        AppStatusBanner(
+          kind: AppStatusKind.error,
+          message: submissionFailureMessage!,
+          compact: true,
+        ),
+        const SizedBox(height: AppSpacing.s12),
+      ],
       _intro(context),
       const SizedBox(height: AppSpacing.s12),
       if (profiles.isEmpty && _editingId == null)
@@ -174,7 +229,7 @@ class _AiLlmCredentialsPageState extends _AiLlmCredentialsPageStateBase
         const SizedBox(height: AppSpacing.s4),
         FButton(
           variant: FButtonVariant.outline,
-          onPress: () => _openEditor(),
+          onPress: _saving || !asyncCreds.hasValue ? null : () => _openEditor(),
           child: Text(l10n.aiLlmAddProvider),
         ),
       ],

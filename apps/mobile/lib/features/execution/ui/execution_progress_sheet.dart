@@ -56,6 +56,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
   String? _actionId;
   String? _planId;
   bool _saving = false;
+  FormDraftBinding? _draft;
 
   @override
   void initState() {
@@ -67,10 +68,20 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     _planId = progress?.planId ?? widget.action?.planId ?? widget.planId;
     widget.dirty.bindTextControllers([_note]);
     _note.addListener(_onNoteChanged);
+    if (progress == null) {
+      _draft = FormDraftBinding(
+        store: ref.read(localFormDraftStoreProvider),
+        form: 'execution.progress.new:${_actionId ?? ''}:${_planId ?? ''}',
+        dirty: widget.dirty,
+        inputs: [_note],
+        payload: () => {'note': _note.text, 'kind': _kind.name},
+      );
+    }
   }
 
   @override
   void dispose() {
+    _draft?.dispose();
     _note.removeListener(_onNoteChanged);
     _note.dispose();
     super.dispose();
@@ -80,7 +91,8 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     if (mounted && !_saving) setState(() {});
   }
 
-  bool get _canSave => !_saving && _note.text.trim().isNotEmpty;
+  bool get _canSave =>
+      !_saving && _draft?.hasPending != true && _note.text.trim().isNotEmpty;
 
   Future<void> _save() async {
     if (!_canSave) return;
@@ -92,6 +104,7 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
       onBusyChanged: _setSaving,
       leave: () => Navigator.of(context).pop(true),
       tag: 'execution-progress',
+      onCommitted: (_) => _draft?.complete(),
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
       commit: () async {
@@ -116,7 +129,10 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     if (mounted && _saving != value) setState(() => _saving = value);
   }
 
-  void _markDirty() => widget.dirty.markDirty();
+  void _markDirty() {
+    widget.dirty.markDirty();
+    _draft?.capture();
+  }
 
   List<ExecutionProgressKind> get _availableKinds {
     final kinds = <ExecutionProgressKind>[
@@ -132,6 +148,17 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
     final existing = widget.progress?.kind;
     if (existing != null && !kinds.contains(existing)) kinds.add(existing);
     return kinds;
+  }
+
+  void _restoreDraft() {
+    setState(
+      () => _draft?.restore((value) {
+        _note.text = value['note'] as String? ?? '';
+        _kind =
+            _availableKinds.where((v) => v.name == value['kind']).firstOrNull ??
+            ExecutionProgressKind.checkin;
+      }),
+    );
   }
 
   @override
@@ -169,6 +196,16 @@ class _ExecutionProgressFormState extends ConsumerState<_ExecutionProgressForm>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_draft?.hasPending == true) ...[
+              AppDraftRestoreBanner(
+                onRestore: _restoreDraft,
+                onDiscard: () => setState(() {
+                  _draft?.discardPending();
+                  _draft?.capture();
+                }),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             if (submissionFailureMessage != null) ...[
               AppStatusBanner(
                 kind: AppStatusKind.error,

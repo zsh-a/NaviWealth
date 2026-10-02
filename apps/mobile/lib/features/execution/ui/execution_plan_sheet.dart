@@ -43,6 +43,7 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
   late ExecutionHorizon _horizon;
   DateTime? _targetDate;
   bool _saving = false;
+  FormDraftBinding? _draft;
 
   @override
   void initState() {
@@ -54,6 +55,20 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
     _targetDate = plan?.targetDate;
     widget.dirty.bindTextControllers([_title, _description]);
     _title.addListener(_onTitleChanged);
+    if (plan == null) {
+      _draft = FormDraftBinding(
+        store: ref.read(localFormDraftStoreProvider),
+        form: 'execution.plan.new',
+        dirty: widget.dirty,
+        inputs: [_title, _description],
+        payload: () => {
+          'title': _title.text,
+          'description': _description.text,
+          'horizon': _horizon.name,
+          'target': _targetDate?.toIso8601String(),
+        },
+      );
+    }
   }
 
   void _onTitleChanged() {
@@ -62,13 +77,15 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
 
   @override
   void dispose() {
+    _draft?.dispose();
     _title.removeListener(_onTitleChanged);
     _title.dispose();
     _description.dispose();
     super.dispose();
   }
 
-  bool get _canSave => !_saving && _title.text.trim().isNotEmpty;
+  bool get _canSave =>
+      !_saving && _draft?.hasPending != true && _title.text.trim().isNotEmpty;
 
   Future<void> _save() async {
     if (!_canSave) return;
@@ -81,6 +98,7 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
       onBusyChanged: _setSaving,
       leave: () => Navigator.of(context).pop(true),
       tag: 'execution-plan',
+      onCommitted: (_) => _draft?.complete(),
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
       commit: () async {
@@ -99,13 +117,13 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
     final int openActionCount;
     try {
       repo = await ref.read(executionRepositoryProvider.future);
-      final relatedActions = await repo
-          .watchActionsForPlan(
+      final counts = await repo
+          .watchActionCountsForPlan(
             ownerUserId: plan.sync.ownerUserId,
             planId: plan.id,
           )
           .first;
-      openActionCount = relatedActions.where((action) => action.isOpen).length;
+      openActionCount = counts.open;
     } on Object catch (error) {
       if (mounted) {
         AppMessenger.show(
@@ -159,7 +177,25 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
     );
   }
 
-  void _markDirty() => widget.dirty.markDirty();
+  void _markDirty() {
+    widget.dirty.markDirty();
+    _draft?.capture();
+  }
+
+  void _restoreDraft() {
+    setState(
+      () => _draft?.restore((value) {
+        _title.text = value['title'] as String? ?? '';
+        _description.text = value['description'] as String? ?? '';
+        _horizon =
+            ExecutionHorizon.values
+                .where((v) => v.name == value['horizon'])
+                .firstOrNull ??
+            ExecutionHorizon.open;
+        _targetDate = DateTime.tryParse(value['target'] as String? ?? '');
+      }),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +218,16 @@ class _ExecutionPlanFormState extends ConsumerState<_ExecutionPlanForm>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (_draft?.hasPending == true) ...[
+              AppDraftRestoreBanner(
+                onRestore: _restoreDraft,
+                onDiscard: () => setState(() {
+                  _draft?.discardPending();
+                  _draft?.capture();
+                }),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+            ],
             if (submissionFailureMessage != null) ...[
               AppStatusBanner(
                 kind: AppStatusKind.error,

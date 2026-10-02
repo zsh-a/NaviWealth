@@ -4,6 +4,22 @@ mixin ExecutionProgressRepositoryMixin {
   AppDatabase get _db;
   OutboxStore get _outbox;
 
+  Stream<int> watchRelatedProgressCount({
+    required String ownerUserId,
+    required String id,
+    required bool forPlan,
+  }) {
+    final table = _db.executionProgressEntries;
+    final count = table.id.count();
+    final query = _db.selectOnly(table)..addColumns([count]);
+    query.where(
+      table.ownerUserId.equals(ownerUserId) &
+          table.deletedAt.isNull() &
+          (forPlan ? table.planId.equals(id) : table.actionId.equals(id)),
+    );
+    return query.watchSingle().map((row) => row.read(count) ?? 0);
+  }
+
   Future<void> _upsertAndEnqueue<R>(
     TableInfo<Table, R> table,
     Insertable<R> companion, {
@@ -74,6 +90,7 @@ mixin ExecutionProgressRepositoryMixin {
       ..where((t) => t.actionId.equals(actionId))
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.id),
       ])
       ..limit(limit);
     return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());
@@ -90,6 +107,7 @@ mixin ExecutionProgressRepositoryMixin {
       ..where((t) => t.planId.equals(planId))
       ..orderBy([
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.id),
       ])
       ..limit(limit);
     return q.watch().map((rows) => rows.map(executionProgressFromRow).toList());

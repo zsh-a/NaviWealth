@@ -48,7 +48,7 @@ class ExecutionActionDetailPage extends ConsumerWidget {
               message: l10n.executionDetailMissingBody,
             );
           }
-          return _ActionDetailBody(action: action);
+          return _ActionDetailBody(key: ValueKey(action.id), action: action);
         },
       ),
     );
@@ -86,131 +86,83 @@ class ExecutionPlanDetailPage extends ConsumerWidget {
               message: l10n.executionDetailMissingBody,
             );
           }
-          return _PlanDetailBody(plan: plan);
+          return _PlanDetailBody(key: ValueKey(plan.id), plan: plan);
         },
       ),
     );
   }
 }
 
-class _PlanDetailBody extends ConsumerWidget {
-  const _PlanDetailBody({required this.plan});
-
+class _PlanDetailBody extends ConsumerStatefulWidget {
+  const _PlanDetailBody({super.key, required this.plan});
   final ExecutionPlan plan;
-
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final relations = ref.watch(executionActionRelationsProvider).value;
-    final actionsAsync = ref.watch(executionActionsForPlanProvider(plan.id));
-    final progressAsync = ref.watch(executionProgressForPlanProvider(plan.id));
-    final actions = actionsAsync.asData?.value ?? const <ExecutionAction>[];
-    return ListView(
-      padding: _detailPadding(context),
-      children: [
-        ExecutionPlanCardController(
-          plan: plan,
-          openActionCount: actions.where((action) => action.isOpen).length,
-          blockedActionCount: actions
-              .where((action) => action.status == ExecutionActionStatus.blocked)
-              .length,
-          onCreateAction: () => showExecutionActionSheet(
-            context: context,
-            initialPlanId: plan.id,
-          ),
-          onEdit: () => showExecutionPlanSheet(context: context, plan: plan),
-          onRecordProgress: () =>
-              showExecutionProgressSheet(context: context, planId: plan.id),
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _RelatedActionsSection(
-          actionsAsync: actionsAsync,
-          relations: relations,
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _ProgressTimeline(
-          entries: progressAsync,
-          title: l10n.executionTimelineSection,
-          emptyMessage: l10n.executionReviewEmptyBody,
-          relationLabels: relations,
-        ),
-      ],
-    );
-  }
+  ConsumerState<_PlanDetailBody> createState() => _PlanDetailBodyState();
 }
 
-class _ActionDetailBody extends ConsumerWidget {
-  const _ActionDetailBody({required this.action});
-
-  final ExecutionAction action;
+class _PlanDetailBodyState extends ConsumerState<_PlanDetailBody> {
+  int _actionLimit = 30;
+  int _progressLimit = 30;
+  List<ExecutionAction> _actions = const [];
+  List<ExecutionProgressEntry> _progress = const [];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
+    final plan = widget.plan;
     final l10n = AppLocalizations.of(context);
     final relations = ref.watch(executionActionRelationsProvider).value;
-    final progressAsync = ref.watch(
-      executionProgressForActionProvider(action.id),
+    final actionKey = (id: plan.id, limit: _actionLimit);
+    final progressKey = (id: plan.id, forPlan: true, limit: _progressLimit);
+    final actions = ref.watch(executionPlanActionsPageProvider(actionKey));
+    final progress = ref.watch(
+      executionRelatedProgressPageProvider(progressKey),
     );
-    return ListView(
-      padding: _detailPadding(context),
-      children: [
-        ExecutionActionCardController(
-          action: action,
-          planLabel: relations?.planLabel(action.planId),
-          onSourceOpen: executionSourceOpen(context, ref, action.source),
-          onEdit: () =>
-              showExecutionActionSheet(context: context, action: action),
-          onRecordProgress: () =>
-              showExecutionProgressSheet(context: context, action: action),
-          doneProgressNote: l10n.executionProgressDoneDefault,
-          droppedProgressNote: l10n.executionProgressDroppedDefault,
-        ),
-        const SizedBox(height: AppSpacing.s20),
-        _ProgressTimeline(
-          entries: progressAsync,
-          title: l10n.executionTimelineSection,
-          emptyMessage: l10n.executionReviewEmptyBody,
-          relationLabels: relations,
-        ),
-      ],
+    final counts = ref.watch(executionPlanActionCountsProvider(plan.id));
+    final progressCount = ref.watch(
+      executionRelatedProgressCountProvider((id: plan.id, forPlan: true)),
     );
-  }
-}
-
-class _RelatedActionsSection extends ConsumerWidget {
-  const _RelatedActionsSection({
-    required this.actionsAsync,
-    required this.relations,
-  });
-
-  final AsyncValue<List<ExecutionAction>> actionsAsync;
-  final ExecutionRelations? relations;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    return actionsAsync.when(
-      loading: () => const _DetailSectionSkeleton(),
-      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
-      data: (actions) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ExecutionSectionHeader(
-              title: l10n.executionRelatedActionsSection,
-              count: actions.length,
-              icon: FLucideIcons.listTodo,
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            if (actions.isEmpty)
-              AppEmptyState(
+    if (actions.hasValue) _actions = actions.requireValue;
+    if (progress.hasValue) _progress = progress.requireValue;
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: _detailPadding(context),
+          sliver: SliverMainAxisGroup(
+            slivers: [
+              SliverToBoxAdapter(
+                child: ExecutionPlanCardController(
+                  plan: plan,
+                  openActionCount: counts.value?.open,
+                  blockedActionCount: counts.value?.blocked,
+                  onCreateAction: () => showExecutionActionSheet(
+                    context: context,
+                    initialPlanId: plan.id,
+                  ),
+                  onEdit: () =>
+                      showExecutionPlanSheet(context: context, plan: plan),
+                  onRecordProgress: () => showExecutionProgressSheet(
+                    context: context,
+                    planId: plan.id,
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s20)),
+              ..._pagedSlivers<ExecutionAction>(
+                context,
+                title: l10n.executionRelatedActionsSection,
                 icon: FLucideIcons.listTodo,
-                title: l10n.executionTodayFilteredEmptyTitle,
-                message: l10n.executionPlansEmptyBody,
-              )
-            else
-              for (final action in actions) ...[
-                ExecutionActionCardController(
+                value: actions,
+                retained: _actions,
+                count: counts.whenData((value) => value.total),
+                emptyTitle: l10n.executionTodayFilteredEmptyTitle,
+                emptyMessage: l10n.executionPlansEmptyBody,
+                onRetry: () {
+                  ref.invalidate(executionPlanActionsPageProvider(actionKey));
+                  ref.invalidate(executionPlanActionCountsProvider(plan.id));
+                },
+                onMore: () => setState(() => _actionLimit += 30),
+                itemBuilder: (action) => ExecutionActionCardController(
+                  key: ValueKey(action.id),
                   action: action,
                   planLabel: relations?.planLabel(action.planId),
                   onOpen: () => context.push(ExecutionRoutes.action(action.id)),
@@ -230,73 +182,205 @@ class _RelatedActionsSection extends ConsumerWidget {
                   doneProgressNote: l10n.executionProgressDoneDefault,
                   droppedProgressNote: l10n.executionProgressDroppedDefault,
                 ),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-          ],
-        );
-      },
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s20)),
+              ..._progressSlivers(
+                context,
+                value: progress,
+                retained: _progress,
+                count: progressCount,
+                relations: relations,
+                onMore: () => setState(() => _progressLimit += 30),
+                onRetry: () {
+                  ref.invalidate(
+                    executionRelatedProgressPageProvider(progressKey),
+                  );
+                  ref.invalidate(
+                    executionRelatedProgressCountProvider((
+                      id: plan.id,
+                      forPlan: true,
+                    )),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _ProgressTimeline extends StatelessWidget {
-  const _ProgressTimeline({
-    required this.entries,
-    required this.title,
-    required this.emptyMessage,
-    required this.relationLabels,
-  });
+class _ActionDetailBody extends ConsumerStatefulWidget {
+  const _ActionDetailBody({super.key, required this.action});
+  final ExecutionAction action;
+  @override
+  ConsumerState<_ActionDetailBody> createState() => _ActionDetailBodyState();
+}
 
-  final AsyncValue<List<ExecutionProgressEntry>> entries;
-  final String title;
-  final String emptyMessage;
-  final ExecutionRelations? relationLabels;
-
+class _ActionDetailBodyState extends ConsumerState<_ActionDetailBody> {
+  int _limit = 30;
+  List<ExecutionProgressEntry> _progress = const [];
   @override
   Widget build(BuildContext context) {
+    final action = widget.action;
     final l10n = AppLocalizations.of(context);
-    return entries.when(
-      loading: () => const _DetailSectionSkeleton(),
-      error: (error, stackTrace) => kDefaultError(context, error, stackTrace),
-      data: (items) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ExecutionSectionHeader(
-            title: title,
-            count: items.length,
-            icon: FLucideIcons.history,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          if (items.isEmpty)
-            AppEmptyState(
-              icon: FLucideIcons.messageSquareText,
-              title: l10n.executionReviewEmptyTitle,
-              message: emptyMessage,
-            )
-          else
-            for (final entry in items) ...[
-              ExecutionProgressCard(
-                entry: entry,
-                actionLabel: relationLabels?.actionLabel(entry.actionId),
-                planLabel: relationLabels?.planLabel(entry.planId),
-                onEdit: () => showExecutionProgressSheet(
-                  context: context,
-                  progress: entry,
+    final relations = ref.watch(executionActionRelationsProvider).value;
+    final key = (id: action.id, forPlan: false, limit: _limit);
+    final progress = ref.watch(executionRelatedProgressPageProvider(key));
+    final count = ref.watch(
+      executionRelatedProgressCountProvider((id: action.id, forPlan: false)),
+    );
+    if (progress.hasValue) _progress = progress.requireValue;
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: _detailPadding(context),
+          sliver: SliverMainAxisGroup(
+            slivers: [
+              SliverToBoxAdapter(
+                child: ExecutionActionCardController(
+                  action: action,
+                  planLabel: relations?.planLabel(action.planId),
+                  onSourceOpen: executionSourceOpen(
+                    context,
+                    ref,
+                    action.source,
+                  ),
+                  onEdit: () => showExecutionActionSheet(
+                    context: context,
+                    action: action,
+                  ),
+                  onRecordProgress: () => showExecutionProgressSheet(
+                    context: context,
+                    action: action,
+                  ),
+                  doneProgressNote: l10n.executionProgressDoneDefault,
+                  droppedProgressNote: l10n.executionProgressDroppedDefault,
                 ),
-                onActionOpen: entry.actionId == null
-                    ? null
-                    : () =>
-                          context.push(ExecutionRoutes.action(entry.actionId!)),
-                onPlanOpen: entry.planId == null
-                    ? null
-                    : () => context.push(ExecutionRoutes.plan(entry.planId!)),
               ),
-              const SizedBox(height: AppSpacing.s8),
+              const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s20)),
+              ..._progressSlivers(
+                context,
+                value: progress,
+                retained: _progress,
+                count: count,
+                relations: relations,
+                onMore: () => setState(() => _limit += 30),
+                onRetry: () {
+                  ref.invalidate(executionRelatedProgressPageProvider(key));
+                  ref.invalidate(
+                    executionRelatedProgressCountProvider((
+                      id: action.id,
+                      forPlan: false,
+                    )),
+                  );
+                },
+              ),
             ],
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
+}
+
+List<Widget> _progressSlivers(
+  BuildContext context, {
+  required AsyncValue<List<ExecutionProgressEntry>> value,
+  required List<ExecutionProgressEntry> retained,
+  required AsyncValue<int> count,
+  required ExecutionRelations? relations,
+  required VoidCallback onMore,
+  required VoidCallback onRetry,
+}) {
+  final l10n = AppLocalizations.of(context);
+  return _pagedSlivers<ExecutionProgressEntry>(
+    context,
+    title: l10n.executionTimelineSection,
+    icon: FLucideIcons.history,
+    value: value,
+    retained: retained,
+    count: count,
+    emptyTitle: l10n.executionReviewEmptyTitle,
+    emptyMessage: l10n.executionReviewEmptyBody,
+    onMore: onMore,
+    onRetry: onRetry,
+    itemBuilder: (entry) => ExecutionProgressCard(
+      key: ValueKey(entry.id),
+      entry: entry,
+      actionLabel: relations?.actionLabel(entry.actionId),
+      planLabel: relations?.planLabel(entry.planId),
+      onEdit: () =>
+          showExecutionProgressSheet(context: context, progress: entry),
+      onActionOpen: entry.actionId == null
+          ? null
+          : () => context.push(ExecutionRoutes.action(entry.actionId!)),
+      onPlanOpen: entry.planId == null
+          ? null
+          : () => context.push(ExecutionRoutes.plan(entry.planId!)),
+    ),
+  );
+}
+
+List<Widget> _pagedSlivers<T>(
+  BuildContext context, {
+  required String title,
+  required IconData icon,
+  required AsyncValue<List<T>> value,
+  required List<T> retained,
+  required AsyncValue<int> count,
+  required String emptyTitle,
+  required String emptyMessage,
+  required Widget Function(T) itemBuilder,
+  required VoidCallback onMore,
+  required VoidCallback onRetry,
+}) {
+  final items = value.value ?? retained;
+  final error = value.error ?? count.error;
+  final stack = value.stackTrace ?? count.stackTrace ?? StackTrace.empty;
+  return [
+    SliverToBoxAdapter(
+      child: ExecutionSectionHeader(
+        title: title,
+        count: count.value,
+        icon: icon,
+      ),
+    ),
+    const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s8)),
+    if (error != null)
+      SliverToBoxAdapter(
+        child: kDefaultError(context, error, stack, onRetry: onRetry),
+      ),
+    if (items.isEmpty && value.isLoading)
+      const SliverToBoxAdapter(child: _DetailSectionSkeleton())
+    else if (items.isEmpty && error == null)
+      SliverToBoxAdapter(
+        child: AppEmptyState(
+          icon: icon,
+          title: emptyTitle,
+          message: emptyMessage,
+        ),
+      )
+    else
+      SliverList.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) => Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.s8),
+          child: itemBuilder(items[index]),
+        ),
+      ),
+    if (items.isNotEmpty &&
+        (count.value == null || count.value! > items.length))
+      SliverToBoxAdapter(
+        child: AppQuietButton(
+          label: AppLocalizations.of(context).commonLoadMore,
+          onPress: value.isLoading || error != null ? null : onMore,
+        ),
+      ),
+    if (items.isNotEmpty && value.isLoading)
+      const SliverToBoxAdapter(child: kDefaultLoading),
+  ];
 }
 
 class _DetailSectionSkeleton extends StatelessWidget {

@@ -181,6 +181,12 @@ sessions so an open form cannot repersist erased input. Cross-page form Undo
 offers expire after 60 seconds and clear when the active owner changes, including
 transitions into or out of local-only mode.
 
+`FormDraftBinding` connects the shared store to Execution plan/progress capture
+and Knowledge note/decision capture and editing. Restored Knowledge edits retain
+the original row revision so newer records require conflict resolution before a
+save. Hosts offer explicit restore/discard rather than silently applying input.
+AI credentials and backup passphrases are excluded from input snapshots.
+
 Cloud sync failures remain discoverable through a shell action (and desktop
 sidebar action) opening the existing sync settings route. Offline state warrants
 that action only with known pending changes; local-only workspaces have none.
@@ -585,6 +591,12 @@ registry seam:
   caches may be cleared for the whole device.
 - Per-OS encrypted archives filter the shared backup inventory by row-family
   prefix and can restore that OS without replacing unrelated domains.
+  Restore first decrypts and validates the selected file without writing data or
+  pausing sync. The user reviews its date, scope, and row count before confirming
+  replacement. Failed checks and writes keep the same selected file available
+  for retry; the prepared archive stays in memory and can only be applied by its
+  original owner-bound service. Applying it retains the transaction and sync
+  pause/resume guarantees of the restore service.
 - AI chat, audit traces, derived memories, event projections, and agent history
   are counted and cleaned as a separate cross-domain local resource.
   `clearSharedHistory()` preserves `authority=user_confirmed` Memory rows and

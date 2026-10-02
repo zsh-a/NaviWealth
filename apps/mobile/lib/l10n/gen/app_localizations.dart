@@ -16143,6 +16143,12 @@ abstract class AppLocalizations {
   /// **'Restore Backup'**
   String get backupConfirmRestoreTitle;
 
+  /// Restore warning for the selected backup scope
+  ///
+  /// In en, this message translates to:
+  /// **'The data included in this backup will replace the corresponding local data in {scope}. This cannot be undone.'**
+  String backupRestoreScopeWarning(String scope);
+
   /// Backup dialog: restore confirmation message
   ///
   /// In en, this message translates to:
@@ -30534,6 +30540,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other · Unrecognized category: {category}'**
   String ingestCategoryFallback(String category);
+
+  /// No description provided for @productRecordUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This product is unavailable or has been deleted. Reload before editing.'**
+  String get productRecordUnavailable;
+
+  /// No description provided for @productEditConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'This product changed elsewhere. Your input is kept. Reopen the latest record before saving.'**
+  String get productEditConflict;
+
+  /// No description provided for @productLedgerFieldsLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The account and currency are fixed to preserve the existing ledger.'**
+  String get productLedgerFieldsLocked;
+
+  /// No description provided for @backupArchiveInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup cannot be restored for the current account and scope. Select a compatible backup.'**
+  String get backupArchiveInvalid;
+
+  /// No description provided for @backupInspectAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Check backup'**
+  String get backupInspectAction;
+
+  /// No description provided for @backupInspectProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Decrypting and checking backup…'**
+  String get backupInspectProgress;
+
+  /// No description provided for @backupInspectHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the backup first to review its date, scope and record count before restoring.'**
+  String get backupInspectHint;
+
+  /// No description provided for @backupFullScope.
+  ///
+  /// In en, this message translates to:
+  /// **'All domains'**
+  String get backupFullScope;
+
+  /// No description provided for @backupArchiveScope.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore scope'**
+  String get backupArchiveScope;
+
+  /// No description provided for @backupArchiveDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup date'**
+  String get backupArchiveDate;
+
+  /// No description provided for @backupArchiveRows.
+  ///
+  /// In en, this message translates to:
+  /// **'Records'**
+  String get backupArchiveRows;
+
+  /// No description provided for @backupSelectedFileSize.
+  ///
+  /// In en, this message translates to:
+  /// **'File size: {kilobytes} KB'**
+  String backupSelectedFileSize(int kilobytes);
 }
 
 class _AppLocalizationsDelegate

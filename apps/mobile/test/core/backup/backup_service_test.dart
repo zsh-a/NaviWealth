@@ -257,6 +257,78 @@ void main() {
 
   group('BackupService', () {
     test(
+      'prepare is read-only, and explicit apply restores the inspected archive',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await insertTestAccount(db, name: 'Archived name');
+        final service = makeService(db);
+        final bytes = await service.exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+          domain: DomainScope.finance,
+        );
+        await db.customStatement("UPDATE accounts SET name = 'Current name'");
+        final depth = await DriftOutboxStore(db).depth();
+        final preview = await service.prepareRestore(
+          passphrase: testPassphrase,
+          fileBytes: bytes,
+          expectedDomain: DomainScope.finance,
+        );
+        expect(preview.summary.archiveDomain, DomainScope.finance);
+        expect(preview.summary.tableCounts['accounts'], 1);
+        expect((await db.select(db.accounts).getSingle()).name, 'Current name');
+        expect(await DriftOutboxStore(db).depth(), depth);
+        var paused = false;
+        var resumed = false;
+        await service.restorePreparedBackup(
+          preview,
+          pauseSync: () => paused = true,
+          resumeSync: () => resumed = true,
+        );
+        expect(
+          (await db.select(db.accounts).getSingle()).name,
+          'Archived name',
+        );
+        expect(paused && resumed, isTrue);
+      },
+    );
+
+    test(
+      'prepared archive cannot be applied by another owner or service',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await insertTestAccount(db);
+        final service = makeService(db);
+        final bytes = await service.exportBackup(
+          passphrase: testPassphrase,
+          overrideIterations: testIterations,
+        );
+        final preview = await service.prepareRestore(
+          passphrase: testPassphrase,
+          fileBytes: bytes,
+        );
+        final foreign = BackupService(
+          db: db,
+          codec: codec,
+          outbox: DriftOutboxStore(db),
+          ownerUserId: 'different',
+        );
+        var paused = false;
+        await expectLater(
+          foreign.restorePreparedBackup(
+            preview,
+            pauseSync: () => paused = true,
+          ),
+          throwsA(isA<BackupValidationException>()),
+        );
+        expect(paused, isFalse);
+        expect(await countRows(db, 'accounts'), 1);
+      },
+    );
+
+    test(
       'export produces valid envelope that decrypts to correct JSON',
       () async {
         final db = makeTestDatabase();

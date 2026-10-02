@@ -80,10 +80,10 @@ class AccountDetailPage extends ConsumerWidget {
             account: account,
             accounts: accounts,
             cashAssetId: cashAssetId,
-            balances:
-                balancesAsync.value?[account.id] ??
-                AccountBalances.empty(account.id),
-            activity: journalAsync.value ?? const <JournalEntryWithPostings>[],
+            balances: balancesAsync.whenData(
+              (items) => items[account.id] ?? AccountBalances.empty(account.id),
+            ),
+            activity: journalAsync,
           );
         },
       ),
@@ -103,20 +103,13 @@ class _AccountDetailBody extends ConsumerWidget {
   final Account account;
   final List<Account> accounts;
   final String? cashAssetId;
-  final AccountBalances balances;
-  final List<JournalEntryWithPostings> activity;
+  final AsyncValue<AccountBalances> balances;
+  final AsyncValue<List<JournalEntryWithPostings>> activity;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    final recent = activity
-        .where(
-          (entry) =>
-              entry.postings.any((posting) => posting.accountId == account.id),
-        )
-        .take(6)
-        .toList(growable: false);
 
     return ListView(
       padding: EdgeInsets.fromLTRB(
@@ -150,35 +143,63 @@ class _AccountDetailBody extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.s8),
-        if (recent.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s20),
-            child: Text(
-              l10n.accountDetailNoActivity,
-              style: context.captionStyle,
-              textAlign: TextAlign.center,
-            ),
-          )
-        else
-          SoftCard.raised(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
-              child: Column(
-                children: [
-                  for (var index = 0; index < recent.length; index++) ...[
-                    _ActivityRow(
-                      entry: recent[index],
-                      account: account,
-                      accounts: accounts,
-                      formatters: formatters,
-                    ),
-                    if (index < recent.length - 1) const FDivider(),
-                  ],
-                ],
-              ),
-            ),
+        activity.when(
+          skipLoadingOnRefresh: false,
+          loading: () => kDefaultLoading,
+          error: (error, stack) => kDefaultError(
+            context,
+            error,
+            stack,
+            onRetry: () =>
+                ref.invalidate(journalEntriesWithPostingsStreamProvider),
           ),
+          data: (entries) => _buildActivity(context, entries, formatters),
+        ),
       ],
+    );
+  }
+
+  Widget _buildActivity(
+    BuildContext context,
+    List<JournalEntryWithPostings> entries,
+    AppFormatters formatters,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final recent = entries
+        .where(
+          (entry) =>
+              entry.postings.any((posting) => posting.accountId == account.id),
+        )
+        .take(6)
+        .toList(growable: false);
+
+    if (recent.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s20),
+        child: Text(
+          l10n.accountDetailNoActivity,
+          style: context.captionStyle,
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    return SoftCard.raised(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+        child: Column(
+          children: [
+            for (var index = 0; index < recent.length; index++) ...[
+              _ActivityRow(
+                entry: recent[index],
+                account: account,
+                accounts: accounts,
+                formatters: formatters,
+              ),
+              if (index < recent.length - 1) const FDivider(),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -191,7 +212,7 @@ class _BalanceCard extends ConsumerWidget {
   });
 
   final Account account;
-  final AccountBalances balances;
+  final AsyncValue<AccountBalances> balances;
   final String? cashAssetId;
 
   @override
@@ -234,27 +255,42 @@ class _BalanceCard extends ConsumerWidget {
           children: [
             Text(l10n.accountDetailBalanceTitle, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s8),
-            if (balances.legs.isEmpty)
-              Text('—', style: TypographyTokens.displayMedium)
-            else
-              for (final leg in balances.legs)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.s4),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: SignedMoneyText(
-                      amount: leg.units,
-                      unit: leg.unit,
-                      formatters: formatters,
-                      showPositiveSign: false,
-                      colorBySign: false,
-                      style: leg.unit == account.currency
-                          ? TypographyTokens.displayMedium
-                          : context.strongTitleStyle,
-                    ),
-                  ),
-                ),
+            balances.when(
+              skipLoadingOnRefresh: false,
+              loading: () => kDefaultLoading,
+              error: (error, stack) => kDefaultError(
+                context,
+                error,
+                stack,
+                onRetry: () => ref.invalidate(accountBalancesByIdProvider),
+              ),
+              data: (value) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (value.legs.isEmpty)
+                    Text('—', style: TypographyTokens.displayMedium)
+                  else
+                    for (final leg in value.legs)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.s4),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          child: SignedMoneyText(
+                            amount: leg.units,
+                            unit: leg.unit,
+                            formatters: formatters,
+                            showPositiveSign: false,
+                            colorBySign: false,
+                            style: leg.unit == account.currency
+                                ? TypographyTokens.displayMedium
+                                : context.strongTitleStyle,
+                          ),
+                        ),
+                      ),
+                ],
+              ),
+            ),
             const SizedBox(height: AppSpacing.s16),
             LayoutBuilder(
               builder: (context, constraints) {

@@ -30,14 +30,30 @@ class HealthMetricDetail extends ConsumerStatefulWidget {
 
 class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
   HealthDaySample? _focused;
-  bool _showAll = false;
+  late Widget _recordsView;
+  @override
+  void initState() {
+    super.initState();
+    _recordsView = _HealthMetricRecords(
+      key: ValueKey('${widget.series.kind.wire}:${widget.series.window.days}'),
+      series: widget.series,
+    );
+  }
+
   bool _sourceSaving = false;
   String? _sourceError;
   @override
   void didUpdateWidget(covariant HealthMetricDetail oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.series != widget.series) _focused = null;
-    if (oldWidget.series.kind != widget.series.kind) _showAll = false;
+    if (oldWidget.series != widget.series) {
+      _recordsView = _HealthMetricRecords(
+        key: ValueKey(
+          '${widget.series.kind.wire}:${widget.series.window.days}',
+        ),
+        series: widget.series,
+      );
+    }
   }
 
   @override
@@ -64,8 +80,6 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
             : null,
       );
     }
-    final records = series.samples.reversed.toList();
-    final visible = _showAll ? records : records.take(7);
     final checkIns = ref.watch(healthCheckInsProvider(series.window.days));
     final entries = checkIns.value ?? const [];
     final entryByDay = {for (final entry in entries) entry.day: entry};
@@ -231,36 +245,7 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
           ),
         ),
         const SizedBox(height: AppSpacing.s20),
-        Text(l.healthRecordsTitle, style: context.labelStyle),
-        const SizedBox(height: AppSpacing.s8),
-        AppGroupedSurface(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (final (index, day) in visible.indexed) ...[
-                if (index > 0)
-                  const AppGroupedDivider(
-                    indent: AppSpacing.s16,
-                    endIndent: AppSpacing.s16,
-                  ),
-                _RecordDay(
-                  key: ValueKey('${kind.wire}:${day.day}'),
-                  kind: kind,
-                  sample: day,
-                ),
-              ],
-            ],
-          ),
-        ),
-        if (records.length > 7) ...[
-          const SizedBox(height: AppSpacing.s8),
-          AppRevealControl(
-            expanded: _showAll,
-            collapsedLabel: l.commonRevealMore(records.length - 7),
-            expandedLabel: l.commonRevealLess,
-            onToggle: () => setState(() => _showAll = !_showAll),
-          ),
-        ],
+        _recordsView,
       ],
     );
   }
@@ -293,6 +278,67 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
     } finally {
       if (mounted) setState(() => _sourceSaving = false);
     }
+  }
+}
+
+// Reused by identity while chart focus changes, so expanded evidence rows
+// do not rebuild on every chart pointer move.
+class _HealthMetricRecords extends StatefulWidget {
+  const _HealthMetricRecords({super.key, required this.series});
+  final HealthSeries series;
+  @override
+  State<_HealthMetricRecords> createState() => _HealthMetricRecordsState();
+}
+
+class _HealthMetricRecordsState extends State<_HealthMetricRecords> {
+  int _recordLimit = 7;
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final kind = widget.series.kind;
+    final records = widget.series.samples.reversed.toList(growable: false);
+    final visible = records.take(_recordLimit);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l.healthRecordsTitle, style: context.labelStyle),
+        const SizedBox(height: AppSpacing.s8),
+        AppGroupedSurface(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              for (final (index, day) in visible.indexed) ...[
+                if (index > 0)
+                  const AppGroupedDivider(
+                    indent: AppSpacing.s16,
+                    endIndent: AppSpacing.s16,
+                  ),
+                _RecordDay(
+                  key: ValueKey('${kind.wire}:${day.day}'),
+                  kind: kind,
+                  sample: day,
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (records.length > 7) ...[
+          const SizedBox(height: AppSpacing.s8),
+          if (_recordLimit < records.length)
+            AppQuietButton(
+              label: l.commonRevealMore(
+                (records.length - _recordLimit).clamp(0, 14),
+              ),
+              onPress: () => setState(() => _recordLimit += 14),
+            ),
+          if (_recordLimit > 7)
+            AppQuietButton(
+              label: l.commonRevealLess,
+              onPress: () => setState(() => _recordLimit = 7),
+            ),
+        ],
+      ],
+    );
   }
 }
 

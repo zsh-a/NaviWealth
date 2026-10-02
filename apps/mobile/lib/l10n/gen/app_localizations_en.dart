@@ -9610,6 +9610,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupConfirmRestoreTitle => 'Restore Backup';
 
   @override
+  String backupRestoreScopeWarning(String scope) {
+    return 'The data included in this backup will replace the corresponding local data in $scope. This cannot be undone.';
+  }
+
+  @override
   String get backupConfirmRestoreMessage =>
       'This will replace ALL local data with the contents of the backup. This cannot be undone. Continue?';
 
@@ -18218,5 +18223,48 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String ingestCategoryFallback(String category) {
     return 'Other · Unrecognized category: $category';
+  }
+
+  @override
+  String get productRecordUnavailable =>
+      'This product is unavailable or has been deleted. Reload before editing.';
+
+  @override
+  String get productEditConflict =>
+      'This product changed elsewhere. Your input is kept. Reopen the latest record before saving.';
+
+  @override
+  String get productLedgerFieldsLocked =>
+      'The account and currency are fixed to preserve the existing ledger.';
+
+  @override
+  String get backupArchiveInvalid =>
+      'This backup cannot be restored for the current account and scope. Select a compatible backup.';
+
+  @override
+  String get backupInspectAction => 'Check backup';
+
+  @override
+  String get backupInspectProgress => 'Decrypting and checking backup…';
+
+  @override
+  String get backupInspectHint =>
+      'Check the backup first to review its date, scope and record count before restoring.';
+
+  @override
+  String get backupFullScope => 'All domains';
+
+  @override
+  String get backupArchiveScope => 'Restore scope';
+
+  @override
+  String get backupArchiveDate => 'Backup date';
+
+  @override
+  String get backupArchiveRows => 'Records';
+
+  @override
+  String backupSelectedFileSize(int kilobytes) {
+    return 'File size: $kilobytes KB';
   }
 }

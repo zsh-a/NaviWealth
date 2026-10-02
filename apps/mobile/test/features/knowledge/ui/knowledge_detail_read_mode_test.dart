@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/visual/ai_markdown.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -12,11 +14,13 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
+import 'package:naviwealth/features/knowledge/ui/knowledge_capture_sheet.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_decision_detail_page.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_note_detail_page.dart';
 import 'package:naviwealth/features/knowledge/ui/widgets/knowledge_decision_options_editor.dart';
 import 'package:naviwealth/features/knowledge/ui/widgets/knowledge_decision_status_badge.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
@@ -24,6 +28,185 @@ import '../../finance/data/repositories/_stub_stamper.dart';
 const _owner = 'knowledge-read-mode-user';
 
 void main() {
+  testWidgets(
+    'decision capture restores incomplete alternatives and clears draft after save',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1800));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final store = LocalFormDraftStore(preferences, owner: _owner);
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repository = KnowledgeRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      Widget app() => _base(
+        repository: repository,
+        preferences: preferences,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showKnowledgeDecisionCapturePage(context),
+              child: const Text('Capture decision'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpWidget(app());
+      await tester.tap(find.text('Capture decision'));
+      await _settle(tester);
+      await tester.enterText(
+        find.widgetWithText(FTextField, 'Question'),
+        'Choose the next step',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('knowledge-capture-option-label-0')),
+        'Proceed',
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('knowledge-capture-option-add')),
+      );
+      await _settle(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('knowledge-capture-option-select-1')),
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('knowledge-capture-option-rationale-1')),
+        '  Still weighing the evidence  ',
+      );
+      await _disposeWidget(tester);
+      await _settle(tester);
+      expect(store.read('knowledge.capture.decision:'), isNotNull);
+      expect(
+        await tester.runAsync(
+          () => repository.listDecisions(ownerUserId: _owner),
+        ),
+        isEmpty,
+      );
+
+      await tester.pumpWidget(app());
+      await tester.tap(find.text('Capture decision'));
+      await _settle(tester);
+      await tester.tap(find.text('Restore draft'));
+      await _settle(tester);
+      final options = tester
+          .widget<KnowledgeDecisionOptionsEditor>(
+            find.byType(KnowledgeDecisionOptionsEditor),
+          )
+          .controller;
+      expect(options.selectedIndex, 1);
+      expect(options.length, 2);
+      expect(options.isValid, isFalse);
+      final field = tester.widget<EditableText>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey('knowledge-capture-option-rationale-1'),
+          ),
+          matching: find.byType(EditableText),
+        ),
+      );
+      expect(field.controller.text, '  Still weighing the evidence  ');
+      await tester.enterText(
+        find.byKey(const ValueKey('knowledge-capture-option-label-1')),
+        'Wait for more evidence',
+      );
+      await _settle(tester);
+      await tester.tap(find.text('Save').hitTestable());
+      await _settle(tester);
+      final saved = (await tester.runAsync(
+        () => repository.listDecisions(ownerUserId: _owner),
+      ))!;
+      expect(saved, hasLength(1));
+      expect(saved.single.selectedLabel, 'Wait for more evidence');
+      expect(saved.single.options, hasLength(2));
+      expect(store.read('knowledge.capture.decision:'), isNull);
+      expect(tester.takeException(), isNull);
+      await _disposeWidget(tester);
+    },
+  );
+
+  testWidgets(
+    'note edit draft survives interruption and retains its original revision',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final store = LocalFormDraftStore(preferences, owner: _owner);
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      final repo = KnowledgeRepository(
+        db: database,
+        outbox: InMemoryOutboxStore(),
+      );
+      final note = _note();
+      await repo.upsertNote(note);
+      await tester.pumpWidget(
+        _base(
+          home: const KnowledgeNoteDetailPage(noteId: 'note-read'),
+          repository: repo,
+          preferences: preferences,
+        ),
+      );
+      await _settle(tester);
+      await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
+      await _settle(tester);
+      await tester.enterText(
+        find.byKey(const Key('knowledge-note-title')),
+        'First draft',
+      );
+      await tester.enterText(
+        find.byKey(const Key('knowledge-note-title')),
+        'Unfinished final draft',
+      );
+      await _disposeWidget(tester);
+      await _settle(tester);
+      expect(
+        store.read('knowledge.note.edit:note-read')?['title'],
+        'Unfinished final draft',
+      );
+      final newer = KnowledgeNote(
+        id: note.id,
+        title: 'Changed on another device',
+        bodyMd: note.bodyMd,
+        sourceUrl: note.sourceUrl,
+        tags: note.tags,
+        createdAt: note.createdAt,
+        sync: note.sync.copyWith(
+          hlc: Hlc.tick(lastSeen: note.sync.hlc),
+          updatedAt: DateTime.now().toUtc(),
+        ),
+      );
+      await repo.upsertNote(newer);
+      await tester.pumpWidget(
+        _base(
+          home: const KnowledgeNoteDetailPage(noteId: 'note-read'),
+          repository: repo,
+          preferences: preferences,
+        ),
+      );
+      await _settle(tester);
+      expect(find.text('Restore draft'), findsOneWidget);
+      await tester.tap(find.text('Restore draft'));
+      await _settle(tester);
+      expect(find.text('Unfinished final draft'), findsOneWidget);
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      final save = tester.widget<AppBusyButton>(
+        find.byWidgetPredicate(
+          (w) => w is AppBusyButton && w.label == l10n.commonSave,
+        ),
+      );
+      expect(save.onPress, isNull);
+      expect(
+        (await repo.findNote(ownerUserId: _owner, id: note.id))?.title,
+        'Changed on another device',
+      );
+      await _disposeWidget(tester);
+    },
+  );
+
   testWidgets('Note read mode renders content and guards the edit toggle', (
     tester,
   ) async {
@@ -154,35 +337,41 @@ void main() {
   });
 }
 
-Widget _base({required Widget home, required KnowledgeRepository repository}) =>
-    ProviderScope(
-      overrides: [
-        knowledgeRepositoryProvider.overrideWith((_) async => repository),
-        knowledgeOwnerUserIdProvider.overrideWith((_) async => _owner),
-        mutationStamperProvider.overrideWith(
-          (_) async => makeStubStamper(userId: _owner),
-        ),
-        lifeOpenActionCountProvider.overrideWith(
-          (_) => const AsyncValue<int?>.data(null),
-        ),
-        lifeSourceActionReaderProvider.overrideWith(
-          (_) =>
-              (_) async => null,
-        ),
-        lifeActionDispatcherProvider.overrideWith(
-          (_) =>
-              (_) async => null,
-        ),
-        lifeActionRouteBuilderProvider.overrideWith((_) => null),
-      ],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        locale: const Locale('en'),
-        home: FTheme(data: FTheme.neutral.light.desktop, child: home),
-      ),
-    );
+Widget _base({
+  required Widget home,
+  required KnowledgeRepository repository,
+  SharedPreferences? preferences,
+}) => ProviderScope(
+  overrides: [
+    if (preferences != null)
+      sharedPreferencesProvider.overrideWithValue(preferences),
+    if (preferences != null) activeUserIdProvider.overrideWithValue(_owner),
+    knowledgeRepositoryProvider.overrideWith((_) async => repository),
+    knowledgeOwnerUserIdProvider.overrideWith((_) async => _owner),
+    mutationStamperProvider.overrideWith(
+      (_) async => makeStubStamper(userId: _owner),
+    ),
+    lifeOpenActionCountProvider.overrideWith(
+      (_) => const AsyncValue<int?>.data(null),
+    ),
+    lifeSourceActionReaderProvider.overrideWith(
+      (_) =>
+          (_) async => null,
+    ),
+    lifeActionDispatcherProvider.overrideWith(
+      (_) =>
+          (_) async => null,
+    ),
+    lifeActionRouteBuilderProvider.overrideWith((_) => null),
+  ],
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    locale: const Locale('en'),
+    home: FTheme(data: FTheme.neutral.light.desktop, child: home),
+  ),
+);
 
 Widget _wrapNote(String noteId, KnowledgeRepository repository) => _base(
   home: KnowledgeNoteDetailPage(noteId: noteId),

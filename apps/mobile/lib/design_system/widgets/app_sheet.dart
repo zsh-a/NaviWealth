@@ -487,12 +487,14 @@ class AppSheet extends StatelessWidget {
             if (!dialog) _dragHandle(colors),
             _header(context),
             Flexible(
-              child: SingleChildScrollView(
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: kBodyWithFooterPadding,
-                child: child,
-              ),
+              child: scrollable
+                  ? SingleChildScrollView(
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: kBodyWithFooterPadding,
+                      child: child,
+                    )
+                  : Padding(padding: kBodyWithFooterPadding, child: child),
             ),
             // Gradient fade divider — organic ribbon-grouped feel.
             AppGradientDivider(

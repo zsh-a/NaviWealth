@@ -7,6 +7,7 @@ export 'data/form_defaults_preferences.dart';
 export 'date_field.dart';
 export 'form_clock.dart';
 export 'form_dirty_guard.dart';
+export 'form_draft_binding.dart';
 export 'form_submission.dart';
 export 'local_form_draft.dart';
 export 'note_field.dart';

@@ -62,6 +62,8 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
   bool _detailsExpanded = false;
   bool _busy = false;
   Asset? _initial;
+  bool _loadingRecord = false;
+  Object? _loadError;
   bool _hydratedFromList = false;
 
   static const _eligibleAccountTypes = {
@@ -93,36 +95,51 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
   }
 
   Future<void> _loadInitial() async {
-    final repo = await ref.read(manualAssetRepositoryProvider.future);
-    final existing = await repo.findById(widget.assetId!);
-    if (existing == null || !mounted) return;
-    final meta = existing.manualMetadata;
-    if (meta is! WealthProductMetadata) return;
+    if (_loadingRecord) return;
     setState(() {
-      _initial = existing;
-      _nameController.text = existing.name ?? '';
-      _accountId = meta.accountId;
-      _currency = existing.currency;
-      _principalController.text = meta.principal.toString();
-      _expectedReturnPctController.text =
-          (meta.expectedAnnualReturn * Decimal.fromInt(100)).toString();
-      _valuationController.text = '';
-      _startDate = meta.startDate;
-      _maturityDate = meta.maturityDate;
-      _issuerController.text = meta.issuer ?? '';
-      _productCodeController.text = meta.productCode ?? '';
-      _detailsExpanded =
-          meta.startDate != null ||
-          meta.maturityDate != null ||
-          (meta.issuer?.trim().isNotEmpty ?? false) ||
-          (meta.productCode?.trim().isNotEmpty ?? false);
+      _loadingRecord = true;
+      _loadError = null;
     });
-    // Hydrating an existing record is not a user edit.
-    dirty.snapshotBaseline();
+    try {
+      final repo = await ref.read(manualAssetRepositoryProvider.future);
+      final existing = await repo.findProductForEdit(widget.assetId!);
+      if (!mounted) return;
+      final meta = existing.manualMetadata;
+      if (meta is! WealthProductMetadata ||
+          !(existing.type == AssetType.wealthProduct)) {
+        throw ManualProductUnavailable();
+      }
+      setState(() {
+        _initial = existing;
+        _nameController.text = existing.name ?? '';
+        _accountId = meta.accountId;
+        _currency = existing.currency;
+        _principalController.text = meta.principal.toString();
+        _expectedReturnPctController.text =
+            (meta.expectedAnnualReturn * Decimal.fromInt(100)).toString();
+        _valuationController.text = '';
+        _startDate = meta.startDate;
+        _maturityDate = meta.maturityDate;
+        _issuerController.text = meta.issuer ?? '';
+        _productCodeController.text = meta.productCode ?? '';
+        _detailsExpanded =
+            meta.startDate != null ||
+            meta.maturityDate != null ||
+            (meta.issuer?.trim().isNotEmpty ?? false) ||
+            (meta.productCode?.trim().isNotEmpty ?? false);
+      });
+      // Hydrating an existing record is not a user edit.
+      dirty.snapshotBaseline();
+    } catch (error) {
+      if (mounted) setState(() => _loadError = error);
+    } finally {
+      if (mounted) setState(() => _loadingRecord = false);
+    }
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) {
+    if (_busy || (widget.isEdit && _initial == null)) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
       if (!_detailsAreValid && !_detailsExpanded) {
         setState(() => _detailsExpanded = true);
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -169,12 +186,14 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       dirty: dirty,
       onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.wealth,
-      failureMessage: (_) => l10n.commonSaveFailed,
+      failureMessage: (error) => error is ManualProductEditConflict
+          ? l10n.productEditConflict
+          : l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
       tag: 'wealth-product',
       commit: () async {
         final repo = await ref.read(manualAssetRepositoryProvider.future);
-        if (initial == null) {
+        if (!widget.isEdit) {
           await repo.createWealthProduct(
             accountId: accountId,
             name: name,
@@ -197,16 +216,13 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             issuer: issuer,
             productCode: productCode,
           );
-          await repo.updateMetadata(id: initial.id, metadata: newMeta);
-          if (valuation != null) {
-            await repo.recordValuationAdjust(
-              assetId: initial.id,
-              newValuation: valuation,
-            );
-          }
-          if (name != (initial.name ?? '')) {
-            await repo.updateBasics(id: initial.id, name: name);
-          }
+          await repo.updateProduct(
+            expected: initial!,
+            name: name,
+            type: AssetType.wealthProduct,
+            metadata: newMeta,
+            currentValuation: valuation,
+          );
         }
         unawaited(
           ref
@@ -218,7 +234,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
   }
 
   Future<void> _delete() async {
-    if (_initial == null) return;
+    if (_busy || _initial == null) return;
     final l10n = AppLocalizations.of(context);
     final ok = await showConfirmDialog(
       context: context,
@@ -228,7 +244,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
       confirmLabel: l10n.commonDelete,
       destructive: true,
     );
-    if (ok != true) return;
+    if (ok != true || !mounted || _busy) return;
     final id = _initial!.id;
     await submitFormAndLeave<void>(
       dirty: dirty,
@@ -295,19 +311,39 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             AppHeaderAction(
               semanticsLabel: l10n.wealthProductDeleteTooltip,
               icon: const Icon(FLucideIcons.trash2),
-              onPress: _busy ? null : _delete,
+              onPress: _busy || _initial == null ? null : _delete,
             ),
         ],
-        child: accountsAsync.whenOrLoading(
-          context: context,
-          error: (e, _) => AppEmptyState.error(
-            title: l10n.commonLoadFailed,
-            message: userSafeErrorMessage(context, e),
-            retryLabel: l10n.commonRetry,
-            onRetry: () => ref.invalidate(accountsStreamProvider),
-          ),
-          data: (accounts) => _buildForm(accounts),
-        ),
+        child: widget.isEdit && (_loadingRecord || _loadError != null)
+            ? _loadingRecord
+                  ? const AssetDetailSkeleton()
+                  : AppEmptyState.error(
+                      title: l10n.commonLoadFailed,
+                      message: _loadError is ManualProductUnavailable
+                          ? l10n.productRecordUnavailable
+                          : userSafeErrorMessage(context, _loadError!),
+                      retryLabel: l10n.commonRetry,
+                      onRetry: () {
+                        ref.invalidate(manualAssetRepositoryProvider);
+                        unawaited(_loadInitial());
+                      },
+                    )
+            : accountsAsync.whenOrLoading(
+                context: context,
+                error: (e, _) => AppEmptyState.error(
+                  title: l10n.commonLoadFailed,
+                  message: userSafeErrorMessage(context, e),
+                  retryLabel: l10n.commonRetry,
+                  onRetry: () => ref.invalidate(accountsStreamProvider),
+                ),
+                data: (accounts) => AbsorbPointer(
+                  absorbing: _busy,
+                  child: ExcludeFocus(
+                    excluding: _busy,
+                    child: _buildForm(accounts),
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -383,6 +419,7 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
             const SizedBox(height: AppSpacing.s8),
           ],
           AccountPicker(
+            enabled: !widget.isEdit,
             accounts: eligible,
             value: _accountId,
             onChanged: (v) => setState(() {
@@ -404,12 +441,17 @@ class _WealthProductFormPageState extends ConsumerState<WealthProductFormPage>
           ),
           const SizedBox(height: AppSpacing.s12),
           CurrencyPicker(
+            enabled: !widget.isEdit,
             value: _currency,
             onChanged: (v) => setState(() {
               _currency = v;
               dirty.markDirty();
             }),
           ),
+          if (widget.isEdit) ...[
+            const SizedBox(height: AppSpacing.s4),
+            Text(l10n.productLedgerFieldsLocked, style: context.captionStyle),
+          ],
           const SizedBox(height: AppSpacing.s12),
           AmountField(
             key: const Key('wealth-product-principal-field'),

@@ -14,15 +14,76 @@ import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/security/in_memory_key_store.dart';
+import 'package:naviwealth/core/security/secure_key_store.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/ai/ai_llm_credentials_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../app/agent_runtime_native_bridge_test_harness.dart';
-
 import '../../../support/test_app_theme.dart';
 
 void main() {
+  testWidgets(
+    'failed profile save retains input and cancel guards unsaved changes',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final store = _UnavailableKeyStore();
+      await tester.pumpWidget(
+        _wrap(
+          credentials: const LlmCredentials(),
+          runtimeRunner: null,
+          keyStore: store,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Add provider'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('llm-profile-name')),
+        'My profile',
+      );
+      await tester.enterText(
+        find.byKey(const Key('llm-profile-key')),
+        'test-key',
+      );
+      await tester.ensureVisible(find.text('Save'));
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text('My profile'), findsOneWidget);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(
+                of: find.byKey(const Key('llm-profile-key')),
+                matching: find.byType(EditableText),
+              ),
+            )
+            .controller
+            .text,
+        'test-key',
+      );
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(find.text(l10n.commonSaveFailed), findsWidgets);
+      expect(find.text(l10n.aiLlmSaved), findsNothing);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.unsavedChangesTitle), findsOneWidget);
+      await tester.tap(find.text(l10n.unsavedChangesKeepEditing));
+      await tester.pumpAndSettle();
+      expect(find.text('My profile'), findsOneWidget);
+      store.fail = false;
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.aiLlmSaved), findsWidgets);
+      expect(find.byType(EditableText), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('shows runtime check unavailable without active profile', (
     tester,
   ) async {
@@ -132,13 +193,16 @@ Widget _wrap({
   required LlmCredentials credentials,
   required AgentRuntimeProfileTurnRunner? runtimeRunner,
   ProposalApplier? proposalApplier,
+  SecureKeyStore? keyStore,
 }) {
   return ProviderScope(
     overrides: [
       deviceLlmPlatformSupportedProvider.overrideWithValue(true),
-      llmCredentialsProvider.overrideWith(
-        () => _FakeCredentialsNotifier(credentials),
-      ),
+      if (keyStore == null)
+        llmCredentialsProvider.overrideWith(
+          () => _FakeCredentialsNotifier(credentials),
+        ),
+      if (keyStore != null) secureKeyStoreProvider.overrideWithValue(keyStore),
       agentRuntimeProfileTurnRunnerProvider.overrideWithValue(runtimeRunner),
       if (proposalApplier != null)
         agentRuntimeProposalBridgeProvider.overrideWith((ref) async {
@@ -146,7 +210,10 @@ Widget _wrap({
         }),
     ],
     child: MaterialApp(
-      builder: buildTestAppTheme,
+      builder: (context, child) => buildTestAppTheme(
+        context,
+        AppMessenger.init(child: child ?? const SizedBox.shrink()),
+      ),
       theme: AppTheme.light(),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -321,4 +388,13 @@ class _StartRequest {
 
   final Map<String, Object?> request;
   final String agentId;
+}
+
+class _UnavailableKeyStore extends InMemoryKeyStore {
+  bool fail = true;
+  @override
+  Future<void> write(String key, String value) async {
+    if (fail) throw StateError('Secure storage unavailable');
+    await super.write(key, value);
+  }
 }

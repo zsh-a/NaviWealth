@@ -818,6 +818,12 @@ void main() {
       sync: _sync(),
     );
     await repository.upsertPlan(plan);
+    await repository.upsertAction(
+      _action(
+        id: 'archive-action',
+        title: 'Open action',
+      ).copyWith(planId: plan.id, sync: _sync()),
+    );
 
     await tester.pumpWidget(
       _wrap(

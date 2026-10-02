@@ -99,6 +99,96 @@ void main() {
     ),
   );
 
+  test('related history grows past old limits and counts isolate owner and tombstones', () async {
+    final actions = [
+      for (var i = 0; i < 230; i++)
+        _action(
+          id: 'action-${i.toString().padLeft(3, '0')}',
+          title: 'Action $i',
+          planId: 'plan',
+          status: i < 20
+              ? ExecutionActionStatus.blocked
+              : i < 200
+              ? ExecutionActionStatus.todo
+              : ExecutionActionStatus.done,
+        ),
+    ];
+    await repo.upsertActions(actions);
+    await repo.upsertAction(
+      _action(
+        id: 'foreign',
+        title: 'Foreign',
+        planId: 'plan',
+      ).copyWith(sync: _sync(0).copyWith(ownerUserId: 'other')),
+    );
+    await repo.softDeleteAction(action: actions.last, sync: _sync(1));
+    final counts = await repo
+        .watchActionCountsForPlan(ownerUserId: _userId, planId: 'plan')
+        .first;
+    expect(counts, (total: 229, open: 200, blocked: 20));
+    final small = await repo
+        .watchActionsForPlan(ownerUserId: _userId, planId: 'plan', limit: 30)
+        .first;
+    final all = await repo
+        .watchActionsForPlan(ownerUserId: _userId, planId: 'plan', limit: 300)
+        .first;
+    expect(small, hasLength(30));
+    expect(all, hasLength(229));
+    expect(all.take(30).map((a) => a.id), small.map((a) => a.id));
+    for (var i = 0; i < 125; i++) {
+      await repo.recordProgress(
+        ExecutionProgressEntry(
+          id: 'progress-$i',
+          actionId: actions.first.id,
+          planId: 'plan',
+          kind: ExecutionProgressKind.checkin,
+          note: 'History $i',
+          createdAt: DateTime.utc(2026, 6, 1).add(Duration(minutes: i)),
+          sync: _sync(i),
+        ),
+      );
+    }
+    expect(
+      await repo
+          .watchRelatedProgressCount(
+            ownerUserId: _userId,
+            id: actions.first.id,
+            forPlan: false,
+          )
+          .first,
+      125,
+    );
+    expect(
+      await repo
+          .watchProgressForAction(
+            ownerUserId: _userId,
+            actionId: actions.first.id,
+            limit: 150,
+          )
+          .first,
+      hasLength(125),
+    );
+    expect(
+      await repo
+          .watchProgressForPlan(
+            ownerUserId: _userId,
+            planId: 'plan',
+            limit: 150,
+          )
+          .first,
+      hasLength(125),
+    );
+    expect(
+      await repo
+          .watchRelatedProgressCount(
+            ownerUserId: 'other',
+            id: 'plan',
+            forPlan: true,
+          )
+          .first,
+      0,
+    );
+  });
   test(
     'concurrent source creation writes only one action and outbox pointer',
     () async {

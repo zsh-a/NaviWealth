@@ -1,12 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/backup/providers.dart';
+import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/core/shell/settings_ui/inline_setting_row.dart';
 import 'package:naviwealth/core/shell/settings_ui/settings_page_frame.dart';
@@ -204,96 +205,14 @@ class BackupPage extends ConsumerWidget {
     logger.d(
       'backup_ui: picked file name=${pickedFile.name} size=${pickedFile.size}',
     );
-    final fileBytes = pickedFile.bytes;
-    logger.d('backup_ui: file loaded (${fileBytes.length} bytes)');
+
     if (!context.mounted) return;
 
-    // Show confirmation sheet with passphrase input.
-    final passphrase = await _showRestoreConfirmSheet(context);
-    if (passphrase == null || passphrase.isEmpty) {
-      logger.d('backup_ui: restore cancelled (no passphrase)');
-      return;
-    }
-    if (!context.mounted) return;
-
-    final dismiss = await showProgressDialog(
+    await showGuardedFormSheet<RestoreResult>(
       context: context,
-      message: l10n.backupImportProgress,
+      builder: (_, dirty) =>
+          _RestoreConfirmSheet(file: pickedFile!, domain: domain, dirty: dirty),
     );
-
-    try {
-      final sw = Stopwatch()..start();
-      logger.d('backup_ui: service resolved, pausing sync and restoring');
-
-      final RestoreResult restoreResult;
-      if (domain case final expectedDomain?) {
-        final restore = await ref.read(
-          domainBackupRestoreRunnerProvider.future,
-        );
-        if (restore == null) {
-          throw StateError('Backup service is not ready.');
-        }
-        restoreResult = await restore(
-          passphrase: passphrase,
-          fileBytes: fileBytes,
-          domain: expectedDomain,
-        );
-      } else {
-        final restore = await ref.read(backupRestoreRunnerProvider.future);
-        if (restore == null) {
-          throw StateError('Backup service is not ready.');
-        }
-        restoreResult = await restore(
-          passphrase: passphrase,
-          fileBytes: fileBytes,
-        );
-      }
-      sw.stop();
-      logger.i(
-        'backup_ui: restore complete '
-        '(${restoreResult.totalRows} rows, ${sw.elapsedMilliseconds}ms)',
-      );
-
-      await dismiss();
-      if (!context.mounted) return;
-
-      AppMessenger.show(
-        context,
-        ToastKind.success,
-        l10n.backupImportSuccess(restoreResult.totalRows),
-      );
-    } on BackupAuthenticationException {
-      await dismiss();
-      if (!context.mounted) return;
-      logger.w('backup_ui: restore failed — wrong passphrase or corrupt file');
-      AppMessenger.show(context, ToastKind.error, l10n.backupWrongPassphrase);
-    } on BackupSchemaTooNewException catch (e) {
-      await dismiss();
-      if (!context.mounted) return;
-      logger.w(
-        'backup_ui: restore failed — schema too new '
-        '(backup=${e.backupVersion}, current=${e.currentVersion})',
-      );
-      AppMessenger.show(context, ToastKind.error, l10n.backupSchemaTooNew);
-    } on BackupValidationException catch (e) {
-      await dismiss();
-      if (!context.mounted) return;
-      logger.w('backup_ui: restore failed — validation: ${e.message}');
-      AppMessenger.show(context, ToastKind.error, e.message);
-    } catch (e, st) {
-      logger.e(
-        'backup_ui: restore failed unexpectedly',
-        error: e,
-        stackTrace: st,
-      );
-      await dismiss();
-      if (!context.mounted) return;
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        userSafeErrorMessage(context, e, stackTrace: st),
-      );
-    }
   }
 
   Future<String?> _showPassphraseSheet({
@@ -309,15 +228,6 @@ class BackupPage extends ConsumerWidget {
         hint: hint,
         confirmLabel: confirmLabel,
       ),
-    );
-  }
-
-  Future<String?> _showRestoreConfirmSheet(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return showAppFormSheet<String>(
-      context: context,
-      builder: (_) =>
-          _RestoreConfirmSheet(title: l10n.backupConfirmRestoreTitle),
     );
   }
 }
@@ -397,23 +307,26 @@ class _PassphraseSheetState extends State<_PassphraseSheet> {
   }
 }
 
-class _RestoreConfirmSheet extends StatefulWidget {
-  const _RestoreConfirmSheet({required this.title});
-
-  final String title;
-
+class _RestoreConfirmSheet extends ConsumerStatefulWidget {
+  const _RestoreConfirmSheet({
+    required this.file,
+    required this.domain,
+    required this.dirty,
+  });
+  final PickedBackupFile file;
+  final DomainScope? domain;
+  final FormDirtyController dirty;
   @override
-  State<_RestoreConfirmSheet> createState() => _RestoreConfirmSheetState();
+  ConsumerState<_RestoreConfirmSheet> createState() =>
+      _RestoreConfirmSheetState();
 }
 
-class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
+class _RestoreConfirmSheetState extends ConsumerState<_RestoreConfirmSheet>
+    with FormSubmission<_RestoreConfirmSheet> {
+  final _controller = TextEditingController();
+  PreparedBackup? _prepared;
+  bool _busy = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -421,47 +334,156 @@ class _RestoreConfirmSheetState extends State<_RestoreConfirmSheet> {
     super.dispose();
   }
 
+  String _failure(Object error) {
+    final l10n = AppLocalizations.of(context);
+    return switch (error) {
+      BackupAuthenticationException() => l10n.backupWrongPassphrase,
+      BackupSchemaTooNewException() => l10n.backupSchemaTooNew,
+      BackupValidationException() => l10n.backupArchiveInvalid,
+      _ => userSafeErrorMessage(context, error),
+    };
+  }
+
+  Future<void> _prepare() async {
+    if (_busy) return;
+    final l10n = AppLocalizations.of(context);
+    final passphrase = _controller.text;
+    if (passphrase.isEmpty) {
+      setState(() => _error = l10n.backupPassphraseRequired);
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    widget.dirty.busy = true;
+    FocusScope.of(context).unfocus();
+    try {
+      final prepare = await ref.read(backupPrepareRestoreRunnerProvider.future);
+      if (prepare == null) throw StateError('Backup service is not ready');
+      final prepared = await prepare(
+        passphrase: passphrase,
+        fileBytes: widget.file.bytes,
+        expectedDomain: widget.domain,
+      );
+      if (!mounted) return;
+      setState(() => _prepared = prepared);
+      // The decrypted archive stays in memory for confirmation and retry.
+      _controller.clear();
+    } catch (error) {
+      if (mounted) setState(() => _error = _failure(error));
+    } finally {
+      widget.dirty.busy = false;
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _restore() async {
+    final prepared = _prepared;
+    if (_busy || prepared == null) return;
+    final l10n = AppLocalizations.of(context);
+    await submitForm<RestoreResult>(
+      dirty: widget.dirty,
+      onBusyChanged: (value) => setState(() => _busy = value),
+      commit: () async {
+        final restore = await ref.read(
+          backupApplyPreparedRestoreRunnerProvider.future,
+        );
+        if (restore == null) throw StateError('Backup service is not ready');
+        return restore(prepared);
+      },
+      leave: () => Navigator.of(context).pop(prepared.summary),
+      failureMessage: _failure,
+      successMessage: l10n.backupImportSuccess(prepared.summary.totalRows),
+      showFailureToast: false,
+      tag: 'backup-restore',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final prepared = _prepared;
     return AppSheet(
-      title: widget.title,
+      title: l10n.backupConfirmRestoreTitle,
       footer: AppSheetFooter(
-        submitLabel: l10n.backupConfirmRestoreAction,
+        submitKey: const Key('backup-restore-submit'),
+        submitLabel: _busy
+            ? prepared == null
+                  ? l10n.backupInspectProgress
+                  : l10n.backupImportProgress
+            : prepared == null
+            ? l10n.backupInspectAction
+            : l10n.backupConfirmRestoreAction,
         cancelLabel: l10n.backupCancelAction,
-        onSubmit: _submit,
+        busy: _busy,
+        destructive: prepared != null,
+        onSubmit: prepared == null ? _prepare : _restore,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Text(widget.file.name, style: context.labelStyle),
+          const SizedBox(height: AppSpacing.s4),
           Text(
-            l10n.backupConfirmRestoreMessage,
-            style: context.bodyCaptionStyle.copyWith(height: 1.4),
+            l10n.backupSelectedFileSize((widget.file.size / 1024).ceil()),
+            style: context.captionStyle,
           ),
-          const SizedBox(height: AppSpacing.s16),
-          FTextFormField(
-            control: FTextFieldControl.managed(controller: _controller),
-            label: Text(l10n.backupPassphraseLabel),
-            hint: l10n.backupRestorePassphraseHint,
-            obscureText: true,
-            autofocus: true,
-          ),
+          const SizedBox(height: AppSpacing.s12),
+          if (prepared == null) ...[
+            Text(l10n.backupInspectHint, style: context.bodyCaptionStyle),
+            const SizedBox(height: AppSpacing.s16),
+            FTextFormField(
+              key: const Key('backup-restore-passphrase'),
+              control: FTextFieldControl.managed(controller: _controller),
+              label: Text(l10n.backupPassphraseLabel),
+              hint: l10n.backupRestorePassphraseHint,
+              enabled: !_busy,
+              obscureText: true,
+              autofocus: true,
+              onSubmit: (_) => _prepare(),
+            ),
+          ] else ...[
+            AppMetadataStrip(
+              children: [
+                AppMetadataItem(
+                  label: l10n.backupArchiveScope,
+                  value: prepared.summary.archiveDomain == null
+                      ? l10n.backupFullScope
+                      : _domainLabel(prepared.summary.archiveDomain!),
+                ),
+                AppMetadataItem(
+                  label: l10n.backupArchiveDate,
+                  value: MaterialLocalizations.of(context)
+                      .formatMediumDate(prepared.createdAt.toLocal()),
+                ),
+                AppMetadataItem(
+                  label: l10n.backupArchiveRows,
+                  value: prepared.summary.totalRows.toString(),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            AppStatusBanner(
+              kind: AppStatusKind.warning,
+              message: l10n.backupRestoreScopeWarning(
+                prepared.summary.archiveDomain == null
+                    ? l10n.backupFullScope
+                    : _domainLabel(prepared.summary.archiveDomain!),
+              ),
+            ),
+          ],
+          if (_error ?? submissionFailureMessage case final message?) ...[
+            const SizedBox(height: AppSpacing.s12),
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: message,
+              compact: true,
+            ),
+          ],
         ],
       ),
     );
-  }
-
-  void _submit() {
-    final l10n = AppLocalizations.of(context);
-    if (_controller.text.isEmpty) {
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.backupPassphraseRequired,
-      );
-      return;
-    }
-    Navigator.of(context).pop(_controller.text);
   }
 }

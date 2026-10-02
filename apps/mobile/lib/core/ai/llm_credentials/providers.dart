@@ -49,7 +49,7 @@ final deviceLlmPlatformSupportedProvider = Provider<bool>((ref) {
 
 /// The user's stored credential set (or `null` if none / corrupt).
 /// `build()` reads the Keychain once; the mutators persist the whole
-/// container through [AsyncValue.guard] per the convention.
+/// container serially; failed writes preserve the last committed state.
 final llmCredentialsProvider =
     AsyncNotifierProvider<LlmCredentialsNotifier, LlmCredentials?>(
       LlmCredentialsNotifier.new,
@@ -61,45 +61,52 @@ class LlmCredentialsNotifier
   Future<LlmCredentials?> fetch() =>
       ref.read(llmCredentialStoreProvider).read();
 
-  LlmCredentials get _current => state.asData?.value ?? const LlmCredentials();
+  Future<void> _writes = Future<void>.value();
 
-  Future<void> _persist(LlmCredentials next) async {
-    state = await AsyncValue.guard(() async {
+  Future<void> _mutate(LlmCredentials Function(LlmCredentials) update) {
+    final operation = _writes.then((_) async {
+      // Wait for the initial read, including its error, before editing. A failed
+      // read must not become an empty container that overwrites existing keys.
+      final current = await future;
+      final next = update(current ?? const LlmCredentials());
       final store = ref.read(llmCredentialStoreProvider);
       if (next.isEmpty) {
         await store.clear();
-        return null;
+        state = const AsyncData(null);
+      } else {
+        await store.write(next);
+        state = AsyncData(next);
       }
-      await store.write(next);
-      return next;
     });
+    _writes = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
   }
 
   /// Add a new profile or replace an existing one by id. A keyless
   /// profile is ignored (the UI blocks this; defensive here too).
   Future<void> upsertProfile(LlmProfile profile) async {
     if (!profile.hasKey) return;
-    await _persist(_current.upsert(profile));
+    await _mutate((current) => current.upsert(profile));
   }
 
   /// Switch which profile the device runtime uses. No-op for an
   /// unknown id.
   Future<void> setActive(String id) async {
-    await _persist(_current.withActive(id));
+    await _mutate((current) => current.withActive(id));
   }
 
   /// Remove one profile. The active selection rolls to the first
   /// remaining profile (or none).
   Future<void> removeProfile(String id) async {
-    await _persist(_current.remove(id));
+    await _mutate((current) => current.remove(id));
   }
 
   /// Wipe every profile from the Keychain.
   Future<void> clearAll() async {
-    state = await AsyncValue.guard(() async {
-      await ref.read(llmCredentialStoreProvider).clear();
-      return null;
-    });
+    await _mutate((_) => const LlmCredentials());
   }
 }
 

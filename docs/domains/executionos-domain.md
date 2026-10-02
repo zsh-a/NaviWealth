@@ -118,6 +118,12 @@ Reopening offers restore or discard; restored values still require explicit
 save and normal schedule validation. Success or explicit discard clears input.
 Editing an existing Action does not restore a stale creation draft.
 
+New Plan and Progress input uses the same local recovery contract. Progress
+snapshots are scoped to their initial Action/Plan context; successful save or
+explicit discard clears them. Detail histories load 30 records at a time and
+build visible rows lazily. Counts and lifecycle confirmations read the full
+owner-scoped history rather than a truncated displayed batch.
+
 Blocking requires a concrete reason and records blocker progress. The reason
 sheet stays open until the status and progress write commits; pending writes
 lock dismissal and input, and failures preserve the reason with inline retry

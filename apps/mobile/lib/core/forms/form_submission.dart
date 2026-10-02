@@ -49,6 +49,8 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   ///
   /// [onCommitted] receives the typed commit result before navigation. It is
   /// the seam for constructing a [FormUndoAction] from a repository receipt.
+  /// Set [showFailureToast] to false when the inline failure banner provides
+  /// feedback and an overlay could obscure the form's retry action.
   Future<bool> submitForm<T>({
     required FormDirtyController dirty,
     required ValueChanged<bool> onBusyChanged,
@@ -56,6 +58,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required VoidCallback leave,
     required FormFailureMessageBuilder failureMessage,
     required String successMessage,
+    bool showFailureToast = true,
     void Function(T result)? onCommitted,
     FormUndoPresentation<T>? undo,
     String tag = 'form',
@@ -73,6 +76,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
           leave: leave,
           failureMessage: failureMessage,
           successMessage: successMessage,
+          showFailureToast: showFailureToast,
           onCommitted: onCommitted,
           undo: undo,
           tag: tag,
@@ -92,6 +96,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required Future<T> Function() commit,
     required FormFailureMessageBuilder failureMessage,
     required String successMessage,
+    bool showFailureToast = true,
     void Function(T result)? onCommitted,
     FormUndoPresentation<T>? undo,
     String tag = 'form',
@@ -104,6 +109,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       leave: () => popOrGo(context, fallback: leaveFallback),
       failureMessage: failureMessage,
       successMessage: successMessage,
+      showFailureToast: showFailureToast,
       onCommitted: onCommitted,
       undo: undo,
       tag: tag,
@@ -118,6 +124,7 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
     required VoidCallback leave,
     required FormFailureMessageBuilder failureMessage,
     required String successMessage,
+    required bool showFailureToast,
     required void Function(T result)? onCommitted,
     required FormUndoPresentation<T>? undo,
     required String tag,
@@ -247,12 +254,14 @@ mixin FormSubmission<W extends ConsumerStatefulWidget> on ConsumerState<W> {
       if (mounted) {
         final message = failureMessage(error);
         setState(() => _submissionFailureMessage = message);
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          message,
-          duration: const Duration(seconds: 6),
-        );
+        if (showFailureToast) {
+          AppMessenger.show(
+            context,
+            ToastKind.error,
+            message,
+            duration: const Duration(seconds: 6),
+          );
+        }
       }
       return false;
     } finally {

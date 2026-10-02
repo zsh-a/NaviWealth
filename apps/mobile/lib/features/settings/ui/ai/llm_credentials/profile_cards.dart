@@ -20,7 +20,7 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
         AppSpacing.s12,
         AppSpacing.s12,
       ),
-      onPress: isActive ? null : () => _activate(p.id),
+      onPress: isActive || _saving ? null : () => _activate(p.id),
       child: Row(
         children: [
           Expanded(
@@ -147,7 +147,7 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
     IconData icon,
     VoidCallback onPress,
   ) => AppTappable(
-    onPress: onPress,
+    onPress: _saving ? null : onPress,
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.s8),
       child: Icon(

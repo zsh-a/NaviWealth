@@ -104,3 +104,46 @@ final domainBackupRestoreRunnerProvider =
         );
       };
     });
+
+typedef BackupPrepareRestoreRunner = Future<PreparedBackup> Function({
+  required String passphrase,
+  required Uint8List fileBytes,
+  DomainScope? expectedDomain,
+});
+
+final backupPrepareRestoreRunnerProvider =
+    FutureProvider<BackupPrepareRestoreRunner?>((ref) async {
+      final service = await ref.watch(backupServiceProvider.future);
+      if (service == null) return null;
+      return ({
+        required String passphrase,
+        required Uint8List fileBytes,
+        DomainScope? expectedDomain,
+      }) => service.prepareRestore(
+        passphrase: passphrase,
+        fileBytes: fileBytes,
+        expectedDomain: expectedDomain,
+      );
+    });
+
+typedef BackupApplyPreparedRestoreRunner = Future<RestoreResult> Function(
+  PreparedBackup prepared,
+);
+
+final backupApplyPreparedRestoreRunnerProvider =
+    FutureProvider<BackupApplyPreparedRestoreRunner?>((ref) async {
+      final service = await ref.watch(backupServiceProvider.future);
+      if (service == null) return null;
+      final owner = ref.watch(activeUserIdProvider);
+      final scheduler = await ref.watch(syncSchedulerProvider.future);
+      return (PreparedBackup prepared) {
+        if (ref.read(activeUserIdProvider) != owner) {
+          throw const BackupValidationException('The active owner changed');
+        }
+        return service.restorePreparedBackup(
+          prepared,
+          pauseSync: scheduler?.pause,
+          resumeSync: scheduler?.resume,
+        );
+      };
+    });

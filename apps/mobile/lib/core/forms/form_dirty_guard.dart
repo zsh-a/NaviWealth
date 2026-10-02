@@ -71,12 +71,14 @@ mixin FormDirtyGuard<W extends ConsumerStatefulWidget> on ConsumerState<W> {
   String get leaveFallback;
 
   /// Wrap the form's scaffold so user-initiated back is guarded.
-  Widget guardedScope({required Widget child}) {
+  /// [alwaysHandleBack] also routes pristine deep-linked forms to their
+  /// fallback instead of letting a root back gesture exit the app.
+  Widget guardedScope({required Widget child, bool alwaysHandleBack = false}) {
     return AnimatedBuilder(
       animation: dirty,
       builder: (context, _) {
         return PopScope(
-          canPop: !dirty.isDirty && !dirty.busy,
+          canPop: !alwaysHandleBack && !dirty.isDirty && !dirty.busy,
           onPopInvokedWithResult: (didPop, _) async {
             if (didPop || dirty.busy) return;
             final shouldLeave = await confirmDiscardIfDirty(context, dirty);

@@ -10,6 +10,7 @@ import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/body_measurement_entry_sheet.dart';
 import 'package:naviwealth/features/health/ui/health_check_in_sections.dart';
 import 'package:naviwealth/features/health/ui/health_metric_detail.dart';
+import 'package:naviwealth/features/health/ui/health_series_chart.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
 import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
@@ -66,6 +67,74 @@ Future<GoRouter> _pump(
 }
 
 void main() {
+  testWidgets(
+    'metric evidence expands in batches and preserves rows across chart focus',
+    (tester) async {
+      final fixture = await HealthTestFixture.create(populated: false);
+      addTearDown(fixture.db.close);
+      for (var i = 0; i < 30; i++) {
+        await fixture.repo.upsert(
+          fixture.metric(
+            'garmin:hrv:$i',
+            HealthMetricKind.hrvDaily,
+            HealthTestFixture.now.subtract(Duration(days: i)),
+            50 + i.toDouble(),
+          ),
+        );
+      }
+      await _pump(
+        tester,
+        fixture,
+        location: '/health/trend?metric=hrv_daily&window=90',
+      );
+      final rows = find.byWidgetPredicate((widget) {
+        final key = widget.key;
+        return key is ValueKey<String> &&
+            RegExp(r'^hrv_daily:\d{4}-').hasMatch(key.value);
+      });
+      expect(rows, findsNWidgets(7));
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      final more = find.byWidgetPredicate(
+        (widget) =>
+            widget is AppQuietButton &&
+            widget.label == l10n.commonRevealMore(14),
+      );
+      await tester.scrollUntilVisible(
+        more.hitTestable(),
+        350,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(more.hitTestable());
+      await tester.pumpAndSettle();
+      expect(rows, findsNWidgets(21));
+      final row = rows.evaluate().first.widget;
+      final chart = tester.widget<HealthSeriesChart>(
+        find.byType(HealthSeriesChart),
+      );
+      chart.onFocus?.call(chart.series.samples.first);
+      await tester.pumpAndSettle();
+      expect(rows, findsNWidgets(21));
+      expect(identical(row, rows.evaluate().first.widget), isTrue);
+      final less = find.byWidgetPredicate(
+        (widget) =>
+            widget is AppQuietButton && widget.label == l10n.commonRevealLess,
+      );
+      await tester.scrollUntilVisible(
+        less.hitTestable(),
+        350,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(less.hitTestable());
+      await tester.pumpAndSettle();
+      expect(rows, findsNWidgets(7));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
   testWidgets(
     'journal dates select matching metric context and dates without metrics stay in history',
     (tester) async {

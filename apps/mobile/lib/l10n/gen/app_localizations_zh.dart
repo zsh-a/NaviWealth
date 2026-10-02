@@ -9094,6 +9094,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get backupConfirmRestoreTitle => '恢复备份';
 
   @override
+  String backupRestoreScopeWarning(String scope) {
+    return '此备份包含的数据将替换$scope中的对应本地数据，且无法撤销。';
+  }
+
+  @override
   String get backupConfirmRestoreMessage => '此操作将替换所有本地数据为备份内容，且无法撤销。是否继续？';
 
   @override
@@ -17226,5 +17231,43 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String ingestCategoryFallback(String category) {
     return '其他 · 未识别的分类：$category';
+  }
+
+  @override
+  String get productRecordUnavailable => '该产品不可用或已被删除，请重新加载后再编辑。';
+
+  @override
+  String get productEditConflict => '该产品已在其他地方修改，已保留当前输入。请重新打开最新记录后再保存。';
+
+  @override
+  String get productLedgerFieldsLocked => '账户和币种已固定，以保持现有账务记录一致。';
+
+  @override
+  String get backupArchiveInvalid => '该备份无法恢复到当前用户和范围，请选择匹配的备份。';
+
+  @override
+  String get backupInspectAction => '检查备份';
+
+  @override
+  String get backupInspectProgress => '正在解密并检查备份…';
+
+  @override
+  String get backupInspectHint => '先检查备份，查看备份日期、恢复范围和记录数量，再确认恢复。';
+
+  @override
+  String get backupFullScope => '全部领域';
+
+  @override
+  String get backupArchiveScope => '恢复范围';
+
+  @override
+  String get backupArchiveDate => '备份日期';
+
+  @override
+  String get backupArchiveRows => '记录数量';
+
+  @override
+  String backupSelectedFileSize(int kilobytes) {
+    return '文件大小：$kilobytes KB';
   }
 }

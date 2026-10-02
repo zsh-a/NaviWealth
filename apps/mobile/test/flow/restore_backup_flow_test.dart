@@ -10,10 +10,15 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/backup/backup_codec.dart';
 import 'package:naviwealth/core/backup/backup_service.dart';
 import 'package:naviwealth/core/backup/providers.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/features/settings/ui/backup/backup_page.dart';
 
+import '../core/persistence/test_database.dart';
 import 'support/app_harness.dart';
 import 'support/page_objects.dart';
 
@@ -24,6 +29,19 @@ void main() {
     ) async {
       String? restorePassphrase;
       Uint8List? restoredBytes;
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final service = BackupService(
+        db: db,
+        codec: BackupCodec(),
+        outbox: DriftOutboxStore(db),
+        ownerUserId: kLocalOnlyUserId,
+      );
+      final bytes = await service.exportBackup(
+        passphrase: 'correct horse battery staple',
+        overrideIterations: 1000,
+      );
+      var applied = false;
 
       await bootApp(
         tester,
@@ -31,23 +49,31 @@ void main() {
           backupRestoreFilePickerProvider.overrideWithValue(() async {
             return PickedBackupFile(
               name: 'naviwealth-backup-flow.bak',
-              bytes: Uint8List.fromList([9, 8, 7, 6]),
+              bytes: bytes,
             );
           }),
-          backupRestoreRunnerProvider.overrideWith((ref) async {
+          backupPrepareRestoreRunnerProvider.overrideWith((ref) async {
             return ({
               required String passphrase,
               required Uint8List fileBytes,
+              DomainScope? expectedDomain,
             }) async {
               restorePassphrase = passphrase;
               restoredBytes = Uint8List.fromList(fileBytes);
-              return const RestoreResult(
-                tableCounts: {'accounts': 2},
-                archiveSchemaVersion: 42,
-                archiveDomain: null,
+              expect(applied, isFalse);
+              return service.prepareRestore(
+                passphrase: passphrase,
+                fileBytes: fileBytes,
+                expectedDomain: expectedDomain,
               );
             };
           }),
+          backupApplyPreparedRestoreRunnerProvider.overrideWith(
+            (ref) async => (PreparedBackup prepared) async {
+              applied = true;
+              return service.restorePreparedBackup(prepared);
+            },
+          ),
         ],
       );
 
@@ -62,9 +88,10 @@ void main() {
       backup.expectLanded();
       await backup.importWithPassphrase('correct horse battery staple');
 
-      backup.expectImportSucceeded(rows: 2);
+      backup.expectImportSucceeded(rows: 0);
+      expect(applied, isTrue);
       expect(restorePassphrase, 'correct horse battery staple');
-      expect(restoredBytes, Uint8List.fromList([9, 8, 7, 6]));
+      expect(restoredBytes, bytes);
       await closeApp(tester);
     }, tags: 'flow');
   });

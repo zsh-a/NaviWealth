@@ -225,3 +225,52 @@ Future<SyncMeta> stampExecutionSync(WidgetRef ref) async {
     hlc: stamp.hlc,
   );
 }
+
+final executionPlanActionCountsProvider = StreamProvider.autoDispose
+    .family<({int total, int open, int blocked}), String>((ref, id) async* {
+      final owner = await ref.watch(executionOwnerUserIdProvider.future);
+      final repo = await ref.watch(executionRepositoryProvider.future);
+      yield* repo.watchActionCountsForPlan(ownerUserId: owner, planId: id);
+    });
+
+final executionPlanActionsPageProvider = StreamProvider.autoDispose
+    .family<List<ExecutionAction>, ({String id, int limit})>((ref, key) async* {
+      final owner = await ref.watch(executionOwnerUserIdProvider.future);
+      final repo = await ref.watch(executionRepositoryProvider.future);
+      yield* repo.watchActionsForPlan(
+        ownerUserId: owner,
+        planId: key.id,
+        limit: key.limit,
+      );
+    });
+
+final executionRelatedProgressPageProvider = StreamProvider.autoDispose
+    .family<
+      List<ExecutionProgressEntry>,
+      ({String id, bool forPlan, int limit})
+    >((ref, key) async* {
+      final owner = await ref.watch(executionOwnerUserIdProvider.future);
+      final repo = await ref.watch(executionRepositoryProvider.future);
+      yield* key.forPlan
+          ? repo.watchProgressForPlan(
+              ownerUserId: owner,
+              planId: key.id,
+              limit: key.limit,
+            )
+          : repo.watchProgressForAction(
+              ownerUserId: owner,
+              actionId: key.id,
+              limit: key.limit,
+            );
+    });
+
+final executionRelatedProgressCountProvider = StreamProvider.autoDispose
+    .family<int, ({String id, bool forPlan})>((ref, key) async* {
+      final owner = await ref.watch(executionOwnerUserIdProvider.future);
+      final repo = await ref.watch(executionRepositoryProvider.future);
+      yield* repo.watchRelatedProgressCount(
+        ownerUserId: owner,
+        id: key.id,
+        forPlan: key.forPlan,
+      );
+    });

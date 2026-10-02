@@ -150,19 +150,22 @@ class _KnowledgeRelationPickerBodyState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FTextField(
+            AppSearchField(
+              controller: _search,
               enabled: !_saving,
-              control: FTextFieldControl.managed(
-                controller: _search,
-                onChange: (value) {
-                  _debounce?.cancel();
-                  _debounce = Timer(const Duration(milliseconds: 250), () {
-                    if (mounted) setState(() => _query = value.text.trim());
-                  });
-                },
-              ),
               autofocus: true,
               hint: l10n.knowledgeRelationPickerSearchHint,
+              clearLabel: l10n.aiChatSessionsSearchClear,
+              onChanged: (value) {
+                _debounce?.cancel();
+                if (value.trim().isEmpty) {
+                  setState(() => _query = '');
+                  return;
+                }
+                _debounce = Timer(const Duration(milliseconds: 250), () {
+                  if (mounted) setState(() => _query = value.trim());
+                });
+              },
             ),
             const SizedBox(height: AppSpacing.s12),
             if (submissionFailureMessage case final message?) ...[

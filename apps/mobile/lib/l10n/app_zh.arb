@@ -2920,6 +2920,8 @@
   "backupPassphraseHint": "输入密码以加密备份",
   "backupPassphraseRequired": "请输入密码",
   "backupConfirmRestoreTitle": "恢复备份",
+  "backupRestoreScopeWarning": "此备份包含的数据将替换{scope}中的对应本地数据，且无法撤销。",
+  "@backupRestoreScopeWarning": { "description": "Restore warning for the selected backup scope", "placeholders": { "scope": { "type": "String" } } },
   "backupConfirmRestoreMessage": "此操作将替换所有本地数据为备份内容，且无法撤销。是否继续？",
   "backupConfirmRestoreAction": "恢复",
   "backupExportAction": "导出",
@@ -5600,5 +5602,18 @@
   "syncLocalSavedPending": "已保存在本机 · {count} 项变更待同步",
   "@syncLocalSavedPending": {"placeholders": {"count": {"type": "int"}}},
   "ingestCategoryFallback": "其他 · 未识别的分类：{category}",
-  "@ingestCategoryFallback": {"placeholders": {"category": {"type": "String"}}}
+  "@ingestCategoryFallback": {"placeholders": {"category": {"type": "String"}}},
+  "productRecordUnavailable": "该产品不可用或已被删除，请重新加载后再编辑。",
+  "productEditConflict": "该产品已在其他地方修改，已保留当前输入。请重新打开最新记录后再保存。",
+  "productLedgerFieldsLocked": "账户和币种已固定，以保持现有账务记录一致。",
+  "backupArchiveInvalid": "该备份无法恢复到当前用户和范围，请选择匹配的备份。",
+  "backupInspectAction": "检查备份",
+  "backupInspectProgress": "正在解密并检查备份…",
+  "backupInspectHint": "先检查备份，查看备份日期、恢复范围和记录数量，再确认恢复。",
+  "backupFullScope": "全部领域",
+  "backupArchiveScope": "恢复范围",
+  "backupArchiveDate": "备份日期",
+  "backupArchiveRows": "记录数量",
+  "backupSelectedFileSize": "文件大小：{kilobytes} KB",
+  "@backupSelectedFileSize": {"placeholders": {"kilobytes": {"type": "int"}}}
 }

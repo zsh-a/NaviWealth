@@ -276,6 +276,13 @@ captured HLC and live source through `KnowledgeEditService`. Loading the latest
 version confirms discarding a draft; a deleted source cannot be saved back into
 existence. This is local edit protection over the existing Sync v3 protocol.
 
+Note/Decision capture and detail editing also retain owner-scoped device-local
+input snapshots through the shared form recovery store. Reopening offers restore
+or discard, including unfinished alternatives and selection. Restored edits keep
+their original HLC so recovery cannot overwrite a newer source revision. Saves
+and explicit discards clear snapshots; domain reset and retention follow the
+shared contract in [LifeOS Shell](../architecture/lifeos-shell.md).
+
 Deleting an entity also tombstones every live relation touching it.
 
 Same-kind merges keep one survivor, union Note tags where applicable, soft

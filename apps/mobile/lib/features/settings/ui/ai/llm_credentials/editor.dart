@@ -2,22 +2,44 @@ part of '../ai_llm_credentials_page.dart';
 
 mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
   @override
-  void _openEditor({LlmProfile? profile}) {
+  void _openEditor({LlmProfile? profile}) async {
+    if (_saving || _probing) return;
+    if (!await confirmDiscardIfDirty(context, dirty) || !mounted) return;
     _nameController.text = profile?.name ?? '';
     _keyController.clear();
     _baseUrlController.text = profile?.baseUrl ?? '';
     _modelController.text = profile?.model ?? '';
     setState(() {
       _editingId = profile?.id ?? '';
+      _editingProfile = profile;
+      _probeError = null;
       _provider = profile?.provider ?? LlmProvider.anthropic;
       _probeResult = null;
     });
+    dirty.snapshotBaseline();
   }
 
-  void _closeEditor() => setState(() {
-    _editingId = null;
-    _probeResult = null;
-  });
+  void _closeEditor() async {
+    if (_saving || _probing) return;
+    if (!await confirmDiscardIfDirty(context, dirty) || !mounted) return;
+    _finishEditor();
+  }
+
+  void _finishEditor() {
+    dirty.markPristine();
+    _keyController.clear();
+    setState(() {
+      _editingId = null;
+      _editingProfile = null;
+      _probeResult = null;
+      _probeError = null;
+    });
+    dirty.snapshotBaseline();
+  }
+
+  void _setSaving(bool value) {
+    if (mounted) setState(() => _saving = value);
+  }
 
   LlmProfile _draftProfile(LlmProfile? existing) {
     final typed = _keyController.text.trim();
@@ -36,27 +58,38 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
   }
 
   Future<void> _test(LlmProfile? existing) async {
+    if (_saving || _probing) return;
+    final draft = _draftProfile(existing);
     setState(() {
       _probing = true;
       _probeResult = null;
+      _probeError = null;
     });
-    final result = await ref
-        .read(llmConnectivityProbeProvider)
-        .probe(_draftProfile(existing));
-    if (!mounted) return;
-    setState(() {
-      _probing = false;
-      _probeResult = result;
-    });
-    _toast(switch (result.status) {
-      LlmProbeStatus.ok => ToastKind.success,
-      LlmProbeStatus.rateLimited ||
-      LlmProbeStatus.badRequest => ToastKind.warning,
-      _ => ToastKind.error,
-    }, result.message);
+    dirty.busy = true;
+    try {
+      final result = await ref.read(llmConnectivityProbeProvider).probe(draft);
+      if (!mounted) return;
+      setState(() => _probeResult = result);
+      _toast(switch (result.status) {
+        LlmProbeStatus.ok => ToastKind.success,
+        LlmProbeStatus.rateLimited ||
+        LlmProbeStatus.badRequest => ToastKind.warning,
+        _ => ToastKind.error,
+      }, result.message);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _probeError = AppLocalizations.of(context).commonLoadFailed,
+        );
+      }
+    } finally {
+      dirty.busy = false;
+      if (mounted) setState(() => _probing = false);
+    }
   }
 
   Future<void> _save(LlmProfile? existing) async {
+    if (_saving || _probing) return;
     final typedKey = _keyController.text.trim();
     final effectiveKey = typedKey.isNotEmpty
         ? typedKey
@@ -80,25 +113,38 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
           ? null
           : _modelController.text.trim(),
     );
-    setState(() => _saving = true);
-    await ref.read(llmCredentialsProvider.notifier).upsertProfile(profile);
-    if (!mounted) return;
-    setState(() {
-      _saving = false;
-      _editingId = null;
-    });
-    _toast(ToastKind.success, AppLocalizations.of(context).aiLlmSaved);
+    final l10n = AppLocalizations.of(context);
+    await submitForm<void>(
+      dirty: dirty,
+      onBusyChanged: _setSaving,
+      commit: () =>
+          ref.read(llmCredentialsProvider.notifier).upsertProfile(profile),
+      leave: _finishEditor,
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.aiLlmSaved,
+      showFailureToast: false,
+      tag: 'llm-profile',
+    );
   }
 
   @override
   Future<void> _activate(String id) async {
-    await ref.read(llmCredentialsProvider.notifier).setActive(id);
-    if (!mounted) return;
-    _toast(ToastKind.success, AppLocalizations.of(context).aiLlmSwitched);
+    if (_saving || _editingId != null) return;
+    final l10n = AppLocalizations.of(context);
+    await submitForm<void>(
+      dirty: dirty,
+      onBusyChanged: _setSaving,
+      commit: () => ref.read(llmCredentialsProvider.notifier).setActive(id),
+      leave: () {},
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.aiLlmSwitched,
+      tag: 'llm-profile-activate',
+    );
   }
 
   @override
   Future<void> _delete(LlmProfile profile) async {
+    if (_saving || _editingId != null) return;
     final l10n = AppLocalizations.of(context);
     final confirm = await showConfirmDialog(
       context: context,
@@ -108,11 +154,17 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
       cancelLabel: l10n.commonCancel,
       destructive: true,
     );
-    if (confirm != true) return;
-    await ref.read(llmCredentialsProvider.notifier).removeProfile(profile.id);
-    if (!mounted) return;
-    if (_editingId == profile.id) _closeEditor();
-    _toast(ToastKind.success, l10n.aiLlmRemoved);
+    if (confirm != true || !mounted || _saving) return;
+    await submitForm<void>(
+      dirty: dirty,
+      onBusyChanged: _setSaving,
+      commit: () =>
+          ref.read(llmCredentialsProvider.notifier).removeProfile(profile.id),
+      leave: () {},
+      failureMessage: (_) => l10n.commonDeleteFailed,
+      successMessage: l10n.aiLlmRemoved,
+      tag: 'llm-profile-delete',
+    );
   }
 
   Widget _editorCard(
@@ -140,6 +192,8 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
           _label(context, l10n.aiLlmNameLabel),
           const SizedBox(height: AppSpacing.s6),
           FTextFormField(
+            enabled: !_saving && !_probing,
+            key: const Key('llm-profile-name'),
             control: FTextFieldControl.managed(controller: _nameController),
             hint: l10n.aiLlmNameHint,
             autocorrect: false,
@@ -149,6 +203,8 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
           _label(context, l10n.aiLlmProviderLabel),
           const SizedBox(height: AppSpacing.s4),
           FSelect<LlmProvider>(
+            key: ValueKey(_editingId),
+            enabled: !_saving && !_probing,
             items: {
               for (final p in LlmProvider.values) _providerLabel(l10n, p): p,
             },
@@ -158,6 +214,7 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
                 if (value == null) return;
                 setState(() {
                   _provider = value;
+                  dirty.markDirty();
                   _probeResult = null;
                 });
               },
@@ -167,6 +224,8 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
           _label(context, 'API Key'),
           const SizedBox(height: AppSpacing.s6),
           FTextFormField(
+            enabled: !_saving && !_probing,
+            key: const Key('llm-profile-key'),
             control: FTextFieldControl.managed(controller: _keyController),
             hint: hasStoredKey ? l10n.aiLlmStoredKeyHint : _keyHint(_provider),
             obscureText: true,
@@ -177,6 +236,7 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
           _label(context, l10n.aiLlmBaseUrlLabel),
           const SizedBox(height: AppSpacing.s6),
           FTextFormField(
+            enabled: !_saving && !_probing,
             control: FTextFieldControl.managed(controller: _baseUrlController),
             hint: _baseUrlHint(_provider),
             autocorrect: false,
@@ -186,6 +246,7 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
           _label(context, l10n.aiLlmModelLabel),
           const SizedBox(height: AppSpacing.s6),
           FTextFormField(
+            enabled: !_saving && !_probing,
             control: FTextFieldControl.managed(controller: _modelController),
             hint: _modelHint(_provider),
             autocorrect: false,
@@ -199,6 +260,14 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
               _probing ? l10n.aiLlmTesting : l10n.aiLlmTestConnectivity,
             ),
           ),
+          if (_probeError != null) ...[
+            const SizedBox(height: AppSpacing.s8),
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: _probeError!,
+              compact: true,
+            ),
+          ],
           if (_probeResult != null) ...[
             const SizedBox(height: AppSpacing.s8),
             Text(
@@ -226,16 +295,20 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
     return Row(
       children: [
         Expanded(
-          child: FButton(
-            onPress: _saving ? null : () => _save(existing),
-            child: Text(_saving ? l10n.aiLlmSaving : l10n.commonSave),
+          child: AppBusyButton(
+            label: l10n.commonSave,
+            busyLabel: l10n.aiLlmSaving,
+            busy: _saving,
+            onPress: _saving || _probing
+                ? null
+                : () => unawaited(_save(existing)),
           ),
         ),
         const SizedBox(width: AppSpacing.s12),
         Expanded(
           child: FButton(
             variant: FButtonVariant.outline,
-            onPress: _saving ? null : _closeEditor,
+            onPress: _saving || _probing ? null : _closeEditor,
             child: Text(l10n.commonCancel),
           ),
         ),

@@ -15,6 +15,7 @@ import '../../core/shell/route_error_page.dart';
 import '../../core/shell/settings_route_paths.dart';
 import '../../design_system/tokens/app_motion_policy.dart';
 import '../../design_system/tokens/motion_tokens.dart';
+import '../../design_system/widgets/form_leave_scope.dart';
 import '../../design_system/widgets/system_back_scope.dart';
 import '../../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
 import '../../features/auth/ui/devices_page.dart' deferred as devices_lib;
@@ -202,10 +203,17 @@ List<RouteBase> _aiSurfaceRoutes() {
     GoRoute(
       path: SettingsRoutes.aiLlm,
       name: SettingsRouteNames.aiLlm,
+      onExit: (context, _) =>
+          FormLeaveScope.confirmRouteLeave(context, path: SettingsRoutes.aiLlm),
       pageBuilder: (context, state) => _aiSurfacePage(
         context,
         state,
-        _backSafe(const AiLlmCredentialsPage()),
+        // The form owns deep-link back handling; another SystemBackScope
+        // would trigger a second discard prompt on Android system back.
+        const FormLeaveScope(
+          routePath: SettingsRoutes.aiLlm,
+          child: AiLlmCredentialsPage(),
+        ),
       ),
     ),
     GoRoute(

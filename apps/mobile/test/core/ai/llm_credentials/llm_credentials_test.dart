@@ -165,6 +165,58 @@ void main() {
   });
 
   group('LlmCredentialsNotifier', () {
+    test(
+      'failed secure write is retryable without losing other profiles',
+      () async {
+        final store = _FailingKeyStore();
+        final container = _container(store);
+        addTearDown(container.dispose);
+        await container.read(llmCredentialsProvider.future);
+        final notifier = container.read(llmCredentialsProvider.notifier);
+        await notifier.upsertProfile(_p('first'));
+        store.fail = true;
+        await expectLater(
+          notifier.upsertProfile(_p('second')),
+          throwsStateError,
+        );
+        expect(
+          container
+              .read(llmCredentialsProvider)
+              .requireValue
+              ?.profiles
+              .map((p) => p.id),
+          ['first'],
+        );
+        expect(container.read(deviceLlmAvailableProvider), isTrue);
+        await expectLater(notifier.clearAll(), throwsStateError);
+        expect((await LlmCredentialStore(store).read())?.activeId, 'first');
+        store.fail = false;
+        await notifier.upsertProfile(_p('second'));
+        expect(
+          (await LlmCredentialStore(store).read())?.profiles.map((p) => p.id),
+          ['first', 'second'],
+        );
+      },
+    );
+
+    test(
+      'concurrent profile changes preserve both committed profiles',
+      () async {
+        final store = InMemoryKeyStore();
+        final container = _container(store);
+        addTearDown(container.dispose);
+        final notifier = container.read(llmCredentialsProvider.notifier);
+        await Future.wait([
+          notifier.upsertProfile(_p('first')),
+          notifier.upsertProfile(_p('second')),
+        ]);
+        expect(
+          (await LlmCredentialStore(store).read())?.profiles.map((p) => p.id),
+          ['first', 'second'],
+        );
+      },
+    );
+
     test('upsert persists; first profile becomes active', () async {
       final container = _container(InMemoryKeyStore());
       addTearDown(container.dispose);
@@ -257,4 +309,19 @@ void main() {
     expect(container.read(deviceLlmPlatformSupportedProvider), !kIsWeb);
     expect(container.read(deviceLlmPlatformSupportedProvider), isTrue);
   });
+}
+
+class _FailingKeyStore extends InMemoryKeyStore {
+  bool fail = false;
+  @override
+  Future<void> write(String key, String value) async {
+    if (fail) throw StateError('secure storage unavailable');
+    await super.write(key, value);
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    if (fail) throw StateError('secure storage unavailable');
+    await super.delete(key);
+  }
 }

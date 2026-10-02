@@ -21,6 +21,10 @@ part 'manual_asset_repository_cash.dart';
 part 'manual_asset_repository_products.dart';
 part 'manual_asset_repository_valuation.dart';
 
+final class ManualProductUnavailable implements Exception {}
+
+final class ManualProductEditConflict implements Exception {}
+
 /// Repository for user-valued assets: cash, deposits and wealth products.
 ///
 /// The current valuation is no longer mirrored on `assets`. Every valuation
@@ -71,6 +75,94 @@ class ManualAssetRepository {
       _db.assets,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
     return row == null ? null : _toAsset(row);
+  }
+
+  Future<Asset> findProductForEdit(String id) async {
+    final owner = await _stamper.currentUserId();
+    final asset = await findById(id);
+    if (asset == null ||
+        asset.sync.deletedAt != null ||
+        asset.sync.ownerUserId != owner ||
+        (asset.type != AssetType.bankDepositTerm &&
+            asset.type != AssetType.bankDepositDemand &&
+            asset.type != AssetType.wealthProduct) ||
+        (asset.manualMetadata is! DepositMetadata &&
+            asset.manualMetadata is! WealthProductMetadata)) {
+      throw ManualProductUnavailable();
+    }
+    return asset;
+  }
+
+  /// Metadata, label, type and optional valuation share one transaction.
+  /// Reject stale editors before writing any journal, price or outbox rows.
+  Future<Asset> updateProduct({
+    required Asset expected,
+    required String name,
+    required AssetType type,
+    required ManualAssetMetadata metadata,
+    Decimal? currentValuation,
+  }) async {
+    final stamp = await _stamper.stamp();
+    return _db.transaction(() async {
+      final current = await findById(expected.id);
+      if (current == null ||
+          current.sync.deletedAt != null ||
+          current.sync.ownerUserId != stamp.ownerUserId ||
+          current.sync.hlc != expected.sync.hlc) {
+        throw ManualProductEditConflict();
+      }
+      final deposit =
+          metadata is DepositMetadata &&
+          current.manualMetadata is DepositMetadata &&
+          (current.type == AssetType.bankDepositTerm ||
+              current.type == AssetType.bankDepositDemand) &&
+          (type == AssetType.bankDepositTerm ||
+              type == AssetType.bankDepositDemand);
+      final wealth =
+          metadata is WealthProductMetadata &&
+          current.manualMetadata is WealthProductMetadata &&
+          current.type == AssetType.wealthProduct &&
+          type == AssetType.wealthProduct;
+      if ((!deposit && !wealth) ||
+          metadata.accountId != current.manualMetadata?.accountId) {
+        throw ArgumentError('Invalid product metadata or account change');
+      }
+      await (_db.update(
+        _db.assets,
+      )..where((t) => t.id.equals(expected.id))).write(
+        AssetsCompanion(
+          name: Value(name),
+          type: Value(type),
+          metadataJson: Value(metadata.encode()),
+          updatedAt: Value(stamp.now),
+          updatedByDevice: Value(stamp.deviceId),
+          hlc: Value(stamp.hlc),
+        ),
+      );
+      await _outbox.enqueue(table: _tableName, rowId: expected.id);
+      await _eventLog.recordFieldChanged(
+        entityTable: _tableName,
+        entityId: expected.id,
+        stamp: stamp,
+        before: {
+          'name': current.name,
+          'type': current.type.name,
+          'metadata_json': current.metadataJson,
+        },
+        after: {
+          'name': name,
+          'type': type.name,
+          'metadata_json': metadata.encode(),
+        },
+      );
+      if (currentValuation != null) {
+        await recordValuationAdjust(
+          assetId: expected.id,
+          newValuation: currentValuation,
+        );
+      }
+      return (await findById(expected.id))!;
+    });
   }
 
   Future<Decimal?> latestValuation(String assetId, {DateTime? asOf}) =>

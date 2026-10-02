@@ -28,6 +28,47 @@ Widget _wrap(Widget child, {required double keyboardInset}) {
 }
 
 void main() {
+  testWidgets(
+    'bounded search sheet keeps its list and retry footer inside a short viewport',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          keyboardInset: 300,
+          SizedBox(
+            height: 320,
+            child: AppSheet(
+              title: 'Find a relation',
+              scrollable: false,
+              footer: const SizedBox(key: Key('retry-footer'), height: 48),
+              child: SizedBox(
+                height: AppControlHeights.searchSheet,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 48, child: Text('Search')),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: 20,
+                        itemBuilder: (_, i) => Text('Result $i'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getSize(find.byType(AppSheet)).height,
+        lessThanOrEqualTo(320),
+      );
+      expect(find.byKey(const Key('retry-footer')), findsOneWidget);
+      expect(find.text('Result 0'), findsOneWidget);
+    },
+  );
+
   testWidgets('AppSheetSurface defaults to one deduplicated glass layer', (
     tester,
   ) async {

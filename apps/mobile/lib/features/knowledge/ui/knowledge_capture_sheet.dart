@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
-import '../../../core/forms/form_dirty_guard.dart';
+import '../../../core/forms/forms.dart';
 import '../../../core/product/product_metrics.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
@@ -68,7 +68,8 @@ class _KnowledgeCaptureSheetState
   final _body = TextEditingController();
   final _source = TextEditingController();
   final _tags = TextEditingController();
-  late final KnowledgeDecisionOptionsController _options;
+  late KnowledgeDecisionOptionsController _options;
+  late final FormDraftBinding _draft;
   Timer? _sourceCheckDebounce;
   KnowledgeNote? _duplicateSource;
   var _sourceCheckSerial = 0;
@@ -78,6 +79,7 @@ class _KnowledgeCaptureSheetState
   String? _error;
 
   bool get _canSave {
+    if (_draft.hasPending) return false;
     final title = _title.text.trim();
     final body = _body.text.trim();
     return switch (_type) {
@@ -102,10 +104,25 @@ class _KnowledgeCaptureSheetState
       _source,
       _tags,
     ]);
+    _draft = FormDraftBinding(
+      store: ref.read(localFormDraftStoreProvider),
+      form: 'knowledge.capture.${_type.name}:${widget.sourceNote?.id ?? ''}',
+      dirty: widget.dirty,
+      inputs: [_title, _body, _source, _tags],
+      payload: () => {
+        'title': _title.text,
+        'body': _body.text,
+        'source': _source.text,
+        'tags': _tags.text,
+        'metadata': _showMetadata,
+        'options': _options.draft,
+      },
+    );
   }
 
   @override
   void dispose() {
+    _draft.dispose();
     _sourceCheckDebounce?.cancel();
     _title.removeListener(_onTextChanged);
     _body.removeListener(_onTextChanged);
@@ -140,6 +157,16 @@ class _KnowledgeCaptureSheetState
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_draft.hasPending) ...[
+          AppDraftRestoreBanner(
+            onRestore: _restoreDraft,
+            onDiscard: () => setState(() {
+              _draft.discardPending();
+              _draft.capture();
+            }),
+          ),
+          const SizedBox(height: AppSpacing.s12),
+        ],
         if (widget.sourceNote case final note?) ...[
           Text(l10n.knowledgeDecisionSourceNote, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s8),
@@ -281,6 +308,24 @@ class _KnowledgeCaptureSheetState
     );
   }
 
+  void _restoreDraft() {
+    setState(
+      () => _draft.restore((value) {
+        _title.text = value['title'] as String? ?? '';
+        _body.text = value['body'] as String? ?? '';
+        _source.text = value['source'] as String? ?? '';
+        _tags.text = value['tags'] as String? ?? '';
+        _showMetadata = value['metadata'] == true;
+        _options
+          ..removeListener(_onOptionsChanged)
+          ..dispose();
+        _options = KnowledgeDecisionOptionsController.fromDraft(
+          value['options'],
+        )..addListener(_onOptionsChanged);
+      }),
+    );
+  }
+
   Future<void> _viewExistingNote() async {
     final duplicate = _duplicateSource;
     if (_saving || duplicate == null) return;
@@ -385,6 +430,7 @@ class _KnowledgeCaptureSheetState
       }
       ref.invalidate(knowledgeNotesProvider);
       ref.invalidate(knowledgeDecisionsProvider);
+      _draft.complete();
       widget.dirty.markPristine();
       if (mounted) Navigator.pop(context, decisionId);
     } on Object catch (error, stackTrace) {
@@ -405,6 +451,7 @@ class _KnowledgeCaptureSheetState
 
   void _onOptionsChanged() {
     widget.dirty.markDirty();
+    _draft.capture();
     if (mounted) setState(() => _error = null);
   }
 

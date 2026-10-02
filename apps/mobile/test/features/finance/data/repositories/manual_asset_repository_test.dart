@@ -10,6 +10,7 @@ import 'package:naviwealth/features/finance/data/repositories/manual_asset_repos
 import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/domain/models/invariants.dart';
+import 'package:naviwealth/features/finance/domain/models/manual_asset_metadata.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '_stub_stamper.dart';
@@ -76,6 +77,117 @@ void main() {
 
   tearDown(() async {
     await db.close();
+  });
+
+  test('product edit rolls back metadata, price, audit and outbox when journal fails', () async {
+    final outbox = DriftOutboxStore(db);
+    final prices = PriceRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+    );
+    final productRepo = ManualAssetRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+      priceRepo: prices,
+    );
+    final initial = await productRepo.createDeposit(
+      accountId: 'acc-cash',
+      type: AssetType.bankDepositDemand,
+      name: 'Original',
+      currency: 'CNY',
+      principal: Decimal.fromInt(100),
+      interestRate: Decimal.parse('0.02'),
+    );
+    final counts = await db
+        .customSelect(
+          'SELECT (SELECT COUNT(*) FROM prices) AS prices, (SELECT COUNT(*) FROM op_outbox) AS outbox, (SELECT COUNT(*) FROM domain_event_log) AS audit',
+        )
+        .getSingle();
+    final failing = ManualAssetRepository(
+      db: db,
+      outbox: outbox,
+      stamper: makeStubStamper(),
+      priceRepo: prices,
+      journalEntryRepo: _ThrowingJournalEntryRepository(
+        db: db,
+        outbox: outbox,
+        stamper: makeStubStamper(),
+      ),
+    );
+    await expectLater(
+      failing.updateProduct(
+        expected: initial,
+        name: 'Renamed',
+        type: AssetType.bankDepositTerm,
+        metadata: (initial.manualMetadata! as DepositMetadata).copyWith(
+          principal: Decimal.fromInt(200),
+        ),
+        currentValuation: Decimal.fromInt(250),
+      ),
+      throwsStateError,
+    );
+    expect(await failing.findById(initial.id), initial);
+    final after = await db
+        .customSelect(
+          'SELECT (SELECT COUNT(*) FROM prices) AS prices, (SELECT COUNT(*) FROM op_outbox) AS outbox, (SELECT COUNT(*) FROM domain_event_log) AS audit',
+        )
+        .getSingle();
+    expect(after.data, counts.data);
+    expect(await db.select(db.journalEntries).get(), isEmpty);
+  });
+
+  test('product edit persists the selected type and rejects stale, deleted and foreign records', () async {
+    final initial = await repo.createDeposit(
+      accountId: 'acc-cash',
+      type: AssetType.bankDepositDemand,
+      name: 'Original',
+      currency: 'CNY',
+      principal: Decimal.fromInt(100),
+      interestRate: Decimal.parse('0.02'),
+    );
+    final updated = await repo.updateProduct(
+      expected: initial,
+      name: 'Term',
+      type: AssetType.bankDepositTerm,
+      metadata: initial.manualMetadata!,
+    );
+    expect(updated.type, AssetType.bankDepositTerm);
+    expect(updated.name, 'Term');
+    await expectLater(
+      repo.updateProduct(
+        expected: initial,
+        name: 'Stale',
+        type: AssetType.bankDepositTerm,
+        metadata: initial.manualMetadata!,
+      ),
+      throwsA(isA<ManualProductEditConflict>()),
+    );
+    await repo.softDelete(initial.id);
+    await expectLater(
+      repo.findProductForEdit(initial.id),
+      throwsA(isA<ManualProductUnavailable>()),
+    );
+    await expectLater(
+      repo.updateProduct(
+        expected: updated,
+        name: 'Deleted',
+        type: updated.type,
+        metadata: updated.manualMetadata!,
+      ),
+      throwsA(isA<ManualProductEditConflict>()),
+    );
+    final foreign = ManualAssetRepository(
+      db: db,
+      outbox: InMemoryOutboxStore(),
+      stamper: makeStubStamper(userId: 'other'),
+      priceRepo: priceRepo,
+    );
+    await expectLater(
+      foreign.findProductForEdit(initial.id),
+      throwsA(isA<ManualProductUnavailable>()),
+    );
   });
 
   test(

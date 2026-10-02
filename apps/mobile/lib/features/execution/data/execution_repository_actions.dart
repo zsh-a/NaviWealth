@@ -4,6 +4,28 @@ mixin ExecutionActionRepositoryMixin {
   AppDatabase get _db;
   OutboxStore get _outbox;
 
+  Stream<({int total, int open, int blocked})> watchActionCountsForPlan({
+    required String ownerUserId,
+    required String planId,
+  }) => _db
+      .customSelect(
+        '''SELECT COUNT(*) AS total,
+       COALESCE(SUM(status IN ('todo', 'doing', 'blocked')), 0) AS open,
+       COALESCE(SUM(status = 'blocked'), 0) AS blocked
+       FROM execution_actions
+       WHERE owner_user_id = ? AND plan_id = ? AND deleted_at IS NULL''',
+        variables: [Variable(ownerUserId), Variable(planId)],
+        readsFrom: {_db.executionActions},
+      )
+      .watchSingle()
+      .map(
+        (row) => (
+          total: row.read<int>('total'),
+          open: row.read<int>('open'),
+          blocked: row.read<int>('blocked'),
+        ),
+      );
+
   Future<void> _upsertAndEnqueue<R>(
     TableInfo<Table, R> table,
     Insertable<R> companion, {
@@ -126,6 +148,7 @@ mixin ExecutionActionRepositoryMixin {
         ),
         (t) => OrderingTerm(expression: t.completedAt, mode: OrderingMode.desc),
         (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.id),
       ])
       ..limit(limit);
     return q.watch().map((rows) => rows.map(executionActionFromRow).toList());

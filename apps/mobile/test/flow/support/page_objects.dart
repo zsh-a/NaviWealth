@@ -774,18 +774,16 @@ class BackupPageObject {
     await settle(tester);
 
     expect(find.text('Restore Backup'), findsWidgets);
-    expect(
-      find.text(
-        'This will replace ALL local data with the contents of the backup. This cannot be undone. Continue?',
-      ),
-      findsOneWidget,
-    );
     await tester.enterText(
       find.widgetWithText(FTextFormField, 'Passphrase'),
       passphrase,
     );
     await settle(tester);
 
+    await tester.tap(find.text('Check backup'));
+    await settle(tester);
+    expect(find.text('Restore scope'), findsOneWidget);
+    expect(find.byType(FTextFormField), findsNothing);
     final restore = find.text('Restore');
     expect(restore, findsWidgets, reason: 'restore submit action missing');
     await tester.tap(restore.last);

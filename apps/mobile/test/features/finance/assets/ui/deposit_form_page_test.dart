@@ -1,16 +1,25 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/assets/ui/deposit_form_page.dart';
+import 'package:naviwealth/features/finance/assets/ui/wealth_product_form_page.dart';
+import 'package:naviwealth/features/finance/data/repositories/manual_asset_repository.dart';
+import 'package:naviwealth/features/finance/data/repositories/price_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/persistence/test_database.dart';
+import '../../../finance/data/repositories/_stub_stamper.dart';
 
 Account _bankAccount() => Account(
   id: 'bank-1',
@@ -26,12 +35,17 @@ Account _bankAccount() => Account(
   ),
 );
 
-Future<Widget> _wrap() async {
+Future<Widget> _wrap({
+  Widget page = const DepositFormPage(),
+  Future<ManualAssetRepository> Function()? loadRepository,
+}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final preferences = await SharedPreferences.getInstance();
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(preferences),
+      if (loadRepository != null)
+        manualAssetRepositoryProvider.overrideWith((_) => loadRepository()),
       accountsStreamProvider.overrideWith(
         (_) => Stream.value(<Account>[_bankAccount()]),
       ),
@@ -41,15 +55,66 @@ Future<Widget> _wrap() async {
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
       builder: (context, child) => AppMessenger.init(child: child!),
-      home: FTheme(
-        data: FTheme.neutral.light.desktop,
-        child: const DepositFormPage(),
-      ),
+      home: FTheme(data: FTheme.neutral.light.desktop, child: page),
     ),
   );
 }
 
 void main() {
+  for (final page in [
+    const DepositFormPage(assetId: 'missing'),
+    const WealthProductFormPage(assetId: 'missing'),
+  ]) {
+    testWidgets(
+      '${page.runtimeType} never shows a create form while an edit is loading or missing',
+      (tester) async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final outbox = InMemoryOutboxStore();
+        final repo = ManualAssetRepository(
+          db: db,
+          outbox: outbox,
+          stamper: makeStubStamper(),
+          priceRepo: PriceRepository(
+            db: db,
+            outbox: outbox,
+            stamper: makeStubStamper(),
+          ),
+        );
+        final pending = Completer<ManualAssetRepository>();
+        var loads = 0;
+        await tester.pumpWidget(
+          await _wrap(
+            page: page,
+            loadRepository: () {
+              loads++;
+              return loads == 1 ? pending.future : Future.value(repo);
+            },
+          ),
+        );
+        await tester.pump();
+        expect(find.byType(AssetDetailSkeleton), findsOneWidget);
+        expect(find.text('Save'), findsNothing);
+        pending.completeError(StateError('temporary failure'));
+        await tester.pumpAndSettle();
+        expect(find.text('Save'), findsNothing);
+        await tester.tap(find.text('Retry'));
+        await tester.pumpAndSettle();
+        expect(loads, 2);
+        expect(
+          find.text(
+            'This product is unavailable or has been deleted. Reload before editing.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Save'), findsNothing);
+        expect(await db.select(db.assets).get(), isEmpty);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump(const Duration(milliseconds: 1));
+      },
+    );
+  }
+
   testWidgets('type selector updates the concise details summary', (
     tester,
   ) async {

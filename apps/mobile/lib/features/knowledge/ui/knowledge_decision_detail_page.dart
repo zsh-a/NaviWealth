@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
-import '../../../core/forms/form_dirty_guard.dart';
-import '../../../core/forms/form_submission.dart';
+import '../../../core/forms/forms.dart';
+import '../../../core/sync/hlc.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
@@ -92,17 +92,21 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
   final _formKey = GlobalKey<FormState>();
   String? _validationError;
   var _saving = false;
+  late final FormDraftBinding _draft;
+  Hlc? _restoredHlc;
+  Hlc get _expectedHlc => _restoredHlc ?? _baseline.sync.hlc;
 
   /// Detail pages open in read mode; the form stays behind this toggle.
   var _editing = false;
   late KnowledgeDecision _baseline;
   bool get _deleted => widget.decision.sync.deletedAt != null;
-  bool get _changed => widget.decision.sync.hlc != _baseline.sync.hlc;
+  bool get _changed => widget.decision.sync.hlc != _expectedHlc;
 
   @override
   void initState() {
     super.initState();
     final value = widget.decision;
+    _restoredHlc = null;
     _baseline = value;
     _question = TextEditingController(text: value.question);
     _rationale = TextEditingController(text: value.rationaleMd);
@@ -116,6 +120,19 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       _rationale,
       _expected,
     ]);
+    _draft = FormDraftBinding(
+      store: ref.read(localFormDraftStoreProvider),
+      form: 'knowledge.decision.edit:${widget.decision.id}',
+      dirty: dirty,
+      inputs: [_question, _rationale, _expected],
+      payload: () => {
+        'question': _question.text,
+        'rationale': _rationale.text,
+        'expected': _expected.text,
+        'options': _options.draft,
+        'baseline': _expectedHlc.toString(),
+      },
+    );
   }
 
   @override
@@ -126,6 +143,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
 
   @override
   void dispose() {
+    _draft.dispose();
     _question.dispose();
     _rationale.dispose();
     _expected.dispose();
@@ -200,6 +218,10 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       primary: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [
+          if (_draft.hasPending) ...[
+            _draftBanner(),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -283,18 +305,28 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
-        onSubmit: dirty.isDirty && !_saving && !_deleted && !_changed
+        onSubmit:
+            dirty.isDirty &&
+                !_draft.hasPending &&
+                !_saving &&
+                !_deleted &&
+                !_changed
             ? _save
             : null,
         action: AppSheetFooter(
           submitLabel: l10n.commonSave,
           cancelLabel: l10n.commonCancel,
-          enabled: dirty.isDirty && !_deleted && !_changed,
+          enabled:
+              dirty.isDirty && !_draft.hasPending && !_deleted && !_changed,
           busy: _saving,
           onSubmit: _save,
           onCancel: _toggleMode,
         ),
         children: [
+          if (_draft.hasPending) ...[
+            _draftBanner(),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           if (_deleted || _changed)
             KnowledgeEditNotice(
               deleted: _deleted,
@@ -348,6 +380,29 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
     );
   }
 
+  Widget _draftBanner() => AppDraftRestoreBanner(
+    onRestore: () => setState(
+      () => _draft.restore((value) {
+        // Preserve the revision that originally supplied the edited fields.
+        _restoredHlc = Hlc.parse(value['baseline'] as String);
+        _question.text = value['question'] as String? ?? '';
+        _rationale.text = value['rationale'] as String? ?? '';
+        _expected.text = value['expected'] as String? ?? '';
+        _options
+          ..removeListener(_onOptionsChanged)
+          ..dispose();
+        _options = KnowledgeDecisionOptionsController.fromDraft(
+          value['options'],
+        )..addListener(_onOptionsChanged);
+        _editing = true;
+      }),
+    ),
+    onDiscard: () => setState(() {
+      _draft.discardPending();
+      _draft.capture();
+    }),
+  );
+
   Future<void> _toggleMode() async {
     if (_editing) {
       final discard = await confirmDiscardIfDirty(context, dirty);
@@ -359,6 +414,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
 
   void _resetFields() {
     final value = widget.decision;
+    _restoredHlc = null;
     _baseline = value;
     _question.text = value.question;
     _rationale.text = value.rationaleMd;
@@ -371,6 +427,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       selectedLabel: value.selectedLabel,
     )..addListener(_onOptionsChanged);
     dirty.markPristine();
+    if (!_draft.hasPending) _draft.complete();
   }
 
   Future<void> _reload() async {
@@ -384,7 +441,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
   }
 
   Future<bool> _save() async {
-    if (_saving || _deleted || _changed) return false;
+    if (_saving || _draft.hasPending || _deleted || _changed) return false;
     final l10n = AppLocalizations.of(context);
     if (!(_formKey.currentState?.validate() ?? false)) return false;
     if (!_options.isValid) {
@@ -406,6 +463,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       failureMessage: (error) => knowledgeEditFailureMessage(context, error),
       successMessage: l10n.commonSaved,
       tag: 'knowledge-decision-edit',
+      onCommitted: (_) => _draft.complete(),
     );
   }
 
@@ -432,7 +490,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
     final service = await ref.read(knowledgeEditServiceProvider.future);
     await service.saveDecision(
       draft: _draftDecision(),
-      expectedHlc: _baseline.sync.hlc,
+      expectedHlc: _expectedHlc,
     );
   }
 
@@ -485,6 +543,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
         id: widget.decision.id,
       );
       ref.invalidate(knowledgeDecisionsProvider);
+      _draft.complete();
       dirty.markPristine();
       if (mounted) {
         AppMessenger.show(context, ToastKind.success, l10n.commonDeleted);
@@ -510,6 +569,7 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
 
   void _onOptionsChanged() {
     dirty.markDirty();
+    _draft.capture();
     if (_validationError != null && mounted) {
       setState(() => _validationError = null);
     }

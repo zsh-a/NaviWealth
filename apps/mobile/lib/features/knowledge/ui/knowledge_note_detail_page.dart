@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/ai/visual/ai_markdown.dart';
-import '../../../core/forms/form_dirty_guard.dart';
-import '../../../core/forms/form_submission.dart';
+import '../../../core/forms/forms.dart';
+import '../../../core/sync/hlc.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_deletion_service.dart';
@@ -93,17 +93,21 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
   late final TextEditingController _tags;
   final _formKey = GlobalKey<FormState>();
   var _saving = false;
+  late final FormDraftBinding _draft;
+  Hlc? _restoredHlc;
+  Hlc get _expectedHlc => _restoredHlc ?? _baseline.sync.hlc;
 
   /// Detail pages open in read mode; the form stays behind this toggle.
   var _editing = false;
   var _showMetadata = false;
   late KnowledgeNote _baseline;
   bool get _deleted => widget.note.sync.deletedAt != null;
-  bool get _changed => widget.note.sync.hlc != _baseline.sync.hlc;
+  bool get _changed => widget.note.sync.hlc != _expectedHlc;
 
   @override
   void initState() {
     super.initState();
+    _restoredHlc = null;
     _baseline = widget.note;
     _title = TextEditingController(text: widget.note.title);
     _body = TextEditingController(text: widget.note.bodyMd);
@@ -115,6 +119,19 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       _source,
       _tags,
     ]);
+    _draft = FormDraftBinding(
+      store: ref.read(localFormDraftStoreProvider),
+      form: 'knowledge.note.edit:${widget.note.id}',
+      dirty: dirty,
+      inputs: [_title, _body, _source, _tags],
+      payload: () => {
+        'title': _title.text,
+        'body': _body.text,
+        'source': _source.text,
+        'tags': _tags.text,
+        'baseline': _expectedHlc.toString(),
+      },
+    );
   }
 
   @override
@@ -125,6 +142,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
 
   @override
   void dispose() {
+    _draft.dispose();
     _title.dispose();
     _body.dispose();
     _source.dispose();
@@ -196,6 +214,10 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       primary: ListView(
         padding: const EdgeInsets.all(AppSpacing.s16),
         children: [
+          if (_draft.hasPending) ...[
+            _draftBanner(),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           Text(
             note.title.isEmpty ? l10n.knowledgeUntitled : note.title,
             style: context.strongHeadlineStyle,
@@ -260,18 +282,28 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: AppFormScaffoldBody(
-        onSubmit: dirty.isDirty && !_saving && !_deleted && !_changed
+        onSubmit:
+            dirty.isDirty &&
+                !_draft.hasPending &&
+                !_saving &&
+                !_deleted &&
+                !_changed
             ? _save
             : null,
         action: AppSheetFooter(
           submitLabel: l10n.commonSave,
           cancelLabel: l10n.commonCancel,
-          enabled: dirty.isDirty && !_deleted && !_changed,
+          enabled:
+              dirty.isDirty && !_draft.hasPending && !_deleted && !_changed,
           busy: _saving,
           onSubmit: _save,
           onCancel: _toggleMode,
         ),
         children: [
+          if (_draft.hasPending) ...[
+            _draftBanner(),
+            const SizedBox(height: AppSpacing.s12),
+          ],
           if (_deleted || _changed)
             KnowledgeEditNotice(
               deleted: _deleted,
@@ -346,6 +378,24 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
     );
   }
 
+  Widget _draftBanner() => AppDraftRestoreBanner(
+    onRestore: () => setState(
+      () => _draft.restore((value) {
+        // Preserve the revision that originally supplied the edited fields.
+        _restoredHlc = Hlc.parse(value['baseline'] as String);
+        _title.text = value['title'] as String? ?? '';
+        _body.text = value['body'] as String? ?? '';
+        _source.text = value['source'] as String? ?? '';
+        _tags.text = value['tags'] as String? ?? '';
+        _editing = true;
+      }),
+    ),
+    onDiscard: () => setState(() {
+      _draft.discardPending();
+      _draft.capture();
+    }),
+  );
+
   Future<void> _toggleMode() async {
     if (_editing) {
       final discard = await confirmDiscardIfDirty(context, dirty);
@@ -356,12 +406,14 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
   }
 
   void _resetFields() {
+    _restoredHlc = null;
     _baseline = widget.note;
     _title.text = widget.note.title;
     _body.text = widget.note.bodyMd;
     _source.text = widget.note.sourceUrl ?? '';
     _tags.text = widget.note.tags.join(', ');
     dirty.markPristine();
+    if (!_draft.hasPending) _draft.complete();
   }
 
   Future<void> _reload() async {
@@ -375,7 +427,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
   }
 
   Future<void> _save() async {
-    if (_saving || _deleted || _changed) return;
+    if (_saving || _draft.hasPending || _deleted || _changed) return;
     if (_source.text.trim().isNotEmpty &&
         normalizeKnowledgeSourceUrl(_source.text) == null) {
       setState(() => _showMetadata = true);
@@ -393,7 +445,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       commit: () async {
         final service = await ref.read(knowledgeEditServiceProvider.future);
         await service.saveNote(
-          expectedHlc: _baseline.sync.hlc,
+          expectedHlc: _expectedHlc,
           draft: KnowledgeNote(
             id: widget.note.id,
             title: _title.text.trim(),
@@ -416,6 +468,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       failureMessage: (error) => knowledgeEditFailureMessage(context, error),
       successMessage: l10n.commonSaved,
       tag: 'knowledge-note-edit',
+      onCommitted: (_) => _draft.complete(),
     );
   }
 
@@ -463,6 +516,7 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
       final service = await ref.read(knowledgeDeletionServiceProvider.future);
       await service.delete(kind: KnowledgeEntryKind.note, id: widget.note.id);
       ref.invalidate(knowledgeNotesProvider);
+      _draft.complete();
       dirty.markPristine();
       if (mounted) {
         AppMessenger.show(context, ToastKind.success, l10n.commonDeleted);

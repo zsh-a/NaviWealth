@@ -47,30 +47,44 @@ class ExecutionPlanCardController extends ConsumerStatefulWidget {
 class _ExecutionPlanCardControllerState
     extends ConsumerState<ExecutionPlanCardController> {
   bool _busy = false;
+  bool _confirming = false;
 
   Future<void> _changeStatus(ExecutionPlanStatus status) async {
-    if (_busy) return;
+    if (_busy || _confirming) return;
     final l10n = AppLocalizations.of(context);
     final feedbackContext = Navigator.of(context).context;
     AppMessenger.cacheOverlay(feedbackContext);
-    if ((status == ExecutionPlanStatus.completed ||
-            status == ExecutionPlanStatus.archived) &&
-        !await _confirmOpenActions(
-          context,
-          widget.openActionCount ?? 0,
-          archive: status == ExecutionPlanStatus.archived,
-        )) {
-      return;
-    }
-    if (!feedbackContext.mounted || !mounted) return;
     final offers = ref.read(formUndoOfferProvider.notifier);
     final logger = ref.read(loggerProvider);
     final before = widget.plan;
-    setState(() => _busy = true);
+    setState(() => _confirming = true);
     try {
       final repository = ref.read(executionRepositoryProvider.future);
       final stampSource = ref.read(mutationStamperProvider.future);
       final repo = await repository;
+      if (status == ExecutionPlanStatus.completed ||
+          status == ExecutionPlanStatus.archived) {
+        final counts = await repo
+            .watchActionCountsForPlan(
+              ownerUserId: before.sync.ownerUserId,
+              planId: before.id,
+            )
+            .first;
+        if (!mounted ||
+            !feedbackContext.mounted ||
+            !await _confirmOpenActions(
+              context,
+              counts.open,
+              archive: status == ExecutionPlanStatus.archived,
+            )) {
+          return;
+        }
+      }
+      if (!mounted || !feedbackContext.mounted) return;
+      setState(() {
+        _confirming = false;
+        _busy = true;
+      });
       final stamper = await stampSource;
       Future<SyncMeta> stampSync() async {
         final stamp = await stamper.stamp();
@@ -138,7 +152,12 @@ class _ExecutionPlanCardControllerState
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _confirming = false;
+        });
+      }
     }
   }
 
