@@ -42,6 +42,7 @@ class IngestExternalConfirmationCoordinator {
     required IngestDraftBatchLifecycleStore store,
     Uuid uuid = const Uuid(),
     DateTime Function()? clock,
+    this.checkDuplicate,
   }) : _store = store,
        _uuid = uuid,
        _clock = clock ?? DateTime.now;
@@ -49,6 +50,7 @@ class IngestExternalConfirmationCoordinator {
   final IngestDraftBatchLifecycleStore _store;
   final Uuid _uuid;
   final DateTime Function() _clock;
+  final IngestDuplicateCheck? checkDuplicate;
 
   /// Confirms [draft] and commits its typed domain mutation atomically.
   ///
@@ -61,12 +63,21 @@ class IngestExternalConfirmationCoordinator {
     required Future<T> Function(String operationToken) apply,
     required String Function(T receipt) entityId,
     String? operationToken,
+    String? accountId,
+    bool allowDuplicate = false,
   }) {
     final token = operationToken ?? _uuid.v4();
     if (token.trim().isEmpty) {
       throw ArgumentError.value(operationToken, 'operationToken');
     }
     return _store.runBatch(() async {
+      final dedup = await checkDuplicate?.call(draft, accountId: accountId);
+      if (!allowDuplicate && dedup != null && dedup.verdict.skipByDefault) {
+        throw const IngestConfirmException(
+          IngestConfirmError.duplicateDetected,
+          'A matching entry now exists. Review it before recording again.',
+        );
+      }
       var revision = await _requireApplied(
         IngestLifecycleTransition(
           ownerUserId: draft.ownerUserId,

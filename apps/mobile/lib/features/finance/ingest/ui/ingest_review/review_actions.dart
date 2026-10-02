@@ -208,7 +208,11 @@ extension _IngestReviewActions on _IngestReviewPageState {
         }
         return;
       }
-      final confirmed = await svc.confirm(draft, fromAccountId: accountId);
+      final confirmed = await svc.confirm(
+        draft,
+        fromAccountId: accountId,
+        allowDuplicate: draft.verdict.skipByDefault,
+      );
       await ref
           .read(productMetricsProvider.notifier)
           .record(ProductFunnelEvent.importReviewCompleted, success: true);
@@ -231,8 +235,16 @@ extension _IngestReviewActions on _IngestReviewPageState {
           ToastKind.warning,
           l10n.ingestRecordNeedsReview,
         );
+      } else if (error.code == IngestConfirmError.duplicateDetected) {
+        ref.invalidate(pendingIngestReviewItemsProvider);
+        AppMessenger.show(
+          context,
+          ToastKind.warning,
+          l10n.ingestDuplicateChanged,
+        );
       } else if (error.code == IngestConfirmError.manualRecoveryRequired ||
           error.code == IngestConfirmError.lifecycleConflict) {
+        ref.invalidate(pendingIngestReviewItemsProvider);
         AppMessenger.show(
           context,
           ToastKind.warning,
@@ -335,6 +347,11 @@ extension _IngestReviewActions on _IngestReviewPageState {
         },
       );
       final outcome = IngestBatchReviewOutcome.from(result);
+      if (result.failures.any(
+        (failure) => failure.error.code == IngestConfirmError.duplicateDetected,
+      )) {
+        ref.invalidate(pendingIngestReviewItemsProvider);
+      }
       if (outcome.confirmed.isNotEmpty) {
         await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
         await ref

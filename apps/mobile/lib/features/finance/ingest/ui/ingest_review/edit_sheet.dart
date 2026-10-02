@@ -136,6 +136,9 @@ class _IngestDraftEditSheetState extends State<_IngestDraftEditSheet> {
         amountMinor: amountMinor,
         currency: currency,
         occurredAt: _date,
+        dateHasTime: _date == widget.parsed.occurredAt
+            ? widget.parsed.dateHasTime
+            : false,
         kind: _kind,
         clearCategoryHint: _category.text.trim().isEmpty,
         categoryHint: _category.text.trim().isEmpty

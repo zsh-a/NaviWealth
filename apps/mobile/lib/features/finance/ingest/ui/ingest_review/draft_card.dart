@@ -312,6 +312,8 @@ class _DraftCard extends StatelessWidget {
                                           : p.kind ==
                                                 IngestTransactionKind.trade
                                           ? l10n.ingestRecordTrade
+                                          : draft.verdict.skipByDefault
+                                          ? l10n.ingestRecordAnyway
                                           : l10n.ingestConfirm,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,

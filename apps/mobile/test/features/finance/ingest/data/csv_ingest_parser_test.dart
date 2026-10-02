@@ -117,7 +117,8 @@ void main() {
       expect(rows.single.description, '瑞幸咖啡 · 拿铁 · 商户消费 · 零钱');
       expect(rows.single.amountMinor, -1800);
       expect(rows.single.currency, 'CNY');
-      expect(rows.single.occurredAt, DateTime.utc(2026, 5, 10));
+      expect(rows.single.occurredAt, DateTime(2026, 5, 10, 12, 30, 1).toUtc());
+      expect(rows.single.dateHasTime, isTrue);
     });
 
     test('parses Alipay export with preamble and 收/支 direction', () {

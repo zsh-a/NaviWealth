@@ -10,6 +10,7 @@
 library;
 
 import '../domain/ingest_models.dart';
+import '../domain/ingest_source_reference.dart';
 import 'delimited_ingest_scalars.dart';
 
 part 'bank_ingest_headers.dart';

@@ -8,6 +8,7 @@
 library;
 
 import 'ingest_parse_diagnostics.dart';
+import 'ingest_source_reference.dart';
 
 /// Where a batch of raw input came from. Only [csv] / [pasteText] are
 /// handled by deterministic parsers in S5a; the image / pdf / email kinds
@@ -33,13 +34,12 @@ enum DedupVerdict {
   /// No plausible match — safe to add.
   newTxn,
 
-  /// Same merchant + near-equal amount within the date window — likely
+  /// Compatible description with near-equal amount or imprecise ledger date — likely
   /// the same transaction the user already recorded; pre-checked to
   /// skip but overridable.
   likelyDuplicate,
 
-  /// Exact merchant + amount + currency within the date window — a
-  /// duplicate with high confidence.
+  /// Same source identity, or exact description + amount + currency + instant.
   duplicate,
 }
 
@@ -118,6 +118,8 @@ class ParsedTransaction {
     this.unitPrice,
     this.activitySide,
     this.confidence = 1.0,
+    this.sourceReference,
+    this.dateHasTime = true,
   });
 
   final String description;
@@ -131,6 +133,8 @@ class ParsedTransaction {
   final String? unitPrice;
   final String? activitySide;
   final double confidence;
+  final IngestSourceReference? sourceReference;
+  final bool dateHasTime;
 
   ParsedTransaction copyWith({
     String? description,
@@ -145,6 +149,8 @@ class ParsedTransaction {
     String? unitPrice,
     String? activitySide,
     double? confidence,
+    IngestSourceReference? sourceReference,
+    bool? dateHasTime,
   }) => ParsedTransaction(
     description: description ?? this.description,
     amountMinor: amountMinor ?? this.amountMinor,
@@ -157,6 +163,8 @@ class ParsedTransaction {
     unitPrice: unitPrice ?? this.unitPrice,
     activitySide: activitySide ?? this.activitySide,
     confidence: confidence ?? this.confidence,
+    sourceReference: sourceReference ?? this.sourceReference,
+    dateHasTime: dateHasTime ?? this.dateHasTime,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -171,6 +179,8 @@ class ParsedTransaction {
     if (unitPrice != null) 'unit_price': unitPrice,
     if (activitySide != null) 'activity_side': activitySide,
     'confidence': confidence,
+    if (sourceReference != null) 'source_reference': sourceReference!.toJson(),
+    'date_has_time': dateHasTime,
   };
 
   factory ParsedTransaction.fromJson(Map<String, Object?> json) {
@@ -188,6 +198,12 @@ class ParsedTransaction {
       unitPrice: json['unit_price'] as String?,
       activitySide: json['activity_side'] as String?,
       confidence: (json['confidence'] as num?)?.toDouble() ?? 1.0,
+      sourceReference: json['source_reference'] is Map<String, Object?>
+          ? IngestSourceReference.fromJson(
+              json['source_reference']! as Map<String, Object?>,
+            )
+          : null,
+      dateHasTime: json['date_has_time'] as bool? ?? false,
     );
   }
 }
@@ -239,6 +255,22 @@ class IngestDraft {
     expiresAt: expiresAt,
     revision: revision ?? this.revision,
   );
+
+  IngestDraft withDedup(DedupVerdict value, String? target, {int? revision}) =>
+      IngestDraft(
+        draftId: draftId,
+        ownerUserId: ownerUserId,
+        createdAt: createdAt,
+        sourceKind: sourceKind,
+        parsed: parsed,
+        verdict: value,
+        status: status,
+        originLabel: originLabel,
+        dedupTargetEntryId: target,
+        traceId: traceId,
+        expiresAt: expiresAt,
+        revision: revision ?? this.revision,
+      );
 }
 
 /// Summary returned after a pipeline run, for the trace + a toast.

@@ -11052,6 +11052,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestConfirm => 'Record';
 
   @override
+  String get ingestRecordAnyway => 'Record anyway';
+
+  @override
+  String get ingestDuplicateChanged =>
+      'A matching entry was found. The duplicate check has been updated; review it before recording.';
+
+  @override
   String get ingestEditDraft => 'Correct fields';
 
   @override

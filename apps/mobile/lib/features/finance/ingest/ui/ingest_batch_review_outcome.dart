@@ -23,7 +23,7 @@ class IngestBatchReviewOutcome {
       if (failure.error.recovery == IngestRecovery.finalizeApplied &&
           item != null) {
         pendingFinalize[item.draft.draftId] = item;
-      } else {
+      } else if (failure.error.code != IngestConfirmError.duplicateDetected) {
         retryFailures.add(failure);
       }
     }

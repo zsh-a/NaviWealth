@@ -23,6 +23,7 @@ import '../../ingest/data/ingest_confirm_service.dart';
 import '../../ingest/data/ingest_external_confirmation_coordinator.dart';
 import '../../ingest/data/providers.dart';
 import '../../ingest/domain/ingest_models.dart';
+import '../../ingest/domain/ingest_source_reference.dart';
 import '../application/trade_entry_submission_service.dart';
 import '../data/providers.dart';
 import '../domain/trade_entry/trade_draft.dart' show TradeType;
@@ -281,6 +282,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         : _noteController.text.trim();
 
     String failureMessage(Object error) {
+      if (error is IngestConfirmException &&
+          error.code == IngestConfirmError.duplicateDetected) {
+        return l10n.ingestDuplicateChanged;
+      }
       if (error is TradeSubmissionContractError) {
         switch (error.code) {
           case TradeSubmissionContractErrorCode.accountInvalid:
@@ -433,6 +438,12 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         fee: fee,
         tax: tax,
         note: note,
+        journalTags: widget.ingestDraft == null
+            ? const []
+            : ingestProvenanceTags(
+                kind: widget.ingestDraft!.parsed.kind.wire,
+                reference: widget.ingestDraft!.parsed.sourceReference,
+              ),
         defaultNarration: (asset) =>
             _tradeNarration(type, quantity, asset, l10n),
       );
@@ -487,6 +498,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             ingestDraft,
             kind: IngestExternalKind.trade,
             operationToken: _transactionId,
+            accountId: _cashAccountId ?? accountId,
+            allowDuplicate: ingestDraft.verdict.skipByDefault,
             apply: (_) => submissionService.commit(
               prepared,
               diagnosticOperation: operation,

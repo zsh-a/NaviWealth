@@ -13,15 +13,15 @@ import 'dart:math' as math;
 
 import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
+import 'ingest_dedup_candidate.dart';
 
 /// Date proximity for two rows to be considered the same event. Covers
 /// manual entry date vs bank settlement/posting date drift.
 const Duration kIngestDedupWindow = Duration(days: 3);
 
-/// Minor-unit slack for a "likely" (vs exact) duplicate. Mirrors the
-/// refund matcher's tolerance shape so the heuristics stay consistent.
+/// A likely match must satisfy both the absolute and relative limits.
 const int kIngestDedupAmountToleranceMinor = 100;
-const double kIngestDedupAmountToleranceFraction = 0.01;
+const int kIngestDedupAmountTolerancePercent = 1;
 
 class DedupResult {
   const DedupResult({required this.verdict, this.targetEntryId});
@@ -58,6 +58,7 @@ final class IngestDedupIndex<T extends Object> {
   final Duration window;
   final Map<_DedupGroupKey, SplayTreeMap<DateTime, _AmountBuckets<T>>> _groups =
       <_DedupGroupKey, SplayTreeMap<DateTime, _AmountBuckets<T>>>{};
+  final Map<String, _IndexedEntry<T>> _identities = {};
   int _nextOrdinal = 0;
 
   void add(TransactionInput transaction, T target) {
@@ -66,6 +67,7 @@ final class IngestDedupIndex<T extends Object> {
     final group = _DedupGroupKey(
       transaction.currency.toUpperCase(),
       signed.isNegative,
+      _candidateKind(transaction),
     );
     final days = _groups.putIfAbsent(
       group,
@@ -75,30 +77,43 @@ final class IngestDedupIndex<T extends Object> {
       _utcDay(transaction.occurredAt),
       () => SplayTreeMap<int, List<_IndexedEntry<T>>>(),
     );
-    amounts
-        .putIfAbsent(signed.abs(), () => <_IndexedEntry<T>>[])
-        .add(
-          _IndexedEntry<T>(
-            ordinal: _nextOrdinal++,
-            transaction: transaction,
-            target: target,
-          ),
-        );
+    final entry = _IndexedEntry<T>(
+      ordinal: _nextOrdinal++,
+      transaction: transaction,
+      target: target,
+    );
+    if (transaction is IngestDedupCandidate &&
+        transaction.sourceIdentity != null) {
+      _identities.putIfAbsent(transaction.sourceIdentity!, () => entry);
+    }
+    amounts.putIfAbsent(signed.abs(), () => <_IndexedEntry<T>>[]).add(entry);
   }
 
   IndexedDedupResult<T> match(
     ParsedTransaction parsed, {
     IngestDedupMetrics? metrics,
+    String? accountId,
   }) {
     final signed = parsed.amountMinor;
     final amount = signed.abs();
     if (amount == 0 || window.isNegative) {
       return IndexedDedupResult<T>(verdict: DedupVerdict.newTxn);
     }
+    final identity = parsed.sourceReference?.hasUniqueScope == true
+        ? parsed.sourceReference!.identity
+        : null;
+    final identified = identity == null ? null : _identities[identity];
+    if (identified != null) {
+      return IndexedDedupResult<T>(
+        verdict: DedupVerdict.duplicate,
+        target: identified.target,
+      );
+    }
     final days =
         _groups[_DedupGroupKey(
           parsed.currency.toUpperCase(),
           signed.isNegative,
+          parsed.kind,
         )];
     if (days == null || days.isEmpty) {
       return IndexedDedupResult<T>(verdict: DedupVerdict.newTxn);
@@ -125,8 +140,9 @@ final class IngestDedupIndex<T extends Object> {
       lastDay: lastDay,
       minimumAmount: amount,
       maximumAmount: amount,
-      requireExactAmount: true,
+      verdict: DedupVerdict.duplicate,
       metrics: metrics,
+      accountId: accountId,
     );
     if (exact != null) {
       return IndexedDedupResult<T>(
@@ -135,24 +151,16 @@ final class IngestDedupIndex<T extends Object> {
       );
     }
 
-    // Deliberately wider than the final 1% rule. `_withinTolerance` uses
-    // double division and can round a boundary value inward for very large
-    // integers; a ~2% prefilter remains a strict conservative superset.
-    final percentageSlack = _ceilDivide(amount, 50);
-    final lowerSlack = math.max(
-      kIngestDedupAmountToleranceMinor,
-      percentageSlack,
-    );
-    final upperSlack = lowerSlack;
     final likely = _earliestMatch(
       parsed: parsed,
       days: days,
       firstDay: firstDay,
       lastDay: lastDay,
-      minimumAmount: math.max(0, amount - lowerSlack),
-      maximumAmount: amount + upperSlack,
-      requireExactAmount: false,
+      minimumAmount: math.max(0, amount - kIngestDedupAmountToleranceMinor),
+      maximumAmount: amount + kIngestDedupAmountToleranceMinor,
+      verdict: DedupVerdict.likelyDuplicate,
       metrics: metrics,
+      accountId: accountId,
     );
     if (likely != null) {
       return IndexedDedupResult<T>(
@@ -170,8 +178,9 @@ final class IngestDedupIndex<T extends Object> {
     required DateTime lastDay,
     required int minimumAmount,
     required int maximumAmount,
-    required bool requireExactAmount,
+    required DedupVerdict verdict,
     required IngestDedupMetrics? metrics,
+    required String? accountId,
   }) {
     _IndexedEntry<T>? earliest;
     DateTime? day = days.containsKey(firstDay)
@@ -183,24 +192,22 @@ final class IngestDedupIndex<T extends Object> {
           ? minimumAmount
           : amounts.firstKeyAfter(minimumAmount);
       while (amount != null && amount <= maximumAmount) {
-        if (requireExactAmount == (amount == parsed.amountMinor.abs())) {
-          for (final entry in amounts[amount]!) {
-            metrics?.candidateVisits++;
-            final gap = parsed.occurredAt
-                .difference(entry.transaction.occurredAt)
-                .abs();
-            if (gap <= window &&
-                (requireExactAmount ||
-                    _withinTolerance(parsed.amountMinor.abs(), amount))) {
-              metrics?.descriptorComparisons++;
-              final description = compareTransactionDescriptions(
-                parsed.description,
-                entry.transaction.description,
-              );
-              if (description.isStrong &&
-                  (earliest == null || entry.ordinal < earliest.ordinal)) {
-                earliest = entry;
-              }
+        for (final entry in amounts[amount]!) {
+          metrics?.candidateVisits++;
+          final gap = parsed.occurredAt
+              .difference(entry.transaction.occurredAt)
+              .abs();
+          if (gap <= window) {
+            metrics?.descriptorComparisons++;
+            final decision = _candidateVerdict(
+              parsed,
+              entry.transaction,
+              window: window,
+              accountId: accountId,
+            );
+            if (decision == verdict &&
+                (earliest == null || entry.ordinal < earliest.ordinal)) {
+              earliest = entry;
             }
           }
         }
@@ -228,29 +235,26 @@ final class _IndexedEntry<T extends Object> {
 }
 
 final class _DedupGroupKey {
-  const _DedupGroupKey(this.currency, this.isNegative);
+  const _DedupGroupKey(this.currency, this.isNegative, this.kind);
 
   final String currency;
   final bool isNegative;
+  final IngestTransactionKind kind;
 
   @override
   bool operator ==(Object other) =>
       other is _DedupGroupKey &&
       other.currency == currency &&
-      other.isNegative == isNegative;
+      other.isNegative == isNegative &&
+      other.kind == kind;
 
   @override
-  int get hashCode => Object.hash(currency, isNegative);
+  int get hashCode => Object.hash(currency, isNegative, kind);
 }
 
 DateTime _utcDay(DateTime value) {
   final utc = value.toUtc();
   return DateTime.utc(utc.year, utc.month, utc.day);
-}
-
-int _ceilDivide(int value, int divisor) {
-  final quotient = value ~/ divisor;
-  return quotient + (value % divisor == 0 ? 0 : 1);
 }
 
 /// Classify [parsed] against [existing].
@@ -261,32 +265,41 @@ DedupResult classifyDedup(
   ParsedTransaction parsed,
   Iterable<TransactionInput> existing, {
   Duration window = kIngestDedupWindow,
+  String? accountId,
 }) {
   final parsedSigned = parsed.amountMinor;
   final amount = parsedSigned.abs();
-  if (amount == 0) return DedupResult.fresh;
+  if (amount == 0 || window.isNegative) return DedupResult.fresh;
+  final entries = existing.toList(growable: false);
+  final identity = parsed.sourceReference?.hasUniqueScope == true
+      ? parsed.sourceReference!.identity
+      : null;
+  if (identity != null) {
+    for (final entry in entries) {
+      if (entry is IngestDedupCandidate &&
+          entry.sourceIdentity == identity &&
+          parseAmountMinor(entry.amountMinor) != 0) {
+        return DedupResult(
+          verdict: DedupVerdict.duplicate,
+          targetEntryId: entry.id,
+        );
+      }
+    }
+  }
 
   DedupResult? likely;
-  for (final e in existing) {
-    if (e.currency.toUpperCase() != parsed.currency.toUpperCase()) continue;
-    final gap = parsed.occurredAt.difference(e.occurredAt).abs();
-    if (gap > window) continue;
-
-    final existingSigned = parseAmountMinor(e.amountMinor);
-    if (existingSigned == 0) continue;
-    if (existingSigned.isNegative != parsedSigned.isNegative) continue;
-    final existingAmount = existingSigned.abs();
-    final descriptorMatch = compareTransactionDescriptions(
-      parsed.description,
-      e.description,
+  for (final e in entries) {
+    final verdict = _candidateVerdict(
+      parsed,
+      e,
+      window: window,
+      accountId: accountId,
     );
-    if (!descriptorMatch.isStrong) continue;
-
-    if (existingAmount == amount) {
+    if (verdict == DedupVerdict.duplicate) {
       return DedupResult(verdict: DedupVerdict.duplicate, targetEntryId: e.id);
     }
 
-    if (_withinTolerance(amount, existingAmount)) {
+    if (verdict == DedupVerdict.likelyDuplicate) {
       likely ??= DedupResult(
         verdict: DedupVerdict.likelyDuplicate,
         targetEntryId: e.id,
@@ -298,8 +311,87 @@ DedupResult classifyDedup(
 
 bool _withinTolerance(int a, int b) {
   final diff = (a - b).abs();
-  if (diff <= kIngestDedupAmountToleranceMinor) return true;
+  if (diff > kIngestDedupAmountToleranceMinor) return false;
   final larger = a > b ? a : b;
   if (larger == 0) return false;
-  return diff / larger <= kIngestDedupAmountToleranceFraction;
+  return BigInt.from(diff) * BigInt.from(100) <=
+      BigInt.from(larger) * BigInt.from(kIngestDedupAmountTolerancePercent);
+}
+
+IngestTransactionKind _candidateKind(TransactionInput entry) =>
+    entry is IngestDedupCandidate
+    ? entry.kind
+    : parseAmountMinor(entry.amountMinor).isNegative
+    ? IngestTransactionKind.expense
+    : IngestTransactionKind.income;
+
+final _descriptorTokens = RegExp(r'[一-鿿]+|[a-z0-9]+');
+String _descriptor(String value) => _descriptorTokens
+    .allMatches(value.toLowerCase())
+    .map((match) => match.group(0)!)
+    .join();
+
+DedupVerdict _candidateVerdict(
+  ParsedTransaction parsed,
+  TransactionInput entry, {
+  required Duration window,
+  String? accountId,
+}) {
+  if (window.isNegative) return DedupVerdict.newTxn;
+  final evidence = entry is IngestDedupCandidate ? entry : null;
+  final reference = parsed.sourceReference?.hasUniqueScope == true
+      ? parsed.sourceReference
+      : null;
+  if (reference != null && evidence?.sourceIdentity == reference.identity) {
+    return DedupVerdict.duplicate;
+  }
+  // Distinct provider-issued ids in the same source account are distinct events.
+  if (reference != null &&
+      evidence?.sourceScope == reference.scope &&
+      evidence?.sourceIdentity != null) {
+    return DedupVerdict.newTxn;
+  }
+  if (_candidateKind(entry) != parsed.kind ||
+      entry.currency.toUpperCase() != parsed.currency.toUpperCase() ||
+      (accountId != null &&
+          entry.accountId != null &&
+          accountId != entry.accountId)) {
+    return DedupVerdict.newTxn;
+  }
+  final signed = parseAmountMinor(entry.amountMinor);
+  if (signed == 0 || signed.isNegative != parsed.amountMinor.isNegative) {
+    return DedupVerdict.newTxn;
+  }
+  final gap = parsed.occurredAt.difference(entry.occurredAt).abs();
+  if (gap > window) return DedupVerdict.newTxn;
+  final descriptorMatch = compareTransactionDescriptions(
+    parsed.description,
+    entry.description,
+  );
+  if (!descriptorMatch.isStrong) return DedupVerdict.newTxn;
+  final left = _descriptor(parsed.description);
+  final right = _descriptor(entry.description);
+  final exactDescription = left == right;
+  // A short merchant-only manual note can be reconciled. Shared channel or
+  // category words must never equate two different products.
+  if (!exactDescription &&
+      left != merchantKey(entry.description) &&
+      right != merchantKey(parsed.description)) {
+    return DedupVerdict.newTxn;
+  }
+  final exactAmount = parsed.amountMinor == signed;
+  if (exactAmount && exactDescription && gap == Duration.zero) {
+    return DedupVerdict.duplicate;
+  }
+  if (gap != Duration.zero &&
+      (evidence?.allowDateDrift == false ||
+          (parsed.dateHasTime && evidence?.dateHasTime == true))) {
+    return DedupVerdict.newTxn;
+  }
+  if (exactAmount ||
+      (exactDescription &&
+          _withinTolerance(parsed.amountMinor.abs(), signed.abs()))) {
+    return DedupVerdict.likelyDuplicate;
+  }
+  return DedupVerdict.newTxn;
 }

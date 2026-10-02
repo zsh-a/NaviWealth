@@ -116,7 +116,20 @@ StatementParseReport parseStatementLedgerReport(
       ),
     ),
   };
-  return StatementParseReport(provider: effective, ledger: ledger);
+  return StatementParseReport(
+    provider: effective,
+    ledger: ParsedLedgerReport(
+      rows: [
+        for (final row in ledger.rows)
+          row.copyWith(
+            sourceReference: row.sourceReference?.withProvider(effective.name),
+          ),
+      ],
+      issues: ledger.issues,
+      candidateRowCount: ledger.candidateRowCount,
+      diagnosticsComplete: ledger.diagnosticsComplete,
+    ),
+  );
 }
 
 ParsedLedgerReport<ParsedTransaction> _parseAlipayLedgerReport(

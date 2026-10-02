@@ -12,6 +12,8 @@ import 'package:naviwealth/features/finance/expense/data/expense_category_reposi
 import 'package:naviwealth/features/finance/expense/domain/expense_category_taxonomy.dart';
 import 'package:naviwealth/features/finance/liabilities/data/liability_repository.dart';
 
+import '../ingest/domain/ingest_source_reference.dart';
+
 class FinanceCoreProposalApplier {
   FinanceCoreProposalApplier({
     required this.journalEntryRepo,
@@ -60,6 +62,7 @@ class FinanceCoreProposalApplier {
       amount: amount,
       currency: currency,
       narration: note ?? plan.summaryZh,
+      tagIds: ingestTagsFromPayload(plan.payload['ingest_tags']),
     );
     final stored = await journalEntryRepo.create(
       entry: build.entry,
@@ -99,6 +102,7 @@ class FinanceCoreProposalApplier {
       amount: amount,
       currency: currency,
       narration: note ?? plan.summaryZh,
+      tagIds: ingestTagsFromPayload(plan.payload['ingest_tags']),
     );
     final stored = await journalEntryRepo.create(
       entry: build.entry,

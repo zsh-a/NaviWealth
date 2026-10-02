@@ -77,7 +77,7 @@ void main() {
 
     test('same merchant + near amount within tolerance → likely', () {
       final r = classifyDedup(_parsed(amountMinor: -3800), [
-        _existing(amountMinor: '-3850'),
+        _existing(amountMinor: '-3830'),
       ]);
       expect(r.verdict, DedupVerdict.likelyDuplicate);
       expect(r.targetEntryId, 'e1');
@@ -141,12 +141,12 @@ void main() {
       final result = _indexed(_parsed(), [
         _existing(
           id: 'first',
-          amountMinor: '-3850',
+          amountMinor: '-3830',
           at: DateTime.utc(2026, 5, 11),
         ),
         _existing(
           id: 'later',
-          amountMinor: '-3750',
+          amountMinor: '-3770',
           at: DateTime.utc(2026, 5, 9),
         ),
       ]);
@@ -220,49 +220,55 @@ void main() {
       expect(result.target, 'match');
     });
 
-    test('preserves fixed-minor and asymmetric one-percent boundaries', () {
+    test('requires both the fixed-minor and relative tolerance boundaries', () {
       expect(
         _indexed(_parsed(amountMinor: -3800), [
-          _existing(amountMinor: '-3900'),
+          _existing(amountMinor: '-3838'),
         ]).verdict,
         DedupVerdict.likelyDuplicate,
       );
       expect(
         _indexed(_parsed(amountMinor: -3800), [
-          _existing(amountMinor: '-3901'),
+          _existing(amountMinor: '-3839'),
         ]).verdict,
         DedupVerdict.newTxn,
       );
       expect(
         _indexed(_parsed(amountMinor: -10000), [
-          _existing(amountMinor: '-10101'),
+          _existing(amountMinor: '-10100'),
         ]).verdict,
         DedupVerdict.likelyDuplicate,
       );
       expect(
-        _indexed(_parsed(amountMinor: -10101), [
+        _indexed(_parsed(amountMinor: -10100), [
           _existing(amountMinor: '-10000'),
         ]).verdict,
         DedupVerdict.likelyDuplicate,
       );
       expect(
         _indexed(_parsed(amountMinor: -10000), [
-          _existing(amountMinor: '-10102'),
+          _existing(amountMinor: '-10101'),
         ]).verdict,
         DedupVerdict.newTxn,
       );
     });
 
-    test('prefilter preserves floating-point tolerance at large integers', () {
+    test('large integers cannot bypass the absolute tolerance limit', () {
       final parsed = _parsed(amountMinor: -9000000000000000000);
       final existing = _existing(amountMinor: '-9090909090909090911');
       final reference = classifyDedup(parsed, [existing]);
       final indexed = _indexed(parsed, [existing]);
 
-      expect(reference.verdict, DedupVerdict.likelyDuplicate);
+      expect(reference.verdict, DedupVerdict.newTxn);
       expect(
         (indexed.verdict, indexed.target),
         (reference.verdict, reference.targetEntryId),
+      );
+      expect(
+        _indexed(parsed, [
+          _existing(amountMinor: '-9000000000000000100'),
+        ]).verdict,
+        DedupVerdict.likelyDuplicate,
       );
     });
 

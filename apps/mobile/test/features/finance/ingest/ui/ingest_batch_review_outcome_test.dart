@@ -42,6 +42,29 @@ IngestBatchItemFailure<IngestDraft> _failure(
 );
 
 void main() {
+  test(
+    'new duplicate conflicts require review instead of a blind batch retry',
+    () {
+      final outcome = IngestBatchReviewOutcome.from(
+        IngestBatchConfirmResult(
+          confirmed: const [],
+          failures: [
+            IngestBatchItemFailure(
+              item: _draft('duplicate'),
+              error: const IngestConfirmException(
+                IngestConfirmError.duplicateDetected,
+                'Review duplicate',
+              ),
+            ),
+          ],
+        ),
+      );
+      expect(outcome.hasFailures, isTrue);
+      expect(outcome.failureCount, 1);
+      expect(outcome.retryFailures, isEmpty);
+    },
+  );
+
   test('projects confirmed drafts into immutable undo state', () {
     final outcome = IngestBatchReviewOutcome.from(
       IngestBatchConfirmResult(

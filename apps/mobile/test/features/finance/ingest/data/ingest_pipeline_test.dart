@@ -82,7 +82,7 @@ void main() {
           description: '麦当劳 · 家庭装纸巾 · 日用百货 · 余额',
           amountMinor: '-3150',
           currency: 'CNY',
-          occurredAt: DateTime.utc(2026, 7, 10),
+          occurredAt: DateTime(2026, 7, 10, 12, 30, 1).toUtc(),
         ),
       ],
       ownerUserId: 'u1',

@@ -12,6 +12,8 @@ enum _BankCol {
   status,
   type,
   channel,
+  transactionId,
+  sourceAccount,
 }
 
 const Map<String, _BankCol> _bankHeaderAliases = <String, _BankCol>{
@@ -117,6 +119,15 @@ const Map<String, _BankCol> _bankHeaderAliases = <String, _BankCol>{
   '交易渠道': _BankCol.channel,
   '支付方式': _BankCol.channel,
   '付款方式': _BankCol.channel,
+  '流水号': _BankCol.transactionId,
+  '交易流水号': _BankCol.transactionId,
+  '交易号': _BankCol.transactionId,
+  'transactionid': _BankCol.transactionId,
+  'reference': _BankCol.transactionId,
+  'accountnumber': _BankCol.sourceAccount,
+  '账户号': _BankCol.sourceAccount,
+  '账号': _BankCol.sourceAccount,
+  '卡号': _BankCol.sourceAccount,
 };
 
 Map<int, _BankCol>? _headerMapping(List<String> cells) {

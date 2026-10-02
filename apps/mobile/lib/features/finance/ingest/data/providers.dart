@@ -8,11 +8,8 @@ library;
 
 import 'dart:async';
 
-import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:naviwealth/features/finance/ai_tools/expense_to_transaction_input.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
-import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/ai/composition/proposal_applier.dart';
@@ -24,11 +21,10 @@ import '../../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../../core/ai/trace/providers.dart';
 import '../../../../core/auth/current_user.dart';
 import '../../../../core/persistence/providers.dart';
-import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
-import '../domain/minor_unit_amount.dart';
 import 'device_ingest_client.dart';
 import 'ingest_confirm_service.dart';
+import 'ingest_dedup_service.dart';
 import 'ingest_draft_store.dart';
 import 'ingest_external_confirmation_coordinator.dart';
 import 'ingest_llm_client.dart';
@@ -60,13 +56,28 @@ final ingestDraftStoreProvider = Provider<IngestDraftStore?>((ref) {
 /// Live pending queue with any persisted apply-recovery continuation.
 final pendingIngestReviewItemsProvider =
     StreamProvider.autoDispose<List<IngestReviewItem>>((ref) async* {
+      ref.watch(journalEntriesWithPostingsStreamProvider);
       final store = ref.watch(ingestDraftStoreProvider);
       if (store == null) {
         yield const <IngestReviewItem>[];
         return;
       }
-      yield* store.watchPendingReviewItems();
+      final service = await ref.watch(ingestDedupServiceProvider.future);
+      if (service == null) return;
+      await for (final _ in store.watchPendingReviewItems()) {
+        await service.refreshPending();
+        yield await store.listPendingReviewItems();
+      }
     });
+
+final ingestDedupServiceProvider = FutureProvider<IngestDedupService?>((
+  ref,
+) async {
+  final store = ref.watch(ingestDraftStoreProvider);
+  if (store == null) return null;
+  final repository = await ref.watch(journalEntryRepositoryProvider.future);
+  return IngestDedupService(store: store, repository: repository);
+});
 
 final ingestDraftProgressProvider =
     StreamProvider.autoDispose<IngestDraftProgress>((ref) async* {
@@ -109,7 +120,12 @@ final ingestConfirmServiceProvider = FutureProvider<IngestConfirmService?>((
   final store = ref.watch(ingestDraftStoreProvider);
   if (store == null) return null;
   final applier = await ref.watch(proposalApplierProvider.future);
-  return IngestConfirmService(applier: applier, store: store);
+  final dedup = await ref.watch(ingestDedupServiceProvider.future);
+  return IngestConfirmService(
+    applier: applier,
+    store: store,
+    checkDuplicate: dedup?.checkForConfirm,
+  );
 });
 
 /// Atomic bridge used only by typed ingest destinations (transfer / trade).
@@ -117,7 +133,18 @@ final ingestExternalConfirmationCoordinatorProvider =
     Provider<IngestExternalConfirmationCoordinator?>((ref) {
       final store = ref.watch(ingestDraftStoreProvider);
       if (store == null) return null;
-      return IngestExternalConfirmationCoordinator(store: store);
+      return IngestExternalConfirmationCoordinator(
+        store: store,
+        checkDuplicate: (draft, {accountId}) async {
+          final repository = await ref.read(
+            journalEntryRepositoryProvider.future,
+          );
+          return IngestDedupService(
+            store: store,
+            repository: repository,
+          ).checkForConfirm(draft, accountId: accountId);
+        },
+      );
     });
 
 /// Orchestrates ②–⑥: snapshot the ledger, run the pipeline, persist the
@@ -241,10 +268,11 @@ class IngestController {
     String? traceId,
   }) async {
     context.requireOwnerBinding();
-    final ledger = await _dedupLedgerWithPending(
-      context.store,
-      context.ownerUserId,
-    );
+    final repository = await _ref.read(journalEntryRepositoryProvider.future);
+    final ledger = await IngestDedupService(
+      store: context.store,
+      repository: repository,
+    ).snapshot();
     final analysis = await context.executor(
       IngestPlanningRequest(payload: payload, existingLedger: ledger),
     );
@@ -319,64 +347,6 @@ class IngestController {
       // Transparency is decorative relative to the parse itself.
     }
   }
-
-  Future<List<TransactionInput>> _dedupLedgerWithPending(
-    IngestDraftStore store,
-    String ownerUserId,
-  ) async {
-    // Snapshot review work first. If a confirmation completes before the
-    // ledger read, the committed row is then visible in the later snapshot;
-    // reading in the opposite order could miss it from both sources.
-    final reviewDrafts = (await store.listPendingReviewItems())
-        .map((item) => item.draft)
-        .toList(growable: false);
-    final repository = await _ref.read(journalEntryRepositoryProvider.future);
-    final expenses = await repository.watchExpenses(ownerUserId).first;
-    final entries = await repository.watchAllWithPostings().first;
-    final ledger = <TransactionInput>[
-      ...expenses
-          .where((expense) => expense.sync.ownerUserId == ownerUserId)
-          .map(expenseToTransactionInput),
-      for (final entry in entries)
-        if (entry.entry.sync.ownerUserId == ownerUserId)
-          ?_incomeTransactionInput(entry),
-    ];
-    if (reviewDrafts.isEmpty) return ledger;
-    return <TransactionInput>[
-      ...ledger,
-      for (final d in reviewDrafts)
-        if (d.ownerUserId == ownerUserId)
-          TransactionInput(
-            id: d.draftId,
-            description: d.parsed.description,
-            amountMinor: d.parsed.amountMinor.toString(),
-            currency: d.parsed.currency,
-            occurredAt: d.parsed.occurredAt,
-            categoryId: d.parsed.categoryHint,
-          ),
-    ];
-  }
-}
-
-TransactionInput? _incomeTransactionInput(JournalEntryWithPostings entry) {
-  for (final posting in entry.postings) {
-    if (!posting.accountId.toLowerCase().contains(':income:') ||
-        posting.units >= Decimal.zero) {
-      continue;
-    }
-    final minor = parseMinorUnitAmount((-posting.units).toString());
-    if (minor == null) continue;
-    return TransactionInput(
-      id: entry.entry.id,
-      description: entry.entry.payee ?? entry.entry.narration,
-      amountMinor: minor.toString(),
-      currency: posting.unit,
-      occurredAt: entry.entry.date,
-      accountId: posting.accountId,
-      categoryId: posting.accountId,
-    );
-  }
-  return null;
 }
 
 final class _CapturedIngestContext {

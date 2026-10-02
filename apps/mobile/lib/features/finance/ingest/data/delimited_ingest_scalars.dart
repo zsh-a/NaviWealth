@@ -1,5 +1,8 @@
 import '../domain/minor_unit_amount.dart';
 
+bool ingestDateHasTime(String? raw) =>
+    raw != null && RegExp(r'\d{1,2}:\d{2}').hasMatch(raw);
+
 String detectIngestDelimiter(List<String> lines) {
   final sample = lines.firstWhere(
     (line) => !isIngestPreambleLine(line),
@@ -45,7 +48,11 @@ DateTime? parseIngestDate(String? value, {bool allowChineseDate = true}) {
   if (value == null || value.isEmpty) return null;
   final cleaned = cleanIngestCell(value);
   final iso = DateTime.tryParse(cleaned);
-  if (iso != null) return DateTime.utc(iso.year, iso.month, iso.day);
+  if (iso != null) {
+    return ingestDateHasTime(cleaned)
+        ? iso.toUtc()
+        : DateTime.utc(iso.year, iso.month, iso.day);
+  }
 
   if (allowChineseDate) {
     final chinese = RegExp(r'^(\d{4})年(\d{1,2})月(\d{1,2})日?')
@@ -55,7 +62,7 @@ DateTime? parseIngestDate(String? value, {bool allowChineseDate = true}) {
       final month = int.parse(chinese.group(2)!);
       final day = int.parse(chinese.group(3)!);
       if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-      return DateTime.utc(year, month, day);
+      return _withStatementTime(year, month, day, cleaned);
     }
   }
 
@@ -78,7 +85,17 @@ DateTime? parseIngestDate(String? value, {bool allowChineseDate = true}) {
     day = b;
   }
   if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-  return DateTime.utc(year, month, day);
+  return _withStatementTime(year, month, day, cleaned);
+}
+
+DateTime? _withStatementTime(int year, int month, int day, String raw) {
+  final time = RegExp(r'(\d{1,2}):(\d{2})(?::(\d{2}))?').firstMatch(raw);
+  if (time == null) return DateTime.utc(year, month, day);
+  final hour = int.parse(time.group(1)!);
+  final minute = int.parse(time.group(2)!);
+  final second = int.parse(time.group(3) ?? '0');
+  if (hour > 23 || minute > 59 || second > 59) return null;
+  return DateTime(year, month, day, hour, minute, second).toUtc();
 }
 
 int? parseIngestAmountMinor(String? value) {

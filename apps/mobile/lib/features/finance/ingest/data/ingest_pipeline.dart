@@ -13,6 +13,7 @@ import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
 import '../domain/ingest_parse_diagnostics.dart';
 import 'ingest_dedup.dart';
+import 'ingest_dedup_candidate.dart';
 import 'statement_ingest_parser.dart';
 
 sealed class IngestPlanningPayload {
@@ -157,17 +158,12 @@ IngestPlanningAnalysis analyzeIngestPlanning(IngestPlanningRequest request) {
         target: dedup.target,
       ),
     );
-    index.add(
-      TransactionInput(
-        id: 'batch-row-$rowIndex',
-        description: normalized.description,
-        amountMinor: normalized.amountMinor.toString(),
-        currency: normalized.currency,
-        occurredAt: normalized.occurredAt,
-        categoryId: normalized.categoryHint,
-      ),
-      BatchRowTarget(rowIndex),
-    );
+    if (dedup.verdict == DedupVerdict.newTxn) {
+      index.add(
+        IngestDedupCandidate.fromParsed(normalized, id: 'batch-row-$rowIndex'),
+        BatchRowTarget(rowIndex),
+      );
+    }
   }
   return IngestPlanningAnalysis(
     rows: rows,

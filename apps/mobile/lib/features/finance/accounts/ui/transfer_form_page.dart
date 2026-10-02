@@ -20,6 +20,7 @@ import '../../ingest/data/ingest_confirm_service.dart';
 import '../../ingest/data/ingest_external_confirmation_coordinator.dart';
 import '../../ingest/data/providers.dart';
 import '../../ingest/domain/ingest_models.dart';
+import '../../ingest/domain/ingest_source_reference.dart';
 import '../../shared/ui/account_tree_picker.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../../shared/ui/postings_preview.dart';
@@ -50,14 +51,18 @@ final SyncMeta _previewSync = SyncMeta(
   hlc: const Hlc(wallMillis: 0, counter: 0, nodeId: 'preview'),
 );
 
-JournalEntryDraft _withJournalEntryId(JournalEntryDraft draft, String id) {
+JournalEntryDraft _withJournalEntryId(
+  JournalEntryDraft draft,
+  String id,
+  List<String> importTags,
+) {
   return JournalEntryDraft(
     id: id,
     date: draft.date,
     settledOn: draft.settledOn,
     narration: draft.narration,
     payee: draft.payee,
-    tagIds: draft.tagIds,
+    tagIds: [...draft.tagIds, ...importTags],
     flag: draft.flag,
   );
 }
@@ -695,8 +700,19 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
           return coordinator.confirm<JournalMutationReceipt>(
             ingestDraft,
             kind: IngestExternalKind.transfer,
+            accountId: ingestDraft.parsed.amountMinor.isNegative
+                ? _fromAccountId
+                : _toAccountId,
+            allowDuplicate: ingestDraft.verdict.skipByDefault,
             apply: (operationToken) => repository.createWithReceipt(
-              entry: _withJournalEntryId(build.entry, operationToken),
+              entry: _withJournalEntryId(
+                build.entry,
+                operationToken,
+                ingestProvenanceTags(
+                  kind: ingestDraft.parsed.kind.wire,
+                  reference: ingestDraft.parsed.sourceReference,
+                ),
+              ),
               postings: build.postings,
             ),
             entityId: (receipt) => receipt.after.entry.id,
@@ -704,6 +720,8 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
         },
         onCommitted: (result) => confirmed = result.item,
         failureMessage: (e) => switch (e) {
+          IngestConfirmException(code: IngestConfirmError.duplicateDetected) =>
+            l10n.ingestDuplicateChanged,
           JournalEntryUnbalancedException(:final message) =>
             l10n.transferRejectedError(message),
           _ => l10n.transferFailedError(

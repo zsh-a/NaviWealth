@@ -15,7 +15,7 @@
     "accountsForEveryCandidate": true,
     "rows": [
       {
-        "occurredAt": "2026-07-10T00:00:00.000Z",
+        "occurredAt": "2026-07-10T12:30:01",
         "description": "示例餐厅 · 午餐 · 餐饮美食 · 余额",
         "amountMinor": -3150,
         "currency": "CNY",
@@ -23,7 +23,7 @@
         "categoryHint": "dining"
       },
       {
-        "occurredAt": "2026-07-07T00:00:00.000Z",
+        "occurredAt": "2026-07-07T19:00:00",
         "description": "示例超市 · 纸巾,家庭装 · 日用百货 · 银行卡",
         "amountMinor": -2880,
         "currency": "CNY",

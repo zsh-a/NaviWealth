@@ -18,7 +18,14 @@ import '../../../../core/ai/composition/proposal_plan.dart';
 import '../../ai_tools/local_skills/txn_classifier.dart'
     show expenseCategorySlugForHint;
 import '../domain/ingest_models.dart';
+import '../domain/ingest_source_reference.dart';
 import '../domain/minor_unit_amount.dart';
+import 'ingest_dedup.dart';
+
+typedef IngestDuplicateCheck = Future<DedupResult> Function(
+  IngestDraft draft, {
+  String? accountId,
+});
 
 class IngestConfirmException implements Exception {
   const IngestConfirmException(
@@ -46,6 +53,7 @@ enum IngestConfirmError {
   restoreFailed,
   lifecycleConflict,
   manualRecoveryRequired,
+  duplicateDetected,
 }
 
 enum IngestRecovery { retryOperation, finalizeApplied, restoreDraft }
@@ -186,11 +194,13 @@ class IngestConfirmService {
     required this.applier,
     required this.store,
     Uuid uuid = const Uuid(),
+    this.checkDuplicate,
   }) : _uuid = uuid;
 
   final ProposalApplier applier;
   final IngestDraftLifecycleStore store;
   final Uuid _uuid;
+  final IngestDuplicateCheck? checkDuplicate;
 
   /// Keeps transactions short enough for mobile SQLite while reducing a
   /// 100-row confirmation from 100 outer commits to four.
@@ -203,11 +213,58 @@ class IngestConfirmService {
   Future<ConfirmedIngestItem> confirm(
     IngestDraft draft, {
     required String fromAccountId,
+    bool allowDuplicate = false,
+  }) async {
+    if (checkDuplicate == null) {
+      return _confirm(
+        draft,
+        fromAccountId: fromAccountId,
+        allowDuplicate: allowDuplicate,
+      );
+    }
+    // The live check, reservation and write share the store's transaction.
+    // Commit durable recovery markers even when the operation reports failure.
+    IngestConfirmException? failure;
+    final item = await _runBatch(() async {
+      try {
+        return await _confirm(
+          draft,
+          fromAccountId: fromAccountId,
+          allowDuplicate: allowDuplicate,
+        );
+      } on IngestConfirmException catch (error) {
+        failure = error;
+        return null;
+      }
+    });
+    if (failure != null) throw failure!;
+    return item!;
+  }
+
+  Future<ConfirmedIngestItem> _confirm(
+    IngestDraft draft, {
+    required String fromAccountId,
+    required bool allowDuplicate,
   }) async {
     if (fromAccountId.isEmpty) {
       throw const IngestConfirmException(
         IngestConfirmError.accountRequired,
         'Select an account before recording this entry.',
+      );
+    }
+    final DedupResult? dedup;
+    try {
+      dedup = await checkDuplicate?.call(draft, accountId: fromAccountId);
+    } catch (_) {
+      throw const IngestConfirmException(
+        IngestConfirmError.applyFailed,
+        'Could not verify whether this entry was already recorded.',
+      );
+    }
+    if (!allowDuplicate && dedup != null && dedup.verdict.skipByDefault) {
+      throw const IngestConfirmException(
+        IngestConfirmError.duplicateDetected,
+        'A matching entry now exists. Review it before recording again.',
       );
     }
     final plan = planFor(draft, accountId: fromAccountId);
@@ -520,7 +577,13 @@ class IngestConfirmService {
         for (var index = chunkStart; index < chunkEnd; index++) {
           final draft = eligible[index];
           try {
-            confirmed.add(await confirm(draft, fromAccountId: fromAccountId));
+            confirmed.add(
+              await _confirm(
+                draft,
+                fromAccountId: fromAccountId,
+                allowDuplicate: false,
+              ),
+            );
           } on IngestConfirmException catch (error) {
             failures.add(IngestBatchItemFailure(item: draft, error: error));
           }
@@ -670,6 +733,10 @@ class IngestConfirmService {
         'date': draft.parsed.occurredAt.toUtc().toIso8601String(),
         'note': draft.parsed.description,
         'category': category,
+        'ingest_tags': ingestProvenanceTags(
+          kind: draft.parsed.kind.wire,
+          reference: draft.parsed.sourceReference,
+        ),
       },
     );
   }
@@ -696,6 +763,10 @@ class IngestConfirmService {
         'date': draft.parsed.occurredAt.toUtc().toIso8601String(),
         'note': draft.parsed.description,
         'category': category,
+        'ingest_tags': ingestProvenanceTags(
+          kind: draft.parsed.kind.wire,
+          reference: draft.parsed.sourceReference,
+        ),
       },
     );
   }

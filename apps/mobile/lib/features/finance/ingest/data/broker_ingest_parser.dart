@@ -5,6 +5,7 @@
 library;
 
 import '../domain/ingest_models.dart';
+import '../domain/ingest_source_reference.dart';
 import 'delimited_ingest_scalars.dart';
 
 enum _BrokerCol {
@@ -19,9 +20,18 @@ enum _BrokerCol {
   commission,
   fee,
   tax,
+  transactionId,
+  sourceAccount,
 }
 
 const Map<String, _BrokerCol> _brokerHeaderAliases = <String, _BrokerCol>{
+  'transactionid': _BrokerCol.transactionId,
+  'tradeid': _BrokerCol.transactionId,
+  '流水号': _BrokerCol.transactionId,
+  '成交编号': _BrokerCol.transactionId,
+  'clientaccountid': _BrokerCol.sourceAccount,
+  'accountnumber': _BrokerCol.sourceAccount,
+  '账号': _BrokerCol.sourceAccount,
   'date': _BrokerCol.date,
   'datetime': _BrokerCol.date,
   'date/time': _BrokerCol.date,
@@ -189,7 +199,8 @@ List<ParsedTransaction> _rowToBrokerTransactions(
     }
   }
 
-  final date = parseIngestDate(cell(_BrokerCol.date), allowChineseDate: false);
+  final rawDate = cell(_BrokerCol.date);
+  final date = parseIngestDate(rawDate, allowChineseDate: false);
   if (date == null) return const <ParsedTransaction>[];
 
   final type = cell(_BrokerCol.type);
@@ -309,7 +320,20 @@ List<ParsedTransaction> _rowToBrokerTransactions(
     );
   }
 
-  return rows;
+  final transactionId = cleanIngestReference(cell(_BrokerCol.transactionId));
+  return [
+    for (final row in rows)
+      row.copyWith(
+        dateHasTime: ingestDateHasTime(rawDate),
+        sourceReference: transactionId == null
+            ? null
+            : IngestSourceReference(
+                provider: 'broker',
+                transactionId: '$transactionId/${row.kind.wire}',
+                account: cleanIngestReference(cell(_BrokerCol.sourceAccount)),
+              ),
+      ),
+  ];
 }
 
 String? _brokerIncomeCategoryHint(String raw) {

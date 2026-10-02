@@ -47,7 +47,7 @@ void main() {
       );
 
       expect(rows, hasLength(1));
-      expect(rows.single.occurredAt, DateTime.utc(2026, 5, 10));
+      expect(rows.single.occurredAt, DateTime(2026, 5, 10, 0, 2).toUtc());
       expect(rows.single.description, '便利店 · 早餐 · 即时到账');
       expect(rows.single.amountMinor, -1230);
     });
@@ -71,7 +71,7 @@ void main() {
       );
 
       expect(rows, hasLength(2));
-      expect(rows[0].occurredAt, DateTime.utc(2026, 7, 10));
+      expect(rows[0].occurredAt, DateTime(2026, 7, 10, 12, 30, 1).toUtc());
       expect(rows[0].amountMinor, -3150);
       expect(rows[0].description, '示例餐厅 · 午餐 · 餐饮美食 · 余额');
       expect(rows[0].categoryHint, 'dining');

@@ -3336,6 +3336,8 @@
   "ingestUncategorized": "未分类",
   "ingestSkip": "跳过",
   "ingestConfirm": "记录",
+  "ingestRecordAnyway": "仍然记录",
+  "ingestDuplicateChanged": "发现匹配流水，重复检查结果已更新，请核对后再记录。",
   "ingestEditDraft": "修正字段",
   "ingestEditDescription": "描述",
   "ingestEditAmount": "金额",

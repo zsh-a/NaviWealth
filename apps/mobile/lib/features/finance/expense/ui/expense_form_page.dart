@@ -285,6 +285,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
           amount: amount,
           currency: currency,
           narration: note,
+          tagIds: initial?.entry.tagIds ?? const [],
         );
         if (initial == null) {
           return journalRepo.createWithReceipt(

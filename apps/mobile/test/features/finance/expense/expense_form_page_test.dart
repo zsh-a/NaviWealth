@@ -24,6 +24,7 @@ import 'package:naviwealth/features/finance/expense/data/expense_category_provid
 import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_category_picker.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_source_reference.dart';
 import 'package:naviwealth/features/finance/shared/ui/forms/forms.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -684,9 +685,14 @@ void main() {
     await tester.pump(const Duration(seconds: 7));
   });
 
-  testWidgets('expense edit success Undo restores the prior amount', (
-    tester,
-  ) async {
+  testWidgets('expense edit Undo preserves import identity', (tester) async {
+    final sourceTags = ingestProvenanceTags(
+      kind: 'expense',
+      reference: const IngestSourceReference(
+        provider: 'wechatPay',
+        transactionId: 'expense-1001',
+      ),
+    );
     final build = JournalEntryBuilders.expense(
       date: DateTime.utc(2026, 3, 1),
       expenseAccountId: 'dining',
@@ -694,6 +700,7 @@ void main() {
       amount: Decimal.parse('15'),
       currency: 'CNY',
       narration: 'Original expense',
+      tagIds: sourceTags,
     );
     final original = await harness.repository.create(
       entry: build.entry,
@@ -721,6 +728,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final edited = (await harness.repository.getById(original.entry.id))!;
+    expect(edited.entry.tagIds, sourceTags);
     expect(
       edited.postings
           .firstWhere((posting) => posting.units > Decimal.zero)
@@ -732,6 +740,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final restored = (await harness.repository.getById(original.entry.id))!;
+    expect(restored.entry.tagIds, sourceTags);
     expect(restored.entry.narration, 'Original expense');
     expect(
       restored.postings

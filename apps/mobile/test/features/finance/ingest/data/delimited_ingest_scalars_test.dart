@@ -2,6 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/features/finance/ingest/data/delimited_ingest_scalars.dart';
 
 void main() {
+  test('preserves statement timestamps and explicit timezone offsets', () {
+    expect(
+      parseIngestDate('2026-06-18 10:30:45'),
+      DateTime(2026, 6, 18, 10, 30, 45).toUtc(),
+    );
+    expect(
+      parseIngestDate('2026-06-18T10:30:45+08:00'),
+      DateTime.utc(2026, 6, 18, 2, 30, 45),
+    );
+    expect(
+      parseIngestDate('2026年6月18日 10:30:45'),
+      DateTime(2026, 6, 18, 10, 30, 45).toUtc(),
+    );
+    expect(parseIngestDate('2026-06-18'), DateTime.utc(2026, 6, 18));
+  });
+
   test('parses common statement amount decorations exactly', () {
     expect(parseIngestAmountMinor(r'$1,234.50'), 123450);
     expect(parseIngestAmountMinor('(50.05)'), -5005);

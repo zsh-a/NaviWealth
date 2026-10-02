@@ -8,6 +8,7 @@ library;
 
 import '../domain/ingest_models.dart';
 import '../domain/ingest_parse_diagnostics.dart';
+import '../domain/ingest_source_reference.dart';
 import 'delimited_ingest_scalars.dart';
 
 /// Header tokens (lower-cased, CJK included) that map a column to a role.
@@ -93,6 +94,18 @@ const Map<String, _Col> _headerAliases = <String, _Col>{
   '收/付款方式': _Col.paymentMethod,
   '交易渠道': _Col.paymentMethod,
   '账户': _Col.paymentMethod,
+  '交易单号': _Col.transactionId,
+  '交易订单号': _Col.transactionId,
+  '交易号': _Col.transactionId,
+  '流水号': _Col.transactionId,
+  'transactionid': _Col.transactionId,
+  'reference': _Col.transactionId,
+  '商户单号': _Col.merchantOrderId,
+  '商家订单号': _Col.merchantOrderId,
+  'accountnumber': _Col.sourceAccount,
+  '账户号': _Col.sourceAccount,
+  '账号': _Col.sourceAccount,
+  '卡号': _Col.sourceAccount,
 };
 
 enum _Col {
@@ -107,6 +120,9 @@ enum _Col {
   status,
   type,
   paymentMethod,
+  transactionId,
+  merchantOrderId,
+  sourceAccount,
 }
 
 /// Parse a CSV/TSV ledger dump. Rows that don't yield a valid date *and*
@@ -220,7 +236,8 @@ _rowToTransaction(
     return null;
   }
 
-  final date = parseIngestDate(cell(_Col.date));
+  final rawDate = cell(_Col.date);
+  final date = parseIngestDate(rawDate);
   if (date == null) {
     return (transaction: null, issue: IngestParseIssueCode.invalidDate);
   }
@@ -280,12 +297,35 @@ _rowToTransaction(
           : -minor.abs(),
       currency: currency.isEmpty ? defaultCurrency : currency,
       occurredAt: date,
+      dateHasTime: ingestDateHasTime(rawDate),
+      sourceReference: _sourceReference(
+        cell(_Col.transactionId),
+        cell(_Col.merchantOrderId),
+        cell(_Col.sourceAccount),
+      ),
       kind: kind,
       categoryHint: kind == IngestTransactionKind.income
           ? _incomeCategoryHint(description)
           : null,
     ),
     issue: null,
+  );
+}
+
+IngestSourceReference? _sourceReference(
+  String? transactionId,
+  String? merchantOrderId,
+  String? account,
+) {
+  final merchantId = cleanIngestReference(merchantOrderId);
+  final id =
+      cleanIngestReference(transactionId) ??
+      (merchantId == null ? null : 'merchant:$merchantId');
+  if (id == null) return null;
+  return IngestSourceReference(
+    provider: 'generic',
+    transactionId: id,
+    account: cleanIngestReference(account),
   );
 }
 

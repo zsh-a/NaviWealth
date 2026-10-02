@@ -10458,6 +10458,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestConfirm => '记录';
 
   @override
+  String get ingestRecordAnyway => '仍然记录';
+
+  @override
+  String get ingestDuplicateChanged => '发现匹配流水，重复检查结果已更新，请核对后再记录。';
+
+  @override
   String get ingestEditDraft => '修正字段';
 
   @override

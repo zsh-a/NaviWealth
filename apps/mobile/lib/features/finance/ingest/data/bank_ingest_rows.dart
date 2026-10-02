@@ -15,7 +15,8 @@ ParsedTransaction? _rowToBankTransaction(
     return null;
   }
 
-  final date = parseIngestDate(cell(_BankCol.date));
+  final rawDate = cell(_BankCol.date);
+  final date = parseIngestDate(rawDate);
   if (date == null) return null;
   if (_shouldSkipByStatus(cell(_BankCol.status))) return null;
 
@@ -66,6 +67,14 @@ ParsedTransaction? _rowToBankTransaction(
         : -minor.abs(),
     currency: currency.isEmpty ? defaultCurrency : currency,
     occurredAt: date,
+    dateHasTime: ingestDateHasTime(rawDate),
+    sourceReference: cleanIngestReference(cell(_BankCol.transactionId)) == null
+        ? null
+        : IngestSourceReference(
+            provider: 'bank',
+            transactionId: cleanIngestReference(cell(_BankCol.transactionId))!,
+            account: cleanIngestReference(cell(_BankCol.sourceAccount)),
+          ),
     kind: resolvedKind,
     categoryHint: resolvedKind == IngestTransactionKind.transfer
         ? null

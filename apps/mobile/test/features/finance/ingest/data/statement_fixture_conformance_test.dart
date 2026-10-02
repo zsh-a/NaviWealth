@@ -94,7 +94,16 @@ void main() {
               },
             )
             .toList(),
-        _requiredMapList(expected, 'rows'),
+        _requiredMapList(expected, 'rows')
+            .map(
+              (row) => <String, Object?>{
+                ...row,
+                'occurredAt': DateTime.parse(_requiredString(row, 'occurredAt'))
+                    .toUtc()
+                    .toIso8601String(),
+              },
+            )
+            .toList(),
       );
       expect(
         report.ledger.issues

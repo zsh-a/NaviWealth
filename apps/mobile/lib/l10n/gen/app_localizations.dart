@@ -18602,6 +18602,18 @@ abstract class AppLocalizations {
   /// **'Record'**
   String get ingestConfirm;
 
+  /// Explicitly record a draft despite its duplicate warning
+  ///
+  /// In en, this message translates to:
+  /// **'Record anyway'**
+  String get ingestRecordAnyway;
+
+  /// A live duplicate check blocked a previously new draft
+  ///
+  /// In en, this message translates to:
+  /// **'A matching entry was found. The duplicate check has been updated; review it before recording.'**
+  String get ingestDuplicateChanged;
+
   /// No description provided for @ingestEditDraft.
   ///
   /// In en, this message translates to:

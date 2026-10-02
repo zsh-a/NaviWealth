@@ -120,18 +120,20 @@ class IngestDraftStore implements IngestDraftBatchLifecycleStore {
   }
 
   Future<List<IngestReviewItem>> listPendingReviewItems({
-    int limit = 200,
+    int? limit = 200,
   }) async {
+    final orderAndLimit = limit == null
+        ? 'ORDER BY created_at_iso ASC, rowid ASC'
+        : 'ORDER BY created_at_iso DESC, rowid ASC LIMIT ?4';
     final rows = await _db
         .customSelect(
           'SELECT * FROM ingest_drafts '
-          'WHERE owner_user_id = ?1 AND status IN (?2, ?3) '
-          'ORDER BY created_at_iso DESC LIMIT ?4',
+          'WHERE owner_user_id = ?1 AND status IN (?2, ?3) $orderAndLimit',
           variables: [
             Variable.withString(_owner),
             Variable.withString(DraftStatus.pending.wire),
             Variable.withString(DraftStatus.confirming.wire),
-            Variable.withInt(limit),
+            if (limit != null) Variable.withInt(limit),
           ],
         )
         .get();
@@ -201,9 +203,10 @@ class IngestDraftStore implements IngestDraftBatchLifecycleStore {
   }) async {
     final changed = await _db.customUpdate(
       'UPDATE ingest_drafts SET parsed_json = ?1, confidence = ?2, '
+      "dedup_verdict = 'likelyDuplicate', dedup_target_entry_id = NULL, "
       'revision = revision + 1 '
       'WHERE draft_id = ?3 AND owner_user_id = ?4 AND status = ?5 '
-      'AND revision = ?6',
+      'AND revision = ?6 AND recovery_kind IS NULL AND operation_token IS NULL',
       variables: [
         Variable.withString(jsonEncode(parsed.toJson())),
         Variable.withReal(parsed.confidence),
@@ -215,6 +218,30 @@ class IngestDraftStore implements IngestDraftBatchLifecycleStore {
     );
     if (changed == 1) _notify();
     return changed == 1;
+  }
+
+  /// Refresh derived review evidence without overwriting a concurrent edit,
+  /// reservation, or recovery continuation. Unchanged evidence is a no-op.
+  Future<void> updateDedup(
+    IngestDraft draft, {
+    required DedupVerdict verdict,
+    required String? targetId,
+  }) async {
+    final changed = await _db.customUpdate(
+      'UPDATE ingest_drafts SET dedup_verdict = ?1, '
+      'dedup_target_entry_id = ?2, revision = revision + 1 '
+      "WHERE owner_user_id = ?3 AND draft_id = ?4 AND status = 'pending' "
+      'AND revision = ?5 AND recovery_kind IS NULL AND operation_token IS NULL '
+      'AND (dedup_verdict != ?1 OR dedup_target_entry_id IS NOT ?2)',
+      variables: [
+        Variable.withString(verdict.wire),
+        _nullableString(targetId),
+        Variable.withString(_owner),
+        Variable.withString(draft.draftId),
+        Variable.withInt(draft.revision),
+      ],
+    );
+    if (changed == 1) _notify();
   }
 
   @override

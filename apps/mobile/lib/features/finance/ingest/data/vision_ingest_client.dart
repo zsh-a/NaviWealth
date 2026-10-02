@@ -11,6 +11,7 @@
 library;
 
 import '../domain/ingest_models.dart';
+import 'delimited_ingest_scalars.dart';
 
 class VisionIngestException implements Exception {
   VisionIngestException(this.message);
@@ -51,11 +52,9 @@ ParsedTransaction? parsedTransactionFromWire(Map<String, Object?> row) {
   // Backend sends date-only `YYYY-MM-DD`; pin to the UTC calendar day
   // (same convention as csv_ingest_parser) so a +08:00 runner doesn't
   // shift it to the previous day.
-  final occurredAt = DateTime.utc(
-    parsedDate.year,
-    parsedDate.month,
-    parsedDate.day,
-  );
+  final occurredAt = ingestDateHasTime(occurredRaw)
+      ? parsedDate.toUtc()
+      : DateTime.utc(parsedDate.year, parsedDate.month, parsedDate.day);
 
   final hint = (row['category_hint'] as String?)?.trim();
   return ParsedTransaction(
@@ -67,6 +66,7 @@ ParsedTransaction? parsedTransactionFromWire(Map<String, Object?> row) {
     amountMinor: -amount.abs(),
     currency: currency.toUpperCase(),
     occurredAt: occurredAt.toUtc(),
+    dateHasTime: ingestDateHasTime(occurredRaw),
     categoryHint: (hint == null || hint.isEmpty) ? null : hint,
     confidence: (row['confidence'] as num?)?.toDouble() ?? 0.6,
   );

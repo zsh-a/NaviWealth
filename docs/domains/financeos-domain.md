@@ -74,6 +74,34 @@ minor units and must route decimal parsing and formatting through
 `features/finance/ingest/domain/minor_unit_amount.dart` without floating-point
 rounding.
 
+### Statement Import Reconciliation
+
+Ingest keeps provider transaction ids and source-account namespaces separate
+from display descriptions. Confirmed entries retain opaque source-identity
+hashes in the journal's existing synced tags. A source identity establishes a
+duplicate even when a later export corrects the description, amount or date;
+different ids in the same source account remain distinct events.
+Bank/broker references require a known source account before they can establish
+identity; account-less counters fall back to conservative transaction matching.
+
+Without an identity, a certain match requires the same signed amount, currency,
+kind, full normalized description and instant. Draft-to-draft matching never
+uses settlement-date drift, and matched rows do not extend the batch's candidate
+chain. Parsers preserve time components and explicit timezone offsets; timestamps
+without an offset use device-local time, while date-only rows retain calendar
+dates. Imprecise manual ledger dates may yield a likely match within three days;
+already imported structured entries do not use date drift.
+near amounts must satisfy both the 100-minor-unit and one-percent limits.
+Shared product categories or payment channels alone are not matching evidence.
+
+Dedup reads all owner-scoped pending/confirming drafts independently of the
+review page's display limit and includes transfer/trade cash legs in ledger
+evidence. Edits, lifecycle changes and ledger updates refresh derived review
+marks. The final commit checks current evidence in its local transaction;
+batch confirmation does not override duplicates, while a single reviewed item
+can be explicitly recorded anyway. Recovery reservations and Undo retain their
+existing fail-closed lifecycle semantics.
+
 ### Investment Interaction
 
 The Plan hub keeps cash safety and goals/contributions visible. Advanced

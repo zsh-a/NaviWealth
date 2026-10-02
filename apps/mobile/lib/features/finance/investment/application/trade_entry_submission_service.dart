@@ -193,6 +193,7 @@ class TradeEntrySubmissionService {
     final journal = _withEntryId(
       _journalBuild(request, prepared.assetInput, plan, uid),
       prepared.transactionId,
+      request.journalTags,
     );
     if (journal.entry.id != prepared.transactionId) {
       throw const TradeSubmissionContractError(
@@ -770,7 +771,11 @@ class TradeEntrySubmissionService {
     );
   }
 
-  JournalEntryBuild _withEntryId(JournalEntryBuild build, String id) {
+  JournalEntryBuild _withEntryId(
+    JournalEntryBuild build,
+    String id,
+    List<String> journalTags,
+  ) {
     final entry = build.entry;
     return JournalEntryBuild(
       entry: JournalEntryDraft(
@@ -779,7 +784,7 @@ class TradeEntrySubmissionService {
         settledOn: entry.settledOn,
         narration: entry.narration,
         payee: entry.payee,
-        tagIds: entry.tagIds,
+        tagIds: [...entry.tagIds, ...journalTags],
         flag: entry.flag,
       ),
       postings: build.postings,
@@ -870,6 +875,7 @@ class TradeEntrySubmissionRequest {
     this.fee,
     this.tax,
     this.note,
+    this.journalTags = const [],
   });
 
   final String transactionId;
@@ -890,5 +896,6 @@ class TradeEntrySubmissionRequest {
   final Decimal? fee;
   final Decimal? tax;
   final String? note;
+  final List<String> journalTags;
   final String Function(Asset asset) defaultNarration;
 }

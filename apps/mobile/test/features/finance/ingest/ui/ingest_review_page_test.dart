@@ -10,18 +10,26 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
+import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/shell/master_detail_layout.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_feedback.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_policy.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_capture_source.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_dedup.dart';
+import 'package:naviwealth/features/finance/ingest/data/ingest_dedup_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
@@ -30,6 +38,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+import '../../data/repositories/_stub_stamper.dart';
 
 late SharedPreferences _sharedPreferences;
 
@@ -186,6 +195,7 @@ IngestDraft _draft({
 );
 
 Widget _app({
+  required AppDatabase db,
   required IngestDraftStore store,
   required IngestConfirmService service,
   bool failLedgerRead = false,
@@ -198,9 +208,26 @@ Widget _app({
   List<IngestSource>? ingestedSources,
   IngestCaptureFeedbackQueue? captureFeedbackQueue,
 }) {
+  final repository = JournalEntryRepository(
+    db: db,
+    outbox: DriftOutboxStore(db),
+    stamper: makeStubStamper(),
+    fxRateSource: const IdentityFxRateSource(),
+    baseCurrency: 'CNY',
+  );
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(_sharedPreferences),
+      appDatabaseProvider.overrideWith((_) async => db),
+      activeUserIdProvider.overrideWith((_) => 'u1'),
+      ingestDedupServiceProvider.overrideWith(
+        (_) async => IngestDedupService(store: store, repository: repository),
+      ),
+      journalEntriesWithPostingsStreamProvider.overrideWith(
+        (_) => Stream.value(const []),
+      ),
+      if (!failLedgerRead)
+        journalEntryRepositoryProvider.overrideWith((_) async => repository),
       ingestDraftStoreProvider.overrideWithValue(store),
       ingestConfirmServiceProvider.overrideWith((_) async => service),
       accountsStreamProvider.overrideWith(
@@ -275,6 +302,42 @@ Future<void> _settleUntil(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  testWidgets('duplicate records require the explicit Record anyway action', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(1440, 900)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft(id: 'original'), _draft(id: 'repeat')]);
+    final applier = _RecordingApplier();
+    final service = IngestConfirmService(
+      applier: applier,
+      store: store,
+      checkDuplicate: (draft, {accountId}) async => const DedupResult(
+        verdict: DedupVerdict.duplicate,
+        targetEntryId: 'original',
+      ),
+    );
+    await tester.pumpWidget(
+      _app(db: db, store: store, service: service, accounts: [_account]),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('ingest-master-repeat')));
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(AppActionButton, 'Record anyway'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(AppActionButton, 'Record anyway'));
+    await tester.pumpAndSettle();
+    expect(applier.applyCount, 1);
+    expect(await store.countByStatus(DraftStatus.confirmed), 1);
+  });
+
   setUpAll(() async {
     SharedPreferences.setMockInitialValues({});
     _sharedPreferences = await SharedPreferences.getInstance();
@@ -299,7 +362,7 @@ void main() {
         store: store,
       );
       await tester.pumpWidget(
-        _app(store: store, service: service, accounts: [_account]),
+        _app(db: db, store: store, service: service, accounts: [_account]),
       );
       await tester.pumpAndSettle();
 
@@ -340,7 +403,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _app(store: store, service: service, accounts: [_account]),
+        _app(db: db, store: store, service: service, accounts: [_account]),
       );
       await tester.pumpAndSettle();
 
@@ -381,7 +444,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
 
@@ -409,7 +472,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(AppActionButton, 'Skip'));
@@ -441,7 +504,7 @@ void main() {
     final applier = _RecordingApplier();
     final service = IngestConfirmService(applier: applier, store: store);
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
 
@@ -474,7 +537,12 @@ void main() {
     addTearDown(loading.close);
 
     await tester.pumpWidget(
-      _app(store: store, service: service, accountsStream: loading.stream),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        accountsStream: loading.stream,
+      ),
     );
     await tester.pump();
     expect(find.text('Take photo'), findsOneWidget);
@@ -483,6 +551,7 @@ void main() {
 
     await tester.pumpWidget(
       _app(
+        db: db,
         store: store,
         service: service,
         accountsStream: Stream.error(StateError('accounts unavailable')),
@@ -515,6 +584,7 @@ void main() {
 
     await tester.pumpWidget(
       _app(
+        db: db,
         store: store,
         service: service,
         touch: true,
@@ -564,6 +634,7 @@ void main() {
 
     await tester.pumpWidget(
       _app(
+        db: db,
         store: store,
         service: service,
         accounts: accounts,
@@ -593,7 +664,7 @@ void main() {
       applier: const _NoopApplier(),
       store: store,
     );
-    await tester.pumpWidget(_app(store: store, service: service));
+    await tester.pumpWidget(_app(db: db, store: store, service: service));
     await tester.pumpAndSettle();
 
     await _tapCaptureOption(tester, 'Paste text');
@@ -615,7 +686,7 @@ void main() {
       store: store,
     );
     await tester.pumpWidget(
-      _app(store: store, service: service, captureTextLimit: 16),
+      _app(db: db, store: store, service: service, captureTextLimit: 16),
     );
     await tester.pumpAndSettle();
 
@@ -639,7 +710,12 @@ void main() {
     );
     final captureSource = _FixedCaptureSource(const IngestCaptureCancelled());
     await tester.pumpWidget(
-      _app(store: store, service: service, captureSource: captureSource),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        captureSource: captureSource,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -685,7 +761,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _app(store: store, service: service, captureFeedbackQueue: feedbackQueue),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        captureFeedbackQueue: feedbackQueue,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -712,7 +793,12 @@ void main() {
     );
     final feedbackQueue = IngestCaptureFeedbackQueue();
     await tester.pumpWidget(
-      _app(store: store, service: service, captureFeedbackQueue: feedbackQueue),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        captureFeedbackQueue: feedbackQueue,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -742,7 +828,12 @@ void main() {
     );
     final captureSource = _DelayedCaptureSource();
     await tester.pumpWidget(
-      _app(store: store, service: service, captureSource: captureSource),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        captureSource: captureSource,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -775,7 +866,12 @@ void main() {
     );
     final ingestedSources = <IngestSource>[];
     await tester.pumpWidget(
-      _app(store: store, service: service, ingestedSources: ingestedSources),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        ingestedSources: ingestedSources,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -832,7 +928,12 @@ void main() {
       ),
     );
     await tester.pumpWidget(
-      _app(store: store, service: service, captureSource: captureSource),
+      _app(
+        db: db,
+        store: store,
+        service: service,
+        captureSource: captureSource,
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -855,7 +956,7 @@ void main() {
       store: store,
     );
     await tester.pumpWidget(
-      _app(store: store, service: service, failLedgerRead: true),
+      _app(db: db, store: store, service: service, failLedgerRead: true),
     );
     await tester.pumpAndSettle();
 
@@ -884,7 +985,7 @@ void main() {
       applier: const _NoopApplier(),
       store: store,
     );
-    await tester.pumpWidget(_app(store: store, service: service));
+    await tester.pumpWidget(_app(db: db, store: store, service: service));
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
@@ -910,7 +1011,7 @@ void main() {
     final applier = _RecordingApplier();
     final service = IngestConfirmService(applier: applier, store: store);
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
 
@@ -936,7 +1037,7 @@ void main() {
       final lifecycle = _FailingLifecycleStore(store, confirmFailures: 1);
       final service = IngestConfirmService(applier: applier, store: lifecycle);
       await tester.pumpWidget(
-        _app(store: store, service: service, accounts: [_account]),
+        _app(db: db, store: store, service: service, accounts: [_account]),
       );
       await tester.pumpAndSettle();
 
@@ -953,7 +1054,7 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
       await tester.pumpWidget(
-        _app(store: store, service: service, accounts: [_account]),
+        _app(db: db, store: store, service: service, accounts: [_account]),
       );
       await tester.pumpAndSettle();
       expect(find.widgetWithText(AppActionButton, 'Record'), findsNothing);
@@ -986,7 +1087,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
 
@@ -1015,7 +1116,7 @@ void main() {
     final service = IngestConfirmService(applier: applier, store: lifecycle);
 
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Confirm all · new only (2)'));
@@ -1065,6 +1166,7 @@ void main() {
     ]);
     await tester.pumpWidget(
       _app(
+        db: db,
         store: store,
         service: service,
         captureSource: captureSource,
@@ -1097,7 +1199,7 @@ void main() {
     final lifecycle = _FailingLifecycleStore(store, pendingFailures: 1);
     final service = IngestConfirmService(applier: applier, store: lifecycle);
     await tester.pumpWidget(
-      _app(store: store, service: service, accounts: [_account]),
+      _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
 
