@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -104,6 +105,7 @@ Future<Widget> _wrap({
   String? editingId,
   double keyboardInset = 0,
   Future<JournalEntryRepository>? repositoryFuture,
+  Future<JournalEntryRepository> Function()? repositoryFactory,
   Stream<List<Account>>? accountsStream,
   Stream<List<Account>>? allAccountsStream,
 }) async {
@@ -113,8 +115,12 @@ Future<Widget> _wrap({
   return ProviderScope(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(harness.prefs),
+      activeUserIdProvider.overrideWithValue('u-test'),
       journalEntryRepositoryProvider.overrideWith(
-        (_) => repositoryFuture ?? Future.value(harness.repository),
+        (_) =>
+            repositoryFactory?.call() ??
+            repositoryFuture ??
+            Future.value(harness.repository),
       ),
       accountsStreamProvider.overrideWith(
         (_) => accountsStream ?? Stream.value(accounts),
@@ -212,6 +218,99 @@ void main() {
   tearDown(() async {
     await harness.dispose();
   });
+
+  testWidgets('unfinished expense input survives an interrupted page', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    Future<Widget> page() => _wrap(
+      harness: harness,
+      preferences: const {},
+      accounts: [
+        _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+      ],
+      allAccounts: [
+        _account(id: 'dining', name: 'Dining', category: AccountSide.expense),
+      ],
+    );
+    await tester.pumpWidget(await page());
+    await tester.pumpAndSettle();
+    await tester.enterText(_amountInput(), '12.50');
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(await page());
+    await tester.pumpAndSettle();
+    expect(find.text('Restore draft'), findsOneWidget);
+    await tester.tap(find.text('Restore draft'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<EditableText>(_amountInput()).controller.text,
+      '12.50',
+    );
+    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.pumpAndSettle();
+    expect(
+      LocalFormDraftStore(
+        harness.prefs,
+        owner: 'u-test',
+      ).read('finance.expense.new'),
+      isNull,
+    );
+    expect(
+      await harness.db.select(harness.db.journalEntries).get(),
+      hasLength(1),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'edit load failure ends loading and retry hydrates the existing record',
+    (tester) async {
+      final build = JournalEntryBuilders.expense(
+        date: DateTime.utc(2026, 3, 1),
+        expenseAccountId: 'dining',
+        fromAccountId: 'cash-1',
+        amount: Decimal.parse('15'),
+        currency: 'CNY',
+      );
+      final original = await harness.repository.create(
+        entry: build.entry,
+        postings: build.postings,
+      );
+      var attempts = 0;
+      await tester.pumpWidget(
+        await _wrap(
+          harness: harness,
+          editingId: original.entry.id,
+          preferences: const {},
+          accounts: [
+            _account(id: 'cash-1', name: 'Cash', category: AccountSide.asset),
+          ],
+          allAccounts: [
+            _account(
+              id: 'dining',
+              name: 'Dining',
+              category: AccountSide.expense,
+            ),
+          ],
+          repositoryFactory: () {
+            if (++attempts == 1) throw StateError('temporary failure');
+            return Future.value(harness.repository);
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AppEmptyState), findsOneWidget);
+      expect(find.byType(FCircularProgress), findsNothing);
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+      expect(attempts, 2);
+      expect(find.byType(AppEmptyState), findsNothing);
+      expect(tester.widget<EditableText>(_amountInput()).controller.text, '15');
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('expense creation derives currency from the remembered account', (
     tester,

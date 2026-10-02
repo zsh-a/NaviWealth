@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../design_system/preferences/theme_preferences.dart';
 import '../auth/current_user.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
+import '../forms/local_form_draft.dart';
 import '../lifeos/domain_pack.dart';
 import '../logging/providers.dart';
 import '../persistence/providers.dart';
@@ -28,11 +30,16 @@ final dataManagementServiceProvider = FutureProvider<DataManagementService>((
         .whereType<DomainDataManagementSpec>()
         .toList(growable: false);
     stage = 'create_service';
+    final container = ref.container;
     return DataManagementService(
       database: database,
       ownerUserId: ownerUserId,
       specs: specs,
       logger: logger,
+      clearLocalDrafts: (scope) => LocalFormDraftStore(
+        container.read(sharedPreferencesProvider),
+        owner: ownerUserId,
+      ).clearDomain(scope.wire),
       agentIdsByDomain: <DomainScope, List<String>>{
         for (final pack in packs)
           pack.scope: pack.agentPresentationSpecs

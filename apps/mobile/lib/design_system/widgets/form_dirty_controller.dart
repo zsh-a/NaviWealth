@@ -21,6 +21,10 @@ class FormDirtyController extends ChangeNotifier {
 
   bool get isDirty => _dirty;
 
+  /// Optional host cleanup after an explicit discard, such as removing a
+  /// device-local autosaved draft. Ordinary dismissal must not invoke this.
+  VoidCallback? onDiscard;
+
   /// Whether a submit is currently in flight. While true the guard
   /// swallows every dismissal vector so a half-written record can't be
   /// abandoned mid-write.

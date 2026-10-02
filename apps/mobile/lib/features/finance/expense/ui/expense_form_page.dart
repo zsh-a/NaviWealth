@@ -42,7 +42,10 @@ class ExpenseFormPage extends ConsumerStatefulWidget {
 }
 
 class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
-    with FormSubmission<ExpenseFormPage>, FormDirtyGuard<ExpenseFormPage> {
+    with
+        FormSubmission<ExpenseFormPage>,
+        FormDirtyGuard<ExpenseFormPage>,
+        WidgetsBindingObserver {
   @override
   String get leaveFallback => FinanceRoutes.expenseActivity;
 
@@ -61,6 +64,8 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   bool _advancedExpanded = false;
   bool _busy = false;
   JournalEntryWithPostings? _initial;
+  String? _loadError;
+  LocalFormDraftSession? _draftSession;
   bool _paymentAccountsHydrated = false;
   bool _categoriesHydrated = false;
   bool _currencyExplicitlySelected = false;
@@ -75,6 +80,17 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     _date = ref.read(formClockProvider)();
     _currency = ref.read(baseCurrencyProvider);
     dirty.bindTextControllers([_amountController, _noteController]);
+    WidgetsBinding.instance.addObserver(this);
+    if (!widget.isEdit) {
+      final store = ref.read(localFormDraftStoreProvider);
+      if (store != null) {
+        _draftSession = LocalFormDraftSession(store, 'finance.expense.new');
+      }
+      _amountController.addListener(_captureDraft);
+      _noteController.addListener(_captureDraft);
+      dirty.addListener(_captureDraft);
+      dirty.onDiscard = () => _draftSession?.complete();
+    }
     if (widget.isEdit) {
       _loadInitial();
     } else {
@@ -165,51 +181,111 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 
   Future<void> _loadInitial() async {
-    final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
-    final existing = await journalRepo.getById(widget.expenseId!);
-    if (existing == null) {
+    setState(() => _loadError = null);
+    try {
+      final journalRepo = await ref.read(journalEntryRepositoryProvider.future);
+      final existing = await journalRepo.getById(widget.expenseId!);
+      if (existing == null) {
+        if (!mounted) return;
+        final l10n = AppLocalizations.of(context);
+        setState(() => _loadError = l10n.expenseFormLoadError);
+        return;
+      }
       if (!mounted) return;
-      final l10n = AppLocalizations.of(context);
-      AppMessenger.show(context, ToastKind.error, l10n.expenseFormLoadError);
-      popOrGo(context, fallback: FinanceRoutes.expenseActivity);
-      return;
-    }
-    if (!mounted) return;
-    String? expenseAccountId;
-    String? fromAccountId;
-    Decimal amount = Decimal.zero;
-    String currency = 'CNY';
-    for (final p in existing.postings) {
-      if (p.units > Decimal.zero) {
-        expenseAccountId = p.accountId;
-        amount = p.units;
-        currency = p.unit;
-      } else {
-        fromAccountId = p.accountId;
+      String? expenseAccountId;
+      String? fromAccountId;
+      Decimal amount = Decimal.zero;
+      String currency = 'CNY';
+      for (final p in existing.postings) {
+        if (p.units > Decimal.zero) {
+          expenseAccountId = p.accountId;
+          amount = p.units;
+          currency = p.unit;
+        } else {
+          fromAccountId = p.accountId;
+        }
+      }
+      final categories = await ref.read(expenseCategoriesProvider.future);
+      final category = categories
+          .where((item) => item.ledgerAccountId == expenseAccountId)
+          .firstOrNull;
+      if (!mounted) return;
+      setState(() {
+        _initial = existing;
+        _amountController.text = amount.toString();
+        _noteController.text = existing.entry.narration;
+        _categoryId = category?.id;
+        _fromAccountId = fromAccountId;
+        _currency = currency;
+        _date = existing.entry.date;
+        // Surface optional fields when the record already carries them.
+        _advancedExpanded = existing.entry.narration.trim().isNotEmpty;
+      });
+      _hydratePaymentAccounts(
+        ref.read(accountsStreamProvider).value ?? const [],
+      );
+      _hydrateCategories(
+        ref.read(expenseCategoriesProvider).value ?? const <ExpenseCategory>[],
+      );
+      // Hydrating an existing record is not a user edit.
+      dirty.snapshotBaseline();
+    } catch (error) {
+      if (mounted) {
+        setState(() => _loadError = userSafeErrorMessage(context, error));
       }
     }
-    final categories = await ref.read(expenseCategoriesProvider.future);
-    final category = categories
-        .where((item) => item.ledgerAccountId == expenseAccountId)
-        .firstOrNull;
-    if (!mounted) return;
-    setState(() {
-      _initial = existing;
-      _amountController.text = amount.toString();
-      _noteController.text = existing.entry.narration;
-      _categoryId = category?.id;
-      _fromAccountId = fromAccountId;
-      _currency = currency;
-      _date = existing.entry.date;
-      // Surface optional fields when the record already carries them.
-      _advancedExpanded = existing.entry.narration.trim().isNotEmpty;
+  }
+
+  void _captureDraft() {
+    if (!dirty.isDirty || _busy) return;
+    _draftSession?.capture({
+      'amount': _amountController.text,
+      'note': _noteController.text,
+      'category': _categoryId,
+      'account': _fromAccountId,
+      'currency': _currency,
+      'date': _date.toIso8601String(),
+      'advanced': _advancedExpanded,
     });
-    _hydratePaymentAccounts(ref.read(accountsStreamProvider).value ?? const []);
-    _hydrateCategories(
-      ref.read(expenseCategoriesProvider).value ?? const <ExpenseCategory>[],
-    );
-    // Hydrating an existing record is not a user edit.
-    dirty.snapshotBaseline();
+  }
+
+  void _restoreDraft() {
+    final session = _draftSession;
+    final payload = session?.pending;
+    if (session == null || payload == null) return;
+    session.accept();
+    setState(() {
+      _amountController.text = payload['amount'] is String
+          ? payload['amount']! as String
+          : '';
+      _noteController.text = payload['note'] is String
+          ? payload['note']! as String
+          : '';
+      _categoryId = payload['category'] is String
+          ? payload['category']! as String
+          : null;
+      _fromAccountId = payload['account'] is String
+          ? payload['account']! as String
+          : null;
+      _currency = payload['currency'] is String
+          ? payload['currency']! as String
+          : _currency;
+      _date =
+          DateTime.tryParse(
+            payload['date'] is String ? payload['date']! as String : '',
+          ) ??
+          _date;
+      _advancedExpanded = payload['advanced'] == true;
+      _paymentAccountsHydrated = true;
+      _categoriesHydrated = true;
+    });
+    dirty.markDirty();
+    _captureDraft();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _draftSession?.flush();
   }
 
   Future<void> _save() async {
@@ -256,6 +332,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
       onBusyChanged: _setBusy,
       leaveFallback: FinanceRoutes.expenseActivity,
       tag: 'expense',
+      onCommitted: (_) => _draftSession?.complete(),
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
       undo: FormUndoPresentation<JournalMutationReceipt>(
@@ -346,6 +423,9 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _draftSession?.dispose();
+    dirty.removeListener(_captureDraft);
     _paymentAccountsSubscription.close();
     _categoriesSubscription.close();
     _amountController.dispose();
@@ -386,6 +466,7 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
 
   @override
   Widget build(BuildContext context) {
+    _captureDraft();
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
     final onSubmit = _busy ? null : _save;
@@ -410,8 +491,27 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
               onPress: _busy ? null : _delete,
             ),
         ],
-        child: loadingExisting
+        child: _loadError != null
+            ? AppEmptyState.error(
+                title: l10n.commonLoadFailed,
+                message: _loadError!,
+                retryLabel: l10n.commonRetry,
+                onRetry: () {
+                  ref.invalidate(journalEntryRepositoryProvider);
+                  unawaited(_loadInitial());
+                },
+              )
+            : loadingExisting
             ? const Center(child: FCircularProgress())
+            : _draftSession?.pending != null
+            ? Padding(
+                padding: const EdgeInsets.all(AppSpacing.s16),
+                child: AppDraftRestoreBanner(
+                  onRestore: _restoreDraft,
+                  onDiscard: () =>
+                      setState(() => _draftSession!.discardPending()),
+                ),
+              )
             : Form(
                 key: _formKey,
                 autovalidateMode: AutovalidateMode.onUserInteraction,

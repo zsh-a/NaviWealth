@@ -99,6 +99,60 @@ class _BatchLifecycleStore extends _FakeLifecycleStore
 }
 
 void main() {
+  test(
+    'stopping during apply completes only the current record and keeps undo',
+    () async {
+      final control = IngestBatchControl();
+      final store = _BatchLifecycleStore();
+      final applier = _FakeApplier(
+        onApply: (plan) async {
+          control.stop();
+          return _applied('entry-${plan.proposalId}');
+        },
+      );
+      final service = IngestConfirmService(applier: applier, store: store);
+      final progress = <(int, int)>[];
+      final result = await service.confirmAllFresh(
+        [
+          for (var i = 0; i < 4; i++)
+            IngestReviewItem(draft: _draft(id: 'row-$i')),
+        ],
+        fromAccountId: 'acct-cash',
+        control: control,
+        onProgress: (completed, total) => progress.add((completed, total)),
+      );
+      expect(result.confirmed.single.draft.draftId, 'row-0');
+      expect(result.unprocessedCount, 3);
+      expect(result.failures, isEmpty);
+      expect(progress, [(1, 4)]);
+      expect(store.updates.last, ('row-0', DraftStatus.confirmed));
+      expect(applier.appliedPlans, hasLength(1));
+      final undone = await service.undoAllConfirmed(result.confirmed);
+      expect(undone.restored, hasLength(1));
+      expect(store.updates.last, ('row-0', DraftStatus.pending));
+    },
+  );
+
+  test(
+    'stopping before a batch creates no reservations or transactions',
+    () async {
+      final control = IngestBatchControl()..stop();
+      final store = _BatchLifecycleStore();
+      final applier = _FakeApplier(onApply: (_) async => _applied('unused'));
+      final result = await IngestConfirmService(applier: applier, store: store)
+          .confirmAllFresh(
+            [IngestReviewItem(draft: _draft())],
+            fromAccountId: 'acct-cash',
+            control: control,
+          );
+      expect(result.unprocessedCount, 1);
+      expect(result.completed, 0);
+      expect(store.batchCalls, 0);
+      expect(store.updates, isEmpty);
+      expect(applier.appliedPlans, isEmpty);
+    },
+  );
+
   group('IngestConfirmService.expensePlanFor', () {
     test('maps a draft to a propose_expense-shaped ready plan', () {
       final plan = IngestConfirmService.expensePlanFor(

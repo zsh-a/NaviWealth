@@ -8,6 +8,7 @@ import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import 'settings_route_paths.dart';
 import 'shell_preferences.dart';
+import 'sync_attention.dart';
 
 /// Collapsible left sidebar for the desktop shell.
 ///
@@ -53,6 +54,7 @@ class DesktopSidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final attention = ref.watch(syncAttentionProvider);
     final collapsed = ref.watch(sidebarCollapsedProvider);
     final effectiveCollapsed = forceCollapsed || collapsed;
     return AnimatedContainer(
@@ -126,6 +128,20 @@ class DesktopSidebar extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.s4),
+                    if (attention != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s8,
+                        ),
+                        child: _SidebarRow(
+                          icon: FLucideIcons.cloudOff,
+                          label: syncOverviewMessage(l10n, attention),
+                          emphasized: true,
+                          collapsed: metrics.collapsed,
+                          labelOpacity: metrics.labelOpacity,
+                          onPress: () => context.push(SettingsRoutes.sync),
+                        ),
+                      ),
                     for (final action in footerActions)
                       Padding(
                         padding: const EdgeInsets.symmetric(

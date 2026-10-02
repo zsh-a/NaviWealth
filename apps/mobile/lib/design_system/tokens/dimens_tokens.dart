@@ -346,8 +346,8 @@ class AppControlHeights {
   /// Minimum interactive target shared by touch and pointer layouts.
   ///
   /// Visual glyphs may remain compact inside this box, but the hit region
-  /// must never shrink below the iOS 44pt baseline.
-  static const double touchTarget = 44;
+  /// must never shrink below the Android 48dp baseline (also covers iOS).
+  static const double touchTarget = 48;
 
   /// Desktop/sidebar collapse affordance height.
   static const double sidebarToggle = AppSpacing.s40;

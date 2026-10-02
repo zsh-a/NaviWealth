@@ -18128,4 +18128,95 @@ class AppLocalizationsEn extends AppLocalizations {
   String ingestLastBatchResult(int recorded, int failed) {
     return 'Last batch: $recorded recorded · $failed need attention';
   }
+
+  @override
+  String get formDraftAvailable =>
+      'There is an unfinished draft on this device. Restore it or start fresh.';
+
+  @override
+  String get formDraftRestore => 'Restore draft';
+
+  @override
+  String get formDraftDiscard => 'Discard draft';
+
+  @override
+  String get ingestCategorySalary => 'Salary';
+
+  @override
+  String get ingestCategoryDividend => 'Dividend';
+
+  @override
+  String get ingestCategoryInterest => 'Interest';
+
+  @override
+  String get ingestCategoryUncategorized => 'Uncategorized (record as Other)';
+
+  @override
+  String get ingestCategoryAppliedHint =>
+      'Choose the category that will be used when recording.';
+
+  @override
+  String get ingestCategoryUnsupported =>
+      'This category is not supported for import. Choose a listed category before saving.';
+
+  @override
+  String get ingestCategoryBatchHint =>
+      'Set expense and income categories separately. Types you leave unchanged keep their current categories.';
+
+  @override
+  String get ingestCategoryUnchanged => 'Keep existing categories';
+
+  @override
+  String get ingestClearSearch => 'Clear search';
+
+  @override
+  String get ingestClearFilters => 'Reset search and filters';
+
+  @override
+  String get ingestStopBatch => 'Stop after current record';
+
+  @override
+  String get ingestStopping => 'Stopping after current record…';
+
+  @override
+  String get ingestStopAndLeaveTitle => 'Stop recording and leave?';
+
+  @override
+  String get ingestStopAndLeaveBody =>
+      'The current record will finish first. Completed records stay saved and the rest remain in the review queue.';
+
+  @override
+  String get ingestStopAndLeave => 'Stop and leave';
+
+  @override
+  String ingestBatchStopped(int recorded, int failed, int remaining) {
+    return 'Stopped: $recorded recorded, $failed need review, $remaining not processed';
+  }
+
+  @override
+  String get ingestLatestDraft => 'Latest saved record';
+
+  @override
+  String get ingestReloadDraft => 'Reload latest record';
+
+  @override
+  String get ingestKeepDraftInput => 'Keep my input and update version';
+
+  @override
+  String get ingestDraftUnavailable =>
+      'This record is no longer available for editing. Your input is still here.';
+
+  @override
+  String get syncLocalSavedNeedsAttention =>
+      'Saved on this device · Sync needs attention';
+
+  @override
+  String syncLocalSavedPending(int count) {
+    return 'Saved on this device · $count changes waiting to sync';
+  }
+
+  @override
+  String ingestCategoryFallback(String category) {
+    return 'Other · Unrecognized category: $category';
+  }
 }

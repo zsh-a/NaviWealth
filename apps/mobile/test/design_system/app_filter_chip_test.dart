@@ -31,7 +31,7 @@ void main() {
 
     expect(
       tester.getSize(find.byType(AppFilterChip)).height,
-      greaterThanOrEqualTo(44),
+      greaterThanOrEqualTo(48),
     );
     expect(
       tester.getSize(
@@ -40,7 +40,7 @@ void main() {
               widget is Semantics && widget.properties.label == 'Clear meals',
         ),
       ),
-      const Size(44, 44),
+      const Size(48, 48),
     );
 
     await tester.tap(find.text('Meals'));

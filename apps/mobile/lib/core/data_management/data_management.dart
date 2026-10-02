@@ -109,10 +109,12 @@ class DataManagementService {
     Map<DomainScope, List<String>> agentIdsByDomain =
         const <DomainScope, List<String>>{},
     AppLogger? logger,
+    Future<void> Function(DomainScope scope)? clearLocalDrafts,
   }) : _database = database,
        _ownerUserId = ownerUserId,
        _specs = List<DomainDataManagementSpec>.unmodifiable(specs),
        _agentIdsByDomain = agentIdsByDomain,
+       _clearLocalDrafts = clearLocalDrafts,
        _logger = logger ?? AppLogger.instance {
     for (final spec in _specs) {
       for (final table in <DataTableSpec>[
@@ -129,6 +131,7 @@ class DataManagementService {
   final List<DomainDataManagementSpec> _specs;
   final Map<DomainScope, List<String>> _agentIdsByDomain;
   final AppLogger _logger;
+  final Future<void> Function(DomainScope scope)? _clearLocalDrafts;
 
   /// Normalizes values returned by SQLite PRAGMA statements.
   ///
@@ -470,6 +473,7 @@ class DataManagementService {
         }
       }
     });
+    await _clearLocalDrafts?.call(scope);
     return affected;
   }
 

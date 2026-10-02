@@ -17143,4 +17143,88 @@ class AppLocalizationsZh extends AppLocalizations {
   String ingestLastBatchResult(int recorded, int failed) {
     return '上次批量：已记录 $recorded 条 · 待处理 $failed 条';
   }
+
+  @override
+  String get formDraftAvailable => '本机有未完成的输入，可以恢复后继续，或丢弃后重新填写。';
+
+  @override
+  String get formDraftRestore => '恢复输入';
+
+  @override
+  String get formDraftDiscard => '丢弃草稿';
+
+  @override
+  String get ingestCategorySalary => '工资';
+
+  @override
+  String get ingestCategoryDividend => '股息';
+
+  @override
+  String get ingestCategoryInterest => '利息';
+
+  @override
+  String get ingestCategoryUncategorized => '未分类（入账为其他）';
+
+  @override
+  String get ingestCategoryAppliedHint => '选择最终入账时使用的分类。';
+
+  @override
+  String get ingestCategoryUnsupported => '此分类不支持导入入账，请从列表中选择分类后保存。';
+
+  @override
+  String get ingestCategoryBatchHint => '支出和收入分别设置分类，未修改的类型保留原分类。';
+
+  @override
+  String get ingestCategoryUnchanged => '保留现有分类';
+
+  @override
+  String get ingestClearSearch => '清除搜索';
+
+  @override
+  String get ingestClearFilters => '重置搜索与筛选';
+
+  @override
+  String get ingestStopBatch => '当前记录完成后停止';
+
+  @override
+  String get ingestStopping => '等待当前记录完成…';
+
+  @override
+  String get ingestStopAndLeaveTitle => '停止入账并离开？';
+
+  @override
+  String get ingestStopAndLeaveBody => '会先完成当前记录。已成功的记录会保留，其余记录仍留在待确认列表。';
+
+  @override
+  String get ingestStopAndLeave => '停止并离开';
+
+  @override
+  String ingestBatchStopped(int recorded, int failed, int remaining) {
+    return '已停止：$recorded 条入账，$failed 条需处理，$remaining 条未执行';
+  }
+
+  @override
+  String get ingestLatestDraft => '最新已保存记录';
+
+  @override
+  String get ingestReloadDraft => '重新加载最新记录';
+
+  @override
+  String get ingestKeepDraftInput => '保留当前输入并更新版本';
+
+  @override
+  String get ingestDraftUnavailable => '此记录已无法编辑，当前输入仍保留在这里。';
+
+  @override
+  String get syncLocalSavedNeedsAttention => '已保存在本机 · 同步需要处理';
+
+  @override
+  String syncLocalSavedPending(int count) {
+    return '已保存在本机 · $count 项变更待同步';
+  }
+
+  @override
+  String ingestCategoryFallback(String category) {
+    return '其他 · 未识别的分类：$category';
+  }
 }

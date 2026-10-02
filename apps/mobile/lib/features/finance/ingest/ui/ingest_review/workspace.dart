@@ -10,6 +10,14 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
     List<IngestReviewItem>? selectedItems,
   ) {
     final l10n = AppLocalizations.of(context);
+    if (_busy != null && _batchControl != null) {
+      return (_) => _ProcessingPanel(
+        state: _busy!,
+        compact: true,
+        onStop: _batchControl!.stopRequested ? null : _stopBatch,
+        stopRequested: _batchControl!.stopRequested,
+      );
+    }
     if (selectedItems != null && selectedItems.isNotEmpty) {
       return (_) => _IngestSelectionActions(
         count: selectedItems.length,
@@ -38,6 +46,8 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
         onCategory:
             selectedItems.any(
               (item) =>
+                  (item.draft.parsed.kind == IngestTransactionKind.expense ||
+                      item.draft.parsed.kind == IngestTransactionKind.income) &&
                   item.isOrdinaryPending &&
                   !_pendingFinalize.containsKey(item.draft.draftId),
             )
@@ -85,6 +95,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
     final footer = _footerBuilder(data, selectedItems)?.call(context);
     return AppPageScaffold(
       titleWidget: _title(l10n),
+      confirmLeave: _confirmReviewLeave,
       actions: [
         if (data.allItems.isNotEmpty)
           AppIconButton(
@@ -119,7 +130,8 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
                           const SizedBox(height: AppSpacing.s12),
                           _reviewControls(data),
                         ],
-                        if (_busy != null) _ProcessingNotice(state: _busy!),
+                        if (_busy != null && _batchControl == null)
+                          _ProcessingNotice(state: _busy!),
                       ],
                     ),
                   ),
@@ -270,7 +282,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
         SliverToBoxAdapter(child: _accountPicker(data)),
       const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s12)),
       SliverToBoxAdapter(child: _reviewControls(data)),
-      if (_busy != null)
+      if (_busy != null && _batchControl == null)
         SliverPadding(
           padding: const EdgeInsets.only(top: AppSpacing.s12),
           sliver: SliverToBoxAdapter(child: _ProcessingNotice(state: _busy!)),
@@ -308,7 +320,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
           prefix: const Icon(FLucideIcons.clipboard),
           child: Flexible(child: Text(l10n.ingestPasteAction)),
         ),
-        if (_busy != null) ...[
+        if (_busy != null && _batchControl == null) ...[
           const SizedBox(height: AppSpacing.s16),
           _ProcessingNotice(state: _busy!),
         ],

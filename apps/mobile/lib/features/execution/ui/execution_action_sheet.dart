@@ -50,7 +50,7 @@ class _ExecutionActionForm extends ConsumerStatefulWidget {
 }
 
 class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
-    with FormSubmission<_ExecutionActionForm> {
+    with FormSubmission<_ExecutionActionForm>, WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final _scheduleErrorKey = GlobalKey();
   final TextEditingController _title = TextEditingController();
@@ -61,6 +61,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
   String? _planId;
   late bool _showDetails;
   bool _saving = false;
+  LocalFormDraftSession? _draftSession;
 
   @override
   void initState() {
@@ -75,21 +76,88 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
     _showDetails = action != null || _planId != null;
     widget.dirty.bindTextControllers([_title, _note]);
     _title.addListener(_onTitleChanged);
+    WidgetsBinding.instance.addObserver(this);
+    if (action == null) {
+      final store = ref.read(localFormDraftStoreProvider);
+      if (store != null) {
+        _draftSession = LocalFormDraftSession(
+          store,
+          'execution.action.new:${widget.initialPlanId ?? ''}',
+        );
+      }
+      _note.addListener(_captureDraft);
+      widget.dirty.addListener(_captureDraft);
+      widget.dirty.onDiscard = () => _draftSession?.complete();
+    }
   }
 
   void _onTitleChanged() {
+    _captureDraft();
     if (mounted && !_saving) setState(() {});
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _draftSession?.dispose();
+    widget.dirty.removeListener(_captureDraft);
+    widget.dirty.onDiscard = null;
     _title.removeListener(_onTitleChanged);
     _title.dispose();
     _note.dispose();
     super.dispose();
   }
 
-  bool get _canSave => !_saving && _title.text.trim().isNotEmpty;
+  bool get _canSave =>
+      !_saving &&
+      _draftSession?.pending == null &&
+      _title.text.trim().isNotEmpty;
+
+  void _captureDraft() {
+    if (!widget.dirty.isDirty || _saving) return;
+    _draftSession?.capture({
+      'title': _title.text,
+      'note': _note.text,
+      'priority': _priority.name,
+      'due': _dueAt?.toIso8601String(),
+      'scheduled': _scheduledFor?.toIso8601String(),
+      'plan': _planId,
+      'details': _showDetails,
+    });
+  }
+
+  void _restoreDraft() {
+    final session = _draftSession;
+    final payload = session?.pending;
+    if (session == null || payload == null) return;
+    session.accept();
+    setState(() {
+      _title.text = payload['title'] is String
+          ? payload['title']! as String
+          : '';
+      _note.text = payload['note'] is String ? payload['note']! as String : '';
+      _priority =
+          ExecutionPriority.values
+              .where((value) => value.name == payload['priority'])
+              .firstOrNull ??
+          ExecutionPriority.normal;
+      _dueAt = DateTime.tryParse(
+        payload['due'] is String ? payload['due']! as String : '',
+      );
+      _scheduledFor = DateTime.tryParse(
+        payload['scheduled'] is String ? payload['scheduled']! as String : '',
+      );
+      _planId = payload['plan'] is String ? payload['plan']! as String : null;
+      _showDetails = payload['details'] == true;
+    });
+    widget.dirty.markDirty();
+    _captureDraft();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _draftSession?.flush();
+  }
 
   bool get _invalidSchedule =>
       _scheduledFor != null &&
@@ -117,6 +185,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
       onBusyChanged: _setSaving,
       leave: () => Navigator.of(context).pop(true),
       tag: 'execution-action',
+      onCommitted: (_) => _draftSession?.complete(),
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.commonSaved,
       commit: () async {
@@ -177,6 +246,7 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
 
   @override
   Widget build(BuildContext context) {
+    _captureDraft();
     final l10n = AppLocalizations.of(context);
     final plans =
         ref.watch(executionPlansProvider).value ?? const <ExecutionPlan>[];
@@ -193,191 +263,201 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
         busy: _saving,
         onSubmit: _save,
       ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (submissionFailureMessage != null) ...[
-              AppStatusBanner(
-                kind: AppStatusKind.error,
-                message: submissionFailureMessage!,
-                compact: true,
-              ),
-              const SizedBox(height: AppSpacing.s12),
-            ],
-            FTextFormField(
-              control: FTextFieldControl.managed(controller: _title),
-              enabled: !_saving,
-              label: Text(l10n.executionActionField),
-              hint: l10n.executionActionTitleHint,
-              maxLines: 1,
-              textInputAction: TextInputAction.next,
-              validator: (value) => (value == null || value.trim().isEmpty)
-                  ? l10n.executionTitleRequired
-                  : null,
-            ),
-            if (!isEditing) ...[
-              const SizedBox(height: AppSpacing.s12),
-              Text(
-                l10n.executionQuickWhenField,
-                style: context.captionLabelStyle,
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              SegmentedRow<_ExecutionQuickWhen>(
-                options: _ExecutionQuickWhen.values,
-                value: _quickWhen,
-                labelOf: (value) => switch (value) {
-                  _ExecutionQuickWhen.inbox => l10n.executionQuickWhenInbox,
-                  _ExecutionQuickWhen.today => l10n.executionQuickWhenToday,
-                  _ExecutionQuickWhen.tomorrow =>
-                    l10n.executionQuickWhenTomorrow,
-                },
-                iconOf: (value) => switch (value) {
-                  _ExecutionQuickWhen.inbox => FLucideIcons.inbox,
-                  _ExecutionQuickWhen.today => FLucideIcons.sun,
-                  _ExecutionQuickWhen.tomorrow => FLucideIcons.sunrise,
-                },
-                onChanged: _saving ? null : _setQuickWhen,
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              SizedBox(
-                width: double.infinity,
-                child: AppQuietButton(
-                  label: _showDetails
-                      ? l10n.executionHideDetails
-                      : l10n.executionShowDetails,
-                  prefix: Icon(
-                    _showDetails
-                        ? FLucideIcons.chevronUp
-                        : FLucideIcons.slidersHorizontal,
+      child: _draftSession?.pending != null
+          ? AppDraftRestoreBanner(
+              onRestore: _restoreDraft,
+              onDiscard: () => setState(() => _draftSession!.discardPending()),
+            )
+          : Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (submissionFailureMessage != null) ...[
+                    AppStatusBanner(
+                      kind: AppStatusKind.error,
+                      message: submissionFailureMessage!,
+                      compact: true,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                  ],
+                  FTextFormField(
+                    control: FTextFieldControl.managed(controller: _title),
+                    enabled: !_saving,
+                    label: Text(l10n.executionActionField),
+                    hint: l10n.executionActionTitleHint,
+                    maxLines: 1,
+                    textInputAction: TextInputAction.next,
+                    validator: (value) =>
+                        (value == null || value.trim().isEmpty)
+                        ? l10n.executionTitleRequired
+                        : null,
                   ),
-                  onPress: _saving
-                      ? null
-                      : () => setState(() => _showDetails = !_showDetails),
-                ),
-              ),
-            ],
-            if (_showDetails) ...[
-              const SizedBox(height: AppSpacing.s12),
-              Text(
-                l10n.executionPriorityField,
-                style: context.captionLabelStyle,
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              SegmentedRow<ExecutionPriority>(
-                options: ExecutionPriority.values,
-                value: _priority,
-                labelOf: (priority) => executionPriorityLabel(l10n, priority),
-                iconOf: _priorityIcon,
-                onChanged: _saving
-                    ? null
-                    : (priority) {
-                        setState(() => _priority = priority);
+                  if (!isEditing) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    Text(
+                      l10n.executionQuickWhenField,
+                      style: context.captionLabelStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s6),
+                    SegmentedRow<_ExecutionQuickWhen>(
+                      options: _ExecutionQuickWhen.values,
+                      value: _quickWhen,
+                      labelOf: (value) => switch (value) {
+                        _ExecutionQuickWhen.inbox =>
+                          l10n.executionQuickWhenInbox,
+                        _ExecutionQuickWhen.today =>
+                          l10n.executionQuickWhenToday,
+                        _ExecutionQuickWhen.tomorrow =>
+                          l10n.executionQuickWhenTomorrow,
+                      },
+                      iconOf: (value) => switch (value) {
+                        _ExecutionQuickWhen.inbox => FLucideIcons.inbox,
+                        _ExecutionQuickWhen.today => FLucideIcons.sun,
+                        _ExecutionQuickWhen.tomorrow => FLucideIcons.sunrise,
+                      },
+                      onChanged: _saving ? null : _setQuickWhen,
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppQuietButton(
+                        label: _showDetails
+                            ? l10n.executionHideDetails
+                            : l10n.executionShowDetails,
+                        prefix: Icon(
+                          _showDetails
+                              ? FLucideIcons.chevronUp
+                              : FLucideIcons.slidersHorizontal,
+                        ),
+                        onPress: _saving
+                            ? null
+                            : () =>
+                                  setState(() => _showDetails = !_showDetails),
+                      ),
+                    ),
+                  ],
+                  if (_showDetails) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    Text(
+                      l10n.executionPriorityField,
+                      style: context.captionLabelStyle,
+                    ),
+                    const SizedBox(height: AppSpacing.s6),
+                    SegmentedRow<ExecutionPriority>(
+                      options: ExecutionPriority.values,
+                      value: _priority,
+                      labelOf: (priority) =>
+                          executionPriorityLabel(l10n, priority),
+                      iconOf: _priorityIcon,
+                      onChanged: _saving
+                          ? null
+                          : (priority) {
+                              setState(() => _priority = priority);
+                              _markDirty();
+                            },
+                    ),
+                    const SizedBox(height: AppSpacing.s12),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final scheduled = DateField(
+                          label: l10n.executionScheduledForField,
+                          initialValue: _scheduledFor,
+                          enabled: !_saving,
+                          onChanged: (value) {
+                            setState(() => _scheduledFor = value);
+                            _markDirty();
+                          },
+                        );
+                        final due = DateField(
+                          label: l10n.executionDueAtField,
+                          initialValue: _dueAt,
+                          enabled: !_saving,
+                          onChanged: (value) {
+                            setState(() => _dueAt = value);
+                            _markDirty();
+                          },
+                        );
+                        final largeText =
+                            MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                        if (constraints.maxWidth < 420 || largeText) {
+                          return Column(
+                            children: [
+                              scheduled,
+                              const SizedBox(height: AppSpacing.s12),
+                              due,
+                            ],
+                          );
+                        }
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: scheduled),
+                            const SizedBox(width: AppSpacing.s12),
+                            Expanded(child: due),
+                          ],
+                        );
+                      },
+                    ),
+                    if (_invalidSchedule) ...[
+                      const SizedBox(height: AppSpacing.s6),
+                      Semantics(
+                        key: _scheduleErrorKey,
+                        liveRegion: true,
+                        child: Text(
+                          l10n.executionScheduleAfterDue,
+                          style: context.captionStyle.copyWith(
+                            color: context.appTheme.status.danger.fg,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.s12),
+                    FormPickerRow(
+                      label: l10n.executionRelationField,
+                      value: executionPlanPickerLabel(l10n, plans, _planId),
+                      leading: const Icon(FLucideIcons.layers),
+                      enabled: !_saving,
+                      onPress: () async {
+                        final picked = await showExecutionPlanPicker(
+                          context: context,
+                          plans: plans,
+                          selectedId: _planId,
+                        );
+                        if (picked == null) return;
+                        setState(
+                          () => _planId = picked == kExecutionPickerNone
+                              ? null
+                              : picked,
+                        );
                         _markDirty();
                       },
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final scheduled = DateField(
-                    label: l10n.executionScheduledForField,
-                    initialValue: _scheduledFor,
-                    enabled: !_saving,
-                    onChanged: (value) {
-                      setState(() => _scheduledFor = value);
-                      _markDirty();
-                    },
-                  );
-                  final due = DateField(
-                    label: l10n.executionDueAtField,
-                    initialValue: _dueAt,
-                    enabled: !_saving,
-                    onChanged: (value) {
-                      setState(() => _dueAt = value);
-                      _markDirty();
-                    },
-                  );
-                  final largeText =
-                      MediaQuery.textScalerOf(context).scale(1) > 1.3;
-                  if (constraints.maxWidth < 420 || largeText) {
-                    return Column(
-                      children: [
-                        scheduled,
-                        const SizedBox(height: AppSpacing.s12),
-                        due,
-                      ],
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: scheduled),
-                      const SizedBox(width: AppSpacing.s12),
-                      Expanded(child: due),
-                    ],
-                  );
-                },
-              ),
-              if (_invalidSchedule) ...[
-                const SizedBox(height: AppSpacing.s6),
-                Semantics(
-                  key: _scheduleErrorKey,
-                  liveRegion: true,
-                  child: Text(
-                    l10n.executionScheduleAfterDue,
-                    style: context.captionStyle.copyWith(
-                      color: context.appTheme.status.danger.fg,
                     ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.s12),
-              FormPickerRow(
-                label: l10n.executionRelationField,
-                value: executionPlanPickerLabel(l10n, plans, _planId),
-                leading: const Icon(FLucideIcons.layers),
-                enabled: !_saving,
-                onPress: () async {
-                  final picked = await showExecutionPlanPicker(
-                    context: context,
-                    plans: plans,
-                    selectedId: _planId,
-                  );
-                  if (picked == null) return;
-                  setState(
-                    () => _planId = picked == kExecutionPickerNone
-                        ? null
-                        : picked,
-                  );
-                  _markDirty();
-                },
+                    const SizedBox(height: AppSpacing.s12),
+                    FTextFormField(
+                      control: FTextFieldControl.managed(controller: _note),
+                      enabled: !_saving,
+                      label: Text(l10n.commonNote),
+                      hint: l10n.executionActionNoteHint,
+                      minLines: 3,
+                      maxLines: 5,
+                      textInputAction: TextInputAction.newline,
+                    ),
+                  ],
+                  if (isEditing) ...[
+                    const SizedBox(height: AppSpacing.s16),
+                    const AppDivider(),
+                    const SizedBox(height: AppSpacing.s12),
+                    FButton(
+                      variant: FButtonVariant.destructive,
+                      onPress: _saving ? null : _delete,
+                      child: Text(l10n.commonDelete),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: AppSpacing.s12),
-              FTextFormField(
-                control: FTextFieldControl.managed(controller: _note),
-                enabled: !_saving,
-                label: Text(l10n.commonNote),
-                hint: l10n.executionActionNoteHint,
-                minLines: 3,
-                maxLines: 5,
-                textInputAction: TextInputAction.newline,
-              ),
-            ],
-            if (isEditing) ...[
-              const SizedBox(height: AppSpacing.s16),
-              const AppDivider(),
-              const SizedBox(height: AppSpacing.s12),
-              FButton(
-                variant: FButtonVariant.destructive,
-                onPress: _saving ? null : _delete,
-                child: Text(l10n.commonDelete),
-              ),
-            ],
-          ],
-        ),
-      ),
+            ),
     );
   }
 

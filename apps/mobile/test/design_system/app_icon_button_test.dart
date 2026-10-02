@@ -93,7 +93,7 @@ void main() {
       ),
     );
 
-    expect(tester.getSize(find.byType(AppIconButton)), const Size(44, 44));
+    expect(tester.getSize(find.byType(AppIconButton)), const Size(48, 48));
   });
 
   testWidgets('softPrimaryRing and softPrimaryTile paint borders', (

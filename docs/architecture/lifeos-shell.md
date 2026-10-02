@@ -171,6 +171,23 @@ maintenance. Runtime diagnostics, app logs, performance evidence, and
 developer-issue tooling are debug-build surfaces; normal release builds keep
 only user-actionable AI model, Agent, transparency, and storage controls.
 
+Shared form input recovery lives in `core/forms/local_form_draft.dart`. Hosts own
+opaque JSON payloads and restore validation. Snapshots stay on this device in
+owner-scoped preferences, expire for recovery after seven days, and never create
+domain records or sync rows. Debounced input flushes on backgrounding/disposal;
+successful save and explicit dirty-guard discard cancel pending writes and clear
+the snapshot. Domain resets clear matching snapshots and invalidate pending
+sessions so an open form cannot repersist erased input. Cross-page form Undo
+offers expire after 60 seconds and clear when the active owner changes, including
+transitions into or out of local-only mode.
+
+Cloud sync failures remain discoverable through a shell action (and desktop
+sidebar action) opening the existing sync settings route. Offline state warrants
+that action only with known pending changes; local-only workspaces have none.
+Settings shows current sync status and distinguishes device-local saved changes
+from a completed sync. These affordances reuse Sync v3 status and do not change
+transport or persistence semantics.
+
 ## Identity And Opt-In
 
 Location:

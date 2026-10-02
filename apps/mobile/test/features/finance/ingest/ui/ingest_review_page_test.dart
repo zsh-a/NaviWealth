@@ -109,10 +109,12 @@ class _RecordingApplier implements ProposalApplier {
   final Set<String> failUndoEntityIds = {};
   var applyCount = 0;
   var failUndo = false;
+  Future<void>? applyGate;
 
   @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
     applyCount++;
+    await applyGate;
     return ProposalApplyState(
       status: ProposalApplyStatus.applied,
       appliedEntityId: 'entry-${plan.proposalId}',
@@ -306,6 +308,221 @@ Future<void> _settleUntil(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  testWidgets(
+    'mixed category edits keep untouched income and exclude transfers',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      final income = _draft(
+        id: 'income',
+        description: 'Salary',
+        kind: IngestTransactionKind.income,
+        amountMinor: 50000,
+      );
+      await store.putAll([
+        _draft(id: 'expense'),
+        income.copyWith(parsed: income.parsed.copyWith(categoryHint: 'salary')),
+        _draft(
+          id: 'transfer',
+          description: 'Transfer',
+          kind: IngestTransactionKind.transfer,
+          amountMinor: -10000,
+        ),
+      ]);
+      final service = IngestConfirmService(
+        applier: const _NoopApplier(),
+        store: store,
+      );
+      await tester.pumpWidget(
+        _app(db: db, store: store, service: service, accounts: [_account]),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('ingest-select-filtered')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppActionButton, 'Set category'));
+      await tester.pumpAndSettle();
+      expect(find.text('Set category for 2 drafts'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('ingest-category-expense')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dining').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+      expect(
+        (await store.readReviewItem('expense'))!.draft.parsed.categoryHint,
+        'dining',
+      );
+      expect(
+        (await store.readReviewItem('income'))!.draft.parsed.categoryHint,
+        'salary',
+      );
+      expect(
+        (await store.readReviewItem('transfer'))!.draft.parsed.categoryHint,
+        isNull,
+      );
+      expect(await store.countByStatus(DraftStatus.confirmed), 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'review restores search after leaving without restoring selection',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft(id: 'coffee'),
+        _draft(id: 'metro', description: 'Metro receipt', amountMinor: -500),
+      ]);
+      final service = IngestConfirmService(
+        applier: const _NoopApplier(),
+        store: store,
+      );
+      await tester.pumpWidget(
+        _app(db: db, store: store, service: service, accounts: [_account]),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('ingest-review-search')),
+        'Coffee',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('ingest-select-filtered')));
+      await tester.pumpAndSettle();
+      expect(find.text('1 selected'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _app(db: db, store: store, service: service, accounts: [_account]),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('1 results · 2 pending'), findsOneWidget);
+      expect(find.text('1 selected'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('ingest-clear-filters')));
+      await tester.pumpAndSettle();
+      expect(find.text('2 results · 2 pending'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Android batch stop stays visible and waits for the current write',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        for (var i = 0; i < 3; i++)
+          _draft(
+            id: 'row-$i',
+            description: 'Merchant $i',
+            amountMinor: -(1000 + i * 300),
+          ),
+      ]);
+      final gate = Completer<void>();
+      final applier = _RecordingApplier()..applyGate = gate.future;
+      final service = IngestConfirmService(applier: applier, store: store);
+      await tester.pumpWidget(
+        _app(
+          db: db,
+          store: store,
+          service: service,
+          accounts: [_account],
+          touch: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Confirm all · new only (3)'));
+      for (var i = 0; i < 10 && applier.applyCount == 0; i++) {
+        await tester.pump(const Duration(milliseconds: 25));
+      }
+      expect(applier.applyCount, 1);
+      final stop = find.text('Stop after current record');
+      expect(stop, findsOneWidget);
+      expect(tester.getCenter(stop).dy, lessThan(844));
+      await tester.tap(stop);
+      await tester.pump();
+      expect(find.text('Stopping after current record…'), findsOneWidget);
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(await store.countByStatus(DraftStatus.confirmed), 1);
+      expect(await store.countByStatus(DraftStatus.pending), 2);
+      expect(applier.applyCount, 1);
+      expect(find.textContaining('2 not processed'), findsWidgets);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppActionButton, 'Undo'));
+      await tester.pumpAndSettle();
+      expect(await store.countByStatus(DraftStatus.confirmed), 0);
+      expect(applier.undone, hasLength(1));
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
+  testWidgets('conflict can retain typed fields before an explicit retry', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u1');
+    await store.putAll([_draft(id: 'coffee')]);
+    final service = IngestConfirmService(
+      applier: const _NoopApplier(),
+      store: store,
+    );
+    await tester.pumpWidget(
+      _app(db: db, store: store, service: service, accounts: [_account]),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppActionButton, 'Correct fields'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(FTextField, 'Description'),
+      'My correction',
+    );
+    final latest = (await store.readReviewItem('coffee'))!.draft;
+    await store.updateParsed(
+      draftId: latest.draftId,
+      expectedRevision: latest.revision,
+      parsed: latest.parsed.copyWith(description: 'Concurrent correction'),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    final keep = find.text('Keep my input and update version');
+    await tester.ensureVisible(keep);
+    await tester.tap(keep);
+    await tester.pumpAndSettle();
+    expect(find.text('My correction'), findsOneWidget);
+    expect(
+      (await store.readReviewItem('coffee'))!.draft.parsed.description,
+      'Concurrent correction',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      (await store.readReviewItem('coffee'))!.draft.parsed.description,
+      'My correction',
+    );
+    expect(await store.countByStatus(DraftStatus.confirmed), 0);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('continuous navigation protects unsaved fields on Android', (
     tester,
   ) async {
@@ -600,15 +817,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(AppActionButton, 'Set category'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(FTextField, 'Category hint (optional)'),
-      'Food',
-    );
+    await tester.tap(find.byKey(const ValueKey('ingest-category-expense')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Dining').last);
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(
       (await store.readReviewItem('coffee'))!.draft.parsed.categoryHint,
-      'Food',
+      'dining',
     );
     expect(
       (await store.readReviewItem('metro'))!.draft.parsed.categoryHint,
@@ -709,7 +926,7 @@ void main() {
     expect(await store.countByStatus(DraftStatus.confirmed), 1);
   });
 
-  setUpAll(() async {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
     _sharedPreferences = await SharedPreferences.getInstance();
   });
@@ -1411,7 +1628,7 @@ void main() {
 
     expect(find.text('Coffee receipt'), findsNothing);
     expect(find.text('Entry skipped'), findsOneWidget);
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
@@ -1438,7 +1655,7 @@ void main() {
     expect(find.text('Coffee receipt'), findsNothing);
     expect(find.text('Recorded'), findsOneWidget);
 
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo').first);
     await tester.pumpAndSettle();
     expect(find.text('Coffee receipt'), findsOneWidget);
     expect(applier.undone.single.appliedEntityId, 'entry-draft-1');
@@ -1547,9 +1764,9 @@ void main() {
     await tester.ensureVisible(find.text('Metro receipt'));
     await tester.pumpAndSettle();
     expect(find.text('Resolve review state'), findsOneWidget);
-    expect(find.text('Undo'), findsOneWidget);
+    expect(find.text('Undo'), findsWidgets);
 
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Coffee receipt'), findsOneWidget);
@@ -1640,7 +1857,7 @@ void main() {
     await tester.ensureVisible(find.widgetWithText(AppActionButton, 'Record'));
     await tester.tap(find.widgetWithText(AppActionButton, 'Record'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Undo'));
+    await tester.tap(find.text('Undo').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Retry'), findsOneWidget);

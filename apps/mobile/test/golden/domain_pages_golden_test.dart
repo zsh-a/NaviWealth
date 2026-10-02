@@ -5,6 +5,7 @@ import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_today_page.dart';
@@ -21,6 +22,7 @@ import 'package:naviwealth/features/health/ui/health_today_providers.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_inbox_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/persistence/test_database.dart';
 import '../features/finance/data/repositories/_stub_stamper.dart';
@@ -30,6 +32,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   runAllVariants('health_manual_today_page', (tester, variant) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
     final db = makeTestDatabase();
     addTearDown(db.close);
     await DomainOptInStore(db).write(DomainOptIns(const {DomainScope.health}));
@@ -59,6 +63,7 @@ void main() {
       variant: variant,
       child: const HealthTodayPage(),
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
         appDatabaseProvider.overrideWith((_) async => db),
         healthClockProvider.overrideWithValue(() => DateTime(2026, 9, 12, 12)),
         currentUserIdProvider.overrideWithValue(() async => 'golden-user'),

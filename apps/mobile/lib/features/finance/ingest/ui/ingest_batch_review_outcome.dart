@@ -13,6 +13,7 @@ class IngestBatchReviewOutcome {
     required this.pendingFinalizeByDraftId,
     required this.retryFailures,
     required this.failureCount,
+    required this.unprocessedCount,
   });
 
   factory IngestBatchReviewOutcome.from(IngestBatchConfirmResult result) {
@@ -40,6 +41,7 @@ class IngestBatchReviewOutcome {
         retryFailures,
       ),
       failureCount: result.failures.length,
+      unprocessedCount: result.unprocessedCount,
     );
   }
 
@@ -48,6 +50,7 @@ class IngestBatchReviewOutcome {
   final Map<String, ConfirmedIngestItem> pendingFinalizeByDraftId;
   final List<IngestBatchItemFailure<IngestDraft>> retryFailures;
   final int failureCount;
+  final int unprocessedCount;
 
   bool get hasFailures => failureCount > 0;
   bool get needsManualFinalize => pendingFinalizeByDraftId.isNotEmpty;

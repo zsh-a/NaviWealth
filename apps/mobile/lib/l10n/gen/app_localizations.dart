@@ -30378,6 +30378,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last batch: {recorded} recorded · {failed} need attention'**
   String ingestLastBatchResult(int recorded, int failed);
+
+  /// No description provided for @formDraftAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'There is an unfinished draft on this device. Restore it or start fresh.'**
+  String get formDraftAvailable;
+
+  /// No description provided for @formDraftRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore draft'**
+  String get formDraftRestore;
+
+  /// No description provided for @formDraftDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard draft'**
+  String get formDraftDiscard;
+
+  /// No description provided for @ingestCategorySalary.
+  ///
+  /// In en, this message translates to:
+  /// **'Salary'**
+  String get ingestCategorySalary;
+
+  /// No description provided for @ingestCategoryDividend.
+  ///
+  /// In en, this message translates to:
+  /// **'Dividend'**
+  String get ingestCategoryDividend;
+
+  /// No description provided for @ingestCategoryInterest.
+  ///
+  /// In en, this message translates to:
+  /// **'Interest'**
+  String get ingestCategoryInterest;
+
+  /// No description provided for @ingestCategoryUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized (record as Other)'**
+  String get ingestCategoryUncategorized;
+
+  /// No description provided for @ingestCategoryAppliedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the category that will be used when recording.'**
+  String get ingestCategoryAppliedHint;
+
+  /// No description provided for @ingestCategoryUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'This category is not supported for import. Choose a listed category before saving.'**
+  String get ingestCategoryUnsupported;
+
+  /// No description provided for @ingestCategoryBatchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Set expense and income categories separately. Types you leave unchanged keep their current categories.'**
+  String get ingestCategoryBatchHint;
+
+  /// No description provided for @ingestCategoryUnchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep existing categories'**
+  String get ingestCategoryUnchanged;
+
+  /// No description provided for @ingestClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get ingestClearSearch;
+
+  /// No description provided for @ingestClearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset search and filters'**
+  String get ingestClearFilters;
+
+  /// No description provided for @ingestStopBatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop after current record'**
+  String get ingestStopBatch;
+
+  /// No description provided for @ingestStopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopping after current record…'**
+  String get ingestStopping;
+
+  /// No description provided for @ingestStopAndLeaveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop recording and leave?'**
+  String get ingestStopAndLeaveTitle;
+
+  /// No description provided for @ingestStopAndLeaveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The current record will finish first. Completed records stay saved and the rest remain in the review queue.'**
+  String get ingestStopAndLeaveBody;
+
+  /// No description provided for @ingestStopAndLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop and leave'**
+  String get ingestStopAndLeave;
+
+  /// No description provided for @ingestBatchStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped: {recorded} recorded, {failed} need review, {remaining} not processed'**
+  String ingestBatchStopped(int recorded, int failed, int remaining);
+
+  /// No description provided for @ingestLatestDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest saved record'**
+  String get ingestLatestDraft;
+
+  /// No description provided for @ingestReloadDraft.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload latest record'**
+  String get ingestReloadDraft;
+
+  /// No description provided for @ingestKeepDraftInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep my input and update version'**
+  String get ingestKeepDraftInput;
+
+  /// No description provided for @ingestDraftUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This record is no longer available for editing. Your input is still here.'**
+  String get ingestDraftUnavailable;
+
+  /// No description provided for @syncLocalSavedNeedsAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device · Sync needs attention'**
+  String get syncLocalSavedNeedsAttention;
+
+  /// No description provided for @syncLocalSavedPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved on this device · {count} changes waiting to sync'**
+  String syncLocalSavedPending(int count);
+
+  /// No description provided for @ingestCategoryFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Other · Unrecognized category: {category}'**
+  String ingestCategoryFallback(String category);
 }
 
 class _AppLocalizationsDelegate

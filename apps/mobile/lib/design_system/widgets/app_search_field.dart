@@ -15,6 +15,7 @@ class AppSearchField extends StatelessWidget {
     this.focusNode,
     this.onChanged,
     this.autofocus = false,
+    this.enabled = true,
   });
 
   final TextEditingController controller;
@@ -23,6 +24,7 @@ class AppSearchField extends StatelessWidget {
   final FocusNode? focusNode;
   final ValueChanged<String>? onChanged;
   final bool autofocus;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) =>
@@ -35,6 +37,7 @@ class AppSearchField extends StatelessWidget {
           ),
           focusNode: focusNode,
           autofocus: autofocus,
+          enabled: enabled,
           hint: hint,
           maxLines: 1,
           textInputAction: TextInputAction.search,
@@ -50,11 +53,13 @@ class AppSearchField extends StatelessWidget {
               : (_, _, _) => AppIconButton(
                   icon: FLucideIcons.x,
                   tooltip: clearLabel,
-                  onPress: () {
-                    controller.clear();
-                    onChanged?.call('');
-                    focusNode?.requestFocus();
-                  },
+                  onPress: !enabled
+                      ? null
+                      : () {
+                          controller.clear();
+                          onChanged?.call('');
+                          focusNode?.requestFocus();
+                        },
                 ),
         ),
       );

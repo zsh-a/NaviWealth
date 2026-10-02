@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../design_system/design_system.dart';
-import '../auth/providers.dart';
+import '../auth/current_user.dart';
 import '../logging/app_logger.dart';
 
 typedef FormFailureMessageBuilder = String Function(Object error);
@@ -45,7 +45,7 @@ class FormUndoOffers extends Notifier<FormUndoOffer?> {
 
   @override
   FormUndoOffer? build() {
-    ref.watch(authSessionProvider.select((session) => session?.userId));
+    ref.watch(activeUserIdProvider);
     _expiry?.cancel();
     ref.onDispose(() => _expiry?.cancel());
     return null;

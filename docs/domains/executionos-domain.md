@@ -112,6 +112,12 @@ title and quick scheduling, while priority, dates, one `Belongs to` Plan
 relation, and notes are progressively disclosed. Plan capture uses a target
 date as its primary time expression.
 
+New Action input is saved through the shared owner-scoped local form draft
+session, separately for standalone capture and each initial Plan context.
+Reopening offers restore or discard; restored values still require explicit
+save and normal schedule validation. Success or explicit discard clears input.
+Editing an existing Action does not restore a stale creation draft.
+
 Blocking requires a concrete reason and records blocker progress. The reason
 sheet stays open until the status and progress write commits; pending writes
 lock dismissal and input, and failures preserve the reason with inline retry

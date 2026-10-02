@@ -172,6 +172,10 @@ void testVisualGolden(
         () => body(tester),
       );
     } finally {
+      // Dispose provider scopes before database tearDown, then advance the
+      // fake clock so Drift can release canceled stream queries.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
       debugDisableShadows = previous;
     }
   }, tags: tags);

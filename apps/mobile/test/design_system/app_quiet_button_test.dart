@@ -14,6 +14,31 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  testWidgets(
+    'Android quiet actions retain a 48dp touch target at large text',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: FTheme(
+              data: FTheme.neutral.light.touch,
+              child: Center(
+                child: AppQuietButton(label: 'Retry', onPress: () {}),
+              ),
+            ),
+          ),
+        ),
+      );
+      expect(
+        tester.getSize(find.byType(AppQuietButton)).height,
+        greaterThanOrEqualTo(48),
+      );
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
   testWidgets('invokes the action when pressed', (tester) async {
     var pressed = false;
     await tester.pumpWidget(

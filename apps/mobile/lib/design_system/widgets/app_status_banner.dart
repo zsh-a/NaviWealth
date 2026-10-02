@@ -87,7 +87,9 @@ class AppStatusBanner extends StatelessWidget {
         ),
       ),
     );
-    if (onPress == null) return banner;
+    if (onPress == null) {
+      return Semantics(liveRegion: kind == AppStatusKind.error, child: banner);
+    }
     return Semantics(
       button: true,
       label: semanticLabel ?? message,

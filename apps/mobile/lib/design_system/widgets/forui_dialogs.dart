@@ -24,7 +24,8 @@ Future<bool> confirmDiscardIfDirty(
   if (controller.busy) return false;
   if (!controller.isDirty) return true;
   final l10n = AppLocalizations.of(context);
-  return await showConfirmDialog(
+  final discarded =
+      await showConfirmDialog(
         context: context,
         title: Text(l10n.unsavedChangesTitle),
         body: Text(l10n.unsavedChangesBody),
@@ -33,6 +34,8 @@ Future<bool> confirmDiscardIfDirty(
         destructive: true,
       ) ==
       true;
+  if (discarded) controller.onDiscard?.call();
+  return discarded;
 }
 
 /// Shows arbitrary app-styled dialog content in a centered, width-constrained

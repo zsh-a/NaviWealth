@@ -5,6 +5,7 @@ part of '../ingest_review_page.dart';
 extension _IngestReviewControls on _IngestReviewPageState {
   void _changeScope({String? query, IngestReviewFilter? filter}) {
     if (_isBusy) return;
+    _restoreOffset = null;
     setState(() {
       _query = query ?? _query;
       _filter = filter ?? _filter;
@@ -31,17 +32,16 @@ extension _IngestReviewControls on _IngestReviewPageState {
           style: context.bodyCaptionStyle,
         ),
         const SizedBox(height: AppSpacing.s8),
-        FTextField(
+        AppSearchField(
           key: const ValueKey('ingest-review-search'),
           focusNode: _searchFocus,
-          control: FTextFieldControl.managed(
-            controller: _search,
-            onChange: (value) {
-              if (value.text != _query) _changeScope(query: value.text);
-            },
-          ),
-          hint: l10n.ingestReviewSearchHint,
+          controller: _search,
           enabled: !_isBusy,
+          clearLabel: l10n.ingestClearSearch,
+          onChanged: (value) {
+            if (!_isBusy && value != _query) _changeScope(query: value);
+          },
+          hint: l10n.ingestReviewSearchHint,
         ),
         const SizedBox(height: AppSpacing.s8),
         LayoutBuilder(
@@ -157,6 +157,20 @@ extension _IngestReviewControls on _IngestReviewPageState {
               mainAxisSize: MainAxisSize.min,
               child: Flexible(child: Text(l10n.ingestSelectReady)),
             ),
+            if (_query.isNotEmpty ||
+                _filter != IngestReviewFilter.all ||
+                _sort != IngestReviewSort.importOrder)
+              AppQuietButton(
+                key: const ValueKey('ingest-clear-filters'),
+                onPress: _isBusy
+                    ? null
+                    : () {
+                        _search.clear();
+                        _sort = IngestReviewSort.importOrder;
+                        _changeScope(query: '', filter: IngestReviewFilter.all);
+                      },
+                label: l10n.ingestClearFilters,
+              ),
             if (_selection.selectedIds.isNotEmpty)
               FButton(
                 key: const ValueKey('ingest-clear-selection'),
@@ -170,13 +184,27 @@ extension _IngestReviewControls on _IngestReviewPageState {
         if (_lastBatchOutcome case final outcome?) ...[
           const SizedBox(height: AppSpacing.s8),
           Text(
-            l10n.ingestLastBatchResult(
-              outcome.confirmed.length,
-              outcome.failureCount,
-            ),
+            outcome.unprocessedCount > 0
+                ? l10n.ingestBatchStopped(
+                    outcome.confirmed.length,
+                    outcome.failureCount,
+                    outcome.unprocessedCount,
+                  )
+                : l10n.ingestLastBatchResult(
+                    outcome.confirmed.length,
+                    outcome.failureCount,
+                  ),
             key: const ValueKey('ingest-batch-result'),
             style: context.bodyCaptionStyle,
           ),
+          if (_lastUndoOffer case final offer?)
+            if (identical(ref.watch(formUndoOfferProvider), offer) &&
+                offer.available)
+              AppActionButton(
+                variant: FButtonVariant.outline,
+                onPress: _isBusy ? null : () => _runIngestUndo(offer),
+                child: Flexible(child: Text(l10n.commonUndo)),
+              ),
           if (outcome.hasFailures)
             FButton(
               variant: FButtonVariant.ghost,

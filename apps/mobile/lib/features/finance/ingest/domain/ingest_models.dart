@@ -241,12 +241,16 @@ class IngestDraft {
 
   double get confidence => parsed.confidence;
 
-  IngestDraft copyWith({DraftStatus? status, int? revision}) => IngestDraft(
+  IngestDraft copyWith({
+    DraftStatus? status,
+    int? revision,
+    ParsedTransaction? parsed,
+  }) => IngestDraft(
     draftId: draftId,
     ownerUserId: ownerUserId,
     createdAt: createdAt,
     sourceKind: sourceKind,
-    parsed: parsed,
+    parsed: parsed ?? this.parsed,
     verdict: verdict,
     status: status ?? this.status,
     originLabel: originLabel,

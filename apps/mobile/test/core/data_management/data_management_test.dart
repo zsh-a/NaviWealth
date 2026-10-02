@@ -106,9 +106,11 @@ void main() {
       addTearDown(db.close);
       await _createFixtureTables(db);
 
+      final clearedDraftDomains = <DomainScope>[];
       final service = DataManagementService(
         database: db,
         ownerUserId: 'user-a',
+        clearLocalDrafts: (scope) async => clearedDraftDomains.add(scope),
         specs: const <DomainDataManagementSpec>[
           DomainDataManagementSpec(
             scope: DomainScope.knowledge,
@@ -134,6 +136,7 @@ void main() {
         requeuePreserved: true,
       );
 
+      expect(clearedDraftDomains, [DomainScope.knowledge]);
       expect(await _count(db, 'dm_source'), 1);
       expect(await _count(db, 'dm_cache'), 1);
       expect(await _count(db, 'dm_global_cache'), 0);

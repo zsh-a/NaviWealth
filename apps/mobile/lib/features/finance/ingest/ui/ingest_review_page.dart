@@ -20,6 +20,8 @@ import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 
 import '../../../../core/ai/visual/visual.dart';
+import '../../../../core/auth/current_user.dart';
+import '../../../../core/logging/providers.dart';
 import '../../../../core/product/product_metrics.dart';
 import '../../../../core/shell/master_detail_layout.dart';
 import '../../../../core/shortcuts/keyboard_platform.dart';
@@ -27,6 +29,8 @@ import '../../../../core/shortcuts/master_detail_shortcuts.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../activation/data/finance_activation_store.dart';
+import '../../expense/domain/expense_category_presets.dart';
+import '../../expense/domain/expense_category_taxonomy.dart';
 import '../../shared/ui/forms/forms.dart';
 import '../data/capture_encoder.dart';
 import '../data/ingest_capture_feedback.dart';
@@ -58,6 +62,8 @@ part 'ingest_review/selection_actions.dart';
 part 'ingest_review/workspace.dart';
 part 'ingest_review/controls.dart';
 part 'ingest_review/duplicate_comparison.dart';
+part 'ingest_review/category_picker.dart';
+part 'ingest_review/view_state.dart';
 
 class IngestReviewPage extends ConsumerStatefulWidget {
   const IngestReviewPage({super.key});
@@ -66,7 +72,8 @@ class IngestReviewPage extends ConsumerStatefulWidget {
   ConsumerState<IngestReviewPage> createState() => _IngestReviewPageState();
 }
 
-class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
+class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
+    with WidgetsBindingObserver {
   String? _accountId;
   _IngestBusyState? _busy;
   final IngestCaptureLease _captureLease = IngestCaptureLease();
@@ -86,11 +93,36 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
   Set<String> _attentionIds = {};
   List<String> _previousReviewOrder = const [];
   final ScrollController _reviewScroll = ScrollController();
+  IngestBatchControl? _batchControl;
+  Completer<void>? _batchFinished;
+  FormUndoOffer? _lastUndoOffer;
+  bool _leaving = false;
+  LocalFormDraftSession? _viewSession;
+  double? _restoreOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _restoreReviewView(ref.read(localFormDraftStoreProvider));
+    ref.listenManual(localFormDraftStoreProvider, (_, store) {
+      if (mounted) setState(() => _restoreReviewView(store));
+    });
+    _reviewScroll.addListener(_captureReviewView);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) _viewSession?.flush();
+  }
 
   bool get _isBusy => _busy != null || _captureLease.isHeld;
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _captureReviewView();
+    _viewSession?.dispose();
     _masterFocus.dispose();
     _search.dispose();
     _searchFocus.dispose();
@@ -100,6 +132,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    _captureReviewView();
     final l10n = AppLocalizations.of(context);
     final reviewItemsAsync = ref.watch(pendingIngestReviewItemsProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
@@ -144,6 +177,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
         final viewData = _currentData;
         if (viewData != null) {
           _scheduleSelectionPrune(viewData.items, ensureFocus: true);
+          _restoreReviewScroll();
         }
         final selectedItems = viewData?.items
             .where((item) => _selection.isSelected(item.draft.draftId))
@@ -154,6 +188,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
             : AppTaskScaffold(
                 titleWidget: _title(l10n),
                 scrollController: _reviewScroll,
+                confirmLeave: _confirmReviewLeave,
                 actionsBuilder: (context, wide) => <Widget>[
                   if (viewData != null && viewData.allItems.isNotEmpty)
                     AppIconButton(
@@ -182,22 +217,31 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage> {
                 railBuilder: (_) => _rail(viewData),
                 footerBuilder: _footerBuilder(viewData, selectedItems),
               );
-        return IngestCaptureFeedbackListener(
-          child: DropTarget(
-            onDragDone: _isBusy ? (_) {} : _onDrop,
-            child: Focus(
-              focusNode: _masterFocus,
-              onKeyEvent: (_, event) => viewData == null
-                  ? KeyEventResult.ignored
-                  : _onMasterKey(viewData, event),
-              child: MasterDetailShortcuts(
-                onSelectNext: viewData == null
-                    ? null
-                    : () => _moveFocus(viewData, 1),
-                onSelectPrevious: viewData == null
-                    ? null
-                    : () => _moveFocus(viewData, -1),
-                child: content,
+        return PopScope(
+          canPop: !_isBusy || _leaving,
+          onPopInvokedWithResult: (didPop, _) async {
+            if (didPop || !await _confirmReviewLeave() || !mounted) return;
+            setState(() => _leaving = true);
+            await WidgetsBinding.instance.endOfFrame;
+            if (context.mounted) smartPop(context);
+          },
+          child: IngestCaptureFeedbackListener(
+            child: DropTarget(
+              onDragDone: _isBusy ? (_) {} : _onDrop,
+              child: Focus(
+                focusNode: _masterFocus,
+                onKeyEvent: (_, event) => viewData == null
+                    ? KeyEventResult.ignored
+                    : _onMasterKey(viewData, event),
+                child: MasterDetailShortcuts(
+                  onSelectNext: viewData == null
+                      ? null
+                      : () => _moveFocus(viewData, 1),
+                  onSelectPrevious: viewData == null
+                      ? null
+                      : () => _moveFocus(viewData, -1),
+                  child: content,
+                ),
               ),
             ),
           ),

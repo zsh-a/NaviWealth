@@ -22,10 +22,12 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
   late final TextEditingController _description;
   late final TextEditingController _amount;
   late final TextEditingController _currency;
-  late final TextEditingController _category;
+  String? _category;
   late DateTime _date;
   late IngestTransactionKind _kind;
   String? _error;
+  bool _conflicted = false;
+  IngestDraft? _latestConflict;
   late IngestDraft _draft;
   late int _index;
   bool _working = false;
@@ -44,15 +46,10 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
       text: formatAbsoluteMinorUnitAmount(parsed.amountMinor),
     );
     _currency = TextEditingController(text: parsed.currency);
-    _category = TextEditingController(text: parsed.categoryHint);
+    _category = _canonicalReviewCategory(parsed.kind, parsed.categoryHint);
     _date = parsed.occurredAt;
     _kind = parsed.kind;
-    widget.dirty.bindTextControllers([
-      _description,
-      _amount,
-      _currency,
-      _category,
-    ]);
+    widget.dirty.bindTextControllers([_description, _amount, _currency]);
   }
 
   @override
@@ -60,7 +57,6 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
     _description.dispose();
     _amount.dispose();
     _currency.dispose();
-    _category.dispose();
     super.dispose();
   }
 
@@ -140,7 +136,10 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
               onChanged: (kind) {
                 if (kind == _kind) return;
                 widget.dirty.markDirty();
-                setState(() => _kind = kind);
+                setState(() {
+                  _kind = kind;
+                  _category = null;
+                });
               },
             ),
             const SizedBox(height: AppSpacing.s12),
@@ -164,7 +163,7 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
             ),
             const SizedBox(height: AppSpacing.s12),
             DateField(
-              key: ValueKey(_draft.draftId),
+              key: ValueKey((_draft.draftId, _draft.revision)),
               label: l10n.ingestEditDate,
               initialValue: _date,
               firstDate: DateTime(1970),
@@ -178,13 +177,50 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
               },
             ),
             const SizedBox(height: AppSpacing.s12),
-            FTextField(
-              control: FTextFieldControl.managed(controller: _category),
-              label: Text(l10n.ingestEditCategory),
-            ),
+            if (_kind == IngestTransactionKind.expense ||
+                _kind == IngestTransactionKind.income)
+              _IngestCategoryPicker(
+                kind: _kind,
+                value: _category,
+                onChanged: (value) {
+                  widget.dirty.markDirty();
+                  setState(() => _category = value);
+                },
+              ),
             if (_error != null) ...[
               const SizedBox(height: AppSpacing.s12),
               AppStatusBanner(kind: AppStatusKind.error, message: _error!),
+              if (_conflicted) ...[
+                const SizedBox(height: AppSpacing.s8),
+                if (_latestConflict case final latest?) ...[
+                  Text(
+                    AppLocalizations.of(context).ingestLatestDraft,
+                    style: context.labelStyle,
+                  ),
+                  Text(
+                    '${latest.parsed.description} · ${latest.parsed.currency} ${formatMinorUnitAmount(latest.parsed.amountMinor)} · ${_comparisonStamp(latest.parsed)}',
+                    style: context.bodyCaptionStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s8),
+                ],
+                AppActionButton(
+                  variant: FButtonVariant.outline,
+                  onPress: _working
+                      ? null
+                      : () => _reloadCurrent(keepInput: false),
+                  child: Flexible(child: Text(l10n.ingestReloadDraft)),
+                ),
+                if (_latestConflict != null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppActionButton(
+                    variant: FButtonVariant.outline,
+                    onPress: _working
+                        ? null
+                        : () => _reloadCurrent(keepInput: true),
+                    child: Flexible(child: Text(l10n.ingestKeepDraftInput)),
+                  ),
+                ],
+              ],
             ],
           ],
         ),
@@ -196,6 +232,14 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
     final unsignedMinor = parseUnsignedMinorUnitAmount(_amount.text);
     final currency = _currency.text.trim().toUpperCase();
     final description = _description.text.trim();
+    if ((_kind == IngestTransactionKind.expense ||
+            _kind == IngestTransactionKind.income) &&
+        !_supportsReviewCategory(_kind, _category)) {
+      setState(
+        () => _error = AppLocalizations.of(context).ingestCategoryUnsupported,
+      );
+      return null;
+    }
     if (unsignedMinor == null ||
         unsignedMinor <= 0 ||
         currency.isEmpty ||
@@ -217,10 +261,8 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
           ? _draft.parsed.dateHasTime
           : false,
       kind: _kind,
-      clearCategoryHint: _category.text.trim().isEmpty,
-      categoryHint: _category.text.trim().isEmpty
-          ? null
-          : _category.text.trim(),
+      clearCategoryHint: _category == null,
+      categoryHint: _category,
     );
   }
 
@@ -246,19 +288,24 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
       );
       if (!mounted) return;
       if (!updated) {
-        setState(
-          () => _error = AppLocalizations.of(context).ingestEditConflict,
-        );
+        final current = await store.readReviewItem(_draft.draftId);
+        if (!mounted) return;
+        setState(() {
+          _error = AppLocalizations.of(context).ingestEditConflict;
+          _conflicted = true;
+          _latestConflict = current?.isOrdinaryPending == true
+              ? current!.draft
+              : null;
+        });
         return;
       }
+      _draft = _draft.copyWith(parsed: parsed, revision: _draft.revision + 1);
       widget.dirty.markPristine();
       if (advance && await _loadNext(1)) return;
       if (mounted) Navigator.of(context).pop();
     } catch (_) {
       if (mounted) {
-        setState(
-          () => _error = AppLocalizations.of(context).ingestEditConflict,
-        );
+        setState(() => _error = AppLocalizations.of(context).commonSaveFailed);
       }
     } finally {
       widget.dirty.busy = false;
@@ -289,9 +336,58 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
     }
   }
 
+  Future<void> _reloadCurrent({required bool keepInput}) async {
+    if (_working) return;
+    if (!keepInput && !await confirmDiscardIfDirty(context, widget.dirty)) {
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _working = true);
+    widget.dirty.busy = true;
+    try {
+      final store = ref.read(ingestDraftStoreProvider);
+      if (store == null || store.ownerUserId != _draft.ownerUserId) {
+        throw StateError('draft owner changed');
+      }
+      final current = await store.readReviewItem(_draft.draftId);
+      if (!mounted) return;
+      if (current == null || !current.isOrdinaryPending) {
+        setState(
+          () => _error = AppLocalizations.of(context).ingestDraftUnavailable,
+        );
+        return;
+      }
+      setState(() {
+        _draft = current.draft;
+        if (!keepInput) _hydrate(current.draft);
+        _conflicted = false;
+        _latestConflict = null;
+        _error = null;
+      });
+      if (!keepInput) widget.dirty.markPristine();
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).commonLoadFailed);
+      }
+    } finally {
+      widget.dirty.busy = false;
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
+  void _hydrate(IngestDraft draft) {
+    final parsed = draft.parsed;
+    _description.text = parsed.description;
+    _amount.text = formatAbsoluteMinorUnitAmount(parsed.amountMinor);
+    _currency.text = parsed.currency;
+    _category = _canonicalReviewCategory(parsed.kind, parsed.categoryHint);
+    _date = parsed.occurredAt;
+    _kind = parsed.kind;
+  }
+
   Future<bool> _loadNext(int offset) async {
     final store = ref.read(ingestDraftStoreProvider);
-    if (store == null) return false;
+    if (store == null || store.ownerUserId != _draft.ownerUserId) return false;
     for (
       var index = _index + offset;
       index >= 0 && index < widget.drafts.length;
@@ -300,16 +396,12 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
       final item = await store.readReviewItem(widget.drafts[index].draftId);
       if (!mounted) return false;
       if (item == null || !item.isOrdinaryPending) continue;
-      final parsed = item.draft.parsed;
       setState(() {
         _index = index;
         _draft = item.draft;
-        _description.text = parsed.description;
-        _amount.text = formatAbsoluteMinorUnitAmount(parsed.amountMinor);
-        _currency.text = parsed.currency;
-        _category.text = parsed.categoryHint ?? '';
-        _date = parsed.occurredAt;
-        _kind = parsed.kind;
+        _hydrate(item.draft);
+        _conflicted = false;
+        _latestConflict = null;
         _error = null;
       });
       widget.dirty.markPristine();
@@ -321,8 +413,8 @@ class _IngestDraftEditSheetState extends ConsumerState<_IngestDraftEditSheet> {
 }
 
 class _IngestCategorySheet extends StatefulWidget {
-  const _IngestCategorySheet({required this.count, required this.dirty});
-  final int count;
+  const _IngestCategorySheet({required this.drafts, required this.dirty});
+  final List<IngestDraft> drafts;
   final FormDirtyController dirty;
 
   @override
@@ -330,37 +422,46 @@ class _IngestCategorySheet extends StatefulWidget {
 }
 
 class _IngestCategorySheetState extends State<_IngestCategorySheet> {
-  final _category = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    widget.dirty.bindTextControllers([_category]);
-  }
-
-  @override
-  void dispose() {
-    _category.dispose();
-    super.dispose();
-  }
+  final _categories = <IngestTransactionKind, String?>{};
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return AppSheet(
-      title: l10n.ingestBatchCategoryCount(widget.count),
+      title: l10n.ingestBatchCategoryCount(widget.drafts.length),
       footer: AppSheetFooter(
         submitLabel: l10n.commonSave,
         cancelLabel: l10n.commonCancel,
+        enabled: _categories.isNotEmpty,
         onSubmit: () {
           widget.dirty.markPristine();
-          Navigator.of(context).pop(_category.text.trim());
+          Navigator.of(context).pop(_categories);
         },
       ),
-      child: FTextField(
-        control: FTextFieldControl.managed(controller: _category),
-        label: Text(l10n.ingestEditCategory),
-        hint: l10n.ingestCategoryClearHint,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.ingestCategoryBatchHint, style: context.bodyCaptionStyle),
+          for (final kind in [
+            IngestTransactionKind.expense,
+            IngestTransactionKind.income,
+          ])
+            if (widget.drafts.any((draft) => draft.parsed.kind == kind)) ...[
+              const SizedBox(height: AppSpacing.s12),
+              _IngestCategoryPicker(
+                kind: kind,
+                value: _categories[kind],
+                unchanged: !_categories.containsKey(kind),
+                label: kind == IngestTransactionKind.expense
+                    ? l10n.ingestKindExpense
+                    : l10n.ingestKindIncome,
+                onChanged: (value) {
+                  widget.dirty.markDirty();
+                  setState(() => _categories[kind] = value);
+                },
+              ),
+            ],
+        ],
       ),
     );
   }

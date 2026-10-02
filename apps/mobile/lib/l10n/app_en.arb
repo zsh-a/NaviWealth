@@ -8898,5 +8898,34 @@
         "type": "int"
       }
     }
-  }
+  },
+  "formDraftAvailable": "There is an unfinished draft on this device. Restore it or start fresh.",
+  "formDraftRestore": "Restore draft",
+  "formDraftDiscard": "Discard draft",
+  "ingestCategorySalary": "Salary",
+  "ingestCategoryDividend": "Dividend",
+  "ingestCategoryInterest": "Interest",
+  "ingestCategoryUncategorized": "Uncategorized (record as Other)",
+  "ingestCategoryAppliedHint": "Choose the category that will be used when recording.",
+  "ingestCategoryUnsupported": "This category is not supported for import. Choose a listed category before saving.",
+  "ingestCategoryBatchHint": "Set expense and income categories separately. Types you leave unchanged keep their current categories.",
+  "ingestCategoryUnchanged": "Keep existing categories",
+  "ingestClearSearch": "Clear search",
+  "ingestClearFilters": "Reset search and filters",
+  "ingestStopBatch": "Stop after current record",
+  "ingestStopping": "Stopping after current record…",
+  "ingestStopAndLeaveTitle": "Stop recording and leave?",
+  "ingestStopAndLeaveBody": "The current record will finish first. Completed records stay saved and the rest remain in the review queue.",
+  "ingestStopAndLeave": "Stop and leave",
+  "ingestBatchStopped": "Stopped: {recorded} recorded, {failed} need review, {remaining} not processed",
+  "@ingestBatchStopped": {"placeholders": {"recorded": {"type": "int"}, "failed": {"type": "int"}, "remaining": {"type": "int"}}},
+  "ingestLatestDraft": "Latest saved record",
+  "ingestReloadDraft": "Reload latest record",
+  "ingestKeepDraftInput": "Keep my input and update version",
+  "ingestDraftUnavailable": "This record is no longer available for editing. Your input is still here.",
+  "syncLocalSavedNeedsAttention": "Saved on this device · Sync needs attention",
+  "syncLocalSavedPending": "Saved on this device · {count} changes waiting to sync",
+  "@syncLocalSavedPending": {"placeholders": {"count": {"type": "int"}}},
+  "ingestCategoryFallback": "Other · Unrecognized category: {category}",
+  "@ingestCategoryFallback": {"placeholders": {"category": {"type": "String"}}}
 }

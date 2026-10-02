@@ -27,6 +27,14 @@ typedef IngestDuplicateCheck = Future<DedupResult> Function(
   String? accountId,
 });
 
+/// Stops future records only. An in-flight record always finishes its own
+/// durable lifecycle before the batch checks this control again.
+class IngestBatchControl {
+  bool _stopRequested = false;
+  bool get stopRequested => _stopRequested;
+  void stop() => _stopRequested = true;
+}
+
 class IngestConfirmException implements Exception {
   const IngestConfirmException(
     this.code,
@@ -160,10 +168,12 @@ class IngestBatchConfirmResult {
   const IngestBatchConfirmResult({
     required this.confirmed,
     required this.failures,
+    this.unprocessedCount = 0,
   });
 
   final List<ConfirmedIngestItem> confirmed;
   final List<IngestBatchItemFailure<IngestDraft>> failures;
+  final int unprocessedCount;
 
   int get completed => confirmed.length + failures.length;
 }
@@ -552,6 +562,7 @@ class IngestConfirmService {
     List<IngestReviewItem> items, {
     required String fromAccountId,
     IngestProgressCallback? onProgress,
+    IngestBatchControl? control,
   }) async {
     if (fromAccountId.isEmpty) {
       throw const IngestConfirmException(
@@ -570,11 +581,13 @@ class IngestConfirmService {
       chunkStart < eligible.length;
       chunkStart += confirmationChunkSize
     ) {
+      if (control?.stopRequested == true) break;
       final chunkEnd = chunkStart + confirmationChunkSize < eligible.length
           ? chunkStart + confirmationChunkSize
           : eligible.length;
       await _runBatch(() async {
         for (var index = chunkStart; index < chunkEnd; index++) {
+          if (control?.stopRequested == true) break;
           final draft = eligible[index];
           try {
             confirmed.add(
@@ -591,7 +604,11 @@ class IngestConfirmService {
         }
       });
     }
-    return IngestBatchConfirmResult(confirmed: confirmed, failures: failures);
+    return IngestBatchConfirmResult(
+      confirmed: confirmed,
+      failures: failures,
+      unprocessedCount: eligible.length - confirmed.length - failures.length,
+    );
   }
 
   Future<T> _runBatch<T>(Future<T> Function() action) {

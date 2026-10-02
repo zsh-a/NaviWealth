@@ -8,12 +8,16 @@ class _IngestBusyState {
     required this.title,
     required this.message,
     required this.icon,
+    this.completed,
+    this.total,
   });
 
   final _IngestAction action;
   final String title;
   final String message;
   final IconData icon;
+  final int? completed;
+  final int? total;
 }
 
 class _ProcessingState extends StatelessWidget {
@@ -47,10 +51,17 @@ class _ProcessingNotice extends StatelessWidget {
 }
 
 class _ProcessingPanel extends StatelessWidget {
-  const _ProcessingPanel({required this.state, this.compact = false});
+  const _ProcessingPanel({
+    required this.state,
+    this.compact = false,
+    this.onStop,
+    this.stopRequested = false,
+  });
 
   final _IngestBusyState state;
   final bool compact;
+  final VoidCallback? onStop;
+  final bool stopRequested;
 
   @override
   Widget build(BuildContext context) {
@@ -64,23 +75,29 @@ class _ProcessingPanel extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            FProgress(
-              style: FProgressStyle(
-                constraints: const BoxConstraints.tightFor(height: 2),
-                trackDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: context.theme.style.borderRadius.pill,
+            if (state.total != null && state.total! > 0)
+              FDeterminateProgress(
+                value: ((state.completed ?? 0) / state.total!).clamp(0, 1),
+                semanticsLabel: state.message,
+              )
+            else
+              FProgress(
+                style: FProgressStyle(
+                  constraints: const BoxConstraints.tightFor(height: 2),
+                  trackDecoration: ShapeDecoration(
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: context.theme.style.borderRadius.pill,
+                    ),
+                    color: colors.muted,
                   ),
-                  color: colors.muted,
-                ),
-                fillDecoration: ShapeDecoration(
-                  shape: RoundedSuperellipseBorder(
-                    borderRadius: context.theme.style.borderRadius.pill,
+                  fillDecoration: ShapeDecoration(
+                    shape: RoundedSuperellipseBorder(
+                      borderRadius: context.theme.style.borderRadius.pill,
+                    ),
+                    color: colors.primary,
                   ),
-                  color: colors.primary,
                 ),
               ),
-            ),
             Padding(
               padding: EdgeInsets.all(
                 compact ? AppSpacing.s12 : AppSpacing.s20,
@@ -116,6 +133,22 @@ class _ProcessingPanel extends StatelessWidget {
                             height: 1.35,
                           ),
                         ),
+                        if (onStop != null || stopRequested) ...[
+                          const SizedBox(height: AppSpacing.s8),
+                          AppActionButton(
+                            variant: FButtonVariant.outline,
+                            onPress: onStop,
+                            child: Flexible(
+                              child: Text(
+                                stopRequested
+                                    ? AppLocalizations.of(context)
+                                          .ingestStopping
+                                    : AppLocalizations.of(context)
+                                          .ingestStopBatch,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

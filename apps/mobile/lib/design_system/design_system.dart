@@ -57,6 +57,7 @@ export 'widgets/app_dialog_route.dart';
 export 'widgets/app_disclosure_header.dart';
 export 'widgets/app_dismissible.dart';
 export 'widgets/app_divider.dart';
+export 'widgets/app_draft_restore_banner.dart';
 export 'widgets/app_empty_state.dart';
 export 'widgets/app_entrance.dart';
 export 'widgets/app_filter_chip.dart';

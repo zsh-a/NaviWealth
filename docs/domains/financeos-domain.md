@@ -114,6 +114,25 @@ destination revision; bulk category edits use owner-scoped optimistic revisions
 without overwriting lifecycle or recovery conflicts. Duplicate comparison can
 resolve either another staged draft or the owning user's journal evidence.
 
+Expense and income category corrections use supported canonical choices; mixed
+bulk edits configure each kind separately and preserve untouched kinds. Unknown
+imported category hints require an explicit replacement before a corrected draft
+can be saved. On a revision conflict the editor retains input and offers the
+latest saved values, reload, or adoption of the latest revision followed by an
+explicit save. This never bypasses lifecycle guards.
+
+Review search, filters, ordering, focus, render window and scroll position are
+owner-scoped device preferences; selected record IDs are deliberately ephemeral.
+Batch confirmation pins progress and can stop between records, finishing the
+current write and reporting successful, failed and untouched counts. Leaving a
+running batch first requests that stop and waits for completion. Confirm and
+dismiss receipts use the shared 60-second cross-page Undo offer; partial Undo
+retries only unfinished continuations.
+
+New expense input uses the shared local form draft session, with explicit restore
+or discard on reopening. Successful saves and explicit discard clear the draft.
+Edit-load failures replace the spinner with actionable retry.
+
 ### Investment Interaction
 
 The Plan hub keeps cash safety and goals/contributions visible. Advanced

@@ -77,7 +77,7 @@ class _DraftMasterRow extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
-                          '${_DraftCard._ymd(parsed.occurredAt)} · ${parsed.categoryHint ?? AppLocalizations.of(context).ingestUncategorized}',
+                          '${_DraftCard._ymd(parsed.occurredAt)} · ${_reviewCategoryDisplay(AppLocalizations.of(context), parsed)}',
                           style: context.bodyCaptionStyle,
                         ),
                         if (pendingFinalize || recoveryUnavailable) ...[
@@ -219,7 +219,7 @@ class _DraftCard extends StatelessWidget {
                     },
                   ),
                 Text(
-                  '${_ymd(p.occurredAt)} · ${p.categoryHint ?? l10n.ingestUncategorized}',
+                  '${_ymd(p.occurredAt)} · ${_reviewCategoryDisplay(l10n, p)}',
                   style: context.bodyCaptionStyle,
                 ),
                 if (focused) ...[

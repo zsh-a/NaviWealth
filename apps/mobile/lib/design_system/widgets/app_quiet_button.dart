@@ -99,7 +99,11 @@ class AppQuietButton extends StatelessWidget {
             role: AppMotionRole.decorative,
           ),
           curve: Motion.standard,
-          constraints: const BoxConstraints(minHeight: 36),
+          constraints: BoxConstraints(
+            minHeight: context.platformVariant.touch
+                ? AppControlHeights.touchTarget
+                : 36,
+          ),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s12,
             vertical: AppSpacing.s8,

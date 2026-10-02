@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/forms/local_form_draft.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -9,32 +11,65 @@ import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_action_sheet.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-Widget _wrap({ExecutionAction? action}) => ProviderScope(
-  overrides: [
-    executionPlansProvider.overrideWith((_) => Stream.value(const [])),
-  ],
-  child: MaterialApp(
-    theme: AppTheme.light(),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    locale: const Locale('en'),
-    home: FTheme(
-      data: FTheme.neutral.light.desktop,
-      child: Builder(
-        builder: (context) => Scaffold(
-          body: TextButton(
-            onPressed: () =>
-                showExecutionActionSheet(context: context, action: action),
-            child: const Text('Open'),
+Widget _wrap({ExecutionAction? action, SharedPreferences? preferences}) =>
+    ProviderScope(
+      overrides: [
+        if (preferences != null)
+          sharedPreferencesProvider.overrideWithValue(preferences),
+        if (preferences != null)
+          activeUserIdProvider.overrideWithValue('owner'),
+        executionPlansProvider.overrideWith((_) => Stream.value(const [])),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        home: FTheme(
+          data: FTheme.neutral.light.desktop,
+          child: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () =>
+                    showExecutionActionSheet(context: context, action: action),
+                child: const Text('Open'),
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  ),
-);
+    );
 
 void main() {
+  testWidgets('action draft restores input and explicit discard clears it', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final store = LocalFormDraftStore(preferences, owner: 'owner');
+    await store.write('execution.action.new:', {
+      'title': 'Continue this action',
+      'priority': 'high',
+      'note': 'Unfinished note',
+    });
+    await tester.pumpWidget(_wrap(preferences: preferences));
+    await tester.tap(find.text('Open'));
+    await tester.pumpAndSettle();
+    expect(find.text('Restore draft'), findsOneWidget);
+    await tester.tap(find.text('Restore draft'));
+    await tester.pumpAndSettle();
+    expect(find.text('Continue this action'), findsOneWidget);
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pumpAndSettle();
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    await tester.tap(find.text(l10n.unsavedChangesDiscard));
+    await tester.pumpAndSettle();
+    expect(store.read('execution.action.new:'), isNull);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('typing an action is protected from barrier dismissal', (
     tester,
   ) async {
