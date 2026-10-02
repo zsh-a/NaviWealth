@@ -101,6 +101,7 @@ void main() {
 
       expect(find.text('First command'), findsOneWidget);
       expect(find.text('Second command'), findsOneWidget);
+      expect(find.byType(BackdropFilter), findsNothing);
 
       final field = tester.widget<EditableText>(find.byType(EditableText));
       expect(field.focusNode.hasFocus, isTrue);

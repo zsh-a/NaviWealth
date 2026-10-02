@@ -216,47 +216,56 @@ class _SessionsPanelState extends ConsumerState<SessionsPanel> {
               ),
             );
           }
-          return ListView.builder(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.s8,
-              AppSpacing.s4,
-              AppSpacing.s8,
-              AppSpacing.s16,
-            ),
-            itemCount: groups.length,
-            itemBuilder: (context, i) {
-              final group = groups[i];
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (i > 0) const SizedBox(height: AppSpacing.s12),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s12,
-                      AppSpacing.s6,
-                      AppSpacing.s12,
-                      AppSpacing.s6,
-                    ),
-                    child: Text(
-                      group.label,
-                      style: context.microLabelStyle.copyWith(
-                        color: context.theme.colors.mutedForeground,
+          return CustomScrollView(
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s8,
+                  AppSpacing.s4,
+                  AppSpacing.s8,
+                  AppSpacing.s16,
+                ),
+                // Each session is a sliver child. A Column per group eagerly
+                // builds every thread in a large Today/Older/Archived bucket.
+                sliver: SliverMainAxisGroup(
+                  slivers: [
+                    for (var i = 0; i < groups.length; i++) ...[
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.s12,
+                            AppSpacing.s6 + (i > 0 ? AppSpacing.s12 : 0),
+                            AppSpacing.s12,
+                            AppSpacing.s6,
+                          ),
+                          child: Text(
+                            groups[i].label,
+                            style: context.microLabelStyle.copyWith(
+                              color: context.theme.colors.mutedForeground,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  for (final s in group.sessions)
-                    _SessionTile(
-                      session: s,
-                      selected: s.id == widget.activeSessionId,
-                      onTap: () => widget.onSelect(s.id),
-                      onDelete: () => _confirmDelete(context, ref, s),
-                      onRename: () => _promptRename(context, ref, s),
-                      onTogglePin: () => _togglePin(ref, s),
-                      onToggleArchive: () => _toggleArchive(ref, s),
-                    ),
-                ],
-              );
-            },
+                      SliverList.builder(
+                        itemCount: groups[i].sessions.length,
+                        itemBuilder: (context, index) {
+                          final s = groups[i].sessions[index];
+                          return _SessionTile(
+                            session: s,
+                            selected: s.id == widget.activeSessionId,
+                            onTap: () => widget.onSelect(s.id),
+                            onDelete: () => _confirmDelete(context, ref, s),
+                            onRename: () => _promptRename(context, ref, s),
+                            onTogglePin: () => _togglePin(ref, s),
+                            onToggleArchive: () => _toggleArchive(ref, s),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),

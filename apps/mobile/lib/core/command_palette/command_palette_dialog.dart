@@ -27,7 +27,7 @@ Future<void> showCommandPalette(
   if (current != null && _openNavigator == navigator && navigator.mounted) {
     return current;
   }
-  final future = showFDialog<void>(
+  final future = showAppDialog<void>(
     context: context,
     barrierDismissible: true,
     routeSettings: const RouteSettings(name: _kCommandPaletteRouteName),

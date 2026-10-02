@@ -106,6 +106,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Exporting backup'), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
+    await tester.tapAt(const Offset(4, 4));
+    await tester.pump(const Duration(milliseconds: 32));
+    expect(find.text('Exporting backup'), findsOneWidget);
     final dismiss = await dismissFuture;
     await dismiss();
     await tester.pumpAndSettle();

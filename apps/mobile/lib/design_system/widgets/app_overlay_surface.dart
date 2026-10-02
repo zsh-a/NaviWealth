@@ -11,8 +11,8 @@ import '../tokens/motion_tokens.dart';
 ///
 /// One recipe for every overlay card in the app: opaque background,
 /// `AppRadius.lg` corners, a hairline border, and the shared elevation
-/// shadow. Modal bottom sheets are the deliberate exception — they keep the
-/// frosted [AppSheetSurface] glass recipe.
+/// shadow. Information bottom sheets keep the frosted [AppSheetSurface] glass
+/// recipe; form sheets use this opaque surface to keep transitions inexpensive.
 class AppOverlaySurface extends StatelessWidget {
   const AppOverlaySurface({
     super.key,
@@ -40,8 +40,11 @@ class AppOverlaySurface extends StatelessWidget {
       ),
       child: child,
     );
-    if (!clip) return decorated;
-    return ClipRRect(borderRadius: borderRadius, child: decorated);
+    return RepaintBoundary(
+      child: clip
+          ? ClipRRect(borderRadius: borderRadius, child: decorated)
+          : decorated,
+    );
   }
 }
 

@@ -11,10 +11,12 @@ import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_busy_button.dart';
+import 'app_dialog_route.dart';
 import 'app_glass.dart';
 import 'app_gradient_divider.dart';
 import 'app_icon_button.dart';
 import 'app_interaction.dart';
+import 'app_overlay_surface.dart';
 import 'form_dirty_controller.dart';
 import 'forui_dialogs.dart';
 
@@ -98,6 +100,8 @@ Future<T?> showAppSheet<T>({
 /// [AppSheetFooter] can pin above the keyboard). The [builder] should
 /// return an [AppSheet] with a [AppSheet.footer] — the form keeps owning
 /// its controllers/validation, it just stops re-implementing chrome.
+/// Forms use an opaque surface on every viewport so their entrance transition
+/// does not resample the backdrop or animate decorative lighting.
 Future<T?> showAppFormSheet<T>({
   required BuildContext context,
   required WidgetBuilder builder,
@@ -112,8 +116,9 @@ Future<T?> showAppFormSheet<T>({
       mainAxisMaxRatio: maxHeightFactor,
       dirtyGuard: dirtyGuard,
       confirmDismiss: confirmDismiss,
-      builder: (sheetContext) =>
-          AppSheetSurface(child: Builder(builder: builder)),
+      builder: (sheetContext) => _AppSheetFormScope(
+        child: AppSheetSurface(child: Builder(builder: builder)),
+      ),
       centerOnWide: true,
     );
   } finally {
@@ -246,7 +251,7 @@ class _AppModalSheetRoute<T> extends FModalSheetRoute<T>
   }
 }
 
-class _AppFormDialogRoute<T> extends FDialogRoute<T>
+class _AppFormDialogRoute<T> extends AppDialogRoute<T>
     with _AppModalDismissal<T> {
   _AppFormDialogRoute({
     required super.style,
@@ -256,18 +261,13 @@ class _AppFormDialogRoute<T> extends FDialogRoute<T>
     required super.barrierLabel,
     required this.dirtyGuard,
     required this.confirmDismiss,
-    required this.duration,
+    required super.duration,
   });
 
   @override
   final FormDirtyController? dirtyGuard;
   @override
   final Future<bool> Function()? confirmDismiss;
-  final Duration duration;
-  @override
-  Duration get transitionDuration => duration;
-  @override
-  Duration get reverseTransitionDuration => duration;
 }
 
 mixin _AppModalDismissal<T> on PopupRoute<T> {
@@ -308,6 +308,9 @@ mixin _AppModalDismissal<T> on PopupRoute<T> {
       _dismissScheduled = false;
       unawaited(_requestDismiss(result));
     });
+    // An idle Android back request can be rejected without scheduling a
+    // frame. Wake the renderer so the deferred discard prompt actually runs.
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   Future<void> _requestDismiss(T? result) async {
@@ -334,6 +337,15 @@ class _AppSheetDialogScope extends InheritedWidget {
   const _AppSheetDialogScope({required super.child});
   @override
   bool updateShouldNotify(_AppSheetDialogScope oldWidget) => false;
+}
+
+/// Form surfaces are opaque on every viewport so sliding/fading a form never
+/// samples a changing backdrop or paints pointer-driven decorative light.
+class _AppSheetFormScope extends InheritedWidget {
+  const _AppSheetFormScope({required super.child});
+
+  @override
+  bool updateShouldNotify(_AppSheetFormScope oldWidget) => false;
 }
 
 /// Internal shell — wraps the body with the unified chrome. Public
@@ -695,13 +707,12 @@ class AppSheetSurface extends StatelessWidget {
   final bool safeTop;
   final bool safeBottom;
 
-  /// Enables live backdrop blur. Glass is the default modal material; callers
-  /// may opt out only for a full-screen or rendering-heavy surface.
+  /// Enables live backdrop blur for information sheets. Forms presented through
+  /// [showAppFormSheet] always use the opaque overlay surface.
   final bool frosted;
 
-  /// Adds the shared environmental light field and state wash. Keep enabled
-  /// for task sheets so the modal surface belongs to the same material family
-  /// as the dock; set to false for deliberately plain/brand-neutral sheets.
+  /// Adds the environmental light field to information sheets. Form routes
+  /// use an opaque surface without decorative light regardless of this value.
   final bool softLight;
 
   @override
@@ -709,6 +720,14 @@ class AppSheetSurface extends StatelessWidget {
     if (_AppSheetSurfaceScope.hasSurface(context)) return child;
 
     final mediaQuery = MediaQuery.of(context);
+    final isDialog =
+        context.dependOnInheritedWidgetOfExactType<_AppSheetDialogScope>() !=
+        null;
+    final isForm =
+        context.getInheritedWidgetOfExactType<_AppSheetFormScope>() != null;
+    final radius = isDialog
+        ? BorderRadius.circular(AppRadius.lg)
+        : borderRadius;
 
     // Domain shells use MediaQuery.padding.bottom to reserve space for their
     // floating dock. A modal sheet launched from that subtree must not treat
@@ -727,30 +746,28 @@ class AppSheetSurface extends StatelessWidget {
     );
 
     final surfaceWidget = _AppSheetSurfaceScope(
-      child: AppGlassSurface(
-        key: const ValueKey<String>('app-sheet.surface'),
-        role: AppGlassRole.sheet,
-        borderRadius:
-            context
-                    .dependOnInheritedWidgetOfExactType<
-                      _AppSheetDialogScope
-                    >() !=
-                null
-            ? BorderRadius.circular(AppRadius.lg)
-            : borderRadius,
-        frosted: frosted,
-        softLight: softLight,
-        child: sheetContent,
-      ),
+      child: isForm || isDialog
+          ? AppOverlaySurface(
+              key: const ValueKey<String>('app-sheet.surface'),
+              borderRadius: radius,
+              clip: true,
+              child: sheetContent,
+            )
+          : AppGlassSurface(
+              key: const ValueKey<String>('app-sheet.surface'),
+              role: AppGlassRole.sheet,
+              borderRadius: radius,
+              frosted: frosted,
+              softLight: softLight,
+              child: sheetContent,
+            ),
     );
 
     // Wide viewports: a bottom sheet glued edge-to-edge across a desktop
     // window reads as a full-window band (doc 15 §6.5 / design doc
     // 01-responsive-layout §2.4). Center and cap it instead; phones keep
     // the classic full-width sheet.
-    if (mediaQuery.size.width < Breakpoints.mobile ||
-        context.dependOnInheritedWidgetOfExactType<_AppSheetDialogScope>() !=
-            null) {
+    if (mediaQuery.size.width < Breakpoints.mobile || isDialog) {
       return surfaceWidget;
     }
     return Align(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:desktop_drop/desktop_drop.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -302,6 +303,61 @@ Future<void> _settleUntil(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  for (final size in [const Size(390, 844), const Size(1440, 900)]) {
+    testWidgets(
+      'draft details open without surface blur and save at $size',
+      (tester) async {
+        final touch = size.width < Breakpoints.expanded;
+        tester.view
+          ..physicalSize = size
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final store = IngestDraftStore(db, ownerUserId: 'u1');
+        await store.putAll([_draft()]);
+        final service = IngestConfirmService(
+          applier: const _NoopApplier(),
+          store: store,
+        );
+        await tester.pumpWidget(
+          _app(db: db, store: store, service: service, touch: touch),
+        );
+        await tester.pumpAndSettle();
+        final l10n = lookupAppLocalizations(const Locale('en'));
+        await tester.tap(find.text(l10n.ingestEditDraft));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 32));
+        final surface = find.byKey(const ValueKey('app-sheet.surface'));
+        expect(tester.widget(surface), isA<AppOverlaySurface>());
+        expect(
+          find.descendant(of: surface, matching: find.byType(BackdropFilter)),
+          findsNothing,
+        );
+        await tester.pumpAndSettle();
+        final description = find.descendant(
+          of: surface,
+          matching: find.widgetWithText(FTextField, l10n.ingestEditDescription),
+        );
+        await tester.enterText(description, 'Updated receipt');
+        await tester.tap(find.text(l10n.commonSave));
+        await tester.pumpAndSettle();
+        final updated = (await store.listByStatus(DraftStatus.pending)).single;
+        expect(updated.parsed.description, 'Updated receipt');
+        expect(updated.parsed.amountMinor, -3850);
+        expect(updated.parsed.occurredAt, DateTime.utc(2026, 5, 10));
+        expect(updated.status, DraftStatus.pending);
+        expect(find.byKey(const ValueKey('app-sheet.surface')), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(
+        size.width < Breakpoints.expanded
+            ? TargetPlatform.android
+            : TargetPlatform.linux,
+      ),
+    );
+  }
+
   testWidgets('duplicate records require the explicit Record anyway action', (
     tester,
   ) async {

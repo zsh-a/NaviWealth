@@ -9,6 +9,7 @@ import '../theme/app_theme_scope.dart';
 import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_dialog_route.dart';
 import 'app_interaction.dart';
 import 'app_overlay_surface.dart';
 import 'app_sheet.dart';
@@ -35,7 +36,7 @@ Future<bool> confirmDiscardIfDirty(
 }
 
 /// Shows arbitrary app-styled dialog content in a centered, width-constrained
-/// frame. Feature code should use this seam instead of calling [showFDialog]
+/// frame. Feature code should use this seam instead of calling [showAppDialog]
 /// directly so desktop dialog geometry stays consistent.
 Future<T?> showAppContentDialog<T>({
   required BuildContext context,
@@ -43,15 +44,18 @@ Future<T?> showAppContentDialog<T>({
   double maxWidth = Breakpoints.dialogWide,
   bool barrierDismissible = true,
 }) {
-  return showFDialog<T>(
+  return showAppDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
-    builder: (context, style, animation) => Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s24),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth),
-          child: child,
+    builder: (context, style, animation) => FadeTransition(
+      opacity: animation,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s24),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
         ),
       ),
     ),
@@ -73,36 +77,39 @@ Future<bool?> showConfirmDialog({
   bool destructive = false,
   IconData? icon,
 }) {
-  return showFDialog<bool>(
+  return showAppDialog<bool>(
     context: context,
     barrierDismissible: true,
-    builder: (ctx, style, animation) => _DialogFrame(
-      child: _AppDialog(
-        accentColor: destructive
-            ? ctx.appTheme.status.danger.fg
-            : FTheme.of(ctx).colors.primary,
-        icon: icon,
-        title: title,
-        body: body,
-        actions: [
-          FButton(
-            variant: FButtonVariant.outline,
-            onPress: () => Navigator.of(ctx).pop(false),
-            child: _DialogButtonLabel(cancelLabel),
-          ),
-          FButton(
-            variant: destructive
-                ? FButtonVariant.destructive
-                : FButtonVariant.primary,
-            onPress: AppInteraction.wrap(
-              () => Navigator.of(ctx).pop(true),
-              intent: destructive
-                  ? AppInteractionIntent.destroy
-                  : AppInteractionIntent.commit,
+    builder: (ctx, style, animation) => FadeTransition(
+      opacity: animation,
+      child: _DialogFrame(
+        child: _AppDialog(
+          accentColor: destructive
+              ? ctx.appTheme.status.danger.fg
+              : FTheme.of(ctx).colors.primary,
+          icon: icon,
+          title: title,
+          body: body,
+          actions: [
+            FButton(
+              variant: FButtonVariant.outline,
+              onPress: () => Navigator.of(ctx).pop(false),
+              child: _DialogButtonLabel(cancelLabel),
             ),
-            child: _DialogButtonLabel(confirmLabel),
-          ),
-        ],
+            FButton(
+              variant: destructive
+                  ? FButtonVariant.destructive
+                  : FButtonVariant.primary,
+              onPress: AppInteraction.wrap(
+                () => Navigator.of(ctx).pop(true),
+                intent: destructive
+                    ? AppInteractionIntent.destroy
+                    : AppInteractionIntent.commit,
+              ),
+              child: _DialogButtonLabel(confirmLabel),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -233,7 +240,7 @@ Future<Future<void> Function()> showProgressDialog({
 }) async {
   final completer = Completer<VoidCallback>();
   unawaited(
-    showFDialog<void>(
+    showAppDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx, style, animation) {
@@ -242,18 +249,21 @@ Future<Future<void> Function()> showProgressDialog({
             completer.complete(() => Navigator.of(ctx).pop());
           }
         });
-        return _DialogFrame(
-          child: _AppDialog(
-            accentColor: FTheme.of(ctx).colors.primary,
-            title: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const FCircularProgress(),
-                const SizedBox(width: AppSpacing.s16),
-                Flexible(child: Text(message)),
-              ],
+        return FadeTransition(
+          opacity: animation,
+          child: _DialogFrame(
+            child: _AppDialog(
+              accentColor: FTheme.of(ctx).colors.primary,
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const FCircularProgress(),
+                  const SizedBox(width: AppSpacing.s16),
+                  Flexible(child: Text(message)),
+                ],
+              ),
+              actions: const [],
             ),
-            actions: const [],
           ),
         );
       },
