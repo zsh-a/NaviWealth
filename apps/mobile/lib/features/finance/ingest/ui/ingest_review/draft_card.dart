@@ -465,7 +465,9 @@ class _ReviewCheckbox extends StatelessWidget {
         size: 20,
         icon: FIcon(value == null ? FLucideIcons.minus : FLucideIcons.check),
         trailingLabelStyle: const FLabelStyleDelta.delta(
-          childPadding: EdgeInsetsGeometryDelta.value(EdgeInsets.all(14)),
+          childPadding: EdgeInsetsGeometryDelta.value(
+            EdgeInsets.all(AppSpacing.s14),
+          ),
         ),
       ),
       value: value != false,

@@ -29,6 +29,7 @@ import 'package:naviwealth/core/shell/desktop_sidebar.dart';
 import 'package:naviwealth/core/shell/domain_shell.dart';
 import 'package:naviwealth/core/shell/shell_preferences.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
+import 'package:naviwealth/core/time/current_time_provider.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_domain_shell.dart';
 import 'package:naviwealth/features/finance/home/ui/home_page.dart';
@@ -42,6 +43,12 @@ import '../features/finance/data/repositories/_stub_stamper.dart';
 
 const Size _mobileSize = Size(400, 800);
 const Size _desktopSize = Size(1440, 900);
+
+// Shell layout assertions do not depend on the foreground minute ticker.
+class _FixedCurrentTime extends CurrentTime {
+  @override
+  DateTime build() => DateTime(2026, 9, 1);
+}
 
 Future<ProviderContainer> _pumpAt(
   WidgetTester tester, {
@@ -64,6 +71,7 @@ Future<ProviderContainer> _pumpAt(
       .write(DomainOptIns(<DomainScope>{for (final d in domains) d.scope}));
   final container = ProviderContainer(
     overrides: [
+      currentTimeProvider.overrideWith(_FixedCurrentTime.new),
       deviceLlmPlatformSupportedProvider.overrideWithValue(aiSupported),
       appDatabaseProvider.overrideWith((_) async => db),
       mutationStamperProvider.overrideWith((_) async => makeStubStamper()),

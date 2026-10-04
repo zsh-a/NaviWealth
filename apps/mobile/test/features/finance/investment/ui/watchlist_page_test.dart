@@ -1286,7 +1286,7 @@ void main() {
       AppIconButton,
       FLucideIcons.ellipsisVertical,
     );
-    expect(tester.getSize(action), const Size.square(44));
+    expect(tester.getSize(action), const Size.square(48));
     await tester.tap(action);
     await tester.pumpAndSettle();
 

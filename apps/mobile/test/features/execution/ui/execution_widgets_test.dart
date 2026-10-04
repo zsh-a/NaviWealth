@@ -3,14 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/lifeos/action_outcome.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/features/execution/data/execution_repository.dart';
 import 'package:naviwealth/features/execution/data/providers.dart';
 import 'package:naviwealth/features/execution/domain/execution_models.dart';
 import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../../core/persistence/test_database.dart';
 
 void main() {
   test('overview snapshot counts execution pressure', () {
@@ -569,20 +573,19 @@ void main() {
       sync: _sync(),
     );
 
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repo = ExecutionRepository(db: db, outbox: InMemoryOutboxStore());
+    await repo.upsertPlan(plan);
+    await repo.upsertAction(action);
+    await repo.recordProgress(progress);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          executionPlanDetailProvider(plan.id)
-              .overrideWith((ref) => Stream.value(plan)),
-          executionActionsForPlanProvider(plan.id)
-              .overrideWith((ref) => Stream.value([action])),
-          executionProgressForPlanProvider(plan.id)
-              .overrideWith((ref) => Stream.value([progress])),
-          executionActionRelationsProvider.overrideWith(
-            (ref) async => ExecutionRelations(
-              actions: {action.id: action},
-              plans: {plan.id: plan},
-            ),
+          executionRepositoryProvider.overrideWith((_) async => repo),
+          executionOwnerUserIdProvider.overrideWith(
+            (_) async => plan.sync.ownerUserId,
           ),
         ],
         child: _wrap(ExecutionPlanDetailPage(planId: plan.id)),
@@ -594,6 +597,8 @@ void main() {
     expect(find.text('Scoped plan action'), findsOneWidget);
     expect(find.text('Scoped plan progress'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
   });
 
   testWidgets('closed plan card exposes resume without close actions', (

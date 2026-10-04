@@ -21,6 +21,7 @@ import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/routing/route_guard.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -59,6 +60,8 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   );
   final container = ProviderContainer(
     overrides: [
+      currentUserIdProvider.overrideWithValue(() async => kLocalOnlyUserId),
+      activeUserIdProvider.overrideWithValue(kLocalOnlyUserId),
       currentTimeProvider.overrideWith(_FixedCurrentTime.new),
       appDatabaseProvider.overrideWith((_) async => db),
       sharedPreferencesProvider.overrideWithValue(prefs),
@@ -331,7 +334,7 @@ void main() {
     });
 
     testWidgets(
-      'deep-linked /settings/ai-llm → /settings → Home, never exits',
+      'deep-linked /settings/ai-llm → /settings/ai → /settings → Home, never exits',
       (tester) async {
         final router = await _boot(tester, AppRoutes.settingsAiLlm);
         expect(_path(router), AppRoutes.settingsAiLlm);
@@ -344,12 +347,17 @@ void main() {
         final first = await tester.binding.handlePopRoute();
         await _drain(tester);
         expect(first, isTrue);
-        expect(_path(router), AppRoutes.settings);
-        expect(router.canPop(), isFalse, reason: 'now at settings root');
+        expect(_path(router), AppRoutes.settingsAi);
 
         final second = await tester.binding.handlePopRoute();
         await _drain(tester);
         expect(second, isTrue, reason: 'gesture handled — app must not exit');
+        expect(_path(router), AppRoutes.settings);
+        expect(router.canPop(), isFalse, reason: 'now at settings root');
+
+        final third = await tester.binding.handlePopRoute();
+        await _drain(tester);
+        expect(third, isTrue, reason: 'gesture handled — app must not exit');
         expect(_path(router), AppRoutes.home);
       },
     );
