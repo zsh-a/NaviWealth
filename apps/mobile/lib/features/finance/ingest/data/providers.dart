@@ -81,7 +81,7 @@ final ingestDedupServiceProvider = FutureProvider<IngestDedupService?>((
 
 final ingestDuplicateMatchProvider = FutureProvider.autoDispose
     .family<
-      ({ParsedTransaction parsed, bool isDraft})?,
+      IngestDuplicateMatch?,
       ({String targetId, ParsedTransaction against})
     >((ref, request) async {
       ref.watch(pendingIngestReviewItemsProvider);

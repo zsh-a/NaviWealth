@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
+import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/format/formatters.dart';
+import 'package:naviwealth/core/forms/form_undo_banner.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -171,6 +173,26 @@ class _IdentityFx implements FxRateSource {
   }) => Decimal.one;
 }
 
+class _RetryRestoreRepository extends JournalEntryRepository {
+  _RetryRestoreRepository(AppDatabase db)
+    : super(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+        fxRateSource: const _IdentityFx(),
+        baseCurrency: 'CNY',
+      );
+
+  int restoreAttempts = 0;
+
+  @override
+  Future<void> restoreSoftDeleted(String id) async {
+    restoreAttempts++;
+    if (restoreAttempts == 1) throw StateError('Temporary restore failure');
+    await super.restoreSoftDeleted(id);
+  }
+}
+
 class _FailingDeleteRepository extends JournalEntryRepository {
   _FailingDeleteRepository(AppDatabase db)
     : super(
@@ -193,6 +215,7 @@ Widget _deleteWrap({
 }) {
   return ProviderScope(
     overrides: [
+      activeUserIdProvider.overrideWith((_) => 'u-test'),
       journalEntryRepositoryProvider.overrideWith((ref) async => repository),
       aiTouchedAtProvider.overrideWith((ref, key) => Stream.value(null)),
       activityEntryInsightClientProvider.overrideWithValue(null),
@@ -364,96 +387,106 @@ void main() {
     expect(find.text('Living'), findsOneWidget);
   });
 
-  testWidgets('deletes the entry, returns to activity, and supports Undo', (
-    tester,
-  ) async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final repository = JournalEntryRepository(
-      db: db,
-      outbox: InMemoryOutboxStore(),
-      stamper: makeStubStamper(),
-      fxRateSource: const _IdentityFx(),
-      baseCurrency: 'CNY',
-    );
-    final persisted = await repository.create(
-      entry: JournalEntryDraft(
-        id: 'je-delete',
-        date: DateTime.utc(2026, 5, 1),
-        narration: 'Coffee',
-      ),
-      postings: [
-        PostingDraft(
-          id: 'p-expense',
-          accountId: 'expenses:living',
-          units: Decimal.parse('25'),
-          unit: 'CNY',
+  testWidgets(
+    'delete Undo survives navigation and toast expiry, and retries a failure',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = _RetryRestoreRepository(db);
+      final persisted = await repository.create(
+        entry: JournalEntryDraft(
+          id: 'je-delete',
+          date: DateTime.utc(2026, 5, 1),
+          narration: 'Coffee',
         ),
-        PostingDraft(
-          id: 'p-cash',
-          accountId: 'assets:cash',
-          units: Decimal.parse('-25'),
-          unit: 'CNY',
-        ),
-      ],
-    );
-    late final GoRouter router;
-    router = GoRouter(
-      initialLocation: '/detail',
-      routes: [
-        GoRoute(
-          path: '/detail',
-          builder: (context, state) => ActivityEntryDetailPage(
-            entry: persisted,
-            accountsById: {
-              'expenses:living': _account(
-                id: 'expenses:living',
-                name: 'Living',
-                category: AccountSide.expense,
-              ),
-              'assets:cash': _account(
-                id: 'assets:cash',
-                name: 'Cash',
-                category: AccountSide.asset,
-              ),
-            },
+        postings: [
+          PostingDraft(
+            id: 'p-expense',
+            accountId: 'expenses:living',
+            units: Decimal.parse('25'),
+            unit: 'CNY',
           ),
-        ),
-        GoRoute(
-          path: '/activity',
-          builder: (context, state) =>
-              const Scaffold(body: Center(child: Text('Activity destination'))),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
+          PostingDraft(
+            id: 'p-cash',
+            accountId: 'assets:cash',
+            units: Decimal.parse('-25'),
+            unit: 'CNY',
+          ),
+        ],
+      );
+      late final GoRouter router;
+      router = GoRouter(
+        initialLocation: '/detail',
+        routes: [
+          GoRoute(
+            path: '/detail',
+            builder: (context, state) => ActivityEntryDetailPage(
+              entry: persisted,
+              accountsById: {
+                'expenses:living': _account(
+                  id: 'expenses:living',
+                  name: 'Living',
+                  category: AccountSide.expense,
+                ),
+                'assets:cash': _account(
+                  id: 'assets:cash',
+                  name: 'Cash',
+                  category: AccountSide.asset,
+                ),
+              },
+            ),
+          ),
+          GoRoute(
+            path: '/activity',
+            builder: (context, state) => const Scaffold(
+              body: Column(
+                children: [Text('Activity destination'), FormUndoBanner()],
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
 
-    await tester.pumpWidget(
-      _deleteWrap(repository: repository, router: router),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _deleteWrap(repository: repository, router: router),
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(FLucideIcons.trash2));
-    await tester.pumpAndSettle();
-    expect(find.text('Delete this entry?'), findsOneWidget);
-    await tester.tap(find.widgetWithText(FButton, 'Delete'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(FLucideIcons.trash2));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete this entry?'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FButton, 'Delete'));
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Activity destination'), findsOneWidget);
-    expect(find.text('Entry deleted'), findsOneWidget);
-    expect(await repository.getById('je-delete'), isNull);
+      expect(find.text('Activity destination'), findsOneWidget);
+      expect(find.text('Entry deleted'), findsOneWidget);
+      expect(await repository.getById('je-delete'), isNull);
 
-    await tester.tap(find.text('Undo'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Change undone'), findsOneWidget);
-    final restored = await repository.getById('je-delete');
-    expect(restored, isNotNull);
-    expect(restored!.postings, hasLength(2));
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump(const Duration(milliseconds: 1));
-  });
+      expect(await repository.getById('je-delete'), isNull);
+      final retry = find.descendant(
+        of: find.byType(FormUndoBanner),
+        matching: find.widgetWithText(AppBusyButton, 'Retry'),
+      );
+      expect(retry, findsOneWidget);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Change undone'), findsOneWidget);
+      final restored = await repository.getById('je-delete');
+      expect(restored, isNotNull);
+      expect(restored!.postings, hasLength(2));
+      expect(repository.restoreAttempts, 2);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(milliseconds: 1));
+    },
+  );
 
   testWidgets('keeps the detail visible and explains a delete failure', (
     tester,

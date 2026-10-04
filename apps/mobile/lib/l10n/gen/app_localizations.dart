@@ -30684,6 +30684,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Only records in this selection are included. Uncheck any records you want to keep unchanged.'**
   String get ingestCategoryPreviewHint;
+
+  /// No description provided for @formAccountPickerSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search account or currency'**
+  String get formAccountPickerSearch;
+
+  /// No description provided for @formAccountPickerNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching accounts. Try another name or currency.'**
+  String get formAccountPickerNoResults;
+
+  /// No description provided for @ingestMatchReasonIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Same source transaction ID'**
+  String get ingestMatchReasonIdentity;
+
+  /// No description provided for @ingestMatchReasonExact.
+  ///
+  /// In en, this message translates to:
+  /// **'Same amount, currency, time and normalized description'**
+  String get ingestMatchReasonExact;
+
+  /// No description provided for @ingestMatchReasonMerchant.
+  ///
+  /// In en, this message translates to:
+  /// **'Same amount, currency and time; the description matches a merchant-only record'**
+  String get ingestMatchReasonMerchant;
+
+  /// No description provided for @ingestMatchReasonDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Same amount and currency, with a matching description and dates within 3 days'**
+  String get ingestMatchReasonDate;
+
+  /// No description provided for @ingestMatchAmountConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The transaction ID matches, but the amount or currency differs. Check the original record before deciding.'**
+  String get ingestMatchAmountConflict;
+
+  /// No description provided for @ingestComparisonImported.
+  ///
+  /// In en, this message translates to:
+  /// **'This import'**
+  String get ingestComparisonImported;
+
+  /// No description provided for @ingestComparisonDifferent.
+  ///
+  /// In en, this message translates to:
+  /// **'Different'**
+  String get ingestComparisonDifferent;
+
+  /// No description provided for @ingestViewOriginal.
+  ///
+  /// In en, this message translates to:
+  /// **'View original record'**
+  String get ingestViewOriginal;
 }
 
 class _AppLocalizationsDelegate

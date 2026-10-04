@@ -8985,5 +8985,15 @@
       }
     }
   },
-  "ingestCategoryPreviewHint": "Only records in this selection are included. Uncheck any records you want to keep unchanged."
+  "ingestCategoryPreviewHint": "Only records in this selection are included. Uncheck any records you want to keep unchanged.",
+  "formAccountPickerSearch": "Search account or currency",
+  "formAccountPickerNoResults": "No matching accounts. Try another name or currency.",
+  "ingestMatchReasonIdentity": "Same source transaction ID",
+  "ingestMatchReasonExact": "Same amount, currency, time and normalized description",
+  "ingestMatchReasonMerchant": "Same amount, currency and time; the description matches a merchant-only record",
+  "ingestMatchReasonDate": "Same amount and currency, with a matching description and dates within 3 days",
+  "ingestMatchAmountConflict": "The transaction ID matches, but the amount or currency differs. Check the original record before deciding.",
+  "ingestComparisonImported": "This import",
+  "ingestComparisonDifferent": "Different",
+  "ingestViewOriginal": "View original record"
 }

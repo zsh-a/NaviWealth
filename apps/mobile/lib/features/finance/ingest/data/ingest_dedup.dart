@@ -9,7 +9,6 @@
 library;
 
 import 'dart:collection';
-import 'dart:math' as math;
 
 import '../../ai_tools/local_skills/local_skills.dart';
 import '../domain/ingest_models.dart';
@@ -19,10 +18,6 @@ import 'ingest_dedup_candidate.dart';
 /// manual entry date vs bank settlement/posting date drift.
 const Duration kIngestDedupWindow = Duration(days: 3);
 
-/// A likely match must satisfy both the absolute and relative limits.
-const int kIngestDedupAmountToleranceMinor = 100;
-const int kIngestDedupAmountTolerancePercent = 1;
-
 class DedupResult {
   const DedupResult({required this.verdict, this.targetEntryId});
 
@@ -30,6 +25,34 @@ class DedupResult {
   final String? targetEntryId;
 
   static const DedupResult fresh = DedupResult(verdict: DedupVerdict.newTxn);
+}
+
+/// Explanation of a live match, derived from the same rules as confirmation.
+enum DedupMatchReason {
+  sourceIdentity,
+  exactDetails,
+  merchantDescription,
+  dateDrift,
+}
+
+DedupMatchReason? explainDedupMatch(
+  ParsedTransaction parsed,
+  TransactionInput entry,
+) {
+  if (parsed.amountMinor == 0 || parseAmountMinor(entry.amountMinor) == 0) {
+    return null;
+  }
+  final verdict = _candidateVerdict(parsed, entry, window: kIngestDedupWindow);
+  if (verdict == DedupVerdict.newTxn) return null;
+  if (parsed.sourceReference?.hasUniqueScope == true &&
+      entry is IngestDedupCandidate &&
+      entry.sourceIdentity == parsed.sourceReference!.identity) {
+    return DedupMatchReason.sourceIdentity;
+  }
+  if (verdict == DedupVerdict.duplicate) return DedupMatchReason.exactDetails;
+  return parsed.occurredAt == entry.occurredAt
+      ? DedupMatchReason.merchantDescription
+      : DedupMatchReason.dateDrift;
 }
 
 /// Optional diagnostics for proving that the index narrows the candidate set.
@@ -156,8 +179,8 @@ final class IngestDedupIndex<T extends Object> {
       days: days,
       firstDay: firstDay,
       lastDay: lastDay,
-      minimumAmount: math.max(0, amount - kIngestDedupAmountToleranceMinor),
-      maximumAmount: amount + kIngestDedupAmountToleranceMinor,
+      minimumAmount: amount,
+      maximumAmount: amount,
       verdict: DedupVerdict.likelyDuplicate,
       metrics: metrics,
       accountId: accountId,
@@ -309,15 +332,6 @@ DedupResult classifyDedup(
   return likely ?? DedupResult.fresh;
 }
 
-bool _withinTolerance(int a, int b) {
-  final diff = (a - b).abs();
-  if (diff > kIngestDedupAmountToleranceMinor) return false;
-  final larger = a > b ? a : b;
-  if (larger == 0) return false;
-  return BigInt.from(diff) * BigInt.from(100) <=
-      BigInt.from(larger) * BigInt.from(kIngestDedupAmountTolerancePercent);
-}
-
 IngestTransactionKind _candidateKind(TransactionInput entry) =>
     entry is IngestDedupCandidate
     ? entry.kind
@@ -359,7 +373,9 @@ DedupVerdict _candidateVerdict(
     return DedupVerdict.newTxn;
   }
   final signed = parseAmountMinor(entry.amountMinor);
-  if (signed == 0 || signed.isNegative != parsed.amountMinor.isNegative) {
+  // Without a shared source identity, even a one-minor-unit difference is a
+  // distinct amount. Description/date similarity cannot override it.
+  if (signed == 0 || signed != parsed.amountMinor) {
     return DedupVerdict.newTxn;
   }
   final gap = parsed.occurredAt.difference(entry.occurredAt).abs();
@@ -379,8 +395,7 @@ DedupVerdict _candidateVerdict(
       right != merchantKey(parsed.description)) {
     return DedupVerdict.newTxn;
   }
-  final exactAmount = parsed.amountMinor == signed;
-  if (exactAmount && exactDescription && gap == Duration.zero) {
+  if (exactDescription && gap == Duration.zero) {
     return DedupVerdict.duplicate;
   }
   if (gap != Duration.zero &&
@@ -388,10 +403,5 @@ DedupVerdict _candidateVerdict(
           (parsed.dateHasTime && evidence?.dateHasTime == true))) {
     return DedupVerdict.newTxn;
   }
-  if (exactAmount ||
-      (exactDescription &&
-          _withinTolerance(parsed.amountMinor.abs(), signed.abs()))) {
-    return DedupVerdict.likelyDuplicate;
-  }
-  return DedupVerdict.newTxn;
+  return DedupVerdict.likelyDuplicate;
 }

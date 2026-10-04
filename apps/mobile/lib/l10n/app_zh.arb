@@ -5658,5 +5658,15 @@
       }
     }
   },
-  "ingestCategoryPreviewHint": "仅修改本次选定范围的记录，可取消勾选不需要修改的项目。"
+  "ingestCategoryPreviewHint": "仅修改本次选定范围的记录，可取消勾选不需要修改的项目。",
+  "formAccountPickerSearch": "搜索账户或币种",
+  "formAccountPickerNoResults": "没有匹配的账户，请换个名称或币种搜索。",
+  "ingestMatchReasonIdentity": "来源交易编号相同",
+  "ingestMatchReasonExact": "金额、币种、时间和规范化后的描述相同",
+  "ingestMatchReasonMerchant": "金额、币种和时间相同，描述与仅记录商户名的账单匹配",
+  "ingestMatchReasonDate": "金额、币种相同，描述匹配，日期相差不超过 3 天",
+  "ingestMatchAmountConflict": "交易编号相同，但金额或币种不同。请核对原记录后再决定如何处理。",
+  "ingestComparisonImported": "本次导入",
+  "ingestComparisonDifferent": "有差异",
+  "ingestViewOriginal": "查看原记录"
 }

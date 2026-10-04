@@ -17314,4 +17314,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestCategoryPreviewHint => '仅修改本次选定范围的记录，可取消勾选不需要修改的项目。';
+
+  @override
+  String get formAccountPickerSearch => '搜索账户或币种';
+
+  @override
+  String get formAccountPickerNoResults => '没有匹配的账户，请换个名称或币种搜索。';
+
+  @override
+  String get ingestMatchReasonIdentity => '来源交易编号相同';
+
+  @override
+  String get ingestMatchReasonExact => '金额、币种、时间和规范化后的描述相同';
+
+  @override
+  String get ingestMatchReasonMerchant => '金额、币种和时间相同，描述与仅记录商户名的账单匹配';
+
+  @override
+  String get ingestMatchReasonDate => '金额、币种相同，描述匹配，日期相差不超过 3 天';
+
+  @override
+  String get ingestMatchAmountConflict => '交易编号相同，但金额或币种不同。请核对原记录后再决定如何处理。';
+
+  @override
+  String get ingestComparisonImported => '本次导入';
+
+  @override
+  String get ingestComparisonDifferent => '有差异';
+
+  @override
+  String get ingestViewOriginal => '查看原记录';
 }

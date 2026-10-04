@@ -112,7 +112,7 @@ class _IncomeFormPageState extends ConsumerState<IncomeFormPage>
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validateAndRevealForm(_formKey)) return;
     final l10n = AppLocalizations.of(context);
     final amount = readAmount(_amountController);
     if (amount == null || amount <= Decimal.zero) {

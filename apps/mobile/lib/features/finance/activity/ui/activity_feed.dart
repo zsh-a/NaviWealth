@@ -12,9 +12,9 @@ import '../../../../core/shell/selection_query.dart';
 import '../../../../core/shell/shell_chrome.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import '../../data/repositories/journal_entry_providers.dart';
 import '../data/activity_feed_provider.dart';
 import 'activity_action_panel.dart';
+import 'activity_entry_delete.dart';
 import 'activity_feed_filter_sheet.dart';
 import 'activity_feed_grouping.dart';
 import 'activity_feed_row.dart';
@@ -309,8 +309,8 @@ class _VirtualizedDayEntry extends ConsumerWidget {
   final ValueChanged<String>? onEntryOpen;
 
   /// Swipe-to-delete on the highest-traffic list (audit §1): same confirm
-  /// dialog + soft-delete + undo toast as the detail page.
-  Future<bool> _confirmAndDelete(BuildContext context, WidgetRef ref) async {
+  /// dialog + soft-delete + cross-page Undo as the detail page.
+  Future<bool> _confirmAndDelete(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await showConfirmDialog(
       context: context,
@@ -321,52 +321,7 @@ class _VirtualizedDayEntry extends ConsumerWidget {
       destructive: true,
     );
     if (confirmed != true || !context.mounted) return false;
-    AppMessenger.cacheOverlay(context);
-    try {
-      final repo = await ref.read(journalEntryRepositoryProvider.future);
-      await repo.softDelete(entry.entry.id);
-      ref.invalidate(activityFeedProvider);
-      if (context.mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.success,
-          l10n.activityEntryDeleted,
-          duration: const Duration(seconds: 6),
-          actionLabel: l10n.commonUndo,
-          onAction: () => unawaited(_restore(context, ref, repo, l10n)),
-        );
-      }
-      return true;
-    } catch (_) {
-      if (context.mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          l10n.activityEntryDeleteFailed,
-        );
-      }
-      return false;
-    }
-  }
-
-  Future<void> _restore(
-    BuildContext context,
-    WidgetRef ref,
-    JournalEntryRepository repo,
-    AppLocalizations l10n,
-  ) async {
-    try {
-      await repo.restoreSoftDeleted(entry.entry.id);
-      ref.invalidate(activityFeedProvider);
-    } catch (_) {
-      if (context.mounted) {
-        AppMessenger.show(
-          context,
-          ToastKind.error,
-          l10n.activityEntryDeleteFailed,
-        );
-      }
-    }
+    return deleteActivityEntryWithUndo(context, entry.entry.id);
   }
 
   @override
@@ -379,7 +334,7 @@ class _VirtualizedDayEntry extends ConsumerWidget {
         itemKey: ValueKey('activity-entry-${entry.entry.id}'),
         borderRadius: AppRadius.lg,
         label: AppLocalizations.of(context).commonDelete,
-        confirm: () => _confirmAndDelete(context, ref),
+        confirm: () => _confirmAndDelete(context),
         // The feed re-flows via provider invalidation; no row animation.
         removeRow: false,
         child: AppSelectedRow(

@@ -45,6 +45,34 @@ IndexedDedupResult<String> _indexed(
 }
 
 void main() {
+  group('explainDedupMatch', () {
+    test('uses the same amount gate as the classifier', () {
+      expect(
+        explainDedupMatch(_parsed(), _existing(amountMinor: '-3801')),
+        isNull,
+      );
+      expect(
+        explainDedupMatch(_parsed(), _existing()),
+        DedupMatchReason.exactDetails,
+      );
+    });
+
+    test('distinguishes merchant-only descriptions from date drift', () {
+      expect(
+        explainDedupMatch(_parsed(), _existing(description: 'Starbucks')),
+        DedupMatchReason.merchantDescription,
+      );
+      expect(
+        explainDedupMatch(_parsed(), _existing(at: DateTime.utc(2026, 5, 11))),
+        DedupMatchReason.dateDrift,
+      );
+      expect(
+        explainDedupMatch(_parsed(), _existing(at: DateTime.utc(2026, 5, 14))),
+        isNull,
+      );
+    });
+  });
+
   group('classifyDedup', () {
     test('exact merchant + amount + window → duplicate', () {
       final r = classifyDedup(_parsed(), [_existing()]);
@@ -75,12 +103,12 @@ void main() {
       expect(r.verdict, DedupVerdict.newTxn);
     });
 
-    test('same merchant + near amount within tolerance → likely', () {
+    test('same merchant + near amount → newTxn', () {
       final r = classifyDedup(_parsed(amountMinor: -3800), [
         _existing(amountMinor: '-3830'),
       ]);
-      expect(r.verdict, DedupVerdict.likelyDuplicate);
-      expect(r.targetEntryId, 'e1');
+      expect(r.verdict, DedupVerdict.newTxn);
+      expect(r.targetEntryId, isNull);
     });
 
     test('different merchant and amount → newTxn', () {
@@ -126,9 +154,9 @@ void main() {
       expect(result.target, 'e1');
     });
 
-    test('exact amount wins over earlier likely and keeps earliest exact', () {
+    test('exact instant wins over earlier likely and keeps earliest exact', () {
       final result = _indexed(_parsed(), [
-        _existing(id: 'likely', amountMinor: '-3850'),
+        _existing(id: 'likely', at: DateTime.utc(2026, 5, 11)),
         _existing(id: 'exact-first'),
         _existing(id: 'exact-later'),
       ]);
@@ -137,23 +165,18 @@ void main() {
       expect(result.target, 'exact-first');
     });
 
-    test('earliest likely target wins across amount and day buckets', () {
-      final result = _indexed(_parsed(), [
-        _existing(
-          id: 'first',
-          amountMinor: '-3830',
-          at: DateTime.utc(2026, 5, 11),
-        ),
-        _existing(
-          id: 'later',
-          amountMinor: '-3770',
-          at: DateTime.utc(2026, 5, 9),
-        ),
-      ]);
+    test(
+      'earliest likely target wins across day buckets at the same amount',
+      () {
+        final result = _indexed(_parsed(), [
+          _existing(id: 'first', at: DateTime.utc(2026, 5, 11)),
+          _existing(id: 'later', at: DateTime.utc(2026, 5, 9)),
+        ]);
 
-      expect(result.verdict, DedupVerdict.likelyDuplicate);
-      expect(result.target, 'first');
-    });
+        expect(result.verdict, DedupVerdict.likelyDuplicate);
+        expect(result.target, 'first');
+      },
+    );
 
     test('uses exact instant window across UTC days and custom windows', () {
       final parsed = _parsed(at: DateTime.utc(2026, 5, 11, 0, 30));
@@ -220,40 +243,38 @@ void main() {
       expect(result.target, 'match');
     });
 
-    test('requires both the fixed-minor and relative tolerance boundaries', () {
-      expect(
-        _indexed(_parsed(amountMinor: -3800), [
-          _existing(amountMinor: '-3838'),
-        ]).verdict,
-        DedupVerdict.likelyDuplicate,
-      );
-      expect(
-        _indexed(_parsed(amountMinor: -3800), [
-          _existing(amountMinor: '-3839'),
-        ]).verdict,
-        DedupVerdict.newTxn,
-      );
-      expect(
-        _indexed(_parsed(amountMinor: -10000), [
-          _existing(amountMinor: '-10100'),
-        ]).verdict,
-        DedupVerdict.likelyDuplicate,
-      );
-      expect(
-        _indexed(_parsed(amountMinor: -10100), [
-          _existing(amountMinor: '-10000'),
-        ]).verdict,
-        DedupVerdict.likelyDuplicate,
-      );
-      expect(
-        _indexed(_parsed(amountMinor: -10000), [
-          _existing(amountMinor: '-10101'),
-        ]).verdict,
-        DedupVerdict.newTxn,
-      );
-    });
+    test(
+      'different income and expense amounts never match without identity',
+      () {
+        for (final (amount, other) in [
+          (3800, 3801),
+          (3800, 3799),
+          (3800, 3830),
+          (3800, 3838),
+          (3800, 3839),
+          (10000, 10100),
+          (10100, 10000),
+          (10000, 10101),
+        ]) {
+          for (final sign in [-1, 1]) {
+            final parsed = _parsed(amountMinor: sign * amount).copyWith(
+              kind: sign < 0
+                  ? IngestTransactionKind.expense
+                  : IngestTransactionKind.income,
+            );
+            final ledger = [_existing(amountMinor: '${sign * other}')];
+            final linear = classifyDedup(parsed, ledger);
+            final indexed = _indexed(parsed, ledger);
+            expect(linear.verdict, DedupVerdict.newTxn);
+            expect(linear.targetEntryId, isNull);
+            expect(indexed.verdict, DedupVerdict.newTxn);
+            expect(indexed.target, isNull);
+          }
+        }
+      },
+    );
 
-    test('large integers cannot bypass the absolute tolerance limit', () {
+    test('large amounts also require exact equality', () {
       final parsed = _parsed(amountMinor: -9000000000000000000);
       final existing = _existing(amountMinor: '-9090909090909090911');
       final reference = classifyDedup(parsed, [existing]);
@@ -268,7 +289,7 @@ void main() {
         _indexed(parsed, [
           _existing(amountMinor: '-9000000000000000100'),
         ]).verdict,
-        DedupVerdict.likelyDuplicate,
+        DedupVerdict.newTxn,
       );
     });
 

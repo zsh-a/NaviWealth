@@ -22,7 +22,7 @@ import '../../data/repositories/providers.dart';
 import '../../shared/l10n/account_l10n.dart';
 import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_entry_insight_client.dart';
-import '../data/activity_feed_provider.dart';
+import 'activity_entry_delete.dart';
 import 'activity_feed_grouping.dart';
 import 'activity_feed_row.dart';
 
@@ -177,7 +177,7 @@ class _ActivityEntryDetailPageState
     final confirmed = await _confirmDelete(context);
     if (confirmed != true || !mounted) return;
     setState(() => _deleting = true);
-    await _deleteActivityEntry(context, ref, widget.entry.entry.id);
+    await _deleteActivityEntry(context, widget.entry.entry.id);
     if (mounted) setState(() => _deleting = false);
   }
 }
@@ -194,62 +194,18 @@ Future<bool?> _confirmDelete(BuildContext context) {
   );
 }
 
-Future<void> _deleteActivityEntry(
-  BuildContext context,
-  WidgetRef ref,
-  String entryId,
-) async {
-  final l10n = AppLocalizations.of(context);
-  final feedbackContext = Navigator.of(context).context;
-  AppMessenger.cacheOverlay(feedbackContext);
-  try {
-    final repo = await ref.read(journalEntryRepositoryProvider.future);
-    await repo.softDelete(entryId);
-    ref.invalidate(activityFeedProvider);
-    if (context.mounted) {
+Future<void> _deleteActivityEntry(BuildContext context, String entryId) async {
+  await deleteActivityEntryWithUndo(
+    context,
+    entryId,
+    onDeleted: () {
       if (context.canPop()) {
         context.pop();
       } else {
         context.go(FinanceRoutes.activity);
       }
-      AppMessenger.show(
-        feedbackContext,
-        ToastKind.success,
-        l10n.activityEntryDeleted,
-        duration: const Duration(seconds: 6),
-        actionLabel: l10n.commonUndo,
-        onAction: () => unawaited(
-          _restoreDeletedEntry(feedbackContext, repo, entryId, l10n),
-        ),
-      );
-    }
-  } catch (_) {
-    if (context.mounted) {
-      AppMessenger.show(
-        context,
-        ToastKind.error,
-        l10n.activityEntryDeleteFailed,
-      );
-    }
-  }
-}
-
-Future<void> _restoreDeletedEntry(
-  BuildContext context,
-  JournalEntryRepository repo,
-  String entryId,
-  AppLocalizations l10n,
-) async {
-  try {
-    await repo.restoreSoftDeleted(entryId);
-    if (context.mounted) {
-      AppMessenger.show(context, ToastKind.success, l10n.commonUndoSucceeded);
-    }
-  } catch (_) {
-    if (context.mounted) {
-      AppMessenger.show(context, ToastKind.error, l10n.commonUndoFailed);
-    }
-  }
+    },
+  );
 }
 
 class ActivityEntryDetailArgs {

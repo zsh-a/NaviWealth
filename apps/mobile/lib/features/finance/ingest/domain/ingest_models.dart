@@ -34,9 +34,9 @@ enum DedupVerdict {
   /// No plausible match — safe to add.
   newTxn,
 
-  /// Compatible description with near-equal amount or imprecise ledger date — likely
-  /// the same transaction the user already recorded; pre-checked to
-  /// skip but overridable.
+  /// Equal signed amount and compatible description, with a shortened merchant
+  /// note or imprecise ledger date — likely the same recorded transaction;
+  /// skipped by default but overridable.
   likelyDuplicate,
 
   /// Same source identity, or exact description + amount + currency + instant.

@@ -34,6 +34,7 @@ import 'package:naviwealth/features/finance/ingest/data/ingest_dedup_service.dar
 import 'package:naviwealth/features/finance/ingest/data/ingest_draft_store.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
+import 'package:naviwealth/features/finance/ingest/domain/ingest_source_reference.dart';
 import 'package:naviwealth/features/finance/ingest/ui/ingest_review_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -184,6 +185,7 @@ IngestDraft _draft({
   String description = 'Coffee receipt',
   int amountMinor = -3850,
   IngestTransactionKind kind = IngestTransactionKind.expense,
+  IngestSourceReference? sourceReference,
 }) => IngestDraft(
   draftId: id,
   ownerUserId: 'u1',
@@ -195,6 +197,7 @@ IngestDraft _draft({
     currency: 'CNY',
     occurredAt: DateTime.utc(2026, 5, 10),
     kind: kind,
+    sourceReference: sourceReference,
   ),
   verdict: DedupVerdict.newTxn,
   status: DraftStatus.pending,
@@ -1155,6 +1158,83 @@ void main() {
     );
   }
 
+  for (final size in [
+    const Size(375, 667),
+    const Size(667, 375),
+    const Size(1440, 900),
+  ]) {
+    testWidgets(
+      'source identity conflict explains differing amounts at $size',
+      (tester) async {
+        final touch = size.width < Breakpoints.expanded;
+        tester.view
+          ..physicalSize = size
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final store = IngestDraftStore(db, ownerUserId: 'u1');
+        const source = IngestSourceReference(
+          provider: 'alipay',
+          transactionId: 'same-order',
+        );
+        await store.putAll([
+          _draft(id: 'original', sourceReference: source),
+          _draft(id: 'repeat', sourceReference: source, amountMinor: -3950),
+        ]);
+        await tester.pumpWidget(
+          _app(
+            db: db,
+            store: store,
+            service: IngestConfirmService(
+              applier: const _NoopApplier(),
+              store: store,
+            ),
+            accounts: [_account],
+            touch: touch,
+            brightness: Brightness.dark,
+            textScaler: const TextScaler.linear(1.5),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final group = find.byKey(
+          const ValueKey('ingest-group-expand-original'),
+        );
+        await tester.scrollUntilVisible(
+          group,
+          150,
+          scrollable: find
+              .descendant(
+                of: find.byType(CustomScrollView).first,
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await Scrollable.ensureVisible(tester.element(group), alignment: 0.2);
+        await tester.pumpAndSettle();
+        await tester.tap(group);
+        await tester.pumpAndSettle();
+        await _openCompactDetails(tester, id: 'repeat');
+        expect(find.text('Same source transaction ID'), findsOneWidget);
+        expect(
+          find.text(
+            'The transaction ID matches, but the amount or currency differs. Check the original record before deciding.',
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('Amount · Different'), findsOneWidget);
+        expect(find.text('CNY -38.50'), findsOneWidget);
+        expect(find.text('CNY -39.50'), findsWidgets);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(
+        size.width < Breakpoints.expanded
+            ? TargetPlatform.android
+            : TargetPlatform.linux,
+      ),
+    );
+  }
+
   testWidgets('duplicate records require the explicit Record anyway action', (
     tester,
   ) async {
@@ -1186,6 +1266,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('ingest-master-repeat')));
     await tester.pumpAndSettle();
     expect(find.text('Matching imported draft'), findsOneWidget);
+    expect(
+      find.text('Same amount, currency, time and normalized description'),
+      findsOneWidget,
+    );
     expect(
       find.widgetWithText(AppActionButton, 'Record anyway'),
       findsOneWidget,

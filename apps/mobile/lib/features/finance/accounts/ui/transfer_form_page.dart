@@ -637,7 +637,7 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validateAndRevealForm(_formKey)) return;
     final amount = readAmount(_amountController);
     if (amount == null ||
         amount <= Decimal.zero ||

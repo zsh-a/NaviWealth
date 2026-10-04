@@ -10,6 +10,12 @@ import 'ingest_dedup.dart';
 import 'ingest_dedup_candidate.dart';
 import 'ingest_draft_store.dart';
 
+typedef IngestDuplicateMatch = ({
+  ParsedTransaction parsed,
+  bool isDraft,
+  DedupMatchReason? reason,
+});
+
 /// One owner-scoped source of evidence for import, edits and final commit.
 class IngestDedupService {
   const IngestDedupService({required this.store, required this.repository});
@@ -21,12 +27,23 @@ class IngestDedupService {
 
   /// Resolve comparison evidence only when a user opens a duplicate. Targets
   /// may be another local draft or a journal entry and are always owner-scoped.
-  Future<({ParsedTransaction parsed, bool isDraft})?> findMatch(
+  Future<IngestDuplicateMatch?> findMatch(
     String targetId, {
     ParsedTransaction? against,
   }) async {
     final staged = await store.readReviewItem(targetId);
-    if (staged != null) return (parsed: staged.draft.parsed, isDraft: true);
+    if (staged != null) {
+      return (
+        parsed: staged.draft.parsed,
+        isDraft: true,
+        reason: against == null
+            ? null
+            : explainDedupMatch(
+                against,
+                IngestDedupCandidate.fromDraft(staged.draft),
+              ),
+      );
+    }
     final ledger = await readLedger();
     final candidates = ledger.where((entry) => entry.id == targetId).toList();
     // One journal entry may have opposite transfer legs or trade fees. Prefer
@@ -57,6 +74,7 @@ class IngestDedupService {
         dateHasTime: candidate?.dateHasTime ?? true,
       ),
       isDraft: false,
+      reason: against == null ? null : explainDedupMatch(against, matched),
     );
   }
 

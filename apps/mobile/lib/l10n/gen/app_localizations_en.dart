@@ -18312,4 +18312,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get ingestCategoryPreviewHint =>
       'Only records in this selection are included. Uncheck any records you want to keep unchanged.';
+
+  @override
+  String get formAccountPickerSearch => 'Search account or currency';
+
+  @override
+  String get formAccountPickerNoResults =>
+      'No matching accounts. Try another name or currency.';
+
+  @override
+  String get ingestMatchReasonIdentity => 'Same source transaction ID';
+
+  @override
+  String get ingestMatchReasonExact =>
+      'Same amount, currency, time and normalized description';
+
+  @override
+  String get ingestMatchReasonMerchant =>
+      'Same amount, currency and time; the description matches a merchant-only record';
+
+  @override
+  String get ingestMatchReasonDate =>
+      'Same amount and currency, with a matching description and dates within 3 days';
+
+  @override
+  String get ingestMatchAmountConflict =>
+      'The transaction ID matches, but the amount or currency differs. Check the original record before deciding.';
+
+  @override
+  String get ingestComparisonImported => 'This import';
+
+  @override
+  String get ingestComparisonDifferent => 'Different';
+
+  @override
+  String get ingestViewOriginal => 'View original record';
 }

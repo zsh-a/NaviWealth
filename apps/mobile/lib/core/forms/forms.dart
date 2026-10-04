@@ -9,5 +9,6 @@ export 'form_clock.dart';
 export 'form_dirty_guard.dart';
 export 'form_draft_binding.dart';
 export 'form_submission.dart';
+export 'form_validation.dart';
 export 'local_form_draft.dart';
 export 'note_field.dart';

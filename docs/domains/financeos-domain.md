@@ -90,8 +90,9 @@ uses settlement-date drift, and matched rows do not extend the batch's candidate
 chain. Parsers preserve time components and explicit timezone offsets; timestamps
 without an offset use device-local time, while date-only rows retain calendar
 dates. Imprecise manual ledger dates may yield a likely match within three days;
-already imported structured entries do not use date drift.
-near amounts must satisfy both the 100-minor-unit and one-percent limits.
+already imported structured entries do not use date drift. Without a shared
+source identity, both certain and likely matches require the exact signed
+amount; even a one-minor-unit difference is a new transaction.
 Shared product categories or payment channels alone are not matching evidence.
 
 Dedup reads all owner-scoped pending/confirming drafts independently of the
@@ -121,7 +122,10 @@ edits preview the exact candidate set, allow excluding individual records, and
 leave untouched kinds unchanged. Compact rows open details in the existing sheet
 surface; tapping rows in selection mode selects them without opening details.
 Duplicate comparison can resolve either another staged draft or the owning
-user's journal evidence.
+user's journal evidence. It explains the live matching rule, compares amount,
+date and description with explicit difference labels, and links to recorded
+evidence. Shared source identities with differing amounts/currencies show an
+explicit conflict; explanation uses the same classifier as confirmation.
 
 Expense and income category corrections use supported canonical choices; mixed
 bulk edits configure each kind separately and preserve untouched kinds. Unknown
@@ -142,6 +146,12 @@ retries only unfinished continuations.
 New expense input uses the shared local form draft session, with explicit restore
 or discard on reopening. Successful saves and explicit discard clear the draft.
 Edit-load failures replace the spinner with actionable retry.
+
+Shared account pickers search account names and currencies without conflating
+identical labels or clearing the selection when search has no results. Expense,
+income and transfer forms reveal and focus the first invalid field on submission.
+Activity deletion from the list and detail page uses the shared 60-second
+cross-page Undo offer, including retry after a failed restore.
 
 ### Investment Interaction
 

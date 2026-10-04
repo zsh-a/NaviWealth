@@ -38,6 +38,76 @@ Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) {
 }
 
 void main() {
+  testWidgets(
+    'searches by name and currency and keeps selection on no results',
+    (tester) async {
+      String? selected = 'checking';
+      await tester.pumpWidget(
+        _wrap(
+          StatefulBuilder(
+            builder: (context, setState) => AccountPicker(
+              accounts: [
+                _account('checking', 'Checking', 'CNY'),
+                _account('broker', 'Brokerage cash', 'USD'),
+                _account('savings', 'Savings', 'USD'),
+              ],
+              value: selected,
+              onChanged: (value) => setState(() => selected = value),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Checking · CNY'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).last, '  uSd broker  ');
+      await tester.pumpAndSettle();
+      expect(find.text('Brokerage cash · USD'), findsOneWidget);
+      expect(find.text('Savings · USD'), findsNothing);
+      await tester.tap(find.text('Brokerage cash · USD'));
+      await tester.pumpAndSettle();
+      expect(selected, 'broker');
+      await tester.tap(find.text('Brokerage cash · USD'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).last, 'missing account');
+      await tester.pumpAndSettle();
+      expect(
+        find.text('No matching accounts. Try another name or currency.'),
+        findsOneWidget,
+      );
+      expect(selected, 'broker');
+      await tester.enterText(find.byType(EditableText).last, '');
+      await tester.pumpAndSettle();
+      expect(find.text('Savings · USD'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'search preserves distinct ids for accounts with the same label',
+    (tester) async {
+      String? selected;
+      await tester.pumpWidget(
+        _wrap(
+          AccountPicker(
+            accounts: [
+              _account('cash-1', 'Cash', 'CNY'),
+              _account('cash-2', 'Cash', 'CNY'),
+            ],
+            value: null,
+            onChanged: (value) => selected = value,
+          ),
+        ),
+      );
+      await tester.tap(find.byType(AccountPicker));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText).last, 'cash');
+      await tester.pumpAndSettle();
+      expect(find.text('Cash · CNY'), findsNWidgets(2));
+      await tester.tap(find.text('Cash · CNY').last);
+      await tester.pumpAndSettle();
+      expect(selected, 'cash-2');
+    },
+  );
+
   for (final required in [true, false]) {
     testWidgets('empty account validates only when optional: $required', (
       tester,

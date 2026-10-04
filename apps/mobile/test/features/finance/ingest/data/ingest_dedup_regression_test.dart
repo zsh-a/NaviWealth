@@ -71,6 +71,69 @@ class CountingApplier implements ProposalApplier {
 }
 
 void main() {
+  test('near amounts stay separate and old likely marks clear before batch confirmation', () async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final store = IngestDraftStore(db, ownerUserId: 'u-test');
+    addTearDown(store.dispose);
+    final result = IngestPipeline().planFromParsed(
+      parsed: [row(amount: -3800), row(amount: -3830)],
+      source: const IngestSource(kind: IngestSourceKind.csv, payload: ''),
+      existingLedger: const [],
+      ownerUserId: 'u-test',
+    );
+    expect(result.newCount, 2);
+    expect(result.duplicateCount, 0);
+    // Simulate a pending queue persisted by the old amount-tolerance rule.
+    await store.putAll([
+      result.drafts.first,
+      result.drafts.last.withDedup(
+        DedupVerdict.likelyDuplicate,
+        result.drafts.first.draftId,
+      ),
+    ]);
+    final dedup = IngestDedupService(
+      store: store,
+      repository: JournalEntryRepository(
+        db: db,
+        outbox: DriftOutboxStore(db),
+        stamper: makeStubStamper(),
+        fxRateSource: const IdentityFxRateSource(),
+        baseCurrency: 'CNY',
+      ),
+    );
+    // Future imports must also retain both distinct pending candidates.
+    final evidence = await dedup.snapshot();
+    expect(evidence, hasLength(2));
+    expect(
+      classifyDedup(row(amount: -3830), evidence).targetEntryId,
+      result.drafts.last.draftId,
+    );
+
+    await dedup.refreshPending();
+    final pending = await store.listPendingReviewItems();
+    expect(pending, hasLength(2));
+    for (final item in pending) {
+      expect(item.draft.verdict, DedupVerdict.newTxn);
+      expect(item.draft.dedupTargetEntryId, isNull);
+      expect(item.canBatchConfirm, isTrue);
+      expect(
+        (await dedup.checkForConfirm(item.draft)).verdict,
+        DedupVerdict.newTxn,
+      );
+    }
+    final applier = CountingApplier();
+    final confirmed = await IngestConfirmService(
+      applier: applier,
+      store: store,
+      checkDuplicate: dedup.checkForConfirm,
+    ).confirmAllFresh(pending, fromAccountId: 'account');
+    expect(confirmed.confirmed, hasLength(2));
+    expect(confirmed.failures, isEmpty);
+    expect(applier.calls, 2);
+    expect(await store.countByStatus(DraftStatus.confirmed), 2);
+  });
+
   test(
     'likely duplicates do not extend the matching chain across imports',
     () async {
@@ -79,7 +142,10 @@ void main() {
       final store = IngestDraftStore(db, ownerUserId: 'u-test');
       addTearDown(store.dispose);
       final first = IngestPipeline().planFromParsed(
-        parsed: [row(amount: -10000), row(amount: -10099)],
+        parsed: [
+          row(),
+          row(description: 'Luckin'),
+        ],
         source: const IngestSource(kind: IngestSourceKind.csv, payload: ''),
         existingLedger: const [],
         ownerUserId: 'u-test',
@@ -98,7 +164,7 @@ void main() {
       ).snapshot();
       expect(evidence, hasLength(1));
       expect(
-        classifyDedup(row(amount: -10198), evidence).verdict,
+        classifyDedup(row(description: 'Luckin Tea'), evidence).verdict,
         DedupVerdict.newTxn,
       );
     },
@@ -381,7 +447,7 @@ void main() {
     expect(result.drafts.last.verdict, DedupVerdict.newTxn);
   });
 
-  test('small payments must satisfy the relative amount tolerance', () {
+  test('different small payments remain distinct', () {
     final result = classifyDedup(row(amount: -200), [
       ledgerRow(row(amount: -300)),
     ]);
@@ -643,6 +709,7 @@ void main() {
       expect(debit!.isDraft, isFalse);
       expect(debit.parsed.amountMinor, -10000);
       expect(debit.parsed.kind, IngestTransactionKind.transfer);
+      expect(debit.reason, DedupMatchReason.sourceIdentity);
       final credit = await dedup.findMatch(
         targetId,
         against: draft.parsed.copyWith(amountMinor: 10000),

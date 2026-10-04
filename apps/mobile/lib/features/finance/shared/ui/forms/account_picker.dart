@@ -41,8 +41,24 @@ class AccountPicker extends StatelessWidget {
       for (final a in filtered)
         a.id: '${localizedAccountName(l10n, a)} · ${a.currency}',
     };
-    return FSelect<String>.rich(
+    return FSelect<String>.searchBuilder(
       format: (id) => labelById[id] ?? '',
+      searchFieldProperties: FSelectSearchFieldProperties(
+        hint: l10n.formAccountPickerSearch,
+      ),
+      filter: (query) {
+        final terms = query.trim().toLowerCase().split(RegExp(r'\s+'));
+        return filtered
+            .where((account) {
+              final label = labelById[account.id]!.toLowerCase();
+              return terms.every(label.contains);
+            })
+            .map((account) => account.id);
+      },
+      contentEmptyBuilder: (context, _) => Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Text(l10n.formAccountPickerNoResults),
+      ),
       control: FSelectControl<String>.lifted(
         value: effectiveValue,
         onChange: onChanged,
@@ -56,15 +72,9 @@ class AccountPicker extends StatelessWidget {
       validator: (v) => required && (v == null || v.isEmpty)
           ? l10n.formAccountPickerRequired
           : null,
-      children: [
-        for (final account in filtered)
-          FSelectItem<String>(
-            value: account.id,
-            title: Text(
-              labelById[account.id]!,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+      contentBuilder: (context, _, ids) => [
+        for (final id in ids)
+          FSelectItem<String>(value: id, title: Text(labelById[id]!)),
       ],
     );
   }
