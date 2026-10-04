@@ -128,22 +128,15 @@ void main() {
               bytes: Uint8List.fromList(backupBytes),
             );
           }),
-          backupRestoreRunnerProvider.overrideWith((ref) async {
-            final service = BackupService(
+          // Both preview and confirmation must use the fixture's real database
+          // and owner. The UI no longer calls the one-step restore runner.
+          backupServiceProvider.overrideWith((ref) async {
+            return BackupService(
               ownerUserId: 'integration-user',
               db: targetDb,
               codec: BackupCodec(),
               outbox: DriftOutboxStore(targetDb),
             );
-            return ({
-              required String passphrase,
-              required Uint8List fileBytes,
-            }) {
-              return service.restoreBackup(
-                passphrase: passphrase,
-                fileBytes: fileBytes,
-              );
-            };
           }),
         ],
       );

@@ -783,13 +783,16 @@ class BackupPageObject {
     await settle(tester);
 
     await tester.tap(find.text('Check backup'));
-    await settle(tester);
+    await settleUntil(tester, find.text('Restore scope'));
     expect(find.text('Restore scope'), findsOneWidget);
     expect(find.byType(FTextFormField), findsNothing);
     final restore = find.text('Restore');
     expect(restore, findsWidgets, reason: 'restore submit action missing');
     await tester.tap(restore.last);
-    await settle(tester);
+    await settleUntil(
+      tester,
+      find.textContaining('Backup restored successfully.'),
+    );
   }
 
   void expectImportSucceeded({required int rows}) {
