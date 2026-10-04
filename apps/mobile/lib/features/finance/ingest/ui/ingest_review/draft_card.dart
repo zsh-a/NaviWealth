@@ -44,20 +44,18 @@ class _DraftMasterRow extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: selected ? colors.muted : colors.background,
-            border: Border.all(
-              color: focused ? colors.primary : colors.border,
-              width: focused ? 2 : 1,
+            border: Border(
+              bottom: BorderSide(
+                color: focused ? colors.primary : colors.border,
+              ),
             ),
-            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Row(
             children: [
-              Checkbox.adaptive(
+              _ReviewCheckbox(
                 value: selected,
                 semanticLabel: parsed.description,
-                onChanged: selectable && !busy
-                    ? (value) => onSelectionChanged(value ?? false)
-                    : null,
+                onChange: selectable && !busy ? onSelectionChanged : null,
               ),
               const SizedBox(width: AppSpacing.s4),
               Expanded(
@@ -83,6 +81,8 @@ class _DraftMasterRow extends StatelessWidget {
                         if (pendingFinalize || recoveryUnavailable) ...[
                           Icon(
                             FLucideIcons.triangleAlert,
+                            semanticLabel: AppLocalizations.of(context)
+                                .ingestFilterAttention,
                             size: AppIconSizes.xs,
                             color: colors.destructive,
                           ),
@@ -97,7 +97,8 @@ class _DraftMasterRow extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.s8),
               MoneyText(
-                amount: parsed.amountMinor.abs() / 100.0,
+                amount: parsed.amountMinor / 100.0,
+                showSign: true,
                 currencyCode: parsed.currency,
                 style: context.strongLabelStyle,
               ),
@@ -167,11 +168,10 @@ class _DraftCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (showSelection) ...[
-                  Checkbox.adaptive(
+                  _ReviewCheckbox(
                     value: selected,
-                    onChanged: selectable && !busy
-                        ? (value) => onSelectionChanged(value ?? false)
-                        : null,
+                    semanticLabel: p.description,
+                    onChange: selectable && !busy ? onSelectionChanged : null,
                   ),
                   const SizedBox(width: AppSpacing.s4),
                 ],
@@ -436,4 +436,41 @@ class _VerdictIndicator extends StatelessWidget {
     };
     return AiPill(label: label, state: state);
   }
+}
+
+/// A Forui checkbox with a 48dp target and an explicit mixed group state.
+class _ReviewCheckbox extends StatelessWidget {
+  const _ReviewCheckbox({
+    super.key,
+    required this.value,
+    this.semanticLabel,
+    this.onChange,
+  });
+
+  final bool? value;
+  final String? semanticLabel;
+  final ValueChanged<bool>? onChange;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: semanticLabel,
+    checked: value == true,
+    mixed: value == null,
+    enabled: onChange != null,
+    excludeSemantics: true,
+    onTap: onChange == null ? null : () => onChange!(value != true),
+    child: FCheckbox(
+      semanticsLabel: semanticLabel,
+      style: FCheckboxStyleDelta.delta(
+        size: 20,
+        icon: FIcon(value == null ? FLucideIcons.minus : FLucideIcons.check),
+        trailingLabelStyle: const FLabelStyleDelta.delta(
+          childPadding: EdgeInsetsGeometryDelta.value(EdgeInsets.all(14)),
+        ),
+      ),
+      value: value != false,
+      enabled: onChange != null,
+      onChange: onChange == null ? null : (_) => onChange!(value != true),
+    ),
+  );
 }

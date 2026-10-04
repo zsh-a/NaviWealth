@@ -9,7 +9,7 @@ String _reviewCategoryDisplay(AppLocalizations l10n, ParsedTransaction parsed) {
   }
   final value = _canonicalReviewCategory(parsed.kind, parsed.categoryHint);
   final options = _reviewCategoryOptions(l10n, parsed.kind);
-  if (value == null) return options['other']!;
+  if (value == null) return l10n.ingestUncategorized;
   return options[value] ?? l10n.ingestCategoryFallback(value);
 }
 

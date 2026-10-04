@@ -103,7 +103,12 @@ can be explicitly recorded anyway. Recovery reservations and Undo retain their
 existing fail-closed lifecycle semantics.
 
 The review queue searches, filters and counts all owner-scoped pending and
-confirming drafts; rendering is lazy and reveals rows in 100-item increments.
+confirming drafts. Description groups are collapsed by default; category groups
+and individual rows remain available. Grouping preserves transaction kind and
+currency boundaries and uses exact whitespace/case-normalized descriptions,
+never fuzzy merchant matches. Status and category facets stay pinned; category
+search includes localized names and canonical aliases. Rendering is lazy and
+automatically reveals another 100 rows near the end of the visible window.
 Selecting filtered results includes rows beyond the rendered window. Changing
 search/filter scope clears selection, and batch button counts use the same
 expense/income eligibility rules as confirmation. Transfers, trades and duplicate
@@ -111,8 +116,12 @@ overrides remain explicit individual workflows; recovery actions remain separate
 from confirmation. Continuous
 field editing saves drafts only, protects unsaved changes, and reloads each
 destination revision; bulk category edits use owner-scoped optimistic revisions
-without overwriting lifecycle or recovery conflicts. Duplicate comparison can
-resolve either another staged draft or the owning user's journal evidence.
+without overwriting lifecycle or recovery conflicts. Group and selection category
+edits preview the exact candidate set, allow excluding individual records, and
+leave untouched kinds unchanged. Compact rows open details in the existing sheet
+surface; tapping rows in selection mode selects them without opening details.
+Duplicate comparison can resolve either another staged draft or the owning
+user's journal evidence.
 
 Expense and income category corrections use supported canonical choices; mixed
 bulk edits configure each kind separately and preserve untouched kinds. Unknown
@@ -121,8 +130,9 @@ can be saved. On a revision conflict the editor retains input and offers the
 latest saved values, reload, or adoption of the latest revision followed by an
 explicit save. This never bypasses lifecycle guards.
 
-Review search, filters, ordering, focus, render window and scroll position are
-owner-scoped device preferences; selected record IDs are deliberately ephemeral.
+Review search, filters, grouping, expanded groups, ordering, focus, render window
+and scroll position are owner-scoped device preferences; selected record IDs are
+deliberately ephemeral.
 Batch confirmation pins progress and can stop between records, finishing the
 current write and reporting successful, failed and untouched counts. Leaving a
 running batch first requests that stop and waits for completion. Confirm and

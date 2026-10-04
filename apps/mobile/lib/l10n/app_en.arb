@@ -8942,5 +8942,48 @@
   "backupArchiveDate": "Backup date",
   "backupArchiveRows": "Records",
   "backupSelectedFileSize": "File size: {kilobytes} KB",
-  "@backupSelectedFileSize": {"placeholders": {"kilobytes": {"type": "int"}}}
+  "@backupSelectedFileSize": {"placeholders": {"kilobytes": {"type": "int"}}},
+  "ingestAllCategories": "All categories",
+  "ingestGroupByDescription": "Group by description",
+  "ingestGroupByCategory": "Group by category",
+  "ingestUngrouped": "Individual records",
+  "ingestMixedCategories": "Mixed categories",
+  "ingestExpandGroup": "Show group records",
+  "ingestCollapseGroup": "Collapse group records",
+  "ingestGroupCount": "{count} records",
+  "@ingestGroupCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestGroupAttention": "{count} to review",
+  "@ingestGroupAttention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestSelectGroup": "Select {count} records in {name}",
+  "@ingestSelectGroup": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ingestCategoryPreview": "Will update {count} records",
+  "@ingestCategoryPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestCategoryPreviewHint": "Only records in this selection are included. Uncheck any records you want to keep unchanged."
 }

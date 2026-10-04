@@ -57,6 +57,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
             _confirmSelected(selectedItems, data!.selectedAccountId),
         onDismiss: () => _dismissSelected(selectedItems),
         onFinalize: () => _finalizeSelected(selectedItems),
+        onClear: () => setState(_selection.clear),
       );
     }
     if (data == null || data.freshCount == 0) return null;
@@ -74,7 +75,9 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
             ),
       child: Flexible(
         child: Text(
-          _filter == IngestReviewFilter.all && _query.isEmpty
+          _filter == IngestReviewFilter.all &&
+                  _query.isEmpty &&
+                  _category == null
               ? l10n.ingestConfirmAllFresh(data.freshCount)
               : l10n.ingestConfirmFiltered(data.freshCount),
           maxLines: 1,
@@ -135,6 +138,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
                       ],
                     ),
                   ),
+                  if (data.allItems.isNotEmpty) _pinnedReviewFacets(data),
                   ..._queueSlivers(data, master: true),
                 ],
               ),
@@ -191,6 +195,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
 
   List<Widget> _queueSlivers(IngestReviewViewData data, {bool master = false}) {
     if (data.items.isEmpty) {
+      _queueLength = 0;
       return [
         SliverFillRemaining(
           hasScrollBody: false,
@@ -206,61 +211,61 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
         ),
       ];
     }
-    final visibleCount = _visibleLimit.clamp(0, data.items.length);
+    final entries = _queueEntries(data);
+    _queueLength = entries.length;
+    final visibleCount = _visibleLimit.clamp(0, entries.length);
     final positions = <Key, int>{
-      for (var i = 0; i < visibleCount; i++)
-        ValueKey('ingest-row-${data.items[i].draft.draftId}'): i,
+      for (var i = 0; i < visibleCount; i++) _queueEntryKey(entries[i]): i,
     };
     return [
       SliverPadding(
         padding: const EdgeInsets.only(bottom: AppSpacing.s12),
         sliver: SliverList.builder(
-          itemCount: visibleCount + (visibleCount < data.items.length ? 1 : 0),
+          itemCount: visibleCount + (visibleCount < entries.length ? 1 : 0),
           findChildIndexCallback: (key) => positions[key],
           itemBuilder: (context, index) {
-            if (index == visibleCount) return _loadMore(data);
-            final item = data.items[index];
+            if (index == visibleCount) return _loadMore(entries.length);
+            final entry = entries[index];
+            if (entry is IngestReviewGroup) {
+              return KeyedSubtree(
+                key: _queueEntryKey(entry),
+                child: _groupRow(entry),
+              );
+            }
+            final item = entry as IngestReviewItem;
             final draft = item.draft;
             final pending =
                 item.pendingFinalize ?? _pendingFinalize[draft.draftId];
             return Padding(
               key: ValueKey('ingest-row-${draft.draftId}'),
               padding: EdgeInsets.only(
-                bottom: index == data.items.length - 1 ? 0 : AppSpacing.s8,
+                bottom: index == entries.length - 1 ? 0 : AppSpacing.s4,
               ),
-              child: master
-                  ? _DraftMasterRow(
-                      draft: draft,
-                      selected: _selection.isSelected(draft.draftId),
-                      selectable: !item.recoveryUnreadable,
-                      focused: _selection.isFocused(draft.draftId),
-                      busy: _isBusy,
-                      pendingFinalize: pending != null,
-                      recoveryUnavailable: item.recoveryUnreadable,
-                      onSelectionChanged: (selected) =>
-                          _toggleSelection(draft.draftId, selected),
-                      onFocus: () => _focusItem(draft.draftId),
-                    )
-                  : _DraftCard(
-                      draft: draft,
-                      selected: _selection.isSelected(draft.draftId),
-                      selectable: !item.recoveryUnreadable,
-                      focused: _selection.isFocused(draft.draftId),
-                      busy: _isBusy,
-                      pendingFinalize: pending != null,
-                      recoveryUnavailable: item.recoveryUnreadable,
-                      onConfirm: () => _confirm(draft, data.selectedAccountId),
-                      onSkip: () => _skip(draft),
-                      onEdit: () => _editDraft(draft),
-                      onTransfer: () => _recordTransfer(draft),
-                      onTrade: () => _recordTrade(draft),
-                      onFinalize: pending == null
-                          ? null
-                          : () => _finalizeApplied(pending),
-                      onSelectionChanged: (selected) =>
-                          _toggleSelection(draft.draftId, selected),
-                      onFocus: () => _focusItem(draft.draftId),
-                    ),
+              child: _DraftMasterRow(
+                draft: draft,
+                selected: _selection.isSelected(draft.draftId),
+                selectable: !item.recoveryUnreadable,
+                focused: master && _selection.isFocused(draft.draftId),
+                busy: _isBusy,
+                pendingFinalize: pending != null,
+                recoveryUnavailable: item.recoveryUnreadable,
+                onSelectionChanged: (selected) =>
+                    _toggleSelection(draft.draftId, selected),
+                onFocus: master
+                    ? () {
+                        if (_selection.selectedIds.isNotEmpty) {
+                          if (!item.recoveryUnreadable) {
+                            _toggleSelection(
+                              draft.draftId,
+                              !_selection.isSelected(draft.draftId),
+                            );
+                          }
+                        } else {
+                          _focusItem(draft.draftId);
+                        }
+                      }
+                    : () => _openDraftDetails(item),
+              ),
             );
           },
         ),
@@ -287,7 +292,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
           padding: const EdgeInsets.only(top: AppSpacing.s12),
           sliver: SliverToBoxAdapter(child: _ProcessingNotice(state: _busy!)),
         ),
-      const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.s12)),
+      if (data.allItems.isNotEmpty) _pinnedReviewFacets(data),
     ];
   }
 

@@ -32,15 +32,17 @@ IngestDraft _draft(
   String? category,
   int amountMinor = -100,
   DateTime? occurredAt,
+  String? description,
+  String currency = 'CNY',
 }) => IngestDraft(
   draftId: id,
   ownerUserId: 'u1',
   createdAt: DateTime.utc(2026, 8, 1),
   sourceKind: IngestSourceKind.csv,
   parsed: ParsedTransaction(
-    description: id,
+    description: description ?? id,
     amountMinor: amountMinor,
-    currency: 'CNY',
+    currency: currency,
     occurredAt: occurredAt ?? DateTime.utc(2026, 8, 1),
     kind: kind,
     categoryHint: category,
@@ -50,6 +52,140 @@ IngestDraft _draft(
 );
 
 void main() {
+  test('localized categories and aliases search all records with kind-scoped facets', () {
+    final items = [
+      IngestReviewItem(draft: _draft('a', category: 'dining')),
+      IngestReviewItem(draft: _draft('b', category: '餐饮')),
+      IngestReviewItem(draft: _draft('c', category: 'other')),
+      IngestReviewItem(draft: _draft('d')),
+      IngestReviewItem(
+        draft: _draft(
+          'income',
+          kind: IngestTransactionKind.income,
+          category: 'other',
+        ),
+      ),
+    ];
+    IngestReviewViewData project({
+      String query = '',
+      IngestReviewCategory? category,
+    }) => IngestReviewViewData.from(
+      accounts: [],
+      items: items,
+      selectedAccountId: null,
+      pendingFinalizeIds: {},
+      query: query,
+      category: category,
+    );
+    for (final query in ['餐饮', 'Dining', '外卖']) {
+      expect(project(query: query).items.map((item) => item.draft.draftId), [
+        'a',
+        'b',
+      ]);
+    }
+    final data = project(
+      category: (kind: IngestTransactionKind.expense, value: 'other'),
+    );
+    expect(data.items.single.draft.draftId, 'c');
+    expect(data.filterCounts[IngestReviewFilter.ready], 1);
+    expect(
+      data.categoryCounts[(kind: IngestTransactionKind.expense, value: null)],
+      1,
+    );
+    expect(
+      data.categoryCounts[(
+        kind: IngestTransactionKind.expense,
+        value: 'dining',
+      )],
+      2,
+    );
+    expect(
+      project(category: (kind: IngestTransactionKind.expense, value: null))
+          .items
+          .single
+          .draft
+          .draftId,
+      'd',
+    );
+  });
+
+  test('description groups span the render window without merging kinds or currencies', () {
+    final items = [
+      for (var i = 0; i < 250; i++)
+        IngestReviewItem(
+          draft: _draft(
+            'row-$i',
+            description: i.isEven ? ' Coffee  Shop ' : 'coffee shop',
+            amountMinor: -100 - i,
+          ),
+        ),
+      IngestReviewItem(
+        draft: _draft(
+          'income',
+          description: 'coffee shop',
+          kind: IngestTransactionKind.income,
+        ),
+      ),
+      IngestReviewItem(
+        draft: _draft('usd', description: 'coffee shop', currency: 'USD'),
+      ),
+      IngestReviewItem(
+        draft: _draft('different', description: 'coffee shop online'),
+      ),
+    ];
+    final data = IngestReviewViewData.from(
+      accounts: [],
+      items: items,
+      selectedAccountId: null,
+      pendingFinalizeIds: {},
+    );
+    expect(data.groups, hasLength(4));
+    expect(data.groups.first.items, hasLength(250));
+    expect(data.items, hasLength(253));
+    final filtered = IngestReviewViewData.from(
+      accounts: [],
+      items: items,
+      selectedAccountId: null,
+      pendingFinalizeIds: {},
+      query: 'row-249',
+    );
+    // Search uses the description, not the opaque draft id.
+    expect(filtered.groups, isEmpty);
+  });
+
+  test('category grouping and no-group mode retain every filtered record', () {
+    final items = [
+      IngestReviewItem(draft: _draft('a', category: 'dining')),
+      IngestReviewItem(draft: _draft('b', category: '餐饮')),
+      IngestReviewItem(
+        draft: _draft('c', category: 'other', verdict: DedupVerdict.duplicate),
+      ),
+    ];
+    for (final grouping in [
+      IngestReviewGrouping.category,
+      IngestReviewGrouping.none,
+    ]) {
+      final data = IngestReviewViewData.from(
+        accounts: [],
+        items: items,
+        selectedAccountId: null,
+        pendingFinalizeIds: {},
+        filter: IngestReviewFilter.ready,
+        grouping: grouping,
+      );
+      expect(
+        data.groups,
+        hasLength(grouping == IngestReviewGrouping.category ? 1 : 2),
+      );
+      expect(
+        data.groups
+            .expand((group) => group.items)
+            .map((item) => item.draft.draftId),
+        ['a', 'b'],
+      );
+    }
+  });
+
   test('batch counts exclude typed destinations and transient recovery', () {
     final data = IngestReviewViewData.from(
       accounts: const [],

@@ -421,46 +421,146 @@ class _IngestCategorySheet extends StatefulWidget {
   State<_IngestCategorySheet> createState() => _IngestCategorySheetState();
 }
 
+typedef _IngestCategoryEdit = ({
+  Map<IngestTransactionKind, String?> categories,
+  Set<String> draftIds,
+});
+
 class _IngestCategorySheetState extends State<_IngestCategorySheet> {
   final _categories = <IngestTransactionKind, String?>{};
+  final _excluded = <String>{};
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final affected = widget.drafts
+        .where(
+          (draft) =>
+              !_excluded.contains(draft.draftId) &&
+              _categories.containsKey(draft.parsed.kind),
+        )
+        .length;
     return AppSheet(
       title: l10n.ingestBatchCategoryCount(widget.drafts.length),
-      footer: AppSheetFooter(
-        submitLabel: l10n.commonSave,
-        cancelLabel: l10n.commonCancel,
-        enabled: _categories.isNotEmpty,
-        onSubmit: () {
-          widget.dirty.markPristine();
-          Navigator.of(context).pop(_categories);
-        },
-      ),
-      child: Column(
+      scrollable: false,
+      footer: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.ingestCategoryBatchHint, style: context.bodyCaptionStyle),
-          for (final kind in [
-            IngestTransactionKind.expense,
-            IngestTransactionKind.income,
-          ])
-            if (widget.drafts.any((draft) => draft.parsed.kind == kind)) ...[
-              const SizedBox(height: AppSpacing.s12),
-              _IngestCategoryPicker(
-                kind: kind,
-                value: _categories[kind],
-                unchanged: !_categories.containsKey(kind),
-                label: kind == IngestTransactionKind.expense
-                    ? l10n.ingestKindExpense
-                    : l10n.ingestKindIncome,
-                onChanged: (value) {
-                  widget.dirty.markDirty();
-                  setState(() => _categories[kind] = value);
-                },
-              ),
-            ],
+          Text(
+            l10n.ingestCategoryPreview(affected),
+            key: const ValueKey('ingest-category-affected'),
+            style: context.labelStyle,
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          AppSheetFooter(
+            submitLabel: l10n.commonSave,
+            cancelLabel: l10n.commonCancel,
+            enabled: affected > 0,
+            onSubmit: () {
+              widget.dirty.markPristine();
+              Navigator.of(context).pop<_IngestCategoryEdit>((
+                categories: Map.of(_categories),
+                draftIds: widget.drafts
+                    .where((draft) => !_excluded.contains(draft.draftId))
+                    .map((draft) => draft.draftId)
+                    .toSet(),
+              ));
+            },
+          ),
+        ],
+      ),
+      child: CustomScrollView(
+        key: const ValueKey('ingest-category-preview'),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.ingestCategoryBatchHint,
+                  style: context.bodyCaptionStyle,
+                ),
+                for (final kind in [
+                  IngestTransactionKind.expense,
+                  IngestTransactionKind.income,
+                ])
+                  if (widget.drafts.any(
+                    (draft) => draft.parsed.kind == kind,
+                  )) ...[
+                    const SizedBox(height: AppSpacing.s12),
+                    _IngestCategoryPicker(
+                      kind: kind,
+                      value: _categories[kind],
+                      unchanged: !_categories.containsKey(kind),
+                      label: kind == IngestTransactionKind.expense
+                          ? l10n.ingestKindExpense
+                          : l10n.ingestKindIncome,
+                      onChanged: (value) {
+                        widget.dirty.markDirty();
+                        setState(() => _categories[kind] = value);
+                      },
+                    ),
+                  ],
+                const SizedBox(height: AppSpacing.s16),
+                Text(
+                  l10n.ingestCategoryPreviewHint,
+                  style: context.bodyCaptionStyle,
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+            ),
+          ),
+          SliverList.builder(
+            itemCount: widget.drafts.length,
+            itemBuilder: (context, index) {
+              final draft = widget.drafts[index];
+              return Row(
+                children: [
+                  _ReviewCheckbox(
+                    key: ValueKey('ingest-category-include-${draft.draftId}'),
+                    semanticLabel: draft.parsed.description,
+                    value: !_excluded.contains(draft.draftId),
+                    onChange: (include) {
+                      widget.dirty.markDirty();
+                      setState(() {
+                        if (include == true) {
+                          _excluded.remove(draft.draftId);
+                        } else {
+                          _excluded.add(draft.draftId);
+                        }
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.s8,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            draft.parsed.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '${_DraftCard._ymd(draft.parsed.occurredAt)} · ${_reviewCategoryDisplay(l10n, draft.parsed)}',
+                            style: context.bodyCaptionStyle,
+                          ),
+                          Text(
+                            '${draft.parsed.currency} ${formatMinorUnitAmount(draft.parsed.amountMinor)}',
+                            style: context.bodyCaptionStyle,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );

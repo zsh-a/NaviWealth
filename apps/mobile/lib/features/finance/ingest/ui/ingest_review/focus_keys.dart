@@ -5,22 +5,44 @@ part of '../ingest_review_page.dart';
 // ignore_for_file: invalid_use_of_protected_member
 
 extension _IngestReviewFocusKeys on _IngestReviewPageState {
-  void _focusItem(String draftId) {
+  void _focusItem(String draftId, {bool requestFocus = true}) {
     if (_isBusy) return;
-    setState(() => _selection.focus(draftId));
-    _masterFocus.requestFocus();
+    setState(() {
+      _selection.focus(draftId);
+      final data = _currentData;
+      if (data != null) {
+        for (final group in data.groups) {
+          if (group.items.any((item) => item.draft.draftId == draftId)) {
+            _expandedGroups.add(group.key);
+            break;
+          }
+        }
+        final index = _queueEntries(data).indexWhere(
+          (entry) =>
+              entry is IngestReviewItem && entry.draft.draftId == draftId,
+        );
+        if (index >= _visibleLimit) _visibleLimit = ((index ~/ 100) + 1) * 100;
+      }
+    });
+    if (requestFocus) _masterFocus.requestFocus();
   }
 
   void _moveFocus(IngestReviewViewData data, int delta) {
     if (_isBusy || isTextInputFocused() || data.items.isEmpty) return;
     final next = _selection.focusByOffset(
-      data.items.map((item) => item.draft.draftId).toList(growable: false),
+      data.reviewOrder
+          .map((item) => item.draft.draftId)
+          .toList(growable: false),
       delta,
     );
     if (next != null) _focusItem(next);
   }
 
-  KeyEventResult _onMasterKey(IngestReviewViewData data, KeyEvent event) {
+  KeyEventResult _onMasterKey(
+    IngestReviewViewData data,
+    KeyEvent event, {
+    required bool wide,
+  }) {
     if (!_masterFocus.hasPrimaryFocus || _isBusy || isTextInputFocused()) {
       return KeyEventResult.ignored;
     }
@@ -49,7 +71,11 @@ extension _IngestReviewFocusKeys on _IngestReviewPageState {
     }
     if (event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.numpadEnter) {
-      _focusItem(focused.draft.draftId);
+      if (wide) {
+        _focusItem(focused.draft.draftId);
+      } else {
+        unawaited(_openDraftDetails(focused));
+      }
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;

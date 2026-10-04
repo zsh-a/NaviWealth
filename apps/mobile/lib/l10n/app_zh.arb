@@ -5615,5 +5615,48 @@
   "backupArchiveDate": "备份日期",
   "backupArchiveRows": "记录数量",
   "backupSelectedFileSize": "文件大小：{kilobytes} KB",
-  "@backupSelectedFileSize": {"placeholders": {"kilobytes": {"type": "int"}}}
+  "@backupSelectedFileSize": {"placeholders": {"kilobytes": {"type": "int"}}},
+  "ingestAllCategories": "全部分类",
+  "ingestGroupByDescription": "按交易描述分组",
+  "ingestGroupByCategory": "按分类分组",
+  "ingestUngrouped": "逐条显示",
+  "ingestMixedCategories": "多个分类",
+  "ingestExpandGroup": "展开组内记录",
+  "ingestCollapseGroup": "收起组内记录",
+  "ingestGroupCount": "{count} 笔",
+  "@ingestGroupCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestGroupAttention": "{count} 笔需核对",
+  "@ingestGroupAttention": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestSelectGroup": "选择“{name}”中的 {count} 笔记录",
+  "@ingestSelectGroup": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "ingestCategoryPreview": "将修改 {count} 笔记录",
+  "@ingestCategoryPreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "ingestCategoryPreviewHint": "仅修改本次选定范围的记录，可取消勾选不需要修改的项目。"
 }

@@ -13,7 +13,7 @@ extension _IngestReviewActions on _IngestReviewPageState {
   Future<void> _editDraft(IngestDraft draft) async {
     if (_isBusy) return;
     final drafts =
-        _currentData?.items
+        _currentData?.reviewOrder
             .where(
               (item) =>
                   item.isOrdinaryPending &&
@@ -32,17 +32,7 @@ extension _IngestReviewActions on _IngestReviewPageState {
         dirty: dirty,
         onCurrentChanged: (id) {
           if (!mounted) return;
-          setState(() {
-            _selection.focus(id);
-            final index =
-                _currentData?.items.indexWhere(
-                  (item) => item.draft.draftId == id,
-                ) ??
-                -1;
-            if (index >= _visibleLimit) {
-              _visibleLimit = ((index ~/ 100) + 1) * 100;
-            }
-          });
+          _focusItem(id, requestFocus: false);
         },
       ),
     );
@@ -61,13 +51,11 @@ extension _IngestReviewActions on _IngestReviewPageState {
         .map((item) => item.draft)
         .toList();
     if (drafts.isEmpty) return;
-    final categories =
-        await showGuardedFormSheet<Map<IngestTransactionKind, String?>>(
-          context: context,
-          builder: (_, dirty) =>
-              _IngestCategorySheet(drafts: drafts, dirty: dirty),
-        );
-    if (categories == null || !mounted) return;
+    final edit = await showGuardedFormSheet<_IngestCategoryEdit>(
+      context: context,
+      builder: (_, dirty) => _IngestCategorySheet(drafts: drafts, dirty: dirty),
+    );
+    if (edit == null || !mounted) return;
     final store = ref.read(ingestDraftStoreProvider);
     if (store == null) return;
     final l10n = AppLocalizations.of(context);
@@ -82,9 +70,15 @@ extension _IngestReviewActions on _IngestReviewPageState {
     try {
       final updatedIds = <String>{};
       final conflictedIds = <String>{};
-      for (final category in categories.entries) {
+      for (final category in edit.categories.entries) {
         final result = await store.updateSelectedCategories(
-          drafts.where((draft) => draft.parsed.kind == category.key).toList(),
+          drafts
+              .where(
+                (draft) =>
+                    draft.parsed.kind == category.key &&
+                    edit.draftIds.contains(draft.draftId),
+              )
+              .toList(),
           category.value,
         );
         updatedIds.addAll(result.updatedIds);

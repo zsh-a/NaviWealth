@@ -17270,4 +17270,48 @@ class AppLocalizationsZh extends AppLocalizations {
   String backupSelectedFileSize(int kilobytes) {
     return '文件大小：$kilobytes KB';
   }
+
+  @override
+  String get ingestAllCategories => '全部分类';
+
+  @override
+  String get ingestGroupByDescription => '按交易描述分组';
+
+  @override
+  String get ingestGroupByCategory => '按分类分组';
+
+  @override
+  String get ingestUngrouped => '逐条显示';
+
+  @override
+  String get ingestMixedCategories => '多个分类';
+
+  @override
+  String get ingestExpandGroup => '展开组内记录';
+
+  @override
+  String get ingestCollapseGroup => '收起组内记录';
+
+  @override
+  String ingestGroupCount(int count) {
+    return '$count 笔';
+  }
+
+  @override
+  String ingestGroupAttention(int count) {
+    return '$count 笔需核对';
+  }
+
+  @override
+  String ingestSelectGroup(int count, String name) {
+    return '选择“$name”中的 $count 笔记录';
+  }
+
+  @override
+  String ingestCategoryPreview(int count) {
+    return '将修改 $count 笔记录';
+  }
+
+  @override
+  String get ingestCategoryPreviewHint => '仅修改本次选定范围的记录，可取消勾选不需要修改的项目。';
 }

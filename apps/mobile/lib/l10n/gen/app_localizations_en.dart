@@ -18267,4 +18267,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupSelectedFileSize(int kilobytes) {
     return 'File size: $kilobytes KB';
   }
+
+  @override
+  String get ingestAllCategories => 'All categories';
+
+  @override
+  String get ingestGroupByDescription => 'Group by description';
+
+  @override
+  String get ingestGroupByCategory => 'Group by category';
+
+  @override
+  String get ingestUngrouped => 'Individual records';
+
+  @override
+  String get ingestMixedCategories => 'Mixed categories';
+
+  @override
+  String get ingestExpandGroup => 'Show group records';
+
+  @override
+  String get ingestCollapseGroup => 'Collapse group records';
+
+  @override
+  String ingestGroupCount(int count) {
+    return '$count records';
+  }
+
+  @override
+  String ingestGroupAttention(int count) {
+    return '$count to review';
+  }
+
+  @override
+  String ingestSelectGroup(int count, String name) {
+    return 'Select $count records in $name';
+  }
+
+  @override
+  String ingestCategoryPreview(int count) {
+    return 'Will update $count records';
+  }
+
+  @override
+  String get ingestCategoryPreviewHint =>
+      'Only records in this selection are included. Uncheck any records you want to keep unchanged.';
 }

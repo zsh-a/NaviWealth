@@ -355,7 +355,13 @@ class IngestReviewPageObject {
     await settle(tester);
 
     expect(find.text('Paste statement text'), findsOneWidget);
-    await tester.enterText(find.byType(FTextField), text);
+    await tester.enterText(
+      find.descendant(
+        of: find.widgetWithText(AppSheet, 'Paste statement text'),
+        matching: find.byType(FTextField),
+      ),
+      text,
+    );
     await settle(tester);
 
     final parse = find.text('Parse');
@@ -390,7 +396,7 @@ class IngestReviewPageObject {
   }
 
   void expectDuplicateCount(int count) {
-    expect(find.text('Duplicate'), findsNWidgets(count));
+    expect(find.text('Duplicate ($count)'), findsOneWidget);
     expect(
       find.textContaining('Confirm all · new only'),
       findsNothing,
@@ -402,7 +408,7 @@ class IngestReviewPageObject {
     await tester.tap(find.textContaining(description).first);
     await tester.pumpAndSettle();
     final card = find.ancestor(
-      of: find.textContaining(description).first,
+      of: find.textContaining(description),
       matching: find.byType(SoftCard),
     );
     expect(card, findsOneWidget, reason: 'draft card missing for $description');
@@ -430,7 +436,7 @@ class IngestReviewPageObject {
     await tester.pumpAndSettle();
     await tester.tap(skip);
     await settleUntil(tester, find.text('Undo'));
-    expect(find.text('Undo'), findsOneWidget, reason: 'skip did not complete');
+    expect(find.text('Undo'), findsWidgets, reason: 'skip did not complete');
     for (var i = 0; i < 20; i++) {
       if (find.textContaining(description).evaluate().isEmpty) return;
       await tester.pump(const Duration(milliseconds: 50));
@@ -440,18 +446,14 @@ class IngestReviewPageObject {
 
   Future<void> undoLastAction() async {
     final undo = find.text('Undo');
-    expect(undo, findsOneWidget, reason: 'undo toast action missing');
+    expect(undo, findsWidgets, reason: 'undo action missing');
     var tappableUndo = undo.hitTestable();
     for (var i = 0; i < 20 && tappableUndo.evaluate().isEmpty; i++) {
       await tester.pump(const Duration(milliseconds: 50));
       tappableUndo = undo.hitTestable();
     }
-    expect(
-      tappableUndo,
-      findsOneWidget,
-      reason: 'undo action stayed offscreen',
-    );
-    await tester.tap(tappableUndo);
+    expect(tappableUndo, findsWidgets, reason: 'undo action stayed offscreen');
+    await tester.tap(tappableUndo.last);
     await settle(tester);
   }
 }

@@ -30612,6 +30612,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'File size: {kilobytes} KB'**
   String backupSelectedFileSize(int kilobytes);
+
+  /// No description provided for @ingestAllCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'All categories'**
+  String get ingestAllCategories;
+
+  /// No description provided for @ingestGroupByDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by description'**
+  String get ingestGroupByDescription;
+
+  /// No description provided for @ingestGroupByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Group by category'**
+  String get ingestGroupByCategory;
+
+  /// No description provided for @ingestUngrouped.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual records'**
+  String get ingestUngrouped;
+
+  /// No description provided for @ingestMixedCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed categories'**
+  String get ingestMixedCategories;
+
+  /// No description provided for @ingestExpandGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Show group records'**
+  String get ingestExpandGroup;
+
+  /// No description provided for @ingestCollapseGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse group records'**
+  String get ingestCollapseGroup;
+
+  /// No description provided for @ingestGroupCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} records'**
+  String ingestGroupCount(int count);
+
+  /// No description provided for @ingestGroupAttention.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} to review'**
+  String ingestGroupAttention(int count);
+
+  /// No description provided for @ingestSelectGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Select {count} records in {name}'**
+  String ingestSelectGroup(int count, String name);
+
+  /// No description provided for @ingestCategoryPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Will update {count} records'**
+  String ingestCategoryPreview(int count);
+
+  /// No description provided for @ingestCategoryPreviewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Only records in this selection are included. Uncheck any records you want to keep unchanged.'**
+  String get ingestCategoryPreviewHint;
 }
 
 class _AppLocalizationsDelegate

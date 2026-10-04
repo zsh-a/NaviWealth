@@ -64,6 +64,7 @@ part 'ingest_review/controls.dart';
 part 'ingest_review/duplicate_comparison.dart';
 part 'ingest_review/category_picker.dart';
 part 'ingest_review/view_state.dart';
+part 'ingest_review/groups.dart';
 
 class IngestReviewPage extends ConsumerStatefulWidget {
   const IngestReviewPage({super.key});
@@ -86,6 +87,10 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
   String _query = '';
   IngestReviewFilter _filter = IngestReviewFilter.all;
   IngestReviewSort _sort = IngestReviewSort.importOrder;
+  IngestReviewCategory? _category;
+  IngestReviewGrouping _grouping = IngestReviewGrouping.description;
+  final Set<IngestReviewGroupKey> _expandedGroups = {};
+  int _queueLength = 0;
   int _visibleLimit = 100;
   IngestReviewViewData? _currentData;
   Object? _projectionKey;
@@ -108,7 +113,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
     ref.listenManual(localFormDraftStoreProvider, (_, store) {
       if (mounted) setState(() => _restoreReviewView(store));
     });
-    _reviewScroll.addListener(_captureReviewView);
+    _reviewScroll.addListener(_onReviewScroll);
   }
 
   @override
@@ -157,6 +162,9 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
             _query,
             _filter,
             _sort,
+            _category,
+            _grouping,
+            l10n.localeName,
             _pendingFinalize.keys.join('\u0000'),
             _attentionIds,
           );
@@ -170,13 +178,31 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
               filter: _filter,
               sort: _sort,
               attentionIds: _attentionIds,
+              category: _category,
+              grouping: _grouping,
+              categoryLabels: {
+                for (final kind in [
+                  IngestTransactionKind.expense,
+                  IngestTransactionKind.income,
+                ]) ...{
+                  (kind: kind, value: null): l10n.ingestUncategorized,
+                  for (final entry in _reviewCategoryOptions(
+                    l10n,
+                    kind,
+                  ).entries)
+                    (kind: kind, value: entry.key): entry.value,
+                },
+              },
             );
             _projectionKey = key;
           }
         }
         final viewData = _currentData;
         if (viewData != null) {
-          _scheduleSelectionPrune(viewData.items, ensureFocus: true);
+          _scheduleSelectionPrune(
+            viewData.reviewOrder.toList(),
+            ensureFocus: true,
+          );
           _restoreReviewScroll();
         }
         final selectedItems = viewData?.items
@@ -232,7 +258,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
                 focusNode: _masterFocus,
                 onKeyEvent: (_, event) => viewData == null
                     ? KeyEventResult.ignored
-                    : _onMasterKey(viewData, event),
+                    : _onMasterKey(viewData, event, wide: useMasterDetail),
                 child: MasterDetailShortcuts(
                   onSelectNext: viewData == null
                       ? null
@@ -284,7 +310,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
       selected: _selection.isSelected(draft.draftId),
       selectable: !item.recoveryUnreadable,
       focused: _selection.isFocused(draft.draftId),
-      busy: _isBusy,
+      busy: _isBusy || _selection.selectedIds.isNotEmpty,
       pendingFinalize: pending != null,
       recoveryUnavailable: item.recoveryUnreadable,
       showSelection: showSelection,

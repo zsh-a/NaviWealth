@@ -11,6 +11,7 @@ class _IngestSelectionActions extends StatelessWidget {
     required this.onConfirm,
     required this.onDismiss,
     required this.onFinalize,
+    required this.onClear,
   });
 
   final int count;
@@ -22,6 +23,7 @@ class _IngestSelectionActions extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback onDismiss;
   final VoidCallback onFinalize;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +32,32 @@ class _IngestSelectionActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          spacing: AppSpacing.s8,
-          runSpacing: AppSpacing.s4,
+        Row(
           children: [
-            Text(l10n.commonSelectedCount(count), style: context.labelStyle),
-            Text(
-              l10n.ingestSelectionEligibility(
-                confirmCount,
-                count - confirmCount,
+            Expanded(
+              child: Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s4,
+                children: [
+                  Text(
+                    l10n.commonSelectedCount(count),
+                    style: context.labelStyle,
+                  ),
+                  Text(
+                    l10n.ingestSelectionEligibility(
+                      confirmCount,
+                      count - confirmCount,
+                    ),
+                    style: context.bodyCaptionStyle,
+                  ),
+                ],
               ),
-              style: context.bodyCaptionStyle,
+            ),
+            AppIconButton(
+              key: const ValueKey('ingest-selection-cancel'),
+              tooltip: l10n.ingestClearSelection,
+              icon: FLucideIcons.x,
+              onPress: busy ? null : onClear,
             ),
           ],
         ),

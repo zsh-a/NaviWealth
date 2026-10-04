@@ -1,5 +1,7 @@
 import '../../../../core/persistence/domain_enums.dart';
 import '../../domain/models/account.dart';
+import '../../expense/domain/expense_category_presets.dart';
+import '../../expense/domain/expense_category_taxonomy.dart';
 import '../data/ingest_confirm_service.dart';
 import '../domain/ingest_models.dart';
 import '../domain/minor_unit_amount.dart';
@@ -7,6 +9,37 @@ import '../domain/minor_unit_amount.dart';
 enum IngestReviewFilter { all, ready, likelyDuplicate, duplicate, attention }
 
 enum IngestReviewSort { importOrder, newest, oldest, amount }
+
+enum IngestReviewGrouping { description, category, none }
+
+/// Kind stays part of the key: income and expense categories never mix.
+typedef IngestReviewCategory = ({IngestTransactionKind kind, String? value});
+
+IngestReviewCategory ingestReviewCategory(ParsedTransaction parsed) {
+  final hint = parsed.categoryHint?.trim();
+  return (
+    kind: parsed.kind,
+    value: hint == null || hint.isEmpty
+        ? null
+        : parsed.kind == IngestTransactionKind.expense
+        ? expenseCategoryByInput(hint)?.slug ?? hint
+        : hint,
+  );
+}
+
+typedef IngestReviewGroupKey = ({
+  IngestTransactionKind kind,
+  String currency,
+  String? value,
+});
+
+class IngestReviewGroup {
+  IngestReviewGroup({required this.key, required List<IngestReviewItem> items})
+    : items = List.unmodifiable(items);
+
+  final IngestReviewGroupKey key;
+  final List<IngestReviewItem> items;
+}
 
 /// Immutable UI projection for the ingest review workspace.
 ///
@@ -22,6 +55,8 @@ class IngestReviewViewData {
     required this.selectedAccountId,
     required this.actionableDrafts,
     required this.freshCount,
+    required this.categoryCounts,
+    required this.groups,
   });
 
   factory IngestReviewViewData.from({
@@ -33,6 +68,9 @@ class IngestReviewViewData {
     IngestReviewFilter filter = IngestReviewFilter.all,
     IngestReviewSort sort = IngestReviewSort.importOrder,
     Set<String> attentionIds = const {},
+    IngestReviewCategory? category,
+    IngestReviewGrouping grouping = IngestReviewGrouping.description,
+    Map<IngestReviewCategory, String> categoryLabels = const {},
   }) {
     final payableAccounts = accounts
         .where((account) => !account.archived)
@@ -56,8 +94,16 @@ class IngestReviewViewData {
           final draft = item.draft;
           final parsed = draft.parsed;
           if (tokens.isEmpty) return true;
+          final category = ingestReviewCategory(parsed);
+          final expenseCategory = parsed.kind == IngestTransactionKind.expense
+              ? expenseCategoryByInput(parsed.categoryHint ?? '')
+              : null;
           final text =
               '${parsed.description} ${parsed.categoryHint ?? ''} '
+                      '${categoryLabels[category] ?? ''} '
+                      '${expenseCategory?.labelZh ?? ''} '
+                      '${expenseCategory?.queryKeywords.join(' ') ?? ''} '
+                      '${expenseCategoryPresetByKey(expenseCategory?.slug ?? '')?.nameEn ?? ''} '
                       '${draft.originLabel ?? ''} ${parsed.currency} '
                       '${formatAbsoluteMinorUnitAmount(parsed.amountMinor)} '
                       '${parsed.occurredAt.toLocal().toIso8601String().split('T').first}'
@@ -84,9 +130,28 @@ class IngestReviewViewData {
         };
     final counts = <IngestReviewFilter, int>{
       for (final scope in IngestReviewFilter.values)
-        scope: searched.where((item) => matches(item, scope)).length,
+        scope: searched
+            .where(
+              (item) =>
+                  matches(item, scope) &&
+                  (category == null ||
+                      ingestReviewCategory(item.draft.parsed) == category),
+            )
+            .length,
     };
-    final filtered = searched.where((item) => matches(item, filter)).toList();
+    final categoryCounts = <IngestReviewCategory, int>{};
+    for (final item in searched.where((item) => matches(item, filter))) {
+      final key = ingestReviewCategory(item.draft.parsed);
+      categoryCounts.update(key, (count) => count + 1, ifAbsent: () => 1);
+    }
+    final filtered = searched
+        .where(
+          (item) =>
+              matches(item, filter) &&
+              (category == null ||
+                  ingestReviewCategory(item.draft.parsed) == category),
+        )
+        .toList();
     if (sort != IngestReviewSort.importOrder) {
       final positions = {
         for (var i = 0; i < allItems.length; i++) allItems[i].draft.draftId: i,
@@ -122,6 +187,24 @@ class IngestReviewViewData {
         )
         .map((item) => item.draft)
         .toList(growable: false);
+    final grouped = <IngestReviewGroupKey, List<IngestReviewItem>>{};
+    for (final item in filtered) {
+      final parsed = item.draft.parsed;
+      final key = (
+        kind: parsed.kind,
+        currency: parsed.currency.toUpperCase(),
+        value: switch (grouping) {
+          IngestReviewGrouping.description =>
+            parsed.description
+                .trim()
+                .replaceAll(RegExp(r'\s+'), ' ')
+                .toLowerCase(),
+          IngestReviewGrouping.category => ingestReviewCategory(parsed).value,
+          IngestReviewGrouping.none => item.draft.draftId,
+        },
+      );
+      (grouped[key] ??= []).add(item);
+    }
     return IngestReviewViewData._(
       items: List<IngestReviewItem>.unmodifiable(filtered),
       allItems: List<IngestReviewItem>.unmodifiable(allItems),
@@ -130,6 +213,11 @@ class IngestReviewViewData {
       selectedAccountId: effectiveSelectedId,
       actionableDrafts: List<IngestDraft>.unmodifiable(actionableDrafts),
       freshCount: filtered.where(canConfirm).length,
+      categoryCounts: Map.unmodifiable(categoryCounts),
+      groups: List.unmodifiable([
+        for (final entry in grouped.entries)
+          IngestReviewGroup(key: entry.key, items: entry.value),
+      ]),
     );
   }
 
@@ -140,6 +228,12 @@ class IngestReviewViewData {
   final String? selectedAccountId;
   final List<IngestDraft> actionableDrafts;
   final int freshCount;
+  final Map<IngestReviewCategory, int> categoryCounts;
+  final List<IngestReviewGroup> groups;
+
+  /// Keyboard traversal and continuous editing follow the displayed groups.
+  Iterable<IngestReviewItem> get reviewOrder =>
+      groups.expand((group) => group.items);
 }
 
 String? _defaultAccountId(List<Account> accounts) {
