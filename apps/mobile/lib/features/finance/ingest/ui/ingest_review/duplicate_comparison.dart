@@ -19,7 +19,8 @@ class _DuplicateComparison extends ConsumerWidget {
             against: draft.parsed,
           )),
         )
-        .when(
+        .whenOrLoading(
+          context: context,
           loading: () =>
               Text(l10n.ingestMatchLoading, style: context.bodyCaptionStyle),
           error: (_, _) => Text(
