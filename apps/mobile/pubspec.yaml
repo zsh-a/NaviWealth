@@ -25,7 +25,7 @@ dependencies:
   decimal: ^3.2.4
   desktop_drop: ^0.8.0
   dio: ^5.10.0
-  drift: ^2.35.0
+  drift: ^2.35.1
   file_picker: ^13.1.0
   fl_chart: ^1.2.0
   flutter:
@@ -74,7 +74,7 @@ dependencies:
   # 1.13.6 fixes the macOS release code signatures that previously required
   # pinning the macOS platform package to 1.13.4.
   sherpa_onnx: ^1.13.8
-  sqlite3: ^3.6.0
+  sqlite3: ^3.7.0
   talker: ^5.1.19
   talker_dio_logger: ^5.1.19
   # Clickable markdown links in AI chat. Used behind a confirm dialog
