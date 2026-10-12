@@ -80,7 +80,7 @@ dependencies:
   # Clickable markdown links in AI chat. Used behind a confirm dialog
   # so the user always sees the full URL before the OS hands it off —
   # AI replies are an untrusted surface (prompt-injection vector).
-  url_launcher: ^6.3.2
+  url_launcher: ^6.3.3
   uuid: ^4.6.0
   web: ^1.1.1
   # Cross-platform background task scheduler (Android WorkManager + iOS
