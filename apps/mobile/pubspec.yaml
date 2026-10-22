@@ -69,7 +69,7 @@ dependencies:
   record: ^7.1.1
   # Sentry 10 uses Swift Package Manager on Apple platforms.
   sentry_flutter: 10.0.0-alpha.5
-  share_plus: ^13.2.1
+  share_plus: ^13.3.1
   shared_preferences: ^2.5.5
   # 1.13.6 fixes the macOS release code signatures that previously required
   # pinning the macOS platform package to 1.13.4.
