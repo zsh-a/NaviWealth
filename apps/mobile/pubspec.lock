@@ -622,18 +622,18 @@ packages:
     dependency: "direct main"
     description:
       name: forui
-      sha256: a00251e8db89430f388990049ea30ec62f7d1c9270f1fe6ab0d316b1a9415a72
+      sha256: "3ea0d75e66e4a01f0b878bdaaad391555b16dc027ac4ee76046045c882b921fa"
       url: "https://pub.dev"
     source: hosted
-    version: "0.26.0"
+    version: "0.27.6"
   forui_lucide:
     dependency: transitive
     description:
       name: forui_lucide
-      sha256: "5c797b7455b4c491504fc0f76c3d2d6eebe7cb49aeac1d5c02026f06ae1d2607"
+      sha256: "63c660e4213309d9558cfc1c10ec52c13dab88cc2794dc41b8be769a7c86206c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.26.1"
+    version: "0.27.0"
   freezed:
     dependency: "direct dev"
     description:
