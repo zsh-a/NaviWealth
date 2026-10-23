@@ -161,7 +161,7 @@ covers it.
 ### Contract (Dart↔Rust↔wire, ~5%)
 The client and the Rust Worker share a wire format but no generated
 types. Today: `test/core/ai/contracts/contracts_roundtrip_test.dart`
-(ContextPack snake_case stability) + `tool/check-ai-contract-wire-enums.sh`.
+(ToolDescriptor, AiTrace and AnalyticalUpload serialization) + `tool/check-ai-contract-wire-enums.sh`.
 The script gates the mobile-local AI enum wire manifest
 (`docs/fixtures/ai_contract_wire_enums.json`) against
 `apps/mobile/tool/dump_ai_contract_wire_enums.dart`, so enum wire strings are

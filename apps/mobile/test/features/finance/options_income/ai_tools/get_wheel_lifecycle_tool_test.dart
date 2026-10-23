@@ -1,8 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -116,10 +115,7 @@ Future<Map<String, Object?>> _invoke(
   if (drainStream) container.read(wheelStrategyViewsProvider);
   return _withRef(container, (ref) async {
     final out = await tool.invoke(
-      DeviceToolContext(
-        ref: ref,
-        session: DeviceSession(messages: const <AnthropicChatMessage>[]),
-      ),
+      DeviceToolContext(ref: ref, session: const DeviceToolSession()),
       input,
     );
     return (out! as Map).cast<String, Object?>();

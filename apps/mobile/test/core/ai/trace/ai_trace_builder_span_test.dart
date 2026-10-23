@@ -88,7 +88,7 @@ void main() {
     test('turn attributes synthesise root span without child spans', () {
       final b = AiTraceBuilder.fromSeed(_seed());
       b.addTurnAttributes(const {
-        'context_pack_json_bytes': 512,
+        'context_blocks_json_bytes': 512,
         'context_appendix_present': true,
         'ignored_null': null,
         'ignored_object': <String, Object?>{'x': 1},
@@ -99,7 +99,7 @@ void main() {
       final root = t.spans.single;
       expect(root.id, kTurnSpanId);
       expect(root.attributes, containsPair('terminal_reason', 'done'));
-      expect(root.attributes, containsPair('context_pack_json_bytes', 512));
+      expect(root.attributes, containsPair('context_blocks_json_bytes', 512));
       expect(root.attributes, containsPair('context_appendix_present', true));
       expect(root.attributes, isNot(contains('ignored_null')));
       expect(root.attributes, isNot(contains('ignored_object')));

@@ -92,7 +92,7 @@ class _AggregateHeader extends StatelessWidget {
         hasCost = true;
       }
     }
-    final contextSummary = summarizeContextPackTraceWindow(traces);
+    final contextSummary = summarizeContextBlockTraceWindow(traces);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
@@ -140,36 +140,11 @@ class _AggregateHeader extends StatelessWidget {
                         : AiPillState.neutral,
                   ),
                   AiPill(
-                    label:
-                        'ctx avg ${_formatBytes(contextSummary.avgPackBytes)}',
+                    label: 'ctx avg ${_formatBytes(contextSummary.avgBytes)}',
                   ),
                   AiPill(
-                    label:
-                        'ctx p95 ${_formatBytes(contextSummary.p95PackBytes)}',
+                    label: 'ctx p95 ${_formatBytes(contextSummary.p95Bytes)}',
                   ),
-                  if (contextSummary.packBudgetBytes > 0)
-                    AiPill(
-                      label:
-                          'ctx p95 '
-                          '${contextSummary.p95PackBudgetPercent}% budget',
-                      state: contextSummary.p95PackBudgetPercent >= 80
-                          ? AiPillState.selected
-                          : AiPillState.neutral,
-                    ),
-                  AiPill(
-                    label:
-                        'appendix avg '
-                        '${_formatBytes(contextSummary.avgAppendixBytes)}',
-                  ),
-                  if (contextSummary.appendixCapBytes > 0)
-                    AiPill(
-                      label:
-                          'appendix p95 '
-                          '${contextSummary.p95AppendixCapPercent}% cap',
-                      state: contextSummary.p95AppendixCapPercent >= 80
-                          ? AiPillState.selected
-                          : AiPillState.neutral,
-                    ),
                 ],
               ],
             ),
@@ -186,80 +161,38 @@ class _AggregateHeader extends StatelessWidget {
   }
 }
 
-/// Aggregate over recent trace root-span ContextPack sizing attributes.
-///
-/// This powers the batch-D decision about whether the ContextPack prompt
-/// appendix is worth its byte cost. It intentionally ignores traces
-/// written before these attributes existed, so the sample count is explicit.
-class ContextPackTraceWindowSummary {
-  const ContextPackTraceWindowSummary({
+/// Aggregate serialized ContextBlock sizes from captured chat turns.
+class ContextBlockTraceWindowSummary {
+  const ContextBlockTraceWindowSummary({
     required this.windowCount,
     required this.sampleCount,
-    required this.avgPackBytes,
-    required this.p95PackBytes,
-    required this.packBudgetBytes,
-    required this.avgAppendixBytes,
-    required this.p95AppendixBytes,
-    required this.appendixCapBytes,
+    required this.avgBytes,
+    required this.p95Bytes,
   });
 
   final int windowCount;
   final int sampleCount;
-  final int avgPackBytes;
-  final int p95PackBytes;
-  final int packBudgetBytes;
-  final int avgAppendixBytes;
-  final int p95AppendixBytes;
-  final int appendixCapBytes;
+  final int avgBytes;
+  final int p95Bytes;
 
   bool get hasSamples => sampleCount > 0;
-
-  int get sampleCoveragePercent {
-    if (windowCount <= 0) return 0;
-    return (sampleCount / windowCount * 100).round();
-  }
-
-  int get p95PackBudgetPercent {
-    if (packBudgetBytes <= 0) return 0;
-    return (p95PackBytes / packBudgetBytes * 100).round();
-  }
-
-  int get p95AppendixCapPercent {
-    if (appendixCapBytes <= 0) return 0;
-    return (p95AppendixBytes / appendixCapBytes * 100).round();
-  }
+  int get sampleCoveragePercent =>
+      windowCount == 0 ? 0 : (sampleCount / windowCount * 100).round();
 }
 
-ContextPackTraceWindowSummary summarizeContextPackTraceWindow(
+ContextBlockTraceWindowSummary summarizeContextBlockTraceWindow(
   List<AiTrace> traces,
 ) {
-  final packBytes = <int>[];
-  final appendixBytes = <int>[];
-  var packBudgetBytes = 0;
-  var appendixCapBytes = 0;
+  final bytes = <int>[];
   for (final trace in traces) {
-    final attrs = _turnAttributes(trace);
-    final pack = _intAttr(attrs, 'context_pack_json_bytes');
-    final appendix = _intAttr(attrs, 'context_appendix_bytes');
-    if (pack == null || appendix == null) continue;
-    packBytes.add(pack);
-    appendixBytes.add(appendix);
-    final budget = _intAttr(attrs, 'context_pack_budget_bytes');
-    if (budget != null && budget > 0) packBudgetBytes = budget;
-    final cap = _intAttr(attrs, 'context_appendix_cap_bytes');
-    if (cap != null && cap > 0) appendixCapBytes = cap;
+    final value = _intAttr(_turnAttributes(trace), 'context_blocks_json_bytes');
+    if (value != null) bytes.add(value);
   }
-
-  packBytes.sort();
-  appendixBytes.sort();
-  return ContextPackTraceWindowSummary(
+  bytes.sort();
+  return ContextBlockTraceWindowSummary(
     windowCount: traces.length,
-    sampleCount: packBytes.length,
-    avgPackBytes: _avg(packBytes),
-    p95PackBytes: _pctInts(packBytes, 0.95),
-    packBudgetBytes: packBudgetBytes,
-    avgAppendixBytes: _avg(appendixBytes),
-    p95AppendixBytes: _pctInts(appendixBytes, 0.95),
-    appendixCapBytes: appendixCapBytes,
+    sampleCount: bytes.length,
+    avgBytes: _avg(bytes),
+    p95Bytes: _pctInts(bytes, 0.95),
   );
 }

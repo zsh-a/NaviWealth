@@ -5,7 +5,7 @@
 this directory is a **generated, read-only export** of those values in the
 [W3C Design Tokens Community Group format] for design-tool handoff (it imports
 cleanly into [Tokens Studio for Figma]). Never edit `tokens.json` by hand —
-edit the Dart token files and regenerate (blueprint doc 15 §10 "SSOT 治理").
+edit the Dart token files and regenerate. The [design system contract](../docs/design/15-ui-refactor-blueprint.md) defines theme and component ownership.
 
 [W3C Design Tokens Community Group format]: https://design-tokens.github.io/community-group/format/
 [Tokens Studio for Figma]: https://tokens.studio/
@@ -51,7 +51,7 @@ changed.
 
 The exporter reads token **values** at run time, so value changes flow into
 the JSON automatically on regeneration. Adding a **new** token constant
-requires a one-line addition in `tool/export_design_tokens.dart` so it is
+requires a one-line addition in `apps/mobile/tool/export_design_tokens.dart` so it is
 exported; the CI check fails when the committed JSON no longer matches the
 Dart values.
 
@@ -75,7 +75,7 @@ AppRadius.lg;           // 16.0
 final t = context.appTheme;
 t.status.success.fg;    // status ColorRole (fg / container / onContainer)
 t.market.roleForDelta(delta).fg;   // direction ColorRole per user preference
-t.type.caption;         // semantic type scale (blueprint §4)
+t.type.caption;         // semantic type scale
 t.card.padding;         // L2 component specs (card / press / badge / …)
 t.categorical.adapt(seedColor);    // brightness-adapted categorical color
 

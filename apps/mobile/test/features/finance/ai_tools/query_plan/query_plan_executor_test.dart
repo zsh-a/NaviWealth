@@ -213,7 +213,7 @@ TransactionInput _txn(
   String? categoryId,
 }) {
   // `date` is an ISO calendar date (YYYY-MM-DD); we always anchor it
-  // to UTC midnight so range comparisons against ContextPack-style
+  // to UTC midnight so range comparisons against DateRange
   // ISO ranges are timezone-independent.
   final parts = date.split('-');
   return TransactionInput(

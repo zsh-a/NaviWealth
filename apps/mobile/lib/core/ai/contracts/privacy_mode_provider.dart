@@ -42,9 +42,8 @@ class AiPrivacySettings {
     maskAccountNames: false,
   );
 
-  /// PrivacyBudget tier this mode allows. Device prompt assembly and
-  /// ingest traces use this as an upper bound; tools that explicitly
-  /// need a smaller tier still get capped.
+  /// Classification recorded by ingest traces for this privacy posture.
+  /// The Vision ingest gate separately checks [mode] before provider calls.
   BudgetTier get maxBudgetTier => switch (mode) {
     AiPrivacyMode.amountsAllowed => BudgetTier.large,
     AiPrivacyMode.amountsBucketed => BudgetTier.standard,
@@ -98,8 +97,7 @@ class AiPrivacyController extends Notifier<AiPrivacySettings> {
   }
 }
 
-/// User's current AI-privacy posture. The command palette status badge
-/// reads this; context assembly clamps to `state.maxBudgetTier`.
+/// User's current AI-privacy posture for the Vision ingest gate and its UI.
 final aiPrivacySettingsProvider =
     NotifierProvider<AiPrivacyController, AiPrivacySettings>(
       AiPrivacyController.new,

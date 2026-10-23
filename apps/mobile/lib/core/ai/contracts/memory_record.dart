@@ -65,7 +65,7 @@ extension MemoryKindWire on MemoryKind {
 
 /// One typed memory row. Created by an Extractor (per-feature indexer
 /// like `trade_journal_memory_indexer.dart`), stored by [MemoryStore],
-/// scored by [HybridScorer], assembled into a [ContextPack] by
+/// scored by [HybridScorer], assembled into a [ContextPackMemory] by
 /// [ContextBuilder].
 class MemoryRecord {
   MemoryRecord({

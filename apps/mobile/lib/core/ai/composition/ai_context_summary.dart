@@ -16,7 +16,7 @@
 /// the raw data and formats lazily at render time.
 ///
 /// **Relationship to memory layer**: this is intentionally a
-/// display-only summary (no AI context input). The ContextPack
+/// display-only summary (no AI context input). Domain context
 /// pipeline used for chat turns is `chat_trace_prep.dart`.
 library;
 

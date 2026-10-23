@@ -62,13 +62,17 @@ class SyncEngine {
     DomainGenerationStore? generationStore,
     DomainResetHandler? resetHandler,
     SyncStabilityRecorder? stabilityRecorder,
+    Set<String>? enabledDomains,
   }) : _clock = clock,
        _backoff = backoff,
        _random = random ?? Random(),
        _logger = logger ?? AppLogger.instance,
        _generationStore = generationStore ?? InMemoryDomainGenerationStore(),
        _resetHandler = resetHandler ?? const NoopDomainResetHandler(),
-       _stabilityRecorder = stabilityRecorder;
+       _stabilityRecorder = stabilityRecorder,
+       _enabledDomains = enabledDomains == null
+           ? null
+           : Set.unmodifiable(enabledDomains);
 
   final SyncApiClient api;
   final PendingRows pending;
@@ -83,6 +87,8 @@ class SyncEngine {
   final DomainGenerationStore _generationStore;
   final DomainResetHandler _resetHandler;
   final SyncStabilityRecorder? _stabilityRecorder;
+  final Set<String>? _enabledDomains;
+  bool _stopped = false;
 
   EngineState _state = EngineState.idle;
   EngineState get state => _state;
@@ -122,7 +128,28 @@ class SyncEngine {
 
   /// Run one sync cycle. Concurrent callers share the in-flight future.
   Future<SyncCycleResult> run() {
+    if (_stopped) return Future.value(_cancelledResult());
     return _inflight ??= _runOnce().whenComplete(() => _inflight = null);
+  }
+
+  /// Invalidate a superseded owner/token/domain session. Its response must not
+  /// apply data or advance a cursor after the new provider graph takes over.
+  void stop() => _stopped = true;
+
+  Future<void> waitUntilIdle() async {
+    await _inflight;
+  }
+
+  SyncCycleResult _cancelledResult([AppLogOperation? operation]) {
+    operation?.cancel(stage: 'session_changed');
+    _state = EngineState.idle;
+    return SyncCycleResult(
+      pushed: 0,
+      pulled: 0,
+      errors: [
+        SyncException(SyncErrorKind.unauthorized, code: 'sync_session_changed'),
+      ],
+    );
   }
 
   Future<SyncCycleResult> _runOnce() async {
@@ -131,6 +158,8 @@ class SyncEngine {
     var pushed = 0;
     var pulled = 0;
     var conflicts = const SyncConflictDiagnostics.empty();
+    final deferredKeys = <String>{};
+    var rejectedRows = false;
     _cycleGenerationResets = 0;
     _cycleGenerationResetFailures = 0;
     _state = EngineState.syncing;
@@ -142,15 +171,17 @@ class SyncEngine {
     try {
       var since = await operation.step('read_cursor', cursors.readSeq);
       while (true) {
+        if (_stopped) return _cancelledResult(operation);
         final generations = await operation.step(
           'read_domain_generations',
           _generationStore.readAll,
         );
         final batch = await operation.step(
           'collect_batch',
-          () => _collectBatch(generations),
+          () => _collectBatch(generations, deferredKeys),
           fields: {'batch_size': kSyncMaxChanges},
         );
+        if (_stopped) return _cancelledResult(operation);
         final SyncResponse resp;
         try {
           resp = await operation.step(
@@ -167,15 +198,51 @@ class SyncEngine {
           break;
         }
 
+        if (_stopped) return _cancelledResult(operation);
+        final expectedDomains = _enabledDomains;
+        if (expectedDomains != null &&
+            (resp.domainGenerations.length != expectedDomains.length ||
+                !expectedDomains.containsAll(resp.domainGenerations.keys))) {
+          throw SyncException(
+            SyncErrorKind.unauthorized,
+            code: 'sync_domain_claim_mismatch',
+            message: 'Domain token refresh has not completed',
+          );
+        }
+        if (resp.more && resp.seq <= since) {
+          throw SyncException(
+            SyncErrorKind.badRequest,
+            code: 'sync_cursor_did_not_advance',
+          );
+        }
+
         pushed += resp.accepted.length;
         await operation.step(
           'reconcile_domain_generations',
           () => _reconcileDomainGenerations(resp.domainGenerations),
         );
+        final acceptedKeys = resp.acceptedKeys;
+        for (final row in batch.changes) {
+          final key = _rowKey(row.table, row.id);
+          if (acceptedKeys.contains(key)) continue;
+          deferredKeys.add(key);
+          // A reset intentionally rejects the old generation and removes its
+          // local pointers. Other rejected rows stay dirty, but cannot keep
+          // later rows from getting a turn in this cycle.
+          if (row.generation ==
+              (resp.domainGenerations[domainWireForWireTable(row.table)] ??
+                  0)) {
+            rejectedRows = true;
+          }
+        }
         final currentRows = resp.changes
             .where((row) {
               final domain = domainWireForWireTable(row.table);
               if (domain == null) return false;
+              if (_enabledDomains != null &&
+                  !_enabledDomains.contains(domain)) {
+                return false;
+              }
               return row.generation == (resp.domainGenerations[domain] ?? 0);
             })
             .toList(growable: false);
@@ -192,15 +259,25 @@ class SyncEngine {
         // Acknowledge only rows the server explicitly accepted. Rows dropped
         // at the domain-claim boundary stay dirty so the user can fix their
         // opt-in/token state and retry instead of losing local edits.
+        if (_stopped) return _cancelledResult(operation);
         await operation.step(
           'clear_acknowledged',
-          () => pending.clear(batch.acknowledgedOpIds(resp.acceptedKeys)),
+          () => pending.clear(batch.acknowledgedOpIds(acceptedKeys)),
         );
         since = resp.seq;
         await cursors.writeSeq(since);
         if (!resp.more) await applier.finishCompatibilityReplay();
 
         if (!batch.morePending && !resp.more) break;
+      }
+      if (rejectedRows) {
+        errors.add(
+          SyncException(
+            SyncErrorKind.unauthorized,
+            code: 'sync_rows_rejected',
+            message: 'Some pending rows were not acknowledged',
+          ),
+        );
       }
     } catch (e) {
       errors.add(
@@ -210,6 +287,7 @@ class SyncEngine {
       );
     }
 
+    if (_stopped) return _cancelledResult(operation);
     if (errors.isEmpty) {
       _consecutiveFailures = 0;
       _nextBackoff = null;
@@ -277,12 +355,22 @@ class SyncEngine {
 
   /// Read the dirty-row set, dedupe to one [RowChange] per row, and cap the
   /// batch at [kSyncMaxChanges].
-  Future<_Batch> _collectBatch(Map<String, int> generations) async {
+  Future<_Batch> _collectBatch(
+    Map<String, int> generations,
+    Set<String> deferredKeys,
+  ) async {
     final pointers = await pending.pointers();
     final order = <String>[];
     final opIdsByKey = <String, List<String>>{};
     final keyToPointer = <String, PendingPointer>{};
     for (final p in pointers) {
+      if (_enabledDomains != null &&
+          !_enabledDomains.contains(domainWireForLocalTable(p.table))) {
+        continue;
+      }
+      if (deferredKeys.contains(_rowKey(prefixTable(p.table), p.rowId))) {
+        continue;
+      }
       final key = '${p.table}\u{0}${p.rowId}';
       if (!opIdsByKey.containsKey(key)) {
         order.add(key);

@@ -1,10 +1,9 @@
 /// Context pack assembled by [ContextBuilder] for an LLM turn
 /// (`docs/architecture/lifeos-shell.md` §6, D-1.7b).
 ///
-/// Named `context_pack_memory.dart` to avoid colliding with the older
-/// [ContextPack] in `task_context.dart` (legacy chat-prompt envelope —
-/// kept untouched). This module is the **Memory Runtime's** output
-/// shape, structured by explicit retrieval roles plus the recent event stream.
+/// Memory Runtime output, structured by explicit retrieval roles plus the
+/// recent event stream. App composition converts it to neutral runtime
+/// context blocks alongside active domain contributions.
 ///
 /// Distinct from raw retrieval hits: the builder pre-filters by intent
 /// (entity / scope / time-window / kind) and pre-classifies hits into

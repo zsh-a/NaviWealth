@@ -1,6 +1,6 @@
 # Sync Protocol — NaviWealth v3
 
-Status: **Active** (2026-09-30).
+Status: **Active**.
 
 ## Document Contract
 
@@ -47,10 +47,49 @@ The response adds:
 ```
 
 Before applying pulled rows, a client compares this map with its local
-`sync.domain_generation.<domain>` values. Any mismatch causes a local hard
+`sync.domain_generation.<owner>.<domain>` values. Any mismatch causes a local hard
 reset of that domain's source rows, caches, memories, audit projections,
 agent state, and outbox pointers. Only response rows matching the new
 generation may then be applied.
+
+### Atomic conflict resolution and pull horizon
+
+For one `(user_id, table, id)`, the winning state is the greatest ordered pair
+`(version, device_id)`. Both that comparison and the authoritative generation
+check execute inside the write SQL. A stale concurrent writer, a duplicate key
+later in one batch, or an equal version/device retry cannot overwrite the winner.
+Only a winning replacement receives a new monotonically allocated `seq`.
+`accepted` acknowledges domain/protocol acceptance; it does not mean the submitted
+state won LWW. A newer server state remains authoritative.
+
+Each pull first captures that user's current `MAX(seq)` as a horizon, then reads
+only `since < seq <= horizon`, excluding the caller's rows. If row-count or
+payload-size limits truncate the page, `more` is true and the cursor is the last
+included row's `seq`; otherwise it is the captured horizon. A concurrent insert
+or replacement receives a later sequence and remains eligible on the next pull.
+The server never performs a later MAX read to advance past unseen rows. If an
+invalid/ahead cursor or erasure leaves `since` above the current horizon, the
+empty final page returns the current horizon so future writes remain reachable.
+
+### Client visibility and progress
+
+A cursor belongs to `SyncScope(ownerUserId, enabledDomains)`, with the domain set
+sorted before persistence. Another owner or domain combination starts with its
+own cursor, preventing earlier filtered pulls from hiding newly visible rows.
+Local HLC ordering is device-local and independent of the pull scope.
+
+The engine checks that response `domain_generations` keys exactly match its
+enabled domains before applying data, acknowledging pointers or advancing the
+cursor. A token still carrying old domain claims fails with
+`sync_domain_claim_mismatch` until auth refresh completes. Superseded sync
+sessions cannot apply their response after owner/token/domain composition changes.
+
+Pending collection and queue depth include only the current owner's enabled
+domains. Other owners' and disabled domains' pointers remain queued. Rows absent
+from `accepted` remain dirty, but their keys are deferred for the rest of the
+current cycle so they cannot starve later batches. Remaining rejection is reported
+as `sync_rows_rejected`; generation-reset rejection is handled by the domain reset.
+A page claiming `more` without advancing its cursor fails instead of looping.
 
 ## POST /sync/reset-domain
 
@@ -136,12 +175,12 @@ pointers; it still clears genuine orphan pointers through the normal ack path.
 Before exposing the database to callers, the client compares a signature of its
 codec, namespace, registered primary keys, owner scope and actual supported column
 types with the persisted signature. A change atomically hydrates newly supported
-opaque fields, resets the pull cursor to zero and marks a schema replay. Pending
+opaque fields, invalidates stored scope cursors and marks a schema replay. Pending
 local mutations remain queued and a strictly newer local HLC always wins. During
 this replay equal-version rows may hydrate fields lost by clients predating opaque
 preservation. The replay marker survives interrupted pagination and clears only
 after the final successful page and durable cursor write. An unchanged signature
-keeps the cursor intact.
+keeps the scoped cursors intact.
 
 Unknown prefixes and unsupported tables are skipped with diagnostics. Adding
 support changes the signature and re-pulls current server state, including rows
@@ -181,19 +220,23 @@ records each run locally. It never deletes synced source tables.
 
 ## Production stability gate
 
-The mobile client normalizes terminal cycle samples by timestamp and keeps the
-latest 50 in the local-only `sync_meta` key
-`sync.stability.samples.v1`. Samples contain only timestamps, success/failure
-classes, conflict counters, and generation-reset counters; row ids, payloads,
-error text, and account data are excluded.
+The mobile client aggregates every terminal cycle into UTC-day buckets in
+owner-scoped local-only `sync_meta` storage (`sync.stability.daily.<owner-key>`).
+Retention covers the newest observed UTC day and its preceding 29 days. Each
+bucket preserves exact cycle/outcome counters plus first and last timestamps;
+higher polling frequency does not evict earlier days or approximate success rate.
+Only timestamps, failure classes, conflict and generation-reset counters are
+retained; row ids, payloads, error text and account data are excluded.
 
-A release window is eligible to pass after at least 10 cycles spanning 14 days.
-It passes only when successful cycles are at least 95 percent, fatal protocol
-errors are zero, and generation-reset failures are zero. The report exposes a
-structured `collecting`, `failing`, or `passing` state, exact gate issues,
-window timestamps, and the remaining cycles and observation time. It also
-retains retryable failure counts, failure-to-success recoveries, local LWW wins,
-and ignored rows for diagnosis. Settings may copy this aggregate report as
-privacy-safe JSON, which must not contain row ids or payloads. This gate is
-prerequisite evidence for any future Sync E2EE decision; serializer fixtures
-alone do not satisfy it, and a real 14-day release window is still required.
+A release window is eligible after at least 10 cycles spanning 14 actual days,
+measured from first to last cycle timestamp rather than the number of buckets.
+It passes only with at least 95 percent successful cycles, zero fatal protocol
+errors and zero generation-reset failures. Reports expose `insufficientData`,
+`failing` or `passing`, exact issues, window timestamps, remaining cycles and
+observation duration. The UI presents insufficient coverage as collecting.
+Retryable failures, failure-to-success recoveries, local LWW wins and ignored rows
+remain available as aggregate diagnostics.
+
+Settings may copy the privacy-safe aggregate report as JSON. This gate supplies
+prerequisite operational evidence for a future Sync E2EE decision; serializers or
+synthetic tests cannot establish a real 14-day release window.

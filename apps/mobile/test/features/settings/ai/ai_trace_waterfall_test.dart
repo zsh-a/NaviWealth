@@ -23,8 +23,8 @@ AiTrace _trace() => const AiTrace(
       durationMs: 1500,
       attributes: {
         'terminal_reason': 'done',
-        'context_pack_json_bytes': 512,
-        'context_appendix_bytes': 128,
+        'context_blocks_json_bytes': 512,
+        'context_blocks_count': 2,
       },
     ),
     AiSpan(
@@ -124,7 +124,7 @@ void main() {
       expect(find.text('output'), findsOneWidget);
     });
 
-    testWidgets('turn detail shows ContextPack sizing attributes', (
+    testWidgets('turn detail shows ContextBlock sizing attributes', (
       tester,
     ) async {
       await _pump(tester, AiTraceWaterfall(trace: _trace()));
@@ -133,8 +133,8 @@ void main() {
       await _pumpBounded(tester);
 
       expect(find.text('attributes'), findsOneWidget);
-      expect(_richTextContaining('context_pack_json_bytes'), findsOneWidget);
-      expect(_richTextContaining('context_appendix_bytes'), findsOneWidget);
+      expect(_richTextContaining('context_blocks_json_bytes'), findsOneWidget);
+      expect(_richTextContaining('context_blocks_count'), findsOneWidget);
     });
 
     testWidgets('cost estimate resolves for a known model', (tester) async {

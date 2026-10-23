@@ -2,29 +2,10 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:naviwealth/features/finance/analytics/domain/concentration_risk.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../core/ai/contracts/base_context.dart'
-    as ai
-    show RiskPreference;
 import '../../../../design_system/preferences/theme_preferences.dart';
 
-/// User-declared appetite for investment risk. Single source of truth
-/// for everything downstream that needs a "how aggressive is this user"
-/// signal:
-///
-///  - the Rebalance feature derives its [AllocationSchemePreset]
-///    one-to-one from this value;
-///  - the AI ContextPack passes this through (as a 3-value wire enum)
-///    so on-device LLM advice can take the user's tolerance into
-///    account;
-///  - the Settings UI lets the user set it explicitly with a single
-///    chip row — no more digging into Rebalance to "set risk".
-///
-/// Why a 4-value enum (vs. the existing 3-value wire enum in
-/// `core/ai/contracts/base_context.dart`)? UX needs a [custom] state
-/// for "I edited my own target weights, don't snap me to a preset" —
-/// that's a UI concern that doesn't carry across the AI wire. The
-/// [RiskAppetiteX.toWire] mapper collapses `custom` → `moderate` when
-/// emitted into a [ContextPack], keeping the wire contract stable.
+/// Finance-owned investment risk preference shared by allocation, settings,
+/// and Finance AI context. Custom weights remain an explicit custom choice.
 enum RiskAppetite { conservative, moderate, aggressive, custom }
 
 extension RiskAppetiteX on RiskAppetite {
@@ -35,15 +16,6 @@ extension RiskAppetiteX on RiskAppetite {
     RiskAppetite.moderate => 'moderate',
     RiskAppetite.aggressive => 'aggressive',
     RiskAppetite.custom => 'custom',
-  };
-
-  /// Project to the 3-value AI wire enum. `custom` falls back to
-  /// `moderate` — the AI side has no notion of "user-edited weights",
-  /// it just needs a coarse risk dial.
-  ai.RiskPreference toWire() => switch (this) {
-    RiskAppetite.conservative => ai.RiskPreference.conservative,
-    RiskAppetite.moderate || RiskAppetite.custom => ai.RiskPreference.moderate,
-    RiskAppetite.aggressive => ai.RiskPreference.aggressive,
   };
 }
 

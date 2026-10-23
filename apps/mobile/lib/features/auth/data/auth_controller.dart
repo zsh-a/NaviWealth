@@ -1,17 +1,19 @@
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/auth/auth_errors.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/current_user.dart' show kLocalOnlyUserId;
 import '../../../core/auth/device_identity_store.dart';
+import '../../../core/auth/owner_transfer_intent.dart';
 import '../../../core/auth/providers.dart';
 import '../../../core/auth/token_store.dart';
 import '../../../core/logging/providers.dart';
+import '../../../core/persistence/owner_data_migration.dart';
 import '../../../core/persistence/providers.dart';
 import '../../../core/shell/route_guard.dart';
-import '../../../core/sync/sync_backfill.dart' show SyncBackfill;
+import '../../../core/sync/providers.dart' show syncSchedulerProvider;
 import 'app_mode_store.dart';
 
 // Re-export state types for backward compatibility — existing feature-level
@@ -39,6 +41,7 @@ export '../../../core/auth/auth_state.dart';
 ///      to `/login`.
 class AuthController extends AsyncNotifier<AuthState> {
   Future<bool>? _inFlightRefresh;
+  bool _changingOwner = false;
 
   @override
   Future<AuthState> build() async {
@@ -52,8 +55,12 @@ class AuthController extends AsyncNotifier<AuthState> {
       }
       _bumpRouterRedirect();
     });
+    // Reconcile before inspecting mode or exposing an owner to repositories.
+    // An interrupted SQLite transaction restores the old identity; a committed
+    // marker completes the target identity, even if only one store was updated.
+    await _recoverOwnerTransfer();
     // Local-only mode is sticky and takes precedence over any persisted
-    // session — the choice is one-way per product decision. Reading the
+    // session until the user explicitly changes mode. Reading the
     // mode depends on SharedPreferences; some unit tests don't seed it,
     // so swallow that error and treat the absence as "no preference yet".
     AppMode mode = AppMode.unset;
@@ -93,6 +100,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     required String password,
     String? deviceName,
   }) async {
+    _requireReadyIdentity();
     final api = ref.read(authApiClientProvider);
     final store = ref.read(tokenStoreProvider);
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
@@ -121,6 +129,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     required String password,
     String? deviceName,
   }) async {
+    _requireReadyIdentity();
     final api = ref.read(authApiClientProvider);
     final store = ref.read(tokenStoreProvider);
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
@@ -163,6 +172,10 @@ class AuthController extends AsyncNotifier<AuthState> {
     } catch (_) {
       // Preference layer not wired (test env) — skip the mode bump.
     }
+    _publishCloudSession(session);
+  }
+
+  void _publishCloudSession(AuthSession session) {
     state = AsyncData(AuthLoggedIn(session));
     _bumpRouterRedirect();
   }
@@ -171,6 +184,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// token, and emits [AuthLocalOnly] so the router lands the user on
   /// home.
   Future<void> enterLocalOnlyMode() async {
+    _requireReadyIdentity();
     await ref.read(appModeStoreProvider).write(AppMode.localOnly);
     await ref.read(tokenStoreProvider).clear();
     state = const AsyncData(AuthLocalOnly());
@@ -181,15 +195,15 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// Register a new cloud account and migrate local-only data.
   ///
   /// Used when a [AuthLocalOnly] user wants to upgrade to cloud sync.
-  /// All rows with `owner_user_id = 'local-user'` are re-assigned to the
-  /// new backend userId so [SyncBackfill] can enqueue them for first push.
+  /// Source rows, confirmed Memory/Profile and local history follow the new
+  /// identity. Resumable effects are invalidated and Sync backfill is reset.
   Future<void> upgradeToCloud({
     required String email,
     required String password,
     String? deviceName,
   }) async {
+    _requireReadyIdentity();
     final api = ref.read(authApiClientProvider);
-    final store = ref.read(tokenStoreProvider);
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
     final logger = ref.read(loggerProvider);
     final deviceId = await deviceIdentity.getOrCreate();
@@ -203,21 +217,11 @@ class AuthController extends AsyncNotifier<AuthState> {
       deviceId: deviceId,
     );
 
-    // Migrate local-only rows to the new cloud userId.
-    final migrated = await _migrateOwnerUserId(
+    await _changeOwner(
       from: kLocalOnlyUserId,
       to: session.userId,
-    );
-    logger.i('auth_upgrade_migrated rows=$migrated');
-
-    // Clear backfill markers so SyncBackfill re-enqueues everything.
-    await _clearBackfillMarkers();
-
-    await _persistCloudSession(
-      session: session,
-      requestedDeviceId: deviceId,
-      store: store,
-      deviceIdentity: deviceIdentity,
+      targetMode: AppMode.cloud,
+      targetSession: session,
     );
     logger.i('auth_upgrade_success user=${session.userId}');
   }
@@ -232,6 +236,7 @@ class AuthController extends AsyncNotifier<AuthState> {
     required String password,
     String? deviceName,
   }) async {
+    _requireReadyIdentity();
     final api = ref.read(authApiClientProvider);
     final store = ref.read(tokenStoreProvider);
     final deviceIdentity = ref.read(deviceIdentityStoreProvider);
@@ -261,66 +266,173 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// clears the session, and switches to [AuthLocalOnly]. Data stays in
   /// the local DB; sync is fully disabled.
   Future<void> switchToLocalOnly() async {
+    _requireReadyIdentity();
     final session = currentSession();
     final logger = ref.read(loggerProvider);
 
-    if (session != null) {
-      final migrated = await _migrateOwnerUserId(
-        from: session.userId,
-        to: kLocalOnlyUserId,
-      );
-      logger.i('auth_downgrade_migrated rows=$migrated');
-
-      // Best-effort remote logout — don't block on failure.
-      final api = ref.read(authApiClientProvider);
-      try {
-        await api.logoutDevice(session, session.deviceId);
-      } on AuthException catch (e) {
-        logger.w('auth_downgrade_logout_failed kind=${e.kind.name}');
-      }
+    if (session == null) {
+      await enterLocalOnlyMode();
+      return;
     }
-
-    // Clear backfill markers so next upgrade re-enqueues.
-    await _clearBackfillMarkers();
-
-    await ref.read(appModeStoreProvider).write(AppMode.localOnly);
-    await ref.read(tokenStoreProvider).clear();
-    state = const AsyncData(AuthLocalOnly());
-    ref.invalidate(appModeProvider);
-    _bumpRouterRedirect();
+    await _changeOwner(
+      from: session.userId,
+      to: kLocalOnlyUserId,
+      targetMode: AppMode.localOnly,
+      targetSession: null,
+    );
+    // Revoke only after the local transfer has committed; a data conflict must
+    // leave the original cloud session usable.
+    try {
+      await ref
+          .read(authApiClientProvider)
+          .logoutDevice(session, session.deviceId);
+    } on AuthException catch (e) {
+      logger.w('auth_downgrade_logout_failed kind=${e.kind.name}');
+    }
     logger.i('auth_downgrade_success');
   }
 
-  /// Batch-update `owner_user_id` across all syncable tables that carry
-  /// the column. Runs in a single Drift transaction.
-  Future<int> _migrateOwnerUserId({
+  Future<void> _changeOwner({
     required String from,
     required String to,
+    required AppMode targetMode,
+    required AuthSession? targetSession,
   }) async {
-    final db = await ref.read(appDatabaseProvider.future);
-    var total = 0;
-    await db.transaction(() async {
-      for (final table in SyncBackfill.tables) {
-        final result = await db.customUpdate(
-          'UPDATE $table SET owner_user_id = ? WHERE owner_user_id = ?',
-          variables: [
-            drift.Variable.withString(to),
-            drift.Variable.withString(from),
-          ],
-        );
-        total += result;
+    if (_changingOwner) {
+      throw StateError('An identity change is already running');
+    }
+    _changingOwner = true;
+    try {
+      await _inFlightRefresh;
+      final scheduler = await ref.read(syncSchedulerProvider.future);
+      final tokenStore = ref.read(tokenStoreProvider);
+      final deviceId = await ref
+          .read(deviceIdentityStoreProvider)
+          .getOrCreate();
+      final previous = OwnerIdentitySnapshot(
+        mode: ref.read(appModeStoreProvider).read().wire,
+        session: await tokenStore.read(),
+        deviceId: deviceId,
+      );
+      final target = OwnerIdentitySnapshot(
+        mode: targetMode.wire,
+        session: targetSession,
+        deviceId: targetSession?.deviceId ?? deviceId,
+      );
+      final intent = OwnerTransferIntent(
+        id: const Uuid().v4(),
+        from: from,
+        to: to,
+        previous: previous,
+        target: target,
+      );
+      final migration = OwnerDataMigration(
+        await ref.read(appDatabaseProvider.future),
+      );
+      if (await tokenStore.readOwnerTransfer() != null) {
+        throw StateError('An owner transfer requires recovery');
       }
-    });
-    return total;
+      var transferred = 0;
+      try {
+        await scheduler?.pauseAndDrain();
+        await tokenStore.writeOwnerTransfer(intent);
+        transferred = await migration.transfer(
+          from: from,
+          to: to,
+          transferId: intent.id,
+          commitIdentity: () => _persistIdentity(target),
+        );
+        await _finishOwnerTransfer(intent, migration);
+      } catch (error, stack) {
+        // Consult the durable marker even when a store operation threw after
+        // persisting its value. Never roll auth back after SQLite committed.
+        bool committed;
+        try {
+          committed = await migration.didCommit(intent.id);
+          await _persistIdentity(committed ? target : previous);
+          await _finishOwnerTransfer(intent, migration);
+        } catch (recoveryError, recoveryStack) {
+          // Leave the journal intact and prevent owner-dependent actions until
+          // startup recovery can complete. Do not resume the previous Sync.
+          scheduler?.stop();
+          state = AsyncError(recoveryError, recoveryStack);
+          rethrow;
+        }
+        if (!committed) {
+          scheduler?.resume();
+          Error.throwWithStackTrace(error, stack);
+        }
+      }
+      scheduler?.stop();
+      _publishIdentity(target);
+      ref
+          .read(loggerProvider)
+          .event(
+            'core.auth.owner_transfer.completed',
+            fields: {'row_count': transferred},
+          );
+    } finally {
+      _changingOwner = false;
+    }
   }
 
-  /// Clear all SyncBackfill markers so the next engine creation
-  /// re-enqueues every local row.
-  Future<void> _clearBackfillMarkers() async {
-    final db = await ref.read(appDatabaseProvider.future);
-    await db.customStatement(
-      "DELETE FROM sync_meta WHERE key LIKE 'sync.backfill.%'",
+  Future<void> _recoverOwnerTransfer() async {
+    final intent = await ref.read(tokenStoreProvider).readOwnerTransfer();
+    if (intent == null) return;
+    final migration = OwnerDataMigration(
+      await ref.read(appDatabaseProvider.future),
     );
+    final committed = await migration.didCommit(intent.id);
+    await _persistIdentity(committed ? intent.target : intent.previous);
+    await _finishOwnerTransfer(intent, migration);
+    ref.invalidate(appModeProvider);
+  }
+
+  Future<void> _persistIdentity(OwnerIdentitySnapshot identity) async {
+    final store = ref.read(tokenStoreProvider);
+    final session = identity.session;
+    if (session == null) {
+      await store.clear();
+    } else {
+      await store.write(session);
+    }
+    await ref.read(appModeStoreProvider).write(AppMode.parse(identity.mode));
+    await ref.read(deviceIdentityStoreProvider).remember(identity.deviceId);
+  }
+
+  Future<void> _finishOwnerTransfer(
+    OwnerTransferIntent intent,
+    OwnerDataMigration migration,
+  ) async {
+    // Removing the journal is the last required write. An orphan commit marker
+    // contains only one random id and is harmless; the next transfer replaces it.
+    await ref.read(tokenStoreProvider).clearOwnerTransfer();
+    try {
+      await migration.clearCommitMarker(intent.id);
+    } catch (_) {
+      ref
+          .read(loggerProvider)
+          .event('core.auth.owner_transfer.cleanup_deferred');
+    }
+  }
+
+  void _publishIdentity(OwnerIdentitySnapshot identity) {
+    final session = identity.session;
+    state = AsyncData(
+      AppMode.parse(identity.mode) == AppMode.localOnly
+          ? const AuthLocalOnly()
+          : session == null
+          ? const AuthLoggedOut()
+          : AuthLoggedIn(session),
+    );
+    ref.invalidate(appModeProvider);
+    _bumpRouterRedirect();
+  }
+
+  void _requireReadyIdentity() {
+    if (_changingOwner || !state.hasValue) {
+      throw StateError('Identity is not ready');
+    }
   }
 
   /// Mark the user's mode preference as `cloud` so the next router redirect
@@ -328,6 +440,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// auth state (still [AuthLoggedOut]); the actual session is established
   /// by [login].
   Future<void> chooseCloud() async {
+    _requireReadyIdentity();
     await ref.read(appModeStoreProvider).write(AppMode.cloud);
     ref.invalidate(appModeProvider);
     _bumpRouterRedirect();
@@ -338,6 +451,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// device logged out" — the device row will time out on the server when
   /// `exp` passes anyway.
   Future<void> logoutCurrent() async {
+    _requireReadyIdentity();
     final session = currentSession();
     if (session == null) {
       _clearSessionState(LoggedOutReason.manuallyLoggedOut);
@@ -363,6 +477,7 @@ class AuthController extends AsyncNotifier<AuthState> {
   /// `false` when the refresh itself failed (in which case we've already
   /// cleared local state and routed to `/login`).
   Future<bool> refreshIfPossible() {
+    if (_changingOwner) return Future.value(false);
     final pending = _inFlightRefresh;
     if (pending != null) return pending;
     final future = _refreshNow();

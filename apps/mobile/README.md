@@ -113,7 +113,7 @@ FinanceOS 规划页包含现金安全、目标与定投，以及按需展开的�
 | 原生嵌入 | `flutter_rust_bridge`（EmbeddingGemma ONNX） |
 | HTTP | `dio` |
 | i18n / 数字货币 | `intl` |
-| 日志 | `talker` + `talker_dio_logger` |
+| 日志 | `talker` + metadata-only `HttpDiagnosticsInterceptor` |
 
 ## 设备端 AI
 

@@ -4,11 +4,11 @@ import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 
-DeviceSession _session() => DeviceSession(messages: []);
+DeviceToolSession _session() => const DeviceToolSession();
 
 class _EchoTool implements DeviceTool {
   const _EchoTool(this.name);

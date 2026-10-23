@@ -8,7 +8,6 @@ import '../../core/config/providers.dart';
 import '../../core/logging/logging_crash_reporter.dart';
 import '../../core/logging/providers.dart';
 import '../../core/logging/sentry_crash_reporter.dart';
-import '../../core/sync/providers.dart';
 import '../../design_system/preferences/theme_preferences.dart';
 import '../../features/auth/data/auth_controller.dart';
 import '../../features/auth/data/auth_route_guard.dart';
@@ -46,13 +45,6 @@ List<Override> buildBootstrapProviderOverrides({
       ],
     ),
     ...agentRuntimeProviderOverrides(),
-    syncAuthTokenProvider.overrideWith(
-      (ref) =>
-          () async => ref
-              .read(authControllerProvider.notifier)
-              .currentSession()
-              ?.accessToken,
-    ),
     core_auth.authSessionReaderProvider.overrideWith(
       (ref) =>
           () => ref.read(authControllerProvider.notifier).currentSession(),

@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/logging/http_diagnostics_interceptor.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/market/domain/market_data_service.dart';
-import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import 'cache/cache_policy.dart';
 import 'cache/quote_cache.dart';
@@ -53,11 +53,6 @@ final marketCacheProvider = FutureProvider<MarketCache>((ref) async {
   );
 });
 
-TalkerDioLogger _marketDioLogger(Ref ref) => TalkerDioLogger(
-  talker: ref.read(talkerProvider),
-  settings: const TalkerDioLoggerSettings(printResponseData: false),
-);
-
 const _marketRequestTimeout = Duration(seconds: 10);
 
 Dio _marketDio(Ref ref) {
@@ -68,7 +63,12 @@ Dio _marketDio(Ref ref) {
       receiveTimeout: _marketRequestTimeout,
     ),
   );
-  dio.interceptors.add(_marketDioLogger(ref));
+  dio.interceptors.add(
+    HttpDiagnosticsInterceptor(
+      logger: ref.read(loggerProvider),
+      service: 'market',
+    ),
+  );
   return dio;
 }
 

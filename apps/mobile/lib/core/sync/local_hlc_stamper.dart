@@ -12,18 +12,18 @@ import 'drift_sync_storage.dart';
 /// sync initialization and historical backfill work.
 class LocalHlcStamper {
   LocalHlcStamper({required AppDatabase db, required this.deviceId})
-    : _cursors = DriftCursorStore(db);
+    : _clock = DriftLocalClockStore(db);
 
-  final DriftCursorStore _cursors;
+  final DriftLocalClockStore _clock;
   final String deviceId;
 
   Future<Hlc> stamp({int? overrideNowMillis}) async {
-    final last = await _cursors.readLocalHlc() ?? Hlc.zero(deviceId);
+    final last = await _clock.read() ?? Hlc.zero(deviceId);
     final next = Hlc.tick(
       lastSeen: last,
       nowMillis: overrideNowMillis ?? DateTime.now().millisecondsSinceEpoch,
     );
-    await _cursors.writeLocalHlc(next);
+    await _clock.write(next);
     return next;
   }
 }

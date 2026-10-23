@@ -14,6 +14,7 @@ import 'package:naviwealth/core/ai/local/memory/context_builder.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_fact.dart';
 import 'package:naviwealth/core/lifeos/personal_profile/personal_profile_snapshot.dart';
 import 'package:naviwealth/features/ai_chat/data/chat_context_block_prep.dart';
@@ -40,6 +41,28 @@ AgentRuntimeContextBlock buildAppChatSystemInstructionBlock({
       'trusted_as_instruction': true,
     },
   );
+}
+
+/// Match the Assistant tool scope and isolate each domain's optional grounding.
+/// A broken Finance repository cannot block a Health/Knowledge/Execution turn.
+Future<List<AgentRuntimeContextBlock>> prepareDomainChatContextBlocks({
+  required List<DomainPack> activePacks,
+  required AiContext aiContext,
+  required Future<List<AgentRuntimeContextBlock>> Function(DomainPack pack)
+  build,
+}) async {
+  final blocks = <AgentRuntimeContextBlock>[];
+  for (final pack in activePacks) {
+    if (aiContext.domain != null && pack.scope != aiContext.domain) continue;
+    if (pack.chatContextBuilder == null) continue;
+    try {
+      blocks.addAll(await build(pack));
+    } on Object {
+      // Domain context is optional; the owning tool can surface a source error
+      // if the user explicitly requests that data later in the turn.
+    }
+  }
+  return List.unmodifiable(blocks);
 }
 
 Future<List<AgentRuntimeContextBlock>> prepareAppChatContextBlocks({

@@ -325,7 +325,7 @@ class _StabilityCard extends StatelessWidget {
                 Text(
                   l10n.syncStabilityWindow(
                     report.successfulCycles,
-                    report.samples.length,
+                    report.cycleCount,
                     report.observedDuration.inDays,
                   ),
                   style: context.captionStyle,

@@ -1,10 +1,6 @@
-/// §5.10.5 — AI privacy posture settings.
-///
-/// Three radio choices for the cloud-egress mode plus one toggle for
-/// account-name masking. Reads + writes [aiPrivacySettingsProvider];
-/// the router consumes the resulting [AiPrivacySettings.maxBudgetTier]
-/// at request time and the command-palette status badge mirrors the
-/// current mode label.
+/// AI privacy posture settings persisted through [aiPrivacySettingsProvider].
+/// The device-direct Vision ingest gate reads the selected mode before
+/// sending a document to the configured model provider.
 library;
 
 import 'package:flutter/widgets.dart';

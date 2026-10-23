@@ -4,15 +4,19 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/auth/auth_session.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
+import 'package:naviwealth/core/sync/dio_sync_api_client.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/local_table_counts.dart';
 import 'package:naviwealth/core/sync/providers.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
 
@@ -41,6 +45,10 @@ void main() {
         appDatabaseProvider.overrideWith((_) async => db),
         activeDomainPacksProvider.overrideWithValue([_financeDiagnosticsPack]),
         syncStatusBusProvider.overrideWithValue(bus),
+        syncScopeProvider.overrideWith(
+          (_) async =>
+              SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+        ),
       ],
     );
   });
@@ -79,6 +87,27 @@ void main() {
   }
 
   group('sync diagnostics providers', () {
+    test('superseded API client keeps its original session token', () async {
+      AuthSession session(String owner) => AuthSession(
+        accessToken: 'token-$owner',
+        expiresAt: DateTime.utc(2030),
+        userId: owner,
+        deviceId: 'device-$owner',
+      );
+      var active = session('first');
+      final isolated = ProviderContainer(
+        overrides: [authSessionProvider.overrideWith((_) => active)],
+      );
+      addTearDown(isolated.dispose);
+      final first = isolated.read(syncApiClientProvider) as DioSyncApiClient;
+      active = session('second');
+      isolated.invalidate(authSessionProvider);
+      final second = isolated.read(syncApiClientProvider) as DioSyncApiClient;
+
+      expect(await first.tokenProvider(), 'token-first');
+      expect(await second.tokenProvider(), 'token-second');
+    });
+
     test('status stream seeds late readers with the current event', () async {
       final event = await waitForProviderValue<SyncStatusEvent>(
         syncStatusEventStreamProvider,
@@ -119,7 +148,10 @@ void main() {
           (value) => value == 0,
         );
 
-        final cursors = DriftCursorStore(db);
+        final cursors = DriftCursorStore(
+          db,
+          scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+        );
         await cursors.writeSeq(42);
         const hlc = Hlc(wallMillis: 42, counter: 1, nodeId: 'dev-1');
         await cursors.writeLocalHlc(hlc);

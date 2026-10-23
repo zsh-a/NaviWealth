@@ -8,7 +8,8 @@ import '../../../design_system/preferences/theme_preferences.dart'
 /// - [unset]: first launch; the onboarding page is shown so the user can pick.
 /// - [cloud]: traditional flow — login wall, data syncs through the backend.
 /// - [localOnly]: data stays on this device; the sync engine and outbox are
-///   inert. One-way: there is no UI affordance to upgrade to a cloud account.
+///   inert. Upgrading transfers local data to a new cloud account; connecting
+///   an existing account keeps its data separate.
 enum AppMode {
   unset,
   cloud,
@@ -46,7 +47,9 @@ class AppModeStore {
 
   Future<void> write(AppMode mode) async {
     final prefs = _ref.read(sharedPreferencesProvider);
-    await prefs.setString(_kAppModeKey, mode.wire);
+    if (!await prefs.setString(_kAppModeKey, mode.wire)) {
+      throw StateError('Could not persist app mode');
+    }
   }
 }
 

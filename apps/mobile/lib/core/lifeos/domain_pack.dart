@@ -19,10 +19,12 @@ import '../../design_system/theme/domain_accent.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../ai/agents/agent.dart';
 import '../ai/agents/agent_presentation.dart';
+import '../ai/composition/ai_context.dart';
 import '../ai/composition/composite_proposal_applier.dart';
 import '../ai/composition/proposal_kind_registry.dart';
 import '../ai/contracts/tool_descriptor.dart';
 import '../ai/intent/intent_policy.dart';
+import '../ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import '../ai/runtime/device/tools/device_tool.dart';
 import '../auth/domain_scope.dart';
 import '../auth/providers.dart';
@@ -36,6 +38,11 @@ import 'share_intent.dart';
 /// [Ref] because most agents are themselves Riverpod-built (they depend
 /// on runtime services like the LLM client or notification service).
 typedef DomainAgentBuilder = List<Agent> Function(Ref ref);
+
+/// Domain-owned prompt grounding. The app invokes only active packs selected
+/// by the current route and isolates retrieval failures per contribution.
+typedef DomainChatContextBuilder =
+    Future<List<AgentRuntimeContextBlock>> Function(Ref ref, AiContext context);
 
 /// Selects the bounded tool catalog exposed to the conversational Assistant
 /// for the current route. Internal agent tools remain in [DomainPack.deviceTools].
@@ -169,6 +176,7 @@ class DomainPack {
     required this.scope,
     this.deviceTools = const <DeviceTool>[],
     this.assistantToolsBuilder,
+    this.chatContextBuilder,
     this.toolDescriptors = const <String, ToolDescriptor>{},
     this.intentDescriptors = const <IntentDescriptor>[],
     this.proposalKinds = const <ProposalKindMeta>[],
@@ -214,6 +222,10 @@ class DomainPack {
   /// complete [deviceTools] list is used for compatibility with third-party or
   /// test packs. Production packs should provide an explicit bounded catalog.
   final DomainAssistantToolsBuilder? assistantToolsBuilder;
+
+  /// Bounded domain facts passed through the shared ContextBlock channel.
+  /// Detailed source data remains available through explicit domain tools.
+  final DomainChatContextBuilder? chatContextBuilder;
 
   /// Metadata for [deviceTools], advertised when this domain is active.
   final Map<String, ToolDescriptor> toolDescriptors;

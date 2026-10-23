@@ -14,37 +14,15 @@ import '../../features/life/composition/life_route_paths.dart';
 
 /// Canonical route paths for NaviWealth's information architecture.
 ///
-/// **IA authority lives in `apps/mobile/docs/design/00-information-architecture.md`.**
-/// If this file and that document disagree, the document wins — update the
-/// routes to match it, not the other way around.
+/// Cross-domain navigation is owned by `docs/architecture/lifeos-shell.md`.
+/// AI entry behavior is owned by `docs/ai/ai-architecture.md`.
+/// Domain route constants and DomainPack registrations define current paths;
+/// `apps/mobile/docs/design/00-information-architecture.md` summarizes the UI.
 ///
-/// ## Target IA (the contract, 2026-05-24)
-///
-/// Primary tabs:    Today / Activity / Wealth / Plan
-/// Global meta:     Settings (via Today top-right ⚙, not a tab)
-/// Global entry:    Search / command palette (bottom-nav center slot)
-/// Assistant:       one workspace — palette + inline sheets + /assistant
-///
-/// ### Tab boundaries (the contract — apply BEFORE adding a new route)
-///
-/// - **Today**     = read-only operating dashboard. CTA-only, no editing.
-/// - **Activity**  = immutable event history + entry (expense/trade/transfer/...).
-/// - **Wealth**    = owned objects + current state (accounts/holdings/liabilities).
-/// - **Plan**      = decisions + future state (FIRE/rebalance/income/scenarios).
-/// - **Settings**  = global preferences only — never `/plan/settings` or
-///                   `/wealth/settings`; deep-link into `/settings/<thing>` instead.
-///
-/// "Analytics" is NOT a section name — split per object:
-///   Wealth → Portfolio Analytics, Plan → Scenario Analytics / FIRE Projection.
-///
-/// ## Migration status
-///
-/// Phases A / B / C / D all shipped. Legacy `/accounts/*` routes,
-/// redirects, and `@Deprecated` aliases have been removed — there is
-/// only one canonical IA now. External callers (browser history, AI
-/// chat `routeHint` payloads minted before the migration) that still
-/// reference `/accounts/*` will 404; rebuild affected sessions or
-/// re-introduce a targeted redirect.
+/// Finance tabs: Today / Activity / Wealth / Plan.
+/// Settings is global configuration; Assistant uses inline sheets and /assistant.
+/// Today is read-only overview, Activity owns events and capture, Wealth owns
+/// current objects, and Plan owns decisions and future state.
 abstract final class AppRoutes {
   // ── Auth ────────────────────────────────────────────────────────────────
   static const login = AuthRoutes.login;
@@ -66,7 +44,7 @@ abstract final class AppRoutes {
   static const wealth = FinanceRoutes.wealth;
   static const plan = FinanceRoutes.plan;
 
-  // ── HealthOS (Phase D-2.3) — gated by domain opt-in (Health OFF by
+  // ── HealthOS — gated by domain opt-in (Health OFF by
   // default). Tabs: Today / Trend.
   static const healthToday = HealthRoutes.today;
   static const healthTrend = HealthRoutes.trend;
@@ -306,11 +284,8 @@ final primaryTabPathsProvider = Provider<List<String>>((ref) {
 
 /// Tab paths for the domain that owns [path] — the Cmd/Ctrl-1..N targets.
 ///
-/// The old flat concatenation permanently bound Cmd-1..4 to the first
-/// domain's (Finance's) tabs, teleporting users out of whatever domain they
-/// were in and leaving every other domain keyboard-unreachable (blueprint
-/// doc 15 §7.4). Outside any domain (e.g. `/life`) this falls back to the
-/// first active domain, preserving the old behavior there.
+/// Targets stay within the current domain. Outside any domain (e.g. `/life`),
+/// this falls back to the first active domain.
 List<String> domainTabPathsForLocation(List<DomainPack> packs, String path) {
   if (packs.isEmpty) return const [];
   final scope = domainForRoute(packs, path);

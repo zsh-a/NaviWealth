@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:uuid/uuid.dart';
@@ -8,6 +10,7 @@ import 'cursor_store.dart';
 import 'domain_generation.dart';
 import 'op_outbox.dart';
 import 'sync_payload_store.dart';
+import 'sync_scope.dart';
 import 'sync_table_registry.dart';
 
 /// Drift-backed [OutboxStore] over the `op_outbox` table.
@@ -56,14 +59,18 @@ bool isOutboxBoundToDatabase(OutboxStore outbox, AppDatabase database) =>
 /// Reads `op_outbox` as the set of locally-dirty rows and serialises each
 /// row's current state for push (`docs/sync/sync-v3.md`).
 class DriftPendingRows implements PendingRows {
-  DriftPendingRows(this._db, {String? ownerUserId})
-    : _ownerUserId = ownerUserId;
+  DriftPendingRows(this._db, {String? ownerUserId, Set<String>? domains})
+    : _ownerUserId = ownerUserId,
+      _domains = domains;
   final AppDatabase _db;
   final String? _ownerUserId;
+  final Set<String>? _domains;
 
   @override
   Future<int> depth() async {
-    if (_ownerUserId != null) return (await pointers()).length;
+    if (_ownerUserId != null || _domains != null) {
+      return (await pointers()).length;
+    }
     final row = await _db
         .customSelect('SELECT COUNT(*) AS c FROM op_outbox')
         .getSingle();
@@ -100,6 +107,13 @@ class DriftPendingRows implements PendingRows {
     }
     return rows
         .where((r) => !foreignOps.contains(r.read<String>('op_id')))
+        .where(
+          (r) =>
+              _domains == null ||
+              _domains.contains(
+                domainWireForLocalTable(r.read<String>('table_name')),
+              ),
+        )
         .map(
           (r) => PendingPointer(
             opId: r.read<String>('op_id'),
@@ -153,48 +167,75 @@ class DriftPendingRows implements PendingRows {
 
 /// Drift-backed [CursorStore] over the `sync_meta` key/value table.
 class DriftCursorStore implements CursorStore {
-  DriftCursorStore(this._db);
+  DriftCursorStore(this._db, {required SyncScope scope})
+    : _key = 'sync.cursor.${scope.storageKey}';
   final AppDatabase _db;
-
-  static const _kSeq = 'sync.cursor';
-  static const _kLocalHlc = 'sync.local_hlc';
+  final String _key;
 
   @override
   Future<int> readSeq() async {
-    final raw = await _readValue(_kSeq);
-    return raw == null ? 0 : (int.tryParse(raw) ?? 0);
-  }
-
-  @override
-  Future<void> writeSeq(int seq) => _writeValue(_kSeq, '$seq');
-
-  @override
-  Future<Hlc?> readLocalHlc() async {
-    final raw = await _readValue(_kLocalHlc);
-    return raw == null ? null : Hlc.parse(raw);
-  }
-
-  @override
-  Future<void> writeLocalHlc(Hlc hlc) =>
-      _writeValue(_kLocalHlc, hlc.toString());
-
-  Future<String?> _readValue(String key) async {
-    final rows = await _db
+    final row = await _db
         .customSelect(
           'SELECT value FROM sync_meta WHERE key = ?',
-          variables: [Variable.withString(key)],
+          variables: [Variable.withString(_key)],
         )
-        .get();
-    if (rows.isEmpty) return null;
-    return rows.first.read<String>('value');
+        .getSingleOrNull();
+    return int.tryParse(row?.read<String>('value') ?? '') ?? 0;
   }
 
-  Future<void> _writeValue(String key, String value) async {
+  @override
+  Future<void> writeSeq(int seq) => _db.customStatement(
+    'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
+    'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+    [_key, '$seq'],
+  );
+
+  @override
+  Future<Hlc?> readLocalHlc() => DriftLocalClockStore(_db).read();
+
+  @override
+  Future<void> writeLocalHlc(Hlc hlc) => DriftLocalClockStore(_db).write(hlc);
+}
+
+/// Device-local ordering is shared across owners and independent of pull scope.
+class DriftLocalClockStore {
+  DriftLocalClockStore(this._db);
+  final AppDatabase _db;
+  static const _key = 'sync.local_hlc';
+
+  Future<Hlc?> read() async {
+    final row = await _db
+        .customSelect(
+          'SELECT value FROM sync_meta WHERE key = ?',
+          variables: [Variable.withString(_key)],
+        )
+        .getSingleOrNull();
+    return row == null ? null : Hlc.parse(row.read<String>('value'));
+  }
+
+  Future<void> write(Hlc value) async {
     await _db.customStatement(
       'INSERT INTO sync_meta(key, value) VALUES (?, ?) '
       'ON CONFLICT(key) DO UPDATE SET value = excluded.value',
-      [key, value],
+      [_key, value.toString()],
     );
+  }
+}
+
+/// Clear progress for an identity whose rows are being reassigned. Uses the
+/// caller's transaction, preserving other users' progress and the local HLC.
+Future<void> clearOwnerSyncProgress(AppDatabase db, String ownerUserId) async {
+  final rows = await db
+      .customSelect("SELECT key FROM sync_meta WHERE key GLOB 'sync.cursor.*'")
+      .get();
+  for (final row in rows) {
+    final key = row.read<String>('key');
+    final scope = jsonDecode(
+      utf8.decode(base64Url.decode(key.substring('sync.cursor.'.length))),
+    ) as List<Object?>;
+    if (scope.first == ownerUserId) {
+      await db.customStatement('DELETE FROM sync_meta WHERE key = ?', [key]);
+    }
   }
 }
 

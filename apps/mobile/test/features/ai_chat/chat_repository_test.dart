@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
-import 'package:naviwealth/core/ai/local/skills/skills.dart';
 import 'package:naviwealth/core/ai/progress/long_task_progress.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
 import 'package:naviwealth/core/ai/trace/trace.dart';
@@ -29,7 +28,6 @@ class _FakeApi implements AiChatApiClient {
   String? lastAgentId;
   String? lastMode;
   Map<String, Object?>? lastMetadata;
-  ContextPack? lastContextPack;
   List<AgentRuntimeContextBlock>? lastContextBlocks;
   AiInteractionResponse? lastInteractionResponse;
   Object? errorToThrow;
@@ -46,8 +44,6 @@ class _FakeApi implements AiChatApiClient {
     String? agentId,
     String? mode,
     Map<String, Object?> metadata = const <String, Object?>{},
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
     List<AgentRuntimeContextBlock> contextBlocks =
         const <AgentRuntimeContextBlock>[],
     AgentRuntimeContextPolicy? contextPolicy,
@@ -63,7 +59,6 @@ class _FakeApi implements AiChatApiClient {
     lastAgentId = agentId;
     lastMode = mode;
     lastMetadata = metadata;
-    lastContextPack = contextPack;
     lastContextBlocks = contextBlocks;
     lastInteractionResponse = interactionResponse;
     if (errorToThrow != null) {
@@ -98,8 +93,6 @@ class _NoDoneApi implements AiChatApiClient {
     String? agentId,
     String? mode,
     Map<String, Object?> metadata = const <String, Object?>{},
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
     List<AgentRuntimeContextBlock> contextBlocks =
         const <AgentRuntimeContextBlock>[],
     AgentRuntimeContextPolicy? contextPolicy,
@@ -250,6 +243,34 @@ void main() {
 
       expect(outcome, SendOutcome.completed);
       expect(api.lastContextBlocks, isEmpty);
+    });
+
+    test('trace preparation failure cannot leave a turn streaming', () async {
+      api.script.addAll([
+        const TextEvent('ready'),
+        const DoneEvent(stopReason: 'end_turn', rounds: 1),
+      ]);
+      repo = ChatRepository(
+        store: store,
+        api: api,
+        sessionReader: () => _fakeSession,
+        tracePrep: ({required requestId, required userMessage}) async {
+          throw StateError('trace preferences unavailable');
+        },
+      );
+      final id = await activeSessionId();
+
+      final outcome = await repo.sendMessage(
+        sessionId: id,
+        ownerUserId: 'user-1',
+        content: 'continue without diagnostics',
+      );
+
+      expect(outcome, SendOutcome.completed);
+      final assistant = (await store.listMessages(id)).last;
+      expect(assistant.role, ChatRole.assistant);
+      expect(assistant.status, ChatMessageStatus.complete);
+      expect(assistant.content, 'ready');
     });
 
     test('clears long-task progress when the turn completes', () async {
@@ -863,7 +884,7 @@ void main() {
     );
   });
 
-  group('ChatRepository — Phase 2-A trace + context pack', () {
+  group('ChatRepository — app traces and neutral context blocks', () {
     late ChatHistoryStore store;
     late _FakeApi api;
     late InMemoryAiTraceStore traceStore;
@@ -878,30 +899,31 @@ void main() {
         api: api,
         sessionReader: () => _fakeSession,
         tracePrep: ({required requestId, required userMessage}) async {
-          const route = RouteContext(path: '/expense', area: 'expense');
           const intent = IntentHint(
             capability: Capability.analyze,
             risk: RiskLevel.suggest,
             label: 'chat_turn',
-          );
-          final pack = const ContextCompressor().compress(
-            route: route,
-            intent: intent,
-            baseCurrency: 'USD',
-            expenseAnomalyDelta: 0.3,
           );
           final seed = AiTrace(
             requestId: requestId,
             startedAtIso: '2026-05-10T10:00:00.000Z',
             intent: intent,
             backend: Backend.hybrid,
-            budgetTier: pack.budget.tier,
+            budgetTier: BudgetTier.standard,
             routingReason: 'analyze_hybrid',
             totalDurationMs: 0,
           );
-          return (pack: pack, traceSeed: seed, traceVerbose: false);
+          return (traceSeed: seed, traceVerbose: false);
         },
         traceStore: traceStore,
+        contextBlockPrep: (_) async => [
+          AgentRuntimeContextBlock(
+            id: 'test:summary',
+            kind: AgentRuntimeContextBlockKind.resource,
+            source: 'test.domain',
+            content: {'fact': 'current summary'},
+          ),
+        ],
       );
       await repo.createSession(ownerUserId: 'user-1');
     });
@@ -913,7 +935,7 @@ void main() {
       return sessions.single.id;
     }
 
-    test('passes the prep ContextPack to the API', () async {
+    test('passes neutral context blocks to the API', () async {
       api.script.add(const DoneEvent(stopReason: 'end_turn', rounds: 1));
       final id = await activeSessionId();
       await repo.sendMessage(
@@ -921,10 +943,8 @@ void main() {
         ownerUserId: 'user-1',
         content: '上月咖啡花了多少？',
       );
-      expect(api.lastContextPack, isNotNull);
-      expect(api.lastContextPack!.task.intent.label, 'chat_turn');
-      expect(api.lastContextPack!.task.signals, isNotEmpty);
-      expect(api.lastContextPack!.budget.tier, BudgetTier.standard);
+      expect(api.lastContextBlocks, hasLength(1));
+      expect(api.lastContextBlocks!.single.id, 'test:summary');
     });
 
     test('appends a finalised AiTrace to the store with tool spans', () async {
@@ -964,11 +984,8 @@ void main() {
       expect(trace.intent.label, 'chat_turn');
       expect(trace.backend, Backend.hybrid);
       final rootAttrs = trace.spans.first.attributes!;
-      expect(rootAttrs['context_pack_present'], isTrue);
-      expect(rootAttrs['context_pack_json_bytes'], isA<int>());
-      expect(rootAttrs['context_pack_budget_tier'], 'standard');
-      expect(rootAttrs['context_appendix_present'], isTrue);
-      expect(rootAttrs['context_appendix_bytes'], isA<int>());
+      expect(rootAttrs['context_blocks_count'], 1);
+      expect(rootAttrs['context_blocks_json_bytes'], isA<int>());
       expect(trace.toolSpans, hasLength(1));
       expect(trace.toolSpans.single.name, 'tool:list_recent_expenses');
       expect(trace.toolSpans.single.isError, isFalse);

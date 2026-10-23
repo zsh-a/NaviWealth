@@ -16,8 +16,8 @@ class DioSyncApiClient implements SyncApiClient {
 
   final Dio _dio;
 
-  /// Async fetcher for the bearer token. Called on every request so a JWT
-  /// refresh is picked up transparently.
+  /// Token for this client's session. Production providers rebuild the client
+  /// on rotation so a superseded engine cannot adopt another session's token.
   final Future<String?> Function() tokenProvider;
 
   @override

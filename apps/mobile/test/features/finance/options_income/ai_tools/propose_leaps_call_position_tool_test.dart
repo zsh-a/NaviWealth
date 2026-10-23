@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/options_income/ai_tools/propose_leaps_call_position_tool.dart';
 
@@ -10,10 +9,7 @@ Future<Map<String, Object?>> _invoke(Map<String, Object?> input) async {
   addTearDown(container.dispose);
   final probe = FutureProvider<Map<String, Object?>>((ref) async {
     final output = await const ProposeLeapsCallPositionTool().invoke(
-      DeviceToolContext(
-        ref: ref,
-        session: DeviceSession(messages: const <AnthropicChatMessage>[]),
-      ),
+      DeviceToolContext(ref: ref, session: const DeviceToolSession()),
       input,
     );
     return (output! as Map).cast<String, Object?>();

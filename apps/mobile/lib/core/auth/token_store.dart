@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import '../security/secure_key_store.dart';
 import 'auth_session.dart';
+import 'owner_transfer_intent.dart';
 
 /// Persistent home for the active [AuthSession].
 ///
@@ -20,6 +23,7 @@ class TokenStore {
   /// Single key — we only ever hold one session at a time. Namespaced
   /// alongside the DB master key so it's discoverable in the Keychain UI.
   static const String storageKey = 'naviwealth.auth_session';
+  static const String ownerTransferKey = 'naviwealth.owner_transfer';
 
   final SecureKeyStore _store;
 
@@ -39,4 +43,24 @@ class TokenStore {
       _store.write(storageKey, session.encode());
 
   Future<void> clear() => _store.delete(storageKey);
+
+  /// A write-ahead intent protects identity changes across process termination.
+  /// Corruption fails closed: discarding it could strand data under another owner.
+  Future<OwnerTransferIntent?> readOwnerTransfer() async {
+    final raw = await _store.read(ownerTransferKey);
+    if (raw == null) return null;
+    try {
+      return OwnerTransferIntent.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      // Decoder errors can include the raw JSON and therefore credentials.
+      throw StateError('Invalid pending owner transfer');
+    }
+  }
+
+  Future<void> writeOwnerTransfer(OwnerTransferIntent intent) =>
+      _store.write(ownerTransferKey, jsonEncode(intent.toJson()));
+
+  Future<void> clearOwnerTransfer() => _store.delete(ownerTransferKey);
 }

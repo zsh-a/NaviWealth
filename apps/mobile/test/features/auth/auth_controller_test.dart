@@ -1,15 +1,76 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/routing/route_guard.dart';
 import 'package:naviwealth/core/auth/auth_api_client.dart';
 import 'package:naviwealth/core/auth/auth_errors.dart';
 import 'package:naviwealth/core/auth/auth_session.dart';
+import 'package:naviwealth/core/auth/current_user.dart' show kLocalOnlyUserId;
 import 'package:naviwealth/core/auth/device_identity_store.dart';
+import 'package:naviwealth/core/auth/owner_transfer_intent.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/auth/token_store.dart';
+import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
+import 'package:naviwealth/core/sync/providers.dart';
+import 'package:naviwealth/core/sync/sync_scheduler.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/auth/data/app_mode_store.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../core/persistence/owner_data_fixture.dart';
+import '../../core/persistence/test_database.dart';
+
+class _RecordingScheduler implements SyncScheduler {
+  final drain = Completer<void>();
+  bool paused = false;
+  bool resumed = false;
+  bool stopped = false;
+
+  @override
+  Future<void> pauseAndDrain() {
+    paused = true;
+    return drain.future;
+  }
+
+  @override
+  void resume() => resumed = true;
+
+  @override
+  void stop() => stopped = true;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FailingTransferStore extends InMemoryKeyStore {
+  _FailingTransferStore(this.boundary);
+  final String boundary;
+  bool armed = false;
+
+  @override
+  Future<void> write(String key, String value) async {
+    if (armed &&
+        ((boundary == 'intent' && key == TokenStore.ownerTransferKey) ||
+            (boundary == 'credentials' && key == TokenStore.storageKey))) {
+      armed = false;
+      throw StateError('Storage write failed');
+    }
+    await super.write(key, value);
+  }
+
+  @override
+  Future<void> delete(String key) async {
+    if (armed && boundary == 'cleanup' && key == TokenStore.ownerTransferKey) {
+      armed = false;
+      throw StateError('Storage cleanup failed');
+    }
+    await super.delete(key);
+  }
+}
 
 class _FakeAuthApi implements AuthApiClient {
   AuthSession? loginResponse;
@@ -117,8 +178,15 @@ AuthSession _session({
   deviceId: deviceId,
 );
 
-ProviderContainer _container({Map<String, String>? seed, AuthApiClient? api}) {
-  final keyStore = InMemoryKeyStore(seed);
+ProviderContainer _container({
+  Map<String, String>? seed,
+  AuthApiClient? api,
+  AppDatabase? database,
+  SharedPreferences? preferences,
+  SyncScheduler? scheduler,
+  InMemoryKeyStore? keyStoreOverride,
+}) {
+  final keyStore = keyStoreOverride ?? InMemoryKeyStore(seed);
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(keyStore),
@@ -126,11 +194,236 @@ ProviderContainer _container({Map<String, String>? seed, AuthApiClient? api}) {
         DeviceIdentityStore(keyStore),
       ),
       if (api != null) authApiClientProvider.overrideWithValue(api),
+      if (database != null)
+        appDatabaseProvider.overrideWith((ref) async => database),
+      if (preferences != null)
+        sharedPreferencesProvider.overrideWithValue(preferences),
+      if (database != null)
+        syncSchedulerProvider.overrideWith((ref) async => scheduler),
     ],
   );
 }
 
 void main() {
+  group('AuthController owner transitions', () {
+    for (final boundary in ['intent', 'credentials', 'cleanup']) {
+      test('runtime failure at $boundary follows durable ownership', () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await seedOwnerData(db, kLocalOnlyUserId, 'local');
+        SharedPreferences.setMockInitialValues({'app.mode.v1': 'local_only'});
+        final keys = _FailingTransferStore(boundary);
+        final scheduler = _RecordingScheduler()..drain.complete();
+        final container = _container(
+          database: db,
+          api: _FakeAuthApi()..registerResponse = _session(),
+          preferences: await SharedPreferences.getInstance(),
+          scheduler: scheduler,
+          keyStoreOverride: keys,
+        );
+        addTearDown(container.dispose);
+        await container.read(authControllerProvider.future);
+        keys.armed = true;
+        final operation = container
+            .read(authControllerProvider.notifier)
+            .upgradeToCloud(email: 'a@b.com', password: 'password');
+        final committed = boundary == 'cleanup';
+        if (committed) {
+          await operation;
+        } else {
+          await expectLater(operation, throwsStateError);
+        }
+        expect(
+          container.read(authControllerProvider).value,
+          committed ? isA<AuthLoggedIn>() : isA<AuthLocalOnly>(),
+        );
+        expect(
+          await ownerOf(db, 'personal_profile_facts', 'local-profile'),
+          committed ? 'u-1' : kLocalOnlyUserId,
+        );
+        expect(
+          (await container.read(tokenStoreProvider).read())?.userId,
+          committed ? 'u-1' : null,
+        );
+        expect(
+          await container.read(tokenStoreProvider).readOwnerTransfer(),
+          isNull,
+        );
+        expect(scheduler.resumed, !committed);
+      });
+    }
+
+    test(
+      'a preexisting transfer intent is never overwritten or cleared',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await seedOwnerData(db, kLocalOnlyUserId, 'local');
+        SharedPreferences.setMockInitialValues({'app.mode.v1': 'local_only'});
+        final container = _container(
+          database: db,
+          api: _FakeAuthApi()..registerResponse = _session(),
+          preferences: await SharedPreferences.getInstance(),
+        );
+        addTearDown(container.dispose);
+        await container.read(authControllerProvider.future);
+        final store = container.read(tokenStoreProvider);
+        final existing = OwnerTransferIntent(
+          id: 'existing-transfer',
+          from: kLocalOnlyUserId,
+          to: 'different-cloud-user',
+          previous: const OwnerIdentitySnapshot(
+            mode: 'local_only',
+            session: null,
+            deviceId: 'device',
+          ),
+          target: OwnerIdentitySnapshot(
+            mode: 'cloud',
+            session: _session(userId: 'different-cloud-user'),
+            deviceId: 'device',
+          ),
+        );
+        await store.writeOwnerTransfer(existing);
+        await expectLater(
+          container
+              .read(authControllerProvider.notifier)
+              .upgradeToCloud(email: 'a@b.com', password: 'password'),
+          throwsStateError,
+        );
+        expect((await store.readOwnerTransfer())?.id, existing.id);
+        expect(await ownerOf(db, 'memories', 'local-memory'), kLocalOnlyUserId);
+      },
+    );
+
+    test(
+      'upgrade waits for sync and preserves confirmed data through downgrade',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await seedOwnerData(db, kLocalOnlyUserId, 'local');
+        SharedPreferences.setMockInitialValues({'app.mode.v1': 'local_only'});
+        final preferences = await SharedPreferences.getInstance();
+        final api = _FakeAuthApi()..registerResponse = _session();
+        final scheduler = _RecordingScheduler();
+        final container = _container(
+          api: api,
+          database: db,
+          preferences: preferences,
+          scheduler: scheduler,
+        );
+        addTearDown(container.dispose);
+        expect(
+          await container.read(authControllerProvider.future),
+          isA<AuthLocalOnly>(),
+        );
+
+        final controller = container.read(authControllerProvider.notifier);
+        final upgrade = controller.upgradeToCloud(
+          email: 'new@user.com',
+          password: 'password',
+        );
+        await Future<void>.delayed(Duration.zero);
+        expect(scheduler.paused, isTrue);
+        expect(await ownerOf(db, 'memories', 'local-memory'), kLocalOnlyUserId);
+        expect(
+          container.read(authControllerProvider).value,
+          isA<AuthLocalOnly>(),
+        );
+        scheduler.drain.complete();
+        await upgrade;
+
+        expect(scheduler.stopped, isTrue);
+        expect(scheduler.resumed, isFalse);
+        expect(
+          container.read(authControllerProvider).value,
+          isA<AuthLoggedIn>(),
+        );
+        expect(container.read(appModeProvider), AppMode.cloud);
+        expect(
+          (await container.read(tokenStoreProvider).read())?.userId,
+          'u-1',
+        );
+        for (final entry in {
+          'memories': 'memory',
+          'personal_profile_facts': 'profile',
+          'chat_sessions': 'chat',
+          'chat_messages': 'message',
+          'recurring_transactions': 'recurring',
+        }.entries) {
+          expect(await ownerOf(db, entry.key, 'local-${entry.value}'), 'u-1');
+        }
+
+        await controller.switchToLocalOnly();
+        expect(
+          container.read(authControllerProvider).value,
+          isA<AuthLocalOnly>(),
+        );
+        expect(container.read(appModeProvider), AppMode.localOnly);
+        expect(await container.read(tokenStoreProvider).read(), isNull);
+        expect(api.logoutCalls, hasLength(1));
+        for (final entry in {
+          'memories': 'memory',
+          'personal_profile_facts': 'profile',
+          'chat_sessions': 'chat',
+          'chat_messages': 'message',
+          'recurring_transactions': 'recurring',
+        }.entries) {
+          expect(
+            await ownerOf(db, entry.key, 'local-${entry.value}'),
+            kLocalOnlyUserId,
+          );
+        }
+      },
+    );
+
+    test(
+      'conflicting downgrade preserves cloud auth and resumes sync',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await seedOwnerData(db, 'u-1', 'cloud');
+        await seedProfileFact(db, kLocalOnlyUserId, 'local-profile');
+        SharedPreferences.setMockInitialValues({'app.mode.v1': 'cloud'});
+        final api = _FakeAuthApi();
+        final scheduler = _RecordingScheduler()..drain.complete();
+        final container = _container(
+          api: api,
+          database: db,
+          seed: {TokenStore.storageKey: _session().encode()},
+          preferences: await SharedPreferences.getInstance(),
+          scheduler: scheduler,
+        );
+        addTearDown(container.dispose);
+        await container.read(authControllerProvider.future);
+        await expectLater(
+          container.read(authControllerProvider.notifier).switchToLocalOnly(),
+          throwsA(isA<Exception>()),
+        );
+        expect(scheduler.resumed, isTrue);
+        expect(scheduler.stopped, isFalse);
+        expect(api.logoutCalls, isEmpty);
+        expect(
+          container.read(authControllerProvider).value,
+          isA<AuthLoggedIn>(),
+        );
+        expect(container.read(appModeProvider), AppMode.cloud);
+        expect(
+          (await container.read(tokenStoreProvider).read())?.userId,
+          'u-1',
+        );
+        expect(
+          await ownerOf(db, 'recurring_transactions', 'cloud-recurring'),
+          'u-1',
+        );
+        expect(await ownerOf(db, 'memories', 'cloud-memory'), 'u-1');
+        expect(
+          await ownerOf(db, 'personal_profile_facts', 'local-profile'),
+          kLocalOnlyUserId,
+        );
+      },
+    );
+  });
+
   group('AuthController.build', () {
     test('emits AuthLoggedOut when nothing is persisted', () async {
       final container = _container();

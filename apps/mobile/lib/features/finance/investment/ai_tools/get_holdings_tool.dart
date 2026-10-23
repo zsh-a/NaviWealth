@@ -1,13 +1,6 @@
-/// `get_holdings` — device port.
-///
-/// Schema + description verbatim from
-/// the historical backend `get_holdings` tool. The backend tool
-/// *prefers* the client `portfolio_snapshot` and short-circuits to it
-/// (`source: "client_portfolio_snapshot"`); on device that snapshot is
-/// the canonical local truth (holdings engine + FX + multi-lot), so
-/// this reproduces exactly that branch via
-/// [devicePortfolioSnapshotProvider]. No D1 read model, hence no
-/// freshness gate (§4.6.1).
+/// Current holdings from the local holdings engine, including FX and lots.
+/// The snapshot is loaded by the tool on demand through
+/// [devicePortfolioSnapshotProvider].
 library;
 
 import 'package:naviwealth/core/ai/contracts/evidence_anchor.dart';
@@ -21,9 +14,7 @@ class GetHoldingsTool implements DeviceTool {
   String get name => 'get_holdings';
 
   @override
-  String get description =>
-      '返回当前持仓快照。优先使用客户端 portfolio_snapshot 中的持仓引擎结果；'
-      '缺失时从 journal_entries / postings 推导近似值。';
+  String get description => '返回本机持仓引擎计算的当前持仓快照，包含多批次成本和基准币种折算值。';
 
   @override
   Map<String, Object?> get inputSchema => {
@@ -69,7 +60,7 @@ class GetHoldingsTool implements DeviceTool {
     );
   }
 
-  /// Pure mirror of the backend `client_portfolio_snapshot` branch.
+  /// Shapes the local holdings result for Finance tools.
   /// `snapshot` is [devicePortfolioSnapshotProvider]'s value (or `null`
   /// when the user has no holdings — still a device-sourced answer,
   /// just empty).

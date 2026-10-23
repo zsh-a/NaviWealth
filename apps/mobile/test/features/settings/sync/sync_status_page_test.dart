@@ -18,6 +18,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/providers.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_stability.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -76,7 +77,10 @@ void main() {
   });
 
   Future<void> seedDiagnostics() async {
-    await DriftCursorStore(db).writeSeq(42);
+    await DriftCursorStore(
+      db,
+      scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+    ).writeSeq(42);
     await DriftOutboxStore(db).enqueue(table: 'accounts', rowId: 'acc-1');
     await db
         .into(db.accounts)
@@ -93,7 +97,7 @@ void main() {
             hlc: const Hlc(wallMillis: 42, counter: 1, nodeId: 'dev-1'),
           ),
         );
-    final stability = DriftSyncStabilityStore(db);
+    final stability = DriftSyncStabilityStore(db, ownerUserId: 'user-1');
     for (var index = 0; index < 10; index++) {
       await stability.record(
         SyncStabilitySample(

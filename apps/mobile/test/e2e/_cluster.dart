@@ -4,6 +4,7 @@ import 'package:naviwealth/core/sync/clock.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/core/sync/sync_table_registry.dart';
 
@@ -26,7 +27,10 @@ class VirtualDevice {
        db = makeTestDatabase(),
        statusBus = SyncStatusBus() {
     pending = DriftPendingRows(db);
-    cursors = DriftCursorStore(db);
+    cursors = DriftCursorStore(
+      db,
+      scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+    );
     final outbox = DriftOutboxStore(db);
     _outbox = outbox;
     engine = SyncEngine(

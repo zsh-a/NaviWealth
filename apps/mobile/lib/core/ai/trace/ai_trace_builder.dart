@@ -40,7 +40,7 @@ class AiTraceBuilder {
 
   /// Attach cheap scalar attributes to the synthesised root turn span.
   /// Used for per-turn observability that is not itself an execution
-  /// slice, such as ContextPack prompt-size metrics.
+  /// slice, such as ContextBlock size metrics.
   void addTurnAttributes(Map<String, Object?> attributes) {
     for (final entry in attributes.entries) {
       final value = entry.value;

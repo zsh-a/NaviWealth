@@ -26,8 +26,6 @@ class ChatAgentTurnRequest {
     this.surface,
     this.agentId,
     this.mode,
-    this.portfolioSnapshot,
-    this.contextPack,
     this.contextBlocks = const <AgentRuntimeContextBlock>[],
     this.contextPolicy,
     this.interactionResponse,
@@ -45,8 +43,6 @@ class ChatAgentTurnRequest {
   final String? surface;
   final String? agentId;
   final String? mode;
-  final Map<String, Object?>? portfolioSnapshot;
-  final ContextPack? contextPack;
   final List<AgentRuntimeContextBlock> contextBlocks;
   final AgentRuntimeContextPolicy? contextPolicy;
   final AiInteractionResponse? interactionResponse;

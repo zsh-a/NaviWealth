@@ -4,7 +4,7 @@
 /// For each `health_metrics` row this indexer emits:
 ///
 /// 1. Always an [EventRecord] in the cross-domain event log so
-///    `ContextPack.recentEvents` can surface "user slept 6.5h on
+///    `ContextPackMemory.recentEvents` can surface "user slept 6.5h on
 ///    2026-05-26" alongside a Finance event from the same day.
 /// 2. For notable sleep sessions only an episodic [MemoryRecord]:
 ///    - Short (< 5h) or long (> 9h): outlier nights worth recalling.
@@ -33,7 +33,7 @@ part 'health_metric_memory_indexer_events.dart';
 part 'health_metric_memory_indexer_formatting.dart';
 part 'health_metric_memory_indexer_trends.dart';
 
-/// Cross-source label so [ContextPack] can filter ("only health
+/// Cross-source label so [ContextPackMemory] can filter ("only health
 /// memories") without enum'ing in core.
 const String kHealthSource = 'health:health_metrics';
 

@@ -218,11 +218,8 @@ async fn sync_inner(
     let device_id = &auth.device_id;
     let request_generations = store::load_domain_generations(&db, user_id, &auth.domains).await?;
 
-    // D-1.5: drop rows whose domain prefix is not in the caller's
-    // `domains` claim. Today every caller's claim is `["finance"]` so
-    // only `fin:*` rows flow; once a user opts into HealthOS the next
-    // token rotation expands the claim and `health:*` rows are
-    // accepted on subsequent requests.
+    // Domain opt-in changes rotate the token. Only prefixes represented by
+    // this request's domains claim may pass the push boundary.
     let body_changes_len = body.changes.len();
     let allowed_changes: Vec<RowChange> = body
         .changes

@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 class _FailAfterCreate extends QueryInterceptor {
@@ -54,7 +55,10 @@ void main() {
         );
         await DriftOutboxStore(seed)
             .enqueue(table: 'health_metrics', rowId: 'hk:hrv');
-        await DriftCursorStore(seed).writeSeq(123);
+        await DriftCursorStore(
+          seed,
+          scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+        ).writeSeq(123);
         final before =
             (await seed.customSelect('SELECT * FROM health_metrics').get())
                 .single
@@ -101,7 +105,16 @@ void main() {
           );
           expect(await migrated.select(migrated.healthCheckIns).get(), isEmpty);
           expect(await DriftOutboxStore(migrated).depth(), 1);
-          expect(await DriftCursorStore(migrated).readSeq(), 123);
+          expect(
+            await DriftCursorStore(
+              migrated,
+              scope: SyncScope(
+                ownerUserId: 'user-1',
+                domains: const {'finance'},
+              ),
+            ).readSeq(),
+            123,
+          );
           await migrated.close();
         }
       },

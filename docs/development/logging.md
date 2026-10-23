@@ -57,6 +57,15 @@ Errors emitted through `AppLogger.event` are converted to `DiagnosticLogError`;
 their original message is never stored or uploaded. Stack traces may be kept
 because they contain code locations rather than business values.
 
+## HTTP diagnostics
+
+Auth, Sync and Finance market Dio clients use the shared
+`apps/mobile/lib/core/logging/http_diagnostics_interceptor.dart` seam. It emits
+only service, method, status, error type and duration through `AppLogger`.
+URLs, headers, request/response bodies and raw transport errors never enter
+Talker history, including in development. Verbose development diagnostics retain
+safe timing and outcome metadata rather than private transport content.
+
 ## Levels
 
 - `debug`: stage start/completion and fine-grained timings;
@@ -87,7 +96,8 @@ async provider must expose its error; retry belongs to the owning workflow
 ## Export and tests
 
 Copy/share runs all history through `sanitizeDiagnosticExport` as a second
-defense for legacy free-form logs. New code must still be safe before export.
+defense for legacy free-form logs, including quoted and unquoted password,
+passphrase and token values. New code must still be safe before export.
 
 Tests for a new operation should verify event order, one terminal event, slow
 or timeout behavior, and absence of representative private values. Logging

@@ -4,6 +4,7 @@ import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/domain_enums.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 
 import '../../core/persistence/test_database.dart';
 
@@ -154,10 +155,40 @@ void main() {
   });
 
   group('DriftCursorStore', () {
+    test(
+      'owner and domain visibility have separate resumable progress',
+      () async {
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        DriftCursorStore cursor(String owner, Set<String> domains) =>
+            DriftCursorStore(
+              db,
+              scope: SyncScope(ownerUserId: owner, domains: domains),
+            );
+        final finance = cursor('first', {'finance'});
+        final expanded = cursor('first', {'finance', 'health'});
+        final other = cursor('second', {'finance'});
+        await finance.writeSeq(100);
+        expect(await expanded.readSeq(), 0);
+        expect(await other.readSeq(), 0);
+        await expanded.writeSeq(120);
+        await finance.writeSeq(200);
+        expect(await cursor('first', {'health', 'finance'}).readSeq(), 120);
+        await other.writeSeq(50);
+        await clearOwnerSyncProgress(db, 'first');
+        expect(await finance.readSeq(), 0);
+        expect(await expanded.readSeq(), 0);
+        expect(await other.readSeq(), 50);
+      },
+    );
+
     test('seq round-trips and defaults to 0', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      final cursors = DriftCursorStore(db);
+      final cursors = DriftCursorStore(
+        db,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      );
       expect(await cursors.readSeq(), 0);
       await cursors.writeSeq(1342);
       expect(await cursors.readSeq(), 1342);
@@ -166,7 +197,10 @@ void main() {
     test('writeSeq is an idempotent upsert', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      final cursors = DriftCursorStore(db);
+      final cursors = DriftCursorStore(
+        db,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      );
       await cursors.writeSeq(10);
       await cursors.writeSeq(20);
       expect(await cursors.readSeq(), 20);
@@ -175,7 +209,10 @@ void main() {
     test('localHlc round-trips and defaults to null', () async {
       final db = makeTestDatabase();
       addTearDown(db.close);
-      final cursors = DriftCursorStore(db);
+      final cursors = DriftCursorStore(
+        db,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      );
       expect(await cursors.readLocalHlc(), isNull);
       const hlc = Hlc(wallMillis: 1_500_000_000_000, counter: 7, nodeId: 'dev');
       await cursors.writeLocalHlc(hlc);

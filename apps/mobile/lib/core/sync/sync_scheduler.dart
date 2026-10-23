@@ -78,6 +78,13 @@ class SyncScheduler with WidgetsBindingObserver {
     _logger.i('sync_scheduler: paused');
   }
 
+  /// Prevent new cycles and finish any current writes before owner migration
+  /// or a destructive local transaction begins.
+  Future<void> pauseAndDrain() async {
+    pause();
+    await _engine.waitUntilIdle();
+  }
+
   /// Resume sync and trigger an immediate cycle.
   void resume() {
     if (_paused) {

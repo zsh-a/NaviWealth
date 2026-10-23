@@ -212,6 +212,36 @@ Rules:
 - Tool lists, prompt blocks, shell specs, agents, and command entries are derived from active domain packs.
 - Backend auth may use the domain claim to filter sync pulls; client code must still enforce local opt-in for UI and domain jobs.
 
+Ownership transfer between local-only and signed-in identities is defined by
+`apps/mobile/lib/core/persistence/owner_data_migration.dart`, independently of the
+sync table registry. Its explicit inventory includes source rows, local recurring
+rules, confirmed Memory/Profile, local events and linked vectors, chats, Agent
+history/settings and forecasts. Stable IDs and provenance links survive;
+historical audit actor IDs remain unchanged.
+
+Auth first pauses and drains the sync scheduler. All SQLite ownership changes,
+singleton-key remapping, dirty pointers and retained sync extras then commit in
+one transaction. A destination uniqueness collision aborts the transfer, retains
+the previous auth identity and resumes sync. Runtime checkpoints, undo state,
+candidates, conversation checkpoints and staging caches are invalidated; scoped
+pull cursors and backfill flags are reset for both affected owners. These are
+identity-transfer rules, not a reason to put local-only tables in sync.
+
+A recoverable transfer journal coordinates SQLite and secure credential storage.
+Before the transaction, TokenStore persists an intent containing a random transfer
+ID, source/target owners and previous/target session, mode and device snapshots.
+Identity writes occur within the ownership transaction; SQLite commits the same
+transfer ID in `sync_meta` with the ownership changes. Credentials and journal
+contents never enter diagnostics.
+
+Startup resolves this journal before exposing auth or selecting the app mode.
+A matching SQLite commit marker restores the target identity; otherwise recovery
+restores the previous identity. Reapplying either snapshot is idempotent. Recovery
+then removes the secure journal before clearing the marker. If recovery fails,
+the journal remains and auth stays unavailable, preventing owner-dependent work.
+Marker cleanup failure after journal removal is harmless: it retains one random
+ID, which the next transfer replaces.
+
 ## AI Composition
 
 Core contracts:
@@ -241,155 +271,32 @@ Rules:
 - Read tools can return direct data.
 - Write tools either return `ProposalEnvelope` or require explicit confirmation. Narrow local writes must be documented in the domain SSOT.
 - System prompts are active-domain scoped. The model must not receive instructions for inactive domain tools.
+- `DomainPack.chatContextBuilder` contributes bounded context for the current
+  route's active domain; global Assistant aggregates active domains. The app
+  context assembler composes neutral runtime blocks with optional memory/profile
+  evidence. Domain facts and portfolio loading do not belong in `core/ai/`.
 
 ## Interaction Session Runtime
 
-The shell's long-term interaction seam is one modality-agnostic
-`InteractionSession`, not a separate Voice Agent Runtime. Its boundary is:
+The shell composes one modality-agnostic `InteractionSession` through these seams:
 
-```text
-Interaction owns timing and delivery
-Agent Runtime owns semantics and execution
-Domain owns truth and side effects
-Capability owns modality
-```
+| Location | Composition responsibility |
+|---|---|
+| `core/ai/session/` | IDs, semantic events, pure reducer and policies |
+| `app/interaction/` | Thin coordinator, ChatRepository adapters and delivery bridge |
+| `core/speech/` | Speech input/output capabilities and platform selection |
+| `app/agent_runtime/` | Existing ChatTurn, tool, proposal and resume adapters |
 
-The initial implementation is deliberately split:
+The coordinator invokes effects outside the reducer. It connects the existing
+Runtime and capability ports; it does not own another Agent loop.
+[AI Architecture](../ai/ai-architecture.md#51a-interactionsession-voice-turn)
+owns lanes, ordering, interruption and delivery behavior, and its
+[engine policy](../ai/ai-architecture.md#51b-engine-capability-policy) owns
+capability requirements and future adapter constraints.
 
-```text
-core/ai/session/       ids, semantic events, pure reducer, policies
-app/interaction/       thin side-effectful Coordinator and host adapters
-core/speech/           SpeechInput and SpeechOutput capabilities
-app/agent_runtime/     existing ChatTurn / tool / proposal / resume adapter
-```
-
-The standalone Rust Agent Runtime already exists in the
-`third_party/agent-runtime` submodule. It remains the source of truth for
-`agent-core`, `agent-chat`, `agent-llm`, runner, store, schema, and fixture
-contracts. `apps/mobile/lib/app/agent_runtime/` is NaviWealth's Host/FRB
-adapter. Full-duplex voice reuses those contracts and does not add a parallel
-Agent loop or an `agent-interaction` crate at this stage.
-
-The Coordinator must remain thin. Its state policy is a pure
-`InteractionState reduce(InteractionState, InteractionEvent)` reducer; it
-invokes ChatRepository, SpeechInput, SpeechOutput, and InteractionEnvelope
-side effects outside the reducer. This keeps deterministic replay and a future
-runtime migration possible without moving Flutter orchestration wholesale.
-
-### Session lanes and identifiers
-
-One `VoiceState` is insufficient because input, execution, and output overlap:
-
-```text
-InputLane       idle → listening → endpointing → committed
-ExecutionLane   idle → running → tool_running → waiting_interaction → done
-OutputLane      idle → synthesizing → playing → interrupted → idle
-```
-
-Every event entering the reducer receives one Coordinator-assigned sequence
-number and carries:
-
-```text
-SessionId + TurnId + ResponseEpoch + sequence
-```
-
-Tool, Proposal, and external-side-effect events additionally carry an
-`OperationId`. `OperationId` is not required on every session event. A stale
-`ResponseEpoch` invalidates UI/audio output; it never rolls back a committed
-business operation.
-
-An `AiIntentInvocation` starts or scopes a session. Later turns carry their
-own `inputOrigin` (`voice`, `touch`, `keyboard`, etc.) and reuse the same
-session. `source` on `AiIntentInvocation` remains the entry location such as
-`finance_home` or `command_palette`; it is not overloaded with the input
-modality.
-
-### Two-phase barge-in
-
-VAD is allowed to react quickly without immediately invalidating the Agent
-response:
-
-```text
-speech_started
-  → BargeInCandidate
-  → duck/pause playback immediately
-  → sustained speech or valid ASR text
-  → BargeInCommitted
-  → increment epoch and cancel/discard stale output
-```
-
-Noise, coughs, and speaker residue can resolve as `false_interruption`, in
-which case the same epoch/output may resume. A pending
-`InteractionEnvelope` takes priority over a normal new turn. Voice input must
-first be interpreted as an interaction response when its schema allows it; it
-must not bypass approval or typed confirmation.
-
-### Delivery and context projection
-
-Generated assistant text, delivered output, and next-turn context are separate:
-
-```text
-GeneratedText       complete local trace/debug output
-DeliveryLedger      completed output segments per channel
-ContextProjection   delivered prefix + interruption marker
-```
-
-The first implementation records completed segment ids rather than a bare
-cross-language string offset. A later implementation may add an explicitly
-defined UTF-8 or grapheme offset. Complete generated text may remain in the
-local trace, but undelivered text must not be silently fed into the next voice
-context.
-
-### Engine policy
-
-The implemented cascaded path is assembled from `InteractionSessionCoordinator`,
-`SpeechInput`, `SpeechOutput`, and the existing Agent Runtime. Recognizers expose
-`SpeechRecognizerCapabilities`; full-duplex is currently available only on the
-opt-in Android native Zipformer path. The following engine names describe
-architecture families, not classes in the current code:
-
-| Engine family | Implementation status | Policy |
-|---|---|---|
-| Local cascaded | Implemented through the Host speech/session seams; capabilities vary by platform/provider | Production path |
-| Cloud realtime | Not implemented | Requires explicit opt-in, transport policy, and the existing tool/interaction gateways |
-| Local omni | Not implemented | Requires a real caller and device/resource verification before experimentation |
-
-The engine descriptor must advertise the capabilities required by the Host:
-streaming input/output, full-duplex, interruption, transcript, tool calls,
-proposal handling, interaction resume, durable resume, and delivery tracking.
-An engine without the required safety capability is restricted to lower-risk,
-read-only conversation.
-
-Future engine adapters must express privacy per signal. These policy dimensions
-are not current runtime wire fields or implemented user settings:
-
-```text
-audio_transport
-transcript_transport
-context_transport
-```
-
-Local ASR plus a remote LLM is audio-local but not a fully local turn. A future
-cloud realtime adapter requires user policy permitting audio and context to
-leave the device. It is not an available fallback in the current app.
-
-The production model policy follows capability slots rather than a single
-"all-in-one voice model":
-
-| Capability slot | Production default | Optional path | Boundary |
-|---|---|---|---|
-| AEC / NS / AGC | Best-effort platform effects on the Android native capture path | Future platform-native adapters | High-rate audio stays native |
-| Streaming ASR | Android system on-device ASR; iOS/macOS local Zipformer through `SpeechRecognizer` | Android local Zipformer; future native system adapters on Apple platforms | Partial text is semantic input only |
-| Offline refinement | None in the first path | SenseVoice or Whisper when a real second-pass caller exists | Never required by the live turn loop |
-| Agent reasoning | Existing user-selected `LlmProfile` and Agent Runtime | Realtime provider's generation inside its Host adapter | Voice does not choose a separate reasoning profile |
-| TTS | System TTS | Downloadable local TTS | System TTS is not bundled model data |
-| Full-duplex | Opt-in Android native Zipformer through the cascaded session | Future cloud realtime or local omni adapter | Other paths retain their advertised lower capabilities |
-
-The current installed Zipformer bundle is Mandarin-only; a zh-en streaming
-bundle is a versioned model-manifest change with its own language declaration,
-checksums, fixtures, and native smoke coverage. `sherpa_onnx` is the current
-local speech backend, not a product-level architecture dependency: all future
-ASR/TTS implementations remain behind the existing speech seam.
+The standalone Rust runtime in `third_party/agent-runtime` remains authoritative
+for its crates, schemas, stores and fixtures. The Host/FRB boundary and code map
+are documented in [Agent Runtime](agent-runtime-current.md).
 
 ## Proposal Application
 
@@ -687,9 +594,7 @@ Behavior:
   `capture_started` reports readiness and transcript-free startup duration. A
   host stop sends a cancelled terminal event before releasing the native
   microphone lease.
-- Full-duplex barge-in follows `BargeInCandidate → BargeInCommitted`. A VAD
-  signal may duck or pause playback immediately, but only sustained speech or
-  valid ASR text increments the response epoch and invalidates the old output.
+- Full-duplex interruption follows the [AI interaction contract](../ai/ai-architecture.md#51a-interactionsession-voice-turn).
 - Speech diagnostics retain only counters, durations, and stable error enums.
   Microphone bytes and transcript text are never passed to diagnostics or logs.
 - AI Chat and Knowledge Inbox are the first callers; domains do not own or
@@ -734,6 +639,9 @@ Rules:
 - Sync table primary keys, owner-scope flags, and backfill eligibility are
   registered in one place: `SyncTableRegistration`.
 - Backend store is generic and does not inspect domain payloads.
+- LWW acceptance and reset-generation guards execute in the same SQL statement.
+  Pull pages use a horizon captured before row selection. Client cursors are
+  scoped to owner and enabled domains; details belong to [Sync v3](../sync/sync-v3.md).
 - Local-only tables and derived data do not sync.
 
 ## Persistence

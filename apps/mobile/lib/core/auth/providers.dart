@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:talker_dio_logger/talker_dio_logger.dart';
 
 import '../../core/persistence/providers.dart';
 import '../../design_system/preferences/theme_preferences.dart';
 import '../config/providers.dart';
 import '../logging/app_logger.dart';
+import '../logging/http_diagnostics_interceptor.dart';
 import '../logging/providers.dart';
 import 'auth_api_client.dart';
 import 'auth_interceptor.dart';
@@ -60,7 +60,12 @@ final authDioProvider = Provider<Dio>((ref) {
       receiveTimeout: const Duration(seconds: 30),
     ),
   );
-  dio.interceptors.add(TalkerDioLogger(talker: ref.read(talkerProvider)));
+  dio.interceptors.add(
+    HttpDiagnosticsInterceptor(
+      logger: ref.read(loggerProvider),
+      service: 'auth',
+    ),
+  );
   return dio;
 });
 

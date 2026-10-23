@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_tables.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite3;
 
@@ -181,8 +182,14 @@ Future<void> _seedV95(File file) async {
     ]) {
       await DriftOutboxStore(db).enqueue(table: pointer.$1, rowId: pointer.$2);
     }
-    await DriftCursorStore(db).writeSeq(123);
-    await DriftCursorStore(db).writeLocalHlc(
+    await DriftCursorStore(
+      db,
+      scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+    ).writeSeq(123);
+    await DriftCursorStore(
+      db,
+      scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+    ).writeLocalHlc(
       const Hlc(wallMillis: 1700000000001, counter: 3, nodeId: 'device'),
     );
     await DriftDomainGenerationStore(
@@ -307,9 +314,24 @@ void main() {
               isEmpty,
             );
             expect(await DriftOutboxStore(migrated).depth(), 3);
-            expect(await DriftCursorStore(migrated).readSeq(), 123);
             expect(
-              await DriftCursorStore(migrated).readLocalHlc(),
+              await DriftCursorStore(
+                migrated,
+                scope: SyncScope(
+                  ownerUserId: 'user-1',
+                  domains: const {'finance'},
+                ),
+              ).readSeq(),
+              123,
+            );
+            expect(
+              await DriftCursorStore(
+                migrated,
+                scope: SyncScope(
+                  ownerUserId: 'user-1',
+                  domains: const {'finance'},
+                ),
+              ).readLocalHlc(),
               const Hlc(
                 wallMillis: 1700000000001,
                 counter: 3,

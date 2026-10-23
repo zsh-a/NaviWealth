@@ -43,7 +43,7 @@ class AiIntentInvocation {
   /// only abstract intents like "generic_help" can omit it.
   final AiObjectRef? object;
 
-  /// Extra ContextPack signals attached to this invocation (e.g.
+  /// Extra contextual facts attached to this invocation (e.g.
   /// `timeframe: '30d'`, related account ids). Summarized into trace
   /// attribution and prompt context.
   final Map<String, Object?> context;

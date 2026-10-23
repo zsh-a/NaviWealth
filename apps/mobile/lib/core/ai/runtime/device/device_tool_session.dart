@@ -1,13 +1,9 @@
-/// Per-turn local tool execution context.
+/// Per-invocation domain-neutral context for device tools.
 ///
-/// This stays smaller than the legacy chat [DeviceSession]. FRB tool-host
-/// calls need local tool context, but they should not construct
-/// provider-specific message objects just to execute Drift-backed tools.
+/// Conversation and provider state belong to the Agent Runtime. Domain tools
+/// resolve their source data through their scoped DeviceToolContext.
 library;
 
 class DeviceToolSession {
-  const DeviceToolSession({this.portfolioSnapshot});
-
-  /// Device-derived portfolio snapshot threaded to tools that need it.
-  final Map<String, Object?>? portfolioSnapshot;
+  const DeviceToolSession();
 }

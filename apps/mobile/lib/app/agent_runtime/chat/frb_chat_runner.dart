@@ -81,8 +81,6 @@ class FrbChatRunner implements ChatAgent {
 
   Stream<AiChatEvent> run({
     required List<ChatAgentMessage> messages,
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
     String? model,
     double? temperature,
     int? maxOutputTokens,
@@ -94,8 +92,6 @@ class FrbChatRunner implements ChatAgent {
         surface: 'ai_chat',
         agentId: _agentId,
         mode: 'chat',
-        portfolioSnapshot: portfolioSnapshot,
-        contextPack: contextPack,
         model: model,
         temperature: temperature,
         maxOutputTokens: maxOutputTokens,
@@ -130,7 +126,7 @@ class FrbChatRunner implements ChatAgent {
       for (final message in messages) message.toJson(),
     ];
     final tools = _toolsReader();
-    final contextBlocks = _contextBlocksFor(request);
+    final contextBlocks = request.contextBlocks;
     var roundsUsed = 0;
     Map<String, Object?>? chatState;
     var toolResults = const <Map<String, Object?>>[];
@@ -228,8 +224,6 @@ class FrbChatRunner implements ChatAgent {
             'surface': request.surface ?? 'ai_chat',
             'mode': ?request.mode,
             'requested_model': ?model,
-            'portfolio_snapshot': ?request.portfolioSnapshot,
-            'context_pack': ?request.contextPack?.toJson(),
             'streaming': true,
             'round': nextRound,
           },
@@ -775,36 +769,6 @@ class FrbChatRunner implements ChatAgent {
     }
   }
 }
-
-List<AgentRuntimeContextBlock> _contextBlocksFor(
-  ChatAgentTurnRequest request,
-) => <AgentRuntimeContextBlock>[
-  ...request.contextBlocks,
-  if (request.contextPack case final pack?)
-    AgentRuntimeContextBlock(
-      id: 'naviwealth_context_pack',
-      kind: AgentRuntimeContextBlockKind.resource,
-      source: 'naviwealth.context_pack',
-      priority: 90,
-      content: pack.toJson(),
-      metadata: const <String, Object?>{
-        'authority': 'derived_local_state',
-        'trusted_as_instruction': false,
-      },
-    ),
-  if (request.portfolioSnapshot case final snapshot?)
-    AgentRuntimeContextBlock(
-      id: 'naviwealth_portfolio_snapshot',
-      kind: AgentRuntimeContextBlockKind.resource,
-      source: 'naviwealth.portfolio_snapshot',
-      priority: 75,
-      content: snapshot,
-      metadata: const <String, Object?>{
-        'authority': 'derived_local_state',
-        'trusted_as_instruction': false,
-      },
-    ),
-];
 
 Future<_ChatSnapshotRecovery> _recoverChatSnapshot({
   required AgentRuntimeChatSnapshotRecord record,

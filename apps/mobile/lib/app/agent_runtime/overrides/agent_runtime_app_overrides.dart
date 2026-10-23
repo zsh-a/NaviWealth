@@ -19,12 +19,16 @@ import 'package:naviwealth/app/agents/daily_navigator_agent.dart';
 import 'package:naviwealth/app/agents/daily_navigator_synthesizer.dart';
 import 'package:naviwealth/app/agents/providers.dart';
 import 'package:naviwealth/core/ai/composition/ai_context.dart';
+import 'package:naviwealth/core/ai/composition/chat_trace_prep.dart';
 import 'package:naviwealth/core/ai/composition/system_prompt_blocks.dart';
+import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart'
     as llm_credentials;
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
+import 'package:naviwealth/core/ai/trace/trace.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/lifeos/personal_profile/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/features/ai_chat/data/providers.dart'
@@ -83,6 +87,26 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
       ),
     );
   }),
+  chatTracePrepProvider.overrideWith((ref) {
+    return ({required requestId, required userMessage}) async => (
+      traceSeed: AiTrace(
+        requestId: requestId,
+        startedAtIso: DateTime.now().toUtc().toIso8601String(),
+        intent: const IntentHint(
+          capability: Capability.analyze,
+          risk: RiskLevel.suggest,
+          label: 'chat_turn',
+        ),
+        backend: Backend.device,
+        budgetTier: BudgetTier.standard,
+        routingReason: ref.read(llm_credentials.deviceLlmAvailableProvider)
+            ? kFrbChatRoutingReason
+            : kDeviceUnavailableRoutingReason,
+        totalDurationMs: 0,
+      ),
+      traceVerbose: ref.read(aiTraceVerboseProvider),
+    );
+  }),
   ai_chat_providers.chatContextBlockPrepProvider.overrideWith((ref) {
     return (request) async {
       // Keep the trusted system instructions independent from retrieval. A
@@ -91,6 +115,12 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
       final systemInstructions = buildAppChatSystemInstructionBlock(
         systemPrompt: ref.read(assembledSystemPromptProvider),
         now: DateTime.now().toUtc(),
+      );
+      final aiContext = ref.read(aiContextProvider);
+      final domainBlocks = await prepareDomainChatContextBlocks(
+        activePacks: ref.read(activeDomainPacksProvider),
+        aiContext: aiContext,
+        build: (pack) => pack.chatContextBuilder!(ref, aiContext),
       );
       try {
         final contextBuilder = await ref.read(contextBuilderProvider.future);
@@ -104,15 +134,16 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
           activeDomainScopes: ref.read(
             activePersonalProfileDomainScopesProvider,
           ),
-          aiContext: ref.read(aiContextProvider),
+          aiContext: aiContext,
           request: request,
         );
         return List<AgentRuntimeContextBlock>.unmodifiable([
           systemInstructions,
+          ...domainBlocks,
           ...blocks,
         ]);
       } catch (_) {
-        return <AgentRuntimeContextBlock>[systemInstructions];
+        return <AgentRuntimeContextBlock>[systemInstructions, ...domainBlocks];
       }
     };
   }),

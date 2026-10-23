@@ -4,7 +4,6 @@ mixin _ChatRepositorySend {
   ChatHistoryStore get _store;
   AiChatApiClient get _api;
   AuthSessionReader get _sessionReader;
-  Future<Map<String, Object?>?> Function()? get _portfolioSnapshotReader;
   ChatContextBlockPrep? get _contextBlockPrep;
   ConversationCheckpointSummarizer get _checkpointSummarizer;
   ChatTracePrep? get _tracePrep;
@@ -106,7 +105,6 @@ mixin _ChatRepositorySend {
         content: ChatRepository.contextTruncatedNotice(ctx.droppedTurns),
       );
     }
-    final portfolioSnapshot = await _portfolioSnapshotReader?.call();
     var contextBlocks = <AgentRuntimeContextBlock>[
       if (systemContext case final routeContext?
           when routeContext.trim().isNotEmpty)
@@ -172,14 +170,16 @@ mixin _ChatRepositorySend {
       );
     }
 
-    // Build the typed ContextPack + seed an AiTrace keyed by the assistant
-    // message id. Failures here are absorbed: chat must never break because
-    // the AI transparency layer hiccupped, so the prep closure already
-    // returns null on its own errors.
-    final prepResult = _tracePrep == null
-        ? null
-        : await _tracePrep.call(requestId: assistantId, userMessage: content);
-    final contextPack = prepResult?.pack;
+    // Trace capture is app-owned and independent of domain context retrieval.
+    ChatTracePrepResult? prepResult;
+    try {
+      prepResult = await _tracePrep?.call(
+        requestId: assistantId,
+        userMessage: content,
+      );
+    } catch (_) {
+      // Diagnostic preparation cannot leave the chat placeholder streaming.
+    }
     final traceSeed = prepResult?.traceSeed;
     final traceBuilder = traceSeed == null
         ? null
@@ -190,7 +190,9 @@ mixin _ChatRepositorySend {
     if (traceBuilder != null && turnMetadata.invocationTrace != null) {
       traceBuilder.attachInvocation(turnMetadata.invocationTrace!);
     }
-    traceBuilder?.addTurnAttributes(_contextPackTraceAttributes(contextPack));
+    traceBuilder?.addTurnAttributes(
+      _contextBlockTraceAttributes(contextBlocks),
+    );
 
     // Interleaved record of the assistant turn. `segments` and
     // `invocationOrder` together rebuild the original
@@ -227,8 +229,6 @@ mixin _ChatRepositorySend {
           'owner_user_id': ownerUserId,
           'assistant_message_id': assistantId,
         },
-        portfolioSnapshot: portfolioSnapshot,
-        contextPack: contextPack,
         contextBlocks: contextBlocks,
         interactionResponse: turnMetadata.interactionResponse,
         model: model,
@@ -563,25 +563,11 @@ mixin _ChatRepositorySend {
   }
 }
 
-Map<String, Object?> _contextPackTraceAttributes(ContextPack? pack) {
-  if (pack == null) {
-    return const <String, Object?>{
-      'context_pack_present': false,
-      'context_pack_json_bytes': 0,
-      'context_appendix_present': false,
-      'context_appendix_bytes': 0,
-    };
-  }
-  final appendix = renderContextPackSystemAppendix(pack);
-  return <String, Object?>{
-    'context_pack_present': true,
-    'context_pack_json_bytes': pack.serializedByteSize,
-    'context_pack_budget_bytes': pack.budget.byteCap,
-    'context_pack_budget_tier': pack.budget.tier.wire,
-    'context_appendix_present': appendix != null,
-    'context_appendix_bytes': appendix == null
-        ? 0
-        : utf8.encode(appendix).length,
-    'context_appendix_cap_bytes': kUserProfileAppendixByteCap,
-  };
-}
+Map<String, Object?> _contextBlockTraceAttributes(
+  List<AgentRuntimeContextBlock> blocks,
+) => <String, Object?>{
+  'context_blocks_count': blocks.length,
+  'context_blocks_json_bytes': utf8
+      .encode(jsonEncode([for (final block in blocks) block.toJson()]))
+      .length,
+};

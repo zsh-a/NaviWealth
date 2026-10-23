@@ -48,8 +48,6 @@ class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
     String? agentId,
     String? mode,
     Map<String, Object?> metadata = const <String, Object?>{},
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
     List<AgentRuntimeContextBlock> contextBlocks =
         const <AgentRuntimeContextBlock>[],
     AgentRuntimeContextPolicy? contextPolicy,
@@ -68,8 +66,6 @@ class RuntimeRoutingAiChatApiClient implements AiChatApiClient {
         surface: surface,
         agentId: agentId,
         mode: mode,
-        portfolioSnapshot: portfolioSnapshot,
-        contextPack: contextPack,
         contextBlocks: contextBlocks,
         contextPolicy: contextPolicy ?? kDefaultAiChatContextPolicy,
         interactionResponse: interactionResponse,

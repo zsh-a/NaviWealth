@@ -80,9 +80,8 @@ class ToolDescriptor {
   final RiskLevel risk;
   final Confirmation requiresConfirmation;
 
-  /// Minimum [BudgetTier] required to invoke. A `large`-only tool
-  /// cannot be called with a `small` ContextPack — code-enforced
-  /// upstream of the model so prompt injection cannot escalate.
+  /// Declared context-size classification exported with the tool catalog.
+  /// Runtime invocation policy and prompt token budgets are separate checks.
   final BudgetTier allowedContextTier;
 
   /// Side-effect classification (orthogonal to risk level).

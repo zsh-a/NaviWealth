@@ -121,7 +121,7 @@ static const List<String> fontFamilyFallback = <String>[
 | 验收项 | 满足方式 |
 |------|---------|
 | 选定基础字体 | Noto Sans SC Variable（OFL）。 |
-| 接入 fontmin / pyftsubset 工具链 | `tool/build-cn-fonts.sh` + `cn_font_chars.py`，CI 集成。 |
+| 接入 fontmin / pyftsubset 工具链 | `apps/mobile/tool/build-cn-fonts.sh` + `cn_font_chars.py`，CI 集成。 |
 | 输出 `app-cn-base.woff2` + 按需扩展包 | base + ext 两级；`unicode-range` 触发懒加载。 |
 | `pubspec.yaml` 与 Web 字体注册 | 已注册 `AppCnSans` 字体族，HTML 同步声明 `@font-face`。 |
 | `font-display: swap` | base / ext 两个 `@font-face` 块均启用。 |

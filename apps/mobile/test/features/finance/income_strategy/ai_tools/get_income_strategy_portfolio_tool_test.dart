@@ -1,8 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/income_strategy/ai_tools/get_income_strategy_portfolio_tool.dart';
@@ -77,10 +76,7 @@ void main() {
     late Map<String, Object?> output;
     final probe = FutureProvider<void>((ref) async {
       output = await const GetIncomeStrategyPortfolioTool().invoke(
-        DeviceToolContext(
-          ref: ref,
-          session: DeviceSession(messages: const <AnthropicChatMessage>[]),
-        ),
+        DeviceToolContext(ref: ref, session: const DeviceToolSession()),
         const <String, Object?>{'asset_id': 'nasdaq:AAPL'},
       ) as Map<String, Object?>;
     });

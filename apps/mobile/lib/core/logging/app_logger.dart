@@ -372,7 +372,7 @@ String sanitizeDiagnosticExport(String input) {
   );
   output = output.replaceAllMapped(
     RegExp(
-      r'(access_token|api_key|token)(["\s:=]+)([^\s,}\]]+)',
+      r'''\b(password|passphrase|access_token|refresh_token|api_key|client_secret|secret|token)(["']?\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,}\]]+)''',
       caseSensitive: false,
     ),
     (match) => '${match.group(1)}${match.group(2)}<redacted>',
@@ -433,6 +433,7 @@ const Set<String> _allowedDiagnosticKeys = {
   'timed_out',
   'provider',
   'endpoint',
+  'method',
   'market',
   'currency',
   'batch_size',

@@ -23,8 +23,8 @@ CREATE INDEX IF NOT EXISTS idx_op_outbox_created
   ON op_outbox(created_at, op_id)
 ''';
 
-/// Single-row key/value store for SyncEngine state — pull cursor
-/// (`sync.cursor`), local HLC (`sync.local_hlc`), applier version.
+/// Key/value store for SyncEngine state — owner/domain pull cursors
+/// (`sync.cursor.*`), local HLC (`sync.local_hlc`), and replay markers.
 const String createSyncMeta = '''
 CREATE TABLE IF NOT EXISTS sync_meta (
   key   TEXT PRIMARY KEY NOT NULL,

@@ -1,10 +1,7 @@
 part of 'providers.dart';
 
-/// Device-side portfolio snapshot — the canonical holdings picture
-/// (holdings engine + FX + multi-lot). Uploaded on the cloud chat path
-/// (`portfolio_snapshot`) and read directly by the device `get_holdings`
-/// tool, so both paths share one builder. Returns
-/// `null` when the user has no holdings.
+/// Local portfolio snapshot (holdings engine + FX + multi-lot), loaded on
+/// demand by Finance tools. Returns `null` when the user has no holdings.
 final devicePortfolioSnapshotProvider =
     FutureProvider.autoDispose<Map<String, Object?>?>(
       (ref) => buildDevicePortfolioSnapshot(ref),

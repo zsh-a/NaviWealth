@@ -15,28 +15,18 @@ TARGETS=(
   "$ROOT/apps/mobile/lib/core/sync"
 )
 
-# Domain words that must not appear in shell contracts. The list is
-# narrow — boundary policy is enforced by absence of these names, not
-# by a generic word-blocklist.
-#
-# Excluded substrings (technical positives that are *not* domain
-# leaks): the LifeOS `domain` field itself (D-1.3 introduced it as a
-# typed namespace), and the `domain_prefix` helper module (D-1.4
-# defines the namespace).
-DOMAIN_WORDS='\b(Money|Account[A-Z]|JournalEntry|Posting|Holding|Liability|FirePlan|FireBucket|TradeJournal|SleepSession|HrvDaily)\b'
-
-# Allow the namespacing helpers themselves to reference domains as
-# string literals (they're the boundary, not a violation of it).
-ALLOWLIST='/core/sync/domain_prefix\.dart|/core/ai/contracts/intent\.dart|/core/ai/contracts/tool_descriptor\.dart'
+# Match complete business type families. A suffix must consume the full
+# identifier: `Account[A-Z]` only matches a one-letter suffix and misses
+# real contracts such as `AccountSummary`.
+# Namespacing helpers need no file exemptions: lowercase domain identifiers
+# do not match these business types, and must not hide future type leaks.
+DOMAIN_WORDS='\b(Money|Account([A-Z][[:alnum:]_]*)?|Cashflow[A-Z][[:alnum:]_]*|JournalEntry([A-Z][[:alnum:]_]*)?|Posting([A-Z][[:alnum:]_]*)?|Holding([A-Z][[:alnum:]_]*)?|Liability([A-Z][[:alnum:]_]*)?|Fire(Plan|Bucket|Goal)([A-Z][[:alnum:]_]*)?|TradeJournal([A-Z][[:alnum:]_]*)?|SleepSession([A-Z][[:alnum:]_]*)?|HrvDaily([A-Z][[:alnum:]_]*)?)\b'
 
 violations=""
 for dir in "${TARGETS[@]}"; do
   hits="$(grep -rnE --include='*.dart' "$DOMAIN_WORDS" "$dir" || true)"
   if [[ -n "$hits" ]]; then
-    filtered="$(echo "$hits" | grep -vE "$ALLOWLIST" || true)"
-    if [[ -n "$filtered" ]]; then
-      violations+="$filtered"$'\n'
-    fi
+    violations+="$hits"$'\n'
   fi
 done
 

@@ -10,6 +10,7 @@ import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
 import 'package:naviwealth/core/sync/sync_payload_store.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/core/sync/sync_table_registry.dart';
 import 'package:talker/talker.dart';
@@ -51,7 +52,10 @@ SyncEngine _engine(
 ) => SyncEngine(
   api: api,
   pending: DriftPendingRows(db, ownerUserId: _owner),
-  cursors: DriftCursorStore(db),
+  cursors: DriftCursorStore(
+    db,
+    scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+  ),
   applier: applier,
   deviceId: device,
   statusBus: SyncStatusBus(),
@@ -125,7 +129,10 @@ void main() {
       );
       await old.applyAll([remote]);
       await old.finishCompatibilityReplay();
-      await DriftCursorStore(oldDb).writeSeq(42);
+      await DriftCursorStore(
+        oldDb,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      ).writeSeq(42);
       await oldDb.customStatement(
         'UPDATE accounts SET name = ?, hlc = ? WHERE id = ?',
         ['Edited locally', _version(3000), 'account'],
@@ -152,7 +159,13 @@ void main() {
 
       await oldDb.customStatement('ALTER TABLE accounts ADD COLUMN color TEXT');
       expect(await old.prepareCompatibility(), isTrue);
-      expect(await DriftCursorStore(oldDb).readSeq(), 0);
+      expect(
+        await DriftCursorStore(
+          oldDb,
+          scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+        ).readSeq(),
+        0,
+      );
       expect(
         (await oldDb
                 .customSelect('SELECT color, name FROM accounts')
@@ -166,9 +179,18 @@ void main() {
         0,
       ); // Old remote state never rolls back a local edit.
       await old.finishCompatibilityReplay();
-      await DriftCursorStore(oldDb).writeSeq(43);
+      await DriftCursorStore(
+        oldDb,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      ).writeSeq(43);
       expect(await old.prepareCompatibility(), isFalse);
-      expect(await DriftCursorStore(oldDb).readSeq(), 43);
+      expect(
+        await DriftCursorStore(
+          oldDb,
+          scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+        ).readSeq(),
+        43,
+      );
       expect(
         await SyncPayloadStore(oldDb).extras('accounts', 'account', _owner),
         {'future_policy': remote.payload!['future_policy']},
@@ -218,7 +240,13 @@ void main() {
     );
     await old.prepareCompatibility();
     expect((await _engine(db, old, api, 'device').run()).errors, isEmpty);
-    expect(await DriftCursorStore(db).readSeq(), 1);
+    expect(
+      await DriftCursorStore(
+        db,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      ).readSeq(),
+      1,
+    );
     expect(await db.select(db.tags).get(), isEmpty);
 
     final upgraded = RowApplier(db, ownerUserId: _owner);
@@ -255,7 +283,10 @@ void main() {
       final first = await api.sync(deviceId: 'device', since: 0, changes: []);
       expect(first.more, isTrue);
       await applier.applyAll(first.changes);
-      await DriftCursorStore(db).writeSeq(first.seq);
+      await DriftCursorStore(
+        db,
+        scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+      ).writeSeq(first.seq);
       expect(
         await db
             .customSelect(

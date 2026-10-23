@@ -86,85 +86,92 @@ void main() {
     ]);
   });
 
-  test('store keeps a privacy-safe bounded rolling window', () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final store = DriftSyncStabilityStore(db, windowSize: 3);
+  SyncStabilitySample cycle(
+    DateTime at, {
+    bool success = true,
+    int fatal = 0,
+  }) => SyncStabilitySample(
+    at: at,
+    success: success,
+    retryableFailures: success ? 0 : 1,
+    fatalFailures: fatal,
+    localWins: 0,
+    ignoredRows: 0,
+    generationResets: 0,
+    generationResetFailures: 0,
+  );
 
-    for (var i = 0; i < 5; i++) {
+  test(
+    'frequent polling preserves fourteen-day evidence and exact rates',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = DriftSyncStabilityStore(db, ownerUserId: 'user-1');
+      final start = DateTime.utc(2026, 7, 1);
+      await store.record(cycle(start));
+      for (var i = 0; i < 120; i++) {
+        await store.record(
+          cycle(
+            start.add(Duration(days: 15, seconds: i * 30)),
+            success: i != 0,
+          ),
+        );
+      }
+      final report = await store.readReport();
+      expect(report.buckets.length, 2);
+      expect(report.cycleCount, 121);
+      expect(report.successfulCycles, 120);
+      expect(report.failedCycles, 1);
+      expect(report.recoveredCycles, 1);
+      expect(report.observedDuration.inDays, 15);
+      expect(report.gateStatus, SyncStabilityGateStatus.passing);
+      expect(report.toJson()['sample_count'], 121);
+      expect(report.toJson().toString(), isNot(contains('user-1')));
+    },
+  );
+
+  test(
+    'retention bounds days without losing failures inside the window',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = DriftSyncStabilityStore(db, ownerUserId: 'user-1');
+      final start = DateTime.utc(2026, 7, 1);
+      for (var day = 0; day < 40; day++) {
+        await store.record(cycle(start.add(Duration(days: day))));
+      }
       await store.record(
-        SyncStabilitySample(
-          at: DateTime.utc(2026, 7, 18).add(Duration(minutes: i)),
-          success: i.isEven,
-          retryableFailures: i.isEven ? 0 : 1,
-          fatalFailures: 0,
-          localWins: i,
-          ignoredRows: 0,
-          generationResets: 0,
-          generationResetFailures: 0,
-        ),
+        cycle(start.add(const Duration(days: 15)), success: false, fatal: 1),
       );
-    }
+      await store.record(cycle(start)); // delayed, outside retention
+      final report = await store.readReport();
+      expect(report.buckets.length, 30);
+      expect(report.cycleCount, 31);
+      expect(report.fatalFailures, 1);
+      expect(report.windowStart, start.add(const Duration(days: 10)));
+      expect(report.windowEnd, start.add(const Duration(days: 39)));
+      expect(report.gateStatus, SyncStabilityGateStatus.failing);
+    },
+  );
 
-    final samples = await store.readSamples();
-    expect(samples, hasLength(3));
-    expect(samples.first.localWins, 2);
-    expect(samples.last.localWins, 4);
-    final report = await store.readReport();
-    expect(report.toJson().toString(), isNot(contains('id')));
-    expect(
-      report.toJson().keys,
-      unorderedEquals(<String>{
-        'window_start',
-        'window_end',
-        'sample_count',
-        'successful_cycles',
-        'failed_cycles',
-        'retryable_failures',
-        'fatal_failures',
-        'local_wins',
-        'ignored_rows',
-        'generation_resets',
-        'generation_reset_failures',
-        'recovered_cycles',
-        'observed_duration_hours',
-        'success_rate',
-        'minimum_samples',
-        'minimum_success_rate',
-        'minimum_window_hours',
-        'remaining_samples',
-        'remaining_window_hours',
-        'gate_issues',
-        'gate_status',
-      }),
-    );
-  });
-
-  test('store orders delayed samples before bounding the window', () async {
-    final db = makeTestDatabase();
-    addTearDown(db.close);
-    final store = DriftSyncStabilityStore(db, windowSize: 3);
-    final start = DateTime.utc(2026, 7, 1);
-
-    for (final day in <int>[4, 0, 3, 1, 2]) {
-      await store.record(
-        SyncStabilitySample(
-          at: start.add(Duration(days: day)),
-          success: true,
-          retryableFailures: 0,
-          fatalFailures: 0,
-          localWins: day,
-          ignoredRows: 0,
-          generationResets: 0,
-          generationResetFailures: 0,
-        ),
+  test(
+    'concurrent recording is atomic and owners never share evidence',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final first = DriftSyncStabilityStore(db, ownerUserId: 'first');
+      final second = DriftSyncStabilityStore(db, ownerUserId: 'second');
+      await Future.wait([
+        for (var i = 0; i < 20; i++)
+          first.record(cycle(DateTime.utc(2026, 7, 1, 0, i))),
+      ]);
+      await second.record(
+        cycle(DateTime.utc(2026, 7, 1), success: false, fatal: 1),
       );
-    }
-
-    final samples = await store.readSamples();
-    expect(samples.map((sample) => sample.localWins), <int>[2, 3, 4]);
-    final report = await store.readReport();
-    expect(report.windowStart, start.add(const Duration(days: 2)));
-    expect(report.windowEnd, start.add(const Duration(days: 4)));
-  });
+      expect((await first.readReport()).cycleCount, 20);
+      expect((await first.readReport()).fatalFailures, 0);
+      expect((await second.readReport()).cycleCount, 1);
+      expect((await second.readReport()).fatalFailures, 1);
+    },
+  );
 }

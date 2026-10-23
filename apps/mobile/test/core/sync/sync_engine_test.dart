@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -17,6 +19,7 @@ import 'package:naviwealth/core/sync/providers.dart';
 import 'package:naviwealth/core/sync/row_applier.dart';
 import 'package:naviwealth/core/sync/sync_api_client.dart';
 import 'package:naviwealth/core/sync/sync_engine.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_stability.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 
@@ -68,6 +71,38 @@ class FakePendingRows implements PendingRows {
   Future<void> clear(Iterable<String> opIds) async {
     final set = opIds.toSet();
     _pointers.removeWhere((p) => set.contains(p.opId));
+  }
+}
+
+class RejectingHealthApi extends FakeSyncApiClient {
+  final received = <List<RowChange>>[];
+  @override
+  Future<SyncResponse> sync({
+    required String deviceId,
+    required int since,
+    required List<RowChange> changes,
+  }) {
+    received.add(changes);
+    if (received.length > 3) throw StateError('sync made no progress');
+    return super.sync(
+      deviceId: deviceId,
+      since: since,
+      changes: changes.where((row) => row.table.startsWith('fin:')).toList(),
+    );
+  }
+}
+
+class BlockingSyncApi extends FakeSyncApiClient {
+  final entered = Completer<void>();
+  final response = Completer<SyncResponse>();
+  @override
+  Future<SyncResponse> sync({
+    required String deviceId,
+    required int since,
+    required List<RowChange> changes,
+  }) {
+    entered.complete();
+    return response.future;
   }
 }
 
@@ -185,6 +220,151 @@ void main() {
       },
     );
 
+    test(
+      'rejected first batch is deferred so later rows still upload',
+      () async {
+        for (var i = 0; i < 500; i++) {
+          pending.put(
+            opId: 'h-$i',
+            table: 'health_metrics',
+            rowId: 'h-$i',
+            row: _rowState(id: 'h-$i', hlc: _hlc(10)),
+          );
+        }
+        pending.put(
+          opId: 'fin',
+          table: 'accounts',
+          rowId: 'fin',
+          row: _rowState(id: 'fin', hlc: _hlc(11)),
+        );
+        final rejecting = RejectingHealthApi();
+        engine = SyncEngine(
+          api: rejecting,
+          pending: pending,
+          cursors: cursors,
+          applier: applier,
+          deviceId: _dev,
+          statusBus: bus,
+        );
+        final result = await engine.run();
+        expect(rejecting.received.map((batch) => batch.length), [500, 1]);
+        expect(result.pushed, 1);
+        expect(result.errors.single.code, 'sync_rows_rejected');
+        expect(await pending.depth(), 500);
+      },
+    );
+
+    test(
+      'disabled-domain work remains queued without blocking active rows',
+      () async {
+        for (var i = 0; i < 501; i++) {
+          pending.put(
+            opId: 'h-$i',
+            table: 'health_metrics',
+            rowId: 'h-$i',
+            row: _rowState(id: 'h-$i', hlc: _hlc(10)),
+          );
+        }
+        pending.put(
+          opId: 'fin',
+          table: 'accounts',
+          rowId: 'fin',
+          row: _rowState(id: 'fin', hlc: _hlc(11)),
+        );
+        api.programmedResponses.add(
+          const SyncResponse(
+            seq: 1,
+            changes: [],
+            more: false,
+            accepted: [RowAck(table: 'fin:accounts', id: 'fin')],
+            domainGenerations: {'finance': 0},
+          ),
+        );
+        engine = SyncEngine(
+          api: api,
+          pending: pending,
+          cursors: cursors,
+          applier: applier,
+          deviceId: _dev,
+          statusBus: bus,
+          enabledDomains: {'finance'},
+        );
+        final result = await engine.run();
+        expect(result.success, isTrue);
+        expect(api.pushedBatches.single.single.id, 'fin');
+        expect(await pending.depth(), 501);
+      },
+    );
+
+    test(
+      'old domain token cannot advance the newly enabled scope cursor',
+      () async {
+        api.programmedResponses.add(
+          const SyncResponse(
+            seq: 100,
+            changes: [],
+            more: false,
+            domainGenerations: {'finance': 0},
+          ),
+        );
+        engine = SyncEngine(
+          api: api,
+          pending: pending,
+          cursors: cursors,
+          applier: applier,
+          deviceId: _dev,
+          statusBus: bus,
+          enabledDomains: {'finance', 'health'},
+        );
+        final result = await engine.run();
+        expect(result.errors.single.code, 'sync_domain_claim_mismatch');
+        expect(await cursors.readSeq(), 0);
+        expect(applier.applied, isEmpty);
+      },
+    );
+
+    test(
+      'non-advancing pull pagination exits with a visible failure',
+      () async {
+        await cursors.writeSeq(7);
+        api.programmedResponses.add(
+          const SyncResponse(seq: 7, changes: [], more: true),
+        );
+        final result = await engine.run();
+        expect(result.errors.single.code, 'sync_cursor_did_not_advance');
+        expect(api.syncCalls, hasLength(1));
+      },
+    );
+
+    test(
+      'superseded engine drains and discards an in-flight response',
+      () async {
+        final blocking = BlockingSyncApi();
+        engine = SyncEngine(
+          api: blocking,
+          pending: pending,
+          cursors: cursors,
+          applier: applier,
+          deviceId: _dev,
+          statusBus: bus,
+        );
+        final running = engine.run();
+        await blocking.entered.future;
+        var drained = false;
+        final drain = engine.waitUntilIdle().then((_) => drained = true);
+        engine.stop();
+        await Future<void>.delayed(Duration.zero);
+        expect(drained, isFalse);
+        blocking.response.complete(
+          const SyncResponse(seq: 100, changes: [], more: false),
+        );
+        expect((await running).errors.single.code, 'sync_session_changed');
+        await drain;
+        expect(drained, isTrue);
+        expect(await cursors.readSeq(), 0);
+      },
+    );
+
     test('happy path: pushes dirty rows and clears their pointers', () async {
       pending.put(
         opId: 'op-1',
@@ -264,7 +444,8 @@ void main() {
 
       final result = await engine.run();
 
-      expect(result.success, isTrue);
+      expect(result.success, isFalse);
+      expect(result.errors.single.code, 'sync_rows_rejected');
       expect(result.pushed, 0);
       expect(await pending.depth(), 1);
       expect(api.pushedBatches.single.single.table, 'know:knowledge_notes');
@@ -568,12 +749,15 @@ void main() {
     });
 
     test(
-      'resets a legacy pull cursor when the client schema is first tracked',
+      'resets scoped pull progress when the client schema is first tracked',
       () async {
         final db = makeTestDatabase();
         addTearDown(db.close);
-        final cursors = DriftCursorStore(db);
-        // A leftover v1-era cursor.
+        final cursors = DriftCursorStore(
+          db,
+          scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+        );
+        // Progress from a previously tracked client shape.
         await cursors.writeSeq(1287);
 
         final container = ProviderContainer(

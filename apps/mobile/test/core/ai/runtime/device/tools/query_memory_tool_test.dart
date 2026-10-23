@@ -9,8 +9,7 @@ import 'package:naviwealth/core/ai/local/memory/memory_access_policy.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
-import 'package:naviwealth/core/ai/runtime/device/anthropic/anthropic_wire.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/query_memory_tool.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -83,10 +82,7 @@ Future<Map<String, Object?>> _invoke(
   const tool = QueryMemoryTool();
   return _withRef(container, (ref) async {
     final out = await tool.invoke(
-      DeviceToolContext(
-        ref: ref,
-        session: DeviceSession(messages: const <AnthropicChatMessage>[]),
-      ),
+      DeviceToolContext(ref: ref, session: const DeviceToolSession()),
       input,
     );
     return (out! as Map).cast<String, Object?>();

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/task_context.dart'
     show AnalyticalUpload;
-import 'package:naviwealth/core/ai/runtime/device/device_session.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool_registry.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -132,7 +132,7 @@ Asset _asset(
   sync: _stamp(),
 );
 
-DeviceSession _session() => DeviceSession(messages: []);
+DeviceToolSession _session() => const DeviceToolSession();
 
 class _ThrowingTool implements DeviceTool {
   @override

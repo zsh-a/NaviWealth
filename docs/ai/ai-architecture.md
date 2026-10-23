@@ -11,14 +11,10 @@ AI runtime。
 
 ## Document Contract
 
-本文拥有设备端 AI 的产品边界、Host/Runtime 分工、工具治理、Memory 上下文和写入
-确认原则；不拥有具体领域业务规则或精确事件字段。字段与枚举以
+本文拥有设备端 AI 的产品边界、入口与 InteractionSession 行为、Host/Runtime 分工、
+工具治理、Memory 上下文和写入确认原则；不拥有具体领域业务规则或精确事件字段。字段与枚举以
 [`ai-protocol.md`](./ai-protocol.md) 和可执行 contract tests 为准，Rust 实现布局以
 [`agent-runtime-current.md`](../architecture/agent-runtime-current.md) 为准。
-
-运行时事件契约见 [`ai-protocol.md`](./ai-protocol.md)，Rust runtime 的代码地图与
-维护约束见
-[`agent-runtime-current.md`](../architecture/agent-runtime-current.md)。
 
 ## 1. 边界
 
@@ -59,6 +55,8 @@ FRB primitive frames 映射为 `AiChatEvent`，执行 active `DomainPack` 暴露
 每轮发送前，`ChatRepository` 调用 app-level Context Assembler：
 
 ```text
+current route -> active DomainPack.chatContextBuilder
+  -> bounded domain Resource ContextBlocks
 active DomainPacks.memorySourcePrefixes
   -> MemoryAccessPolicy
 PersonalProfileStore -> PersonalProfileSnapshot
@@ -70,6 +68,13 @@ persisted chat prefix omitted by ContextWindow
   -> agent-chat ContextPolicy / ContextSnapshot
   -> provider request
 ```
+
+Context Assembler 只接受域中立的 `AgentRuntimeContextBlock`。领域通过
+`DomainPack.chatContextBuilder` 提供有界事实：领域页面仅收集该 active domain，
+全局 Assistant 才聚合全部 active domains。Finance 的 `finance:current_summary`
+包含当前 owner 的账户数量、风险及已有的 FIRE/异常/到期概况，复用已经加载的
+领域状态，不启动完整持仓读取；明细按工具请求获取。App 层分别组合系统、领域、Memory/Profile，单个可选来源失败不阻断
+其他可用上下文。
 
 Host 负责 Drift、embedding、Personal Profile、当前 route/entity 和领域启用策略；Rust
 负责 block/evidence 校验、时间与 supersede 过滤、token 预算、优先级选择、BLAKE3 hash、
@@ -185,18 +190,21 @@ Personal Profile 与 `authority=user_confirmed` 的正式 Memory 已进入当前
 用户可见的 AI trace 使用 Opik 风格 `AiSpan` 树：`turn` / `llm` / `tool`、父子关系、耗时、
 token、model、stop reason、状态和可选 I/O。`ai_traces`、`ai_undo_stack` 与
 `ai_touched_entities` 均为 local-only。
+Trace seed 在 app composition 创建，不读取固定领域快照。上下文规模使用
+`context_blocks_count` 和 `context_blocks_json_bytes` 指标；块数和序列化字节数
+不代表模型 token 消耗。
 Runtime events、执行状态和恢复 checkpoints 各有对应契约；trace 是诊断视图，
 不能替代持久化续轮状态或副作用恢复记录。
 
 ## 4. Device LLM Runtime 契约
 
-- **§4.1 ContextPack**：由 BaseContext、TaskContext（`route` / `intent` /
-  `signals`）和 PrivacyBudget 组成，只在端侧构造和消费。
-- **§4.1a ContextBlock**：通用 runtime 上下文单位。Host 可提供 Profile、Memory、
+- **§4.1 ContextBlock**：唯一的通用 runtime 上下文单位。Host 可提供 Profile、Memory、
   Resource、CompactionSummary 等数据块；数据块可携带 `ContextEvidence`（authority、
   provenance、validity、supersedes）。Runtime 重算 token/hash，过滤无效 evidence，
   按 `ContextPolicy` 选择并保存含 omission reason 的 `ContextSnapshot`。
   Runtime/Agent/Command instruction blocks 始终保留且与数据块分权。
+  实际 prompt token 预算由 `AgentRuntimeContextPolicy` 管理；`BudgetTier` 仅用于
+  tool/trace 分类，不是另一套上下文字节上限。
 - **§4.2 本地真值**：工具直接读取 Drift 或端侧 provider。
 - **§4.3 写入边界**：所有写入和外部动作遵循 §3.2。
 - **§4.4 Interaction**：问题、审批和 typed confirmation 使用
@@ -246,8 +254,17 @@ session 后续的每个输入都是新的 Turn，并携带 `inputOrigin`（`voic
 三个并行 lane、`SessionId` / `TurnId` / `ResponseEpoch`、pending
 `InteractionEnvelope`、delivery projection 和 interruption policy；薄
 Coordinator 在 reducer 外调用 ChatRepository、SpeechInput、SpeechOutput
-等副作用。全局事件序号由 Coordinator 分配，Tool / Proposal / 外部副作用
-才附加 `OperationId`。
+等副作用。每个进入 reducer 的事件携带
+`SessionId + TurnId + ResponseEpoch + sequence`，全局 sequence 由 Coordinator
+分配；Tool / Proposal / 外部副作用才附加 `OperationId`。
+
+三个 lane 独立演进，允许输入、执行和播放重叠：
+
+```text
+InputLane       idle → listening → endpointing → committed
+ExecutionLane   idle → running → tool_running → waiting_interaction → done
+OutputLane      idle → synthesizing → playing → interrupted → idle
+```
 
 Voice barge-in 必须分两阶段：
 
@@ -273,6 +290,57 @@ ContextProjection → 已交付前缀 + interrupted 标记
 
 第一版只记录 segment id，不使用未定义的跨 Dart/Rust `usize` 偏移。
 
+### 5.1b Engine 与 capability policy
+
+The implemented cascaded path is assembled from `InteractionSessionCoordinator`,
+`SpeechInput`, `SpeechOutput`, and the existing Agent Runtime. Recognizers expose
+`SpeechRecognizerCapabilities`; full-duplex is currently available only on the
+opt-in Android native Zipformer path. The following engine names describe
+architecture families, not classes in the current code:
+
+| Engine family | Implementation status | Policy |
+|---|---|---|
+| Local cascaded | Implemented through the Host speech/session seams; capabilities vary by platform/provider | Production path |
+| Cloud realtime | Not implemented | Requires explicit opt-in, transport policy, and the existing tool/interaction gateways |
+| Local omni | Not implemented | Requires a real caller and device/resource verification before experimentation |
+
+The engine descriptor must advertise the capabilities required by the Host:
+streaming input/output, full-duplex, interruption, transcript, tool calls,
+proposal handling, interaction resume, durable resume, and delivery tracking.
+An engine without the required safety capability is restricted to lower-risk,
+read-only conversation.
+
+Future engine adapters must express privacy per signal. These policy dimensions
+are not current runtime wire fields or implemented user settings:
+
+```text
+audio_transport
+transcript_transport
+context_transport
+```
+
+Local ASR plus a remote LLM is audio-local but not a fully local turn. A future
+cloud realtime adapter requires user policy permitting audio and context to
+leave the device. It is not an available fallback in the current app.
+
+The production model policy follows capability slots rather than a single
+"all-in-one voice model":
+
+| Capability slot | Production default | Optional path | Boundary |
+|---|---|---|---|
+| AEC / NS / AGC | Best-effort platform effects on the Android native capture path | Future platform-native adapters | High-rate audio stays native |
+| Streaming ASR | Android system on-device ASR; iOS/macOS local Zipformer through `SpeechRecognizer` | Android local Zipformer; future native system adapters on Apple platforms | Partial text is semantic input only |
+| Offline refinement | None in the first path | SenseVoice or Whisper when a real second-pass caller exists | Never required by the live turn loop |
+| Agent reasoning | Existing user-selected `LlmProfile` and Agent Runtime | Realtime provider's generation inside its Host adapter | Voice does not choose a separate reasoning profile |
+| TTS | System TTS | Downloadable local TTS | System TTS is not bundled model data |
+| Full-duplex | Opt-in Android native Zipformer through the cascaded session | Future cloud realtime or local omni adapter | Other paths retain their advertised lower capabilities |
+
+The current installed Zipformer bundle is Mandarin-only; a zh-en streaming
+bundle is a versioned model-manifest change with its own language declaration,
+checksums, fixtures, and native smoke coverage. `sherpa_onnx` is the current
+local speech backend, not a product-level architecture dependency: all future
+ASR/TTS implementations remain behind the existing speech seam.
+
 ### 5.2 Calm 视觉
 
 AI 元素使用 surface tone、细线图标、克制的 cursor 动效和 outline reply chip。
@@ -292,7 +360,7 @@ AI 元素使用 surface tone、细线图标、克制的 cursor 动效和 outline
 - [ ] Barge-in 区分 candidate 与 committed interruption
 - [ ] Undelivered assistant output 不进入下一轮 voice context
 
-### 5.10.7 反模式
+### 5.4 反模式
 
 - 悬浮聊天气泡、独立 AI tab、随处散落的 sparkle 或魔法棒
 - 打开应用先展示 chat，而不是用户数据和任务
@@ -308,7 +376,7 @@ apps/mobile/lib/core/ai/
   intent/          AiIntentInvocation and policy
   session/         InteractionSession ids, events, reducer, delivery, interruption policy
   llm_credentials/ profiles and secure credential seams
-  local/           embedding, memory, deterministic skills
+  local/           embedding and memory
   runtime/         host-neutral runtime seams and device tool contracts
   trace/           local trace storage and providers
   visual/          shared AI visual primitives
@@ -317,7 +385,7 @@ apps/mobile/lib/core/ai/
 apps/mobile/lib/app/agent_runtime/
   bridges/         stable Dart APIs over generated FRB bindings
   chat/            ChatTurn frame mapping and device-tool continuation
-  context/         active-domain Memory -> untrusted ContextBlocks
+  context/         system + active-domain facts + memory -> ContextBlocks
   catalog/         DomainPack -> runtime catalog
   persistence/     checkpoint/effect journal
   runner/          profile turn and embedded runtime composition

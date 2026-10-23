@@ -118,7 +118,7 @@ class RowApplier {
         await _payloads.writeExtras(table, id, owner, extras);
       }
       await _db.customStatement(
-        "DELETE FROM sync_meta WHERE key = 'sync.cursor'",
+        "DELETE FROM sync_meta WHERE key GLOB 'sync.cursor.*'",
       );
       await _db.customStatement(
         'INSERT INTO sync_meta(key, value) VALUES (?, ?) '

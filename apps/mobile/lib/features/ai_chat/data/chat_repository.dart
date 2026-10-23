@@ -8,7 +8,6 @@ import '../../../core/ai/composition/chat_trace_prep.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/contracts/contracts.dart';
 import '../../../core/ai/runtime/agent_runtime/agent_runtime_context_block.dart';
-import '../../../core/ai/runtime/device/device_user_profile_prompt.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/auth_session.dart';
 import '../../../core/auth/providers.dart';
@@ -52,7 +51,6 @@ class ChatRepository
     required ChatHistoryStore store,
     required AiChatApiClient api,
     required AuthSessionReader sessionReader,
-    Future<Map<String, Object?>?> Function()? portfolioSnapshotReader,
     ChatContextBlockPrep? contextBlockPrep,
     ConversationCheckpointSummarizer? checkpointSummarizer,
     ChatTracePrep? tracePrep,
@@ -62,7 +60,6 @@ class ChatRepository
   }) : _store = store,
        _api = api,
        _sessionReader = sessionReader,
-       _portfolioSnapshotReader = portfolioSnapshotReader,
        _contextBlockPrep = contextBlockPrep,
        _checkpointSummarizer =
            checkpointSummarizer ??
@@ -78,8 +75,6 @@ class ChatRepository
   final AiChatApiClient _api;
   @override
   final AuthSessionReader _sessionReader;
-  @override
-  final Future<Map<String, Object?>?> Function()? _portfolioSnapshotReader;
   @override
   final ChatContextBlockPrep? _contextBlockPrep;
   @override

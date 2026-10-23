@@ -26,6 +26,8 @@ const markdownFiles = [
   path.join(repoRoot, 'README.md'),
   path.join(repoRoot, 'CLAUDE.md'),
   path.join(repoRoot, 'apps/mobile/README.md'),
+  path.join(repoRoot, 'apps/mobile/design_tokens/README.md'),
+  ...walkMarkdown(path.join(repoRoot, 'apps/mobile/docs')),
   ...walkMarkdown(docsRoot),
 ];
 const failures = [];

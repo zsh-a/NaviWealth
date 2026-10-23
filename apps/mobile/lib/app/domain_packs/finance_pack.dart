@@ -36,6 +36,7 @@ import 'package:naviwealth/features/finance/options_income/data/trade_journal_me
 import 'package:naviwealth/features/finance/ui/settings/finance_domain_settings_section.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../features/finance/composition/finance_chat_context.dart';
 import '../routing/route_paths.dart';
 import 'finance_life_contribution.dart';
 import 'proposal_applier_route.dart';
@@ -45,6 +46,7 @@ final DomainPack kFinancePack = DomainPack(
   accent: DomainAccents.finance,
   deviceTools: kFinanceDeviceTools,
   assistantToolsBuilder: financeAssistantToolsForPath,
+  chatContextBuilder: buildFinanceChatContextBlocks,
   toolDescriptors: kFinanceToolDescriptors,
   intentDescriptors: [
     ...kFinanceIntentDescriptors,

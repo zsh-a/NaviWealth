@@ -184,7 +184,7 @@ regression-fixture text that does **not** paint on web (the device AI
 runtime is `!kIsWeb`-gated — see `docs/ai/ai-architecture.md` §4.6). Two
 changes landed together:
 
-1. `tool/cn_font_chars.py` scopes device AI plus feature `ai_tools`, `agents`,
+1. `apps/mobile/tool/cn_font_chars.py` scopes device AI plus feature `ai_tools`, `agents`,
    `data`, `domain`, and `composition` trees out of the *base* scan
    (model-facing or non-UI; `ext` still covers deferred text).
 2. The budget was raised to ~308 KiB on 2026-07-18 when the old per-file

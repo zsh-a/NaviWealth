@@ -57,7 +57,8 @@ abstract final class FinanceRoutes {
   static const plan = '/plan';
 
   static const spending = '/activity/spending';
-  static const expenseNew = '/activity/expense/new';
+  static const activityExpense = '/activity/expense';
+  static const expenseNew = '$activityExpense/new';
   static const incomeNew = '/activity/income/new';
   static const cashflow = '/activity/cashflow';
   static const cashflowRecurring = '/activity/cashflow/recurring';
@@ -166,7 +167,7 @@ abstract final class FinanceRoutes {
       '$wealthNewCash?accountId=${Uri.encodeQueryComponent(id)}';
 
   static String expense(String id) =>
-      '/activity/expense/${Uri.encodeComponent(id)}';
+      '$activityExpense/${Uri.encodeComponent(id)}';
 
   static String activityFeed({
     DateTime? from,

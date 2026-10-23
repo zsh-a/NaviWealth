@@ -1536,14 +1536,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.1.20"
-  talker_dio_logger:
-    dependency: "direct main"
-    description:
-      name: talker_dio_logger
-      sha256: c2ab184171bdc3f45a8791c57a7746d095398d5e18a505c042b41a30af244bc4
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.1.20"
   talker_logger:
     dependency: transitive
     description:

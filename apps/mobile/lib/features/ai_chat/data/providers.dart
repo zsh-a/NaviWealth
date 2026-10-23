@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/ai/composition/chat_trace_prep.dart';
-import '../../../core/ai/composition/portfolio_snapshot.dart';
 import '../../../core/ai/runtime/chat_agent.dart';
 import '../../../core/ai/trace/trace.dart';
 import '../../../core/auth/providers.dart';
@@ -46,13 +45,11 @@ final chatRepositoryProvider = FutureProvider<ChatRepository>((ref) async {
   final reader = ref.watch(authSessionReaderProvider);
   final traceStore = ref.watch(aiTraceStoreProvider);
   final tracePrep = ref.watch(chatTracePrepProvider);
-  final portfolioReader = ref.watch(portfolioSnapshotReaderProvider);
   final contextBlockPrep = ref.watch(chatContextBlockPrepProvider);
   return ChatRepository(
     store: store,
     api: api,
     sessionReader: reader,
-    portfolioSnapshotReader: portfolioReader,
     contextBlockPrep: contextBlockPrep,
     tracePrep: tracePrep,
     traceStore: traceStore,

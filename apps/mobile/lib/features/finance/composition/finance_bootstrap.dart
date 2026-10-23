@@ -15,8 +15,6 @@ import 'package:naviwealth/features/finance/home/composition/finance_chat_rail_p
 
 import '../../../core/ai/composition/ai_context_summary.dart';
 import '../../../core/ai/composition/chat_rail_provider.dart';
-import '../../../core/ai/composition/chat_trace_prep.dart';
-import '../../../core/ai/composition/portfolio_snapshot.dart';
 import '../../../core/auth/auth_state.dart';
 import '../../../core/auth/providers.dart' as auth;
 import '../../../core/command_palette/local_query_result_pane_provider.dart';
@@ -26,8 +24,6 @@ import '../inbox/data/financial_inbox_providers.dart';
 import '../investment/notifications/watchlist_alerts.dart';
 import '../ui/command_palette/finance_ask_ai_result_pane.dart';
 import 'finance_ai_context_summary_provider.dart';
-import 'finance_chat_trace_preparer.dart';
-import 'finance_portfolio_snapshot.dart';
 import 'finance_query_plan_executor_provider.dart';
 
 /// Every FinanceOS shell-seam override in one place. Each entry maps a
@@ -40,19 +36,10 @@ List<Override> financeCompositionOverrides() => [
   chatRailContentSelectorProvider.overrideWith(
     (ref) => ref.watch(financeChatRailContentSelectorProvider),
   ),
-  // Per-chat-turn ContextPack + AiTrace seed; the chat repository skips
-  // the trace seam when this is null.
-  chatTracePrepProvider.overrideWith(
-    (ref) => ref.watch(financeChatTracePrepProvider),
-  ),
   // AI page header summary chip. Finance contributes net-worth / anomaly
   // / maturity facts; the default empty summary collapses.
   aiContextSummaryProvider.overrideWith(
     (ref) => ref.watch(financeAiContextSummaryProvider),
-  ),
-  // Portfolio snapshot attached to each chat turn for grounding.
-  portfolioSnapshotReaderProvider.overrideWith(
-    (ref) => ref.watch(financePortfolioSnapshotReaderProvider),
   ),
   financeQueryPlanExecutorProvider.overrideWith(
     (ref) => DriftQueryPlanExecutor(ref: ref),

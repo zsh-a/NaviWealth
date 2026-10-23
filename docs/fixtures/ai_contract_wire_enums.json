@@ -37,12 +37,6 @@
     "analyze",
     "write"
   ],
-  "CashflowTrend": [
-    "improving",
-    "stable",
-    "worsening",
-    "unknown"
-  ],
   "Confirmation": [
     "none",
     "one_tap",
@@ -73,11 +67,6 @@
     "propose",
     "commit"
   ],
-  "RiskPreference": [
-    "conservative",
-    "moderate",
-    "aggressive"
-  ],
   "SideEffect": [
     "none",
     "device_local_write",
@@ -87,20 +76,6 @@
     "local",
     "cross_cutting",
     "external"
-  ],
-  "SignalKind": [
-    "spending_spike",
-    "subscription_price_up",
-    "refund_unmatched",
-    "deposit_maturing",
-    "fire_milestone",
-    "cashflow_anomaly",
-    "other"
-  ],
-  "SignalSeverity": [
-    "info",
-    "warn",
-    "critical"
   ],
   "TerminalReason": [
     "done",

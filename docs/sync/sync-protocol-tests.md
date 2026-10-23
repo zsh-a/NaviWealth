@@ -12,6 +12,11 @@ Companion to [`sync-v3.md`](./sync-v3.md). These are protocol-level
 scenarios that the Flutter client and Cloudflare Worker backend should cover
 for the active row-state sync protocol.
 
+Backend concurrency and pagination regressions run real SQLite against the
+production SQL in `apps/backend/src/sync/store_sql_tests.rs`. They cover interleaved
+writers, same-batch duplicate keys, ties/retries, reset races, pull-horizon races,
+count/byte pagination and large cursors. Run `rtk cargo test` from `apps/backend`.
+
 Each case lists **setup -> action -> expected outcome**. Test names follow
 `SP-<group>-<n>` for cross-referencing in test comments.
 
@@ -233,7 +238,8 @@ HLC unit-test IDs remain stable.
 - **Setup**: all rows newer than `since` were authored by the caller.
 - **Action**: caller syncs.
 - **Expect**: `changes == []`, `more == false`, and `seq` equals the user's
-  global `MAX(seq)` so the caller does not pull its own rows later.
+  `MAX(seq)` horizon captured before reading rows. Later concurrent writes remain
+  eligible for the next pull.
 
 ### SP-D-8 — Pagination uses last returned seq when more is true
 
@@ -395,7 +401,7 @@ HLC unit-test IDs remain stable.
 
 ### SP-H-2 — Cursor reset forces full pull without duplicates
 
-- **Setup**: existing device clears `sync.cursor`.
+- **Setup**: existing device clears its active scoped cursor.
 - **Action**: sync starts with `since = 0`.
 - **Expect**: rows are re-applied idempotently under LWW and local state
   converges without duplicate business rows.
@@ -407,12 +413,13 @@ HLC unit-test IDs remain stable.
 - **Expect**: one dirty pointer per existing syncable row is queued, and the
   first sync uploads current state.
 
-### SP-H-4 — Cursor ahead of server is harmless
+### SP-H-4 — Cursor ahead of server returns to the current horizon
 
 - **Setup**: corrupted client cursor is greater than server `MAX(seq)`.
 - **Action**: sync runs.
-- **Expect**: server returns no changes, `more == false`, and the client can
-  continue from the returned cursor.
+- **Expect**: server returns no changes, `more == false`, and the current
+  pre-read horizon, allowing future writes to be pulled. This does not replay
+  rows skipped by the corrupted cursor; a full replay starts from zero.
 
 ---
 

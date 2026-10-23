@@ -11,71 +11,44 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../support/test_app_theme.dart';
 
 void main() {
-  group('summarizeContextPackTraceWindow', () {
-    test('aggregates only traces with ContextPack sizing attributes', () {
-      final summary = summarizeContextPackTraceWindow([
-        _trace('req-1', packBytes: 1024, appendixBytes: 256),
+  group('summarizeContextBlockTraceWindow', () {
+    test('aggregates only traces with ContextBlock sizing attributes', () {
+      final summary = summarizeContextBlockTraceWindow([
+        _trace('req-1', blockBytes: 1024),
         _trace('req-2'),
-        _trace('req-3', packBytes: 2048, appendixBytes: 512),
-        _trace(
-          'req-4',
-          packBytes: 4096,
-          appendixBytes: 900,
-          appendixCapBytes: 1000,
-        ),
+        _trace('req-3', blockBytes: 2048),
+        _trace('req-4', blockBytes: 4096),
       ]);
 
       expect(summary.windowCount, 4);
       expect(summary.sampleCount, 3);
       expect(summary.sampleCoveragePercent, 75);
-      expect(summary.avgPackBytes, 2389);
-      expect(summary.p95PackBytes, 4096);
-      expect(summary.packBudgetBytes, 10000);
-      expect(summary.p95PackBudgetPercent, 41);
-      expect(summary.avgAppendixBytes, 556);
-      expect(summary.p95AppendixBytes, 900);
-      expect(summary.appendixCapBytes, 1000);
-      expect(summary.p95AppendixCapPercent, 90);
+      expect(summary.avgBytes, 2389);
+      expect(summary.p95Bytes, 4096);
     });
 
     test('returns an empty summary when no trace has sizing attributes', () {
-      final summary = summarizeContextPackTraceWindow([
+      final summary = summarizeContextBlockTraceWindow([
         _trace('req-1'),
         _trace('req-2'),
       ]);
 
       expect(summary.windowCount, 2);
       expect(summary.hasSamples, isFalse);
-      expect(summary.avgPackBytes, 0);
-      expect(summary.p95PackBudgetPercent, 0);
-      expect(summary.p95AppendixCapPercent, 0);
+      expect(summary.avgBytes, 0);
     });
   });
 
   group('AiTransparencyPage', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
-    testWidgets('shows ContextPack sample metrics in the aggregate header', (
+    testWidgets('shows ContextBlock sample metrics in the aggregate header', (
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
       final store = InMemoryAiTraceStore();
-      await store.append(
-        _trace(
-          'req-1',
-          packBytes: 1024,
-          appendixBytes: 256,
-          appendixCapBytes: 1000,
-        ),
-      );
-      await store.append(
-        _trace(
-          'req-2',
-          packBytes: 4096,
-          appendixBytes: 900,
-          appendixCapBytes: 1000,
-        ),
-      );
+      await store.append(_trace('req-1', blockBytes: 1024));
+      await store.append(_trace('req-2', blockBytes: 4096));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -97,28 +70,14 @@ void main() {
       expect(find.text('ctx samples 2/2'), findsOneWidget);
       expect(find.text('ctx avg 2.5KB'), findsOneWidget);
       expect(find.text('ctx p95 4.0KB'), findsOneWidget);
-      expect(find.text('ctx p95 41% budget'), findsOneWidget);
-      expect(find.text('appendix avg 578B'), findsOneWidget);
-      expect(find.text('appendix p95 90% cap'), findsOneWidget);
     });
   });
 }
 
-AiTrace _trace(
-  String requestId, {
-  int? packBytes,
-  int? packBudgetBytes = 10000,
-  int? appendixBytes,
-  int? appendixCapBytes,
-}) {
-  final attrs = packBytes == null || appendixBytes == null
+AiTrace _trace(String requestId, {int? blockBytes}) {
+  final attrs = blockBytes == null
       ? null
-      : <String, Object?>{
-          'context_pack_json_bytes': packBytes,
-          'context_pack_budget_bytes': ?packBudgetBytes,
-          'context_appendix_bytes': appendixBytes,
-          'context_appendix_cap_bytes': ?appendixCapBytes,
-        };
+      : <String, Object?>{'context_blocks_json_bytes': blockBytes};
   return AiTrace(
     requestId: requestId,
     startedAtIso: '2026-06-19T00:00:00.000Z',

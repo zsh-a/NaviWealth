@@ -12,6 +12,7 @@ import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/providers.dart';
+import 'package:naviwealth/core/sync/sync_scope.dart';
 import 'package:naviwealth/core/sync/sync_status.dart';
 import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.dart';
 import 'package:naviwealth/features/settings/ui/sync/sync_status_page.dart';
@@ -47,7 +48,10 @@ void main() {
       await db.close();
     });
 
-    await DriftCursorStore(db).writeSeq(42);
+    await DriftCursorStore(
+      db,
+      scope: SyncScope(ownerUserId: 'user-1', domains: const {'finance'}),
+    ).writeSeq(42);
     await DriftOutboxStore(db).enqueue(table: 'accounts', rowId: 'acc-1');
     await db
         .into(db.accounts)

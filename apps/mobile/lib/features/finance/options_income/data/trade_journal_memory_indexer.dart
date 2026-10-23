@@ -7,7 +7,7 @@
 /// 1. **Always** an [EventRecord] in the cross-domain event log:
 ///    `trade_opened` for live positions, `trade_closed` /
 ///    `trade_assigned` / `trade_expired` for terminal ones. Events are
-///    cheap, abundant; they feed `ContextPack.recentEvents`.
+///    cheap, abundant; they feed `ContextPackMemory.recentEvents`.
 /// 2. **For terminal positions only** an episodic [MemoryRecord]
 ///    capturing the decision shape: `{context, decision, reasoning,
 ///    outcome}`. This is what makes "去年这个时候为什么卖 NVDA put"
@@ -39,7 +39,7 @@ import '../domain/options_strategy_profile.dart';
 import '../domain/trade_journal_entry.dart';
 import 'providers.dart';
 
-/// Stable cross-source label so [ContextPack] can filter ("only
+/// Stable cross-source label so [ContextPackMemory] can filter ("only
 /// options memories") without enum'ing in core.
 const String kTradeJournalSource = 'options_trade_journal';
 const String kTradeJournalEventSourceFamily = 'fin:options_trade_journal';

@@ -178,8 +178,6 @@ final class _NoopApi implements AiChatApiClient {
     String? agentId,
     String? mode,
     Map<String, Object?> metadata = const <String, Object?>{},
-    Map<String, Object?>? portfolioSnapshot,
-    ContextPack? contextPack,
     List<AgentRuntimeContextBlock> contextBlocks =
         const <AgentRuntimeContextBlock>[],
     AgentRuntimeContextPolicy? contextPolicy,
