@@ -7,6 +7,32 @@ import {
 } from './_helpers';
 
 test.describe('boot', () => {
+  test('home starts with external requests blocked', async ({ page, baseURL }) => {
+    const origin = new URL(baseURL!).origin;
+    const rendererAssets: string[] = [];
+    page.on('response', (response) => {
+      const url = new URL(response.url());
+      if (url.pathname.includes('/canvaskit/') && response.ok()) {
+        rendererAssets.push(url.origin);
+      }
+    });
+    await page.route(/^https?:/, (route) =>
+      new URL(route.request().url()).origin === origin
+        ? route.continue()
+        : route.abort(),
+    );
+    const spy = attachConsoleSpy(page);
+
+    await page.goto('/');
+    await waitForFlutterReady(page);
+
+    expect(rendererAssets.length).toBeGreaterThan(0);
+    expect(rendererAssets.every((assetOrigin) => assetOrigin === origin)).toBe(true);
+    // Deliberately aborted optional font downloads emit browser network errors.
+    // They must not prevent startup or produce unhandled application errors.
+    expect(spy.pageErrorMessages).toEqual([]);
+  });
+
   test('home loads without console or page errors', async ({ page }) => {
     const spy = attachConsoleSpy(page);
 

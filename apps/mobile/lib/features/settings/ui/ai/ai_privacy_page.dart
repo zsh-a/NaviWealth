@@ -1,137 +1,77 @@
-/// AI privacy posture settings persisted through [aiPrivacySettingsProvider].
-/// The device-direct Vision ingest gate reads the selected mode before
-/// sending a document to the configured model provider.
-library;
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 
-import '../../../../core/ai/contracts/contracts.dart';
-import '../../../../core/shell/settings_ui/inline_setting_row.dart';
+import '../../../../core/ai/contracts/ai_privacy_settings.dart';
+import '../../../../core/ai/llm_credentials/providers.dart';
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import 'ai_provider_privacy_fields.dart';
 
-class AiPrivacyPage extends ConsumerWidget {
+class AiPrivacyPage extends ConsumerStatefulWidget {
   const AiPrivacyPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AiPrivacyPage> createState() => _AiPrivacyPageState();
+}
+
+class _AiPrivacyPageState extends ConsumerState<AiPrivacyPage> {
+  bool _saving = false;
+  String? _error;
+
+  Future<void> _setPermission(bool value) async {
+    if (_saving) return;
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(aiPrivacySettingsProvider.notifier)
+          .setAllowDocumentRecognition(value);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _error = AppLocalizations.of(context).commonSaveFailed);
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final settings = ref.watch(aiPrivacySettingsProvider);
-    final controller = ref.read(aiPrivacySettingsProvider.notifier);
+    final supported = ref.watch(deviceLlmPlatformSupportedProvider);
     return AppPageScaffold(
       title: l10n.aiPrivacyTitle,
       childPad: false,
       child: SettingsPageFrame(
         topPadding: AppSpacing.s8,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-            child: Text(l10n.aiPrivacyIntro, style: context.bodyCaptionStyle),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          AppGroupedSurface(
-            padding: EdgeInsets.zero,
-            child: Column(
-              children: [
-                _ModeRow(
-                  mode: AiPrivacyMode.amountsAllowed,
-                  selected: settings.mode,
-                  label: l10n.aiPrivacyModeAmountsAllowedLabel,
-                  description: l10n.aiPrivacyModeAmountsAllowedDescription,
-                  onSelect: controller.setMode,
-                ),
-                const AppGradientDivider(),
-                _ModeRow(
-                  mode: AiPrivacyMode.amountsBucketed,
-                  selected: settings.mode,
-                  label: l10n.aiPrivacyModeAmountsBucketedLabel,
-                  description: l10n.aiPrivacyModeAmountsBucketedDescription,
-                  onSelect: controller.setMode,
-                ),
-                const AppGradientDivider(),
-                _ModeRow(
-                  mode: AiPrivacyMode.amountsLocal,
-                  selected: settings.mode,
-                  label: l10n.aiPrivacyModeAmountsLocalLabel,
-                  description: l10n.aiPrivacyModeAmountsLocalDescription,
-                  onSelect: controller.setMode,
-                ),
-              ],
+          if (!supported)
+            AppStatusBanner(
+              kind: AppStatusKind.info,
+              message: l10n.settingsAiNativeOnly,
+              compact: true,
+            )
+          else ...[
+            AiProviderPrivacyFields(
+              allowDocumentRecognition: ref
+                  .watch(aiPrivacySettingsProvider)
+                  .allowDocumentRecognition,
+              enabled: !_saving,
+              onChanged: _setPermission,
             ),
-          ),
-          const SizedBox(height: AppSpacing.s16),
-          AppGroupedSurface(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
-            child: InlineSwitchRow(
-              icon: FLucideIcons.eyeOff,
-              label: l10n.aiPrivacyMaskAccountsLabel,
-              subtitle: l10n.aiPrivacyMaskAccountsDescription,
-              value: settings.maskAccountNames,
-              onChanged: controller.setMaskAccountNames,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeRow extends StatelessWidget {
-  const _ModeRow({
-    required this.mode,
-    required this.selected,
-    required this.label,
-    required this.description,
-    required this.onSelect,
-  });
-
-  final AiPrivacyMode mode;
-  final AiPrivacyMode selected;
-  final String label;
-  final String description;
-  final void Function(AiPrivacyMode mode) onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final isSelected = mode == selected;
-    return AppTappable(
-      onPress: () => onSelect(mode),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s16,
-          vertical: AppSpacing.s14,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FRadio(
-              value: isSelected,
-              onChange: (_) => onSelect(mode),
-              semanticsLabel: label,
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: context.labelStyle.copyWith(
-                      color: colors.foreground,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.s2),
-                  Text(description, style: context.captionStyle),
-                ],
+            if (_error case final error?) ...[
+              const SizedBox(height: AppSpacing.s12),
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                message: error,
+                compact: true,
               ),
-            ),
+            ],
           ],
-        ),
+        ],
       ),
     );
   }

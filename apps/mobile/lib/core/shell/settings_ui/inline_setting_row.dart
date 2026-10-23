@@ -302,48 +302,64 @@ class InlineSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.s14,
-        vertical: AppSpacing.s10,
-      ),
-      child: Row(
-        children: [
-          SettingsIconChip(icon: icon),
-          const SizedBox(width: AppSpacing.s12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  label,
-                  style: context.theme.typography.body.sm,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (subtitle != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.s2),
-                    child: Text(
-                      subtitle!,
-                      style: context.captionStyle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+    void change(bool next) {
+      if (!enabled) return;
+      AppInteraction.signal(AppInteractionIntent.select);
+      onChanged(next);
+    }
+
+    // One native switch owns focus, keyboard activation and semantics. Its
+    // label is the whole row; the outer detector includes the row padding in
+    // the same hit target without adding another accessible control.
+    return Semantics(
+      label: label,
+      hint: subtitle,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        excludeFromSemantics: true,
+        onTap: enabled ? () => change(!value) : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s14,
+            vertical: AppSpacing.s10,
+          ),
+          child: ExcludeFocus(
+            excluding: !enabled,
+            child: FSwitch(
+              value: value,
+              enabled: enabled,
+              leadingLabel: true,
+              onChange: change,
+              label: ExcludeSemantics(
+                child: Row(
+                  children: [
+                    SettingsIconChip(icon: icon),
+                    const SizedBox(width: AppSpacing.s12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(label, style: context.theme.typography.body.sm),
+                          if (subtitle != null)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: AppSpacing.s2,
+                              ),
+                              child: Text(
+                                subtitle!,
+                                style: context.captionStyle,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-          FSwitch(
-            value: value,
-            enabled: enabled,
-            onChange: (v) {
-              AppInteraction.signal(AppInteractionIntent.select);
-              onChanged(v);
-            },
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -419,7 +435,7 @@ class InlineActionRow extends StatelessWidget {
   }
 }
 
-/// Single-line link row (no trailing value chip; just chevron). Same
+/// Link row with a wrapping label and a trailing chevron. Same
 /// chrome as [InlineSettingRow]. Use for navigation tiles inside an
 /// inset-grouped section.
 ///
@@ -481,12 +497,7 @@ class InlineLinkRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    label,
-                    style: context.theme.typography.body.sm,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(label, style: context.theme.typography.body.sm),
                   if (subtitle != null)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.s2),

@@ -86,9 +86,6 @@ typedef DomainCommandPaletteBuilder = List<CommandPaletteEntry> Function(
 typedef DomainProposalApplierRouteBuilder =
     Future<ProposalApplierRoute> Function(Ref ref);
 
-/// Builds one domain-owned section for Settings -> Domains.
-typedef DomainSettingsSectionBuilder = Widget Function();
-
 /// Builds domain-owned rows for Settings -> Notifications.
 typedef DomainNotificationSettingsBuilder = List<Widget> Function();
 
@@ -143,7 +140,7 @@ class DomainSettingsSpec {
     required this.icon,
     required this.label,
     required this.subtitle,
-    this.sectionBuilder,
+    this.alwaysEnabled = false,
     this.detailPath,
     this.routeBuilder,
   }) : assert(
@@ -160,9 +157,9 @@ class DomainSettingsSpec {
   /// Toggle subtitle that can vary with enabled state.
   final DomainSettingsSubtitleBuilder subtitle;
 
-  /// Optional fully-owned section shown on Settings -> Domains. Use this for
-  /// always-on domains whose settings are richer than an opt-in toggle.
-  final DomainSettingsSectionBuilder? sectionBuilder;
+  /// Always-on domains show a status label instead of an opt-in switch.
+  /// Operational controls belong in the detail page for every domain.
+  final bool alwaysEnabled;
 
   /// Canonical path for the optional domain detail page. The Domains page
   /// uses this to push the detail route without knowing domain internals.

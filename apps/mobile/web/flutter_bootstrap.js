@@ -12,4 +12,8 @@
 {{flutter_js}}
 {{flutter_build_config}}
 
-_flutter.loader.load();
+// Keep first paint independent of external renderer CDNs. Flutter includes
+// these assets in the build; resolve against <base> for nested deployments.
+_flutter.loader.load({
+  config: { canvasKitBaseUrl: new URL('canvaskit/', document.baseURI).href },
+});

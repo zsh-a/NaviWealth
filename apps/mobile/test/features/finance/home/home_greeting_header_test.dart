@@ -57,11 +57,16 @@ void main() {
     await tester.pumpWidget(_wrap());
     await tester.pumpAndSettle();
 
-    // The greeting hosts the cross-domain shell chrome (the Today tab has
-    // no FHeader): global Search + Settings. The domain switcher chip is
-    // hidden here because only one domain is registered in this scope.
+    // One direct action and one shared menu keep the title readable.
     expect(find.byIcon(FLucideIcons.search), findsOneWidget);
-    expect(find.byIcon(FLucideIcons.settings), findsOneWidget);
+    expect(find.byIcon(FLucideIcons.ellipsis), findsOneWidget);
     expect(find.text('Finance overview'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('More actions'));
+    await tester.pumpAndSettle();
+    expect(find.text('Settings'), findsOneWidget);
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+    expect(find.text('settings-route'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 500));
   });
 }

@@ -165,6 +165,10 @@ Rules:
   the header workspace switcher. Finance-only installations resolve `/life`
   to Finance Today; the Life workspace becomes useful only when at least one
   optional domain is active.
+- Brief pages use `ShellPageHeading`: domain and global actions share one
+  overflow menu, with one direct action. The title and controls wrap as separate
+  groups when space or text scaling requires it. The Execution Today heading
+  always offers action capture, including populated and filtered lists.
 - The Life hub does not repeat domain destinations inside its content.
 - Life signals, Financial Inbox, and Knowledge Decisions use the shared
   `SourceActionControl` and neutral action-dispatch/read seams. An existing
@@ -184,6 +188,13 @@ automatic cleanup, and database compaction live under Advanced → Storage
 maintenance. Runtime diagnostics, app logs, performance evidence, and
 developer-issue tooling are debug-build surfaces; normal release builds keep
 only user-actionable AI model, Agent, transparency, and storage controls.
+The domain list contains compact enablement rows and configuration links;
+`DomainSettingsSpec.alwaysEnabled` distinguishes a status row from an opt-in
+switch. Finance preferences live at the contributed `/settings/domains/finance`
+detail route. Domain writes are serialized, with inline retry on failure. Settings switches
+expose one named semantic control and support whole-row and keyboard activation.
+AI provider setup explains provider data use and asks separately about document
+recognition. General app startup does not open an AI privacy prompt.
 
 Shared form input recovery lives in `core/forms/local_form_draft.dart`. Hosts own
 opaque JSON payloads and restore validation. Snapshots stay on this device in

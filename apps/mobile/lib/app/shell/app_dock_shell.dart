@@ -13,7 +13,6 @@ import '../../core/shell/desktop_sidebar.dart';
 import '../../core/shell/domain_shell.dart';
 import '../../core/shell/domain_switcher.dart';
 import '../../design_system/design_system.dart';
-import '../../features/settings/ui/ai/ai_privacy_onboarding.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../routing/route_paths.dart';
 import '../share_intents/share_intent_service.dart';
@@ -187,27 +186,10 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
               context,
               accentColor: activeAccent,
             ),
-            child: _ShellGlobalMounts(child: shellChild),
+            child: shellChild,
           ),
         );
       },
-    );
-  }
-}
-
-class _ShellGlobalMounts extends StatelessWidget {
-  const _ShellGlobalMounts({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: <Widget>[
-        child,
-        const IgnorePointer(child: AiPrivacyOnboardingMount()),
-      ],
     );
   }
 }

@@ -35,64 +35,98 @@ extension _IngestReviewControls on _IngestReviewPageState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.ingestReviewQueueCount(data.items.length, data.allItems.length),
-          style: context.bodyCaptionStyle,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        AppSearchField(
-          key: const ValueKey('ingest-review-search'),
-          focusNode: _searchFocus,
-          controller: _search,
-          enabled: !_isBusy,
-          clearLabel: l10n.ingestClearSearch,
-          onChanged: (value) {
-            if (!_isBusy && value != _query) _changeScope(query: value);
-          },
-          hint: l10n.ingestReviewSearchHint,
-        ),
-        const SizedBox(height: AppSpacing.s8),
-        FSelect<IngestReviewSort>.rich(
-          key: const ValueKey('ingest-review-sort'),
-          enabled: !_isBusy,
-          format: (value) => _sortLabel(l10n, value),
-          control: FSelectControl<IngestReviewSort>.lifted(
-            value: _sort,
-            onChange: (value) {
-              if (value == null || _isBusy) return;
-              setState(() {
-                _sort = value;
-                _visibleLimit = 100;
-              });
-              _resetReviewScroll();
-            },
-          ),
+        Row(
           children: [
-            for (final value in IngestReviewSort.values)
-              FSelectItem(value: value, title: Text(_sortLabel(l10n, value))),
+            Expanded(
+              child: AppSearchField(
+                key: const ValueKey('ingest-review-search'),
+                focusNode: _searchFocus,
+                controller: _search,
+                enabled: !_isBusy,
+                clearLabel: l10n.ingestClearSearch,
+                onChanged: (value) {
+                  if (!_isBusy && value != _query) _changeScope(query: value);
+                },
+                hint: l10n.ingestReviewSearchHint,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Semantics(
+              expanded: _reviewOptionsExpanded,
+              child: AppIconButton(
+                key: const ValueKey('ingest-review-options'),
+                icon: FLucideIcons.slidersHorizontal,
+                tooltip: l10n.ingestReviewOptions,
+                onPress: _isBusy
+                    ? null
+                    : () => setState(
+                        () => _reviewOptionsExpanded = !_reviewOptionsExpanded,
+                      ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: AppSpacing.s8),
-        Wrap(
-          spacing: AppSpacing.s8,
-          runSpacing: AppSpacing.s4,
+        if (_reviewOptionsExpanded) ...[
+          const SizedBox(height: AppSpacing.s12),
+          _reviewOptions(data),
+        ],
+        const SizedBox(height: AppSpacing.s4),
+        Row(
           children: [
-            FButton(
-              key: const ValueKey('ingest-select-filtered'),
-              variant: FButtonVariant.ghost,
-              onPress: _isBusy || data.items.isEmpty
-                  ? null
-                  : () => setState(() {
-                      _selection.selectAll(
-                        data.items
-                            .where((item) => !item.recoveryUnreadable)
-                            .map((item) => item.draft.draftId),
-                      );
-                    }),
-              mainAxisSize: MainAxisSize.min,
-              child: Flexible(child: Text(l10n.ingestSelectFiltered)),
+            Expanded(
+              child: Text(
+                l10n.ingestReviewQueueCount(
+                  data.items.length,
+                  data.allItems.length,
+                ),
+                style: context.bodyCaptionStyle,
+              ),
             ),
-            FButton(
+            const SizedBox(width: AppSpacing.s8),
+            Flexible(
+              child: FButton(
+                key: const ValueKey('ingest-select-filtered'),
+                variant: FButtonVariant.ghost,
+                onPress: _isBusy || data.items.isEmpty
+                    ? null
+                    : () => setState(() {
+                        _selection.selectAll(
+                          data.items
+                              .where((item) => !item.recoveryUnreadable)
+                              .map((item) => item.draft.draftId),
+                        );
+                      }),
+                mainAxisSize: MainAxisSize.min,
+                child: Flexible(child: Text(l10n.ingestSelectFiltered)),
+              ),
+            ),
+          ],
+        ),
+        if (_hasReviewOptions ||
+            _query.isNotEmpty ||
+            _filter != IngestReviewFilter.all)
+          Wrap(
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (_category case final category?)
+                AppBadge(label: _categoryLabel(l10n, category)),
+              if (_sort != IngestReviewSort.importOrder)
+                AppBadge(label: _sortLabel(l10n, _sort)),
+              if (_grouping != IngestReviewGrouping.description)
+                AppBadge(label: _groupingLabel(l10n, _grouping)),
+              AppQuietButton(
+                key: const ValueKey('ingest-clear-filters'),
+                onPress: _isBusy ? null : _clearReviewFilters,
+                label: l10n.ingestClearFilters,
+              ),
+            ],
+          ),
+        if (_selection.selectedIds.isNotEmpty)
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FButton(
               key: const ValueKey('ingest-select-ready'),
               variant: FButtonVariant.ghost,
               onPress: _isBusy || data.freshCount == 0
@@ -114,35 +148,7 @@ extension _IngestReviewControls on _IngestReviewPageState {
               mainAxisSize: MainAxisSize.min,
               child: Flexible(child: Text(l10n.ingestSelectReady)),
             ),
-            if (_query.isNotEmpty ||
-                _category != null ||
-                _filter != IngestReviewFilter.all ||
-                _sort != IngestReviewSort.importOrder)
-              AppQuietButton(
-                key: const ValueKey('ingest-clear-filters'),
-                onPress: _isBusy
-                    ? null
-                    : () {
-                        _search.clear();
-                        _sort = IngestReviewSort.importOrder;
-                        _changeScope(
-                          query: '',
-                          filter: IngestReviewFilter.all,
-                          clearCategory: true,
-                        );
-                      },
-                label: l10n.ingestClearFilters,
-              ),
-            if (_selection.selectedIds.isNotEmpty)
-              FButton(
-                key: const ValueKey('ingest-clear-selection'),
-                variant: FButtonVariant.ghost,
-                onPress: _isBusy ? null : () => setState(_selection.clear),
-                mainAxisSize: MainAxisSize.min,
-                child: Flexible(child: Text(l10n.ingestClearSelection)),
-              ),
-          ],
-        ),
+          ),
         if (_lastBatchOutcome case final outcome?) ...[
           const SizedBox(height: AppSpacing.s8),
           Text(
@@ -187,7 +193,23 @@ extension _IngestReviewControls on _IngestReviewPageState {
     );
   }
 
-  Widget _pinnedReviewFacets(IngestReviewViewData data) {
+  bool get _hasReviewOptions =>
+      _category != null ||
+      _sort != IngestReviewSort.importOrder ||
+      _grouping != IngestReviewGrouping.description;
+
+  void _clearReviewFilters() {
+    _search.clear();
+    _sort = IngestReviewSort.importOrder;
+    _grouping = IngestReviewGrouping.description;
+    _changeScope(
+      query: '',
+      filter: IngestReviewFilter.all,
+      clearCategory: true,
+    );
+  }
+
+  Widget _reviewOptions(IngestReviewViewData data) {
     final l10n = AppLocalizations.of(context);
     const allCategories = (
       kind: IngestTransactionKind.expense,
@@ -197,107 +219,124 @@ extension _IngestReviewControls on _IngestReviewPageState {
       ..sort(
         (a, b) => _categoryLabel(l10n, a).compareTo(_categoryLabel(l10n, b)),
       );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FSelect<IngestReviewCategory>.rich(
+          key: const ValueKey('ingest-review-category'),
+          label: Text(l10n.ingestReviewCategoryLabel),
+          enabled: !_isBusy,
+          format: (value) => value == allCategories
+              ? l10n.ingestAllCategories
+              : _categoryLabel(l10n, value),
+          control: FSelectControl<IngestReviewCategory>.lifted(
+            value: _category ?? allCategories,
+            onChange: (value) {
+              if (value == null) return;
+              _changeScope(
+                category: value == allCategories ? null : value,
+                clearCategory: value == allCategories,
+              );
+            },
+          ),
+          children: [
+            FSelectItem<IngestReviewCategory>(
+              value: allCategories,
+              title: Text(l10n.ingestAllCategories),
+            ),
+            for (final category in categories)
+              FSelectItem<IngestReviewCategory>(
+                value: category,
+                title: Text(
+                  '${_categoryLabel(l10n, category)} (${data.categoryCounts[category] ?? 0})',
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        FSelect<IngestReviewSort>.rich(
+          key: const ValueKey('ingest-review-sort'),
+          label: Text(l10n.ingestReviewSortLabel),
+          enabled: !_isBusy,
+          format: (value) => _sortLabel(l10n, value),
+          control: FSelectControl<IngestReviewSort>.lifted(
+            value: _sort,
+            onChange: (value) {
+              if (value == null || _isBusy) return;
+              setState(() {
+                _sort = value;
+                _visibleLimit = 100;
+              });
+              _resetReviewScroll();
+            },
+          ),
+          children: [
+            for (final value in IngestReviewSort.values)
+              FSelectItem(value: value, title: Text(_sortLabel(l10n, value))),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        FSelect<IngestReviewGrouping>.rich(
+          key: const ValueKey('ingest-review-grouping'),
+          label: Text(l10n.ingestReviewGroupingLabel),
+          enabled: !_isBusy,
+          format: (value) => _groupingLabel(l10n, value),
+          control: FSelectControl<IngestReviewGrouping>.lifted(
+            value: _grouping,
+            onChange: (value) {
+              if (value == null || _isBusy) return;
+              setState(() {
+                _grouping = value;
+                _expandedGroups.clear();
+                _visibleLimit = 100;
+              });
+              _resetReviewScroll();
+            },
+          ),
+          children: [
+            for (final grouping in IngestReviewGrouping.values)
+              FSelectItem(
+                value: grouping,
+                title: Text(_groupingLabel(l10n, grouping)),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _pinnedReviewFacets(IngestReviewViewData data) {
+    final l10n = AppLocalizations.of(context);
     return PinnedHeaderSliver(
       child: Container(
         key: const ValueKey('ingest-pinned-facets'),
         color: context.theme.colors.background,
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final filter in [
-                    IngestReviewFilter.all,
-                    IngestReviewFilter.attention,
-                    IngestReviewFilter.ready,
-                    IngestReviewFilter.likelyDuplicate,
-                    IngestReviewFilter.duplicate,
-                  ])
-                    Padding(
-                      padding: const EdgeInsetsDirectional.only(
-                        end: AppSpacing.s8,
-                      ),
-                      child: AppFilterChip(
-                        key: ValueKey('ingest-filter-${filter.name}'),
-                        label:
-                            '${_filterLabel(l10n, filter)} (${data.filterCounts[filter] ?? 0})',
-                        active: _filter == filter,
-                        onPress: _isBusy
-                            ? null
-                            : () => _changeScope(filter: filter),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.s8),
-            Row(
-              children: [
-                Expanded(
-                  child: FSelect<IngestReviewCategory>.rich(
-                    key: const ValueKey('ingest-review-category'),
-                    enabled: !_isBusy,
-                    format: (value) => value == allCategories
-                        ? l10n.ingestAllCategories
-                        : _categoryLabel(l10n, value),
-                    control: FSelectControl<IngestReviewCategory>.lifted(
-                      value: _category ?? allCategories,
-                      onChange: (value) {
-                        if (value == null) return;
-                        _changeScope(
-                          category: value == allCategories ? null : value,
-                          clearCategory: value == allCategories,
-                        );
-                      },
-                    ),
-                    children: [
-                      FSelectItem<IngestReviewCategory>(
-                        value: allCategories,
-                        title: Text(l10n.ingestAllCategories),
-                      ),
-                      for (final category in categories)
-                        FSelectItem<IngestReviewCategory>(
-                          value: category,
-                          title: Text(
-                            '${_categoryLabel(l10n, category)} (${data.categoryCounts[category] ?? 0})',
-                          ),
-                        ),
-                    ],
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final filter in [
+                IngestReviewFilter.all,
+                IngestReviewFilter.attention,
+                IngestReviewFilter.ready,
+                IngestReviewFilter.likelyDuplicate,
+                IngestReviewFilter.duplicate,
+              ])
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: AppSpacing.s8),
+                  child: AppFilterChip(
+                    key: ValueKey('ingest-filter-${filter.name}'),
+                    label:
+                        '${_filterLabel(l10n, filter)} (${data.filterCounts[filter] ?? 0})',
+                    active: _filter == filter,
+                    onPress: _isBusy
+                        ? null
+                        : () => _changeScope(filter: filter),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.s8),
-                Expanded(
-                  child: FSelect<IngestReviewGrouping>.rich(
-                    key: const ValueKey('ingest-review-grouping'),
-                    enabled: !_isBusy,
-                    format: (value) => _groupingLabel(l10n, value),
-                    control: FSelectControl<IngestReviewGrouping>.lifted(
-                      value: _grouping,
-                      onChange: (value) {
-                        if (value == null || _isBusy) return;
-                        setState(() {
-                          _grouping = value;
-                          _expandedGroups.clear();
-                          _visibleLimit = 100;
-                        });
-                        _resetReviewScroll();
-                      },
-                    ),
-                    children: [
-                      for (final grouping in IngestReviewGrouping.values)
-                        FSelectItem(
-                          value: grouping,
-                          title: Text(_groupingLabel(l10n, grouping)),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

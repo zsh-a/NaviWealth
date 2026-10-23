@@ -15,6 +15,9 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
       _probeError = null;
       _provider = profile?.provider ?? LlmProvider.anthropic;
       _probeResult = null;
+      _allowDocumentRecognition = ref
+          .read(aiPrivacySettingsProvider)
+          .allowDocumentRecognition;
     });
     dirty.snapshotBaseline();
   }
@@ -117,8 +120,24 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
     await submitForm<void>(
       dirty: dirty,
       onBusyChanged: _setSaving,
-      commit: () =>
-          ref.read(llmCredentialsProvider.notifier).upsertProfile(profile),
+      commit: () async {
+        final privacy = ref.read(aiPrivacySettingsProvider.notifier);
+        final previous = ref
+            .read(aiPrivacySettingsProvider)
+            .allowDocumentRecognition;
+        final changed = previous != _allowDocumentRecognition;
+        if (changed) {
+          await privacy.setAllowDocumentRecognition(_allowDocumentRecognition);
+        }
+        try {
+          await ref
+              .read(llmCredentialsProvider.notifier)
+              .upsertProfile(profile);
+        } catch (_) {
+          if (changed) await privacy.setAllowDocumentRecognition(previous);
+          rethrow;
+        }
+      },
       leave: _finishEditor,
       failureMessage: (_) => l10n.commonSaveFailed,
       successMessage: l10n.aiLlmSaved,
@@ -189,6 +208,15 @@ mixin _AiLlmCredentialsEditorMixin on _AiLlmCredentialsPageStateBase {
             style: context.labelStyle,
           ),
           const SizedBox(height: AppSpacing.s14),
+          AiProviderPrivacyFields(
+            allowDocumentRecognition: _allowDocumentRecognition,
+            enabled: !_saving && !_probing,
+            onChanged: (value) => setState(() {
+              _allowDocumentRecognition = value;
+              dirty.markDirty();
+            }),
+          ),
+          const SizedBox(height: AppSpacing.s20),
           _label(context, l10n.aiLlmNameLabel),
           const SizedBox(height: AppSpacing.s6),
           FTextFormField(

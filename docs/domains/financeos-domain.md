@@ -107,8 +107,10 @@ The review queue searches, filters and counts all owner-scoped pending and
 confirming drafts. Description groups are collapsed by default; category groups
 and individual rows remain available. Grouping preserves transaction kind and
 currency boundaries and uses exact whitespace/case-normalized descriptions,
-never fuzzy merchant matches. Status and category facets stay pinned; category
-search includes localized names and canonical aliases. Rendering is lazy and
+never fuzzy merchant matches. Status facets stay pinned; category, sorting and
+grouping controls share a collapsed filters/display panel. Active options remain
+visible as summaries, and selection reveals bulk actions. Category search includes
+localized names and canonical aliases. Rendering is lazy and
 automatically reveals another 100 rows near the end of the visible window.
 Selecting filtered results includes rows beyond the rendered window. Changing
 search/filter scope clears selection, and batch button counts use the same
@@ -145,7 +147,10 @@ retries only unfinished continuations.
 
 New expense input uses the shared local form draft session, with explicit restore
 or discard on reopening. Successful saves and explicit discard clear the draft.
-Edit-load failures replace the spinner with actionable retry.
+Edit-load failures replace the spinner with actionable retry. Category and account
+loading/failure states retain their labels and provide local retry without
+discarding input. Save remains disabled until both selections are available and
+the selected account matches the form currency.
 
 Shared account pickers search account names and currencies without conflating
 identical labels or clearing the selection when search has no results. Expense,

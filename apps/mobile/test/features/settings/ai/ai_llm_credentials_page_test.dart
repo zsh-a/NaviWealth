@@ -11,6 +11,8 @@ import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
 import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+import 'package:naviwealth/core/ai/contracts/ai_privacy_settings.dart';
+import 'package:naviwealth/core/ai/llm_credentials/llm_connectivity.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -20,12 +22,64 @@ import 'package:naviwealth/core/security/in_memory_key_store.dart';
 import 'package:naviwealth/core/security/secure_key_store.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/settings/ui/ai/ai_llm_credentials_page.dart';
+import 'package:naviwealth/features/settings/ui/ai/ai_provider_privacy_fields.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../app/agent_runtime_native_bridge_test_harness.dart';
 import '../../../support/test_app_theme.dart';
 
+late SharedPreferences _preferences;
+
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    _preferences = await SharedPreferences.getInstance();
+  });
+
+  testWidgets(
+    'native setup discloses provider data use only when configuring',
+    (tester) async {
+      final probe = _RecordingProbe();
+      await tester.pumpWidget(
+        _wrap(
+          credentials: const LlmCredentials(),
+          runtimeRunner: null,
+          probe: probe,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AiProviderPrivacyFields), findsNothing);
+      await tester.tap(find.text('Add provider'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AiProviderPrivacyFields), findsOneWidget);
+      final fields = tester.widget<AiProviderPrivacyFields>(
+        find.byType(AiProviderPrivacyFields),
+      );
+      expect(fields.allowDocumentRecognition, isFalse);
+      expect(find.byType(Dialog), findsNothing);
+      expect(probe.calls, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('unsupported platforms expose no provider setup or permission', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        credentials: const LlmCredentials(),
+        runtimeRunner: null,
+        supported: false,
+      ),
+    );
+    await tester.pumpAndSettle();
+    final l10n = lookupAppLocalizations(const Locale('en'));
+    expect(find.text(l10n.aiLlmUnsupportedTitle), findsOneWidget);
+    expect(find.text(l10n.aiLlmAddProvider), findsNothing);
+    expect(find.byType(AiProviderPrivacyFields), findsNothing);
+  });
+
   testWidgets(
     'failed profile save retains input and cancel guards unsaved changes',
     (tester) async {
@@ -33,20 +87,29 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       final store = _UnavailableKeyStore();
+      final probe = _RecordingProbe();
       await tester.pumpWidget(
         _wrap(
           credentials: const LlmCredentials(),
           runtimeRunner: null,
           keyStore: store,
+          probe: probe,
         ),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Add provider'));
       await tester.pumpAndSettle();
+      final privacyFields = tester.widget<AiProviderPrivacyFields>(
+        find.byType(AiProviderPrivacyFields),
+      );
+      privacyFields.onChanged(true);
+      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('llm-profile-name')));
       await tester.enterText(
         find.byKey(const Key('llm-profile-name')),
         'My profile',
       );
+      await tester.ensureVisible(find.byKey(const Key('llm-profile-key')));
       await tester.enterText(
         find.byKey(const Key('llm-profile-key')),
         'test-key',
@@ -70,6 +133,13 @@ void main() {
       final l10n = lookupAppLocalizations(const Locale('en'));
       expect(find.text(l10n.commonSaveFailed), findsWidgets);
       expect(find.text(l10n.aiLlmSaved), findsNothing);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AiLlmCredentialsPage)),
+      );
+      expect(
+        container.read(aiPrivacySettingsProvider).allowDocumentRecognition,
+        isFalse,
+      );
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(find.text(l10n.unsavedChangesTitle), findsOneWidget);
@@ -80,7 +150,12 @@ void main() {
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
       expect(find.text(l10n.aiLlmSaved), findsWidgets);
+      expect(
+        container.read(aiPrivacySettingsProvider).allowDocumentRecognition,
+        isTrue,
+      );
       expect(find.byType(EditableText), findsNothing);
+      expect(probe.calls, 0);
       expect(tester.takeException(), isNull);
     },
   );
@@ -125,6 +200,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(native.llmRequests, isEmpty);
     await tester.ensureVisible(find.text('Start check'));
     await tester.tap(find.text('Start check'));
     await tester.pumpAndSettle();
@@ -195,15 +271,19 @@ Widget _wrap({
   required AgentRuntimeProfileTurnRunner? runtimeRunner,
   ProposalApplier? proposalApplier,
   SecureKeyStore? keyStore,
+  LlmConnectivityProbe? probe,
+  bool supported = true,
 }) {
   return ProviderScope(
     overrides: [
-      deviceLlmPlatformSupportedProvider.overrideWithValue(true),
+      sharedPreferencesProvider.overrideWithValue(_preferences),
+      deviceLlmPlatformSupportedProvider.overrideWithValue(supported),
       if (keyStore == null)
         llmCredentialsProvider.overrideWith(
           () => _FakeCredentialsNotifier(credentials),
         ),
       if (keyStore != null) secureKeyStoreProvider.overrideWithValue(keyStore),
+      if (probe != null) llmConnectivityProbeProvider.overrideWithValue(probe),
       agentRuntimeProfileTurnRunnerProvider.overrideWithValue(runtimeRunner),
       if (proposalApplier != null)
         agentRuntimeProposalBridgeProvider.overrideWith((ref) async {
@@ -397,5 +477,18 @@ class _UnavailableKeyStore extends InMemoryKeyStore {
   Future<void> write(String key, String value) async {
     if (fail) throw StateError('Secure storage unavailable');
     await super.write(key, value);
+  }
+}
+
+class _RecordingProbe implements LlmConnectivityProbe {
+  int calls = 0;
+
+  @override
+  Future<LlmProbeResult> probe(
+    LlmProfile profile, {
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
+    calls++;
+    return const LlmProbeResult(LlmProbeStatus.ok, 'Connected');
   }
 }

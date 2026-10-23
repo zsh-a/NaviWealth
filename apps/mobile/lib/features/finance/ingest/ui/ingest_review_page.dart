@@ -87,6 +87,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
   final TextEditingController _search = TextEditingController();
   final FocusNode _searchFocus = FocusNode(debugLabel: 'ingest review search');
   String _query = '';
+  bool _reviewOptionsExpanded = false;
   IngestReviewFilter _filter = IngestReviewFilter.all;
   IngestReviewSort _sort = IngestReviewSort.importOrder;
   IngestReviewCategory? _category;

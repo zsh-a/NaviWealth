@@ -61,9 +61,7 @@ Future<ProviderContainer> _pumpAt(
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
 
-  SharedPreferences.setMockInitialValues({
-    'ai_privacy.onboarding_seen.v1': true,
-  });
+  SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);
@@ -123,6 +121,22 @@ void main() {
     };
     addTearDown(() => FlutterError.onError = originalHandler);
   });
+
+  for (final aiSupported in [false, true]) {
+    testWidgets('fresh shell never opens AI setup (supported: $aiSupported)', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      await _pumpAt(
+        tester,
+        domains: [financeDomainShell(l10n)],
+        aiSupported: aiSupported,
+      );
+      expect(find.byType(AppSheet), findsNothing);
+      expect(appSheetOverlayDepthListenable.value, 0);
+      expect(find.byType(HomePage), findsOneWidget);
+    });
+  }
 
   testWidgets('desktop hides Ask AI when the runtime is unsupported', (
     tester,

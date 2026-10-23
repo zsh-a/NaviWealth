@@ -14,6 +14,7 @@ class ExpenseCategoryPicker extends StatelessWidget {
     required this.value,
     required this.onChanged,
     required this.label,
+    this.required = false,
     this.helperText,
     this.leafOnly = true,
     this.excludeIds = const <String>{},
@@ -24,6 +25,7 @@ class ExpenseCategoryPicker extends StatelessWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
   final String label;
+  final bool required;
   final String? helperText;
   final bool leafOnly;
   final Set<String> excludeIds;
@@ -72,7 +74,7 @@ class ExpenseCategoryPicker extends StatelessWidget {
         value: effectiveValue,
         onChange: onChanged,
       ),
-      label: Text(label),
+      label: required ? RequiredLabel(label) : Text(label),
       description: helperText == null ? null : Text(helperText!),
       enabled: entries.isNotEmpty,
       validator: validator ?? FFormFieldProperties.defaultValidator,

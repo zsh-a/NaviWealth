@@ -13,10 +13,10 @@ import 'package:naviwealth/features/finance/data/repositories/journal_entry_prov
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/ai/composition/proposal_applier.dart';
+import '../../../../core/ai/contracts/ai_privacy_settings.dart';
 import '../../../../core/ai/contracts/ai_span.dart';
 import '../../../../core/ai/contracts/ai_trace.dart';
 import '../../../../core/ai/contracts/intent.dart';
-import '../../../../core/ai/contracts/privacy_mode_provider.dart';
 import '../../../../core/ai/trace/ai_trace_builder.dart';
 import '../../../../core/ai/trace/providers.dart';
 import '../../../../core/auth/current_user.dart';
@@ -171,16 +171,17 @@ class IngestController {
   Future<void> _planningTail = Future<void>.value();
 
   Future<IngestResult> ingest(IngestSource source) async {
-    // §5.10.10 / S5b — privacy gate (隐私门). Image / PDF / email need
-    // provider Vision; the §5.10.5 posture decides if that is permitted.
-    final mode = _ref.read(aiPrivacySettingsProvider).mode;
-    switch (ingestPrivacyGate(source.kind, mode)) {
+    final privacy = _ref.read(aiPrivacySettingsProvider);
+    switch (ingestPrivacyGate(
+      source.kind,
+      allowDocumentRecognition: privacy.allowDocumentRecognition,
+    )) {
       case IngestGateVerdict.blockedByPrivacy:
         return const IngestResult(
           drafts: <IngestDraft>[],
           rejectedReason:
-              '隐私模式「金额完全本地」已禁用模型解析；'
-              '请改用 CSV / 文本粘贴，或在设置中调整 AI 隐私模式',
+              'AI 文档识别尚未开启，文件不会发送给模型服务商。'
+              '请改用 CSV / 文本粘贴，或在 AI 隐私设置中允许文档识别。',
         );
       case IngestGateVerdict.providerVisionAllowed:
         final context = _captureContext();

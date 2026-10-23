@@ -108,6 +108,9 @@ Future<Widget> _wrap({
   Future<JournalEntryRepository> Function()? repositoryFactory,
   Stream<List<Account>>? accountsStream,
   Stream<List<Account>>? allAccountsStream,
+  Stream<List<Account>> Function()? accountsStreamFactory,
+  Stream<List<ExpenseCategory>> Function()? categoriesStreamFactory,
+  TextScaler textScaler = TextScaler.noScaling,
 }) async {
   for (final entry in preferences.entries) {
     await harness.prefs.setString(entry.key, entry.value as String);
@@ -123,32 +126,42 @@ Future<Widget> _wrap({
             Future.value(harness.repository),
       ),
       accountsStreamProvider.overrideWith(
-        (_) => accountsStream ?? Stream.value(accounts),
+        (_) =>
+            accountsStreamFactory?.call() ??
+            accountsStream ??
+            Stream.value(accounts),
       ),
       allAccountsStreamProvider.overrideWith(
         (_) => allAccountsStream ?? Stream.value(allAccounts),
       ),
       expenseCategoriesProvider.overrideWith(
-        (_) => Stream.value([
-          for (final account in allAccounts)
-            if (account.category == AccountSide.expense)
-              ExpenseCategory(
-                id: account.id,
-                name: account.name,
-                parentId: account.parentId,
-                ledgerAccountId: account.id,
-                icon: account.icon,
-                color: account.color,
-                sync: account.sync,
-              ),
-        ]),
+        (_) =>
+            categoriesStreamFactory?.call() ??
+            Stream.value([
+              for (final account in allAccounts)
+                if (account.category == AccountSide.expense)
+                  ExpenseCategory(
+                    id: account.id,
+                    name: account.name,
+                    parentId: account.parentId,
+                    ledgerAccountId: account.id,
+                    icon: account.icon,
+                    color: account.color,
+                    sync: account.sync,
+                  ),
+            ]),
       ),
     ],
     child: MaterialApp.router(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       locale: const Locale('en', 'US'),
-      builder: (context, child) => AppMessenger.init(child: child!),
+      builder: (context, child) => AppMessenger.init(
+        child: MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+          child: child!,
+        ),
+      ),
       routerConfig: GoRouter(
         initialLocation: editingId == null ? '/new' : '/edit',
         routes: [
@@ -218,6 +231,114 @@ void main() {
   tearDown(() async {
     await harness.dispose();
   });
+
+  testWidgets(
+    'async fields keep labels and recover independently without losing input',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final categoryLoading = StreamController<List<ExpenseCategory>>();
+      final accountsLoading = StreamController<List<Account>>();
+      addTearDown(categoryLoading.close);
+      addTearDown(accountsLoading.close);
+      var categoryReads = 0;
+      var accountReads = 0;
+      final account = _account(
+        id: 'cash-1',
+        name: 'Cash',
+        category: AccountSide.asset,
+      );
+      final category = ExpenseCategory(
+        id: 'dining',
+        name: 'Dining',
+        ledgerAccountId: 'dining',
+        sync: _meta(),
+      );
+      await tester.pumpWidget(
+        await _wrap(
+          harness: harness,
+          accounts: const [],
+          allAccounts: const [],
+          preferences: const {},
+          categoriesStreamFactory: () => ++categoryReads == 1
+              ? categoryLoading.stream
+              : Stream.value([category]),
+          accountsStreamFactory: () => ++accountReads == 1
+              ? accountsLoading.stream
+              : Stream.value([account]),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('Category *', findRichText: true), findsOneWidget);
+      expect(find.text('Account *', findRichText: true), findsOneWidget);
+      _expectSubmitAvailability(tester, enabled: false);
+      await tester.enterText(_amountInput(), '18.50');
+      categoryLoading.addError(StateError('category unavailable'));
+      accountsLoading.addError(StateError('account unavailable'));
+      await tester.pumpAndSettle();
+      expect(find.text("Couldn't load categories"), findsOneWidget);
+      expect(find.text("Couldn't load accounts"), findsOneWidget);
+      _expectSubmitAvailability(tester, enabled: false);
+      final categoryRetry = find.descendant(
+        of: find.byKey(const Key('expense-categories-error')),
+        matching: find.byType(AppQuietButton),
+      );
+      await tester.ensureVisible(categoryRetry);
+      await tester.tap(categoryRetry);
+      await tester.pumpAndSettle();
+      expect(find.byType(ExpenseCategoryPicker), findsOneWidget);
+      expect(find.byKey(const Key('expense-accounts-error')), findsOneWidget);
+      _expectSubmitAvailability(tester, enabled: false);
+      final accountRetry = find.descendant(
+        of: find.byKey(const Key('expense-accounts-error')),
+        matching: find.byType(AppQuietButton),
+      );
+      await tester.ensureVisible(accountRetry);
+      await tester.tap(accountRetry);
+      await tester.pumpAndSettle();
+      expect(find.byType(AccountPicker), findsOneWidget);
+      expect(
+        tester.widget<AmountField>(find.byType(AmountField)).controller!.text,
+        '18.50',
+      );
+      _expectSubmitAvailability(tester, enabled: true);
+      await tester.tap(find.widgetWithText(FButton, 'Save'));
+      await tester.pumpAndSettle();
+      expect(
+        await harness.db.select(harness.db.journalEntries).get(),
+        hasLength(1),
+      );
+      expect(categoryReads, 2);
+      expect(accountReads, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'empty category and account data explain how to continue and disable save',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        await _wrap(
+          harness: harness,
+          accounts: const [],
+          allAccounts: const [],
+          preferences: const {},
+          textScaler: const TextScaler.linear(2),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('No expense categories'), findsOneWidget);
+      expect(find.text('Create an account first'), findsOneWidget);
+      expect(
+        find.text('Setting up default categories, please wait…'),
+        findsNothing,
+      );
+      _expectSubmitAvailability(tester, enabled: false);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('unfinished expense input survives an interrupted page', (
     tester,

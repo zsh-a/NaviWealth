@@ -9,6 +9,13 @@ AI runtime。
 `LlmProfile` 时，选定的 transcript/context 会直接发给该 provider；本地 ASR
 只保证识别音频的处理路径，不改变后续模型请求的传输边界。
 
+原生端的模型服务商配置页说明这一传输边界，并提供单独的“AI 文档识别”权限，
+默认关闭。在配置页编辑的权限随服务商配置一起保存，也可在 AI 隐私设置中单独修改；
+首次打开应用不弹出 AI 设置。
+开启后，主动选择识别的图片、PDF 和邮件会完整发送给已配置的 provider，
+不会自动对金额或账户名称做掩码。CSV 和粘贴文本由本机确定性解析器处理。
+这项权限不改变聊天消息和工具上下文的传输规则，Web 不提供文档识别开关。
+
 ## Document Contract
 
 本文拥有设备端 AI 的产品边界、入口与 InteractionSession 行为、Host/Runtime 分工、

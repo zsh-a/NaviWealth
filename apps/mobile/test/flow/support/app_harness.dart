@@ -21,7 +21,6 @@ import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/app/share_intents/share_intent_service.dart';
-import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
@@ -138,7 +137,6 @@ Future<void> bootApp(
     ...initialPrefs,
   });
   final prefs = await SharedPreferences.getInstance();
-  await markAiPrivacyOnboardingSeen(prefs);
   final testDb = liveData == null ? makeTestDatabase() : null;
   if (testDb != null) {
     addTearDown(testDb.close);

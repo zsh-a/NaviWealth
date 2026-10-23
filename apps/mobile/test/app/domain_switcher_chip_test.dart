@@ -31,6 +31,44 @@ DomainShellSpec _domain({
 );
 
 void main() {
+  testWidgets('single-domain home does not show a link to itself', (
+    tester,
+  ) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: DomainSwitcherChip()),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          activeDomainShellsProvider.overrideWithValue([
+            _domain(scope: DomainScope.finance, label: 'FinanceOS', path: '/'),
+          ]),
+          domainSwitcherHomePathProvider.overrideWithValue('/'),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+          builder: (context, child) =>
+              FTheme(data: FTheme.neutral.light.desktop, child: child!),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('FinanceOS'), findsNothing);
+    expect(find.byType(AppQuietButton), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Life hub links directly to its only active domain', (
     tester,
   ) async {

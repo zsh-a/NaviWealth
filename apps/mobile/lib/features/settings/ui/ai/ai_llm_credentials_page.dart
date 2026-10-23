@@ -16,6 +16,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../app/agent_runtime/bindings/agent_runtime_profile_turn_binding.dart';
 import '../../../../app/agent_runtime/proposals/agent_runtime_proposal_bridge.dart';
 import '../../../../core/ai/composition/proposal_plan.dart';
+import '../../../../core/ai/contracts/ai_privacy_settings.dart';
 import '../../../../core/ai/llm_credentials/llm_connectivity.dart';
 import '../../../../core/ai/llm_credentials/llm_credentials.dart';
 import '../../../../core/ai/llm_credentials/providers.dart';
@@ -24,6 +25,7 @@ import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import 'ai_provider_privacy_fields.dart';
 
 part 'llm_credentials/editor.dart';
 part 'llm_credentials/profile_cards.dart';
@@ -76,6 +78,7 @@ abstract class _AiLlmCredentialsPageStateBase
   bool _probing = false;
   bool _runtimeChecking = false;
   bool _proposalApplying = false;
+  bool _allowDocumentRecognition = false;
   LlmProbeResult? _probeResult;
   AgentRuntimeProfileTurnResult? _runtimeResult;
   Map<String, Object?>? _proposalApplyResult;

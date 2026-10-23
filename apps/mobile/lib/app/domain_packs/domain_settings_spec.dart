@@ -11,11 +11,13 @@ DomainSettingsSpec domainSettingsSpec({
   required String routePath,
   required String routeName,
   required Widget page,
+  bool alwaysEnabled = false,
 }) {
   return DomainSettingsSpec(
     icon: icon,
     label: label,
     subtitle: subtitle,
+    alwaysEnabled: alwaysEnabled,
     detailPath: routePath,
     routeBuilder: (wrap) => GoRoute(
       path: _settingsChildPath(routePath),

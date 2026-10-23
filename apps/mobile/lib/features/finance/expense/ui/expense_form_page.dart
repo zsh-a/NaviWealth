@@ -9,6 +9,7 @@ import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/visual/ai_hover_overlay.dart';
 import 'package:naviwealth/core/ai/visual/ai_object_capsule.dart';
 import 'package:naviwealth/core/ai/write/write.dart';
+import 'package:naviwealth/core/logging/app_logger.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/domain/account_semantics.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -129,9 +130,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 
   void _onPaymentAccounts(
-    AsyncValue<List<Account>>? _,
+    AsyncValue<List<Account>>? previous,
     AsyncValue<List<Account>> next,
   ) {
+    if (next.hasError && previous?.error != next.error) {
+      AppLogger.instance.w(
+        'Expense accounts load failed',
+        error: next.error,
+        stackTrace: next.stackTrace,
+      );
+    }
     final accounts = next.value;
     if (accounts == null || (widget.isEdit && _initial == null)) return;
     _hydratePaymentAccounts(accounts);
@@ -159,9 +167,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 
   void _onCategories(
-    AsyncValue<List<ExpenseCategory>>? _,
+    AsyncValue<List<ExpenseCategory>>? previous,
     AsyncValue<List<ExpenseCategory>> next,
   ) {
+    if (next.hasError && previous?.error != next.error) {
+      AppLogger.instance.w(
+        'Expense categories load failed',
+        error: next.error,
+        stackTrace: next.stackTrace,
+      );
+    }
     final categories = next.value;
     if (categories == null || (widget.isEdit && _initial == null)) return;
     _hydrateCategories(categories);
@@ -464,14 +479,44 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
     return parts.join(' · ');
   }
 
+  void _retryCategories() {
+    ref
+      ..invalidate(systemAccountsSeedProvider)
+      ..invalidate(expenseCategoryRepositoryProvider)
+      ..invalidate(expenseCategoriesSeedProvider)
+      ..invalidate(expenseCategoriesProvider);
+  }
+
+  void _retryAccounts() {
+    ref
+      ..invalidate(accountRepositoryProvider)
+      ..invalidate(systemAccountsSeedProvider)
+      ..invalidate(accountsStreamProvider);
+  }
+
   @override
   Widget build(BuildContext context) {
     _captureDraft();
     final l10n = AppLocalizations.of(context);
     final loadingExisting = widget.isEdit && _initial == null;
-    final onSubmit = _busy ? null : _save;
     final categoriesAsync = ref.watch(expenseCategoriesProvider);
     final accountsAsync = ref.watch(accountsStreamProvider);
+    final selectedCategory = _expenseLeafCategories(
+      categoriesAsync.value ?? const [],
+    ).any((category) => category.id == _categoryId);
+    final selectedAccount = _paymentAccounts(accountsAsync.value ?? const [])
+        .any(
+          (account) =>
+              account.id == _fromAccountId && account.currency == _currency,
+        );
+    final prerequisitesReady =
+        !categoriesAsync.isLoading &&
+        !categoriesAsync.hasError &&
+        !accountsAsync.isLoading &&
+        !accountsAsync.hasError &&
+        selectedCategory &&
+        selectedAccount;
+    final onSubmit = _busy || !prerequisitesReady ? null : _save;
     return guardedScope(
       child: AppFormPageScaffold(
         title: Text(_pageTitle(l10n, categoriesAsync.value)),
@@ -572,13 +617,16 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                       ),
                       const SizedBox(height: AppSpacing.s8),
                       categoriesAsync.when(
+                        skipLoadingOnRefresh: false,
                         data: (categories) {
                           if (_expenseLeafCategories(categories).isEmpty) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: AppSpacing.s12,
+                            return _ExpenseFieldState(
+                              label: l10n.expenseCategoryPickerLabelDefault,
+                              message: l10n.expenseCategoriesEmpty,
+                              actionLabel: l10n.expenseCategoriesManageTitle,
+                              onAction: () => context.push(
+                                FinanceRoutes.planExpenseCategories,
                               ),
-                              child: Text(l10n.expenseFormCategoriesLoading),
                             );
                           }
                           return ExpenseCategoryPicker(
@@ -592,27 +640,30 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                               });
                             },
                             label: l10n.expenseCategoryPickerLabelDefault,
+                            required: true,
                             leafOnly: true,
                             validator: (id) => id == null || id.isEmpty
                                 ? l10n.expenseCategoryPickerRequired
                                 : null,
                           );
                         },
-                        loading: () => const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: AppSpacing.s12,
-                          ),
-                          child: FProgress(),
+                        loading: () => _ExpenseFieldState(
+                          label: l10n.expenseCategoryPickerLabelDefault,
+                          message: l10n.commonLoading,
+                          loading: true,
                         ),
-                        error: (e, _) => Text(
-                          userSafeErrorMessage(context, e),
-                          style: context.captionStyle.copyWith(
-                            color: context.appTheme.status.danger.fg,
-                          ),
+                        error: (_, _) => _ExpenseFieldState(
+                          key: const Key('expense-categories-error'),
+                          label: l10n.expenseCategoryPickerLabelDefault,
+                          message: l10n.expenseFormCategoriesLoadError,
+                          error: true,
+                          actionLabel: l10n.commonRetry,
+                          onAction: _retryCategories,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.s12),
                       accountsAsync.when(
+                        skipLoadingOnRefresh: false,
                         data: (accounts) {
                           final fromAccounts = _paymentAccounts(accounts);
                           if (fromAccounts.isEmpty) {
@@ -683,12 +734,18 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
                             ],
                           );
                         },
-                        loading: () => const FProgress(),
-                        error: (e, _) => Text(
-                          userSafeErrorMessage(context, e),
-                          style: context.captionStyle.copyWith(
-                            color: context.appTheme.status.danger.fg,
-                          ),
+                        loading: () => _ExpenseFieldState(
+                          label: l10n.expenseFormAccountLabel,
+                          message: l10n.commonLoading,
+                          loading: true,
+                        ),
+                        error: (_, _) => _ExpenseFieldState(
+                          key: const Key('expense-accounts-error'),
+                          label: l10n.expenseFormAccountLabel,
+                          message: l10n.expenseFormAccountsLoadError,
+                          error: true,
+                          actionLabel: l10n.commonRetry,
+                          onAction: _retryAccounts,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.s12),
@@ -750,6 +807,60 @@ class _ExpenseFormPageState extends ConsumerState<ExpenseFormPage>
   }
 }
 
+/// Keep field identity and recovery in place while its data is unavailable.
+class _ExpenseFieldState extends StatelessWidget {
+  const _ExpenseFieldState({
+    super.key,
+    required this.label,
+    required this.message,
+    this.loading = false,
+    this.error = false,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String label;
+  final String message;
+  final bool loading;
+  final bool error;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) => FLabel(
+    layout: FLabelLayout.vertical,
+    label: RequiredLabel(label),
+    child: loading
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const FProgress(),
+              const SizedBox(height: AppSpacing.s4),
+              Text(message, style: context.captionStyle),
+            ],
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppStatusBanner(
+                kind: error ? AppStatusKind.error : AppStatusKind.info,
+                message: message,
+                action: error && onAction != null
+                    ? AppQuietButton(label: actionLabel!, onPress: onAction)
+                    : null,
+              ),
+              if (!error && onAction != null) ...[
+                const SizedBox(height: AppSpacing.s4),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: AppQuietButton(label: actionLabel!, onPress: onAction),
+                ),
+              ],
+            ],
+          ),
+  );
+}
+
 class _NoAccountsHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -798,7 +909,7 @@ class _NoAccountsHint extends StatelessWidget {
                 FButton(
                   variant: FButtonVariant.outline,
                   onPress: () => context.push(FinanceRoutes.wealthAccountNew),
-                  child: Text(l10n.expenseFormNoAccountsCta),
+                  child: Flexible(child: Text(l10n.expenseFormNoAccountsCta)),
                 ),
               ],
             ),

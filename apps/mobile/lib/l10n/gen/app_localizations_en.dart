@@ -10,6 +10,33 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String settingsDomainsUpdateFailed(String domain) {
+    return 'Could not update $domain. Try again.';
+  }
+
+  @override
+  String get aiPrivacyDocumentRecognitionDescription =>
+      'Send selected images, PDFs and emails to your configured model provider. Files are sent in full; amounts and account names are not automatically removed. CSV and pasted text are parsed on this device.';
+
+  @override
+  String get aiPrivacyDocumentRecognitionLabel => 'AI document recognition';
+
+  @override
+  String get ingestReviewGroupingLabel => 'Group';
+
+  @override
+  String get ingestReviewCategoryLabel => 'Category';
+
+  @override
+  String get ingestReviewSortLabel => 'Sort';
+
+  @override
+  String get ingestReviewOptions => 'Filters and display';
+
+  @override
+  String get settingsDomainsAlwaysOn => 'Always on';
+
+  @override
   String get capitalAllocationAutoBalanceHint =>
       'Finish editing a target to adjust the others proportionally. Total stays at 100%; saving also applies unfinished input.';
 
@@ -6187,13 +6214,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pick a category, account, and currency';
 
   @override
-  String get expenseFormCategoriesLoading =>
-      'Setting up default categories, please wait…';
-
-  @override
-  String expenseFormCategoriesLoadError(String error) {
-    return 'Couldn\'t load categories: $error';
-  }
+  String get expenseFormCategoriesLoadError => 'Couldn\'t load categories';
 
   @override
   String get expenseFormAccountLabel => 'Account';
@@ -6211,9 +6232,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String expenseFormAccountsLoadError(String error) {
-    return 'Couldn\'t load accounts: $error';
-  }
+  String get expenseFormAccountsLoadError => 'Couldn\'t load accounts';
 
   @override
   String get expenseFormDateLabel => 'Date & time';
@@ -8470,9 +8489,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Always-on finance domain: currency, FX rates, risk posture, allocation, and FIRE planning assumptions';
 
   @override
-  String get settingsDomainsFinanceAlwaysOnBadge => 'Always on';
-
-  @override
   String settingsDomainsDisabledToast(String domain) {
     return '$domain disabled. You can re-enable it here at any time.';
   }
@@ -9213,52 +9229,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsAiPrivacySubtitle =>
-      'Control what is sent to your model provider';
+      'Provider data use and document permission';
 
   @override
   String get aiPrivacyTitle => 'AI privacy';
 
   @override
   String get aiPrivacyIntro =>
-      'Choose how much data can be sent when you use a cloud model. You can change this at any time.';
-
-  @override
-  String get aiPrivacyModeAmountsAllowedLabel => 'Amounts allowed';
-
-  @override
-  String get aiPrivacyModeAmountsAllowedDescription =>
-      'Send exact amounts and account context. Best answer quality.';
-
-  @override
-  String get aiPrivacyModeAmountsBucketedLabel => 'Amounts bucketed';
-
-  @override
-  String get aiPrivacyModeAmountsBucketedDescription =>
-      'Round amounts to the nearest order of magnitude before sending. Cloud sees patterns but not exact numbers.';
-
-  @override
-  String get aiPrivacyModeAmountsLocalLabel => 'Amounts stay local';
-
-  @override
-  String get aiPrivacyModeAmountsLocalDescription =>
-      'Only intent and category names leave the device. Cloud answers narrow to qualitative tips.';
-
-  @override
-  String get aiPrivacyMaskAccountsLabel => 'Mask account / institution names';
-
-  @override
-  String get aiPrivacyMaskAccountsDescription =>
-      'Replace bank and broker names with anonymous IDs before they\'re sent.';
-
-  @override
-  String get aiPrivacyOnboardingTitle => 'Pick your AI privacy posture';
-
-  @override
-  String get aiPrivacyOnboardingBody =>
-      'NaviWealth\'s AI is local-first. When it needs to use the cloud, this setting decides what it can send. You can change it later in Settings.';
-
-  @override
-  String get aiPrivacyOnboardingConfirm => 'Got it';
+      'Chat messages and the context needed to answer them are sent directly from this device to your configured model provider. The document permission below is separate and off by default.';
 
   @override
   String get aiTransparencyUndoSectionTitle => 'Pending AI changes';

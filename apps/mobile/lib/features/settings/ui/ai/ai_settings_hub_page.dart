@@ -63,13 +63,15 @@ class AiSettingsHubPage extends ConsumerWidget {
                 onTap: () =>
                     context.pushNamed(SettingsRouteNames.personalMemory),
               ),
-              const AppGroupedDivider(),
-              InlineLinkRow(
-                icon: FLucideIcons.lock,
-                label: l10n.settingsAiPrivacyTitle,
-                subtitle: l10n.settingsAiPrivacySubtitle,
-                onTap: () => context.pushNamed(SettingsRouteNames.aiPrivacy),
-              ),
+              if (supported) ...[
+                const AppGroupedDivider(),
+                InlineLinkRow(
+                  icon: FLucideIcons.lock,
+                  label: l10n.settingsAiPrivacyTitle,
+                  subtitle: l10n.settingsAiPrivacySubtitle,
+                  onTap: () => context.pushNamed(SettingsRouteNames.aiPrivacy),
+                ),
+              ],
               const AppGroupedDivider(),
               InlineLinkRow(
                 icon: FLucideIcons.history,

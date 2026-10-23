@@ -1,5 +1,9 @@
 # `web_smoke` — Cross-Browser Smoke for the Flutter Web Build
 
+The bootstrap loads bundled CanvasKit assets from the app origin. The boot
+suite also blocks external requests to verify that first paint does not depend
+on the renderer CDN.
+
 Automated companion to [`docs/development/web-compat-matrix.md`](../../../docs/development/web-compat-matrix.md) (FIR-40). Runs Playwright against the production-shaped Flutter web bundle on **Chromium, WebKit, and Firefox**, asserting things that have silently regressed before:
 
 - Drift opens a persistent storage backend (and on Firefox, that backend is not OPFS).

@@ -4,7 +4,7 @@
 library;
 
 export 'ai_domain.dart';
-export 'ai_privacy_mode.dart';
+export 'ai_privacy_settings.dart';
 export 'ai_span.dart';
 export 'ai_trace.dart';
 export 'chat_events.dart';
@@ -13,7 +13,6 @@ export 'intent.dart';
 export 'interaction.dart';
 export 'memory_candidate.dart';
 export 'privacy_budget.dart';
-export 'privacy_mode_provider.dart';
 export 'proposal_envelope.dart';
 export 'scoped_disclosure.dart';
 export 'task_context.dart';

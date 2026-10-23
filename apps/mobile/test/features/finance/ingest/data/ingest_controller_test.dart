@@ -4,7 +4,6 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/ai_trace.dart';
-import 'package:naviwealth/core/ai/contracts/privacy_mode_provider.dart';
 import 'package:naviwealth/core/ai/trace/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
@@ -34,7 +33,9 @@ void main() {
   late AppDatabase db;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'ai_privacy.document_recognition': true,
+    });
     prefs = await SharedPreferences.getInstance();
     db = makeTestDatabase();
   });
@@ -390,16 +391,13 @@ void main() {
     );
 
     test('privacy gate blocks Vision before touching the client', () async {
+      await prefs.remove('ai_privacy.document_recognition');
       final vision = _RecordingVisionIngestClient(
         parsed: const <ParsedTransaction>[],
       );
       final container = buildContainer(visionClient: vision);
       addTearDown(container.dispose);
       await readyStore(container);
-      await container
-          .read(aiPrivacySettingsProvider.notifier)
-          .setMode(AiPrivacyMode.amountsLocal);
-
       final result = await container
           .read(ingestControllerProvider)
           .ingest(
@@ -411,7 +409,7 @@ void main() {
           );
 
       expect(result.isRejected, isTrue);
-      expect(result.rejectedReason, contains('模型解析'));
+      expect(result.rejectedReason, contains('AI 文档识别尚未开启'));
       expect(result.drafts, isEmpty);
       expect(vision.calls, 0);
     });

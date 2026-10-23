@@ -8,6 +8,7 @@ import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/domain/ingest_models.dart';
@@ -66,6 +67,15 @@ final taskFlowAccounts = <Account>[
     name: 'Dining & coffee',
     currency: 'CNY',
     category: AccountSide.expense,
+    sync: _sync(4),
+  ),
+];
+
+final taskFlowExpenseCategories = <ExpenseCategory>[
+  ExpenseCategory(
+    id: 'golden-dining',
+    name: 'Dining & coffee',
+    ledgerAccountId: 'golden-dining',
     sync: _sync(4),
   ),
 ];

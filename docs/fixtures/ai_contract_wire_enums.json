@@ -12,11 +12,6 @@
     "shell",
     "global"
   ],
-  "AiPrivacyMode": [
-    "amounts_allowed",
-    "amounts_bucketed",
-    "amounts_local"
-  ],
   "AiSpanKind": [
     "turn",
     "llm",

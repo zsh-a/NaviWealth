@@ -45,9 +45,7 @@ Future<GoRouter> _boot(WidgetTester tester, String initial) async {
   tester.view.physicalSize = const Size(400, 800);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
-  SharedPreferences.setMockInitialValues({
-    'ai_privacy.onboarding_seen.v1': true,
-  });
+  SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
   final db = makeTestDatabase();
   addTearDown(db.close);

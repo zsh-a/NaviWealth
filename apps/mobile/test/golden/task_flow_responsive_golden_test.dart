@@ -16,6 +16,8 @@ import 'package:naviwealth/features/finance/data/securities_catalog/providers.da
 import 'package:naviwealth/features/finance/domain/fx/fx_rate.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/expense/data/expense_category_providers.dart';
+import 'package:naviwealth/features/finance/expense/domain/expense_category.dart';
 import 'package:naviwealth/features/finance/expense/ui/expense_form_page.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_confirm_service.dart';
 import 'package:naviwealth/features/finance/ingest/data/providers.dart';
@@ -69,14 +71,21 @@ void main() {
     ),
   ];
 
-  List<Override> expenseOverrides() => <Override>[
+  List<Override> expenseOverrides({bool unavailable = false}) => <Override>[
     ...commonOverrides(),
+    expenseCategoriesProvider.overrideWith(
+      (_) => unavailable
+          ? Stream<List<ExpenseCategory>>.error(StateError('category storage'))
+          : Stream<List<ExpenseCategory>>.value(taskFlowExpenseCategories),
+    ),
     accountsStreamProvider.overrideWith(
-      (_) => Stream<List<Account>>.value(
-        taskFlowAccounts
-            .where((account) => account.category == AccountSide.asset)
-            .toList(growable: false),
-      ),
+      (_) => unavailable
+          ? Stream<List<Account>>.error(StateError('account storage'))
+          : Stream<List<Account>>.value(
+              taskFlowAccounts
+                  .where((account) => account.category == AccountSide.asset)
+                  .toList(growable: false),
+            ),
     ),
     allAccountsStreamProvider.overrideWith(
       (_) => Stream<List<Account>>.value(taskFlowAccounts),
@@ -227,6 +236,22 @@ void main() {
       child: const ExpenseFormPage(),
     ),
   );
+  for (final profile in [
+    ResponsiveGoldenProfile.narrow,
+    ResponsiveGoldenProfile.textScale,
+  ]) {
+    runResponsiveGolden(
+      'task flow expense unavailable — ${profile.name}',
+      profile: profile,
+      body: (tester, profile) => pumpAndSnapshotResponsive(
+        tester,
+        name: 'task_flow_expense_unavailable_${profile.name}',
+        profile: profile,
+        overrides: expenseOverrides(unavailable: true),
+        child: const ExpenseFormPage(),
+      ),
+    );
+  }
   runResponsiveGolden(
     'task flow transfer — narrow',
     profile: ResponsiveGoldenProfile.narrow,

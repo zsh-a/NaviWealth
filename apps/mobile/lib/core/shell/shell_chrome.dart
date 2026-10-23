@@ -1,7 +1,7 @@
 /// Cross-domain shell chrome primitives.
 ///
 /// Domain tab pages use this file for the stable shell-facing API:
-/// [ShellTabScaffold], [ShellActionRow], and the tab padding helpers. The
+/// [ShellTabScaffold], [ShellPageHeading], and the tab padding helpers. The
 /// app layer injects concrete global chrome such as the domain switcher,
 /// command palette, and Settings navigation through [shellChromeBuildersProvider].
 library;
@@ -30,11 +30,6 @@ typedef ShellChromeHeaderActionsBuilder = List<ShellHeaderActionSpec> Function(
   WidgetRef ref,
 );
 
-typedef ShellChromeActionRowBuilder = Widget? Function(
-  BuildContext context,
-  WidgetRef ref,
-);
-
 typedef ShellChromeOpenAiAction = Future<void> Function(
   BuildContext context,
   WidgetRef ref, {
@@ -50,7 +45,6 @@ class ShellChromeBuilders {
   const ShellChromeBuilders({
     this.leadingBuilder,
     this.headerActionsBuilder,
-    this.actionRowBuilder,
     this.openAiAction,
   });
 
@@ -58,7 +52,6 @@ class ShellChromeBuilders {
 
   final ShellChromeLeadingBuilder? leadingBuilder;
   final ShellChromeHeaderActionsBuilder? headerActionsBuilder;
-  final ShellChromeActionRowBuilder? actionRowBuilder;
   final ShellChromeOpenAiAction? openAiAction;
 
   Widget? buildLeading(BuildContext context, WidgetRef ref) =>
@@ -70,9 +63,6 @@ class ShellChromeBuilders {
   ) =>
       headerActionsBuilder?.call(context, ref) ??
       const <ShellHeaderActionSpec>[];
-
-  Widget? buildActionRow(BuildContext context, WidgetRef ref) =>
-      actionRowBuilder?.call(context, ref);
 
   Future<void> openAi(BuildContext context, WidgetRef ref, {String? prefill}) {
     final action = openAiAction;
@@ -97,6 +87,7 @@ class ShellHeaderActionSpec {
     required this.onPress,
     this.order = 0,
     this.badgeCount = 0,
+    this.iconColor,
   });
 
   final IconData icon;
@@ -104,6 +95,7 @@ class ShellHeaderActionSpec {
   final VoidCallback onPress;
   final int order;
   final int badgeCount;
+  final Color? iconColor;
 }
 
 /// Page padding for top-level domain tabs.
@@ -169,19 +161,6 @@ class ShellTabScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final inline = _showInlineChrome(context);
     final chrome = ref.watch(shellChromeBuildersProvider);
-    final mergedActions = <ShellHeaderActionSpec>[
-      ...actions,
-      if (inline) ...chrome.buildHeaderActions(context, ref),
-    ]..sort((a, b) => a.order.compareTo(b.order));
-    // Keep the visual hierarchy stable across window sizes: at most two
-    // actions stay visible and the rest move into the adaptive overflow.
-    // A wider window should add breathing room, not recreate an icon toolbar.
-    final directActions = mergedActions
-        .take(directActionBudget)
-        .toList(growable: false);
-    final overflowActions = mergedActions
-        .skip(directActionBudget)
-        .toList(growable: false);
     return DomainTabScaffold(
       title: title,
       childPad: childPad,
@@ -190,40 +169,62 @@ class ShellTabScaffold extends ConsumerWidget {
       // with the existing direction-aware collapse behavior.
       collapseOnScroll: inline && collapseOnScroll,
       leading: inline ? chrome.buildLeading(context, ref) : null,
-      actions: <Widget>[
-        for (final action in directActions)
-          FHeaderAction(
-            icon: _ShellHeaderActionIcon(
-              icon: action.icon,
-              badgeCount: action.badgeCount,
-            ),
-            semanticsLabel: action.badgeCount > 0
-                ? '${action.label} (${action.badgeCount})'
-                : action.label,
-            onPress: action.onPress,
-          ),
-        if (overflowActions.isNotEmpty)
-          _ShellHeaderOverflow(actions: overflowActions),
-      ],
+      actions: _headerActions(context, ref, actions, directActionBudget),
       child: child,
     );
   }
 }
 
+List<Widget> _headerActions(
+  BuildContext context,
+  WidgetRef ref,
+  List<ShellHeaderActionSpec> actions,
+  int directActionBudget,
+) {
+  final merged = <ShellHeaderActionSpec>[
+    ...actions,
+    if (_showInlineChrome(context))
+      ...ref
+          .watch(shellChromeBuildersProvider)
+          .buildHeaderActions(context, ref),
+  ]..sort((a, b) => a.order.compareTo(b.order));
+  return [
+    for (final action in merged.take(directActionBudget))
+      AppHeaderAction(
+        icon: _ShellHeaderActionIcon(
+          icon: action.icon,
+          color: action.iconColor,
+          badgeCount: action.badgeCount,
+        ),
+        semanticsLabel: action.badgeCount > 0
+            ? '${action.label} (${action.badgeCount})'
+            : action.label,
+        onPress: action.onPress,
+      ),
+    if (merged.length > directActionBudget)
+      _ShellHeaderOverflow(actions: merged.skip(directActionBudget).toList()),
+  ];
+}
+
 class _ShellHeaderActionIcon extends StatelessWidget {
-  const _ShellHeaderActionIcon({required this.icon, required this.badgeCount});
+  const _ShellHeaderActionIcon({
+    required this.icon,
+    required this.badgeCount,
+    this.color,
+  });
 
   final IconData icon;
   final int badgeCount;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
-    if (badgeCount <= 0) return Icon(icon);
+    if (badgeCount <= 0) return Icon(icon, color: color);
     final label = badgeCount > 9 ? '9+' : '$badgeCount';
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Icon(icon),
+        Icon(icon, color: color),
         PositionedDirectional(
           top: -AppSpacing.s6,
           end: -AppSpacing.s8,
@@ -288,20 +289,67 @@ class _ShellHeaderOverflow extends StatelessWidget {
   }
 }
 
-/// In-content shell chrome slot for surfaces without an `FHeader`.
+/// Task heading for brief pages, with one shared action budget.
 ///
-/// Currently used by the Today greeting header. Hidden on desktop where the
-/// persistent dock / sidebar owns the global chrome.
-class ShellActionRow extends ConsumerWidget {
-  const ShellActionRow({super.key});
+/// Domain actions and global actions use a single overflow menu. When the title
+/// and controls cannot share a line, the controls wrap as a group instead of
+/// squeezing the title into a narrow column. Desktop navigation owns the global
+/// controls; domain actions remain available at every width.
+class ShellPageHeading extends ConsumerWidget {
+  const ShellPageHeading({
+    super.key,
+    required this.title,
+    this.actions = const [],
+    this.titleStyle,
+    this.padding = const EdgeInsets.only(
+      top: AppSpacing.s8,
+      bottom: AppSpacing.s16,
+    ),
+  });
+
+  final String title;
+  final List<ShellHeaderActionSpec> actions;
+  final TextStyle? titleStyle;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (!_showInlineChrome(context)) return const SizedBox.shrink();
-    return ref
-            .watch(shellChromeBuildersProvider)
-            .buildActionRow(context, ref) ??
-        const SizedBox.shrink();
+    final leading = _showInlineChrome(context)
+        ? ref.watch(shellChromeBuildersProvider).buildLeading(context, ref)
+        : null;
+    final controls = _headerActions(context, ref, actions, 1);
+    return FHeaderData(
+      actionStyle: context.theme.headerStyles.resolve({
+        FHeaderVariant.nested,
+        context.platformVariant,
+      }).actionStyle,
+      child: Padding(
+        padding: padding,
+        child: SizedBox(
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSpacing.s8,
+            runSpacing: AppSpacing.s8,
+            children: [
+              Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: titleStyle ?? context.briefGreetingTitleStyle,
+                ),
+              ),
+              if (leading != null || controls.isNotEmpty)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [?leading, ...controls],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -312,9 +360,8 @@ class ShellActionRow extends ConsumerWidget {
 /// intentionally own their in-content hero/header instead of rendering an
 /// `FHeader`. Those pages still
 /// need to be shell-owned so global chrome, cross-platform back behavior, and
-/// tab padding stay centralized. Use [ShellActionRow] inside the page's hero
-/// row to render the injected domain switcher + global actions on compact
-/// viewports.
+/// tab padding stay centralized. Use [ShellPageHeading] for the page's task
+/// title, domain actions, and injected compact navigation.
 class ShellCanvasScaffold extends StatelessWidget {
   const ShellCanvasScaffold({
     super.key,

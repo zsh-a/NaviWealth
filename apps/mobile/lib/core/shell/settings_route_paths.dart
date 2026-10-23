@@ -37,6 +37,7 @@ abstract final class SettingsRoutes {
   static const monthlyExpense = '/settings/monthly-expense';
   // LifeOS domain console — per-user opt-in toggles + per-domain ops.
   static const domains = '/settings/domains';
+  static const domainsFinance = '/settings/domains/finance';
   static const domainsHealth = '/settings/domains/health';
 
   static String aiTransparencyDetail(String requestId) =>
@@ -69,5 +70,6 @@ abstract final class SettingsRouteNames {
   static const stressTest = 'stress-test';
   static const monthlyExpense = 'monthly-expense';
   static const domains = 'domains';
+  static const domainsFinance = 'domains-finance';
   static const domainsHealth = 'domains-health';
 }

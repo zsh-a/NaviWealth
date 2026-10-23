@@ -10,6 +10,33 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String settingsDomainsUpdateFailed(String domain) {
+    return '无法更新 $domain，请重试。';
+  }
+
+  @override
+  String get aiPrivacyDocumentRecognitionDescription =>
+      '将你选择识别的图片、PDF 和邮件发送给已配置的模型服务商。文件会完整发送，金额和账户名称不会自动隐藏。CSV 和粘贴文本在本机解析。';
+
+  @override
+  String get aiPrivacyDocumentRecognitionLabel => 'AI 文档识别';
+
+  @override
+  String get ingestReviewGroupingLabel => '分组';
+
+  @override
+  String get ingestReviewCategoryLabel => '类别';
+
+  @override
+  String get ingestReviewSortLabel => '排序';
+
+  @override
+  String get ingestReviewOptions => '筛选与显示';
+
+  @override
+  String get settingsDomainsAlwaysOn => '常开';
+
+  @override
   String get capitalAllocationAutoBalanceHint =>
       '完成一个目标的输入后，其余项目按比例联动，总计保持 100%；保存时也会应用尚未完成的输入。';
 
@@ -5892,12 +5919,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expenseFormCategoryAccountRequired => '请选择类目、账户和币种';
 
   @override
-  String get expenseFormCategoriesLoading => '正在准备默认类目，请稍候…';
-
-  @override
-  String expenseFormCategoriesLoadError(String error) {
-    return '类目加载失败：$error';
-  }
+  String get expenseFormCategoriesLoadError => '无法加载类别';
 
   @override
   String get expenseFormAccountLabel => '账户';
@@ -5914,9 +5936,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String expenseFormAccountsLoadError(String error) {
-    return '账户加载失败：$error';
-  }
+  String get expenseFormAccountsLoadError => '无法加载账户';
 
   @override
   String get expenseFormDateLabel => '日期时间';
@@ -8019,9 +8039,6 @@ class AppLocalizationsZh extends AppLocalizations {
       '始终启用的财务功能：货币、汇率、风险偏好、资产配置和 FIRE 规划';
 
   @override
-  String get settingsDomainsFinanceAlwaysOnBadge => '常开';
-
-  @override
   String settingsDomainsDisabledToast(String domain) {
     return '$domain 已关闭。你可以随时在这里重新启用。';
   }
@@ -8719,48 +8736,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiPrivacyTitle => 'AI 隐私';
 
   @override
-  String get settingsAiPrivacySubtitle => '控制发送给模型服务商的数据范围';
+  String get settingsAiPrivacySubtitle => '模型服务商的数据使用与文档权限';
 
   @override
   String get aiPrivacyTitle => 'AI 隐私';
 
   @override
-  String get aiPrivacyIntro => '选择使用云端模型时可以发送多少数据。你可以随时更改。';
-
-  @override
-  String get aiPrivacyModeAmountsAllowedLabel => '金额可上行';
-
-  @override
-  String get aiPrivacyModeAmountsAllowedDescription => '上传精确金额和账户上下文，回答质量最佳。';
-
-  @override
-  String get aiPrivacyModeAmountsBucketedLabel => '金额做掩码';
-
-  @override
-  String get aiPrivacyModeAmountsBucketedDescription =>
-      '金额按数量级取整后再上传。云端能看到模式但看不到具体数字。';
-
-  @override
-  String get aiPrivacyModeAmountsLocalLabel => '金额完全本地';
-
-  @override
-  String get aiPrivacyModeAmountsLocalDescription => '只把意图和分类名上传，云端只能给定性建议。';
-
-  @override
-  String get aiPrivacyMaskAccountsLabel => '隐藏账户和机构名称';
-
-  @override
-  String get aiPrivacyMaskAccountsDescription => '发送前，将银行、券商等机构名称替换为匿名标识。';
-
-  @override
-  String get aiPrivacyOnboardingTitle => '选择你的 AI 隐私偏好';
-
-  @override
-  String get aiPrivacyOnboardingBody =>
-      'NaviWealth 的 AI 默认本地优先。当需要走云端时，这个设置决定能上传什么。后续可在设置里改。';
-
-  @override
-  String get aiPrivacyOnboardingConfirm => '好的';
+  String get aiPrivacyIntro =>
+      '聊天消息及回答所需的上下文会由本机直接发送给你配置的模型服务商。下方文档权限单独控制，默认关闭。';
 
   @override
   String get aiTransparencyUndoSectionTitle => '待撤销的 AI 改动';

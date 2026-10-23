@@ -33,7 +33,6 @@ List<Override> appShellChromeOverrides() {
 const ShellChromeBuilders appShellChromeBuilders = ShellChromeBuilders(
   leadingBuilder: _buildShellLeading,
   headerActionsBuilder: _buildShellGlobalActions,
-  actionRowBuilder: _buildShellActionRow,
   openAiAction: askAi,
 );
 
@@ -107,7 +106,8 @@ class DomainSwitcherChip extends ConsumerWidget {
     final singleTarget = single != null && single.tabs.isNotEmpty
         ? single.tabs.first.routePath
         : null;
-    final isSingleHomeLink = isLifeHub && singleTarget != null;
+    final isSingleHomeLink =
+        isLifeHub && singleTarget != null && singleTarget != path;
     if (specs.length == 1 && !isSingleHomeLink) {
       return const SizedBox.shrink();
     }
@@ -190,82 +190,5 @@ class DomainSwitcherChip extends ConsumerWidget {
         ),
       ),
     );
-  }
-}
-
-/// In-content app chrome for surfaces without an `FHeader` — currently the
-/// Today greeting header.
-Widget _buildShellActionRow(BuildContext context, WidgetRef ref) {
-  final l10n = AppLocalizations.of(context);
-  final attention = ref.watch(syncAttentionProvider);
-  return Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      const DomainSwitcherChip(),
-      if (attention != null)
-        _ShellIconButton(
-          icon: FLucideIcons.cloudOff,
-          tooltip: syncOverviewMessage(l10n, attention),
-          onPress: () => context.push(SettingsRoutes.sync),
-        ),
-      if (attention != null)
-        AppAdaptiveActionMenu(
-          title: l10n.shellMoreActions,
-          actions: [
-            AppAdaptiveAction(
-              icon: FLucideIcons.search,
-              title: l10n.navSearch,
-              onPress: () => Actions.maybeInvoke(
-                context,
-                const OpenCommandPaletteIntent(),
-              ),
-            ),
-            AppAdaptiveAction(
-              icon: FLucideIcons.settings,
-              title: l10n.navSettingsTooltip,
-              onPress: () => context.push(SettingsRoutes.root),
-            ),
-          ],
-          triggerBuilder: (_, openMenu, focusNode) => AppHeaderAction(
-            icon: const Icon(FLucideIcons.ellipsis),
-            semanticsLabel: l10n.shellMoreActions,
-            focusNode: focusNode,
-            onPress: openMenu,
-          ),
-        )
-      else ...[
-        _ShellIconButton(
-          icon: FLucideIcons.search,
-          tooltip: l10n.navSearch,
-          onPress: () =>
-              Actions.maybeInvoke(context, const OpenCommandPaletteIntent()),
-        ),
-        _ShellIconButton(
-          icon: FLucideIcons.settings,
-          tooltip: l10n.navSettingsTooltip,
-          onPress: () => context.push(SettingsRoutes.root),
-        ),
-      ],
-    ],
-  );
-}
-
-/// 48dp tappable icon used by the in-content action row. Matches the visual
-/// weight of the header `FHeaderAction`s so the row reads like the headered
-/// pages.
-class _ShellIconButton extends StatelessWidget {
-  const _ShellIconButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPress,
-  });
-
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPress;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppIconButton(icon: icon, tooltip: tooltip, onPress: onPress);
   }
 }

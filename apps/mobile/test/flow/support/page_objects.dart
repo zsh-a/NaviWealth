@@ -9,8 +9,10 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/forms/amount_field.dart';
+import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/ai_chat/ui/chat_composer.dart';
+import 'package:naviwealth/features/execution/ui/execution_action_card_controller.dart';
 import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_review_page.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
@@ -50,7 +52,14 @@ class AppShell {
   }
 
   Future<void> openSettings() async {
-    final action = find.byIcon(FLucideIcons.settings);
+    var action = find.byIcon(FLucideIcons.settings);
+    if (action.evaluate().isEmpty) {
+      final more = find.widgetWithIcon(AppHeaderAction, FLucideIcons.ellipsis);
+      expect(more, findsOneWidget, reason: 'header actions menu missing');
+      await tester.tap(more);
+      await settle(tester);
+      action = find.text('Settings');
+    }
     expect(action, findsWidgets, reason: 'settings action missing');
     await tester.tap(action.last);
     await settle(tester);
@@ -512,9 +521,10 @@ class DomainsPageObject {
     );
     final toggle = find.descendant(of: card, matching: find.byType(FSwitch));
     expect(toggle, findsOneWidget, reason: '$label toggle missing');
-    await tester.ensureVisible(toggle);
+    final labelFinder = find.text(label);
+    await tester.ensureVisible(labelFinder);
     await settle(tester);
-    await tester.tap(toggle);
+    await tester.tap(labelFinder);
     await settle(tester);
   }
 }
@@ -653,7 +663,13 @@ class ExecutionTodayPageObject {
 
   Future<void> completeAction(String title) async {
     expect(find.text(title), findsOneWidget);
-    final menu = find.bySemanticsLabel('More actions').hitTestable();
+    final card = find.ancestor(
+      of: find.text(title),
+      matching: find.byType(ExecutionActionCardController),
+    );
+    final menu = find
+        .descendant(of: card, matching: find.bySemanticsLabel('More actions'))
+        .hitTestable();
     expect(menu, findsOneWidget, reason: 'action overflow menu missing');
     await tester.tap(menu);
     await settle(tester);
@@ -667,15 +683,20 @@ class ExecutionTodayPageObject {
   }
 
   Future<void> openReview() async {
-    // Today is a headerless cockpit: the Review entry is an AppIconButton in
-    // the greeting header, exposed through its tooltip semantics label.
-    final review = find.bySemanticsLabel('Review').hitTestable();
+    final menu = find
+        .descendant(
+          of: find.byType(ShellPageHeading),
+          matching: find.bySemanticsLabel('More actions'),
+        )
+        .hitTestable();
     // Completing an action raises a top-center undo toast (6s) that can
     // transiently cover the greeting header; wait for it to clear instead of
     // assuming the button is hittable on the very next frame.
-    await settleUntil(tester, review, maxPumps: 200);
-    expect(review, findsOneWidget, reason: 'execution review action missing');
-    await tester.tap(review);
+    await settleUntil(tester, menu, maxPumps: 200);
+    expect(menu, findsOneWidget, reason: 'execution heading menu missing');
+    await tester.tap(menu);
+    await settle(tester);
+    await tester.tap(find.text('Review').hitTestable());
     await settle(tester);
   }
 }

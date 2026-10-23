@@ -1,4 +1,3 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
@@ -7,6 +6,7 @@ import 'package:naviwealth/core/ai/agents/agent_intents.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
+import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart'
     show kCashflowAnomalyReviewAgentId;
@@ -33,11 +33,12 @@ import 'package:naviwealth/features/finance/data/diagnostics/local_table_counts.
 import 'package:naviwealth/features/finance/data_management/finance_data_management.dart';
 import 'package:naviwealth/features/finance/finance_ai_tools.dart';
 import 'package:naviwealth/features/finance/options_income/data/trade_journal_memory_indexer.dart';
-import 'package:naviwealth/features/finance/ui/settings/finance_domain_settings_section.dart';
+import 'package:naviwealth/features/finance/ui/settings/finance_settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../features/finance/composition/finance_chat_context.dart';
 import '../routing/route_paths.dart';
+import 'domain_settings_spec.dart';
 import 'finance_life_contribution.dart';
 import 'proposal_applier_route.dart';
 
@@ -104,8 +105,8 @@ final DomainPack kFinancePack = DomainPack(
     ],
     memorySourcePrefixes: const ['fin:', kTradeJournalSource],
   ),
-  shell: const DomainShellContribution(
-    navigation: DomainNavigation(
+  shell: DomainShellContribution(
+    navigation: const DomainNavigation(
       shellSpecBuilder: financeDomainShell,
       shellRouteBuilder: financeShellRoute,
       tabPaths: [
@@ -119,11 +120,14 @@ final DomainPack kFinancePack = DomainPack(
     ),
     accent: DomainAccents.finance,
     commandPaletteEntriesBuilder: financeCommandPaletteEntries,
-    settingsSpec: DomainSettingsSpec(
+    settingsSpec: domainSettingsSpec(
       icon: FLucideIcons.walletCards,
       label: 'FinanceOS',
       subtitle: _financeSettingsSubtitle,
-      sectionBuilder: _financeSettingsSection,
+      alwaysEnabled: true,
+      routePath: SettingsRoutes.domainsFinance,
+      routeName: SettingsRouteNames.domainsFinance,
+      page: const FinanceSettingsPage(),
     ),
     settingsRoutesBuilder: financeSettingsRoutes,
   ),
@@ -150,8 +154,6 @@ void _financeMemoryBootstrap(Ref ref) {
 
 String _financeSettingsSubtitle(AppLocalizations l10n, bool _) =>
     l10n.settingsDomainsFinanceSubtitle;
-
-Widget _financeSettingsSection() => const FinanceDomainSettingsSection();
 
 String _weeklyWealthReviewLabel(AppLocalizations l10n) =>
     l10n.agentPresentationWeeklyWealthReviewLabel;

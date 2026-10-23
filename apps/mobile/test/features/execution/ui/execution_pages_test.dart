@@ -12,6 +12,7 @@ import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/theme/app_theme.dart';
+import 'package:naviwealth/design_system/widgets/app_actions.dart';
 import 'package:naviwealth/design_system/widgets/app_toast.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
@@ -226,8 +227,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.bySemanticsLabel('Review'), findsWidgets);
     expect(find.text('New Action'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('More actions'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review'), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -239,6 +244,33 @@ void main() {
     // shell_chrome_test's tooltip flush).
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('Today offers capture when actions already exist', (
+    tester,
+  ) async {
+    final action = _action(id: 'existing', title: 'Existing action');
+    await tester.pumpWidget(
+      _wrap(
+        const ExecutionTodayPage(),
+        overrides: _executionOverrides(
+          todayActions: [action],
+          openActions: [action],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Existing action'), findsOneWidget);
+    final create = find.byWidgetPredicate(
+      (widget) =>
+          widget is AppHeaderAction && widget.semanticsLabel == 'New Action',
+    );
+    expect(create, findsOneWidget);
+    await tester.tap(create);
+    await tester.pumpAndSettle();
+    expect(find.byType(FTextFormField), findsOneWidget);
+    expect(find.text('Save'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Today keeps unscheduled backlog out of the daily workspace', (

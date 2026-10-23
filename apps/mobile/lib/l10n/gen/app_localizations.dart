@@ -98,6 +98,54 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @settingsDomainsUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update {domain}. Try again.'**
+  String settingsDomainsUpdateFailed(String domain);
+
+  /// No description provided for @aiPrivacyDocumentRecognitionDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Send selected images, PDFs and emails to your configured model provider. Files are sent in full; amounts and account names are not automatically removed. CSV and pasted text are parsed on this device.'**
+  String get aiPrivacyDocumentRecognitionDescription;
+
+  /// No description provided for @aiPrivacyDocumentRecognitionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'AI document recognition'**
+  String get aiPrivacyDocumentRecognitionLabel;
+
+  /// No description provided for @ingestReviewGroupingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Group'**
+  String get ingestReviewGroupingLabel;
+
+  /// No description provided for @ingestReviewCategoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get ingestReviewCategoryLabel;
+
+  /// No description provided for @ingestReviewSortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get ingestReviewSortLabel;
+
+  /// No description provided for @ingestReviewOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters and display'**
+  String get ingestReviewOptions;
+
+  /// No description provided for @settingsDomainsAlwaysOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Always on'**
+  String get settingsDomainsAlwaysOn;
+
   /// No description provided for @capitalAllocationAutoBalanceHint.
   ///
   /// In en, this message translates to:
@@ -10474,17 +10522,11 @@ abstract class AppLocalizations {
   /// **'Pick a category, account, and currency'**
   String get expenseFormCategoryAccountRequired;
 
-  /// No description provided for @expenseFormCategoriesLoading.
-  ///
-  /// In en, this message translates to:
-  /// **'Setting up default categories, please wait…'**
-  String get expenseFormCategoriesLoading;
-
   /// No description provided for @expenseFormCategoriesLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t load categories: {error}'**
-  String expenseFormCategoriesLoadError(String error);
+  /// **'Couldn\'t load categories'**
+  String get expenseFormCategoriesLoadError;
 
   /// No description provided for @expenseFormAccountLabel.
   ///
@@ -10510,8 +10552,8 @@ abstract class AppLocalizations {
   /// No description provided for @expenseFormAccountsLoadError.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t load accounts: {error}'**
-  String expenseFormAccountsLoadError(String error);
+  /// **'Couldn\'t load accounts'**
+  String get expenseFormAccountsLoadError;
 
   /// No description provided for @expenseFormDateLabel.
   ///
@@ -14233,12 +14275,6 @@ abstract class AppLocalizations {
   /// **'Always-on finance domain: currency, FX rates, risk posture, allocation, and FIRE planning assumptions'**
   String get settingsDomainsFinanceSubtitle;
 
-  /// Badge for the always-on FinanceOS domain
-  ///
-  /// In en, this message translates to:
-  /// **'Always on'**
-  String get settingsDomainsFinanceAlwaysOnBadge;
-
   /// Toast shown after disabling an optional LifeOS domain from domain settings.
   ///
   /// In en, this message translates to:
@@ -15440,7 +15476,7 @@ abstract class AppLocalizations {
   /// Settings tile subtitle for the AI privacy page
   ///
   /// In en, this message translates to:
-  /// **'Control what is sent to your model provider'**
+  /// **'Provider data use and document permission'**
   String get settingsAiPrivacySubtitle;
 
   /// Title of the AI privacy page
@@ -15452,74 +15488,8 @@ abstract class AppLocalizations {
   /// Intro copy on the AI privacy page
   ///
   /// In en, this message translates to:
-  /// **'Choose how much data can be sent when you use a cloud model. You can change this at any time.'**
+  /// **'Chat messages and the context needed to answer them are sent directly from this device to your configured model provider. The document permission below is separate and off by default.'**
   String get aiPrivacyIntro;
-
-  /// Radio label: amounts can go to the cloud
-  ///
-  /// In en, this message translates to:
-  /// **'Amounts allowed'**
-  String get aiPrivacyModeAmountsAllowedLabel;
-
-  /// Radio description: amounts can go to the cloud
-  ///
-  /// In en, this message translates to:
-  /// **'Send exact amounts and account context. Best answer quality.'**
-  String get aiPrivacyModeAmountsAllowedDescription;
-
-  /// Radio label: amounts go up as ballpark buckets
-  ///
-  /// In en, this message translates to:
-  /// **'Amounts bucketed'**
-  String get aiPrivacyModeAmountsBucketedLabel;
-
-  /// Radio description for bucketed amounts
-  ///
-  /// In en, this message translates to:
-  /// **'Round amounts to the nearest order of magnitude before sending. Cloud sees patterns but not exact numbers.'**
-  String get aiPrivacyModeAmountsBucketedDescription;
-
-  /// Radio label: amounts never leave the device
-  ///
-  /// In en, this message translates to:
-  /// **'Amounts stay local'**
-  String get aiPrivacyModeAmountsLocalLabel;
-
-  /// Radio description for local-only amounts
-  ///
-  /// In en, this message translates to:
-  /// **'Only intent and category names leave the device. Cloud answers narrow to qualitative tips.'**
-  String get aiPrivacyModeAmountsLocalDescription;
-
-  /// Toggle label for masking account names
-  ///
-  /// In en, this message translates to:
-  /// **'Mask account / institution names'**
-  String get aiPrivacyMaskAccountsLabel;
-
-  /// Toggle description for masking account names
-  ///
-  /// In en, this message translates to:
-  /// **'Replace bank and broker names with anonymous IDs before they\'re sent.'**
-  String get aiPrivacyMaskAccountsDescription;
-
-  /// Title of the first-launch privacy onboarding sheet
-  ///
-  /// In en, this message translates to:
-  /// **'Pick your AI privacy posture'**
-  String get aiPrivacyOnboardingTitle;
-
-  /// Body copy of the first-launch privacy onboarding sheet
-  ///
-  /// In en, this message translates to:
-  /// **'NaviWealth\'s AI is local-first. When it needs to use the cloud, this setting decides what it can send. You can change it later in Settings.'**
-  String get aiPrivacyOnboardingBody;
-
-  /// Confirm button on the privacy onboarding sheet
-  ///
-  /// In en, this message translates to:
-  /// **'Got it'**
-  String get aiPrivacyOnboardingConfirm;
 
   /// Section header above the list of undo-able AI changes on the transparency page
   ///

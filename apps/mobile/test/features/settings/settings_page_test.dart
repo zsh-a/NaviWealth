@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +9,9 @@ import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
+import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/biometric_auth_service.dart';
@@ -14,6 +19,7 @@ import 'package:naviwealth/core/security/biometric_lock_preferences.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/data/preferences/base_currency_preference.dart';
+import 'package:naviwealth/features/finance/ui/settings/finance_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/advanced_settings_page.dart';
 import 'package:naviwealth/features/settings/ui/ai/ai_settings_hub_page.dart';
 import 'package:naviwealth/features/settings/ui/data_management/data_management_page.dart';
@@ -95,6 +101,8 @@ GoRouter _router({
           for (final pack in resolvedPacks)
             if (pack.shell.settingsSpec?.routeBuilder != null)
               pack.shell.settingsSpec!.routeBuilder!((child) => child),
+          for (final pack in resolvedPacks)
+            ...?pack.shell.settingsRoutesBuilder?.call((child) => child),
         ],
       ),
     ],
@@ -107,6 +115,7 @@ Future<Widget> _wrap(
   Locale? locale,
   TextScaler? textScaler,
   bool aiSupported = true,
+  DomainOptInStore? domainStore,
 }) async {
   final db = makeTestDatabase();
   addTearDown(db.close);
@@ -115,6 +124,8 @@ Future<Widget> _wrap(
       deviceLlmPlatformSupportedProvider.overrideWithValue(aiSupported),
       sharedPreferencesProvider.overrideWithValue(prefs),
       appDatabaseProvider.overrideWith((_) async => db),
+      if (domainStore != null)
+        auth.domainOptInStoreProvider.overrideWith((_) async => domainStore),
       currentUserIdProvider.overrideWithValue(() async => kLocalOnlyUserId),
       domainPackRegistryProvider.overrideWithValue(kAllDomainPacks),
     ],
@@ -185,7 +196,9 @@ void main() {
       tester,
     ) async {
       final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(await _wrap(prefs));
+      await tester.pumpWidget(
+        await _wrap(prefs, initialLocation: SettingsRoutes.domainsFinance),
+      );
       await tester.pumpAndSettle();
 
       // Wave 41 — the row renders the full `currencyDisplayLabel`
@@ -214,7 +227,9 @@ void main() {
             ],
             child: MaterialApp.router(
               theme: AppTheme.light(),
-              routerConfig: _router(),
+              routerConfig: _router(
+                initialLocation: SettingsRoutes.domainsFinance,
+              ),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               builder: (context, child) => FTheme(
@@ -337,6 +352,128 @@ void main() {
   group('Settings → Domains', () {
     setUp(() => SharedPreferences.setMockInitialValues({}));
 
+    _testWidgets(
+      'keeps domain choices visible and opens Finance configuration',
+      (tester) async {
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final prefs = await SharedPreferences.getInstance();
+        await tester.pumpWidget(await _wrap(prefs));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Always on'), findsOneWidget);
+        expect(find.byType(FSwitch), findsNWidgets(3));
+        expect(find.text('Base currency'), findsNothing);
+        expect(find.text('Risk appetite'), findsNothing);
+        expect(find.text('ExecutionOS').hitTestable(), findsOneWidget);
+
+        await tester.tap(find.text('Configure FinanceOS'));
+        await tester.pumpAndSettle();
+        expect(find.byType(FinanceSettingsPage), findsOneWidget);
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(FinanceSettingsPage)),
+        );
+        for (final label in [
+          l10n.settingsBaseCurrencyTitle,
+          l10n.settingsFxRatesTitle,
+          l10n.settingsRiskAppetiteLabel,
+          l10n.settingsMonthlyExpenseLabel,
+          l10n.settingsRiskThresholdsLabel,
+          l10n.settingsStressTestLabel,
+        ]) {
+          expect(find.text(label), findsOneWidget);
+        }
+        expect(find.text('KnowledgeOS'), findsNothing);
+        await tester.tap(find.byKey(const ValueKey('app.back')));
+        await tester.pumpAndSettle();
+        expect(find.text('ExecutionOS').hitTestable(), findsOneWidget);
+      },
+    );
+
+    _testWidgets('serializes domain updates and offers retry after failure', (
+      tester,
+    ) async {
+      final prefs = await SharedPreferences.getInstance();
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = _ControlledDomainStore(db)
+        ..writeBlocker = Completer<void>()
+        ..failWrite = true;
+      await tester.pumpWidget(await _wrap(prefs, domainStore: store));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('KnowledgeOS'));
+      await tester.pump();
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(DomainsSettingsPage)),
+      );
+      expect(find.text(l10n.commonSaving), findsOneWidget);
+      expect(
+        tester
+            .widgetList<FSwitch>(find.byType(FSwitch))
+            .every((s) => !s.enabled),
+        isTrue,
+      );
+      await tester.tap(find.text('ExecutionOS'));
+      expect(store.writeCount, 1);
+
+      store.writeBlocker!.complete();
+      await tester.pumpAndSettle();
+      expect(
+        find.text(l10n.settingsDomainsUpdateFailed('KnowledgeOS')),
+        findsOneWidget,
+      );
+      expect(store.value.contains(DomainScope.knowledge), isFalse);
+      expect(tester.takeException(), isNull);
+
+      store
+        ..writeBlocker = null
+        ..failWrite = false;
+      await tester.tap(find.text(l10n.commonRetry));
+      await tester.pumpAndSettle();
+      expect(store.value.contains(DomainScope.knowledge), isTrue);
+      expect(store.writeCount, 2);
+      await tester.tap(find.text(l10n.settingsDomainsOpenLater));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(l10n.settingsDomainsUpdateFailed('KnowledgeOS')),
+        findsNothing,
+      );
+    });
+
+    _testWidgets(
+      'failed opt-in loading disables toggles until retry succeeds',
+      (tester) async {
+        final prefs = await SharedPreferences.getInstance();
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        final store = _ControlledDomainStore(db)..failRead = true;
+        await tester.pumpWidget(await _wrap(prefs, domainStore: store));
+        await tester.pumpAndSettle();
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(DomainsSettingsPage)),
+        );
+        expect(find.text(l10n.commonLoadFailed), findsOneWidget);
+        expect(
+          tester
+              .widgetList<FSwitch>(find.byType(FSwitch))
+              .every((s) => !s.enabled),
+          isTrue,
+        );
+        store.failRead = false;
+        await tester.tap(find.text(l10n.commonRetry));
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.commonLoadFailed), findsNothing);
+        expect(
+          tester
+              .widgetList<FSwitch>(find.byType(FSwitch))
+              .every((s) => s.enabled),
+          isTrue,
+        );
+      },
+    );
+
     _testWidgets('renders optional domain toggles from the shared spec list', (
       tester,
     ) async {
@@ -359,14 +496,7 @@ void main() {
 
       await tester.ensureVisible(find.text('HealthOS'));
       await tester.pumpAndSettle();
-      final healthSwitch = find.descendant(
-        of: find.ancestor(
-          of: find.text('HealthOS'),
-          matching: find.byType(Row),
-        ),
-        matching: find.byType(FSwitch),
-      );
-      await tester.tap(healthSwitch.first);
+      await tester.tap(find.text('HealthOS'));
       await tester.pumpAndSettle();
 
       expect(
@@ -575,19 +705,36 @@ void main() {
 
       await tester.ensureVisible(find.text('Biometric unlock'));
       await tester.pumpAndSettle();
-      final biometricSwitch = find.descendant(
-        of: find.ancestor(
-          of: find.text('Biometric unlock'),
-          matching: find.byType(Row),
-        ),
-        matching: find.byType(FSwitch),
-      );
-      await tester.tap(biometricSwitch.first);
+      await tester.tap(find.text('Biometric unlock'));
       await tester.pumpAndSettle();
 
       expect(container.read(biometricUnlockEnabledProvider), isTrue);
     });
   });
+}
+
+class _ControlledDomainStore extends DomainOptInStore {
+  _ControlledDomainStore(super.db);
+
+  DomainOptIns value = DomainOptIns.financeOnly;
+  Completer<void>? writeBlocker;
+  bool failRead = false;
+  bool failWrite = false;
+  int writeCount = 0;
+
+  @override
+  Future<DomainOptIns> read() async {
+    if (failRead) throw StateError('Domain preferences unavailable');
+    return value;
+  }
+
+  @override
+  Future<void> write(DomainOptIns optIns) async {
+    writeCount++;
+    await writeBlocker?.future;
+    if (failWrite) throw StateError('Domain preference write failed');
+    value = optIns;
+  }
 }
 
 class _FakeBiometricAuthService implements BiometricAuthService {

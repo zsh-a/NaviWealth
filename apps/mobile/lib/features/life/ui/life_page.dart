@@ -279,16 +279,10 @@ class _LifeGreeting extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  greeting,
-                  style: context.displayTitleStyle.copyWith(height: 1.05),
-                ),
-              ),
-              const ShellActionRow(),
-            ],
+          ShellPageHeading(
+            title: greeting,
+            titleStyle: context.displayTitleStyle.copyWith(height: 1.05),
+            padding: EdgeInsets.zero,
           ),
           const SizedBox(height: AppSpacing.s6),
           Text(l10n.lifeBriefSubtitle, style: context.captionStyle),

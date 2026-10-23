@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:naviwealth/core/ai/contracts/ai_privacy_mode.dart';
 import 'package:naviwealth/core/ai/contracts/ai_span.dart';
 import 'package:naviwealth/core/ai/contracts/ai_trace.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart';
@@ -19,9 +18,6 @@ void main() {
       const AiDomain.shell().wire,
       const AiDomain.global().wire,
     ],
-    'AiPrivacyMode': AiPrivacyMode.values
-        .map((v) => v.wire)
-        .toList(growable: false),
     'AiSpanKind': AiSpanKind.values.map((v) => v.wire).toList(growable: false),
     'AiSpanStatus': AiSpanStatus.values
         .map((v) => v.wire)

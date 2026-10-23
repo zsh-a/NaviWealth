@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/shell/shell_chrome.dart';
-import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/health_metric_kind.dart';
 import 'body_measurement_entry_sheet.dart';
@@ -20,29 +19,17 @@ class HealthGreetingHeader extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final dataReady = ref.watch(healthHasAnyDataProvider).value == true;
 
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.s8,
-        bottom: AppSpacing.s16,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              l10n.healthOverviewTitle,
-              style: context.briefGreetingTitleStyle,
-            ),
+    return ShellPageHeading(
+      title: l10n.healthOverviewTitle,
+      actions: [
+        if (dataReady)
+          ShellHeaderActionSpec(
+            icon: FLucideIcons.scale,
+            label: l10n.healthRecordBodyMetricAction,
+            onPress: () => _recordBodyMetric(context, ref),
+            order: -10,
           ),
-          if (dataReady)
-            AppIconButton(
-              icon: FLucideIcons.scale,
-              tooltip: l10n.healthRecordBodyMetricAction,
-              onPress: () => _recordBodyMetric(context, ref),
-            ),
-          const ShellActionRow(),
-        ],
-      ),
+      ],
     );
   }
 

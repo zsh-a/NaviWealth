@@ -336,7 +336,77 @@ Future<void> _openCompactDetails(
   await tester.pumpAndSettle();
 }
 
+Future<void> _toggleReviewOptions(WidgetTester tester) async {
+  final options = find.byKey(const ValueKey('ingest-review-options'));
+  await tester.ensureVisible(options);
+  await tester.tap(options);
+  await tester.pumpAndSettle();
+}
+
 void main() {
+  testWidgets(
+    'compact review prioritizes records and reveals display options on demand',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(390, 844)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final store = IngestDraftStore(db, ownerUserId: 'u1');
+      await store.putAll([
+        _draft(id: 'coffee'),
+        _draft(id: 'metro', description: 'Metro'),
+      ]);
+      await tester.pumpWidget(
+        _app(
+          db: db,
+          store: store,
+          service: IngestConfirmService(
+            applier: const _NoopApplier(),
+            store: store,
+          ),
+          accounts: [_account],
+          touch: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('ingest-review-sort')), findsNothing);
+      expect(
+        find.byKey(const ValueKey('ingest-review-category')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('ingest-review-grouping')),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('ingest-select-ready')), findsNothing);
+      expect(
+        tester
+            .getTopLeft(find.byKey(const ValueKey('ingest-master-coffee')))
+            .dy,
+        lessThan(390),
+      );
+      await _toggleReviewOptions(tester);
+      expect(find.byKey(const ValueKey('ingest-review-sort')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('ingest-review-category')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('ingest-review-grouping')),
+        findsOneWidget,
+      );
+      await _toggleReviewOptions(tester);
+      await tester.tap(find.byKey(const ValueKey('ingest-select-filtered')));
+      await tester.pumpAndSettle();
+      expect(find.text('2 selected'), findsOneWidget);
+      expect(find.byKey(const ValueKey('ingest-select-ready')), findsOneWidget);
+      expect(find.text('Confirm (2)'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final scenario in [
     (size: const Size(375, 812), scale: 2.0, brightness: Brightness.dark),
     (size: const Size(844, 390), scale: 1.0, brightness: Brightness.light),
@@ -376,6 +446,13 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        await _toggleReviewOptions(tester);
+        expect(
+          find.byKey(const ValueKey('ingest-review-sort')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        await _toggleReviewOptions(tester);
         final edit = find.byKey(const ValueKey('ingest-group-category-row-0'));
         if (edit.evaluate().isEmpty) {
           await tester.scrollUntilVisible(
@@ -484,11 +561,13 @@ void main() {
       expect(await store.countByStatus(DraftStatus.confirmed), 0);
       expect(find.text('150 records'), findsOneWidget);
       await tester.pump(const Duration(seconds: 4));
+      await _toggleReviewOptions(tester);
       final category = find.byKey(const ValueKey('ingest-review-category'));
       await tester.tap(category);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Expense · Dining (149)').last);
       await tester.pumpAndSettle();
+      await _toggleReviewOptions(tester);
       expect(find.text('149 results · 151 pending'), findsOneWidget);
       expect(find.text('150 selected'), findsNothing);
       expect(find.text('149 records'), findsOneWidget);
@@ -638,6 +717,7 @@ void main() {
         'Coffee',
       );
       await tester.pumpAndSettle();
+      await _toggleReviewOptions(tester);
       await tester.tap(find.byKey(const ValueKey('ingest-review-category')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Expense · Uncategorized (2)').last);
@@ -646,6 +726,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Group by category').last);
       await tester.pumpAndSettle();
+      await _toggleReviewOptions(tester);
       await tester.tap(
         find.byKey(const ValueKey('ingest-group-expand-coffee')),
       );

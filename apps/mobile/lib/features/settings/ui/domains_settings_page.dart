@@ -3,29 +3,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth_providers;
 import '../../../core/lifeos/domain_pack.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../core/shell/settings_route_paths.dart';
 import '../../../core/shell/settings_ui/inline_setting_row.dart';
 import '../../../core/shell/settings_ui/settings_page_frame.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 
-/// `/settings/domains` — LifeOS domain management.
-///
-/// FinanceOS is always on; optional domains expose enablement here.
-class DomainsSettingsPage extends ConsumerWidget {
+/// Compact domain enablement and links to domain-owned configuration pages.
+class DomainsSettingsPage extends ConsumerStatefulWidget {
   const DomainsSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final optIns = ref.watch(auth_providers.domainOptInsProvider).value;
+  ConsumerState<DomainsSettingsPage> createState() =>
+      _DomainsSettingsPageState();
+}
+
+class _DomainsSettingsPageState extends ConsumerState<DomainsSettingsPage> {
+  DomainPack? _updating;
+  ({DomainPack pack, bool enabled})? _failedChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final optIns = ref.watch(auth_providers.domainOptInsProvider);
     final l10n = AppLocalizations.of(context);
-    // Set when DomainOptInRouteGuard redirected a deep link into a domain
-    // the user hasn't enabled — explain why they landed here.
     final blocked =
         GoRouterState.of(context).uri.queryParameters['blocked'] != null;
+    final packs = ref
+        .watch(domainPackRegistryProvider)
+        .where((pack) => pack.shell.settingsSpec != null);
 
     return AppPageScaffold(
       title: l10n.settingsDomainsTitle,
@@ -39,84 +47,88 @@ class DomainsSettingsPage extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.s16),
           ],
-          ..._domainSettingSections(
-            context: context,
-            ref: ref,
-            optIns: optIns,
-            l10n: l10n,
-          ),
+          if (optIns.hasError) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: l10n.commonLoadFailed,
+              action: AppQuietButton(
+                label: l10n.commonRetry,
+                onPress: () =>
+                    ref.invalidate(auth_providers.domainOptInsProvider),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ],
+          if (_failedChange case final failed?) ...[
+            AppStatusBanner(
+              kind: AppStatusKind.error,
+              message: l10n.settingsDomainsUpdateFailed(
+                failed.pack.shell.settingsSpec!.label,
+              ),
+              action: AppQuietButton(
+                label: l10n.commonRetry,
+                onPress: _updating == null
+                    ? () => _setDomainEnabled(failed.pack, failed.enabled)
+                    : null,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s16),
+          ],
+          for (final (index, pack) in packs.indexed) ...[
+            if (index > 0) const SizedBox(height: AppSpacing.s16),
+            _DomainSettingsCard(
+              spec: pack.shell.settingsSpec!,
+              value:
+                  pack.shell.settingsSpec!.alwaysEnabled ||
+                  (optIns.value?.contains(pack.scope) ?? false),
+              enabled: _updating == null && optIns.hasValue && !optIns.hasError,
+              busy: _updating == pack,
+              onChanged: (value) => _setDomainEnabled(pack, value),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  List<Widget> _domainSettingSections({
-    required BuildContext context,
-    required WidgetRef ref,
-    required DomainOptIns? optIns,
-    required AppLocalizations l10n,
-  }) {
-    final sections = <Widget>[];
-    for (final pack in ref.watch(domainPackRegistryProvider)) {
-      final spec = pack.shell.settingsSpec;
-      if (spec == null) continue;
-      if (sections.isNotEmpty) {
-        sections.add(const SizedBox(height: AppSpacing.s16));
-      }
-      final sectionBuilder = spec.sectionBuilder;
-      if (sectionBuilder != null) {
-        sections.add(sectionBuilder());
-        continue;
-      }
-      sections.add(
-        _DomainToggleCard(
-          icon: spec.icon,
-          label: spec.label,
-          subtitle: spec.subtitle(l10n, optIns?.contains(pack.scope) ?? false),
-          value: optIns?.contains(pack.scope) ?? false,
-          onChanged: (v) => _setDomainEnabled(context, ref, pack, v),
-          onOpenSettings:
-              (optIns?.contains(pack.scope) ?? false) && spec.detailPath != null
-              ? () => context.push(spec.detailPath!)
-              : null,
-          settingsLabel: l10n.settingsDomainsConfigure(spec.label),
-        ),
-      );
-    }
-    return sections;
-  }
-
-  Future<void> _setDomainEnabled(
-    BuildContext context,
-    WidgetRef ref,
-    DomainPack pack,
-    bool enabled,
-  ) async {
+  Future<void> _setDomainEnabled(DomainPack pack, bool enabled) async {
+    if (_updating != null) return;
     final l10n = AppLocalizations.of(context);
-    final label =
-        pack.shell.settingsSpec?.label ??
-        switch (pack.scope) {
-          DomainScope.finance => 'FinanceOS',
-          DomainScope.health => 'HealthOS',
-          DomainScope.knowledge => 'KnowledgeOS',
-          DomainScope.execution => 'ExecutionOS',
-        };
+    final spec = pack.shell.settingsSpec!;
     if (!enabled) {
       final confirmed = await showConfirmDialog(
         context: context,
-        title: Text(l10n.settingsDomainsDisableConfirmTitle(label)),
-        body: Text(l10n.settingsDomainsDisableConfirmBody(label)),
+        title: Text(l10n.settingsDomainsDisableConfirmTitle(spec.label)),
+        body: Text(l10n.settingsDomainsDisableConfirmBody(spec.label)),
         cancelLabel: l10n.commonCancel,
         confirmLabel: l10n.settingsDomainsDisableConfirmAction,
         destructive: true,
         icon: FLucideIcons.power,
       );
-      if (confirmed != true || !context.mounted) return;
+      if (confirmed != true || !mounted) return;
     }
-    await ref
-        .read(auth_providers.domainOptInsProvider.notifier)
-        .setEnabled(pack.scope, enabled);
-    if (!context.mounted) return;
+    setState(() {
+      _updating = pack;
+      _failedChange = null;
+    });
+    try {
+      await ref
+          .read(auth_providers.domainOptInsProvider.notifier)
+          .setEnabled(pack.scope, enabled);
+    } catch (error, stackTrace) {
+      AppLogger.instance.e(
+        'Domain enablement update failed (${pack.scope.wire})',
+        error: error,
+        stackTrace: stackTrace,
+      );
+      if (mounted) {
+        setState(() => _failedChange = (pack: pack, enabled: enabled));
+      }
+      return;
+    } finally {
+      if (mounted) setState(() => _updating = null);
+    }
+    if (!mounted) return;
     if (enabled) {
       final resume = GoRouterState.of(context).uri.queryParameters['resume'];
       if (resume == pack.scope.wire && context.canPop()) {
@@ -127,64 +139,86 @@ class DomainsSettingsPage extends ConsumerWidget {
       if (homePath == null) return;
       final openNow = await showConfirmDialog(
         context: context,
-        title: Text(l10n.settingsDomainsEnableSuccessTitle(label)),
-        body: Text(l10n.settingsDomainsEnableSuccessBody(label)),
+        title: Text(l10n.settingsDomainsEnableSuccessTitle(spec.label)),
+        body: Text(l10n.settingsDomainsEnableSuccessBody(spec.label)),
         cancelLabel: l10n.settingsDomainsOpenLater,
         confirmLabel: l10n.settingsDomainsOpenNow,
-        icon: pack.shell.settingsSpec?.icon,
+        icon: spec.icon,
       );
-      if (openNow == true && context.mounted) context.go(homePath);
+      if (openNow == true && mounted) context.go(homePath);
       return;
     }
     context.go(SettingsRoutes.domains);
     AppMessenger.show(
       context,
       ToastKind.info,
-      l10n.settingsDomainsDisabledToast(label),
+      l10n.settingsDomainsDisabledToast(spec.label),
     );
   }
 }
 
-class _DomainToggleCard extends StatelessWidget {
-  const _DomainToggleCard({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
+class _DomainSettingsCard extends StatelessWidget {
+  const _DomainSettingsCard({
+    required this.spec,
     required this.value,
+    required this.enabled,
+    required this.busy,
     required this.onChanged,
-    required this.settingsLabel,
-    this.onOpenSettings,
   });
 
-  final IconData icon;
-  final String label;
-  final String subtitle;
+  final DomainSettingsSpec spec;
   final bool value;
+  final bool enabled;
+  final bool busy;
   final ValueChanged<bool> onChanged;
-  final String settingsLabel;
-  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final subtitle = busy ? l10n.commonSaving : spec.subtitle(l10n, value);
     return AppGroupedSurface(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
       child: Column(
         children: [
-          InlineSwitchRow(
-            icon: icon,
-            label: label,
-            subtitle: subtitle,
-            value: value,
-            onChanged: onChanged,
-          ),
-          // Operational configuration is separate from the enable/disable
-          // gesture so neither target has a surprising side effect.
-          if (onOpenSettings != null) ...[
+          if (spec.alwaysEnabled)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s14,
+                vertical: AppSpacing.s10,
+              ),
+              child: Row(
+                children: [
+                  SettingsIconChip(icon: spec.icon),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: Text(
+                      spec.label,
+                      style: context.theme.typography.body.sm,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  AppBadge(
+                    label: l10n.settingsDomainsAlwaysOn,
+                    size: AppBadgeSize.compact,
+                  ),
+                ],
+              ),
+            )
+          else
+            InlineSwitchRow(
+              icon: spec.icon,
+              label: spec.label,
+              subtitle: subtitle,
+              value: value,
+              enabled: enabled,
+              onChanged: onChanged,
+            ),
+          if (value && spec.detailPath != null) ...[
             const AppGroupedDivider(),
             InlineLinkRow(
               icon: FLucideIcons.slidersHorizontal,
-              label: settingsLabel,
-              onTap: onOpenSettings!,
+              label: l10n.settingsDomainsConfigure(spec.label),
+              onTap: () => context.push(spec.detailPath!),
             ),
           ],
         ],

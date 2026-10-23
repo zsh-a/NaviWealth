@@ -16,52 +16,25 @@ class KnowledgeGreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.s8,
-        bottom: AppSpacing.s16,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Text(
-              l10n.knowledgeInboxTitle,
-              style: context.briefGreetingTitleStyle,
-            ),
+    return ShellPageHeading(
+      title: l10n.knowledgeInboxTitle,
+      actions: [
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.plus,
+          label: l10n.knowledgeCaptureAction,
+          iconColor: DomainAccents.knowledge.resolve(
+            context.appTheme.brightness,
           ),
-          AppIconButton(
-            icon: FLucideIcons.plus,
-            tooltip: l10n.knowledgeCaptureAction,
-            // Domain identity accent (KnowledgeOS indigo) on the inbox's
-            // one primary action.
-            iconColor: DomainAccents.knowledge.resolve(
-              context.appTheme.brightness,
-            ),
-            onPress: () => showKnowledgeCaptureSheet(context),
-          ),
-          AppAdaptiveActionMenu(
-            title: l10n.shellMoreActions,
-            actions: [
-              AppAdaptiveAction(
-                icon: FLucideIcons.circleCheck,
-                title: l10n.knowledgeNewDecision,
-                onPress: () => showKnowledgeDecisionCapturePage(context),
-              ),
-            ],
-            triggerBuilder: (context, openMenu, focusNode) => Focus(
-              focusNode: focusNode,
-              child: AppIconButton(
-                key: const ValueKey('knowledge-create-more'),
-                tooltip: l10n.shellMoreActions,
-                icon: FLucideIcons.ellipsis,
-                onPress: openMenu,
-              ),
-            ),
-          ),
-          const ShellActionRow(),
-        ],
-      ),
+          onPress: () => showKnowledgeCaptureSheet(context),
+          order: -10,
+        ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.circleCheck,
+          label: l10n.knowledgeNewDecision,
+          onPress: () => showKnowledgeDecisionCapturePage(context),
+          order: 10,
+        ),
+      ],
     );
   }
 }
