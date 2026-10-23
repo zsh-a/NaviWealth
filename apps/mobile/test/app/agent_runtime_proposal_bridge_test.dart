@@ -8,6 +8,7 @@ import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart'
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 
@@ -215,7 +216,7 @@ void main() {
           agentRuntimeCatalogProvider.overrideWithValue(
             AgentRuntimeCatalog(
               generatedAt: DateTime.utc(2026, 6, 29, 3, 0),
-              activeDomains: const <String>['execution'],
+              activeDomains: const <DomainScope>[DomainScope.execution],
               agents: const <AgentRuntimeAgentSpec>[],
               tools: const <AgentRuntimeToolSpec>[],
               proposalKinds: const <AgentRuntimeProposalKindSpec>[],

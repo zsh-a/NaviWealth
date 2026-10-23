@@ -9,7 +9,6 @@ import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 
@@ -19,7 +18,7 @@ AgentExecution _execution(String id, DateTime start, {String? process}) =>
     AgentExecution(
       runId: id,
       agentId: 'test',
-      domain: 'finance',
+      domain: const AiDomain.domain(DomainScope.finance),
       title: 'Review',
       instructions: 'Review facts',
       traceId: 'trace:$id',

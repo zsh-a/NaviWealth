@@ -19,12 +19,12 @@ import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/local/embedding/embedder.dart';
 import 'package:naviwealth/core/ai/local/memory/event_store.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/ai/local/memory/memory_store.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -764,7 +764,7 @@ void main() {
         id: 'artifact-1',
         ownerUserId: 'user-1',
         agentId: agent.id,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Latest Artifact',
@@ -890,7 +890,7 @@ void main() {
         id: 'artifact-1',
         ownerUserId: 'user-1',
         agentId: agent.id,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Hidden Artifact',

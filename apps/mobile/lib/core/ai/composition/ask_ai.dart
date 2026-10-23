@@ -16,14 +16,13 @@
 /// **Domain rule.** The invocation's `domain` is read from
 /// [aiContextProvider], which the outer shell keeps in sync with the
 /// active route. When the user is on a shell-level route (`/login`,
-/// `/settings/*`) we fall back to [DomainScope.finance] — the
-/// always-on seed domain. Call sites never write `domain:` directly.
+/// `/settings/*`) ownership is explicitly global. Call sites never write `domain:` directly.
 library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../auth/domain_scope.dart';
+import '../contracts/ai_domain.dart';
 import '../intent/ai_intent_invocation.dart';
 import 'ai_context.dart';
 
@@ -53,7 +52,7 @@ final askAiSurfaceProvider = Provider<AskAiSurface>((ref) => _noopAskAiSurface);
 ///
 /// All parameters except [intent] / [object] are optional — by default
 /// `source` is the current route path, `domain` is the route's
-/// owning [DomainScope] (falling back to `finance`), and `capabilities`
+/// owning [DomainScope] (or explicit global ownership), and `capabilities`
 /// covers chat / proposal / visualization.
 Future<void> askAi(
   BuildContext context,
@@ -71,7 +70,7 @@ Future<void> askAi(
     return openSurface(context, prefill: prefill);
   }
   final aiCtx = ref.read(aiContextProvider);
-  final domain = (aiCtx.domain ?? DomainScope.finance).wire;
+  final domain = AiDomain.fromScope(aiCtx.domain);
   return openSurface(
     context,
     invocation: AiIntentInvocation(

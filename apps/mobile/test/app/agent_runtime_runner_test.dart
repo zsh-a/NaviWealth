@@ -7,6 +7,7 @@ import 'package:naviwealth/app/agent_runtime/persistence/agent_runtime_checkpoin
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_runner.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -328,7 +329,7 @@ AgentRuntimeLlmBridge _llmBridge(_FakeNativeBridge native) {
 AgentRuntimeCatalog _catalog() {
   return AgentRuntimeCatalog(
     generatedAt: DateTime.utc(2026, 6, 29, 8),
-    activeDomains: const <String>['execution'],
+    activeDomains: const <DomainScope>[DomainScope.execution],
     agents: const <AgentRuntimeAgentSpec>[],
     tools: const <AgentRuntimeToolSpec>[],
     proposalKinds: const <AgentRuntimeProposalKindSpec>[],

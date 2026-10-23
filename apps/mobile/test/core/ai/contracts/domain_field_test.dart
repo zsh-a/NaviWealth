@@ -7,103 +7,103 @@ import 'package:naviwealth/core/ai/intent/intent.dart';
 
 void main() {
   group('D-1.3 domain field', () {
-    test('IntentHint defaults to finance and round-trips', () {
-      const hint = IntentHint(
-        capability: Capability.analyze,
-        risk: RiskLevel.info,
-      );
-      expect(hint.domain, kDomainFinance);
-      final restored = IntentHint.fromJson(hint.toJson());
-      expect(restored.domain, kDomainFinance);
-    });
+    for (final domain in <AiDomain>[
+      for (final scope in DomainScope.values) AiDomain.domain(scope),
+      const AiDomain.shell(),
+      const AiDomain.global(),
+    ]) {
+      test('AI contracts round-trip explicit ${domain.wire} ownership', () {
+        final hint = IntentHint(
+          domain: domain,
+          capability: Capability.analyze,
+          risk: RiskLevel.info,
+        );
+        final tool = ToolDescriptor(
+          domain: domain,
+          name: 'read_data',
+          access: Access.read,
+          risk: RiskLevel.info,
+          requiresConfirmation: Confirmation.none,
+          allowedContextTier: BudgetTier.small,
+        );
+        expect(hint.toJson()['domain'], domain.wire);
+        expect(tool.toJson()['domain'], domain.wire);
+        expect(IntentHint.fromJson(hint.toJson()).domain, domain);
+        expect(ToolDescriptor.fromJson(tool.toJson()).domain, domain);
+      });
+    }
 
-    test('IntentHint preserves a non-finance domain', () {
-      const hint = IntentHint(
-        capability: Capability.summarize,
-        risk: RiskLevel.suggest,
-        domain: 'health',
-      );
-      final restored = IntentHint.fromJson(hint.toJson());
-      expect(restored.domain, 'health');
-    });
-
-    test('IntentHint legacy JSON without domain decodes to finance', () {
-      final legacy = <String, Object?>{'capability': 'analyze', 'risk': 'info'};
-      expect(IntentHint.fromJson(legacy).domain, kDomainFinance);
-    });
-
-    test('ToolDescriptor defaults to finance and round-trips', () {
-      const tool = ToolDescriptor(
-        name: 'get_holdings',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-      );
-      expect(tool.domain, kDomainFinance);
-      expect(ToolDescriptor.fromJson(tool.toJson()).domain, kDomainFinance);
-    });
-
-    test('ToolDescriptor preserves shell / health domains', () {
-      const shellTool = ToolDescriptor(
-        name: 'build_context',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.standard,
-        domain: kDomainShell,
-      );
-      expect(shellTool.domain, kDomainShell);
-      expect(ToolDescriptor.fromJson(shellTool.toJson()).domain, kDomainShell);
-
-      const healthTool = ToolDescriptor(
-        name: 'get_recovery_signal',
-        access: Access.read,
-        risk: RiskLevel.info,
-        requiresConfirmation: Confirmation.none,
-        allowedContextTier: BudgetTier.small,
-        domain: 'health',
-      );
-      expect(ToolDescriptor.fromJson(healthTool.toJson()).domain, 'health');
-    });
-
-    test('ToolDescriptor legacy JSON without domain decodes to finance', () {
-      final legacy = <String, Object?>{
-        'name': 'get_holdings',
-        'access': 'read',
-        'risk': 'info',
-        'requires_confirmation': 'none',
-        'allowed_context_tier': 'small',
-      };
-      expect(ToolDescriptor.fromJson(legacy).domain, kDomainFinance);
-    });
+    for (final value in [null, '', 'life', 'settings', 'unregistered', 42]) {
+      test('AI domain rejects missing or unknown wire value $value', () {
+        expect(() => AiDomain.fromWire(value), throwsFormatException);
+        expect(
+          () => IntentHint.fromJson({
+            'capability': 'analyze',
+            'risk': 'info',
+            'domain': value,
+          }),
+          throwsFormatException,
+        );
+        expect(
+          () => ToolDescriptor.fromJson({'name': 'read_data', 'domain': value}),
+          throwsFormatException,
+        );
+      });
+    }
 
     test('built-in catalog tags each tool with the right LifeOS domain', () {
       ToolDescriptor lookup(String name) =>
           productionToolDescriptors.values.firstWhere((t) => t.name == name);
-      expect(lookup('query_memory').domain, kDomainShell);
-      expect(lookup('build_context').domain, kDomainShell);
-      expect(lookup('get_holdings').domain, kDomainFinance);
-      expect(lookup('propose_fire_plan_update').domain, kDomainFinance);
-      expect(lookup('get_wheel_lifecycle').domain, kDomainFinance);
-      expect(lookup('get_hrv_trend').domain, kDomainHealth);
-      expect(lookup('get_recovery_signal').domain, kDomainHealth);
-      expect(lookup('recall_decision').domain, kDomainKnowledge);
-      expect(lookup('propose_capture').domain, kDomainKnowledge);
-      expect(lookup('list_open_actions').domain, kDomainExecution);
-      expect(lookup('propose_action').domain, kDomainExecution);
-      const validDomains = <String>{
-        kDomainFinance,
-        kDomainShell,
-        kDomainHealth,
-        kDomainKnowledge,
-        kDomainExecution,
-      };
+      expect(lookup('query_memory').domain, const AiDomain.shell());
+      expect(lookup('build_context').domain, const AiDomain.shell());
+      expect(
+        lookup('get_holdings').domain,
+        const AiDomain.domain(DomainScope.finance),
+      );
+      expect(
+        lookup('propose_fire_plan_update').domain,
+        const AiDomain.domain(DomainScope.finance),
+      );
+      expect(
+        lookup('get_wheel_lifecycle').domain,
+        const AiDomain.domain(DomainScope.finance),
+      );
+      expect(
+        lookup('get_hrv_trend').domain,
+        const AiDomain.domain(DomainScope.health),
+      );
+      expect(
+        lookup('get_recovery_signal').domain,
+        const AiDomain.domain(DomainScope.health),
+      );
+      expect(
+        lookup('recall_decision').domain,
+        const AiDomain.domain(DomainScope.knowledge),
+      );
+      expect(
+        lookup('propose_capture').domain,
+        const AiDomain.domain(DomainScope.knowledge),
+      );
+      expect(
+        lookup('list_open_actions').domain,
+        const AiDomain.domain(DomainScope.execution),
+      );
+      expect(
+        lookup('propose_action').domain,
+        const AiDomain.domain(DomainScope.execution),
+      );
+      const validDomains = <AiDomain>[
+        AiDomain.domain(DomainScope.finance),
+        AiDomain.shell(),
+        AiDomain.domain(DomainScope.health),
+        AiDomain.domain(DomainScope.knowledge),
+        AiDomain.domain(DomainScope.execution),
+      ];
       for (final t in productionToolDescriptors.values) {
         expect(
           validDomains.contains(t.domain),
           isTrue,
-          reason: 'tool ${t.name} has unexpected domain ${t.domain}',
+          reason: 'tool ${t.name} has unexpected domain ${t.domain.wire}',
         );
       }
     });
@@ -112,34 +112,38 @@ void main() {
       const invocation = AiIntentInvocation(
         source: 'expense_detail',
         intent: 'explain_change',
-        domain: kDomainFinance,
+        domain: AiDomain.domain(DomainScope.finance),
       );
-      expect(invocation.domain, kDomainFinance);
-      expect(invocation.toTraceJson()['domain'], kDomainFinance);
+      expect(invocation.domain, const AiDomain.domain(DomainScope.finance));
+      expect(invocation.toTraceJson()['domain'], 'finance');
 
       const healthInv = AiIntentInvocation(
         source: 'sleep_card',
         intent: 'explain_recovery',
-        domain: kDomainHealth,
+        domain: AiDomain.domain(DomainScope.health),
       );
-      expect(healthInv.toTraceJson()['domain'], kDomainHealth);
+      expect(healthInv.toTraceJson()['domain'], 'health');
     });
 
-    test('IntentDescriptor defaults to finance, accepts non-finance', () {
+    test('IntentDescriptor retains explicit shell and business ownership', () {
       const descriptor = IntentDescriptor(
+        domain: AiDomain.shell(),
         name: 'explain_change',
         allowedObjectTypes: <String>{'expense'},
         preferredCapabilities: <AiCapability>{AiCapability.chat},
       );
-      expect(descriptor.domain, kDomainFinance);
+      expect(descriptor.domain, const AiDomain.shell());
 
       const healthDescriptor = IntentDescriptor(
         name: 'explain_recovery',
         allowedObjectTypes: <String>{'sleep_session'},
         preferredCapabilities: <AiCapability>{AiCapability.chat},
-        domain: 'health',
+        domain: AiDomain.domain(DomainScope.health),
       );
-      expect(healthDescriptor.domain, 'health');
+      expect(
+        healthDescriptor.domain,
+        const AiDomain.domain(DomainScope.health),
+      );
     });
   });
 }

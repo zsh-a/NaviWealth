@@ -38,7 +38,7 @@ class LifePage extends ConsumerWidget {
       app_agent_providers.latestDailyNavigatorArtifactProvider,
     );
     final reviewPacks = packs
-        .where((pack) => pack.reviewRoutePath != null)
+        .where((pack) => pack.shell.navigation?.reviewRoutePath != null)
         .toList(growable: false);
     final formatters = context.formatters(ref);
     final priorityEvents = events
@@ -227,7 +227,7 @@ class _LifeReviewEntry extends StatelessWidget {
 
   Future<void> _open(BuildContext context) async {
     if (packs.length == 1) {
-      context.go(packs.single.reviewRoutePath!);
+      context.go(packs.single.shell.navigation!.reviewRoutePath!);
       return;
     }
     await showAppSheet<void>(
@@ -244,7 +244,7 @@ class _LifeReviewEntry extends StatelessWidget {
               title: LifePage._domainLabel(l10n, pack.scope),
               onPress: () {
                 Navigator.of(sheetContext).pop();
-                context.go(pack.reviewRoutePath!);
+                context.go(pack.shell.navigation!.reviewRoutePath!);
               },
             ),
         ],

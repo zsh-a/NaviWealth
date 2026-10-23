@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart'
     as core;
 import 'package:naviwealth/core/logging/providers.dart';
@@ -40,7 +41,7 @@ final agentRuntimeProfileTurnBindingProvider =
 core.AgentRuntimeProfileTurnBinding? agentRuntimeProfileTurnBinding(
   Ref ref, {
   required String agentId,
-  required String domain,
+  required AiDomain domain,
   required String surface,
   bool resolveAvailability = true,
 }) {

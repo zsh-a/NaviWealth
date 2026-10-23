@@ -3,6 +3,7 @@ import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_evidence_navigation_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_quality_report.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../persistence/test_database.dart';
 
@@ -62,7 +63,7 @@ void main() {
         id: id,
         ownerUserId: 'user-1',
         agentId: 'agent-1',
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Private title',

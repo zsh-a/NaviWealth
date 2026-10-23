@@ -7,6 +7,8 @@
 /// evaluation surface.
 library;
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import '../agents/agent_artifact.dart';
 import '../agents/agent_intents.dart';
 
@@ -39,7 +41,7 @@ class AgentOutcomeRegressionCase {
   final String agentId;
 
   /// Domain pack id: finance / health / knowledge / execution.
-  final String domain;
+  final AiDomain domain;
 
   /// Fixture key owned by the executable domain test. The corpus does not
   /// define the rows themselves; it defines the expected visible outcome.
@@ -77,14 +79,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.weekly_wealth_review.no_finding',
         agentId: 'weekly_wealth_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.weekly_wealth_review.empty_portfolio',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'finance.weekly_wealth_review.ready',
         agentId: 'weekly_wealth_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.weekly_wealth_review.baseline_portfolio',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -102,7 +104,7 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.weekly_wealth_review.no_llm_profile_fallback',
         agentId: 'weekly_wealth_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.weekly_wealth_review.no_llm_profile',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -121,14 +123,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.cashflow_anomaly_review.no_finding',
         agentId: 'cashflow_anomaly_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.cashflow_anomaly_review.no_anomaly',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'finance.cashflow_anomaly_review.ready',
         agentId: 'cashflow_anomaly_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.cashflow_anomaly_review.monthly_spike',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.alert,
@@ -148,7 +150,7 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.cashflow_anomaly_review.no_llm_profile_fallback',
         agentId: 'cashflow_anomaly_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.cashflow_anomaly_review.no_llm_profile',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.alert,
@@ -169,14 +171,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.fire_plan_drift_monitor.no_finding',
         agentId: 'fire_plan_drift_monitor',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.fire_plan_drift_monitor.healthy_plan',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'finance.fire_plan_drift_monitor.ready',
         agentId: 'fire_plan_drift_monitor',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.fire_plan_drift_monitor.withdrawal_rate_drift',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -203,7 +205,7 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.fire_plan_drift_monitor.no_llm_profile_fallback',
         agentId: 'fire_plan_drift_monitor',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.fire_plan_drift_monitor.no_llm_profile',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -231,14 +233,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.options_income_risk_review.no_finding',
         agentId: 'options_income_risk_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.options_income_risk_review.clean_scan',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'finance.options_income_risk_review.ready',
         agentId: 'options_income_risk_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.options_income_risk_review.stale_elevated_scan',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.alert,
@@ -263,7 +265,7 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'finance.options_income_risk_review.no_llm_profile_fallback',
         agentId: 'options_income_risk_review',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.options_income_risk_review.no_llm_profile',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.alert,
@@ -289,14 +291,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'health.recovery_alert.no_finding',
         agentId: 'recovery_alert',
-        domain: 'health',
+        domain: AiDomain.domain(DomainScope.health),
         snapshotId: 'health.recovery_alert.stable_hrv',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'health.recovery_alert.ready',
         agentId: 'recovery_alert',
-        domain: 'health',
+        domain: AiDomain.domain(DomainScope.health),
         snapshotId: 'health.recovery_alert.hrv_decline',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.alert,
@@ -313,14 +315,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'health.weekly_summary.no_finding',
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: AiDomain.domain(DomainScope.health),
         snapshotId: 'health.weekly_summary.empty_week',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'health.weekly_summary.ready',
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: AiDomain.domain(DomainScope.health),
         snapshotId: 'health.weekly_summary.active_week',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -342,14 +344,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'execution.review.no_finding',
         agentId: 'execution_review',
-        domain: 'execution',
+        domain: AiDomain.domain(DomainScope.execution),
         snapshotId: 'execution.review.no_signals',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'execution.review.ready',
         agentId: 'execution_review',
-        domain: 'execution',
+        domain: AiDomain.domain(DomainScope.execution),
         snapshotId: 'execution.review.blocked_due_work',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -374,7 +376,7 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'execution.review.budget_exhausted',
         agentId: 'execution_review',
-        domain: 'execution',
+        domain: AiDomain.domain(DomainScope.execution),
         snapshotId: 'execution.review.effect_budget_exhausted',
         expectedStatus: AgentOutcomeRegressionStatus.failed,
         tags: <String>{kAgentOutcomeBudgetExhaustedTag},
@@ -382,14 +384,14 @@ const List<AgentOutcomeRegressionCase> agentOutcomeRegressionCorpus =
       AgentOutcomeRegressionCase(
         id: 'execution.due_actions.no_finding',
         agentId: 'execution_due_actions',
-        domain: 'execution',
+        domain: AiDomain.domain(DomainScope.execution),
         snapshotId: 'execution.due_actions.none_due',
         expectedStatus: AgentOutcomeRegressionStatus.noFinding,
       ),
       AgentOutcomeRegressionCase(
         id: 'execution.due_actions.ready',
         agentId: 'execution_due_actions',
-        domain: 'execution',
+        domain: AiDomain.domain(DomainScope.execution),
         snapshotId: 'execution.due_actions.due_tomorrow',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.reminder,

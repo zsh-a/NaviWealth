@@ -8,7 +8,8 @@
 /// domain-neutral.
 library;
 
-import 'intent.dart' show RiskLevel, RiskLevelWire, kDefaultDomain;
+import 'ai_domain.dart';
+import 'intent.dart' show RiskLevel, RiskLevelWire;
 import 'privacy_budget.dart' show BudgetTier, BudgetTierWire;
 
 enum Access { read, propose, externalWrite }
@@ -72,7 +73,7 @@ class ToolDescriptor {
     required this.requiresConfirmation,
     required this.allowedContextTier,
     this.sideEffect = SideEffect.none,
-    this.domain = kDefaultDomain,
+    required this.domain,
   });
 
   final String name;
@@ -87,9 +88,8 @@ class ToolDescriptor {
   /// Side-effect classification (orthogonal to risk level).
   final SideEffect sideEffect;
 
-  /// LifeOS domain this tool belongs to (`finance` / `health` /
-  /// `knowledge` / `shell` for cross-domain).
-  final String domain;
+  /// Explicit business domain, shell infrastructure, or global ownership.
+  final AiDomain domain;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'name': name,
@@ -98,7 +98,7 @@ class ToolDescriptor {
     'requires_confirmation': requiresConfirmation.wire,
     'allowed_context_tier': allowedContextTier.wire,
     'side_effect': sideEffect.wire,
-    'domain': domain,
+    'domain': domain.wire,
   };
 
   factory ToolDescriptor.fromJson(Map<String, Object?> json) {
@@ -120,11 +120,7 @@ class ToolDescriptor {
           ? BudgetTierWire.parse(t)
           : BudgetTier.standard,
       sideEffect: se is String ? SideEffectWire.parse(se) : SideEffect.none,
-      domain: domain is String && domain.isNotEmpty ? domain : kDefaultDomain,
+      domain: AiDomain.fromWire(domain),
     );
   }
 }
-
-/// Cross-domain shell tools (Memory Layer). Distinguishes shell-level
-/// tools from any single LifeOS domain.
-const String kDomainShell = 'shell';

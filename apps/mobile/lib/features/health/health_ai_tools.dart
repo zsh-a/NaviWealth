@@ -5,7 +5,9 @@
 /// opted into the Health domain (`domainOptInsProvider`).
 library;
 
-import '../../core/ai/contracts/intent.dart' show RiskLevel, kDomainHealth;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
+import '../../core/ai/contracts/intent.dart' show RiskLevel;
 import '../../core/ai/contracts/tool_descriptor.dart';
 import '../../core/ai/runtime/device/tools/device_tool.dart';
 import '../../core/ai/runtime/device/tools/registered_device_tool.dart';
@@ -21,7 +23,7 @@ import 'ai_tools/record_body_measurement_tool.dart';
 /// adding one registration here; the runtime tool list and descriptor map
 /// are derived below.
 const DeviceToolRegistrationBuilder _healthTool = DeviceToolRegistrationBuilder(
-  kDomainHealth,
+  AiDomain.domain(DomainScope.health),
 );
 
 final List<RegisteredDeviceTool> kHealthToolRegistrations =

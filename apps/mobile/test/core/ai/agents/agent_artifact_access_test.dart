@@ -6,6 +6,7 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_access.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -54,7 +55,7 @@ void main() {
         (ref) => readActiveAgentArtifact(
           ref,
           artifactId: 'health-artifact',
-          expectedDomain: DomainScope.health.wire,
+          expectedDomain: const AiDomain.domain(DomainScope.health),
         ),
       );
 
@@ -131,7 +132,7 @@ void main() {
       (ref) => readActiveAgentArtifact(
         ref,
         artifactId: 'health-artifact',
-        expectedDomain: DomainScope.knowledge.wire,
+        expectedDomain: const AiDomain.domain(DomainScope.knowledge),
       ),
     );
 
@@ -181,7 +182,7 @@ AgentArtifact _artifact({
     id: id,
     ownerUserId: ownerUserId,
     agentId: 'health_agent',
-    domain: DomainScope.health.wire,
+    domain: const AiDomain.domain(DomainScope.health),
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.info,
     title: 'Health Artifact',

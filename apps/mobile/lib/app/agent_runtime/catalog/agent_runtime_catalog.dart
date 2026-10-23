@@ -15,6 +15,7 @@ import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
 import 'package:naviwealth/core/ai/composition/device_tools_provider.dart';
 import 'package:naviwealth/core/ai/composition/proposal_kind_registry.dart';
 import 'package:naviwealth/core/ai/composition/tool_descriptor_lookup.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/contracts/intent.dart' show RiskLevel;
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
@@ -55,7 +56,7 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
 }) {
   final descriptors = domainToolDescriptors(packs);
   final promptBlocks = domainSystemPromptBlocks(packs);
-  final activeDomains = [for (final pack in packs) pack.scope.wire];
+  final activeDomains = [for (final pack in packs) pack.scope];
   final activeDomainSet = activeDomains.toSet();
   return AgentRuntimeCatalog(
     generatedAt: generatedAt.toUtc(),
@@ -63,12 +64,12 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
     agents: [
       kSettingsLlmRuntimeCheckAgent,
       for (final agent in appAgents)
-        AgentRuntimeAgentSpec.fromAgent(agent, domain: 'life'),
+        AgentRuntimeAgentSpec.fromAgent(agent, domain: const AiDomain.global()),
       for (final registration in agentRegistrations)
-        if (activeDomainSet.contains(registration.domain.wire))
+        if (activeDomainSet.contains(registration.domain))
           AgentRuntimeAgentSpec.fromAgent(
             registration.agent,
-            domain: registration.domain.wire,
+            domain: AiDomain.domain(registration.domain),
           ),
     ],
     tools: [
@@ -88,15 +89,13 @@ AgentRuntimeCatalog buildAgentRuntimeCatalog({
 
 const AgentRuntimeAgentSpec kSettingsLlmRuntimeCheckAgent =
     AgentRuntimeAgentSpec(
+      domain: AiDomain.shell(),
       id: kSettingsLlmRuntimeCheckAgentId,
       name: 'Settings LLM Runtime Check',
       version: '0.1.0',
       schedule: AgentRuntimeScheduleSpec.manual(),
       capabilities: <String>['diagnostic'],
-      metadata: <String, Object?>{
-        'domain': 'settings',
-        'surface': 'settings_ai_llm',
-      },
+      metadata: <String, Object?>{'surface': 'settings_ai_llm'},
     );
 
 class AgentRuntimeCatalog {
@@ -110,7 +109,7 @@ class AgentRuntimeCatalog {
   });
 
   final DateTime generatedAt;
-  final List<String> activeDomains;
+  final List<DomainScope> activeDomains;
   final List<AgentRuntimeAgentSpec> agents;
   final List<AgentRuntimeToolSpec> tools;
   final List<AgentRuntimeProposalKindSpec> proposalKinds;
@@ -120,7 +119,7 @@ class AgentRuntimeCatalog {
     'protocol_version': kAgentRuntimeProtocolVersion,
     'catalog_version': kAgentRuntimeCatalogVersion,
     'generated_at': generatedAt.toUtc().toIso8601String(),
-    'active_domains': List<String>.unmodifiable(activeDomains),
+    'active_domains': [for (final domain in activeDomains) domain.wire],
     'agents': List<Map<String, Object?>>.unmodifiable([
       for (final agent in agents)
         Map<String, Object?>.unmodifiable(agent.toJson()),
@@ -145,6 +144,7 @@ class AgentRuntimeCatalog {
 class AgentRuntimeAgentSpec {
   const AgentRuntimeAgentSpec({
     required this.id,
+    required this.domain,
     required this.name,
     required this.version,
     required this.schedule,
@@ -152,12 +152,15 @@ class AgentRuntimeAgentSpec {
     required this.metadata,
   });
 
-  factory AgentRuntimeAgentSpec.fromAgent(Agent agent, {String? domain}) {
+  factory AgentRuntimeAgentSpec.fromAgent(
+    Agent agent, {
+    required AiDomain domain,
+  }) {
     final metadata = <String, Object?>{
       'dart_type': agent.runtimeType.toString(),
     };
-    if (domain != null) metadata['domain'] = domain;
     return AgentRuntimeAgentSpec(
+      domain: domain,
       id: agent.id,
       name: agent.name,
       version: '0.1.0',
@@ -168,6 +171,7 @@ class AgentRuntimeAgentSpec {
   }
 
   final String id;
+  final AiDomain domain;
   final String name;
   final String version;
   final AgentRuntimeScheduleSpec schedule;
@@ -181,7 +185,7 @@ class AgentRuntimeAgentSpec {
     'version': version,
     'schedule': schedule.toJson(),
     'capabilities': capabilities,
-    'metadata': metadata,
+    'metadata': {...metadata, 'domain': domain.wire},
   };
 }
 

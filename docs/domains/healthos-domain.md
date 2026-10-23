@@ -136,7 +136,7 @@ Tables:
 
 - `core/persistence/health_tables.dart`
 - Drift table: `health_metrics`
-- Drift table: `health_check_ins` (additive schema v97)
+- Drift table: `health_check_ins` (included in the schema-98 baseline)
 - Entity: `features/health/domain/health_metric.dart`
 - Kind enum: `features/health/domain/health_metric_kind.dart`
 
@@ -187,8 +187,10 @@ Unknown event tags remain intact when an older client edits a record.
 participates in Health reset and encrypted backups. Older clients skip the
 unknown row family; upgrading changes the registry compatibility signature
 and replays the remote rows. Restoring an older archive that has no check-in
-table preserves existing check-ins. The v97 migration adds the table/indexes
-without rewriting existing metrics or sync state.
+table preserves existing check-ins. New databases create both Health tables and
+their indexes directly in schema 98. Other local schema versions are rejected
+without rewriting data; the startup unlock gate requires explicit confirmation
+before resetting them. There is no historical local-schema migration chain.
 
 Source selection and sleep goals are device-local, owner-scoped preferences
 in `health_preferences.dart`; they are not synced or included in backups.
@@ -414,7 +416,9 @@ When touching HealthOS, add or run targeted tests for:
 - Sleep segment merge behavior.
 - `HealthMetricRepository` queries.
 - Check-in owner/date identity, live opt-in gating, transactional outbox,
-  tombstones, v96→v97 upgrade/rollback, sync replay, and backup compatibility.
+  tombstones, current-baseline creation/reopen, sync replay, and backup compatibility.
+- Shared `schema_baseline_test.dart` proves unsupported local schemas remain
+  unchanged, and the unlock-gate widget tests cover explicit reset confirmation.
 - Source/method/device isolation, per-component baseline days, stale inputs,
   naps, explicit goals, and chart-date context.
 - Health AI tool outputs.

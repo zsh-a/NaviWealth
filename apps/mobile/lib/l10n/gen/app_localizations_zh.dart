@@ -17344,4 +17344,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get ingestViewOriginal => '查看原记录';
+
+  @override
+  String get databaseSchemaMismatchTitle => '本地数据库版本不受支持';
+
+  @override
+  String get databaseSchemaMismatchMessage =>
+      '此版本使用新的数据库格式。现有数据未被修改，重置本地数据后可重新开始。';
 }

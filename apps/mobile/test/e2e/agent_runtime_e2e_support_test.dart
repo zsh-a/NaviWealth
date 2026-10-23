@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 
 import 'agent_runtime_e2e_support.dart';
@@ -53,12 +52,12 @@ void main() {
           _pack(
             DomainScope.finance,
             const _FakeTool('get_budget'),
-            domain: 'finance',
+            domain: const AiDomain.domain(DomainScope.finance),
           ),
           _pack(
             DomainScope.execution,
             const _FakeTool('propose_action'),
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             access: Access.propose,
             confirmation: Confirmation.oneTap,
           ),
@@ -115,23 +114,25 @@ void main() {
 DomainPack _pack(
   DomainScope scope,
   DeviceTool tool, {
-  String domain = 'finance',
+  AiDomain domain = const AiDomain.domain(DomainScope.finance),
   Access access = Access.read,
   Confirmation confirmation = Confirmation.none,
 }) {
   return DomainPack(
     scope: scope,
-    deviceTools: [tool],
-    toolDescriptors: <String, ToolDescriptor>{
-      tool.name: ToolDescriptor(
-        name: tool.name,
-        access: access,
-        risk: access == Access.propose ? RiskLevel.propose : RiskLevel.info,
-        requiresConfirmation: confirmation,
-        allowedContextTier: BudgetTier.small,
-        domain: domain,
-      ),
-    },
+    ai: DomainAiContribution(
+      deviceTools: [tool],
+      toolDescriptors: <String, ToolDescriptor>{
+        tool.name: ToolDescriptor(
+          name: tool.name,
+          access: access,
+          risk: access == Access.propose ? RiskLevel.propose : RiskLevel.info,
+          requiresConfirmation: confirmation,
+          allowedContextTier: BudgetTier.small,
+          domain: domain,
+        ),
+      },
+    ),
   );
 }
 

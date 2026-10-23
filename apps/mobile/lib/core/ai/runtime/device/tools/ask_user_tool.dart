@@ -16,8 +16,8 @@ library;
 
 import 'package:uuid/uuid.dart';
 
+import '../../../contracts/ai_domain.dart';
 import '../../../contracts/interaction.dart';
-import '../../../contracts/tool_descriptor.dart' show kDomainShell;
 import 'device_tool.dart';
 
 /// Wire tool name — referenced by the runtime terminal-tool check.
@@ -141,7 +141,7 @@ class AskUserTool implements DeviceTool {
           'custom_text': <String, Object?>{'type': 'string'},
         },
       },
-      payload: <String, Object?>{'domain': kDomainShell},
+      payload: <String, Object?>{'domain': const AiDomain.shell().wire},
       metadata: <String, Object?>{'allow_custom': allowCustom},
       resumeKind: AiInteractionResumeKind.chatTurn,
       createdAt: DateTime.now().toUtc(),
@@ -157,7 +157,7 @@ class AskUserTool implements DeviceTool {
       'allow_custom': allowCustom,
       // The loop suspends here; the user's response resumes this turn.
       'awaiting_user': true,
-      'domain': kDomainShell,
+      'domain': const AiDomain.shell().wire,
       'interaction': interaction.toJson(),
     };
   }

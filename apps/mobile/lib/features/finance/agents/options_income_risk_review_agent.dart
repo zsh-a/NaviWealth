@@ -437,7 +437,7 @@ class OptionsIncomeRiskAnalysis {
       id: id,
       ownerUserId: ownerUserId,
       agentId: kOptionsIncomeRiskReviewAgentId,
-      domain: 'finance',
+      domain: const AiDomain.domain(DomainScope.finance),
       kind: severity == AgentArtifactSeverity.warning
           ? AgentArtifactKind.alert
           : AgentArtifactKind.review,
@@ -548,7 +548,7 @@ class OptionsIncomeRiskAnalysis {
         capability: Capability.analyze,
         risk: RiskLevel.info,
         label: 'options_income_risk_review',
-        domain: kDomainFinance,
+        domain: AiDomain.domain(DomainScope.finance),
       ),
       backend: Backend.device,
       budgetTier: BudgetTier.small,

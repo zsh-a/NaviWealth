@@ -30,14 +30,69 @@ Widget _wrap({
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => FTheme(
         data: FTheme.neutral.light.desktop,
-        child: AppMessenger.init(child: child ?? const SizedBox.shrink()),
+        child: AppMessenger.init(
+          // Match production placement above the routed Navigator. A failed
+          // database removes that Navigator together with the private child.
+          child: DatabaseUnlockGate(child: child ?? const SizedBox.shrink()),
+        ),
       ),
-      home: const DatabaseUnlockGate(child: Text('Private database content')),
+      home: const Text('Private database content'),
     ),
   );
 }
 
 void main() {
+  testWidgets(
+    'builder-mounted gate confirms and cancels reset without routed Navigator',
+    (tester) async {
+      var resetCalls = 0;
+      var available = false;
+      final database = makeTestDatabase();
+      addTearDown(database.close);
+      late ProviderContainer container;
+      await tester.pumpWidget(
+        _wrap(
+          database: () async {
+            if (!available) {
+              throw const UnsupportedDatabaseSchema(
+                foundVersion: 97,
+                requiredVersion: 98,
+              );
+            }
+            return database;
+          },
+          recovery: DatabaseRecoveryController(
+            resetDatabase: () async {
+              resetCalls++;
+              available = true;
+            },
+            invalidateDatabase: () => container.invalidate(appDatabaseProvider),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      container = ProviderScope.containerOf(
+        tester.element(find.byType(DatabaseUnlockGate)),
+      );
+      expect(find.text('Private database content'), findsNothing);
+      await tester.tap(find.text('Reset unreadable local data'));
+      await tester.pumpAndSettle();
+      expect(find.text('Reset unreadable local data?'), findsOneWidget);
+      expect(resetCalls, 0);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(resetCalls, 0);
+      await tester.tap(find.text('Reset unreadable local data'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Reset local data'));
+      await tester.pumpAndSettle();
+      expect(resetCalls, 1);
+      expect(find.text('Private database content'), findsOneWidget);
+      expect(find.text('Reset unreadable local data?'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('shows app content only after the database resolves', (
     tester,
   ) async {
@@ -85,6 +140,41 @@ void main() {
     expect(find.text('Reset unreadable local data?'), findsOneWidget);
     expect(resetCalls, 0);
 
+    await tester.tap(find.text('Reset local data'));
+    await tester.pumpAndSettle();
+    expect(resetCalls, 1);
+  });
+
+  testWidgets('requires confirmation before resetting an unsupported schema', (
+    tester,
+  ) async {
+    var resetCalls = 0;
+    await tester.pumpWidget(
+      _wrap(
+        database: () => Future<AppDatabase>.error(
+          const UnsupportedDatabaseSchema(
+            foundVersion: 97,
+            requiredVersion: 98,
+          ),
+        ),
+        recovery: DatabaseRecoveryController(
+          resetDatabase: () async => resetCalls++,
+          invalidateDatabase: () {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Local database version is unsupported'), findsOneWidget);
+    expect(find.text('Private database content'), findsNothing);
+    expect(resetCalls, 0);
+    await tester.tap(find.text('Reset unreadable local data'));
+    await tester.pumpAndSettle();
+    expect(resetCalls, 0);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(resetCalls, 0);
+    await tester.tap(find.text('Reset unreadable local data'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Reset local data'));
     await tester.pumpAndSettle();
     expect(resetCalls, 1);

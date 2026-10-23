@@ -16,6 +16,7 @@ AiTrace _trace({
   requestId: 'r',
   startedAtIso: '2026-05-16T00:00:00Z',
   intent: const IntentHint(
+    domain: AiDomain.shell(),
     capability: Capability.analyze,
     risk: RiskLevel.info,
   ),

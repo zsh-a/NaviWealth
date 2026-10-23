@@ -2,17 +2,6 @@ part of 'app_database.dart';
 
 Future<void> _createFinancePlanningIndexes(AppDatabase db) async {
   for (final statement in financePlanningIndexStmts) {
-    final tableMatch = RegExp(
-      r'\bON\s+([a-z_][a-z0-9_]*)',
-      caseSensitive: false,
-    ).firstMatch(statement);
-    final table = tableMatch?.group(1);
-    if (table != null &&
-        (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
-      // Focused migration fixtures may intentionally omit unrelated planning
-      // tables. Their indexes are created when those tables are introduced.
-      continue;
-    }
     await db.customStatement(statement);
   }
 }
@@ -23,127 +12,6 @@ Future<void> _createForecastSnapshots(AppDatabase db) async {
   }
 }
 
-Future<void> _addColumnIfMissing(
-  AppDatabase db, {
-  required String table,
-  required String column,
-  required String definition,
-}) async {
-  final columns = await db.customSelect('PRAGMA table_info($table)').get();
-  // Some focused migration tests intentionally construct only the table under
-  // test. A missing unrelated table has nothing to migrate here.
-  if (columns.isEmpty) return;
-  final exists = columns.any((row) => row.read<String>('name') == column);
-  if (exists) return;
-  await db.customStatement('ALTER TABLE $table ADD COLUMN $column $definition');
-}
-
-Future<void> _migrateFxRates(AppDatabase db) async {
-  final columns = await db.customSelect('PRAGMA table_info(fx_rates)').get();
-  if (columns.isEmpty) return;
-
-  await _addColumnIfMissing(
-    db,
-    table: 'fx_rates',
-    column: 'fetched_at',
-    definition: 'INTEGER NOT NULL DEFAULT 0',
-  );
-  // Rows created before v78 only know the provider observation day. Keeping
-  // that day as the fallback is honest and avoids inventing a newer fetch
-  // timestamp during migration.
-  await db.customStatement(
-    'UPDATE fx_rates SET fetched_at = as_of WHERE fetched_at = 0',
-  );
-
-  // The repository already treated this as a natural key. Make that
-  // invariant database-backed as well, while retaining the last inserted row
-  // if an older development database happened to contain duplicates.
-  await db.customStatement('DROP INDEX IF EXISTS idx_fx_rates_pair_as_of');
-  await db.customStatement('''
-DELETE FROM fx_rates
-WHERE rowid NOT IN (
-  SELECT MAX(rowid)
-  FROM fx_rates
-  GROUP BY base_currency, quote_currency, as_of
-)
-''');
-  await db.customStatement(
-    'CREATE UNIQUE INDEX IF NOT EXISTS idx_fx_rates_pair_as_of '
-    'ON fx_rates(base_currency, quote_currency, as_of)',
-  );
-}
-
-Future<void> _migrateMarketDataCaches(AppDatabase db, Migrator migrator) async {
-  await _rebuildMarketQuotes(db, migrator);
-  await _rebuildMarketHistoryBars(db, migrator);
-  await _rebuildMarketSymbolSearches(db, migrator);
-}
-
-Future<void> _rebuildMarketQuotes(AppDatabase db, Migrator migrator) async {
-  if (!await _needsMarketColumn(db, 'market_quotes')) return;
-  await db.customStatement(
-    'ALTER TABLE market_quotes RENAME TO market_quotes_v77',
-  );
-  await migrator.createTable(db.marketQuotes);
-  await db.customStatement('''
-INSERT INTO market_quotes (
-  market, symbol, source, currency, price, previous_close, open_price,
-  day_high, day_low, volume, exchange, as_of, fetched_at
-)
-SELECT
-  'unknown', symbol, source, currency, price, previous_close, open_price,
-  day_high, day_low, volume, exchange, as_of, fetched_at
-FROM market_quotes_v77
-''');
-  await db.customStatement('DROP TABLE market_quotes_v77');
-}
-
-Future<void> _rebuildMarketHistoryBars(
-  AppDatabase db,
-  Migrator migrator,
-) async {
-  if (!await _needsMarketColumn(db, 'market_history_bars')) return;
-  await db.customStatement(
-    'ALTER TABLE market_history_bars RENAME TO market_history_bars_v77',
-  );
-  await migrator.createTable(db.marketHistoryBars);
-  await db.customStatement('''
-INSERT INTO market_history_bars (
-  market, symbol, interval, as_of, source, open_price, high, low,
-  close_price, volume, adjusted_close, fetched_at
-)
-SELECT
-  'unknown', symbol, interval, as_of, source, open_price, high, low,
-  close_price, volume, adjusted_close, fetched_at
-FROM market_history_bars_v77
-''');
-  await db.customStatement('DROP TABLE market_history_bars_v77');
-}
-
-Future<void> _rebuildMarketSymbolSearches(
-  AppDatabase db,
-  Migrator migrator,
-) async {
-  if (!await _needsMarketColumn(db, 'market_symbol_searches')) return;
-  await db.customStatement(
-    'ALTER TABLE market_symbol_searches '
-    'RENAME TO market_symbol_searches_v77',
-  );
-  await migrator.createTable(db.marketSymbolSearches);
-  await db.customStatement('''
-INSERT INTO market_symbol_searches (market, query, source, results, fetched_at)
-SELECT 'unknown', query, source, results, fetched_at
-FROM market_symbol_searches_v77
-''');
-  await db.customStatement('DROP TABLE market_symbol_searches_v77');
-}
-
-Future<bool> _needsMarketColumn(AppDatabase db, String table) async {
-  final columns = await db.customSelect('PRAGMA table_info($table)').get();
-  if (columns.isEmpty) return false;
-  return !columns.any((row) => row.read<String>('name') == 'market');
-}
-
 const List<String> _marketDataCacheIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_market_quotes_market_symbol_fetched '
       'ON market_quotes(market, symbol, fetched_at)',
@@ -152,23 +20,6 @@ const List<String> _marketDataCacheIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_market_search_market_query_fetched '
       'ON market_symbol_searches(market, query, fetched_at)',
 ];
-
-Future<void> _createMarketDataCacheIndexes(AppDatabase db) async {
-  for (final statement in _marketDataCacheIndexStmts) {
-    final table = RegExp(
-      r'\bON\s+([a-z_][a-z0-9_]*)',
-      caseSensitive: false,
-    ).firstMatch(statement)?.group(1);
-    if (table != null &&
-        (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
-      // Focused migration fixtures may intentionally omit unrelated cache
-      // tables. They are created with their indexes on the next full schema
-      // creation / applicable migration.
-      continue;
-    }
-    await db.customStatement(statement);
-  }
-}
 
 Future<void> _createChatTables(AppDatabase db) async {
   await _createChatSessionsTable(db);
@@ -272,52 +123,6 @@ Future<void> _createAgentRuntimeChatSnapshots(AppDatabase db) async {
   for (final stmt in agentRuntimeChatSnapshotDdl) {
     await db.customStatement(stmt);
   }
-}
-
-Future<void> _upgradeAgentRuntimeChatSnapshotsForInteractions(
-  AppDatabase db,
-) async {
-  final columns = await db
-      .customSelect('PRAGMA table_info(agent_runtime_chat_snapshots)')
-      .get();
-  if (columns.isEmpty) {
-    await _createAgentRuntimeChatSnapshots(db);
-    return;
-  }
-
-  await db.customStatement(
-    'DROP INDEX IF EXISTS idx_agent_runtime_chat_snapshots_pending',
-  );
-  await db.customStatement(
-    'ALTER TABLE agent_runtime_chat_snapshots '
-    'RENAME TO agent_runtime_chat_snapshots_v55',
-  );
-  await _createAgentRuntimeChatSnapshots(db);
-  await db.customStatement('''
-    INSERT INTO agent_runtime_chat_snapshots (
-      owner_user_id,
-      turn_id,
-      snapshot_version,
-      revision,
-      status,
-      snapshot_json,
-      created_at,
-      updated_at,
-      expires_at
-    )
-    SELECT
-      owner_user_id,
-      turn_id,
-      snapshot_version,
-      revision,
-      status,
-      snapshot_json,
-      created_at,
-      updated_at,
-      expires_at
-    FROM agent_runtime_chat_snapshots_v55
-  ''');
-  await db.customStatement('DROP TABLE agent_runtime_chat_snapshots_v55');
 }
 
 Future<void> _createAgentArtifacts(AppDatabase db) async {
@@ -462,15 +267,6 @@ const List<String> _watchlistIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_watchlist_simulations_collection '
       'ON watchlist_simulations(owner_user_id, collection_id, created_at) '
       'WHERE deleted_at IS NULL',
-  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_owner_hlc '
-      'ON watchlist_simulation_positions(owner_user_id, hlc)',
-  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_simulation '
-      'ON watchlist_simulation_positions('
-      'owner_user_id, simulation_id, created_at) '
-      'WHERE deleted_at IS NULL',
-  'CREATE INDEX IF NOT EXISTS idx_watchlist_simulation_positions_item '
-      'ON watchlist_simulation_positions(owner_user_id, watchlist_item_id) '
-      'WHERE deleted_at IS NULL',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_hlc '
       'ON watchlist_simulation_allocation_heads(owner_user_id, hlc)',
   'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_simulation '
@@ -510,68 +306,11 @@ const List<String> _corporateActionIndexStmts = [
       'WHERE deleted_at IS NULL',
 ];
 
-Future<void> _createRecurringTransactionIndexes(AppDatabase db) async {
-  for (final stmt in _recurringTransactionIndexStmts) {
-    await db.customStatement(stmt);
-  }
-}
-
-Future<void> _createCorporateActionIndexes(AppDatabase db) async {
-  for (final stmt in _corporateActionIndexStmts) {
-    await db.customStatement(stmt);
-  }
-}
-
-Future<void> _createExecutionIndexes(AppDatabase db) async {
-  for (final stmt in executionIndexStmts) {
-    await db.customStatement(stmt);
-  }
-}
-
 Future<void> _createMarketCorporateActionIndexes(AppDatabase db) async {
   await db.customStatement(
     'CREATE INDEX IF NOT EXISTS idx_market_corporate_actions_symbol '
     'ON market_corporate_action_candidates(market, symbol, fetched_at)',
   );
-}
-
-Future<void> _createWatchlistAtomicAllocationIndexes(AppDatabase db) async {
-  await db.customStatement(
-    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_hlc '
-    'ON watchlist_simulation_allocation_heads(owner_user_id, hlc)',
-  );
-  await db.customStatement(
-    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_heads_simulation '
-    'ON watchlist_simulation_allocation_heads('
-    'owner_user_id, simulation_id) WHERE deleted_at IS NULL',
-  );
-  await db.customStatement(
-    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_versions_hlc '
-    'ON watchlist_simulation_allocation_versions(owner_user_id, hlc)',
-  );
-  await db.customStatement(
-    'CREATE INDEX IF NOT EXISTS idx_watchlist_sim_allocation_versions_time '
-    'ON watchlist_simulation_allocation_versions('
-    'owner_user_id, simulation_id, effective_at) '
-    'WHERE deleted_at IS NULL',
-  );
-}
-
-Future<void> _createWatchlistIndexes(AppDatabase db) async {
-  for (final stmt in _watchlistIndexStmts) {
-    final tableMatch = RegExp(
-      r'\bON\s+([a-z_][a-z0-9_]*)',
-      caseSensitive: false,
-    ).firstMatch(stmt);
-    final table = tableMatch?.group(1);
-    if (table != null &&
-        (await db.customSelect('PRAGMA table_info($table)').get()).isEmpty) {
-      // Watchlist tables arrived in v10/v82/v84/v85. Focused migration fixtures
-      // may omit tables from earlier phases entirely.
-      continue;
-    }
-    await db.customStatement(stmt);
-  }
 }
 
 const List<String> _optionsIncomeIndexStmts = [
@@ -586,18 +325,6 @@ const List<String> _optionsTradeJournalIndexStmts = [
       'ON options_trade_journal(owner_user_id, opened_at DESC) '
       'WHERE deleted_at IS NULL',
 ];
-
-Future<void> _createOptionsIncomeIndexes(AppDatabase db) async {
-  for (final stmt in _optionsIncomeIndexStmts) {
-    await db.customStatement(stmt);
-  }
-}
-
-Future<void> _createOptionsTradeJournalIndexes(AppDatabase db) async {
-  for (final stmt in _optionsTradeJournalIndexStmts) {
-    await db.customStatement(stmt);
-  }
-}
 
 Future<void> _createOptionsOpportunityCache(AppDatabase db) async {
   for (final stmt in optionsOpportunityCacheDdl) {
@@ -615,23 +342,9 @@ Future<void> _createRecurringPatternObservations(AppDatabase db) async {
 /// [AppDatabase.migration] still applies cleanly when a user jumps v15 → v17.
 /// v17 immediately drops the table, so this is effectively a no-op
 /// migration path in practice.
-Future<void> _createMemoryDocuments(AppDatabase db) async {
-  await db.customStatement(
-    'CREATE TABLE IF NOT EXISTS memory_documents ('
-    '  id TEXT PRIMARY KEY, source TEXT, source_id TEXT, owner_user_id TEXT,'
-    '  title TEXT, body TEXT, fingerprint TEXT, dimension INTEGER,'
-    '  vector_bytes BLOB, updated_at INTEGER)',
-  );
-}
 
 Future<void> _createMemoryRuntime(AppDatabase db) async {
   for (final stmt in memoryRuntimeDdl) {
-    await db.customStatement(stmt);
-  }
-}
-
-Future<void> _createMemoryStorage(AppDatabase db) async {
-  for (final stmt in memoryStorageDdl) {
     await db.customStatement(stmt);
   }
 }

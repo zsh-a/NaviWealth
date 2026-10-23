@@ -11,7 +11,7 @@ const String kSettingsLlmRuntimeCheckAgentId = 'settings_llm_runtime_check';
 
 typedef AgentRuntimeProfileTurnBindingKey = ({
   String agentId,
-  String domain,
+  AiDomain domain,
   String surface,
 });
 
@@ -22,7 +22,7 @@ typedef AgentRuntimeProfileTurnTraceRecorder = Future<AiTrace?> Function(
 typedef AgentRuntimeProfileTurnTraceRecorderFactory =
     AgentRuntimeProfileTurnTraceRecorder Function({
       required String agentId,
-      required String domain,
+      required AiDomain domain,
       required String surface,
     });
 
@@ -96,7 +96,7 @@ class AgentRuntimeProfileTurnBinding {
   }) : _runnerReader = runnerReader;
 
   final String agentId;
-  final String domain;
+  final AiDomain domain;
   final String surface;
   final AgentRuntimeProfileTurnTraceRecorder? recordTrace;
   final AgentRuntimeProfileTurnTraceRecordErrorHandler? onRecordTraceError;
@@ -125,6 +125,7 @@ class AgentRuntimeProfileTurnBinding {
       metadata: <String, Object?>{
         'surface': surface,
         'agent_id': agentId,
+        'domain': domain.wire,
         ...metadata,
       },
       maxEffectSteps: maxEffectSteps,

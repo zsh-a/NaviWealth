@@ -5,7 +5,7 @@ import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 /// Guards the D-1.8 follow-up: every active LifeOS domain contributes
-/// Cmd-K entries through `DomainPack.commandPaletteEntriesBuilder`, so
+/// Cmd-K entries through `DomainPack.shell.commandPaletteEntriesBuilder`, so
 /// HealthOS / KnowledgeOS are no longer palette dead zones (only Finance
 /// used to be wired). The shell merges them via `activeDomainPacksProvider`
 /// the same way it merges device tools.
@@ -15,11 +15,11 @@ void main() {
   test('every production domain pack contributes palette entries', () {
     for (final pack in kAllDomainPacks) {
       expect(
-        pack.commandPaletteEntriesBuilder,
+        pack.shell.commandPaletteEntriesBuilder,
         isNotNull,
         reason: '${pack.scope} should wire a command palette builder',
       );
-      final entries = pack.commandPaletteEntriesBuilder!(l10n);
+      final entries = pack.shell.commandPaletteEntriesBuilder!(l10n);
       expect(entries, isNotEmpty, reason: '${pack.scope} entries');
     }
   });
@@ -31,15 +31,15 @@ void main() {
   });
 
   test('health + knowledge entries navigate to their domain routes', () {
-    final health = kHealthPack.commandPaletteEntriesBuilder!(l10n);
+    final health = kHealthPack.shell.commandPaletteEntriesBuilder!(l10n);
     expect(health.map((e) => e.id), contains('nav.health.today'));
 
-    final knowledge = kKnowledgePack.commandPaletteEntriesBuilder!(l10n);
+    final knowledge = kKnowledgePack.shell.commandPaletteEntriesBuilder!(l10n);
     expect(knowledge.map((e) => e.id), contains('nav.knowledge.inbox'));
   });
 
   test('health entries are searchable by metrics and sync actions', () {
-    final health = kHealthPack.commandPaletteEntriesBuilder!(l10n);
+    final health = kHealthPack.shell.commandPaletteEntriesBuilder!(l10n);
 
     expect(
       health.where((entry) => entry.matches('vo2')).map((entry) => entry.id),
@@ -56,7 +56,7 @@ void main() {
   });
 
   test('corporate actions use one command with dividend keywords', () {
-    final finance = kFinancePack.commandPaletteEntriesBuilder!(l10n);
+    final finance = kFinancePack.shell.commandPaletteEntriesBuilder!(l10n);
     final corporateActions = finance.where(
       (entry) => entry.id == 'action.corporateAction',
     );

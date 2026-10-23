@@ -94,6 +94,17 @@ by their label or key, verify enabled state and results, and avoid asserting
 menu indices or callback identity. Agent registration belongs in composition
 tests; individual agent tests should cover their own analysis and outputs.
 
+Auth tests inject the preferences and secure-storage dependencies explicitly.
+`auth_session_lifecycle_test.dart` uses controlled futures to prove that late
+refresh/login responses cannot undo logout or replace a newer account, and that
+local session writes serialize across identity transitions. It also covers mode
+read/write failures and rollback. `owner_transfer_recovery_test.dart` covers the
+secure transfer journal, interrupted writes, repeated startup recovery and a
+SQLite file reopen. It also checks that an explicit database reset retries a
+pending identity recovery without restarting the app. The login widget test
+verifies that persistence failures are shown without publishing a signed-in
+session.
+
 ### Integration (real chain, ~10%)
 Exercises **repository → real Drift → read model** with a real
 `AppDatabase` (unkeyed in-memory, production encryption bootstrap bypassed), so
@@ -311,17 +322,20 @@ content as diagnostics. Run the same gate locally from `apps/mobile/` with
 
 ## 6. On-device integration (`integration_test/`)
 
-The host suites pin recovery and upgrade behavior before device execution:
+The host suites pin recovery and baseline behavior before device execution:
 
 - `confirmed_memory_recovery_test.dart` covers encrypted confirmed Memory
   lineage/provenance, owner isolation, old archives without Memory, cleanup
   protection, rollback, and vector rebuilding without overwriting edited rows.
 - `sync_compatibility_test.dart` covers mixed-version opaque fields, upgrade
   hydration, skipped-table replay, interrupted pagination, LWW and scoped reset.
-- `sync_compatibility_migration_test.dart` opens a real schema-v95 SQLite file,
-  preserves all four domains, confirmed Memory/Profile and pending sync state,
-  injects a failure after compatibility DDL, and verifies rollback and retry
-  across close/reopen.
+- `schema_baseline_test.dart` checks the fresh schema-98 baseline. It rejects
+  older and newer schema versions without modifying their version, tables or
+  retained rows, and verifies that a current-schema file reopens with its data.
+  Historical schema upgrade chains and migration fixtures are not supported.
+- `database_unlock_gate_test.dart` requires an explicit confirmation before a
+  schema mismatch can reset local data. Retrying or cancelling preserves it;
+  unknown failures do not offer destructive reset.
 - `watchlist_simulation_allocation_sync_test.dart` checks all 24 orders for a
   two-holding version/head delivered in separate pages, including duplicate and
   stale rows; the selected aggregate remains pending until complete.
@@ -337,7 +351,7 @@ the host; the on-device layer closes the packaged-platform gap:
 ✅ Seeded. `apps/mobile/integration_test/database_boot_integration_test.dart`
 opens the **real** file-backed `AppDatabase` through `openAppConnection()`
 (SQLCipher PRAGMA + path_provider +
-`createInBackground` + on-disk migration to schemaVersion). It requires a
+`createInBackground` + current-baseline creation/reopen). It requires a
 non-plaintext file header, rejects a wrong key, and proves a write survives a
 full close/reopen cycle — the production connection every headless test
 bypasses via `NativeDatabase.memory`. Its Android-only secure-storage case then
@@ -401,8 +415,10 @@ headless `flutter test` host.
 SQLCipher library. It pins correct-key reopen, wrong-key byte preservation,
 plaintext export migration, valid and corrupt interrupted-swap recovery, key
 loss fail-closed behavior, and the exact reset artifact allowlist. Widget tests
-pin the root recovery gate: only missing/invalid/wrong-key states offer a
-destructive reset, while migration and unknown failures preserve local bytes.
+pin the root recovery gate: missing/invalid/wrong-key states and unsupported
+schema baselines offer a confirmed local reset. Encryption-migration and unknown
+failures preserve local bytes and offer retry. Plaintext-to-encrypted file
+conversion remains separate from the unsupported historical schema upgrades.
 
 ## 7. Current Coverage And Known Gaps
 
@@ -414,7 +430,7 @@ Current baseline:
   useful.
 - Real-Drift integration covers net worth through manual assets, liabilities,
   and ledger-reconstructed securities.
-- Android on-device integration owns database encryption, boot/migration/reopen,
+- Android on-device integration owns database encryption, baseline boot/reopen,
   backup/restore, and a journal repository write. A green packaged emulator run
   remains required release evidence for newly added SQLCipher assertions.
 - Sync v3 request/response fixtures are generated from the Dart/Rust

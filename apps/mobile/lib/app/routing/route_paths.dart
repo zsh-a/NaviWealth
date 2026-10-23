@@ -255,17 +255,18 @@ abstract final class AppRouteNames {
 /// domain) at the call site.
 ///
 /// Iterates [packs] (typically [domainPackRegistryProvider]) and
-/// returns the first pack whose [DomainPack.tabPaths] or
-/// [DomainPack.additionalPathPrefixes] owns [path]. Adding a new
+/// returns the first pack whose [DomainNavigation.tabPaths] or
+/// [DomainNavigation.additionalPathPrefixes] owns [path]. Adding a new
 /// domain therefore touches only `domain_packs.dart` — this function
 /// stays domain-blind.
 DomainScope? domainForRoute(List<DomainPack> packs, String path) {
   bool ownedBy(String prefix) => path == prefix || path.startsWith('$prefix/');
   for (final p in packs) {
-    for (final tab in p.tabPaths) {
+    for (final tab in p.shell.navigation?.tabPaths ?? const <String>[]) {
       if (ownedBy(tab)) return p.scope;
     }
-    for (final extra in p.additionalPathPrefixes) {
+    for (final extra
+        in p.shell.navigation?.additionalPathPrefixes ?? const <String>[]) {
       if (ownedBy(extra)) return p.scope;
     }
   }
@@ -279,7 +280,7 @@ DomainScope? domainForRoute(List<DomainPack> packs, String path) {
 /// keyboard targets before the user opts in.
 final primaryTabPathsProvider = Provider<List<String>>((ref) {
   final packs = ref.watch(activeDomainPacksProvider);
-  return [for (final p in packs) ...p.tabPaths];
+  return [for (final p in packs) ...?p.shell.navigation?.tabPaths];
 });
 
 /// Tab paths for the domain that owns [path] — the Cmd/Ctrl-1..N targets.
@@ -290,7 +291,8 @@ List<String> domainTabPathsForLocation(List<DomainPack> packs, String path) {
   if (packs.isEmpty) return const [];
   final scope = domainForRoute(packs, path);
   for (final p in packs) {
-    if (p.scope == scope) return p.tabPaths;
+    if (p.scope == scope) return p.shell.navigation?.tabPaths ?? const [];
   }
-  return packs.first.tabPaths;
+  return packs.map((p) => p.shell.navigation).nonNulls.firstOrNull?.tabPaths ??
+      const [];
 }

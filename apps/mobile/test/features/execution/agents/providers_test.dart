@@ -10,8 +10,8 @@ import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/background/background_scheduler.dart';
 import 'package:naviwealth/core/background/providers.dart';
@@ -212,7 +212,7 @@ AgentArtifact _executionArtifact({
     id: id,
     ownerUserId: 'user-1',
     agentId: kExecutionReviewAgentId,
-    domain: 'execution',
+    domain: const AiDomain.domain(DomainScope.execution),
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.info,
     title: 'Execution Review',

@@ -136,8 +136,11 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
       return true;
     }
     for (final pack in packs) {
-      if (pack.reviewRoutePath == path && pack.tabPaths.isNotEmpty) {
-        router.go(pack.tabPaths.first);
+      final navigation = pack.shell.navigation;
+      if (navigation != null &&
+          navigation.reviewRoutePath == path &&
+          navigation.tabPaths.isNotEmpty) {
+        router.go(navigation.tabPaths.first);
         return true;
       }
     }

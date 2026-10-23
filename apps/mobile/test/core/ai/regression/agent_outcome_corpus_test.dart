@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart'
     show IntentDescriptor, intentAllowsDomain;
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
@@ -34,17 +35,18 @@ void main() {
         'execution',
       };
       for (final c in agentOutcomeRegressionCorpus) {
-        expect(c.id, startsWith('${c.domain}.'));
-        expect(legalDomains, contains(c.domain), reason: c.id);
+        expect(c.id, startsWith('${c.domain.wire}.'));
+        expect(legalDomains, contains(c.domain.wire), reason: c.id);
         expect(c.agentId, isNotEmpty, reason: c.id);
-        expect(c.snapshotId, startsWith('${c.domain}.'));
+        expect(c.snapshotId, startsWith('${c.domain.wire}.'));
       }
     });
 
     test('all LifeOS domains have ready outcome coverage', () {
       final readyDomains = {
         for (final c in agentOutcomeRegressionCorpus)
-          if (c.expectedStatus == AgentOutcomeRegressionStatus.ready) c.domain,
+          if (c.expectedStatus == AgentOutcomeRegressionStatus.ready)
+            c.domain.wire,
       };
 
       expect(
@@ -56,7 +58,7 @@ void main() {
     test('FinanceOS first-batch agents have ready outcome coverage', () {
       final financeReadyAgentIds = {
         for (final c in agentOutcomeRegressionCorpus)
-          if (c.domain == 'finance' &&
+          if (c.domain == const AiDomain.domain(DomainScope.finance) &&
               c.expectedStatus == AgentOutcomeRegressionStatus.ready)
             c.agentId,
       };
@@ -83,7 +85,7 @@ void main() {
 
       for (final c in agentOutcomeRegressionCorpus.where(
         (c) =>
-            c.domain == 'finance' &&
+            c.domain == const AiDomain.domain(DomainScope.finance) &&
             c.expectedStatus == AgentOutcomeRegressionStatus.ready,
       )) {
         final path = executableFixturePaths[c.agentId];
@@ -246,7 +248,7 @@ void main() {
 
         for (final c in agentOutcomeRegressionCorpus.where(
           (c) =>
-              c.domain == 'finance' &&
+              c.domain == const AiDomain.domain(DomainScope.finance) &&
               c.expectedStatus == AgentOutcomeRegressionStatus.ready,
         )) {
           expect(
@@ -287,7 +289,7 @@ void main() {
     test('FinanceOS has executable no-LLM fallback coverage', () {
       final financeNoLlmCases = agentOutcomeRegressionCorpus.where(
         (c) =>
-            c.domain == 'finance' &&
+            c.domain == const AiDomain.domain(DomainScope.finance) &&
             c.tags.contains(kAgentOutcomeNoLlmProfileTag),
       );
 

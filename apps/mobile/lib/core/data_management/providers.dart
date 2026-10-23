@@ -26,7 +26,7 @@ final dataManagementServiceProvider = FutureProvider<DataManagementService>((
     stage = 'resolve_domain_inventory';
     final packs = ref.watch(domainPackRegistryProvider);
     final specs = packs
-        .map((pack) => pack.dataManagementSpec)
+        .map((pack) => pack.data.dataManagementSpec)
         .whereType<DomainDataManagementSpec>()
         .toList(growable: false);
     stage = 'create_service';
@@ -42,7 +42,7 @@ final dataManagementServiceProvider = FutureProvider<DataManagementService>((
       ).clearDomain(scope.wire),
       agentIdsByDomain: <DomainScope, List<String>>{
         for (final pack in packs)
-          pack.scope: pack.agentPresentationSpecs
+          pack.scope: pack.ai.agentPresentationSpecs
               .map((spec) => spec.agentId)
               .toList(growable: false),
       },

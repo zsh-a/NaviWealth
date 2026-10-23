@@ -243,15 +243,15 @@ class AiTrace {
     final bt = json['budget_tier'];
     final rr = json['routing_reason'];
     final td = json['total_duration_ms'];
+    if (it is! Map<Object?, Object?>) {
+      throw const FormatException(
+        'AI trace intent must state an explicit domain',
+      );
+    }
     return AiTrace(
       requestId: id is String ? id : '',
       startedAtIso: ts is String ? ts : '',
-      intent: it is Map
-          ? IntentHint.fromJson(_strKeyed(it))
-          : const IntentHint(
-              capability: Capability.analyze,
-              risk: RiskLevel.info,
-            ),
+      intent: IntentHint.fromJson(_strKeyed(it)),
       backend: bk is String ? BackendWire.parse(bk) : Backend.device,
       budgetTier: bt is String ? BudgetTierWire.parse(bt) : BudgetTier.standard,
       routingReason: rr is String ? rr : '',

@@ -163,7 +163,10 @@ void main() {
           ]),
           domainPackRegistryProvider.overrideWithValue([
             const DomainPack(scope: DomainScope.finance),
-            const DomainPack(scope: DomainScope.health, accent: accent),
+            const DomainPack(
+              scope: DomainScope.health,
+              shell: DomainShellContribution(accent: accent),
+            ),
           ]),
           domainSwitcherHomePathProvider.overrideWithValue('/life'),
         ],

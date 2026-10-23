@@ -4,6 +4,14 @@
     "propose",
     "external_write"
   ],
+  "AiDomain": [
+    "finance",
+    "health",
+    "knowledge",
+    "execution",
+    "shell",
+    "global"
+  ],
   "AiPrivacyMode": [
     "amounts_allowed",
     "amounts_bucketed",

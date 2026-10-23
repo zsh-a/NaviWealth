@@ -1,7 +1,9 @@
 /// ExecutionOS device-tool aggregator.
 library;
 
-import '../../core/ai/contracts/intent.dart' show RiskLevel, kDomainExecution;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
+import '../../core/ai/contracts/intent.dart' show RiskLevel;
 import '../../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../../core/ai/contracts/tool_descriptor.dart';
 import '../../core/ai/runtime/device/tools/device_tool.dart';
@@ -15,7 +17,7 @@ import 'ai_tools/propose_progress_tool.dart';
 import 'ai_tools/summarize_execution_progress_tool.dart';
 
 const DeviceToolRegistrationBuilder _executionTool =
-    DeviceToolRegistrationBuilder(kDomainExecution);
+    DeviceToolRegistrationBuilder(AiDomain.domain(DomainScope.execution));
 
 final List<RegisteredDeviceTool> kExecutionToolRegistrations =
     <RegisteredDeviceTool>[

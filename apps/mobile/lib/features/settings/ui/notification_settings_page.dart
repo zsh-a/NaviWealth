@@ -35,7 +35,7 @@ class NotificationSettingsPage extends ConsumerWidget {
     final notificationsEnabled = ref.watch(notificationsEnabledProvider);
     final domainRows = [
       for (final pack in ref.watch(activeDomainPacksProvider))
-        ...?pack.notificationSettingsBuilder?.call(),
+        ...?pack.shell.notificationSettingsBuilder?.call(),
     ];
 
     return AppPageScaffold(

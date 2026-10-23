@@ -70,6 +70,7 @@ AiTrace _traceWithSixToolErrors() => AiTrace(
   requestId: 'trace-latest',
   startedAtIso: '2026-08-23T08:00:00.000Z',
   intent: const IntentHint(
+    domain: AiDomain.shell(),
     capability: Capability.analyze,
     risk: RiskLevel.info,
   ),

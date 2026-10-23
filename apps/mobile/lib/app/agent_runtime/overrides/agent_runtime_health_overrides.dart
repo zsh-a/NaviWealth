@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_effect_plan_binding.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/features/health/agents/recovery_alert_agent.dart';
 import 'package:naviwealth/features/health/agents/weekly_summary_agent.dart';
 
@@ -13,7 +14,7 @@ List<Override> agentRuntimeHealthProviderOverrides() => <Override>[
         runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kRecoveryAlertAgentId,
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           surface: 'health_recovery_alert',
         ),
       ),
@@ -25,7 +26,7 @@ List<Override> agentRuntimeHealthProviderOverrides() => <Override>[
         runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kWeeklySummaryAgentId,
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           surface: 'health_weekly_summary',
         ),
       ),

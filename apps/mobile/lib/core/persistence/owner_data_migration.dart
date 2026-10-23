@@ -77,7 +77,6 @@ const kOwnerDataTables = <OwnerDataTable>[
   OwnerDataTable('watchlist_simulation_allocation_heads'),
   OwnerDataTable('watchlist_simulation_allocation_versions'),
   OwnerDataTable('watchlist_simulation_holding_versions'),
-  OwnerDataTable('watchlist_simulation_positions'),
   OwnerDataTable('watchlist_simulations'),
 
   // User-confirmed local data and historical evidence preserve ids and links.

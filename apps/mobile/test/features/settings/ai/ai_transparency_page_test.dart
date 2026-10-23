@@ -82,6 +82,7 @@ AiTrace _trace(String requestId, {int? blockBytes}) {
     requestId: requestId,
     startedAtIso: '2026-06-19T00:00:00.000Z',
     intent: const IntentHint(
+      domain: AiDomain.shell(),
       capability: Capability.analyze,
       risk: RiskLevel.info,
     ),

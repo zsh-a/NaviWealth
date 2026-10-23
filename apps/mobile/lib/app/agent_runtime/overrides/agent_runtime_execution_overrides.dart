@@ -3,6 +3,7 @@ library;
 
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_effect_plan_binding.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/features/execution/agents/providers.dart'
     as execution_agent_providers;
 import 'package:naviwealth/features/execution/agents/review_agent.dart';
@@ -14,7 +15,7 @@ List<Override> agentRuntimeExecutionProviderOverrides() => <Override>[
         runtime: agentRuntimeEffectPlanBinding(
           ref,
           agentId: kExecutionReviewAgentId,
-          domain: 'execution',
+          domain: const AiDomain.domain(DomainScope.execution),
           surface: 'execution_review',
         ),
       ),

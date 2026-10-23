@@ -53,14 +53,18 @@ void main() {
           [
             DomainPack(
               scope: DomainScope.finance,
-              chatContextBuilder: (ref, context) async {
-                financeReads++;
-                throw StateError('Finance store unavailable');
-              },
+              ai: DomainAiContribution(
+                chatContextBuilder: (ref, context) async {
+                  financeReads++;
+                  throw StateError('Finance store unavailable');
+                },
+              ),
             ),
             DomainPack(
               scope: scope,
-              chatContextBuilder: (ref, context) async => [_block(scope)],
+              ai: DomainAiContribution(
+                chatContextBuilder: (ref, context) async => [_block(scope)],
+              ),
             ),
           ],
         );
@@ -88,15 +92,19 @@ void main() {
         [
           DomainPack(
             scope: DomainScope.finance,
-            chatContextBuilder: (ref, context) async => [
-              _block(DomainScope.finance),
-            ],
+            ai: DomainAiContribution(
+              chatContextBuilder: (ref, context) async => [
+                _block(DomainScope.finance),
+              ],
+            ),
           ),
           DomainPack(
             scope: DomainScope.health,
-            chatContextBuilder: (ref, context) async => [
-              _block(DomainScope.health),
-            ],
+            ai: DomainAiContribution(
+              chatContextBuilder: (ref, context) async => [
+                _block(DomainScope.health),
+              ],
+            ),
           ),
         ],
       );
@@ -114,16 +122,21 @@ void main() {
   );
 
   test('global chat isolates failing and absent domain contributors', () async {
-    final container = _container(const AiContext(path: '/life'), [
+    final container = _container(const AiContext(domain: null, path: '/life'), [
       DomainPack(
         scope: DomainScope.finance,
-        chatContextBuilder: (ref, context) async => throw StateError('offline'),
+        ai: DomainAiContribution(
+          chatContextBuilder: (ref, context) async =>
+              throw StateError('offline'),
+        ),
       ),
       DomainPack(
         scope: DomainScope.knowledge,
-        chatContextBuilder: (ref, context) async => [
-          _block(DomainScope.knowledge),
-        ],
+        ai: DomainAiContribution(
+          chatContextBuilder: (ref, context) async => [
+            _block(DomainScope.knowledge),
+          ],
+        ),
       ),
       const DomainPack(scope: DomainScope.execution),
     ]);

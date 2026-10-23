@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 void main() {
   AgentArtifact artifact(
@@ -12,7 +13,7 @@ void main() {
     id: 'artifact-$agentId',
     ownerUserId: 'u1',
     agentId: agentId,
-    domain: 'test',
+    domain: const AiDomain.shell(),
     kind: AgentArtifactKind.review,
     severity: severity,
     title: agentId,

@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../app/agent_runtime/bindings/agent_runtime_profile_turn_binding.dart';
@@ -30,7 +31,7 @@ part 'llm_credentials/runtime.dart';
 
 const _settingsRuntimeBindingKey = (
   agentId: kSettingsLlmRuntimeCheckAgentId,
-  domain: 'settings',
+  domain: AiDomain.shell(),
   surface: 'settings_ai_llm',
 );
 

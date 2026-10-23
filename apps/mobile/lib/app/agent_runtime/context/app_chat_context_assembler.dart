@@ -54,7 +54,7 @@ Future<List<AgentRuntimeContextBlock>> prepareDomainChatContextBlocks({
   final blocks = <AgentRuntimeContextBlock>[];
   for (final pack in activePacks) {
     if (aiContext.domain != null && pack.scope != aiContext.domain) continue;
-    if (pack.chatContextBuilder == null) continue;
+    if (pack.ai.chatContextBuilder == null) continue;
     try {
       blocks.addAll(await build(pack));
     } on Object {

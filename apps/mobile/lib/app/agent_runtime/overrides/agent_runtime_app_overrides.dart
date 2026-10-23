@@ -42,7 +42,7 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
     final runtime = agentRuntimeProfileTurnBinding(
       ref,
       agentId: kDailyNavigatorAgentId,
-      domain: 'life',
+      domain: const AiDomain.global(),
       surface: 'life_daily_navigator',
       resolveAvailability: false,
     )!;
@@ -92,7 +92,8 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
       traceSeed: AiTrace(
         requestId: requestId,
         startedAtIso: DateTime.now().toUtc().toIso8601String(),
-        intent: const IntentHint(
+        intent: IntentHint(
+          domain: AiDomain.fromScope(ref.read(aiContextProvider).domain),
           capability: Capability.analyze,
           risk: RiskLevel.suggest,
           label: 'chat_turn',
@@ -120,7 +121,7 @@ List<Override> agentRuntimeAppProviderOverrides() => <Override>[
       final domainBlocks = await prepareDomainChatContextBlocks(
         activePacks: ref.read(activeDomainPacksProvider),
         aiContext: aiContext,
-        build: (pack) => pack.chatContextBuilder!(ref, aiContext),
+        build: (pack) => pack.ai.chatContextBuilder!(ref, aiContext),
       );
       try {
         final contextBuilder = await ref.read(contextBuilderProvider.future);

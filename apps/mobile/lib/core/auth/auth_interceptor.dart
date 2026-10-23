@@ -96,13 +96,32 @@ class AuthInterceptor extends Interceptor {
       handler.next(err);
       return;
     }
-    final ok = await onUnauthorized();
+    // A delayed 401 from a previous token must not refresh or clear the current
+    // account, nor replay that account's request under a different identity.
+    final failedSession = sessionReader();
+    if (failedSession == null ||
+        originalAuth != 'Bearer ${failedSession.accessToken}') {
+      handler.next(err);
+      return;
+    }
+    bool ok;
+    try {
+      ok = await onUnauthorized();
+    } catch (_) {
+      // Session persistence can fail after refresh. Always complete the Dio
+      // handler and retain the original HTTP failure without leaking storage
+      // error details or replaying with an uncommitted identity.
+      handler.next(err);
+      return;
+    }
     if (!ok) {
       handler.next(err);
       return;
     }
     final fresh = sessionReader();
-    if (fresh == null) {
+    if (fresh == null ||
+        fresh.userId != failedSession.userId ||
+        fresh.deviceId != failedSession.deviceId) {
       handler.next(err);
       return;
     }

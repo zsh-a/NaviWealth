@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 
@@ -124,7 +125,7 @@ void main() {
       const regressionCase = AgentOutcomeRegressionCase(
         id: 'finance.route.ready',
         agentId: 'route_agent',
-        domain: 'finance',
+        domain: AiDomain.domain(DomainScope.finance),
         snapshotId: 'finance.route.fixture',
         expectedStatus: AgentOutcomeRegressionStatus.ready,
         expectedArtifactKind: AgentArtifactKind.review,
@@ -144,7 +145,7 @@ void main() {
         id: 'artifact-1',
         ownerUserId: 'u',
         agentId: 'route_agent',
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Route result',
@@ -204,7 +205,7 @@ void main() {
           id: 'artifact-1',
           ownerUserId: 'u',
           agentId: 'options_income_risk_review',
-          domain: 'finance',
+          domain: const AiDomain.domain(DomainScope.finance),
           kind: AgentArtifactKind.review,
           severity: AgentArtifactSeverity.info,
           title: 'Options Income Risk Review',
@@ -265,7 +266,7 @@ void main() {
           id: 'artifact-1',
           ownerUserId: 'u',
           agentId: 'cashflow_anomaly_review',
-          domain: 'finance',
+          domain: const AiDomain.domain(DomainScope.finance),
           kind: AgentArtifactKind.alert,
           severity: AgentArtifactSeverity.warning,
           title: 'Cashflow Anomaly Review',
@@ -417,7 +418,7 @@ void main() {
           id: 'artifact-1',
           ownerUserId: 'u',
           agentId: 'weekly_summary',
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           kind: AgentArtifactKind.review,
           severity: AgentArtifactSeverity.info,
           title: 'Weekly Summary',
@@ -453,7 +454,7 @@ AgentArtifact _matchingCashflowArtifact({
     id: 'artifact-1',
     ownerUserId: 'u',
     agentId: 'cashflow_anomaly_review',
-    domain: 'finance',
+    domain: const AiDomain.domain(DomainScope.finance),
     kind: AgentArtifactKind.alert,
     severity: AgentArtifactSeverity.warning,
     title: 'Cashflow Anomaly Review',

@@ -44,7 +44,7 @@ final lifeContextSnapshotProvider = FutureProvider<LifeContextSnapshot>((
     for (final pack in activePacks) pack.scope,
   };
   final sourcePrefixes = <String>{
-    for (final pack in activePacks) ...pack.memorySourcePrefixes,
+    for (final pack in activePacks) ...pack.ai.memorySourcePrefixes,
   };
   final profile = await ref.watch(personalProfileSnapshotProvider.future);
   final recentChanges = await runtime.recentEvents(

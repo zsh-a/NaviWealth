@@ -83,7 +83,7 @@ void main() {
       expect(d.risk, RiskLevel.commit);
       expect(d.requiresConfirmation, Confirmation.oneTap);
       expect(d.sideEffect, SideEffect.deviceLocalWrite);
-      expect(d.domain, kDomainHealth);
+      expect(d.domain, const AiDomain.domain(DomainScope.health));
     });
 
     test('records AI body fat as canonical health metric', () async {

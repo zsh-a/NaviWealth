@@ -92,6 +92,101 @@ Future<void> _persistSnapshot(
 
 void main() {
   test(
+    'failed recovery after rebuild cannot reuse the previous ready identity',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      SharedPreferences.setMockInitialValues({'app.mode.v1': 'local_only'});
+      final keys = InMemoryKeyStore();
+      final container = _bootstrap(
+        db,
+        keys,
+        await SharedPreferences.getInstance(),
+      );
+      addTearDown(container.dispose);
+      expect(
+        await container.read(authControllerProvider.future),
+        isA<AuthLocalOnly>(),
+      );
+      await keys.write(TokenStore.ownerTransferKey, 'invalid-journal');
+      container.invalidate(authControllerProvider);
+      await expectLater(
+        container.read(authControllerProvider.future),
+        throwsStateError,
+      );
+      final controller = container.read(authControllerProvider.notifier);
+      expect(controller.currentSession(), isNull);
+      expect(await controller.refreshIfPossible(), isFalse);
+      await expectLater(controller.chooseCloud(), throwsStateError);
+      expect(await keys.read(TokenStore.ownerTransferKey), 'invalid-journal');
+    },
+  );
+
+  test(
+    'explicit database reset retries pending journal recovery without restart',
+    () async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      SharedPreferences.setMockInitialValues({'app.mode.v1': 'local_only'});
+      final preferences = await SharedPreferences.getInstance();
+      final keys = InMemoryKeyStore();
+      final tokens = TokenStore(keys);
+      await tokens.writeOwnerTransfer(
+        OwnerTransferIntent(
+          id: 'interrupted-before-schema-change',
+          from: kLocalOnlyUserId,
+          to: 'cloud-owner',
+          previous: _local,
+          target: _cloud,
+        ),
+      );
+      var available = false;
+      final container = ProviderContainer(
+        retry: (_, _) => null,
+        overrides: [
+          secureKeyStoreProvider.overrideWithValue(keys),
+          deviceIdentityStoreProvider.overrideWithValue(
+            DeviceIdentityStore(keys),
+          ),
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          appDatabaseProvider.overrideWith((ref) async {
+            if (!available) {
+              throw const UnsupportedDatabaseSchema(
+                foundVersion: 97,
+                requiredVersion: 98,
+              );
+            }
+            return db;
+          }),
+        ],
+      );
+      addTearDown(container.dispose);
+      await expectLater(
+        container.read(authControllerProvider.future),
+        throwsA(isA<UnsupportedDatabaseSchema>()),
+      );
+      final recovery = DatabaseRecoveryController(
+        resetDatabase: () async {
+          available = true;
+        },
+        invalidateDatabase: () => container.invalidate(appDatabaseProvider),
+      );
+      await recovery.resetLocalData();
+      expect(
+        await container.read(authControllerProvider.future),
+        isA<AuthLocalOnly>(),
+      );
+      expect(await tokens.readOwnerTransfer(), isNull);
+      expect(await tokens.read(), isNull);
+      await container.read(authControllerProvider.notifier).chooseCloud();
+      expect(
+        container.read(authControllerProvider).value,
+        isA<AuthLoggedOut>(),
+      );
+    },
+  );
+
+  test(
     'committed ownership and recovery marker survive database reopen',
     () async {
       final directory = await Directory.systemTemp.createTemp(

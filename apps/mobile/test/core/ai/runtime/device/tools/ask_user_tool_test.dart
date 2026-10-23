@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/contracts/interaction.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -33,7 +34,7 @@ void main() {
       expect(d, isNotNull);
       expect(d!.access, Access.read);
       expect(d.sideEffect, SideEffect.none);
-      expect(d.domain, kDomainShell);
+      expect(d.domain, const AiDomain.shell());
     });
 
     test('normalises a valid request and marks awaiting_user', () async {

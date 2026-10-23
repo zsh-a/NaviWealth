@@ -17,6 +17,7 @@ import 'package:naviwealth/app/agents/providers.dart';
 import 'package:naviwealth/app/domain_composition.dart';
 import 'package:naviwealth/app/domain_packs.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
@@ -167,7 +168,10 @@ void main() {
 
       final catalog = container.read(agentRuntimeCatalogProvider);
 
-      expect(catalog.activeDomains, ['health', 'knowledge']);
+      expect(catalog.activeDomains, [
+        DomainScope.health,
+        DomainScope.knowledge,
+      ]);
       expect(
         catalog.agents.map((agent) => agent.id),
         containsAll(<String>['recovery_alert']),
@@ -211,7 +215,11 @@ void main() {
 
       final catalog = container.read(agentRuntimeCatalogProvider);
 
-      expect(catalog.activeDomains, ['health', 'knowledge', 'execution']);
+      expect(catalog.activeDomains, [
+        DomainScope.health,
+        DomainScope.knowledge,
+        DomainScope.execution,
+      ]);
       expect(
         catalog.agents.map((agent) => agent.id),
         containsAll(<String>['recovery_alert', 'execution_review']),
@@ -267,7 +275,11 @@ AgentRuntimeLlmBridge _llmBridge(AgentRuntimeNativeBridge native) {
 AgentRuntimeCatalog _catalog() {
   return AgentRuntimeCatalog(
     generatedAt: DateTime.utc(2026, 6, 29, 8),
-    activeDomains: const <String>['execution', 'health', 'knowledge'],
+    activeDomains: const <DomainScope>[
+      DomainScope.execution,
+      DomainScope.health,
+      DomainScope.knowledge,
+    ],
     agents: const <AgentRuntimeAgentSpec>[],
     tools: const <AgentRuntimeToolSpec>[],
     proposalKinds: const <AgentRuntimeProposalKindSpec>[],

@@ -3,6 +3,8 @@ library;
 
 import 'dart:async';
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import 'agent_runtime_protocol.dart';
 import 'agent_runtime_step_result.dart';
 
@@ -115,7 +117,7 @@ class AgentRuntimeEffectPlanBinding {
        _catalogJsonReader = catalogJsonReader;
 
   final String agentId;
-  final String domain;
+  final AiDomain domain;
   final String surface;
   final Future<void> Function(AgentRuntimeNativeStepRunResult stepRun)?
   recordTrace;

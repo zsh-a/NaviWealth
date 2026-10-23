@@ -86,11 +86,17 @@ void main() {
             domainPackRegistryProvider.overrideWithValue(const [
               DomainPack(
                 scope: DomainScope.execution,
-                tabPaths: ['/registered-execution'],
-                settingsSpec: DomainSettingsSpec(
-                  icon: FLucideIcons.listTodo,
-                  label: 'ExecutionOS',
-                  subtitle: _settingsSubtitle,
+                shell: DomainShellContribution(
+                  navigation: DomainNavigation(
+                    tabPaths: ['/registered-execution'],
+                    shellSpecBuilder: _unusedShellSpec,
+                    shellRouteBuilder: _unusedShellRoute,
+                  ),
+                  settingsSpec: DomainSettingsSpec(
+                    icon: FLucideIcons.listTodo,
+                    label: 'ExecutionOS',
+                    subtitle: _settingsSubtitle,
+                  ),
                 ),
               ),
             ]),
@@ -182,7 +188,13 @@ void main() {
             activeDomainPacksProvider.overrideWithValue(const [
               DomainPack(
                 scope: DomainScope.execution,
-                tabPaths: ['/registered-execution'],
+                shell: DomainShellContribution(
+                  navigation: DomainNavigation(
+                    tabPaths: ['/registered-execution'],
+                    shellSpecBuilder: _unusedShellSpec,
+                    shellRouteBuilder: _unusedShellRoute,
+                  ),
+                ),
               ),
             ]),
             lifeActionDispatcherProvider.overrideWithValue(applier.dispatch),
@@ -227,3 +239,9 @@ void main() {
     },
   );
 }
+
+Never _unusedShellSpec(Object _) =>
+    throw StateError('Shell UI is outside this test.');
+
+Never _unusedShellRoute() =>
+    throw StateError('Shell routes are outside this test.');

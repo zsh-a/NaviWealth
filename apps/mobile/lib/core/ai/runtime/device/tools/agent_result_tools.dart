@@ -1,6 +1,7 @@
 /// Shell read tools for explaining persisted agent results.
 library;
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
@@ -36,7 +37,14 @@ class GetAgentArtifactsTool implements DeviceTool {
       },
       'domain': <String, Object?>{
         'type': 'string',
-        'enum': ['finance', 'health', 'knowledge', 'execution'],
+        'enum': [
+          'finance',
+          'health',
+          'knowledge',
+          'execution',
+          'shell',
+          'global',
+        ],
         'description': '按 domain 读取最近 artifact。未传 artifact_id/agent_id 时使用。',
       },
       'limit': <String, Object?>{
@@ -62,7 +70,15 @@ class GetAgentArtifactsTool implements DeviceTool {
     };
     final artifactId = _trimmed(input['artifact_id']);
     final agentId = _trimmed(input['agent_id']);
-    final domain = _trimmed(input['domain']);
+    final domainWire = _trimmed(input['domain']);
+    AiDomain? domain;
+    if (domainWire != null) {
+      try {
+        domain = AiDomain.fromWire(domainWire);
+      } on FormatException {
+        return const {'error': 'Unknown AI domain', 'code': 'invalid_input'};
+      }
+    }
     final limit = _limit(input['limit']);
 
     final artifacts = <AgentArtifact>[];
@@ -181,9 +197,9 @@ class GetAgentRunsTool implements DeviceTool {
   }
 }
 
-bool _domainIsActive(String wire, DomainOptIns optIns) {
-  final scope = DomainScope.tryParse(wire);
-  return scope != null && optIns.contains(scope);
+bool _domainIsActive(AiDomain domain, DomainOptIns optIns) {
+  final scope = domain.scope;
+  return scope == null || optIns.contains(scope);
 }
 
 bool _artifactIsReadable(
@@ -199,7 +215,7 @@ Map<String, Object?> _artifactToWire(AgentArtifact artifact) {
   return <String, Object?>{
     'id': artifact.id,
     'agent_id': artifact.agentId,
-    'domain': artifact.domain,
+    'domain': artifact.domain.wire,
     'kind': artifact.kind.wire,
     'severity': artifact.severity.wire,
     'title': artifact.title,

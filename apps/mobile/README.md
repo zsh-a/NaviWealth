@@ -212,3 +212,9 @@ Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
 ```
 
 `release.yml` 在 tag 发布时运行质量门槛并构建 Android arm64 APK/AAB；其中设备质量门槛复用 `integration-device.yml`。当前没有 iOS tag 构建或分发 job；其验证与分发条件见 [LifeOS 路线图](../../docs/roadmap/roadmap-lifeos.md#triggered-bets)。
+
+## 数据库基线
+
+当前使用 schema 98，仅维护新建结构，不再保留历史迁移链。其他版本的本地库
+会停止打开并保留原始数据；界面提供确认后重置入口，支持原生端与 Web。
+同版本数据库可直接重开。升级开发环境前应保留需要的数据副本。

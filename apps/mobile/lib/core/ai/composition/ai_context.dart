@@ -15,7 +15,7 @@ import '../../auth/domain_scope.dart';
 class AiContext {
   const AiContext({
     required this.path,
-    this.domain,
+    required this.domain,
     this.label,
     this.entityType,
     this.entityId,
@@ -52,5 +52,5 @@ class AiContext {
 /// Global ambient-context state. Updated from the outer shell whenever
 /// the route changes.
 final aiContextProvider = StateProvider<AiContext>(
-  (_) => const AiContext(path: '/', domain: DomainScope.finance),
+  (_) => const AiContext(path: '/', domain: null),
 );

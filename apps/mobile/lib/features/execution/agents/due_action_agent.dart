@@ -1,3 +1,5 @@
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_presentation.dart';
@@ -58,7 +60,7 @@ class ExecutionDueActionAgent implements Agent {
         id: artifactId,
         ownerUserId: ownerUserId,
         agentId: id,
-        domain: 'execution',
+        domain: const AiDomain.domain(DomainScope.execution),
         kind: AgentArtifactKind.reminder,
         severity: AgentArtifactSeverity.attention,
         title: l10n.executionDueAgentTitle,

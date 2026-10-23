@@ -303,8 +303,8 @@ including sync outbox pointers. Pending snapshots cannot be edited; a definition
 or head change while editing requires reopening the form before saving. Existing
 capital is immutable: copying the current form configuration creates a new id,
 capital baseline, and observation history while preserving the source simulation.
-For older definitions that allowed capital edits, cumulative return uses the
-recorded observation baseline rather than the edited definition's amount.
+Cumulative return uses this immutable starting capital. Each scenario's creation
+baseline and subsequent observations belong to that same capital base.
 
 Result cards show quote completeness, missing symbols, and the UTC quote date
 before headline numbers. An entirely unpriced invested allocation displays an
@@ -334,23 +334,22 @@ remain available during refresh. Local record-read errors and a successfully
 refreshed empty dataset have distinct states.
 
 Watchlist simulations are a separate paper-only aggregate backed by
-`watchlist_simulations`, legacy compatibility positions, a deterministic
-allocation head, immutable effective-dated allocation versions, virtual holding
+`watchlist_simulations`, a deterministic allocation head, immutable
+effective-dated allocation versions, virtual holding
 versions, and action entries. The head row id equals the simulation id, so Sync
 v3 LWW selects one complete allocation snapshot atomically instead of merging
 independently-authored position rows into an impossible total. Head-first page
 arrival is an explicit pending state; values and entitlement materialization
 remain blocked until the selected version's cash and holding weights total
-exactly 100%. Simulation and compatibility-position protocol markers prevent a
-missing or tombstoned head page from being mistaken for legacy data. Concurrent losing
+exactly 100%. Missing or tombstoned heads remain pending; there is no legacy
+position fallback or dual write. Concurrent losing
 branches remain immutable history but are never projected. They may reference
 a watchlist collection and canonical watchlist-item ids, but must never reuse or
 write `InvestmentPortfolio`, accounts, lots, journal entries, postings, or trade
 execution state. All paper source rows sync under `fin:` and participate in
 encrypted backup; local observations remain derived.
 
-Existing simulations retain `weightedDailyChangeV1`. New simulations created
-with quote evidence use `holdingsTotalReturnV2`: creation captures raw price,
+All simulations use one weighted daily observation model. Creation captures raw price,
 price currency/date/source, target weight, and a virtual `Decimal` quantity
 only when the quote is non-stale and its currency equals the simulation base
 currency. Quantity evidence also requires canonical market/symbol identity,
@@ -361,14 +360,17 @@ Unchanged allocation saves are no-ops and preserve trusted quantities. Real
 reallocations create a new effective-dated version, link it to the previously
 selected version, and atomically advance the deterministic head. Quantity stays
 unknown until a trustworthy capital base is available rather than being derived
-from the legacy projection curve. Record-date lookup walks the selected head's
+from the observed projection curve. Record-date lookup walks the selected head's
 predecessor lineage before reading its holding child, so a concurrent losing
-branch or removed symbol cannot silently supply an older quantity. Pre-head
-rows retain a deterministic legacy fallback and are linked as virtual
-predecessors when the first headed version is introduced; every newly written
-version requires an explicit head and can never be selected by fallback
-heuristics. Valued action entries and local observations store an allocation
-basis key. A head change immediately hides basis-mismatched paper cash and
+branch or removed symbol cannot silently supply an older quantity. Every
+version requires an explicit head. Quantity coverage is independently reported
+as unavailable, partial or complete; complete weights do not imply priced
+holdings. Snapshot reads run inside one transaction and query the selected
+holdings and predecessor lineage separately, avoiding history-by-holdings join
+fanout. The repository composes separate allocation, observation and paper-action
+stores; the observation store has no sync outbox access. Valued action entries and
+market observations store an allocation basis key. The creation baseline has its
+own explicit `baseline` basis; null-basis market observations are not projected. A head change immediately hides basis-mismatched paper cash and
 curve points, while later reconciliation clears or rebuilds those derived
 values from the winning lineage.
 
@@ -379,7 +381,7 @@ can apply trusted intervening split and implemented stock-distribution ratios.
 Only a complete successful range may create or revise a quantity-based
 entitlement; partial/stale refreshes may add reference terms but cannot
 downgrade a previously trusted entitlement. Provider source key, revision
-hash, dates, currency, and per-share terms always survive. Holdings V2 resolves
+hash, dates, currency, and per-share terms always survive. Entitlement resolution uses
 the latest virtual holding at the record date and may record eligible quantity
 and gross paper entitlement. Quantity adjustments require an explicit ex-date;
 missing or boundary-ambiguous dates and conflicting stock-distribution ratios
@@ -390,7 +392,7 @@ paper cash pending tax, clearing the receivable rather than adding a second
 amount. Offline refreshes and earlier device clocks cannot move it backward.
 Both lifecycle balances are informational and excluded from NAV. Unknown
 withholding tax, net cash,
-base-currency value, and NAV application remain null. Legacy or incomplete
+base-currency value, and NAV application remain null. Unavailable or incomplete
 holdings stay `referenceOnly`. Provider cancellation updates the same paper
 row even when coverage is incomplete; disappearance from a feed does not
 delete history. No materialization path may write real investment or ledger

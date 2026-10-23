@@ -333,6 +333,7 @@ class IngestController {
         requestId: requestId,
         startedAtIso: startedAt.toIso8601String(),
         intent: const IntentHint(
+          domain: AiDomain.domain(DomainScope.finance),
           capability: Capability.classify,
           risk: RiskLevel.info,
           label: 'ingest_vision',

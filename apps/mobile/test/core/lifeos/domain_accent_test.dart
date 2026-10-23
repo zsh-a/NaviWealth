@@ -43,7 +43,10 @@ void main() {
         dark: Color(0xFFEEEEEE),
       );
       const packs = <DomainPack>[
-        DomainPack(scope: DomainScope.knowledge, accent: accent),
+        DomainPack(
+          scope: DomainScope.knowledge,
+          shell: DomainShellContribution(accent: accent),
+        ),
       ];
       expect(
         resolveDomainAccent(packs, DomainScope.knowledge, Brightness.light),

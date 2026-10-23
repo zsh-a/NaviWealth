@@ -1,6 +1,8 @@
 /// Focused KnowledgeOS device-tool catalog.
 library;
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import '../../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../../core/ai/contracts/tool_descriptor.dart';
 import '../../core/ai/runtime/device/tools/device_tool.dart';
@@ -14,7 +16,7 @@ import 'ai_tools/search_knowledge_tool.dart';
 import 'ai_tools/search_notes_tool.dart';
 
 const DeviceToolRegistrationBuilder _knowledgeTool =
-    DeviceToolRegistrationBuilder('knowledge');
+    DeviceToolRegistrationBuilder(AiDomain.domain(DomainScope.knowledge));
 
 final List<RegisteredDeviceTool> kKnowledgeToolRegistrations =
     <RegisteredDeviceTool>[

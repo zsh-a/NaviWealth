@@ -143,11 +143,11 @@ List<Map<String, Object?>> domainPackE2eToolSpecs({
 }) {
   final specs = <Map<String, Object?>>[
     for (final pack in packs)
-      for (final tool in pack.deviceTools)
+      for (final tool in pack.ai.deviceTools)
         if (selectedNames.contains(tool.name))
           AgentRuntimeToolSpec.fromTool(
             tool,
-            descriptor: pack.toolDescriptors[tool.name],
+            descriptor: pack.ai.toolDescriptors[tool.name],
           ).toJson(),
   ];
   _assertSelectedToolsExist(specs, selectedNames);

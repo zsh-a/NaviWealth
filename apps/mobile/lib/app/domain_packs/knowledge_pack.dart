@@ -23,32 +23,43 @@ import 'proposal_applier_route.dart';
 
 final DomainPack kKnowledgePack = DomainPack(
   scope: DomainScope.knowledge,
-  accent: DomainAccents.knowledge,
-  deviceTools: kKnowledgeDeviceTools,
-  assistantToolsBuilder: (_) => kKnowledgeAssistantDeviceTools,
-  toolDescriptors: kKnowledgeToolDescriptors,
-  proposalKinds: kKnowledgeProposalKinds,
-  proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
-    ref,
-    readApplier: (ref) =>
-        ref.watch(knowledge_proposals.knowledgeProposalApplierProvider.future),
-    kinds: knowledge_proposals.kKnowledgeProposalAppliedKinds,
-    tablePrefixes: const {knowledge_proposals.kKnowledgeTablePrefix},
+  ai: DomainAiContribution(
+    deviceTools: kKnowledgeDeviceTools,
+    assistantToolsBuilder: (_) => kKnowledgeAssistantDeviceTools,
+    toolDescriptors: kKnowledgeToolDescriptors,
+    proposalKinds: kKnowledgeProposalKinds,
+    proposalApplierRouteBuilder: (ref) => buildProposalApplierRoute(
+      ref,
+      readApplier: (ref) => ref.watch(
+        knowledge_proposals.knowledgeProposalApplierProvider.future,
+      ),
+      kinds: knowledge_proposals.kKnowledgeProposalAppliedKinds,
+      tablePrefixes: const {knowledge_proposals.kKnowledgeTablePrefix},
+    ),
+    systemPromptBlock: kKnowledgeSystemPromptBlock,
+    memorySourcePrefixes: const ['know:'],
   ),
-  systemPromptBlock: kKnowledgeSystemPromptBlock,
-  shellSpecBuilder: knowledgeDomainShell,
-  shellRouteBuilder: knowledgeShellRoute,
-  tabPaths: [AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
-  memorySourcePrefixes: const ['know:'],
-  memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
-  commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
-  sourceRouteResolver: knowledgeSourceRoute,
-  shareIntentHandlers: const [KnowledgeShareIntentHandler()],
-  dataManagementSpec: knowledgeDataManagementSpec,
-  settingsSpec: const DomainSettingsSpec(
-    icon: FLucideIcons.brain,
-    label: 'KnowledgeOS',
-    subtitle: _knowledgeSettingsSubtitle,
+  shell: const DomainShellContribution(
+    navigation: DomainNavigation(
+      shellSpecBuilder: knowledgeDomainShell,
+      shellRouteBuilder: knowledgeShellRoute,
+      tabPaths: [AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
+    ),
+    accent: DomainAccents.knowledge,
+    commandPaletteEntriesBuilder: knowledgeCommandPaletteEntries,
+    settingsSpec: DomainSettingsSpec(
+      icon: FLucideIcons.brain,
+      label: 'KnowledgeOS',
+      subtitle: _knowledgeSettingsSubtitle,
+    ),
+  ),
+  lifecycle: const DomainLifecycleContribution(
+    memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
+  ),
+  data: DomainDataContribution(
+    sourceRouteResolver: knowledgeSourceRoute,
+    dataManagementSpec: knowledgeDataManagementSpec,
+    shareIntentHandlers: const [KnowledgeShareIntentHandler()],
   ),
 );
 

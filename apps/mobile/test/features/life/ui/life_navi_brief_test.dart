@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/life/ui/life_navi_brief.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -25,7 +26,7 @@ AgentArtifact _artifact() => AgentArtifact(
   id: 'daily-navigator:one',
   ownerUserId: 'user-1',
   agentId: 'daily_navigator',
-  domain: 'life',
+  domain: const AiDomain.global(),
   kind: AgentArtifactKind.briefing,
   severity: AgentArtifactSeverity.attention,
   title: 'Some items need priority attention',

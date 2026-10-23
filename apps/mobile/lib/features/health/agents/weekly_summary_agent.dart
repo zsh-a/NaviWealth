@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
@@ -158,7 +159,7 @@ class WeeklySummaryAgent implements Agent {
       id: id,
       ownerUserId: ownerUserId,
       agentId: kWeeklySummaryAgentId,
-      domain: 'health',
+      domain: const AiDomain.domain(DomainScope.health),
       kind: AgentArtifactKind.review,
       severity: severity,
       title: l10n.healthAgentWeeklyTitle,

@@ -13,8 +13,10 @@
 library;
 
 import '../../../l10n/gen/app_localizations.dart';
-import '../contracts/intent.dart' show kDomainFinance;
+import '../contracts/ai_domain.dart';
 import 'ai_intent_invocation.dart';
+
+export '../contracts/ai_domain.dart';
 
 class IntentCopy {
   const IntentCopy({required this.label, required this.promptTemplate});
@@ -127,24 +129,22 @@ class IntentDescriptor {
     required this.preferredCapabilities,
     this.preferredReadModels = const <String>[],
     this.requiresExplicitConfirmation = false,
-    this.domain = kDomainFinance,
-    this.allowedDomains = const <String>{},
+    required this.domain,
+    this.allowedDomains = const <AiDomain>[],
   });
 
   /// Stable identifier — `'explain_change'`, never renamed.
   final String name;
 
-  /// Home LifeOS domain this intent belongs to (trace attribution +
-  /// the default surface). Defaults to Finance for legacy descriptors
-  /// that predate explicit domain registration.
-  final String domain;
+  /// Explicit ownership used for attribution and permitted surfaces.
+  final AiDomain domain;
 
   /// Extra domains this intent is *also* valid in, beyond [domain]. Set
   /// this for genuinely cross-cutting intents (e.g. a "correlate spend ×
   /// sleep" intent valid from both a finance and a health surface) so a
   /// trigger on either domain's page is accepted. Empty = single-domain
   /// (just [domain]). The effective set is [domains].
-  final Set<String> allowedDomains;
+  final List<AiDomain> allowedDomains;
 
   /// Which `AiObjectRef.type` values may use this intent. Empty set
   /// means "object-less / abstract intent".
@@ -173,13 +173,13 @@ class IntentDescriptor {
 
   /// Full set of domains this intent may be triggered from = [domain]
   /// plus [allowedDomains]. Single-domain intents resolve to `{domain}`.
-  Set<String> get domains => <String>{domain, ...allowedDomains};
+  Set<AiDomain> get domains => <AiDomain>{domain, ...allowedDomains};
 }
 
 /// Whether [desc] may be triggered from [domain]. Cross-domain intents
 /// (those declaring [IntentDescriptor.allowedDomains]) accept any of
 /// their domains; single-domain intents accept only their home [domain].
-bool intentAllowsDomain(IntentDescriptor desc, String domain) =>
+bool intentAllowsDomain(IntentDescriptor desc, AiDomain domain) =>
     desc.domains.contains(domain);
 
 class IntentCatalog {
@@ -251,7 +251,7 @@ String renderPromptFor(
   assert(
     intentAllowsDomain(desc, invocation.domain),
     'Intent "${invocation.intent}" triggered from domain '
-    '"${invocation.domain}" but only allows ${desc.domains}.',
+    '"${invocation.domain.wire}" but only allows ${desc.domains.map((domain) => domain.wire).join(", ")}.',
   );
   final timeframe =
       (invocation.context['timeframe'] as String?) ??

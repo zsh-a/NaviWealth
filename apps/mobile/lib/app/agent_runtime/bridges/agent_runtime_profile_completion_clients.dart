@@ -15,7 +15,7 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
   }) : _completer = _TracedProfileCompleter(
          llmBridge: llmBridge,
          recordTrace: recordTrace,
-         domain: 'finance',
+         domain: const AiDomain.domain(DomainScope.finance),
          defaultAgentId: 'finance_activity_insight',
        );
 
@@ -57,7 +57,7 @@ class FrbKnowledgeRewriteClient implements KnowledgeRewriteClient {
   }) : _completer = _TracedProfileCompleter(
          llmBridge: llmBridge,
          recordTrace: recordTrace,
-         domain: 'knowledge',
+         domain: const AiDomain.domain(DomainScope.knowledge),
          defaultAgentId: 'knowledge_rewrite',
        );
 
@@ -146,7 +146,7 @@ typedef FrbProfileCompletionTraceRecorder = Future<Object?> Function({
   DateTime? startedAt,
   DateTime? finishedAt,
   String? requestId,
-  String domain,
+  required AiDomain domain,
   String surface,
   String routingReason,
   Object? error,
@@ -159,7 +159,7 @@ Future<void> _recordProfileCompletionBestEffort(
   DateTime? startedAt,
   DateTime? finishedAt,
   String? requestId,
-  required String domain,
+  required AiDomain domain,
   required String surface,
   String routingReason = kFrbAgentRuntimeProfileRoutingReason,
   Object? error,
@@ -185,7 +185,7 @@ Future<void> _recordProfileCompletionBestEffort(
 class _TracedProfileCompleter {
   const _TracedProfileCompleter({
     required AgentRuntimeLlmBridge llmBridge,
-    required String domain,
+    required AiDomain domain,
     required String defaultAgentId,
     FrbProfileCompletionTraceRecorder? recordTrace,
     String routingReason = kFrbAgentRuntimeProfileRoutingReason,
@@ -197,7 +197,7 @@ class _TracedProfileCompleter {
 
   final AgentRuntimeLlmBridge _llmBridge;
   final FrbProfileCompletionTraceRecorder? _recordTrace;
-  final String _domain;
+  final AiDomain _domain;
   final String _defaultAgentId;
   final String _routingReason;
 
@@ -282,7 +282,7 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
   }) : _completer = _TracedProfileCompleter(
          llmBridge: llmBridge,
          recordTrace: recordTrace,
-         domain: 'finance',
+         domain: const AiDomain.domain(DomainScope.finance),
          defaultAgentId: 'finance_ingest',
          routingReason: kFrbVisionIngestRoutingReason,
        );

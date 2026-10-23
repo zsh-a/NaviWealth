@@ -69,7 +69,7 @@ void main() {
 
     final artifact = await store.read(result.artifactId!);
     expect(artifact, isNotNull);
-    expect(artifact!.domain, 'finance');
+    expect(artifact!.domain, const AiDomain.domain(DomainScope.finance));
     expect(artifact.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.warning);
     expect(artifact.memoryId, isNull);
@@ -112,7 +112,7 @@ void main() {
     final trace = await traceStore.findByRequestId(result.traceId!);
     expect(trace, isNotNull);
     expect(trace!.routingReason, kDeterministicAgentRoutingReason);
-    expect(trace.intent.domain, kDomainFinance);
+    expect(trace.intent.domain, const AiDomain.domain(DomainScope.finance));
     expect(trace.intent.label, 'weekly_wealth_review');
     expect(trace.spans.single.attributes, containsPair('deterministic', true));
     expect(
@@ -323,7 +323,7 @@ AgentArtifact _financeArtifact({
     id: id,
     ownerUserId: 'u',
     agentId: kWeeklyWealthReviewAgentId,
-    domain: 'finance',
+    domain: const AiDomain.domain(DomainScope.finance),
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.info,
     title: 'Weekly Wealth Review',

@@ -87,7 +87,7 @@ void main() {
       );
       expect(
         headless.container.read(agentRuntimeCatalogProvider).activeDomains,
-        expectedScopes.map((scope) => scope.wire),
+        expectedScopes,
       );
     },
   );

@@ -173,10 +173,30 @@ apps/mobile/lib/app/agent_runtime/
   runner/agent_runtime_runner.dart             Profile turn + Rust-owned snapshot composition
   bridges/agent_runtime_llm_bridge.dart        LlmProfile -> provider-neutral request
   bridges/agent_runtime_llm_stream_bridge.dart ChatTurn streaming bridge over FRB JSON
-  chat/frb_chat_runner.dart                    ChatTurn event mapping and Flutter tool loop
+  chat/frb_chat_runner.dart                    Public ChatAgent entrypoint
+  chat/frb_chat_run.dart                       Native round / host-effect coordination
+  chat/frb_chat_event_projection.dart          FRB frames -> UI and trace events
+  chat/frb_chat_tool_dispatch.dart             Ordered writes and parallel read batches
+  chat/frb_chat_tool_journal.dart              Host dispatch/result persistence
+  chat/frb_chat_recovery.dart                  Sealed host recovery outcomes
+  chat/frb_chat_cancellation.dart              Native stream cancellation
   context/app_chat_context_assembler.dart      Active-domain Memory -> ContextBlock
   trace/agent_runtime_trace_recorder.dart      FRB result -> local AiTraceStore adapter
 ```
+
+Flutter AI ownership is explicit: `AiDomain.domain(DomainScope)` identifies a
+registered business domain; `AiDomain.shell()` identifies shell infrastructure;
+`AiDomain.global()` identifies cross-domain work. Intents, tool descriptors,
+artifacts, execution records and trace recorders require that typed identity.
+Only JSON and persistence boundaries use its wire string. Missing or unknown
+values are rejected; there is no Finance default or legacy `life`/`settings`
+alias. Chat traces derive the identity from the current route context.
+
+The chat host separates event projection, tool dispatch and the durable dispatch
+journal from native-round orchestration. Recovery uses sealed outcomes for
+completed tool results, pending interaction, interaction suspension, cancellation
+and failure. Native state and snapshots remain opaque maps: Dart preserves their
+contents and sends them back to Rust, without implementing another Agent runtime.
 
 ## Runtime Layers
 
@@ -222,7 +242,7 @@ snapshots from compounding across turns.
 
 Flutter owns retrieval policy. `ChatRepository` invokes the app-level
 `app_chat_context_assembler.dart`, which uses one `MemoryAccessPolicy` derived
-from active `DomainPack.memorySourcePrefixes`. The same policy protects
+from active `DomainPack.ai.memorySourcePrefixes`. The same policy protects
 automatic context, explicit recall tools, proposal target lookup, and apply.
 Host-owned current Profile facts become untrusted `profile` blocks; retrieved
 memories and recent events become untrusted `memory` blocks. Drift, embeddings,

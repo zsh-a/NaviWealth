@@ -12,7 +12,7 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
   final evaluatedByDomain = <DomainScope, Set<String>>{};
   final now = DateTime.now().toUtc();
   for (final pack in ref.watch(activeDomainPacksProvider)) {
-    final slice = pack.lifeSignalBuilder?.call(ref, now);
+    final slice = pack.data.lifeSignalBuilder?.call(ref, now);
     if (slice == null) continue;
     events.addAll(slice.events);
     evaluatedSourceFamilies.addAll(slice.evaluatedSourceFamilies);

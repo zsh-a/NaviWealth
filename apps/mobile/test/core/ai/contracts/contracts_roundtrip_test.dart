@@ -8,6 +8,7 @@ void main() {
   group('ToolDescriptor roundtrip', () {
     test('descriptor round-trips with all axes', () {
       const desc = ToolDescriptor(
+        domain: AiDomain.shell(),
         name: 'request_disclosure',
         access: Access.read,
         risk: RiskLevel.info,
@@ -61,6 +62,7 @@ void main() {
     // finance tools — bumping the canonical key count from 6 → 7.
     test('toJson emits exactly the seven documented keys', () {
       const desc = ToolDescriptor(
+        domain: AiDomain.shell(),
         name: 'sentinel',
         access: Access.read,
         risk: RiskLevel.info,
@@ -85,6 +87,7 @@ void main() {
       // fields must take their documented defaults.
       final legacy = <String, Object?>{
         'name': 'legacy_tool',
+        'domain': 'shell',
         'access': 'read',
         'risk': 'info',
         'requires_confirmation': 'none',
@@ -145,6 +148,7 @@ void main() {
         requestId: 'trace_1',
         startedAtIso: '2026-05-10T10:30:00Z',
         intent: IntentHint(
+          domain: AiDomain.shell(),
           capability: Capability.analyze,
           risk: RiskLevel.suggest,
           label: 'cashflow_explain',
@@ -200,6 +204,7 @@ void main() {
           requestId: 'r',
           startedAtIso: '2026-05-12T00:00:00Z',
           intent: IntentHint(
+            domain: AiDomain.shell(),
             capability: Capability.analyze,
             risk: RiskLevel.suggest,
           ),
@@ -223,6 +228,7 @@ void main() {
           requestId: 'r',
           startedAtIso: '2026-05-12T00:00:00Z',
           intent: IntentHint(
+            domain: AiDomain.shell(),
             capability: Capability.analyze,
             risk: RiskLevel.suggest,
           ),
@@ -255,6 +261,7 @@ void main() {
         requestId: 'r',
         startedAtIso: '2026-05-12T00:00:00Z',
         intent: IntentHint(
+          domain: AiDomain.shell(),
           capability: Capability.analyze,
           risk: RiskLevel.info,
         ),
@@ -273,7 +280,7 @@ void main() {
       final json = <String, Object?>{
         'request_id': 'old',
         'started_at': '2026-01-01T00:00:00Z',
-        'intent': {'capability': 'analyze', 'risk': 'info'},
+        'intent': {'capability': 'analyze', 'risk': 'info', 'domain': 'shell'},
         'backend': 'cloud',
         'budget_tier': 'small',
         'routing_reason': 'legacy',

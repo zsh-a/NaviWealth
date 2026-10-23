@@ -10,6 +10,7 @@ import 'package:naviwealth/app/agent_runtime/tools/agent_runtime_tool_host.dart'
 import 'package:naviwealth/core/ai/composition/proposal_applier.dart';
 import 'package:naviwealth/core/ai/composition/proposal_apply_state.dart';
 import 'package:naviwealth/core/ai/composition/proposal_plan.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/core/ai/llm_credentials/providers.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
@@ -226,7 +227,7 @@ AgentRuntimeProfileTurnRunner _runner(_SettingsRuntimeBridge native) {
   return AgentRuntimeProfileTurnRunner(
     catalog: AgentRuntimeCatalog(
       generatedAt: DateTime.utc(2026, 6, 29, 10),
-      activeDomains: const <String>['finance'],
+      activeDomains: const <DomainScope>[DomainScope.finance],
       agents: const <AgentRuntimeAgentSpec>[],
       tools: const <AgentRuntimeToolSpec>[],
       proposalKinds: const <AgentRuntimeProposalKindSpec>[],

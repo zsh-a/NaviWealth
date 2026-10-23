@@ -6,6 +6,7 @@ import '../../../core/ai/intent/intent.dart';
 
 const kFinanceIntentDescriptors = <IntentDescriptor>[
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_change',
     allowedObjectTypes: <String>{
       'expense',
@@ -25,6 +26,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'summarize_account',
     allowedObjectTypes: <String>{'account'},
     preferredCapabilities: <AiCapability>{
@@ -38,6 +40,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'stress_test_plan',
     allowedObjectTypes: <String>{'fire_plan'},
     preferredCapabilities: <AiCapability>{
@@ -51,6 +54,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'compare_period',
     allowedObjectTypes: <String>{
       'expense',
@@ -65,6 +69,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     preferredReadModels: <String>['cashflow_buckets'],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_insight',
     allowedObjectTypes: <String>{'insight'},
     preferredCapabilities: <AiCapability>{
@@ -78,6 +83,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_chart',
     allowedObjectTypes: <String>{'chart'},
     preferredCapabilities: <AiCapability>{
@@ -91,6 +97,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'transactions.explainSelection',
     allowedObjectTypes: <String>{'transactions'},
     preferredCapabilities: <AiCapability>{
@@ -104,6 +111,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_fire_state',
     allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
     preferredCapabilities: <AiCapability>{
@@ -117,6 +125,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'review_cash_bucket',
     allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
     preferredCapabilities: <AiCapability>{
@@ -126,6 +135,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     preferredReadModels: <String>['fire_state'],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'simulate_fire_change',
     allowedObjectTypes: <String>{'fire_plan', 'fire_state'},
     preferredCapabilities: <AiCapability>{
@@ -141,6 +151,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     ],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_stress_test',
     allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
     preferredCapabilities: <AiCapability>{
@@ -150,6 +161,7 @@ const kFinanceIntentDescriptors = <IntentDescriptor>[
     preferredReadModels: <String>['fire_state', 'fire_stress_tests'],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'suggest_fire_actions',
     allowedObjectTypes: <String>{'fire_state', 'fire_plan'},
     preferredCapabilities: <AiCapability>{

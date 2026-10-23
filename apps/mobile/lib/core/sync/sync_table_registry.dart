@@ -152,10 +152,6 @@ kSyncTableRegistrations = <SyncTableRegistration>[
     domainPrefix: kFinanceDomainPrefix,
   ),
   SyncTableRegistration(
-    'watchlist_simulation_positions',
-    domainPrefix: kFinanceDomainPrefix,
-  ),
-  SyncTableRegistration(
     'watchlist_simulation_allocation_heads',
     domainPrefix: kFinanceDomainPrefix,
   ),

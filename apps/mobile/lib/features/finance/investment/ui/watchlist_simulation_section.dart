@@ -439,9 +439,7 @@ class _WatchlistSimulationOverviewRow extends ConsumerWidget {
       projectedValues: observations.map(
         (observation) => observation.projectedValue,
       ),
-      startingCapital:
-          observations.firstOrNull?.projectedValue ??
-          simulation.startingCapital,
+      startingCapital: simulation.startingCapital,
     );
     final incomplete = _incompleteObservationCount(simulation, observations);
     return AppTappable(
@@ -881,9 +879,7 @@ class _WatchlistSimulationBody extends ConsumerWidget {
       ),
       // Older definitions allowed capital edits without rebasing this series.
       // The recorded baseline remains the denominator for those saved curves.
-      startingCapital: observations.isEmpty
-          ? simulation.startingCapital
-          : observations.first.projectedValue,
+      startingCapital: simulation.startingCapital,
     );
 
     final sortedPositions = positions.toList()

@@ -5,7 +5,9 @@
 /// the cross-domain `deviceToolsProvider`.
 library;
 
-import '../../core/ai/contracts/intent.dart' show RiskLevel, kDomainFinance;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
+import '../../core/ai/contracts/intent.dart' show RiskLevel;
 import '../../core/ai/contracts/privacy_budget.dart' show BudgetTier;
 import '../../core/ai/contracts/tool_descriptor.dart';
 import '../../core/ai/runtime/device/tools/device_tool.dart';
@@ -52,7 +54,7 @@ import 'options_income/ai_tools/propose_options_profile_update_tool.dart';
 /// adding one registration here; the runtime tool list and descriptor map
 /// are derived below.
 const DeviceToolRegistrationBuilder _financeTool =
-    DeviceToolRegistrationBuilder(kDomainFinance);
+    DeviceToolRegistrationBuilder(AiDomain.domain(DomainScope.finance));
 
 final List<RegisteredDeviceTool>
 kFinanceToolRegistrations = <RegisteredDeviceTool>[

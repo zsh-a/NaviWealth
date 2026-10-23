@@ -19,10 +19,13 @@ import 'package:naviwealth/core/sync/sync_scheduler.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/auth/data/app_mode_store.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
+import 'package:naviwealth/features/auth/data/session_persistence.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/persistence/owner_data_fixture.dart';
 import '../../core/persistence/test_database.dart';
+
+late SharedPreferences _preferences;
 
 class _RecordingScheduler implements SyncScheduler {
   final drain = Completer<void>();
@@ -196,8 +199,7 @@ ProviderContainer _container({
       if (api != null) authApiClientProvider.overrideWithValue(api),
       if (database != null)
         appDatabaseProvider.overrideWith((ref) async => database),
-      if (preferences != null)
-        sharedPreferencesProvider.overrideWithValue(preferences),
+      sharedPreferencesProvider.overrideWithValue(preferences ?? _preferences),
       if (database != null)
         syncSchedulerProvider.overrideWith((ref) async => scheduler),
     ],
@@ -205,6 +207,10 @@ ProviderContainer _container({
 }
 
 void main() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    _preferences = await SharedPreferences.getInstance();
+  });
   group('AuthController owner transitions', () {
     for (final boundary in ['intent', 'credentials', 'cleanup']) {
       test('runtime failure at $boundary follows durable ownership', () async {
@@ -288,7 +294,7 @@ void main() {
           container
               .read(authControllerProvider.notifier)
               .upgradeToCloud(email: 'a@b.com', password: 'password'),
-          throwsStateError,
+          throwsA(isA<IdentityRecoveryRequired>()),
         );
         expect((await store.readOwnerTransfer())?.id, existing.id);
         expect(await ownerOf(db, 'memories', 'local-memory'), kLocalOnlyUserId);
@@ -455,7 +461,10 @@ void main() {
             .encode(),
       });
       final container = ProviderContainer(
-        overrides: [secureKeyStoreProvider.overrideWithValue(keyStore)],
+        overrides: [
+          secureKeyStoreProvider.overrideWithValue(keyStore),
+          sharedPreferencesProvider.overrideWithValue(_preferences),
+        ],
       );
       addTearDown(container.dispose);
 

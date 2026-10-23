@@ -13,7 +13,6 @@ import 'package:naviwealth/core/ai/contracts/intent.dart';
 import 'package:naviwealth/core/ai/contracts/privacy_budget.dart';
 import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -46,7 +45,7 @@ const _descriptor = ToolDescriptor(
   requiresConfirmation: Confirmation.oneTap,
   allowedContextTier: BudgetTier.small,
   sideEffect: SideEffect.deviceLocalWrite,
-  domain: 'finance',
+  domain: AiDomain.domain(DomainScope.finance),
 );
 
 final _agent = _FakeAgent(
@@ -57,18 +56,22 @@ final _agent = _FakeAgent(
 
 final _pack = DomainPack(
   scope: DomainScope.finance,
-  deviceTools: const <DeviceTool>[_readTool, _proposeTool],
-  toolDescriptors: const <String, ToolDescriptor>{'propose_fake': _descriptor},
-  proposalKinds: <ProposalKindMeta>[
-    const ProposalKindMeta(
-      kind: 'fake',
-      icon: Icons.check,
-      label: _proposalLabel,
-      toolName: 'propose_fake',
-    ),
-  ],
-  systemPromptBlock: 'Finance prompt block',
-  agentBuilder: (_) => <Agent>[_agent],
+  ai: DomainAiContribution(
+    deviceTools: const <DeviceTool>[_readTool, _proposeTool],
+    toolDescriptors: const <String, ToolDescriptor>{
+      'propose_fake': _descriptor,
+    },
+    proposalKinds: <ProposalKindMeta>[
+      const ProposalKindMeta(
+        kind: 'fake',
+        icon: Icons.check,
+        label: _proposalLabel,
+        toolName: 'propose_fake',
+      ),
+    ],
+    systemPromptBlock: 'Finance prompt block',
+    agentBuilder: (_) => <Agent>[_agent],
+  ),
 );
 
 String _proposalLabel(AppLocalizations l10n) => 'Fake';
@@ -100,7 +103,7 @@ void main() {
       'schedule': <String, Object?>{'type': 'manual'},
       'capabilities': <String>['diagnostic'],
       'metadata': <String, Object?>{
-        'domain': 'settings',
+        'domain': 'shell',
         'surface': 'settings_ai_llm',
       },
     });
@@ -270,7 +273,7 @@ void main() {
       };
       final registrationDomains = {
         for (final agent in container.read(appAgentRegistryProvider))
-          agent.id: 'life',
+          agent.id: 'global',
         for (final registration in container.read(registrationsProvider))
           registration.agent.id: registration.domain.wire,
       };

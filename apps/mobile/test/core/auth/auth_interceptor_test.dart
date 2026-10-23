@@ -23,6 +23,7 @@ class _ScriptedAdapter implements HttpClientAdapter {
   _ScriptedAdapter(this._replies);
   final List<_R> _replies;
   final List<_Call> calls = [];
+  void Function()? onRequestCaptured;
 
   @override
   void close({bool force = false}) {}
@@ -34,6 +35,7 @@ class _ScriptedAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     calls.add(_Call(options.method, options.path, options.headers));
+    onRequestCaptured?.call();
     if (calls.length > _replies.length) {
       throw StateError(
         'unexpected call ${calls.length} to ${options.method} ${options.path}',
@@ -56,10 +58,10 @@ class _R {
   final String body;
 }
 
-AuthSession _session(String token) => AuthSession(
+AuthSession _session(String token, {String userId = 'u'}) => AuthSession(
   accessToken: token,
   expiresAt: DateTime.utc(2026, 12, 1),
-  userId: 'u',
+  userId: userId,
   deviceId: 'd',
 );
 
@@ -80,6 +82,69 @@ Dio _buildDio({
 
 void main() {
   group('AuthInterceptor', () {
+    test('refresh persistence failure completes the original request without retry', () async {
+      final adapter = _ScriptedAdapter([_R(401)]);
+      final dio = _buildDio(
+        adapter: adapter,
+        reader: () => _session('old'),
+        onUnauthorized: () async => throw StateError('Storage unavailable'),
+      );
+      await expectLater(
+        dio.get<dynamic>('/sync').timeout(const Duration(seconds: 2)),
+        throwsA(
+          isA<DioException>().having(
+            (error) => error.response?.statusCode,
+            'original status',
+            401,
+          ),
+        ),
+      );
+      expect(adapter.calls, hasLength(1));
+    });
+
+    test('late 401 from an old token cannot refresh the new session', () async {
+      var session = _session('old');
+      final adapter = _ScriptedAdapter([_R(401)])
+        ..onRequestCaptured = () =>
+            session = _session('new', userId: 'new-user');
+      var refreshes = 0;
+      final dio = _buildDio(
+        adapter: adapter,
+        reader: () => session,
+        onUnauthorized: () {
+          refreshes++;
+          return true;
+        },
+      );
+      await expectLater(
+        dio.post<dynamic>('/private-records'),
+        throwsA(isA<DioException>()),
+      );
+      expect(refreshes, 0);
+      expect(adapter.calls, hasLength(1));
+    });
+
+    test(
+      'request is not replayed into an account changed during refresh',
+      () async {
+        var session = _session('old');
+        final adapter = _ScriptedAdapter([_R(401)]);
+        final dio = _buildDio(
+          adapter: adapter,
+          reader: () => session,
+          onUnauthorized: () {
+            session = _session('new', userId: 'new-user');
+            return true;
+          },
+        );
+        await expectLater(
+          dio.post<dynamic>('/private-records'),
+          throwsA(isA<DioException>()),
+        );
+        expect(adapter.calls, hasLength(1));
+      },
+    );
+
     test('stamps Bearer header from sessionReader on every request', () async {
       final adapter = _ScriptedAdapter([_R(200)]);
       final dio = _buildDio(

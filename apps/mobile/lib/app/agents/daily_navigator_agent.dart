@@ -2,6 +2,8 @@
 /// into one evidence-backed judgment and at most one review action.
 library;
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import '../../core/ai/agents/agent.dart';
 import '../../core/ai/agents/agent_artifact.dart';
 import '../../core/ai/agents/agent_artifact_store.dart';
@@ -125,7 +127,7 @@ class DailyNavigatorAgent implements Agent {
       id: kDailyNavigatorFindingId,
       ownerUserId: ownerUserId,
       agentId: kDailyNavigatorAgentId,
-      domain: 'life',
+      domain: const AiDomain.global(),
       kind: 'daily_judgment',
       severity: AgentArtifactSeverity.attention,
       confidence: 0.85,
@@ -187,7 +189,7 @@ class DailyNavigatorAgent implements Agent {
         id: artifactId,
         ownerUserId: ownerUserId,
         agentId: kDailyNavigatorAgentId,
-        domain: 'life',
+        domain: const AiDomain.global(),
         kind: AgentArtifactKind.briefing,
         severity: AgentArtifactSeverity.attention,
         title: strings.lifeHeroHeadlineAttention,

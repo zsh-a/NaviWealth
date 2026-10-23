@@ -70,7 +70,7 @@ Future<AgentRunResult> executeScheduledLlmTask(
       intent: IntentHint(
         capability: Capability.analyze,
         risk: RiskLevel.info,
-        domain: task.domain.wire,
+        domain: AiDomain.domain(task.domain),
       ),
       backend: Backend.device,
       budgetTier: BudgetTier.standard,
@@ -82,7 +82,7 @@ Future<AgentRunResult> executeScheduledLlmTask(
   final execution = AgentExecution(
     runId: ctx.runId ?? traceId,
     agentId: task.id,
-    domain: task.domain.wire,
+    domain: AiDomain.domain(task.domain),
     title: task.title,
     instructions: task.instructions,
     traceId: traceId,
@@ -217,7 +217,7 @@ Future<AgentRunResult> _executeScheduledLlmTask(
   final allowed = ref.read(deviceToolsProvider).where((tool) {
     final descriptor = lookup(tool.name);
     return descriptor != null &&
-        descriptor.domain == task.domain.wire &&
+        descriptor.domain == AiDomain.domain(task.domain) &&
         descriptor.access == Access.read &&
         descriptor.sideEffect == SideEffect.none &&
         descriptor.requiresConfirmation == Confirmation.none;
@@ -403,7 +403,7 @@ Future<AgentRunResult> _executeScheduledLlmTask(
         id: artifactId,
         ownerUserId: owner,
         agentId: task.id,
-        domain: task.domain.wire,
+        domain: AiDomain.domain(task.domain),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: task.title,

@@ -62,7 +62,7 @@ Future<void> preloadDeferredRoutesForTest({List<DomainPack>? packs}) async {
   final resolvedPacks = packs ?? kAllDomainPacks;
   await Future.wait<void>(<Future<void>>[
     for (final p in resolvedPacks)
-      if (p.deferredPreloader != null) p.deferredPreloader!(),
+      if (p.shell.navigation?.deferredPreloader case final preload?) preload(),
     settings_lib.loadLibrary(),
     devices_lib.loadLibrary(),
     ai_chat_lib.loadLibrary(),
@@ -78,7 +78,7 @@ Future<void> preloadDeferredRoutesForTest({List<DomainPack>? packs}) async {
 ///   AI route-context sync, root system-back handling, and the domain
 ///   dock chrome (visible only when ≥ 2 domains are registered).
 /// - Each domain provides its own [StatefulShellRoute] under the dock
-///   via [DomainPack.shellRouteBuilder]. Routes for every registered
+///   via [DomainNavigation.shellRouteBuilder]. Routes for every registered
 ///   pack mount unconditionally so deep links survive opt-in toggles;
 ///   the dock chrome already hides inactive domains.
 /// - Settings, login, onboarding stay outside the dock shell — they
@@ -88,7 +88,8 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
   final packs = ref.read(domainPackRegistryProvider);
   final shellRoutes = <RouteBase>[
     for (final p in packs)
-      if (p.shellRouteBuilder != null) p.shellRouteBuilder!(),
+      if (p.shell.navigation case final navigation?)
+        navigation.shellRouteBuilder(),
   ];
   return GoRouter(
     initialLocation: initialLocation,
@@ -424,7 +425,7 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
 List<RouteBase> _domainSettingsRoutes(List<DomainPack> packs) {
   return [
     for (final pack in packs)
-      if (pack.settingsSpec?.routeBuilder case final routeBuilder?)
+      if (pack.shell.settingsSpec?.routeBuilder case final routeBuilder?)
         routeBuilder(_backSafe),
   ];
 }
@@ -432,7 +433,7 @@ List<RouteBase> _domainSettingsRoutes(List<DomainPack> packs) {
 List<RouteBase> _domainOwnedSettingsRoutes(List<DomainPack> packs) {
   return [
     for (final pack in packs)
-      if (pack.settingsRoutesBuilder case final routesBuilder?)
+      if (pack.shell.settingsRoutesBuilder case final routesBuilder?)
         ...routesBuilder(_backSafe),
   ];
 }

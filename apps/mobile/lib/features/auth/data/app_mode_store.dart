@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../design_system/preferences/theme_preferences.dart'
     show sharedPreferencesProvider;
@@ -36,24 +37,24 @@ enum AppMode {
 const String _kAppModeKey = 'app.mode.v1';
 
 class AppModeStore {
-  AppModeStore(this._ref);
+  AppModeStore(this._preferences);
 
-  final Ref _ref;
+  final SharedPreferences _preferences;
 
   AppMode read() {
-    final prefs = _ref.read(sharedPreferencesProvider);
-    return AppMode.parse(prefs.getString(_kAppModeKey));
+    return AppMode.parse(_preferences.getString(_kAppModeKey));
   }
 
   Future<void> write(AppMode mode) async {
-    final prefs = _ref.read(sharedPreferencesProvider);
-    if (!await prefs.setString(_kAppModeKey, mode.wire)) {
+    if (!await _preferences.setString(_kAppModeKey, mode.wire)) {
       throw StateError('Could not persist app mode');
     }
   }
 }
 
-final appModeStoreProvider = Provider<AppModeStore>(AppModeStore.new);
+final appModeStoreProvider = Provider<AppModeStore>(
+  (ref) => AppModeStore(ref.watch(sharedPreferencesProvider)),
+);
 
 /// Reactive snapshot of the persisted mode. Watch this from providers that
 /// need to swap behaviour (router guard, outbox, mutation stamper). The

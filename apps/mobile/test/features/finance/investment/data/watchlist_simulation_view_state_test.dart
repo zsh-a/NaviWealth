@@ -132,7 +132,6 @@ WatchlistSimulation _simulation(String id, String name, {int day = 1}) =>
       name: name,
       baseCurrency: 'USD',
       startingCapital: Decimal.fromInt(1000),
-      cashWeight: Decimal.one,
       baselineAt: DateTime.utc(2026, 10, day),
       createdAt: DateTime.utc(2026, 10, day),
       sync: SyncMeta(

@@ -38,17 +38,17 @@ void main() {
   group('DomainPack class', () {
     test('default values are empty contributions', () {
       const empty = DomainPack(scope: DomainScope.finance);
-      expect(empty.deviceTools, <DeviceTool>[]);
-      expect(empty.systemPromptBlock, '');
-      expect(empty.shellSpecBuilder, isNull);
-      expect(empty.agentBuilder, isNull);
-      expect(empty.memoryBootstrapBuilder, isNull);
-      expect(empty.backgroundBootstrapBuilder, isNull);
-      expect(empty.localTableCountsBuilder, isNull);
-      expect(empty.notificationSettingsBuilder, isNull);
-      expect(empty.settingsRoutesBuilder, isNull);
-      expect(empty.settingsSpec, isNull);
-      expect(empty.shareIntentHandlers, isEmpty);
+      expect(empty.ai.deviceTools, <DeviceTool>[]);
+      expect(empty.ai.systemPromptBlock, '');
+      expect(empty.shell.navigation?.shellSpecBuilder, isNull);
+      expect(empty.ai.agentBuilder, isNull);
+      expect(empty.lifecycle.memoryBootstrapBuilder, isNull);
+      expect(empty.lifecycle.backgroundBootstrapBuilder, isNull);
+      expect(empty.data.localTableCountsBuilder, isNull);
+      expect(empty.shell.notificationSettingsBuilder, isNull);
+      expect(empty.shell.settingsRoutesBuilder, isNull);
+      expect(empty.shell.settingsSpec, isNull);
+      expect(empty.data.shareIntentHandlers, isEmpty);
     });
   });
 
@@ -59,9 +59,18 @@ void main() {
 
     expect(
       domainShareIntentHandlers(const [
-        DomainPack(scope: DomainScope.finance, shareIntentHandlers: [first]),
-        DomainPack(scope: DomainScope.knowledge, shareIntentHandlers: [second]),
-        DomainPack(scope: DomainScope.execution, shareIntentHandlers: [third]),
+        DomainPack(
+          scope: DomainScope.finance,
+          data: DomainDataContribution(shareIntentHandlers: [first]),
+        ),
+        DomainPack(
+          scope: DomainScope.knowledge,
+          data: DomainDataContribution(shareIntentHandlers: [second]),
+        ),
+        DomainPack(
+          scope: DomainScope.execution,
+          data: DomainDataContribution(shareIntentHandlers: [third]),
+        ),
       ]).map((handler) => (handler as _FakeShareIntentHandler).id),
       ['second', 'first', 'third'],
     );

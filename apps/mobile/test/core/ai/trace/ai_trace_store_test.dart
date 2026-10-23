@@ -64,6 +64,7 @@ void main() {
         requestId: 'req-1',
         startedAtIso: '2026-05-10T10:00:00.000Z',
         intent: IntentHint(
+          domain: AiDomain.shell(),
           capability: Capability.analyze,
           risk: RiskLevel.suggest,
         ),
@@ -108,6 +109,7 @@ void main() {
         requestId: 'req-1',
         startedAtIso: '2026-05-10T10:00:05.000Z',
         intent: IntentHint(
+          domain: AiDomain.shell(),
           capability: Capability.analyze,
           risk: RiskLevel.info,
         ),
@@ -129,6 +131,7 @@ AiTrace _trace(String id, String iso) => AiTrace(
   requestId: id,
   startedAtIso: iso,
   intent: const IntentHint(
+    domain: AiDomain.shell(),
     capability: Capability.analyze,
     risk: RiskLevel.info,
   ),

@@ -424,9 +424,13 @@ void main() {
     'resumes completed tool results from a persisted chat snapshot',
     () async {
       final store = InMemoryAgentRuntimeChatSnapshotStore();
-      await store.save(
-        snapshot: _chatRecoverySnapshot(dispatchStatus: 'completed'),
-      );
+      final snapshot = _chatRecoverySnapshot(dispatchStatus: 'completed');
+      (snapshot['state']!
+          as Map<String, Object?>)['native_private_state'] = <String, Object?>{
+        'cursor': ['opaque', 17],
+        'version': 7,
+      };
+      await store.save(snapshot: snapshot);
       final streamBridge = _streamBridge(
         _FakeLlmBridge(),
         events: const <String>[
@@ -461,6 +465,14 @@ void main() {
       final metadata =
           streamBridge.requests.single['metadata'] as Map<String, Object?>;
       expect(metadata['chat_state'], isA<Map<String, Object?>>());
+      expect(
+        (metadata['chat_state']!
+            as Map<String, Object?>)['native_private_state'],
+        {
+          'cursor': ['opaque', 17],
+          'version': 7,
+        },
+      );
       expect(metadata['tool_results'], hasLength(1));
       expect(events.whereType<TextEvent>().single.text, 'recovered');
       expect(await store.loadResumable('turn-recovery'), isNull);

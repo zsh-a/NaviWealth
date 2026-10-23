@@ -214,7 +214,7 @@ Domain indexers convert domain rows into events and memories:
 - Health metric indexer.
 - Knowledge note and decision indexers.
 
-New indexers belong in the owning domain and are contributed through the owning `DomainPack.memoryBootstrapBuilder`; `app/domain_bootstrap.dart` only loops active packs. Do not make `core/ai/local/memory/` import a domain.
+New indexers belong in the owning domain and are contributed through the owning `DomainPack.lifecycle.memoryBootstrapBuilder`; `app/domain_bootstrap.dart` only loops active packs. Do not make `core/ai/local/memory/` import a domain.
 
 Agent Artifacts, repeated reviews, attention decisions, and outcome feedback
 are not durable Memory. A model inference can enter the stable profile only

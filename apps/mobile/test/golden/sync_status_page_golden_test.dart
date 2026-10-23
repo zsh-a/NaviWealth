@@ -24,7 +24,9 @@ const _deviceId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 final _goldenNow = DateTime.utc(2026, 6, 19, 14);
 const _financeDiagnosticsPack = DomainPack(
   scope: DomainScope.finance,
-  localTableCountsBuilder: financeLocalTableCounts,
+  data: DomainDataContribution(
+    localTableCountsBuilder: financeLocalTableCounts,
+  ),
 );
 
 void main() {

@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/app/agent_artifact_page.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/visual/ai_markdown.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -24,7 +25,7 @@ void main() {
         id: 'reading',
         ownerUserId: 'user-1',
         agentId: 'weekly_wealth_review',
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Weekly report',
@@ -79,7 +80,7 @@ void main() {
       id: artifactId,
       ownerUserId: 'user-1',
       agentId: 'weekly_wealth_review',
-      domain: 'finance',
+      domain: const AiDomain.domain(DomainScope.finance),
       kind: AgentArtifactKind.review,
       severity: AgentArtifactSeverity.attention,
       title: 'Weekly wealth conclusion',
@@ -147,7 +148,7 @@ void main() {
         id: artifactId,
         ownerUserId: 'user-1',
         agentId: 'execution_review',
-        domain: 'execution',
+        domain: const AiDomain.domain(DomainScope.execution),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.attention,
         title: 'Execution review conclusion',

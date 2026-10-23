@@ -18347,4 +18347,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ingestViewOriginal => 'View original record';
+
+  @override
+  String get databaseSchemaMismatchTitle =>
+      'Local database version is unsupported';
+
+  @override
+  String get databaseSchemaMismatchMessage =>
+      'This version uses a new database format. Your existing data has been kept intact. Reset local data to start again.';
 }

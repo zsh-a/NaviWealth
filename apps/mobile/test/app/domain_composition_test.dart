@@ -30,7 +30,6 @@ import 'package:naviwealth/core/ai/contracts/tool_descriptor.dart';
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_corpus.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/command_palette/command_palette_entry.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
@@ -64,7 +63,7 @@ const _financeDescriptor = ToolDescriptor(
   risk: RiskLevel.info,
   requiresConfirmation: Confirmation.none,
   allowedContextTier: BudgetTier.small,
-  domain: 'finance',
+  domain: AiDomain.domain(DomainScope.finance),
 );
 
 const _healthDescriptor = ToolDescriptor(
@@ -73,10 +72,11 @@ const _healthDescriptor = ToolDescriptor(
   risk: RiskLevel.info,
   requiresConfirmation: Confirmation.none,
   allowedContextTier: BudgetTier.small,
-  domain: 'health',
+  domain: AiDomain.domain(DomainScope.health),
 );
 
 const _financeIntent = IntentDescriptor(
+  domain: AiDomain.domain(DomainScope.finance),
   name: 'fake_finance_intent',
   allowedObjectTypes: <String>{'finance_object'},
   preferredCapabilities: <AiCapability>{AiCapability.chat},
@@ -86,21 +86,21 @@ const _healthIntent = IntentDescriptor(
   name: 'fake_health_intent',
   allowedObjectTypes: <String>{'health_object'},
   preferredCapabilities: <AiCapability>{AiCapability.chat},
-  domain: kDomainHealth,
+  domain: AiDomain.domain(DomainScope.health),
 );
 
 const _sharedFinanceIntent = IntentDescriptor(
   name: 'fake_shared_intent',
   allowedObjectTypes: <String>{'shared_object'},
   preferredCapabilities: <AiCapability>{AiCapability.chat},
-  domain: kDomainFinance,
+  domain: AiDomain.domain(DomainScope.finance),
 );
 
 const _sharedHealthIntent = IntentDescriptor(
   name: 'fake_shared_intent',
   allowedObjectTypes: <String>{'shared_object'},
   preferredCapabilities: <AiCapability>{AiCapability.chat},
-  domain: kDomainHealth,
+  domain: AiDomain.domain(DomainScope.health),
 );
 
 const _financeAgentPresentation = AgentPresentationSpec(
@@ -113,43 +113,47 @@ const _financeAgentPresentation = AgentPresentationSpec(
 
 const _financePack = DomainPack(
   scope: DomainScope.finance,
-  deviceTools: [_tool],
-  toolDescriptors: <String, ToolDescriptor>{
-    'finance_descriptor': _financeDescriptor,
-  },
-  intentDescriptors: [_financeIntent],
-  proposalKinds: [
-    ProposalKindMeta(
-      kind: 'fake_finance',
-      icon: Icons.account_balance,
-      label: _fakeFinanceProposalLabel,
-      toolName: 'propose_fake_finance',
-    ),
-  ],
-  proposalApplierRouteBuilder: _fakeFinanceProposalRoute,
-  systemPromptBlock: 'Finance block',
-  commandPaletteEntriesBuilder: _financeEntries,
-  agentBuilder: _financeAgents,
-  agentPresentationSpecs: [_financeAgentPresentation],
+  ai: DomainAiContribution(
+    deviceTools: [_tool],
+    toolDescriptors: <String, ToolDescriptor>{
+      'finance_descriptor': _financeDescriptor,
+    },
+    intentDescriptors: [_financeIntent],
+    proposalKinds: [
+      ProposalKindMeta(
+        kind: 'fake_finance',
+        icon: Icons.account_balance,
+        label: _fakeFinanceProposalLabel,
+        toolName: 'propose_fake_finance',
+      ),
+    ],
+    proposalApplierRouteBuilder: _fakeFinanceProposalRoute,
+    systemPromptBlock: 'Finance block',
+    agentBuilder: _financeAgents,
+    agentPresentationSpecs: [_financeAgentPresentation],
+  ),
+  shell: DomainShellContribution(commandPaletteEntriesBuilder: _financeEntries),
 );
 
 const _healthPack = DomainPack(
   scope: DomainScope.health,
-  toolDescriptors: <String, ToolDescriptor>{
-    'health_descriptor': _healthDescriptor,
-  },
-  intentDescriptors: [_healthIntent],
-  proposalKinds: [
-    ProposalKindMeta(
-      kind: 'fake_health',
-      icon: Icons.monitor_heart,
-      label: _fakeHealthProposalLabel,
-      toolName: 'propose_fake_health',
-    ),
-  ],
-  proposalApplierRouteBuilder: _fakeHealthProposalRoute,
-  systemPromptBlock: 'Health block',
-  commandPaletteEntriesBuilder: _healthEntries,
+  ai: DomainAiContribution(
+    toolDescriptors: <String, ToolDescriptor>{
+      'health_descriptor': _healthDescriptor,
+    },
+    intentDescriptors: [_healthIntent],
+    proposalKinds: [
+      ProposalKindMeta(
+        kind: 'fake_health',
+        icon: Icons.monitor_heart,
+        label: _fakeHealthProposalLabel,
+        toolName: 'propose_fake_health',
+      ),
+    ],
+    proposalApplierRouteBuilder: _fakeHealthProposalRoute,
+    systemPromptBlock: 'Health block',
+  ),
+  shell: DomainShellContribution(commandPaletteEntriesBuilder: _healthEntries),
 );
 
 String _fakeFinanceProposalLabel(AppLocalizations l10n) => 'Fake finance';
@@ -378,6 +382,31 @@ void main() {
     );
   });
 
+  test(
+    'Assistant excludes internal tools unless a pack contributes a selector',
+    () {
+      final hidden = domainAssistantDeviceTools(
+        const [_financePack],
+        currentPath: FinanceRoutes.home,
+        currentDomain: DomainScope.finance,
+      );
+      expect(hidden.map((tool) => tool.name), isNot(contains(_tool.name)));
+      final exposedPack = DomainPack(
+        scope: DomainScope.finance,
+        ai: DomainAiContribution(
+          deviceTools: const [_tool],
+          assistantToolsBuilder: (_) => const [_tool],
+        ),
+      );
+      final exposed = domainAssistantDeviceTools(
+        [exposedPack],
+        currentPath: FinanceRoutes.home,
+        currentDomain: DomainScope.finance,
+      );
+      expect(exposed.map((tool) => tool.name), contains(_tool.name));
+    },
+  );
+
   test('Assistant tools follow the current domain and advanced route', () {
     Iterable<String> names(String path, DomainScope domain) =>
         domainAssistantDeviceTools(
@@ -593,11 +622,11 @@ void main() {
   test('intent catalog de-duplicates active descriptors by name', () {
     const financePack = DomainPack(
       scope: DomainScope.finance,
-      intentDescriptors: [_sharedFinanceIntent],
+      ai: DomainAiContribution(intentDescriptors: [_sharedFinanceIntent]),
     );
     const healthPack = DomainPack(
       scope: DomainScope.health,
-      intentDescriptors: [_sharedHealthIntent],
+      ai: DomainAiContribution(intentDescriptors: [_sharedHealthIntent]),
     );
 
     final catalog = domainIntentCatalog(const [financePack, healthPack]);
@@ -605,13 +634,18 @@ void main() {
     expect(catalog.descriptors.map((descriptor) => descriptor.name), [
       'fake_shared_intent',
     ]);
-    expect(catalog.lookup('fake_shared_intent')?.domain, kDomainFinance);
+    expect(
+      catalog.lookup('fake_shared_intent')?.domain,
+      const AiDomain.domain(DomainScope.finance),
+    );
   });
 
   test('composition bundle includes domain provider overrides', () {
     const pack = DomainPack(
       scope: DomainScope.finance,
-      providerOverridesBuilder: _providerOverrides,
+      lifecycle: DomainLifecycleContribution(
+        providerOverridesBuilder: _providerOverrides,
+      ),
     );
     final c = ProviderContainer(
       overrides: [
@@ -628,8 +662,10 @@ void main() {
     var backgroundBootstrapCount = 0;
     final pack = DomainPack(
       scope: DomainScope.finance,
-      memoryBootstrapBuilder: (_) => memoryBootstrapCount++,
-      backgroundBootstrapBuilder: (_) => backgroundBootstrapCount++,
+      lifecycle: DomainLifecycleContribution(
+        memoryBootstrapBuilder: (_) => memoryBootstrapCount++,
+        backgroundBootstrapBuilder: (_) => backgroundBootstrapCount++,
+      ),
     );
     final memoryBootstrapProvider = Provider<void>(
       (ref) => domainMemoryBootstraps(ref, [pack]),
@@ -673,14 +709,14 @@ void main() {
         .setEnabled(DomainScope.execution, true);
 
     expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
-    expect(kFinancePack.backgroundBootstrapBuilder, isNotNull);
-    expect(kHealthPack.backgroundBootstrapBuilder, isNotNull);
-    expect(kKnowledgePack.backgroundBootstrapBuilder, isNull);
-    expect(kExecutionPack.backgroundBootstrapBuilder, isNotNull);
+    expect(kFinancePack.lifecycle.backgroundBootstrapBuilder, isNotNull);
+    expect(kHealthPack.lifecycle.backgroundBootstrapBuilder, isNotNull);
+    expect(kKnowledgePack.lifecycle.backgroundBootstrapBuilder, isNull);
+    expect(kExecutionPack.lifecycle.backgroundBootstrapBuilder, isNotNull);
     expect(
       kAllDomainPacks
-          .where((pack) => pack.settingsSpec != null)
-          .map((pack) => pack.settingsSpec!.label),
+          .where((pack) => pack.shell.settingsSpec != null)
+          .map((pack) => pack.shell.settingsSpec!.label),
       ['FinanceOS', 'HealthOS', 'KnowledgeOS', 'ExecutionOS'],
     );
     expect(c.read(activeDomainPacksProvider).map((pack) => pack.scope), [
@@ -695,10 +731,10 @@ void main() {
       containsAll(<String>['propose_action', 'summarize_execution_progress']),
     );
     expect(c.read(systemPromptBlocksProvider), [
-      kFinancePack.systemPromptBlock,
-      kHealthPack.systemPromptBlock,
-      kKnowledgePack.systemPromptBlock,
-      kExecutionPack.systemPromptBlock,
+      kFinancePack.ai.systemPromptBlock,
+      kHealthPack.ai.systemPromptBlock,
+      kKnowledgePack.ai.systemPromptBlock,
+      kExecutionPack.ai.systemPromptBlock,
     ]);
     expect(c.read(activeDomainShellsProvider).map((shell) => shell.scope), [
       DomainScope.finance,
@@ -708,14 +744,21 @@ void main() {
     ]);
     final l10n = lookupAppLocalizations(const Locale('en'));
     expect(
-      kKnowledgePack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
+      kKnowledgePack.shell.navigation!
+          .shellSpecBuilder(l10n)
+          .tabs
+          .map((tab) => tab.routePath),
       <String>[AppRoutes.knowledgeInbox, AppRoutes.knowledgeLibrary],
     );
     expect(
-      kExecutionPack.shellSpecBuilder!(l10n).tabs.map((tab) => tab.routePath),
+      kExecutionPack.shell.navigation!
+          .shellSpecBuilder(l10n)
+          .tabs
+          .map((tab) => tab.routePath),
       <String>[AppRoutes.executionToday, AppRoutes.executionPlans],
     );
     final executionCommandIds = kExecutionPack
+        .shell
         .commandPaletteEntriesBuilder!(l10n)
         .map((entry) => entry.id);
     expect(executionCommandIds, contains('create.execution'));
@@ -723,7 +766,7 @@ void main() {
       expect(executionCommandIds, isNot(contains(retiredId)));
     }
     expect(
-      kKnowledgePack.commandPaletteEntriesBuilder!(l10n).map(
+      kKnowledgePack.shell.commandPaletteEntriesBuilder!(l10n).map(
         (entry) => entry.id,
       ),
       contains('create.knowledge.note'),
@@ -815,13 +858,13 @@ void main() {
         for (final regressionCase in agentOutcomeRegressionCorpus)
           if (regressionCase.expectedStatus ==
               AgentOutcomeRegressionStatus.ready)
-            '${regressionCase.domain}:${regressionCase.agentId}',
+            '${regressionCase.domain.wire}:${regressionCase.agentId}',
       };
       final noFindingCorpusKeys = {
         for (final regressionCase in agentOutcomeRegressionCorpus)
           if (regressionCase.expectedStatus ==
               AgentOutcomeRegressionStatus.noFinding)
-            '${regressionCase.domain}:${regressionCase.agentId}',
+            '${regressionCase.domain.wire}:${regressionCase.agentId}',
       };
 
       expect(specs.keys.toSet(), agentIds);

@@ -11,24 +11,28 @@ const _knowledgePath = '/knowledge/inbox';
 
 const _financeSharePack = DomainPack(
   scope: DomainScope.finance,
-  shareIntentHandlers: [
-    _FakeShareIntentHandler(
-      acceptedKinds: {SharedIntentKind.text, SharedIntentKind.image},
-      destinationPath: _financePath,
-      navigationPriority: 100,
-    ),
-  ],
+  data: DomainDataContribution(
+    shareIntentHandlers: [
+      _FakeShareIntentHandler(
+        acceptedKinds: {SharedIntentKind.text, SharedIntentKind.image},
+        destinationPath: _financePath,
+        navigationPriority: 100,
+      ),
+    ],
+  ),
 );
 
 const _knowledgeSharePack = DomainPack(
   scope: DomainScope.knowledge,
-  shareIntentHandlers: [
-    _FakeShareIntentHandler(
-      acceptedKinds: {SharedIntentKind.text, SharedIntentKind.url},
-      destinationPath: _knowledgePath,
-      dispatchPriority: 100,
-    ),
-  ],
+  data: DomainDataContribution(
+    shareIntentHandlers: [
+      _FakeShareIntentHandler(
+        acceptedKinds: {SharedIntentKind.text, SharedIntentKind.url},
+        destinationPath: _knowledgePath,
+        dispatchPriority: 100,
+      ),
+    ],
+  ),
 );
 
 void main() {
@@ -72,14 +76,16 @@ void main() {
       packs: const [
         DomainPack(
           scope: DomainScope.knowledge,
-          shareIntentHandlers: [
-            _FakeShareIntentHandler(
-              acceptedKinds: {SharedIntentKind.text},
-              destinationPath: _knowledgePath,
-              dispatchPriority: 100,
-              throws: true,
-            ),
-          ],
+          data: DomainDataContribution(
+            shareIntentHandlers: [
+              _FakeShareIntentHandler(
+                acceptedKinds: {SharedIntentKind.text},
+                destinationPath: _knowledgePath,
+                dispatchPriority: 100,
+                throws: true,
+              ),
+            ],
+          ),
         ),
         _financeSharePack,
       ],

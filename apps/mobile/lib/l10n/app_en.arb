@@ -8995,5 +8995,7 @@
   "ingestMatchAmountConflict": "The transaction ID matches, but the amount or currency differs. Check the original record before deciding.",
   "ingestComparisonImported": "This import",
   "ingestComparisonDifferent": "Different",
-  "ingestViewOriginal": "View original record"
+  "ingestViewOriginal": "View original record",
+  "databaseSchemaMismatchTitle": "Local database version is unsupported",
+  "databaseSchemaMismatchMessage": "This version uses a new database format. Your existing data has been kept intact. Reset local data to start again."
 }

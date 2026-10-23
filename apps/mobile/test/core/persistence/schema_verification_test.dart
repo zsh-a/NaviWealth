@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 97', () {
-      expect(db.schemaVersion, 97);
+    test('is 98', () {
+      expect(db.schemaVersion, 98);
     });
   });
 
@@ -110,7 +110,6 @@ void main() {
   group('Watchlist simulations', () {
     for (final table in const [
       'watchlist_simulations',
-      'watchlist_simulation_positions',
       'watchlist_simulation_allocation_heads',
       'watchlist_simulation_allocation_versions',
       'watchlist_simulation_holding_versions',
@@ -139,9 +138,6 @@ void main() {
           'collection_id',
           'base_currency',
           'starting_capital',
-          'cash_weight',
-          'calculation_mode',
-          'allocation_protocol_version',
           'baseline_at',
         ]),
       );
@@ -154,18 +150,20 @@ void main() {
         isEmpty,
       );
 
-      final positionColumns = await db
-          .customSelect('PRAGMA table_info(watchlist_simulation_positions)')
-          .get();
       expect(
-        positionColumns.map((row) => row.read<String>('name')),
-        containsAll([
-          'simulation_id',
-          'watchlist_item_id',
-          'target_weight',
-          'requires_explicit_head',
-        ]),
+        simulationNames.intersection({
+          'cash_weight',
+          'calculation_mode',
+          'allocation_protocol_version',
+        }),
+        isEmpty,
       );
+      final retired = await db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE name = 'watchlist_simulation_positions'",
+          )
+          .get();
+      expect(retired, isEmpty);
     });
 
     test('holding versions preserve quote and missing-FX evidence', () async {

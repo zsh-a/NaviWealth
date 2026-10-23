@@ -17,6 +17,7 @@ library;
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../../composition/tool_descriptor_lookup.dart';
 import '../../../contracts/intent.dart' show RiskLevel;
@@ -64,7 +65,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         risk: RiskLevel.info,
         requiresConfirmation: Confirmation.none,
         allowedContextTier: BudgetTier.small,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
       'build_context': ToolDescriptor(
         name: 'build_context',
@@ -72,7 +73,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         risk: RiskLevel.info,
         requiresConfirmation: Confirmation.none,
         allowedContextTier: BudgetTier.standard,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
       'propose_memory': ToolDescriptor(
         name: 'propose_memory',
@@ -81,7 +82,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         requiresConfirmation: Confirmation.oneTap,
         allowedContextTier: BudgetTier.standard,
         sideEffect: SideEffect.deviceLocalWrite,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
       'propose_scheduled_task': ToolDescriptor(
         name: 'propose_scheduled_task',
@@ -90,7 +91,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         requiresConfirmation: Confirmation.oneTap,
         allowedContextTier: BudgetTier.standard,
         sideEffect: SideEffect.deviceLocalWrite,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
       // Interaction tool: no data side effect, but it pauses the agent loop
       // and hands a structured decision to the user (see `ask_user_tool.dart`).
@@ -100,7 +101,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         risk: RiskLevel.info,
         requiresConfirmation: Confirmation.none,
         allowedContextTier: BudgetTier.small,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
       'get_agent_artifacts': ToolDescriptor(
         name: 'get_agent_artifacts',
@@ -108,7 +109,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         risk: RiskLevel.info,
         requiresConfirmation: Confirmation.none,
         allowedContextTier: BudgetTier.small,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
       'get_agent_runs': ToolDescriptor(
         name: 'get_agent_runs',
@@ -116,7 +117,7 @@ const Map<String, ToolDescriptor> kShellToolDescriptors =
         risk: RiskLevel.info,
         requiresConfirmation: Confirmation.none,
         allowedContextTier: BudgetTier.small,
-        domain: kDomainShell,
+        domain: AiDomain.shell(),
       ),
     };
 

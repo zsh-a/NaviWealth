@@ -6,11 +6,11 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_schedule.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/agent_result_tools.dart';
 import 'package:naviwealth/core/ai/runtime/device/tools/device_tool.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -62,7 +62,7 @@ void main() {
         id: 'weekly_wealth_review:2026-07-05',
         ownerUserId: _owner,
         agentId: 'weekly_wealth_review',
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.attention,
         title: 'Weekly Wealth Review',
@@ -141,7 +141,7 @@ void main() {
         id: 'weekly_summary:2026-07-05',
         ownerUserId: _owner,
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Weekly Summary',
@@ -179,7 +179,7 @@ void main() {
           id: 'weekly_summary:2026-07-05',
           ownerUserId: _owner,
           agentId: 'weekly_summary',
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           kind: AgentArtifactKind.review,
           severity: AgentArtifactSeverity.info,
           title: 'Weekly Summary',
@@ -215,7 +215,7 @@ void main() {
         id: 'retired_health_agent:2026-07-04',
         ownerUserId: _owner,
         agentId: 'retired_health_agent',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Retired Agent',
@@ -228,7 +228,7 @@ void main() {
         id: 'weekly_summary:2026-07-05',
         ownerUserId: _owner,
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Weekly Summary',

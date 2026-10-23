@@ -3,7 +3,7 @@
 ///
 /// Domain-neutral — never imports `features/`. Feature-specific
 /// extractors live next to the feature's data layer and are aggregated
-/// by `app/domain_bootstrap.dart` through `DomainPack.memoryBootstrapBuilder`.
+/// by `app/domain_bootstrap.dart` through `DomainPack.lifecycle.memoryBootstrapBuilder`.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

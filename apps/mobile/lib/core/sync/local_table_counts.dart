@@ -11,7 +11,7 @@ final localTableCountsProvider = FutureProvider<LocalTableCounts>((ref) async {
   final packs = ref.watch(activeDomainPacksProvider);
   final countMaps = await Future.wait<LocalTableCounts>([
     for (final pack in packs)
-      if (pack.localTableCountsBuilder case final builder?) builder(ref),
+      if (pack.data.localTableCountsBuilder case final builder?) builder(ref),
   ]);
   return {for (final counts in countMaps) ...counts};
 });

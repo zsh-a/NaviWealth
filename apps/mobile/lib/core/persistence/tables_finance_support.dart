@@ -83,34 +83,8 @@ class WatchlistSimulations extends Table with SyncableTable {
   TextColumn get name => text()();
   TextColumn get baseCurrency => text().withLength(min: 3, max: 8)();
   TextColumn get startingCapital => text().map(const DecimalConverter())();
-  TextColumn get cashWeight =>
-      text().map(const DecimalConverter()).withDefault(const Constant('0'))();
-  TextColumn get calculationMode =>
-      text().withDefault(const Constant('weightedDailyChangeV1'))();
-  IntColumn get allocationProtocolVersion =>
-      integer().withDefault(const Constant(0))();
   DateTimeColumn get baselineAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
-
-  @override
-  Set<Column<Object>> get primaryKey => {id};
-}
-
-/// Target weights for a paper-only watchlist simulation.
-@DataClassName('WatchlistSimulationPositionRow')
-class WatchlistSimulationPositions extends Table with SyncableTable {
-  TextColumn get id => text()();
-  TextColumn get simulationId => text()();
-  TextColumn get watchlistItemId => text()();
-  TextColumn get targetWeight => text().map(const DecimalConverter())();
-  BoolColumn get requiresExplicitHead =>
-      boolean().withDefault(const Constant(false))();
-  DateTimeColumn get createdAt => dateTime()();
-
-  @override
-  List<String> get customConstraints => [
-    'UNIQUE(owner_user_id, simulation_id, watchlist_item_id)',
-  ];
 
   @override
   Set<Column<Object>> get primaryKey => {id};
@@ -142,10 +116,7 @@ class WatchlistSimulationAllocationVersions extends Table with SyncableTable {
   DateTimeColumn get effectiveAt => dateTime()();
   TextColumn get reason => text()();
   TextColumn get previousAllocationVersionId => text().nullable()();
-  BoolColumn get requiresExplicitHead =>
-      boolean().withDefault(const Constant(false))();
   TextColumn get cashWeight => text().map(const DecimalConverter())();
-  BoolColumn get isComplete => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 
   @override

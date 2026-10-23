@@ -74,7 +74,9 @@ void main() {
     var backgroundRuns = 0;
     final pack = DomainPack(
       scope: DomainScope.finance,
-      backgroundBootstrapBuilder: (_) => backgroundRuns++,
+      lifecycle: DomainLifecycleContribution(
+        backgroundBootstrapBuilder: (_) => backgroundRuns++,
+      ),
     );
     final container = ProviderContainer(
       overrides: <Override>[

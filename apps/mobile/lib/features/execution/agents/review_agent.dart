@@ -4,6 +4,8 @@
 /// active plans and recent progress) into a temporary artifact.
 library;
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import '../../../core/ai/agents/agent.dart';
 import '../../../core/ai/agents/agent_artifact.dart';
 import '../../../core/ai/agents/agent_artifact_presentation.dart';
@@ -141,7 +143,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:blocked:${action.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'blocked_action',
             severity: AgentArtifactSeverity.warning,
             confidence: 1,
@@ -156,7 +158,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:due:${action.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'due_action',
             severity: AgentArtifactSeverity.attention,
             confidence: 1,
@@ -171,7 +173,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:stalled:${action.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'stalled_action',
             severity: AgentArtifactSeverity.warning,
             confidence: 1,
@@ -186,7 +188,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:no_next_action:plan:${plan.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'plan_without_next_action',
             severity: AgentArtifactSeverity.attention,
             confidence: 1,
@@ -197,7 +199,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:overdue_plan:${plan.id}',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'overdue_plan',
             severity: AgentArtifactSeverity.warning,
             confidence: 1,
@@ -212,7 +214,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:repeated_blocker:$actionId',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'repeated_blocker',
             severity: AgentArtifactSeverity.warning,
             confidence: 1,
@@ -226,7 +228,7 @@ class ExecutionReviewAgent implements Agent {
             id: 'execution_finding:today_overload',
             ownerUserId: ownerUserId,
             agentId: kExecutionReviewAgentId,
-            domain: 'execution',
+            domain: const AiDomain.domain(DomainScope.execution),
             kind: 'today_overload',
             severity: AgentArtifactSeverity.warning,
             confidence: 1,
@@ -339,7 +341,7 @@ class ExecutionReviewAgent implements Agent {
       id: id,
       ownerUserId: ownerUserId,
       agentId: kExecutionReviewAgentId,
-      domain: 'execution',
+      domain: const AiDomain.domain(DomainScope.execution),
       kind: AgentArtifactKind.review,
       severity: blockedActions.isNotEmpty || dueActions.isNotEmpty
           ? AgentArtifactSeverity.attention

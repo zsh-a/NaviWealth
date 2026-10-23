@@ -1,8 +1,6 @@
 /// Intent descriptors used by unified agent-result surfaces.
 library;
 
-import '../contracts/intent.dart'
-    show kDomainExecution, kDomainFinance, kDomainHealth, kDomainKnowledge;
 import '../intent/intent.dart';
 
 const String kAgentArtifactObjectType = 'agent_artifact';
@@ -15,24 +13,42 @@ const String kHealthExplainRecoveryAlertIntent = 'health.explainRecoveryAlert';
 const kAgentResultIntentDescriptors = <IntentDescriptor>[
   IntentDescriptor(
     name: kAgentExplainResultIntent,
-    domain: kDomainFinance,
-    allowedDomains: <String>{kDomainHealth, kDomainKnowledge, kDomainExecution},
+    domain: AiDomain.shell(),
+    allowedDomains: <AiDomain>[
+      AiDomain.global(),
+      AiDomain.domain(DomainScope.finance),
+      AiDomain.domain(DomainScope.health),
+      AiDomain.domain(DomainScope.knowledge),
+      AiDomain.domain(DomainScope.execution),
+    ],
     allowedObjectTypes: <String>{kAgentArtifactObjectType},
     preferredCapabilities: <AiCapability>{AiCapability.chat},
     preferredReadModels: <String>['agent_artifacts', 'agent_runs'],
   ),
   IntentDescriptor(
     name: kAgentShowEvidenceIntent,
-    domain: kDomainFinance,
-    allowedDomains: <String>{kDomainHealth, kDomainKnowledge, kDomainExecution},
+    domain: AiDomain.shell(),
+    allowedDomains: <AiDomain>[
+      AiDomain.global(),
+      AiDomain.domain(DomainScope.finance),
+      AiDomain.domain(DomainScope.health),
+      AiDomain.domain(DomainScope.knowledge),
+      AiDomain.domain(DomainScope.execution),
+    ],
     allowedObjectTypes: <String>{kAgentArtifactObjectType},
     preferredCapabilities: <AiCapability>{AiCapability.chat},
     preferredReadModels: <String>['agent_artifacts', 'agent_runs'],
   ),
   IntentDescriptor(
     name: kAgentCreatePlanFromResultIntent,
-    domain: kDomainFinance,
-    allowedDomains: <String>{kDomainHealth, kDomainKnowledge, kDomainExecution},
+    domain: AiDomain.shell(),
+    allowedDomains: <AiDomain>[
+      AiDomain.global(),
+      AiDomain.domain(DomainScope.finance),
+      AiDomain.domain(DomainScope.health),
+      AiDomain.domain(DomainScope.knowledge),
+      AiDomain.domain(DomainScope.execution),
+    ],
     allowedObjectTypes: <String>{kAgentArtifactObjectType},
     preferredCapabilities: <AiCapability>{
       AiCapability.chat,
@@ -46,7 +62,7 @@ const kFinanceAgentIntentDescriptors = <IntentDescriptor>[
   ...kAgentResultIntentDescriptors,
   IntentDescriptor(
     name: kFinanceReviewWealthIntent,
-    domain: kDomainFinance,
+    domain: AiDomain.domain(DomainScope.finance),
     allowedObjectTypes: <String>{kAgentArtifactObjectType},
     preferredCapabilities: <AiCapability>{
       AiCapability.chat,
@@ -64,7 +80,7 @@ const kHealthAgentIntentDescriptors = <IntentDescriptor>[
   ...kAgentResultIntentDescriptors,
   IntentDescriptor(
     name: kHealthExplainRecoveryAlertIntent,
-    domain: kDomainHealth,
+    domain: AiDomain.domain(DomainScope.health),
     allowedObjectTypes: <String>{kAgentArtifactObjectType},
     preferredCapabilities: <AiCapability>{AiCapability.chat},
     preferredReadModels: <String>[

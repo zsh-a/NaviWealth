@@ -32,6 +32,7 @@ AiTrace _trace({List<AiSpan> spans = const []}) => AiTrace(
   requestId: 'req-1',
   startedAtIso: '2026-05-17T10:00:00.000Z',
   intent: const IntentHint(
+    domain: AiDomain.shell(),
     capability: Capability.analyze,
     risk: RiskLevel.suggest,
   ),

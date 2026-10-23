@@ -42,7 +42,7 @@ void main() {
         capability: Capability.analyze,
         risk: RiskLevel.info,
         label: 'knowledge_rewrite',
-        domain: 'knowledge',
+        domain: AiDomain.domain(DomainScope.knowledge),
       ),
       backend: Backend.device,
       budgetTier: BudgetTier.standard,

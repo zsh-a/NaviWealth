@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../persistence/app_database.dart';
 import 'agent_artifact.dart';
@@ -23,7 +24,7 @@ class AgentFinding {
   final String id;
   final String ownerUserId;
   final String agentId;
-  final String domain;
+  final AiDomain domain;
   final String kind;
   final AgentArtifactSeverity severity;
   final double confidence;
@@ -73,7 +74,7 @@ class StoredAgentFinding {
 
   final String id;
   final String agentId;
-  final String domain;
+  final AiDomain domain;
   final String kind;
   final AgentArtifactSeverity severity;
   final double confidence;
@@ -92,7 +93,7 @@ abstract interface class AgentFindingStore {
 
   Future<List<StoredAgentFinding>> listOpen({
     required String ownerUserId,
-    String? domain,
+    AiDomain? domain,
     String? agentId,
     int limit = 100,
   });
@@ -184,7 +185,7 @@ class SqliteAgentFindingStore implements AgentFindingStore {
   @override
   Future<List<StoredAgentFinding>> listOpen({
     required String ownerUserId,
-    String? domain,
+    AiDomain? domain,
     String? agentId,
     int limit = 100,
   }) async {
@@ -192,7 +193,7 @@ class SqliteAgentFindingStore implements AgentFindingStore {
     final variables = <Variable<Object>>[Variable.withString(ownerUserId)];
     if (domain != null) {
       clauses.add('domain = ?');
-      variables.add(Variable.withString(domain));
+      variables.add(Variable.withString(domain.wire));
     }
     if (agentId != null) {
       clauses.add('agent_id = ?');
@@ -211,7 +212,7 @@ class SqliteAgentFindingStore implements AgentFindingStore {
           (row) => StoredAgentFinding(
             id: row.read<String>('id'),
             agentId: row.read<String>('agent_id'),
-            domain: row.read<String>('domain'),
+            domain: AiDomain.fromWire(row.read<String>('domain')),
             kind: row.read<String>('kind'),
             severity: agentArtifactSeverityFromWire(
               row.read<String>('severity'),
@@ -311,7 +312,7 @@ class SqliteAgentFindingStore implements AgentFindingStore {
             ownerUserId,
             finding.id,
             agentId,
-            finding.domain,
+            finding.domain.wire,
             finding.kind,
             finding.severity.wire,
             finding.confidence.clamp(0, 1),

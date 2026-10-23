@@ -2,10 +2,11 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:naviwealth/core/auth/domain_scope.dart';
 
 import '../../auth/current_user.dart';
-import '../../auth/domain_scope.dart';
 import '../../auth/providers.dart' as auth;
+import '../contracts/ai_domain.dart';
 import 'agent.dart';
 import 'agent_artifact.dart';
 import 'agent_artifact_store.dart';
@@ -15,7 +16,7 @@ import 'providers.dart';
 Future<AgentArtifact?> readActiveAgentArtifact(
   Ref ref, {
   required String artifactId,
-  String? expectedDomain,
+  AiDomain? expectedDomain,
   DateTime? visibleAt,
 }) {
   return _readActiveAgentArtifact(
@@ -32,7 +33,7 @@ Future<AgentArtifact?> readActiveAgentArtifact(
 Future<AgentArtifact?> readActiveAgentArtifactFromWidgetRef(
   WidgetRef ref, {
   required String artifactId,
-  String? expectedDomain,
+  AiDomain? expectedDomain,
   DateTime? visibleAt,
 }) {
   return _readActiveAgentArtifact(
@@ -48,7 +49,7 @@ Future<AgentArtifact?> readActiveAgentArtifactFromWidgetRef(
 
 Future<AgentArtifact?> _readActiveAgentArtifact({
   required String artifactId,
-  String? expectedDomain,
+  AiDomain? expectedDomain,
   DateTime? visibleAt,
   required Future<AgentArtifactStore> Function() readStore,
   required Future<String> Function() readOwnerUserId,
@@ -73,10 +74,9 @@ Future<AgentArtifact?> _readActiveAgentArtifact({
     return null;
   }
 
-  final scope = DomainScope.tryParse(artifact.domain);
-  if (scope == null) return null;
+  final scope = artifact.domain.scope;
   final optIns = await readOptIns();
-  if (!optIns.contains(scope)) return null;
+  if (scope != null && !optIns.contains(scope)) return null;
 
   final activeAgentIds = {for (final agent in readAgents()) agent.id};
   if (!activeAgentIds.contains(artifact.agentId)) return null;

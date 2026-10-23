@@ -2,6 +2,7 @@
 library;
 
 import 'package:drift/drift.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../persistence/app_database.dart';
 import 'agent_artifact.dart';
@@ -38,7 +39,7 @@ abstract interface class AgentArtifactStore {
 
   Future<List<AgentArtifact>> latestForDomain({
     required String ownerUserId,
-    required String domain,
+    required AiDomain domain,
     int limit = 20,
     DateTime? visibleAt,
   });
@@ -104,7 +105,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
         artifact.id,
         artifact.ownerUserId,
         artifact.agentId,
-        artifact.domain,
+        artifact.domain.wire,
         artifact.kind.wire,
         artifact.severity.wire,
         artifact.title,
@@ -240,7 +241,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
   @override
   Future<List<AgentArtifact>> latestForDomain({
     required String ownerUserId,
-    required String domain,
+    required AiDomain domain,
     int limit = 20,
     DateTime? visibleAt,
   }) async {
@@ -262,7 +263,7 @@ class SqliteAgentArtifactStore implements AgentArtifactStore {
           ''',
           variables: [
             Variable.withString(ownerUserId),
-            Variable.withString(domain),
+            Variable.withString(domain.wire),
             Variable.withInt(atMillis),
             Variable.withInt(atMillis),
           ],
@@ -283,7 +284,7 @@ AgentArtifact _rowToArtifact(QueryRow row) {
     id: row.read<String>('id'),
     ownerUserId: row.read<String>('owner_user_id'),
     agentId: row.read<String>('agent_id'),
-    domain: row.read<String>('domain'),
+    domain: AiDomain.fromWire(row.read<String>('domain')),
     kind: agentArtifactKindFromWire(row.read<String>('kind')),
     severity: agentArtifactSeverityFromWire(row.read<String>('severity')),
     title: row.read<String>('title'),

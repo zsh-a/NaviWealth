@@ -5,6 +5,10 @@
 /// feature module to the device runtime implementation.
 library;
 
+import 'ai_domain.dart';
+
+export 'ai_domain.dart';
+
 /// Coarse capability the user is requesting. Forms one axis of the
 /// intent policy matrix.
 enum Capability {
@@ -124,24 +128,6 @@ extension SideEffectScopeWire on SideEffectScope {
   };
 }
 
-/// LifeOS domain identifier. Phase D-1.3 — every Intent / Trace /
-/// ToolDescriptor carries a domain so tools, intents, and trace rows
-/// can be partitioned per active domain (`finance`, `health`, ...).
-///
-/// Free-form string by design: the registry isn't a closed enum because
-/// 1) the active domain set evolves slowly (Phase D-2 = `health`); 2)
-/// trace rows written before Phase D-1.3 land with no `domain` field
-/// and must decode to `finance` for backward compat.
-const String kDomainFinance = 'finance';
-const String kDomainHealth = 'health';
-const String kDomainKnowledge = 'knowledge';
-const String kDomainExecution = 'execution';
-
-/// Default for legacy intents/traces/tools. Reading code outside
-/// `core/ai/contracts/` should reference this constant rather than
-/// hard-coding the string.
-const String kDefaultDomain = kDomainFinance;
-
 /// Typed input for a device AI turn. Every feature surface that wants
 /// AI help produces one of these.
 class IntentHint {
@@ -150,7 +136,7 @@ class IntentHint {
     required this.risk,
     this.sideEffect,
     this.label,
-    this.domain = kDefaultDomain,
+    required this.domain,
   });
 
   final Capability capability;
@@ -165,17 +151,15 @@ class IntentHint {
   /// 'expense_search'). Free-form, not policy-bearing.
   final String? label;
 
-  /// LifeOS domain that owns this intent ('finance', 'health', ...).
-  /// Phase D-1.3: required for new code; defaults to `finance` to keep
-  /// pre-Phase-D trace rows decoding correctly.
-  final String domain;
+  /// Explicit business, shell, or global ownership.
+  final AiDomain domain;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'capability': capability.wire,
     'risk': risk.wire,
     if (sideEffect != null) 'side_effect': sideEffect!.wire,
     if (label != null) 'label': label,
-    'domain': domain,
+    'domain': domain.wire,
   };
 
   factory IntentHint.fromJson(Map<String, Object?> json) {
@@ -191,7 +175,7 @@ class IntentHint {
       risk: risk is String ? RiskLevelWire.parse(risk) : RiskLevel.info,
       sideEffect: se is String ? SideEffectScopeWire.parse(se) : null,
       label: label is String ? label : null,
-      domain: domain is String && domain.isNotEmpty ? domain : kDefaultDomain,
+      domain: AiDomain.fromWire(domain),
     );
   }
 }

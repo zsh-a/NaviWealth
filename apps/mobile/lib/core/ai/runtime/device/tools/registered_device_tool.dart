@@ -1,3 +1,5 @@
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 import '../../../contracts/intent.dart' show RiskLevel;
 import '../../../contracts/privacy_budget.dart' show BudgetTier;
 import '../../../contracts/tool_descriptor.dart';
@@ -25,7 +27,7 @@ class RegisteredDeviceTool {
   final Confirmation requiresConfirmation;
   final BudgetTier allowedContextTier;
   final SideEffect sideEffect;
-  final String domain;
+  final AiDomain domain;
 
   /// Whether this tool is advertised to the conversational Assistant.
   ///
@@ -53,7 +55,7 @@ class RegisteredDeviceTool {
 class DeviceToolRegistrationBuilder {
   const DeviceToolRegistrationBuilder(this.domain);
 
-  final String domain;
+  final AiDomain domain;
 
   RegisteredDeviceTool read(
     DeviceTool tool, {

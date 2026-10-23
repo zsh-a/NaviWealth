@@ -88,6 +88,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         _lastErrorKind = e.kind;
         _lastErrorMessage = e.message;
       });
+    } catch (_) {
+      // Local persistence/recovery failures must be visible without exposing
+      // storage internals or treating an unpersisted session as signed in.
+      if (!mounted) return;
+      setState(() {
+        _lastErrorKind = AuthErrorKind.unknown;
+        _lastErrorMessage = null;
+      });
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

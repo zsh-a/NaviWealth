@@ -19,9 +19,9 @@ final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
   final db = AppDatabase.open(encryptionKey: encryptionKey);
   try {
     // Force the lazy native connection to verify SQLCipher, unlock, recover a
-    // migration if necessary, and run Drift migrations before UI consumers
+    // migration if necessary, and check the schema baseline before UI consumers
     // receive a seemingly healthy database handle.
-    await db.customSelect('SELECT 1;').getSingle();
+    await db.ensureReady();
     await RowApplier(db).prepareCompatibility();
   } on Object {
     await db.close();
@@ -33,7 +33,7 @@ final appDatabaseProvider = FutureProvider<AppDatabase>((ref) async {
 
 final databaseRecoveryControllerProvider = Provider<DatabaseRecoveryController>(
   (ref) => DatabaseRecoveryController(
-    resetDatabase: () => resetEncryptedDatabase(
+    resetDatabase: () => resetLocalDatabase(
       store: ref.read(secureKeyStoreProvider),
       dbFileName: defaultDbFileName,
     ),
@@ -51,7 +51,7 @@ final class DatabaseRecoveryController {
   final Future<void> Function() _resetDatabase;
   final void Function() _invalidateDatabase;
 
-  Future<void> resetLocalEncryptedData() async {
+  Future<void> resetLocalData() async {
     await _resetDatabase();
     _invalidateDatabase();
   }

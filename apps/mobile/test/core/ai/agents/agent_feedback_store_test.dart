@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_feedback_store.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -13,7 +14,7 @@ void main() {
       id: 'daily:one',
       ownerUserId: 'u1',
       agentId: 'daily_navigator',
-      domain: 'life',
+      domain: const AiDomain.global(),
       kind: AgentArtifactKind.briefing,
       severity: AgentArtifactSeverity.attention,
       title: 'Today',

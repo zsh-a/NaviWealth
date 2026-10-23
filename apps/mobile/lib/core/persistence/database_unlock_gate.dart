@@ -1,11 +1,12 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
+import 'app_database.dart';
 import 'database_encryption.dart';
 import 'providers.dart';
 
@@ -27,30 +28,44 @@ class _DatabaseUnlockGateState extends ConsumerState<DatabaseUnlockGate> {
     return switch (database) {
       AsyncData() => widget.child,
       AsyncLoading() => const _DatabaseLoadingSurface(),
-      AsyncError(:final error) => _DatabaseFailureSurface(
-        error: error,
-        resetting: _resetting,
-        onRetry: () => ref.invalidate(appDatabaseProvider),
-        onReset: _canReset(error) ? _reset : null,
+      // The gate lives above the app router and hides it on startup failure.
+      // Recovery dialogs therefore need a navigator owned by this surface.
+      AsyncError(:final error) => Navigator(
+        pages: [
+          MaterialPage<void>(
+            child: Builder(
+              builder: (recoveryContext) => _DatabaseFailureSurface(
+                error: error,
+                resetting: _resetting,
+                onRetry: () => ref.invalidate(appDatabaseProvider),
+                onReset: _canReset(error)
+                    ? () => _reset(recoveryContext)
+                    : null,
+              ),
+            ),
+          ),
+        ],
+        onDidRemovePage: (_) {},
       ),
     };
   }
 
   bool _canReset(Object error) =>
+      error is UnsupportedDatabaseSchema ||
       error is DatabaseEncryptionException &&
-      switch (error.code) {
-        DatabaseEncryptionFailureCode.keyMissing ||
-        DatabaseEncryptionFailureCode.invalidKey ||
-        DatabaseEncryptionFailureCode.unlockFailed => true,
-        DatabaseEncryptionFailureCode.cipherUnavailable ||
-        DatabaseEncryptionFailureCode.migrationFailed => false,
-      };
+          switch (error.code) {
+            DatabaseEncryptionFailureCode.keyMissing ||
+            DatabaseEncryptionFailureCode.invalidKey ||
+            DatabaseEncryptionFailureCode.unlockFailed => true,
+            DatabaseEncryptionFailureCode.cipherUnavailable ||
+            DatabaseEncryptionFailureCode.migrationFailed => false,
+          };
 
-  Future<void> _reset() async {
+  Future<void> _reset(BuildContext recoveryContext) async {
     if (_resetting) return;
     final l10n = AppLocalizations.of(context);
     final confirmed = await showConfirmDialog(
-      context: context,
+      context: recoveryContext,
       title: Text(l10n.databaseRecoveryResetConfirmTitle),
       body: Text(l10n.databaseRecoveryResetConfirmBody),
       confirmLabel: l10n.databaseRecoveryResetConfirmAction,
@@ -62,9 +77,7 @@ class _DatabaseUnlockGateState extends ConsumerState<DatabaseUnlockGate> {
 
     setState(() => _resetting = true);
     try {
-      await ref
-          .read(databaseRecoveryControllerProvider)
-          .resetLocalEncryptedData();
+      await ref.read(databaseRecoveryControllerProvider).resetLocalData();
     } on Object {
       if (!mounted) return;
       AppMessenger.show(
@@ -161,6 +174,12 @@ class _DatabaseFailureSurface extends StatelessWidget {
     AppLocalizations l10n,
     Object error,
   ) {
+    if (error is UnsupportedDatabaseSchema) {
+      return (
+        title: l10n.databaseSchemaMismatchTitle,
+        message: l10n.databaseSchemaMismatchMessage,
+      );
+    }
     if (error is! DatabaseEncryptionException) {
       return (
         title: l10n.databaseRecoveryUnavailableTitle,

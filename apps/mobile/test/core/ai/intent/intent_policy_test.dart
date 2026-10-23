@@ -2,19 +2,19 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/production_ai_catalog.dart';
-import 'package:naviwealth/core/ai/contracts/intent.dart'
-    show kDomainFinance, kDomainHealth, kDomainKnowledge;
 import 'package:naviwealth/core/ai/intent/intent.dart';
 import 'package:naviwealth/l10n/gen/app_localizations_zh.dart';
 
 const _catalog = IntentCatalog(<IntentDescriptor>[
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_change',
     allowedObjectTypes: <String>{'expense'},
     preferredCapabilities: <AiCapability>{AiCapability.chat},
     preferredReadModels: <String>['expense_summary'],
   ),
   IntentDescriptor(
+    domain: AiDomain.domain(DomainScope.finance),
     name: 'explain_chart',
     allowedObjectTypes: <String>{'chart'},
     preferredCapabilities: <AiCapability>{AiCapability.chat},
@@ -108,6 +108,7 @@ void main() {
 
   test('requiresExplicitConfirmation can be set on a descriptor', () {
     const d = IntentDescriptor(
+      domain: AiDomain.domain(DomainScope.finance),
       name: 'place_order',
       allowedObjectTypes: <String>{'asset'},
       preferredCapabilities: <AiCapability>{AiCapability.proposal},
@@ -122,7 +123,7 @@ void main() {
       intent: 'explain_change',
       object: AiObjectRef(type: 'expense', id: 'e1'),
       context: {'timeframe': '本月'},
-      domain: kDomainFinance,
+      domain: AiDomain.domain(DomainScope.finance),
     );
     final l10n = AppLocalizationsZh();
     final prompt = renderPromptFor(
@@ -140,7 +141,7 @@ void main() {
       source: 'x',
       intent: 'explain_change',
       object: AiObjectRef(type: 'expense', id: 'e1'),
-      domain: kDomainFinance,
+      domain: AiDomain.domain(DomainScope.finance),
     );
     final l10n = AppLocalizationsZh();
     final prompt = renderPromptFor(
@@ -157,7 +158,7 @@ void main() {
       source: 'chart',
       intent: 'explain_chart',
       object: AiObjectRef(type: 'chart', id: 'net_worth'),
-      domain: kDomainFinance,
+      domain: AiDomain.domain(DomainScope.finance),
     );
     final l10n = AppLocalizationsZh();
     final prompt = renderPromptFor(
@@ -187,7 +188,7 @@ void main() {
       intent: 'agent.unregisteredFollowUp',
       object: AiObjectRef(type: 'agent_artifact', id: 'artifact-1'),
       suggestedPrompt: 'Explain this artifact.',
-      domain: kDomainFinance,
+      domain: AiDomain.domain(DomainScope.finance),
     );
 
     expect(
@@ -204,7 +205,7 @@ void main() {
         intent: 'agent.unregisteredFollowUp',
         object: AiObjectRef(type: 'agent_artifact', id: 'artifact-1'),
         suggestedPrompt: 'Explain this artifact.',
-        domain: kDomainFinance,
+        domain: AiDomain.domain(DomainScope.finance),
       );
 
       final prompt = renderPromptFor(
@@ -222,7 +223,7 @@ void main() {
       source: 'agent_card',
       intent: 'agent.unregisteredFollowUp',
       object: AiObjectRef(type: 'agent_artifact', id: 'artifact-1'),
-      domain: kDomainFinance,
+      domain: AiDomain.domain(DomainScope.finance),
     );
 
     final prompt = renderPromptFor(
@@ -238,26 +239,46 @@ void main() {
 
   test('single-domain intent: domains resolves to just its home domain', () {
     const d = IntentDescriptor(
+      domain: AiDomain.domain(DomainScope.finance),
       name: 'explain_change',
       allowedObjectTypes: <String>{'expense'},
       preferredCapabilities: <AiCapability>{AiCapability.chat},
     );
-    expect(d.domains, <String>{kDomainFinance});
-    expect(intentAllowsDomain(d, kDomainFinance), isTrue);
-    expect(intentAllowsDomain(d, kDomainHealth), isFalse);
+    expect(d.domains, <AiDomain>{const AiDomain.domain(DomainScope.finance)});
+    expect(
+      intentAllowsDomain(d, const AiDomain.domain(DomainScope.finance)),
+      isTrue,
+    );
+    expect(
+      intentAllowsDomain(d, const AiDomain.domain(DomainScope.health)),
+      isFalse,
+    );
   });
 
   test('cross-domain intent accepts home + allowedDomains', () {
     const d = IntentDescriptor(
+      domain: AiDomain.domain(DomainScope.finance),
       name: 'correlate_spend_sleep',
       allowedObjectTypes: <String>{},
       preferredCapabilities: <AiCapability>{AiCapability.chat},
-      allowedDomains: <String>{kDomainHealth},
+      allowedDomains: <AiDomain>[AiDomain.domain(DomainScope.health)],
     );
-    expect(d.domains, <String>{kDomainFinance, kDomainHealth});
-    expect(intentAllowsDomain(d, kDomainFinance), isTrue);
-    expect(intentAllowsDomain(d, kDomainHealth), isTrue);
-    expect(intentAllowsDomain(d, kDomainKnowledge), isFalse);
+    expect(d.domains, <AiDomain>{
+      const AiDomain.domain(DomainScope.finance),
+      const AiDomain.domain(DomainScope.health),
+    });
+    expect(
+      intentAllowsDomain(d, const AiDomain.domain(DomainScope.finance)),
+      isTrue,
+    );
+    expect(
+      intentAllowsDomain(d, const AiDomain.domain(DomainScope.health)),
+      isTrue,
+    );
+    expect(
+      intentAllowsDomain(d, const AiDomain.domain(DomainScope.knowledge)),
+      isFalse,
+    );
   });
 
   test('every registered intent allows its own home domain', () {
@@ -276,7 +297,7 @@ void main() {
       intent: 'explain_insight',
       object: AiObjectRef(type: 'insight', id: 'anom_2026'),
       context: {'severity': 'warn'},
-      domain: kDomainFinance,
+      domain: AiDomain.domain(DomainScope.finance),
     );
     final json = inv.toTraceJson();
     expect(json['source'], 'home_insight_card');

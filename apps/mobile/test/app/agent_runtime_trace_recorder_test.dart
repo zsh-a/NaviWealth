@@ -12,7 +12,7 @@ void main() {
     );
     final trace = await recorder.recordProfileTurn(
       agentId: 'execution_review',
-      domain: kDomainExecution,
+      domain: const AiDomain.domain(DomainScope.execution),
       surface: 'settings_runtime_check',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
@@ -23,7 +23,7 @@ void main() {
     expect(trace.requestId, 'agent-runtime:execution_review:run_1');
     expect(trace.backend, Backend.device);
     expect(trace.routingReason, kFrbAgentRuntimeProfileRoutingReason);
-    expect(trace.intent.domain, kDomainExecution);
+    expect(trace.intent.domain, const AiDomain.domain(DomainScope.execution));
     expect(trace.terminalReason, TerminalReason.done);
     expect(trace.spans.map((span) => span.name), <String>[
       'turn',
@@ -47,6 +47,7 @@ void main() {
   test('marks budget exhaustion as closed early', () async {
     final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
     final trace = await recorder.recordProfileTurn(
+      domain: const AiDomain.shell(),
       agentId: 'execution_review',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8),
@@ -72,6 +73,7 @@ void main() {
   test('uses native terminal reason for failed runs', () async {
     final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
     final trace = await recorder.recordStepRun(
+      domain: const AiDomain.shell(),
       agentId: 'execution_review',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8),
@@ -102,6 +104,7 @@ void main() {
   test('records effect-plan fallback reason in turn attributes', () async {
     final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
     final trace = await recorder.recordStepRun(
+      domain: const AiDomain.shell(),
       agentId: 'execution_review',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8),
@@ -140,6 +143,7 @@ void main() {
     () async {
       final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
       final trace = await recorder.recordStepRun(
+        domain: const AiDomain.shell(),
         agentId: 'execution_review',
         startedAt: DateTime.utc(2026, 6, 29, 8),
         finishedAt: DateTime.utc(2026, 6, 29, 8),
@@ -200,7 +204,7 @@ void main() {
 
     final trace = await recorder.recordStepRun(
       agentId: 'execution_due_actions',
-      domain: kDomainExecution,
+      domain: const AiDomain.domain(DomainScope.execution),
       surface: 'execution_due_actions',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
@@ -328,6 +332,7 @@ void main() {
       final recorder = AgentRuntimeTraceRecorder(appendTrace: (_) async {});
 
       final trace = await recorder.recordStepRun(
+        domain: const AiDomain.shell(),
         agentId: 'execution_review',
         startedAt: DateTime.utc(2026, 6, 29, 8),
         finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
@@ -391,7 +396,7 @@ void main() {
 
     final trace = await recorder.recordProfileCompletion(
       agentId: 'weekly_summary',
-      domain: kDomainHealth,
+      domain: const AiDomain.domain(DomainScope.health),
       surface: 'health_weekly_summary',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
@@ -408,7 +413,7 @@ void main() {
     expect(trace.requestId, 'profile_completion_1');
     expect(trace.routingReason, kFrbAgentRuntimeProfileRoutingReason);
     expect(trace.intent.label, 'health_weekly_summary');
-    expect(trace.intent.domain, kDomainHealth);
+    expect(trace.intent.domain, const AiDomain.domain(DomainScope.health));
     expect(trace.terminalReason, TerminalReason.done);
     expect(trace.spans.map((span) => span.name), <String>[
       'turn',
@@ -432,7 +437,7 @@ void main() {
 
     final trace = await recorder.recordProfileCompletion(
       agentId: 'knowledge_contradiction',
-      domain: kDomainHealth,
+      domain: const AiDomain.domain(DomainScope.health),
       surface: 'knowledge_contradiction',
       startedAt: DateTime.utc(2026, 6, 29, 8),
       finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
@@ -457,7 +462,7 @@ void main() {
 
       final trace = await recorder.recordProfileCompletion(
         agentId: 'knowledge_rewrite',
-        domain: kDomainKnowledge,
+        domain: const AiDomain.domain(DomainScope.knowledge),
         surface: 'knowledge_rewrite',
         startedAt: DateTime.utc(2026, 6, 29, 8),
         finishedAt: DateTime.utc(2026, 6, 29, 8, 0, 1),
@@ -492,7 +497,7 @@ void main() {
 
       final trace = await recorder.recordProfileCompletion(
         agentId: 'finance_vision_ingest',
-        domain: kDomainFinance,
+        domain: const AiDomain.domain(DomainScope.finance),
         surface: 'finance_vision_ingest',
         routingReason: kFrbVisionIngestRoutingReason,
         startedAt: DateTime.utc(2026, 6, 29, 8),
@@ -505,7 +510,7 @@ void main() {
       );
 
       expect(trace.routingReason, kFrbVisionIngestRoutingReason);
-      expect(trace.intent.domain, kDomainFinance);
+      expect(trace.intent.domain, const AiDomain.domain(DomainScope.finance));
       expect(trace.llmSpans.single.model, 'claude-test');
       expect(
         trace.llmSpans.single.attributes,

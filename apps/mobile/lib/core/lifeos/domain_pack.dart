@@ -34,6 +34,11 @@ import '../shell/domain_shell.dart';
 import 'life_signal.dart';
 import 'share_intent.dart';
 
+part 'domain_ai_contribution.dart';
+part 'domain_shell_contribution.dart';
+part 'domain_lifecycle_contribution.dart';
+part 'domain_data_contribution.dart';
+
 /// Builds the per-turn list of [Agent]s a domain contributes. Receives
 /// [Ref] because most agents are themselves Riverpod-built (they depend
 /// on runtime services like the LLM client or notification service).
@@ -45,7 +50,7 @@ typedef DomainChatContextBuilder =
     Future<List<AgentRuntimeContextBlock>> Function(Ref ref, AiContext context);
 
 /// Selects the bounded tool catalog exposed to the conversational Assistant
-/// for the current route. Internal agent tools remain in [DomainPack.deviceTools].
+/// for the current route. Internal agent tools remain in [DomainAiContribution.deviceTools].
 typedef DomainAssistantToolsBuilder = List<DeviceTool> Function(
   String currentPath,
 );
@@ -171,184 +176,20 @@ class DomainSettingsSpec {
 /// next to the domain's tool barrel, so the inventory list in
 /// `lib/app/domain_packs.dart` is the single grep-able answer to "what
 /// domains does this build have?".
-class DomainPack {
+final class DomainPack {
   const DomainPack({
     required this.scope,
-    this.deviceTools = const <DeviceTool>[],
-    this.assistantToolsBuilder,
-    this.chatContextBuilder,
-    this.toolDescriptors = const <String, ToolDescriptor>{},
-    this.intentDescriptors = const <IntentDescriptor>[],
-    this.proposalKinds = const <ProposalKindMeta>[],
-    this.proposalApplierRouteBuilder,
-    this.systemPromptBlock = '',
-    this.shellSpecBuilder,
-    this.shellRouteBuilder,
-    this.deferredPreloader,
-    this.tabPaths = const <String>[],
-    this.additionalPathPrefixes = const <String>[],
-    this.reviewRoutePath,
-    this.agentBuilder,
-    this.agentPresentationSpecs = const <AgentPresentationSpec>[],
-    this.memorySourcePrefixes = const <String>[],
-    this.memoryBootstrapBuilder,
-    this.backgroundBootstrapBuilder,
-    this.commandPaletteEntriesBuilder,
-    this.providerOverridesBuilder,
-    this.lifeSignalBuilder,
-    this.sourceRouteResolver,
-    this.localTableCountsBuilder,
-    this.dataManagementSpec,
-    this.notificationSettingsBuilder,
-    this.settingsRoutesBuilder,
-    this.settingsSpec,
-    this.shareIntentHandlers = const <DomainShareIntentHandler>[],
-    this.accent,
+    this.ai = const DomainAiContribution(),
+    this.shell = const DomainShellContribution(),
+    this.lifecycle = const DomainLifecycleContribution(),
+    this.data = const DomainDataContribution(),
   });
 
-  /// Opt-in scope this pack registers under.
   final DomainScope scope;
-
-  /// Optional chrome identity hue (switcher chip, switcher sheet rows, dock
-  /// tab tint). Null falls back to the global primary — zero behavior change
-  /// for packs that do not opt in. Status and market colors stay semantic;
-  /// see `design_system/theme/domain_accent.dart`.
-  final DomainAccent? accent;
-
-  /// Device AI tools advertised when this domain is active.
-  final List<DeviceTool> deviceTools;
-
-  /// User-facing Assistant tools for this domain. When omitted, the domain's
-  /// complete [deviceTools] list is used for compatibility with third-party or
-  /// test packs. Production packs should provide an explicit bounded catalog.
-  final DomainAssistantToolsBuilder? assistantToolsBuilder;
-
-  /// Bounded domain facts passed through the shared ContextBlock channel.
-  /// Detailed source data remains available through explicit domain tools.
-  final DomainChatContextBuilder? chatContextBuilder;
-
-  /// Metadata for [deviceTools], advertised when this domain is active.
-  final Map<String, ToolDescriptor> toolDescriptors;
-
-  /// AI object/capsule intents advertised when this domain is active.
-  final List<IntentDescriptor> intentDescriptors;
-
-  /// Chat proposal-card kinds advertised when this domain is active.
-  final List<ProposalKindMeta> proposalKinds;
-
-  /// Proposal apply/undo route owned by this domain. Null when the domain
-  /// contributes no chat proposal-card apply kinds.
-  final DomainProposalApplierRouteBuilder? proposalApplierRouteBuilder;
-
-  /// System-prompt block appended onto [kDeviceSystemPromptBase].
-  /// Empty string = no prompt contribution.
-  final String systemPromptBlock;
-
-  /// Localised shell spec (4-tab IA, color, dock placement). Null when
-  /// the domain has no top-level shell presence yet.
-  final DomainShellSpecBuilder? shellSpecBuilder;
-
-  /// Constructs the domain's `StatefulShellRoute` (mounted under the
-  /// outer `AppDockShell` in `router_builder.dart`). Null when the
-  /// domain has no routable surface yet.
-  final DomainShellRouteBuilder? shellRouteBuilder;
-
-  /// Test-only preloader for every `deferred as` library this domain's
-  /// routes can reach. Null when the domain ships no deferred libs.
-  final DomainDeferredPreloader? deferredPreloader;
-
-  /// Top-level tab paths the domain claims. Used by
-  /// `domainForRoute` to map an active path back to its [scope] and
-  /// by `primaryTabPathsProvider` to drive the system back handler
-  /// + Cmd-1..4 tab switcher. The l10n-bound [shellSpecBuilder] still
-  /// owns labels + icons.
-  final List<String> tabPaths;
-
-  /// Extra route prefixes the domain owns that are **not** top-level
-  /// tabs (and therefore don't belong in [tabPaths]). Used only by
-  /// `domainForRoute` for owner lookup; the system back handler does
-  /// not treat these as primary roots. FinanceOS uses this for
-  /// `/cashflow*` which lives under the Finance shell but isn't a
-  /// 4-tab destination.
-  final List<String> additionalPathPrefixes;
-
-  /// Optional contextual review destination surfaced by the Life hub.
-  /// Review pages stay domain-owned and do not consume a permanent shell tab.
-  final String? reviewRoutePath;
-
-  /// Builds the per-turn list of [Agent]s. Null when the domain has no
-  /// agents. Non-null builders typically read
-  /// one or more agent providers from `ref` so each agent stays
-  /// composition-blind.
-  final DomainAgentBuilder? agentBuilder;
-
-  /// Shared UI presentation metadata for the agents contributed by this
-  /// domain. Specs are active-domain scoped by [activeDomainPacksProvider] and
-  /// keyed by [AgentPresentationSpec.agentId].
-  final List<AgentPresentationSpec> agentPresentationSpecs;
-
-  /// Memory Runtime source prefixes this domain is allowed to contribute to
-  /// shared AI context. The app-level context assembler unions this field
-  /// across active packs before querying both memories and recent events.
-  ///
-  /// This is an allow-list, not a retrieval hint: an inactive domain's local
-  /// rows remain on device but must not enter an AI turn. Keep prefixes
-  /// domain-owned and narrow enough that two packs cannot claim one another's
-  /// records.
-  final List<String> memorySourcePrefixes;
-
-  /// Eager Memory Runtime indexer bootstrap. Null when the domain has no
-  /// memory indexers with source streams.
-  final DomainBootstrapBuilder? memoryBootstrapBuilder;
-
-  /// Eager background-job bootstrap. Null when the domain has no startup
-  /// background scheduler or pending wakeup drain.
-  final DomainBootstrapBuilder? backgroundBootstrapBuilder;
-
-  /// Cmd-K command palette contributions. Null when the domain has no
-  /// palette entries yet. Non-null builders are invoked with the active
-  /// locale's [AppLocalizations] and their entries are concatenated into
-  /// the shell palette in domain order.
-  final DomainCommandPaletteBuilder? commandPaletteEntriesBuilder;
-
-  /// Build-level provider overrides for domain-owned seams that do not
-  /// belong in `bootstrap.dart`. These are registered for every pack in
-  /// the build inventory; opt-in-gated work should still check opt-ins
-  /// inside the contributing provider.
-  final DomainProviderOverridesBuilder? providerOverridesBuilder;
-
-  /// Domain-owned signals and evaluated source-family evidence for Life.
-  final DomainLifeSignalBuilder? lifeSignalBuilder;
-
-  /// Domain-owned route resolution for Execution source references.
-  final DomainSourceRouteResolver? sourceRouteResolver;
-
-  /// Debug diagnostics for Settings → Sync. Domains own their table SQL;
-  /// the Settings page reads the domain-neutral aggregate provider.
-  final DomainLocalTableCountsBuilder? localTableCountsBuilder;
-
-  /// Domain-owned source/cache inventory for Settings → Data & Storage.
-  /// Registered for all packs, including disabled optional domains, so users
-  /// can inspect and clear residual local data without re-enabling a domain.
-  final DomainDataManagementSpec? dataManagementSpec;
-
-  /// Rows contributed to Settings → Notifications when this domain is active.
-  /// Global notification permission and master enablement stay in Settings;
-  /// domain-specific notification toggles remain with the owning domain.
-  final DomainNotificationSettingsBuilder? notificationSettingsBuilder;
-
-  /// Top-level Settings routes contributed by this domain.
-  final DomainSettingsRoutesBuilder? settingsRoutesBuilder;
-
-  /// Settings → Domains toggle metadata and optional domain detail route.
-  /// Null when the domain has no settings surface yet.
-  final DomainSettingsSpec? settingsSpec;
-
-  /// Domain-owned handlers for OS share-sheet payloads.
-  ///
-  /// App code receives plugin events and converts them to [SharedIntentPayload].
-  /// Domains decide whether and how to persist payloads they understand.
-  final List<DomainShareIntentHandler> shareIntentHandlers;
+  final DomainAiContribution ai;
+  final DomainShellContribution shell;
+  final DomainLifecycleContribution lifecycle;
+  final DomainDataContribution data;
 }
 
 /// Inventory of all known [DomainPack]s. Default empty; `bootstrap.dart`
@@ -383,7 +224,7 @@ Color? resolveDomainAccent(
   Brightness brightness,
 ) {
   for (final pack in packs) {
-    if (pack.scope == scope) return pack.accent?.resolve(brightness);
+    if (pack.scope == scope) return pack.shell.accent?.resolve(brightness);
   }
   return null;
 }
@@ -394,7 +235,7 @@ List<DomainShareIntentHandler> domainShareIntentHandlers(
   var index = 0;
   final indexed = <MapEntry<int, DomainShareIntentHandler>>[
     for (final pack in packs)
-      for (final handler in pack.shareIntentHandlers)
+      for (final handler in pack.data.shareIntentHandlers)
         MapEntry(index++, handler),
   ];
   indexed.sort((a, b) {

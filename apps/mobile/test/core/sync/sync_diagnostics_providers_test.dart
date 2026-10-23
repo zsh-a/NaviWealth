@@ -24,7 +24,9 @@ import '../../core/persistence/test_database.dart';
 
 const _financeDiagnosticsPack = DomainPack(
   scope: DomainScope.finance,
-  localTableCountsBuilder: financeLocalTableCounts,
+  data: DomainDataContribution(
+    localTableCountsBuilder: financeLocalTableCounts,
+  ),
 );
 
 void main() {

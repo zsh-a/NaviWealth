@@ -14,6 +14,11 @@ import 'package:naviwealth/core/ai/contracts/user_profile.dart';
 void main() {
   final manifest = <String, List<String>>{
     'Access': Access.values.map((v) => v.wire).toList(growable: false),
+    'AiDomain': [
+      for (final scope in DomainScope.values) AiDomain.domain(scope).wire,
+      const AiDomain.shell().wire,
+      const AiDomain.global().wire,
+    ],
     'AiPrivacyMode': AiPrivacyMode.values
         .map((v) => v.wire)
         .toList(growable: false),

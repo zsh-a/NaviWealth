@@ -74,7 +74,7 @@ Income Planner **不是**期权扫描终端，也**不是**最高 premium 排行
 |---|---|---|
 | AI 完全设备端，无 `/ai/chat` 中继 | [AI Architecture](../ai/ai-architecture.md) | 评分 + tool 实现全部 Dart。Backend 不解析期权语义。 |
 | Backend 只做 sync_rows 存储 | [`sync-v3.md`](../sync/sync-v3.md) | 派生数据（opportunity cache）**不上同步**；用户状态（profile / income strategy plan / journal）走行级同步。 |
-| Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.toolDescriptors`。 |
+| Device tool descriptor catalog | `features/finance/options_income/ai_tools/` + `features/finance/finance_ai_tools.dart` | profile / opportunity / wheel lifecycle descriptors live with the owning domain tool registrations and are exposed through `DomainPack.ai.toolDescriptors`。 |
 | Money 类型 | [FinanceOS](financeos-domain.md)，`apps/mobile/lib/features/finance/domain/fx/money.dart` | 所有期权金额走 `Money` + `Decimal`。 |
 | Web 无 AI | [LifeOS Shell](../architecture/lifeos-shell.md) | Plan hub 隐藏收入策略入口；期权页面通过 `kIsWeb` 返回不支持提示。 |
 | 表单与面板 | [Agent Guide](https://github.com/zsh-a/NaviWealth/blob/main/CLAUDE.md#ui-conventions) | 只读详情用 `showAppFormSheet` + `AppSheetFooter`；可编辑轻量表单用 `showGuardedFormSheet`；多区块交易记录用 `AppFormPageScaffold`。 |

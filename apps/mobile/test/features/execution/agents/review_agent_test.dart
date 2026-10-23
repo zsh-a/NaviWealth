@@ -8,6 +8,7 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_runner.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/local/memory/providers.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
@@ -189,7 +190,7 @@ void main() {
         .read('$kExecutionReviewAgentId:2026-06-05');
     expect(artifact, isNotNull);
     expect(artifact!.agentId, kExecutionReviewAgentId);
-    expect(artifact.domain, 'execution');
+    expect(artifact.domain, const AiDomain.domain(DomainScope.execution));
     expect(artifact.kind, AgentArtifactKind.review);
     expect(artifact.severity, AgentArtifactSeverity.attention);
     expect(artifact.memoryId, isNull);
@@ -489,7 +490,7 @@ AgentRuntimeEffectPlanBinding _runtime({
 }) {
   return agentRuntimeEffectPlanTestBinding(
     agentId: kExecutionReviewAgentId,
-    domain: 'execution',
+    domain: const AiDomain.domain(DomainScope.execution),
     surface: 'execution_review',
     bridge: bridge,
     dispatcher: dispatcher,
@@ -501,9 +502,10 @@ AgentRuntimeEffectPlanBinding _runtime({
 AgentRuntimeCatalog _catalog() {
   return AgentRuntimeCatalog(
     generatedAt: DateTime.utc(2026, 6, 29, 8),
-    activeDomains: const <String>['execution'],
+    activeDomains: const <DomainScope>[DomainScope.execution],
     agents: const <AgentRuntimeAgentSpec>[
       AgentRuntimeAgentSpec(
+        domain: AiDomain.domain(DomainScope.execution),
         id: kExecutionReviewAgentId,
         name: 'Execution Review',
         version: '0.1.0',

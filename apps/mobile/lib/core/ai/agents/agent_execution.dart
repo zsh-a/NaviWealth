@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../auth/current_user.dart';
-import '../../auth/domain_scope.dart';
 import '../../auth/providers.dart' show domainOptInsProvider;
 import '../../persistence/app_database.dart';
 import '../../persistence/providers.dart';
@@ -36,7 +35,8 @@ class AgentExecution {
   }) : steps = steps ?? [],
        activeStepIds = activeStepIds ?? {};
 
-  final String runId, agentId, domain, title, instructions, traceId, processId;
+  final String runId, agentId, title, instructions, traceId, processId;
+  final AiDomain domain;
   final DateTime startedAt;
   String status, phase;
   String? errorCode, summary, artifactId;
@@ -99,7 +99,7 @@ class AgentExecution {
   Map<String, Object?> toJson() => {
     'run_id': runId,
     'agent_id': agentId,
-    'domain': domain,
+    'domain': domain.wire,
     'title': title,
     'instructions': instructions,
     'trace_id': traceId,
@@ -118,7 +118,7 @@ class AgentExecution {
   factory AgentExecution.fromJson(Map<String, Object?> json) => AgentExecution(
     runId: json['run_id']! as String,
     agentId: json['agent_id']! as String,
-    domain: json['domain']! as String,
+    domain: AiDomain.fromWire(json['domain']),
     title: json['title']! as String,
     instructions: json['instructions']! as String,
     traceId: json['trace_id']! as String,
@@ -226,10 +226,8 @@ final agentExecutionProvider = StreamProvider.autoDispose
       final store = await ref.watch(agentExecutionStoreProvider.future);
       Future<AgentExecution?> read() async {
         final execution = await store.read(key.agentId, runId: key.runId);
-        final domain = execution == null
-            ? null
-            : DomainScope.tryParse(execution.domain);
-        return domain != null && domains.contains(domain) ? execution : null;
+        final domain = execution?.domain.scope;
+        return domain == null || domains.contains(domain) ? execution : null;
       }
 
       yield await read();

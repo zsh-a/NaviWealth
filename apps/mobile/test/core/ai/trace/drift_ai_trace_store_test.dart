@@ -11,6 +11,7 @@ void main() {
     requestId: id,
     startedAtIso: startedAt.toUtc().toIso8601String(),
     intent: const IntentHint(
+      domain: AiDomain.shell(),
       capability: Capability.analyze,
       risk: RiskLevel.suggest,
       label: 'chat_turn',

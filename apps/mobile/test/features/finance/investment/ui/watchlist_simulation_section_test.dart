@@ -62,7 +62,6 @@ final _simulation = WatchlistSimulation(
   name: 'Growth paper mix',
   baseCurrency: 'USD',
   startingCapital: Decimal.parse('100000'),
-  cashWeight: Decimal.parse('0.1'),
   baselineAt: DateTime.utc(2026, 8, 31),
   createdAt: DateTime.utc(2026, 8, 31),
   sync: _sync,
@@ -586,7 +585,6 @@ void main() {
         name: 'Income paper mix',
         baseCurrency: 'CNY',
         startingCapital: Decimal.fromInt(200000),
-        cashWeight: _simulation.cashWeight,
         baselineAt: _simulation.baselineAt,
         createdAt: _simulation.createdAt,
         sync: _simulation.sync,
@@ -1102,33 +1100,6 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-    'legacy capital edits cannot change the recorded return denominator',
-    (tester) async {
-      final oldDefinition = WatchlistSimulation(
-        id: _simulation.id,
-        collectionId: _simulation.collectionId,
-        name: _simulation.name,
-        baseCurrency: _simulation.baseCurrency,
-        startingCapital: Decimal.fromInt(200000),
-        cashWeight: _simulation.cashWeight,
-        baselineAt: _simulation.baselineAt,
-        createdAt: _simulation.createdAt,
-        sync: _simulation.sync,
-      );
-      await tester.pumpWidget(
-        _wrap(
-          preferences: preferences,
-          simulations: [oldDefinition],
-          positions: [_position],
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('+0.90%'), findsWidgets);
-      expect(find.text('-49.55%'), findsNothing);
-    },
-  );
-
   testWidgets('saved simulation is revealed after its stream entry arrives', (
     tester,
   ) async {
@@ -1145,7 +1116,6 @@ void main() {
           name: 'Scenario $i',
           baseCurrency: _simulation.baseCurrency,
           startingCapital: _simulation.startingCapital,
-          cashWeight: _simulation.cashWeight,
           baselineAt: _simulation.baselineAt,
           createdAt: _simulation.createdAt,
           sync: _simulation.sync,
@@ -1241,7 +1211,6 @@ void main() {
       name: _simulation.name,
       baseCurrency: _simulation.baseCurrency,
       startingCapital: _simulation.startingCapital,
-      cashWeight: Decimal.one,
       baselineAt: _simulation.baselineAt,
       createdAt: _simulation.createdAt,
       sync: _simulation.sync,
@@ -1594,13 +1563,14 @@ void main() {
     });
   }
 
-  testWidgets('keeps pre-lineage observations in the history chart', (
+  testWidgets('shows observations from the selected allocation history', (
     tester,
   ) async {
     final observations = [
       _observations[0],
       WatchlistSimulationObservation(
-        id: 'observation-legacy',
+        id: 'observation-predecessor',
+        allocationBasisKey: 'basis-predecessor',
         simulationId: _simulation.id,
         observationDay: '2026-09-01',
         observedAt: DateTime.utc(2026, 9, 1),
@@ -1804,7 +1774,6 @@ WatchlistSimulation _otherSimulation() => WatchlistSimulation(
   name: 'Income paper mix',
   baseCurrency: _simulation.baseCurrency,
   startingCapital: _simulation.startingCapital,
-  cashWeight: _simulation.cashWeight,
   baselineAt: _simulation.baselineAt,
   createdAt: _simulation.createdAt,
   sync: _simulation.sync,
@@ -1887,16 +1856,18 @@ Widget _wrap({
         (_, _) => Stream.value(positions),
       ),
       watchlistSimulationAllocationProvider.overrideWith((_, simulationId) {
-        final simulation = simulations.firstWhere(
-          (candidate) => candidate.id == simulationId,
-        );
         return Stream.value(
           ResolvedWatchlistSimulationAllocation(
             status: allocationStatus,
             allocationVersionId: 'allocation-test',
             allocationBasisKey: 'basis-test',
             validAllocationBasisKeys: const {'basis-test'},
-            cashWeight: simulation.cashWeight,
+            cashWeight:
+                Decimal.one -
+                positions.fold<Decimal>(
+                  Decimal.zero,
+                  (sum, p) => sum + p.targetWeight,
+                ),
             positions: positions,
           ),
         );

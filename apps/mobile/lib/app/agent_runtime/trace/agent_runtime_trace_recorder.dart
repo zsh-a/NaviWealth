@@ -7,7 +7,6 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_step_result.dart';
@@ -35,7 +34,7 @@ class AgentRuntimeTraceRecorder {
 
   AgentRuntimeStepTraceRecorder stepRunRecorder({
     required String agentId,
-    required String domain,
+    required AiDomain domain,
     required String surface,
   }) {
     return (stepRun) => recordStepRun(
@@ -48,7 +47,7 @@ class AgentRuntimeTraceRecorder {
 
   AgentRuntimeProfileTurnTraceRecorder profileTurnRecorder({
     required String agentId,
-    required String domain,
+    required AiDomain domain,
     required String surface,
   }) {
     return (result) => recordProfileTurn(
@@ -65,7 +64,7 @@ class AgentRuntimeTraceRecorder {
     DateTime? startedAt,
     DateTime? finishedAt,
     String? requestId,
-    String domain = kDefaultDomain,
+    required AiDomain domain,
     String surface = 'agent_runtime',
   }) async {
     final started = (startedAt ?? DateTime.now().toUtc()).toUtc();
@@ -92,7 +91,7 @@ class AgentRuntimeTraceRecorder {
     DateTime? startedAt,
     DateTime? finishedAt,
     String? requestId,
-    String domain = kDefaultDomain,
+    required AiDomain domain,
     String surface = 'agent_runtime',
   }) async {
     final started = (startedAt ?? DateTime.now().toUtc()).toUtc();
@@ -121,7 +120,7 @@ class AgentRuntimeTraceRecorder {
     DateTime? startedAt,
     DateTime? finishedAt,
     String? requestId,
-    String domain = kDefaultDomain,
+    required AiDomain domain,
     String surface = 'agent_runtime',
     String routingReason = kFrbAgentRuntimeProfileRoutingReason,
     Object? error,
@@ -151,7 +150,7 @@ class AgentRuntimeTraceRecorder {
     required DateTime startedAt,
     required DateTime finishedAt,
     required String requestId,
-    required String domain,
+    required AiDomain domain,
     required String surface,
     String label = 'agent_runtime_profile_turn',
     String routingReason = kFrbAgentRuntimeProfileRoutingReason,
@@ -292,7 +291,7 @@ class AgentRuntimeTraceRecorder {
     required DateTime startedAt,
     required DateTime finishedAt,
     required String requestId,
-    required String domain,
+    required AiDomain domain,
     required String surface,
     required String routingReason,
     Object? error,

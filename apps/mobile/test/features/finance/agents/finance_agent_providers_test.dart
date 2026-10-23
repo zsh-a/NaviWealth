@@ -8,6 +8,7 @@ import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/features/finance/agents/cashflow_anomaly_review_agent.dart';
 import 'package:naviwealth/features/finance/agents/fire_plan_drift_monitor_agent.dart';
@@ -23,37 +24,37 @@ void main() {
       _artifact(
         id: 'weekly-old',
         agentId: kWeeklyWealthReviewAgentId,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         createdAt: now.add(const Duration(minutes: 1)),
       ),
       _artifact(
         id: 'cashflow-latest',
         agentId: kCashflowAnomalyReviewAgentId,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         createdAt: now.add(const Duration(minutes: 2)),
       ),
       _artifact(
         id: 'weekly-latest',
         agentId: kWeeklyWealthReviewAgentId,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         createdAt: now.add(const Duration(minutes: 3)),
       ),
       _artifact(
         id: 'options-latest',
         agentId: kOptionsIncomeRiskReviewAgentId,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         createdAt: now.add(const Duration(minutes: 4)),
       ),
       _artifact(
         id: 'fire-latest',
         agentId: kFirePlanDriftMonitorAgentId,
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         createdAt: now.add(const Duration(minutes: 5)),
       ),
       _artifact(
         id: 'health-newer',
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         createdAt: now.add(const Duration(hours: 1)),
       ),
     ]);
@@ -83,7 +84,7 @@ void main() {
 
     expect(artifacts.map((artifact) => artifact.id), ['weekly-latest']);
     expect(artifacts.single.agentId, kWeeklyWealthReviewAgentId);
-    expect(artifacts.single.domain, 'finance');
+    expect(artifacts.single.domain, const AiDomain.domain(DomainScope.finance));
   });
 }
 
@@ -164,7 +165,7 @@ class _FakeArtifactStore implements AgentArtifactStore {
   @override
   Future<List<AgentArtifact>> latestForDomain({
     required String ownerUserId,
-    required String domain,
+    required AiDomain domain,
     int limit = 20,
     DateTime? visibleAt,
   }) {
@@ -175,7 +176,7 @@ class _FakeArtifactStore implements AgentArtifactStore {
 AgentArtifact _artifact({
   required String id,
   required String agentId,
-  required String domain,
+  required AiDomain domain,
   required DateTime createdAt,
 }) {
   return AgentArtifact(

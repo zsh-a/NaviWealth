@@ -60,7 +60,7 @@ void main() {
 
     final artifact = await store.read(result.artifactId!);
     expect(artifact, isNotNull);
-    expect(artifact!.domain, 'finance');
+    expect(artifact!.domain, const AiDomain.domain(DomainScope.finance));
     expect(artifact.kind, AgentArtifactKind.alert);
     expect(artifact.severity, AgentArtifactSeverity.warning);
     expect(artifact.actions.single.intent, 'agent.explainResult');
@@ -90,7 +90,7 @@ void main() {
     final trace = await traceStore.findByRequestId(result.traceId!);
     expect(trace, isNotNull);
     expect(trace!.routingReason, kDeterministicAgentRoutingReason);
-    expect(trace.intent.domain, kDomainFinance);
+    expect(trace.intent.domain, const AiDomain.domain(DomainScope.finance));
     expect(trace.intent.label, 'cashflow_anomaly_review');
     expect(trace.spans.single.attributes, containsPair('deterministic', true));
     expect(trace.spans.single.attributes, containsPair('delta_pct', 62));

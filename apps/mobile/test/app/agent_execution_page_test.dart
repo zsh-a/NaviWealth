@@ -32,7 +32,7 @@ void main() {
           AgentExecution(
             runId: 'run',
             agentId: 'test',
-            domain: 'finance',
+            domain: const AiDomain.domain(DomainScope.finance),
             title: 'Weekly review',
             instructions: 'Review available facts',
             traceId: 'trace',
@@ -114,7 +114,7 @@ void main() {
       final execution = AgentExecution(
         runId: 'run',
         agentId: 'test',
-        domain: 'finance',
+        domain: const AiDomain.domain(DomainScope.finance),
         title: 'Review',
         instructions: 'Review facts',
         traceId: 'trace',

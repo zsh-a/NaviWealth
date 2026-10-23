@@ -8,6 +8,7 @@ library;
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../persistence/app_database.dart';
@@ -35,7 +36,7 @@ class AgentFeedback {
   final String ownerUserId;
   final String artifactId;
   final String agentId;
-  final String domain;
+  final AiDomain domain;
   final AgentFeedbackKind kind;
   final String? actionKind;
   final String? lifeContextFingerprint;
@@ -110,7 +111,7 @@ class SqliteAgentFeedbackStore implements AgentFeedbackStore {
         feedback.ownerUserId,
         feedback.artifactId,
         feedback.agentId,
-        feedback.domain,
+        feedback.domain.wire,
         feedback.kind.name,
         feedback.actionKind,
         feedback.lifeContextFingerprint,
@@ -152,7 +153,7 @@ AgentFeedback _feedbackFromRow(QueryRow row) {
     ownerUserId: row.read<String>('owner_user_id'),
     artifactId: row.read<String>('artifact_id'),
     agentId: row.read<String>('agent_id'),
-    domain: row.read<String>('domain'),
+    domain: AiDomain.fromWire(row.read<String>('domain')),
     kind: AgentFeedbackKind.values.byName(row.read<String>('kind')),
     actionKind: row.read<String?>('action_kind'),
     lifeContextFingerprint: row.read<String?>('life_context_fingerprint'),

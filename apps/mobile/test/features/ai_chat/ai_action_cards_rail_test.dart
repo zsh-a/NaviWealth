@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_intents.dart';
+import 'package:naviwealth/core/ai/composition/ai_context.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
 import 'package:naviwealth/core/ai/composition/chat_rail_content.dart';
 import 'package:naviwealth/core/ai/composition/chat_rail_provider.dart';
@@ -22,6 +23,10 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          aiContextProvider.overrideWith(
+            (_) =>
+                const AiContext(path: '/wealth', domain: DomainScope.finance),
+          ),
           chatRailContentSelectorProvider.overrideWith(
             (ref) =>
                 (_) => const <ChatRailContent>[
@@ -78,7 +83,7 @@ void main() {
     expect(invocation, isNotNull);
     expect(invocation!.intent, kAgentExplainResultIntent);
     expect(invocation.source, 'finance_agent_artifact_rail');
-    expect(invocation.domain, 'finance');
+    expect(invocation.domain, const AiDomain.domain(DomainScope.finance));
     expect(
       invocation.object,
       const AiObjectRef(type: kAgentArtifactObjectType, id: 'artifact-1'),

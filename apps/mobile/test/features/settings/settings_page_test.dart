@@ -93,8 +93,8 @@ GoRouter _router({
             ],
           ),
           for (final pack in resolvedPacks)
-            if (pack.settingsSpec?.routeBuilder != null)
-              pack.settingsSpec!.routeBuilder!((child) => child),
+            if (pack.shell.settingsSpec?.routeBuilder != null)
+              pack.shell.settingsSpec!.routeBuilder!((child) => child),
         ],
       ),
     ],

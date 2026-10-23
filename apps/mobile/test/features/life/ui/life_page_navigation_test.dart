@@ -21,14 +21,19 @@ DomainPack _domainPack(
   final path = '/${scope.wire}';
   return DomainPack(
     scope: scope,
-    tabPaths: [path],
-    reviewRoutePath: reviewRoutePath,
-    shellSpecBuilder: (_) => DomainShellSpec(
-      scope: scope,
-      label: label,
-      icon: FLucideIcons.layers,
-      selectedIcon: FLucideIcons.layers,
-      tabs: const [],
+    shell: DomainShellContribution(
+      navigation: DomainNavigation(
+        shellSpecBuilder: (_) => DomainShellSpec(
+          scope: scope,
+          label: label,
+          icon: FLucideIcons.layers,
+          selectedIcon: FLucideIcons.layers,
+          tabs: const [],
+        ),
+        tabPaths: [path],
+        reviewRoutePath: reviewRoutePath,
+        shellRouteBuilder: _unusedShellRoute,
+      ),
     ),
   );
 }
@@ -269,3 +274,6 @@ void main() {
     },
   );
 }
+
+Never _unusedShellRoute() =>
+    throw StateError('Shell routes are outside this test.');

@@ -361,7 +361,6 @@ WatchlistSimulation _cashSimulation(
   name: name,
   baseCurrency: 'USD',
   startingCapital: Decimal.fromInt(1000),
-  cashWeight: Decimal.one,
   baselineAt: _collection.createdAt,
   createdAt: _collection.createdAt,
   sync: _collection.sync,

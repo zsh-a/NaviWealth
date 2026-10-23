@@ -10,7 +10,7 @@
 /// through this registry, so a new domain (HealthOS, KnowledgeOS, …)
 /// adds its kinds by registering more metas, no shell edits.
 ///
-/// Default registry is empty. `DomainPack.proposalKinds` contributes
+/// Default registry is empty. `DomainPack.ai.proposalKinds` contributes
 /// metadata and `domain_composition.dart` overrides
 /// [proposalKindRegistryProvider] with the union of active domains'
 /// contributions.

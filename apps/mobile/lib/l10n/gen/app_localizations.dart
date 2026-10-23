@@ -30744,6 +30744,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View original record'**
   String get ingestViewOriginal;
+
+  /// No description provided for @databaseSchemaMismatchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local database version is unsupported'**
+  String get databaseSchemaMismatchTitle;
+
+  /// No description provided for @databaseSchemaMismatchMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This version uses a new database format. Your existing data has been kept intact. Reset local data to start again.'**
+  String get databaseSchemaMismatchMessage;
 }
 
 class _AppLocalizationsDelegate

@@ -64,7 +64,6 @@ final _simulation = WatchlistSimulation(
   name: 'Growth paper mix',
   baseCurrency: 'USD',
   startingCapital: Decimal.parse('100000'),
-  cashWeight: Decimal.parse('0.1'),
   baselineAt: DateTime.utc(2026, 8, 31),
   createdAt: DateTime.utc(2026, 8, 31),
   sync: _sync,
@@ -141,7 +140,6 @@ void main() {
       name: 'Income paper mix',
       baseCurrency: 'CNY',
       startingCapital: Decimal.fromInt(200000),
-      cashWeight: _simulation.cashWeight,
       baselineAt: _simulation.baselineAt,
       createdAt: _simulation.createdAt,
       sync: _simulation.sync,
@@ -265,7 +263,7 @@ class _SimulationFormEntryState extends State<_SimulationFormEntry> {
                 context: context,
                 simulation: _simulation,
                 positions: _positions,
-                cashWeight: _simulation.cashWeight,
+                cashWeight: Decimal.parse('0.1'),
                 items: _items,
                 snapshots: _snapshots,
               ),
@@ -293,7 +291,7 @@ List<Override> _paperOverrides(
         allocationVersionId: 'allocation-test',
         allocationBasisKey: 'basis-test',
         validAllocationBasisKeys: const {'basis-test'},
-        cashWeight: _simulation.cashWeight,
+        cashWeight: Decimal.parse('0.1'),
         positions: _positions,
       ),
     ),
@@ -304,10 +302,14 @@ List<Override> _paperOverrides(
     ),
   ),
   watchlistSimulationStoredObservationsProvider.overrideWith(
-    (_, _) => Stream.value(_observations),
+    (_, id) => Stream.value(
+      _observationsFor(simulations.firstWhere((s) => s.id == id)),
+    ),
   ),
   watchlistSimulationObservationsProvider.overrideWith(
-    (_, _) => Stream.value(_observations),
+    (_, id) => Stream.value(
+      _observationsFor(simulations.firstWhere((s) => s.id == id)),
+    ),
   ),
   watchlistSimulationActionEntriesProvider.overrideWith(
     (_, _) => Stream.value(const []),
@@ -322,4 +324,25 @@ List<Override> _paperOverrides(
   watchlistSimulationObservationRecorderProvider.overrideWithValue(
     (_) async => null,
   ),
+];
+
+List<WatchlistSimulationObservation> _observationsFor(
+  WatchlistSimulation simulation,
+) => [
+  for (final observation in _observations)
+    WatchlistSimulationObservation(
+      id: '${simulation.id}:${observation.observationDay}',
+      simulationId: simulation.id,
+      observationDay: observation.observationDay,
+      observedAt: observation.observedAt,
+      projectedValue:
+          (observation.projectedValue *
+                  simulation.startingCapital /
+                  _simulation.startingCapital)
+              .toDecimal(scaleOnInfinitePrecision: 8),
+      weightedDailyChange: observation.weightedDailyChange,
+      pricedWeight: observation.pricedWeight,
+      missingQuoteWeight: observation.missingQuoteWeight,
+      allocationBasisKey: observation.allocationBasisKey,
+    ),
 ];

@@ -186,7 +186,7 @@ void main() {
           SqlitePersonalProfileStore(db),
         ),
         activeDomainScopes: const <String>{},
-        aiContext: const AiContext(path: '/'),
+        aiContext: const AiContext(domain: null, path: '/'),
         request: const ChatContextPrepRequest(
           ownerUserId: _owner,
           sessionId: 's1',

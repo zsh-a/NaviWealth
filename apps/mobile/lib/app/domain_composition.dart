@@ -217,7 +217,7 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
       final packs = ref.watch(activeDomainPacksProvider);
       return (family, rowId) {
         for (final pack in packs) {
-          final route = pack.sourceRouteResolver?.call(family, rowId);
+          final route = pack.data.sourceRouteResolver?.call(family, rowId);
           if (route != null) return route;
         }
         final separator = family.indexOf(':');
@@ -241,7 +241,7 @@ const Set<String> kGlobalMemorySourcePrefixes = <String>{'user_confirmed_ai'};
 MemoryAccessPolicy memoryAccessPolicyForPacks(List<DomainPack> packs) {
   return MemoryAccessPolicy.allowPrefixes(<String>{
     ...kGlobalMemorySourcePrefixes,
-    for (final pack in packs) ...pack.memorySourcePrefixes,
+    for (final pack in packs) ...pack.ai.memorySourcePrefixes,
   });
 }
 
@@ -395,7 +395,7 @@ Locale _resolvedShellLocale(Locale? preferred) {
 List<DeviceTool> domainDeviceTools(List<DomainPack> packs) {
   return <DeviceTool>[
     ...kShellDeviceToolsCore,
-    for (final p in packs) ...p.deviceTools,
+    for (final p in packs) ...p.ai.deviceTools,
   ];
 }
 
@@ -411,7 +411,8 @@ List<DeviceTool> domainAssistantDeviceTools(
     for (final tool in kShellDeviceToolsCore) tool.name: tool,
     for (final pack in scopedPacks)
       for (final tool
-          in pack.assistantToolsBuilder?.call(currentPath) ?? pack.deviceTools)
+          in pack.ai.assistantToolsBuilder?.call(currentPath) ??
+              const <DeviceTool>[])
         tool.name: tool,
   };
   return List<DeviceTool>.unmodifiable(toolsByName.values);
@@ -420,21 +421,21 @@ List<DeviceTool> domainAssistantDeviceTools(
 Map<String, ToolDescriptor> domainToolDescriptors(List<DomainPack> packs) {
   return <String, ToolDescriptor>{
     ...kShellToolDescriptors,
-    for (final p in packs) ...p.toolDescriptors,
+    for (final p in packs) ...p.ai.toolDescriptors,
   };
 }
 
 List<ProposalKindMeta> domainProposalKinds(List<DomainPack> packs) {
   return <ProposalKindMeta>[
     ...kShellProposalKinds,
-    for (final p in packs) ...p.proposalKinds,
+    for (final p in packs) ...p.ai.proposalKinds,
   ];
 }
 
 IntentCatalog domainIntentCatalog(List<DomainPack> packs) {
   final descriptorsByName = <String, IntentDescriptor>{};
   for (final pack in packs) {
-    for (final descriptor in pack.intentDescriptors) {
+    for (final descriptor in pack.ai.intentDescriptors) {
       descriptorsByName.putIfAbsent(descriptor.name, () => descriptor);
     }
   }
@@ -477,7 +478,7 @@ Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
     );
   }
   for (final p in packs) {
-    final builder = p.proposalApplierRouteBuilder;
+    final builder = p.ai.proposalApplierRouteBuilder;
     if (builder != null) routes.add(await builder(ref));
   }
   return routes;
@@ -486,7 +487,7 @@ Future<List<ProposalApplierRoute>> domainProposalApplierRoutes(
 List<String> domainSystemPromptBlocks(List<DomainPack> packs) {
   return [
     for (final p in packs)
-      if (p.systemPromptBlock.isNotEmpty) p.systemPromptBlock,
+      if (p.ai.systemPromptBlock.isNotEmpty) p.ai.systemPromptBlock,
   ];
 }
 
@@ -503,8 +504,8 @@ List<DomainAgentRegistration> domainAgentRegistrations(
 ) {
   final registrations = composeScheduledAgents(ref, [
     for (final p in packs)
-      if (p.agentBuilder != null)
-        for (final agent in p.agentBuilder!(ref))
+      if (p.ai.agentBuilder != null)
+        for (final agent in p.ai.agentBuilder!(ref))
           DomainAgentRegistration(agent: agent, domain: p.scope),
   ]);
   final active = packs.map((pack) => pack.scope).toSet();
@@ -527,19 +528,19 @@ Map<String, AgentPresentationSpec> domainAgentPresentationSpecs(
 ) {
   return <String, AgentPresentationSpec>{
     for (final pack in packs)
-      for (final spec in pack.agentPresentationSpecs) spec.agentId: spec,
+      for (final spec in pack.ai.agentPresentationSpecs) spec.agentId: spec,
   };
 }
 
 void domainMemoryBootstraps(Ref ref, List<DomainPack> packs) {
   for (final p in packs) {
-    p.memoryBootstrapBuilder?.call(ref);
+    p.lifecycle.memoryBootstrapBuilder?.call(ref);
   }
 }
 
 void domainBackgroundBootstraps(Ref ref, List<DomainPack> packs) {
   for (final p in packs) {
-    p.backgroundBootstrapBuilder?.call(ref);
+    p.lifecycle.backgroundBootstrapBuilder?.call(ref);
   }
 }
 
@@ -549,7 +550,8 @@ List<DomainShellSpec> domainShellSpecs(
 ) {
   return [
     for (final p in packs)
-      if (p.shellSpecBuilder != null) p.shellSpecBuilder!(l10n),
+      if (p.shell.navigation case final navigation?)
+        navigation.shellSpecBuilder(l10n),
   ];
 }
 
@@ -559,14 +561,15 @@ List<CommandPaletteEntry> domainCommandPaletteEntries(
 ) {
   return [
     for (final p in packs)
-      if (p.commandPaletteEntriesBuilder != null)
-        ...p.commandPaletteEntriesBuilder!(l10n),
+      if (p.shell.commandPaletteEntriesBuilder != null)
+        ...p.shell.commandPaletteEntriesBuilder!(l10n),
   ];
 }
 
 List<Override> domainProviderOverrides(List<DomainPack> packs) {
   return [
     for (final p in packs)
-      if (p.providerOverridesBuilder != null) ...p.providerOverridesBuilder!(),
+      if (p.lifecycle.providerOverridesBuilder != null)
+        ...p.lifecycle.providerOverridesBuilder!(),
   ];
 }

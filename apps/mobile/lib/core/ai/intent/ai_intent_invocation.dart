@@ -15,6 +15,8 @@
 /// chat) is decided downstream from [capabilities] + viewport.
 library;
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 class AiIntentInvocation {
   const AiIntentInvocation({
     required this.source,
@@ -61,16 +63,16 @@ class AiIntentInvocation {
   /// LifeOS domain the trigger surface belongs to. Required so trace
   /// attribution is unambiguous; populated by `askAi()` from
   /// `aiContextProvider.domain` (which the shell keeps in sync with
-  /// the current route). Use one of `kDomainFinance` / `kDomainHealth`
-  /// / `kDomainKnowledge`.
-  final String domain;
+  /// the current route). Use one of `AiDomain.domain(DomainScope.finance)` / `AiDomain.domain(DomainScope.health)`
+  /// / `AiDomain.domain(DomainScope.knowledge)`.
+  final AiDomain domain;
 
   /// Serialised form for AiTrace — local-only, never crosses the wire
   /// unaltered. Keys are stable so the transparency page can render.
   Map<String, Object?> toTraceJson() => <String, Object?>{
     'source': source,
     'intent': intent,
-    'domain': domain,
+    'domain': domain.wire,
     if (object != null) ...{
       'object_type': object!.type,
       'object_id': object!.id,

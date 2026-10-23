@@ -9,6 +9,7 @@ import 'package:naviwealth/core/auth/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/security/in_memory_key_store.dart';
 import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/features/auth/data/app_mode_store.dart';
 import 'package:naviwealth/features/auth/data/auth_controller.dart';
 import 'package:naviwealth/features/auth/ui/login_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -104,12 +105,26 @@ AuthSession _session() => AuthSession(
   deviceId: 'd-1',
 );
 
-ProviderContainer _container({AuthApiClient? api, Map<String, String>? seed}) {
+class _UnavailableModeStore implements AppModeStore {
+  @override
+  AppMode read() => AppMode.localOnly;
+
+  @override
+  Future<void> write(AppMode mode) async =>
+      throw StateError('Mode write failed');
+}
+
+ProviderContainer _container({
+  AuthApiClient? api,
+  Map<String, String>? seed,
+  AppModeStore? modes,
+}) {
   return ProviderContainer(
     overrides: [
       secureKeyStoreProvider.overrideWithValue(InMemoryKeyStore(seed)),
       sharedPreferencesProvider.overrideWithValue(_preferences),
       if (api != null) authApiClientProvider.overrideWithValue(api),
+      if (modes != null) appModeStoreProvider.overrideWithValue(modes),
     ],
   );
 }
@@ -136,6 +151,37 @@ Future<AppLocalizations> _l10n(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    'connection persistence failure shows a banner and keeps local identity',
+    (tester) async {
+      final container = _container(
+        api: _StubAuthApi()..loginResponse = _session(),
+        modes: _UnavailableModeStore(),
+      );
+      addTearDown(container.dispose);
+      await container.read(authControllerProvider.future);
+      await _pump(tester, container);
+      final l10n = await _l10n(tester);
+      await tester.enterText(
+        find.byKey(const ValueKey('login.email')),
+        'a@b.com',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('login.password')),
+        'hunter22',
+      );
+      await tester.tap(find.byKey(const ValueKey('login.submit')));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.authLoginErrorGeneric), findsOneWidget);
+      expect(
+        container.read(authControllerProvider).value,
+        isA<AuthLocalOnly>(),
+      );
+      expect(await container.read(tokenStoreProvider).read(), isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   // Localizations require flutter_localizations delegates.
   setUpAll(() {
     GlobalMaterialLocalizations.delegate;

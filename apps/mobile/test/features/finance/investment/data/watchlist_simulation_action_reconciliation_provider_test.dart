@@ -273,7 +273,7 @@ void main() {
     expect(container.read(provider).requireValue, hasLength(1));
     expect(
       container.read(provider).requireValue.single.allocationBasisKey,
-      isNull,
+      kWatchlistSimulationBaselineBasisKey,
     );
     expect(container.read(actionProvider).requireValue, isEmpty);
   });

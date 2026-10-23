@@ -9,7 +9,7 @@ import '../tokens/color_palette.dart';
 /// A domain accent is chrome identity only (switcher chip, switcher sheet,
 /// dock tab tint). It never recolors buttons, badges, or status surfaces:
 /// success/warning/danger and market up/down keep their semantic roles.
-/// Domains that leave `DomainPack.accent` null fall back to the global
+/// Domains that leave `DomainPack.shell.accent` null fall back to the global
 /// primary, which is pixel-identical to pre-accent behavior.
 @immutable
 class DomainAccent {

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/app/agent_runtime/catalog/agent_runtime_catalog.dart';
 import 'package:naviwealth/app/agent_runtime/runner/agent_runtime_step_runner.dart';
 import 'package:naviwealth/app/agent_runtime/trace/agent_runtime_trace_recorder.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/logging/providers.dart';
 
@@ -20,7 +21,7 @@ export 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_pl
 AgentRuntimeEffectPlanBinding agentRuntimeEffectPlanBinding(
   Ref ref, {
   required String agentId,
-  required String domain,
+  required AiDomain domain,
   required String surface,
 }) {
   return AgentRuntimeEffectPlanBinding.lazyCatalog(

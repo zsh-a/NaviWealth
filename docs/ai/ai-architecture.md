@@ -52,12 +52,28 @@ Rust 拥有 ChatTurn 状态、provider stream 解析、续轮和 tool-round budg
 FRB primitive frames 映射为 `AiChatEvent`，执行 active `DomainPack` 暴露的设备工具，
 再以 `chat_state` 和 `tool_results` 恢复 Rust loop。
 
+`FrbChatRunner` 是公共入口；内部 `frb_chat_run.dart` 只编排原生轮次与 Host 效果。
+`frb_chat_event_projection.dart` 将 FRB 帧投影为 UI/trace 事件；
+`frb_chat_tool_dispatch.dart` 批量并发只读工具、顺序执行写工具；
+`frb_chat_tool_journal.dart` 在副作用前记录 dispatch，完成后持久化结果。
+`frb_chat_recovery.dart` 用 sealed 状态区分可恢复工具结果、等待交互、待挂起交互、
+取消与失败，避免可空字段和布尔值组成非法恢复状态。Rust 的 snapshot/state
+仍作为不透明 Map 原样传递，Dart 不复制其运行时状态机。
+
+AI 的内部归属统一使用 `AiDomain`：业务域必须由 `AiDomain.domain(DomainScope)`
+构造；基础设施使用 `AiDomain.shell()`，跨域助手使用 `AiDomain.global()`。
+Intent、工具描述、Agent 产物、执行记录与 trace 必须显式提供归属。只有 JSON/数据库边界
+使用 `.wire` 字符串；缺失或未知值直接拒绝，不再隐式回落到 Finance，也不接受旧 `life` /
+`settings` 标记。Chat trace 从当前 `AiContext.domain` 生成归属，Health 页面因此记录为
+Health，全局页面记录为 global。
+
+
 每轮发送前，`ChatRepository` 调用 app-level Context Assembler：
 
 ```text
-current route -> active DomainPack.chatContextBuilder
+current route -> active DomainPack.ai.chatContextBuilder
   -> bounded domain Resource ContextBlocks
-active DomainPacks.memorySourcePrefixes
+active DomainPack.ai.memorySourcePrefixes
   -> MemoryAccessPolicy
 PersonalProfileStore -> PersonalProfileSnapshot
 MemoryRuntime / EventStore -> role-classified memory + recent events
@@ -70,7 +86,7 @@ persisted chat prefix omitted by ContextWindow
 ```
 
 Context Assembler 只接受域中立的 `AgentRuntimeContextBlock`。领域通过
-`DomainPack.chatContextBuilder` 提供有界事实：领域页面仅收集该 active domain，
+`DomainPack.ai.chatContextBuilder` 提供有界事实：领域页面仅收集该 active domain，
 全局 Assistant 才聚合全部 active domains。Finance 的 `finance:current_summary`
 包含当前 owner 的账户数量、风险及已有的 FIRE/异常/到期概况，复用已经加载的
 领域状态，不启动完整持仓读取；明细按工具请求获取。App 层分别组合系统、领域、Memory/Profile，单个可选来源失败不阻断

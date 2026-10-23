@@ -58,7 +58,7 @@ class DomainsSettingsPage extends ConsumerWidget {
   }) {
     final sections = <Widget>[];
     for (final pack in ref.watch(domainPackRegistryProvider)) {
-      final spec = pack.settingsSpec;
+      final spec = pack.shell.settingsSpec;
       if (spec == null) continue;
       if (sections.isNotEmpty) {
         sections.add(const SizedBox(height: AppSpacing.s16));
@@ -94,7 +94,7 @@ class DomainsSettingsPage extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context);
     final label =
-        pack.settingsSpec?.label ??
+        pack.shell.settingsSpec?.label ??
         switch (pack.scope) {
           DomainScope.finance => 'FinanceOS',
           DomainScope.health => 'HealthOS',
@@ -123,7 +123,7 @@ class DomainsSettingsPage extends ConsumerWidget {
         context.pop();
         return;
       }
-      final homePath = pack.tabPaths.isEmpty ? null : pack.tabPaths.first;
+      final homePath = pack.shell.navigation?.tabPaths.firstOrNull;
       if (homePath == null) return;
       final openNow = await showConfirmDialog(
         context: context,
@@ -131,7 +131,7 @@ class DomainsSettingsPage extends ConsumerWidget {
         body: Text(l10n.settingsDomainsEnableSuccessBody(label)),
         cancelLabel: l10n.settingsDomainsOpenLater,
         confirmLabel: l10n.settingsDomainsOpenNow,
-        icon: pack.settingsSpec?.icon,
+        icon: pack.shell.settingsSpec?.icon,
       );
       if (openNow == true && context.mounted) context.go(homePath);
       return;

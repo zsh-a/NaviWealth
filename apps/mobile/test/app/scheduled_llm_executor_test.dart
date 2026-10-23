@@ -146,7 +146,7 @@ void main() {
             toolDescriptorLookupProvider.overrideWithValue(
               (name) => ToolDescriptor(
                 name: name,
-                domain: 'finance',
+                domain: const AiDomain.domain(DomainScope.finance),
                 access: Access.read,
                 risk: RiskLevel.info,
                 requiresConfirmation: Confirmation.none,
@@ -260,7 +260,7 @@ void main() {
             toolDescriptorLookupProvider.overrideWithValue(
               (name) => ToolDescriptor(
                 name: name,
-                domain: domain.wire,
+                domain: AiDomain.domain(domain),
                 access: Access.read,
                 risk: RiskLevel.info,
                 requiresConfirmation: Confirmation.none,
@@ -306,7 +306,11 @@ void main() {
             toolDescriptorLookupProvider.overrideWithValue(
               (name) => ToolDescriptor(
                 name: name,
-                domain: name == 'other_domain' ? 'health' : 'finance',
+                domain: AiDomain.domain(
+                  name == 'other_domain'
+                      ? DomainScope.health
+                      : DomainScope.finance,
+                ),
                 access: name == 'write' ? Access.propose : Access.read,
                 risk: RiskLevel.info,
                 requiresConfirmation: Confirmation.none,

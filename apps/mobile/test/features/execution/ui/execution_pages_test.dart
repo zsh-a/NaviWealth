@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/forms/form_undo_banner.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -281,7 +282,7 @@ void main() {
                   id: 'review-focus',
                   ownerUserId: 'user',
                   agentId: 'execution_review',
-                  domain: 'execution',
+                  domain: const AiDomain.domain(DomainScope.execution),
                   kind: AgentArtifactKind.review,
                   severity: AgentArtifactSeverity.info,
                   title: 'Execution Review',

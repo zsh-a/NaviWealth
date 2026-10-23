@@ -7,6 +7,8 @@ library;
 
 import 'dart:convert';
 
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
+
 enum AgentArtifactKind { briefing, review, alert, reminder }
 
 extension AgentArtifactKindWire on AgentArtifactKind {
@@ -70,7 +72,7 @@ class AgentArtifact {
   final String id;
   final String ownerUserId;
   final String agentId;
-  final String domain;
+  final AiDomain domain;
   final AgentArtifactKind kind;
   final AgentArtifactSeverity severity;
   final String title;

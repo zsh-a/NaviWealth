@@ -88,8 +88,8 @@ final watchlistSimulationActionEntriesProvider = StreamProvider.autoDispose
           )
           .map(
             (entries) => entries
-                // Reference-only rows may predate allocation lineage; a
-                // paper-valued row must be tied to a concrete lineage.
+                // Reference-only rows carry no quantity basis; a paper-valued
+                // row must be tied to the selected allocation lineage.
                 .where(
                   (entry) =>
                       (entry.allocationBasisKey == null &&

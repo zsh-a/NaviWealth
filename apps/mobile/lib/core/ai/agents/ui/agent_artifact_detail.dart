@@ -482,7 +482,7 @@ Map<String, Object?> _agentArtifactAttrs(AgentArtifact artifact) {
   return <String, Object?>{
     'artifact_id': artifact.id,
     'agent_id': artifact.agentId,
-    'artifact_domain': artifact.domain,
+    'artifact_domain': artifact.domain.wire,
     'artifact_kind': artifact.kind.wire,
     'artifact_severity': artifact.severity.wire,
     'artifact_summary': artifact.summary,

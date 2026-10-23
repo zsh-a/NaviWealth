@@ -15,6 +15,7 @@ import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart';
 import 'package:naviwealth/core/ai/agents/ui/agent_result_card.dart';
 import 'package:naviwealth/core/ai/composition/ask_ai.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/intent/ai_intent_invocation.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
@@ -75,7 +76,7 @@ AgentArtifact _artifact({
     id: id,
     ownerUserId: 'user-1',
     agentId: agentId,
-    domain: 'health',
+    domain: const AiDomain.domain(DomainScope.health),
     kind: AgentArtifactKind.briefing,
     severity: AgentArtifactSeverity.attention,
     title: title,
@@ -893,7 +894,7 @@ class _FakeArtifactStore implements AgentArtifactStore {
   @override
   Future<List<AgentArtifact>> latestForDomain({
     required String ownerUserId,
-    required String domain,
+    required AiDomain domain,
     int limit = 20,
     DateTime? visibleAt,
   }) async => const <AgentArtifact>[];

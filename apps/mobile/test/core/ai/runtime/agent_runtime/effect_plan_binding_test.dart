@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 
 void main() {
@@ -7,7 +8,7 @@ void main() {
       final recorded = <AgentRuntimeNativeStepRunResult>[];
       final binding = AgentRuntimeEffectPlanBinding(
         agentId: 'execution_review',
-        domain: 'execution',
+        domain: const AiDomain.domain(DomainScope.execution),
         surface: 'agent_test',
         stepRunner: const _StaticStepRunner(
           AgentRuntimeNativeStepRunResult(
@@ -45,7 +46,7 @@ void main() {
         final recorded = <AgentRuntimeNativeStepRunResult>[];
         final binding = AgentRuntimeEffectPlanBinding(
           agentId: 'execution_review',
-          domain: 'execution',
+          domain: const AiDomain.domain(DomainScope.execution),
           surface: 'agent_test',
           stepRunner: _ThrowingStepRunner(StateError('native unavailable')),
           catalogJson: const <String, Object?>{},

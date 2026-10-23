@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../../core/persistence/test_database.dart';
 
@@ -14,7 +15,7 @@ void main() {
       id: 'artifact-1',
       ownerUserId: 'user-1',
       agentId: 'daily_navigator',
-      domain: 'health',
+      domain: const AiDomain.domain(DomainScope.health),
       kind: AgentArtifactKind.briefing,
       severity: AgentArtifactSeverity.attention,
       title: 'Daily Navigator',
@@ -94,7 +95,7 @@ void main() {
       Future<void> save({
         required String id,
         required String agentId,
-        required String domain,
+        required AiDomain domain,
         required DateTime createdAt,
       }) {
         return store.save(
@@ -115,19 +116,19 @@ void main() {
       await save(
         id: 'old-health',
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         createdAt: DateTime.utc(2026, 7, 1),
       );
       await save(
         id: 'new-health',
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         createdAt: DateTime.utc(2026, 7, 5),
       );
       await save(
         id: 'execution',
         agentId: 'execution_review',
-        domain: 'execution',
+        domain: const AiDomain.domain(DomainScope.execution),
         createdAt: DateTime.utc(2026, 7, 4),
       );
 
@@ -142,7 +143,7 @@ void main() {
 
       final byDomain = await store.latestForDomain(
         ownerUserId: 'user-1',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
       );
       expect(byDomain.map((artifact) => artifact.id), [
         'new-health',
@@ -169,7 +170,7 @@ void main() {
             id: id,
             ownerUserId: 'user-1',
             agentId: 'weekly_summary',
-            domain: 'health',
+            domain: const AiDomain.domain(DomainScope.health),
             kind: AgentArtifactKind.review,
             severity: AgentArtifactSeverity.info,
             title: id,
@@ -216,7 +217,7 @@ void main() {
 
       final afterSnooze = await store.latestForDomain(
         ownerUserId: 'user-1',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         visibleAt: now.add(const Duration(hours: 3)),
       );
       expect(afterSnooze.map((artifact) => artifact.id), [
@@ -239,7 +240,7 @@ void main() {
           id: 'stable-agent-artifact',
           ownerUserId: 'user-1',
           agentId: 'weekly_summary',
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           kind: AgentArtifactKind.review,
           severity: AgentArtifactSeverity.info,
           title: 'Weekly summary',
@@ -275,7 +276,7 @@ void main() {
           id: 'stable-snoozed-artifact',
           ownerUserId: 'user-1',
           agentId: 'weekly_summary',
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           kind: AgentArtifactKind.review,
           severity: AgentArtifactSeverity.info,
           title: 'Weekly summary',
@@ -293,7 +294,7 @@ void main() {
           id: 'stable-snoozed-artifact',
           ownerUserId: 'user-1',
           agentId: 'weekly_summary',
-          domain: 'health',
+          domain: const AiDomain.domain(DomainScope.health),
           kind: AgentArtifactKind.review,
           severity: AgentArtifactSeverity.warning,
           title: 'Weekly summary',
@@ -339,7 +340,7 @@ void main() {
         id: 'stable-agent-artifact',
         ownerUserId: ownerUserId,
         agentId: 'weekly_summary',
-        domain: 'health',
+        domain: const AiDomain.domain(DomainScope.health),
         kind: AgentArtifactKind.review,
         severity: AgentArtifactSeverity.info,
         title: 'Weekly summary',

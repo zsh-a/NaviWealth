@@ -900,6 +900,7 @@ void main() {
         sessionReader: () => _fakeSession,
         tracePrep: ({required requestId, required userMessage}) async {
           const intent = IntentHint(
+            domain: AiDomain.shell(),
             capability: Capability.analyze,
             risk: RiskLevel.suggest,
             label: 'chat_turn',

@@ -31,7 +31,9 @@ import '../../../core/persistence/test_database.dart';
 const _deviceId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const _financeDiagnosticsPack = DomainPack(
   scope: DomainScope.finance,
-  localTableCountsBuilder: financeLocalTableCounts,
+  data: DomainDataContribution(
+    localTableCountsBuilder: financeLocalTableCounts,
+  ),
 );
 
 SyncStabilitySample _stabilitySample({

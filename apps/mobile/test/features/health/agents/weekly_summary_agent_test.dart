@@ -11,12 +11,12 @@ import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
 import 'package:naviwealth/core/ai/agents/providers.dart' as agent_providers;
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/regression/agent_outcome_evaluator.dart';
 import 'package:naviwealth/core/ai/runtime/agent_runtime/agent_runtime_effect_plan_binding.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_dispatcher.dart';
 import 'package:naviwealth/core/ai/runtime/device/device_tool_session.dart';
 import 'package:naviwealth/core/auth/current_user.dart';
-import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
@@ -252,7 +252,7 @@ void main() {
     final artifact = await store.read(result.artifactId!);
     expect(artifact, isNotNull);
     expect(artifact!.kind, AgentArtifactKind.review);
-    expect(artifact.domain, 'health');
+    expect(artifact.domain, const AiDomain.domain(DomainScope.health));
     expect(artifact.severity, AgentArtifactSeverity.info);
     expect(artifact.memoryId, isNull);
     expect(artifact.traceId, 'trace-weekly-summary-1');
@@ -444,7 +444,7 @@ AgentArtifact _weeklyArtifact({
     id: id,
     ownerUserId: _owner,
     agentId: kWeeklySummaryAgentId,
-    domain: 'health',
+    domain: const AiDomain.domain(DomainScope.health),
     kind: AgentArtifactKind.review,
     severity: AgentArtifactSeverity.info,
     title: 'Weekly Summary',
@@ -460,7 +460,7 @@ AgentRuntimeEffectPlanBinding _runtime({
 }) {
   return agentRuntimeEffectPlanTestBinding(
     agentId: kWeeklySummaryAgentId,
-    domain: 'health',
+    domain: const AiDomain.domain(DomainScope.health),
     surface: 'health_weekly_summary',
     bridge: bridge,
     dispatcher: dispatcher,
@@ -472,9 +472,10 @@ AgentRuntimeEffectPlanBinding _runtime({
 AgentRuntimeCatalog _catalog() {
   return AgentRuntimeCatalog(
     generatedAt: DateTime.utc(2026, 6, 29, 20),
-    activeDomains: const <String>['health'],
+    activeDomains: const <DomainScope>[DomainScope.health],
     agents: const <AgentRuntimeAgentSpec>[
       AgentRuntimeAgentSpec(
+        domain: AiDomain.domain(DomainScope.health),
         id: kWeeklySummaryAgentId,
         name: 'Weekly Summary',
         version: '0.1.0',

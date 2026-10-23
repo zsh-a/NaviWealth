@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact.dart';
 import 'package:naviwealth/core/ai/agents/agent_finding_store.dart';
+import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../persistence/test_database.dart';
 
@@ -16,7 +17,7 @@ void main() {
         id: 'finding-1',
         ownerUserId: 'owner',
         agentId: 'agent',
-        domain: 'knowledge',
+        domain: const AiDomain.domain(DomainScope.knowledge),
         kind: 'contradiction',
         severity: AgentArtifactSeverity.warning,
         confidence: 0.9,

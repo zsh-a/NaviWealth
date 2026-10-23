@@ -167,29 +167,7 @@ void main() {
           'name': 'Growth paper mix',
           'base_currency': 'USD',
           'starting_capital': '100000',
-          'cash_weight': '0.2',
-          'allocation_protocol_version': 1,
           'baseline_at': 1_700_000_000,
-          'created_at': 1_700_000_000,
-          'owner_user_id': _user,
-          'updated_at': 1_700_000_000,
-          'updated_by_device': _devA,
-          'hlc': version,
-          'deleted_at': null,
-        },
-        version: version,
-        deleted: false,
-        deviceId: _devA,
-      ),
-      RowChange(
-        table: prefixFinanceTable('watchlist_simulation_positions'),
-        id: 'position-1',
-        payload: <String, Object?>{
-          'id': 'position-1',
-          'simulation_id': 'simulation-1',
-          'watchlist_item_id': 'us_stock:AAPL',
-          'target_weight': '0.8',
-          'requires_explicit_head': true,
           'created_at': 1_700_000_000,
           'owner_user_id': _user,
           'updated_at': 1_700_000_000,
@@ -228,9 +206,7 @@ void main() {
           'effective_at': 1_700_000_000,
           'reason': 'creation',
           'previous_allocation_version_id': null,
-          'requires_explicit_head': true,
           'cash_weight': '0.2',
-          'is_complete': true,
           'created_at': 1_700_000_000,
           'owner_user_id': _user,
           'updated_at': 1_700_000_000,
@@ -311,16 +287,10 @@ void main() {
       ),
     ]);
 
-    expect(written, 6);
+    expect(written, 5);
     final simulation = await (db.select(
       db.watchlistSimulations,
     )..where((t) => t.id.equals('simulation-1'))).getSingle();
-    final position = await (db.select(
-      db.watchlistSimulationPositions,
-    )..where((t) => t.id.equals('position-1'))).getSingle();
-    expect(simulation.collectionId, 'collection-growth');
-    expect(simulation.startingCapital.toString(), '100000');
-    expect(simulation.allocationProtocolVersion, 1);
     final head = await (db.select(
       db.watchlistSimulationAllocationHeads,
     )..where((t) => t.id.equals('simulation-1'))).getSingle();
@@ -333,12 +303,11 @@ void main() {
     final action = await (db.select(
       db.watchlistSimulationActionEntries,
     )..where((t) => t.id.equals('action-1'))).getSingle();
-    expect(position.watchlistItemId, 'us_stock:AAPL');
-    expect(position.targetWeight.toString(), '0.8');
-    expect(position.requiresExplicitHead, isTrue);
+    expect(simulation.startingCapital.toString(), '100000');
+    expect(allocation.cashWeight.toString(), '0.2');
+    expect(holding.watchlistItemId, 'us_stock:AAPL');
+    expect(holding.targetWeight.toString(), '0.8');
     expect(head.allocationVersionId, 'allocation-1');
-    expect(allocation.requiresExplicitHead, isTrue);
-    expect(allocation.isComplete, isTrue);
     expect(holding.quantity.toString(), '400');
     expect(holding.fxToBase.toString(), '1');
     expect(action.revisionHash, 'revision-1');
@@ -370,8 +339,6 @@ void main() {
             'name': 'Growth paper mix',
             'base_currency': 'USD',
             'starting_capital': '100000',
-            'cash_weight': '0.2',
-            'calculation_mode': 'holdingsTotalReturnV2',
             'baseline_at': 1_700_000_000,
             'created_at': 1_700_000_000,
             'owner_user_id': _user,
@@ -401,6 +368,18 @@ void main() {
         )
         .getSingle();
     expect(observationCount.read<int>('count'), 1);
+
+    // Only physical removal clears the device-local series. This invariant
+    // belongs to the current schema, independently of retired migrations.
+    await (db.delete(
+      db.watchlistSimulations,
+    )..where((t) => t.id.equals('simulation-1'))).go();
+    expect(
+      await db
+          .customSelect('SELECT * FROM watchlist_simulation_observations')
+          .get(),
+      isEmpty,
+    );
   });
 
   test('skips rows that are not syncable tables', () async {

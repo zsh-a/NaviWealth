@@ -5,7 +5,11 @@ import 'package:naviwealth/core/ai/trace/ai_trace_builder.dart';
 AiTrace _seed() => const AiTrace(
   requestId: 'req-1',
   startedAtIso: '2026-05-17T10:00:00.000Z',
-  intent: IntentHint(capability: Capability.analyze, risk: RiskLevel.suggest),
+  intent: IntentHint(
+    domain: AiDomain.shell(),
+    capability: Capability.analyze,
+    risk: RiskLevel.suggest,
+  ),
   backend: Backend.device,
   budgetTier: BudgetTier.standard,
   routingReason: 'device_llm_direct',

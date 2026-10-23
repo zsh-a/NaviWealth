@@ -89,6 +89,7 @@ void main() {
       'descriptor proposal authority does not depend on tool prefix',
       () async {
         const descriptor = ToolDescriptor(
+          domain: AiDomain.shell(),
           name: 'queue_work',
           access: Access.propose,
           risk: RiskLevel.propose,
@@ -120,6 +121,7 @@ void main() {
 
     test('a propose prefix cannot bypass descriptor write policy', () async {
       const descriptor = ToolDescriptor(
+        domain: AiDomain.shell(),
         name: 'propose_unsafe',
         access: Access.read,
         risk: RiskLevel.info,

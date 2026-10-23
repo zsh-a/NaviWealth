@@ -91,6 +91,20 @@ sidebar. Review is reached from one domain header action, the Life review
 entry, or a relevant signal/artifact; it is not duplicated in the command
 palette.
 
+`DomainPack` groups contributions by responsibility:
+
+| Contribution | Responsibility |
+|---|---|
+| `ai` | Tools, explicit Assistant catalog, intents, context, proposals, agents and memory source access |
+| `shell` | Navigation, accent, command palette and settings surfaces |
+| `lifecycle` | Memory/background startup hooks and provider overrides |
+| `data` | Life signals, source routing, diagnostics, maintenance and share handlers |
+
+A navigable pack supplies one `DomainNavigation` with a required shell spec,
+route builder and tab paths. A pack without navigation cannot accidentally
+advertise disconnected tab roots. An omitted Assistant selector exposes no
+conversational tools; private agent tools are never published by fallback.
+
 ## Adding Or Changing A Domain
 
 Use this path for any domain-level change:
@@ -134,13 +148,13 @@ Rules:
 
 - Settings, login, onboarding, the `/assistant` conversation workspace, and
   global configuration routes stay outside the domain dock shell.
-- A domain owns its tab paths through `DomainPack.tabPaths`.
-- A domain may declare a chrome identity hue through `DomainPack.accent`
+- A domain owns its tab paths through `DomainPack.shell.navigation.tabPaths`.
+- A domain may declare a chrome identity hue through `DomainPack.shell.accent`
   (a light/dark `DomainAccent` pair from `design_system/theme/domain_accent.dart`).
   It tints only shell chrome — the switcher chip/sheet, the dock/rail/sidebar
   selected-tab treatment, and the desktop workspace tile. Null falls back to
   the global primary; status and market colors always stay semantic.
-- Additional route prefixes that belong to a domain but are not tabs use `DomainPack.additionalPathPrefixes`.
+- Additional route prefixes that belong to a domain but are not tabs use `DomainPack.shell.navigation.additionalPathPrefixes`.
 - Desktop uses one visual sidebar at the large window class (1200dp+). Its
   workspace row switches between Life and active domains. Life and all enabled
   domains remain directly reachable in the sidebar, including from Life. The
@@ -212,6 +226,19 @@ Rules:
 - Tool lists, prompt blocks, shell specs, agents, and command entries are derived from active domain packs.
 - Backend auth may use the domain claim to filter sync pulls; client code must still enforce local opt-in for UI and domain jobs.
 
+Auth state changes use a session revision and a serialized local commit gate.
+An explicit login, logout or local-mode intent supersedes older network work;
+late success and failure cannot rewrite or clear a newer session. Refresh is
+single-flight within its revision. Already-started persistence commits finish
+before the next identity write. Logout clears the local identity before remote
+device revocation, and a subsequent login waits for that revocation.
+
+`AuthController` owns state and revisions; `SessionPersistence` writes and
+compensates token/mode/device snapshots; `OwnerTransferService` coordinates
+ownership changes, sync draining and transfer-journal recovery. Mode reads and
+writes propagate failures. A failed connect cannot claim success while leaving
+a local-only boot mode behind; failed compensation keeps auth unavailable.
+
 Ownership transfer between local-only and signed-in identities is defined by
 `apps/mobile/lib/core/persistence/owner_data_migration.dart`, independently of the
 sync table registry. Its explicit inventory includes source rows, local recurring
@@ -271,7 +298,7 @@ Rules:
 - Read tools can return direct data.
 - Write tools either return `ProposalEnvelope` or require explicit confirmation. Narrow local writes must be documented in the domain SSOT.
 - System prompts are active-domain scoped. The model must not receive instructions for inactive domain tools.
-- `DomainPack.chatContextBuilder` contributes bounded context for the current
+- `DomainPack.ai.chatContextBuilder` contributes bounded context for the current
   route's active domain; global Assistant aggregates active domains. The app
   context assembler composes neutral runtime blocks with optional memory/profile
   evidence. Domain facts and portfolio loading do not belong in `core/ai/`.
@@ -304,8 +331,8 @@ Proposal application is a cross-domain seam under `core/ai/composition/`.
 
 Current composition:
 
-- Each domain contributes proposal card metadata through `DomainPack.proposalKinds`.
-- Each domain contributes proposal apply/undo routing through `DomainPack.proposalApplierRouteBuilder`.
+- Each domain contributes proposal card metadata through `DomainPack.ai.proposalKinds`.
+- Each domain contributes proposal apply/undo routing through `DomainPack.ai.proposalApplierRouteBuilder`.
 - `proposalKindRegistryProvider` and `proposalApplierProvider` are derived from active domain packs by `app/domain_composition.dart`.
 - Finance exposes `financeProposalApplierProvider`.
 - `CompositeProposalApplier` routes by explicit domain-owned proposal kinds and applied table prefixes. Unknown kinds or tables fail fast.
@@ -327,7 +354,7 @@ and evidence; app composition must not repeat financial calculations or infer
 clearance from an incomplete observation.
 
 ExecutionOS contributes its contextual review destination through
-`DomainPack.reviewRoutePath`. The Life hub renders one review entry and offers
+`DomainPack.shell.navigation.reviewRoutePath`. The Life hub renders one review entry and offers
 only active domains with a real destination. Review data and pages stay
 domain-owned; generic Life signals are not presented as a review backlog.
 
@@ -421,9 +448,9 @@ Rules:
   constraints, and rules live in Personal Profile and require explicit user
   confirmation.
 - Domain indexers live in domain `data/`.
-- Domain indexers are contributed through `DomainPack.memoryBootstrapBuilder`;
+- Domain indexers are contributed through `DomainPack.lifecycle.memoryBootstrapBuilder`;
   the app bootstrap only loops active packs.
-- Every domain also declares `DomainPack.memorySourcePrefixes`. App composition
+- Every domain also declares `DomainPack.ai.memorySourcePrefixes`. App composition
   turns active packs into one `MemoryAccessPolicy`; automatic Chat assembly,
   `build_context`, `query_memory`, proposal target lookup, and proposal apply
   all reuse it. Rows from disabled domains remain local but cannot be recalled
@@ -485,7 +512,7 @@ registry seam:
 - Domain-neutral contracts and inspection/maintenance orchestration live in
   `core/data_management/`.
 - Each domain owns a `features/<domain>/data_management/` spec and registers it
-  through `DomainPack.dataManagementSpec`.
+  through `DomainPack.data.dataManagementSpec`.
 - The page reads the complete `domainPackRegistryProvider`, not only active
   packs. Data from a disabled optional domain must remain visible and
   maintainable.
@@ -705,15 +732,14 @@ confirmed rows intact. Primary-key collisions with preserved rows abort and
 roll back the restore. Older archives without an owner header are validated by
 their row owners; account identity remapping is not part of restore.
 
-Schema v80/v81 intentionally reset Execution/Knowledge tables. These historical
-resets do not establish a general data-preserving upgrade guarantee. Future
-schema changes must state preservation or explicit reset behavior and provide
-upgrade, failed-upgrade, and supported-old-archive evidence for affected user
-data. Schema v95→v96 adds only local Sync compatibility state and wraps upgrades
-in a transaction. File-backed tests preserve all four domains, confirmed Memory,
-Profile, vectors, dirty pointers and sync metadata; an injected failure after
-DDL rolls back and succeeds on retry. These tests do not recover data removed
-by historical resets or replace packaged-device interruption evidence.
+Schema 98 is a fresh baseline. Historical schema upgrades and downgrades are
+unsupported. Opening another version raises `UnsupportedDatabaseSchema` without
+rewriting or deleting its rows. The startup gate explains the format mismatch
+and offers a confirmed local reset on native and Web; reset is never automatic.
+Current-baseline databases reopen normally. `schema_baseline_test.dart` verifies
+repeated rejection leaves the old schema and data intact, and verifies current
+schema reopen. Backup validation and Sync's generic opaque-field handling are
+separate contracts; they do not provide a database-format migration path.
 
 ## Background And Notifications
 

@@ -22,17 +22,35 @@ import '../core/persistence/test_database.dart';
 
 const _financePack = DomainPack(
   scope: DomainScope.finance,
-  tabPaths: <String>[AppRoutes.home, AppRoutes.activity, AppRoutes.wealth],
+  shell: DomainShellContribution(
+    navigation: DomainNavigation(
+      tabPaths: <String>[AppRoutes.home, AppRoutes.activity, AppRoutes.wealth],
+      shellSpecBuilder: _unusedShellSpec,
+      shellRouteBuilder: _unusedShellRoute,
+    ),
+  ),
 );
 
 const _healthPack = DomainPack(
   scope: DomainScope.health,
-  tabPaths: <String>[AppRoutes.healthToday],
+  shell: DomainShellContribution(
+    navigation: DomainNavigation(
+      tabPaths: <String>[AppRoutes.healthToday],
+      shellSpecBuilder: _unusedShellSpec,
+      shellRouteBuilder: _unusedShellRoute,
+    ),
+  ),
 );
 
 const _knowledgePack = DomainPack(
   scope: DomainScope.knowledge,
-  tabPaths: <String>[AppRoutes.knowledgeInbox],
+  shell: DomainShellContribution(
+    navigation: DomainNavigation(
+      tabPaths: <String>[AppRoutes.knowledgeInbox],
+      shellSpecBuilder: _unusedShellSpec,
+      shellRouteBuilder: _unusedShellRoute,
+    ),
+  ),
 );
 
 class _StubGuard implements RouteGuard {
@@ -365,3 +383,9 @@ void main() {
     },
   );
 }
+
+Never _unusedShellSpec(Object _) =>
+    throw StateError('Shell UI is outside this test.');
+
+Never _unusedShellRoute() =>
+    throw StateError('Shell routes are outside this test.');
