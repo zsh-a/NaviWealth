@@ -31,6 +31,48 @@ class _DisabledActivateAction extends Action<ActivateIntent> {
   void invoke(ActivateIntent intent) {}
 }
 
+/// Named interaction surface for custom app buttons and navigation controls.
+///
+/// Forui owns the single button semantics node and its gesture/focus actions;
+/// only the decorative content is excluded. Excluding the entire tappable's
+/// descendants would also remove its semantic tap action.
+class AppActionTappable extends StatelessWidget {
+  const AppActionTappable({
+    super.key,
+    required this.semanticsLabel,
+    required this.onPress,
+    required this.child,
+    this.selected = false,
+    this.focusedOutlineStyle,
+    this.builder = FTappable.defaultBuilder,
+  }) : assert(semanticsLabel != '', 'semanticsLabel must not be empty');
+
+  final String semanticsLabel;
+  final VoidCallback? onPress;
+  final Widget child;
+  final bool selected;
+  final FFocusedOutlineStyleDelta? focusedOutlineStyle;
+  final ValueWidgetBuilder<Set<FTappableVariant>> builder;
+
+  @override
+  Widget build(BuildContext context) => _ManagedActionFocus(
+    enabled: onPress != null,
+    focusNode: null,
+    builder: (focusNode) => FTappable(
+      semanticsLabel: semanticsLabel,
+      onPress: onPress,
+      selected: selected,
+      focusNode: focusNode,
+      focusedOutlineStyle: focusedOutlineStyle,
+      shortcuts: appActionActivationShortcuts,
+      actions: _disabledActivationActions(onPress),
+      builder: (context, variants, child) =>
+          ExcludeSemantics(child: builder(context, variants, child)),
+      child: child,
+    ),
+  );
+}
+
 /// App-owned text action with a large Forui target and reliable keyboard use.
 ///
 /// [FButton] 0.23 declares shortcut/action fields but does not forward them

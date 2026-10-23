@@ -12,15 +12,18 @@ import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/fire/data/fire_providers.dart';
+import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
+import 'package:naviwealth/features/finance/investment/data/providers.dart';
 import 'package:naviwealth/features/finance/liabilities/data/providers.dart';
 
 import '../../../../core/auth/current_user.dart';
 import '../../../../core/persistence/providers.dart';
+import '../../../../core/time/current_time_provider.dart';
 import '../domain/money_runway.dart';
 import 'runway_forecast_repository.dart';
 
 final moneyRunwayNowProvider = Provider<DateTime>(
-  (ref) => DateTime.now().toUtc(),
+  (ref) => ref.watch(currentTimeProvider).toUtc(),
 );
 
 final runwayForecastRepositoryProvider =
@@ -45,6 +48,7 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
   final recurring = ref.watch(recurringTransactionsProvider);
   final events = ref.watch(cashFlowEventsProvider);
   final accounts = ref.watch(allAccountsStreamProvider);
+  final assets = ref.watch(allAssetsStreamProvider);
   final liabilities = ref.watch(liabilitiesStreamProvider);
   final schedules = ref.watch(allLiabilitySchedulesProvider);
   final dividendCash = ref.watch(dividendCashProjection90dProvider);
@@ -54,6 +58,7 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
       recurring.isLoading ||
       events.isLoading ||
       accounts.isLoading ||
+      assets.isLoading ||
       liabilities.isLoading ||
       schedules.isLoading) {
     return const AsyncValue<MoneyRunwaySnapshot>.loading();
@@ -63,6 +68,7 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
       recurring.error ??
       events.error ??
       accounts.error ??
+      assets.error ??
       liabilities.error ??
       schedules.error;
   if (error != null) {
@@ -262,6 +268,14 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
     final reserveTarget =
         configuredMonthlyExpense * Decimal.fromInt(reserveMonths);
     final startingBalance = computeLiquidAssets(snapshot).amount;
+    final includedCashIds = {
+      for (final allocation in snapshot.allocations)
+        if (allocation.category == AssetCategory.cash)
+          for (final item in allocation.items) item.id,
+    };
+    final balanceIsComplete = assets.requireValue
+        .where((asset) => asset.type == AssetType.cash)
+        .every((asset) => includedCashIds.contains(asset.id));
     final completeness =
         ((observedDays / 60).clamp(0, 1) * 0.5 +
                 (flows.isEmpty ? 0 : 0.25) +
@@ -272,7 +286,9 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
         .value
         ?.meanRelativeError;
     final calculatedConfidence =
-        completeness < 0.5 || (forecastError != null && forecastError > 0.25)
+        !balanceIsComplete ||
+            completeness < 0.5 ||
+            (forecastError != null && forecastError > 0.25)
         ? MoneyRunwayConfidence.low
         : completeness < 0.8 || (forecastError != null && forecastError > 0.10)
         ? MoneyRunwayConfidence.medium
@@ -301,6 +317,7 @@ final moneyRunwayProvider = Provider<AsyncValue<MoneyRunwaySnapshot>>((ref) {
         scheduledFlows: flows,
         confidence: confidence,
         dataCompleteness: completeness,
+        balanceIsComplete: balanceIsComplete,
         historicalForecastError: forecastError,
         missingCurrencies: missingCurrencies,
         hasData: !snapshot.isEmpty || events.requireValue.events.isNotEmpty,

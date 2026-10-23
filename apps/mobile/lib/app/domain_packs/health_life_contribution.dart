@@ -50,6 +50,18 @@ DomainLifeSignalSlice healthLifeSignals(Ref ref, DateTime now) {
   return DomainLifeSignalSlice(
     events: List<LifeEvent>.unmodifiable(events),
     evaluatedSourceFamilies: Set<String>.unmodifiable(evaluated),
+    sourceEvaluations: {
+      (
+        rowFamily: _metricFamily,
+        rowId: 'recovery:${_dayKey(now)}',
+      ): recovery.hasError
+          ? LifeSourceEvaluationStatus.failed
+          : !_settled(recovery)
+          ? LifeSourceEvaluationStatus.pending
+          : verdict == null || verdict == 'insufficient_data'
+          ? LifeSourceEvaluationStatus.incomplete
+          : LifeSourceEvaluationStatus.complete,
+    },
   );
 }
 

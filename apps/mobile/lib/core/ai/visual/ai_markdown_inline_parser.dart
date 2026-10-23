@@ -112,13 +112,8 @@ class _InlineParser {
               decorationColor: AiTone.active(context)
                   .withValues(alpha: AppOpacity.disabled),
             );
-            // The label is rendered inside a tappable WidgetSpan so we
-            // don't need to wire a TapGestureRecognizer (which would
-            // need lifecycle management). The trade-off: link text
-            // isn't part of the surrounding SelectableText selection.
-            // That's an acceptable cost — copying the assistant turn
-            // already uses the message-level "Copy" affordance, and
-            // selection across hostile URLs is a rare need.
+            // The link owns its interaction in a WidgetSpan; its Text still
+            // participates in the document's shared SelectionArea.
             out.add(_LinkSpan.build(label, url, linkStyle, context));
             i = paren + 1;
             continue;
@@ -177,8 +172,7 @@ class _InlineParser {
 }
 
 /// Tappable link span. Hosted in a `WidgetSpan` so we don't have to
-/// manage `TapGestureRecognizer` lifecycles — `SelectableText.rich`
-/// would otherwise leak them on rebuild. Confirms the destination
+/// manage `TapGestureRecognizer` lifecycles during rebuilds. Confirms the destination
 /// with the user before handing the URL to the OS, because AI replies
 /// are an untrusted surface (prompt-injection vector).
 class _LinkSpan {
@@ -210,8 +204,8 @@ class _LinkTappable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      container: true,
       link: true,
-      label: label,
       hint: url,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -225,7 +219,7 @@ class _LinkTappable extends StatelessWidget {
 }
 
 /// Shared confirm dialog — surfaces the *full URL* in a non-editable
-/// SelectableText so the user can verify (and copy) the destination
+/// selection area so the user can verify (and copy) the destination
 /// before opening it. Returns silently on cancel; shows a snackbar if
 /// `launchUrl` reports failure (no installed handler / blocked).
 Future<void> _confirmAndOpen(BuildContext context, String url) async {
@@ -253,13 +247,15 @@ Future<void> _confirmAndOpen(BuildContext context, String url) async {
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(color: AiTone.outline(context)),
           ),
-          child: SelectableText(
-            url,
-            style: AiType.body(context).copyWith(
-              fontFamily: 'monospace',
-              fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
+          child: SelectionArea(
+            child: Text(
+              url,
+              style: AiType.body(context).copyWith(
+                fontFamily: 'monospace',
+                fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
+              ),
+              maxLines: 4,
             ),
-            maxLines: 4,
           ),
         ),
       ],

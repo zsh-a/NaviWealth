@@ -9,6 +9,7 @@ import '../../core/ai/llm_credentials/providers.dart';
 import '../../core/developer/developer_issue.dart';
 import '../../core/developer/providers.dart';
 import '../../core/lifeos/domain_pack.dart';
+import '../../core/shell/active_route.dart';
 import '../../core/shell/desktop_sidebar.dart';
 import '../../core/shell/domain_shell.dart';
 import '../../core/shell/domain_switcher.dart';
@@ -96,7 +97,7 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   }
 
   void _syncRoute(GoRouter router) {
-    final location = router.routeInformationProvider.value.uri.path;
+    final location = activeRoutePath(router);
     final nextDomain = domainForRoute(
       ref.read(domainPackRegistryProvider),
       location,
@@ -127,7 +128,7 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
   bool _handleSystemBackBeforeExit(BuildContext context) {
     if (attemptBack(context)) return true;
     final router = GoRouter.of(context);
-    final path = router.routeInformationProvider.value.uri.path;
+    final path = activeRoutePath(router);
     final packs = ref.read(activeDomainPacksProvider);
     final tabs = domainTabPathsForLocation(packs, path);
     if (tabs.length > 1 && tabs.contains(path) && path != tabs.first) {
@@ -154,7 +155,7 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
       animation: router.routerDelegate,
       child: widget.child,
       builder: (context, child) {
-        final location = router.routeInformationProvider.value.uri.path;
+        final location = activeRoutePath(router);
         final routedChild = child ?? const SizedBox.shrink();
         DomainShellSpec? activeSpec;
         for (final spec in specs) {

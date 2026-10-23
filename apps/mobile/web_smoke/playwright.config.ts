@@ -22,6 +22,9 @@ export default defineConfig({
     : 'list',
   use: {
     baseURL,
+    locale: 'en-US',
+    actionTimeout: 10_000,
+    navigationTimeout: 30_000,
     serviceWorkers: 'block',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
@@ -46,8 +49,8 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  // Serve the static Flutter build with the right COOP/COEP headers so
-  // OPFS (where supported) can pick the cross-origin-isolated path.
+  // The preview server also exercises Drift's persistent fallback without
+  // requiring cross-origin isolation headers from the deployment host.
   webServer: process.env.WEB_SMOKE_BASE_URL
     ? undefined
     : {

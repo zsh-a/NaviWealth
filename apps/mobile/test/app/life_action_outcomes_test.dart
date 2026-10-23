@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/app/life_action_outcomes.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
@@ -22,6 +23,12 @@ void main() {
       currentSnapshot: LifeSignalSnapshot(
         observedAt: DateTime.utc(2026, 7, 18),
         evaluatedSourceFamilies: const <String>{'health:health_metrics'},
+        sourceEvaluations: const {
+          (rowFamily: 'health:health_metrics', rowId: 'recovery:2026-07-17'):
+              LifeSourceEvaluationStatus.complete,
+          (rowFamily: 'health:health_metrics', rowId: 'inbox'):
+              LifeSourceEvaluationStatus.complete,
+        },
         events: [
           LifeEvent(
             id: 'recovery',
@@ -49,7 +56,7 @@ void main() {
     expect(outcomes, isNot(contains('dropped')));
   });
 
-  test('does not infer clearance from an unevaluated source family', () {
+  test('unsupported sources remain explicit without inferred clearance', () {
     final action = _action(id: 'loading', rowId: 'recovery:2026-07-17');
 
     final outcomes = deriveLifeActionOutcomes(
@@ -61,7 +68,8 @@ void main() {
       ),
     );
 
-    expect(outcomes, isEmpty);
+    expect(outcomes['loading']?.status, ActionOutcomeStatus.unsupported);
+    expect(outcomes['loading']?.evaluatedAt, isNull);
   });
 
   test('requires a later observation and a concrete source id', () {
@@ -83,8 +91,106 @@ void main() {
       ),
     );
 
-    expect(sameMoment, isEmpty);
-    expect(missingId, isEmpty);
+    expect(sameMoment['same-time']?.status, ActionOutcomeStatus.pending);
+    expect(missingId['missing-id']?.status, ActionOutcomeStatus.unsupported);
+  });
+
+  for (final entry in {
+    LifeSourceEvaluationStatus.pending: ActionOutcomeStatus.pending,
+    LifeSourceEvaluationStatus.incomplete: ActionOutcomeStatus.incomplete,
+    LifeSourceEvaluationStatus.failed: ActionOutcomeStatus.failed,
+  }.entries) {
+    test('preserves ${entry.key.name} without an observation timestamp', () {
+      final outcomes = deriveLifeActionOutcomes(
+        closedActions: [_action(id: 'action', rowId: 'source')],
+        currentSnapshot: LifeSignalSnapshot(
+          observedAt: DateTime.utc(2026, 7, 18),
+          events: const [],
+          evaluatedSourceFamilies: const {},
+          sourceEvaluations: {
+            (rowFamily: 'health:health_metrics', rowId: 'source'): entry.key,
+          },
+        ),
+      );
+      expect(outcomes['action']?.status, entry.value);
+      expect(outcomes['action']?.evaluatedAt, isNull);
+      expect(outcomes['action']?.isObserved, isFalse);
+    });
+  }
+
+  test('today being evaluated cannot clear an older source identity', () {
+    final outcomes = deriveLifeActionOutcomes(
+      closedActions: [_action(id: 'older', rowId: 'recovery:2026-07-17')],
+      currentSnapshot: LifeSignalSnapshot(
+        observedAt: DateTime.utc(2026, 7, 18),
+        events: const [],
+        evaluatedSourceFamilies: const {'health:health_metrics'},
+        sourceEvaluations: const {
+          (rowFamily: 'health:health_metrics', rowId: 'recovery:2026-07-18'):
+              LifeSourceEvaluationStatus.complete,
+        },
+      ),
+    );
+    expect(outcomes['older']?.status, ActionOutcomeStatus.incomplete);
+    expect(outcomes['older']?.evaluatedAt, isNull);
+  });
+
+  test(
+    'financial outcome reflects live read failures and preserves evidence time',
+    () {
+      final action = _action(id: 'financial', rowId: 'signal');
+      final observedAt = DateTime.utc(2026, 7, 18);
+      final stored = AsyncValue.data({
+        action.id: ActionOutcomeSummary(
+          status: ActionOutcomeStatus.signalCleared,
+          sourceLabel: 'signal kind',
+          sourceCapturedAt: action.createdAt,
+          evaluatedAt: observedAt,
+        ),
+      });
+      ActionOutcomeSummary derive(AsyncValue<Object?> scan) =>
+          deriveFinancialActionOutcome(
+            action: action,
+            stored: stored,
+            revalidation: const AsyncValue.data(null),
+            scan: scan,
+          );
+      expect(
+        derive(const AsyncValue.loading()).status,
+        ActionOutcomeStatus.pending,
+      );
+      final failed = derive(
+        AsyncValue.error(StateError('read failed'), StackTrace.current),
+      );
+      expect(failed.status, ActionOutcomeStatus.failed);
+      expect(failed.evaluatedAt, isNull);
+      final recovered = derive(const AsyncValue.data(null));
+      expect(recovered.status, ActionOutcomeStatus.signalCleared);
+      expect(recovered.evaluatedAt, observedAt);
+      expect(
+        recovered.sourceLabel,
+        'HealthOS',
+      ); // Stable action label, not raw signal kind.
+    },
+  );
+
+  test('an older financial observation cannot evaluate a newer completion', () {
+    final action = _action(id: 'financial', rowId: 'signal');
+    final outcome = deriveFinancialActionOutcome(
+      action: action,
+      stored: AsyncValue.data({
+        action.id: ActionOutcomeSummary(
+          status: ActionOutcomeStatus.signalCleared,
+          sourceLabel: 'Source',
+          sourceCapturedAt: action.createdAt,
+          evaluatedAt: action.completedAt!.subtract(const Duration(days: 1)),
+        ),
+      }),
+      revalidation: const AsyncValue.data(null),
+      scan: const AsyncValue.data(null),
+    );
+    expect(outcome.status, ActionOutcomeStatus.incomplete);
+    expect(outcome.evaluatedAt, isNull);
   });
 }
 

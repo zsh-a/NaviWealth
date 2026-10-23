@@ -31,7 +31,12 @@ class MoneyRunwayPage extends ConsumerWidget {
       unawaited(
         ref
             .read(runwayForecastRepositoryProvider.future)
-            .then((repository) => repository.recordAndEvaluate(snapshot)),
+            .then((repository) => repository.recordAndEvaluate(snapshot))
+            .then((changed) {
+              if (changed && context.mounted) {
+                ref.invalidate(runwayForecastQualityProvider);
+              }
+            }),
       );
     });
     final runway = ref.watch(moneyRunwayProvider);

@@ -4,6 +4,19 @@ Behavior contract for the Flutter web build's go_router setup. Automated coverag
 
 Tracking issues: web routing verification, initial setup, cross-browser matrix.
 
+Page pushes reflect the topmost page's canonical URL, including Knowledge note
+and Execution Action IDs. App composition enables
+`GoRouter.optionURLReflectsImperativeAPIs`; all page constructors must remain
+usable from path/query parameters without an in-memory `extra` object. Pop and
+browser Back restore the previous URL. Hard refresh restores the visible
+record, while optional unsaved form prefills are not durable route state.
+Bottom sheets remain transient overlays.
+
+Shell chrome and route context use the router's matched configuration, including
+redirects and pushed pages. They must not classify the visible domain from a
+requested URL that is still being redirected; a Finance-only `/life` arrival
+renders Finance Today with its Finance navigation.
+
 ## Setup
 
 ```bash

@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/ai/composition/ask_ai.dart';
 import '../../core/lifeos/domain_pack.dart';
+import '../../core/shell/active_route.dart';
 import '../../core/shell/domain_shell.dart';
 import '../../core/shell/domain_switcher.dart';
 import '../../core/shell/settings_route_paths.dart';
@@ -100,7 +101,7 @@ class DomainSwitcherChip extends ConsumerWidget {
     if (specs.isEmpty) return const SizedBox.shrink();
     final homePath = ref.watch(domainSwitcherHomePathProvider);
 
-    final path = GoRouter.of(context).routeInformationProvider.value.uri.path;
+    final path = activeRoutePath(GoRouter.of(context));
     final isLifeHub = path == homePath;
     final single = specs.length == 1 ? specs.single : null;
     final singleTarget = single != null && single.tabs.isNotEmpty

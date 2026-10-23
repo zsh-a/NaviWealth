@@ -1,10 +1,34 @@
 import 'package:drift/drift.dart' hide isNotNull, isNull;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/features/finance/data/securities_catalog/securities_catalog_loader.dart';
 
 import '../../../../core/persistence/test_database.dart';
 import '_catalog_fixtures.dart';
+
+class _CatalogWriteProbe extends QueryInterceptor {
+  int calls = 0;
+
+  @override
+  Future<void> runCustom(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    calls++;
+    return executor.runCustom(statement, args);
+  }
+
+  @override
+  Future<void> runBatched(
+    QueryExecutor executor,
+    BatchedStatements statements,
+  ) {
+    calls++;
+    return executor.runBatched(statements);
+  }
+}
 
 void main() {
   late AppDatabase db;
@@ -136,6 +160,70 @@ void main() {
         .get();
     expect(rows.map((r) => r.read<String>('id')).toList(), ['us_stock:AAPL']);
   });
+
+  test(
+    'large catalog indexing bounds worker calls and replaces stale matches',
+    () async {
+      // Count executor calls, rather than wall time, to catch per-security
+      // worker round trips without making this test depend on machine speed.
+      final probe = _CatalogWriteProbe();
+      final catalogDb = AppDatabase(
+        DatabaseConnection(NativeDatabase.memory().interceptWith(probe)),
+      );
+      addTearDown(catalogDb.close);
+      await catalogDb.ensureReady();
+      probe.calls = 0;
+      final rows = List.generate(
+        1001,
+        (i) => <String, Object?>{
+          's': 'ITEM$i',
+          'm': 'us_stock',
+          't': 'stock',
+          'c': 'USD',
+          'ne': 'Catalog company $i',
+        },
+      );
+      await SecuritiesCatalogLoader(
+        db: catalogDb,
+        bundleReader: makeReader(makeFixtureBundle(rows: rows)),
+      ).load();
+      expect(probe.calls, lessThan(20));
+
+      Future<List<String>> search(String token) async {
+        final matches = await catalogDb
+            .customSelect(
+              '''
+        SELECT c.id FROM securities_catalog_fts AS f
+        JOIN securities_catalog AS c ON c.rowid = f.rowid
+        WHERE securities_catalog_fts MATCH ?
+        ''',
+              variables: [Variable.withString('"$token"')],
+            )
+            .get();
+        return matches.map((row) => row.read<String>('id')).toList();
+      }
+
+      for (final index in [0, 499, 500, 999, 1000]) {
+        expect(await search('ITEM$index'), ['us_stock:ITEM$index']);
+      }
+      await SecuritiesCatalogLoader(
+        db: catalogDb,
+        bundleReader: makeReader(
+          makeFixtureBundle(
+            version: 'replacement',
+            checksum: 'replacement',
+            rows: [rows.last],
+          ),
+        ),
+      ).load();
+      expect(await search('ITEM0'), isEmpty);
+      expect(await search('ITEM1000'), ['us_stock:ITEM1000']);
+      expect(
+        (await catalogDb.select(catalogDb.securitiesCatalog).get()),
+        hasLength(1),
+      );
+    },
+  );
 
   test('parser ignores blank lines and comments in the bundle', () async {
     const bundle = '''

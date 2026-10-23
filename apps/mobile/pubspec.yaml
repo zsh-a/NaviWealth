@@ -148,6 +148,21 @@ flutter:
         - asset: assets/fonts/inter-bold.woff2
           weight: 700
 
+    # Flutter's web engine requires a family named Roboto as its default and
+    # otherwise downloads it from Google Fonts, even when the app uses Inter.
+    # Alias that engine default to our bundled Inter weights. This is not a
+    # separate Roboto asset; the existing font files are reused unchanged.
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/inter-regular.woff2
+          weight: 400
+        - asset: assets/fonts/inter-medium.woff2
+          weight: 500
+        - asset: assets/fonts/inter-semibold.woff2
+          weight: 600
+        - asset: assets/fonts/inter-bold.woff2
+          weight: 700
+
     # Outfit — used only by Display 2XL (the hero number on the home
     # dashboard). One bold-weight subset is enough; the rest of the type
     # ramp goes through Inter.

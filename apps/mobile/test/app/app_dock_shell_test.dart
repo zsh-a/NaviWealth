@@ -15,6 +15,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart' show FHeader;
 import 'package:naviwealth/app/app.dart';
 import 'package:naviwealth/app/domain_packs.dart';
+import 'package:naviwealth/app/routing/route_guard.dart';
 import 'package:naviwealth/app/routing/route_paths.dart';
 import 'package:naviwealth/app/routing/router.dart';
 import 'package:naviwealth/app/shell/shell_chrome.dart';
@@ -56,6 +57,7 @@ Future<ProviderContainer> _pumpAt(
   Size viewportSize = _mobileSize,
   required List<DomainShellSpec> domains,
   bool aiSupported = true,
+  bool enforceLifeHomeGuard = false,
 }) async {
   tester.view.physicalSize = viewportSize;
   tester.view.devicePixelRatio = 1.0;
@@ -77,6 +79,10 @@ Future<ProviderContainer> _pumpAt(
       activeUserIdProvider.overrideWithValue('u-test'),
       sharedPreferencesProvider.overrideWithValue(prefs),
       ...appShellChromeOverrides(),
+      if (enforceLifeHomeGuard)
+        routeGuardsProvider.overrideWith(
+          (ref) => [ref.watch(lifeHomeRouteGuardProvider)],
+        ),
       // Register the production pack inventory so the router has routes
       // to mount under the dock shell. Tests still control dock UI by
       // overriding `activeDomainShellsProvider` below.
@@ -153,6 +159,33 @@ void main() {
   });
 
   group('Finance-only shell', () {
+    testWidgets('Life redirect keeps Finance chrome and context aligned', (
+      tester,
+    ) async {
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      final container = await _pumpAt(
+        tester,
+        initialLocation: AppRoutes.life,
+        viewportSize: _desktopSize,
+        domains: [financeDomainShell(l10n)],
+        enforceLifeHomeGuard: true,
+      );
+      expect(find.byType(HomePage), findsOneWidget);
+      final sidebar = tester.widget<DesktopSidebar>(
+        find.byType(DesktopSidebar),
+      );
+      expect(
+        sidebar.destinations.map((destination) => destination.label),
+        containsAll([
+          l10n.navToday,
+          l10n.navActivity,
+          l10n.navWealth,
+          l10n.navPlan,
+        ]),
+      );
+      expect(_currentAiContextPath(container), AppRoutes.home);
+    });
+
     testWidgets('compact chrome stays domain-local with one domain', (
       tester,
     ) async {

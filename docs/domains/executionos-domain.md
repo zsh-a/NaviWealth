@@ -164,9 +164,26 @@ the exact `know:knowledge_decisions` source identity plus a Decision-question
 label snapshot, so repeated taps open or reuse the existing follow-up instead
 of creating duplicates.
 
-Completed-action outcome badges are observational comparisons, not causal
-claims. They appear only after a successful, current evaluation of the exact
-source identity.
+Completed Actions use one source-outcome presentation in Review, Action detail,
+and the source's linked-action control. Action completion and source evaluation
+remain separate. A successful observation shows whether the signal was still
+detected, its observation time, and explicit non-causal wording. Pending reads,
+incomplete coverage, failed evaluation, and unavailable automatic evaluation
+have distinct states; a missing map entry never implies clearance or pending
+evaluation.
+
+Life signal evaluations declare exact source identities. Reading today's
+Recovery or Activity snapshot cannot clear yesterday's source, and filtered or
+paged Activity data cannot prove an absent signal. Insufficient Health inputs
+and missing budget data remain incomplete. Finance Inbox outcomes preserve
+their persisted observation time and must postdate the Action's current
+completion. Read failures override cached success until the read recovers.
+
+Failed or incomplete supported evaluations can retry their owning reads;
+inactive source domains have no retry callback. Observed results offer source
+review where a source route exists. Finance's once-per-completion observations
+are not presented as a continuously refreshed measurement, and unobserved
+states are excluded from Agent outcome counts.
 
 ## AI Tools And Proposals
 

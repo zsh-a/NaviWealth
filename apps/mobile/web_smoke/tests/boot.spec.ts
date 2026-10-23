@@ -1,43 +1,44 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './_app';
 
 import {
   attachConsoleSpy,
   expectNoConsoleErrors,
-  waitForFlutterReady,
+  openApp,
 } from './_helpers';
 
 test.describe('boot', () => {
   test('home starts with external requests blocked', async ({ page, baseURL }) => {
     const origin = new URL(baseURL!).origin;
     const rendererAssets: string[] = [];
+    const externalRequests: string[] = [];
     page.on('response', (response) => {
       const url = new URL(response.url());
       if (url.pathname.includes('/canvaskit/') && response.ok()) {
         rendererAssets.push(url.origin);
       }
     });
-    await page.route(/^https?:/, (route) =>
-      new URL(route.request().url()).origin === origin
-        ? route.continue()
-        : route.abort(),
-    );
+    await page.route(/^https?:/, (route) => {
+      const url = route.request().url();
+      if (new URL(url).origin === origin) return route.continue();
+      externalRequests.push(url);
+      return route.abort();
+    });
     const spy = attachConsoleSpy(page);
 
-    await page.goto('/');
-    await waitForFlutterReady(page);
+    await openApp(page, '/');
+    await expect(page.getByRole('button', { name: 'Add account', exact: true })).toBeVisible();
 
     expect(rendererAssets.length).toBeGreaterThan(0);
     expect(rendererAssets.every((assetOrigin) => assetOrigin === origin)).toBe(true);
-    // Deliberately aborted optional font downloads emit browser network errors.
-    // They must not prevent startup or produce unhandled application errors.
-    expect(spy.pageErrorMessages).toEqual([]);
+    expect(externalRequests, 'local startup must use bundled renderer and fonts').toEqual([]);
+    await expectNoConsoleErrors(spy);
   });
 
   test('home loads without console or page errors', async ({ page }) => {
     const spy = attachConsoleSpy(page);
 
-    await page.goto('/');
-    await waitForFlutterReady(page);
+    await openApp(page, '/');
+    await expect(page.getByRole('button', { name: 'Add account', exact: true })).toBeVisible();
 
     // Title is set by MaterialApp.onGenerateTitle. We don't lock the exact
     // string (it's localized) — we just want a non-empty title, which

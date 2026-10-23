@@ -20,8 +20,8 @@ void main() {
   tearDown(() async => db.close());
 
   group('Schema version', () {
-    test('is 98', () {
-      expect(db.schemaVersion, 98);
+    test('is 99', () {
+      expect(db.schemaVersion, 99);
     });
   });
 
@@ -512,9 +512,14 @@ void main() {
         columns,
         containsAll([
           'predicted_balance',
-          'actual_balance',
+          'observed_balance',
+          'observed_currency',
+          'observed_at',
+          'observed_data_completeness',
+          'observed_balance_is_complete',
+          'evaluation_status',
+          'balance_is_complete',
           'data_completeness',
-          'evaluated_at',
         ]),
       );
       expect(columns, isNot(contains('hlc')));

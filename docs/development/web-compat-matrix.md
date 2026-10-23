@@ -98,9 +98,10 @@ Walk each browser/OS row in §2; mark ✅ / ❌ / N/A in the release issue.
 ### 4.1 Firefox storage selection
 
 Drift probes browser capabilities and may select OPFS or an IndexedDB fallback.
-The release gate is behavioral: data must survive reload and the smoke suite
-must identify a persistent implementation. A silent `inMemory` selection is a
-regression.
+The release gate is behavioral: data created through the UI must survive reload
+and be readable by another tab. The smoke suite does not infer the exact
+implementation from storage-origin names. A silent `inMemory` selection that
+loses records is a regression.
 
 ### 4.2 iOS Safari — PWA storage eviction
 
@@ -126,17 +127,21 @@ a fast gate; weekly and manually dispatched runs cover Chromium, Firefox, and
 WebKit. The suite remains available locally for targeted checks.
 
 Covered headless:
-- App loads with no console errors.
-- Bottom nav navigates between tabs; URL matches `PathUrlStrategy` (no `#/`).
-- Browser back/forward returns to the correct route.
-- Hard refresh on a deep-link route re-renders the same page.
-- Drift opens an impl in `{opfsLocks, opfsShared, sharedIndexedDb, unsafeIndexedDb, inMemory}`; chosen impl is logged.
-- Manifest + service worker are reachable (200, valid JSON, scope correct).
+- App boots with a real local-only identity and renders the expected content;
+  its bundled renderer works with external requests blocked.
+- UI tab navigation and browser back/forward restore the rendered destination,
+  using `PathUrlStrategy` URLs without `#/`.
+- An account created through the UI survives reload. Knowledge notes are
+  readable across tabs after writes from either tab.
+- Optional-domain guards, Knowledge/Execution enablement and capture, concrete
+  detail URLs, and hard-refresh content recovery run through Flutter semantics.
+- Manifest fields, install icons/meta tags, and Drift root assets are checked.
 
 Not covered (why the manual checklist still exists):
 - Real iOS Safari (no headless WebKit-on-iOS available on Linux).
 - "Add to Home Screen" install + launch.
 - Real font rendering (the bot doesn't share the user's font cache).
-- Auth requiring a real backend (smoke uses a mocked auth shim).
+- Auth requiring a real backend (smoke uses production local-only mode with
+  auth guards enabled, isolated preferences, and actual local persistence).
 
 See `apps/mobile/web_smoke/README.md` to run it locally.

@@ -17329,6 +17329,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ingestViewOriginal => '查看原记录';
 
   @override
+  String get actionOutcomePending => '等待新的来源观测';
+
+  @override
+  String get actionOutcomeIncomplete => '来源数据不完整';
+
+  @override
+  String get actionOutcomeFailed => '来源评估失败';
+
+  @override
+  String get actionOutcomeUnsupported => '此来源暂不支持自动评估';
+
+  @override
+  String get actionOutcomeUnavailable => '暂未取得来源结果';
+
+  @override
+  String actionOutcomeObservedAt(String time) {
+    return '观测于 $time';
+  }
+
+  @override
+  String get actionOutcomeObservational => '观测变化不代表由此行动造成。';
+
+  @override
+  String get actionOutcomeRefresh => '重新评估来源';
+
+  @override
+  String get actionOutcomeReview => '查看来源';
+
+  @override
   String get databaseSchemaMismatchTitle => '本地数据库版本不受支持';
 
   @override

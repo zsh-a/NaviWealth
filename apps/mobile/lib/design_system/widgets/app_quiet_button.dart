@@ -6,6 +6,7 @@ import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import '../tokens/text_style_presets.dart';
+import 'app_actions.dart';
 
 enum AppQuietButtonTone { neutral, danger }
 
@@ -87,41 +88,41 @@ class AppQuietButton extends StatelessWidget {
       ],
     );
 
-    return Semantics(
-      button: true,
-      enabled: enabled,
-      child: FTappable(
-        onPress: enabled ? onPress : null,
-        child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(
-            context,
-            Motion.fast,
-            role: AppMotionRole.decorative,
+    return AppActionTappable(
+      semanticsLabel: effectiveLabel,
+      onPress: enabled ? onPress : null,
+      focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: AnimatedContainer(
+        duration: AppMotionPolicy.duration(
+          context,
+          Motion.fast,
+          role: AppMotionRole.decorative,
+        ),
+        curve: Motion.standard,
+        constraints: BoxConstraints(
+          minHeight: context.platformVariant.touch
+              ? AppControlHeights.touchTarget
+              : 36,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s8,
+        ),
+        decoration: BoxDecoration(
+          color: enabled
+              ? activeContainer
+              : colors.muted.withValues(alpha: AppOpacity.subtle),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: foreground.withValues(alpha: AppOpacity.light),
           ),
-          curve: Motion.standard,
-          constraints: BoxConstraints(
-            minHeight: context.platformVariant.touch
-                ? AppControlHeights.touchTarget
-                : 36,
-          ),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s8,
-          ),
-          decoration: BoxDecoration(
-            color: enabled
-                ? activeContainer
-                : colors.muted.withValues(alpha: AppOpacity.subtle),
-            borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(
-              color: foreground.withValues(alpha: AppOpacity.light),
-            ),
-          ),
-          alignment: Alignment.center,
-          child: DefaultTextStyle.merge(
-            style: context.mediumLabelStyle.copyWith(color: foreground),
-            child: content,
-          ),
+        ),
+        alignment: Alignment.center,
+        child: DefaultTextStyle.merge(
+          style: context.mediumLabelStyle.copyWith(color: foreground),
+          child: content,
         ),
       ),
     );

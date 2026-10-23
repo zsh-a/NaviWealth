@@ -45,9 +45,6 @@ class _CardOpenRegion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (onOpen == null) return child;
-    return Semantics(
-      button: true,
-      child: AppTappable(onPress: onOpen, child: child),
-    );
+    return AppTappable(onPress: onOpen, child: child);
   }
 }

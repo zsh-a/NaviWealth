@@ -1,61 +1,62 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './_app';
 
 import {
   attachConsoleSpy,
+  enableFlutterSemantics,
   expectNoConsoleErrors,
-  waitForFlutterReady,
+  openApp,
 } from './_helpers';
 
-// PathUrlStrategy is enabled in app/bootstrap.dart, so the routes below
-// must work as direct hits without any `#/` fragment. The asserted route
-// paths come from app/route_paths.dart and docs/web-routing.md.
-const ROUTES = ['/', '/activity', '/wealth', '/plan', '/settings', '/settings/appearance'] as const;
+const ROUTES = [
+  { path: '/', role: 'button', name: 'Add account' },
+  { path: '/activity', role: 'banner', name: 'Records' },
+  { path: '/wealth', role: 'banner', name: 'Wealth' },
+  { path: '/plan', role: 'button', name: 'Budget, Needs setup' },
+  { path: '/settings', role: 'button', name: 'Local mode Sync data across devices' },
+  { path: '/settings/appearance', role: 'button', name: 'Language System default' },
+] as const;
 
 test.describe('go_router (PathUrlStrategy)', () => {
   for (const route of ROUTES) {
-    test(`direct hit on ${route} renders without #fragment`, async ({ page }) => {
+    test(`direct hit on ${route.path} renders its destination`, async ({ page }) => {
       const spy = attachConsoleSpy(page);
-      await page.goto(route);
-      await waitForFlutterReady(page);
+      await openApp(page, route.path);
+      await expect(page.getByRole(route.role, { name: route.name, exact: true })).toBeVisible();
       expect(new URL(page.url()).hash).toBe('');
-      expect(new URL(page.url()).pathname).toBe(route);
+      expect(new URL(page.url()).pathname).toBe(route.path);
       await expectNoConsoleErrors(spy);
     });
   }
 
-  test('hard refresh on a non-root route re-renders the same route', async ({
-    page,
-  }) => {
+  test('hard refresh preserves the rebalance destination', async ({ page }) => {
     const spy = attachConsoleSpy(page);
-    await page.goto('/plan/rebalance');
-    await waitForFlutterReady(page);
-    expect(new URL(page.url()).pathname).toBe('/plan/rebalance');
-
+    await openApp(page, '/plan/rebalance');
+    await expect(page.getByRole('group', { name: /^No data yet Add assets/ })).toBeVisible();
     await page.reload();
-    await waitForFlutterReady(page);
-    expect(new URL(page.url()).pathname).toBe('/plan/rebalance');
-
+    await enableFlutterSemantics(page);
+    await expect(page).toHaveURL(/\/plan\/rebalance$/);
+    await expect(page.getByRole('group', { name: /^No data yet Add assets/ })).toBeVisible();
     await expectNoConsoleErrors(spy);
   });
 
-  test('browser back/forward restores prior route', async ({ page }) => {
+  test('tab clicks and browser back/forward restore rendered destinations', async ({ page }) => {
     const spy = attachConsoleSpy(page);
-    await page.goto('/');
-    await waitForFlutterReady(page);
+    await openApp(page, '/');
+    await expect(page.getByRole('button', { name: 'Add account', exact: true })).toBeVisible();
 
-    await page.goto('/wealth');
-    await waitForFlutterReady(page);
-    await page.goto('/settings');
-    await waitForFlutterReady(page);
+    await page.getByRole('button', { name: 'Wealth', exact: true }).click();
+    await expect(page.getByRole('banner', { name: 'Wealth', exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/wealth$/);
+    await page.getByRole('button', { name: 'Plan', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Budget, Needs setup', exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/plan$/);
 
     await page.goBack();
-    await waitForFlutterReady(page);
-    expect(new URL(page.url()).pathname).toBe('/wealth');
-
+    await expect(page).toHaveURL(/\/wealth$/);
+    await expect(page.getByRole('banner', { name: 'Wealth', exact: true })).toBeVisible();
     await page.goForward();
-    await waitForFlutterReady(page);
-    expect(new URL(page.url()).pathname).toBe('/settings');
-
+    await expect(page).toHaveURL(/\/plan$/);
+    await expect(page.getByRole('button', { name: 'Budget, Needs setup', exact: true })).toBeVisible();
     await expectNoConsoleErrors(spy);
   });
 });

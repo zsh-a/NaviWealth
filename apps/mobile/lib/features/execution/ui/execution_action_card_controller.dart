@@ -28,7 +28,6 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
     this.onSourceOpen,
     this.showActions = true,
     this.compact = false,
-    this.outcome,
     this.focusSelected = false,
     this.onToggleFocus,
     this.completionBuilder,
@@ -47,7 +46,6 @@ class ExecutionActionCardController extends ConsumerStatefulWidget {
   final VoidCallback? onSourceOpen;
   final bool showActions;
   final bool compact;
-  final ActionOutcomeSummary? outcome;
   final bool focusSelected;
   final VoidCallback? onToggleFocus;
 
@@ -139,7 +137,16 @@ class _ExecutionActionCardControllerState
       onSourceOpen: _busy ? null : widget.onSourceOpen,
       showActions: widget.showActions,
       compact: widget.compact,
-      outcome: widget.outcome,
+      outcome:
+          !widget.compact && widget.action.status == ExecutionActionStatus.done
+          ? ref
+                .watch(actionOutcomeSummariesProvider)
+                .whenData((outcomes) => outcomes[widget.action.id])
+          : const AsyncValue.data(null),
+      onOutcomeRefresh:
+          !widget.compact && widget.action.status == ExecutionActionStatus.done
+          ? ref.watch(actionOutcomeRefreshProvider(widget.action.id))
+          : null,
       focusSelected: widget.focusSelected,
       onToggleFocus: widget.onToggleFocus,
       onEdit: widget.onEdit,

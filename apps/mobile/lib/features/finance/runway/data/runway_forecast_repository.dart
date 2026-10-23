@@ -16,6 +16,14 @@ final class RunwayForecastQuality {
   final double? meanRelativeError;
 }
 
+enum _ObservationStatus {
+  comparable,
+  late,
+  incomplete,
+  currencyMismatch,
+  zeroBaseline,
+}
+
 class RunwayForecastRepository {
   const RunwayForecastRepository({
     required AppDatabase db,
@@ -26,31 +34,38 @@ class RunwayForecastRepository {
   final AppDatabase _db;
   final String _ownerUserId;
 
-  Future<void> recordAndEvaluate(MoneyRunwaySnapshot snapshot) async {
-    await _evaluateDue(snapshot);
-    final day = _dayKey(snapshot.asOf);
-    for (final horizon in const [30, 90]) {
-      await _db.customStatement(
-        '''
+  /// Returns whether observation evidence changed and quality should refresh.
+  Future<bool> recordAndEvaluate(MoneyRunwaySnapshot snapshot) {
+    return _db.transaction(() async {
+      final changed = await _evaluateDue(snapshot);
+      if (!snapshot.hasData) return changed;
+      final day = _dayKey(snapshot.asOf);
+      for (final horizon in const [30, 90]) {
+        await _db.customStatement(
+          '''
 INSERT OR IGNORE INTO runway_forecast_snapshots (
   id, owner_user_id, as_of_day, target_at, horizon_days, currency,
-  starting_balance, predicted_balance, data_completeness, evidence_json
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  starting_balance, predicted_balance, data_completeness, balance_is_complete,
+  evidence_json
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ''',
-        [
-          '$_ownerUserId:$day:$horizon',
-          _ownerUserId,
-          day,
-          snapshot.asOf.add(Duration(days: horizon)).millisecondsSinceEpoch,
-          horizon,
-          snapshot.currency,
-          snapshot.startingBalance.toString(),
-          snapshot.balanceAt(horizon).toString(),
-          snapshot.dataCompleteness,
-          jsonEncode(snapshot.toEvidenceJson()),
-        ],
-      );
-    }
+          [
+            '$_ownerUserId:$day:$horizon',
+            _ownerUserId,
+            day,
+            snapshot.asOf.add(Duration(days: horizon)).millisecondsSinceEpoch,
+            horizon,
+            snapshot.currency,
+            snapshot.startingBalance.toString(),
+            snapshot.balanceAt(horizon).toString(),
+            snapshot.dataCompleteness,
+            snapshot.balanceIsComplete,
+            jsonEncode(snapshot.toEvidenceJson()),
+          ],
+        );
+      }
+      return changed;
+    });
   }
 
   Future<RunwayForecastQuality> quality() async {
@@ -59,19 +74,16 @@ INSERT OR IGNORE INTO runway_forecast_snapshots (
           '''
 SELECT predicted_balance, starting_balance, absolute_error
 FROM runway_forecast_snapshots
-WHERE owner_user_id = ? AND evaluated_at IS NOT NULL
-ORDER BY evaluated_at DESC
+WHERE owner_user_id = ? AND evaluation_status = ?
+ORDER BY target_at DESC, observed_at DESC, id DESC
 LIMIT 12
 ''',
-          variables: [Variable<String>(_ownerUserId)],
+          variables: [
+            Variable<String>(_ownerUserId),
+            Variable<String>(_ObservationStatus.comparable.name),
+          ],
         )
         .get();
-    if (rows.isEmpty) {
-      return const RunwayForecastQuality(
-        evaluatedCount: 0,
-        meanRelativeError: null,
-      );
-    }
     var total = 0.0;
     var evaluated = 0;
     for (final row in rows) {
@@ -86,52 +98,74 @@ LIMIT 12
         evaluated++;
       }
     }
-    if (evaluated == 0) {
-      return RunwayForecastQuality(
-        evaluatedCount: rows.length,
-        meanRelativeError: null,
-      );
-    }
     return RunwayForecastQuality(
-      evaluatedCount: rows.length,
-      meanRelativeError: total / evaluated,
+      evaluatedCount: evaluated,
+      meanRelativeError: evaluated == 0 ? null : total / evaluated,
     );
   }
 
-  Future<void> _evaluateDue(MoneyRunwaySnapshot current) async {
-    final now = current.asOf.millisecondsSinceEpoch;
+  Future<bool> _evaluateDue(MoneyRunwaySnapshot current) async {
+    final day = current.asOf.millisecondsSinceEpoch;
+    final now = current.observedAt.millisecondsSinceEpoch;
     final due = await _db
         .customSelect(
           '''
-SELECT id, predicted_balance
+SELECT id, target_at, currency, starting_balance, predicted_balance,
+       balance_is_complete
 FROM runway_forecast_snapshots
-WHERE owner_user_id = ? AND evaluated_at IS NULL AND target_at <= ?
-  AND currency = ?
+WHERE owner_user_id = ? AND target_at <= ?
+  AND (observed_at IS NULL OR (
+    target_at = ? AND observed_at < ? AND evaluation_status IN (?, ?)
+  ))
 ''',
           variables: [
             Variable<String>(_ownerUserId),
+            Variable<int>(day),
+            Variable<int>(day),
             Variable<int>(now),
-            Variable<String>(current.currency),
+            Variable<String>(_ObservationStatus.incomplete.name),
+            Variable<String>(_ObservationStatus.currencyMismatch.name),
           ],
         )
         .get();
     for (final row in due) {
       final predicted = Decimal.parse(row.read<String>('predicted_balance'));
-      final error = (current.startingBalance - predicted).abs();
+      final starting = Decimal.parse(row.read<String>('starting_balance'));
+      final status = row.read<int>('target_at') != day
+          ? _ObservationStatus.late
+          : row.read<String>('currency') != current.currency
+          ? _ObservationStatus.currencyMismatch
+          : !row.read<bool>('balance_is_complete') ||
+                !current.balanceIsComplete ||
+                !current.hasData
+          ? _ObservationStatus.incomplete
+          : predicted == Decimal.zero && starting == Decimal.zero
+          ? _ObservationStatus.zeroBaseline
+          : _ObservationStatus.comparable;
+      final error = status == _ObservationStatus.comparable
+          ? (current.startingBalance - predicted).abs()
+          : null;
       await _db.customStatement(
         '''
 UPDATE runway_forecast_snapshots
-SET actual_balance = ?, absolute_error = ?, evaluated_at = ?
+SET observed_balance = ?, observed_currency = ?, observed_at = ?,
+    observed_data_completeness = ?, observed_balance_is_complete = ?,
+    evaluation_status = ?, absolute_error = ?
 WHERE id = ?
 ''',
         [
           current.startingBalance.toString(),
-          error.toString(),
+          current.currency,
           now,
+          current.dataCompleteness,
+          current.balanceIsComplete && current.hasData,
+          status.name,
+          error?.toString(),
           row.read<String>('id'),
         ],
       );
     }
+    return due.isNotEmpty;
   }
 
   String _dayKey(DateTime value) {

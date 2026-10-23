@@ -1,9 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './_app';
 
 import {
   attachConsoleSpy,
   expectNoConsoleErrors,
-  waitForFlutterReady,
+  openApp,
 } from './_helpers';
 
 const VIEWPORTS = [
@@ -57,8 +57,15 @@ test.describe('responsive application shell', () => {
       });
 
       for (const route of routes) {
-        await page.goto(route);
-        await waitForFlutterReady(page);
+        await openApp(page, route);
+        const content = route === '/wealth/accounts'
+          ? page.getByRole('button', { name: 'New account', exact: true }).first()
+          : route === '/plan/rebalance'
+            ? page.getByRole('group', { name: /^No data yet Add assets/ })
+            : route === '/'
+              ? page.getByRole('button', { name: 'Add account', exact: true })
+              : page.getByRole('banner', { name: route === '/wealth' ? 'Wealth' : 'Plan', exact: true });
+        await expect(content).toBeVisible();
 
         expect(new URL(page.url()).pathname).toBe(route);
         const dimensions = await page.evaluate(() => ({

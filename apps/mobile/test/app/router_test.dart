@@ -77,6 +77,8 @@ import 'package:naviwealth/features/finance/ui/settings/monthly_expense_settings
 import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dart';
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
+import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
+import 'package:naviwealth/features/knowledge/ui/knowledge_note_detail_page.dart';
 import 'package:naviwealth/features/settings/ui/ai/ai_transparency_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -334,6 +336,50 @@ void main() {
   });
 
   group('deep-link arrival', () {
+    testWidgets(
+      'pushed record details report their URL and restore it on pop',
+      (tester) async {
+        final container = await _pumpAt(tester);
+        final router = container.read(appRouterProvider);
+        String reportedLocation() => router.routeInformationParser
+            .restoreRouteInformation(
+              router.routerDelegate.currentConfiguration,
+            )!
+            .uri
+            .toString();
+
+        for (final (source, detail, pageType) in [
+          (
+            KnowledgeRoutes.inbox,
+            KnowledgeRoutes.note('note/with spaces'),
+            KnowledgeNoteDetailPage,
+          ),
+          (
+            ExecutionRoutes.today,
+            ExecutionRoutes.action('action/with spaces'),
+            ExecutionActionDetailPage,
+          ),
+        ]) {
+          router.go(source);
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          unawaited(router.push<void>(detail));
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+
+          expect(find.byType(pageType), findsOneWidget);
+          expect(reportedLocation(), detail);
+          expect(router.canPop(), isTrue);
+
+          router.pop();
+          await tester.pump();
+          await tester.pump(const Duration(milliseconds: 300));
+          expect(reportedLocation(), source);
+        }
+        await _drainTimers(tester);
+      },
+    );
+
     testWidgets('result drill-down preserves one dock shell and back stack', (
       tester,
     ) async {

@@ -89,6 +89,11 @@ For isolated Forui widget tests, set `MaterialApp.builder` (or
 Navigator so sheets and dialogs inherit Forui theme and accessibility state.
 Full-app flows already receive these scopes from `NaviWealthApp`.
 
+Shared control tests require one named semantic button, semantic tap, visible
+focus, and Enter/Space activation without key-repeat duplication. Markdown
+tests require readable non-editable content, selection across blocks, and
+accessible links; the browser note journey also reads the rendered body.
+
 Prefer observable behavior over widget implementation details: select actions
 by their label or key, verify enabled state and results, and avoid asserting
 menu indices or callback identity. Agent registration belongs in composition
@@ -198,6 +203,19 @@ Golden test files and their PNG baselines live under `test/golden/`;
 theme-matrix pages run light, dark, and dark-colorblind variants, while AI primitive goldens use
 component-scoped light surfaces. Keep new Task primary surfaces and
 responsive breakpoints (phone/tablet/web) covered as layout refactors land.
+
+### Browser business smoke
+
+`web_smoke/` exercises the release bundle with production auth guards and a
+fresh local-only browser preference, then enables Flutter semantics. It uses
+real repositories and Drift: account creation/reload, Knowledge note writes
+across tabs, domain enablement, Knowledge/Execution concrete detail URLs,
+content after reload, and tab/browser history navigation. Assertions await
+business content, not only an engine host or URL. Missing persistence fails;
+no storage-initialization skip or mocked auth shim masks the result.
+Chromium runs on relevant PRs; weekly/manual jobs also run Firefox and WebKit.
+Real-backend auth, native capabilities, and real Safari/PWA install remain
+separate acceptance evidence under [Web Compatibility](web-compat-matrix.md).
 
 ### Sync protocol E2E (best-in-class — keep)
 `test/e2e/sync_e2e_test.dart` + `SyncCluster`/`VirtualDevice` simulate
@@ -329,7 +347,7 @@ The host suites pin recovery and baseline behavior before device execution:
   protection, rollback, and vector rebuilding without overwriting edited rows.
 - `sync_compatibility_test.dart` covers mixed-version opaque fields, upgrade
   hydration, skipped-table replay, interrupted pagination, LWW and scoped reset.
-- `schema_baseline_test.dart` checks the fresh schema-98 baseline. It rejects
+- `schema_baseline_test.dart` checks the fresh schema-99 baseline. It rejects
   older and newer schema versions without modifying their version, tables or
   retained rows, and verifies that a current-schema file reopens with its data.
   Historical schema upgrade chains and migration fixtures are not supported.
@@ -399,7 +417,10 @@ workflow on an Android emulator (weekly + manual + PRs touching the
 harness, backup, Sync, or persistence code), not the unit-test VM. The workflow
 retains a machine-readable event stream, the ordinary integration log, a
 privacy-safe database-encryption evidence JSON, the process-interruption log,
-and its separate interruption evidence JSON. `run-android-integration.sh`
+and its separate interruption evidence JSON on both successful and failed runs
+for 30 days. Artifact names bind the Android API/architecture, commit SHA, run
+id, and attempt so release evidence can be traced to its build and device
+configuration. `run-android-integration.sh`
 fails even after a nominally green Flutter run unless dedicated markers prove
 SQLCipher availability, encrypted bytes, correct/wrong-key behavior, plaintext
 migration, Android Keystore persistence and fail-closed behavior, successful

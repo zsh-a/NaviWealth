@@ -7,7 +7,6 @@ import '../../../core/ai/agents/agent_run_store.dart';
 import '../../../core/ai/attention/attention_item.dart';
 import '../../../core/ai/attention/ui/attention_group.dart';
 import '../../../core/auth/domain_scope.dart';
-import '../../../core/lifeos/action_outcome.dart';
 import '../../../core/shell/shell_chrome.dart';
 import '../../../core/shell/shell_visibility.dart';
 import '../../../design_system/design_system.dart';
@@ -217,7 +216,6 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
     final progressAsync = ref.watch(executionRecentProgressProvider);
     final closedActionsAsync = ref.watch(executionClosedActionsProvider);
     final relations = ref.watch(executionReviewRelationsProvider).value;
-    final outcomes = ref.watch(actionOutcomeSummariesProvider);
     final error = progressAsync.error ?? closedActionsAsync.error;
     if (error != null) {
       return AppEmptyState.error(
@@ -356,7 +354,6 @@ class _ReviewBodyState extends ConsumerState<_ReviewBody> {
                   showExecutionProgressSheet(context: context, action: action),
               doneProgressNote: l10n.executionProgressDoneDefault,
               droppedProgressNote: l10n.executionProgressDroppedDefault,
-              outcome: outcomes[action.id],
             ),
           ),
         );

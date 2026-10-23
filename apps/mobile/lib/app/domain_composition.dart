@@ -59,7 +59,6 @@ import '../features/execution/data/execution_repository.dart';
 import '../features/execution/data/providers.dart';
 import '../features/execution/domain/execution_models.dart';
 import '../features/finance/composition/finance_route_paths.dart';
-import '../features/finance/inbox/data/financial_inbox_providers.dart';
 import '../features/health/composition/health_route_paths.dart';
 import '../features/knowledge/composition/knowledge_route_paths.dart';
 import '../l10n/gen/app_localizations.dart';
@@ -92,13 +91,8 @@ List<Override> lifeOsDomainCompositionOverrides({List<DomainPack>? packs}) {
         ref.watch(activeDomainPacksProvider).map((pack) => pack.scope.wire),
       ),
     ),
-    actionOutcomeSummariesProvider.overrideWith((ref) {
-      final outcomes = <String, ActionOutcomeSummary>{
-        ...watchLifeActionOutcomes(ref),
-        ...?ref.watch(financialActionOutcomeSummariesProvider).value,
-      };
-      return Map.unmodifiable(outcomes);
-    }),
+    actionOutcomeSummariesProvider.overrideWith(watchLifeActionOutcomes),
+    actionOutcomeRefreshProvider.overrideWith(watchActionOutcomeRefresh),
     lifeClosedActionsProvider.overrideWith((ref) {
       return ref
           .watch(executionClosedActionsProvider)

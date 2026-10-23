@@ -34,6 +34,18 @@ enum ActionOutcomeStatus {
 
   /// The same source signal was detected in a later local snapshot.
   signalStillActive,
+
+  /// No complete source observation after this completion is available yet.
+  pending,
+
+  /// The evaluator ran, but did not cover this source or lacked enough data.
+  incomplete,
+
+  /// Reading or evaluating the source failed.
+  failed,
+
+  /// This source has no active automatic evaluator.
+  unsupported,
 }
 
 /// Attribution boundary for cross-domain outcome copy.
@@ -48,19 +60,30 @@ class ActionOutcomeSummary {
     required this.status,
     required this.sourceLabel,
     required this.sourceCapturedAt,
-    required this.evaluatedAt,
+    this.evaluatedAt,
     this.attribution = ActionOutcomeAttribution.observational,
   });
 
   final ActionOutcomeStatus status;
   final String sourceLabel;
   final DateTime sourceCapturedAt;
-  final DateTime evaluatedAt;
+  final DateTime? evaluatedAt;
   final ActionOutcomeAttribution attribution;
+
+  bool get isObserved =>
+      status == ActionOutcomeStatus.signalCleared ||
+      status == ActionOutcomeStatus.signalStillActive;
 }
 
 /// App-composed outcome summaries keyed by the action id owned by the
 /// lifecycle domain. Core supplies an empty default so domain UI remains
 /// independently testable and does not import sibling features.
 final actionOutcomeSummariesProvider =
-    Provider<Map<String, ActionOutcomeSummary>>((_) => const {});
+    Provider<AsyncValue<Map<String, ActionOutcomeSummary>>>(
+      (_) => const AsyncValue.data({}),
+    );
+
+/// Refreshes the owning source reads, not just the outcome presentation.
+final actionOutcomeRefreshProvider = Provider.family<VoidCallback?, String>(
+  (_, _) => null,
+);

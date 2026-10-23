@@ -6,12 +6,13 @@
 //   - block structure (heading vs paragraph vs list vs code vs quote
 //     vs hr) appears in the rendered tree
 //   - inline formatting (bold / italic / inline code / link) is
-//     surfaced as a styled span on the SelectableText.rich subtree
+//     surfaced as a styled span on the Text.rich subtree
 //   - streaming safety: unclosed delimiters and unclosed fences do not
 //     crash and surface the streaming caret on the last block
 //   - the trailing caret slot lands on the last text-bearing block
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/ai/visual/visual.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -50,21 +51,11 @@ List<(String, TextStyle?)> _flatten(InlineSpan root) {
   return out;
 }
 
-/// Returns the joined text from every `SelectableText.rich` and
-/// `Text.rich` in the rendered tree. Lets us assert the textual
+/// Returns the joined plain and rich text in the rendered tree.
+/// Lets us assert the textual
 /// content even when blocks are split into separate widgets.
 String _allText(WidgetTester tester) {
   final buf = StringBuffer();
-  for (final t in tester.widgetList<SelectableText>(
-    find.byType(SelectableText),
-  )) {
-    final span = t.textSpan;
-    if (span == null) continue;
-    for (final p in _flatten(span)) {
-      buf.write(p.$1);
-    }
-    buf.write('\n');
-  }
   for (final t in tester.widgetList<Text>(find.byType(Text))) {
     final span = t.textSpan;
     if (span != null) {
@@ -80,21 +71,150 @@ String _allText(WidgetTester tester) {
   return buf.toString();
 }
 
+final _richTextFinder = find.byWidgetPredicate(
+  (widget) => widget is Text && widget.textSpan != null,
+);
+
 void main() {
+  group('AiMarkdown — read-only selection and accessibility', () {
+    testWidgets('blocks expose readable text rather than editable fields', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await _pump(
+        tester,
+        const AiMarkdown(
+          text:
+              '# Heading\n\nReadable body\n\n- List item\n\n> Quote body\n\n'
+              '```\nanswer = 42;\n```\n\n| Key | Value |\n| --- | --- |\n| Row | Result |',
+        ),
+      );
+      for (final label in [
+        'Heading',
+        'Readable body',
+        'List item',
+        'Quote body',
+        'answer = 42;',
+        'Result',
+      ]) {
+        expect(
+          find.semantics.byLabel(RegExp(RegExp.escape(label))).evaluate(),
+          isNotEmpty,
+        );
+      }
+      expect(
+        find.semantics
+            .byPredicate(
+              (node) => node.getSemanticsData().flagsCollection.isTextField,
+            )
+            .evaluate(),
+        isEmpty,
+      );
+      semantics.dispose();
+    });
+
+    testWidgets('keyboard selection copies across paragraphs and link labels', (
+      tester,
+    ) async {
+      String? copied;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copied =
+                (call.arguments as Map<Object?, Object?>)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await _pump(
+        tester,
+        const AiMarkdown(
+          text: 'First paragraph.\n\nSecond with [reference](https://example.test).',
+        ),
+      );
+      await tester.tap(find.text('First paragraph.', findRichText: true));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyC);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(copied, contains('First paragraph.'));
+      expect(copied, contains('Second with'));
+      expect(copied, contains('reference'));
+      await tester.pumpAndSettle();
+    }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
+    testWidgets(
+      'links retain a named semantic action and confirm destination',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        await _pump(
+          tester,
+          const AiMarkdown(
+            text: 'Read [reference](https://example.test/path).',
+          ),
+        );
+        final link = find.semantics.byLabel('reference');
+        expect(
+          link.evaluate().single.getSemanticsData().flagsCollection.isLink,
+          isTrue,
+        );
+        tester.semantics.tap(link);
+        await tester.pumpAndSettle();
+        expect(find.text('https://example.test/path'), findsOneWidget);
+        expect(
+          find.semantics.byLabel('https://example.test/path').evaluate(),
+          isNotEmpty,
+        );
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(AiMarkdown)),
+        );
+        await tester.tap(find.text(l10n.commonCancel));
+        await tester.pumpAndSettle();
+        expect(find.text('https://example.test/path'), findsNothing);
+        semantics.dispose();
+      },
+    );
+
+    testWidgets('selectable false opts out of an ancestor selection area', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const SelectionArea(
+          child: AiMarkdown(text: 'Read without selection', selectable: false),
+        ),
+      );
+      final text = tester.element(
+        find.text('Read without selection', findRichText: true),
+      );
+      expect(SelectionContainer.maybeOf(text), isNull);
+      expect(
+        find.text('Read without selection', findRichText: true),
+        findsOneWidget,
+      );
+    });
+  });
+
   group('AiMarkdown — block structure', () {
     testWidgets('renders a plain paragraph', (tester) async {
       await _pump(tester, const AiMarkdown(text: 'hello world'));
-      expect(find.byType(SelectableText), findsOneWidget);
+      expect(_richTextFinder, findsOneWidget);
       expect(_allText(tester), contains('hello world'));
     });
 
     testWidgets('renders headings with bold weight', (tester) async {
       await _pump(tester, const AiMarkdown(text: '# Title\n\nbody text'));
-      // Two SelectableText subtrees: heading + paragraph.
-      expect(find.byType(SelectableText), findsNWidgets(2));
-      final st = tester
-          .widgetList<SelectableText>(find.byType(SelectableText))
-          .toList();
+      // Two rich Text subtrees: heading + paragraph.
+      expect(_richTextFinder, findsNWidgets(2));
+      final st = tester.widgetList<Text>(_richTextFinder).toList();
       final headingFlat = _flatten(st.first.textSpan!);
       expect(headingFlat.first.$1, 'Title');
       expect(headingFlat.first.$2!.fontWeight, FontWeight.w600);
@@ -108,7 +228,7 @@ void main() {
       expect(_allText(tester), contains('two'));
       expect(_allText(tester), contains('three'));
       // Three rows.
-      expect(find.byType(SelectableText), findsNWidgets(3));
+      expect(_richTextFinder, findsNWidgets(3));
     });
 
     testWidgets('renders ordered lists with the model\'s own numbering', (
@@ -118,7 +238,7 @@ void main() {
         tester,
         const AiMarkdown(text: '1. alpha\n2. beta\n5. delta'),
       );
-      // Numbered markers render as plain Text rather than SelectableText.
+      // Numbered markers render as plain Text rather than rich Text.
       expect(find.text('1.'), findsOneWidget);
       expect(find.text('2.'), findsOneWidget);
       // The parser keeps the model's numbering rather than re-numbering.
@@ -130,7 +250,7 @@ void main() {
         tester,
         const AiMarkdown(text: '> a quoted line\n> second line'),
       );
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       expect(flat.first.$1, 'a quoted line\nsecond line');
       expect(flat.first.$2!.fontStyle, FontStyle.italic);
@@ -214,9 +334,7 @@ void main() {
         ),
       );
       // Walk every selectable cell to find the bold span.
-      final selectables = tester
-          .widgetList<SelectableText>(find.byType(SelectableText))
-          .toList();
+      final selectables = tester.widgetList<Text>(_richTextFinder).toList();
       final hasBold = selectables.any((st) {
         final flat = _flatten(st.textSpan!);
         return flat.any(
@@ -278,9 +396,9 @@ void main() {
         tester,
         const AiMarkdown(text: '- parent\n  - child\n  - sibling'),
       );
-      // We render every list item in its own SelectableText, so three
+      // We render every list item in its own rich Text, so three
       // rows arrive in the tree.
-      expect(find.byType(SelectableText), findsNWidgets(3));
+      expect(_richTextFinder, findsNWidgets(3));
       // The child rows must sit indented further right than the
       // parent — assert by inspecting the EdgeInsets on their wrapping
       // Padding widgets.
@@ -318,7 +436,7 @@ void main() {
         const AiMarkdown(text: '- [ ] pending step\n- [x] done step'),
       );
       // Two list rows.
-      expect(find.byType(SelectableText), findsNWidgets(2));
+      expect(_richTextFinder, findsNWidgets(2));
       // The `[ ]` / `[x]` token is consumed by the parser — it must
       // NOT appear in the rendered text.
       final txt = _allText(tester);
@@ -330,7 +448,7 @@ void main() {
 
     testWidgets('checked task gets line-through styling', (tester) async {
       await _pump(tester, const AiMarkdown(text: '- [x] complete'));
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       final completeSpan = flat.firstWhere((p) => p.$1 == 'complete');
       expect(completeSpan.$2!.decoration, TextDecoration.lineThrough);
@@ -355,7 +473,7 @@ void main() {
   group('AiMarkdown — inline formatting', () {
     testWidgets('bold emits a w600 span', (tester) async {
       await _pump(tester, const AiMarkdown(text: 'plain **strong** plain'));
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       final bold = flat.firstWhere((p) => p.$1 == 'strong');
       expect(bold.$2!.fontWeight, FontWeight.w600);
@@ -365,7 +483,7 @@ void main() {
       tester,
     ) async {
       await _pump(tester, const AiMarkdown(text: 'plain *em* plain'));
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       final em = flat.firstWhere((p) => p.$1 == 'em');
       expect(em.$2!.fontStyle, FontStyle.italic);
@@ -374,7 +492,7 @@ void main() {
     testWidgets('does not italicize arithmetic-like patterns', (tester) async {
       // `5*3=15` should render as-is rather than turning `3=1` italic.
       await _pump(tester, const AiMarkdown(text: 'sum: 5*3=15'));
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       final italicSpans = flat.where(
         (p) => p.$2?.fontStyle == FontStyle.italic,
@@ -390,7 +508,7 @@ void main() {
 
     testWidgets('strikethrough emits a line-through span', (tester) async {
       await _pump(tester, const AiMarkdown(text: 'keep ~~drop this~~ rest'));
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       final drop = flat.firstWhere((p) => p.$1 == 'drop this');
       expect(drop.$2!.decoration, TextDecoration.lineThrough);
@@ -404,7 +522,7 @@ void main() {
         const AiMarkdown(text: 'see [the docs](https://x.example)'),
       );
       // Link label lives inside a WidgetSpan → a Text widget in the
-      // tree (not a SelectableText), and is wrapped by a
+      // tree (not a rich Text), and is wrapped by a
       // GestureDetector so the user can tap to open.
       final txt = tester.widget<Text>(find.text('the docs'));
       expect(txt.style?.decoration, TextDecoration.underline);
@@ -456,7 +574,7 @@ void main() {
           text: '```dart\n// hello\nvar x = "abc"; var n = 42;\n```',
         ),
       );
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       // We expect at least three differently-styled fragments:
       // comment, string, number. We don't pin specific colors — only
@@ -475,7 +593,7 @@ void main() {
       tester,
     ) async {
       await _pump(tester, const AiMarkdown(text: '```dart\nvar x10 = 1;\n```'));
-      final st = tester.widget<SelectableText>(find.byType(SelectableText));
+      final st = tester.widget<Text>(_richTextFinder);
       final flat = _flatten(st.textSpan!);
       // The `10` in `x10` belongs to the identifier and must NOT be
       // split off as a number span. We verify by checking that `x10`
@@ -620,11 +738,9 @@ void main() {
         ),
       );
       expect(find.byKey(caretKey), findsOneWidget);
-      // The caret sits inside the *last* SelectableText (the third
+      // The caret sits inside the *last* rich Text (the third
       // block — `body two`).
-      final selectables = tester
-          .widgetList<SelectableText>(find.byType(SelectableText))
-          .toList();
+      final selectables = tester.widgetList<Text>(_richTextFinder).toList();
       final lastSpans = _flatten(selectables.last.textSpan!);
       // The very last span in the last block is the caret WidgetSpan.
       // We can detect this by looking for the body's text + no caret

@@ -8974,6 +8974,20 @@
   "ingestComparisonImported": "This import",
   "ingestComparisonDifferent": "Different",
   "ingestViewOriginal": "View original record",
+  "actionOutcomePending": "Waiting for a new source observation",
+  "actionOutcomeIncomplete": "Source data is incomplete",
+  "actionOutcomeFailed": "Source evaluation failed",
+  "actionOutcomeUnsupported": "Automatic source evaluation is unavailable",
+  "actionOutcomeUnavailable": "No source result is available yet",
+  "actionOutcomeObservedAt": "Observed {time}",
+  "@actionOutcomeObservedAt": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "actionOutcomeObservational": "Observed change does not establish that this action caused it.",
+  "actionOutcomeRefresh": "Recheck source",
+  "actionOutcomeReview": "Review source",
   "databaseSchemaMismatchTitle": "Local database version is unsupported",
   "databaseSchemaMismatchMessage": "This version uses a new database format. Your existing data has been kept intact. Reset local data to start again."
 }

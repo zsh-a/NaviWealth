@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 
 import '../ai/contracts/source_identity.dart';
 import '../auth/domain_scope.dart';
+import 'action_dispatcher.dart';
+
+enum LifeSourceEvaluationStatus { complete, pending, incomplete, failed }
 
 /// Cross-domain attention signal rendered by the Life hub.
 @immutable
@@ -48,10 +51,15 @@ class DomainLifeSignalSlice {
   const DomainLifeSignalSlice({
     this.events = const <LifeEvent>[],
     this.evaluatedSourceFamilies = const <String>{},
+    this.sourceEvaluations = const {},
   });
 
   final List<LifeEvent> events;
   final Set<String> evaluatedSourceFamilies;
+
+  /// Exact identities covered by this observation, including failed reads.
+  /// A successfully read family alone does not prove an older row was checked.
+  final Map<LifeActionSource, LifeSourceEvaluationStatus> sourceEvaluations;
 }
 
 /// Complete observation consumed by outcome evaluation.
@@ -62,12 +70,14 @@ class LifeSignalSnapshot {
     required this.events,
     required this.evaluatedSourceFamilies,
     this.evaluatedSourceFamiliesByDomain = const <DomainScope, Set<String>>{},
+    this.sourceEvaluations = const {},
   });
 
   final DateTime observedAt;
   final List<LifeEvent> events;
   final Set<String> evaluatedSourceFamilies;
   final Map<DomainScope, Set<String>> evaluatedSourceFamiliesByDomain;
+  final Map<LifeActionSource, LifeSourceEvaluationStatus> sourceEvaluations;
 
   bool evaluated(String sourceRowFamily) =>
       evaluatedSourceFamilies.contains(sourceRowFamily);

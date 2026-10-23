@@ -153,7 +153,7 @@ void main() {
             if (!available) {
               throw const UnsupportedDatabaseSchema(
                 foundVersion: 97,
-                requiredVersion: 98,
+                requiredVersion: 99,
               );
             }
             return db;

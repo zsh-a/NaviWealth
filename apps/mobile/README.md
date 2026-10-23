@@ -41,6 +41,12 @@ tool/run-asr-native-smoke.sh .cache/asr-native-smoke
 
 > Web 字体准备与验证见[本地开发](../../docs/development/local-development.md)和[浏览器兼容矩阵](../../docs/development/web-compat-matrix.md)。`build-cn-fonts.sh` 自动扫描 `lib/` 中文字符并产出首屏 woff2，CI 在 `flutter build web` 之前会重新构建。
 
+`pubspec.yaml` 将 Flutter 引擎默认使用的 `Roboto` 字族名映射到现有 Inter
+字体文件，避免启动时额外访问 Google Fonts。它复用 Inter 的四个字重，不包含
+独立的 Roboto 字体，也不改变界面的 Inter / Outfit / AppCnSans 字体体系。
+Web 启动冒烟测试应在阻断外部请求时验证真实首页与零控制台错误；此约束覆盖
+应用首屏，不代表任意用户输入的全部 Unicode 字形均已离线打包。
+
 ## 目录结构
 
 ```
@@ -215,6 +221,6 @@ Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
 
 ## 数据库基线
 
-当前使用 schema 98，仅维护新建结构，不再保留历史迁移链。其他版本的本地库
+当前使用 schema 99，仅维护新建结构，不再保留历史迁移链。其他版本的本地库
 会停止打开并保留原始数据；界面提供确认后重置入口，支持原生端与 Web。
 同版本数据库可直接重开。升级开发环境前应保留需要的数据副本。

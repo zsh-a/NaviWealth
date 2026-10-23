@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
+import 'package:naviwealth/core/lifeos/action_outcome.dart';
 import 'package:naviwealth/core/lifeos/ui/source_action_control.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
@@ -13,10 +14,14 @@ Widget _wrap({
   required LifeSourceActionReader read,
   required LifeActionDispatcher dispatch,
   Future<void> Function(String)? onCreated,
+  Map<String, ActionOutcomeSummary> outcomes = const {},
+  VoidCallback? refreshOutcome,
 }) => ProviderScope(
   overrides: [
     lifeSourceActionReaderProvider.overrideWithValue(read),
     lifeActionDispatcherProvider.overrideWithValue(dispatch),
+    actionOutcomeSummariesProvider.overrideWithValue(AsyncValue.data(outcomes)),
+    actionOutcomeRefreshProvider.overrideWith((ref, id) => refreshOutcome),
   ],
   child: MaterialApp(
     theme: AppTheme.light(),
@@ -69,9 +74,72 @@ void main() {
       expect(find.text('Done'), findsOneWidget);
       expect(find.text('Open action'), findsOneWidget);
       expect(find.text('Create action'), findsNothing);
+      expect(find.text('No source result is available yet'), findsOneWidget);
       expect(calls, 0);
     },
   );
+
+  testWidgets('source shows observed evidence without claiming causality', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        read: (_) async => const LifeLinkedAction(
+          id: 'completed',
+          state: LifeActionState.done,
+        ),
+        dispatch: (_) async => null,
+        outcomes: {
+          'completed': ActionOutcomeSummary(
+            status: ActionOutcomeStatus.signalStillActive,
+            sourceLabel: 'Budget',
+            sourceCapturedAt: DateTime.utc(2026, 7, 17),
+            evaluatedAt: DateTime.utc(2026, 7, 18),
+          ),
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Budget: signal still detected'), findsOneWidget);
+    expect(find.textContaining('Observed '), findsWidgets);
+    expect(
+      find.text(
+        'Observed change does not establish that this action caused it.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Recheck source'), findsNothing);
+    expect(find.text('Open action'), findsOneWidget);
+  });
+
+  testWidgets('failed source evaluation retries its owning read', (
+    tester,
+  ) async {
+    var retries = 0;
+    await tester.pumpWidget(
+      _wrap(
+        read: (_) async => const LifeLinkedAction(
+          id: 'completed',
+          state: LifeActionState.done,
+        ),
+        dispatch: (_) async => null,
+        outcomes: {
+          'completed': ActionOutcomeSummary(
+            status: ActionOutcomeStatus.failed,
+            sourceLabel: 'Budget',
+            sourceCapturedAt: DateTime.utc(2026, 7, 17),
+          ),
+        },
+        refreshOutcome: () => retries++,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Source evaluation failed'), findsOneWidget);
+    expect(find.textContaining('Observed '), findsNothing);
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(retries, 1);
+  });
 
   testWidgets(
     'replacement requires explicit confirmation and passes exact dropped id',

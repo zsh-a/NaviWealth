@@ -7,7 +7,6 @@ sealed class _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   });
 }
 
@@ -21,11 +20,10 @@ class _MdParagraph extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final spans = _InlineParser.parse(text, base, context);
     if (trailing != null) spans.add(trailing);
-    return _selectableRich(spans, selectable: selectable);
+    return _richText(spans);
   }
 }
 
@@ -40,15 +38,11 @@ class _MdHeading extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final style = AiType.heading(context, base, level);
     final spans = _InlineParser.parse(text, style, context);
     if (trailing != null) spans.add(trailing);
-    return Semantics(
-      header: true,
-      child: _selectableRich(spans, selectable: selectable),
-    );
+    return Semantics(header: true, child: _richText(spans));
   }
 }
 
@@ -60,7 +54,6 @@ class _MdHr extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -82,7 +75,6 @@ class _MdQuote extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final style = base.copyWith(
       color: AiTone.muted(context),
@@ -100,7 +92,7 @@ class _MdQuote extends _MdBlock {
         ),
       ),
       padding: const EdgeInsets.only(left: AppSpacing.s8),
-      child: _selectableRich(spans, selectable: selectable),
+      child: _richText(spans),
     );
   }
 }
@@ -124,7 +116,6 @@ class _MdList extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final rows = <Widget>[];
     for (var i = 0; i < items.length; i++) {
@@ -148,7 +139,7 @@ class _MdList extends _MdBlock {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _marker(context, base, item),
-              Expanded(child: _selectableRich(spans, selectable: selectable)),
+              Expanded(child: _richText(spans)),
             ],
           ),
         ),

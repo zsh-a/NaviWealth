@@ -2,7 +2,7 @@
 
 Status: active cross-domain sequencing SSOT.
 
-Last reviewed: 2026-10-01 against code baseline `0809735fc`.
+Last reviewed: 2026-10-24 against the owning code and executable contracts.
 
 ## Document Contract
 
@@ -34,11 +34,12 @@ The current code already provides:
 
 | Implemented baseline | Evidence and remaining distinction |
 |---|---|
-| Activation, Financial Inbox, Monthly Close, Runway, and saved financial decisions | [FinanceOS Roadmap](roadmap-finance.md) and [Finance task flows](https://github.com/zsh-a/NaviWealth/tree/0809735fc/apps/mobile/test/flow/). These workflows are available for study; adoption and repeated-use evidence are still required. |
-| Shared source-linked Action creation and navigation | [SourceActionControl](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/lib/core/lifeos/ui/source_action_control.dart), [Execution source repository](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/lib/features/execution/data/execution_repository_actions.dart), and [repository tests](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/test/features/execution/data/execution_repository_test.dart). Direct user-confirmed creation works without an AI proposal; open/Done Actions are reused and Dropped replacement is confirmed. De-duplication is local, not cross-device uniqueness. |
-| Commit-first forms, dirty guards, and failure retention | [Form submission contract](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/lib/core/forms/form_submission.dart) and the owning domain SSOTs. Health measurements, Execution blocker reasons, Knowledge editing/review, and the affected Finance forms lock pending writes and retain failed inputs. Supported status/Finance mutations offer typed Undo. Scoped device-local input recovery covers expense capture, import preferences, Execution Action/Plan/Progress capture, and Knowledge Note/Decision capture/editing under the [shared recovery contract](../architecture/lifeos-shell.md); this does not imply recovery for every editor. |
-| Personal Intelligence Loop, Memory V1, and confirmed-data recovery | [AI Architecture](../ai/ai-architecture.md), [LifeOS Shell](../architecture/lifeos-shell.md), and [confirmed-memory recovery tests](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/test/core/backup/confirmed_memory_recovery_test.dart). Memory provenance and Personal Profile survive supported recovery and shared-history cleanup. |
-| Sync compatibility and native durability implementations | [Sync compatibility tests](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/test/core/sync/sync_compatibility_test.dart), [schema baseline tests](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/test/core/persistence/schema_baseline_test.dart), and [Android integration workflow](https://github.com/zsh-a/NaviWealth/blob/0809735fc/.github/workflows/integration-device.yml). Checked-in tests and harnesses do not establish a passing packaged-device run or a real release stability window. |
+| Activation, Financial Inbox, Monthly Close, Runway, and saved financial decisions | [FinanceOS Roadmap](roadmap-finance.md) and [Finance task flows](https://github.com/zsh-a/NaviWealth/tree/main/apps/mobile/test/flow/). These workflows are available for study; adoption and repeated-use evidence are still required. |
+| Shared source-linked Action creation and navigation | [SourceActionControl](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/lib/core/lifeos/ui/source_action_control.dart), [Execution source repository](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/lib/features/execution/data/execution_repository_actions.dart), and [repository tests](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/test/features/execution/data/execution_repository_test.dart). Direct user-confirmed creation works without an AI proposal; open/Done Actions are reused and Dropped replacement is confirmed. De-duplication is local, not cross-device uniqueness. |
+| Source outcome presentation and recoverable details | [ExecutionOS](../domains/executionos-domain.md) and [LifeOS Shell](../architecture/lifeos-shell.md) own the shared source/detail/Review presentation, explicit evaluation states, source retry/review, nullable counts, retained content, and section retry. Source observations remain non-causal. |
+| Commit-first forms, dirty guards, and failure retention | [Form submission contract](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/lib/core/forms/form_submission.dart) and the owning domain SSOTs. Health measurements, Execution blocker reasons, Knowledge editing/review, and the affected Finance forms lock pending writes and retain failed inputs. Supported status/Finance mutations offer typed Undo. Scoped device-local input recovery covers expense capture, import preferences, Execution Action/Plan/Progress capture, and Knowledge Note/Decision capture/editing under the [shared recovery contract](../architecture/lifeos-shell.md); this does not imply recovery for every editor. |
+| Personal Intelligence Loop, Memory V1, and confirmed-data recovery | [AI Architecture](../ai/ai-architecture.md), [LifeOS Shell](../architecture/lifeos-shell.md), and [confirmed-memory recovery tests](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/test/core/backup/confirmed_memory_recovery_test.dart). Memory provenance and Personal Profile survive supported recovery and shared-history cleanup. |
+| Sync compatibility and native durability implementations | [Sync compatibility tests](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/test/core/sync/sync_compatibility_test.dart), [schema baseline tests](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/test/core/persistence/schema_baseline_test.dart), and [Android integration workflow](https://github.com/zsh-a/NaviWealth/blob/main/.github/workflows/integration-device.yml). Checked-in tests and harnesses do not establish a passing packaged-device run or a real release stability window. |
 
 Life currently receives Finance budget/journal signals, Health signals, and
 Execution signals. Financial Inbox has additional Finance detectors; Knowledge
@@ -48,9 +49,9 @@ Action control does not make Life a complete cross-domain review inbox.
 ## Now
 
 Keep at most three initiatives here. N1 and N2 retain their identities because
-Finance and the product-discovery SSOT refer to them. N3 is the next bounded
-engineering batch; it improves existing workflows while N1 collects real
-samples and N2 collects user evidence.
+Finance and the product-discovery SSOT refer to them. Engineering changes
+support observed failures while N1 collects real samples and N2 collects user
+evidence; completed delivery batches live in the owning SSOTs.
 
 ### N1. Real-World Statement Ingestion Quality
 
@@ -106,62 +107,13 @@ Remaining scope and exit evidence:
   and aggregate population surveys do not satisfy this exit.
 
 Owner: product research with domain task support. Code changes address
-observed task failures or correctness gaps such as N3; the study does not need
+observed task failures or correctness gaps; the study does not need
 another analytics platform to begin.
-
-### N3. Consistent Action Outcomes And Recoverable Details
-
-Outcome: users can tell whether an Action is complete, whether its source
-problem remains, and how to recover when the supporting data is unavailable.
-
-Current gaps:
-
-- [Outcome summaries](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/lib/core/lifeos/action_outcome.dart)
-  represent cleared/still-active observations. Execution Review consumes them,
-  but the shared source control and Action detail do not present the same
-  evaluation. Missing summaries alone cannot explain pending, incomplete,
-  failed, or unsupported evaluation.
-- [Execution detail](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/lib/features/execution/ui/execution_detail_page.dart)
-  converts unavailable Plan actions into an empty list for header counts;
-  related-action and progress errors have no section retry.
-
-First delivery slice:
-
-- Present the same authoritative source result and observation time in source
-  controls, Action detail, and Review. Distinguish Action state from source
-  evaluation; a completed Action never implies clearance.
-- Expose pending, incomplete, failed, and unsupported evaluation only when
-  the owning source can distinguish them. Never derive them from a missing
-  map entry. Knowledge outcomes remain explicit user-authored reviews.
-- Add source-owned retry/review access where a real handler exists. Keep
-  cross-domain composition in `app/` and use the existing neutral seams.
-
-Second delivery slice:
-
-- Separate loading, error, empty, and successful data in Execution details.
-  Unknown counts must not appear as zero. Preserve prior content during
-  refresh where available and retry only the failed section.
-- Explain deleted sources, missing objects, and inactive domains through
-  their existing routes and source-resolution contracts.
-
-Exit evidence:
-
-- Focused widget/composition tests cover delayed reads, section errors/retry,
-  complete/incomplete source observations, Action completion/Undo, and source
-  reappearance without claiming causality.
-- Task flows cover Life/Financial Inbox/Knowledge Decision → Action detail →
-  completion or Undo → source return; existing de-duplication, Dropped
-  replacement, and committed-id retry remain intact.
-- English/Chinese copy and the owning SSOTs describe the resulting behavior.
-
-Owner: app composition and the participating domains. Persistent editor drafts,
-new Action types, and a second review/navigation model are outside this batch.
 
 ## Next
 
-Accepted follow-ups stay behind the Now engineering batch. Release evidence can
-be collected alongside N1/N2; it does not require restarting implemented
-infrastructure projects.
+Release evidence can be collected alongside N1/N2; it does not require
+restarting implemented infrastructure projects.
 
 ### Release Acceptance: Recovery, Encryption, And Sync
 
@@ -172,7 +124,7 @@ The remaining deliverable is attributable runtime evidence.
 
 | Gate | Required remaining evidence | Authority |
 |---|---|---|
-| Android portability and encryption | A successful packaged Android emulator run proves cipher availability, encrypted bytes, key persistence and wrong/missing-key handling, legacy migration, and backup/restore. The two-process force-stop test proves recovery after interruption with its required evidence marker/JSON. | [Device workflow](https://github.com/zsh-a/NaviWealth/blob/0809735fc/.github/workflows/integration-device.yml), [integration runner](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/tool/run-android-integration.sh), [interruption runner](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/tool/run-android-backup-interruption.sh) |
+| Android portability and encryption | A successful packaged Android emulator run proves cipher availability, encrypted bytes, key persistence and wrong/missing-key handling, legacy migration, and backup/restore. The two-process force-stop test proves recovery after interruption with its required evidence marker/JSON. | [Device workflow](https://github.com/zsh-a/NaviWealth/blob/main/.github/workflows/integration-device.yml), [integration runner](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/tool/run-android-integration.sh), [interruption runner](https://github.com/zsh-a/NaviWealth/blob/main/apps/mobile/tool/run-android-backup-interruption.sh) |
 | Sync v3 release stability | Export a real release window with at least 10 cycles spanning 14 days, ≥95% success, zero fatal protocol failures, and zero generation-reset failures. Owner-scoped UTC-day aggregates retain 30 days and exact cycle counts; insufficient coverage remains collecting. | [Stability contract](../sync/sync-v3.md#production-stability-gate), `apps/mobile/lib/core/sync/sync_stability.dart` |
 
 Remote CI results and production stability exports were not verified in this
@@ -185,17 +137,17 @@ Sync E2EE remains gated on the release stability result and a recovery design.
 Outcome: the existing decision/Action/review loop works across supported
 window sizes and platform capabilities.
 
-Current gap: [Web route smoke](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/web_smoke/tests/router.spec.ts)
-primarily checks Finance/Settings URLs and boot errors; the
-[responsive matrix](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/web_smoke/tests/responsive.spec.ts)
-covers core Finance routes and document overflow. Those assertions do not
-prove the correct domain view or complete canvas-rendered workflow.
+The Web harness uses a real local-only identity and Flutter semantics to create
+accounts, Knowledge notes, and Execution actions. Record content, concrete
+detail URLs, reload, browser history, domain enablement, and cross-tab reads are
+executable checks. Harness implementation is not evidence for every supported
+browser or native interaction.
 
-Exit evidence:
+Remaining acceptance:
 
-- Deterministic seeded coverage checks opt-in/off behavior, actual destination
-  rendering, concrete Knowledge/Execution detail links, reload, and back/forward.
-  Keep manual acceptance for interactions unsupported by the browser harness.
+- Attach passing release-build results for the supported browser matrix.
+  Keep real Safari/PWA acceptance for platform interactions unavailable to
+  the browser harness.
 - Chromium covers shell/layout breakpoints; WebKit/Firefox cover routing,
   persistence, and supported-domain capability behavior. Web acceptance never
   requires an AI runtime or Health platform integration.
@@ -220,17 +172,17 @@ order below is the recommended research order, not a dated delivery promise.
 
 | Candidate | Current starting point and smallest extension | Promotion evidence and stop condition |
 |---|---|---|
-| Explain forecast versus later observation | Runway already records 30/90-day forecasts, evaluates due snapshots, and displays aggregate error. First verify target date versus actual observation date, comparable balances, and data completeness; then prototype one review of changed assumptions. Finance owns calculations. | N2 participants repeatedly cannot explain a consequential forecast deviation. Late/missing observations must remain distinguishable from forecast error; defer explanatory features if no recurring confusion is observed. |
+| Explain forecast versus later observation | Runway already records 30/90-day forecasts, evaluates due snapshots, and displays aggregate error. Target-day comparability and balance completeness now gate error statistics; prototype one review of changed assumptions only after observed user confusion. Finance owns calculations. | N2 participants repeatedly cannot explain a consequential forecast deviation. Late/missing observations must remain distinguishable from forecast error; defer explanatory features if no recurring confusion is observed. |
 | Compose one high-value decision workflow | Finance already stores baseline, assumptions, selected result, review evidence, and an Action. Knowledge already stores rationale, alternatives, and actual outcome. Prototype source-preserving navigation between existing records for one observed life event rather than creating another Decision aggregate. | N2 identifies repeated context switching or lost rationale in a specific decision. Promote only the narrow workflow with task evidence; stop if source links and existing review are sufficient. |
 | Make repeated import review require fewer corrections | The representative corpus, duplicate checks, Monthly Close, and quality reports already exist. Prototype one confirmed correction rule or focused field editor for the most frequent observed pattern. | N1/N2 provide redacted correction examples and a measured repeated cost. Keep mappings explicit and reversible; defer new providers without samples and rule-learning without repetition. |
 | Bring consequential due reviews into Life | Financial Inbox has more detectors than its Life contribution, and Knowledge due reviews have no Life signal contribution. Reuse one domain-owned due result through `DomainPack` after a concrete missed-review problem is observed. | Users repeatedly miss the same consequential review despite the owning domain's existing entry. Verify freshness, inactive-domain gating, source routing, and attention de-duplication; stop if it only duplicates existing reminders. |
 | Test a small Health behavior experiment | Reuse a Knowledge Note/Decision for the hypothesis, an Execution Plan/Progress for follow-through, and existing Health windows for observations. Start with a manual prototype and explicit review; an Experiment entity or recurring-task engine is not assumed. | Opt-in Health users complete at least two repeated experiment cycles and use the evidence to keep/revise a routine. Sparse data stays inconclusive and observations remain non-causal; defer if logging cost exceeds review value. |
 
-Forecast observations currently use the liquid balance seen on the next Runway
-evaluation after the target date. This is not automatically an exact historical
-target-date balance. The [repository](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/lib/features/finance/runway/data/runway_forecast_repository.dart)
-and [test](https://github.com/zsh-a/NaviWealth/blob/0809735fc/apps/mobile/test/features/finance/runway/data/runway_forecast_repository_test.dart)
-already provide the baseline; future work must preserve that distinction.
+Runway's [Finance contract](../domains/financeos-domain.md) distinguishes the
+forecast target day from the actual observation time. Only comparable,
+complete, same-currency observations on the target UTC day affect error and
+confidence; late observations remain evidence, not reconstructed historical
+balances. Explanation UI still requires the demand trigger above.
 
 ## Triggered Architecture And Capability Work
 
@@ -251,8 +203,8 @@ already provide the baseline; future work must preserve that distinction.
   evidence, and user-study evidence. One does not substitute for another.
 - Every promoted item names an owner, current gap, minimum scope, dependency,
   exit evidence, and stop/defer condition. Now contains at most three items.
-- Sequence N3 outcome presentation, then detail recovery, then platform workflow
-  acceptance; N1/N2 evidence collection proceeds alongside that engineering work.
+- Collect platform workflow and release acceptance alongside N1/N2; deepen
+  implemented workflows only for observed correctness or usability gaps.
 - New functionality must enter through a recorded measured problem. It does
   not displace Now because a competitor has launched a similar feature.
 - Keep domain calculations and authoritative records in their owning domain.

@@ -411,17 +411,6 @@ class _InboxDetail extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s8),
           ],
         ],
-        if (item.revalidationStatus != null) ...[
-          _EvidenceRow(
-            label: l10n.financialInboxRevalidation,
-            value: _revalidationLabel(l10n, item.revalidationStatus!),
-          ),
-          if (item.revalidatedAt != null)
-            _EvidenceRow(
-              label: l10n.financialInboxRevalidatedAt,
-              value: _dateTime(item.revalidatedAt!),
-            ),
-        ],
         const SizedBox(height: AppSpacing.s20),
         FButton(
           onPress: () {
@@ -699,17 +688,3 @@ List<_AnomalyExpense> _anomalyExpenses(Object? value) {
       .whereType<_AnomalyExpense>()
       .toList(growable: false);
 }
-
-String _revalidationLabel(
-  AppLocalizations l10n,
-  FinancialSignalRevalidationStatus status,
-) => switch (status) {
-  FinancialSignalRevalidationStatus.cleared =>
-    l10n.financialInboxRevalidationCleared,
-  FinancialSignalRevalidationStatus.stillDetected =>
-    l10n.financialInboxRevalidationStillDetected,
-  FinancialSignalRevalidationStatus.inconclusive =>
-    l10n.financialInboxRevalidationInconclusive,
-  FinancialSignalRevalidationStatus.actionDropped =>
-    l10n.financialInboxRevalidationActionDropped,
-};

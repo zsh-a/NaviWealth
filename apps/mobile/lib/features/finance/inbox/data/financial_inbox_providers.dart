@@ -398,6 +398,25 @@ final financialSignalRevalidationProvider =
       return report;
     });
 
+/// A user-requested recheck must retry the reads that failed, rather than
+/// rebuilding a summary over the same cached AsyncError.
+void refreshFinancialSignalEvaluation(Ref ref) {
+  final period = _periodKey(ref.read(financialInboxNowProvider));
+  ref.invalidate(financialInboxNowProvider);
+  ref.invalidate(pendingIngestReviewItemsProvider);
+  ref.invalidate(moneyRunwayProvider);
+  ref.invalidate(reconciliationsForPeriodProvider(period));
+  ref.invalidate(journalExpensesStreamProvider);
+  ref.invalidate(dashboardSnapshotProvider);
+  ref.invalidate(financialDecisionsProvider);
+  ref.invalidate(concentrationAlertsProvider);
+  ref.invalidate(dividendCenterSnapshotProvider);
+  ref.invalidate(holdingsSnapshotProvider);
+  ref.invalidate(financialSignalRepositoryProvider);
+  ref.invalidate(financialSignalScanCandidatesProvider);
+  ref.invalidate(financialSignalRevalidationProvider);
+}
+
 DateTime _observationAfter(List<LifeClosedAction> actions) {
   final latest = actions
       .map((action) => action.completedAt.toUtc())

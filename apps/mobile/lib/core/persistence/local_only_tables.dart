@@ -756,17 +756,26 @@ CREATE TABLE IF NOT EXISTS runway_forecast_snapshots (
   currency TEXT NOT NULL,
   starting_balance TEXT NOT NULL,
   predicted_balance TEXT NOT NULL,
-  actual_balance TEXT,
+  balance_is_complete INTEGER NOT NULL,
+  observed_balance TEXT,
+  observed_currency TEXT,
+  observed_at INTEGER,
+  observed_data_completeness REAL,
+  observed_balance_is_complete INTEGER,
+  evaluation_status TEXT CHECK (
+    evaluation_status IN (
+      'comparable', 'late', 'incomplete', 'currencyMismatch', 'zeroBaseline'
+    )
+  ),
   absolute_error TEXT,
   data_completeness REAL NOT NULL,
   evidence_json TEXT NOT NULL,
-  evaluated_at INTEGER,
   UNIQUE(owner_user_id, as_of_day, horizon_days)
 )
 ''',
   '''
 CREATE INDEX IF NOT EXISTS idx_runway_forecast_due
-ON runway_forecast_snapshots(owner_user_id, evaluated_at, target_at)
+ON runway_forecast_snapshots(owner_user_id, target_at, evaluation_status)
 ''',
   '''
 CREATE TABLE IF NOT EXISTS dividend_forecast_snapshots (

@@ -56,7 +56,7 @@ void main() {
             if (!available) {
               throw const UnsupportedDatabaseSchema(
                 foundVersion: 97,
-                requiredVersion: 98,
+                requiredVersion: 99,
               );
             }
             return database;
@@ -154,7 +154,7 @@ void main() {
         database: () => Future<AppDatabase>.error(
           const UnsupportedDatabaseSchema(
             foundVersion: 97,
-            requiredVersion: 98,
+            requiredVersion: 99,
           ),
         ),
         recovery: DatabaseRecoveryController(

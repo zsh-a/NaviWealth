@@ -17,7 +17,8 @@ class ExecutionActionCard extends StatelessWidget {
     this.onSourceOpen,
     this.showActions = true,
     this.compact = false,
-    this.outcome,
+    this.outcome = const AsyncValue.data(null),
+    this.onOutcomeRefresh,
     this.focusSelected = false,
     this.onToggleFocus,
   });
@@ -36,7 +37,8 @@ class ExecutionActionCard extends StatelessWidget {
   final VoidCallback? onSourceOpen;
   final bool showActions;
   final bool compact;
-  final ActionOutcomeSummary? outcome;
+  final AsyncValue<ActionOutcomeSummary?> outcome;
+  final VoidCallback? onOutcomeRefresh;
   final bool focusSelected;
   final VoidCallback? onToggleFocus;
 
@@ -151,30 +153,6 @@ class ExecutionActionCard extends StatelessWidget {
                                     label: action.source.labelSnapshot!,
                                     onPress: onSourceOpen,
                                   ),
-                                if (!compact && outcome != null)
-                                  AppBadge(
-                                    label: switch (outcome!.status) {
-                                      ActionOutcomeStatus.signalCleared =>
-                                        l10n.executionOutcomeSignalCleared(
-                                          outcome!.sourceLabel,
-                                        ),
-                                      ActionOutcomeStatus.signalStillActive =>
-                                        l10n.executionOutcomeSignalStillActive(
-                                          outcome!.sourceLabel,
-                                        ),
-                                    },
-                                    tone:
-                                        outcome!.status ==
-                                            ActionOutcomeStatus.signalCleared
-                                        ? AppBadgeTone.success
-                                        : AppBadgeTone.warning,
-                                    size: AppBadgeSize.compact,
-                                    icon:
-                                        outcome!.status ==
-                                            ActionOutcomeStatus.signalCleared
-                                        ? FLucideIcons.circleCheck
-                                        : FLucideIcons.refreshCw,
-                                  ),
                               ],
                             ),
                           ],
@@ -214,6 +192,16 @@ class ExecutionActionCard extends StatelessWidget {
                 ),
             ],
           ),
+          if (!compact &&
+              action.status == ExecutionActionStatus.done &&
+              (!action.source.isEmpty || outcome.asData?.value != null)) ...[
+            const SizedBox(height: AppSpacing.s12),
+            ActionOutcomeView(
+              outcome: outcome,
+              onRefresh: onOutcomeRefresh,
+              onReview: onSourceOpen,
+            ),
+          ],
         ],
       ),
     );

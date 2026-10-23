@@ -100,6 +100,20 @@ DomainLifeSignalSlice financeLifeSignals(Ref ref, DateTime now) {
   return DomainLifeSignalSlice(
     events: List<LifeEvent>.unmodifiable(events),
     evaluatedSourceFamilies: Set<String>.unmodifiable(evaluated),
+    sourceEvaluations: {
+      (
+        rowFamily: _budgetFamily,
+        rowId: 'month:$periodMonth',
+      ): budgetSignal == BudgetSignal.noData
+          ? LifeSourceEvaluationStatus.incomplete
+          : _evaluationStatus(budget),
+      (
+        rowFamily: _journalFamily,
+        rowId: 'day:${_dayKey(now)}',
+      ): _settled(activity) && (feed!.isFiltered || feed.hasMore)
+          ? LifeSourceEvaluationStatus.incomplete
+          : _evaluationStatus(activity),
+    },
   );
 }
 
@@ -117,6 +131,12 @@ String? financeSourceRoute(String family, String rowId) {
 
 bool _settled<T>(AsyncValue<T> value) =>
     value.hasValue && !value.hasError && !value.isLoading;
+
+LifeSourceEvaluationStatus _evaluationStatus<T>(AsyncValue<T> value) {
+  if (value.hasError) return LifeSourceEvaluationStatus.failed;
+  if (!_settled(value)) return LifeSourceEvaluationStatus.pending;
+  return LifeSourceEvaluationStatus.complete;
+}
 
 String _dayKey(DateTime value) {
   final local = value.toLocal();

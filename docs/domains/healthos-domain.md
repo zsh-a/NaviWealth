@@ -136,7 +136,7 @@ Tables:
 
 - `core/persistence/health_tables.dart`
 - Drift table: `health_metrics`
-- Drift table: `health_check_ins` (included in the schema-98 baseline)
+- Drift table: `health_check_ins` (included in the schema-99 baseline)
 - Entity: `features/health/domain/health_metric.dart`
 - Kind enum: `features/health/domain/health_metric_kind.dart`
 
@@ -188,7 +188,7 @@ participates in Health reset and encrypted backups. Older clients skip the
 unknown row family; upgrading changes the registry compatibility signature
 and replays the remote rows. Restoring an older archive that has no check-in
 table preserves existing check-ins. New databases create both Health tables and
-their indexes directly in schema 98. Other local schema versions are rejected
+their indexes directly in schema 99. Other local schema versions are rejected
 without rewriting data; the startup unlock gate requires explicit confirmation
 before resetting them. There is no historical local-schema migration chain.
 

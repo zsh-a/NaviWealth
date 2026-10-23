@@ -182,6 +182,16 @@ Rules:
   committed id. Action completion never implies the source issue has cleared;
   source outcome evaluation remains a separate observational result.
 
+`actionOutcomeSummariesProvider` carries an asynchronous, app-composed map of
+explicit source-evaluation states. Source controls and Execution detail/Review
+share `ActionOutcomeView`; loading, evaluation failure, incomplete coverage,
+and unavailable evaluators remain distinct from observed clear/active results.
+Domain Life contributions declare the exact identities covered by each
+snapshot. App composition combines those observations with Finance's persisted
+Inbox outcomes and wires retry callbacks to active source-domain reads.
+Observation times are preserved and never substituted with Action completion
+times. The ExecutionOS SSOT owns the outcome presentation behavior.
+
 Settings uses the same progressive-disclosure rule. Data & storage contains
 backup/export and destructive user-data actions. Cache counts, retention,
 automatic cleanup, and database compaction live under Advanced → Storage
@@ -743,7 +753,7 @@ confirmed rows intact. Primary-key collisions with preserved rows abort and
 roll back the restore. Older archives without an owner header are validated by
 their row owners; account identity remapping is not part of restore.
 
-Schema 98 is a fresh baseline. Historical schema upgrades and downgrades are
+Schema 99 is a fresh baseline. Historical schema upgrades and downgrades are
 unsupported. Opening another version raises `UnsupportedDatabaseSchema` without
 rewriting or deleting its rows. The startup gate explains the format mismatch
 and offers a confirmed local reset on native and Web; reset is never automatic.

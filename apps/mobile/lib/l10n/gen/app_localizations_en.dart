@@ -18327,6 +18327,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ingestViewOriginal => 'View original record';
 
   @override
+  String get actionOutcomePending => 'Waiting for a new source observation';
+
+  @override
+  String get actionOutcomeIncomplete => 'Source data is incomplete';
+
+  @override
+  String get actionOutcomeFailed => 'Source evaluation failed';
+
+  @override
+  String get actionOutcomeUnsupported =>
+      'Automatic source evaluation is unavailable';
+
+  @override
+  String get actionOutcomeUnavailable => 'No source result is available yet';
+
+  @override
+  String actionOutcomeObservedAt(String time) {
+    return 'Observed $time';
+  }
+
+  @override
+  String get actionOutcomeObservational =>
+      'Observed change does not establish that this action caused it.';
+
+  @override
+  String get actionOutcomeRefresh => 'Recheck source';
+
+  @override
+  String get actionOutcomeReview => 'Review source';
+
+  @override
   String get databaseSchemaMismatchTitle =>
       'Local database version is unsupported';
 

@@ -4,6 +4,7 @@
 /// active plans and recent progress) into a temporary artifact.
 library;
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 
 import '../../../core/ai/agents/agent.dart';
@@ -125,10 +126,14 @@ class ExecutionReviewAgent implements Agent {
     final droppedThisWeek = recentClosedActions
         .where((action) => action.status == ExecutionActionStatus.dropped)
         .length;
-    final actionOutcomes = ctx.ref.read(actionOutcomeSummariesProvider);
+    final actionOutcomes =
+        ctx.ref.read(actionOutcomeSummariesProvider).asData?.value ??
+        const <String, ActionOutcomeSummary>{};
     final evaluatedOutcomes = <String, ActionOutcomeSummary>{
       for (final action in recentClosedActions)
-        action.id: ?actionOutcomes[action.id],
+        if (actionOutcomes[action.id] case final outcome?
+            when outcome.isObserved && outcome.evaluatedAt != null)
+          action.id: outcome,
     };
     final findingStore = await ctx.ref.read(
       agent_providers.agentFindingStoreProvider.future,
@@ -426,7 +431,7 @@ class ExecutionReviewAgent implements Agent {
                   entry.key: <String, Object?>{
                     'status': entry.value.status.name,
                     'source_label': entry.value.sourceLabel,
-                    'evaluated_at': entry.value.evaluatedAt
+                    'evaluated_at': entry.value.evaluatedAt!
                         .toUtc()
                         .toIso8601String(),
                     'attribution': entry.value.attribution.name,

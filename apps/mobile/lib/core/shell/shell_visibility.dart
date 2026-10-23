@@ -12,6 +12,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'active_route.dart';
+
 /// Active route path fallback for trees rendered without GoRouter.
 ///
 /// Empty string means "unknown / not under a domain shell" — treat as active
@@ -72,7 +74,7 @@ class ShellTabPause extends ConsumerWidget {
       builder: (context, _) {
         return _buildForActive(
           isShellTabPathActive(
-            activeTabPath: _activeRouterPath(router),
+            activeTabPath: activeRoutePath(router),
             routePath: routePath,
           ),
         );
@@ -92,16 +94,4 @@ class ShellTabPause extends ConsumerWidget {
       ],
     );
   }
-}
-
-String _activeRouterPath(GoRouter router) {
-  final configuration = router.routerDelegate.currentConfiguration;
-  if (configuration.isEmpty) {
-    return router.routeInformationProvider.value.uri.path;
-  }
-  final last = configuration.last;
-  if (last is ImperativeRouteMatch) {
-    return last.matches.uri.path;
-  }
-  return configuration.uri.path;
 }

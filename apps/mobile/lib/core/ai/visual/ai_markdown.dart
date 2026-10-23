@@ -71,8 +71,7 @@ class AiMarkdown extends StatefulWidget {
   final InlineSpan? trailing;
   final bool selectable;
 
-  /// When true, skip [AnimatedSize] and prefer lighter text selection
-  /// so high-frequency streaming rebuilds stay smooth.
+  /// When true, skip [AnimatedSize] so streaming rebuilds stay smooth.
   final bool streaming;
 
   @override
@@ -98,7 +97,6 @@ class _AiMarkdownState extends State<AiMarkdown> {
     final blocks = _blocks();
     final trailing = widget.trailing;
     final baseStyle = widget.baseStyle;
-    final selectable = widget.selectable;
     if (blocks.isEmpty) {
       // Empty input + a streaming caret still wants the caret visible
       // so the bubble doesn't collapse to zero height while waiting for
@@ -117,27 +115,32 @@ class _AiMarkdownState extends State<AiMarkdown> {
           context,
           base: effectiveBase,
           trailing: isLast ? trailing : null,
-          selectable: selectable,
         ),
       );
       if (!isLast) {
         children.add(SizedBox(height: _gapAfter(blocks[i], blocks[i + 1])));
       }
     }
-    final column = Column(
+    Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: children,
     );
     // Streaming rebuilds ~10×/s — AnimatedSize on every token costs
     // layout thrash. Only smooth height changes once the turn settles.
-    if (widget.streaming) return column;
-    return AnimatedSize(
-      duration: AppMotionPolicy.duration(context, Motion.fast),
-      curve: Motion.aiCalm,
-      alignment: Alignment.topLeft,
-      child: column,
-    );
+    if (!widget.streaming) {
+      content = AnimatedSize(
+        duration: AppMotionPolicy.duration(context, Motion.fast),
+        curve: Motion.aiCalm,
+        alignment: Alignment.topLeft,
+        child: content,
+      );
+    }
+    // Read-only content retains ordinary text/link semantics on Web. A single
+    // selection scope also lets users copy across paragraph and block edges.
+    return widget.selectable
+        ? SelectionArea(child: content)
+        : SelectionContainer.disabled(child: content);
   }
 
   /// Gap between two adjacent blocks. Tighter between list rows so a

@@ -30715,6 +30715,60 @@ abstract class AppLocalizations {
   /// **'View original record'**
   String get ingestViewOriginal;
 
+  /// No description provided for @actionOutcomePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for a new source observation'**
+  String get actionOutcomePending;
+
+  /// No description provided for @actionOutcomeIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Source data is incomplete'**
+  String get actionOutcomeIncomplete;
+
+  /// No description provided for @actionOutcomeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Source evaluation failed'**
+  String get actionOutcomeFailed;
+
+  /// No description provided for @actionOutcomeUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic source evaluation is unavailable'**
+  String get actionOutcomeUnsupported;
+
+  /// No description provided for @actionOutcomeUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No source result is available yet'**
+  String get actionOutcomeUnavailable;
+
+  /// No description provided for @actionOutcomeObservedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed {time}'**
+  String actionOutcomeObservedAt(String time);
+
+  /// No description provided for @actionOutcomeObservational.
+  ///
+  /// In en, this message translates to:
+  /// **'Observed change does not establish that this action caused it.'**
+  String get actionOutcomeObservational;
+
+  /// No description provided for @actionOutcomeRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Recheck source'**
+  String get actionOutcomeRefresh;
+
+  /// No description provided for @actionOutcomeReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Review source'**
+  String get actionOutcomeReview;
+
   /// No description provided for @databaseSchemaMismatchTitle.
   ///
   /// In en, this message translates to:

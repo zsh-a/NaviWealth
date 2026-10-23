@@ -91,6 +91,7 @@ class MoneyRunwayPoint {
 class MoneyRunwaySnapshot {
   const MoneyRunwaySnapshot({
     required this.asOf,
+    required this.observedAt,
     required this.currency,
     required this.startingBalance,
     required this.reserveTarget,
@@ -101,6 +102,7 @@ class MoneyRunwaySnapshot {
     required this.status,
     required this.confidence,
     required this.dataCompleteness,
+    required this.balanceIsComplete,
     required this.historicalForecastError,
     required this.missingCurrencies,
     required this.hasData,
@@ -109,6 +111,9 @@ class MoneyRunwaySnapshot {
   });
 
   final DateTime asOf;
+
+  /// Actual observation instant, distinct from the forecast's UTC day anchor.
+  final DateTime observedAt;
   final String currency;
   final Decimal startingBalance;
   final Decimal reserveTarget;
@@ -119,6 +124,10 @@ class MoneyRunwaySnapshot {
   final MoneyRunwayStatus status;
   final MoneyRunwayConfidence confidence;
   final double dataCompleteness;
+
+  /// All liquid assets have a recorded value converted to [currency].
+  /// This is independent of historical-flow coverage in [dataCompleteness].
+  final bool balanceIsComplete;
   final double? historicalForecastError;
   final Set<String> missingCurrencies;
   final bool hasData;
@@ -198,6 +207,7 @@ class MoneyRunwaySnapshot {
 
   Map<String, Object?> toEvidenceJson() => <String, Object?>{
     'as_of': asOf.toIso8601String(),
+    'observed_at': observedAt.toIso8601String(),
     'currency': currency,
     'starting_balance': startingBalance.toString(),
     'reserve_target': reserveTarget.toString(),
@@ -215,6 +225,7 @@ class MoneyRunwaySnapshot {
     'status': status.name,
     'confidence': confidence.name,
     'data_completeness': dataCompleteness,
+    'balance_is_complete': balanceIsComplete,
     'historical_forecast_error': historicalForecastError,
     'scheduled_flow_count': scheduledFlows.length,
     'estimated_flow_count': scheduledFlows
@@ -236,6 +247,7 @@ MoneyRunwaySnapshot buildMoneyRunway({
   required Iterable<RunwayScheduledFlow> scheduledFlows,
   required MoneyRunwayConfidence confidence,
   double dataCompleteness = 0,
+  bool balanceIsComplete = false,
   double? historicalForecastError,
   Set<String> missingCurrencies = const <String>{},
   int horizonDays = 90,
@@ -299,6 +311,7 @@ MoneyRunwaySnapshot buildMoneyRunway({
 
   return MoneyRunwaySnapshot(
     asOf: start,
+    observedAt: asOf.toUtc(),
     currency: currency,
     startingBalance: startingBalance,
     reserveTarget: reserveTarget,
@@ -309,6 +322,7 @@ MoneyRunwaySnapshot buildMoneyRunway({
     status: status,
     confidence: confidence,
     dataCompleteness: dataCompleteness,
+    balanceIsComplete: balanceIsComplete,
     historicalForecastError: historicalForecastError,
     missingCurrencies: Set<String>.unmodifiable(missingCurrencies),
     hasData: hasData,
@@ -372,7 +386,7 @@ MoneyRunwaySnapshot applyMoneyRunwayScenario(
     );
   }
   return buildMoneyRunway(
-    asOf: base.asOf,
+    asOf: base.observedAt,
     currency: base.currency,
     startingBalance: base.startingBalance,
     reserveTarget: base.reserveTarget,
@@ -381,6 +395,7 @@ MoneyRunwaySnapshot applyMoneyRunwayScenario(
     scheduledFlows: flows,
     confidence: base.confidence,
     dataCompleteness: base.dataCompleteness,
+    balanceIsComplete: base.balanceIsComplete,
     historicalForecastError: base.historicalForecastError,
     missingCurrencies: base.missingCurrencies,
     hasData: base.hasData,

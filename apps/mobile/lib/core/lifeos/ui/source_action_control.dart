@@ -6,6 +6,8 @@ import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../../shell/settings_route_paths.dart';
 import '../action_dispatcher.dart';
+import '../action_outcome.dart';
+import 'action_outcome_view.dart';
 
 /// Shared source lifecycle: load, reuse/open, or explicitly replace a dropped action.
 class SourceActionControl extends ConsumerStatefulWidget {
@@ -90,6 +92,15 @@ class _SourceActionControlState extends ConsumerState<SourceActionControl> {
             AppBadge(label: sourceActionStateLabel(l10n, action.state)),
             const SizedBox(height: AppSpacing.s8),
             Text(l10n.sourceActionLinked, style: context.bodyCaptionStyle),
+            if (action.state == LifeActionState.done) ...[
+              const SizedBox(height: AppSpacing.s10),
+              ActionOutcomeView(
+                outcome: ref
+                    .watch(actionOutcomeSummariesProvider)
+                    .whenData((outcomes) => outcomes[action.id]),
+                onRefresh: ref.watch(actionOutcomeRefreshProvider(action.id)),
+              ),
+            ],
             const SizedBox(height: AppSpacing.s10),
             AppQuietButton(
               key: widget.openKey,

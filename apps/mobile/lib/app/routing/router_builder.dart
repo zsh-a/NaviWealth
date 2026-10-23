@@ -85,6 +85,10 @@ Future<void> preloadDeferredRoutesForTest({List<DomainPack>? packs}) async {
 ///   cover the full canvas while open and pop back into whatever
 ///   domain the user came from.
 GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
+  // Every page has a URL-only route constructor. Keep pushed details in the
+  // browser address bar so refresh/share restore the visible record; sheets
+  // remain Navigator overlays and do not acquire a second route model.
+  GoRouter.optionURLReflectsImperativeAPIs = true;
   final packs = ref.read(domainPackRegistryProvider);
   final shellRoutes = <RouteBase>[
     for (final p in packs)

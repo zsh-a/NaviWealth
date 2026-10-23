@@ -3,6 +3,7 @@ import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
+import 'app_actions.dart';
 import 'app_glass.dart';
 import 'app_interaction.dart';
 import 'app_selection_indicator.dart';
@@ -150,70 +151,66 @@ class _NavTabButton extends StatelessWidget {
     final selectedColor = accentColor ?? colors.primary;
     final iconColor = selected ? selectedColor : colors.mutedForeground;
     final labelColor = selected ? selectedColor : colors.mutedForeground;
-    return Semantics(
-      button: true,
+    return AppActionTappable(
       selected: selected,
-      label: tab.label,
-      child: FTappable(
-        selected: selected,
-        focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
-        builder: (context, variants, child) => AppGlassFeedback(
-          variants: variants,
-          accentColor: accentColor,
-          child: child!,
-        ),
-        onPress: () {
-          if (!selected) {
-            AppInteraction.signal(AppInteractionIntent.navigate);
-          }
-          onTap();
-        },
-        child: SizedBox(
-          height: _kDestinationHeight,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s6,
-              vertical: AppSpacing.s4,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: _kIconSlotSize,
-                  height: _kIconSlotSize,
-                  // Selection is signalled by the accent colour plus the
-                  // underline indicator below; the icon glyph stays fixed so
-                  // tabs do not need paired outline/filled assets.
-                  child: Center(
-                    child: Icon(
-                      tab.icon,
-                      color: iconColor,
-                      size: AppIconSizes.h18,
-                    ),
+      semanticsLabel: tab.label,
+      focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      builder: (context, variants, child) => AppGlassFeedback(
+        variants: variants,
+        accentColor: accentColor,
+        child: child!,
+      ),
+      onPress: () {
+        if (!selected) {
+          AppInteraction.signal(AppInteractionIntent.navigate);
+        }
+        onTap();
+      },
+      child: SizedBox(
+        height: _kDestinationHeight,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s6,
+            vertical: AppSpacing.s4,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: _kIconSlotSize,
+                height: _kIconSlotSize,
+                // Selection is signalled by the accent colour plus the
+                // underline indicator below; the icon glyph stays fixed so
+                // tabs do not need paired outline/filled assets.
+                child: Center(
+                  child: Icon(
+                    tab.icon,
+                    color: iconColor,
+                    size: AppIconSizes.h18,
                   ),
                 ),
-                Text(
-                  tab.label,
-                  style:
-                      (selected
-                              ? TypographyTokens.labelSmall
-                              : TypographyTokens.labelSmallMedium)
-                          .copyWith(color: labelColor, height: 1.15),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s2),
-                AppSelectionIndicator(
-                  selected: selected,
-                  length: AppSpacing.s16,
-                  thickness: AppSpacing.s2,
-                  color: accentColor,
-                ),
-              ],
-            ),
+              ),
+              Text(
+                tab.label,
+                style:
+                    (selected
+                            ? TypographyTokens.labelSmall
+                            : TypographyTokens.labelSmallMedium)
+                        .copyWith(color: labelColor, height: 1.15),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.s2),
+              AppSelectionIndicator(
+                selected: selected,
+                length: AppSpacing.s16,
+                thickness: AppSpacing.s2,
+                color: accentColor,
+              ),
+            ],
           ),
         ),
       ),
@@ -241,48 +238,45 @@ class _AssistantActionButton extends StatelessWidget {
     final colors = context.theme.colors;
     final foreground = colors.primary;
 
-    return Semantics(
-      button: true,
-      label: semanticLabel ?? label ?? 'AI',
-      child: FTappable(
-        onPress: onTap,
-        focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
+    return AppActionTappable(
+      semanticsLabel: semanticLabel ?? label ?? 'AI',
+      onPress: onTap,
+      focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      builder: (context, variants, child) =>
+          AppGlassFeedback(variants: variants, child: child!),
+      child: Container(
+        key: const ValueKey<String>('floating-nav.assistant'),
+        height: AppSpacing.s40,
+        constraints: BoxConstraints(
+          minWidth: compact ? AppSpacing.s40 : AppSpacing.s64,
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? AppSpacing.s8 : AppSpacing.s10,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(AppRadius.full),
         ),
-        builder: (context, variants, child) =>
-            AppGlassFeedback(variants: variants, child: child!),
-        child: Container(
-          key: const ValueKey<String>('floating-nav.assistant'),
-          height: AppSpacing.s40,
-          constraints: BoxConstraints(
-            minWidth: compact ? AppSpacing.s40 : AppSpacing.s64,
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? AppSpacing.s8 : AppSpacing.s10,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.full),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: foreground, size: AppIconSizes.h18),
-              if (label != null) ...[
-                const SizedBox(width: AppSpacing.s6),
-                Text(
-                  label!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TypographyTokens.labelSmallMedium.copyWith(
-                    color: foreground,
-                    height: 1,
-                  ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: foreground, size: AppIconSizes.h18),
+            if (label != null) ...[
+              const SizedBox(width: AppSpacing.s6),
+              Text(
+                label!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TypographyTokens.labelSmallMedium.copyWith(
+                  color: foreground,
+                  height: 1,
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );

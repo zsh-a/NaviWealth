@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/lifeos/action_outcome.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
@@ -16,6 +17,71 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import '../../../core/persistence/test_database.dart';
 
 void main() {
+  testWidgets('action detail subscribes to the same source outcome as Review', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    final repo = ExecutionRepository(db: db, outbox: InMemoryOutboxStore());
+    final at = DateTime.utc(2026, 7, 17);
+    await repo.upsertAction(
+      ExecutionAction(
+        id: 'done',
+        title: 'Review budget',
+        status: ExecutionActionStatus.done,
+        source: const ExecutionSourceRef(
+          domain: 'finance',
+          rowFamily: 'fin:budgets',
+          rowId: 'month:2026-07',
+          labelSnapshot: 'Budget',
+        ),
+        createdAt: at,
+        completedAt: at,
+        sync: SyncMeta(
+          ownerUserId: 'owner',
+          updatedAt: at,
+          updatedByDevice: 'device',
+          hlc: Hlc.zero('device'),
+        ),
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          executionRepositoryProvider.overrideWith((_) async => repo),
+          executionOwnerUserIdProvider.overrideWith((_) async => 'owner'),
+          actionOutcomeSummariesProvider.overrideWithValue(
+            AsyncValue.data({
+              'done': ActionOutcomeSummary(
+                status: ActionOutcomeStatus.signalStillActive,
+                sourceLabel: 'Budget',
+                sourceCapturedAt: at,
+                evaluatedAt: DateTime.utc(2026, 7, 18),
+              ),
+            }),
+          ),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('en'),
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: const ExecutionActionDetailPage(actionId: 'done'),
+          ),
+        ),
+      ),
+    );
+    await _settle(tester);
+    expect(find.text('Budget: signal still detected'), findsOneWidget);
+    expect(find.textContaining('Observed '), findsWidgets);
+    expect(find.text('Waiting for a new source observation'), findsNothing);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _settle(tester);
+  });
+
   testWidgets(
     'action timeline lazily renders and loads records older than the previous 100-row cutoff',
     (tester) async {

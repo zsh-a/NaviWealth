@@ -12,7 +12,6 @@ class _MdCode extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final lang = (language ?? '').trim();
     final l10n = AppLocalizations.of(context);
@@ -72,9 +71,7 @@ class _MdCode extends _MdBlock {
               AppSpacing.s12,
               AppSpacing.s8,
             ),
-            child: _NoSoftWrap(
-              child: _selectableRich(spans, selectable: selectable),
-            ),
+            child: _NoSoftWrap(child: _richText(spans)),
           ),
         ],
       ),
@@ -113,7 +110,6 @@ class _MdTable extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final cols = header.length;
     final outline = AiTone.outline(context);
@@ -152,9 +148,7 @@ class _MdTable extends _MdBlock {
         },
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 80),
-          child: selectable
-              ? SelectableText.rich(TextSpan(children: spans), textAlign: align)
-              : Text.rich(TextSpan(children: spans), textAlign: align),
+          child: _richText(spans, textAlign: align),
         ),
       );
     }
@@ -223,7 +217,6 @@ class _MdFlowBlock extends _MdBlock {
     BuildContext context, {
     required TextStyle base,
     required InlineSpan? trailing,
-    required bool selectable,
   }) {
     final widget = Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
@@ -285,7 +278,5 @@ class _CopyButtonState extends State<_CopyButton> {
   }
 }
 
-Widget _selectableRich(List<InlineSpan> spans, {required bool selectable}) {
-  final span = TextSpan(children: spans);
-  return selectable ? SelectableText.rich(span) : Text.rich(span);
-}
+Widget _richText(List<InlineSpan> spans, {TextAlign? textAlign}) =>
+    Text.rich(TextSpan(children: spans), textAlign: textAlign);

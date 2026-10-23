@@ -77,7 +77,7 @@ final class AppDatabaseTransactionScope {
 
 /// Local NaviWealth database.
 ///
-/// Schema 98 is a fresh baseline. Other versions are rejected without modifying
+/// Schema 99 is a fresh baseline. Other versions are rejected without modifying
 /// data; the startup gate offers an explicit local reset. Current-schema files
 /// reopen normally. There is no historical upgrade or downgrade path.
 @DriftDatabase(
@@ -174,7 +174,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 98;
+  int get schemaVersion => 99;
 
   UnsupportedDatabaseSchema? _schemaMismatch;
 

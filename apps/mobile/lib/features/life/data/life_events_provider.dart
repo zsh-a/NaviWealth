@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
+import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/features/life/domain/life_event.dart';
 
@@ -10,12 +11,14 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
   final events = <LifeEvent>[];
   final evaluatedSourceFamilies = <String>{};
   final evaluatedByDomain = <DomainScope, Set<String>>{};
+  final sourceEvaluations = <LifeActionSource, LifeSourceEvaluationStatus>{};
   final now = DateTime.now().toUtc();
   for (final pack in ref.watch(activeDomainPacksProvider)) {
     final slice = pack.data.lifeSignalBuilder?.call(ref, now);
     if (slice == null) continue;
     events.addAll(slice.events);
     evaluatedSourceFamilies.addAll(slice.evaluatedSourceFamilies);
+    sourceEvaluations.addAll(slice.sourceEvaluations);
     evaluatedByDomain[pack.scope] = Set<String>.unmodifiable(
       slice.evaluatedSourceFamilies,
     );
@@ -31,6 +34,7 @@ final lifeSignalSnapshotProvider = Provider<LifeSignalSnapshot>((ref) {
     events: List.unmodifiable(events),
     evaluatedSourceFamilies: Set.unmodifiable(evaluatedSourceFamilies),
     evaluatedSourceFamiliesByDomain: Map.unmodifiable(evaluatedByDomain),
+    sourceEvaluations: Map.unmodifiable(sourceEvaluations),
   );
 });
 

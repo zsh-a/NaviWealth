@@ -7,7 +7,7 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 void main() {
   for (final background in [false, true]) {
-    for (final version in [1, 77, 97, 99]) {
+    for (final version in [1, 77, 98, 100]) {
       test(
         'rejects schema $version without modifying data (background=$background)',
         () async {

@@ -21,6 +21,7 @@ import 'package:go_router/go_router.dart';
 import '../../design_system/design_system.dart';
 import '../../l10n/gen/app_localizations.dart';
 import '../lifeos/domain_pack.dart';
+import 'active_route.dart';
 import 'domain_shell.dart';
 
 /// App-composed route for the cross-domain home surface.
@@ -40,11 +41,7 @@ Future<void> showDomainSwitcherSheet(
   String? homePath,
 ) async {
   if (specs.length < 2 && homePath == null) return;
-  final activePath = GoRouter.of(context)
-      .routeInformationProvider
-      .value
-      .uri
-      .path;
+  final activePath = activeRoutePath(GoRouter.of(context));
   final active = activeSpecForPath(specs, activePath);
   final onHome =
       homePath != null &&

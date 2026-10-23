@@ -8,6 +8,7 @@ import '../../l10n/gen/app_localizations.dart';
 import '../ai/write/persistent_undo_banner.dart';
 import '../forms/form_undo_banner.dart';
 import '../lifeos/domain_pack.dart';
+import 'active_route.dart';
 import 'domain_shell.dart';
 import 'domain_switcher.dart';
 import 'sync_activity_strip.dart';
@@ -206,7 +207,7 @@ class _MobileLayout extends ConsumerWidget {
     return AnimatedBuilder(
       animation: router.routerDelegate,
       builder: (context, _) {
-        final path = _activePath(router);
+        final path = activeRoutePath(router);
         final onTabRoot = tabs.any((tab) => tab.routePath == path);
 
         // Keep the routed page's viewport stable while overlays open. The
@@ -351,18 +352,6 @@ class _DockReveal extends StatelessWidget {
       ),
     );
   }
-}
-
-String _activePath(GoRouter router) {
-  final config = router.routerDelegate.currentConfiguration;
-  if (config.isEmpty) {
-    return router.routeInformationProvider.value.uri.path;
-  }
-  final last = config.last;
-  if (last is ImperativeRouteMatch) {
-    return last.matches.uri.path;
-  }
-  return config.uri.path;
 }
 
 class _TabletLayout extends ConsumerWidget {

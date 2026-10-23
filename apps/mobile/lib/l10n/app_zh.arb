@@ -5664,6 +5664,20 @@
   "ingestComparisonImported": "本次导入",
   "ingestComparisonDifferent": "有差异",
   "ingestViewOriginal": "查看原记录",
+  "actionOutcomePending": "等待新的来源观测",
+  "actionOutcomeIncomplete": "来源数据不完整",
+  "actionOutcomeFailed": "来源评估失败",
+  "actionOutcomeUnsupported": "此来源暂不支持自动评估",
+  "actionOutcomeUnavailable": "暂未取得来源结果",
+  "actionOutcomeObservedAt": "观测于 {time}",
+  "@actionOutcomeObservedAt": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
+  "actionOutcomeObservational": "观测变化不代表由此行动造成。",
+  "actionOutcomeRefresh": "重新评估来源",
+  "actionOutcomeReview": "查看来源",
   "databaseSchemaMismatchTitle": "本地数据库版本不受支持",
   "databaseSchemaMismatchMessage": "此版本使用新的数据库格式。现有数据未被修改，重置本地数据后可重新开始。"
 }

@@ -382,11 +382,13 @@ void main() {
       _wrap(
         ExecutionActionCard(
           action: _action(status: ExecutionActionStatus.done),
-          outcome: ActionOutcomeSummary(
-            status: ActionOutcomeStatus.signalCleared,
-            sourceLabel: 'HealthOS',
-            sourceCapturedAt: DateTime.utc(2026, 7, 16),
-            evaluatedAt: DateTime.utc(2026, 7, 18),
+          outcome: AsyncValue.data(
+            ActionOutcomeSummary(
+              status: ActionOutcomeStatus.signalCleared,
+              sourceLabel: 'HealthOS',
+              sourceCapturedAt: DateTime.utc(2026, 7, 16),
+              evaluatedAt: DateTime.utc(2026, 7, 18),
+            ),
           ),
           showActions: false,
           onEdit: () {},
@@ -401,6 +403,13 @@ void main() {
     );
 
     expect(find.text('HealthOS: signal no longer detected'), findsOneWidget);
+    expect(find.textContaining('Observed '), findsWidgets);
+    expect(
+      find.text(
+        'Observed change does not establish that this action caused it.',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets(

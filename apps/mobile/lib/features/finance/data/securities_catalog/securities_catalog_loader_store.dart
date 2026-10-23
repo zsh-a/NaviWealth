@@ -53,25 +53,18 @@ Future<void> _replaceCatalog(
               .toList(),
         );
       });
-
-      // Mirror the same slice into the contentless FTS5 index. We
-      // keep the rowids in step with `securities_catalog.rowid` so
-      // search queries can join the two tables by rowid without
-      // building a separate id map.
-      for (final entry in slice) {
-        await db.customStatement(
-          '''
-          INSERT INTO securities_catalog_fts(
-            rowid, symbol, name_en, name_cn, pinyin, pinyin_initials, aliases
-          )
-          SELECT rowid, symbol, name_en, name_cn, pinyin, pinyin_initials, aliases
-          FROM securities_catalog
-          WHERE id = ?
-          ''',
-          [entry.id],
-        );
-      }
     }
+
+    // Build the contentless FTS index in SQLite, preserving source rowids.
+    // Per-security statements cross the worker boundary on Web and hold the
+    // transaction open for minutes, blocking unrelated user writes at startup.
+    await db.customStatement('''
+      INSERT INTO securities_catalog_fts(
+        rowid, symbol, name_en, name_cn, pinyin, pinyin_initials, aliases
+      )
+      SELECT rowid, symbol, name_en, name_cn, pinyin, pinyin_initials, aliases
+      FROM securities_catalog
+    ''');
 
     // Meta row is written last: a crash before this point leaves the
     // catalog in an old state but the meta unchanged, so the next

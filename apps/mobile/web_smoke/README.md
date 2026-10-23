@@ -1,12 +1,16 @@
 # `web_smoke` — Cross-Browser Smoke for the Flutter Web Build
 
-The bootstrap loads bundled CanvasKit assets from the app origin. The boot
-suite also blocks external requests to verify that first paint does not depend
-on the renderer CDN.
+The bootstrap loads bundled CanvasKit assets from the app origin, and Flutter's
+default font family reuses bundled Inter. The boot suite blocks external
+requests and requires zero external startup requests or console errors.
 
 Automated companion to [`docs/development/web-compat-matrix.md`](../../../docs/development/web-compat-matrix.md) (FIR-40). Runs Playwright against the production-shaped Flutter web bundle on **Chromium, WebKit, and Firefox**, asserting things that have silently regressed before:
 
-- Drift opens a persistent storage backend (and on Firefox, that backend is not OPFS).
+- Accounts created through the UI survive a hard reload.
+- Knowledge notes written in either of two tabs are readable by the other.
+- Optional domains start disabled; enabling them permits Knowledge/Execution
+  capture, concrete detail links, and reload with the saved content intact.
+- Workspace navigation and browser back/forward render the expected content.
 - `PathUrlStrategy` routes resolve as direct hits and after reload.
 - Core Finance routes stay free of document-level horizontal overflow at
   390, 840, 1200, and 1600px viewport widths.
@@ -15,7 +19,8 @@ Automated companion to [`docs/development/web-compat-matrix.md`](../../../docs/d
 
 Out of scope:
 
-- User-flow E2E (Flutter renders into a canvas; flows needing a real human — PWA install, font fallback, keyboard quirks — live in the manual checklist).
+- Real-backend login and cloud sync (the suite uses production local-only mode).
+- PWA installation, real font rendering, and native keyboard/platform quirks.
 - Perf benchmarks (first-paint budgets live in FIR-39).
 - Real iOS Safari (not reachable from a Linux runner).
 
@@ -31,7 +36,7 @@ From `apps/mobile/`:
 
 ```bash
 # 1. Build the web bundle and install the generated Drift root assets.
-bash tool/build-web.sh --release --dart-define=BYPASS_AUTH=true
+bash tool/build-web.sh --release
 
 # 2. Install Playwright browsers (one-time).
 cd web_smoke
@@ -46,6 +51,13 @@ npm run test:firefox        # one project
 If the Playwright-managed Chromium bundle is unavailable but the host already
 has Chromium, set `WEB_SMOKE_CHROMIUM_EXECUTABLE=/path/to/chromium` for the
 Chromium project. CI continues to use Playwright's pinned browser by default.
+
+Each test has a fresh browser context with the production `app.mode.v1`
+preference set to `local_only`, and a fixed English browser locale. Auth route
+guards remain enabled. Domain preferences and records are created through the
+actual UI and repositories; no backend, mocked auth, direct database seeding,
+or test-only application bridge is needed. Flutter's accessibility placeholder
+enables role/text locators. A mounted canvas alone never proves business success.
 
 The harness boots a tiny static server (`serve.mjs`) that points at
 `../build/web` and falls back to `index.html` for SPA routes. Set
@@ -71,8 +83,13 @@ to `full`; set `WEB_SMOKE_RESPONSIVE=compact` to reproduce the PR gate.
 Each `tests/*.spec.ts` follows the same shape:
 
 1. `attachConsoleSpy(page)` before the first navigation.
-2. `await page.goto(...)` then `waitForFlutterReady(page)` to avoid racing the first frame.
-3. Assert the invariant.
+2. Import `test` from `_app.ts`; use `openApp(page, route)` for a new document,
+   or `enableFlutterSemantics(page)` after reload.
+3. Await concrete content, saved values, or navigation results with role/text
+   locators. For text input, `enterText` sends keyboard input to Flutter's
+   focused editor rather than mutating its accessibility mirror.
 4. End with `await expectNoConsoleErrors(spy)` so an unrelated `.dart` exception still trips this suite.
 
-For Drift internals, prefer `detectDriftImpl` over re-implementing the IndexedDB/OPFS probe inline — the helper centralizes the brittle storage-API calls.
+Persistence is proven by reading saved content after reload or in another tab.
+Storage-origin existence is insufficient, and missing data must fail rather
+than skip. These tests do not infer which Drift backend the browser selected.

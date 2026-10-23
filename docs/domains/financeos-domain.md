@@ -158,6 +158,30 @@ income and transfer forms reveal and focus the first invalid field on submission
 Activity deletion from the list and detail page uses the shared 60-second
 cross-page Undo offer, including retry after a failed restore.
 
+### Runway Forecast Evaluation
+
+Runway retains one local forecast per UTC day and 30/90-day horizon. The target
+is a UTC calendar day; the balance observation retains its actual timestamp,
+currency, coverage, and history/flow completeness score. It is an observation
+of the available current balance on that day, not a reconstructed day-end
+ledger balance.
+
+Only observations on the target day, in the forecast currency, with complete
+starting and observed liquid balances contribute to historical forecast error.
+Balance coverage requires every cash asset to have a value and usable FX in the
+dashboard; missing non-cash valuations and short expense history do not make a
+cash balance incomplete. Missing liquid-balance coverage limits confidence to
+low. The history/flow completeness score remains evidence
+and still informs forecast confidence independently of balance comparability.
+
+Late, incomplete, and currency-mismatched observations retain their evidence
+without an error score. An incomplete or currency-mismatched observation can be
+replaced by a later eligible observation on the same target day; a missed target
+day cannot be repaired with a later balance. Forecasts whose starting and
+predicted balances are both zero have no relative-error denominator and are
+excluded from the count and average. Confidence uses the latest 12 comparable
+observations only. These local records do not sync or claim causal attribution.
+
 ### Investment Interaction
 
 The Plan hub keeps cash safety and goals/contributions visible. Advanced
