@@ -68,12 +68,20 @@ test.describe('responsive application shell', () => {
         await expect(content).toBeVisible();
 
         expect(new URL(page.url()).pathname).toBe(route);
-        const dimensions = await page.evaluate(() => ({
-          innerWidth: window.innerWidth,
-          bodyScrollWidth: document.body.scrollWidth,
-          documentScrollWidth: document.documentElement.scrollWidth,
-        }));
-        expect(dimensions.bodyScrollWidth).toBeLessThanOrEqual(
+        const dimensions = await page.evaluate(() => {
+          const body = document.body.getBoundingClientRect();
+          return {
+            innerWidth: window.innerWidth,
+            bodyLeft: body.left,
+            bodyRight: body.right,
+            documentScrollWidth: document.documentElement.scrollWidth,
+          };
+        });
+        // Flutter clips its body; hidden semantics/font-measurement nodes can
+        // inflate body.scrollWidth without overflowing the page. Check the
+        // body's actual bounds and the document's scroll extent instead.
+        expect(dimensions.bodyLeft).toBeGreaterThanOrEqual(-1);
+        expect(dimensions.bodyRight).toBeLessThanOrEqual(
           dimensions.innerWidth + 1,
         );
         expect(dimensions.documentScrollWidth).toBeLessThanOrEqual(

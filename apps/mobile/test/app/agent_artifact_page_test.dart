@@ -59,7 +59,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(AiMarkdown), findsOneWidget);
-      expect(find.byType(SelectableText), findsWidgets);
+      expect(
+        find.descendant(
+          of: find.byType(AiMarkdown),
+          matching: find.byType(SelectionArea),
+        ),
+        findsOneWidget,
+      );
       expect(
         tester.getSize(find.byType(AiMarkdown)).width,
         lessThanOrEqualTo(AdaptiveMaxWidth.narrow),
