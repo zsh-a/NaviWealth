@@ -1,3 +1,7 @@
+from io import BytesIO
+import re
+from zipfile import ZIP_DEFLATED, ZipFile
+
 import pytest
 
 import tool.asset_catalog.sources.hk_stock as hk_stock
@@ -10,6 +14,7 @@ from tool.asset_catalog.sources.hk_stock import (
     _fetch_yfinance_screen,
     fetch_hk_stock,
     parse_hkex_row,
+    parse_workbook,
     parse_yfinance_quote,
 )
 
@@ -36,6 +41,24 @@ class TestParseHkexRow:
         assert row is not None
         assert row["type"] == "etf"
         assert row["symbol"] == "2800.HK"
+
+    @pytest.mark.parametrize(
+        ("category", "expected_type"),
+        [
+            ("Exchange Traded Products", "etf"),
+            ("Real Estate Investment Trusts", "stock"),
+        ],
+    )
+    def test_official_category_labels(self, category, expected_type):
+        row = parse_hkex_row("02800", "FUND", category)
+        assert row is not None
+        assert row["type"] == expected_type
+
+    @pytest.mark.parametrize("currency", ["USD", "CNY", "", None])
+    def test_non_hkd_counter_excluded(self, currency):
+        assert parse_hkex_row(
+            "80700", "TENCENT-R", "Equity", trading_currency=currency,
+        ) is None
 
     def test_reit_treated_as_stock(self):
         row = parse_hkex_row(823, "LINK REIT", "REIT")
@@ -78,6 +101,41 @@ def test_category_map_has_no_duplicates():
     """Drop-categories and type-map must not overlap, otherwise classifications collide."""
     overlap = set(CATEGORY_TYPE_MAP) & DROPPED_CATEGORIES
     assert not overlap, f"category collision: {overlap}"
+
+
+def test_workbook_reads_all_physical_rows_when_dimensions_are_wrong():
+    openpyxl = pytest.importorskip("openpyxl")
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.append(["List of Securities"])
+    sheet.append(["Stock Code", "Name of Securities", "Category", "Trading Currency"])
+    sheet.append(["00700", "TENCENT", "Equity", "HKD"])
+    sheet.append(["02800", "TRACKER FUND", "Exchange Traded Products", "HKD"])
+    sheet.append(["00823", "LINK REIT", "Real Estate Investment Trusts", "HKD"])
+    sheet.append(["80700", "TENCENT-R", "Equity", "CNY"])
+    original = BytesIO()
+    workbook.save(original)
+    workbook.close()
+
+    truncated_dimensions = BytesIO()
+    with (
+        ZipFile(original) as source,
+        ZipFile(truncated_dimensions, "w", ZIP_DEFLATED) as target,
+    ):
+        for item in source.infolist():
+            contents = source.read(item.filename)
+            if item.filename == "xl/worksheets/sheet1.xml":
+                contents = re.sub(
+                    rb'<dimension ref="[^"]+"', b'<dimension ref="A1:D3"', contents,
+                )
+            target.writestr(item, contents)
+
+    rows = parse_workbook(truncated_dimensions.getvalue())
+    assert [(row["symbol"], row["type"]) for row in rows] == [
+        ("0700.HK", "stock"),
+        ("2800.HK", "etf"),
+        ("0823.HK", "stock"),
+    ]
 
 
 def test_fallback_floor_matches_release_policy():

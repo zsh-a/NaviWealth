@@ -108,7 +108,9 @@ def parse_mootdx_row(
     if market_label is None:
         return None
     code = str(raw.get("code") or raw.get("Code") or "").strip()
-    name = str(raw.get("name") or raw.get("Name") or "").strip()
+    # TDX uses NUL-padded fixed-width names; transport padding is not part of
+    # the security name and must not reach CSV, display text, or the FTS index.
+    name = str(raw.get("name") or raw.get("Name") or "").replace("\x00", "").strip()
     if not code or not name:
         return None
     asset_type = classify_a_share(market_label, code)
@@ -228,7 +230,8 @@ def fetch_mootdx_market(
             raise FetchError(
                 "mootdx not installed; run pip install -r requirements.txt"
             ) from exc
-        client_factory = lambda: Quotes.factory(market="std")
+        def client_factory() -> _MootdxClient:
+            return Quotes.factory(market="std")
 
     try:
         client = client_factory()

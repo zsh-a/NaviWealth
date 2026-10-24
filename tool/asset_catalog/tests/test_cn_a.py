@@ -60,6 +60,12 @@ class TestParseBaostockBasic:
 
 
 class TestParseMootdxRow:
+    @pytest.mark.parametrize("name", ["万 科Ａ\x00", "万 科Ａ\x00\x00", " \x00万 科Ａ\x00 "])
+    def test_transport_padding_is_not_part_of_the_security_name(self, name):
+        row = parse_mootdx_row(0, {"code": "000002", "name": name})
+        assert row is not None
+        assert row["name_cn"] == "万 科Ａ"
+
     def test_shanghai_stock(self):
         row = parse_mootdx_row(1, {"code": "600519", "name": "贵州茅台"})
         assert row is not None
@@ -105,6 +111,7 @@ class TestParseMootdxRow:
         assert parse_mootdx_row(1, {}) is None
         assert parse_mootdx_row(1, {"code": "", "name": "x"}) is None
         assert parse_mootdx_row(1, {"code": "600519", "name": ""}) is None
+        assert parse_mootdx_row(1, {"code": "600519", "name": "\x00\x00"}) is None
 
 
 class _FakeMootdxTransport:

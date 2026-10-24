@@ -6,7 +6,7 @@ at build time and loaded into a local FTS5 table on first launch.
 This directory holds everything needed to regenerate that bundle.
 
 The runtime side lives in
-[`apps/mobile/lib/data/securities_catalog/`](../../apps/mobile/lib/data/securities_catalog/) —
+[`apps/mobile/lib/features/finance/data/securities_catalog/`](../../apps/mobile/lib/features/finance/data/securities_catalog/) —
 this README is for the build pipeline only.
 
 ## Layout
@@ -70,11 +70,15 @@ When BaoStock fails, the cn_a adapter automatically falls back to a
 mootdx-only pass. The build script also runs an opt-in cross-check pass
 (BaoStock vs. mootdx) and warns if the SH+SZ universes disagree by more
 than 1% — this catches BaoStock data lag and mootdx protocol drift.
+TDX's fixed-width name padding is stripped before storing source rows.
 
 When HKEX is unreachable or its workbook contains fewer than 1,500 parsed
 rows, the Hong Kong adapter falls back to Yahoo Finance's HKG equity and ETF
-screeners. Yahoo classifies short-lived structured products as equities, so
-the fallback conservatively keeps the 0001-9999 stock/GEM code space plus the
+screeners. The official workbook is read beyond its declared dimensions, which
+can under-report the actual rows; its long-form ETF/REIT category labels are
+normalised, and non-HKD counters are excluded. Yahoo classifies short-lived
+structured products as equities, so the fallback conservatively keeps the
+0001-9999 stock/GEM code space plus the
 separate ETF result set. The fallback is validated against the same 1,500-row
 floor before replacing the committed CSV. Yahoo's endpoints are unofficial,
 rate-limited, and intended for personal/non-commercial use; HKEX remains the

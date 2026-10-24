@@ -34,7 +34,7 @@ import logging
 import pathlib
 import re
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from typing import Any
 
 from tool.asset_catalog.common import make_row, to_simplified, write_rows
@@ -55,7 +55,9 @@ CATEGORY_TYPE_MAP = {
     "equities": "stock",
     "etf": "etf",
     "etp": "etf",  # exchange-traded products (legacy label)
+    "exchange traded products": "etf",
     "reit": "stock",  # treated as a stock for catalog purposes
+    "real estate investment trusts": "stock",
     "dw": "stock",  # derivative warrants — keep, but flag via aliases
 }
 
@@ -77,6 +79,8 @@ def parse_hkex_row(
     code: object,
     name: object,
     category: object,
+    *,
+    trading_currency: object = "HKD",
 ) -> dict[str, str] | None:
     """Translate one HKEX row to a CSV row, or ``None`` to drop.
 
@@ -88,6 +92,10 @@ def parse_hkex_row(
     if not code_str or not name_str:
         return None
     if not code_str.isdigit():
+        return None
+    # The official list also contains USD/RMB counters. The catalog's HK
+    # universe is HKD-denominated, matching the Yahoo fallback's currency filter.
+    if str(trading_currency).strip().upper() != "HKD":
         return None
 
     cat = _normalise_category(str(category) if category is not None else "")
@@ -164,9 +172,17 @@ def parse_workbook(blob: bytes) -> list[dict[str, str]]:
         wb = load_workbook(io.BytesIO(blob), read_only=True, data_only=True)
     except Exception as exc:
         raise FetchError(f"HKEX: invalid workbook: {exc}") from exc
-    sheet = wb.worksheets[0]
+    try:
+        sheet = wb.worksheets[0]
+        # HKEX can under-report worksheet dimensions; read every physical row
+        # instead of silently truncating the security list to the declared range.
+        sheet.reset_dimensions()
+        return _parse_workbook_rows(sheet.iter_rows(values_only=True))
+    finally:
+        wb.close()
 
-    rows = sheet.iter_rows(values_only=True)
+
+def _parse_workbook_rows(rows: Iterable[tuple[object, ...]]) -> list[dict[str, str]]:
     headers: list[str] | None = None
     out: list[dict[str, str]] = []
     for row in rows:
@@ -191,10 +207,17 @@ def parse_workbook(blob: bytes) -> list[dict[str, str]]:
             (i for i, h in enumerate(headers) if "category" in h and "sub" not in h),
             -1,
         )
+        currency_idx = next(
+            (i for i, h in enumerate(headers) if h == "trading currency"), -1,
+        )
         parsed = parse_hkex_row(
             code=row[code_idx] if code_idx < len(row) else None,
             name=row[name_idx] if name_idx < len(row) else None,
             category=row[cat_idx] if 0 <= cat_idx < len(row) else None,
+            trading_currency=(
+                row[currency_idx] if 0 <= currency_idx < len(row)
+                else None if currency_idx >= 0 else "HKD"
+            ),
         )
         if parsed:
             out.append(parsed)
