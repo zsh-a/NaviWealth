@@ -263,15 +263,15 @@ Target: **< 12 min** of blocking PR checks; heavy/flaky-prone work nightly.
 PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
     ├─ build_runner freshness + l10n parity         (existing)
     ├─ flutter test (4 shards; unit/widget/flow/integ.)       flow/integ run here today
-    ├─ responsive golden regression (Linux-pinned)          (parallel)
+    ├─ full golden regression (Linux-pinned)                (parallel)
     ├─ cargo test (backend, native host)            ~1 min
     ├─ contract tests                               ~30 s
     ├─ native ASR pinned-WAV regression             speech changes, macOS
-    └─ web smoke (chromium)                         ~2 min   (web-smoke.yml)
+    └─ web build + Chromium smoke                  (reusable web-smoke.yml)
 Weekly ├─ web smoke full matrix (Firefox/WebKit/OPFS)
        └─ native ASR pinned model/WAV exact-transcript smoke
-Main ├─ full golden regression + web release build (parallel with checks)
-     └─ Pages deploy after static/tests/goldens/build succeed
+Main ├─ same mobile checks + Web build/Chromium smoke (parallel)
+     └─ Pages deploys the verified bundle after all checks succeed
 Release └─ signed Android APK/AAB + native payload/16 KiB checks + device gate
 ```
 
@@ -310,14 +310,18 @@ Design-token export freshness runs once in the Flutter shards; the root
 token guards share one cached source inventory rather than rereading files for
 each rule, and prohibit raw values without imposing minimum usage counts.
 
-One Linux-pinned `golden-regression` job runs responsive task flows on PRs and
-the full suite on `main` and release calls. Static checks and tests do not wait
-for renderable fonts: their declared assets use stubs. Rendering and Web builds
-share font subsets cached by font tooling and the extracted CN glyph set;
-unrelated code changes cannot force font regeneration.
+One Linux-pinned `golden-regression` job runs the full suite on PRs, `main`, and
+release calls so visual failures are caught before merging. Every Flutter job
+uses `.github/actions/setup-mobile` for the pinned SDK and dependency setup.
+Its default font stubs keep headless checks independent of font generation;
+rendering and release builds request real fonts, cached by font tooling and
+the extracted CN glyph set. Unrelated code changes cannot force font
+regeneration.
 
-Web PR smoke retains direct hits, refresh/history, persistence, and PWA checks
-in Chromium. Its document-overflow matrix samples two content-heavy routes at
+Mobile PRs and `main` call the same Web build-and-smoke workflow. It compiles
+once with the production API URL and source SHA, checks the bundled catalog
+bytes, and verifies direct hits, refresh/history, persistence, and PWA behavior in
+Chromium. Its document-overflow matrix samples two content-heavy routes at
 phone/desktop sizes; weekly/manual runs retain all five routes and four widths
 alongside the full browser matrix. Flutter's internal responsive rendering is
 covered by the responsive goldens rather than DOM width assertions.
@@ -327,7 +331,20 @@ README screenshots are curated documentation and updated manually with
 Ordinary `main` pushes no longer build and discard an Android release bundle. Signed
 APK/AAB generation, native payload validation, and 16 KiB compatibility remain
 release gates, alongside the Android device evidence. Web builds run in
-parallel with quality checks, while deployment waits for all required results.
+parallel with quality checks. Only the bundle that passed browser smoke is
+uploaded for Pages deployment; deployment also waits for static checks, all
+test shards, and full goldens. Weekly/manual Web runs use the same build path
+with all browsers and the full responsive matrix.
+
+Production Web and backend deployments have one owner each: their `main`
+workflows. `release.yml` publishes Android only and calls the mobile workflow
+with `quality_only: true`. A pushed or manually selected `vX.Y.Z` tag must match
+the checked-out commit and event SHA before any release quality jobs start.
+`tool/release.py` derives version/build metadata from that tag and packages
+APK/AAB, release notes, and `latest.json`; it never falls back to a branch.
+Published ancestor releases define the changelog boundary, excluding failed
+candidate tags. `tool/build-android-release.sh` supplies the same version and
+native flags to APK/AAB builds and removes the decoded signing key on exit.
 
 **Native ASR regression gate.** `.github/workflows/asr-native-smoke.yml` runs
 on speech-runtime dependency changes, every Monday, and by manual dispatch. It

@@ -1,8 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Where the Flutter web release bundle lives. CI sets WEB_BUILD_DIR after
-// downloading the `mobile-web-build` artifact; locally it defaults to the
-// build/web output relative to this project.
+// CI builds and tests this bundle before uploading the same bytes for Pages.
+// Locally it defaults to the build/web output relative to this project.
 const buildDir = process.env.WEB_BUILD_DIR ?? '../build/web';
 const port = Number(process.env.WEB_SMOKE_PORT ?? 4173);
 const baseURL = process.env.WEB_SMOKE_BASE_URL ?? `http://127.0.0.1:${port}`;

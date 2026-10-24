@@ -17,6 +17,7 @@ on:
       - 'apps/mobile/test_driver/**'
       - 'apps/mobile/tool/run-android-integration.sh'
       - 'apps/mobile/tool/run-android-backup-interruption.sh'
+      - 'apps/mobile/tool/prepare-test-font-stubs.sh'
       - 'apps/mobile/lib/core/backup/**'
       - 'apps/mobile/lib/core/persistence/**'
       - 'apps/mobile/lib/core/sync/**'
@@ -27,6 +28,7 @@ on:
       - '.gitmodules'
       - 'third_party/agent-runtime'
       - '.github/workflows/integration-device.yml'
+      - '.github/actions/setup-mobile/**'
   schedule:
     - cron: '45 2 * * 1'
   workflow_dispatch:
@@ -56,13 +58,7 @@ jobs:
             apps/mobile/android/**/*.gradle*
             apps/mobile/android/gradle/wrapper/gradle-wrapper.properties
             apps/mobile/pubspec.lock
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.2'
-          cache: true
-      - run: flutter pub get
-      - name: Stub web-only font assets so the asset bundle resolves
-        run: tool/prepare-test-font-stubs.sh
+      - uses: ./.github/actions/setup-mobile
       # KVM is required for a hardware-accelerated emulator on the runner.
       - name: Enable KVM
         run: |

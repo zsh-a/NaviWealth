@@ -191,12 +191,13 @@ wrangler pages deploy --branch main
 
 1. `static checks` — `flutter analyze --fatal-infos`、生成代码 freshness、l10n 与架构边界检查
 2. `test shard 0..3 / 4` — 按文件分片执行完整普通 unit/widget/flow/integration 测试，每个文件只加载一次
-3. `golden regression (mobile)` — PR 执行响应式任务流；`main` 和发布执行完整 Linux golden 回归
-4. `build web` — `main` 上并行执行 release 构建；Pages 部署等待静态检查、全部分片及 golden 回归通过
+3. `golden regression (mobile)` — PR、`main` 和发布统一执行完整 Linux golden 回归
+4. `Web build and smoke` — PR 与 `main` 复用同一 release 构建和 Chromium 冒烟流程；Pages 只部署冒烟通过的原产物，并等待静态检查、全部分片及 golden 回归通过
 
+所有 Flutter job 通过 `setup-mobile` action 统一 SDK 版本与依赖安装。
 静态检查与普通测试使用字体占位文件，真实截图和 Web 构建通过共享 action
 按字体脚本与所需字符集缓存字体。各分片直接写入耗时摘要，仅失败时上传
-JSON 事件；Markdown、浏览器测试、设备 harness 和 README 图片维护不再
+JSON 事件；Markdown、设备 harness 和 README 图片维护不再
 触发整套移动端检查。README 图片使用本地脚本按需更新。
 Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
 负责；设备集成测试仍在相关 PR、每周及发布流程运行。
@@ -217,7 +218,7 @@ Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
 ./tool/check-ai-contract-wire-enums.sh   # AI wire enum fixture 一致
 ```
 
-`release.yml` 在 tag 发布时运行质量门槛并构建 Android arm64 APK/AAB；其中设备质量门槛复用 `integration-device.yml`。当前没有 iOS tag 构建或分发 job；其验证与分发条件见 [LifeOS 路线图](../../docs/roadmap/roadmap-lifeos.md#triggered-bets)。
+`release.yml` 只从已存在且与源码一致的 `vX.Y.Z` tag 发布 Android arm64 APK/AAB 和更新清单；手动运行也必须选择 tag。版本与 build number 由 `tool/release.py` 从 tag 解析，APK/AAB 共用构建参数；设备质量门槛复用 `integration-device.yml`。Web 与后端仅由 `main` 部署。当前没有 iOS tag 构建或分发 job；其验证与分发条件见 [LifeOS 路线图](../../docs/roadmap/roadmap-lifeos.md#triggered-bets)。
 
 ## 数据库基线
 

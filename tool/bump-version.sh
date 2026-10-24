@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Bump the version of both mobile and backend, commit the change, and create
-# a release tag. The unified release workflow picks it up.
+# a release tag. Main deploys Web/backend; the tag publishes Android artifacts.
 #
 # Usage:
 #   tool/bump-version.sh 0.2.0
@@ -17,7 +17,7 @@ usage() {
 [ $# -eq 1 ] || usage
 semver="$1"
 
-if ! [[ "$semver" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+if ! [[ "$semver" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
   echo "error: semver must look like X.Y.Z, got '$semver'" >&2
   exit 64
 fi
@@ -37,7 +37,7 @@ if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
   exit 1
 fi
 
-# Stamp mobile version (build number stays at +1; release workflow re-stamps).
+# Stamp mobile version (release builds supply their build number via Flutter).
 mobile_file="apps/mobile/pubspec.yaml"
 sed -i.bak -E "s/^version: .*/version: ${semver}+1/" "$mobile_file"
 rm "${mobile_file}.bak"

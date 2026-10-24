@@ -1,0 +1,24 @@
+name: Set up mobile
+description: Install the pinned Flutter SDK, prepare font assets, and resolve dependencies.
+inputs:
+  fonts:
+    description: Use real fonts for rendering/builds, or stubs for headless checks.
+    default: stub
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.47.2'
+        cache: true
+    - name: Prepare test font stubs
+      if: inputs.fonts == 'stub'
+      shell: bash
+      working-directory: ${{ github.workspace }}/apps/mobile
+      run: tool/prepare-test-font-stubs.sh
+    - uses: ./.github/actions/mobile-fonts
+      if: inputs.fonts == 'real'
+    - name: Resolve mobile dependencies
+      shell: bash
+      working-directory: ${{ github.workspace }}/apps/mobile
+      run: flutter pub get

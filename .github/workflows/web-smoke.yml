@@ -1,29 +1,9 @@
 name: web-smoke
 
-# Cross-browser Playwright smoke for the Flutter web release bundle
-# (apps/mobile/web_smoke). The suites already existed; this workflow is
-# what actually runs them — previously they were dormant (FIR-40).
-#
-#   - Pull requests touching web-relevant paths: chromium only (fast gate).
-#   - Weekly + manual dispatch: full Chromium / Firefox / WebKit matrix
-#     (WebKit stands in for desktop Safari and exercises the OPFS fallback).
+# mobile.yml calls this for PRs and main pushes. Weekly/manual runs cover all
+# browsers; main deploys the exact bundle that passed this job's Chromium gate.
 on:
-  pull_request:
-    paths:
-      - 'apps/mobile/lib/**'
-      - 'apps/mobile/web/**'
-      - 'apps/mobile/web_smoke/**'
-      - 'apps/mobile/pubspec.yaml'
-      - 'apps/mobile/pubspec.lock'
-      - 'apps/mobile/assets/**'
-      - 'apps/mobile/tool/build-web.sh'
-      - 'apps/mobile/tool/setup-drift-web.sh'
-      - 'apps/mobile/tool/build-cn-fonts.sh'
-      - 'apps/mobile/tool/build-latin-fonts.sh'
-      - 'apps/mobile/tool/cn_font_chars.py'
-      - '.github/actions/mobile-fonts/**'
-      - '.github/workflows/web-smoke.yml'
-      - '!apps/mobile/**/*.md'
+  workflow_call:
   schedule:
     # 02:30 UTC Sunday — full browser matrix.
     - cron: '30 2 * * 0'
@@ -35,50 +15,56 @@ concurrency:
 
 jobs:
   smoke:
-    name: web smoke (${{ github.event_name == 'pull_request' && 'chromium' || 'all browsers' }})
+    name: Web build and browser smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: apps/mobile
+    env:
+      FULL_BROWSER_SUITE: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
     steps:
       - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: ./.github/actions/setup-mobile
         with:
-          flutter-version: '3.47.2'
-          cache: true
+          fonts: real
       - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
           cache-dependency-path: apps/mobile/web_smoke/package-lock.json
-      - run: flutter pub get
-
-      - uses: ./.github/actions/mobile-fonts
-      - name: Build Flutter web (release)
-        run: bash tool/build-web.sh --release
-
-      - name: Install Playwright + browsers
-        working-directory: apps/mobile/web_smoke
+      - name: Build production Web bundle
         run: |
-          npm ci
-          # PRs only need chromium; nightly/manual installs the full matrix.
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npx playwright install --with-deps chromium
-          else
-            npx playwright install --with-deps
-          fi
-      - name: Run smoke suite
+          api_url="$(tr -d '\r\n' < ../backend/.api-base-url)"
+          bash tool/build-web.sh --release --source-maps \
+            --dart-define="API_BASE_URL=$api_url" \
+            --dart-define="GIT_SHA=$GITHUB_SHA"
+      - name: Verify bundled securities catalog
+        working-directory: ${{ github.workspace }}
+        run: cmp apps/mobile/assets/catalog/securities.v1.ndjson apps/mobile/build/web/assets/assets/catalog/securities.v1.ndjson
+      - name: Install and run browser smoke
         working-directory: apps/mobile/web_smoke
         env:
           CI: 'true'
           WEB_BUILD_DIR: ${{ github.workspace }}/apps/mobile/build/web
-          WEB_SMOKE_RESPONSIVE: ${{ github.event_name == 'pull_request' && 'compact' || 'full' }}
+          WEB_SMOKE_RESPONSIVE: ${{ env.FULL_BROWSER_SUITE == 'true' && 'full' || 'compact' }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            npx playwright test --project=chromium
-          else
+          npm ci
+          if [ "$FULL_BROWSER_SUITE" = true ]; then
+            npx playwright install --with-deps
             npx playwright test
+          else
+            npx playwright install --with-deps chromium
+            npx playwright test --project=chromium
           fi
+      - name: Upload verified Web bundle
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-web-build
+          path: apps/mobile/build/web
+          retention-days: 7
+          if-no-files-found: error
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4

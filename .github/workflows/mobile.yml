@@ -2,17 +2,25 @@ name: mobile
 
 on:
   workflow_call:
+    inputs:
+      quality_only:
+        description: Run checks without building or deploying Web (Android releases).
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: &mobile-paths
       - 'apps/mobile/**'
       - '!apps/mobile/**/*.md'
-      - '!apps/mobile/web_smoke/**'
       - '!apps/mobile/integration_test/**'
       - '!apps/mobile/test_driver/**'
       - '!apps/mobile/test/readme_screenshots/**'
       - '.github/workflows/mobile.yml'
+      - '.github/workflows/web-smoke.yml'
+      - '.github/workflows/release.yml'
       - '.github/actions/mobile-fonts/**'
+      - '.github/actions/setup-mobile/**'
+      - 'apps/backend/.api-base-url'
       - '.gitmodules'
       - 'docs/fixtures/ai_contract_wire_enums.json'
       - 'docs/fixtures/sync_v3_*.json'
@@ -24,6 +32,8 @@ on:
       - '!tool/check-sync-wire-fixtures.sh'
       - 'tool/lint-*.sh'
       - 'tool/dart_dependencies.py'
+      - 'tool/release.py'
+      - 'tool/build-android-release.sh'
       - 'tool/tests/**'
   pull_request:
     paths: *mobile-paths
@@ -44,13 +54,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.2'
-          cache: true
-      - name: Stub font assets for static analysis
-        run: tool/prepare-test-font-stubs.sh
-      - run: flutter pub get
+      - uses: ./.github/actions/setup-mobile
       - run: flutter analyze --fatal-infos
       - name: Verify generated code is up to date
         run: |
@@ -74,13 +78,7 @@ jobs:
         shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.2'
-          cache: true
-      - run: flutter pub get
-      - name: Stub font assets required by the Flutter asset bundle
-        run: tool/prepare-test-font-stubs.sh
+      - uses: ./.github/actions/setup-mobile
       - name: Prepare test result directory
         run: mkdir -p test-results
       - name: Run tests
@@ -114,25 +112,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
+      - uses: ./.github/actions/setup-mobile
         with:
-          flutter-version: '3.47.2'
-          cache: true
-      - uses: ./.github/actions/mobile-fonts
-      - run: flutter pub get
+          fonts: real
       - name: Run golden suite
         # The visual baseline is locked to Linux rasterisation. Devs on
         # macOS / Windows skip the comparison via flutter_test_config.dart;
         # this job is the source of truth. A failed match dumps the diff
         # PNG next to the golden so it's recoverable from the artifact.
-        run: |
-          # PRs keep the responsive task spine; main and releases compare all
-          # baselines. Both share one job instead of separate render runners.
-          args=(test/golden --tags=golden)
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            args=(test/golden/task_flow_responsive_golden_test.dart --tags=responsive-golden)
-          fi
-          flutter test "${args[@]}" --reporter=expanded
+        run: flutter test test/golden --tags=golden --reporter=expanded
       - name: Upload golden diffs on failure
         if: failure()
         uses: actions/upload-artifact@v4
@@ -142,35 +130,16 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  build-web:
-    name: build web
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v7
-      - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.47.2'
-          cache: true
-      - uses: ./.github/actions/mobile-fonts
-      - run: flutter pub get
-      - name: Read backend API URL
-        id: api-url
-        working-directory: ${{ github.workspace }}
-        run: echo "url=$(cat apps/backend/.api-base-url | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - run: bash tool/build-web.sh --release --source-maps --dart-define=API_BASE_URL=${{ steps.api-url.outputs.url }} --dart-define=GIT_SHA=${{ github.sha }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mobile-web-build
-          path: apps/mobile/build/web
-          retention-days: 7
-          if-no-files-found: error
+  web:
+    name: Web build and smoke
+    if: ${{ !inputs.quality_only }}
+    uses: ./.github/workflows/web-smoke.yml
 
   deploy-pages:
     name: deploy Cloudflare Pages
     runs-on: ubuntu-latest
-    needs: [build-web, static-checks, test-shards, golden-regression]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [web, static-checks, test-shards, golden-regression]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !inputs.quality_only
     env:
       HAS_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     concurrency:

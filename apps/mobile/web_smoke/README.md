@@ -66,13 +66,15 @@ and run against a deployed build instead.
 
 ## CI
 
-The `web-smoke` workflow (`.github/workflows/web-smoke.yml`) runs Chromium for
-pull requests that touch Web-relevant paths. Weekly and manually dispatched
-runs execute the Chromium, Firefox, and WebKit projects. The workflow builds
-its own production-shaped Flutter Web bundle so every smoke run verifies the
-same commit without depending on a separate workflow artifact.
+Mobile CI calls the reusable `web-smoke` workflow
+(`.github/workflows/web-smoke.yml`) for pull requests and `main`. It builds once
+with the production API URL and source SHA, checks the bundled catalog bytes,
+and runs Chromium. On `main`, the passing bundle is uploaded as `mobile-web-build`;
+Pages deploys those exact bytes after static checks, test shards, and full
+goldens also succeed. Weekly and manually dispatched runs execute the same
+build with Chromium, Firefox, and WebKit.
 
-PRs set `WEB_SMOKE_RESPONSIVE=compact`: `/wealth/accounts` and
+PRs and `main` set `WEB_SMOKE_RESPONSIVE=compact`: `/wealth/accounts` and
 `/plan/rebalance` at 390px and 1200px (four app boots). Weekly/manual runs use
 `full`: all five Finance routes at all four widths (20 boots). Direct-hit,
 refresh/history, storage, and PWA suites run in both modes. Local runs default

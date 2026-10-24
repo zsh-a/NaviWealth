@@ -9,10 +9,10 @@ choose to use pull requests.
 
 - `mobile / static checks`
 - `mobile / test shard 0..3 / 4`
-- `mobile / golden regression (mobile)` (responsive task flows on PRs, full suite on `main` and release)
-- `mobile / build web` on `main`
+- `mobile / golden regression (mobile)` (full suite on PRs, `main`, and release)
+- `mobile / Web build and smoke / Web build and browser smoke` on PRs and `main`
 - `backend / fmt + clippy + test`
-- `web-smoke / web smoke (...)` for web-relevant pull requests
+- `web-smoke / Web build and browser smoke` for weekly/manual full-browser runs
 - `docs / links + strict build` for documentation changes
 
 Workflows use path filters, so unrelated application areas do not start each
@@ -24,8 +24,8 @@ the device and native-runtime workflows.
 ## Optional protected-main setup
 
 If protected-main development is re-enabled, use a Ruleset and require only
-checks that are present for the changed paths. Do not require push-only jobs
-such as `build web` on pull requests.
+checks that are present for the changed paths. Do not require deployment jobs
+on pull requests.
 
 ## Repository secrets
 
@@ -39,9 +39,17 @@ such as `build web` on pull requests.
 | `KEY_PASSWORD` | Signed Android releases |
 ## Tag-based release flow
 
-Tags drive `release.yml`. A tag `vX.Y.Z` builds Android and Web artifacts from
-the committed source and optionally deploys the backend. Build numbers come
-from `git rev-list --count <tag>`.
+`main` is the sole production deployment source for Web and backend. Pages
+receives the exact bundle that passed Chromium smoke, after mobile static
+checks, all test shards, and full goldens succeed.
+
+Tags drive the Android-only `release.yml`. A tag `vX.Y.Z` must resolve to the
+checked-out source and event SHA; versions and build numbers come from that
+tag (`git rev-list --count <tag>`). Manual runs must select an existing tag in
+the ref picker; branch dispatch fails before quality or build jobs start.
+Release quality gates cover mobile, backend contracts, native runtime, and
+Android device acceptance. The workflow publishes signed APK/AAB and the
+in-app update manifest, without redeploying Web or backend.
 
 ```bash
 ./tool/bump-version.sh 0.9.0
