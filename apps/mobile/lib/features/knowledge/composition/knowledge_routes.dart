@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../design_system/widgets/form_leave_scope.dart';
 import '../../../l10n/gen/app_localizations.dart';
+import '../ui/bcr_knowledge_library_page.dart';
 import '../ui/knowledge_decision_detail_page.dart';
 import '../ui/knowledge_inbox_page.dart';
 import '../ui/knowledge_library_page.dart';
@@ -45,6 +46,11 @@ StatefulShellRoute knowledgeShellRoute() {
             ),
             builder: (context, state) => const KnowledgeLibraryPage(),
             routes: [
+              GoRoute(
+                path: 'bcr',
+                name: KnowledgeRouteNames.bcrLibrary,
+                builder: (context, state) => const BcrKnowledgeLibraryPage(),
+              ),
               GoRoute(
                 path: 'note/:id',
                 name: KnowledgeRouteNames.noteDetail,

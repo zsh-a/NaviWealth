@@ -64,7 +64,7 @@ void main() {
   }
 
   for (final background in [false, true]) {
-    for (final version in [1, 77, 98, 102]) {
+    for (final version in [1, 77, 98, 104]) {
       test(
         'rejects schema $version without modifying data (background=$background)',
         () async {
@@ -157,60 +157,196 @@ void main() {
   });
 
   for (final background in [false, true]) {
-    test(
-      'schema 99 adds meals without resetting existing data (background=$background)',
-      () async {
-        final directory = await Directory.systemTemp.createTemp(
-          'schema-meals-',
-        );
-        addTearDown(() => directory.delete(recursive: true));
-        final file = File('${directory.path}/lifeos.db');
-        final initial = AppDatabase(NativeDatabase(file));
-        await initial.customStatement('''
-        INSERT INTO health_metrics (id, captured_at, kind, value, unit,
-          owner_user_id, updated_at, updated_by_device, hlc)
-        VALUES ('existing-weight', 1700000000, 'weight', 70, 'kg',
-          'owner', 1700000000, 'device', '1700000000000.0000-device')
-      ''');
-        await initial.close();
-        // These are the only schema additions since 99. Removing them produces
-        // the previous baseline's schema while keeping all existing row data.
-        final raw = sqlite.sqlite3.open(file.path);
-        raw.execute('DROP TABLE health_meal_photos');
-        raw.execute('DROP TABLE health_meals');
-        raw.execute('PRAGMA user_version = 99');
-        raw.close();
-        final upgraded = AppDatabase(
-          background
-              ? NativeDatabase.createInBackground(file)
-              : NativeDatabase(file),
-        );
-        await upgraded.ensureReady();
-        expect(
-          (await upgraded
-                  .customSelect(
-                    "SELECT value FROM health_metrics WHERE id = 'existing-weight'",
-                  )
-                  .getSingle())
-              .read<double>('value'),
-          70,
-        );
-        expect(await upgraded.select(upgraded.healthMeals).get(), isEmpty);
-        expect(await upgraded.select(upgraded.healthMealPhotos).get(), isEmpty);
-        expect(
-          (await upgraded.customSelect('PRAGMA user_version').getSingle())
-              .read<int>('user_version'),
-          101,
-        );
-        await upgraded.close();
-        final reopened = AppDatabase(NativeDatabase(file));
-        await reopened.ensureReady();
-        expect(
-          (await reopened.select(reopened.healthMetrics).get()).single.id,
-          'existing-weight',
-        );
-        await reopened.close();
-      },
-    );
+    for (final baseline in const [
+      (version: 99, multiPhoto: false, knowledge: 0),
+      (version: 100, multiPhoto: false, knowledge: 0),
+      (version: 101, multiPhoto: true, knowledge: 0),
+      (version: 101, multiPhoto: false, knowledge: 2),
+      (version: 102, multiPhoto: false, knowledge: 3),
+    ]) {
+      test(
+        'schema ${baseline.version} multi=${baseline.multiPhoto} '
+        'knowledge=${baseline.knowledge} preserves data (background=$background)',
+        () async {
+          final directory = await Directory.systemTemp.createTemp(
+            'schema-joined-',
+          );
+          addTearDown(() => directory.delete(recursive: true));
+          final file = File('${directory.path}/lifeos.db');
+          final initial = AppDatabase(NativeDatabase(file));
+          await initial.ensureReady();
+          await initial.close();
+          final raw = sqlite.sqlite3.open(file.path);
+          raw.execute("""
+            INSERT INTO health_metrics (id, captured_at, kind, value, unit,
+              owner_user_id, updated_at, updated_by_device, hlc)
+            VALUES ('existing-weight', 1700000000, 'weight', 70, 'kg',
+              'owner', 1700000000, 'device', '1700000000000.0000-device')
+          """);
+          if (baseline.version == 99) {
+            raw.execute('DROP TABLE health_meal_photos');
+            raw.execute('DROP TABLE health_meals');
+          } else {
+            raw.execute("""
+              INSERT INTO health_meals (id, captured_at, day, meal_type, foods_json,
+                owner_user_id, updated_at, updated_by_device, hlc)
+              VALUES ('meal', 1700000000, 1700000000, 'lunch', '{"version":1,"foods":[]}',
+                'owner', 1700000000, 'device', '1700000000000.0000-device')
+            """);
+            if (baseline.multiPhoto) {
+              raw.execute("""
+                INSERT INTO health_meal_photos
+                  (id, meal_id, owner_user_id, bytes, view_role, position, timestamp_ms)
+                VALUES ('overview-photo', 'meal', 'owner', X'010203', 'overview', 0, NULL),
+                  ('detail-photo', 'meal', 'owner', X'0405', 'detail', 1, 1500)
+              """);
+            } else {
+              raw.execute('DROP TRIGGER trg_health_meal_deleted_photo');
+              raw.execute('DROP TABLE health_meal_photos');
+              raw.execute('''CREATE TABLE health_meal_photos (
+                id TEXT NOT NULL PRIMARY KEY REFERENCES health_meals(id) ON DELETE CASCADE,
+                owner_user_id TEXT NOT NULL, bytes BLOB NOT NULL)''');
+              raw.execute(
+                "INSERT INTO health_meal_photos VALUES ('meal', 'owner', X'010203')",
+              );
+              raw.execute('''CREATE TRIGGER trg_health_meal_deleted_photo
+                AFTER UPDATE OF deleted_at ON health_meals WHEN NEW.deleted_at IS NOT NULL
+                BEGIN DELETE FROM health_meal_photos WHERE id = NEW.id; END''');
+            }
+          }
+          if (baseline.knowledge == 0) {
+            raw.execute('DROP TABLE knowledge_source_cache');
+            raw.execute('DROP TABLE knowledge_source_import_leases');
+          } else {
+            raw.execute("""
+              INSERT INTO knowledge_source_cache
+                (owner_user_id, source_id, label, library_url, imported_at, content_json, cache_revision)
+              VALUES ('owner', 'source', 'Research', 'https://notes.example.com/knowledge',
+                1700000000, '{"version":1,"notes":[],"attachmentCount":0}', 'cache-revision')
+            """);
+            raw.execute(
+              "INSERT INTO knowledge_source_import_leases VALUES ('owner', 'source', 'lease-token')",
+            );
+          }
+          if (baseline.knowledge < 3) {
+            raw.execute('DROP TABLE knowledge_source_connections');
+          } else {
+            raw.execute("""
+              INSERT INTO knowledge_source_connections
+                (owner_user_id, source_id, label, library_url, repository_owner,
+                 repository_name, branch, revision, credential_id, remote_head, checked_at)
+              VALUES ('owner', 'source', 'Research', 'https://notes.example.com/knowledge',
+                'account', 'research', 'main', 'connection-revision', 'credential-id', NULL, NULL)
+            """);
+          }
+          raw.execute('PRAGMA user_version = ${baseline.version}');
+          raw.close();
+          final upgraded = AppDatabase(
+            background
+                ? NativeDatabase.createInBackground(file)
+                : NativeDatabase(file),
+          );
+          try {
+            await upgraded.ensureReady();
+            expect(
+              (await upgraded.select(upgraded.healthMetrics).get())
+                  .single
+                  .value,
+              70,
+            );
+            final photos = await upgraded
+                .select(upgraded.healthMealPhotos)
+                .get();
+            expect(
+              photos,
+              hasLength(
+                baseline.version == 99
+                    ? 0
+                    : baseline.multiPhoto
+                    ? 2
+                    : 1,
+              ),
+            );
+            if (baseline.multiPhoto) {
+              final detail = photos.singleWhere(
+                (photo) => photo.id == 'detail-photo',
+              );
+              expect(detail.mealId, 'meal');
+              expect(detail.viewRole, 'detail');
+              expect(detail.position, 1);
+              expect(detail.timestampMs, 1500);
+              expect(detail.bytes, [4, 5]);
+              expect(
+                photos
+                    .singleWhere((photo) => photo.id == 'overview-photo')
+                    .bytes,
+                [1, 2, 3],
+              );
+            } else if (photos.isNotEmpty) {
+              expect(photos.single.id, 'meal');
+              expect(photos.single.mealId, 'meal');
+              expect(photos.single.viewRole, 'overview');
+              expect(photos.single.position, 0);
+              expect(photos.single.timestampMs, isNull);
+              expect(photos.single.bytes, [1, 2, 3]);
+            }
+            final caches = await upgraded
+                .select(upgraded.knowledgeSourceCache)
+                .get();
+            final leases = await upgraded
+                .select(upgraded.knowledgeSourceImportLeases)
+                .get();
+            final connections = await upgraded
+                .select(upgraded.knowledgeSourceConnections)
+                .get();
+            expect(caches, hasLength(baseline.knowledge == 0 ? 0 : 1));
+            expect(leases, hasLength(baseline.knowledge == 0 ? 0 : 1));
+            expect(connections, hasLength(baseline.knowledge == 3 ? 1 : 0));
+            if (caches.isNotEmpty) {
+              expect(caches.single.cacheRevision, 'cache-revision');
+              expect(leases.single.token, 'lease-token');
+            }
+            if (connections.isNotEmpty) {
+              expect(connections.single.credentialId, 'credential-id');
+              expect(connections.single.revision, 'connection-revision');
+            }
+            expect(
+              await upgraded.customSelect('PRAGMA foreign_key_check').get(),
+              isEmpty,
+            );
+            expect(
+              (await upgraded.customSelect('PRAGMA user_version').getSingle())
+                  .read<int>('user_version'),
+              103,
+            );
+            if (photos.isNotEmpty) {
+              await upgraded.customStatement(
+                "UPDATE health_meals SET deleted_at = 1700000001 WHERE id = 'meal'",
+              );
+              expect(
+                await upgraded.select(upgraded.healthMealPhotos).get(),
+                isEmpty,
+              );
+            }
+          } finally {
+            await upgraded.close();
+          }
+          final reopened = AppDatabase(NativeDatabase(file));
+          try {
+            await reopened.ensureReady();
+            expect(
+              (await reopened.select(reopened.healthMetrics).get()).single.id,
+              'existing-weight',
+            );
+            expect(
+              await reopened.select(reopened.knowledgeSourceCache).get(),
+              hasLength(baseline.knowledge == 0 ? 0 : 1),
+            );
+          } finally {
+            await reopened.close();
+          }
+        },
+      );
+    }
   }
 }

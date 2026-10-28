@@ -10,6 +10,190 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get knowledgeBcrSyncTitle => 'BCR GitHub sync';
+
+  @override
+  String get knowledgeBcrRepository => 'GitHub repository';
+
+  @override
+  String get knowledgeBcrRepositoryHint => 'owner/repository';
+
+  @override
+  String get knowledgeBcrBranch => 'Branch (optional)';
+
+  @override
+  String get knowledgeBcrBranchHint => 'Use the repository\'s default branch';
+
+  @override
+  String get knowledgeBcrToken => 'GitHub access token';
+
+  @override
+  String get knowledgeBcrTokenHint =>
+      'Use the same private repository as BCR. Only Contents: read is needed.';
+
+  @override
+  String get knowledgeBcrTokenNative =>
+      'The token is saved in this device\'s secure storage.';
+
+  @override
+  String get knowledgeBcrTokenWeb =>
+      'The token stays in this browser session. Re-enter it after reopening.';
+
+  @override
+  String get knowledgeBcrTokenKeep => 'Leave blank to keep the saved token.';
+
+  @override
+  String get knowledgeBcrConnect => 'Connect and sync';
+
+  @override
+  String get knowledgeBcrManage => 'Connection settings';
+
+  @override
+  String get knowledgeBcrConnected => 'BCR connected and synced';
+
+  @override
+  String get knowledgeBcrSyncNow => 'Sync now';
+
+  @override
+  String get knowledgeBcrSyncing => 'Syncing…';
+
+  @override
+  String get knowledgeBcrLastChecked => 'Last checked';
+
+  @override
+  String get knowledgeBcrWaitingRetry => 'Will retry automatically';
+
+  @override
+  String get knowledgeBcrTokenNeeded =>
+      'Add or update the GitHub token to resume sync.';
+
+  @override
+  String get knowledgeBcrNetwork =>
+      'Cannot reach GitHub. Your offline notes are still available.';
+
+  @override
+  String get knowledgeBcrUnauthorized =>
+      'The GitHub token is invalid or expired. Update it in connection settings.';
+
+  @override
+  String get knowledgeBcrForbidden =>
+      'GitHub denied access. Check the token\'s repository permission.';
+
+  @override
+  String get knowledgeBcrNotFound =>
+      'Repository or branch not found. Check the address and token access.';
+
+  @override
+  String get knowledgeBcrRateLimited =>
+      'GitHub rate limit reached. Sync will retry after the waiting period.';
+
+  @override
+  String get knowledgeBcrInvalidRepository =>
+      'Use BCR\'s private GitHub repository.';
+
+  @override
+  String get knowledgeBcrStop => 'Stop sync';
+
+  @override
+  String get knowledgeBcrCancelled =>
+      'Sync stopped. Cached notes are unchanged.';
+
+  @override
+  String get knowledgeBcrUnlinked =>
+      'Connect GitHub to keep this source updated.';
+
+  @override
+  String get knowledgeBcrTitle => 'BCR sources';
+
+  @override
+  String get knowledgeBcrAdd => 'Connect a source';
+
+  @override
+  String get knowledgeBcrName => 'Source name';
+
+  @override
+  String get knowledgeBcrUrl => 'BCR knowledge page URL';
+
+  @override
+  String get knowledgeBcrUrlHint => 'https://notes.example.com/notes/knowledge';
+
+  @override
+  String get knowledgeBcrUpdate => 'Sync now';
+
+  @override
+  String get knowledgeBcrRemove => 'Disconnect';
+
+  @override
+  String get knowledgeBcrRemoveBody =>
+      'Disconnect this repository and remove its cached notes from this device? Saved decision excerpts will remain.';
+
+  @override
+  String get knowledgeBcrEmpty => 'No BCR sources connected';
+
+  @override
+  String get knowledgeBcrHint =>
+      'Connect the same GitHub repository used by BCR. Notes sync automatically while the app is in the foreground and remain readable offline.';
+
+  @override
+  String get knowledgeBcrTextOnly =>
+      'Note text is available offline. Attachments, relative links and backlinks open in BCR.';
+
+  @override
+  String get knowledgeBcrSearch => 'Search cached BCR notes';
+
+  @override
+  String get knowledgeBcrNoResults => 'No matching notes';
+
+  @override
+  String get knowledgeBcrCite => 'Use as decision evidence';
+
+  @override
+  String get knowledgeBcrInsert => 'Insert evidence into draft';
+
+  @override
+  String get knowledgeBcrEvidenceHint =>
+      'This excerpt, source identity and SHA-256 fingerprint will be saved with your decision after you save the draft.';
+
+  @override
+  String get knowledgeBcrInvalid =>
+      'The remote knowledge files failed validation. Your existing cached notes were kept.';
+
+  @override
+  String get knowledgeBcrChanged =>
+      'This connection changed or was reset. Open its latest settings and try again.';
+
+  @override
+  String get knowledgeBcrCapacity =>
+      'The source cache exceeds the 32 MiB device limit. Disconnect a source before syncing.';
+
+  @override
+  String get knowledgeBcrRequired =>
+      'Enter a source name, GitHub repository, access token and valid HTTP(S) BCR page URL.';
+
+  @override
+  String knowledgeBcrNoteCount(int count) {
+    return '$count cached notes';
+  }
+
+  @override
+  String knowledgeBcrAttachments(int count) {
+    return '$count attachments available in BCR';
+  }
+
+  @override
+  String get knowledgeBcrFingerprint => 'Snapshot fingerprint';
+
+  @override
+  String get knowledgeBcrCachedAt => 'Cached';
+
+  @override
+  String get knowledgeBcrReadMore => 'Read next page';
+
+  @override
+  String get knowledgeBcrResultsLimit =>
+      'Showing the first 50 matches. Refine your search for more results.';
+
+  @override
   String get healthRecordAction => 'Add health record';
 
   @override

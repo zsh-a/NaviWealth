@@ -10,6 +10,172 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get knowledgeBcrSyncTitle => 'BCR GitHub 同步';
+
+  @override
+  String get knowledgeBcrRepository => 'GitHub 仓库';
+
+  @override
+  String get knowledgeBcrRepositoryHint => '用户名/仓库名';
+
+  @override
+  String get knowledgeBcrBranch => '分支（选填）';
+
+  @override
+  String get knowledgeBcrBranchHint => '留空使用仓库默认分支';
+
+  @override
+  String get knowledgeBcrToken => 'GitHub 访问令牌';
+
+  @override
+  String get knowledgeBcrTokenHint => '填写 BCR 使用的同一个私有仓库，令牌只需 Contents 读取权限。';
+
+  @override
+  String get knowledgeBcrTokenNative => '令牌保存在此设备的安全存储中。';
+
+  @override
+  String get knowledgeBcrTokenWeb => '令牌仅保留在当前浏览器会话，重新打开后需补充。';
+
+  @override
+  String get knowledgeBcrTokenKeep => '留空保留已保存的令牌。';
+
+  @override
+  String get knowledgeBcrConnect => '连接并同步';
+
+  @override
+  String get knowledgeBcrManage => '连接设置';
+
+  @override
+  String get knowledgeBcrConnected => '已连接 BCR 并完成同步';
+
+  @override
+  String get knowledgeBcrSyncNow => '立即同步';
+
+  @override
+  String get knowledgeBcrSyncing => '正在同步…';
+
+  @override
+  String get knowledgeBcrLastChecked => '最近检查';
+
+  @override
+  String get knowledgeBcrWaitingRetry => '稍后自动重试';
+
+  @override
+  String get knowledgeBcrTokenNeeded => '请补充或更新 GitHub 令牌以继续同步。';
+
+  @override
+  String get knowledgeBcrNetwork => '暂时无法连接 GitHub，已缓存的笔记仍可离线阅读。';
+
+  @override
+  String get knowledgeBcrUnauthorized => 'GitHub 令牌无效或已过期，请在连接设置中更新。';
+
+  @override
+  String get knowledgeBcrForbidden => 'GitHub 拒绝访问，请检查令牌的仓库读取权限。';
+
+  @override
+  String get knowledgeBcrNotFound => '找不到仓库或分支，请检查地址及令牌授权范围。';
+
+  @override
+  String get knowledgeBcrRateLimited => 'GitHub 请求额度受限，将在等待结束后自动重试。';
+
+  @override
+  String get knowledgeBcrInvalidRepository => '请选择 BCR 使用的 GitHub 私有仓库。';
+
+  @override
+  String get knowledgeBcrStop => '停止同步';
+
+  @override
+  String get knowledgeBcrCancelled => '已停止同步，原有缓存继续保留。';
+
+  @override
+  String get knowledgeBcrUnlinked => '连接 GitHub 后即可自动更新此资料来源。';
+
+  @override
+  String get knowledgeBcrTitle => 'BCR 资料';
+
+  @override
+  String get knowledgeBcrAdd => '接入资料来源';
+
+  @override
+  String get knowledgeBcrName => '来源名称';
+
+  @override
+  String get knowledgeBcrUrl => 'BCR 知识库页面地址';
+
+  @override
+  String get knowledgeBcrUrlHint => 'https://notes.example.com/notes/knowledge';
+
+  @override
+  String get knowledgeBcrUpdate => '立即同步';
+
+  @override
+  String get knowledgeBcrRemove => '断开连接';
+
+  @override
+  String get knowledgeBcrRemoveBody => '断开此仓库并移除此设备的资料缓存？已保存的决策摘录会继续保留。';
+
+  @override
+  String get knowledgeBcrEmpty => '尚未接入 BCR 资料';
+
+  @override
+  String get knowledgeBcrHint =>
+      '连接 BCR 使用的同一个 GitHub 仓库，前台自动同步笔记，离线时继续阅读本机缓存。';
+
+  @override
+  String get knowledgeBcrTextOnly => '笔记正文可离线阅读。附件、相对链接和双链请在 BCR 中打开。';
+
+  @override
+  String get knowledgeBcrSearch => '搜索已缓存的 BCR 笔记';
+
+  @override
+  String get knowledgeBcrNoResults => '没有匹配的笔记';
+
+  @override
+  String get knowledgeBcrCite => '引用 BCR 资料';
+
+  @override
+  String get knowledgeBcrInsert => '将依据插入草稿';
+
+  @override
+  String get knowledgeBcrEvidenceHint =>
+      '摘录、来源身份和 SHA-256 指纹会随决策草稿一起保存，请检查后正常保存决策。';
+
+  @override
+  String get knowledgeBcrInvalid => '远端知识库文件未通过格式或完整性校验，原有缓存已保留。';
+
+  @override
+  String get knowledgeBcrChanged => '连接已更新或被重置，请打开最新设置后再试。';
+
+  @override
+  String get knowledgeBcrCapacity => '本机资料缓存超过 32 MiB，请先断开一个资料来源。';
+
+  @override
+  String get knowledgeBcrRequired =>
+      '请填写来源名称、GitHub 仓库、访问令牌和有效的 HTTP(S) BCR 页面地址。';
+
+  @override
+  String knowledgeBcrNoteCount(int count) {
+    return '已缓存 $count 篇笔记';
+  }
+
+  @override
+  String knowledgeBcrAttachments(int count) {
+    return '$count 个附件可在 BCR 中查看';
+  }
+
+  @override
+  String get knowledgeBcrFingerprint => '资料快照指纹';
+
+  @override
+  String get knowledgeBcrCachedAt => '缓存时间';
+
+  @override
+  String get knowledgeBcrReadMore => '阅读下一页';
+
+  @override
+  String get knowledgeBcrResultsLimit => '显示前 50 条匹配结果，请缩小搜索范围以查找更多内容。';
+
+  @override
   String get healthRecordAction => '记录健康';
 
   @override

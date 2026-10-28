@@ -33,12 +33,18 @@ Future<void> showKnowledgeCaptureSheet(BuildContext context) async {
 Future<String?> showKnowledgeDecisionCapturePage(
   BuildContext context, {
   KnowledgeNote? sourceNote,
+  String? initialRationale,
 }) {
   final navigator = Navigator.of(context, rootNavigator: true);
   final theme = FTheme.capture(from: context, to: navigator.context);
   return navigator.push<String>(
     MaterialPageRoute(
-      builder: (_) => theme.wrap(_DecisionCapturePage(sourceNote: sourceNote)),
+      builder: (_) => theme.wrap(
+        _DecisionCapturePage(
+          sourceNote: sourceNote,
+          initialRationale: initialRationale,
+        ),
+      ),
     ),
   );
 }
@@ -49,9 +55,11 @@ class _KnowledgeCaptureSheet extends ConsumerStatefulWidget {
     this.fullPage = false,
     this.confirmLeave,
     this.sourceNote,
+    this.initialRationale,
   });
 
   final KnowledgeNote? sourceNote;
+  final String? initialRationale;
   final bool fullPage;
   final Future<bool> Function()? confirmLeave;
 
@@ -92,6 +100,7 @@ class _KnowledgeCaptureSheetState
   void initState() {
     super.initState();
     if (widget.fullPage) _type = _CaptureType.decision;
+    _body.text = widget.initialRationale ?? '';
     _options = KnowledgeDecisionOptionsController();
     _title.addListener(_onTextChanged);
     _body.addListener(_onTextChanged);
@@ -118,6 +127,10 @@ class _KnowledgeCaptureSheetState
         'options': _options.draft,
       },
     );
+    if (_body.text.isNotEmpty) {
+      widget.dirty.markDirty();
+      _draft.capture();
+    }
   }
 
   @override
@@ -495,9 +508,10 @@ class _KnowledgeCaptureSheetState
 }
 
 class _DecisionCapturePage extends ConsumerStatefulWidget {
-  const _DecisionCapturePage({this.sourceNote});
+  const _DecisionCapturePage({this.sourceNote, this.initialRationale});
 
   final KnowledgeNote? sourceNote;
+  final String? initialRationale;
 
   @override
   ConsumerState<_DecisionCapturePage> createState() =>
@@ -514,6 +528,7 @@ class _DecisionCapturePageState extends ConsumerState<_DecisionCapturePage>
     child: _KnowledgeCaptureSheet(
       dirty: dirty,
       sourceNote: widget.sourceNote,
+      initialRationale: widget.initialRationale,
       fullPage: true,
       confirmLeave: handleBackIntent,
     ),

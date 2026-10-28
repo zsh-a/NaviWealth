@@ -78,6 +78,7 @@ import 'package:naviwealth/features/finance/ui/settings/risk_thresholds_page.dar
 import 'package:naviwealth/features/finance/ui/wealth/wealth_hub_page.dart';
 import 'package:naviwealth/features/health/ui/health_trend_page.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_paths.dart';
+import 'package:naviwealth/features/knowledge/ui/bcr_knowledge_library_page.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_note_detail_page.dart';
 import 'package:naviwealth/features/settings/ui/ai/ai_transparency_page.dart';
 import 'package:naviwealth/features/settings/ui/settings_page.dart';
@@ -349,6 +350,11 @@ void main() {
             .toString();
 
         for (final (source, detail, pageType) in [
+          (
+            KnowledgeRoutes.library,
+            KnowledgeRoutes.bcrLibrary,
+            BcrKnowledgeLibraryPage,
+          ),
           (
             KnowledgeRoutes.inbox,
             KnowledgeRoutes.note('note/with spaces'),

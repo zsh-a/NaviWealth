@@ -35,6 +35,11 @@ final dataManagementServiceProvider = FutureProvider<DataManagementService>((
       database: database,
       ownerUserId: ownerUserId,
       specs: specs,
+      resetCleanups: {
+        for (final pack in packs)
+          if (pack.data.resetLocalResourcesBuilder case final build?)
+            pack.scope: build(ref),
+      },
       logger: logger,
       clearLocalDrafts: (scope) => LocalFormDraftStore(
         container.read(sharedPreferencesProvider),

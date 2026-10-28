@@ -4,6 +4,7 @@ library;
 abstract final class KnowledgeRoutes {
   static const inbox = '/knowledge';
   static const library = '/knowledge/library';
+  static const bcrLibrary = '/knowledge/library/bcr';
   static const noteDetail = '/knowledge/library/note/:id';
   static const decisionDetail = '/knowledge/library/decision/:id';
 
@@ -17,6 +18,7 @@ abstract final class KnowledgeRoutes {
 abstract final class KnowledgeRouteNames {
   static const inbox = 'knowledge-inbox';
   static const library = 'knowledge-library';
+  static const bcrLibrary = 'knowledge-bcr-library';
   static const noteDetail = 'knowledge-note-detail';
   static const decisionDetail = 'knowledge-decision-detail';
 }

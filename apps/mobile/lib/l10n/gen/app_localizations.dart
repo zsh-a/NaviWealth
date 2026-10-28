@@ -98,6 +98,324 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @knowledgeBcrSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'BCR GitHub sync'**
+  String get knowledgeBcrSyncTitle;
+
+  /// No description provided for @knowledgeBcrRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub repository'**
+  String get knowledgeBcrRepository;
+
+  /// No description provided for @knowledgeBcrRepositoryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'owner/repository'**
+  String get knowledgeBcrRepositoryHint;
+
+  /// No description provided for @knowledgeBcrBranch.
+  ///
+  /// In en, this message translates to:
+  /// **'Branch (optional)'**
+  String get knowledgeBcrBranch;
+
+  /// No description provided for @knowledgeBcrBranchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the repository\'s default branch'**
+  String get knowledgeBcrBranchHint;
+
+  /// No description provided for @knowledgeBcrToken.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub access token'**
+  String get knowledgeBcrToken;
+
+  /// No description provided for @knowledgeBcrTokenHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the same private repository as BCR. Only Contents: read is needed.'**
+  String get knowledgeBcrTokenHint;
+
+  /// No description provided for @knowledgeBcrTokenNative.
+  ///
+  /// In en, this message translates to:
+  /// **'The token is saved in this device\'s secure storage.'**
+  String get knowledgeBcrTokenNative;
+
+  /// No description provided for @knowledgeBcrTokenWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'The token stays in this browser session. Re-enter it after reopening.'**
+  String get knowledgeBcrTokenWeb;
+
+  /// No description provided for @knowledgeBcrTokenKeep.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave blank to keep the saved token.'**
+  String get knowledgeBcrTokenKeep;
+
+  /// No description provided for @knowledgeBcrConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect and sync'**
+  String get knowledgeBcrConnect;
+
+  /// No description provided for @knowledgeBcrManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection settings'**
+  String get knowledgeBcrManage;
+
+  /// No description provided for @knowledgeBcrConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'BCR connected and synced'**
+  String get knowledgeBcrConnected;
+
+  /// No description provided for @knowledgeBcrSyncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get knowledgeBcrSyncNow;
+
+  /// No description provided for @knowledgeBcrSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get knowledgeBcrSyncing;
+
+  /// No description provided for @knowledgeBcrLastChecked.
+  ///
+  /// In en, this message translates to:
+  /// **'Last checked'**
+  String get knowledgeBcrLastChecked;
+
+  /// No description provided for @knowledgeBcrWaitingRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Will retry automatically'**
+  String get knowledgeBcrWaitingRetry;
+
+  /// No description provided for @knowledgeBcrTokenNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or update the GitHub token to resume sync.'**
+  String get knowledgeBcrTokenNeeded;
+
+  /// No description provided for @knowledgeBcrNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot reach GitHub. Your offline notes are still available.'**
+  String get knowledgeBcrNetwork;
+
+  /// No description provided for @knowledgeBcrUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'The GitHub token is invalid or expired. Update it in connection settings.'**
+  String get knowledgeBcrUnauthorized;
+
+  /// No description provided for @knowledgeBcrForbidden.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub denied access. Check the token\'s repository permission.'**
+  String get knowledgeBcrForbidden;
+
+  /// No description provided for @knowledgeBcrNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Repository or branch not found. Check the address and token access.'**
+  String get knowledgeBcrNotFound;
+
+  /// No description provided for @knowledgeBcrRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'GitHub rate limit reached. Sync will retry after the waiting period.'**
+  String get knowledgeBcrRateLimited;
+
+  /// No description provided for @knowledgeBcrInvalidRepository.
+  ///
+  /// In en, this message translates to:
+  /// **'Use BCR\'s private GitHub repository.'**
+  String get knowledgeBcrInvalidRepository;
+
+  /// No description provided for @knowledgeBcrStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sync'**
+  String get knowledgeBcrStop;
+
+  /// No description provided for @knowledgeBcrCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync stopped. Cached notes are unchanged.'**
+  String get knowledgeBcrCancelled;
+
+  /// No description provided for @knowledgeBcrUnlinked.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect GitHub to keep this source updated.'**
+  String get knowledgeBcrUnlinked;
+
+  /// No description provided for @knowledgeBcrTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'BCR sources'**
+  String get knowledgeBcrTitle;
+
+  /// No description provided for @knowledgeBcrAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect a source'**
+  String get knowledgeBcrAdd;
+
+  /// No description provided for @knowledgeBcrName.
+  ///
+  /// In en, this message translates to:
+  /// **'Source name'**
+  String get knowledgeBcrName;
+
+  /// No description provided for @knowledgeBcrUrl.
+  ///
+  /// In en, this message translates to:
+  /// **'BCR knowledge page URL'**
+  String get knowledgeBcrUrl;
+
+  /// No description provided for @knowledgeBcrUrlHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://notes.example.com/notes/knowledge'**
+  String get knowledgeBcrUrlHint;
+
+  /// No description provided for @knowledgeBcrUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get knowledgeBcrUpdate;
+
+  /// No description provided for @knowledgeBcrRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get knowledgeBcrRemove;
+
+  /// No description provided for @knowledgeBcrRemoveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect this repository and remove its cached notes from this device? Saved decision excerpts will remain.'**
+  String get knowledgeBcrRemoveBody;
+
+  /// No description provided for @knowledgeBcrEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No BCR sources connected'**
+  String get knowledgeBcrEmpty;
+
+  /// No description provided for @knowledgeBcrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect the same GitHub repository used by BCR. Notes sync automatically while the app is in the foreground and remain readable offline.'**
+  String get knowledgeBcrHint;
+
+  /// No description provided for @knowledgeBcrTextOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Note text is available offline. Attachments, relative links and backlinks open in BCR.'**
+  String get knowledgeBcrTextOnly;
+
+  /// No description provided for @knowledgeBcrSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search cached BCR notes'**
+  String get knowledgeBcrSearch;
+
+  /// No description provided for @knowledgeBcrNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching notes'**
+  String get knowledgeBcrNoResults;
+
+  /// No description provided for @knowledgeBcrCite.
+  ///
+  /// In en, this message translates to:
+  /// **'Use as decision evidence'**
+  String get knowledgeBcrCite;
+
+  /// No description provided for @knowledgeBcrInsert.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert evidence into draft'**
+  String get knowledgeBcrInsert;
+
+  /// No description provided for @knowledgeBcrEvidenceHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This excerpt, source identity and SHA-256 fingerprint will be saved with your decision after you save the draft.'**
+  String get knowledgeBcrEvidenceHint;
+
+  /// No description provided for @knowledgeBcrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote knowledge files failed validation. Your existing cached notes were kept.'**
+  String get knowledgeBcrInvalid;
+
+  /// No description provided for @knowledgeBcrChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'This connection changed or was reset. Open its latest settings and try again.'**
+  String get knowledgeBcrChanged;
+
+  /// No description provided for @knowledgeBcrCapacity.
+  ///
+  /// In en, this message translates to:
+  /// **'The source cache exceeds the 32 MiB device limit. Disconnect a source before syncing.'**
+  String get knowledgeBcrCapacity;
+
+  /// No description provided for @knowledgeBcrRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a source name, GitHub repository, access token and valid HTTP(S) BCR page URL.'**
+  String get knowledgeBcrRequired;
+
+  /// No description provided for @knowledgeBcrNoteCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cached notes'**
+  String knowledgeBcrNoteCount(int count);
+
+  /// No description provided for @knowledgeBcrAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} attachments available in BCR'**
+  String knowledgeBcrAttachments(int count);
+
+  /// No description provided for @knowledgeBcrFingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot fingerprint'**
+  String get knowledgeBcrFingerprint;
+
+  /// No description provided for @knowledgeBcrCachedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached'**
+  String get knowledgeBcrCachedAt;
+
+  /// No description provided for @knowledgeBcrReadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read next page'**
+  String get knowledgeBcrReadMore;
+
+  /// No description provided for @knowledgeBcrResultsLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the first 50 matches. Refine your search for more results.'**
+  String get knowledgeBcrResultsLimit;
+
   /// No description provided for @healthRecordAction.
   ///
   /// In en, this message translates to:

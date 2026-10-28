@@ -54,6 +54,9 @@ void main() {
         'agent_artifacts',
         'agent_preferences',
         'agent_runtime_checkpoints',
+        'knowledge_source_cache',
+        'knowledge_source_import_leases',
+        'knowledge_source_connections',
       };
 
       for (final table in agentLocalOnlyTables) {

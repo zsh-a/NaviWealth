@@ -110,11 +110,14 @@ class DataManagementService {
         const <DomainScope, List<String>>{},
     AppLogger? logger,
     Future<void> Function(DomainScope scope)? clearLocalDrafts,
+    Map<DomainScope, Future<void> Function(String ownerUserId)> resetCleanups =
+        const {},
   }) : _database = database,
        _ownerUserId = ownerUserId,
        _specs = List<DomainDataManagementSpec>.unmodifiable(specs),
        _agentIdsByDomain = agentIdsByDomain,
        _clearLocalDrafts = clearLocalDrafts,
+       _resetCleanups = resetCleanups,
        _logger = logger ?? AppLogger.instance {
     for (final spec in _specs) {
       for (final table in <DataTableSpec>[
@@ -132,6 +135,8 @@ class DataManagementService {
   final Map<DomainScope, List<String>> _agentIdsByDomain;
   final AppLogger _logger;
   final Future<void> Function(DomainScope scope)? _clearLocalDrafts;
+  final Map<DomainScope, Future<void> Function(String ownerUserId)>
+  _resetCleanups;
 
   /// Normalizes values returned by SQLite PRAGMA statements.
   ///
@@ -334,13 +339,7 @@ class DataManagementService {
     var deleted = 0;
     await _database.transaction(() async {
       for (final table in resolvedSpec.cacheTables) {
-        final where = table.ownerScoped ? ' WHERE owner_user_id = ?' : '';
-        deleted += await _database.customUpdate(
-          'DELETE FROM ${table.table}$where',
-          variables: table.ownerScoped
-              ? <Variable<Object>>[Variable<String>(_ownerUserId)]
-              : const <Variable<Object>>[],
-        );
+        deleted += await _deleteTableRows(table);
       }
     });
     return deleted;
@@ -473,7 +472,11 @@ class DataManagementService {
         }
       }
     });
-    await _clearLocalDrafts?.call(scope);
+    await Future.wait<void>([
+      if (_clearLocalDrafts case final clear?) Future.sync(() => clear(scope)),
+      if (_resetCleanups[scope] case final cleanup?)
+        Future.sync(() => cleanup(_ownerUserId)),
+    ]);
     return affected;
   }
 
@@ -490,7 +493,10 @@ class DataManagementService {
         _ownerUserId,
       ]);
     }
-    return _database.customUpdate('DELETE FROM ${table.table}');
+    return _database.customUpdate(
+      'DELETE FROM ${table.table}',
+      updates: _typedTables(table.table),
+    );
   }
 
   Future<int> _deleteWhere(String table, String where, List<Object?> values) {
@@ -498,6 +504,7 @@ class DataManagementService {
     return _database.customUpdate(
       'DELETE FROM $table WHERE $where',
       variables: values.map(Variable<Object>.new).toList(growable: false),
+      updates: _typedTables(table),
     );
   }
 
@@ -519,8 +526,14 @@ class DataManagementService {
         if (ownerColumn != null) Variable<Object>(_ownerUserId),
         for (final value in values) Variable<Object>(value),
       ],
+      updates: _typedTables(table),
     );
   }
+
+  Set<TableInfo<Table, Object?>> _typedTables(String name) => _database
+      .allTables
+      .where((table) => table.actualTableName == name)
+      .toSet();
 
   Future<int> _enqueueTableRows(DataTableSpec table) async {
     final primaryKey = syncPrimaryKeyForTable(table.table);

@@ -88,6 +88,8 @@ dependencies:
   # deterministic attention snapshots; they never invoke an LLM.
   workmanager: ^0.10.10
   xml: ^7.0.1
+  # BCR archive validation uses this parser's event stream before loading YAML.
+  yaml: 3.1.4
 
 # D-2.2 (`docs/healthos-domain.md` §2): `health ^13.3.1` pins
 # `device_info_plus ^12.1.0`, which pulls `win32 ^5.11.0` —

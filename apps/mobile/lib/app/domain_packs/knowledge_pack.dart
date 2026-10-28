@@ -11,6 +11,8 @@ import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_kin
     show kKnowledgeProposalKinds;
 import 'package:naviwealth/features/knowledge/composition/knowledge_routes.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_share_intent_handler.dart';
+import 'package:naviwealth/features/knowledge/data/bcr_knowledge_foreground_sync.dart';
+import 'package:naviwealth/features/knowledge/data/bcr_knowledge_providers.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_decision_memory_indexer.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_note_memory_indexer.dart';
 import 'package:naviwealth/features/knowledge/data_management/knowledge_data_management.dart';
@@ -55,11 +57,16 @@ final DomainPack kKnowledgePack = DomainPack(
   ),
   lifecycle: const DomainLifecycleContribution(
     memoryBootstrapBuilder: _knowledgeMemoryBootstrap,
+    backgroundBootstrapBuilder: _knowledgeSyncBootstrap,
   ),
   data: DomainDataContribution(
     sourceRouteResolver: knowledgeSourceRoute,
     dataManagementSpec: knowledgeDataManagementSpec,
     shareIntentHandlers: const [KnowledgeShareIntentHandler()],
+    resetLocalResourcesBuilder: (ref) {
+      final credentials = ref.read(bcrGithubCredentialsProvider);
+      return credentials.clearOwner;
+    },
   ),
 );
 
@@ -67,6 +74,9 @@ void _knowledgeMemoryBootstrap(Ref ref) {
   ref.watch(knowledgeDecisionMemoryIndexerProvider);
   ref.watch(knowledgeNoteMemoryIndexerProvider);
 }
+
+void _knowledgeSyncBootstrap(Ref ref) =>
+    ref.watch(bcrKnowledgeForegroundSyncProvider);
 
 String _knowledgeSettingsSubtitle(AppLocalizations l10n, bool enabled) =>
     enabled

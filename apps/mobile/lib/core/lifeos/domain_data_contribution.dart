@@ -8,6 +8,7 @@ final class DomainDataContribution {
     this.localTableCountsBuilder,
     this.dataManagementSpec,
     this.shareIntentHandlers = const <DomainShareIntentHandler>[],
+    this.resetLocalResourcesBuilder,
   });
 
   /// Domain-owned signals and evaluated source-family evidence for Life.
@@ -30,4 +31,9 @@ final class DomainDataContribution {
   /// App code receives plugin events and converts them to [SharedIntentPayload].
   /// Domains decide whether and how to persist payloads they understand.
   final List<DomainShareIntentHandler> shareIntentHandlers;
+
+  /// Captures domain-owned local resource adapters at composition time. The
+  /// returned cleanup runs after database reset has fenced pending work.
+  final Future<void> Function(String ownerUserId) Function(Ref ref)?
+  resetLocalResourcesBuilder;
 }

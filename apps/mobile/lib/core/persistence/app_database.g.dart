@@ -43454,6 +43454,1476 @@ class KnowledgeRelationsCompanion
   }
 }
 
+class $KnowledgeSourceCacheTable extends KnowledgeSourceCache
+    with TableInfo<$KnowledgeSourceCacheTable, KnowledgeSourceCacheRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KnowledgeSourceCacheTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _libraryUrlMeta = const VerificationMeta(
+    'libraryUrl',
+  );
+  @override
+  late final GeneratedColumn<String> libraryUrl = GeneratedColumn<String>(
+    'library_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _importedAtMeta = const VerificationMeta(
+    'importedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> importedAt = GeneratedColumn<DateTime>(
+    'imported_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentJsonMeta = const VerificationMeta(
+    'contentJson',
+  );
+  @override
+  late final GeneratedColumn<String> contentJson = GeneratedColumn<String>(
+    'content_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cacheRevisionMeta = const VerificationMeta(
+    'cacheRevision',
+  );
+  @override
+  late final GeneratedColumn<String> cacheRevision = GeneratedColumn<String>(
+    'cache_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    sourceId,
+    label,
+    libraryUrl,
+    importedAt,
+    contentJson,
+    cacheRevision,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'knowledge_source_cache';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KnowledgeSourceCacheRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('library_url')) {
+      context.handle(
+        _libraryUrlMeta,
+        libraryUrl.isAcceptableOrUnknown(data['library_url']!, _libraryUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_libraryUrlMeta);
+    }
+    if (data.containsKey('imported_at')) {
+      context.handle(
+        _importedAtMeta,
+        importedAt.isAcceptableOrUnknown(data['imported_at']!, _importedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_importedAtMeta);
+    }
+    if (data.containsKey('content_json')) {
+      context.handle(
+        _contentJsonMeta,
+        contentJson.isAcceptableOrUnknown(
+          data['content_json']!,
+          _contentJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contentJsonMeta);
+    }
+    if (data.containsKey('cache_revision')) {
+      context.handle(
+        _cacheRevisionMeta,
+        cacheRevision.isAcceptableOrUnknown(
+          data['cache_revision']!,
+          _cacheRevisionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_cacheRevisionMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ownerUserId, sourceId};
+  @override
+  KnowledgeSourceCacheRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KnowledgeSourceCacheRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      libraryUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}library_url'],
+      )!,
+      importedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}imported_at'],
+      )!,
+      contentJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_json'],
+      )!,
+      cacheRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cache_revision'],
+      )!,
+    );
+  }
+
+  @override
+  $KnowledgeSourceCacheTable createAlias(String alias) {
+    return $KnowledgeSourceCacheTable(attachedDatabase, alias);
+  }
+}
+
+class KnowledgeSourceCacheRow extends DataClass
+    implements Insertable<KnowledgeSourceCacheRow> {
+  final String ownerUserId;
+  final String sourceId;
+  final String label;
+  final String libraryUrl;
+  final DateTime importedAt;
+  final String contentJson;
+  final String cacheRevision;
+  const KnowledgeSourceCacheRow({
+    required this.ownerUserId,
+    required this.sourceId,
+    required this.label,
+    required this.libraryUrl,
+    required this.importedAt,
+    required this.contentJson,
+    required this.cacheRevision,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['source_id'] = Variable<String>(sourceId);
+    map['label'] = Variable<String>(label);
+    map['library_url'] = Variable<String>(libraryUrl);
+    map['imported_at'] = Variable<DateTime>(importedAt);
+    map['content_json'] = Variable<String>(contentJson);
+    map['cache_revision'] = Variable<String>(cacheRevision);
+    return map;
+  }
+
+  KnowledgeSourceCacheCompanion toCompanion(bool nullToAbsent) {
+    return KnowledgeSourceCacheCompanion(
+      ownerUserId: Value(ownerUserId),
+      sourceId: Value(sourceId),
+      label: Value(label),
+      libraryUrl: Value(libraryUrl),
+      importedAt: Value(importedAt),
+      contentJson: Value(contentJson),
+      cacheRevision: Value(cacheRevision),
+    );
+  }
+
+  factory KnowledgeSourceCacheRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KnowledgeSourceCacheRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      label: serializer.fromJson<String>(json['label']),
+      libraryUrl: serializer.fromJson<String>(json['libraryUrl']),
+      importedAt: serializer.fromJson<DateTime>(json['importedAt']),
+      contentJson: serializer.fromJson<String>(json['contentJson']),
+      cacheRevision: serializer.fromJson<String>(json['cacheRevision']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'label': serializer.toJson<String>(label),
+      'libraryUrl': serializer.toJson<String>(libraryUrl),
+      'importedAt': serializer.toJson<DateTime>(importedAt),
+      'contentJson': serializer.toJson<String>(contentJson),
+      'cacheRevision': serializer.toJson<String>(cacheRevision),
+    };
+  }
+
+  KnowledgeSourceCacheRow copyWith({
+    String? ownerUserId,
+    String? sourceId,
+    String? label,
+    String? libraryUrl,
+    DateTime? importedAt,
+    String? contentJson,
+    String? cacheRevision,
+  }) => KnowledgeSourceCacheRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    sourceId: sourceId ?? this.sourceId,
+    label: label ?? this.label,
+    libraryUrl: libraryUrl ?? this.libraryUrl,
+    importedAt: importedAt ?? this.importedAt,
+    contentJson: contentJson ?? this.contentJson,
+    cacheRevision: cacheRevision ?? this.cacheRevision,
+  );
+  KnowledgeSourceCacheRow copyWithCompanion(
+    KnowledgeSourceCacheCompanion data,
+  ) {
+    return KnowledgeSourceCacheRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      label: data.label.present ? data.label.value : this.label,
+      libraryUrl: data.libraryUrl.present
+          ? data.libraryUrl.value
+          : this.libraryUrl,
+      importedAt: data.importedAt.present
+          ? data.importedAt.value
+          : this.importedAt,
+      contentJson: data.contentJson.present
+          ? data.contentJson.value
+          : this.contentJson,
+      cacheRevision: data.cacheRevision.present
+          ? data.cacheRevision.value
+          : this.cacheRevision,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnowledgeSourceCacheRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('label: $label, ')
+          ..write('libraryUrl: $libraryUrl, ')
+          ..write('importedAt: $importedAt, ')
+          ..write('contentJson: $contentJson, ')
+          ..write('cacheRevision: $cacheRevision')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    sourceId,
+    label,
+    libraryUrl,
+    importedAt,
+    contentJson,
+    cacheRevision,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KnowledgeSourceCacheRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.sourceId == this.sourceId &&
+          other.label == this.label &&
+          other.libraryUrl == this.libraryUrl &&
+          other.importedAt == this.importedAt &&
+          other.contentJson == this.contentJson &&
+          other.cacheRevision == this.cacheRevision);
+}
+
+class KnowledgeSourceCacheCompanion
+    extends UpdateCompanion<KnowledgeSourceCacheRow> {
+  final Value<String> ownerUserId;
+  final Value<String> sourceId;
+  final Value<String> label;
+  final Value<String> libraryUrl;
+  final Value<DateTime> importedAt;
+  final Value<String> contentJson;
+  final Value<String> cacheRevision;
+  final Value<int> rowid;
+  const KnowledgeSourceCacheCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.libraryUrl = const Value.absent(),
+    this.importedAt = const Value.absent(),
+    this.contentJson = const Value.absent(),
+    this.cacheRevision = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KnowledgeSourceCacheCompanion.insert({
+    required String ownerUserId,
+    required String sourceId,
+    required String label,
+    required String libraryUrl,
+    required DateTime importedAt,
+    required String contentJson,
+    required String cacheRevision,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       sourceId = Value(sourceId),
+       label = Value(label),
+       libraryUrl = Value(libraryUrl),
+       importedAt = Value(importedAt),
+       contentJson = Value(contentJson),
+       cacheRevision = Value(cacheRevision);
+  static Insertable<KnowledgeSourceCacheRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<String>? sourceId,
+    Expression<String>? label,
+    Expression<String>? libraryUrl,
+    Expression<DateTime>? importedAt,
+    Expression<String>? contentJson,
+    Expression<String>? cacheRevision,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (sourceId != null) 'source_id': sourceId,
+      if (label != null) 'label': label,
+      if (libraryUrl != null) 'library_url': libraryUrl,
+      if (importedAt != null) 'imported_at': importedAt,
+      if (contentJson != null) 'content_json': contentJson,
+      if (cacheRevision != null) 'cache_revision': cacheRevision,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KnowledgeSourceCacheCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<String>? sourceId,
+    Value<String>? label,
+    Value<String>? libraryUrl,
+    Value<DateTime>? importedAt,
+    Value<String>? contentJson,
+    Value<String>? cacheRevision,
+    Value<int>? rowid,
+  }) {
+    return KnowledgeSourceCacheCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      sourceId: sourceId ?? this.sourceId,
+      label: label ?? this.label,
+      libraryUrl: libraryUrl ?? this.libraryUrl,
+      importedAt: importedAt ?? this.importedAt,
+      contentJson: contentJson ?? this.contentJson,
+      cacheRevision: cacheRevision ?? this.cacheRevision,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (libraryUrl.present) {
+      map['library_url'] = Variable<String>(libraryUrl.value);
+    }
+    if (importedAt.present) {
+      map['imported_at'] = Variable<DateTime>(importedAt.value);
+    }
+    if (contentJson.present) {
+      map['content_json'] = Variable<String>(contentJson.value);
+    }
+    if (cacheRevision.present) {
+      map['cache_revision'] = Variable<String>(cacheRevision.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnowledgeSourceCacheCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('label: $label, ')
+          ..write('libraryUrl: $libraryUrl, ')
+          ..write('importedAt: $importedAt, ')
+          ..write('contentJson: $contentJson, ')
+          ..write('cacheRevision: $cacheRevision, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KnowledgeSourceImportLeasesTable extends KnowledgeSourceImportLeases
+    with
+        TableInfo<
+          $KnowledgeSourceImportLeasesTable,
+          KnowledgeSourceImportLease
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KnowledgeSourceImportLeasesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _tokenMeta = const VerificationMeta('token');
+  @override
+  late final GeneratedColumn<String> token = GeneratedColumn<String>(
+    'token',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [ownerUserId, sourceId, token];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'knowledge_source_import_leases';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KnowledgeSourceImportLease> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('token')) {
+      context.handle(
+        _tokenMeta,
+        token.isAcceptableOrUnknown(data['token']!, _tokenMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tokenMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ownerUserId, sourceId};
+  @override
+  KnowledgeSourceImportLease map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KnowledgeSourceImportLease(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      token: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}token'],
+      )!,
+    );
+  }
+
+  @override
+  $KnowledgeSourceImportLeasesTable createAlias(String alias) {
+    return $KnowledgeSourceImportLeasesTable(attachedDatabase, alias);
+  }
+}
+
+class KnowledgeSourceImportLease extends DataClass
+    implements Insertable<KnowledgeSourceImportLease> {
+  final String ownerUserId;
+  final String sourceId;
+  final String token;
+  const KnowledgeSourceImportLease({
+    required this.ownerUserId,
+    required this.sourceId,
+    required this.token,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['source_id'] = Variable<String>(sourceId);
+    map['token'] = Variable<String>(token);
+    return map;
+  }
+
+  KnowledgeSourceImportLeasesCompanion toCompanion(bool nullToAbsent) {
+    return KnowledgeSourceImportLeasesCompanion(
+      ownerUserId: Value(ownerUserId),
+      sourceId: Value(sourceId),
+      token: Value(token),
+    );
+  }
+
+  factory KnowledgeSourceImportLease.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KnowledgeSourceImportLease(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      token: serializer.fromJson<String>(json['token']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'token': serializer.toJson<String>(token),
+    };
+  }
+
+  KnowledgeSourceImportLease copyWith({
+    String? ownerUserId,
+    String? sourceId,
+    String? token,
+  }) => KnowledgeSourceImportLease(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    sourceId: sourceId ?? this.sourceId,
+    token: token ?? this.token,
+  );
+  KnowledgeSourceImportLease copyWithCompanion(
+    KnowledgeSourceImportLeasesCompanion data,
+  ) {
+    return KnowledgeSourceImportLease(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      token: data.token.present ? data.token.value : this.token,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnowledgeSourceImportLease(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('token: $token')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(ownerUserId, sourceId, token);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KnowledgeSourceImportLease &&
+          other.ownerUserId == this.ownerUserId &&
+          other.sourceId == this.sourceId &&
+          other.token == this.token);
+}
+
+class KnowledgeSourceImportLeasesCompanion
+    extends UpdateCompanion<KnowledgeSourceImportLease> {
+  final Value<String> ownerUserId;
+  final Value<String> sourceId;
+  final Value<String> token;
+  final Value<int> rowid;
+  const KnowledgeSourceImportLeasesCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.token = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KnowledgeSourceImportLeasesCompanion.insert({
+    required String ownerUserId,
+    required String sourceId,
+    required String token,
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       sourceId = Value(sourceId),
+       token = Value(token);
+  static Insertable<KnowledgeSourceImportLease> custom({
+    Expression<String>? ownerUserId,
+    Expression<String>? sourceId,
+    Expression<String>? token,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (sourceId != null) 'source_id': sourceId,
+      if (token != null) 'token': token,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KnowledgeSourceImportLeasesCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<String>? sourceId,
+    Value<String>? token,
+    Value<int>? rowid,
+  }) {
+    return KnowledgeSourceImportLeasesCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      sourceId: sourceId ?? this.sourceId,
+      token: token ?? this.token,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (token.present) {
+      map['token'] = Variable<String>(token.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnowledgeSourceImportLeasesCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('token: $token, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $KnowledgeSourceConnectionsTable extends KnowledgeSourceConnections
+    with
+        TableInfo<
+          $KnowledgeSourceConnectionsTable,
+          KnowledgeSourceConnectionRow
+        > {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $KnowledgeSourceConnectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _ownerUserIdMeta = const VerificationMeta(
+    'ownerUserId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerUserId = GeneratedColumn<String>(
+    'owner_user_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceIdMeta = const VerificationMeta(
+    'sourceId',
+  );
+  @override
+  late final GeneratedColumn<String> sourceId = GeneratedColumn<String>(
+    'source_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _libraryUrlMeta = const VerificationMeta(
+    'libraryUrl',
+  );
+  @override
+  late final GeneratedColumn<String> libraryUrl = GeneratedColumn<String>(
+    'library_url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repositoryOwnerMeta = const VerificationMeta(
+    'repositoryOwner',
+  );
+  @override
+  late final GeneratedColumn<String> repositoryOwner = GeneratedColumn<String>(
+    'repository_owner',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _repositoryNameMeta = const VerificationMeta(
+    'repositoryName',
+  );
+  @override
+  late final GeneratedColumn<String> repositoryName = GeneratedColumn<String>(
+    'repository_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _branchMeta = const VerificationMeta('branch');
+  @override
+  late final GeneratedColumn<String> branch = GeneratedColumn<String>(
+    'branch',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _revisionMeta = const VerificationMeta(
+    'revision',
+  );
+  @override
+  late final GeneratedColumn<String> revision = GeneratedColumn<String>(
+    'revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _credentialIdMeta = const VerificationMeta(
+    'credentialId',
+  );
+  @override
+  late final GeneratedColumn<String> credentialId = GeneratedColumn<String>(
+    'credential_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _remoteHeadMeta = const VerificationMeta(
+    'remoteHead',
+  );
+  @override
+  late final GeneratedColumn<String> remoteHead = GeneratedColumn<String>(
+    'remote_head',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _checkedAtMeta = const VerificationMeta(
+    'checkedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> checkedAt = GeneratedColumn<DateTime>(
+    'checked_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    ownerUserId,
+    sourceId,
+    label,
+    libraryUrl,
+    repositoryOwner,
+    repositoryName,
+    branch,
+    revision,
+    credentialId,
+    remoteHead,
+    checkedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'knowledge_source_connections';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<KnowledgeSourceConnectionRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('owner_user_id')) {
+      context.handle(
+        _ownerUserIdMeta,
+        ownerUserId.isAcceptableOrUnknown(
+          data['owner_user_id']!,
+          _ownerUserIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerUserIdMeta);
+    }
+    if (data.containsKey('source_id')) {
+      context.handle(
+        _sourceIdMeta,
+        sourceId.isAcceptableOrUnknown(data['source_id']!, _sourceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceIdMeta);
+    }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_labelMeta);
+    }
+    if (data.containsKey('library_url')) {
+      context.handle(
+        _libraryUrlMeta,
+        libraryUrl.isAcceptableOrUnknown(data['library_url']!, _libraryUrlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_libraryUrlMeta);
+    }
+    if (data.containsKey('repository_owner')) {
+      context.handle(
+        _repositoryOwnerMeta,
+        repositoryOwner.isAcceptableOrUnknown(
+          data['repository_owner']!,
+          _repositoryOwnerMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_repositoryOwnerMeta);
+    }
+    if (data.containsKey('repository_name')) {
+      context.handle(
+        _repositoryNameMeta,
+        repositoryName.isAcceptableOrUnknown(
+          data['repository_name']!,
+          _repositoryNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_repositoryNameMeta);
+    }
+    if (data.containsKey('branch')) {
+      context.handle(
+        _branchMeta,
+        branch.isAcceptableOrUnknown(data['branch']!, _branchMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_branchMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(
+        _revisionMeta,
+        revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_revisionMeta);
+    }
+    if (data.containsKey('credential_id')) {
+      context.handle(
+        _credentialIdMeta,
+        credentialId.isAcceptableOrUnknown(
+          data['credential_id']!,
+          _credentialIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_credentialIdMeta);
+    }
+    if (data.containsKey('remote_head')) {
+      context.handle(
+        _remoteHeadMeta,
+        remoteHead.isAcceptableOrUnknown(data['remote_head']!, _remoteHeadMeta),
+      );
+    }
+    if (data.containsKey('checked_at')) {
+      context.handle(
+        _checkedAtMeta,
+        checkedAt.isAcceptableOrUnknown(data['checked_at']!, _checkedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {ownerUserId, sourceId};
+  @override
+  KnowledgeSourceConnectionRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return KnowledgeSourceConnectionRow(
+      ownerUserId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_user_id'],
+      )!,
+      sourceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_id'],
+      )!,
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      )!,
+      libraryUrl: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}library_url'],
+      )!,
+      repositoryOwner: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repository_owner'],
+      )!,
+      repositoryName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}repository_name'],
+      )!,
+      branch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}branch'],
+      )!,
+      revision: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}revision'],
+      )!,
+      credentialId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}credential_id'],
+      )!,
+      remoteHead: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}remote_head'],
+      ),
+      checkedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}checked_at'],
+      ),
+    );
+  }
+
+  @override
+  $KnowledgeSourceConnectionsTable createAlias(String alias) {
+    return $KnowledgeSourceConnectionsTable(attachedDatabase, alias);
+  }
+}
+
+class KnowledgeSourceConnectionRow extends DataClass
+    implements Insertable<KnowledgeSourceConnectionRow> {
+  final String ownerUserId;
+  final String sourceId;
+  final String label;
+  final String libraryUrl;
+  final String repositoryOwner;
+  final String repositoryName;
+  final String branch;
+  final String revision;
+  final String credentialId;
+  final String? remoteHead;
+  final DateTime? checkedAt;
+  const KnowledgeSourceConnectionRow({
+    required this.ownerUserId,
+    required this.sourceId,
+    required this.label,
+    required this.libraryUrl,
+    required this.repositoryOwner,
+    required this.repositoryName,
+    required this.branch,
+    required this.revision,
+    required this.credentialId,
+    this.remoteHead,
+    this.checkedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['owner_user_id'] = Variable<String>(ownerUserId);
+    map['source_id'] = Variable<String>(sourceId);
+    map['label'] = Variable<String>(label);
+    map['library_url'] = Variable<String>(libraryUrl);
+    map['repository_owner'] = Variable<String>(repositoryOwner);
+    map['repository_name'] = Variable<String>(repositoryName);
+    map['branch'] = Variable<String>(branch);
+    map['revision'] = Variable<String>(revision);
+    map['credential_id'] = Variable<String>(credentialId);
+    if (!nullToAbsent || remoteHead != null) {
+      map['remote_head'] = Variable<String>(remoteHead);
+    }
+    if (!nullToAbsent || checkedAt != null) {
+      map['checked_at'] = Variable<DateTime>(checkedAt);
+    }
+    return map;
+  }
+
+  KnowledgeSourceConnectionsCompanion toCompanion(bool nullToAbsent) {
+    return KnowledgeSourceConnectionsCompanion(
+      ownerUserId: Value(ownerUserId),
+      sourceId: Value(sourceId),
+      label: Value(label),
+      libraryUrl: Value(libraryUrl),
+      repositoryOwner: Value(repositoryOwner),
+      repositoryName: Value(repositoryName),
+      branch: Value(branch),
+      revision: Value(revision),
+      credentialId: Value(credentialId),
+      remoteHead: remoteHead == null && nullToAbsent
+          ? const Value.absent()
+          : Value(remoteHead),
+      checkedAt: checkedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(checkedAt),
+    );
+  }
+
+  factory KnowledgeSourceConnectionRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return KnowledgeSourceConnectionRow(
+      ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
+      sourceId: serializer.fromJson<String>(json['sourceId']),
+      label: serializer.fromJson<String>(json['label']),
+      libraryUrl: serializer.fromJson<String>(json['libraryUrl']),
+      repositoryOwner: serializer.fromJson<String>(json['repositoryOwner']),
+      repositoryName: serializer.fromJson<String>(json['repositoryName']),
+      branch: serializer.fromJson<String>(json['branch']),
+      revision: serializer.fromJson<String>(json['revision']),
+      credentialId: serializer.fromJson<String>(json['credentialId']),
+      remoteHead: serializer.fromJson<String?>(json['remoteHead']),
+      checkedAt: serializer.fromJson<DateTime?>(json['checkedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'ownerUserId': serializer.toJson<String>(ownerUserId),
+      'sourceId': serializer.toJson<String>(sourceId),
+      'label': serializer.toJson<String>(label),
+      'libraryUrl': serializer.toJson<String>(libraryUrl),
+      'repositoryOwner': serializer.toJson<String>(repositoryOwner),
+      'repositoryName': serializer.toJson<String>(repositoryName),
+      'branch': serializer.toJson<String>(branch),
+      'revision': serializer.toJson<String>(revision),
+      'credentialId': serializer.toJson<String>(credentialId),
+      'remoteHead': serializer.toJson<String?>(remoteHead),
+      'checkedAt': serializer.toJson<DateTime?>(checkedAt),
+    };
+  }
+
+  KnowledgeSourceConnectionRow copyWith({
+    String? ownerUserId,
+    String? sourceId,
+    String? label,
+    String? libraryUrl,
+    String? repositoryOwner,
+    String? repositoryName,
+    String? branch,
+    String? revision,
+    String? credentialId,
+    Value<String?> remoteHead = const Value.absent(),
+    Value<DateTime?> checkedAt = const Value.absent(),
+  }) => KnowledgeSourceConnectionRow(
+    ownerUserId: ownerUserId ?? this.ownerUserId,
+    sourceId: sourceId ?? this.sourceId,
+    label: label ?? this.label,
+    libraryUrl: libraryUrl ?? this.libraryUrl,
+    repositoryOwner: repositoryOwner ?? this.repositoryOwner,
+    repositoryName: repositoryName ?? this.repositoryName,
+    branch: branch ?? this.branch,
+    revision: revision ?? this.revision,
+    credentialId: credentialId ?? this.credentialId,
+    remoteHead: remoteHead.present ? remoteHead.value : this.remoteHead,
+    checkedAt: checkedAt.present ? checkedAt.value : this.checkedAt,
+  );
+  KnowledgeSourceConnectionRow copyWithCompanion(
+    KnowledgeSourceConnectionsCompanion data,
+  ) {
+    return KnowledgeSourceConnectionRow(
+      ownerUserId: data.ownerUserId.present
+          ? data.ownerUserId.value
+          : this.ownerUserId,
+      sourceId: data.sourceId.present ? data.sourceId.value : this.sourceId,
+      label: data.label.present ? data.label.value : this.label,
+      libraryUrl: data.libraryUrl.present
+          ? data.libraryUrl.value
+          : this.libraryUrl,
+      repositoryOwner: data.repositoryOwner.present
+          ? data.repositoryOwner.value
+          : this.repositoryOwner,
+      repositoryName: data.repositoryName.present
+          ? data.repositoryName.value
+          : this.repositoryName,
+      branch: data.branch.present ? data.branch.value : this.branch,
+      revision: data.revision.present ? data.revision.value : this.revision,
+      credentialId: data.credentialId.present
+          ? data.credentialId.value
+          : this.credentialId,
+      remoteHead: data.remoteHead.present
+          ? data.remoteHead.value
+          : this.remoteHead,
+      checkedAt: data.checkedAt.present ? data.checkedAt.value : this.checkedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnowledgeSourceConnectionRow(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('label: $label, ')
+          ..write('libraryUrl: $libraryUrl, ')
+          ..write('repositoryOwner: $repositoryOwner, ')
+          ..write('repositoryName: $repositoryName, ')
+          ..write('branch: $branch, ')
+          ..write('revision: $revision, ')
+          ..write('credentialId: $credentialId, ')
+          ..write('remoteHead: $remoteHead, ')
+          ..write('checkedAt: $checkedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    ownerUserId,
+    sourceId,
+    label,
+    libraryUrl,
+    repositoryOwner,
+    repositoryName,
+    branch,
+    revision,
+    credentialId,
+    remoteHead,
+    checkedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is KnowledgeSourceConnectionRow &&
+          other.ownerUserId == this.ownerUserId &&
+          other.sourceId == this.sourceId &&
+          other.label == this.label &&
+          other.libraryUrl == this.libraryUrl &&
+          other.repositoryOwner == this.repositoryOwner &&
+          other.repositoryName == this.repositoryName &&
+          other.branch == this.branch &&
+          other.revision == this.revision &&
+          other.credentialId == this.credentialId &&
+          other.remoteHead == this.remoteHead &&
+          other.checkedAt == this.checkedAt);
+}
+
+class KnowledgeSourceConnectionsCompanion
+    extends UpdateCompanion<KnowledgeSourceConnectionRow> {
+  final Value<String> ownerUserId;
+  final Value<String> sourceId;
+  final Value<String> label;
+  final Value<String> libraryUrl;
+  final Value<String> repositoryOwner;
+  final Value<String> repositoryName;
+  final Value<String> branch;
+  final Value<String> revision;
+  final Value<String> credentialId;
+  final Value<String?> remoteHead;
+  final Value<DateTime?> checkedAt;
+  final Value<int> rowid;
+  const KnowledgeSourceConnectionsCompanion({
+    this.ownerUserId = const Value.absent(),
+    this.sourceId = const Value.absent(),
+    this.label = const Value.absent(),
+    this.libraryUrl = const Value.absent(),
+    this.repositoryOwner = const Value.absent(),
+    this.repositoryName = const Value.absent(),
+    this.branch = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.credentialId = const Value.absent(),
+    this.remoteHead = const Value.absent(),
+    this.checkedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  KnowledgeSourceConnectionsCompanion.insert({
+    required String ownerUserId,
+    required String sourceId,
+    required String label,
+    required String libraryUrl,
+    required String repositoryOwner,
+    required String repositoryName,
+    required String branch,
+    required String revision,
+    required String credentialId,
+    this.remoteHead = const Value.absent(),
+    this.checkedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : ownerUserId = Value(ownerUserId),
+       sourceId = Value(sourceId),
+       label = Value(label),
+       libraryUrl = Value(libraryUrl),
+       repositoryOwner = Value(repositoryOwner),
+       repositoryName = Value(repositoryName),
+       branch = Value(branch),
+       revision = Value(revision),
+       credentialId = Value(credentialId);
+  static Insertable<KnowledgeSourceConnectionRow> custom({
+    Expression<String>? ownerUserId,
+    Expression<String>? sourceId,
+    Expression<String>? label,
+    Expression<String>? libraryUrl,
+    Expression<String>? repositoryOwner,
+    Expression<String>? repositoryName,
+    Expression<String>? branch,
+    Expression<String>? revision,
+    Expression<String>? credentialId,
+    Expression<String>? remoteHead,
+    Expression<DateTime>? checkedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (ownerUserId != null) 'owner_user_id': ownerUserId,
+      if (sourceId != null) 'source_id': sourceId,
+      if (label != null) 'label': label,
+      if (libraryUrl != null) 'library_url': libraryUrl,
+      if (repositoryOwner != null) 'repository_owner': repositoryOwner,
+      if (repositoryName != null) 'repository_name': repositoryName,
+      if (branch != null) 'branch': branch,
+      if (revision != null) 'revision': revision,
+      if (credentialId != null) 'credential_id': credentialId,
+      if (remoteHead != null) 'remote_head': remoteHead,
+      if (checkedAt != null) 'checked_at': checkedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  KnowledgeSourceConnectionsCompanion copyWith({
+    Value<String>? ownerUserId,
+    Value<String>? sourceId,
+    Value<String>? label,
+    Value<String>? libraryUrl,
+    Value<String>? repositoryOwner,
+    Value<String>? repositoryName,
+    Value<String>? branch,
+    Value<String>? revision,
+    Value<String>? credentialId,
+    Value<String?>? remoteHead,
+    Value<DateTime?>? checkedAt,
+    Value<int>? rowid,
+  }) {
+    return KnowledgeSourceConnectionsCompanion(
+      ownerUserId: ownerUserId ?? this.ownerUserId,
+      sourceId: sourceId ?? this.sourceId,
+      label: label ?? this.label,
+      libraryUrl: libraryUrl ?? this.libraryUrl,
+      repositoryOwner: repositoryOwner ?? this.repositoryOwner,
+      repositoryName: repositoryName ?? this.repositoryName,
+      branch: branch ?? this.branch,
+      revision: revision ?? this.revision,
+      credentialId: credentialId ?? this.credentialId,
+      remoteHead: remoteHead ?? this.remoteHead,
+      checkedAt: checkedAt ?? this.checkedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (ownerUserId.present) {
+      map['owner_user_id'] = Variable<String>(ownerUserId.value);
+    }
+    if (sourceId.present) {
+      map['source_id'] = Variable<String>(sourceId.value);
+    }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
+    if (libraryUrl.present) {
+      map['library_url'] = Variable<String>(libraryUrl.value);
+    }
+    if (repositoryOwner.present) {
+      map['repository_owner'] = Variable<String>(repositoryOwner.value);
+    }
+    if (repositoryName.present) {
+      map['repository_name'] = Variable<String>(repositoryName.value);
+    }
+    if (branch.present) {
+      map['branch'] = Variable<String>(branch.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<String>(revision.value);
+    }
+    if (credentialId.present) {
+      map['credential_id'] = Variable<String>(credentialId.value);
+    }
+    if (remoteHead.present) {
+      map['remote_head'] = Variable<String>(remoteHead.value);
+    }
+    if (checkedAt.present) {
+      map['checked_at'] = Variable<DateTime>(checkedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('KnowledgeSourceConnectionsCompanion(')
+          ..write('ownerUserId: $ownerUserId, ')
+          ..write('sourceId: $sourceId, ')
+          ..write('label: $label, ')
+          ..write('libraryUrl: $libraryUrl, ')
+          ..write('repositoryOwner: $repositoryOwner, ')
+          ..write('repositoryName: $repositoryName, ')
+          ..write('branch: $branch, ')
+          ..write('revision: $revision, ')
+          ..write('credentialId: $credentialId, ')
+          ..write('remoteHead: $remoteHead, ')
+          ..write('checkedAt: $checkedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $ExecutionPlansTable extends ExecutionPlans
     with TableInfo<$ExecutionPlansTable, ExecutionPlanRow> {
   @override
@@ -53581,6 +55051,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $KnowledgeDecisionsTable(this);
   late final $KnowledgeRelationsTable knowledgeRelations =
       $KnowledgeRelationsTable(this);
+  late final $KnowledgeSourceCacheTable knowledgeSourceCache =
+      $KnowledgeSourceCacheTable(this);
+  late final $KnowledgeSourceImportLeasesTable knowledgeSourceImportLeases =
+      $KnowledgeSourceImportLeasesTable(this);
+  late final $KnowledgeSourceConnectionsTable knowledgeSourceConnections =
+      $KnowledgeSourceConnectionsTable(this);
   late final $ExecutionPlansTable executionPlans = $ExecutionPlansTable(this);
   late final $ExecutionActionsTable executionActions = $ExecutionActionsTable(
     this,
@@ -53668,6 +55144,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     knowledgeNotes,
     knowledgeDecisions,
     knowledgeRelations,
+    knowledgeSourceCache,
+    knowledgeSourceImportLeases,
+    knowledgeSourceConnections,
     executionPlans,
     executionActions,
     executionProgressEntries,
@@ -74583,6 +76062,834 @@ typedef $$KnowledgeRelationsTableProcessedTableManager =
       KnowledgeRelationRow,
       PrefetchHooks Function()
     >;
+typedef $$KnowledgeSourceCacheTableCreateCompanionBuilder =
+    KnowledgeSourceCacheCompanion Function({
+      required String ownerUserId,
+      required String sourceId,
+      required String label,
+      required String libraryUrl,
+      required DateTime importedAt,
+      required String contentJson,
+      required String cacheRevision,
+      Value<int> rowid,
+    });
+typedef $$KnowledgeSourceCacheTableUpdateCompanionBuilder =
+    KnowledgeSourceCacheCompanion Function({
+      Value<String> ownerUserId,
+      Value<String> sourceId,
+      Value<String> label,
+      Value<String> libraryUrl,
+      Value<DateTime> importedAt,
+      Value<String> contentJson,
+      Value<String> cacheRevision,
+      Value<int> rowid,
+    });
+
+class $$KnowledgeSourceCacheTableFilterComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceCacheTable> {
+  $$KnowledgeSourceCacheTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get libraryUrl => $composableBuilder(
+    column: $table.libraryUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentJson => $composableBuilder(
+    column: $table.contentJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get cacheRevision => $composableBuilder(
+    column: $table.cacheRevision,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$KnowledgeSourceCacheTableOrderingComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceCacheTable> {
+  $$KnowledgeSourceCacheTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get libraryUrl => $composableBuilder(
+    column: $table.libraryUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contentJson => $composableBuilder(
+    column: $table.contentJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get cacheRevision => $composableBuilder(
+    column: $table.cacheRevision,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$KnowledgeSourceCacheTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceCacheTable> {
+  $$KnowledgeSourceCacheTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get libraryUrl => $composableBuilder(
+    column: $table.libraryUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get contentJson => $composableBuilder(
+    column: $table.contentJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get cacheRevision => $composableBuilder(
+    column: $table.cacheRevision,
+    builder: (column) => column,
+  );
+}
+
+class $$KnowledgeSourceCacheTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KnowledgeSourceCacheTable,
+          KnowledgeSourceCacheRow,
+          $$KnowledgeSourceCacheTableFilterComposer,
+          $$KnowledgeSourceCacheTableOrderingComposer,
+          $$KnowledgeSourceCacheTableAnnotationComposer,
+          $$KnowledgeSourceCacheTableCreateCompanionBuilder,
+          $$KnowledgeSourceCacheTableUpdateCompanionBuilder,
+          (
+            KnowledgeSourceCacheRow,
+            BaseReferences<
+              _$AppDatabase,
+              $KnowledgeSourceCacheTable,
+              KnowledgeSourceCacheRow
+            >,
+          ),
+          KnowledgeSourceCacheRow,
+          PrefetchHooks Function()
+        > {
+  $$KnowledgeSourceCacheTableTableManager(
+    _$AppDatabase db,
+    $KnowledgeSourceCacheTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KnowledgeSourceCacheTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$KnowledgeSourceCacheTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$KnowledgeSourceCacheTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> libraryUrl = const Value.absent(),
+                Value<DateTime> importedAt = const Value.absent(),
+                Value<String> contentJson = const Value.absent(),
+                Value<String> cacheRevision = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KnowledgeSourceCacheCompanion(
+                ownerUserId: ownerUserId,
+                sourceId: sourceId,
+                label: label,
+                libraryUrl: libraryUrl,
+                importedAt: importedAt,
+                contentJson: contentJson,
+                cacheRevision: cacheRevision,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required String sourceId,
+                required String label,
+                required String libraryUrl,
+                required DateTime importedAt,
+                required String contentJson,
+                required String cacheRevision,
+                Value<int> rowid = const Value.absent(),
+              }) => KnowledgeSourceCacheCompanion.insert(
+                ownerUserId: ownerUserId,
+                sourceId: sourceId,
+                label: label,
+                libraryUrl: libraryUrl,
+                importedAt: importedAt,
+                contentJson: contentJson,
+                cacheRevision: cacheRevision,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $KnowledgeSourceCacheTable,
+                    KnowledgeSourceCacheRow
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $KnowledgeSourceCacheTable,
+                    KnowledgeSourceCacheRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$KnowledgeSourceCacheTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KnowledgeSourceCacheTable,
+      KnowledgeSourceCacheRow,
+      $$KnowledgeSourceCacheTableFilterComposer,
+      $$KnowledgeSourceCacheTableOrderingComposer,
+      $$KnowledgeSourceCacheTableAnnotationComposer,
+      $$KnowledgeSourceCacheTableCreateCompanionBuilder,
+      $$KnowledgeSourceCacheTableUpdateCompanionBuilder,
+      (
+        KnowledgeSourceCacheRow,
+        BaseReferences<
+          _$AppDatabase,
+          $KnowledgeSourceCacheTable,
+          KnowledgeSourceCacheRow
+        >,
+      ),
+      KnowledgeSourceCacheRow,
+      PrefetchHooks Function()
+    >;
+typedef $$KnowledgeSourceImportLeasesTableCreateCompanionBuilder =
+    KnowledgeSourceImportLeasesCompanion Function({
+      required String ownerUserId,
+      required String sourceId,
+      required String token,
+      Value<int> rowid,
+    });
+typedef $$KnowledgeSourceImportLeasesTableUpdateCompanionBuilder =
+    KnowledgeSourceImportLeasesCompanion Function({
+      Value<String> ownerUserId,
+      Value<String> sourceId,
+      Value<String> token,
+      Value<int> rowid,
+    });
+
+class $$KnowledgeSourceImportLeasesTableFilterComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceImportLeasesTable> {
+  $$KnowledgeSourceImportLeasesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get token => $composableBuilder(
+    column: $table.token,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$KnowledgeSourceImportLeasesTableOrderingComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceImportLeasesTable> {
+  $$KnowledgeSourceImportLeasesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get token => $composableBuilder(
+    column: $table.token,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$KnowledgeSourceImportLeasesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceImportLeasesTable> {
+  $$KnowledgeSourceImportLeasesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get token =>
+      $composableBuilder(column: $table.token, builder: (column) => column);
+}
+
+class $$KnowledgeSourceImportLeasesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KnowledgeSourceImportLeasesTable,
+          KnowledgeSourceImportLease,
+          $$KnowledgeSourceImportLeasesTableFilterComposer,
+          $$KnowledgeSourceImportLeasesTableOrderingComposer,
+          $$KnowledgeSourceImportLeasesTableAnnotationComposer,
+          $$KnowledgeSourceImportLeasesTableCreateCompanionBuilder,
+          $$KnowledgeSourceImportLeasesTableUpdateCompanionBuilder,
+          (
+            KnowledgeSourceImportLease,
+            BaseReferences<
+              _$AppDatabase,
+              $KnowledgeSourceImportLeasesTable,
+              KnowledgeSourceImportLease
+            >,
+          ),
+          KnowledgeSourceImportLease,
+          PrefetchHooks Function()
+        > {
+  $$KnowledgeSourceImportLeasesTableTableManager(
+    _$AppDatabase db,
+    $KnowledgeSourceImportLeasesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KnowledgeSourceImportLeasesTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$KnowledgeSourceImportLeasesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$KnowledgeSourceImportLeasesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
+                Value<String> token = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KnowledgeSourceImportLeasesCompanion(
+                ownerUserId: ownerUserId,
+                sourceId: sourceId,
+                token: token,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required String sourceId,
+                required String token,
+                Value<int> rowid = const Value.absent(),
+              }) => KnowledgeSourceImportLeasesCompanion.insert(
+                ownerUserId: ownerUserId,
+                sourceId: sourceId,
+                token: token,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $KnowledgeSourceImportLeasesTable,
+                    KnowledgeSourceImportLease
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $KnowledgeSourceImportLeasesTable,
+                    KnowledgeSourceImportLease
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$KnowledgeSourceImportLeasesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KnowledgeSourceImportLeasesTable,
+      KnowledgeSourceImportLease,
+      $$KnowledgeSourceImportLeasesTableFilterComposer,
+      $$KnowledgeSourceImportLeasesTableOrderingComposer,
+      $$KnowledgeSourceImportLeasesTableAnnotationComposer,
+      $$KnowledgeSourceImportLeasesTableCreateCompanionBuilder,
+      $$KnowledgeSourceImportLeasesTableUpdateCompanionBuilder,
+      (
+        KnowledgeSourceImportLease,
+        BaseReferences<
+          _$AppDatabase,
+          $KnowledgeSourceImportLeasesTable,
+          KnowledgeSourceImportLease
+        >,
+      ),
+      KnowledgeSourceImportLease,
+      PrefetchHooks Function()
+    >;
+typedef $$KnowledgeSourceConnectionsTableCreateCompanionBuilder =
+    KnowledgeSourceConnectionsCompanion Function({
+      required String ownerUserId,
+      required String sourceId,
+      required String label,
+      required String libraryUrl,
+      required String repositoryOwner,
+      required String repositoryName,
+      required String branch,
+      required String revision,
+      required String credentialId,
+      Value<String?> remoteHead,
+      Value<DateTime?> checkedAt,
+      Value<int> rowid,
+    });
+typedef $$KnowledgeSourceConnectionsTableUpdateCompanionBuilder =
+    KnowledgeSourceConnectionsCompanion Function({
+      Value<String> ownerUserId,
+      Value<String> sourceId,
+      Value<String> label,
+      Value<String> libraryUrl,
+      Value<String> repositoryOwner,
+      Value<String> repositoryName,
+      Value<String> branch,
+      Value<String> revision,
+      Value<String> credentialId,
+      Value<String?> remoteHead,
+      Value<DateTime?> checkedAt,
+      Value<int> rowid,
+    });
+
+class $$KnowledgeSourceConnectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceConnectionsTable> {
+  $$KnowledgeSourceConnectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get libraryUrl => $composableBuilder(
+    column: $table.libraryUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repositoryOwner => $composableBuilder(
+    column: $table.repositoryOwner,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get repositoryName => $composableBuilder(
+    column: $table.repositoryName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get branch => $composableBuilder(
+    column: $table.branch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get credentialId => $composableBuilder(
+    column: $table.credentialId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get remoteHead => $composableBuilder(
+    column: $table.remoteHead,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get checkedAt => $composableBuilder(
+    column: $table.checkedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$KnowledgeSourceConnectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceConnectionsTable> {
+  $$KnowledgeSourceConnectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceId => $composableBuilder(
+    column: $table.sourceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get libraryUrl => $composableBuilder(
+    column: $table.libraryUrl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repositoryOwner => $composableBuilder(
+    column: $table.repositoryOwner,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get repositoryName => $composableBuilder(
+    column: $table.repositoryName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get branch => $composableBuilder(
+    column: $table.branch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get credentialId => $composableBuilder(
+    column: $table.credentialId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get remoteHead => $composableBuilder(
+    column: $table.remoteHead,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get checkedAt => $composableBuilder(
+    column: $table.checkedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$KnowledgeSourceConnectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $KnowledgeSourceConnectionsTable> {
+  $$KnowledgeSourceConnectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get ownerUserId => $composableBuilder(
+    column: $table.ownerUserId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get sourceId =>
+      $composableBuilder(column: $table.sourceId, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<String> get libraryUrl => $composableBuilder(
+    column: $table.libraryUrl,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get repositoryOwner => $composableBuilder(
+    column: $table.repositoryOwner,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get repositoryName => $composableBuilder(
+    column: $table.repositoryName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get branch =>
+      $composableBuilder(column: $table.branch, builder: (column) => column);
+
+  GeneratedColumn<String> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+
+  GeneratedColumn<String> get credentialId => $composableBuilder(
+    column: $table.credentialId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get remoteHead => $composableBuilder(
+    column: $table.remoteHead,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get checkedAt =>
+      $composableBuilder(column: $table.checkedAt, builder: (column) => column);
+}
+
+class $$KnowledgeSourceConnectionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $KnowledgeSourceConnectionsTable,
+          KnowledgeSourceConnectionRow,
+          $$KnowledgeSourceConnectionsTableFilterComposer,
+          $$KnowledgeSourceConnectionsTableOrderingComposer,
+          $$KnowledgeSourceConnectionsTableAnnotationComposer,
+          $$KnowledgeSourceConnectionsTableCreateCompanionBuilder,
+          $$KnowledgeSourceConnectionsTableUpdateCompanionBuilder,
+          (
+            KnowledgeSourceConnectionRow,
+            BaseReferences<
+              _$AppDatabase,
+              $KnowledgeSourceConnectionsTable,
+              KnowledgeSourceConnectionRow
+            >,
+          ),
+          KnowledgeSourceConnectionRow,
+          PrefetchHooks Function()
+        > {
+  $$KnowledgeSourceConnectionsTableTableManager(
+    _$AppDatabase db,
+    $KnowledgeSourceConnectionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$KnowledgeSourceConnectionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$KnowledgeSourceConnectionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$KnowledgeSourceConnectionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> ownerUserId = const Value.absent(),
+                Value<String> sourceId = const Value.absent(),
+                Value<String> label = const Value.absent(),
+                Value<String> libraryUrl = const Value.absent(),
+                Value<String> repositoryOwner = const Value.absent(),
+                Value<String> repositoryName = const Value.absent(),
+                Value<String> branch = const Value.absent(),
+                Value<String> revision = const Value.absent(),
+                Value<String> credentialId = const Value.absent(),
+                Value<String?> remoteHead = const Value.absent(),
+                Value<DateTime?> checkedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KnowledgeSourceConnectionsCompanion(
+                ownerUserId: ownerUserId,
+                sourceId: sourceId,
+                label: label,
+                libraryUrl: libraryUrl,
+                repositoryOwner: repositoryOwner,
+                repositoryName: repositoryName,
+                branch: branch,
+                revision: revision,
+                credentialId: credentialId,
+                remoteHead: remoteHead,
+                checkedAt: checkedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String ownerUserId,
+                required String sourceId,
+                required String label,
+                required String libraryUrl,
+                required String repositoryOwner,
+                required String repositoryName,
+                required String branch,
+                required String revision,
+                required String credentialId,
+                Value<String?> remoteHead = const Value.absent(),
+                Value<DateTime?> checkedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => KnowledgeSourceConnectionsCompanion.insert(
+                ownerUserId: ownerUserId,
+                sourceId: sourceId,
+                label: label,
+                libraryUrl: libraryUrl,
+                repositoryOwner: repositoryOwner,
+                repositoryName: repositoryName,
+                branch: branch,
+                revision: revision,
+                credentialId: credentialId,
+                remoteHead: remoteHead,
+                checkedAt: checkedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $KnowledgeSourceConnectionsTable,
+                    KnowledgeSourceConnectionRow
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $KnowledgeSourceConnectionsTable,
+                    KnowledgeSourceConnectionRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$KnowledgeSourceConnectionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $KnowledgeSourceConnectionsTable,
+      KnowledgeSourceConnectionRow,
+      $$KnowledgeSourceConnectionsTableFilterComposer,
+      $$KnowledgeSourceConnectionsTableOrderingComposer,
+      $$KnowledgeSourceConnectionsTableAnnotationComposer,
+      $$KnowledgeSourceConnectionsTableCreateCompanionBuilder,
+      $$KnowledgeSourceConnectionsTableUpdateCompanionBuilder,
+      (
+        KnowledgeSourceConnectionRow,
+        BaseReferences<
+          _$AppDatabase,
+          $KnowledgeSourceConnectionsTable,
+          KnowledgeSourceConnectionRow
+        >,
+      ),
+      KnowledgeSourceConnectionRow,
+      PrefetchHooks Function()
+    >;
 typedef $$ExecutionPlansTableCreateCompanionBuilder =
     ExecutionPlansCompanion Function({
       required String ownerUserId,
@@ -79487,6 +81794,20 @@ class $AppDatabaseManager {
       $$KnowledgeDecisionsTableTableManager(_db, _db.knowledgeDecisions);
   $$KnowledgeRelationsTableTableManager get knowledgeRelations =>
       $$KnowledgeRelationsTableTableManager(_db, _db.knowledgeRelations);
+  $$KnowledgeSourceCacheTableTableManager get knowledgeSourceCache =>
+      $$KnowledgeSourceCacheTableTableManager(_db, _db.knowledgeSourceCache);
+  $$KnowledgeSourceImportLeasesTableTableManager
+  get knowledgeSourceImportLeases =>
+      $$KnowledgeSourceImportLeasesTableTableManager(
+        _db,
+        _db.knowledgeSourceImportLeases,
+      );
+  $$KnowledgeSourceConnectionsTableTableManager
+  get knowledgeSourceConnections =>
+      $$KnowledgeSourceConnectionsTableTableManager(
+        _db,
+        _db.knowledgeSourceConnections,
+      );
   $$ExecutionPlansTableTableManager get executionPlans =>
       $$ExecutionPlansTableTableManager(_db, _db.executionPlans);
   $$ExecutionActionsTableTableManager get executionActions =>

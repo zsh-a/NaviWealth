@@ -77,9 +77,10 @@ final class AppDatabaseTransactionScope {
 
 /// Local NaviWealth database.
 ///
-/// Schema 101 supports multiple device-local views per meal. Upgrades from
-/// 99 and 100 preserve existing records and photos; other baselines and
-/// downgrades are rejected without modifying data.
+/// Schema 103 combines multiple meal photos with local BCR source connections.
+/// Upgrades from 99–102 preserve both the published Health baseline and local
+/// Knowledge baselines. Older baselines and downgrades
+/// are rejected without modifying data.
 @DriftDatabase(
   tables: [
     Users,
@@ -137,6 +138,9 @@ final class AppDatabaseTransactionScope {
     KnowledgeNotes,
     KnowledgeDecisions,
     KnowledgeRelations,
+    KnowledgeSourceCache,
+    KnowledgeSourceImportLeases,
+    KnowledgeSourceConnections,
     // ExecutionOS Action Kernel: plans, personal actions, and updates.
     ExecutionPlans,
     ExecutionActions,
@@ -176,7 +180,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 101;
+  int get schemaVersion => 103;
 
   UnsupportedDatabaseSchema? _schemaMismatch;
 
@@ -234,31 +238,68 @@ class AppDatabase extends _$AppDatabase {
       await _createHealthMealIndexes(this);
     },
     onUpgrade: (m, from, to) async {
-      if ((from == 99 || from == 100) && to == 101) {
+      if (from >= 99 && from <= 102 && to == 103) {
         await transaction(() async {
           if (from == 99) {
             await m.createTable(healthMeals);
             await m.createTable(healthMealPhotos);
           } else {
-            await customStatement(
-              'DROP TRIGGER IF EXISTS trg_health_meal_deleted_photo',
-            );
-            await m.alterTable(
-              TableMigration(
-                healthMealPhotos,
-                newColumns: [
-                  healthMealPhotos.mealId,
-                  healthMealPhotos.viewRole,
-                  healthMealPhotos.position,
-                  healthMealPhotos.timestampMs,
-                ],
-                columnTransformer: {
-                  healthMealPhotos.mealId: healthMealPhotos.id,
-                },
-              ),
-            );
+            // Published Health 101 and local Knowledge 101/102 were authored
+            // concurrently. Inspect this one known difference before copying
+            // photos, so an already migrated multi-photo meal keeps its ids.
+            final photoColumns = (await customSelect(
+              'PRAGMA table_info(health_meal_photos)',
+            ).get()).map((row) => row.read<String>('name')).toSet();
+            const legacyColumns = {'id', 'owner_user_id', 'bytes'};
+            const currentColumns = {
+              ...legacyColumns,
+              'meal_id',
+              'view_role',
+              'position',
+              'timestamp_ms',
+            };
+            if (!photoColumns.contains('meal_id')) {
+              if (photoColumns.length != legacyColumns.length ||
+                  !photoColumns.containsAll(legacyColumns)) {
+                throw StateError('Unknown legacy meal photo schema.');
+              }
+              await customStatement(
+                'DROP TRIGGER IF EXISTS trg_health_meal_deleted_photo',
+              );
+              await m.alterTable(
+                TableMigration(
+                  healthMealPhotos,
+                  newColumns: [
+                    healthMealPhotos.mealId,
+                    healthMealPhotos.viewRole,
+                    healthMealPhotos.position,
+                    healthMealPhotos.timestampMs,
+                  ],
+                  columnTransformer: {
+                    healthMealPhotos.mealId: healthMealPhotos.id,
+                  },
+                ),
+              );
+            } else if (!photoColumns.containsAll(currentColumns)) {
+              throw StateError('Incomplete multi-photo meal schema.');
+            }
           }
+          await customStatement(
+            'DROP TRIGGER IF EXISTS trg_health_meal_deleted_photo',
+          );
           await _createHealthMealIndexes(this);
+          final existingTables = (await customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          ).get()).map((row) => row.read<String>('name')).toSet();
+          for (final table in <TableInfo<Table, Object?>>[
+            knowledgeSourceCache,
+            knowledgeSourceImportLeases,
+            knowledgeSourceConnections,
+          ]) {
+            if (!existingTables.contains(table.actualTableName)) {
+              await m.createTable(table);
+            }
+          }
         });
         return;
       }

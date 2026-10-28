@@ -147,6 +147,103 @@ query, or migration backfill for retired object types.
 
 ## Search And Memory
 
+### BCR Knowledge Sources
+
+Library's **BCR sources** action opens `/knowledge/library/bcr` inside the
+existing Library branch. Connect the same private GitHub repository and branch
+used by BCR; no file export/import is needed. A blank branch resolves the
+repository's default branch on connection, then persists that explicit branch.
+The connection sheet also supplies a display name, BCR reading-page URL and
+GitHub access token. Navi needs only the repository's Contents read permission.
+
+BCR owns the source documents. These snapshots are read-only projections, not
+additional KnowledgeOS business entities or synced `knowledge_notes` rows.
+The source id is a SHA-256 of normalized GitHub owner/repository and the
+case-sensitive branch, independently of display names, note titles, contents
+and reading-page URL. Notes keep BCR's stable ids. The HTTP(S) page URL is only
+a locator for opening the source in BCR. Connecting adopts an earlier
+file-import cache of that page atomically, without changing saved citations.
+
+`KnowledgeSourceConnections` keeps device-local connection metadata, credential
+ids, revision, last accepted Git HEAD and last check time. Tokens stay outside
+Drift, ordinary preferences, logs, exports and Navi Sync: native hosts use
+owner-scoped SecureKeyStore documents; Web uses session memory and requests a
+token again after reopening. Domain reset fences pending work in SQLite before
+attempting credential cleanup through the DomainPack resource-cleanup seam.
+
+`KnowledgeSourceCache` stores owner-scoped text snapshots in the existing
+database. `KnowledgeSourceImportLeases` is the existing storage name for pending
+connection/sync tokens, acquired **before** HTTP. Commit rechecks the owner,
+connection revision and lease, and updates the complete cache and HEAD in one
+transaction. Reset/disconnect/changed credentials or cancelled sessions cannot
+be undone by late responses, including a first connection without prior data.
+Failed network, validation and storage operations keep the prior snapshot.
+
+Cache cleanup removes cached text and leases but keeps connection metadata for
+automatic reconstruction. Domain reset removes connections too. Cached text
+can transfer with the owner's local data; credential-bound connections and
+pending leases invalidate on owner transfer and require reconnection. All
+three tables remain outside Navi Sync and backup. Readers lose access when a
+source is disconnected, reset, replaced or owned by another active user.
+
+The Knowledge DomainPack mounts a foreground-only sync driver when the domain
+is enabled: check on startup/resume and every 30 seconds, pause on background,
+and coalesce in-flight operations. **Sync now** uses the same service. Network
+errors retry with bounded exponential backoff; GitHub Retry-After/reset waits
+take precedence, including manual checks. Permission or missing-token failures
+pause automatic retry until the connection is repaired. Clearing the cache
+retains the ability to rebuild it even if the stored HEAD has not changed.
+
+Search covers all cached notes through bounded lexical retrieval on native and
+Web; it does not depend on the recent-Note Memory subscription or a model.
+`search_bcr_notes` and `read_bcr_note` expose the same read-only sources to the
+native assistant. Responses identify their source, document, update/cache
+times and snapshot fingerprint. Reading is paginated and requires the current
+fingerprint; cached documents must not be presented as a live BCR query.
+
+Decision capture can start from a source reader. Existing Decision editors can
+pick a source and explicitly insert its previewed excerpt into the rationale
+draft. The ordinary Save action persists it. Standard Markdown retains the
+source id, original note id, page URL, original update time, bounded excerpt
+and `sha256:` snapshot fingerprint. Updating/removing the cache never rewrites
+saved decision evidence. This reuses existing rationale editing, recovery,
+merge, proposal Undo, Sync and encrypted backup behavior without introducing a
+parallel Decision source field.
+
+The snapshot fingerprint covers the fixed-order note fields (id, title,
+optional path, body, tags, collection id, creation/update epoch milliseconds
+and citations), using UTF-8 JSON with recursively sorted citation-map keys.
+It is Navi's SHA-256 fingerprint, **not** BCR's BLAKE3 revision or Git HEAD.
+Quotes and titles remain user-editable as part of the rationale.
+
+GitHub traffic is GET-only to api.github.com, with redirects disabled and a
+bounded response stream. Each cycle verifies the repository is private and
+reads an immutable commit/tree. Same-HEAD checks reuse a complete local cache;
+otherwise managed files are read with bounded concurrency and verified using
+their Git SHA-1 blob identities. Verified text blobs use a bounded in-memory
+LRU so changed HEADs and rate-limit retries can resume without redownloading
+unchanged content. No remote commit, push or three-way merge is needed for this
+read-only consumer; BCR retains ownership of document edits and conflict policy.
+
+Limits: 12 MiB per JSON response, 16 MiB managed text, 2 MiB per text file,
+5,000 notes per source, and 32 MiB total persisted cached content per owner.
+Truncated trees, unsupported files/symlinks, size or SHA mismatches, invalid
+UTF-8, YAML aliases/complex keys or excessive nesting, inconsistent ids and
+missing provenance stop the cycle before replacing the cache. Text parsing
+supports BCR manifest versions 1–4 and is shared with the format fixtures.
+The YAML event preflight uses pinned `yaml` 3.1.4; upgrades must retain its
+safety regressions. GitHub endpoint behavior follows the
+[Git trees](https://docs.github.com/en/rest/git/trees),
+[Git blobs](https://docs.github.com/en/rest/git/blobs) and
+[rate-limit](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)
+contracts.
+
+Attachment metadata and Git tree sizes are checked, but binary attachments
+are neither downloaded, BLAKE3-verified nor cached. Offline support is
+for note text; attachments, relative links and backlinks use the BCR entry.
+The connection synchronizes remote BCR content into local read-only snapshots;
+it does not add a second writer for BCR documents.
+
 Knowledge source rows remain authoritative in Drift. Two domain indexers mirror
 them into Memory Runtime:
 
@@ -190,6 +287,8 @@ The bounded catalog in `knowledge_ai_tools.dart` contains:
 - `search_notes`
 - `search_knowledge`
 - `find_similar_knowledge`
+- `search_bcr_notes`
+- `read_bcr_note`
 - `propose_capture`
 - `propose_merge`
 

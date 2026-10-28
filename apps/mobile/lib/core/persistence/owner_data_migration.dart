@@ -55,6 +55,7 @@ const kOwnerDataTables = <OwnerDataTable>[
   OwnerDataTable('knowledge_decisions'),
   OwnerDataTable('knowledge_notes'),
   OwnerDataTable('knowledge_relations'),
+  OwnerDataTable('knowledge_source_cache'),
   OwnerDataTable('liabilities'),
   OwnerDataTable('options_leaps_call_positions'),
   OwnerDataTable('options_strategy_profile', identityColumn: 'user_id'),
@@ -106,6 +107,8 @@ const kOwnerDataTables = <OwnerDataTable>[
   OwnerDataTable('sync_row_extras'),
 
   // These caches either embed the old identity or can resume a business effect.
+  OwnerDataTable('knowledge_source_connections', policy: _invalidate),
+  OwnerDataTable('knowledge_source_import_leases', policy: _invalidate),
   OwnerDataTable('agent_runtime_chat_snapshots', policy: _invalidate),
   OwnerDataTable('agent_runtime_checkpoints', policy: _invalidate),
   OwnerDataTable('ai_undo_stack', policy: _invalidate),

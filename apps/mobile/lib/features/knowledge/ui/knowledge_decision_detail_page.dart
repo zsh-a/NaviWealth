@@ -17,6 +17,7 @@ import '../data/knowledge_rewrite_client.dart';
 import '../data/knowledge_search_service.dart';
 import '../data/providers.dart';
 import '../domain/knowledge_models.dart';
+import 'bcr_knowledge_library_page.dart';
 import 'knowledge_decision_review_sheet.dart';
 import 'knowledge_rewrite_sheet.dart';
 import 'widgets/knowledge_decision_action_section.dart';
@@ -363,6 +364,13 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
             enabled: !_saving,
           ),
           const SizedBox(height: AppSpacing.s8),
+          AppQuietButton(
+            key: const Key('knowledge-decision-cite-bcr'),
+            label: l10n.knowledgeBcrCite,
+            prefix: const Icon(FLucideIcons.bookOpen),
+            onPress: _saving || _changed || _deleted ? null : _citeBcr,
+          ),
+          const SizedBox(height: AppSpacing.s8),
           KnowledgeRewriteAction(enabled: !_saving, onRewrite: _rewrite),
           const SizedBox(height: AppSpacing.s12),
           FTextField(
@@ -520,6 +528,26 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
       _question.text = draft.heading;
       _rationale.text = draft.content;
     });
+  }
+
+  Future<void> _citeBcr() async {
+    final owner = await ref.read(knowledgeOwnerUserIdProvider.future);
+    final baseline = _expectedHlc;
+    if (!mounted) return;
+    final reference = await pickBcrKnowledgeReference(context);
+    if (!mounted || reference == null) return;
+    final currentOwner = await ref.read(knowledgeOwnerUserIdProvider.future);
+    if (!mounted ||
+        _saving ||
+        _deleted ||
+        _changed ||
+        !_editing ||
+        currentOwner != owner ||
+        baseline != _expectedHlc) {
+      return;
+    }
+    final separator = _rationale.text.trim().isEmpty ? '' : '\n\n';
+    _rationale.text = '${_rationale.text}$separator${reference.toMarkdown()}';
   }
 
   Future<void> _delete() async {

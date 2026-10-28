@@ -432,6 +432,8 @@ void main() {
         'search_notes',
         'search_knowledge',
         'find_similar_knowledge',
+        'search_bcr_notes',
+        'read_bcr_note',
         'propose_capture',
       ]),
     );
@@ -711,7 +713,7 @@ void main() {
     expect(c.read(domainPackRegistryProvider), kAllDomainPacks);
     expect(kFinancePack.lifecycle.backgroundBootstrapBuilder, isNotNull);
     expect(kHealthPack.lifecycle.backgroundBootstrapBuilder, isNotNull);
-    expect(kKnowledgePack.lifecycle.backgroundBootstrapBuilder, isNull);
+    expect(kKnowledgePack.lifecycle.backgroundBootstrapBuilder, isNotNull);
     expect(kExecutionPack.lifecycle.backgroundBootstrapBuilder, isNotNull);
     expect(
       kAllDomainPacks

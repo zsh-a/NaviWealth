@@ -6,6 +6,18 @@ final DomainDataManagementSpec knowledgeDataManagementSpec =
     DomainDataManagementSpec(
       scope: DomainScope.knowledge,
       label: 'KnowledgeOS',
-      sourceTables: syncDataTablesForPrefix(kKnowledgeDomainPrefix),
-      cacheTables: const <DataTableSpec>[],
+      sourceTables: [
+        ...syncDataTablesForPrefix(kKnowledgeDomainPrefix),
+        const DataTableSpec(
+          table: 'knowledge_source_connections',
+          ownerScoped: true,
+        ),
+      ],
+      cacheTables: const <DataTableSpec>[
+        DataTableSpec(table: 'knowledge_source_cache', ownerScoped: true),
+        DataTableSpec(
+          table: 'knowledge_source_import_leases',
+          ownerScoped: true,
+        ),
+      ],
     );

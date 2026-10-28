@@ -14,6 +14,7 @@ import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/outbox_provider.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_proposal_applier.dart';
+import 'package:naviwealth/features/knowledge/data/bcr_knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_memory_indexer_support.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
@@ -21,6 +22,7 @@ import 'package:naviwealth/features/knowledge/knowledge_ai_tools.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
+import '../bcr_test_fixture.dart';
 
 const _owner = 'knowledge-tools-user';
 const _otherOwner = 'knowledge-tools-other-user';
@@ -51,13 +53,15 @@ void main() {
     await database.close();
   });
 
-  test('catalog remains bounded to the seven documented Knowledge tools', () {
+  test('catalog contains the documented Knowledge and read-only BCR tools', () {
     expect(kKnowledgeDeviceTools.map((tool) => tool.name), <String>[
       'recall_decision',
       'list_due_reviews',
       'search_notes',
       'search_knowledge',
       'find_similar_knowledge',
+      'search_bcr_notes',
+      'read_bcr_note',
       'propose_capture',
       'propose_merge',
     ]);
@@ -173,6 +177,67 @@ void main() {
       note.id,
     );
   });
+
+  test(
+    'BCR tools isolate owners and pin Unicode pages to a cached fingerprint',
+    () async {
+      final sources = BcrKnowledgeRepository(database);
+      final url = Uri.parse('https://notes.example.com/knowledge');
+      for (final owner in [_owner, _otherOwner]) {
+        await sources.importArchive(
+          owner: owner,
+          label: 'Research',
+          libraryUrl: url,
+          archive: makeBcrArchive(
+            body: owner == _owner
+                ? '${'a' * 11999}😀Tail'
+                : 'Private foreign source',
+          ),
+          expectedCacheRevision: null,
+          importToken: await sources.beginImport(owner: owner, libraryUrl: url),
+        );
+      }
+      final result = await _invokeByName(container, 'search_bcr_notes', {
+        'query': '',
+      }) as Map<Object?, Object?>;
+      final row =
+          (result['notes']! as List<Object?>).single! as Map<Object?, Object?>;
+      final args = <String, Object?>{
+        'source_id': row['source_id'],
+        'note_id': row['note_id'],
+        'fingerprint': row['fingerprint'],
+      };
+      final first = await _invokeByName(
+        container,
+        'read_bcr_note',
+        args,
+      ) as Map<Object?, Object?>;
+      expect(first['body'], 'a' * 11999);
+      expect(first['next_offset'], 11999);
+      final second = await _invokeByName(container, 'read_bcr_note', {
+        ...args,
+        'offset': first['next_offset'],
+      }) as Map<Object?, Object?>;
+      expect(second['body'], '😀Tail');
+      expect(second['next_offset'], isNull);
+      final source = (await sources.listSources(_owner)).single;
+      await sources.importArchive(
+        owner: _owner,
+        label: 'Research',
+        libraryUrl: url,
+        archive: makeBcrArchive(body: 'New version'),
+        expectedCacheRevision: source.cacheRevision,
+        importToken: await sources.beginImport(owner: _owner, libraryUrl: url),
+      );
+      final stale = await _invokeByName(
+        container,
+        'read_bcr_note',
+        args,
+      ) as Map<Object?, Object?>;
+      expect(stale['code'], 'bad_request');
+      expect(outbox.queued, isEmpty);
+    },
+  );
 
   test(
     'capture proposal does not write before apply and undo tombstones it',

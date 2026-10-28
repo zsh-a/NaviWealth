@@ -54,6 +54,50 @@ class KnowledgeRelations extends Table with SyncableTable {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Re-creatable, device-local BCR snapshots. Never registered for sync/backup.
+@DataClassName('KnowledgeSourceCacheRow')
+class KnowledgeSourceCache extends Table {
+  TextColumn get ownerUserId => text()();
+  TextColumn get sourceId => text()();
+  TextColumn get label => text()();
+  TextColumn get libraryUrl => text()();
+  DateTimeColumn get importedAt => dateTime()();
+  TextColumn get contentJson => text()();
+  TextColumn get cacheRevision => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {ownerUserId, sourceId};
+}
+
+/// A pending import is invalidated by cache cleanup, reset or owner transfer.
+class KnowledgeSourceImportLeases extends Table {
+  TextColumn get ownerUserId => text()();
+  TextColumn get sourceId => text()();
+  TextColumn get token => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {ownerUserId, sourceId};
+}
+
+/// Device-local GitHub connections. Secrets live in SecureKeyStore only.
+@DataClassName('KnowledgeSourceConnectionRow')
+class KnowledgeSourceConnections extends Table {
+  TextColumn get ownerUserId => text()();
+  TextColumn get sourceId => text()();
+  TextColumn get label => text()();
+  TextColumn get libraryUrl => text()();
+  TextColumn get repositoryOwner => text()();
+  TextColumn get repositoryName => text()();
+  TextColumn get branch => text()();
+  TextColumn get revision => text()();
+  TextColumn get credentialId => text()();
+  TextColumn get remoteHead => text().nullable()();
+  DateTimeColumn get checkedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {ownerUserId, sourceId};
+}
+
 const List<String> knowledgeIndexStmts = [
   'CREATE INDEX IF NOT EXISTS idx_knowledge_notes_owner_hlc '
       'ON knowledge_notes(owner_user_id, hlc)',

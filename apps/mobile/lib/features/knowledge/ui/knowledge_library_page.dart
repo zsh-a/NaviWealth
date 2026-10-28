@@ -158,6 +158,11 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           label: l10n.knowledgeNewDecision,
           onPress: () => showKnowledgeDecisionCapturePage(context),
         ),
+        ShellHeaderActionSpec(
+          icon: FLucideIcons.bookOpen,
+          label: l10n.knowledgeBcrTitle,
+          onPress: () => context.push(KnowledgeRoutes.bcrLibrary),
+        ),
       ],
       child: FormLeaveScope(
         routePath: KnowledgeRoutes.library,
