@@ -41,6 +41,14 @@ const Map<String, String> _kVimGotoRoutes = <String, String>{
 class NaviWealthApp extends ConsumerWidget {
   const NaviWealthApp({super.key});
 
+  // Forui's material_ui/cupertino_ui delegates have different resource types
+  // from Flutter's. Register both above the root overlay so text-selection
+  // toolbars can resolve their labels outside the field's local fallback.
+  static const localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+    ...AppLocalizations.localizationsDelegates,
+    ...FLocalizations.localizationsDelegates,
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
@@ -75,7 +83,7 @@ class NaviWealthApp extends ConsumerWidget {
       locale: locale,
       routerConfig: router,
       onNavigationNotification: _claimSystemBack,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      localizationsDelegates: localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (BuildContext ctx, Widget? child) {
         // Pick a forui theme aligned with the active Material brightness
